@@ -19,7 +19,7 @@
 
 https://github.com/user-attachments/assets/84cbea65-6fb8-452a-b4d6-811c69c301cc
 
-<p align="center"><sub>▶ The 45-second trailer (sound on). Full 1080p version: <a href="promo/clawd-wars-promo.mp4">promo/clawd-wars-promo.mp4</a></sub></p>
+<p align="center"><sub>🔊 <b>Click the speaker in the player for sound</b> — GitHub starts videos muted. Full 1080p version: <a href="promo/clawd-wars-promo.mp4">promo/clawd-wars-promo.mp4</a></sub></p>
 
 <p align="center">
   <img src="docs/desktop.png" alt="Three Claudes and eight agents fighting across the bottom of the screen">
