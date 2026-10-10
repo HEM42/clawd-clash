@@ -31,6 +31,8 @@
 - **Hover cards in window mode only appear when the session list is hidden.** With the list showing, the same details are already right below the scene, so the pop-up just got in the way. The desktop is unchanged.
 - "Fit Window Height to Claudes" is now "Fit Window Height to Sessions", since the window lists every AI, not just Claude.
 - **Agent rows in the window carry a small "AGENT" tag** before the agent's name, a grey pill like the status chips. Being nested inside the session's card was the only cue before, which was easy to miss.
+- **The menu no longer lists the sessions.** The menu bar helmet, right-click and the top-bar Crew menu now open straight onto the options. The window's list and the desktop's hover cards already show every session. ⚠︎ items for hooks that need fixing still sit at the top when there are any.
+- **Top-bar menus while the window is in front.** macOS only shows an app's menus with a Dock icon, so with Show Dock Icon off there was nothing up there when Clawd Wars was active. Now, in window mode, the Dock icon and the Clawd Wars / Crew / Window menus appear while the window is the active app and disappear when you switch away. With Show Dock Icon on, nothing changes.
 - Window cards lose the thick accent bar on their left edge. The card's border, in the project colour, is now the same width all the way round.
 - Settings lists Install/Remove Hooks for every supported AI found on the Mac, generated from `HookInstaller.others`. Cards name the reply's author by AI ("Gemini: …") instead of always "Claude:".
 

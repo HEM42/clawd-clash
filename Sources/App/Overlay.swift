@@ -157,6 +157,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         view = OverlayView()
         super.init()
         view.controller = self
+        // Menus in the top bar need a Dock icon. Without "Show Dock Icon", the window still gets them while it's in front.
+        NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.updateFrontPolicy(active: true)
+        }
+        NotificationCenter.default.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.updateFrontPolicy(active: false)
+        }
 
         panel.isOpaque = false
         panel.backgroundColor = .clear
@@ -1415,6 +1422,20 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         NSApp.mainMenu = makeMainMenu()
     }
 
+    /// With the Dock icon off: a Dock icon (and so the top-bar menus) only while the window is the app in front.
+    private func updateFrontPolicy(active: Bool) {
+        guard !showInDock else { return }
+        let want: NSApplication.ActivationPolicy = active && windowMode && clawdWindow?.window.isVisible == true ? .regular : .accessory
+        guard NSApp.activationPolicy() != want else { return }
+        NSApp.setActivationPolicy(want)
+        if want == .regular {
+            NSApp.mainMenu = makeMainMenu()
+        } else {
+            // Dropping the Dock icon can take our windows down with it; keep them up, without stealing focus.
+            if windowMode { clawdWindow?.window.orderFrontRegardless() } else { panel.orderFrontRegardless() }
+        }
+    }
+
     @objc private func toggleDock() {
         showInDock.toggle()
         applyDockPolicy()
@@ -1614,37 +1635,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             m.addItem(item)
         }
         if !hookIssues.isEmpty { m.addItem(.separator()) }
-        let listed = sessions.enumerated()
-            .sorted { (AIStyle.rank($0.element.group), $0.offset) < (AIStyle.rank($1.element.group), $1.offset) }
-            .map(\.element)
-        let severalAIs = Set(listed.filter { $0.id != "home" }.map(\.group)).count > 1
-        var lastAI: String?
-        for s in listed {
-            if severalAIs && s.id != "home" && s.group != lastAI {
-                if lastAI != nil { m.addItem(.separator()) }
-                m.addItem(disabled: HookInstaller.displayName(s.group).uppercased())
-                lastAI = s.group
-            }
-            let leader = Cast(id: s.leader)
-            let status: String = {
-                switch s.mood {
-                case .idle: return s.agents.isEmpty ? "Idle" : "Idle (agents running)"
-                case .thinking: return "Thinking…"
-                case .working: return "Working"
-                case .waiting: return "Needs your attention"
-                }
-            }()
-            let project = s.project.isEmpty ? "" : " — \(s.project)"
-            let ai = s.id == "home" ? "" : " [\(s.aiLabel)]"
-            m.addItem(disabled: "\(leader.name)\(ai)\(project): \(s.live ? status : s.hookSilent ? "not reporting (\(HookInstaller.silentFix(s.assistant)))" : "no live status (restart this session)")")
-            for a in s.agents {
-                let who = Cast.of(a)
-                m.addItem(disabled: "     \(who.name) — \(a.task ?? a.type)")
-            }
-        }
+        // No session list here: the window's list and the desktop's hover cards already show every session.
         if demo { m.addItem(disabled: "(demo mode)") }
         if playground != nil { m.addItem(disabled: "(playground)") }
-        m.addItem(.separator())
+        if demo || playground != nil { m.addItem(.separator()) }
 
         let size = NSMenuItem(title: "Size", action: nil, keyEquivalent: "")
         let sub = NSMenu()
