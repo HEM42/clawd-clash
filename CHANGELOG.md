@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.3.0 — 2026-10-10
+
+### Added
+- Window mode is set in the Mos Eisley cantina (A New Hope). `Cantina.swift` draws the scene strip as pixel art: white-plaster adobe walls with a hand-finished texture, ceiling beams, hanging lamps with faint light shafts, arched booth alcoves (round table, lamp, bench), the curved bar with a brass rail and a shelf of glowing bottles, a packed-earth floor, and Figrin D'an and the Modal Nodes — three Bith on a stage, bobbing in time with music notes drifting up. The room is rendered once per window size and cached; only the band animates. The crew stands a little way into the floor.
+- The card area is restyled as warm dark adobe with a plaster texture, and cards are warm-tinted to match. The window background follows.
+
 ## 2.2.0 — 2026-10-10
 
 ### Added

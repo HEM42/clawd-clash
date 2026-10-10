@@ -192,8 +192,9 @@ final class OverlayController: NSObject {
         return NSPoint(x: st.minX + 60 * zoom, y: st.minY + windowFloor - Self.footroom * zoom)
     }
 
-    /// Height of the floor in the window's scene strip (feet stand on it).
-    var windowFloor: CGFloat { 22 }
+    /// Height of the cantina floor in the window's scene strip; feet stand a little way into it.
+    static let cantinaFloor: CGFloat = 30
+    var windowFloor: CGFloat { 24 }
 
     // MARK: Status
 

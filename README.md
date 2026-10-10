@@ -34,7 +34,7 @@ Speech bubbles flip to whichever side of the head has room. The whole crew lines
 
 ### Window mode
 
-Right-click a villain and choose **Show in Window** to swap the desktop overlay for a regular window: the crew on a starfield strip, and a card per Claude with its status and how long it's been in it, what it's doing right now, your last prompt, its last reply, prompt and tool counts, and every agent's task and current tool. Click a card to jump to that session; tick **Keep on top** to pin the window.
+Right-click a villain and choose **Show in Window** to swap the desktop overlay for a regular window set in the Mos Eisley cantina (band included): the crew fighting on the cantina floor, and a card per Claude with its status and how long it's been in it, what it's doing right now, your last prompt, its last reply, prompt and tool counts, and every agent's task and current tool. Click a card to jump to that session; tick **Keep on top** to pin the window.
 
 ### Little signals
 

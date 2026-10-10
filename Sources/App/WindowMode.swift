@@ -41,7 +41,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         super.init()
         window.title = "Clawd Wars"
         window.minSize = NSSize(width: 520, height: 380)
-        window.backgroundColor = NSColor(srgbRed: 0.055, green: 0.063, blue: 0.125, alpha: 1)
+        window.backgroundColor = NSColor(srgbRed: 0.17, green: 0.13, blue: 0.10, alpha: 1)
         window.isReleasedWhenClosed = false
         window.delegate = self
         window.setFrameAutosaveName("ClawdWarsWindow")
@@ -115,9 +115,10 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     }
 }
 
-/// The scene strip: a starfield with a horizon, and the crew standing on it.
+/// The scene strip: the Mos Eisley cantina, with the crew standing on its floor.
 final class SceneView: NSView {
     weak var controller: OverlayController?
+    private var room: (size: NSSize, image: CGImage)?
 
     override var isFlipped: Bool { false }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
@@ -125,23 +126,26 @@ final class SceneView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         guard let ctx = NSGraphicsContext.current?.cgContext, let controller else { return }
         let b = bounds
-        let space = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
-                               colors: [CGColor(red: 0.16, green: 0.10, blue: 0.30, alpha: 1),
-                                        CGColor(red: 0.03, green: 0.04, blue: 0.10, alpha: 1)] as CFArray,
-                               locations: [0, 1])!
-        ctx.drawLinearGradient(space, start: CGPoint(x: 0, y: b.maxY), end: CGPoint(x: 0, y: b.minY), options: [])
-        let floor = controller.windowFloor
-        for i in 0..<Int(b.width / 9) {
-            let x = noise(i * 3) * Double(b.width), y = Double(floor + 6) + noise(i * 3 + 1) * Double(b.height - floor - 6)
-            let big = noise(i * 3 + 2) > 0.85
-            ctx.setFillColor(CGColor(red: 1, green: 1, blue: 1, alpha: big ? 0.9 : 0.45))
-            let s: CGFloat = big ? 3 : 2
-            ctx.fill(CGRect(x: CGFloat(x).rounded(), y: CGFloat(y).rounded(), width: s, height: s))
+        let p = Cantina.pixel
+        let pw = Int((b.width / p).rounded(.up)), ph = Int((b.height / p).rounded(.up))
+        let floorRows = Int((OverlayController.cantinaFloor / p).rounded())
+        let drawRect = CGRect(x: 0, y: 0, width: CGFloat(pw) * p, height: CGFloat(ph) * p)
+        ctx.interpolationQuality = .none
+
+        // The room only changes when the window is resized.
+        if room?.size != b.size {
+            let c = PixelCanvas(pw, ph)
+            Cantina.drawRoom(c, floorRows: floorRows)
+            if let img = c.makeImage() { room = (b.size, img) }
         }
-        ctx.setFillColor(CGColor(red: 0.10, green: 0.10, blue: 0.16, alpha: 1))
-        ctx.fill(CGRect(x: 0, y: 0, width: b.width, height: floor))
-        ctx.setFillColor(CGColor(red: 0.85, green: 0.47, blue: 0.34, alpha: 1))
-        ctx.fill(CGRect(x: 0, y: floor - 2, width: b.width, height: 2))
+        if let img = room?.image { ctx.draw(img, in: drawRect) }
+
+        // The band plays on.
+        let band = PixelCanvas(min(pw, 48), ph)
+        Cantina.drawBand(band, floorRows: floorRows, t: Date().timeIntervalSince1970)
+        if let img = band.makeImage() {
+            ctx.draw(img, in: CGRect(x: 0, y: 0, width: CGFloat(band.w) * p, height: drawRect.height))
+        }
 
         guard let window else { return }
         let origin = window.convertToScreen(convert(bounds, to: nil)).origin
@@ -198,6 +202,15 @@ final class CardsView: NSView {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
         ctx.interpolationQuality = .none
         hitRects = []
+        // Cantina adobe: warm dark plaster with a hand-finished texture.
+        NSColor(srgbRed: 0.17, green: 0.13, blue: 0.10, alpha: 1).setFill()
+        bounds.fill()
+        for i in 0..<Int(bounds.width * bounds.height / 260) {
+            let x = noise(i * 13) * Double(bounds.width), y = noise(i * 13 + 1) * Double(bounds.height)
+            (noise(i * 13 + 2) > 0.5 ? NSColor(srgbRed: 0.22, green: 0.17, blue: 0.13, alpha: 1)
+                                     : NSColor(srgbRed: 0.14, green: 0.105, blue: 0.08, alpha: 1)).setFill()
+            NSRect(x: CGFloat(x).rounded(), y: CGFloat(y).rounded(), width: 2, height: 2).fill()
+        }
         var y = Self.pad
         let x = Self.pad, w = bounds.width - Self.pad * 2
 
@@ -219,7 +232,7 @@ final class CardsView: NSView {
             let r = NSRect(x: x, y: y, width: w, height: h)
             hitRects.append((r, c.pid))
             let box = NSBezierPath(roundedRect: r, xRadius: 8, yRadius: 8)
-            NSColor(srgbRed: 0.085, green: 0.095, blue: 0.16, alpha: 1).setFill()
+            NSColor(srgbRed: 0.11, green: 0.085, blue: 0.065, alpha: 0.96).setFill()
             box.fill()
             (c.focused ? NSColor(srgbRed: 1, green: 0.88, blue: 0.29, alpha: 0.9) : c.accent.withAlphaComponent(0.55)).setStroke()
             box.lineWidth = c.focused ? 2 : 1
