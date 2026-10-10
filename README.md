@@ -18,6 +18,13 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/rodclemen/clawd-wars/blob/main/promo/clawd-wars-promo.mp4">
+    <img src="docs/trailer.png" width="820" alt="Watch the Clawd Wars trailer (45 seconds)">
+  </a>
+  <br><sub>▶ <b>Watch the 45-second trailer</b></sub>
+</p>
+
+<p align="center">
   <img src="docs/desktop.png" alt="Three Claudes and eight agents fighting across the bottom of the screen">
 </p>
 
