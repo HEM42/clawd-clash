@@ -70,6 +70,8 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         content.addSubview(scroll)
         content.addSubview(header)
         header.controller = controller
+        header.scene = sceneView
+        sceneView.onDarkTopChange = { [weak self] in self?.header.needsDisplay = true }
         layout()
         applyPin()
     }
@@ -161,6 +163,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
 /// The traffic lights sit on its left; drag anywhere else on it to move the window.
 final class HeaderView: NSView {
     weak var controller: OverlayController?
+    weak var scene: SceneView?
     var onClose: (() -> Void)?
     var onToggleList: (() -> Void)?
 
@@ -168,11 +171,15 @@ final class HeaderView: NSView {
 
     private enum Button { case minimize, close }
     private var hovered: Button?
-    private static let buttonSize: CGFloat = 22
+    private static let buttonSize: CGFloat = 20
+
+    /// The vertical centre of the bar as you see it. Some scenes start with a dark ceiling (the cantina's beam) that
+    /// reads as part of the bar, so centre on bar + that band rather than on the bar alone.
+    private var midY: CGFloat { (bounds.height - min(scene?.darkTop ?? 0, 10)) / 2 }
 
     /// Our own buttons on the right (the system traffic lights are hidden): minimize, then close.
     private func rect(_ b: Button) -> NSRect {
-        let s = Self.buttonSize, y = ((bounds.height - s) / 2).rounded()
+        let s = Self.buttonSize, y = (midY - s / 2).rounded()
         let closeX = bounds.width - 8 - s
         return NSRect(x: b == .close ? closeX : closeX - 4 - s, y: y, width: s, height: s)
     }
@@ -210,17 +217,13 @@ final class HeaderView: NSView {
         // a faint highlight of the location's tone along the top
         (base.blended(withFraction: 0.15, of: .white) ?? base).withAlphaComponent(0.35).setFill()
         NSRect(x: 0, y: b.height - 1, width: b.width, height: 1).fill()
-        // …and a matching edge along the bottom, so the bar visibly ends where the scene starts. Many scenes open with
-        // a dark ceiling, which otherwise reads as part of the bar and makes its contents look off-centre.
-        NSColor(white: 1, alpha: 0.16).setFill()
-        NSRect(x: 0, y: 0, width: b.width, height: 1).fill()
 
         // Where the crew is, on the left.
         if let where_ = controller?.location.name {
             let label = NSAttributedString(string: where_.uppercased(), attributes: [
                 .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold), .foregroundColor: NSColor(white: 0.78, alpha: 1),
                 .kern: 1.2])
-            label.draw(at: NSPoint(x: 14, y: (b.height - label.size().height) / 2))
+            label.draw(at: NSPoint(x: 14, y: (midY - label.size().height / 2).rounded()))
         }
 
         // Collapse to just the scene (arrows in) / back to the full view (arrows out), and close.
@@ -235,7 +238,7 @@ final class HeaderView: NSView {
             let tint = NSColor(white: hovered == button ? 1 : 0.72, alpha: 1)
             if button == .close {
                 // Drawn by hand, centred exactly on the bar: the xmark symbol's odd pixel height sat half a pixel low.
-                let c = NSPoint(x: r.midX, y: b.height / 2), d: CGFloat = 4.5
+                let c = NSPoint(x: r.midX, y: midY), d: CGFloat = 4.5
                 let x = NSBezierPath()
                 x.move(to: NSPoint(x: c.x - d, y: c.y - d)); x.line(to: NSPoint(x: c.x + d, y: c.y + d))
                 x.move(to: NSPoint(x: c.x - d, y: c.y + d)); x.line(to: NSPoint(x: c.x + d, y: c.y - d))
@@ -270,6 +273,9 @@ final class HeaderView: NSView {
 /// The scene strip: the Mos Eisley cantina, with the crew standing on its floor.
 final class SceneView: NSView {
     weak var controller: OverlayController?
+    var onDarkTopChange: (() -> Void)?
+    /// How many points at the top of the scene are a dark band that looks like part of the title bar.
+    private(set) var darkTop: CGFloat = 0
     private var room: (size: NSSize, location: Location, image: CGImage)?
 
     override var isFlipped: Bool { false }
@@ -291,6 +297,11 @@ final class SceneView: NSView {
             let c = PixelCanvas(pw, ph)
             location.drawStatic(c, floorRows: floorRows)
             if let img = c.makeImage() { room = (b.size, location, img) }
+            // Dark rows along the top (row 0 is the top), minus whatever overhangs the view and is clipped.
+            var rows = 0
+            while rows < min(ph, 8), c.rowLuminance(rows) < 0.24 { rows += 1 }
+            let dark = max(0, CGFloat(rows) * p - (CGFloat(ph) * p - b.height))
+            if dark != darkTop { darkTop = dark; onDarkTopChange?() }
         }
         if let img = room?.image { ctx.draw(img, in: drawRect) }
 

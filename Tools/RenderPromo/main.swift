@@ -503,7 +503,7 @@ let sdLength = 300.0, sdHalf = 190.0, sdX = 165.0
 func starDestroyer(_ c: PixelCanvas, tipY: Double, t: Double) {
     let base = tipY - sdLength
     let lit = [C(0xA9ABB0), C(0x9A9CA2), C(0xB9BBC0)], shade = [C(0x8F9197), C(0x82848A), C(0x9C9EA4)]
-    for y in max(0, Int(base) - 18)..<min(c.h, Int(tipY) + 1) {
+    for y in min(c.h, max(0, Int(base) - 18))..<max(min(c.h, max(0, Int(base) - 18)), min(c.h, Int(tipY) + 1)) {
         let back = tipY - Double(y)                       // rows behind the nose
         if back > sdLength {                              // the engine block behind the hull
             let hw = sdHalf * 0.8
@@ -530,7 +530,7 @@ func starDestroyer(_ c: PixelCanvas, tipY: Double, t: Double) {
             if (x + 400) % segW == 0 && edge > 3 { col = C(0x74767C) }      // plate seams
             if row % 10 == 0 && edge > 3 { col = C(0x6A6C72) }
             let g = noise(row * 313 + x * 7)
-            if edge > 8 && g > 0.985 { col = C(0x55575D) } else if edge > 8 && g > 0.975 { col = C(0xD4D6DA) }   // greebles
+            if edge > 8 && g > 0.996 { col = C(0x55575D) } else if edge > 8 && g > 0.992 { col = C(0xD4D6DA) }   // greebles
             if edge >= 6 && edge < 7 { col = C(0x5E6066) }                 // trench along each edge
             if edge < 2.5 { col = dx < 0 ? C(0xD0D2D6) : C(0x6E7076) }     // bevelled rims
             if abs(dx) < 1.5 { col = C(0x6E7076) }                         // keel line
@@ -575,7 +575,7 @@ func openingBattle(_ ctx: CGContext, local l: Double, t: Double) {
     blit(sky, ctx)
     // the blockade runner, behind the destroyer
     let p = tantivePos(l)
-    if l > 1.4 {
+    if l > 1.4 && l < 6.5 {                    // swallowed by the destroyer after that
         let tc = tantive(t: t)
         if let img = tc.makeImage() {
             let s = 6 * p.k
@@ -586,7 +586,7 @@ func openingBattle(_ ctx: CGContext, local l: Double, t: Double) {
         }
     }
     // the destroyer, closest to us
-    let tip = destroyerTip(l)
+    let tip = destroyerTip(min(l, 7.05))      // it comes to rest with its engines at the top
     let fx = PixelCanvas(fxW, fxH)
     if tip > -2 {
         starDestroyer(fx, tipY: tip, t: t)

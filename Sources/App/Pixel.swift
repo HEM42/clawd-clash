@@ -122,6 +122,17 @@ final class PixelCanvas {
         }
     }
 
+    /// Average brightness (0…1) of one row, transparent pixels counting as black.
+    func rowLuminance(_ y: Int) -> Double {
+        guard y >= 0, y < h, w > 0 else { return 0 }
+        var sum = 0.0
+        for x in 0..<w {
+            let i = (y * w + x) * 4
+            sum += 0.2126 * Double(buf[i]) + 0.7152 * Double(buf[i + 1]) + 0.0722 * Double(buf[i + 2])
+        }
+        return sum / Double(w) / 255
+    }
+
     func makeImage() -> CGImage? {
         let data = Data(buf) as CFData
         guard let provider = CGDataProvider(data: data) else { return nil }
