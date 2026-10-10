@@ -3,6 +3,12 @@
 ## 2.22.0 — 2026-10-11
 
 ### Changed
+- **The Jawa Sandcrawler is now a junk hold.** It used to be a tidy row of droids for sale. Now:
+  - heaps of scavenged junk are packed solid at both ends and piled lower along the back: broken R2 domes, gold protocol-droid heads (one eye still lit), GONK power droids, mouse droids, bent arms, wheels, pipes, crates and scrap plates;
+  - cables sag from the ceiling, and a magnet crane holds a dangling R2 unit;
+  - the rusty hull has ribs and rust streaks, and bolts and scraps litter the floor grating;
+  - animated: flickering work lights, two pairs of Jawa eyes blinking in a dark doorway, and sparks spitting from a broken droid on the right pile.
+  - The parts come from one `drawJunkPart` routine with a fixed seed, so each pile looks the same every time.
 - **Obi-Wan's Hut redrawn as the inside of his domed hut from A New Hope.** The old version was a flat sand-coloured wall with a window and a shelf. Now:
   - a plaster dome curves overhead, with rough Jundland rock in the corners;
   - desert sun beams through the round window, with dust drifting in the light;

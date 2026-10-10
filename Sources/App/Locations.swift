@@ -601,33 +601,122 @@ enum Scenes {
         }
     }
 
-    // Jawa / R2-D2 — inside the sandcrawler: rusty plates, rivets, and droids waiting to be sold.
+    // Jawa / R2-D2 — the sandcrawler's hold: rusty plates, sagging cables, a magnet crane with an R2 unit dangling
+    // from it, and heaps of scavenged junk — broken droid heads, arms, wheels, pipes and crates — piled everywhere.
     static func sandcrawler(_ c: PixelCanvas, _ g: Int) {
-        c.gradient(0, g, C(0x4A3424), C(0x6E4A2E), bands: 4)
-        for y in stride(from: 6, to: g, by: 10) {
-            c.rect(0, y, c.w, 1, C(0x3A2818))
-            for x in stride(from: 3, to: c.w, by: 8) { c.px(x, y + 2, C(0x9A6A42)) }
+        // Rusty hull plates with rivets, dark at the ceiling.
+        c.gradient(0, g, C(0x24180F), C(0x5A3C24), bands: 5)
+        for y in stride(from: 8, to: g, by: 11) {
+            c.rect(0, y, c.w, 1, C(0x1E140C))
+            for x in stride(from: 4, to: c.w, by: 9) { c.px(x, y + 2, C(0x8A5E3A)) }
         }
-        c.rect(0, 0, c.w, 4, C(0x2E1E12))
-        // droids lined up for sale
-        for (i, x) in stride(from: 20, to: c.w - 10, by: 26).enumerated() {
-            if i % 2 == 0 {
-                c.rect(x, g - 9, 6, 7, C(0xC8B48A)); c.ellipse(x + 3, g - 10, 3, 2, C(0xA9AEB8)); c.px(x + 3, g - 10, C(0xE0303A))
-                c.rect(x - 1, g - 4, 1, 4, C(0x8A8F9C)); c.rect(x + 6, g - 4, 1, 4, C(0x8A8F9C))
-            } else {
-                c.rect(x + 1, g - 14, 4, 4, C(0x8A8F9C)); c.rect(x, g - 10, 6, 10, C(0x6E7480)); c.px(x + 2, g - 13, C(0x3BD15A))
+        for x in stride(from: 0, to: c.w, by: 46) { c.rect(x, 0, 3, g, C(0x2E1E12)); c.rect(x + 1, 0, 1, g, C(0x4A3220)) }   // ribs
+        for i in 0..<(c.w * g / 26) {   // rust streaks
+            let x = Int(noise(i * 7 + 2) * Double(c.w)), y = Int(noise(i * 7 + 3) * Double(g))
+            c.rect(x, y, 1, 1 + Int(noise(i * 7 + 4) * 4), C(0x7A4426, 0.35))
+        }
+        c.rect(0, 0, c.w, 5, C(0x1A110A))
+        // The Jawas' dark doorway at the back (their eyes glow in it — see crawlerLights).
+        let dx = c.w / 2 + 70
+        c.rect(dx, g - 26, 18, 26, C(0x0E0905)); c.rect(dx - 1, g - 27, 20, 1, C(0x6E4A2E))
+
+        // Cables sagging from the ceiling.
+        for (i, x0) in stride(from: 10, to: c.w - 30, by: 57).enumerated() {
+            let span = 30 + i % 3 * 8, sag = 7 + i % 2 * 5
+            for x in 0..<span {
+                let u = Double(x) / Double(span) * 2 - 1
+                c.px(x0 + x, 5 + Int(Double(sag) * (1 - u * u)), i % 2 == 0 ? C(0x1A1A1A) : C(0x6A2A1E))
             }
         }
+
+        // The magnet crane, with an R2 unit hanging off it.
+        let mx = c.w / 2 - 54
+        c.rect(mx - 30, 5, 60, 2, C(0x3A2818)); c.rect(mx, 7, 1, 14, C(0x2A2A2A))
+        c.rect(mx - 4, 21, 9, 3, C(0x5A5A62)); c.rect(mx - 4, 21, 9, 1, C(0x8A8A92))
+        drawJunkDroidDome(c, mx, 26, tilt: 1)
+
+        // Junk everywhere: low heaps along the back wall, tall piles at both ends.
+        func heap(_ cx: Int, _ rx: Int, _ ry: Int, seed: Int) {
+            c.ellipse(cx, g, rx, ry, C(0x3A281A))
+            c.ellipse(cx, g + 1, rx - 2, ry - 2, C(0x4A3422))
+            // parts scattered over its surface
+            // packed all the way into the heap, back to front, so the surface is solid junk
+            let n = rx * ry / 7
+            for i in 0..<n {
+                let u = noise(seed * 100 + i * 3) * 2 - 1
+                let x = cx + Int(u * Double(rx - 3))
+                let surface = g - Int(Double(ry) * (1 - u * u).squareRoot()) + 2
+                let depth = Int(pow(noise(seed * 100 + i * 3 + 1), 2) * Double(max(1, g - surface)))
+                drawJunkPart(c, x, min(g, surface + depth), kind: Int(noise(seed * 100 + i * 3 + 2) * 9), seed: seed * 31 + i)
+            }
+        }
+        heap(22, 44, 40, seed: 1)               // the big pile on the left
+        heap(c.w - 24, 46, 44, seed: 2)         // and the right
+        heap(c.w / 2 - 80, 30, 16, seed: 3)     // lower ones behind the crew
+        heap(c.w / 2 - 20, 22, 9, seed: 6)
+        heap(c.w / 2 + 34, 32, 13, seed: 4)
+        heap(c.w / 2 + 112, 24, 18, seed: 5)
+
+        // Floor grating, littered.
         c.ground(g, C(0x3A2818), edge: C(0x8A6A42), speck: C(0x4A3424), seed: 13)
-        for x in stride(from: 0, to: c.w, by: 4) { c.rect(x, g + 1, 1, c.h - g - 1, C(0x2A1C10)) }   // floor grating
+        for x in stride(from: 0, to: c.w, by: 4) { c.rect(x, g + 1, 1, c.h - g - 1, C(0x2A1C10)) }
+        for i in 0..<14 {   // bolts, nuts and scraps on the floor
+            let x = Int(noise(i * 17 + 5) * Double(c.w)), y = g + 2 + Int(noise(i * 17 + 6) * Double(max(1, c.h - g - 3)))
+            c.rect(x, y, 1 + i % 3, 1, [C(0x9A9AA2), C(0x8A5E3A), C(0x6E7480)][i % 3])
+        }
     }
 
-    static func crawlerLights(_ c: PixelCanvas, _ g: Int, t: Double) {
-        for (i, x) in stride(from: 10, to: c.w, by: 40).enumerated() {
-            let flick = noise(Int(t * 6) + i * 9) > 0.15
-            c.rect(x, 4, 6, 2, flick ? C(0xFFC86A) : C(0x6E4A2E))
-            if flick { c.circle(x + 3, 6, 7, C(0xFFC86A, 0.07)) }
+    /// An R2-style dome head (dented, one eye out).
+    static func drawJunkDroidDome(_ c: PixelCanvas, _ x: Int, _ y: Int, tilt: Int = 0) {
+        c.rect(x - 4, y, 9, 6, C(0xC8CCD4)); c.ellipse(x, y, 4, 3, C(0xA9AEB8))
+        c.rect(x - 4, y + 2, 9, 1, C(0x3A62A8)); c.px(x - 1 + tilt, y - 1, C(0x1A1A22)); c.px(x + 2, y + 3, C(0x3A62A8))
+        c.rect(x - 3, y + 6, 2, 2, C(0x8A8F9C)); c.rect(x + 2, y + 6, 2, 2, C(0x8A8F9C))
+    }
+
+    /// One piece of scavenged junk, by `kind`.
+    static func drawJunkPart(_ c: PixelCanvas, _ x: Int, _ y: Int, kind: Int, seed: Int) {
+        let rust = C(0x8A5E3A), metal = C(0x8A8F9C), dark = C(0x4A4E58), gold = C(0xC9A44A)
+        switch kind {
+        case 0: drawJunkDroidDome(c, x, y - 4)                                             // R2 dome
+        case 1: c.ellipse(x, y - 2, 3, 3, gold); c.px(x - 1, y - 3, C(0x2A2A2E)); c.px(x + 1, y - 3, C(0xFFD24A))   // protocol droid head, one eye lit
+        case 2: c.rect(x - 4, y - 5, 9, 6, C(0x6E6A5A)); c.rect(x - 4, y - 5, 9, 1, C(0x8A8670)); c.px(x, y - 3, C(0x2A2A2E))   // GONK box
+        case 3: c.rect(x - 3, y - 3, 7, 3, dark); c.rect(x - 4, y - 1, 9, 1, metal); c.px(x + 3, y - 3, C(0xE0303A))   // mouse droid
+        case 4: c.circle(x, y - 2, 2, C(0x2A2A2E)); c.px(x, y - 2, metal)                    // wheel
+        case 5: for i in 0..<6 { c.px(x - 3 + i, y - 1 - (i > 3 ? i - 3 : 0), metal) }; c.rect(x + 3, y - 4, 2, 2, dark)   // a bent droid arm
+        case 6: c.rect(x - 4, y - 2, 8, 2, rust); c.px(x - 4, y - 2, C(0xA87048))           // pipe
+        case 7: c.rect(x - 3, y - 4, 7, 5, C(0x6A4A2C)); c.rect(x - 3, y - 4, 7, 1, C(0x8A6A42)); c.rect(x - 3, y - 2, 7, 1, C(0x4A3220))   // crate
+        default: c.rect(x - 2, y - 2, 5, 2, [rust, metal, dark, gold][seed % 4])               // scrap plate
         }
+    }
+
+    /// Flickering work lights, Jawa eyes blinking in the doorway, and sparks from a broken droid on the pile.
+    static func crawlerLights(_ c: PixelCanvas, _ g: Int, t: Double) {
+        for (i, x) in stride(from: 24, to: c.w, by: 46).enumerated() {
+            let flick = noise(Int(t * 6) + i * 9) > 0.15
+            c.rect(x, 5, 6, 2, flick ? C(0xFFC86A) : C(0x6E4A2E))
+            if flick { c.circle(x + 3, 7, 8, C(0xFFC86A, 0.07)) }
+        }
+        // two pairs of Jawa eyes in the doorway, blinking out of step
+        let dx = c.w / 2 + 70
+        for (j, (ex, ey)) in [(dx + 4, g - 18), (dx + 11, g - 14)].enumerated() {
+            let blink = (t * 0.6 + Double(j) * 0.37).truncatingRemainder(dividingBy: 1) < 0.06
+            if !blink {
+                c.px(ex, ey, C(0xFFD84A)); c.px(ex + 2, ey, C(0xFFD84A))
+                c.circle(ex + 1, ey, 3, C(0xFFD84A, 0.10))
+            }
+        }
+        // sparks spitting from a droid on the right pile
+        let sp = (t * 1.3).truncatingRemainder(dividingBy: 1)
+        if sp < 0.25 {
+            let sx = c.w - 30, sy = g - 26
+            for k in 0..<5 {
+                let a = Double(k) * 1.1 + t * 7, d = sp * 18
+                c.px(sx + Int(cos(a) * d), sy - Int(abs(sin(a)) * d) + Int(sp * sp * 30), C(0xFFE27A, 1 - sp * 4))
+            }
+        }
+        // the crane's R2 swaying a little
+        let mx = c.w / 2 - 54, sway = Int(sin(t * 1.2) * 1.4)
+        if sway != 0 { c.px(mx + sway * 3, 31, C(0xC8CCD4, 0.25)) }
     }
 
     // Yoda — Dagobah: misty swamp, gnarled trees, Yoda's hut glowing in the murk.
