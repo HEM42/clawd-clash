@@ -21,6 +21,7 @@
 - **npm-installed AIs that launch a child process.** The scan found both the npm wrapper and the real process, kept the wrapper, and dropped the process actually running the hooks. For Codex, Qwen, Gemini and Copilot it now keeps the child; Claude keeps its old rule for nested runs.
 
 ### Changed
+- Window cards lose the thick accent bar on their left edge. The card's border, in the project colour, is now the same width all the way round.
 - Settings lists Install/Remove Hooks for every supported AI found on the Mac, generated from `HookInstaller.others`. Cards name the reply's author by AI ("Gemini: …") instead of always "Claude:".
 
 ## 2.20.0 — 2026-10-10

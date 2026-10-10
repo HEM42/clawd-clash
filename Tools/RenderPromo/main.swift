@@ -1,16 +1,16 @@
 import AppKit
 import AVFoundation
 
-// Renders the 10-second promo with the app's own sprite code: a storyboard sheet of key frames,
+// Renders the 13-second promo with the app's own sprite code: a storyboard sheet of key frames,
 // or every frame of the video (1920×1080, 30 fps).
 //   swiftc -O -swift-version 5 Sources/App/Pixel.swift Sources/App/Characters.swift Sources/App/Leaders.swift \
 //          Sources/App/Cast.swift Sources/App/Cantina.swift Sources/App/Locations.swift Sources/Shared/*.swift \
 //          Tools/RenderPromo/main.swift -o build/renderpromo
 //   build/renderpromo storyboard build/promo        → storyboard.png + one PNG per key frame
-//   build/renderpromo frames build/promo/frames     → frame-000.png … frame-299.png
+//   build/renderpromo frames build/promo/frames     → frame-000.png … frame-389.png
 //   build/renderpromo video build/promo             → clawd-wars-promo.mp4 (H.264, silent)
 
-let W = 1920, H = 1080, fps = 30.0, duration = 10.0
+let W = 1920, H = 1080, fps = 30.0, duration = 13.0
 let S = 6.0                      // screen pixels per sprite pixel for a session; agents are 2/3 of that
 let groundY = 150.0              // fx-row of the floor line (fx canvas is W/S × H/S, y down)
 
@@ -196,7 +196,7 @@ struct Shot { let name: String; let start: Double; let end: Double; let render: 
 
 let shots: [Shot] = [
     // 1 · The hook: three busy terminals — which one needs you?
-    Shot(name: "hook", start: 0, end: 1.6) { ctx, local, t in
+    Shot(name: "hook", start: 0, end: 2.0) { ctx, local, t in
         let zoom = 1 + 0.03 * local
         ctx.saveGState()
         ctx.translateBy(x: Double(W) / 2, y: Double(H) / 2); ctx.scaleBy(x: zoom, y: zoom)
@@ -207,7 +207,7 @@ let shots: [Shot] = [
         caption("Which one needs you?", ctx, local: local, start: 0.6, y: 120, size: 76, color: yellow)
     },
     // 2 · The reveal: they're a Star Wars battle along the bottom of the screen.
-    Shot(name: "battle", start: 1.6, end: 3.8) { ctx, local, t in
+    Shot(name: "battle", start: 2.0, end: 4.6) { ctx, local, t in
         desktop(ctx, dim: easeOut(local / 0.4))
         let drop = { (d: Double) -> Double in max(0, 40 * (1 - easeIn((local - d) / 0.3))) }
         var vader = Actor(cast: .villain(.vader), x: 62, mode: .working, role: .duel, label: "idle-claude")
@@ -221,7 +221,7 @@ let shots: [Shot] = [
         caption("on your desktop.", ctx, local: local, start: 0.55, y: 815)
     },
     // 3 · Status at a glance: working, thinking, needs you, done.
-    Shot(name: "status", start: 3.8, end: 5.8) { ctx, local, t in
+    Shot(name: "status", start: 4.6, end: 7.0) { ctx, local, t in
         desktop(ctx, dim: 1)
         let cast: [(Cast, VaderMode, BubbleKind?, String, NSColor)] = [
             (.villain(.vader), .working, nil, "WORKING", NSColor(srgbRed: 0.45, green: 0.85, blue: 0.45, alpha: 1)),
@@ -245,7 +245,7 @@ let shots: [Shot] = [
         caption("Know what every session is doing — at a glance.", ctx, local: local, start: 0.05, y: 900, size: 58)
     },
     // 4 · Subagents march in, each labelled with its task.
-    Shot(name: "agents", start: 5.8, end: 7.4) { ctx, local, t in
+    Shot(name: "agents", start: 7.0, end: 9.0) { ctx, local, t in
         desktop(ctx, dim: 1)
         draw(Actor(cast: .villain(.vader), x: 262, facing: -1, mode: .standGuard, label: "idle-claude"), ctx, t: t)
         let crew: [(Companion, String, Double)] = [(.luke, "Find hook events", 190), (.leia, "Write changelog", 140),
@@ -259,7 +259,7 @@ let shots: [Shot] = [
         caption("Every subagent joins the fight.", ctx, local: local, start: 0.1, y: 900)
     },
     // 5 · Claude vs Codex vs Qwen: each AI takes a side and gets its own outline.
-    Shot(name: "versus", start: 7.4, end: 8.8) { ctx, local, t in
+    Shot(name: "versus", start: 9.0, end: 10.8) { ctx, local, t in
         desktop(ctx, dim: 1)
         let vader = Actor(cast: .villain(.vader), x: 92, role: .duel, label: "CLAUDE", ai: .claude)
         let luke = Actor(cast: .hero(.luke), x: 149, facing: -1, role: .duel, label: "CODEX", ai: .codex)
@@ -274,7 +274,7 @@ let shots: [Shot] = [
         caption("Light side vs dark side — literally.", ctx, local: local, start: 0.35, y: 820, size: 48, color: yellow)
     },
     // 6 · End card: the Falcon flies through, the title lands.
-    Shot(name: "endcard", start: 8.8, end: 10) { ctx, local, t in
+    Shot(name: "endcard", start: 10.8, end: 13.0) { ctx, local, t in
         space(ctx, t: local)
         // the Falcon streaks across the sky
         let fp = local / 0.9
@@ -322,7 +322,7 @@ let shots: [Shot] = [
 
 /// A Star Wars wipe between shots: a soft, feathered edge travels across the frame at a constant speed,
 /// uncovering the next shot behind it while both shots keep playing. Centred on each cut.
-let wipe = 0.7, feather = 220.0
+let wipe = 1.2, feather = 220.0
 
 /// Greyscale mask that is white (keep the outgoing shot) to the right of `edge`, ramping softly across `feather`.
 func wipeMask(edge: Double) -> CGImage {
@@ -405,7 +405,7 @@ func storyboard(_ frames: [NSBitmapImageRep]) -> NSBitmapImageRep {
     let tf = NSFont(name: "Futura-CondensedExtraBold", size: 64) ?? .systemFont(ofSize: 60, weight: .black)
     NSAttributedString(string: "CLAWD WARS", attributes: [.font: tf, .foregroundColor: yellow, .kern: 5])
         .draw(at: NSPoint(x: margin, y: Double(sh) - 110))
-    put("10-second promo · storyboard · 1920×1080 · 30 fps · every sprite drawn by the app's own code",
+    put("13-second promo · storyboard · 1920×1080 · 30 fps · every sprite drawn by the app's own code",
         margin, Double(sh) - 150, 26, .medium, NSColor(white: 0.75, alpha: 1))
     let dim = NSColor(white: 0.62, alpha: 1), body = NSColor(white: 0.92, alpha: 1)
     for (i, f) in frames.enumerated() {
@@ -484,7 +484,7 @@ if cmd == "video" {
     let t = Double(args[3]) ?? 0
     save(frame(t), "\(out)/t\(args[3]).png"); print("wrote \(out)/t\(args[3]).png")
 } else {
-    let keys: [Double] = [1.3, 3.2, 5.1, 7.2, 8.6, 9.8]
+    let keys: [Double] = [1.2, 3.6, 6.1, 8.2, 9.95, 12.6]
     let frames = keys.map(frame)
     for (i, f) in frames.enumerated() { save(f, "\(out)/key-\(i + 1).png") }
     save(storyboard(frames), "\(out)/storyboard.png")

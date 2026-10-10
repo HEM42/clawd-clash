@@ -303,8 +303,6 @@ final class CardsView: NSView {
             (c.focused ? NSColor(srgbRed: 1, green: 0.88, blue: 0.29, alpha: 0.9) : c.accent.withAlphaComponent(0.55)).setStroke()
             box.lineWidth = c.focused ? 2 : 1
             box.stroke()
-            c.accent.setFill()
-            NSBezierPath(roundedRect: NSRect(x: r.minX, y: r.minY, width: 5, height: r.height), xRadius: 2.5, yRadius: 2.5).fill()
 
             // Portrait (drawn upright: this view is flipped)
             let pw = Self.portraitSize.width, ph = Self.portraitSize.height
