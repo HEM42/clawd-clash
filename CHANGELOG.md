@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.17.1 — 2026-10-10
+
+### Fixed
+- Droopy McCool now matches the film (checked against Wikipedia and starwars.com): an eyeless Kitonak playing a slim chindinkalu flute, instead of a horn and two little eyes. The band is the original three-piece lineup (Max Rebo, Sy Snootles, Droopy McCool), not the Special Edition one.
+
 ## 2.17.0 — 2026-10-10
 
 ### Added

@@ -712,8 +712,8 @@ enum Scenes {
         }
     }
 
-    /// The Max Rebo Band in Jabba's palace: Max Rebo at his red organ, Sy Snootles singing into the mic,
-    /// Droopy McCool on his long horn — all bobbing to the beat on the right side of the throne room.
+    /// The Max Rebo Band in Jabba's palace, as in the original Return of the Jedi: Max Rebo at his red ball jett
+    /// organ, Sy Snootles singing into the mic, Droopy McCool (eyeless Kitonak) on his chindinkalu flute.
     static func maxReboBand(_ c: PixelCanvas, _ g: Int, t: Double) {
         let x0 = c.w - 64
         guard x0 > 60 else { return }
@@ -742,14 +742,15 @@ enum Scenes {
         c.oy = 0
         c.rect(sx + 9, g - 15, 1, 15, C(0x9AA0A8)); c.rect(sx + 8, g - 16, 3, 2, C(0x3A3A42)) // mic stand
 
-        // Droopy McCool: chubby pale Kitonak with his long horn
+        // Droopy McCool: chubby, eyeless pale Kitonak playing his chindinkalu flute
         let dx = x0 + 44
         c.oy = bob(0.66)
         let pale = C(0xD8D4CC), paleDark = C(0xB0ACA4)
         c.ellipse(dx + 6, g - 7, 6, 7, pale)
         c.rect(dx + 2, g - 3, 9, 3, paleDark)
-        c.px(dx + 5, g - 10, C(0x3A3A3A)); c.px(dx + 8, g - 10, C(0x3A3A3A))                 // tiny eyes
-        c.rect(dx + 7, g - 8, 9, 1, C(0xC9CED6)); c.rect(dx + 15, g - 9, 2, 3, C(0xC9CED6)) // the horn
+        c.rect(dx + 4, g - 11, 5, 1, paleDark)                                                 // folds where eyes would be
+        c.rect(dx + 7, g - 9, 8, 1, C(0x8A6A48))                                               // the slim wooden flute
+        c.px(dx + 9, g - 9, C(0x5A4636)); c.px(dx + 11, g - 9, C(0x5A4636)); c.px(dx + 13, g - 9, C(0x5A4636))
         c.oy = 0
 
         // notes
