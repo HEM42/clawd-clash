@@ -89,3 +89,50 @@ let locations = canvas(Int(cellLW) * lcols + (lcols - 1) * 8, Int(cellLH) * lRow
 }
 save(locations, "locations.png")
 print("wrote \(out)/roster.png and \(out)/locations.png")
+
+// MARK: Social preview (1280×640, for GitHub → Settings → Social preview)
+
+let social = canvas(1280, 640) { ctx in
+    let space = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                           colors: [CGColor(red: 0.16, green: 0.10, blue: 0.30, alpha: 1),
+                                    CGColor(red: 0.03, green: 0.04, blue: 0.10, alpha: 1)] as CFArray, locations: [0, 1])!
+    ctx.drawLinearGradient(space, start: CGPoint(x: 0, y: 640), end: CGPoint(x: 0, y: 0), options: [])
+    for i in 0..<160 {
+        let big = noise(i * 3 + 2) > 0.85
+        ctx.setFillColor(CGColor(red: 1, green: 1, blue: 1, alpha: big ? 0.9 : 0.45))
+        let s: CGFloat = big ? 4 : 2
+        ctx.fill(CGRect(x: CGFloat(noise(i * 3)) * 1280, y: 200 + CGFloat(noise(i * 3 + 1)) * 440, width: s, height: s))
+    }
+    ctx.setFillColor(CGColor(red: 0.10, green: 0.10, blue: 0.16, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: 1280, height: 150))
+    ctx.setFillColor(CGColor(red: 0.85, green: 0.47, blue: 0.34, alpha: 1)); ctx.fill(CGRect(x: 0, y: 147, width: 1280, height: 4))
+    // title
+    let yellow = NSColor(srgbRed: 1, green: 0.91, blue: 0.12, alpha: 1)
+    let titleFont = NSFont(name: "Futura-CondensedExtraBold", size: 92) ?? .systemFont(ofSize: 84, weight: .black)
+    let title = NSAttributedString(string: "CLAWD WARS", attributes: [.font: titleFont, .foregroundColor: yellow, .kern: 8])
+    title.draw(at: NSPoint(x: (1280 - title.size().width) / 2, y: 470))
+    let sub = NSAttributedString(string: "Your Claude Code sessions as a pixel-art Star Wars battle on your desktop",
+                                 attributes: [.font: NSFont.systemFont(ofSize: 26, weight: .semibold), .foregroundColor: NSColor(white: 0.9, alpha: 1)])
+    sub.draw(at: NSPoint(x: (1280 - sub.size().width) / 2, y: 418))
+    // the crew, standing on the horizon
+    let crew: [(PixelCanvas) -> Void] = [
+        { drawLeader($0, .boba, t: 0.3, mode: .working, walking: false, role: .shoot(offset: 0)) },
+        { drawCompanion($0, .han, t: 0.2, walking: false) },
+        { drawLeader($0, .vader, t: 0.62, mode: .working, walking: false, role: .duel) },
+        { drawCompanion($0, .luke, t: 0.62, walking: false, role: .duel) },
+        { drawCompanion($0, .yoda, t: 0.9, walking: false) },
+        { drawLeader($0, .atat, t: 0.1, mode: .idle, walking: false) },
+    ]
+    let scales: [CGFloat] = [4, 3, 4, 3, 3, 4]
+    var x: CGFloat = 40
+    for (i, draw) in crew.enumerated() {
+        let c = PixelCanvas(Sprite.width, Sprite.height); draw(c)
+        c.addOutline(C(0xFFFFFF, 0.92))
+        guard let b = c.opaqueBounds(), let img = c.makeImage()?.cropping(to: b) else { continue }
+        let s = scales[i], w = b.width * s
+        let bottomGap = CGFloat(Sprite.height) - b.maxY
+        ctx.draw(img, in: CGRect(x: x, y: 150 + (bottomGap - 8) * s, width: w, height: b.height * s))
+        x += w + 26
+    }
+}
+save(social, "social-preview.png")
+print("wrote \(out)/social-preview.png")

@@ -10,6 +10,14 @@
 </p>
 
 <p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license"></a>
+  <img src="https://img.shields.io/badge/macOS-13%2B-black?logo=apple" alt="macOS 13+">
+  <img src="https://img.shields.io/badge/Swift-5-orange?logo=swift&logoColor=white" alt="Swift">
+  <img src="https://img.shields.io/badge/for-Claude%20Code-D97757" alt="for Claude Code">
+  <img src="https://img.shields.io/badge/free-to%20use-brightgreen" alt="Free to use">
+</p>
+
+<p align="center">
   <img src="docs/desktop.png" alt="Three Claudes and eight agents fighting across the bottom of the screen">
 </p>
 
@@ -127,6 +135,22 @@ Menu bar helmet → **Settings → Remove Claude Code Hooks**, then **Quit**. Th
 ```sh
 rm -rf ~/Applications/"Clawd Wars.app" ~/.claude/vader-status
 ```
+
+## Contributing
+
+New characters and locations are very welcome — everything is pixel art drawn in code, so there are no assets to wrangle:
+
+- **A villain:** add a case to `Leader` in `Sources/App/Leaders.swift` (name, weapon, head height) and a `draw…` costume function; give it a home in `Location.home(of:)`.
+- **A hero:** add a case to `Companion` in `Sources/App/Characters.swift` and its drawing; a home in `Location.home(of:)`.
+- **A location:** add a case to `Location` and a scene in `Scenes` (`Sources/App/Locations.swift`), with an optional animated layer.
+- Bump `leaderCount` / `companionCount` in `Sources/Shared/StatusStore.swift`.
+- Check it: hold ⌘ and open the menu for the **Playground**, or run `CLAWD_SHOT=/tmp/shot.png` with `--playground=…` / `--agents=…`. Regenerate the README sheets with `Tools/RenderDocs`.
+
+Issues and pull requests are open — say which character you'd like next.
+
+## License
+
+**Free to use.** The code is [MIT licensed](LICENSE): use it, change it, share it, ship it — just keep the license notice.
 
 ---
 
