@@ -28,6 +28,7 @@
 - Sprites are 72×52 canvases facing right; the body is x 18…37, y 26…37, feet end at row 43, the hand pivot is (41.5, 34.5). Characters facing left are mirrored by the renderer. `C(0xRRGGBB)` makes a colour; `canvas.pattern(x, y, rows, palette)` draws string art.
 - Adding a villain: a case in `Leader` (name, weapon, headTop, optional muzzle), a `draw…` costume, a home in `Location.home(of:)`, a Playground weapon label in `Overlay.swift`, and bump `StatusStore.leaderCount`. Heroes likewise with `Companion` and `companionCount`.
 - Cast ids: villains are `Leader.rawValue` (< 100), heroes `100 + Companion.rawValue`; `Cast` (Sources/App/Cast.swift) wraps both and draws either as a session or an agent. Side rules live in `StatusStore.side(for:in:)`, `nextLeader` and `nextAgentCast`.
+- Per-AI look lives in `AIStyle` (Sources/App/Accents.swift): outline colour (never dark) and list order. `Actor.assistant` carries it to sprites; cards and the menu group by it.
 - Fight rules: Claudes fight Claudes, agents fight agents, a leftover Claude and agent fight each other, anyone else left over cheers; unarmed characters are bystanders.
 - Commits follow Conventional Commits; every change gets a CHANGELOG entry.
 

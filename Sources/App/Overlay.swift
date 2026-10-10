@@ -25,6 +25,7 @@ private struct Actor {
     var mode: VaderMode = .idle
     var label = ""
     var pid: Int32?              // the Claude process (an agent carries its parent's)
+    var assistant = "claude"     // which AI: sets the outline colour (an agent carries its parent's)
     var bubble: BubbleKind?
     var urgent = false           // "needs you" ignored for over a minute
     var accent: NSColor?         // project colour, shared with its agents
@@ -60,6 +61,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         .map { $0.dropFirst(13).split(separator: ",").compactMap { Int($0) } }
     private var playgroundAgents: [Int] = CommandLine.arguments.first { $0.hasPrefix("--agents=") }
         .map { $0.dropFirst(9).split(separator: ",").compactMap { Int($0) } } ?? []
+    /// `--ais=claude,codex`: which AI each playground session belongs to (cycled), to check outlines and grouping.
+    private let playgroundAIs: [String] = CommandLine.arguments.first { $0.hasPrefix("--ais=") }
+        .map { $0.dropFirst(6).split(separator: ",").map(String.init) } ?? []
     private var playgroundMood: Mood = CommandLine.arguments.first { $0.hasPrefix("--mood=") }
         .flatMap { Mood(rawValue: String($0.dropFirst(7))) } ?? .working
     private var dragging = false
@@ -510,6 +514,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
         let projectOf = Dictionary(sessions.map { ($0.id, $0.project) }, uniquingKeysWith: { a, _ in a })
         let pidOf = Dictionary(sessions.map { ($0.id, $0.pid) }, uniquingKeysWith: { a, _ in a })
+        let aiOf = Dictionary(sessions.map { ($0.id, $0.assistant) }, uniquingKeysWith: { a, _ in a })
 
         // Reconcile actors.
         var seen = Set<String>()
@@ -519,6 +524,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let facing = dir * u.facing
             var mood = Mood.idle, mode = VaderMode.idle, label = ""
             var pid = u.session?.pid
+            var assistant = u.session?.assistant ?? "claude"
             var bubble: BubbleKind?, urgent = false, accent: NSColor?
             if let s = u.session {
                 mood = s.mood
@@ -539,6 +545,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 label = Self.agentLabel(a)
                 accent = Accents.color(for: projectOf[a.session] ?? "")
                 pid = pidOf[a.session] ?? nil
+                assistant = aiOf[a.session] ?? "claude"
             }
             let focused = pid != nil && pid == focusedPid && u.session != nil
             // Idle a while: sit down after 2 minutes (the zZz comes at 5).
@@ -550,7 +557,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 actors[idx].facing = facing
                 actors[idx].kind = u.kind
                 actors[idx].mood = mood; actors[idx].mode = mode; actors[idx].label = label
-                actors[idx].pid = pid
+                actors[idx].pid = pid; actors[idx].assistant = assistant
                 actors[idx].bubble = bubble; actors[idx].urgent = urgent
                 actors[idx].accent = accent; actors[idx].focused = focused
                 actors[idx].sitting = sitting; actors[idx].detail = detail
@@ -565,7 +572,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 }
                 var a = Actor(key: u.key, kind: u.kind, x: startX, targetX: target, facing: facing,
                               born: born, phase: Double(abs(u.key.hashValue) % 1000) / 97)
-                a.mood = mood; a.mode = mode; a.label = label; a.pid = pid
+                a.mood = mood; a.mode = mode; a.label = label; a.pid = pid; a.assistant = assistant
                 a.bubble = bubble; a.urgent = urgent; a.accent = accent; a.focused = focused
                 a.sitting = sitting; a.detail = detail
                 actors.append(a)
@@ -617,8 +624,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             rec.reply = "Done. The crew now fits the window and everyone still gets a fight."
             rec.prompts = 4 + i * 3
             rec.tools = 38 + i * 21
-            return SessionSnapshot(id: "pg-\(l)", leader: l, project: "", mood: playgroundMood, agents: i == 0 ? crew : [],
-                                   record: rec)
+            var snap = SessionSnapshot(id: "pg-\(l)", leader: l, project: "", mood: playgroundMood, agents: i == 0 ? crew : [],
+                                       record: rec)
+            if !playgroundAIs.isEmpty { snap.assistant = playgroundAIs[i % playgroundAIs.count] }
+            return snap
         }
     }
 
@@ -840,7 +849,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                          role: role ?? .none, asSession: false)
                 scale = cs; y = ground + (ls - cs) * 8
             }
-            canvas.addOutline(C(0xFFFFFF, 0.92))
+            canvas.addOutline(AIStyle.outline(actor.assistant))
             guard let img = canvas.makeImage() else { continue }
 
             if now < actor.born { continue }             // not on stage yet
@@ -1455,11 +1464,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     private var portraitCache: [String: CGImage] = [:]
 
-    private func portrait(_ key: String, _ draw: (PixelCanvas) -> Void) -> CGImage? {
+    private func portrait(_ key: String, assistant: String, _ draw: (PixelCanvas) -> Void) -> CGImage? {
+        let key = key + ":" + assistant
         if let img = portraitCache[key] { return img }
         let c = PixelCanvas(Sprite.width, Sprite.height)
         draw(c)
-        c.addOutline(C(0xFFFFFF, 0.92))
+        c.addOutline(AIStyle.outline(assistant))
         // Crop to the character's actual outline (walkers and Jabba are much wider than a Clawd).
         let img = c.opaqueBounds().flatMap { c.makeImage()?.cropping(to: $0) }
         portraitCache[key] = img
@@ -1479,7 +1489,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let dim = NSColor(white: 0.62, alpha: 1), soft = NSColor(white: 0.85, alpha: 1)
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         var cards: [CardModel] = []
-        for s in sessions where s.id != "home" || !s.agents.isEmpty {
+        // Grouped by AI (stable within a group); with more than one AI each group gets a small header.
+        let listed = sessions.enumerated()
+            .filter { $0.element.id != "home" || !$0.element.agents.isEmpty }
+            .sorted { (AIStyle.rank($0.element.assistant), $0.offset) < (AIStyle.rank($1.element.assistant), $1.offset) }
+            .map(\.element)
+        let severalAIs = Set(listed.map(\.assistant)).count > 1
+        var lastAI: String?
+        for s in listed {
             let leader = Cast(id: s.leader)
             let actor = actors.first { $0.key == "L:" + s.id }
             let held = Self.duration(now - since(s, now: now))
@@ -1528,14 +1545,18 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 if a.type != "general-purpose" && a.type != "playground" && a.type != "demo" { detail.append(a.type) }
                 return CardModel.Agent(name: who.name, task: Self.agentLabel(a).isEmpty ? "Agent" : Self.agentLabel(a),
                                        detail: detail.joined(separator: "  ·  "),
-                                       portrait: portrait("a\(who.id)") { who.draw($0, t: 0.3, mode: .idle, walking: false, role: .rest, asSession: true) })
+                                       portrait: portrait("a\(who.id)", assistant: s.assistant) { who.draw($0, t: 0.3, mode: .idle, walking: false, role: .rest, asSession: true) })
             }
             cards.append(CardModel(
                 villain: leader.name + (s.id == "home" ? "" : "  ·  " + s.assistant.capitalized), project: s.project, accent: Accents.color(for: s.project) ?? NSColor(white: 0.5, alpha: 1),
                 status: status, statusColor: color, focused: s.pid != nil && s.pid == focusedPid,
                 lines: lines, agents: agents,
-                portrait: portrait("l\(leader.id)") { leader.draw($0, t: 0.1, mode: .idle, walking: false, role: .none, asSession: true) },
+                portrait: portrait("l\(leader.id)", assistant: s.assistant) { leader.draw($0, t: 0.1, mode: .idle, walking: false, role: .none, asSession: true) },
                 pid: s.pid))
+            if severalAIs && s.assistant != lastAI {
+                cards[cards.count - 1].group = (HookInstaller.displayName(s.assistant), AIStyle.color(s.assistant))
+            }
+            lastAI = s.assistant
         }
         let banner: String? = offlineReason.map { $0 + " — live status is off. Fix it from Settings in the menu." } ?? hookBanner
         w.cardsView.update(cards: cards, banner: banner)
@@ -1589,7 +1610,17 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             m.addItem(item)
         }
         if !hookIssues.isEmpty { m.addItem(.separator()) }
-        for s in sessions {
+        let listed = sessions.enumerated()
+            .sorted { (AIStyle.rank($0.element.assistant), $0.offset) < (AIStyle.rank($1.element.assistant), $1.offset) }
+            .map(\.element)
+        let severalAIs = Set(listed.filter { $0.id != "home" }.map(\.assistant)).count > 1
+        var lastAI: String?
+        for s in listed {
+            if severalAIs && s.id != "home" && s.assistant != lastAI {
+                if lastAI != nil { m.addItem(.separator()) }
+                m.addItem(disabled: HookInstaller.displayName(s.assistant).uppercased())
+                lastAI = s.assistant
+            }
             let leader = Cast(id: s.leader)
             let status: String = {
                 switch s.mood {

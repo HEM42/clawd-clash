@@ -10,6 +10,10 @@
 - **macOS notification for silent sessions**, once per session: "Approve Clawd Wars in Codex — type /hooks in Codex and approve Clawd Wars (project) to see its live status." Clicking it jumps to that session. Notifications are skipped in playground, demo, chaos and frame-dump runs.
 - Process scan records each process's start time (`kp_proc.p_starttime`); the silent check compares it with the hook file's modification time.
 
+- **Each AI looks different.** Sprites get an outline in their AI's colour: white for Claude (as before), cyan for Codex, lavender for Qwen Code. The colours are always light, never black, so they read on any desktop wallpaper. Agents take their session's colour, and the window's card portraits match.
+- **The list is split by AI.** With more than one AI running, the window's cards are grouped Claude Code → Codex → Qwen Code, each group under a small coloured divider ("CODEX ────"). The menu bar list gets the same sections. With one AI there are no headers, so nothing changes.
+- `--ais=claude,codex,qwen` playground flag: assigns an AI to each playground session (cycled), to check outlines and grouping.
+
 ### Changed
 - **The first-launch offer covers every AI that's on the Mac and not yet connected**, not just Claude Code. Each AI is offered once (`offeredHooks.<name>`), so someone who connected Claude Code earlier and installs Codex later is asked about Codex on next launch. The offer explains Codex's one-time `/hooks` approval up front.
 - The red OFFLINE banner is now only for an unreadable status file. A missing hook shows as the AI-specific banner above, and no longer appears when Claude Code isn't installed at all (e.g. Codex-only users).

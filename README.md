@@ -45,6 +45,8 @@ And it's genuinely fun. Run two Claudes and they duel. Spawn a Han Solo and he s
 
 Run **Claude Code** alongside **OpenAI Codex** or **Qwen Code** and they pick sides: whichever was there first keeps its side, the other takes the opposite — Claude has Vader, so Codex gets the heroes — and each one's agents fight for their own side. Light side versus dark side, literally. Close one and everyone's random again.
 
+You can tell the AIs apart at a glance: Claude's characters keep the white outline, Codex's get a cyan one and Qwen Code's a lavender one. In the window and the menu bar list, each AI gets its own little section.
+
 ## The roster
 
 Every character is Clawd — Claude Code's little pixel mascot — in costume, drawn in code: no sprite sheets, no image assets (even the app icon is rendered by the same code).

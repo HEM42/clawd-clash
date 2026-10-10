@@ -32,3 +32,23 @@ enum Accents {
         return palette[i % palette.count]
     }
 }
+
+/// Each AI's look: the outline round its sprites (always light, never black, so it reads on any desktop) and
+/// the order its group appears in lists. Claude keeps the classic white.
+enum AIStyle {
+    static let order = ["claude", "codex", "qwen"]
+
+    static func outlineHex(_ assistant: String) -> UInt32 {
+        switch assistant { case "codex": return 0x6FD3FF; case "qwen": return 0xC08CFF; default: return 0xFFFFFF }
+    }
+
+    static func outline(_ assistant: String) -> Px { C(outlineHex(assistant), 0.92) }
+
+    static func color(_ assistant: String) -> NSColor {
+        let h = outlineHex(assistant)
+        return NSColor(srgbRed: CGFloat((h >> 16) & 0xFF) / 255, green: CGFloat((h >> 8) & 0xFF) / 255,
+                       blue: CGFloat(h & 0xFF) / 255, alpha: 1)
+    }
+
+    static func rank(_ assistant: String) -> Int { order.firstIndex(of: assistant) ?? order.count }
+}

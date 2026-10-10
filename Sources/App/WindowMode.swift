@@ -18,6 +18,7 @@ struct CardModel {
     let agents: [Agent]
     let portrait: CGImage?
     let pid: Int32?
+    var group: (title: String, color: NSColor)? = nil   // first card of an AI's group, when several AIs run
 }
 
 /// "Show in Window" mode: a normal window with the crew in a scene strip on top and a card per Claude
@@ -235,6 +236,7 @@ final class CardsView: NSView {
     private static let portraitSize = NSSize(width: 56 * portraitScale, height: 43 * portraitScale)
     private static let lineH: CGFloat = 16
     private static let agentH: CGFloat = 34
+    private static let groupH: CGFloat = 22
 
     private func cardHeight(_ c: CardModel) -> CGFloat {
         let text = 22 + CGFloat(c.lines.count) * Self.lineH + (c.agents.isEmpty ? 0 : 6 + CGFloat(c.agents.count) * Self.agentH)
@@ -243,7 +245,7 @@ final class CardsView: NSView {
 
     func relayout() {
         var h = Self.pad + (banner == nil ? 0 : 34)
-        for c in cards { h += cardHeight(c) + 10 }
+        for c in cards { h += cardHeight(c) + 10 + (c.group == nil ? 0 : Self.groupH) }
         if cards.isEmpty { h += 30 }
         contentHeight = h
         let minH = enclosingScrollView?.bounds.height ?? 0
@@ -282,6 +284,16 @@ final class CardsView: NSView {
         }
 
         for c in cards {
+            if let g = c.group {
+                // A small divider naming the AI: "CODEX ─────"
+                let t = NSAttributedString(string: g.title.uppercased(), attributes: [
+                    .font: NSFont.systemFont(ofSize: 10.5, weight: .heavy), .kern: 1.2, .foregroundColor: g.color])
+                let ts = t.size()
+                t.draw(at: NSPoint(x: x + 2, y: y + 2))
+                g.color.withAlphaComponent(0.35).setFill()
+                NSRect(x: x + ts.width + 10, y: (y + 2 + ts.height / 2).rounded(), width: w - ts.width - 12, height: 1).fill()
+                y += Self.groupH
+            }
             let h = cardHeight(c)
             let r = NSRect(x: x, y: y, width: w, height: h)
             hitRects.append((r, c.pid))
