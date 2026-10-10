@@ -210,6 +210,10 @@ final class HeaderView: NSView {
         // a faint highlight of the location's tone along the top
         (base.blended(withFraction: 0.15, of: .white) ?? base).withAlphaComponent(0.35).setFill()
         NSRect(x: 0, y: b.height - 1, width: b.width, height: 1).fill()
+        // …and a matching edge along the bottom, so the bar visibly ends where the scene starts. Many scenes open with
+        // a dark ceiling, which otherwise reads as part of the bar and makes its contents look off-centre.
+        NSColor(white: 1, alpha: 0.16).setFill()
+        NSRect(x: 0, y: 0, width: b.width, height: 1).fill()
 
         // Where the crew is, on the left.
         if let where_ = controller?.location.name {

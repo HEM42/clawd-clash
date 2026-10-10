@@ -25,6 +25,7 @@
   - The **collapse** button (arrows pointing in) hides the session list, leaving just the scene strip. It then becomes an **expand** button (arrows pointing out) that brings the full view back. These replace a minus sign and a chevron, which read like "minimize window" and "menu".
   - **×** closes the window and returns to desktop mode, as before.
   - The location name, collapse icon and close × all share the bar's vertical centre, measured on a real non-Retina window. The × is drawn by hand because the built-in xmark symbol's odd pixel height left it half a pixel low.
+  - The bar gets a faint bottom edge to match its top highlight. Several scenes (the cantina, for one) start with a dark ceiling beam that blended into the bar, so the bar looked 40 px tall and its correctly centred contents looked too high.
   - Both highlight on hover (the close button turns red) and have tooltips. The rest of the bar still drags the window, and ⌘W still closes it.
 - **Settings → Show Session List in Window** (on by default). Turned off, the window becomes just its header and the location scene: the list is hidden and the window locks to that height. Turning it back on restores the height you had, or fits the sessions if Fit Window Height is on.
 - **Hover cards in window mode only appear when the session list is hidden.** With the list showing, the same details are already right below the scene, so the pop-up just got in the way. The desktop is unchanged.

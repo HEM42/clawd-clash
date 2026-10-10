@@ -10,7 +10,7 @@ import AVFoundation
 //   /tmp/renderpromo video promo          → clawd-wars-promo.mp4 (H.264, silent)
 //   /tmp/renderpromo frame promo 9.5      → a single frame at 9.5 s
 
-let W = 1920, H = 1080, fps = 30.0, duration = 30.2
+let W = 1920, H = 1080, fps = 30.0, duration = 45.7
 
 // The stage the crew stands on. The whole frame by default; window mode narrows it to the scene strip.
 var S = 6.0                      // screen pixels per sprite pixel for a session; agents are 2/3 of that
@@ -323,7 +323,7 @@ func drawCard(_ c: Card, _ ctx: CGContext, x: Double, top: Double, width: Double
                 ctx.restoreGState()
             }
             let title = NSMutableAttributedString(attributedString: str(name, 11.5, .semibold, .white))
-            title.append(str("  —  " + task, 11.5, .regular, c.ai.ns))
+            title.append(str("  ·  " + task, 11.5, .regular, c.ai.ns))
             put(title, tx + 40 * z, ty)
             put(str(detail, 10.5, .regular, dimText), tx + 40 * z, ty - 16 * z)
             ty -= agentH
@@ -402,13 +402,241 @@ func windowMode(_ ctx: CGContext, frame r: CGRect, local: Double, t: Double) {
     ctx.restoreGState()
 }
 
+// MARK: Opening (the Episode IV opening, in pixels)
+
+let fxW = W / 6, fxH = H / 6        // the opening is drawn on one 320×180 pixel canvas, 6 px per pixel
+
+/// Draws a full-frame pixel canvas onto the screen, crisp.
+func blit(_ c: PixelCanvas, _ ctx: CGContext) {
+    guard let img = c.makeImage() else { return }
+    ctx.saveGState(); ctx.interpolationQuality = .none
+    ctx.draw(img, in: CGRect(x: 0, y: Double(H) - Double(c.h) * 6, width: Double(c.w) * 6, height: Double(c.h) * 6))
+    ctx.restoreGState()
+}
+
+/// Deep-space starfield; `shift` moves it up (the camera tilting down).
+func starfield(_ c: PixelCanvas, shift: Double = 0, t: Double) {
+    for i in 0..<260 {
+        let x = Int(noise(i * 5) * Double(c.w))
+        let y = Int((noise(i * 5 + 1) * Double(c.h + 120) - shift).rounded()) - 0
+        guard y >= 0, y < c.h else { continue }
+        let b = noise(i * 5 + 2)
+        let tw = 0.75 + 0.25 * sin(t * 4 + Double(i))
+        if b > 0.93 {                                   // a few bright ones with a little cross
+            c.px(x, y, C(0xFFFFFF, tw)); c.px(x - 1, y, C(0xBFD8FF, 0.5 * tw)); c.px(x + 1, y, C(0xBFD8FF, 0.5 * tw))
+            c.px(x, y - 1, C(0xBFD8FF, 0.5 * tw)); c.px(x, y + 1, C(0xBFD8FF, 0.5 * tw))
+        } else {
+            c.px(x, y, C(0xFFFFFF, (0.25 + b * 0.5) * tw))
+        }
+    }
+}
+
+/// Tatooine rising from the bottom of the frame, with its two moons. `rise` 0…1 brings it into view.
+func tatooine(_ c: PixelCanvas, rise: Double) {
+    let r = 330.0, cx = 205.0, cy = Double(c.h) + r - 34 - (1 - rise) * 70
+    let bands = [C(0xE2B77A), C(0xD8A465), C(0xC98F52), C(0xDDAE70), C(0xB97C44), C(0xD39C5E)]
+    for y in max(0, Int(cy - r))..<c.h {
+        let dy = Double(y) - cy
+        let half = (r * r - dy * dy).squareRoot()
+        for x in max(0, Int(cx - half))...min(c.w - 1, Int(cx + half)) {
+            let dx = Double(x) - cx
+            let lat = Int((dy + r) / 9 + noise(x / 7 + y * 3) * 1.2) % bands.count
+            var col = bands[lat]
+            // the night side to the left, dithered at the terminator
+            let shade = (dx + r * 0.35) / (r * 0.6)
+            if shade < 0 || (shade < 0.25 && (x + y) % 2 == 0) { col = C(0x3A2416) }
+            else if shade < 0.5 && (x + y) % 3 == 0 { col = C(0x7A4E2C) }
+            // thin bright atmosphere at the limb
+            if hypot(dx, dy) > r - 1.5 && shade > 0 { col = C(0xF6E2B8) }
+            c.px(x, y, col)
+        }
+    }
+    // the two moons, up and to the left of the planet
+    for (mx, my, mr) in [(70.0, cy - r - 40 + 30 * rise, 9.0), (98.0, cy - r - 18 + 30 * rise, 5.0)] {
+        for y in Int(my - mr)...Int(my + mr) {
+            for x in Int(mx - mr)...Int(mx + mr) where hypot(Double(x) - mx, Double(y) - my) <= mr && y >= 0 && y < c.h {
+                let lit = Double(x) - mx > -mr * 0.2
+                c.px(x, y, lit ? C(0xD9D2C4) : C(0x4A4640))
+            }
+        }
+    }
+}
+
+/// The Tantive IV seen from behind as it flees: engine bank at the top, hammerhead nose at the bottom.
+let tantiveRows = [
+    "..EEEEEEEEE..",
+    ".EEEEEEEEEEE.",
+    ".HHHHHHHHHHH.",
+    "HHHHHHHHHHHHH",
+    "HHDHHDHHDHHDH",
+    ".HHHHHHHHHHH.",
+    "...HHHHHHH...",
+    "....HHHHH....",
+    "....HLHLH....",
+    "....HHHHH....",
+    "....HLHLH....",
+    "....HHHHH....",
+    "...HHHHHHH...",
+    "..HHHHHHHHH..",
+    "..HLLHHHLLH..",
+    "..HHHHHHHHH..",
+    "...HHHHHHH...",
+    "....HHHHH....",
+    ".....HWH.....",
+    "......H......",
+]
+
+func tantive(t: Double) -> PixelCanvas {
+    let c = PixelCanvas(15, tantiveRows.count + 2)
+    c.pattern(1, 1, tantiveRows, ["H": C(0xD6D4CC), "D": C(0x8A8880), "L": C(0x6FA0D0), "W": C(0xFFFFFF),
+                                  "E": C(0xFFC8D0, 0.75 + 0.25 * sin(t * 30))])
+    c.addOutline(C(0xFFFFFF, 0.92))
+    return c
+}
+
+/// The Star Destroyer seen from below, nose pointing the way it flies (down the frame). `tipY` is the row of
+/// its nose; the hull reaches `length` rows back up to the engine block.
+let sdLength = 330.0, sdHalf = 120.0, sdX = 168.0
+
+func starDestroyer(_ c: PixelCanvas, tipY: Double, t: Double) {
+    let base = tipY - sdLength
+    for y in max(0, Int(base) - 16)..<min(c.h, Int(tipY) + 1) {
+        let back = tipY - Double(y)                       // rows behind the nose
+        if back > sdLength {                              // engine block behind the hull
+            let hw = sdHalf * 0.78
+            for x in max(0, Int(sdX - hw))...min(c.w - 1, Int(sdX + hw)) { c.px(x, y, C(0x55575D)) }
+            continue
+        }
+        let hw = back * sdHalf / sdLength
+        guard hw >= 0.5 else { c.px(Int(sdX), y, C(0xB4B6BB)); continue }
+        let row = Int(back)
+        for x in max(0, Int(sdX - hw))...min(c.w - 1, Int(sdX + hw)) {
+            let dx = Double(x) - sdX, edge = hw - abs(dx)
+            var col = dx < 0 ? C(0xA9ABB0) : C(0x8F9197)                 // lit left half, shaded right
+            if edge < 2.5 { col = dx < 0 ? C(0xC9CBD0) : C(0x74767C) }   // bevelled edges
+            if abs(dx) < 1.5 { col = C(0x6E7076) }                         // keel line
+            if row % 16 == 0 && edge > 3 { col = C(0x6A6C72) }             // hull plating seams
+            let cell = (row / 16) * 40 + (x + 400) / 9
+            if edge > 4, noise(cell) > 0.82, row % 16 > 4, row % 16 < 12, (x + 400) % 9 < 6 { col = C(0x7C7E84) }   // panels
+            if row > 150 && row < 168 && abs(dx) < 10 { col = C(0x2E3034) }  // the docking bay
+            c.px(x, y, col)
+        }
+        // running lights along the edges
+        if row % 22 == 7 {
+            let on = sin(t * 6 + Double(row)) > 0
+            c.px(Int(sdX - hw) + 2, y, on ? C(0xFFFFFF) : C(0x9FA3AA)); c.px(Int(sdX + hw) - 2, y, on ? C(0xFFFFFF) : C(0x9FA3AA))
+        }
+    }
+    // three big engines glowing at the back
+    let ey = Int(base) - 16
+    for (k, ex) in [sdX - 50, sdX, sdX + 50].enumerated() {
+        let r = k == 1 ? 9.0 : 7.0
+        for y in (ey - Int(r))...(ey + Int(r)) where y >= 0 && y < c.h {
+            for x in Int(ex - r)...Int(ex + r) {
+                let d = hypot(Double(x) - ex, Double(y - ey))
+                if d <= r { c.px(x, y, d < r * 0.45 ? C(0xFFFFFF) : (d < r * 0.75 ? C(0xBFE0FF) : C(0x6FB8FF))) }
+            }
+        }
+    }
+}
+
+/// The chase: where the Tantive IV is at shot-local time `l` (fx units) and how big.
+func tantivePos(_ l: Double) -> (x: Double, y: Double, k: Double) {
+    let f = easeOut((l - 1.6) / 3.0)
+    return (lerp(186, 150, f) + sin(l * 2.3) * 3, lerp(-28, 118, f) + (l > 4.6 ? (l - 4.6) * 3 : 0), lerp(1.4, 0.7, clamp((l - 1.6) / 6)))
+}
+
+func destroyerTip(_ l: Double) -> Double { -4 + (l - 3.2) * 70 }
+
+func openingBattle(_ ctx: CGContext, local l: Double, t: Double) {
+    let tilt = easeOut((l - 0.2) / 1.6)
+    let sky = PixelCanvas(fxW, fxH)
+    sky.rect(0, 0, fxW, fxH, C(0x000000))
+    starfield(sky, shift: 60 * tilt, t: t)
+    tatooine(sky, rise: tilt)
+    blit(sky, ctx)
+    // the blockade runner, behind the destroyer
+    let p = tantivePos(l)
+    if l > 1.4 {
+        let tc = tantive(t: t)
+        if let img = tc.makeImage() {
+            let s = 6 * p.k
+            ctx.saveGState(); ctx.interpolationQuality = .none
+            ctx.draw(img, in: CGRect(x: p.x * 6 - Double(tc.w) * s / 2, y: Double(H) - (p.y * 6 + Double(tc.h) * s / 2),
+                                     width: Double(tc.w) * s, height: Double(tc.h) * s))
+            ctx.restoreGState()
+        }
+    }
+    // the destroyer, closest to us
+    let tip = destroyerTip(l)
+    let fx = PixelCanvas(fxW, fxH)
+    if tip > -2 {
+        starDestroyer(fx, tipY: tip, t: t)
+        fx.addOutline(C(0xFFFFFF, 0.92))
+    }
+    // red turbolaser bolts chasing the runner: from off the top at first, then from the destroyer's nose
+    for i in 0..<40 {
+        let born = 1.3 + Double(i) * 0.17
+        let age = l - born
+        guard age > 0, age < 0.55 else { continue }
+        let tipAt = destroyerTip(born)
+        let from = tipAt > 4 ? (sdX + (noise(i * 7) - 0.5) * 30, tipAt - noise(i * 7 + 1) * 20) : (150 + noise(i * 7) * 70, -4.0)
+        let aim = tantivePos(born + 0.45)
+        let miss = (noise(i * 7 + 2) - 0.5) * 34
+        let to = (aim.x + miss, aim.y + abs(miss) * 0.3)
+        let g = age / 0.55
+        let x = lerp(from.0, to.0, g), y = lerp(from.1, to.1, g)
+        let len = hypot(to.0 - from.0, to.1 - from.1)
+        let ux = (to.0 - from.0) / max(len, 0.01), uy = (to.1 - from.1) / max(len, 0.01)
+        fx.glowLine(x - ux * 7, y - uy * 7, x, y, core: C(0xFFE0E0), glow: C(0xFF2A2A), coreR: 0.6, glowR: 1.8)
+        if g > 0.92 && abs(miss) < 8 { drawSparks(fx, x: to.0, y: to.1, t: t, size: 3) }
+    }
+    blit(fx, ctx)
+}
+
 // MARK: Shots
 
-struct Shot { let name: String; let start: Double; let end: Double; let render: (CGContext, Double, Double) -> Void }
+struct Shot {
+    let name: String; let start: Double; let end: Double
+    var cut = false                                   // comes in on a hard cut instead of a wipe
+    let render: (CGContext, Double, Double) -> Void
+}
 
 let shots: [Shot] = [
+    // 0a · The parody of the film's opening line, in that blue, on black.
+    Shot(name: "longago", start: 0, end: 3.5) { ctx, local, t in
+        ctx.setFillColor(CGColor(gray: 0, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
+        let a = clamp(local / 0.6) * (1 - clamp((local - 2.7) / 0.6))
+        let blue = NSColor(srgbRed: 0.29, green: 0.84, blue: 0.93, alpha: a)
+        let font = NSFont.systemFont(ofSize: 60, weight: .regular)
+        for (i, line) in ["A long time ago, in a terminal", "far, far away...."].enumerated() {
+            NSAttributedString(string: line, attributes: [.font: font, .foregroundColor: blue]).draw(at: NSPoint(x: 520, y: 580 - Double(i) * 84))
+        }
+    },
+    // 0b · The logo, outlined in yellow, falling away into the stars.
+    Shot(name: "logo", start: 3.5, end: 7.0, cut: true) { ctx, local, t in
+        let sky = PixelCanvas(fxW, fxH)
+        sky.rect(0, 0, fxW, fxH, C(0x000000)); starfield(sky, t: t); blit(sky, ctx)
+        let p = clamp(local / 3.5)
+        let s = 2.4 * exp(-3.4 * p)
+        let a = 1 - clamp((p - 0.8) / 0.2)
+        let tf = NSFont(name: "Futura-CondensedExtraBold", size: 260) ?? .systemFont(ofSize: 240, weight: .black)
+        ctx.saveGState()
+        ctx.translateBy(x: Double(W) / 2, y: Double(H) / 2); ctx.scaleBy(x: s, y: s)
+        for (i, word) in ["CLAWD", "WARS"].enumerated() {
+            let w = NSAttributedString(string: word, attributes: [.font: tf, .kern: 20, .strokeWidth: 3,
+                                                                  .strokeColor: yellow.withAlphaComponent(a)])
+            let sz = w.size()
+            w.draw(at: NSPoint(x: -sz.width / 2, y: i == 0 ? 0 : -sz.height * 0.82))
+        }
+        ctx.restoreGState()
+    },
+    // 0c · Tilt down to Tatooine: the Tantive IV runs, the Star Destroyer slides in overhead and keeps coming.
+    Shot(name: "destroyer", start: 7.0, end: 15.5, cut: true) { ctx, local, t in
+        openingBattle(ctx, local: local, t: t)
+    },
     // 1 · The hook: three AIs at work in three terminals, and one overwhelmed human.
-    Shot(name: "hook", start: 0, end: 4.0) { ctx, local, t in
+    Shot(name: "hook", start: 15.5, end: 19.5) { ctx, local, t in
         let zoom = 1 + 0.03 * local
         ctx.saveGState()
         ctx.translateBy(x: Double(W) / 2, y: Double(H) / 2); ctx.scaleBy(x: zoom, y: zoom)
@@ -419,7 +647,7 @@ let shots: [Shot] = [
         caption("Sound familiar?", ctx, local: local, start: 0.7, y: 120, size: 76, color: yellow)
     },
     // 2 · Desktop mode: they become a Star Wars brawl along the bottom of the screen.
-    Shot(name: "desktop", start: 4.0, end: 8.6) { ctx, local, t in
+    Shot(name: "desktop", start: 19.5, end: 24.1) { ctx, local, t in
         desktop(ctx, dim: easeOut(local / 0.4))
         let drop = { (d: Double) -> Double in max(0, 40 * (1 - easeIn((local - d) / 0.3))) }
         var vader = Actor(cast: .villain(.vader), x: 62, mode: .working, role: .duel, label: "idle-claude")
@@ -436,7 +664,7 @@ let shots: [Shot] = [
                 size: 40, color: yellow, weight: .bold)
     },
     // 3 · Status at a glance: working, thinking, needs you, napping.
-    Shot(name: "status", start: 8.6, end: 12.8) { ctx, local, t in
+    Shot(name: "status", start: 24.1, end: 28.3) { ctx, local, t in
         desktop(ctx, dim: 1)
         let cast: [(Cast, AI, VaderMode, BubbleKind?, String, NSColor)] = [
             (.villain(.vader), .claude, .working, nil, "WORKING", NSColor(srgbRed: 0.45, green: 0.85, blue: 0.45, alpha: 1)),
@@ -457,12 +685,12 @@ let shots: [Shot] = [
             let w = NSAttributedString(string: word, attributes: [.font: NSFont.systemFont(ofSize: 40, weight: .black), .kern: 2]).size().width
             text(word, ctx, x: a.x * S - w / 2, y: 70, size: 40, weight: .black, color: col, alpha: clamp(f), kern: 2)
         }
-        caption("All fun and games — and you still see everything.", ctx, local: local, start: 0.05, y: 900, size: 58)
+        caption("All fun and games, and you still see everything.", ctx, local: local, start: 0.05, y: 900, size: 58)
         caption("(Leave Boba waiting and he starts jumping.)", ctx, local: local, start: 0.9, y: 835, size: 36,
                 color: yellow, weight: .bold)
     },
     // 4 · Subagents march in, each labelled with its task.
-    Shot(name: "agents", start: 12.8, end: 16.8) { ctx, local, t in
+    Shot(name: "agents", start: 28.3, end: 32.3) { ctx, local, t in
         desktop(ctx, dim: 1)
         draw(Actor(cast: .villain(.vader), x: 262, facing: -1, mode: .standGuard, label: "idle-claude"), ctx, t: t)
         let crew: [(Companion, String, Double)] = [(.luke, "Find hook events", 190), (.leia, "Write changelog", 140),
@@ -478,7 +706,7 @@ let shots: [Shot] = [
                 color: yellow, weight: .bold)
     },
     // 5 · Window mode: the crew in the cantina, a live card for every session.
-    Shot(name: "window", start: 16.8, end: 21.6) { ctx, local, t in
+    Shot(name: "window", start: 32.3, end: 37.1) { ctx, local, t in
         desktop(ctx, dim: 1, floor: false)
         let f = easeOut(local / 0.6), s = 0.94 + 0.06 * f
         let base = CGRect(x: 300, y: 20, width: 1320, height: 800)
@@ -490,7 +718,7 @@ let shots: [Shot] = [
                 y: 890, size: 32, color: yellow, weight: .bold)
     },
     // 6 · Every AI it supports, Claude first and biggest, each with its own outline.
-    Shot(name: "ais", start: 21.6, end: 26.0) { ctx, local, t in
+    Shot(name: "ais", start: 37.1, end: 41.5) { ctx, local, t in
         desktop(ctx, dim: 1)
         // the line-up: Claude a head taller, duelling Codex; everyone else cheering
         let lineup: [(Cast, AI, Double, Double, FightRole)] = [
@@ -527,7 +755,7 @@ let shots: [Shot] = [
         caption("Everyone picks a side. Nobody plays nice.", ctx, local: local, start: 0.7, y: 640, size: 40, color: yellow, weight: .bold)
     },
     // 7 · End card: the Falcon flies through, the title lands.
-    Shot(name: "endcard", start: 26.0, end: 30.2) { ctx, local, t in
+    Shot(name: "endcard", start: 41.5, end: 45.7) { ctx, local, t in
         space(ctx, t: local)
         // the Falcon streaks across the sky
         let fp = local / 1.1
@@ -601,7 +829,7 @@ func frame(_ t: Double) -> NSBitmapImageRep {
     NSGraphicsContext.current = gc
     let ctx = gc.cgContext
     ctx.interpolationQuality = .none
-    if let j = shots.indices.dropFirst().first(where: { abs(t - shots[$0].start) < wipe / 2 }) {
+    if let j = shots.indices.dropFirst().first(where: { !shots[$0].cut && abs(t - shots[$0].start) < wipe / 2 }) {
         // Mid-wipe: the incoming shot underneath, the outgoing one on top, masked to the right of the edge.
         let p = (t - shots[j].start + wipe / 2) / wipe
         let edge = lerp(-feather / 2, Double(W) + feather / 2, p)
@@ -628,12 +856,18 @@ func save(_ rep: NSBitmapImageRep, _ path: String) {
 // MARK: Storyboard sheet
 
 let beats: [(title: String, action: String, onScreen: String, sound: String)] = [
+    ("A LONG TIME AGO", "Black screen. The film's famous blue opening line, parodied for terminals, fades in and out.",
+     "“A long time ago, in a terminal far, far away....”", "silence"),
+    ("THE LOGO", "Hard cut to stars. CLAWD WARS, outlined in yellow, starts bigger than the screen and falls away into the starfield.",
+     "CLAWD WARS (outlined logo)", "the big orchestral hit"),
+    ("THE STAR DESTROYER", "The camera tilts down to pixel Tatooine and its two moons. The Tantive IV races in from the top under red laser fire; then the Star Destroyer's nose slides in overhead and the hull keeps coming, filling the frame, until its three engines pass.",
+     "no text", "engine rumble, turbolasers"),
     ("THE HOOK", "Three busy terminals (Claude, Codex, Gemini) on a dusky Mac desktop, slow push-in. One thinking, one waiting on a permission prompt, one long done.",
      "“Three AIs. Nine agents. One very confused human.”  →  “Sound familiar?”", "low synth hum, keyboard clicks"),
     ("DESKTOP MODE", "Desktop dims; Claude's Vader and Codex's Luke drop onto the bottom edge and duel. Agent Han trades shots with a Codex Stormtrooper. Project names and agent tasks on the labels.",
      "DESKTOP MODE badge  ·  “Now they're a pixel-art Star Wars brawl along the bottom of your screen. They fight while they work.”", "saber ignite + clash, blaster pew"),
     ("AT A GLANCE", "Four sessions pop in, each in its AI's outline: Vader swings his kata, the Emperor's bubble fills with dots, Boba's red ! jumps, Jabba snoozes with zZz.",
-     "“All fun and games — and you still see everything.”  ·  WORKING · THINKING… · NEEDS YOU! · NAPPING", "one 8-bit blip per pop"),
+     "“All fun and games, and you still see everything.”  ·  WORKING · THINKING… · NEEDS YOU! · NAPPING", "one 8-bit blip per pop"),
     ("SUBAGENTS", "Vader stands guard. R2-D2, Chewie, Leia and Luke march in one after another, each with its task label, and fall into line.",
      "“Every subagent reports for duty.”  ·  “Its job is right there on its label. No more guessing.”", "marching footsteps, R2 beep"),
     ("WINDOW MODE", "The app window slides up: the cantina with its band, Vader duelling Codex's Luke, agents cheering; below, live cards whose timers tick and whose “Now:” line changes. Then Luke stops, jumps with a red ! and his card flips to NEEDS YOU.",
@@ -677,7 +911,7 @@ func storyboard(_ frames: [NSBitmapImageRep]) -> NSBitmapImageRep {
         ctx.setStrokeColor(CGColor(gray: 1, alpha: 0.25)); ctx.setLineWidth(2); ctx.stroke(r)
         let ty = top - ph - 44
         put("\(i + 1)  \(b.title)", x, ty, 30, .heavy, yellow)
-        put(String(format: "%.1f – %.1f s", s.start, s.end), x + pw - 170, ty + 2, 26, .semibold, dim)
+        put(String(format: "%.1f - %.1f s", s.start, s.end), x + pw - 170, ty + 2, 26, .semibold, dim)
         put(b.action, x, ty - 14, 21, .regular, body, width: pw)
         put("ON SCREEN  " + b.onScreen, x, ty - 100, 20, .semibold, NSColor(srgbRed: 0.75, green: 0.85, blue: 1, alpha: 1), width: pw)
         put("SOUND  " + b.sound, x, ty - 180, 20, .semibold, dim, width: pw)
@@ -742,7 +976,7 @@ if cmd == "video" {
     let t = Double(args[3]) ?? 0
     save(frame(t), "\(out)/t\(args[3]).png"); print("wrote \(out)/t\(args[3]).png")
 } else {
-    let keys: [Double] = [1.5, 6.3, 10.9, 15.0, 19.6, 24.0, 29.0]
+    let keys: [Double] = [1.8, 4.4, 11.2, 17.0, 21.8, 26.4, 30.5, 35.1, 39.5, 44.5]
     let frames = keys.map(frame)
     for (i, f) in frames.enumerated() { save(f, "\(out)/key-\(i + 1).png") }
     save(storyboard(frames), "\(out)/storyboard.png")
