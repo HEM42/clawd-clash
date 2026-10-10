@@ -866,15 +866,23 @@ enum Scenes {
             }
         }
 
-        // The round hatch to the cockpit corridor (right), with the cockpit window at the end of it.
-        let hx = c.w - 66, hy = g - 20
-        c.circle(hx, hy, 19, C(0x4A4840)); c.circle(hx, hy, 17, C(0xB0AC9E)); c.circle(hx, hy, 15, C(0x16161A))
-        c.rect(hx - 15, hy + 9, 31, 12, C(0x16161A))                       // the opening goes down to the floor
-        c.rect(hx - 17, hy + 2, 2, 19, C(0xB0AC9E)); c.rect(hx + 16, hy + 2, 2, 19, C(0xB0AC9E))
-        c.ellipse(hx, hy - 2, 9, 6, C(0x05060C))                            // the cockpit window, far down the corridor
-        c.ellipse(hx, hy - 2, 9, 6, C(0x2A3A5A, 0.4))
-        for k in 0..<4 { c.rect(hx - 9 + k * 5, hy - 8, 1, 12, C(0x2A2A2E)) }   // window frame struts
-        c.rect(hx - 11, hy + 5, 22, 2, C(0x3A3934))                        // the console under it
+        // The round hatch to the cockpit corridor (right), big enough to see the cockpit window at the end of it.
+        let hx = c.w - 74, hy = g - 32, hr = 32
+        c.circle(hx, hy, hr + 2, C(0x4A4840)); c.circle(hx, hy, hr, C(0xB0AC9E)); c.circle(hx, hy, hr - 3, C(0x16161A))
+        c.rect(hx - hr + 3, hy, (hr - 3) * 2 + 1, g - hy, C(0x16161A))     // the opening goes down to the floor
+        c.rect(hx - hr, hy, 3, g - hy, C(0xB0AC9E)); c.rect(hx + hr - 2, hy, 3, g - hy, C(0xB0AC9E))
+        for k in stride(from: -hr + 6, to: hr - 4, by: 9) { c.px(hx + k, hy - Int((Double(hr * hr - k * k)).squareRoot()) + 1, C(0x6E6A5E)) }   // rivets
+        // the corridor walls narrowing toward the cockpit
+        for y in (hy - 18)..<(g) { let w = 8 + (y - (hy - 18)) / 2; c.rect(hx - 26, y, max(0, 26 - w), 1, C(0x22221E)); c.rect(hx + w, y, max(0, 26 - w), 1, C(0x22221E)) }
+        // the cockpit window: wide, framed by struts, the console below it
+        c.ellipse(hx, hy - 4, 22, 14, C(0x05060C))
+        c.ellipse(hx, hy - 4, 22, 14, C(0x1E2E50, 0.35))
+        for k in [-12, -4, 4, 12] { c.rect(hx + k, hy - 18, 1, 28, C(0x2E2E32)) }
+        c.rect(hx - 22, hy - 5, 44, 1, C(0x2E2E32))
+        c.rect(hx - 24, hy + 10, 48, 4, C(0x3A3934)); c.rect(hx - 24, hy + 10, 48, 1, C(0x6A6658))
+        for k in 0..<8 { c.px(hx - 20 + k * 5, hy + 12, [C(0xE0303A), C(0x6CFF7A), C(0xFFD24A), C(0x5AB4FF)][k % 4]) }
+        // the two pilot seats, silhouetted
+        c.rect(hx - 14, hy + 4, 7, 9, C(0x0A0A0C)); c.rect(hx + 8, hy + 4, 7, 9, C(0x0A0A0C))
 
         // The dejarik table with its curved padded bench (left).
         let tx = 74
@@ -910,16 +918,18 @@ enum Scenes {
         let z = (t * 0.7).truncatingRemainder(dividingBy: 1)
         if z < 0.12 { for k in 0..<10 { c.px(rx - 3 - k * 2, ry + 2 + k, C(0xFF4A3A, 1 - z * 6)) } }
 
-        // Hyperspace past the cockpit window.
-        let hx = c.w - 66, hy = g - 22
-        for i in 0..<12 {
-            let a = Double(i) * 2.4 + 0.3
-            let p = (t * 1.6 + noise(i * 13)).truncatingRemainder(dividingBy: 1)
-            let r0 = p * 7, r1 = min(9, r0 + 2 + p * 4)
-            let x0 = hx + Int(cos(a) * r0), y0 = hy + Int(sin(a) * r0 * 0.65)
-            let x1 = hx + Int(cos(a) * r1), y1 = hy + Int(sin(a) * r1 * 0.65)
-            c.px(x0, y0, C(0xDDEEFF, 0.5 * p)); c.px(x1, y1, C(0xFFFFFF, 0.9 * p))
-            if abs(x1 - x0) > 1 || abs(y1 - y0) > 1 { c.px((x0 + x1) / 2, (y0 + y1) / 2, C(0xC8E0FF, 0.7 * p)) }
+        // Hyperspace past the cockpit window: streaks racing out from the centre, stretching as they go.
+        let hx = c.w - 74, hy = g - 36
+        c.ellipse(hx, hy, 3, 2, C(0xDDEEFF, 0.5))
+        for i in 0..<34 {
+            let a = Double(i) * 2.39996 + noise(i * 7)
+            let p = (t * 1.4 + noise(i * 13)).truncatingRemainder(dividingBy: 1)
+            let r0 = p * p * 22, r1 = min(22, r0 + 1 + p * 9)
+            for k in 0...4 {
+                let r = r0 + (r1 - r0) * Double(k) / 4
+                let x = hx + Int((cos(a) * r).rounded()), y = hy + Int((sin(a) * r * 0.62).rounded())
+                c.px(x, y, C(k == 4 ? 0xFFFFFF : 0xB8D8FF, (0.25 + 0.75 * p) * (0.4 + Double(k) * 0.15)))
+            }
         }
     }
 

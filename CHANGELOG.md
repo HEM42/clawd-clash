@@ -8,7 +8,7 @@
   - the walls are crowded with pipes and clamps, blinking light panels, vents, red valve wheels and looping hoses;
   - the **dejarik table** with its curved cream padded bench, and two holo monsters hopping on the board;
   - **Luke's training remote** bobbing above the bench, firing a tiny red zap now and then;
-  - a **round hatch** down the corridor to the cockpit, with **hyperspace streaking** past the cockpit window at the end;
+  - a **big round hatch** (most of the wall's height) looking down the narrowing corridor into the cockpit: a wide window with **hyperspace streaking** out from its centre, the two pilot seats in silhouette, and the lit console;
   - deck plates with a softly lit strip.
 - **Dagobah redrawn from The Empire Strikes Back.** It used to be a row of identical straight trunks. Now:
   - layered murk: pale misty trees far back, dark twisted trunks with hanging vines in front;
