@@ -196,7 +196,7 @@ final class HeaderView: NSView {
         addTrackingArea(NSTrackingArea(rect: bounds, options: [.mouseMoved, .mouseEnteredAndExited, .activeAlways, .inVisibleRect],
                                        owner: self))
         removeAllToolTips()
-        addToolTip(rect(.close), owner: "Close the window (back to the desktop)" as NSString, userData: nil)
+        addToolTip(rect(.close), owner: "Quit Clawd Wars" as NSString, userData: nil)
         addToolTip(rect(.minimize), owner: "Show or hide the session list" as NSString, userData: nil)
     }
 

@@ -23,7 +23,7 @@
 ### Changed
 - **Window title bar redesigned.** The system close/minimize buttons are gone. The location name moves to the left, and the right side has our own buttons:
   - The **collapse** button (arrows pointing in) hides the session list, leaving just the scene strip. It then becomes an **expand** button (arrows pointing out) that brings the full view back. These replace a minus sign and a chevron, which read like "minimize window" and "menu".
-  - **×** closes the window and returns to desktop mode, as before.
+  - **×** quits Clawd Wars. Window mode is remembered, so the next launch opens the window again. ⌘W still closes the window and switches to desktop mode.
   - The location name, collapse icon and close × all share the bar's vertical centre, measured on a real non-Retina window. The × is drawn by hand because the built-in xmark symbol's odd pixel height left it half a pixel low.
   - **Contents centred on the bar as you see it.** Several scenes (the cantina, for one) start with a dark ceiling beam that blends into the bar, so the bar looked 40 px tall and its correctly centred contents looked too high. The scene now measures how many of its top rows are dark (average brightness under 0.24, up to 10 pt). The label and buttons centre on bar + band; scenes with a light top centre on the bar alone. This replaces a short-lived bottom separator line, which didn't help.
   - Both highlight on hover (the close button turns red) and have tooltips. The rest of the bar still drags the window, and ⌘W still closes it.
