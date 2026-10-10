@@ -76,6 +76,18 @@ final class PixelCanvas {
         }
     }
 
+    /// Mirror everything drawn so far, left to right.
+    func flipHorizontally() {
+        var out = buf
+        for y in 0..<h {
+            for x in 0..<w {
+                let src = (y * w + x) * 4, dst = (y * w + (w - 1 - x)) * 4
+                for k in 0..<4 { out[dst + k] = buf[src + k] }
+            }
+        }
+        buf = out
+    }
+
     /// 1px outline around every solid pixel, so dark sprites still read on a dark desktop.
     /// Only fully opaque pixels count as solid, so saber glows and bolts don't get outlined.
     func addOutline(_ c: Px) {

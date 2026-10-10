@@ -23,7 +23,11 @@ private struct Actor {
     var mood: Mood = .idle
     var mode: VaderMode = .idle
     var label = ""
-    var pid: Int32?
+    var pid: Int32?              // the Claude process (an agent carries its parent's)
+    var bubble: BubbleKind?
+    var urgent = false           // "needs you" ignored for over a minute
+    var accent: NSColor?         // project colour, shared with its agents
+    var focused = false          // its terminal is the one in front
 
     var isLeader: Bool { if case .leader = kind { return true } else { return false } }
 }
@@ -56,18 +60,34 @@ final class OverlayController: NSObject {
     private var lastTick = Date().timeIntervalSince1970
     private let start = Date().timeIntervalSince1970
     private var frameCount = 0
+    private var refitting = false
     private let debug = ProcessInfo.processInfo.environment["VADER_DEBUG"] != nil
     private var lastDebug = 0
     private var processes: [ClaudeProcesses.Info] = []
     private var lastScan = 0.0
     private var cpuSamples: [Int32: (at: Double, cpu: Double)] = [:]
     private var busyUntil: [Int32: Double] = [:]
-    fileprivate var items: [DrawItem] = []
+    var items: [DrawItem] = []
+    // Status debounce (from agent-view): a new mood must hold for 2 refreshes, except "needs you", which is instant.
+    private var debounce: [String: (confirmed: Mood, pending: Mood?, ticks: Int)] = [:]
+    private var moodSince: [String: Double] = [:]
+    private var focusedPid: Int32?
+    private var lastFocusCheck = 0.0
+    private var lastShot = 0.0
+    private let shotPath = ProcessInfo.processInfo.environment["CLAWD_SHOT"]
+    private var clawdWindow: ClawdWindow?
+    private var windowMode: Bool {
+        get { UserDefaults.standard.bool(forKey: "windowMode") }
+        set { UserDefaults.standard.set(newValue, forKey: "windowMode") }
+    }
 
+    /// The chosen size, shrunk in window mode when the crew is too wide for the window.
     private var zoom: CGFloat {
-        get { let z = UserDefaults.standard.double(forKey: "zoom"); return z > 0 ? z : 1 }
+        get { baseZoom * (windowMode ? windowFit : 1) }
         set { UserDefaults.standard.set(newValue, forKey: "zoom") }
     }
+    private var baseZoom: CGFloat { let z = UserDefaults.standard.double(forKey: "zoom"); return z > 0 ? z : 1 }
+    private var windowFit: CGFloat = 1
 
     private var showLabels: Bool {
         get { UserDefaults.standard.object(forKey: "labels") as? Bool ?? true }
@@ -107,10 +127,11 @@ final class OverlayController: NSObject {
         panel.contentView = view
 
         home = savedHome()
+        if windowMode { openWindow() }
         refreshStatus()
         snapActors()
         tick()
-        panel.orderFrontRegardless()
+        if !windowMode { panel.orderFrontRegardless() }
 
         Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.refreshStatus() }
         let frame = Timer(timeInterval: 1.0 / 30, repeats: true) { [weak self] _ in self?.tick() }
@@ -157,6 +178,23 @@ final class OverlayController: NSObject {
         return NSPoint(x: min(max(p.x, f.minX + 18 * s), f.maxX - 18 * s), y: y)
     }
 
+    /// Where the crew stands. On the desktop: the screen under the saved spot. In window mode: the
+    /// window's scene strip, so the same layout and drawing code works in both.
+    private var stage: NSRect {
+        if windowMode, let w = clawdWindow { return w.sceneScreenRect }
+        return screen(at: home)?.frame ?? NSRect(x: -1e5, y: 0, width: 2e5, height: 1e5)
+    }
+
+    /// The first villain's spot (bottom of its canvas).
+    private var anchor: NSPoint {
+        guard windowMode else { return home }
+        let st = stage
+        return NSPoint(x: st.minX + 60 * zoom, y: st.minY + windowFloor - Self.footroom * zoom)
+    }
+
+    /// Height of the floor in the window's scene strip (feet stand on it).
+    var windowFloor: CGFloat { 22 }
+
     // MARK: Status
 
     private func refreshStatus() {
@@ -177,8 +215,46 @@ final class OverlayController: NSObject {
             for i in sessions.indices where !sessions[i].live {
                 if let pid = sessions[i].pid, (busyUntil[pid] ?? 0) > now { sessions[i].mood = .working }
             }
+            if now - lastFocusCheck >= 1 {
+                lastFocusCheck = now
+                focusedPid = Jump.focusedSession(among: sessions.compactMap { s in
+                    s.pid.map { ($0, s.cwd.map { ($0 as NSString).lastPathComponent } ?? s.project) }
+                })
+            }
         }
+        debounceMoods(now)
+        Accents.update(visible: sessions.map(\.project))
         relayout()
+        if windowMode { updateCards(now) }
+    }
+
+    private func debounceMoods(_ now: Double) {
+        var next: [String: (confirmed: Mood, pending: Mood?, ticks: Int)] = [:]
+        for i in sessions.indices {
+            let id = sessions[i].id, raw = sessions[i].mood
+            var e = debounce[id] ?? (raw, nil, 0)
+            if debounce[id] == nil { moodSince[id] = now }
+            if raw == e.confirmed {
+                e.pending = nil; e.ticks = 0
+            } else if raw == .waiting {
+                e = (raw, nil, 0); moodSince[id] = now          // the raised hand is the whole point: no delay
+            } else if e.pending == raw {
+                e.ticks += 1
+                if e.ticks >= 2 { e = (raw, nil, 0); moodSince[id] = now }
+            } else {
+                e.pending = raw; e.ticks = 1
+            }
+            sessions[i].mood = e.confirmed
+            next[id] = e
+        }
+        debounce = next
+        moodSince = moodSince.filter { next[$0.key] != nil }
+    }
+
+    /// How long a session has been in its current mood (hooks know exactly; otherwise we count from when we saw it).
+    private func since(_ s: SessionSnapshot, now: Double) -> Double {
+        if let rec = s.record, let t = rec.since, rec.state == s.mood.rawValue { return t }
+        return moodSince[s.id] ?? now
     }
 
     private func sampleCPU(_ now: Double) {
@@ -301,42 +377,82 @@ final class OverlayController: NSObject {
         f = f.map { $0 - origin }
 
         // Direction: toward the side of the screen with more room.
-        let sf = screen(at: home)?.frame ?? NSRect(x: -1e5, y: 0, width: 2e5, height: 1e5)
-        let dir: CGFloat = (sf.maxX - home.x) >= (home.x - sf.minX) ? 1 : -1
+        let sf = stage, origin0 = anchor
+        let dir: CGFloat = windowMode ? 1 : ((sf.maxX - origin0.x) >= (origin0.x - sf.minX) ? 1 : -1)
         var lo = CGFloat.greatestFiniteMagnitude, hi = -CGFloat.greatestFiniteMagnitude
         for (k, u) in units.enumerated() {
-            let x = home.x + dir * f[k]
+            let x = origin0.x + dir * f[k]
             let ext = (dir * u.facing > 0) ? (u.back, u.fwd) : (u.fwd, u.back)
             lo = min(lo, x - ext.0); hi = max(hi, x + ext.1)
         }
+        // Window mode: shrink the whole crew to fit the window (grow back when there's room again).
+        if windowMode && !refitting {
+            let needed = hi - lo, avail = sf.width - 8
+            var fit = windowFit
+            if needed > avail { fit = max(0.35, windowFit * avail / needed) }
+            else if windowFit < 1 && needed < avail * 0.8 { fit = min(1, windowFit * avail * 0.9 / needed) }
+            if abs(fit - windowFit) > 0.01 {
+                windowFit = fit
+                refitting = true
+                relayout()
+                refitting = false
+                snapActors()
+                return
+            }
+        }
         var shift: CGFloat = 0
-        if hi > sf.maxX - 4 { shift = sf.maxX - 4 - hi }
-        if lo + shift < sf.minX + 4 { shift = sf.minX + 4 - lo }
+        if windowMode && hi - lo <= sf.width - 8 {
+            shift = sf.midX - (lo + hi) / 2          // centred in the window when it fits
+        } else {
+            if hi > sf.maxX - 4 { shift = sf.maxX - 4 - hi }
+            if lo + shift < sf.minX + 4 { shift = sf.minX + 4 - lo }
+        }
+        let projectOf = Dictionary(sessions.map { ($0.id, $0.project) }, uniquingKeysWith: { a, _ in a })
+        let pidOf = Dictionary(sessions.map { ($0.id, $0.pid) }, uniquingKeysWith: { a, _ in a })
 
         // Reconcile actors.
         var seen = Set<String>()
         for (k, u) in units.enumerated() {
             seen.insert(u.key)
-            let target = home.x + dir * f[k] + shift
+            let target = origin0.x + dir * f[k] + shift
             let facing = dir * u.facing
             var mood = Mood.idle, mode = VaderMode.idle, label = ""
-            let pid = u.session?.pid
+            var pid = u.session?.pid
+            var bubble: BubbleKind?, urgent = false, accent: NSColor?
             if let s = u.session {
                 mood = s.mood
                 mode = s.mood == .idle && !s.agents.isEmpty ? .standGuard : VaderMode(s.mood)
                 label = s.project.isEmpty ? (s.id == "home" ? "" : Leader(index: s.leader).name) : s.project
+                let held = now - since(s, now: now)
+                switch s.mood {
+                case .thinking: bubble = .thinking
+                case .waiting: bubble = .waiting; urgent = held > 60
+                case .idle:
+                    if !s.live && s.pid != nil { bubble = .unknown }                // no hooks: say so, don't fake idle
+                    else if s.record != nil && held > 300 { bubble = .sleeping }    // idle 5+ min
+                case .working: break
+                }
+                accent = Accents.color(for: s.project)
             }
-            if let a = u.agent { label = Self.agentLabel(a) }
+            if let a = u.agent {
+                label = Self.agentLabel(a)
+                accent = Accents.color(for: projectOf[a.session] ?? "")
+                pid = pidOf[a.session] ?? nil
+            }
+            let focused = pid != nil && pid == focusedPid && u.session != nil
             if let idx = actors.firstIndex(where: { $0.key == u.key && $0.leaving == nil }) {
                 actors[idx].targetX = target
                 actors[idx].facing = facing
                 actors[idx].kind = u.kind
                 actors[idx].mood = mood; actors[idx].mode = mode; actors[idx].label = label
                 actors[idx].pid = pid
+                actors[idx].bubble = bubble; actors[idx].urgent = urgent
+                actors[idx].accent = accent; actors[idx].focused = focused
             } else {
                 var a = Actor(key: u.key, kind: u.kind, x: target, targetX: target, facing: facing,
                               born: now, phase: Double(abs(u.key.hashValue) % 1000) / 97)
                 a.mood = mood; a.mode = mode; a.label = label; a.pid = pid
+                a.bubble = bubble; a.urgent = urgent; a.accent = accent; a.focused = focused
                 actors.append(a)
             }
         }
@@ -354,7 +470,7 @@ final class OverlayController: NSObject {
 
     private func playgroundSessions(_ villains: [Int]) -> [SessionSnapshot] {
         let crew = playgroundAgents.map {
-            AgentRecord(id: "pg-a\($0)", session: "pg", type: "playground", character: $0, started: Double($0), lastSeen: 0,
+            AgentRecord(id: "pg-a\($0)", session: "pg", type: "playground", character: $0, started: start, lastSeen: 0,
                         task: Self.sampleTasks[$0 % Self.sampleTasks.count])
         }
         guard !villains.isEmpty else {
@@ -369,7 +485,7 @@ final class OverlayController: NSObject {
     private func demoSessions(_ t: Double) -> [SessionSnapshot] {
         func agents(_ chars: [Int], session: String) -> [AgentRecord] {
             chars.map { AgentRecord(id: "demo-\($0)", session: session, type: "demo", character: $0,
-                                    started: Double($0), lastSeen: 0, task: Self.sampleTasks[$0 % Self.sampleTasks.count]) }
+                                    started: demoStart, lastSeen: 0, task: Self.sampleTasks[$0 % Self.sampleTasks.count]) }
         }
         func s(_ leader: Int, _ mood: Mood, _ crew: [Int] = []) -> SessionSnapshot {
             SessionSnapshot(id: "demo-\(leader)", leader: leader, project: "project-\(leader + 1)",
@@ -418,6 +534,12 @@ final class OverlayController: NSObject {
         guard busy || frameCount % 3 == 0 else { return }
 
         items = buildItems(now: now)
+        if let shotPath, now - lastShot > 5 { lastShot = now; writeShot(to: shotPath) }
+
+        if windowMode {
+            clawdWindow?.sceneView.needsDisplay = true
+            return
+        }
 
         // Fit the window around everything that's drawn.
         var bounds = NSRect.null
@@ -436,7 +558,7 @@ final class OverlayController: NSObject {
     private func leaderHitRects() -> [NSRect] {
         let s = Self.leaderScale * zoom
         return actors.filter { $0.isLeader && $0.leaving == nil }.map {
-            NSRect(x: $0.x - 16 * s, y: home.y + 5 * s, width: 32 * s, height: 35 * s)
+            NSRect(x: $0.x - 16 * s, y: anchor.y + 5 * s, width: 32 * s, height: 35 * s)
         }
     }
 
@@ -448,6 +570,7 @@ final class OverlayController: NSObject {
         var alpha: CGFloat = 1
         var boxed = false      // text drawn on a dark rounded box so it reads on any wallpaper
         var agentBox = false   // agents' task boxes get a blue tint to tell them from project names
+        var accent: NSColor?   // project colour for the box border
     }
 
     private func buildItems(now: Double) -> [DrawItem] {
@@ -481,7 +604,9 @@ final class OverlayController: NSObject {
             FileHandle.standardError.write("fights=\(fights.count) \(line)\n".data(using: .utf8)!)
         }
 
-        let screenFrame = screen(at: home)?.frame ?? .infinite
+        let screenFrame = stage, ground = anchor.y
+        var labels: [(item: DrawItem, leader: Bool, focused: Bool)] = []
+        var bubbleRects: [NSRect] = []
         // Companions first so leaders (and their sabers) draw on top.
         for actor in actors.sorted(by: { !$0.isLeader && $1.isLeader }) {
             let walking = actor.walkDir != 0
@@ -493,12 +618,12 @@ final class OverlayController: NSObject {
             case .leader(let who):
                 let role = roles[actor.key]
                 drawLeader(canvas, who, t: t, mode: role != nil ? .working : actor.mode,
-                           walking: walking, role: role ?? .none)
-                scale = ls; y = home.y
+                           walking: walking, role: role ?? .none, urgent: actor.urgent && role == nil)
+                scale = ls; y = ground
             case .companion(let who):
                 let role = roles[actor.key]
                 drawCompanion(canvas, who, t: role != nil ? t : t + actor.phase, walking: walking, role: role ?? .none)
-                scale = cs; y = home.y + (ls - cs) * 8
+                scale = cs; y = ground + (ls - cs) * 8
             }
             canvas.addOutline(C(0xFFFFFF, 0.92))
             guard let img = canvas.makeImage() else { continue }
@@ -518,18 +643,25 @@ final class OverlayController: NSObject {
 
             // Speech bubble on whichever side of the head fits on screen (Claudes only).
             var bubbleSpan: (minX: CGFloat, maxX: CGFloat, maxY: CGFloat)?
-            if actor.isLeader && (actor.mood == .thinking || actor.mood == .waiting) {
+            if actor.isLeader, let kind = actor.bubble {
+                let w = CGFloat(Bubble.width) * ls
+                let rightX = actor.x + 13 * ls, leftX = actor.x - 13 * ls - w
+                // On the side away from the nearest neighbour (so it's clearly this Claude's),
+                // unless that side is off screen.
+                let nearest = actors.filter { $0.key != actor.key && $0.leaving == nil }
+                    .min { abs($0.x - actor.x) < abs($1.x - actor.x) }
+                let preferRight = nearest.map { $0.x < actor.x } ?? true
+                let onRight = preferRight ? rightX + w <= screenFrame.maxX : leftX < screenFrame.minX
                 let bc = PixelCanvas(Bubble.width, Bubble.height)
-                drawBubble(bc, mood: actor.mood, t: t)
+                drawBubble(bc, kind: kind, t: t, urgent: actor.urgent, tailRight: !onRight)
                 if let bimg = bc.makeImage() {
-                    let w = CGFloat(Bubble.width) * ls, h = CGFloat(Bubble.height) * ls
+                    let h = CGFloat(Bubble.height) * ls
                     let by = y + CGFloat(Sprite.height - 1 - Bubble.height) * ls
-                    let rightX = actor.x + 13 * ls
-                    let onRight = rightX + w <= screenFrame.maxX
-                    let bx = onRight ? rightX : actor.x - 13 * ls - w
+                    let bx = onRight ? rightX : leftX
                     bubbleSpan = (bx, bx + w, by + h)
+                    bubbleRects.append(NSRect(x: bx, y: by, width: w, height: h))
                     overlay.append(DrawItem(image: bimg, rect: NSRect(x: bx.rounded(), y: by, width: w, height: h),
-                                            mirrored: !onRight, alpha: CGFloat(alpha)))
+                                            alpha: CGFloat(alpha)))
                 }
             }
 
@@ -582,9 +714,10 @@ final class OverlayController: NSObject {
                     var ly = y + CGFloat(drop) * z + headTop
                     // Pulled back over a speech bubble by the edge clamp? Sit on top of the bubble instead.
                     if let b = bubbleSpan, lx < b.maxX, lx + size.width > b.minX { ly = max(ly, b.maxY + 3 * z) }
-                    overlay.append(DrawItem(text: text, rect: NSRect(x: lx.rounded(), y: ly,
+                    labels.append((DrawItem(text: text, rect: NSRect(x: lx.rounded(), y: ly,
                                                                      width: size.width, height: size.height),
-                                            alpha: CGFloat(alpha), boxed: true, agentBox: !actor.isLeader))
+                                            alpha: CGFloat(alpha), boxed: true, agentBox: !actor.isLeader, accent: actor.accent),
+                                   actor.isLeader, actor.focused))
                 }
             }
         }
@@ -607,9 +740,35 @@ final class OverlayController: NSObject {
             let c = PixelCanvas(width, Sprite.height)
             drawFightFX(c, t: t, left: fighter(l, side: 1), right: fighter(r, side: -1))
             if let img = c.makeImage() {
-                overlay.append(DrawItem(image: img, rect: NSRect(x: left.rounded(), y: home.y,
+                overlay.append(DrawItem(image: img, rect: NSRect(x: left.rounded(), y: ground,
                                                                  width: CGFloat(width) * ls,
                                                                  height: CGFloat(Sprite.height) * ls)))
+            }
+        }
+
+        // Labels never overlap (from agent-view): Claudes' labels get first pick, then agents';
+        // anything that would collide moves up a row.
+        var placed = bubbleRects
+        for l in labels.sorted(by: { $0.leader && !$1.leader }) {
+            var r = l.item.rect
+            var tries = 0
+            while tries < 6, placed.contains(where: { $0.insetBy(dx: -2 * z, dy: -1 * z).intersects(r) }) {
+                r.origin.y += r.height + 2 * z
+                tries += 1
+            }
+            placed.append(r)
+            var item = l.item
+            item = DrawItem(text: item.text, rect: r, alpha: item.alpha, boxed: true, agentBox: item.agentBox, accent: item.accent)
+            overlay.append(item)
+            if l.focused {
+                // Bobbing marker over the Claude whose terminal you're in.
+                let caret = PixelCanvas(3, 3)
+                drawFocusCaret(caret)
+                if let img = caret.makeImage() {
+                    let cw = 3 * 2.5 * z, bob = (sin(t * 3.3) * 1.5 * z).rounded()
+                    overlay.append(DrawItem(image: img, rect: NSRect(x: (r.midX - cw / 2).rounded(), y: r.maxY + 3 * z + bob,
+                                                                     width: cw, height: cw)))
+                }
             }
         }
         return out + overlay
@@ -699,12 +858,190 @@ final class OverlayController: NSObject {
     /// Clicking a villain brings its Claude session's terminal/editor window to the front.
     private func jump(at point: NSPoint) {
         let s = Self.leaderScale * zoom
+        let c = Self.companionScale * zoom
         guard let actor = actors.first(where: {
             $0.isLeader && $0.leaving == nil
-                && NSRect(x: $0.x - 16 * s, y: home.y + 5 * s, width: 32 * s, height: 35 * s).contains(point)
+                && NSRect(x: $0.x - 16 * s, y: anchor.y + 5 * s, width: 32 * s, height: 35 * s).contains(point)
+        }) ?? actors.first(where: {   // an agent jumps to its Claude
+            !$0.isLeader && $0.leaving == nil
+                && NSRect(x: $0.x - 16 * c, y: anchor.y + (s - c) * 8 + 5 * c, width: 32 * c, height: 35 * c).contains(point)
         }) else { return }
         guard let pid = actor.pid else { NSSound.beep(); return }
         Jump.toSession(pid: pid)
+    }
+
+    // MARK: Window mode
+
+    @objc func toggleWindowMode() {
+        windowMode.toggle()
+        if windowMode {
+            openWindow()
+            panel.orderOut(nil)
+        } else {
+            clawdWindow?.window.orderOut(nil)
+            clawdWindow = nil
+            NSApp.setActivationPolicy(.accessory)
+            panel.orderFrontRegardless()
+        }
+        refreshStatus()
+        snapActors()
+    }
+
+    private func openWindow() {
+        if clawdWindow == nil {
+            let w = ClawdWindow(controller: self, sceneHeight: sceneHeight)
+            w.onClose = { [weak self] in self?.toggleWindowMode() }
+            w.onGeometryChange = { [weak self] in
+                guard let self else { return }
+                self.relayout()
+                self.snapActors()
+            }
+            clawdWindow = w
+        }
+        // A real window gets a Dock icon and a menu bar while it's open.
+        NSApp.setActivationPolicy(.regular)
+        NSApp.mainMenu = makeMainMenu()
+        clawdWindow?.window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private var sceneHeight: CGFloat { max(200, (CGFloat(Sprite.height) * Self.leaderScale + 70) * baseZoom + windowFloor) }
+
+    private func makeMainMenu() -> NSMenu {
+        let main = NSMenu()
+        let appItem = NSMenuItem()
+        let app = NSMenu()
+        app.addItem(withTitle: "About Clawd Wars", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        app.addItem(.separator())
+        app.addItem(action: "Show on Desktop", #selector(toggleWindowMode), target: self)
+        app.addItem(.separator())
+        app.addItem(withTitle: "Quit Clawd Wars", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appItem.submenu = app
+        main.addItem(appItem)
+        let winItem = NSMenuItem()
+        let win = NSMenu(title: "Window")
+        win.addItem(withTitle: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
+        win.addItem(withTitle: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        winItem.submenu = win
+        main.addItem(winItem)
+        return main
+    }
+
+    /// Click in the window's scene strip.
+    func click(at point: NSPoint) { jump(at: point) }
+
+    private var portraitCache: [String: CGImage] = [:]
+
+    private func portrait(_ key: String, _ draw: (PixelCanvas) -> Void) -> CGImage? {
+        if let img = portraitCache[key] { return img }
+        let c = PixelCanvas(Sprite.width, Sprite.height)
+        draw(c)
+        c.addOutline(C(0xFFFFFF, 0.92))
+        // Crop to the character (the canvas has room for sabers and bubbles around it).
+        let img = c.makeImage()?.cropping(to: CGRect(x: 8, y: 9, width: 46, height: 38))
+        portraitCache[key] = img
+        return img
+    }
+
+    private static func duration(_ seconds: Double) -> String {
+        let s = Int(max(0, seconds))
+        if s < 60 { return "\(s)s" }
+        if s < 3600 { return "\(s / 60)m \(s % 60)s" }
+        return "\(s / 3600)h \(s % 3600 / 60)m"
+    }
+
+    /// Build the window's cards from everything the hooks recorded (model, title, prompt, reply, current tool…).
+    private func updateCards(_ now: Double) {
+        guard let w = clawdWindow else { return }
+        let dim = NSColor(white: 0.62, alpha: 1), soft = NSColor(white: 0.85, alpha: 1)
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        var cards: [CardModel] = []
+        for s in sessions where s.id != "home" || !s.agents.isEmpty {
+            let leader = Leader(index: s.leader)
+            let actor = actors.first { $0.key == "L:" + s.id }
+            let held = Self.duration(now - since(s, now: now))
+            var status: String, color: NSColor
+            switch (s.mood, actor?.bubble) {
+            case (.working, _) where !s.live: status = "BUSY (CPU)"; color = NSColor(srgbRed: 1, green: 0.69, blue: 0.24, alpha: 1)
+            case (.working, _): status = "WORKING · \(held)"; color = NSColor(srgbRed: 0.42, green: 0.9, blue: 0.46, alpha: 1)
+            case (.thinking, _): status = "THINKING · \(held)"; color = NSColor(srgbRed: 0.42, green: 0.71, blue: 1, alpha: 1)
+            case (.waiting, _): status = (actor?.urgent == true ? "NEEDS YOU! · " : "NEEDS YOU · ") + held
+                color = NSColor(srgbRed: 1, green: 0.35, blue: 0.35, alpha: 1)
+            case (.idle, .some(.unknown)): status = "NO LIVE STATUS"; color = NSColor(srgbRed: 1, green: 0.69, blue: 0.24, alpha: 1)
+            case (.idle, .some(.sleeping)): status = "ASLEEP · \(held)"; color = NSColor(srgbRed: 0.63, green: 0.55, blue: 1, alpha: 1)
+            case (.idle, _): status = "IDLE · \(held)"; color = dim
+            }
+
+            var lines: [(String, NSColor)] = []
+            if let r = s.record {
+                let meta = [r.model, r.title].compactMap { $0 }.joined(separator: "  ·  ")
+                if !meta.isEmpty { lines.append((meta, dim)) }
+                if let a = r.activity, s.mood != .idle { lines.append(("Now: " + a, .white)) }
+                if let p = r.prompt { lines.append(("You: “" + p + "”", soft)) }
+                if let reply = r.reply, s.mood == .idle { lines.append(("Claude: “" + reply + "”", soft)) }
+                var stats: [String] = []
+                if let n = r.prompts { stats.append("\(n) prompt\(n == 1 ? "" : "s")") }
+                if let n = r.tools { stats.append("\(n) tool call\(n == 1 ? "" : "s")") }
+                if let c = r.created { stats.append("up " + Self.duration(now - c)) }
+                if let cwd = s.cwd { stats.append(cwd.hasPrefix(home) ? "~" + cwd.dropFirst(home.count) : cwd) }
+                if !stats.isEmpty { lines.append((stats.joined(separator: "  ·  "), dim)) }
+            } else if !s.live {
+                lines.append(("Started before the hooks were installed, so it can't report what it's doing.", soft))
+                lines.append(("Restart it for live status: /exit, then claude --continue", dim))
+                if let cwd = s.cwd { lines.append((cwd.hasPrefix(home) ? "~" + cwd.dropFirst(home.count) : cwd, dim)) }
+            }
+
+            let agents: [CardModel.Agent] = s.agents.map { a in
+                let who = Companion(rawValue: a.character % Companion.allCases.count) ?? .luke
+                var detail = [a.activity ?? "Starting…", Self.duration(now - a.started)]
+                if let n = a.tools { detail.append("\(n) tool call\(n == 1 ? "" : "s")") }
+                if a.type != "general-purpose" && a.type != "playground" && a.type != "demo" { detail.append(a.type) }
+                return CardModel.Agent(name: who.name, task: Self.agentLabel(a).isEmpty ? "Agent" : Self.agentLabel(a),
+                                       detail: detail.joined(separator: "  ·  "),
+                                       portrait: portrait("c\(who.rawValue)") { drawCompanion($0, who, t: 0.3, walking: false) })
+            }
+            cards.append(CardModel(
+                villain: leader.name, project: s.project, accent: Accents.color(for: s.project) ?? NSColor(white: 0.5, alpha: 1),
+                status: status, statusColor: color, focused: s.pid != nil && s.pid == focusedPid,
+                lines: lines, agents: agents,
+                portrait: portrait("l\(leader.rawValue)") { drawLeader($0, leader, t: 0.1, mode: .idle, walking: false) },
+                pid: s.pid))
+        }
+        let banner: String? = (playground == nil && !demo && !HookInstaller.isInstalled)
+            ? "Claude Code hooks aren't installed — live status is off. Install them from the right-click menu." : nil
+        w.cardsView.update(cards: cards, banner: banner)
+    }
+
+    /// CLAWD_SHOT=/path.png: write the rendered scene (or the whole window) every 5 s — for checking
+    /// visuals without screen-recording permission (from agent-view's AGENTVIEW_SHOT).
+    private func writeShot(to path: String) {
+        var rep: NSBitmapImageRep?
+        if windowMode, let content = clawdWindow?.window.contentView {
+            rep = content.bitmapImageRepForCachingDisplay(in: content.bounds)
+            if let rep { content.cacheDisplay(in: content.bounds, to: rep) }
+        } else {
+            var bounds = NSRect.null
+            for item in items { bounds = bounds.union(item.rect) }
+            guard !bounds.isNull else { return }
+            bounds = bounds.insetBy(dx: -10, dy: -10).integral
+            guard let r = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(bounds.width) * 2, pixelsHigh: Int(bounds.height) * 2,
+                                           bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                           colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0),
+                  let gc = NSGraphicsContext(bitmapImageRep: r) else { return }
+            r.size = bounds.size
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current = gc
+            let ctx = gc.cgContext
+            ctx.scaleBy(x: 2, y: 2)
+            ctx.setFillColor(CGColor(red: 0.17, green: 0.18, blue: 0.23, alpha: 1))   // a dark "desktop"
+            ctx.fill(CGRect(origin: .zero, size: bounds.size))
+            OverlayView.render(items, origin: bounds.origin, in: ctx)
+            NSGraphicsContext.restoreGraphicsState()
+            rep = r
+        }
+        if let data = rep?.representation(using: .png, properties: [:]) {
+            try? data.write(to: URL(fileURLWithPath: path))
+        }
     }
 
     // MARK: Menu
@@ -743,6 +1080,7 @@ final class OverlayController: NSObject {
         }
         size.submenu = sub
         m.addItem(size)
+        m.addItem(action: windowMode ? "Show on Desktop" : "Show in Window", #selector(toggleWindowMode), target: self)
         m.addItem(action: "Show Project Names", #selector(toggleLabels), target: self, on: showLabels)
         m.addItem(playgroundMenu())
         m.addItem(action: "Demo Mode", #selector(toggleDemo), target: self, on: demo)
@@ -763,6 +1101,7 @@ final class OverlayController: NSObject {
 
     @objc private func setZoom(_ sender: NSMenuItem) {
         zoom = sender.representedObject as? Double ?? 1
+        clawdWindow?.setSceneHeight(sceneHeight)
         home = clampHome(home)
         relayout()
         snapActors()
@@ -944,9 +1283,14 @@ final class OverlayView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         guard let ctx = NSGraphicsContext.current?.cgContext, let controller else { return }
         ctx.clear(bounds)
+        Self.render(controller.items, origin: controller.panelOrigin, in: ctx)
+    }
+
+    /// Draw the scene's items (in screen coordinates) into the current context, offset by `origin`.
+    /// Shared by the desktop overlay, the window's scene strip and the CLAWD_SHOT frame dump.
+    static func render(_ items: [OverlayController.DrawItem], origin o: NSPoint, in ctx: CGContext) {
         ctx.interpolationQuality = .none
-        let o = controller.panelOrigin
-        for item in controller.items {
+        for item in items {
             let r = item.rect.offsetBy(dx: -o.x, dy: -o.y)
             if let text = item.text {
                 if item.boxed {
@@ -954,9 +1298,14 @@ final class OverlayView: NSView {
                     (item.agentBox ? NSColor(calibratedRed: 0.05, green: 0.10, blue: 0.24, alpha: 0.82 * item.alpha)
                                    : NSColor(white: 0.08, alpha: 0.82 * item.alpha)).setFill()
                     box.fill()
-                    (item.agentBox ? NSColor(calibratedRed: 0.45, green: 0.65, blue: 1, alpha: 0.5 * item.alpha)
-                                   : NSColor(white: 1, alpha: 0.35 * item.alpha)).setStroke()
-                    box.lineWidth = 1
+                    if let accent = item.accent {
+                        accent.withAlphaComponent(0.9 * item.alpha).setStroke()
+                        box.lineWidth = 1.5
+                    } else {
+                        (item.agentBox ? NSColor(calibratedRed: 0.45, green: 0.65, blue: 1, alpha: 0.5 * item.alpha)
+                                       : NSColor(white: 1, alpha: 0.35 * item.alpha)).setStroke()
+                        box.lineWidth = 1
+                    }
                     box.stroke()
                     let ts = text.size()
                     text.draw(in: NSRect(x: r.midX - ts.width / 2, y: r.midY - ts.height / 2, width: ts.width, height: ts.height))

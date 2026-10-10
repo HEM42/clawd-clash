@@ -29,6 +29,26 @@ enum Jump {
         raiseWindow(of: app, matching: folders.reversed(), cwd: cwd)
     }
 
+    private static var hostCache: [Int32: pid_t] = [:]
+
+    /// Which of these sessions is the one you're looking at: its host app is frontmost and, when several
+    /// sessions share that app (VS Code windows or native tabs), the focused window's title names its project.
+    static func focusedSession(among sessions: [(pid: Int32, project: String)]) -> Int32? {
+        guard let front = NSWorkspace.shared.frontmostApplication else { return nil }
+        let inFront = sessions.filter { s in
+            if let host = hostCache[s.pid] { return host == front.processIdentifier }
+            guard let app = hostApp(of: s.pid) else { return false }
+            hostCache[s.pid] = app.processIdentifier
+            return app.processIdentifier == front.processIdentifier
+        }
+        if inFront.count <= 1 { return inFront.first?.pid }
+        guard AXIsProcessTrusted() else { return nil }
+        let axApp = AXUIElementCreateApplication(front.processIdentifier)
+        guard let window = attribute(axApp, kAXFocusedWindowAttribute) else { return nil }
+        let parts = titleParts(attribute(window as! AXUIElement, kAXTitleAttribute) as? String)
+        return inFront.first { parts.contains($0.project) }?.pid
+    }
+
     /// First GUI app up the process tree (e.g. Code Helper → Visual Studio Code).
     private static func hostApp(of pid: Int32) -> NSRunningApplication? {
         var current: Int32? = pid

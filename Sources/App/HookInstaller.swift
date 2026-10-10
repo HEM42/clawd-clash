@@ -49,7 +49,7 @@ enum HookInstaller {
             let groups = hooks[e] as? [[String: Any]] ?? []
             return groups.contains { g in
                 (g["hooks"] as? [[String: Any]] ?? []).contains {
-                    ($0["command"] as? String) == "\"\(hookBinary)\""
+                    (($0["command"] as? String) ?? "").contains(marker)
                 }
             }
         }

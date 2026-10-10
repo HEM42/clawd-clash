@@ -11,6 +11,14 @@ struct SessionRecord: Codable {
     var lastTool: Double?  // last PreToolUse, so brief "thinking" gaps between tools still read as working
     var pid: Int32?        // the claude process, so the session disappears as soon as it exits
     var created: Double?   // when the session first appeared, for spawn order
+    var since: Double?     // when `state` last changed (status durations, long-idle sleep, ignored "!")
+    var activity: String?  // what it's doing right now, e.g. "Edit Overlay.swift" or "Bash: swift build"
+    var prompt: String?    // your last prompt (trimmed)
+    var reply: String?     // Claude's last reply (trimmed), from Stop
+    var title: String?     // Claude Code's session title
+    var model: String?
+    var tools: Int?        // tool calls this session
+    var prompts: Int?      // prompts this session
 }
 
 struct AgentRecord: Codable {
@@ -21,6 +29,8 @@ struct AgentRecord: Codable {
     var started: Double
     var lastSeen: Double
     var task: String?      // the Agent tool's short description, e.g. "Find hook events"
+    var activity: String?  // the agent's current tool call
+    var tools: Int?
 }
 
 /// An Agent tool call seen in PreToolUse, waiting for its SubagentStart (which only carries the type).
@@ -50,6 +60,8 @@ struct SessionSnapshot {
     var agents: [AgentRecord]
     var live = true        // false = found in the process table but its hooks never fired
     var pid: Int32?        // the claude process, for jumping to its terminal
+    var record: SessionRecord?   // everything the hooks know (nil for sessions without hooks)
+    var cwd: String?
 }
 
 enum StatusPaths {
@@ -113,22 +125,45 @@ enum StatusStore {
                 if let owner { s.sessions[session]?.pid = owner }
             }
             func set(_ state: String) {
+                if s.sessions[session]?.state != state || s.sessions[session]?.since == nil { s.sessions[session]?.since = now }
                 s.sessions[session]?.state = state
                 s.sessions[session]?.updated = now
             }
             func touchAgent(_ id: String) {
                 if let i = s.agents.firstIndex(where: { $0.id == id }) { s.agents[i].lastSeen = now }
             }
+            func clip(_ v: Any?, _ n: Int) -> String? {
+                guard let t = (v as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !t.isEmpty else { return nil }
+                let flat = t.replacingOccurrences(of: "\n", with: " ")
+                return flat.count > n ? String(flat.prefix(n - 1)) + "…" : flat
+            }
+            if let title = clip(json["session_title"], 80) { s.sessions[session]?.title = title }
 
             switch event {
             case "SessionStart":
                 set("idle")
+                if let m = json["model"] as? String { s.sessions[session]?.model = m }
+                else if let m = (json["model"] as? [String: Any])?["id"] as? String { s.sessions[session]?.model = m }
             case "UserPromptSubmit":
                 set("thinking")
+                s.sessions[session]?.prompt = clip(json["prompt"], 240)
+                let promptsCount = (s.sessions[session]?.prompts ?? 0) + 1
+                    s.sessions[session]?.prompts = promptsCount
+                s.sessions[session]?.activity = nil
             case "PreToolUse":
-                if let a = agentId { touchAgent(a) } else {
+                let activity = describeTool(json["tool_name"] as? String ?? "", json["tool_input"] as? [String: Any] ?? [:])
+                if let a = agentId {
+                    touchAgent(a)
+                    if let i = s.agents.firstIndex(where: { $0.id == a }) {
+                        s.agents[i].activity = activity
+                        s.agents[i].tools = (s.agents[i].tools ?? 0) + 1
+                    }
+                } else {
                     set("working")
                     s.sessions[session]?.lastTool = now
+                    s.sessions[session]?.activity = activity
+                    let toolsCount = (s.sessions[session]?.tools ?? 0) + 1
+                    s.sessions[session]?.tools = toolsCount
                     // Remember the task of each agent Claude launches; SubagentStart picks it up.
                     let tool = json["tool_name"] as? String ?? ""
                     if tool == "Agent" || tool == "Task", let input = json["tool_input"] as? [String: Any],
@@ -143,7 +178,11 @@ enum StatusStore {
                     s.sessions[session]?.lastTool = now
                 }
             case "PermissionRequest":
-                if agentId == nil { set("waiting") }
+                if agentId == nil {
+                    set("waiting")
+                    let tool = describeTool(json["tool_name"] as? String ?? "", json["tool_input"] as? [String: Any] ?? [:])
+                    s.sessions[session]?.activity = "Asking to: " + tool
+                }
             case "Notification":
                 let type = json["notification_type"] as? String ?? ""
                 let message = (json["message"] as? String ?? "").lowercased()
@@ -151,6 +190,8 @@ enum StatusStore {
             case "Stop", "StopFailure":
                 set("idle")
                 s.sessions[session]?.lastTool = nil
+                s.sessions[session]?.activity = nil
+                if let r = clip(json["last_assistant_message"], 240) { s.sessions[session]?.reply = r }
             case "SubagentStart":
                 let id = agentId ?? UUID().uuidString
                 if !s.agents.contains(where: { $0.id == id }) {
@@ -178,6 +219,34 @@ enum StatusStore {
             default:
                 break
             }
+        }
+    }
+
+    /// A short, human description of a tool call: "Edit Overlay.swift", "Bash: swift build", "Grep fightRoles".
+    static func describeTool(_ tool: String, _ input: [String: Any]) -> String {
+        func str(_ k: String) -> String? { (input[k] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) }
+        func file(_ k: String) -> String? { str(k).map { ($0 as NSString).lastPathComponent } }
+        func short(_ v: String, _ n: Int = 48) -> String {
+            let flat = v.replacingOccurrences(of: "\n", with: " ")
+            return flat.count > n ? String(flat.prefix(n - 1)) + "…" : flat
+        }
+        switch tool {
+        case "Bash": return "Bash: " + short(str("description") ?? str("command") ?? "")
+        case "Read", "Edit", "Write", "MultiEdit": return "\(tool) \(file("file_path") ?? "")"
+        case "NotebookEdit": return "Edit \(file("notebook_path") ?? "")"
+        case "Grep": return "Grep " + short(str("pattern") ?? "", 32)
+        case "Glob": return "Glob " + short(str("pattern") ?? "", 32)
+        case "WebFetch": return "Fetch " + (str("url").flatMap { URL(string: $0)?.host } ?? "")
+        case "WebSearch": return "Search: " + short(str("query") ?? "", 40)
+        case "Agent", "Task": return "Agent: " + short(str("description") ?? "", 40)
+        case "Skill": return "Skill " + (str("skill") ?? "")
+        case "TodoWrite": return "Updating todos"
+        default:
+            if tool.hasPrefix("mcp__") {   // mcp__server__tool → "server: tool"
+                let parts = tool.dropFirst(5).components(separatedBy: "__")
+                return parts.count >= 2 ? "\(parts[0]): \(parts.dropFirst().joined(separator: " "))" : tool
+            }
+            return tool
         }
     }
 
@@ -263,7 +332,8 @@ enum StatusStore {
             }
             previous = leader
             result.append(SessionSnapshot(id: id, leader: leader, project: rec.project ?? "",
-                                          mood: mood(rec, now: now), agents: [], pid: rec.pid))
+                                          mood: mood(rec, now: now), agents: [], pid: rec.pid, record: rec,
+                                          cwd: rec.pid.flatMap { ClaudeProcesses.cwd($0) }))
         }
         if let processes {
             // Records from before pids were tracked are matched to a process by project folder.
@@ -282,7 +352,8 @@ enum StatusStore {
                 used.insert(leader)
                 previous = leader
                 result.append(SessionSnapshot(id: "pid-\(p.pid)", leader: leader, project: p.project,
-                                              mood: .idle, agents: [], live: false, pid: p.pid))
+                                              mood: .idle, agents: [], live: false, pid: p.pid,
+                                              cwd: ClaudeProcesses.cwd(p.pid)))
             }
         }
         if result.isEmpty {   // no Claude running: an idle Vader keeps the spot warm

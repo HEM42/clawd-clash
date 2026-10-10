@@ -32,6 +32,20 @@ Claudes always fight Claudes, and agents fight agents (across sessions too). Sab
 
 Speech bubbles flip to whichever side of the head has room. The whole crew lines up toward the side of the screen with more space, facing that way so sabers and bolts swing into open space. If it still doesn't fit, everyone walks along the screen until it does, and walks back once the agents finish. The layout always reserves saber room, so the crew doesn't pace back and forth every time Claude switches between thinking and running a tool.
 
+### Window mode
+
+Right-click a villain and choose **Show in Window** to swap the desktop overlay for a regular window: the crew on a starfield strip, and a card per Claude with its status and how long it's been in it, what it's doing right now, your last prompt, its last reply, prompt and tool counts, and every agent's task and current tool. Click a card to jump to that session; tick **Keep on top** to pin the window.
+
+### Little signals
+
+| You see | It means |
+|---|---|
+| `?` bubble | that session has no hooks (started before install) — restart it for live status |
+| zZz bubble | idle for 5+ minutes |
+| villain jumping, `!` flashing fast | it's been waiting for you for over a minute |
+| bobbing yellow marker | that's the Claude whose terminal/tab is in front |
+| matching label colours | a Claude and its agents share their project's colour |
+
 ## Install
 
 ```sh
@@ -43,7 +57,7 @@ Speech bubbles flip to whichever side of the head has room. The whole crew lines
 
 - **Click a villain** to jump to its Claude session (the exact Terminal/iTerm tab, or the VS Code/Cursor window for that project; asks once for Accessibility permission).
 - **Drag any villain** to move the whole crew. The position is saved, and Vader stays fully on screen.
-- **Right-click a villain** for every session's status and agents, Size, Show Project Names, Playground (pick villains and agents and watch them fight), Demo Mode (cycles every scene, fights included), Forget Idle Sessions, Reset Position, Launch at Login, Install/Remove hooks and Quit.
+- **Right-click a villain** for every session's status and agents, Show in Window, Size, Show Project Names, Playground (pick villains and agents and watch them fight), Demo Mode (cycles every scene, fights included), Forget Idle Sessions, Reset Position, Launch at Login, Install/Remove hooks and Quit.
 - The rest of the overlay is click-through, so it never blocks the window underneath.
 - The overlay floats above every app, including full-screen spaces, on all desktops.
 

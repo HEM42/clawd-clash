@@ -122,7 +122,9 @@ func deflectAngle(_ t: Double) -> Double {
 
 // MARK: - Drawing
 
-func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, walking: Bool, role: FightRole = .none) {
+/// `urgent`: a "needs you" that's been ignored for a while — the villain jumps up and down waving.
+func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, walking: Bool, role: FightRole = .none,
+                urgent: Bool = false) {
     let lt = t + Double(who.rawValue) * 0.77     // personal clock so solo leaders aren't in lockstep
     let step = walkStep(t, walking)
     var breathe = walking ? (step == 0 ? -1 : 0) : (sin(lt * 2 * .pi / 2.6) > 0.35 ? -1 : 0)
@@ -141,7 +143,8 @@ func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, wal
         case .idle, .thinking:
             break
         case .waiting:
-            saber = -90 + 2 * sin(t * 3)
+            saber = urgent ? -90 + 25 * sin(t * 12) : -90 + 2 * sin(t * 3)
+            if urgent { hop = cheerHop(t * 1.5); breathe = 0 }
         case .standGuard:
             saber = -65 + 3 * sin(t * 2.2)
             capeSpeed = 2.2
@@ -703,13 +706,24 @@ func drawFightFX(_ c: PixelCanvas, t: Double, left: Fighter, right: Fighter) {
 
 enum Bubble { static let width = 18, height = 13 }
 
-/// Compact bubble — it only ever holds three thinking dots or a "!".
-func drawBubble(_ c: PixelCanvas, mood: Mood, t: Double) {
+/// What a Claude's bubble says. There's never real text: dots, "!", "?" or zZz.
+enum BubbleKind {
+    case thinking
+    case waiting        // needs your attention
+    case unknown        // session without hooks: we can't tell what it's doing
+    case sleeping       // idle for a long time
+}
+
+/// Compact bubble — it only ever holds three thinking dots, a "!", a "?" or zZz.
+/// `tailRight`: the bubble sits left of the head, so its tail points right. Only the frame is
+/// mirrored for that — the symbol inside never reads backwards.
+func drawBubble(_ c: PixelCanvas, kind: BubbleKind, t: Double, urgent: Bool = false, tailRight: Bool = false) {
     let border: Px
-    if mood == .waiting {
-        border = sin(t * 6) > 0 ? C(0xE0303A) : C(0xFF6A6A)
-    } else {
-        border = outline
+    switch kind {
+    case .waiting: border = sin(t * (urgent ? 14 : 6)) > 0 ? C(0xE0303A) : C(0xFF6A6A)
+    case .unknown: border = C(0xC98A1A)
+    case .sleeping: border = C(0x6A5ACD)
+    case .thinking: border = outline
     }
     c.rect(5, 1, 11, 7, white)
     c.rect(4, 2, 13, 5, white)
@@ -718,11 +732,27 @@ func drawBubble(_ c: PixelCanvas, mood: Mood, t: Double) {
     c.px(4, 1, border); c.px(16, 1, border); c.px(4, 7, border); c.px(16, 7, border)
     c.rect(1, 10, 2, 2, white); c.px(1, 10, border)
     c.px(0, 12, border)
-    if mood == .waiting {
+    if tailRight { c.flipHorizontally(); c.ox = -3 }   // box moved from x 3...17 to 0...14
+    defer { c.ox = 0 }
+    switch kind {
+    case .waiting:
         c.rect(9, 2, 2, 3, border)
         c.rect(9, 6, 2, 1, border)
-    } else {
+    case .unknown:
+        c.pattern(8, 2, ["XXX", "..X", ".X.", "...", ".X."], ["X": border])
+    case .sleeping:
+        // zZz, drifting gently
+        let off = Int(t * 1.5) % 2
+        c.pattern(5, 3 + off, ["ZZ", ".Z", "ZZ"], ["Z": border.alpha(0.6)])
+        c.pattern(8, 2, ["ZZZ", ".Z.", "ZZZ"], ["Z": border])
+        c.pattern(12, 4 - off, ["ZZ", ".Z", "ZZ"], ["Z": border.alpha(0.6)])
+    case .thinking:
         let step = Int(t * 3) % 4
         for i in 0..<3 where step > i { c.rect(6 + i * 3, 3, 2, 2, border) }
     }
+}
+
+/// Bobbing marker over the Claude whose terminal you're in right now.
+func drawFocusCaret(_ c: PixelCanvas) {
+    c.pattern(0, 0, [".Y.", "YYY", ".Y."], ["Y": C(0xFFE14A)])
 }

@@ -1,5 +1,30 @@
 # Changelog
 
+## 2.2.0 — 2026-10-10
+
+### Added
+- **Show in Window** (right-click menu). A normal window with a Dock icon and menu bar replaces the desktop overlay. A starfield strip on top shows the crew, laid out and drawn by the same code as the overlay, with the strip acting as their "screen". The crew is centred and shrinks to fit the window width. Below it is one card per Claude:
+  - villain portrait, name and project in its accent colour, plus a status chip with how long it's been in that state (WORKING · 2m 10s, THINKING, NEEDS YOU, IDLE, ASLEEP, NO LIVE STATUS, BUSY (CPU));
+  - model and session title, what it's doing now ("Now: Edit Overlay.swift"), your last prompt, and its last reply when idle;
+  - prompt and tool-call counts, uptime and working folder;
+  - its agents, each with portrait, hero name, task, current tool, age and tool count.
+  Clicking a card or a character jumps to that session. "Keep on top" pins the window. A red banner says so when the hooks aren't installed (from agent-view: never show stale data silently). Closing the window goes back to the desktop overlay, and the window remembers its frame.
+- The hook records more per session: model and session title (SessionStart / UserPromptSubmit), last prompt, Claude's last reply (Stop's `last_assistant_message`), the current activity, tool and prompt counts, and when the state last changed. Tool calls are summarised as "Edit Overlay.swift", "Bash: swift build", "Grep fightRoles", "Fetch github.com", or "server: tool" for MCP. Agents get their current activity and tool count too.
+- From [agent-view](https://github.com/HEM42/agent-view):
+  - Status debounce: a new mood must hold for two refreshes, except "needs you", which shows instantly.
+  - A "?" bubble for sessions without hooks, instead of pretending they're idle.
+  - A zZz bubble after 5 minutes idle.
+  - A "needs you" ignored for more than a minute makes the villain jump and wave, and the "!" flashes faster.
+  - A bobbing yellow marker over the Claude whose terminal or VS Code tab is in front.
+  - Project accent colours: collision-free, remembered, and shared by a Claude and its agents on label borders and cards.
+  - Labels never overlap: Claudes get first pick and colliding labels move up a row.
+  - `CLAWD_SHOT=/path.png` writes the rendered scene (or the whole window) every 5 s, so visuals can be checked without screen recording.
+
+### Changed
+- Speech bubbles go on the side away from the nearest neighbour, so it's clear whose bubble it is. When a bubble sits on the left, only its frame is mirrored; the "?" and zZz never read backwards.
+- The "hooks installed" check matches the hook by name instead of exact path.
+- Playground and Demo agents start their clocks when created instead of showing nonsense ages.
+
 ## 2.1.1 — 2026-10-10
 
 ### Added
