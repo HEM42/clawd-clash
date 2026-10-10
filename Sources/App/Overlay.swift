@@ -83,9 +83,11 @@ final class OverlayController: NSObject {
 
     /// The chosen size, shrunk in window mode when the crew is too wide for the window.
     private var zoom: CGFloat {
-        get { windowMode ? windowFit : baseZoom }
+        get { windowMode ? Self.windowZoom * windowFit : baseZoom }
         set { UserDefaults.standard.set(newValue, forKey: "zoom") }
     }
+    /// Window mode always uses the Small size (the scene backdrop's pixels match it: 2 pt).
+    private static let windowZoom: CGFloat = 0.67
     private var baseZoom: CGFloat { let z = UserDefaults.standard.double(forKey: "zoom"); return z > 0 ? z : 1 }
     private var windowFit: CGFloat = 1
 
@@ -200,8 +202,8 @@ final class OverlayController: NSObject {
     }
 
     /// Height of the cantina floor in the window's scene strip; feet stand a little way into it.
-    static let cantinaFloor: CGFloat = 30
-    var windowFloor: CGFloat { 24 }
+    static let cantinaFloor: CGFloat = 20
+    var windowFloor: CGFloat { 16 }
 
     // MARK: Status
 
@@ -913,7 +915,7 @@ final class OverlayController: NSObject {
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    private var sceneHeight: CGFloat { max(200, CGFloat(Sprite.height) * Self.leaderScale + 70 + windowFloor) }
+    private var sceneHeight: CGFloat { max(170, (CGFloat(Sprite.height) * Self.leaderScale + 70) * Self.windowZoom + windowFloor) }
 
     private func makeMainMenu() -> NSMenu {
         let main = NSMenu()

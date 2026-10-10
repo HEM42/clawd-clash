@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.4.2 — 2026-10-10
+
+### Changed
+- Window mode always uses the Small size (0.67), still shrinking further if the window is too narrow. The location backdrops now use 2 pt pixels to match the crew, and the scene strip is shorter (170 pt; floor 20 pt, feet at 16 pt), leaving more room for the cards.
+
 ## 2.4.1 — 2026-10-10
 
 ### Changed

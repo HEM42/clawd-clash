@@ -6,7 +6,7 @@ import AppKit
 
 enum Cantina {
     /// Pixel size of the backdrop on screen.
-    static let pixel: CGFloat = 3
+    static let pixel: CGFloat = 2      // matches the crew's pixels at the window's Small size
 
     // Palette
     static let plaster = C(0xD9CBB0), plasterShade = C(0xB8A88C), plasterDark = C(0x9C8C70)
