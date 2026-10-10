@@ -66,6 +66,12 @@ Blasters are drawn from the film props — Han's DL-44, Leia's Defender, the Sto
 
 Claudes fight Claudes, agents fight agents, and leftovers pair up or cheer. R2-D2, C-3PO and the tauntaun stay out of it.
 
+And when Han Solo's agent is done, he doesn't just fade away — the Millennium Falcon comes to pick him up:
+
+<p align="center">
+  <img src="docs/falcon.png" alt="The Falcon swoops in, lands beside Han, he walks up the ramp, and it flies away" width="900">
+</p>
+
 ## Window mode
 
 Prefer a window? **Show in Window** puts the whole crew in a scene and gives every Claude a card: what it's doing *right now*, your last prompt, its last reply, how long it's been at it, and every agent's task and current tool call.
@@ -86,9 +92,15 @@ The scene is set **where the first Claude belongs** — the Death Star for Vader
   <img src="docs/locations.png" alt="All 22 locations" width="760">
 </p>
 
-The window sizes itself to the number of Claudes, has a themed title bar, can stay on top, and can hide its Dock icon.
+The window sizes itself to the number of Claudes (or keep your own height), has a themed title bar, can stay on top, and can hide its Dock icon. Project names float over the Claudes on the desktop; in the window the cards carry them instead — each mode remembers your choice.
 
 ## The little things
+
+Hover over anyone for the details — what that Claude is doing right now, your last prompt, its agents:
+
+<p align="center">
+  <img src="docs/hover.png" alt="Hover card over Darth Vader" width="640">
+</p>
 
 | You see | It means |
 |---|---|

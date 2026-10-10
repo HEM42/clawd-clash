@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.17.4 — 2026-10-10
+
+### Changed
+- README: new images of Han's Millennium Falcon departure (a four-step strip) and a desktop hover card. The window screenshots are re-shot without project names over the Claudes (the new window default), and the text explains per-mode labels and the optional fixed window height. The locations sheet always shows the Modal Nodes in the cantina.
+
 ## 2.17.3 — 2026-10-10
 
 ### Changed

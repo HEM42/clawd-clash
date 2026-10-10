@@ -73,6 +73,8 @@ save(roster, "roster.png")
 
 // MARK: Locations
 
+Cantina.maxReboTonight = false      // the sheet shows the Modal Nodes (the Max Rebo Band is in Jabba's palace)
+
 let lw = 250, lh = 70, lscale: CGFloat = 2, lcols = 3
 let locs = Location.allCases
 let lRows = (locs.count + lcols - 1) / lcols
