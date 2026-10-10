@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.14.0 — 2026-10-10
+
+### Added
+- **Hover details** (from agent-view): hovering any villain or agent, on the desktop or in the window, shows a card beside it, kept on screen. For a Claude: name and project, status and duration, current activity, your last prompt, agent count, and "Click to jump". For an agent: its task, current tool, age and tool count, and which Claude it belongs to. Agents now take hover and clicks on the desktop too (a click jumps to their Claude).
+- **Walk-ins** (from agent-view's door): new Claudes and agents walk in from the side, 240 pt × zoom away, one at a time with 0.6 s between them, instead of fading in where they stand. On launch everyone is simply in place.
+- **Staged idle**: a lone idle Claude stands for 2 minutes, then sits down (legs folded, body on the floor, cape stopping at the floor), and shows zZz after 5 minutes. Walkers, Jabba, the Rancor and the Emperor stay standing. Claudes that are fighting don't sit.
+- **Explicit offline state** (from agent-view): a pulsing red OFFLINE banner over the crew on the desktop when the hooks aren't installed or the status file can't be read (the window shows it above the cards). A session the hooks still call idle, whose process has been busy for over a minute with no agent reporting, is marked **not reporting**: "?" bubble, NOT REPORTING on its card, and a hover note to restart it.
+- Debug and screenshot aids: `CLAWD_HOVER=<key>` pretends to hover a character, `--mood=idle|thinking|waiting|working` sets the Playground mood at launch, and Playground "Idle" spreads villains across the idle stages.
+
 ## 2.13.1 — 2026-10-10
 
 ### Added

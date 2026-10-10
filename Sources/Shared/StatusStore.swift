@@ -61,6 +61,7 @@ struct SessionSnapshot {
     var live = true        // false = found in the process table but its hooks never fired
     var pid: Int32?        // the claude process, for jumping to its terminal
     var record: SessionRecord?   // everything the hooks know (nil for sessions without hooks)
+    var stalled = false          // hooks say idle, but the process has been busy for a minute: not reporting
     var cwd: String?
 }
 

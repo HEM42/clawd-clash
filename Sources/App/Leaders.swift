@@ -78,6 +78,9 @@ enum Leader: Int, CaseIterable {
         }
     }
 
+    /// Whether it sits down when it's been idle a while (walkers, slugs, monsters and the Emperor don't).
+    var canSit: Bool { ![.atst, .atat, .jabba, .rancor, .emperor].contains(self) }
+
     /// Where its blaster bolts come out (canvas pixels). Walkers fire from their chin guns.
     var muzzle: (x: Int, y: Int) {
         switch self {
@@ -143,7 +146,13 @@ func deflectAngle(_ t: Double) -> Double {
 
 /// `urgent`: a "needs you" that's been ignored for a while — the villain jumps up and down waving.
 func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, walking: Bool, role: FightRole = .none,
-                urgent: Bool = false) {
+                urgent: Bool = false, sitting: Bool = false) {
+    // Long-idle Claudes sit down (the big ones just keep standing).
+    var unengaged = false
+    if case .none = role { unengaged = true }
+    let seated = sitting && who.canSit && !walking && unengaged && (mode == .idle || mode == .standGuard)
+    seatedPose = seated
+    defer { seatedPose = false }
     let lt = t + Double(who.rawValue) * 0.77     // personal clock so solo leaders aren't in lockstep
     let step = walkStep(t, walking)
     var breathe = walking ? (step == 0 ? -1 : 0) : (sin(lt * 2 * .pi / 2.6) > 0.35 ? -1 : 0)
@@ -210,6 +219,8 @@ func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, wal
     if zap != nil { armRaise = 2 }
 
     if case .cheer = role, mode == .working, !walking { drawCheerSparkles(c, t: t) }
+
+    if seated { hop += 4 }
 
     // Back layer moves with hops but not with breathing.
     c.ox = dx; c.oy = hop
@@ -303,7 +314,7 @@ func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, wal
 }
 
 private func drawCape(_ c: PixelCanvas, t: Double, speed: Double, color: Px, edge: Px, extra: Double = 0) {
-    for y in 27...44 {
+    for y in 27...44 where y + c.oy <= 44 {      // a seated character's cape stops at the floor
         let k = Double(y - 27) / 17
         let hw = 10.5 + k * (4.5 + extra)
         let sway = sin(t * speed + k * 2.2) * k * 1.6

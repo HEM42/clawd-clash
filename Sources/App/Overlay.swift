@@ -28,6 +28,8 @@ private struct Actor {
     var urgent = false           // "needs you" ignored for over a minute
     var accent: NSColor?         // project colour, shared with its agents
     var focused = false          // its terminal is the one in front
+    var sitting = false          // idle 2+ minutes: sat down on the floor
+    var detail: [String] = []    // hover card lines
 
     var isLeader: Bool { if case .leader = kind { return true } else { return false } }
 }
@@ -54,7 +56,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         .map { $0.dropFirst(13).split(separator: ",").compactMap { Int($0) } }
     private var playgroundAgents: [Int] = CommandLine.arguments.first { $0.hasPrefix("--agents=") }
         .map { $0.dropFirst(9).split(separator: ",").compactMap { Int($0) } } ?? []
-    private var playgroundMood: Mood = .working
+    private var playgroundMood: Mood = CommandLine.arguments.first { $0.hasPrefix("--mood=") }
+        .flatMap { Mood(rawValue: String($0.dropFirst(7))) } ?? .working
     private var dragging = false
     private var dragOffset = NSPoint.zero
     private var lastTick = Date().timeIntervalSince1970
@@ -74,6 +77,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
     private var focusedPid: Int32?
     private var lastFocusCheck = 0.0
     private var lastShot = 0.0
+    private var hasLaidOut = false          // after the first layout, newcomers walk in instead of appearing
+    private var hoveredKey: String?
+    private var busySince: [Int32: Double] = [:]
+    private var offlineReason: String?
+    private var lastHookCheck = 0.0
+    private var hooksInstalled = true
     private let shotPath = ProcessInfo.processInfo.environment["CLAWD_SHOT"]
     private var clawdWindow: ClawdWindow?
     private var windowMode: Bool {
@@ -212,8 +221,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
     private func refreshStatus() {
         let now = Date().timeIntervalSince1970
         if let playground {
+            offlineReason = nil
             sessions = playgroundSessions(playground)
         } else if demo {
+            offlineReason = nil
             sessions = demoSessions(now - demoStart)
         } else {
             if now - lastScan > 3 {
@@ -226,6 +237,19 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             // working ≈ 5–10%), so treat sustained CPU as "working" for them.
             for i in sessions.indices where !sessions[i].live {
                 if let pid = sessions[i].pid, (busyUntil[pid] ?? 0) > now { sessions[i].mood = .working }
+            }
+            // Not reporting: the hooks say idle, but the process has been busy for over a minute and no
+            // agent has reported in that time — the hooks have stopped firing for it.
+            for i in sessions.indices where sessions[i].live {
+                guard let pid = sessions[i].pid, let rec = sessions[i].record, rec.state == "idle",
+                      let busy = busySince[pid], now - busy > 60, now - rec.updated > 60,
+                      !sessions[i].agents.contains(where: { now - $0.lastSeen < 60 }) else { continue }
+                sessions[i].stalled = true
+            }
+            if now - lastHookCheck > 10 { lastHookCheck = now; hooksInstalled = HookInstaller.isInstalled }
+            offlineReason = hooksInstalled ? nil : "OFFLINE — Claude Code hooks aren't installed"
+            if FileManager.default.fileExists(atPath: StatusPaths.state.path) && StatusStore.load() == nil {
+                offlineReason = "OFFLINE — can't read the status file"
             }
             if now - lastFocusCheck >= 1 {
                 lastFocusCheck = now
@@ -275,12 +299,16 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             guard let cpu = ClaudeProcesses.cpuSeconds(p.pid) else { continue }
             if let prev = cpuSamples[p.pid], now > prev.at {
                 let usage = (cpu - prev.cpu) / (now - prev.at)
-                if usage > 0.03 { busyUntil[p.pid] = now + 6 }
+                if usage > 0.03 {
+                    busyUntil[p.pid] = now + 6
+                    if busySince[p.pid] == nil { busySince[p.pid] = now }
+                }
             }
             next[p.pid] = (now, cpu)
         }
         cpuSamples = next
         busyUntil = busyUntil.filter { $0.value > now }
+        busySince = busySince.filter { busyUntil[$0.key] != nil }
     }
 
     /// Build the formation and give every actor a target position.
@@ -440,7 +468,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
                 case .thinking: bubble = .thinking
                 case .waiting: bubble = .waiting; urgent = held > 60
                 case .idle:
-                    if !s.live && s.pid != nil { bubble = .unknown }                // no hooks: say so, don't fake idle
+                    if (!s.live && s.pid != nil) || s.stalled { bubble = .unknown }  // no live status: say so, don't fake idle
                     else if s.record != nil && held > 300 { bubble = .sleeping }    // idle 5+ min
                 case .working: break
                 }
@@ -452,6 +480,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
                 pid = pidOf[a.session] ?? nil
             }
             let focused = pid != nil && pid == focusedPid && u.session != nil
+            // Idle a while: sit down after 2 minutes (the zZz comes at 5).
+            var sitting = false
+            if let s = u.session, s.mood == .idle, s.record != nil, !s.stalled { sitting = now - since(s, now: now) > 120 }
+            let detail = hoverDetail(u.session, u.agent, now: now)
             if let idx = actors.firstIndex(where: { $0.key == u.key && $0.leaving == nil }) {
                 actors[idx].targetX = target
                 actors[idx].facing = facing
@@ -460,17 +492,28 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
                 actors[idx].pid = pid
                 actors[idx].bubble = bubble; actors[idx].urgent = urgent
                 actors[idx].accent = accent; actors[idx].focused = focused
+                actors[idx].sitting = sitting; actors[idx].detail = detail
             } else {
-                var a = Actor(key: u.key, kind: u.kind, x: target, targetX: target, facing: facing,
-                              born: now, phase: Double(abs(u.key.hashValue) % 1000) / 97)
+                // Newcomers walk in from the side, one at a time (from agent-view's walk-in through the door).
+                var startX = target, born = now
+                if hasLaidOut && !dragging {
+                    let fromRight = target >= sf.midX
+                    startX = target + (fromRight ? 1 : -1) * 240 * z
+                    let queued = actors.filter { $0.born > now - 0.6 }.count
+                    born = now + Double(queued) * 0.6
+                }
+                var a = Actor(key: u.key, kind: u.kind, x: startX, targetX: target, facing: facing,
+                              born: born, phase: Double(abs(u.key.hashValue) % 1000) / 97)
                 a.mood = mood; a.mode = mode; a.label = label; a.pid = pid
                 a.bubble = bubble; a.urgent = urgent; a.accent = accent; a.focused = focused
+                a.sitting = sitting; a.detail = detail
                 actors.append(a)
             }
         }
         for idx in actors.indices where actors[idx].leaving == nil && !seen.contains(actors[idx].key) {
             actors[idx].leaving = now
         }
+        if !sessions.isEmpty { hasLaidOut = true }
     }
 
     private func snapActors() {
@@ -499,7 +542,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         return villains.enumerated().map { i, l in
             var rec = SessionRecord(state: playgroundMood.rawValue, updated: start, leader: l, project: "")
             rec.created = start - Double(600 + i * 1700)
-            rec.since = start - Double(20 + i * 35)
+            // On "Idle", spread them over the idle stages: standing, sitting (2 min+), asleep (5 min+).
+            rec.since = playgroundMood == .idle ? start - Double(60 + i * 160) : start - Double(20 + i * 35)
             rec.model = "claude-opus-5-5"
             rec.prompt = prompts[i % prompts.count]
             rec.activity = nowActs[i % nowActs.count]
@@ -543,6 +587,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         actors.removeAll { $0.leaving.map { now - $0 > fadeOut } ?? false }
 
         for i in actors.indices {
+            if now < actors[i].born { continue }        // waiting for its turn to walk in
             let d = actors[i].targetX - actors[i].x
             if dragging || abs(d) < 0.5 {
                 actors[i].x = actors[i].targetX
@@ -554,13 +599,23 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             }
         }
 
+        // Which character is the mouse over? (desktop and window alike: both work in screen coordinates)
+        let mouseNow = NSEvent.mouseLocation
+        var hovered = (windowMode && clawdWindow?.window.isVisible != true) ? nil
+            : hitRects().first { $0.1.contains(mouseNow) }?.0
+        if let forced = ProcessInfo.processInfo.environment["CLAWD_HOVER"] {   // debug: pretend to hover a character
+            hovered = actors.first { $0.key.contains(forced) }?.key
+        }
+        let hoverChanged = hovered != hoveredKey
+        hoveredKey = hovered
+
         // Idle scenes only breathe, so 10 fps is plenty; full 30 fps when anything is moving.
         frameCount += 1
         let busy = dragging || !fights.isEmpty || actors.contains {
             $0.walkDir != 0 || $0.leaving != nil || now - $0.born < fadeIn || !$0.isLeader
                 || $0.mode == .working || $0.mode == .waiting
         }
-        guard busy || frameCount % 3 == 0 else { return }
+        guard busy || hoverChanged || frameCount % 3 == 0 else { return }
 
         items = buildItems(now: now)
         if let shotPath, now - lastShot > 5 { lastShot = now; writeShot(to: shotPath) }
@@ -578,17 +633,53 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         if bounds != panel.frame { panel.setFrame(bounds, display: false) }
 
         let mouse = NSEvent.mouseLocation
-        let passThrough = !(dragging || leaderHitRects().contains { $0.contains(mouse) })
+        let passThrough = !(dragging || hitRects().contains { $0.1.contains(mouse) })
         if panel.ignoresMouseEvents != passThrough { panel.ignoresMouseEvents = passThrough }
 
         view.needsDisplay = true
     }
 
-    private func leaderHitRects() -> [NSRect] {
-        let s = Self.leaderScale * zoom
-        return actors.filter { $0.isLeader && $0.leaving == nil }.map {
-            NSRect(x: $0.x - 16 * s, y: anchor.y + 5 * s, width: 32 * s, height: 35 * s)
+    /// Where each character can be hovered or clicked (villains first, so they win overlaps).
+    private func hitRects() -> [(String, NSRect)] {
+        let s = Self.leaderScale * zoom, c = Self.companionScale * zoom
+        return actors.filter { $0.leaving == nil }.sorted { $0.isLeader && !$1.isLeader }.map {
+            $0.isLeader ? ($0.key, NSRect(x: $0.x - 16 * s, y: anchor.y + 5 * s, width: 32 * s, height: 35 * s))
+                        : ($0.key, NSRect(x: $0.x - 16 * c, y: anchor.y + (s - c) * 8 + 5 * c, width: 32 * c, height: 35 * c))
         }
+    }
+
+    /// Lines for the hover card.
+    private func hoverDetail(_ s: SessionSnapshot?, _ a: AgentRecord?, now: Double) -> [String] {
+        if let a {
+            let who = Companion(rawValue: a.character % Companion.allCases.count) ?? .luke
+            var lines = ["\(who.name) — \(Self.agentLabel(a).isEmpty ? "Agent" : Self.agentLabel(a))"]
+            var info = [a.activity ?? "Starting…", Self.duration(now - a.started)]
+            if let n = a.tools { info.append("\(n) tool call\(n == 1 ? "" : "s")") }
+            lines.append(info.joined(separator: "  ·  "))
+            if let owner = sessions.first(where: { $0.id == a.session }) {
+                let p = owner.project.isEmpty ? "" : " (\(owner.project))"
+                lines.append("Agent of \(Leader(index: owner.leader).name)\(p)")
+            }
+            return lines
+        }
+        guard let s else { return [] }
+        var lines = [Leader(index: s.leader).name + (s.project.isEmpty ? "" : " — " + s.project)]
+        let held = Self.duration(now - since(s, now: now))
+        switch s.mood {
+        case _ where s.stalled: lines.append("Not reporting — restart this Claude session")
+        case _ where !s.live: lines.append(s.mood == .working ? "Busy (no live status — no hooks)" : "No live status — no hooks")
+        case .working: lines.append("Working · \(held)")
+        case .thinking: lines.append("Thinking · \(held)")
+        case .waiting: lines.append("Needs you · \(held)")
+        case .idle: lines.append((now - since(s, now: now) > 300 ? "Asleep · " : "Idle · ") + held)
+        }
+        if let r = s.record {
+            if let act = r.activity, s.mood != .idle { lines.append("Now: " + act) }
+            if let p = r.prompt { lines.append("You: “" + (p.count > 60 ? String(p.prefix(59)) + "…" : p) + "”") }
+        }
+        if !s.agents.isEmpty { lines.append("\(s.agents.count) agent\(s.agents.count == 1 ? "" : "s") at work") }
+        lines.append("Click to jump to this session")
+        return lines
     }
 
     struct DrawItem {
@@ -647,7 +738,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             case .leader(let who):
                 let role = roles[actor.key]
                 drawLeader(canvas, who, t: t, mode: role != nil ? .working : actor.mode,
-                           walking: walking, role: role ?? .none, urgent: actor.urgent && role == nil)
+                           walking: walking, role: role ?? .none, urgent: actor.urgent && role == nil, sitting: actor.sitting)
                 scale = ls; y = ground
             case .companion(let who):
                 let role = roles[actor.key]
@@ -657,8 +748,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             canvas.addOutline(C(0xFFFFFF, 0.92))
             guard let img = canvas.makeImage() else { continue }
 
-            var alpha = min(1, (now - actor.born) / fadeIn)
-            var drop = (1 - alpha) * 24
+            if now < actor.born { continue }             // not on stage yet
+            var alpha = min(1, (now - actor.born) / 0.25)
+            var drop = 0.0
             if let left = actor.leaving {
                 let f = min(1, (now - left) / fadeOut)
                 alpha = min(alpha, 1 - f)
@@ -800,6 +892,38 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
                                                                      width: cw, height: cw)))
                 }
             }
+        }
+        // Hover card (from agent-view's hover-for-details): next to the character, kept on screen.
+        if let key = hoveredKey, let actor = actors.first(where: { $0.key == key && $0.leaving == nil }), !actor.detail.isEmpty {
+            let text = NSMutableAttributedString()
+            for (i, line) in actor.detail.enumerated() {
+                let last = i == actor.detail.count - 1 && actor.isLeader
+                text.append(NSAttributedString(string: (i == 0 ? "" : "\n") + line, attributes: [
+                    .font: i == 0 ? NSFont.systemFont(ofSize: 12, weight: .bold) : NSFont.systemFont(ofSize: 11, weight: last ? .regular : .medium),
+                    .foregroundColor: i == 0 ? NSColor.white : (last ? NSColor(white: 0.6, alpha: 1) : NSColor(white: 0.85, alpha: 1)),
+                ]))
+            }
+            let ts = text.size()
+            let size = NSSize(width: ts.width + 16, height: ts.height + 10)
+            let s = actor.isLeader ? ls : cs
+            var x = actor.x + 18 * s, y = ground + (actor.isLeader ? 10 : 18) * ls
+            if x + size.width > screenFrame.maxX - 4 { x = actor.x - 18 * s - size.width }
+            x = min(max(x, screenFrame.minX + 4), screenFrame.maxX - size.width - 4)
+            y = min(y, screenFrame.maxY - size.height - 4)
+            overlay.append(DrawItem(text: text, rect: NSRect(x: x.rounded(), y: y.rounded(), width: size.width, height: size.height),
+                                    alpha: 1, boxed: true, accent: actor.accent ?? NSColor(white: 0.6, alpha: 1)))
+        }
+
+        // OFFLINE banner on the desktop (the window shows it above the cards): never show stale data silently.
+        if let reason = offlineReason, !windowMode, let first = actors.first(where: { $0.isLeader && $0.leaving == nil }) {
+            let text = NSAttributedString(string: reason, attributes: [
+                .font: NSFont.systemFont(ofSize: 11, weight: .bold), .foregroundColor: NSColor(srgbRed: 1, green: 0.72, blue: 0.72, alpha: 1)])
+            let ts = text.size()
+            let size = NSSize(width: ts.width + 16, height: ts.height + 8)
+            let x = min(max(first.x - size.width / 2, screenFrame.minX + 4), screenFrame.maxX - size.width - 4)
+            let y = ground + CGFloat(Sprite.height) * ls + 26 * z
+            overlay.append(DrawItem(text: text, rect: NSRect(x: x.rounded(), y: y.rounded(), width: size.width, height: size.height),
+                                    alpha: 0.75 + 0.25 * CGFloat(sin(t * 4)), boxed: true, accent: NSColor(srgbRed: 0.9, green: 0.2, blue: 0.2, alpha: 1)))
         }
         return out + overlay
     }
@@ -1065,6 +1189,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             let held = Self.duration(now - since(s, now: now))
             var status: String, color: NSColor
             switch (s.mood, actor?.bubble) {
+            case (_, _) where s.stalled: status = "NOT REPORTING"; color = NSColor(srgbRed: 1, green: 0.69, blue: 0.24, alpha: 1)
             case (.working, _) where !s.live: status = "BUSY (CPU)"; color = NSColor(srgbRed: 1, green: 0.69, blue: 0.24, alpha: 1)
             case (.working, _): status = "WORKING · \(held)"; color = NSColor(srgbRed: 0.42, green: 0.9, blue: 0.46, alpha: 1)
             case (.thinking, _): status = "THINKING · \(held)"; color = NSColor(srgbRed: 0.42, green: 0.71, blue: 1, alpha: 1)
@@ -1110,8 +1235,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
                 portrait: portrait("l\(leader.rawValue)") { drawLeader($0, leader, t: 0.1, mode: .idle, walking: false) },
                 pid: s.pid))
         }
-        let banner: String? = (playground == nil && !demo && !HookInstaller.isInstalled)
-            ? "Claude Code hooks aren't installed — live status is off. Install them from the right-click menu." : nil
+        let banner: String? = offlineReason.map { $0 + " — live status is off. Fix it from Settings in the menu." }
         w.cardsView.update(cards: cards, banner: banner)
         w.header.needsDisplay = true
         w.fitToContent()
