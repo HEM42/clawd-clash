@@ -3,6 +3,13 @@
 ## 2.22.0 — 2026-10-11
 
 ### Changed
+- **Obi-Wan's Hut redrawn as the inside of his domed hut from A New Hope.** The old version was a flat sand-coloured wall with a window and a shelf. Now:
+  - a plaster dome curves overhead, with rough Jundland rock in the corners;
+  - desert sun beams through the round window, with dust drifting in the light;
+  - **Leia's hologram**, "Help me, Obi-Wan Kenobi": a flickering blue figure with her side buns, glitching now and then, above a projector on a low table and a round woven rug;
+  - the chest that held Anakin's lightsaber, lid open, the hilt glinting inside;
+  - his hooded robe on a peg and a curved sleeping nook with cushions.
+  - The projector sits left of centre so the crew, who stand in the middle, don't block it.
 - **Jabba's Palace redrawn to look like the Return of the Jedi throne room.** The old version was a generic brown wall with black arches and could have been any dungeon. Now:
   - smoky amber sandstone with a back ledge, softly lit rounded alcoves, and dusty light shafts falling from vents high in the wall;
   - **Han Solo frozen in carbonite** on the wall (raised hands, face relief, the little control lights);

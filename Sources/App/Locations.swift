@@ -141,6 +141,7 @@ enum Location: String, CaseIterable {
         case .dagobah: Scenes.swampFog(c, g, t: t)
         case .falcon: Scenes.dejarik(c, g, t: t)
         case .sandcrawler: Scenes.crawlerLights(c, g, t: t)
+        case .obiWanHut: Scenes.obiWanHologram(c, g, t: t)
         case .hoth: Scenes.snowfall(c, g, t: t)
         case .rancorPit: Scenes.grateLight(c, g, t: t)
         default: break
@@ -525,18 +526,79 @@ enum Scenes {
         c.ground(g, C(0xD0A066), edge: C(0xE6BA80), speck: C(0xB88A52), seed: 11)
     }
 
-    // Obi-Wan — his hut in the Jundland Wastes: round window, shelves, a lamp, the old chest.
+    // Obi-Wan — inside his domed hut in the Jundland Wastes (A New Hope): a cave-like plaster dome, desert sun
+    // through the round window, the open chest that held Anakin's lightsaber, his robe on a peg, a sleeping nook,
+    // and the projector where Leia's message plays (animated in `obiWanHologram`).
     static func obiWanHut(_ c: PixelCanvas, _ g: Int) {
-        c.gradient(0, g, C(0xB89A74), C(0x8A6E50), bands: 4)
-        for i in 0..<(c.w * g / 40) { c.px(Int(noise(i * 5) * Double(c.w)), Int(noise(i * 5 + 1) * Double(g)), C(0x9C8060)) }
-        let wx = c.w * 2 / 3, wy = g / 2 - 4
-        c.circle(wx, wy, 9, C(0x6E5440)); c.circle(wx, wy, 7, C(0xF2D8A8)); c.rect(wx - 7, wy + 2, 15, 5, C(0xD8B47A))
-        c.rect(wx - 7, wy, 15, 1, C(0x6E5440)); c.rect(wx, wy - 7, 1, 14, C(0x6E5440))
-        for y in [g - 24, g - 16] { c.rect(16, y, 40, 2, C(0x5A4636)) }
-        for (i, x) in stride(from: 18, to: 54, by: 5).enumerated() { c.rect(x, g - 28 + (i % 2), 3, 4, [C(0xB08D57), C(0x8AA0B0), C(0xC86A48)][i % 3]) }
-        c.rect(c.w / 3, g - 8, 16, 8, C(0x5A4636)); c.rect(c.w / 3, g - 8, 16, 2, C(0x8A6E54))   // the chest
-        c.circle(c.w / 3 + 30, g - 18, 1, C(0xFFD08A)); c.circle(c.w / 3 + 30, g - 18, 5, C(0xFFD08A, 0.12))
-        c.ground(g, C(0x7A5E42), edge: C(0x9A7A58), speck: C(0x6A5038), seed: 12)
+        // Warm plaster walls.
+        c.gradient(0, g, C(0xC8AC84), C(0xA4865F), bands: 5)
+        for i in 0..<(c.w * g / 30) { c.px(Int(noise(i * 5) * Double(c.w)), Int(noise(i * 5 + 1) * Double(g)), C(0x9A7C58, 0.5)) }
+        // The dome: rough rock outside an arch spanning the room, with a smoothed plaster rim.
+        for x in 0..<c.w {
+            let u = (Double(x) / Double(c.w - 1)) * 2 - 1                  // -1 … 1 across the room
+            let curve = Int(3 + (1 - (1 - u * u).squareRoot()) * Double(g - 14))
+            c.rect(x, 0, 1, curve, C(0x5E4630))
+            for i in 0..<(curve / 3) { c.px(x, Int(noise(x * 13 + i) * Double(curve)), C(0x4A3524)) }
+            c.px(x, curve, C(0xE0C8A0)); c.px(x, curve + 1, C(0xB8996E))
+        }
+
+        // The round window, with a beam of desert sun falling across the room.
+        let wx = c.w / 2 + 40, wy = g / 2 - 2
+        c.circle(wx, wy, 8, C(0x7A5E40)); c.circle(wx, wy, 6, C(0xFFF1CF))
+        c.rect(wx - 6, wy, 13, 1, C(0x7A5E40)); c.rect(wx, wy - 6, 1, 13, C(0x7A5E40))
+        for y in wy..<g {
+            let d = y - wy, x0 = wx - 6 - d * 3 / 2
+            c.rect(x0, y, 12 + d / 2, 1, C(0xFFF1CF, 0.10))
+        }
+
+        // His robe on a peg.
+        let rx = 16
+        c.rect(rx, g - 34, 3, 1, C(0x5A4030))
+        for y in 0..<20 { let half = 2 + y / 4; c.rect(rx + 1 - half, g - 33 + y, half * 2 + 1, 1, C(0x6A4A30)) }
+        c.rect(rx - 1, g - 33, 4, 3, C(0x4E3624))                              // the hood
+
+        // The sleeping nook: a curved recess with cushions.
+        let nx = c.w - 120
+        c.ellipse(nx + 22, g - 10, 24, 12, C(0x8A6C4A)); c.rect(nx - 2, g - 10, 48, 10, C(0xA4865F))
+        c.rect(nx + 2, g - 9, 40, 4, C(0xC9B08A)); c.rect(nx + 4, g - 11, 9, 3, C(0x8E5A3A)); c.rect(nx + 31, g - 11, 9, 3, C(0x7A8A6A))
+
+        // The chest that held Anakin's lightsaber, lid open, the hilt glinting inside.
+        let cx = 30
+        c.rect(cx, g - 9, 20, 9, C(0x5A4030)); c.rect(cx, g - 9, 20, 1, C(0x8A6A48))
+        c.rect(cx + 1, g - 16, 18, 6, C(0x4A3424)); c.rect(cx + 1, g - 16, 18, 1, C(0x7A5A3C))   // lid, up
+        c.rect(cx + 6, g - 10, 8, 1, C(0xB8BEC6)); c.px(cx + 9, g - 10, C(0x2A2A2E)); c.px(cx + 13, g - 11, C(0xFFFFFF))
+
+        // Floor, the round woven rug and the low table with the hologram projector.
+        c.ground(g, C(0x8A6C4A), edge: C(0xB8996E), speck: C(0x7A5E40), seed: 12)
+        let mid = 92                                   // left of centre, where the crew doesn't stand in front of it
+        c.ellipse(mid, g + (c.h - g) / 2, 34, max(2, (c.h - g) / 2 - 1), C(0x9A4A30))
+        c.ellipse(mid, g + (c.h - g) / 2, 28, max(1, (c.h - g) / 2 - 2), C(0xB8683E))
+        c.ellipse(mid, g + (c.h - g) / 2, 16, max(1, (c.h - g) / 2 - 3), C(0x9A4A30))
+        c.rect(mid - 9, g - 6, 18, 2, C(0x6A4A30)); c.rect(mid - 7, g - 4, 2, 4, C(0x5A4030)); c.rect(mid + 5, g - 4, 2, 4, C(0x5A4030))
+        c.ellipse(mid, g - 7, 3, 1, C(0x8A8F9C)); c.px(mid, g - 8, C(0x9AD8FF))
+    }
+
+    /// Leia's message flickering above the projector ("Help me, Obi-Wan Kenobi"), and dust drifting in the sunbeam.
+    static func obiWanHologram(_ c: PixelCanvas, _ g: Int, t: Double) {
+        let mid = 92, base = g - 9
+        let flicker = noise(Int(t * 14)) > 0.12 ? 1.0 : 0.35
+        let a = (0.55 + 0.15 * sin(t * 9)) * flicker
+        let blue = C(0x8AD4FF, a), dim = C(0x5AA8E8, a * 0.7)
+        c.rect(mid - 4, base - 18, 9, 18, C(0x6ABFFF, 0.06 * flicker))   // the projection cone
+        // Leia: the buns, head, gown
+        c.rect(mid - 1, base - 18, 3, 4, blue)                                       // head
+        c.rect(mid - 4, base - 17, 2, 2, blue); c.rect(mid + 3, base - 17, 2, 2, blue)   // the side buns
+        c.px(mid, base - 16, dim)                                                     // face shadow
+        c.rect(mid, base - 14, 1, 2, dim)                                             // neck
+        for y in 0..<10 { let half = 1 + y / 3; c.rect(mid - half, base - 12 + y, half * 2 + 1, 1, y % 2 == 0 ? blue : dim) }
+        if noise(Int(t * 5)) > 0.8 { c.rect(mid - 3, base - 10 + Int(noise(Int(t * 20)) * 10), 7, 1, C(0xFFFFFF, 0.4)) }  // a scan glitch
+        // dust motes in the sunbeam
+        let wx = c.w / 2 + 40, wy = g / 2 - 2
+        for i in 0..<7 {
+            let p = (t * 0.05 + Double(i) / 7).truncatingRemainder(dividingBy: 1)
+            let y = wy + 4 + Int(p * Double(g - wy - 6)), x = wx - 4 - Int(p * Double(g - wy) * 1.2) + Int(sin(t + Double(i)) * 2)
+            c.px(x, y, C(0xFFF6E0, 0.5 * (1 - abs(p - 0.5) * 2)))
+        }
     }
 
     // Jawa / R2-D2 — inside the sandcrawler: rusty plates, rivets, and droids waiting to be sold.
