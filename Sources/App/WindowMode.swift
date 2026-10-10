@@ -449,14 +449,23 @@ final class CardsView: NSView {
                     if let img = a.portrait {
                         draw(img, fitting: NSRect(x: tx - 4, y: ty, width: 36, height: 30), in: ctx, maxScale: 1)
                     }
-                    let ax = tx + 40
+                    // A small "AGENT" tag in front, so a row can't be mistaken for a session.
+                    let tag = NSAttributedString(string: "AGENT", attributes: [
+                        .font: NSFont.systemFont(ofSize: 8.5, weight: .heavy), .kern: 0.8,
+                        .foregroundColor: NSColor(white: 0.78, alpha: 1)])
+                    let tagSize = tag.size()
+                    let chip = NSRect(x: tx + 40, y: ty + 2, width: (tagSize.width + 10).rounded(), height: 14)
+                    NSColor(white: 1, alpha: 0.12).setFill()
+                    NSBezierPath(roundedRect: chip, xRadius: 4, yRadius: 4).fill()
+                    tag.draw(at: NSPoint(x: chip.minX + 5, y: (chip.midY - tagSize.height / 2).rounded()))
+                    let ax = chip.maxX + 6
                     let title = NSMutableAttributedString(string: a.name, attributes: [
                         .font: NSFont.systemFont(ofSize: 11.5, weight: .semibold), .foregroundColor: NSColor.white])
                     title.append(NSAttributedString(string: "  —  " + a.task, attributes: [
                         .font: NSFont.systemFont(ofSize: 11.5), .foregroundColor: c.accent]))
-                    title.draw(with: NSRect(x: ax, y: ty + 1, width: tw - 40, height: 16),
+                    title.draw(with: NSRect(x: ax, y: ty + 1, width: tx + tw - ax, height: 16),
                                options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
-                    draw(a.detail, at: NSPoint(x: ax, y: ty + 17), width: tw - 40,
+                    draw(a.detail, at: NSPoint(x: tx + 40, y: ty + 17), width: tw - 40,
                          font: .systemFont(ofSize: 10.5), color: NSColor(white: 0.62, alpha: 1))
                     ty += Self.agentH
                 }

@@ -435,17 +435,19 @@ func starfield(_ c: PixelCanvas, shift: Double = 0, t: Double) {
 func tatooine(_ c: PixelCanvas, rise: Double) {
     let r = 330.0, cx = 205.0, cy = Double(c.h) + r - 34 - (1 - rise) * 70
     let bands = [C(0xE2B77A), C(0xD8A465), C(0xC98F52), C(0xDDAE70), C(0xB97C44), C(0xD39C5E)]
-    for y in max(0, Int(cy - r))..<c.h {
+    for y in min(c.h, max(0, Int(cy - r)))..<c.h {
         let dy = Double(y) - cy
-        let half = (r * r - dy * dy).squareRoot()
-        for x in max(0, Int(cx - half))...min(c.w - 1, Int(cx + half)) {
+        let half = max(0, r * r - dy * dy).squareRoot()
+        let x0 = max(0, Int(cx - half)), x1 = min(c.w - 1, Int(cx + half))
+        guard x0 <= x1 else { continue }
+        for x in x0...x1 {
             let dx = Double(x) - cx
             let lat = Int((dy + r) / 9 + noise(x / 7 + y * 3) * 1.2) % bands.count
             var col = bands[lat]
             // the night side to the left, dithered at the terminator
             let shade = (dx + r * 0.35) / (r * 0.6)
-            if shade < 0 || (shade < 0.25 && (x + y) % 2 == 0) { col = C(0x3A2416) }
-            else if shade < 0.5 && (x + y) % 3 == 0 { col = C(0x7A4E2C) }
+            if shade < 0 || (shade < 0.1 && (x + y) % 2 == 0) { col = C(0x3A2416) }
+            else if shade < 0.2 && (x + y) % 3 == 0 { col = C(0x7A4E2C) }
             // thin bright atmosphere at the limb
             if hypot(dx, dy) > r - 1.5 && shade > 0 { col = C(0xF6E2B8) }
             c.px(x, y, col)
@@ -496,43 +498,59 @@ func tantive(t: Double) -> PixelCanvas {
 
 /// The Star Destroyer seen from below, nose pointing the way it flies (down the frame). `tipY` is the row of
 /// its nose; the hull reaches `length` rows back up to the engine block.
-let sdLength = 330.0, sdHalf = 120.0, sdX = 168.0
+let sdLength = 300.0, sdHalf = 190.0, sdX = 165.0
 
 func starDestroyer(_ c: PixelCanvas, tipY: Double, t: Double) {
     let base = tipY - sdLength
-    for y in max(0, Int(base) - 16)..<min(c.h, Int(tipY) + 1) {
+    let lit = [C(0xA9ABB0), C(0x9A9CA2), C(0xB9BBC0)], shade = [C(0x8F9197), C(0x82848A), C(0x9C9EA4)]
+    for y in max(0, Int(base) - 18)..<min(c.h, Int(tipY) + 1) {
         let back = tipY - Double(y)                       // rows behind the nose
-        if back > sdLength {                              // engine block behind the hull
-            let hw = sdHalf * 0.78
-            for x in max(0, Int(sdX - hw))...min(c.w - 1, Int(sdX + hw)) { c.px(x, y, C(0x55575D)) }
+        if back > sdLength {                              // the engine block behind the hull
+            let hw = sdHalf * 0.8
+            let x0 = max(0, Int(sdX - hw)), x1 = min(c.w - 1, Int(sdX + hw))
+            guard x0 <= x1 else { continue }
+            for x in x0...x1 {
+                let g = noise(y * 211 + x * 13)
+                c.px(x, y, g > 0.9 ? C(0x6A6C72) : (x % 7 == 0 ? C(0x45474C) : C(0x55575D)))
+            }
             continue
         }
         let hw = back * sdHalf / sdLength
-        guard hw >= 0.5 else { c.px(Int(sdX), y, C(0xB4B6BB)); continue }
-        let row = Int(back)
-        for x in max(0, Int(sdX - hw))...min(c.w - 1, Int(sdX + hw)) {
+        guard hw >= 0.5 else { c.px(Int(sdX), y, C(0xC9CBD0)); continue }
+        let row = Int(back), band = row / 10
+        let segW = 5 + Int(noise(band * 17) * 8)
+        let x0 = max(0, Int(sdX - hw)), x1 = min(c.w - 1, Int(sdX + hw))
+        guard x0 <= x1 else { continue }
+        for x in x0...x1 {
             let dx = Double(x) - sdX, edge = hw - abs(dx)
-            var col = dx < 0 ? C(0xA9ABB0) : C(0x8F9197)                 // lit left half, shaded right
-            if edge < 2.5 { col = dx < 0 ? C(0xC9CBD0) : C(0x74767C) }   // bevelled edges
+            let seg = (x + 400) / segW
+            let tone = noise(band * 131 + seg)
+            let pal = dx < 0 ? lit : shade                                 // lit from the left
+            var col = tone < 0.15 ? pal[1] : (tone > 0.85 ? pal[2] : pal[0])
+            if (x + 400) % segW == 0 && edge > 3 { col = C(0x74767C) }      // plate seams
+            if row % 10 == 0 && edge > 3 { col = C(0x6A6C72) }
+            let g = noise(row * 313 + x * 7)
+            if edge > 8 && g > 0.985 { col = C(0x55575D) } else if edge > 8 && g > 0.975 { col = C(0xD4D6DA) }   // greebles
+            if edge >= 6 && edge < 7 { col = C(0x5E6066) }                 // trench along each edge
+            if edge < 2.5 { col = dx < 0 ? C(0xD0D2D6) : C(0x6E7076) }     // bevelled rims
             if abs(dx) < 1.5 { col = C(0x6E7076) }                         // keel line
-            if row % 16 == 0 && edge > 3 { col = C(0x6A6C72) }             // hull plating seams
-            let cell = (row / 16) * 40 + (x + 400) / 9
-            if edge > 4, noise(cell) > 0.82, row % 16 > 4, row % 16 < 12, (x + 400) % 9 < 6 { col = C(0x7C7E84) }   // panels
-            if row > 150 && row < 168 && abs(dx) < 10 { col = C(0x2E3034) }  // the docking bay
+            if row > 118 && row < 150 && abs(dx) < 16 {                     // the docking bay
+                col = (row == 119 || row == 149 || abs(dx) > 14.5) ? C(0x8A8C92) : C(0x24262A)
+            }
             c.px(x, y, col)
         }
         // running lights along the edges
-        if row % 22 == 7 {
+        if row % 18 == 7 {
             let on = sin(t * 6 + Double(row)) > 0
-            c.px(Int(sdX - hw) + 2, y, on ? C(0xFFFFFF) : C(0x9FA3AA)); c.px(Int(sdX + hw) - 2, y, on ? C(0xFFFFFF) : C(0x9FA3AA))
+            c.px(Int(sdX - hw) + 3, y, on ? C(0xFFFFFF) : C(0x9FA3AA)); c.px(Int(sdX + hw) - 3, y, on ? C(0xFFFFFF) : C(0x9FA3AA))
         }
     }
-    // three big engines glowing at the back
-    let ey = Int(base) - 16
-    for (k, ex) in [sdX - 50, sdX, sdX + 50].enumerated() {
-        let r = k == 1 ? 9.0 : 7.0
+    // three big engines glowing at the back, flickering
+    let ey = Int(base) - 18
+    for (k, ex) in [sdX - 80, sdX, sdX + 80].enumerated() {
+        let r = (k == 1 ? 13.0 : 10.0) + sin(t * 25 + Double(k)) * 0.6
         for y in (ey - Int(r))...(ey + Int(r)) where y >= 0 && y < c.h {
-            for x in Int(ex - r)...Int(ex + r) {
+            for x in Int(ex - r)...Int(ex + r) where x >= 0 && x < c.w {
                 let d = hypot(Double(x) - ex, Double(y - ey))
                 if d <= r { c.px(x, y, d < r * 0.45 ? C(0xFFFFFF) : (d < r * 0.75 ? C(0xBFE0FF) : C(0x6FB8FF))) }
             }
@@ -546,7 +564,7 @@ func tantivePos(_ l: Double) -> (x: Double, y: Double, k: Double) {
     return (lerp(186, 150, f) + sin(l * 2.3) * 3, lerp(-28, 118, f) + (l > 4.6 ? (l - 4.6) * 3 : 0), lerp(1.4, 0.7, clamp((l - 1.6) / 6)))
 }
 
-func destroyerTip(_ l: Double) -> Double { -4 + (l - 3.2) * 70 }
+func destroyerTip(_ l: Double) -> Double { -4 + (l - 3.0) * 85 }
 
 func openingBattle(_ ctx: CGContext, local l: Double, t: Double) {
     let tilt = easeOut((l - 0.2) / 1.6)
