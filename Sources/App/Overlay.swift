@@ -1169,7 +1169,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         guard claude || !others.isEmpty else { return }
         if claude { d.set(true, forKey: "offeredHooks") }
         for ai in others { d.set(true, forKey: "offeredHooks.\(ai.name)") }
-        let names = (claude ? ["Claude Code"] : []) + others.map { $0.name == "codex" ? "Codex" : "Qwen Code" }
+        let names = (claude ? ["Claude Code"] : []) + others.map { HookInstaller.displayName($0.name) }
         let list = names.count > 1 ? names.dropLast().joined(separator: ", ") + " and " + names.last! : names[0]
         let codex = others.contains { $0.name == "codex" }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
@@ -1520,7 +1520,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 if !meta.isEmpty { lines.append((meta, dim)) }
                 if let a = r.activity, s.mood != .idle { lines.append(("Now: " + a, .white)) }
                 if let p = r.prompt { lines.append(("You: “" + p + "”", soft)) }
-                if let reply = r.reply, s.mood == .idle { lines.append(("Claude: “" + reply + "”", soft)) }
+                if let reply = r.reply, s.mood == .idle { lines.append((s.assistant.capitalized + ": “" + reply + "”", soft)) }
                 var stats: [String] = []
                 if let n = r.prompts { stats.append("\(n) prompt\(n == 1 ? "" : "s")") }
                 if let n = r.tools { stats.append("\(n) tool call\(n == 1 ? "" : "s")") }
@@ -1701,19 +1701,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         } else {
             sm.addItem(action: "Install Claude Code Hooks", #selector(installHooks), target: self)
         }
-        if HookInstaller.codexAvailable {
-            if HookInstaller.codexInstalled {
-                sm.addItem(action: "Remove Codex Hooks", #selector(removeCodexHooks), target: self)
-            } else {
-                sm.addItem(action: "Install Codex Hooks", #selector(installCodexHooks), target: self)
-            }
-        }
-        if HookInstaller.available(HookInstaller.qwen) {
-            if HookInstaller.installed(HookInstaller.qwen) {
-                sm.addItem(action: "Remove Qwen Code Hooks", #selector(removeQwenHooks), target: self)
-            } else {
-                sm.addItem(action: "Install Qwen Code Hooks", #selector(installQwenHooks), target: self)
-            }
+        for ai in HookInstaller.others where HookInstaller.available(ai) {
+            let on = HookInstaller.installed(ai)
+            let item = NSMenuItem(title: "\(on ? "Remove" : "Install") \(HookInstaller.displayName(ai.name)) Hooks",
+                                  action: on ? #selector(removeOtherHooks(_:)) : #selector(installOtherHooks(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = ai.name
+            sm.addItem(item)
         }
         root.submenu = sm
         return root
@@ -1888,12 +1882,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     @objc private func fixHookIssue(_ sender: NSMenuItem) {
         guard let what = sender.representedObject as? String else { return }
         if what.hasPrefix("jump:"), let pid = Int32(what.dropFirst(5)) { Jump.toSession(pid: pid); return }
-        switch what {
-        case "claude": installHooks()
-        case "codex": installCodexHooks()
-        case "qwen": installQwenHooks()
-        default: break
-        }
+        if what == "claude" { installHooks() } else { installOther(what) }
         lastHookCheck = 0
     }
 
@@ -1901,26 +1890,22 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         do { try HookInstaller.install() } catch { alert("Couldn't install hooks", error.localizedDescription) }
     }
 
-    @objc private func installCodexHooks() {
+    @objc private func installOtherHooks(_ sender: NSMenuItem) { installOther(sender.representedObject as? String ?? "") }
+
+    private func installOther(_ name: String) {
+        guard let ai = HookInstaller.other(name) else { return }
+        let display = HookInstaller.displayName(name)
         do {
-            try HookInstaller.installCodex()
-            alert("Codex hooks installed", "Codex only runs new hooks after you trust them: run /hooks in Codex and approve them. Codex sessions that are already open pick them up after a restart.")
-        } catch { alert("Couldn't install Codex hooks", error.localizedDescription) }
+            try HookInstaller.install(ai)
+            alert("\(display) hooks installed", name == "codex"
+                  ? "Codex only runs new hooks after you trust them: run /hooks in Codex and approve them. Codex sessions that are already open pick them up after a restart."
+                  : "\(display) sessions that are already open pick them up after a restart.")
+        } catch { alert("Couldn't install \(display) hooks", error.localizedDescription) }
     }
 
-    @objc private func installQwenHooks() {
-        do {
-            try HookInstaller.install(HookInstaller.qwen)
-            alert("Qwen Code hooks installed", "Qwen Code sessions that are already open pick them up after a restart.")
-        } catch { alert("Couldn't install Qwen Code hooks", error.localizedDescription) }
-    }
-
-    @objc private func removeQwenHooks() {
-        do { try HookInstaller.uninstall(HookInstaller.qwen) } catch { alert("Couldn't remove Qwen Code hooks", error.localizedDescription) }
-    }
-
-    @objc private func removeCodexHooks() {
-        do { try HookInstaller.uninstallCodex() } catch { alert("Couldn't remove Codex hooks", error.localizedDescription) }
+    @objc private func removeOtherHooks(_ sender: NSMenuItem) {
+        guard let name = sender.representedObject as? String, let ai = HookInstaller.other(name) else { return }
+        do { try HookInstaller.uninstall(ai) } catch { alert("Couldn't remove \(HookInstaller.displayName(name)) hooks", error.localizedDescription) }
     }
 
     @objc private func removeHooks() {

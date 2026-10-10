@@ -63,7 +63,7 @@ struct SessionSnapshot {
     var live = true        // false = found in the process table but its hooks never fired
     var pid: Int32?        // the claude process, for jumping to its terminal
     var record: SessionRecord?   // everything the hooks know (nil for sessions without hooks)
-    var assistant = "claude"     // which AI runs this session: "claude" or "codex"
+    var assistant = "claude"     // which AI runs this session: "claude", "codex", "qwen", "gemini" or "copilot"
     var stalled = false          // hooks say idle, but the process has been busy for a minute: not reporting
     var hookSilent = false       // started after our hooks were installed and ran a turn, yet never reported (e.g. Codex: not approved)
     var cwd: String?
@@ -107,6 +107,26 @@ enum StatusStore {
     }
 
     /// Apply one Claude Code hook event (the JSON Claude Code pipes to the hook on stdin).
+    /// Brings other AIs' payloads to the Claude Code shape `apply` reads: Copilot's camelCase fields, Gemini CLI's
+    /// event names (BeforeAgent → UserPromptSubmit, AfterTool → PostToolUse…), tool input sent as a JSON string.
+    static func normalize(_ input: [String: Any], assistant: String, event: String?) -> [String: Any] {
+        var j = input
+        let renames = ["sessionId": "session_id", "hookEventName": "hook_event_name", "toolName": "tool_name",
+                       "toolArgs": "tool_input", "transcriptPath": "transcript_path", "agentId": "agent_id",
+                       "agentName": "agent_type", "agentDescription": "description"]
+        for (from, to) in renames where j[to] == nil { if let v = j[from] { j[to] = v } }
+        if let text = j["tool_input"] as? String, let data = text.data(using: .utf8),
+           let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] { j["tool_input"] = obj }
+        if let event { j["hook_event_name"] = event }
+        if assistant == "gemini" {
+            let names = ["BeforeAgent": "UserPromptSubmit", "AfterAgent": "Stop", "BeforeTool": "PreToolUse", "AfterTool": "PostToolUse"]
+            if let e = j["hook_event_name"] as? String, let mapped = names[e] { j["hook_event_name"] = mapped }
+            if j["last_assistant_message"] == nil, let reply = j["prompt_response"] { j["last_assistant_message"] = reply }
+            if (j["notification_type"] as? String) == "ToolPermission" { j["notification_type"] = "permission_prompt" }
+        }
+        return j
+    }
+
     static func apply(event json: [String: Any], assistant: String = "claude", now: Double = Date().timeIntervalSince1970) {
         let event = json["hook_event_name"] as? String ?? ""
         let session = json["session_id"] as? String ?? "default"
@@ -206,7 +226,7 @@ enum StatusStore {
                     var pending = s.pending ?? []
                     let match = pending.firstIndex { $0.session == session && $0.type == type }
                         ?? pending.firstIndex { $0.session == session }
-                    let task = match.map { pending.remove(at: $0).task }
+                    let task = match.map { pending.remove(at: $0).task } ?? clip(json["description"], 80)
                     s.pending = pending
                     s.agents.append(AgentRecord(
                         id: id, session: session, type: type,
@@ -214,10 +234,15 @@ enum StatusStore {
                         started: now, lastSeen: now, task: task))
                 }
             case "SubagentStop":
-                if let a = agentId {
+                if let a = agentId, s.agents.contains(where: { $0.id == a }) {
                     s.agents.removeAll { $0.id == a }
-                } else if let i = s.agents.lastIndex(where: { $0.session == session }) {
-                    s.agents.remove(at: i)
+                } else if agentId == nil || assistant == "copilot" {
+                    // No id, or (Copilot) an id its SubagentStart didn't give us: the oldest agent of that type.
+                    let type = json["agent_type"] as? String
+                    if let i = s.agents.firstIndex(where: { $0.session == session && $0.type == type })
+                        ?? s.agents.lastIndex(where: { $0.session == session }) {
+                        s.agents.remove(at: i)
+                    }
                 }
             case "SessionEnd":
                 s.sessions[session] = nil
@@ -253,7 +278,8 @@ enum StatusStore {
         case "glob": return "Glob " + short(str("pattern") ?? "", 32)
         case "web_fetch": return "Fetch " + (str("url").flatMap { URL(string: $0)?.host } ?? "the web")
         case "web_search", "google_web_search": return "Search: " + short(str("query") ?? "", 40)
-        case "todo_write": return "Updating todos"
+        case "todo_write", "write_todos": return "Updating todos"
+        case "list_directory": return "List " + (file("dir_path") ?? file("path") ?? "files")
         case "task", "agent": return "Agent: " + short(str("description") ?? "", 40)
         case "NotebookEdit": return "Edit \(file("notebook_path") ?? "")"
         case "Grep": return "Grep " + short(str("pattern") ?? "", 32)
@@ -293,9 +319,10 @@ enum StatusStore {
         let live = sessions.values.filter { $0.leader != nil }
         guard live.contains(where: { assistantOf($0) != assistant }) else { return nil }
         // Whoever has been running longest keeps the side it mostly has (ties: its first character's side).
-        guard let first = live.min(by: { ($0.created ?? $0.updated) < ($1.created ?? $1.updated) }) else { return nil }
+        // (A record without `created` predates that field, so it's older than any that has one.)
+        guard let first = live.min(by: { ($0.created ?? 0) < ($1.created ?? 0) }) else { return nil }
         let firstAI = assistantOf(first)
-        let theirs = live.filter { assistantOf($0) == firstAI }.sorted { ($0.created ?? $0.updated) < ($1.created ?? $1.updated) }
+        let theirs = live.filter { assistantOf($0) == firstAI }.sorted { ($0.created ?? 0) < ($1.created ?? 0) }
         let dark = theirs.filter { isDark($0.leader!) }.count, light = theirs.count - dark
         let firstSideDark = dark == light ? isDark(theirs[0].leader!) : dark > light
         return firstAI == assistant ? firstSideDark : !firstSideDark

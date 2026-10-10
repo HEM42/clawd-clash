@@ -9,13 +9,13 @@ if args.contains("--install-hooks") || args.contains("--uninstall-hooks") {
             print("Installed Claude Code hooks → \(HookInstaller.hookBinary)")
             for ai in HookInstaller.others where HookInstaller.available(ai) {
                 try HookInstaller.install(ai)
-                print("Installed \(ai.name.capitalized) hooks → \(ai.file.path)"
+                print("Installed \(HookInstaller.displayName(ai.name)) hooks → \(ai.file.path)"
                       + (ai.name == "codex" ? " (trust them once: run /hooks in Codex and approve)" : ""))
             }
         } else {
             try HookInstaller.uninstall()
             for ai in HookInstaller.others { try HookInstaller.uninstall(ai) }
-            print("Removed the Claude Code, Codex and Qwen hooks")
+            print("Removed the Clawd Wars hooks from Claude Code, Codex, Qwen Code, Gemini CLI and Copilot CLI")
         }
         exit(0)
     } catch {

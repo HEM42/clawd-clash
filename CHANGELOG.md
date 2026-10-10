@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.21.0 — 2026-10-10
+
+### Added
+- **Gemini CLI support.** Hooks go in `~/.gemini/settings.json`, next to the user's own settings and hooks. A backup is kept, and the handler is named `clawd-wars` so `/hooks disable clawd-wars` works. Gemini CLI uses its own event names, which the hook translates: `BeforeAgent` → prompt, `BeforeTool`/`AfterTool` → tool calls, `AfterAgent` → done (its `prompt_response` becomes the reply), and a `ToolPermission` notification → needs you. Timeouts are in milliseconds there. Its tools are described like Qwen's (`replace`, `write_file`, `run_shell_command`, `grep_search`, `list_directory`, `write_todos`…).
+  - `~/.gemini` is shared with Google's newer Antigravity CLI, so Gemini CLI counts as installed only when a `gemini` command exists. The app looks in Homebrew, `/usr/local`, `~/.local`, npm-global, nvm, Volta, Bun, pnpm, Yarn, asdf and mise, because an app's own PATH is bare.
+- **GitHub Copilot CLI support.** Our hooks get a file of their own, `~/.copilot/hooks/clawd-wars.json` (`"version": 1`, flat entries with `bash` and `timeoutSec`), which is deleted on uninstall. Using PascalCase event names gets Copilot's Claude-compatible payloads (snake_case fields, Claude tool names), so nearly everything maps directly.
+  - `SubagentStart` only exists in camelCase. That one entry is camelCase, and the hook converts the payload (`sessionId`, `agentName`, `agentDescription` → the agent's task).
+  - Copilot's `SubagentStop` carries an id its start event never sent, so a Copilot agent that can't be matched by id removes the oldest agent of the same type.
+  - Like Gemini, it only counts as installed when a `copilot` command exists. A `~/.copilot` folder alone can come from Copilot in VS Code.
+- Gemini CLI (gold) and Copilot CLI (mint) get their own outline colours and list sections, take sides like the others, and are covered by the hook health checks, the first-launch offer and Settings → Install/Remove … Hooks.
+- The hook takes `--event <name>` for AIs whose payloads don't name the event or use their own names. `StatusStore.normalize` translates the payload before `apply`.
+
+### Fixed
+- **Sides with old sessions.** A session recorded before sessions had a start time fell back to its last-update time, which keeps moving, so the oldest AI could look like the newest and the side rule flipped. A missing start time now counts as the oldest.
+- **npm-installed AIs that launch a child process.** The scan found both the npm wrapper and the real process, kept the wrapper, and dropped the process actually running the hooks. For Codex, Qwen, Gemini and Copilot it now keeps the child; Claude keeps its old rule for nested runs.
+
+### Changed
+- Settings lists Install/Remove Hooks for every supported AI found on the Mac, generated from `HookInstaller.others`. Cards name the reply's author by AI ("Gemini: …") instead of always "Claude:".
+
 ## 2.20.0 — 2026-10-10
 
 ### Added

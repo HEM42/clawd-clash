@@ -1,6 +1,6 @@
 # Clawd Wars
 
-> A native macOS app (Swift + AppKit, no dependencies) that shows running Claude Code, OpenAI Codex and Qwen Code sessions as pixel-art Star Wars characters on the desktop or in a window. Every session and subagent is a hero or a villain (one shared cast; with two AIs running they take opposite sides); they fight while they work. Status comes from Claude Code, Codex and Qwen Code hooks (same hook binary, `--assistant codex|qwen`; config in `HookInstaller.OtherAI`). Every sprite, effect, location and the app icon are drawn in code — there are no image assets.
+> A native macOS app (Swift + AppKit, no dependencies) that shows running Claude Code, OpenAI Codex, Qwen Code, Gemini CLI and GitHub Copilot CLI sessions as pixel-art Star Wars characters on the desktop or in a window. Every session and subagent is a hero or a villain (one shared cast; with two AIs running they take opposite sides); they fight while they work. Status comes from Claude Code, Codex and Qwen Code hooks (same hook binary, `--assistant codex|qwen|gemini|copilot` and `--event <name>`; per-AI config in `HookInstaller.OtherAI`, payloads translated by `StatusStore.normalize`). Every sprite, effect, location and the app icon are drawn in code — there are no image assets.
 
 ## Build and run
 
@@ -12,7 +12,7 @@
 ## Code map
 
 - [Sources/Shared/StatusStore.swift](Sources/Shared/StatusStore.swift): the state shared by hook and app (`~/.claude/vader-status/state.json`, written under `flock`). Turns hook events into session/agent records, assigns villains (random, Vader and Kylo never back to back) and heroes, and builds `SessionSnapshot`s.
-- [Sources/Shared/Processes.swift](Sources/Shared/Processes.swift): finds `claude`, `codex` and `qwen` processes, their cwd, start time and CPU time (sessions without hooks, dead-session pruning, "busy" detection).
+- [Sources/Shared/Processes.swift](Sources/Shared/Processes.swift): finds `claude`, `codex`, `qwen`, `gemini` and `copilot` processes, their cwd, start time and CPU time (sessions without hooks, dead-session pruning, "busy" detection).
 - [Sources/Hook/main.swift](Sources/Hook/main.swift): the `vader-hook` binary Claude Code runs; reads hook JSON from stdin, never prints, always exits 0.
 - [Sources/App/Overlay.swift](Sources/App/Overlay.swift): `OverlayController` — refresh loop, status debounce, fight pairing and formation layout, walking, labels, bubbles, hover cards, menus, window-mode glue, frame dump. `OverlayView.render` draws a list of `DrawItem`s (screen coordinates).
 - [Sources/App/Characters.swift](Sources/App/Characters.swift): the shared Clawd body, saber choreography (`kataPose`, `duelPose`), blasters, and all heroes (`Companion`).

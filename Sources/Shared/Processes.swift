@@ -93,17 +93,28 @@ enum ClaudeProcesses {
             let isClaude = exe == "claude" || args.contains { $0.hasSuffix("@anthropic-ai/claude-code/cli.js") }
             let isCodex = exe == "codex" || args.contains { $0.contains("@openai/codex") && $0.hasSuffix(".js") }
             let isQwen = exe == "qwen" || args.contains { $0.contains("@qwen-code/qwen-code") && $0.hasSuffix(".js") }
-            guard isClaude || isCodex || isQwen else { continue }
+            let isGemini = exe == "gemini" || args.contains { $0.contains("@google/gemini-cli/") && $0.hasSuffix(".js") }
+            // "@github/copilot/" with the slash: not VS Code's copilot-language-server
+            let isCopilot = exe == "copilot" || args.contains { $0.contains("@github/copilot/") && $0.hasSuffix(".js") }
+            guard isClaude || isCodex || isQwen || isGemini || isCopilot else { continue }
             let skip = ["-p", "--print", "--chrome-native-host", "mcp", "--version", "-v", "update", "doctor",
                         "exec", "login", "logout", "app-server", "mcp-server", "completion", "proto"]
             if args.dropFirst().contains(where: { skip.contains($0) }) { continue }
             let project = cwd(pid).map { ($0 as NSString).lastPathComponent } ?? ""
             let st = info.kp_proc.p_starttime
-            found.append(Info(pid: pid, project: project, assistant: isCodex ? "codex" : (isQwen ? "qwen" : "claude"),
+            let assistant = isCodex ? "codex" : isQwen ? "qwen" : isGemini ? "gemini" : isCopilot ? "copilot" : "claude"
+            found.append(Info(pid: pid, project: project, assistant: assistant,
                               started: Double(st.tv_sec) + Double(st.tv_usec) / 1e6))
         }
-        // A claude launched by another claude (e.g. a nested tool) isn't a separate session.
-        let ids = Set(found.map(\.pid))
-        return found.filter { parent($0.pid).map { !ids.contains($0) } ?? true }.sorted { $0.pid < $1.pid }
+        // A claude launched by another claude (e.g. a nested tool) isn't a separate session. The other AIs are
+        // often an npm wrapper (or Gemini/Qwen relaunching itself) starting the real process: keep that child,
+        // since it's the one that runs the hooks.
+        let byPid = Dictionary(found.map { ($0.pid, $0) }, uniquingKeysWith: { a, _ in a })
+        var drop = Set<Int32>()
+        for info in found {
+            guard let p = parent(info.pid), let up = byPid[p], up.assistant == info.assistant else { continue }
+            drop.insert(info.assistant == "claude" ? info.pid : up.pid)
+        }
+        return found.filter { !drop.contains($0.pid) }.sorted { $0.pid < $1.pid }
     }
 }
