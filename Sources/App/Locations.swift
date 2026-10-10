@@ -129,7 +129,10 @@ enum Location: String, CaseIterable {
     func drawAnimated(_ c: PixelCanvas, floorRows f: Int, t: Double) {
         let g = c.h - f
         switch self {
-        case .cantina: Cantina.drawBand(c, floorRows: f, t: t); Cantina.drawBarCrowd(c, floorRows: f, t: t)
+        case .cantina:
+            // Tonight's band: the Modal Nodes or, on some nights, the Max Rebo Band (re-rolled on each visit).
+            if Cantina.maxReboTonight { Scenes.maxReboBand(c, g - 4, t: t, at: 2) } else { Cantina.drawBand(c, floorRows: f, t: t) }
+            Cantina.drawBarCrowd(c, floorRows: f, t: t)
         case .deathStar, .executor: Scenes.blinkLights(c, g, t: t, seed: self == .deathStar ? 1 : 2)
         case .sarlaccPit: Scenes.sarlaccTentacles(c, g, t: t)
         case .jabbasPalace: Scenes.torches(c, g, t: t); Scenes.maxReboBand(c, g, t: t)
@@ -714,9 +717,9 @@ enum Scenes {
 
     /// The Max Rebo Band in Jabba's palace, as in the original Return of the Jedi: Max Rebo at his red ball jett
     /// organ, Sy Snootles singing into the mic, Droopy McCool (eyeless Kitonak) on his chindinkalu flute.
-    static func maxReboBand(_ c: PixelCanvas, _ g: Int, t: Double) {
-        let x0 = c.w - 64
-        guard x0 > 60 else { return }
+    static func maxReboBand(_ c: PixelCanvas, _ g: Int, t: Double, at x: Int? = nil) {
+        let x0 = x ?? c.w - 64                           // Jabba's palace: the right side of the throne room
+        guard x != nil || x0 > 60 else { return }
         func bob(_ k: Double) -> Int { (t * 2.2 + k).truncatingRemainder(dividingBy: 1) < 0.5 ? 0 : -1 }
 
         // Max Rebo: small blue Ortolan with floppy ears and a trunk, at the red ball organ

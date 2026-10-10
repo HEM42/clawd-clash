@@ -182,6 +182,7 @@ final class SceneView: NSView {
 
         // The place only changes when the window is resized or the location changes.
         let location = controller.location
+        if room?.location != location && location == .cantina { Cantina.maxReboTonight = Bool.random() }   // a new night
         if room?.size != b.size || room?.location != location {
             let c = PixelCanvas(pw, ph)
             location.drawStatic(c, floorRows: floorRows)

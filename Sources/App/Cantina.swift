@@ -120,8 +120,11 @@ enum Cantina {
         c.rect(x + r - 3, bottom - 12, 6, 1, glow.alpha(0.25))
     }
 
-    /// Width of the band stage: the four Modal Nodes seen on screen.
-    static let bandWidth = 50
+    /// Width of the band stage: room for the four Modal Nodes or the Max Rebo Band.
+    static let bandWidth = 66
+
+    /// Which band is playing: the Modal Nodes, or (at random) the Max Rebo Band. Re-rolled on each visit.
+    static var maxReboTonight = Bool.random()
 
     /// Figrin D'an and the Modal Nodes as seen in the cantina: four Bith bobbing to the beat — Figrin D'an
     /// (kloo horn), Doikk Na'ts (Fizzz), Ickabel G'ont and Tedn Dahai (fanfars).

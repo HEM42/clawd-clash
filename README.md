@@ -80,7 +80,7 @@ The scene is set **where the first Claude belongs** — the Death Star for Vader
   <img src="docs/window-hoth.png" alt="Window mode on Hoth" width="760">
 </p>
 
-22 hand-built locations, each with its own little animation — Figrin D'an and the Modal Nodes play in the cantina while Wuher polishes glasses and Dr. Evazan looks for trouble at the bar, the Max Rebo Band plays for Jabba, the sarlacc's tentacles wave, Theed's laser gates pulse, snow falls on Hoth, fog drifts across Dagobah:
+22 hand-built locations, each with its own little animation — Figrin D'an and the Modal Nodes (or, some nights, the Max Rebo Band) play in the cantina while Wuher polishes glasses and Dr. Evazan looks for trouble at the bar, the Max Rebo Band plays for Jabba, the sarlacc's tentacles wave, Theed's laser gates pulse, snow falls on Hoth, fog drifts across Dagobah:
 
 <p align="center">
   <img src="docs/locations.png" alt="All 22 locations" width="760">

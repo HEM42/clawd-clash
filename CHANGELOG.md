@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.17.2 — 2026-10-10
+
+### Changed
+- The cantina's band is now random: each time the cantina comes up (at launch, or on switching to it) it's either Figrin D'an and the Modal Nodes or the Max Rebo Band, on the same stage. The stage is widened to 66 px to fit either. The Max Rebo Band still plays in Jabba's palace.
+
 ## 2.17.1 — 2026-10-10
 
 ### Fixed
