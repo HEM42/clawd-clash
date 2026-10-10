@@ -129,10 +129,10 @@ enum Location: String, CaseIterable {
     func drawAnimated(_ c: PixelCanvas, floorRows f: Int, t: Double) {
         let g = c.h - f
         switch self {
-        case .cantina: Cantina.drawBand(c, floorRows: f, t: t)
+        case .cantina: Cantina.drawBand(c, floorRows: f, t: t); Cantina.drawBarCrowd(c, floorRows: f, t: t)
         case .deathStar, .executor: Scenes.blinkLights(c, g, t: t, seed: self == .deathStar ? 1 : 2)
         case .sarlaccPit: Scenes.sarlaccTentacles(c, g, t: t)
-        case .jabbasPalace: Scenes.torches(c, g, t: t)
+        case .jabbasPalace: Scenes.torches(c, g, t: t); Scenes.maxReboBand(c, g, t: t)
         case .theed: Scenes.laserGates(c, g, t: t)
         case .emperorThrone: Scenes.spaceBattle(c, g, t: t)
         case .dagobah: Scenes.swampFog(c, g, t: t)
@@ -710,5 +710,50 @@ enum Scenes {
             let y = Int((noise(i * 7) * Double(g) + t * (3 + noise(i * 7 + 1) * 3)).truncatingRemainder(dividingBy: Double(g)))
             c.px(x0 - 6 + Int(noise(i * 7 + 2) * 12) + y / 8, y, C(0xF2D8A0, 0.5))
         }
+    }
+
+    /// The Max Rebo Band in Jabba's palace: Max Rebo at his red organ, Sy Snootles singing into the mic,
+    /// Droopy McCool on his long horn — all bobbing to the beat on the right side of the throne room.
+    static func maxReboBand(_ c: PixelCanvas, _ g: Int, t: Double) {
+        let x0 = c.w - 64
+        guard x0 > 60 else { return }
+        func bob(_ k: Double) -> Int { (t * 2.2 + k).truncatingRemainder(dividingBy: 1) < 0.5 ? 0 : -1 }
+
+        // Max Rebo: small blue Ortolan with floppy ears and a trunk, at the red ball organ
+        c.oy = bob(0)
+        let blue = C(0x5A8AD8), blueDark = C(0x3E6AB0)
+        c.ellipse(x0 + 8, g - 7, 6, 5, blue)
+        c.rect(x0 + 1, g - 12, 4, 5, blueDark); c.rect(x0 + 12, g - 12, 4, 5, blueDark)       // ears
+        c.px(x0 + 6, g - 9, C(0x101010)); c.px(x0 + 10, g - 9, C(0x101010))                  // eyes
+        c.rect(x0 + 8, g - 7, 1, 4, blueDark); c.px(x0 + 9, g - 3, blueDark)                  // trunk
+        c.oy = 0
+        c.ellipse(x0 + 8, g - 3, 7, 3, C(0xC8303A))                                           // the organ
+        for k in 0..<5 { c.px(x0 + 3 + k * 2, g - 5, (Int(t * 5) + k) % 4 == 0 ? C(0xFFE27A) : white) }
+
+        // Sy Snootles: thin yellow-green singer with a long-lipped snout, at a microphone stand
+        let sx = x0 + 26
+        c.oy = bob(0.33)
+        let sy = C(0xB8C860), syDark = C(0x8A9A40)
+        c.rect(sx + 1, g - 9, 1, 9, syDark); c.rect(sx + 4, g - 9, 1, 9, syDark)            // spindly legs
+        c.ellipse(sx + 3, g - 11, 3, 3, sy)                                                    // body
+        c.rect(sx + 2, g - 17, 3, 4, sy)                                                       // head
+        c.px(sx + 2, g - 16, C(0x101010)); c.px(sx + 4, g - 16, C(0x101010))
+        c.rect(sx + 5, g - 15, 4, 1, C(0xD86A7A))                                              // the long lips
+        c.oy = 0
+        c.rect(sx + 9, g - 15, 1, 15, C(0x9AA0A8)); c.rect(sx + 8, g - 16, 3, 2, C(0x3A3A42)) // mic stand
+
+        // Droopy McCool: chubby pale Kitonak with his long horn
+        let dx = x0 + 44
+        c.oy = bob(0.66)
+        let pale = C(0xD8D4CC), paleDark = C(0xB0ACA4)
+        c.ellipse(dx + 6, g - 7, 6, 7, pale)
+        c.rect(dx + 2, g - 3, 9, 3, paleDark)
+        c.px(dx + 5, g - 10, C(0x3A3A3A)); c.px(dx + 8, g - 10, C(0x3A3A3A))                 // tiny eyes
+        c.rect(dx + 7, g - 8, 9, 1, C(0xC9CED6)); c.rect(dx + 15, g - 9, 2, 3, C(0xC9CED6)) // the horn
+        c.oy = 0
+
+        // notes
+        let f = (t / 1.4).truncatingRemainder(dividingBy: 1)
+        c.pattern(x0 + 20, g - 24 - Int(f * 8), ["..N", "..N", "NNN", "NN."], ["N": C(0xFFC86A, 1 - f)])
     }
 }

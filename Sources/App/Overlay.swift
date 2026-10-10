@@ -77,6 +77,15 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
     private var focusedPid: Int32?
     private var lastFocusCheck = 0.0
     private var lastShot = 0.0
+    // Chaos test (--chaos[=seconds]): random sessions/agents/moods, with layout invariants checked continuously.
+    private let chaosSeconds: Double? = CommandLine.arguments.first { $0.hasPrefix("--chaos") }
+        .map { arg in arg.split(separator: "=").count == 2 ? Double(arg.split(separator: "=")[1]) ?? 120 : 120 }
+    private var chaos: [SessionSnapshot] = []
+    private var chaosAgentSerial = 0
+    private var violations: [String: (count: Int, examples: [String])] = [:]
+    private var walkingSince: [String: Double] = [:]
+    private var missingSince: [String: Double] = [:]
+    private var lastCheck = 0.0
     private var hasLaidOut = false          // after the first layout, newcomers walk in instead of appearing
     private var hoveredKey: String?
     private var busySince: [Int32: Double] = [:]
@@ -222,7 +231,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
 
     private func refreshStatus() {
         let now = Date().timeIntervalSince1970
-        if let playground {
+        if chaosSeconds != nil {
+            offlineReason = nil
+            sessions = chaosStep(now)
+        } else if let playground {
             offlineReason = nil
             sessions = playgroundSessions(playground)
         } else if demo {
@@ -621,6 +633,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
 
         items = buildItems(now: now)
         if let shotPath, now - lastShot > 5 { lastShot = now; writeShot(to: shotPath) }
+        if chaosSeconds != nil, now - lastCheck > 0.25 { lastCheck = now; checkInvariants(now) }
 
         if windowMode {
             clawdWindow?.sceneView.needsDisplay = true
@@ -1048,6 +1061,95 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
                 self.lastHookCheck = 0
             }
         }
+    }
+
+    // MARK: Chaos test
+
+    /// One random step: Claudes and agents come and go and change mood, much faster than real use.
+    private func chaosStep(_ now: Double) -> [SessionSnapshot] {
+        if let limit = chaosSeconds, now - start > limit { finishChaos() }
+        func roll(_ p: Double) -> Bool { Double.random(in: 0..<1) < p }
+        let moods: [Mood] = [.working, .working, .thinking, .waiting, .idle]
+        if chaos.isEmpty || (chaos.count < 7 && roll(0.15)) {
+            let used = Set(chaos.map(\.leader))
+            if let l = (0..<StatusStore.leaderCount).filter({ !used.contains($0) }).randomElement() {
+                chaos.append(SessionSnapshot(id: "chaos-\(l)-\(Int(now * 1000))", leader: l, project: "project-\(l)",
+                                             mood: moods.randomElement()!, agents: []))
+            }
+        }
+        if chaos.count > 1 && roll(0.08) { chaos.remove(at: Int.random(in: 0..<chaos.count)) }
+        if roll(0.4), !chaos.isEmpty { chaos[Int.random(in: 0..<chaos.count)].mood = moods.randomElement()! }
+        let agentCount = chaos.reduce(0) { $0 + $1.agents.count }
+        if agentCount < 12 && roll(0.25), !chaos.isEmpty {
+            chaosAgentSerial += 1
+            let i = Int.random(in: 0..<chaos.count)
+            chaos[i].agents.append(AgentRecord(id: "chaos-a\(chaosAgentSerial)", session: chaos[i].id, type: "chaos",
+                                               character: Int.random(in: 0..<StatusStore.companionCount),
+                                               started: now, lastSeen: now,
+                                               task: Self.sampleTasks.randomElement()))
+        }
+        if roll(0.2), let i = chaos.indices.filter({ !chaos[$0].agents.isEmpty }).randomElement() {
+            chaos[i].agents.remove(at: Int.random(in: 0..<chaos[i].agents.count))
+        }
+        return chaos
+    }
+
+    private func violation(_ kind: String, _ example: String) {
+        var v = violations[kind] ?? (0, [])
+        v.count += 1
+        if v.examples.count < 3 { v.examples.append(example) }
+        violations[kind] = v
+    }
+
+    /// The rules the layout must keep, whatever happens.
+    private func checkInvariants(_ now: Double) {
+        let st = stage
+        let onStage = actors.filter { $0.leaving == nil && now >= $0.born }
+        for a in onStage {
+            // Off screen: once it has had time to walk in, every character's body stays on the stage.
+            if now - a.born > 4, a.walkDir == 0, a.x < st.minX - 1 || a.x > st.maxX + 1 {
+                violation("character off screen", "\(a.key) at x=\(Int(a.x)) (stage \(Int(st.minX))…\(Int(st.maxX)))")
+            }
+            // Stuck walking: nobody walks for more than 8 s without arriving.
+            if a.walkDir != 0 {
+                let since = walkingSince[a.key] ?? now
+                walkingSince[a.key] = since
+                if now - since > 8 { violation("stuck walking", "\(a.key) walking \(Int(now - since))s toward \(Int(a.targetX)) from \(Int(a.x))") }
+            } else {
+                walkingSince[a.key] = nil
+            }
+        }
+        // Missing: every session and agent shows up within 3 s.
+        var wanted: [String] = []
+        for s in sessions { wanted.append("L:" + s.id); wanted += s.agents.map { "A:" + $0.id } }
+        let present = Set(actors.filter { $0.leaving == nil }.map(\.key))
+        for key in wanted where !present.contains(key) {
+            let since = missingSince[key] ?? now
+            missingSince[key] = since
+            if now - since > 3 { violation("missing character", key) }
+        }
+        missingSince = missingSince.filter { !present.contains($0.key) && wanted.contains($0.key) }
+        if present.count > wanted.count { violation("extra characters", "\(present.count) on stage for \(wanted.count) wanted") }
+        // Labels: on screen, and never on top of each other.
+        let boxes = items.filter { $0.boxed && $0.alpha > 0.5 }.map(\.rect)
+        for r in boxes where r.minX < st.minX - 1 || r.maxX > st.maxX + 1 {
+            violation("label off screen", "x \(Int(r.minX))…\(Int(r.maxX))")
+        }
+        for (i, a) in boxes.enumerated() {
+            for b in boxes.dropFirst(i + 1) where a.insetBy(dx: 1, dy: 1).intersects(b.insetBy(dx: 1, dy: 1)) {
+                violation("labels overlap", "\(Int(a.minX)),\(Int(a.minY)) and \(Int(b.minX)),\(Int(b.minY))")
+            }
+        }
+    }
+
+    private func finishChaos() {
+        var report = "Chaos test: \(Int(chaosSeconds ?? 0)) s, \(chaosAgentSerial) agents spawned, \(windowMode ? "window" : "desktop") mode\n"
+        if violations.isEmpty { report += "✓ no violations\n" }
+        for (kind, v) in violations.sorted(by: { $0.value.count > $1.value.count }) {
+            report += "✗ \(kind): \(v.count)×  e.g. \(v.examples.joined(separator: " | "))\n"
+        }
+        FileHandle.standardOutput.write(report.data(using: .utf8)!)
+        exit(violations.isEmpty ? 0 : 1)
     }
 
     // MARK: Menu bar

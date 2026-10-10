@@ -120,18 +120,17 @@ enum Cantina {
         c.rect(x + r - 3, bottom - 12, 6, 1, glow.alpha(0.25))
     }
 
-    /// Width of the band stage: all seven Modal Nodes.
-    static let bandWidth = 82
+    /// Width of the band stage: the four Modal Nodes seen on screen.
+    static let bandWidth = 50
 
-    /// Figrin D'an and the Modal Nodes — all seven Bith, each with their instrument, bobbing to the beat:
-    /// Figrin D'an and Lirin Car'n (kloo horns), Doikk Na'ts (Fizzz), Ickabel G'ont and Tedn Dahai (fanfars),
-    /// Nalan Cheel (bandfill) and Tech Mo'r (ommni box).
+    /// Figrin D'an and the Modal Nodes as seen in the cantina: four Bith bobbing to the beat — Figrin D'an
+    /// (kloo horn), Doikk Na'ts (Fizzz), Ickabel G'ont and Tedn Dahai (fanfars).
     static func drawBand(_ c: PixelCanvas, floorRows: Int, t: Double) {
         let base = c.h - floorRows - 4
         let skin = C(0xE3D8C4), skinShade = C(0xBDB09A), robe = C(0x2E2A30)
         let black = C(0x161618), silver = C(0xC9CED6), brass = C(0xD8B048), brassDark = C(0xA8842E)
         enum Instrument { case kloo, fizzz, fanfar, bandfill, ommni }
-        let band: [Instrument] = [.kloo, .fizzz, .fanfar, .kloo, .bandfill, .ommni, .fanfar]
+        let band: [Instrument] = [.kloo, .fizzz, .fanfar, .fanfar]
         for (i, instrument) in band.enumerated() {
             let x = 4 + i * 11
             let beat = Int((t * 2.2 + Double(i) * 0.29).truncatingRemainder(dividingBy: 1) * 2)   // on/off the beat
@@ -171,7 +170,50 @@ enum Cantina {
         // music notes drifting up
         for n in 0..<2 {
             let f = (t / 1.6 + Double(n) * 0.5).truncatingRemainder(dividingBy: 1)
-            c.pattern(24 + n * 34, base - 22 - Int(f * 10), ["..N", "..N", "NNN", "NN."], ["N": C(0x3A2C22, 1 - f)])
+            c.pattern(14 + n * 22, base - 22 - Int(f * 10), ["..N", "..N", "NNN", "NN."], ["N": C(0x3A2C22, 1 - f)])
         }
+    }
+
+    /// The bar crowd: Wuher the bartender polishing a glass behind the counter, and Dr. Cornelius Evazan
+    /// with Ponda Baba leaning on the end of the bar, looking for trouble.
+    static func drawBarCrowd(_ c: PixelCanvas, floorRows: Int, t: Double) {
+        let w = c.w, wallBottom = c.h - floorRows
+        let barStart = Int(Double(w) * 0.56), barEnd = min(w - 4, barStart + max(60, w / 3))
+        guard barEnd - barStart > 30 else { return }
+        let counterTop = wallBottom - 11
+        let skin = C(0xD8A888), skinShade = C(0xB88868)
+
+        // Wuher: balding, stubbly, apron, behind the counter (only head and shoulders show)
+        let wx = barStart + (barEnd - barStart) * 2 / 3
+        c.rect(wx - 3, counterTop - 4, 8, 4, C(0x6E5A44))                      // shirt
+        c.rect(wx - 1, counterTop - 4, 4, 4, C(0xC8BCA0))                      // apron bib
+        c.rect(wx - 2, counterTop - 10, 6, 6, skin)                            // head
+        c.rect(wx - 2, counterTop - 10, 6, 1, C(0x5A4A3A))                     // thin hair
+        c.px(wx - 1, counterTop - 8, C(0x2A1A10)); c.px(wx + 2, counterTop - 8, C(0x2A1A10))
+        c.rect(wx - 1, counterTop - 6, 4, 1, skinShade)                        // stubble
+        // polishing a glass, rag going round and round
+        let k = Int(t * 6) % 4
+        c.rect(wx + 5, counterTop - 4 - (k == 1 || k == 2 ? 1 : 0), 2, 3, C(0xBFE0F0, 0.8))
+        c.px(wx + 4 + (k % 2), counterTop - 3, white)
+
+        // Dr. Cornelius Evazan: scarred face, dark coat, at the near end of the bar
+        let ex = barStart - 10
+        c.rect(ex, wallBottom - 10, 6, 10, C(0x3A3028))                        // coat
+        c.rect(ex + 1, wallBottom - 3, 1, 3, C(0x2A221C)); c.rect(ex + 4, wallBottom - 3, 1, 3, C(0x2A221C))
+        c.rect(ex, wallBottom - 16, 6, 6, C(0xC89878))                         // face
+        c.rect(ex, wallBottom - 16, 6, 1, C(0x3A2A1E))                         // hair
+        c.px(ex + 1, wallBottom - 14, C(0x2A1A10)); c.px(ex + 4, wallBottom - 14, C(0x2A1A10))
+        c.px(ex + 2, wallBottom - 13, C(0x8A4A3A)); c.px(ex + 3, wallBottom - 12, C(0x8A4A3A))   // the scars
+        c.px(ex + 4, wallBottom - 12, C(0x8A4A3A))
+        c.rect(ex + 6, wallBottom - 9, 3, 1, C(0x3A3028))                      // elbow on the bar
+
+        // Ponda Baba: Aqualish — walrus face with tusks, brown coat, just behind him
+        let px = barStart - 20
+        c.rect(px, wallBottom - 10, 7, 10, C(0x5A4A32))                        // coat
+        c.rect(px + 1, wallBottom - 3, 1, 3, C(0x3A2E20)); c.rect(px + 5, wallBottom - 3, 1, 3, C(0x3A2E20))
+        c.rect(px, wallBottom - 16, 7, 6, C(0x7A6A58))                         // big jowly face
+        c.px(px + 1, wallBottom - 15, C(0x101010)); c.px(px + 5, wallBottom - 15, C(0x101010))
+        c.px(px + 2, wallBottom - 11, C(0xF0E6CC)); c.px(px + 4, wallBottom - 11, C(0xF0E6CC))  // tusks
+        c.rect(px + 1, wallBottom - 13, 5, 1, C(0x5A4A3A))
     }
 }

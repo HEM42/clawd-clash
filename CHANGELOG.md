@@ -3,10 +3,19 @@
 ## 2.16.0 — 2026-10-10
 
 ### Added
-- The full cantina band: **Figrin D'an and the Modal Nodes**, all seven Bith. Figrin D'an and Lirin Car'n play kloo horns (black, silver keys, flared bells), Doikk Na'ts the Fizzz, Ickabel G'ont and Tedn Dahai fanfars, Nalan Cheel the tall curved bandfill, and Tech Mo'r the ommni box with blinking keys. Each bobs on their own beat. The stage is widened to 82 px and the booth alcoves move over.
+- The cantina band as seen in the film: **Figrin D'an and the Modal Nodes**, four Bith with their instruments. Figrin D'an plays a kloo horn (black, silver keys, flared bell), Doikk Na'ts the Fizzz, and Ickabel G'ont and Tedn Dahai fanfars. Each bobs on their own beat.
+- **The Max Rebo Band** in Jabba's palace: Max Rebo (blue Ortolan with floppy ears and a trunk) at his red organ with blinking keys, Sy Snootles (thin yellow-green singer with the long lips) at a microphone stand, and Droopy McCool (chubby pale Kitonak) on his long horn.
+- **The bar crowd** in the cantina: Wuher the bartender behind the counter polishing a glass, and Dr. Cornelius Evazan (scarred face, dark coat) with Ponda Baba (Aqualish, tusks) leaning on the end of the bar.
+- **Chaos test** (`--chaos[=seconds]`, a developer tool, hidden from users). Every half second it randomly adds and removes Claudes (up to 7) and agents (up to 12) and flips their moods, while checking that:
+  - no character is off screen after walking in;
+  - nobody walks for more than 8 s;
+  - every session and agent appears within 3 s;
+  - there are no extra characters;
+  - labels stay on screen and never overlap.
+  It prints a report and exits non-zero on violations. First runs: 90 s on the desktop (36 agents) and 90 s in window mode (43 agents), no violations.
 
 ### Changed
-- README: describes the full band, hover cards, walk-ins, sitting idle, NOT REPORTING and the OFFLINE banner. `docs/locations.png` and `docs/window-cantina.png` are regenerated to show the band.
+- README: describes both bands, the bar crowd, hover cards, walk-ins, sitting idle, NOT REPORTING and the OFFLINE banner. `docs/locations.png` and `docs/window-cantina.png` are regenerated.
 
 ## 2.15.3 — 2026-10-10
 
