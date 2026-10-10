@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.6.2 — 2026-10-10
+
+### Changed
+- "Show Dock Icon" now applies in both desktop and window mode (on by default). With it on, Clawd Wars has a Dock icon and an app menu bar (app menu + Crew menu) in both modes. With it off, it's a menu-bar-only accessory in both, reached through the helmet. Clicking the Dock icon in window mode brings the window forward. The app menu's Show in Window / Show on Desktop label follows the current mode.
+
 ## 2.6.1 — 2026-10-10
 
 ### Added

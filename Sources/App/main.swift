@@ -43,4 +43,5 @@ if let id = Bundle.main.bundleIdentifier,
 let app = NSApplication.shared
 app.setActivationPolicy(.accessory)
 let controller = OverlayController()
+app.delegate = controller
 app.run()

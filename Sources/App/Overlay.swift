@@ -38,7 +38,7 @@ private let fadeIn = 0.5
 private let fadeOut = 0.6
 private let fightLinger = 3.0      // keep fighting through brief gaps between tool calls
 
-final class OverlayController: NSObject, NSMenuDelegate {
+final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
     private let panel: OverlayPanel
     private let view: OverlayView
     private var sessions: [SessionSnapshot] = []
@@ -135,6 +135,7 @@ final class OverlayController: NSObject, NSMenuDelegate {
         tick()
         if !windowMode { panel.orderFrontRegardless() }
         installStatusItem()
+        applyDockPolicy()
 
         Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.refreshStatus() }
         let frame = Timer(timeInterval: 1.0 / 30, repeats: true) { [weak self] _ in self?.tick() }
@@ -927,9 +928,10 @@ final class OverlayController: NSObject, NSMenuDelegate {
         } else {
             clawdWindow?.window.orderOut(nil)
             clawdWindow = nil
-            NSApp.setActivationPolicy(.accessory)
+            applyDockPolicy()
             panel.orderFrontRegardless()
         }
+        NSApp.mainMenu = makeMainMenu()
         refreshStatus()
         snapActors()
     }
@@ -945,10 +947,7 @@ final class OverlayController: NSObject, NSMenuDelegate {
             }
             clawdWindow = w
         }
-        // A real window gets a Dock icon and a menu bar while it's open — unless that's switched off,
-        // in which case the menu bar helmet is the way in.
-        NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
-        NSApp.mainMenu = makeMainMenu()
+        applyDockPolicy()
         clawdWindow?.window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
@@ -958,15 +957,31 @@ final class OverlayController: NSObject, NSMenuDelegate {
         set { UserDefaults.standard.set(newValue, forKey: "showInDock") }
     }
 
+    /// Dock icon (and an app menu bar with the Crew menu) in both modes, or neither — then the
+    /// menu bar helmet is the way in.
+    private func applyDockPolicy() {
+        NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
+        NSApp.mainMenu = makeMainMenu()
+    }
+
     @objc private func toggleDock() {
         showInDock.toggle()
-        guard windowMode else { return }
-        NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
-        // Leaving .regular hides the window along with the app; bring it back.
+        applyDockPolicy()
+        // Changing the activation policy can hide our windows; bring them back.
         DispatchQueue.main.async {
-            self.clawdWindow?.window.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
+            if self.windowMode {
+                self.clawdWindow?.window.makeKeyAndOrderFront(nil)
+                NSApp.activate(ignoringOtherApps: true)
+            } else {
+                self.panel.orderFrontRegardless()
+            }
         }
+    }
+
+    /// Clicking the Dock icon brings the window forward in window mode.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if windowMode { clawdWindow?.window.makeKeyAndOrderFront(nil) }
+        return true
     }
 
     private var sceneHeight: CGFloat { max(170, (CGFloat(Sprite.height) * Self.leaderScale + 70) * Self.windowZoom + windowFloor) }
@@ -977,7 +992,7 @@ final class OverlayController: NSObject, NSMenuDelegate {
         let app = NSMenu()
         app.addItem(withTitle: "About Clawd Wars", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         app.addItem(.separator())
-        app.addItem(action: "Show on Desktop", #selector(toggleWindowMode), target: self)
+        app.addItem(action: windowMode ? "Show on Desktop" : "Show in Window", #selector(toggleWindowMode), target: self)
         app.addItem(.separator())
         app.addItem(withTitle: "Quit Clawd Wars", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = app
@@ -1154,7 +1169,7 @@ final class OverlayController: NSObject, NSMenuDelegate {
         if windowMode { m.addItem(disabled: "Size (desktop only)") } else { m.addItem(size) }
         m.addItem(action: windowMode ? "Show on Desktop" : "Show in Window", #selector(toggleWindowMode), target: self)
         if windowMode { m.addItem(locationMenu()) }
-        m.addItem(action: "Show Dock Icon in Window Mode", #selector(toggleDock), target: self, on: showInDock)
+        m.addItem(action: "Show Dock Icon", #selector(toggleDock), target: self, on: showInDock)
         m.addItem(action: "Show Project Names", #selector(toggleLabels), target: self, on: showLabels)
         // Developer toys: only with ⌘ held while opening the menu (or while one is running, so you can leave it).
         if NSEvent.modifierFlags.contains(.command) || playground != nil || demo {
