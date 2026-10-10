@@ -1023,8 +1023,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         let c = PixelCanvas(Sprite.width, Sprite.height)
         draw(c)
         c.addOutline(C(0xFFFFFF, 0.92))
-        // Crop to the character (the canvas has room for sabers and bubbles around it).
-        let img = c.makeImage()?.cropping(to: CGRect(x: 8, y: 9, width: 46, height: 38))
+        // Crop to the character's actual outline (walkers and Jabba are much wider than a Clawd).
+        let img = c.opaqueBounds().flatMap { c.makeImage()?.cropping(to: $0) }
         portraitCache[key] = img
         return img
     }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.9.1 — 2026-10-10
+
+### Fixed
+- The AT-AT (and other wide characters) were cut off in the window's cards. Portraits used a fixed crop sized for a standard Clawd. They are now cropped to each character's visible pixels (`PixelCanvas.opaqueBounds`) and drawn as large as fits, up to 2× (whole-number scales keep pixels crisp), centred at the bottom. The portrait column is widened to 112 pt so the AT-AT fits at 2×. Agent portraits use the same fitting.
+
 ## 2.9.0 — 2026-10-10
 
 ### Added

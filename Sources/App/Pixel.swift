@@ -76,6 +76,17 @@ final class PixelCanvas {
         }
     }
 
+    /// The smallest rectangle containing every visible pixel (canvas coordinates, y down).
+    func opaqueBounds() -> CGRect? {
+        var minX = w, minY = h, maxX = -1, maxY = -1
+        for y in 0..<h {
+            for x in 0..<w where buf[(y * w + x) * 4 + 3] > 24 {
+                minX = min(minX, x); maxX = max(maxX, x); minY = min(minY, y); maxY = max(maxY, y)
+            }
+        }
+        return maxX < 0 ? nil : CGRect(x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1)
+    }
+
     /// Mirror everything drawn so far, left to right.
     func flipHorizontally() {
         var out = buf

@@ -230,7 +230,8 @@ final class CardsView: NSView {
 
     private static let pad: CGFloat = 12
     private static let portraitScale: CGFloat = 2          // portraits are cropped to 46×38 sprite pixels
-    private static let portraitSize = NSSize(width: 46 * portraitScale, height: 38 * portraitScale)
+    // Wide enough for the AT-AT (54 px) at 2×; everyone else is centred in it.
+    private static let portraitSize = NSSize(width: 56 * portraitScale, height: 38 * portraitScale)
     private static let lineH: CGFloat = 16
     private static let agentH: CGFloat = 34
 
@@ -295,11 +296,7 @@ final class CardsView: NSView {
             // Portrait (drawn upright: this view is flipped)
             let pw = Self.portraitSize.width, ph = Self.portraitSize.height
             if let img = c.portrait {
-                ctx.saveGState()
-                ctx.translateBy(x: r.minX + 10, y: r.minY + Self.pad + ph)
-                ctx.scaleBy(x: 1, y: -1)
-                ctx.draw(img, in: CGRect(x: 0, y: 0, width: pw, height: ph))
-                ctx.restoreGState()
+                draw(img, fitting: NSRect(x: r.minX + 10, y: r.minY + Self.pad, width: pw, height: ph), in: ctx, maxScale: 2)
             }
 
             let tx = r.minX + 16 + pw, tw = r.maxX - tx - 12
@@ -336,11 +333,7 @@ final class CardsView: NSView {
                 ty += 6
                 for a in c.agents {
                     if let img = a.portrait {
-                        ctx.saveGState()
-                        ctx.translateBy(x: tx - 4, y: ty + 30)
-                        ctx.scaleBy(x: 1, y: -1)
-                        ctx.draw(img, in: CGRect(x: 0, y: 0, width: 36, height: 30))
-                        ctx.restoreGState()
+                        draw(img, fitting: NSRect(x: tx - 4, y: ty, width: 36, height: 30), in: ctx, maxScale: 1)
                     }
                     let ax = tx + 40
                     let title = NSMutableAttributedString(string: a.name, attributes: [
@@ -356,6 +349,21 @@ final class CardsView: NSView {
             }
             y += h + 10
         }
+    }
+
+    /// Draw a pixel-art portrait as large as fits in `box` (never above `maxScale`), centred at the
+    /// bottom of the box, upright in this flipped view. Whole-number scales keep the pixels crisp.
+    private func draw(_ img: CGImage, fitting box: NSRect, in ctx: CGContext, maxScale: CGFloat) {
+        let iw = CGFloat(img.width), ih = CGFloat(img.height)
+        var k = min(box.width / iw, box.height / ih, maxScale)
+        if k >= 1 { k = k.rounded(.down) }
+        let w = iw * k, h = ih * k
+        ctx.saveGState()
+        ctx.interpolationQuality = .none
+        ctx.translateBy(x: (box.midX - w / 2).rounded(), y: box.maxY)
+        ctx.scaleBy(x: 1, y: -1)
+        ctx.draw(img, in: CGRect(x: 0, y: 0, width: w, height: h))
+        ctx.restoreGState()
     }
 
     private func draw(_ s: String, at p: NSPoint, width: CGFloat, font: NSFont, color: NSColor) {
