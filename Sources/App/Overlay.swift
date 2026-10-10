@@ -796,6 +796,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
         var roles: [String: FightRole] = [:]
         var fx: [(Actor, Actor)] = []
+        var incoming: [String: Double] = [:]   // blaster-vs-blaster: each defender → its shooter's clock offset
         for fight in fights {
             guard let a = actors.first(where: { $0.key == fight.a && $0.leaving == nil }),
                   let b = actors.first(where: { $0.key == fight.b && $0.leaving == nil }),
@@ -804,6 +805,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let (lRole, rRole) = fightRoles(weapon(l), weapon(r))
             roles[l.key] = lRole; roles[r.key] = rRole
             fx.append((l, r))
+            if case .shoot(let lo) = lRole, case .shoot(let ro) = rRole { incoming[l.key] = ro; incoming[r.key] = lo }
         }
         for a in actors where cheering.contains(a.key) && a.walkDir == 0 && a.leaving == nil { roles[a.key] = .cheer }
         if debug, Int(now * 2) != lastDebug {
@@ -870,8 +872,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             }
             let mirrored = facing < 0
             let bodyX = (mirrored ? CGFloat(Sprite.width) - CGFloat(Sprite.bodyCenterX) : CGFloat(Sprite.bodyCenterX)) * scale
+            // Ducking a bolt in a shoot-out: squat (squashed from the feet up).
+            let duck = incoming[actor.key].map { CGFloat(duckAmount(t: t, shooterOffset: $0, armoured: actor.cast.armoured)) } ?? 0
             let rect = NSRect(x: (actor.x - bodyX).rounded(), y: y + CGFloat(drop) * z,
-                              width: CGFloat(Sprite.width) * scale, height: CGFloat(Sprite.height) * scale)
+                              width: CGFloat(Sprite.width) * scale, height: (CGFloat(Sprite.height) * scale * (1 - 0.22 * duck)).rounded())
             out.append(DrawItem(image: img, rect: rect, mirrored: mirrored, alpha: CGFloat(alpha)))
 
             // Speech bubble on whichever side of the head fits on screen (Claudes only).
@@ -970,7 +974,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 var muzzle = (x: 52.0, y: 32.0)
                 muzzle = a.cast.muzzle
                 return Fighter(weapon: weapon(a), x: Double((a.x - left) / ls), k: Double(sc / ls),
-                               top: Double((CGFloat(Sprite.height) * (ls - sc) - lift) / ls), side: side, muzzle: muzzle)
+                               top: Double((CGFloat(Sprite.height) * (ls - sc) - lift) / ls), side: side, muzzle: muzzle,
+                               armoured: a.cast.armoured)
             }
             let c = PixelCanvas(width, Sprite.height)
             drawFightFX(c, t: t, left: fighter(l, side: 1), right: fighter(r, side: -1))

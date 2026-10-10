@@ -43,7 +43,7 @@ You run Claude Code in three terminals. One is thinking, one is waiting for your
 
 It sits on the bottom of your screen, above every window, and it's click-through everywhere except the characters. No dashboard to open, no tab to check. It's just… there, quietly having a war.
 
-And it's genuinely fun. Run two Claudes and they duel. Spawn a Han Solo and he shoots at Vader, who deflects every bolt into the sky. The Emperor catches Force lightning on Kylo's crossguard. Jabba laughs at all of it.
+And it's genuinely fun. Run two Claudes and they duel. Spawn a Han Solo and he shoots at Vader, who deflects every bolt into the sky. Put two gunslingers together and it's a proper shoot-out: they duck, bolts collide mid-air, shields flash, and Boba's armour sends shots pinging off into the sky. The Emperor catches Force lightning on Kylo's crossguard. Jabba laughs at all of it.
 
 ## Claude vs Codex vs everyone
 

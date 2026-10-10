@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.22.0 — 2026-10-11
+
+### Added
+- **Blaster shoot-outs have saves now.** When two blaster characters fight (Han vs Boba Fett, Leia vs a stormtrooper…), most bolts no longer just land. Each shot plays one move from a fixed cycle, so the show varies without random flicker, and both shooters run through it out of step:
+  - **Hit:** still in the mix now and then.
+  - **Duck:** the target squats as the bolt arrives, and it whizzes over their head and fizzles out behind them.
+  - **Collide:** the target fires back at the same instant, and the two bolts meet mid-air in a growing starburst.
+  - **Shield:** a flickering blue bubble flashes around the target, and the bolt splashes on it.
+  - **Ricochet:** armoured characters (Boba Fett, stormtroopers, R0-GR, IG-88, the AT-ST and AT-AT) take it on the armour with a "tink" of sparks, and the bolt glances off into the sky. Unarmoured characters duck instead.
+  - The outcome comes from `boltOutcome(t:offset:defenderArmoured:)`, which both the effects layer and the sprite renderer use, so a duck in the sprite always matches the bolt flying over it.
+
 ## 2.21.0 — 2026-10-10
 
 ### Added

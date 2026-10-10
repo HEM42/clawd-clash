@@ -57,6 +57,9 @@ enum Leader: Int, CaseIterable {
         }
     }
 
+    /// Armour or a metal shell: blaster bolts ricochet off it.
+    var armoured: Bool { [.boba, .trooper, .rogr, .ig88, .atst, .atat].contains(self) }
+
     /// Top row of the helmet/hood/hair on the 72x52 canvas, for placing the project label.
     var headTop: Int {
         switch self {
@@ -132,6 +135,27 @@ func fightRoles(_ a: Weapon, _ b: Weapon) -> (FightRole, FightRole) {
 func fightIsCloseQuarters(_ a: Weapon, _ b: Weapon) -> Bool { a == .saber && b == .saber }
 
 let blasterPeriod = 0.9
+
+/// What happens to a bolt in a blaster-vs-blaster shoot-out. Plain hits stay in the mix, but most shots are saved.
+enum BoltOutcome { case hit, duck, collide, shield, ricochet }
+
+/// The outcome of the shot a shooter (by its clock offset) is firing at time `t`. A fixed cycle, so the effects
+/// layer and the defender's own sprite (ducking) always agree, and both shooters run through it out of step.
+func boltOutcome(t: Double, offset: Double, defenderArmoured: Bool) -> BoltOutcome {
+    let cycle: [BoltOutcome] = [.hit, .duck, .collide, .shield, .ricochet, .duck, .collide, .hit, .ricochet, .shield, .duck]
+    let n = Int(floor((t + offset) / blasterPeriod)) + (offset > 0 ? 4 : 0)
+    let o = cycle[((n % cycle.count) + cycle.count) % cycle.count]
+    return o == .ricochet && !defenderArmoured ? .duck : o   // no armour to bounce it off: get down instead
+}
+
+/// How far (0…1) a defender squats to let a bolt from the shooter with clock `offset` whizz over its head.
+func duckAmount(t: Double, shooterOffset: Double, armoured: Bool) -> Double {
+    guard boltOutcome(t: t, offset: shooterOffset, defenderArmoured: armoured) == .duck else { return 0 }
+    let f = frac((t + shooterOffset) / blasterPeriod)
+    // Down as the bolt closes in, held while it passes, back up after.
+    let down = min(max((f - 0.12) / 0.12, 0), 1), up = min(max((f - 0.55) / 0.15, 0), 1)
+    return down * (1 - up)
+}
 private let boltArrival = 0.4          // fraction of the period a bolt spends in flight
 private let rifleMuzzle = (x: 52, y: 32)
 private let deflectPeak = -15.0
@@ -786,6 +810,7 @@ struct Fighter {
     let top: Double                      // y of this sprite's canvas top
     let side: Double                     // +1 facing right, -1 facing left
     let muzzle: (x: Double, y: Double)   // in its own canvas coordinates
+    var armoured = false                 // bolts ricochet off it
 
     /// A point given in the sprite's own (right-facing) canvas coordinates.
     func point(_ cx: Double, _ cy: Double) -> (x: Double, y: Double) {
@@ -797,6 +822,83 @@ struct Fighter {
     func blade(_ angle: Double, _ u: Double, dx: Double = 0) -> (x: Double, y: Double) {
         let r = angle * .pi / 180, h = point(Sprite.hand.x + dx, Sprite.hand.y)
         return (h.x + side * cos(r) * u * k, h.y + sin(r) * u * k)
+    }
+}
+
+/// One bolt of a blaster-vs-blaster shoot-out, played out per `outcome`. `f` is the shooter's phase in its period.
+private func drawShootout(_ c: PixelCanvas, f: Double, t: Double, m: (x: Double, y: Double), me: Fighter, foe: Fighter,
+                          outcome: BoltOutcome,
+                          bolt: ((x: Double, y: Double), (x: Double, y: Double), Double, Double) -> Void) {
+    let arrive = boltArrival
+    switch outcome {
+    case .hit:
+        if f < arrive { bolt(m, foe.body, f / arrive, 1) }
+        else if f < arrive + 0.06 { drawSparks(c, x: foe.body.x, y: foe.body.y, t: t, size: 2) }
+
+    case .duck:
+        // Aimed at head height; the defender squats (see duckAmount) and it whizzes over, out behind them.
+        let head = foe.point(Sprite.bodyCenterX + 4, 21)
+        let behind = (x: foe.x - foe.side * 40 * foe.k, y: head.y - 2 * foe.k)
+        let total = arrive * 1.6
+        if f < total {
+            let g = f / total
+            let fade = g > 0.8 ? (1 - g) / 0.2 : 1
+            bolt(m, behind, g, fade)
+        }
+
+    case .collide:
+        // The defender fires back at the same moment; the bolts meet in the middle and burst.
+        let fm = foe.point(foe.muzzle.x + 2, foe.muzzle.y + 0.5)
+        let meet = (x: (m.x + fm.x) / 2, y: (m.y + fm.y) / 2)
+        let flight = arrive * 0.55
+        if f < flight {
+            let g = f / flight
+            bolt(m, meet, g, 1)
+            bolt(fm, meet, g, 1)
+        } else if f < flight + 0.16 {
+            let g = (f - flight) / 0.16
+            // a bright starburst that grows and fades
+            let r = (2 + g * 7) * me.k, a = 1 - g
+            for i in 0..<8 {
+                let ang = Double(i) * .pi / 4 + g * 0.6
+                c.glowLine(meet.x + cos(ang) * r * 0.35, meet.y + sin(ang) * r * 0.35, meet.x + cos(ang) * r, meet.y + sin(ang) * r,
+                           core: C(0xFFF4D0).alpha(a), glow: C(0xFF6A2A).alpha(a * 0.8), coreR: 0.5, glowR: 1.6)
+            }
+            c.glowLine(meet.x, meet.y, meet.x, meet.y, core: C(0xFFFFFF).alpha(a), glow: C(0xFFD25A).alpha(a), coreR: 1.2, glowR: 3.2 * (1 - g * 0.5))
+        }
+
+    case .shield:
+        // A blue bubble flickers up around the defender and the bolt splashes on it.
+        let centre = foe.point(Sprite.bodyCenterX + 1, 31)
+        let r = 15 * foe.k
+        let front = (x: centre.x + foe.side * r, y: m.y + (centre.y - m.y) * 0.3)
+        if f < arrive {
+            bolt(m, front, f / arrive, 1)
+        } else if f < arrive + 0.3 {
+            let g = (f - arrive) / 0.3
+            let a = (1 - g) * (0.6 + 0.4 * sin(g * 40))   // flicker
+            let n = 22
+            for i in 0..<n {
+                let a0 = Double(i) / Double(n) * 2 * .pi, a1 = Double(i + 1) / Double(n) * 2 * .pi
+                c.glowLine(centre.x + cos(a0) * r, centre.y + sin(a0) * r * 1.05, centre.x + cos(a1) * r, centre.y + sin(a1) * r * 1.05,
+                           core: C(0xBFF0FF).alpha(a * 0.9), glow: C(0x3AA8FF).alpha(a * 0.6), coreR: 0.4, glowR: 1.4)
+            }
+            if g < 0.35 { c.glowLine(front.x, front.y, front.x, front.y, core: C(0xFFFFFF).alpha(1 - g / 0.35),
+                                     glow: C(0x3AA8FF).alpha(1 - g / 0.35), coreR: 1, glowR: 3) }
+        }
+
+    case .ricochet:
+        // Armour: a "tink" of sparks and the bolt glances off up into the sky.
+        let impact = foe.point(Sprite.bodyCenterX + 8, 27)
+        if f < arrive {
+            bolt(m, impact, f / arrive, 1)
+        } else if f < arrive + 0.4 {
+            let g = (f - arrive) / 0.4
+            if g < 0.18 { drawSparks(c, x: impact.x, y: impact.y, t: t, size: 2) }
+            let x = impact.x + foe.side * g * 22 * foe.k, y = impact.y - g * 40
+            c.glowLine(x, y, x - foe.side * 2.5, y + 4, core: C(0xFFE0E0).alpha(1 - g), glow: C(0xFF2A2A).alpha(1 - g),
+                       coreR: 0.6, glowR: 1.8)
+        }
     }
 }
 
@@ -829,6 +931,18 @@ func drawFightFX(_ c: PixelCanvas, t: Double, left: Fighter, right: Fighter) {
         case .shoot(let offset):
             let f = frac((t + offset) / blasterPeriod)
             let m = me.point(me.muzzle.x + 2, me.muzzle.y + 0.5)
+            func bolt(from a: (x: Double, y: Double), to b: (x: Double, y: Double), _ g: Double, alpha: Double = 1) {
+                let x = a.x + (b.x - a.x) * g, y = a.y + (b.y - a.y) * g
+                let len = hypot(b.x - a.x, b.y - a.y)
+                let ux = (b.x - a.x) / max(len, 0.01), uy = (b.y - a.y) / max(len, 0.01)
+                c.glowLine(x - ux * 5, y - uy * 5, x, y, core: C(0xFFE0E0).alpha(alpha), glow: C(0xFF2A2A).alpha(alpha),
+                           coreR: 0.6, glowR: 1.8)
+            }
+            if case .shoot = foeRole {
+                drawShootout(c, f: f, t: t, m: m, me: me, foe: foe,
+                             outcome: boltOutcome(t: t, offset: offset, defenderArmoured: foe.armoured), bolt: bolt)
+                continue
+            }
             var impact = foe.body
             var deflects = false
             if case .deflect = foeRole {
@@ -839,11 +953,7 @@ func drawFightFX(_ c: PixelCanvas, t: Double, left: Fighter, right: Fighter) {
                 deflects = true
             }
             if f < boltArrival {
-                let g = f / boltArrival
-                let x = m.x + (impact.x - m.x) * g, y = m.y + (impact.y - m.y) * g
-                let len = hypot(impact.x - m.x, impact.y - m.y)
-                let ux = (impact.x - m.x) / max(len, 0.01), uy = (impact.y - m.y) / max(len, 0.01)
-                c.glowLine(x - ux * 5, y - uy * 5, x, y, core: C(0xFFE0E0), glow: C(0xFF2A2A), coreR: 0.6, glowR: 1.8)
+                bolt(from: m, to: impact, f / boltArrival)
             } else if f < boltArrival + 0.06 {
                 drawSparks(c, x: impact.x, y: impact.y, t: t, size: 2)
             }
