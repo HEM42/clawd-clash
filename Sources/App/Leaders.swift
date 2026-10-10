@@ -42,7 +42,7 @@ enum Leader: Int, CaseIterable {
         case .ig88: return "IG-88"
         case .atst: return "AT-ST"
         case .atat: return "AT-AT"
-        case .rancor: return "The Rancor"
+        case .rancor: return "Rancor"
         }
     }
 
@@ -72,7 +72,7 @@ enum Leader: Int, CaseIterable {
         case .ig88: return 9
         case .atst: return 10
         case .atat: return 11
-        case .rancor: return 7
+        case .rancor: return 8
         }
     }
 
@@ -549,41 +549,51 @@ private func drawIG88(_ c: PixelCanvas, step: Int, lift: Int) {
               ["M": metal, "L": metalLight, "R": C(0xC0392B)])
 }
 
-/// The rancor: a hulking brown beast-Clawd with a huge fanged mouth, tiny eyes and short thick legs.
+/// The rancor: a towering, hunched reptile that stands upright on two short, stubby legs, with a flat face
+/// that's mostly fanged mouth, tiny eyes, spines over its back and shoulders, and very long arms.
 private func drawRancor(_ c: PixelCanvas, step: Int, lift: Int) {
     let base = c.oy
-    let hide = C(0x7A5A3E), shade = C(0x5A402A), light = C(0x9A7A56)
-    for (i, lx) in [18, 30].enumerated() {                          // thick legs
+    let hide = C(0x8A7A62), shade = C(0x6A5C48), light = C(0xA89878), spine = C(0x4A3E30), claw = C(0xE8DCC0)
+    for (i, lx) in [21, 31].enumerated() {                          // two short, stubby legs
         let up = step >= 0 && i == step ? 1 : 0
-        c.rect(lx, 36, 7, 7 - up, shade)
-        c.rect(lx - 1, 42 - up, 9, 2, C(0x4A3220))
-        for k in 0..<3 { c.px(lx + k * 3, 43 - up, C(0xE8DCC0)) }  // toe claws
+        c.rect(lx, 35, 6, 8 - up, shade)
+        c.rect(lx - 1, 42 - up, 8, 2, C(0x54483A))
+        for k in 0..<3 { c.px(lx - 1 + k * 3, 43 - up, claw) }      // three toes
     }
     c.oy = base + lift
-    // hunched body
-    c.rect(14, 18, 30, 19, hide)
-    c.rect(16, 14, 24, 5, hide)
-    c.rect(14, 34, 30, 3, shade)
-    for (x, y) in [(18, 22), (24, 27), (30, 20), (36, 30), (20, 31), (33, 25)] { c.rect(x, y, 2, 1, light) }   // warty hide
-    // the left arm hangs down behind
-    c.rect(11, 22, 4, 14, shade); for k in 0..<3 { c.px(11 + k, 36, C(0xE8DCC0)) }
-    // head thrust forward with the enormous mouth
-    c.rect(38, 10, 14, 15, hide)
-    c.rect(38, 10, 14, 2, light)
-    c.px(43, 13, C(0xFFD23D)); c.px(48, 13, C(0xFFD23D))              // tiny eyes
-    c.rect(39, 17, 13, 6, C(0x3A1A12))                                // gaping mouth
-    for k in 0..<6 { c.px(39 + k * 2, 17, C(0xF0E6CC)); c.px(40 + k * 2, 22, C(0xF0E6CC)) }   // fangs
+    // tall torso, hunched forward (shoulders lean right)
+    for y in 14...36 {
+        let lean = (36 - y) / 4                                     // top leans toward the head
+        c.rect(19 + lean, y, 18, 1, hide)
+        c.px(19 + lean, y, shade)
+    }
+    c.rect(21, 33, 16, 3, shade)                                    // belly fold
+    for (x, y) in [(24, 20), (29, 25), (23, 29), (32, 18), (27, 31), (33, 28)] { c.rect(x, y, 2, 1, light) }   // scales
+    for k in 0..<5 { c.px(21 + k * 3 + (5 - k) / 2, 13 - k % 2, spine); c.px(21 + k * 3 + (5 - k) / 2, 14, spine) }  // back spines
+    // the near arm hangs almost to the ground — they're long
+    c.rect(16, 19, 4, 20, shade)
+    c.rect(15, 38, 6, 2, shade)
+    for k in 0..<3 { c.px(15 + k * 2, 40, claw) }
+    c.px(17, 22, spine); c.px(17, 26, spine)
+    // flat face dominated by the mouth, thrust forward on the hunch
+    c.rect(34, 9, 13, 14, hide)
+    c.rect(34, 9, 13, 2, light)
+    c.px(37, 11, spine); c.px(41, 10, spine)                        // brow ridges
+    c.px(38, 12, C(0xFFD23D)); c.px(43, 12, C(0xFFD23D))            // tiny eyes
+    c.rect(35, 15, 12, 7, C(0x3A1A12))                              // the mouth
+    for k in 0..<6 { c.px(35 + k * 2, 15, claw); c.px(36 + k * 2, 21, claw) }   // fangs top and bottom
+    c.rect(35, 22, 12, 1, shade)                                    // jaw
 }
 
-/// The rancor's swiping arm: a long, thick forearm ending in three claws.
+/// The rancor's reaching arm: very long, thick, ending in three claws.
 private func drawClaw(_ c: PixelCanvas, angle: Double) {
-    let hx = Sprite.hand.x - 2, hy = Sprite.hand.y - 6
+    let hx = 35.0, hy = 25.0                                         // shoulder, below the jaw
     let r = angle * .pi / 180, ux = cos(r), uy = sin(r)
-    c.glowLine(hx, hy, hx + ux * 15, hy + uy * 15, core: C(0x6E4E34), glow: C(0, 0), coreR: 1.8, glowR: 1.9)
-    let tx = hx + ux * 15, ty = hy + uy * 15
+    c.glowLine(hx, hy, hx + ux * 20, hy + uy * 20, core: C(0x7A6A54), glow: C(0, 0), coreR: 1.8, glowR: 1.9)
+    let tx = hx + ux * 20, ty = hy + uy * 20
     for k in -1...1 {
         let a = r + Double(k) * 0.35
-        c.glowLine(tx, ty, tx + cos(a) * 5, ty + sin(a) * 5, core: C(0xF0E6CC), glow: C(0, 0), coreR: 0.6, glowR: 0.7)
+        c.glowLine(tx, ty, tx + cos(a) * 5, ty + sin(a) * 5, core: C(0xE8DCC0), glow: C(0, 0), coreR: 0.6, glowR: 0.7)
     }
 }
 

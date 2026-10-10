@@ -1274,7 +1274,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
                                          .boba: "EE-3 blaster", .trooper: "E-11 blaster", .emperor: "Force lightning",
                                          .rogr: "E-5 blaster", .dooku: "curved-hilt saber",
                                          .gamorrean: "vibro-axe", .jabba: "unarmed — laughs", .ig88: "blaster rifle",
-                                         .atst: "chin blasters", .atat: "heavy chin cannons", .rancor: "claws"]
+                                         .atst: "chin blasters", .atat: "heavy chin cannons", .rancor: "long clawed arms"]
         for l in Leader.allCases {
             let order = picked.firstIndex(of: l.rawValue).map { "   #\($0 + 1)" } ?? ""
             let item = NSMenuItem(title: "\(l.name) (\(weapons[l] ?? ""))\(order)",

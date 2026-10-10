@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.11.1 — 2026-10-10
+
+### Changed
+- The rancor is now just "Rancor" and redrawn to match the film (per the Star Wars databank): upright on two short, stubby legs with three-toed feet, a tall torso hunched forward, spines along its back and shoulders, scaly grey-brown hide, a flat face that's mostly fanged mouth with tiny eyes, and disproportionately long arms. One arm hangs almost to the ground; the other swipes from below the jaw.
+
 ## 2.11.0 — 2026-10-10
 
 ### Added
