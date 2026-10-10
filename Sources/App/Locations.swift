@@ -830,28 +830,97 @@ enum Scenes {
         if e > 0.82 && e < 0.94 { c.px(bx + 68, g + 3, C(0xFFE84A)); c.px(bx + 71, g + 3, C(0xFFE84A)) }
     }
 
-    // Han / Chewbacca — the Millennium Falcon's hold: curved walls, pipes, the dejarik table.
+    // Han / Chewbacca — the Millennium Falcon's main hold (A New Hope): curved hull with ribs, walls crowded with
+    // pipes, valves and blinking panels, the dejarik table with its curved padded bench, and a round hatch down the
+    // corridor to the cockpit, where hyperspace streaks past the window (animated in `dejarik`).
     static func falcon(_ c: PixelCanvas, _ g: Int) {
-        c.gradient(0, g, C(0x8A8A84), C(0x5E5E5A), bands: 4)
-        for x in stride(from: 0, to: c.w, by: 18) {
-            c.rect(x, 0, 3, g, C(0x4A4A46)); c.rect(x + 1, 0, 1, g, C(0xA8A8A0))
+        // Walls: warm grey, darker up into the curve of the hull.
+        c.gradient(0, g, C(0x3A3934), C(0x8E8A7E), bands: 6)
+        // The hull curving overhead at both ends.
+        for x in 0..<c.w {
+            let u = Double(x) / Double(c.w - 1) * 2 - 1
+            let curve = Int(pow(abs(u), 3) * Double(g / 2))
+            if curve > 0 { c.rect(x, 0, 1, curve, C(0x262521)) }
+            c.px(x, curve, C(0x5A5850))
         }
-        for y in [g / 4, g / 2] { c.rect(0, y, c.w, 2, C(0x6E6A60)); c.rect(0, y + 2, c.w, 1, C(0x3A3A36)) }
-        for x in stride(from: 6, to: c.w, by: 36) { c.rect(x, g / 4 - 6, 10, 4, C(0x3A3A36)); c.px(x + 2, g / 4 - 5, C(0xE0303A)) }
-        // the dejarik table
-        let tx = c.w / 3
-        c.ellipse(tx, g - 4, 13, 3, C(0x3A3A36)); c.rect(tx - 2, g - 4, 4, 4, C(0x2A2A28))
-        c.ellipse(tx, g - 5, 11, 2, C(0x1E3A2A))
-        c.ground(g, C(0x3A3A36), edge: C(0x8A8A84), speck: C(0x2E2E2A), seed: 14)
+        // Ribs.
+        for x in stride(from: 6, to: c.w, by: 34) { c.rect(x, 0, 4, g, C(0x5E5B52)); c.rect(x + 1, 0, 1, g, C(0xA6A294)); c.rect(x + 3, 0, 1, g, C(0x3A3934)) }
+        // Pipes and conduits along the walls.
+        for (y, col, hi) in [(10, C(0x6E5A48), C(0x9A8268)), (15, C(0x4E5A5E), C(0x7A8A90)), (g - 30, C(0x6A6658), C(0x9A9688))] {
+            c.rect(0, y, c.w, 3, col); c.rect(0, y, c.w, 1, hi)
+            for x in stride(from: 20, to: c.w, by: 47) { c.rect(x, y - 1, 3, 5, C(0x3A3934)) }   // clamps
+        }
+        // Panels, vents, valve wheels and a hose loop, scattered between the ribs.
+        for (i, x) in stride(from: 14, to: c.w - 20, by: 34).enumerated() {
+            let y = 22 + (i % 3) * 7
+            switch i % 4 {
+            case 0:   // a light panel
+                c.rect(x, y, 14, 8, C(0x2E2D29)); c.rect(x + 1, y + 1, 12, 6, C(0x3E3D38))
+                for k in 0..<4 { c.px(x + 2 + k * 3, y + 3, [C(0xE0303A), C(0x6CFF7A), C(0xFFD24A), C(0x5AB4FF)][(i + k) % 4]) }
+            case 1:   // a vent
+                c.rect(x, y, 16, 9, C(0x4A4840)); for k in 0..<4 { c.rect(x + 1, y + 1 + k * 2, 14, 1, C(0x2A2925)) }
+            case 2:   // valve wheel on a pipe stub
+                c.rect(x + 6, y - 2, 3, 12, C(0x6E5A48)); c.circle(x + 7, y + 3, 4, C(0x8A3A2A)); c.circle(x + 7, y + 3, 2, C(0x3A3934)); c.px(x + 7, y + 3, C(0xC86A48))
+            default:  // a hose looping down
+                for k in 0..<14 { c.px(x + k, y + Int(sin(Double(k) / 13 * .pi) * 6), C(0x2A2A2A)); c.px(x + k, y + 1 + Int(sin(Double(k) / 13 * .pi) * 6), C(0x2A2A2A)) }
+            }
+        }
+
+        // The round hatch to the cockpit corridor (right), with the cockpit window at the end of it.
+        let hx = c.w - 66, hy = g - 20
+        c.circle(hx, hy, 19, C(0x4A4840)); c.circle(hx, hy, 17, C(0xB0AC9E)); c.circle(hx, hy, 15, C(0x16161A))
+        c.rect(hx - 15, hy + 9, 31, 12, C(0x16161A))                       // the opening goes down to the floor
+        c.rect(hx - 17, hy + 2, 2, 19, C(0xB0AC9E)); c.rect(hx + 16, hy + 2, 2, 19, C(0xB0AC9E))
+        c.ellipse(hx, hy - 2, 9, 6, C(0x05060C))                            // the cockpit window, far down the corridor
+        c.ellipse(hx, hy - 2, 9, 6, C(0x2A3A5A, 0.4))
+        for k in 0..<4 { c.rect(hx - 9 + k * 5, hy - 8, 1, 12, C(0x2A2A2E)) }   // window frame struts
+        c.rect(hx - 11, hy + 5, 22, 2, C(0x3A3934))                        // the console under it
+
+        // The dejarik table with its curved padded bench (left).
+        let tx = 74
+        for y in 0..<14 {                                                  // the bench: a padded half-ring behind the table
+            let half = Int(Double(26) * (1 - pow(Double(13 - y) / 14, 2)).squareRoot())
+            c.rect(tx - half, g - 18 + y, half * 2, 1, y % 4 == 0 ? C(0xBCB6A2) : C(0xD8D2BC))
+        }
+        c.rect(tx - 26, g - 6, 52, 6, C(0xC8C2AC)); c.rect(tx - 26, g - 6, 52, 1, C(0xE8E2CC))
+        c.ellipse(tx, g - 7, 14, 3, C(0x3A3A36)); c.rect(tx - 2, g - 6, 4, 6, C(0x2A2A28))
+        for k in 0..<7 { c.rect(tx - 12 + k * 4, g - 8, 2, 1, k % 2 == 0 ? C(0x2E5A3A) : C(0x1E3A2A)) }   // the board
+        c.ellipse(tx, g - 7, 12, 2, C(0x1E3A2A, 0.4))
+
+        // Deck plates with a lit strip.
+        c.ground(g, C(0x3A3A36), edge: C(0x9A968A), speck: C(0x2E2E2A), seed: 14)
         for x in stride(from: 0, to: c.w, by: 3) { c.rect(x, g + 1, 1, c.h - g - 1, C(0x2A2A28)) }
+        c.rect(0, g + 2, c.w, 1, C(0xFFD8A0, 0.25))
     }
 
+    /// The dejarik monsters squaring off, Luke's training remote hovering and zapping, and hyperspace streaking past
+    /// the cockpit window down the corridor.
     static func dejarik(_ c: PixelCanvas, _ g: Int, t: Double) {
-        let tx = c.w / 3
+        let tx = 74
         let flick = 0.55 + 0.3 * noise(Int(t * 12))
-        // two tiny holo monsters squaring off
-        c.rect(tx - 7, g - 10, 3, 4, C(0x7AFFB0, flick)); c.px(tx - 6, g - 11, C(0x7AFFB0, flick))
-        c.rect(tx + 4, g - 9, 4, 3, C(0x7AC8FF, flick)); c.px(tx + 7, g - 10, C(0x7AC8FF, flick))
+        let hop = Int(sin(t * 3) * 1.2)
+        c.rect(tx - 8, g - 13 + hop, 3, 4, C(0x7AFFB0, flick)); c.px(tx - 7, g - 14 + hop, C(0x7AFFB0, flick))
+        c.rect(tx + 4, g - 12 - hop, 4, 3, C(0x7AC8FF, flick)); c.px(tx + 7, g - 13 - hop, C(0x7AC8FF, flick))
+
+        // The training remote, bobbing above the bench, firing a little zap now and then.
+        let rx = 132 + Int(sin(t * 0.9) * 10), ry = g - 40 + Int(cos(t * 1.7) * 4)
+        c.circle(rx, ry, 3, C(0x3A3A3E)); c.circle(rx, ry, 2, C(0x5A5A62))
+        c.px(rx - 1, ry - 1, C(0x9A9AA2)); c.px(rx + 1, ry, C(0xFF5A3A))
+        for k in [-4, 4] { c.px(rx + k, ry, C(0x8A8A92)) }                 // its little antennae
+        let z = (t * 0.7).truncatingRemainder(dividingBy: 1)
+        if z < 0.12 { for k in 0..<10 { c.px(rx - 3 - k * 2, ry + 2 + k, C(0xFF4A3A, 1 - z * 6)) } }
+
+        // Hyperspace past the cockpit window.
+        let hx = c.w - 66, hy = g - 22
+        for i in 0..<12 {
+            let a = Double(i) * 2.4 + 0.3
+            let p = (t * 1.6 + noise(i * 13)).truncatingRemainder(dividingBy: 1)
+            let r0 = p * 7, r1 = min(9, r0 + 2 + p * 4)
+            let x0 = hx + Int(cos(a) * r0), y0 = hy + Int(sin(a) * r0 * 0.65)
+            let x1 = hx + Int(cos(a) * r1), y1 = hy + Int(sin(a) * r1 * 0.65)
+            c.px(x0, y0, C(0xDDEEFF, 0.5 * p)); c.px(x1, y1, C(0xFFFFFF, 0.9 * p))
+            if abs(x1 - x0) > 1 || abs(y1 - y0) > 1 { c.px((x0 + x1) / 2, (y0 + y1) / 2, C(0xC8E0FF, 0.7 * p)) }
+        }
     }
 
     // Leia / C-3PO — the Tantive IV: white ribbed corridor.

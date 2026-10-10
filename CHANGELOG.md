@@ -3,6 +3,13 @@
 ## 2.22.0 — 2026-10-11
 
 ### Changed
+- **The Millennium Falcon redrawn as its main hold from A New Hope.** It used to be a flat grid of identical grey panels. Now:
+  - the hull curves overhead at both ends, with ribs along it;
+  - the walls are crowded with pipes and clamps, blinking light panels, vents, red valve wheels and looping hoses;
+  - the **dejarik table** with its curved cream padded bench, and two holo monsters hopping on the board;
+  - **Luke's training remote** bobbing above the bench, firing a tiny red zap now and then;
+  - a **round hatch** down the corridor to the cockpit, with **hyperspace streaking** past the cockpit window at the end;
+  - deck plates with a softly lit strip.
 - **Dagobah redrawn from The Empire Strikes Back.** It used to be a row of identical straight trunks. Now:
   - layered murk: pale misty trees far back, dark twisted trunks with hanging vines in front;
   - the gnarled tree over the **dark side cave**: twisted trunk strands, roots arching over the black cave mouth, branches dripping moss;
