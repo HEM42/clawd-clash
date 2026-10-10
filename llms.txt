@@ -36,4 +36,4 @@
 
 - [README.md](README.md): what it is, screenshots, install.
 - [CHANGELOG.md](CHANGELOG.md): detailed history of every change and why.
-- [promo/clawd-wars-promo.mp4](promo/clawd-wars-promo.mp4): the 45-second promo trailer (1080p); `docs/trailer.png` is its README thumbnail.
+- [promo/clawd-wars-promo.mp4](promo/clawd-wars-promo.mp4): the 45-second promo trailer (1080p); the README embeds a 720p upload of it as an inline player.

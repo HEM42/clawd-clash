@@ -3,7 +3,7 @@
 ## 2.21.0 — 2026-10-10
 
 ### Added
-- **Promo trailer.** `promo/clawd-wars-promo.mp4` is a 45-second 1080p trailer, with its storyboard alongside. The README opens with it as a clickable thumbnail (`docs/trailer.png`: the closing title card with a play button).
+- **Promo trailer.** `promo/clawd-wars-promo.mp4` is a 45-second 1080p trailer, with its storyboard alongside. The README opens with it as an inline player: a 9 MB 720p copy uploaded to GitHub, since free accounts play videos only up to 10 MB in a README. A link to the full 1080p file sits under it.
   - Earlier in-progress versions had been swept into nine commits by `git add -A` while the video was being made in the same folder. That put about 150 MB of video in history. History was rewritten with `git filter-repo` so the promo appears only once, and force-pushed. No release tags were affected.
 - **Gemini CLI support.** Hooks go in `~/.gemini/settings.json`, next to the user's own settings and hooks. A backup is kept, and the handler is named `clawd-wars` so `/hooks disable clawd-wars` works. Gemini CLI uses its own event names, which the hook translates: `BeforeAgent` → prompt, `BeforeTool`/`AfterTool` → tool calls, `AfterAgent` → done (its `prompt_response` becomes the reply), and a `ToolPermission` notification → needs you. Timeouts are in milliseconds there. Its tools are described like Qwen's (`replace`, `write_file`, `run_shell_command`, `grep_search`, `list_directory`, `write_todos`…).
   - `~/.gemini` is shared with Google's newer Antigravity CLI, so Gemini CLI counts as installed only when a `gemini` command exists. The app looks in Homebrew, `/usr/local`, `~/.local`, npm-global, nvm, Volta, Bun, pnpm, Yarn, asdf and mise, because an app's own PATH is bare.
