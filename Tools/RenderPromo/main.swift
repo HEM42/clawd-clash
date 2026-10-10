@@ -7,7 +7,8 @@ import AVFoundation
 //          Sources/App/Cast.swift Sources/App/Cantina.swift Sources/App/Locations.swift Sources/Shared/*.swift \
 //          Tools/RenderPromo/main.swift -o /tmp/renderpromo
 //   /tmp/renderpromo storyboard promo     → storyboard.png + one PNG per key frame
-//   /tmp/renderpromo video promo          → clawd-wars-promo.mp4 (H.264, silent)
+//   /tmp/renderpromo video promo          → clawd-wars-promo.mp4 (H.264 + AAC soundtrack)
+//   /tmp/renderpromo audio promo          → clawd-wars-promo.wav (just the soundtrack)
 //   /tmp/renderpromo frame promo 9.5      → a single frame at 9.5 s
 
 let W = 1920, H = 1080, fps = 30.0, duration = 45.7
@@ -877,9 +878,9 @@ let beats: [(title: String, action: String, onScreen: String, sound: String)] = 
     ("A LONG TIME AGO", "Black screen. The film's famous blue opening line, parodied for terminals, fades in and out.",
      "“A long time ago, in a terminal far, far away....”", "silence"),
     ("THE LOGO", "Hard cut to stars. CLAWD WARS, outlined in yellow, starts bigger than the screen and falls away into the starfield.",
-     "CLAWD WARS (outlined logo)", "the big orchestral hit"),
+     "CLAWD WARS (outlined logo)", "big hit, then an original chiptune fanfare"),
     ("THE STAR DESTROYER", "The camera tilts down to pixel Tatooine and its two moons. The Tantive IV races in from the top under red laser fire; then the Star Destroyer's nose slides in overhead and the hull keeps coming, filling the frame, until its three engines pass.",
-     "no text", "engine rumble, turbolasers"),
+     "no text", "dark pulsing build, a turbolaser per bolt, timpani, the rumble growing as it passes"),
     ("THE HOOK", "Three busy terminals (Claude, Codex, Gemini) on a dusky Mac desktop, slow push-in. One thinking, one waiting on a permission prompt, one long done.",
      "“Three AIs. Nine agents. One very confused human.”  →  “Sound familiar?”", "low synth hum, keyboard clicks"),
     ("DESKTOP MODE", "Desktop dims; Claude's Vader and Codex's Luke drop onto the bottom edge and duel. Agent Han trades shots with a Codex Stormtrooper. Project names and agent tasks on the labels.",
@@ -938,6 +939,324 @@ func storyboard(_ frames: [NSBitmapImageRep]) -> NSBitmapImageRep {
     return rep
 }
 
+// MARK: Soundtrack (all synthesized here: an original chiptune score and retro sound effects)
+
+let sampleRate = 44100.0
+func hashNoise(_ i: Int) -> Double { noise(i) }   // the sprites' noise, reachable from inside Mix
+
+/// A mono mix bus the whole soundtrack is written into.
+final class Mix {
+    var buf: [Float]
+    init(seconds: Double) { buf = [Float](repeating: 0, count: Int(seconds * sampleRate) + 1) }
+
+    enum Wave { case square(Double), saw, triangle, sine }
+
+    /// One note or sweep: `freq` slides to `to`, with an attack/release envelope and optional vibrato.
+    func tone(_ start: Double, _ dur: Double, _ freq: Double, to: Double? = nil, wave: Wave = .square(0.5), vol: Double,
+              attack: Double = 0.005, release: Double = 0.05, decay: Double = 0, vibrato: Double = 0) {
+        guard start < Double(buf.count) / sampleRate, dur > 0 else { return }
+        let n = Int(dur * sampleRate), s0 = Int(max(0, start) * sampleRate)
+        var phase = 0.0
+        for i in 0..<n {
+            let idx = s0 + i
+            guard idx < buf.count else { break }
+            let tt = Double(i) / sampleRate, p = tt / dur
+            var f = to.map { freq * pow($0 / freq, p) } ?? freq
+            if vibrato > 0 { f *= 1 + vibrato * sin(tt * 2 * .pi * 5.5) }
+            phase += f / sampleRate
+            let ph = phase - floor(phase)
+            let v: Double
+            switch wave {
+            case .square(let duty): v = ph < duty ? 1 : -1
+            case .saw: v = 2 * ph - 1
+            case .triangle: v = ph < 0.5 ? 4 * ph - 1 : 3 - 4 * ph
+            case .sine: v = sin(2 * .pi * ph)
+            }
+            var env = min(1, tt / attack) * min(1, (dur - tt) / release)
+            if decay > 0 { env *= exp(-tt / decay) }
+            buf[idx] += Float(v * env * vol)
+        }
+    }
+
+    /// Filtered noise: `cutoff` (0…1, one-pole low-pass amount) slides to `cutoffTo`; `highpass` keeps only the hiss.
+    func noise(_ start: Double, _ dur: Double, vol: Double, cutoff: Double = 1, cutoffTo: Double? = nil,
+               attack: Double = 0.002, release: Double = 0.05, decay: Double = 0, highpass: Bool = false, seed: Int = 1) {
+        let n = Int(dur * sampleRate), s0 = Int(max(0, start) * sampleRate)
+        var lp = 0.0, rng = UInt64(seed &* 2654435761 &+ 12345)
+        for i in 0..<n {
+            let idx = s0 + i
+            guard idx < buf.count else { break }
+            rng = rng &* 6364136223846793005 &+ 1442695040888963407
+            let white = Double(Int64(bitPattern: rng >> 11) % 2_000_000) / 1_000_000 - 1
+            let tt = Double(i) / sampleRate, p = tt / dur
+            let a = cutoffTo.map { cutoff + ($0 - cutoff) * p } ?? cutoff
+            lp += (white - lp) * a
+            let v = highpass ? white - lp : lp
+            var env = min(1, tt / attack) * min(1, max(0, dur - tt) / release)
+            if decay > 0 { env *= exp(-tt / decay) }
+            buf[idx] += Float(v * env * vol)
+        }
+    }
+
+    // Sound effects
+    func pew(_ t: Double, vol: Double = 0.16) {                       // hand blaster
+        tone(t, 0.2, 1900, to: 220, wave: .square(0.5), vol: vol, release: 0.08, decay: 0.09)
+        noise(t, 0.05, vol: vol * 0.5, cutoff: 0.6, decay: 0.02)
+    }
+    func turbolaser(_ t: Double, pitch: Double, vol: Double = 0.1) {
+        tone(t, 0.32, 900 * pitch, to: 110 * pitch, wave: .saw, vol: vol, release: 0.1, decay: 0.14)
+        noise(t, 0.12, vol: vol * 0.6, cutoff: 0.25, decay: 0.05, seed: Int(t * 100))
+    }
+    func clash(_ t: Double, vol: Double = 0.2) {                      // sabers meeting
+        noise(t, 0.22, vol: vol, cutoff: 0.9, decay: 0.06, highpass: true, seed: Int(t * 77))
+        tone(t, 0.18, 1400, to: 500, wave: .square(0.3), vol: vol * 0.35, decay: 0.05)
+        tone(t, 0.25, 180, to: 120, wave: .saw, vol: vol * 0.4, decay: 0.1)
+    }
+    func ignite(_ t: Double, vol: Double = 0.14) {
+        tone(t, 0.5, 70, to: 120, wave: .saw, vol: vol, attack: 0.02, release: 0.2)
+        noise(t, 0.3, vol: vol * 0.5, cutoff: 0.05, cutoffTo: 0.4, decay: 0.15, seed: 9)
+    }
+    func hum(_ t: Double, _ dur: Double, vol: Double = 0.035) {        // saber hum while blades are out
+        tone(t, dur, 92, wave: .saw, vol: vol, attack: 0.3, release: 0.4, vibrato: 0.01)
+        tone(t, dur, 94.5, wave: .saw, vol: vol, attack: 0.3, release: 0.4)
+    }
+    func boom(_ t: Double, vol: Double = 0.45) {
+        tone(t, 1.2, 90, to: 32, wave: .sine, vol: vol, release: 0.4, decay: 0.45)
+        noise(t, 0.8, vol: vol * 0.5, cutoff: 0.08, cutoffTo: 0.01, decay: 0.3, seed: Int(t * 13))
+    }
+    func whoosh(_ center: Double, _ dur: Double, vol: Double = 0.12) {
+        noise(center - dur / 2, dur, vol: vol, cutoff: 0.01, cutoffTo: 0.25, attack: dur * 0.5, release: dur * 0.5, seed: Int(center * 31))
+    }
+    func pop(_ t: Double, step: Int, vol: Double = 0.1) {
+        let f = 520 * pow(2, Double(step) * 4 / 12)
+        tone(t, 0.09, f, to: f * 1.6, wave: .square(0.25), vol: vol, release: 0.03)
+    }
+    func ping(_ t: Double, vol: Double = 0.16) {                      // notification
+        tone(t, 0.25, 1318.5, wave: .sine, vol: vol, release: 0.2, decay: 0.15)
+        tone(t + 0.12, 0.45, 1760, wave: .sine, vol: vol, release: 0.35, decay: 0.2)
+    }
+    func step(_ t: Double, vol: Double = 0.05) { noise(t, 0.04, vol: vol, cutoff: 0.15, decay: 0.012, seed: Int(t * 997)) }
+    func click(_ t: Double, vol: Double = 0.04) { noise(t, 0.02, vol: vol, cutoff: 0.8, decay: 0.006, highpass: true, seed: Int(t * 541)) }
+    func r2(_ t: Double, vol: Double = 0.07) {                       // a little droid chirp
+        for k in 0..<10 {
+            let f = 1100 + hashNoise(Int(t * 10) + k * 3) * 1700
+            tone(t + Double(k) * 0.045, 0.05, f, to: f * (hashNoise(k + 4) > 0.5 ? 1.3 : 0.8), wave: .sine, vol: vol, release: 0.01)
+        }
+    }
+    // Drums
+    func kick(_ t: Double, vol: Double = 0.3) { tone(t, 0.16, 150, to: 45, wave: .sine, vol: vol, release: 0.05, decay: 0.08) }
+    func snare(_ t: Double, vol: Double = 0.12) {
+        noise(t, 0.14, vol: vol, cutoff: 0.7, decay: 0.05, seed: Int(t * 61))
+        tone(t, 0.08, 220, to: 160, wave: .triangle, vol: vol * 0.5, decay: 0.04)
+    }
+    func hat(_ t: Double, vol: Double = 0.035) { noise(t, 0.04, vol: vol, cutoff: 0.95, decay: 0.012, highpass: true, seed: Int(t * 173)) }
+}
+
+func midi(_ n: Int) -> Double { 440 * pow(2, Double(n - 69) / 12) }
+
+/// Writes 16-bit mono PCM as a WAV file.
+func writeWAV(_ samples: [Float], to path: String) {
+    var d = Data()
+    func u32(_ v: UInt32) { var x = v.littleEndian; d.append(Data(bytes: &x, count: 4)) }
+    func u16(_ v: UInt16) { var x = v.littleEndian; d.append(Data(bytes: &x, count: 2)) }
+    d.append("RIFF".data(using: .ascii)!); u32(UInt32(36 + samples.count * 2)); d.append("WAVEfmt ".data(using: .ascii)!)
+    u32(16); u16(1); u16(1); u32(UInt32(sampleRate)); u32(UInt32(sampleRate) * 2); u16(2); u16(16)
+    d.append("data".data(using: .ascii)!); u32(UInt32(samples.count * 2))
+    var pcm = [Int16](repeating: 0, count: samples.count)
+    for i in samples.indices { pcm[i] = Int16(max(-1, min(1, samples[i])) * 32000) }
+    pcm.withUnsafeBufferPointer { d.append(Data(buffer: $0)) }
+    try! d.write(to: URL(fileURLWithPath: path))
+}
+
+func shotStart(_ name: String) -> Double { shots.first { $0.name == name }!.start }
+
+/// Every time the duelling blades meet (the same clock the sparks use) between `a` and `b`.
+func clashTimes(_ a: Double, _ b: Double) -> [Double] {
+    var out: [Double] = [], was = false
+    var t = a
+    while t < b {
+        let c = duelPose(t).clash
+        if c && !was { out.append(t) }
+        was = c; t += 1 / 120
+    }
+    return out
+}
+
+/// When a blaster with `offset` fires between `a` and `b` (a bolt leaves at each whole period).
+func shotTimes(_ a: Double, _ b: Double, offset: Double) -> [Double] {
+    var out: [Double] = []
+    var k = ceil((a + offset) / blasterPeriod)
+    while k * blasterPeriod - offset < b { out.append(k * blasterPeriod - offset); k += 1 }
+    return out
+}
+
+func soundtrack() -> [Float] {
+    let m = Mix(seconds: duration)
+    let half = wipe / 2
+
+    // ── Opening ────────────────────────────────────────────────────────────────
+    // "A long time ago…": silence, as in the film.
+    // The logo: a big hit and an original fanfare.
+    let logo = shotStart("logo")
+    m.boom(logo, vol: 0.55)
+    m.noise(logo, 1.6, vol: 0.12, cutoff: 0.9, decay: 0.5, highpass: true, seed: 3)          // crash cymbal
+    for n in [48, 55, 60, 64, 67] { m.tone(logo, 1.1, midi(n), wave: .saw, vol: 0.05, release: 0.6, decay: 0.7) }
+    let fanfare: [(Double, Double, Int)] = [(0.3, 0.28, 64), (0.6, 0.28, 67), (0.9, 0.85, 72), (1.8, 0.28, 71),
+                                            (2.1, 0.28, 69), (2.4, 1.05, 74)]
+    for (s, d, n) in fanfare {
+        m.tone(logo + s, d, midi(n + 12), wave: .square(0.5), vol: 0.07, release: 0.08, vibrato: 0.006)
+        m.tone(logo + s, d, midi(n), wave: .saw, vol: 0.05, release: 0.08)
+    }
+    for (s, d, chord) in [(0.0, 0.9, [48, 52, 55]), (0.9, 0.9, [45, 48, 52]), (1.8, 0.6, [41, 45, 48]), (2.4, 1.1, [43, 47, 50])] {
+        for n in chord { m.tone(logo + s, d, midi(n), wave: .triangle, vol: 0.07, attack: 0.03, release: 0.15) }
+    }
+    m.tone(logo + 2.4, 1.1, midi(31), wave: .sine, vol: 0.2, release: 0.3)
+
+    // The Star Destroyer: a dark pulsing build, turbolasers, and a rumble that grows as it passes overhead.
+    let sd = shotStart("destroyer")
+    for i in 0..<Int((8.5 + half) / 0.25) {
+        let t = sd + Double(i) * 0.25
+        let grow = min(1, Double(i) / 30)
+        m.tone(t, 0.22, midi(i % 8 == 7 ? 37 : 36), wave: .square(0.25), vol: 0.05 + 0.06 * grow, release: 0.04)
+    }
+    for (s, chord) in [(0.0, [48, 51, 55]), (2.0, [44, 48, 51]), (4.0, [46, 50, 53]), (6.0, [48, 51, 55]), (7.0, [43, 47, 50])] {
+        for n in chord { m.tone(sd + s, 1.8, midi(n), wave: .saw, vol: 0.04, attack: 0.05, release: 0.6) }
+    }
+    for k in 0..<12 { m.tone(sd + 2.4 + Double(k) * 0.05, 0.08, 70, to: 55, wave: .sine, vol: 0.06 + Double(k) * 0.012, decay: 0.05) }  // timpani roll
+    m.boom(sd + 3.0, vol: 0.4)                                                                            // its nose appears
+    m.noise(sd + 2.6, 6.5, vol: 0.32, cutoff: 0.004, cutoffTo: 0.03, attack: 3.0, release: 2.0, seed: 5)  // the rumble
+    m.tone(sd + 2.6, 6.5, 41, wave: .sine, vol: 0.18, attack: 3.0, release: 2.0)
+    m.tone(sd + 1.4, 5.0, 620, to: 560, wave: .triangle, vol: 0.02, attack: 0.5, release: 1.5)            // the runner's engines
+    for i in 0..<40 {                                                                                      // one per bolt on screen
+        let t = sd + 1.3 + Double(i) * 0.17
+        if t < sd + 8.5 + half { m.turbolaser(t, pitch: noise(i * 7) > 0.5 ? 1 : 0.8, vol: 0.07) }
+    }
+    m.tone(sd + 6.6, 3.0, midi(24), wave: .sine, vol: 0.12, attack: 0.4, release: 1.5)                   // engines passing
+
+    // ── The promo: an original chiptune groove, Am F C G ────────────────────────
+    let g0 = shotStart("hook"), beat = 0.5, bar = 2.0
+    let roots = [45, 41, 48, 43]
+    let triads = [[69, 72, 76], [65, 69, 72], [67, 72, 76], [67, 71, 74]]
+    let melodyA: [[(Int, Double)]] = [[(76, 1), (81, 1), (84, 0.5), (83, 0.5), (81, 1)], [(84, 1), (81, 1), (77, 0.5), (79, 0.5), (81, 1)],
+                                      [(79, 1), (76, 0.5), (79, 0.5), (84, 1), (83, 1)], [(86, 1), (83, 1), (79, 2)]]
+    let melodyB: [[(Int, Double)]] = [[(81, 0.5), (84, 0.5), (88, 1), (86, 0.5), (84, 0.5), (83, 1)], [(81, 1.5), (84, 0.5), (81, 1), (77, 1)],
+                                      [(79, 0.5), (81, 0.5), (79, 0.5), (76, 0.5), (79, 1), (84, 1)], [(83, 1), (86, 1), (91, 2)]]
+    let grooveBars = Int(((shotStart("endcard") - g0) / bar).rounded())
+    for b in 0..<grooveBars {
+        let t0 = g0 + Double(b) * bar, c = b % 4
+        let full = b >= 2                                  // the hook is sparse; the band kicks in with desktop mode
+        for e in 0..<8 {                                   // bass, eighths, octave bounce
+            m.tone(t0 + Double(e) * beat / 2, beat / 2 * 0.9, midi(roots[c] - 12 + (e % 2) * 12), wave: .square(0.25),
+                   vol: full ? 0.075 : 0.05, release: 0.02)
+            m.hat(t0 + Double(e) * beat / 2, vol: e % 2 == 1 ? 0.04 : 0.025)
+        }
+        m.kick(t0)
+        if full {
+            m.kick(t0 + 2 * beat); m.kick(t0 + 2.5 * beat, vol: 0.18)
+            m.snare(t0 + beat); m.snare(t0 + 3 * beat)
+            for s in 0..<16 {                              // the arpeggio
+                m.tone(t0 + Double(s) * beat / 4, beat / 4 * 0.8, midi(triads[c][s % 3] - 12 + (s / 3 % 2) * 12),
+                       wave: .triangle, vol: 0.03, release: 0.02)
+            }
+            let phrase = (b - 2) / 4 % 2 == 0 ? melodyA : melodyB
+            var tt = t0
+            for (n, d) in phrase[c] {
+                m.tone(tt, d * beat * 0.92, midi(n), wave: .square(0.5), vol: 0.055, release: 0.04, vibrato: 0.004)
+                tt += d * beat
+            }
+        }
+        if b == grooveBars - 1 {                           // snare roll into the end card
+            for k in 0..<8 { m.snare(t0 + 2 * beat + Double(k) * beat / 4, vol: 0.06 + Double(k) * 0.01) }
+        }
+    }
+
+    // ── End card: a heroic cadence, F G A ────────────────────────────────────────
+    let end = shotStart("endcard")
+    for (s, d, chord, lead) in [(0.0, 0.7, [53, 57, 60, 65], 81), (0.7, 0.7, [55, 59, 62, 67], 83), (1.4, 2.8, [57, 61, 64, 69], 85)] {
+        for n in chord { m.tone(end + s, d, midi(n), wave: .saw, vol: 0.045, attack: 0.02, release: d > 1 ? 1.6 : 0.1) }
+        m.tone(end + s, d, midi(lead), wave: .square(0.5), vol: 0.06, release: d > 1 ? 1.6 : 0.1, vibrato: 0.006)
+        m.tone(end + s, d, midi(chord[0] - 24), wave: .sine, vol: 0.2, release: d > 1 ? 1.6 : 0.1)
+    }
+    m.boom(end + 0.35, vol: 0.45)                          // the title lands
+    m.noise(end + 1.4, 2.5, vol: 0.08, cutoff: 0.9, decay: 0.8, highpass: true, seed: 8)
+    m.whoosh(end + 0.55, 1.1, vol: 0.22)                   // the Falcon flies by
+    m.tone(end, 1.1, 300, to: 900, wave: .saw, vol: 0.025, attack: 0.4, release: 0.5)
+
+    // ── Sound effects in the promo ──────────────────────────────────────────────
+    for s in shots.dropFirst() where !s.cut { m.whoosh(s.start, wipe, vol: 0.07) }       // every wipe
+
+    let hook = shotStart("hook")                           // somebody typing
+    for i in 0..<26 { m.click(hook + 0.2 + Double(i) * 0.13 + noise(i) * 0.06) }
+
+    let desk = shotStart("desktop")                        // the drop-ins, the duel and the shootout
+    for (i, d) in [0.0, 0.12, 0.24, 0.32].enumerated() { m.step(desk + d + 0.3, vol: 0.1 + Double(i % 2) * 0.03) }
+    m.ignite(desk + 0.45)
+    m.hum(desk + 0.45, 4.6 - 0.45 + half)
+    for t in clashTimes(desk + 0.45, desk + 4.6 + half) { m.clash(t) }
+    for t in shotTimes(desk + 0.45, desk + 4.6 + half, offset: 0) { m.pew(t) }
+    for t in shotTimes(desk + 0.45, desk + 4.6 + half, offset: blasterPeriod / 2) { m.pew(t, vol: 0.12) }
+
+    let status = shotStart("status")                       // the four pop in; Boba's alert
+    for i in 0..<4 { m.pop(status + 0.1 + Double(i) * 0.22, step: i) }
+    for k in 0..<5 { m.tone(status + 1.2 + Double(k) * 0.62, 0.08, 1568, wave: .square(0.5), vol: 0.035, release: 0.03) }
+
+    let agents = shotStart("agents")                       // marching in, and R2
+    for k in 0..<14 { m.step(agents + Double(k) * 0.125, vol: 0.06) }
+    m.r2(agents + 1.4)
+
+    let win = shotStart("window")                          // the cantina duel, the cards, and the ping
+    m.hum(win, 2.5, vol: 0.02)
+    for t in clashTimes(win, win + 2.5) { m.clash(t, vol: 0.09) }
+    for k in [0.9, 1.8] { m.click(win + k, vol: 0.06) }
+    m.ping(win + 2.5)
+
+    let ais = shotStart("ais")                             // six pop in, Claude vs Codex
+    for i in 0..<6 { m.pop(ais + 0.15 + Double(i) * 0.1, step: i % 4) }
+    m.ignite(ais + 0.3, vol: 0.12)
+    m.hum(ais + 0.35, 4.4 - 0.35 + half)
+    for t in clashTimes(ais + 0.35, ais + 4.4 + half) { m.clash(t) }
+
+    for t in clashTimes(end + 0.5, duration) { m.clash(t, vol: 0.12) }                     // the duel on the horizon
+
+    // Master: gentle saturation, normalise, fade out.
+    var peak: Float = 0
+    for i in m.buf.indices { m.buf[i] = Float(tanh(Double(m.buf[i]) * 1.2)); peak = max(peak, abs(m.buf[i])) }
+    let gain = peak > 0 ? 0.89 / peak : 1
+    let fadeFrom = Int((duration - 1.2) * sampleRate)
+    for i in m.buf.indices {
+        m.buf[i] *= gain
+        if i > fadeFrom { m.buf[i] *= Float(max(0, 1 - Double(i - fadeFrom) / (1.2 * sampleRate))) }
+    }
+    return m.buf
+}
+
+/// Puts the soundtrack under the silent video: WAV → AAC with afconvert, then a passthrough export.
+func mux(video: String, audio: String, to out: String) {
+    let m4a = audio.replacingOccurrences(of: ".wav", with: ".m4a")
+    try? FileManager.default.removeItem(atPath: m4a)
+    let p = Process()
+    p.executableURL = URL(fileURLWithPath: "/usr/bin/afconvert")
+    p.arguments = ["-f", "m4af", "-d", "aac", "-b", "192000", audio, m4a]
+    try! p.run(); p.waitUntilExit()
+
+    let comp = AVMutableComposition()
+    let v = AVURLAsset(url: URL(fileURLWithPath: video)), a = AVURLAsset(url: URL(fileURLWithPath: m4a))
+    let range = CMTimeRange(start: .zero, duration: CMTime(seconds: duration, preferredTimescale: 600))
+    let vt = comp.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)!
+    try! vt.insertTimeRange(range, of: v.tracks(withMediaType: .video)[0], at: .zero)
+    let at = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)!
+    let aRange = CMTimeRange(start: .zero, duration: min(range.duration, a.duration))
+    try! at.insertTimeRange(aRange, of: a.tracks(withMediaType: .audio)[0], at: .zero)
+    try? FileManager.default.removeItem(atPath: out)
+    let ex = AVAssetExportSession(asset: comp, presetName: AVAssetExportPresetPassthrough)!
+    ex.outputURL = URL(fileURLWithPath: out); ex.outputFileType = .mp4
+    let done = DispatchSemaphore(value: 0)
+    ex.exportAsynchronously { done.signal() }
+    done.wait()
+    if ex.status != .completed { print("mux failed: \(String(describing: ex.error))"); exit(1) }
+    print("wrote \(out)")
+}
+
 // MARK: Main
 
 let args = CommandLine.arguments
@@ -985,7 +1304,12 @@ func writeVideo(to path: String) {
 }
 
 if cmd == "video" {
-    writeVideo(to: "\(out)/clawd-wars-promo.mp4")
+    let tmp = NSTemporaryDirectory()
+    writeVideo(to: tmp + "clawd-wars-silent.mp4")
+    writeWAV(soundtrack(), to: tmp + "clawd-wars.wav")
+    mux(video: tmp + "clawd-wars-silent.mp4", audio: tmp + "clawd-wars.wav", to: "\(out)/clawd-wars-promo.mp4")
+} else if cmd == "audio" {
+    writeWAV(soundtrack(), to: "\(out)/clawd-wars-promo.wav"); print("wrote \(out)/clawd-wars-promo.wav")
 } else if cmd == "frames" {
     let n = Int(duration * fps)
     for f in 0..<n { autoreleasepool { save(frame(Double(f) / fps), "\(out)/frame-\(String(format: "%03d", f)).png") } }

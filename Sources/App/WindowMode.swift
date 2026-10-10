@@ -93,8 +93,18 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         var f = window.frame
         f.size.height += delta
         f.origin.y -= delta
+        window.setFrame(onScreen(f), display: true, animate: true)
+    }
+
+    /// Grows downward from where the window is, but never past the screen: a window parked at the bottom grows
+    /// upward instead, and nothing gets taller than the screen.
+    private func onScreen(_ frame: NSRect) -> NSRect {
+        guard let vf = (window.screen ?? NSScreen.main)?.visibleFrame else { return frame }
+        var f = frame
+        f.size.height = min(f.height, vf.height)
         if f.minY < vf.minY { f.origin.y = vf.minY }
-        window.setFrame(f, display: true, animate: true)
+        if f.maxY > vf.maxY { f.origin.y = vf.maxY - f.height }
+        return f
     }
 
     var sceneScreenRect: NSRect { window.convertToScreen(sceneView.convert(sceneView.bounds, to: nil)) }
@@ -118,7 +128,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
                 var f = window.frame
                 f.origin.y -= h - f.height
                 f.size.height = h
-                window.setFrame(f, display: true, animate: true)
+                window.setFrame(onScreen(f), display: true, animate: true)
             }
         }
         fitToContent()
