@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.16.0 — 2026-10-10
+
+### Added
+- The full cantina band: **Figrin D'an and the Modal Nodes**, all seven Bith. Figrin D'an and Lirin Car'n play kloo horns (black, silver keys, flared bells), Doikk Na'ts the Fizzz, Ickabel G'ont and Tedn Dahai fanfars, Nalan Cheel the tall curved bandfill, and Tech Mo'r the ommni box with blinking keys. Each bobs on their own beat. The stage is widened to 82 px and the booth alcoves move over.
+
+### Changed
+- README: describes the full band, hover cards, walk-ins, sitting idle, NOT REPORTING and the OFFLINE banner. `docs/locations.png` and `docs/window-cantina.png` are regenerated to show the band.
+
 ## 2.15.3 — 2026-10-10
 
 ### Fixed

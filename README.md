@@ -32,8 +32,9 @@ You run Claude Code in three terminals. One is thinking, one is waiting for your
 - 🗡️ **Working?** Your Claude swings a lightsaber.
 - 💭 **Thinking?** A thought bubble.
 - ❗ **Needs you?** A red `!` — and if you ignore it for a minute, it starts jumping up and down.
-- 😴 **Done and idle?** zZz.
-- 🧑‍🚀 **Spawned subagents?** Rebels walk in next to it, each one labelled with *what it's doing* — and they fade out when they finish.
+- 😴 **Done and idle?** After a couple of minutes it sits down; after five it's asleep (zZz).
+- 🧑‍🚀 **Spawned subagents?** Rebels march in one by one, each labelled with *what it's doing* — and they fade out when they finish.
+- 🔍 **Want details?** Hover any character: status, how long, the tool it's running right now, your last prompt.
 - 🖱️ **Click any of them** to jump straight to that session's terminal or VS Code tab.
 
 It sits on the bottom of your screen, above every window, and it's click-through everywhere except the characters. No dashboard to open, no tab to check. It's just… there, quietly having a war.
@@ -79,7 +80,7 @@ The scene is set **where the first Claude belongs** — the Death Star for Vader
   <img src="docs/window-hoth.png" alt="Window mode on Hoth" width="760">
 </p>
 
-22 hand-built locations, each with its own little animation — the cantina band plays, the sarlacc's tentacles wave, Theed's laser gates pulse, snow falls on Hoth, fog drifts across Dagobah:
+22 hand-built locations, each with its own little animation — Figrin D'an and the Modal Nodes play in the cantina (all seven of them, with their kloo horns, fanfars, bandfill and ommni box), the sarlacc's tentacles wave, Theed's laser gates pulse, snow falls on Hoth, fog drifts across Dagobah:
 
 <p align="center">
   <img src="docs/locations.png" alt="All 22 locations" width="760">
@@ -95,12 +96,17 @@ The window sizes itself to the number of Claudes, has a themed title bar, can st
 | 💭 thought bubble | thinking |
 | red `!` | waiting for your permission — **jumping** after a minute |
 | `?` | that session started before the hooks were installed; restart it for live status |
+| sitting on the floor | idle for 2+ minutes |
 | zZz | idle for 5+ minutes |
+| `?` and NOT REPORTING | the hooks stopped reporting for that session while it's clearly busy — restart it |
+| red OFFLINE banner | the hooks aren't installed (or the status file can't be read) — never silently stale |
 | bobbing yellow ◆ | the Claude whose terminal you're looking at right now |
 | matching label colours | a Claude and its agents share their project's colour |
 | label above the head | the project (Claudes) or the task (agents) |
 
 - **Several Claudes at once** — each gets its own villain and project label; sessions that predate the hooks are still found from the process table.
+- **Hover** any villain or agent for a details card; agents also show which Claude they work for.
+- **Newcomers walk in** from the side of the screen, one at a time, instead of popping up.
 - **Drag** the crew anywhere — they'll stand right on the bottom edge of either monitor. Bubbles and labels never go off-screen; if the line is too long, everyone walks over to make room.
 - **Click** a villain (or a card) to jump to the session: the exact tab in Terminal or iTerm2, or the right window — even the right *native tab* — in VS Code or Cursor.
 - **Menu bar helmet** and right-click give you everything: status, Show in Window, Location, Settings. Hold **⌘** for the Playground (put any villains and heroes on stage and watch them fight) and Demo Mode.

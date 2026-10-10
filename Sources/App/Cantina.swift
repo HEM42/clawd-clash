@@ -36,12 +36,12 @@ enum Cantina {
         for x in stride(from: 6, to: w, by: 22) { c.rect(x, 5, 3, 2, ceiling) }
 
         // Regions the bar and the band stand occupy, so alcoves don't sit behind them.
-        let band = 0..<min(w, 44)
+        let band = 0..<min(w, bandWidth)
         let barStart = Int(Double(w) * 0.56), barEnd = min(w - 4, barStart + max(60, w / 3))
 
         // Arched booth alcoves along the back wall
         let archH = max(14, Int(Double(wallBottom) * 0.62))
-        var x = 50
+        var x = bandWidth + 6
         while x + 26 < w {
             if !(x + 26 > barStart - 4 && x < barEnd + 4) && !band.contains(x) {
                 drawAlcove(c, x: x, bottom: wallBottom, width: 26, height: archH)
@@ -120,15 +120,22 @@ enum Cantina {
         c.rect(x + r - 3, bottom - 12, 6, 1, glow.alpha(0.25))
     }
 
-    /// Figrin D'an and the Modal Nodes: three Bith bobbing to the beat on the band stage.
+    /// Width of the band stage: all seven Modal Nodes.
+    static let bandWidth = 82
+
+    /// Figrin D'an and the Modal Nodes — all seven Bith, each with their instrument, bobbing to the beat:
+    /// Figrin D'an and Lirin Car'n (kloo horns), Doikk Na'ts (Fizzz), Ickabel G'ont and Tedn Dahai (fanfars),
+    /// Nalan Cheel (bandfill) and Tech Mo'r (ommni box).
     static func drawBand(_ c: PixelCanvas, floorRows: Int, t: Double) {
         let base = c.h - floorRows - 4
-        let skin = C(0xE3D8C4), skinShade = C(0xBDB09A), robe = C(0x2E2A30), horn = C(0xC9CED6)
-        for i in 0..<3 {
-            let x = 6 + i * 12
-            let beat = Int((t * 2.2 + Double(i) * 0.33).truncatingRemainder(dividingBy: 1) * 2)   // on/off the beat
-            let bob = beat == 0 ? 0 : -1
-            c.oy = bob
+        let skin = C(0xE3D8C4), skinShade = C(0xBDB09A), robe = C(0x2E2A30)
+        let black = C(0x161618), silver = C(0xC9CED6), brass = C(0xD8B048), brassDark = C(0xA8842E)
+        enum Instrument { case kloo, fizzz, fanfar, bandfill, ommni }
+        let band: [Instrument] = [.kloo, .fizzz, .fanfar, .kloo, .bandfill, .ommni, .fanfar]
+        for (i, instrument) in band.enumerated() {
+            let x = 4 + i * 11
+            let beat = Int((t * 2.2 + Double(i) * 0.29).truncatingRemainder(dividingBy: 1) * 2)   // on/off the beat
+            c.oy = beat == 0 ? 0 : -1
             c.rect(x + 1, base - 9, 6, 9, robe)                              // robe
             c.pattern(x, base - 18, [
                 "..SSSS..",
@@ -141,16 +148,30 @@ enum Cantina {
                 "..SssS..",
                 "...SS...",
             ], ["S": skin, "s": skinShade, "E": C(0x101010)])                // the big Bith head
-            // instruments: a horn for two of them, the "fanfar" for the middle one
-            if i == 1 {
-                c.rect(x + 5, base - 9, 1, 6, horn); c.rect(x + 5, base - 3, 3, 2, horn)
-            } else {
-                c.rect(x + 4, base - 10, 4, 1, horn); c.rect(x + 7, base - 11, 2, 3, horn)
+            switch instrument {
+            case .kloo:                                                      // long black clarinet-like horn
+                c.rect(x + 4, base - 10, 1, 9, black)
+                for k in [base - 8, base - 6, base - 4] { c.px(x + 4, k, silver) }
+                c.rect(x + 3, base - 2, 3, 2, silver)                        // flared bell
+            case .fizzz:                                                     // small silver whistle, held sideways
+                c.rect(x + 4, base - 10, 5, 1, silver); c.px(x + 8, base - 11, silver)
+            case .fanfar:                                                    // brass horn, bell up and forward
+                c.rect(x + 5, base - 10, 1, 3, brass); c.rect(x + 6, base - 11, 2, 1, brass)
+                c.rect(x + 8, base - 13, 2, 3, brass); c.px(x + 9, base - 14, brassDark)
+            case .bandfill:                                                  // big curved bass horn
+                c.rect(x + 4, base - 10, 1, 7, brassDark)
+                c.rect(x + 4, base - 3, 4, 1, brassDark); c.rect(x + 7, base - 9, 1, 6, brass)
+                c.rect(x + 6, base - 12, 3, 3, brass); c.px(x + 7, base - 12, brassDark)
+            case .ommni:                                                     // ommni box with glowing keys
+                c.rect(x + 1, base - 8, 7, 4, black)
+                for k in 0..<3 { c.px(x + 2 + k * 2, base - 7, (Int(t * 4) + k) % 3 == 0 ? C(0x7AFFB0) : silver) }
             }
             c.oy = 0
         }
         // music notes drifting up
-        let f = (t / 1.6).truncatingRemainder(dividingBy: 1)
-        c.pattern(40, base - 22 - Int(f * 10), ["..N", "..N", "NNN", "NN."], ["N": C(0x3A2C22, 1 - f)])
+        for n in 0..<2 {
+            let f = (t / 1.6 + Double(n) * 0.5).truncatingRemainder(dividingBy: 1)
+            c.pattern(24 + n * 34, base - 22 - Int(f * 10), ["..N", "..N", "NNN", "NN."], ["N": C(0x3A2C22, 1 - f)])
+        }
     }
 }
