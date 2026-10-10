@@ -63,6 +63,7 @@ enum Location: String, CaseIterable {
         case .rey: return .jakku
         case .mace, .ahsoka: return .jediCouncil
         case .ewok: return .endor
+        case .tauntaun: return .hoth
         }
     }
 

@@ -12,7 +12,7 @@ A desktop overlay for macOS that shows what Claude Code is doing. The sprite is 
 | waiting on a permission prompt    | holds his saber upright and shows a red **!** bubble                |
 | idle while agents are still running | stands guard with his saber lit                                   |
 
-Each subagent appears next to its Claude as a random hero: **Luke**, **Obi-Wan**, **Qui-Gon**, **Mace Windu**, **Yoda**, **Rey** and **Ahsoka** (sabers), **Han** (DL-44), **Leia** (Defender), **Chewbacca** (bowcaster), a **Jawa** (ion blaster), **Wicket the Ewok** (spear), or the unarmed **R2-D2** and **C-3PO**. Agents fade in when they spawn and fade out when they finish.
+Each subagent appears next to its Claude as a random hero: **Luke**, **Obi-Wan**, **Qui-Gon**, **Mace Windu**, **Yoda**, **Rey** and **Ahsoka** (sabers), **Han** (DL-44), **Leia** (Defender), **Chewbacca** (bowcaster), a **Jawa** (ion blaster), **Wicket the Ewok** (spear), or the unarmed **R2-D2**, **C-3PO** and a **tauntaun**. Agents fade in when they spawn and fade out when they finish.
 
 ### Several Claudes at once
 

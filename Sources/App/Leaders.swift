@@ -10,7 +10,7 @@ extension Companion {
         case .luke, .obiwan, .quigon, .mace, .yoda, .rey, .ahsoka: return .saber
         case .ewok: return .saber     // a spear — fights up close like a blade
         case .han, .leia, .jawa, .chewie: return .blaster
-        case .r2d2, .c3po: return .none
+        case .r2d2, .c3po, .tauntaun: return .none
         }
     }
 

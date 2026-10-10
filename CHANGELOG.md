@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.10.0 — 2026-10-10
+
+### Added
+- **Tauntaun** hero (agent): a shaggy grey-white biped with curled horns, a long snout, two big feet and a swishing tail. It's unarmed like R2-D2 and C-3PO, so it doesn't fight. It stomps now and then, bobs its head, and huffs frosty breath. Home: Hoth.
+
+### Changed
+- The location name in the window's title bar is back to its earlier style (10.5 pt semibold, light grey, uppercase) instead of crawl-yellow, and stays on the right.
+
 ## 2.9.1 — 2026-10-10
 
 ### Fixed

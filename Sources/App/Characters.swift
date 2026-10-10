@@ -13,7 +13,7 @@ enum Sprite {
 }
 
 enum Companion: Int, CaseIterable {
-    case luke, han, leia, obiwan, r2d2, c3po, quigon, mace, yoda, jawa, chewie, rey, ahsoka, ewok
+    case luke, han, leia, obiwan, r2d2, c3po, quigon, mace, yoda, jawa, chewie, rey, ahsoka, ewok, tauntaun
 
     var name: String {
         switch self {
@@ -31,6 +31,7 @@ enum Companion: Int, CaseIterable {
         case .rey: return "Rey"
         case .ahsoka: return "Ahsoka Tano"
         case .ewok: return "Wicket the Ewok"
+        case .tauntaun: return "Tauntaun"
         }
     }
 
@@ -47,6 +48,7 @@ enum Companion: Int, CaseIterable {
         case .yoda: return 24
         case .ahsoka: return 16
         case .ewok: return 22
+        case .tauntaun: return 14
         }
     }
 }
@@ -273,6 +275,7 @@ func drawCompanion(_ c: PixelCanvas, _ who: Companion, t: Double, walking: Bool,
     case .c3po: drawC3PO(c, t: t, walking: walking)
     case .quigon, .mace, .yoda, .rey, .ahsoka: drawJedi(c, who, t: t, walking: walking, role: role)
     case .ewok: drawEwok(c, t: t, walking: walking, role: role)
+    case .tauntaun: drawTauntaun(c, t: t, walking: walking)
     case .jawa, .chewie: drawGunner(c, who, t: t, walking: walking, role: role)
     }
 }
@@ -675,4 +678,42 @@ func drawSpear(_ c: PixelCanvas, angle: Double) {
     c.glowLine(hx - ux * 4, hy - uy * 4, hx + ux * 18, hy + uy * 18, core: C(0x8A6238), glow: C(0, 0), coreR: 0.7, glowR: 0.8)
     c.glowLine(hx + ux * 18, hy + uy * 18, hx + ux * 22, hy + uy * 22, core: C(0x9AA0A8), glow: C(0, 0), coreR: 1.1, glowR: 1.2)
     c.glowLine(hx + ux * 16, hy + uy * 16, hx + ux * 17, hy + uy * 17, core: C(0xC8B48A), glow: C(0, 0), coreR: 1.0, glowR: 1.1)  // binding
+}
+
+/// A tauntaun from Hoth: a shaggy grey-white biped with curled horns, a long snout and a tail. It doesn't
+/// fight — it stomps about, bobs its head and huffs frosty breath.
+private func drawTauntaun(_ c: PixelCanvas, t: Double, walking: Bool) {
+    let fur = C(0xD8D2C4), furShade = C(0xAEA696), furDark = C(0x8A8274), horn = C(0x8A6A48)
+    let step = walking ? Int(t * 8) % 2 : (sin(t * 3) > 0.7 ? 0 : -1)        // an impatient stomp now and then
+    let bob = Int((sin(t * 2.4) * 1.2).rounded())
+    // Two strong legs with big feet
+    for (i, lx) in [21, 31].enumerated() {
+        let up = step == i ? 1 : 0
+        c.rect(lx, 34, 4, 8 - up, furShade)
+        c.rect(lx - 1, 41 - up, 6, 2, furDark)
+    }
+    // Tail swishing behind
+    let sway = Int((sin(t * 2) * 2).rounded())
+    c.glowLine(18, 32, 9, Double(36 + sway), core: furShade, glow: C(0, 0), coreR: 1.4, glowR: 1.5)
+    // Body (a shaggy Clawd) with a little arm
+    c.rect(18, 22, 18, 13, fur)
+    c.rect(18, 33, 18, 2, furShade)
+    for (x, y) in [(20, 25), (24, 29), (29, 24), (33, 30), (22, 32), (31, 27)] { c.px(x, y, furShade) }
+    c.rect(35, 28, 3, 2, furShade)
+    // Neck and head, bobbing; long snout forward, horns curling back
+    c.oy = bob
+    c.rect(30, 16, 6, 7, fur)
+    c.rect(32, 11, 10, 7, fur)
+    c.rect(42, 13, 5, 4, fur)                    // snout
+    c.rect(42, 16, 5, 1, furShade)
+    c.px(46, 14, furDark)                         // nostril
+    c.rect(36, 13, 2, 2, C(0x1A1612))             // eye
+    c.pattern(30, 7, [".HHH.", "H...H", "H....", ".H..."], ["H": horn])   // curled horn
+    c.oy = 0
+    // Frosty breath
+    let f = (t / 1.8).truncatingRemainder(dividingBy: 1)
+    if f < 0.6 {
+        let k = f / 0.6
+        c.circle(48 + Int(k * 7), 15 + bob - Int(k * 3), 1 + Int(k * 2), white.alpha(0.55 * (1 - k)))
+    }
 }
