@@ -61,6 +61,8 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         scroll.hasVerticalScroller = true
         scroll.drawsBackground = false
         scroll.autohidesScrollers = true
+        // Overlay scrollers float over the cards instead of reserving a column for themselves.
+        scroll.scrollerStyle = .overlay
         content.addSubview(sceneView)
         content.addSubview(scroll)
         content.addSubview(header)
@@ -74,7 +76,9 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     /// Make the window exactly as tall as the scene plus the cards (one per Claude), keeping its top edge
     /// where it is and never taller than the screen — past that the cards scroll.
     func fitToContent() {
-        guard let screen = window.screen ?? NSScreen.main else { return }
+        // Don't fight the user mid-drag; it settles to the right height when they let go.
+        guard UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true,
+              !window.inLiveResize, let screen = window.screen ?? NSScreen.main else { return }
         let vf = screen.visibleFrame
         let top = Self.headerHeight + sceneHeight
         let wanted = min(max(top + cardsView.contentHeight, top + 60), vf.height)
@@ -104,7 +108,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         sceneView.autoresizingMask = [.width, .minYMargin]
         scroll.frame = NSRect(x: 0, y: 0, width: b.width, height: max(0, b.height - hh - sceneHeight))
         scroll.autoresizingMask = [.width, .height]
-        cardsView.frame.size.width = scroll.contentSize.width
+        cardsView.frame.size.width = scroll.bounds.width
     }
 
     private func togglePin() {
@@ -125,8 +129,10 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     }
 
     func windowDidMove(_ notification: Notification) { onGeometryChange?() }
+    func windowDidEndLiveResize(_ notification: Notification) { fitToContent() }
     func windowDidResize(_ notification: Notification) {
-        cardsView.frame.size.width = scroll.contentSize.width
+        scroll.scrollerStyle = .overlay          // the system can switch it back when a mouse is plugged in
+        cardsView.frame.size.width = scroll.bounds.width
         cardsView.relayout()
         onGeometryChange?()
     }
@@ -269,7 +275,7 @@ final class CardsView: NSView {
         for c in cards { h += cardHeight(c) + 10 }
         if cards.isEmpty { h += 30 }
         contentHeight = h
-        let minH = enclosingScrollView?.contentSize.height ?? 0
+        let minH = enclosingScrollView?.bounds.height ?? 0
         setFrameSize(NSSize(width: frame.width, height: max(h, minH)))
         needsDisplay = true
     }

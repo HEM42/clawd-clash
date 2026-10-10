@@ -1169,7 +1169,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         // In the window the crew always fits the window, so Size only applies on the desktop.
         if windowMode { m.addItem(disabled: "Size (desktop only)") } else { m.addItem(size) }
         m.addItem(action: windowMode ? "Show on Desktop" : "Show in Window", #selector(toggleWindowMode), target: self)
-        if windowMode { m.addItem(locationMenu()) }
+        if windowMode {
+            m.addItem(locationMenu())
+            m.addItem(action: "Fit Window Height to Claudes", #selector(toggleAutoHeight), target: self,
+                      on: UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true)
+        }
         m.addItem(action: "Show Dock Icon", #selector(toggleDock), target: self, on: showInDock)
         m.addItem(action: "Show Project Names", #selector(toggleLabels), target: self, on: showLabels)
         // Developer toys: only with ⌘ held while opening the menu (or while one is running, so you can leave it).
@@ -1200,6 +1204,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
     }
 
     @objc private func toggleLabels() { showLabels.toggle() }
+
+    @objc private func toggleAutoHeight() {
+        let on = !(UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true)
+        UserDefaults.standard.set(on, forKey: "autoHeight")
+        if on { clawdWindow?.fitToContent() }
+    }
 
     private func locationMenu() -> NSMenuItem {
         let root = NSMenuItem(title: "Location: \(location.name)", action: nil, keyEquivalent: "")

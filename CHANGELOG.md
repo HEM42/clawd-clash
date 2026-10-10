@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.7.1 — 2026-10-10
+
+### Fixed
+- Cards no longer leave a scrollbar-sized gap on the right, or shift sideways when the window changes height. The card area uses overlay scrollers (re-applied on resize, because macOS can switch back to legacy scrollers when a mouse is connected), and cards are sized to the scroll view's full width, so both margins are 12 pt. Auto-height pauses while you drag the window edge and settles when you let go (`windowDidEndLiveResize`), so the cards don't jump around mid-drag.
+
+### Added
+- "Fit Window Height to Claudes" toggle in window mode (on by default). With it off, the window keeps whatever height you give it, and the cards scroll if needed.
+
 ## 2.7.0 — 2026-10-10
 
 ### Changed
