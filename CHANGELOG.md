@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.11.0 — 2026-10-10
+
+### Added
+- **The Rancor** villain: a hulking brown beast-Clawd with warty hide, a huge fanged mouth, tiny yellow eyes, thick clawed legs and a hanging arm. It fights with claw swipes on its other arm (melee, so it duels sabers).
+- **Rancor Pit** location under Jabba's palace: rough stone, the keeper's barred gate, bones and skulls on the floor, and light falling through the grate above with drifting dust.
+
+### Fixed
+- The card portrait box is 80 pt tall (was 76), so the rancor shows at 2× instead of dropping to 1×.
+
 ## 2.10.0 — 2026-10-10
 
 ### Added

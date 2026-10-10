@@ -6,7 +6,7 @@ import AppKit
 
 enum Location: String, CaseIterable {
     case cantina, deathStar, sarlaccPit, jabbasPalace, supremacy, theed, emperorThrone, geonosis, naboo, executor
-    case larsFarm, obiWanHut, sandcrawler, dagobah, falcon, tantive, tuskenDesert, jakku, jediCouncil, endor, hoth
+    case larsFarm, obiWanHut, sandcrawler, dagobah, falcon, tantive, tuskenDesert, jakku, jediCouncil, endor, hoth, rancorPit
 
     var name: String {
         switch self {
@@ -31,6 +31,7 @@ enum Location: String, CaseIterable {
         case .jediCouncil: return "Jedi Council Chamber"
         case .endor: return "Forest Moon of Endor"
         case .hoth: return "Battle of Hoth"
+        case .rancorPit: return "Rancor Pit"
         }
     }
 
@@ -48,6 +49,7 @@ enum Location: String, CaseIterable {
         case .ig88: return .executor
         case .atst: return .endor
         case .atat: return .hoth
+        case .rancor: return .rancorPit
         }
     }
 
@@ -89,6 +91,7 @@ enum Location: String, CaseIterable {
         case .jediCouncil: return c(0x22180F)
         case .endor: return c(0x15200F)
         case .hoth: return c(0x1C2430)
+        case .rancorPit: return c(0x1A140F)
         }
     }
 
@@ -117,6 +120,7 @@ enum Location: String, CaseIterable {
         case .jediCouncil: Scenes.jediCouncil(c, g)
         case .endor: Scenes.endor(c, g)
         case .hoth: Scenes.hoth(c, g)
+        case .rancorPit: Scenes.rancorPit(c, g)
         }
     }
 
@@ -134,6 +138,7 @@ enum Location: String, CaseIterable {
         case .falcon: Scenes.dejarik(c, g, t: t)
         case .sandcrawler: Scenes.crawlerLights(c, g, t: t)
         case .hoth: Scenes.snowfall(c, g, t: t)
+        case .rancorPit: Scenes.grateLight(c, g, t: t)
         default: break
         }
     }
@@ -664,6 +669,45 @@ enum Scenes {
             let x = Int((noise(i * 5) * Double(c.w) + t * (6 + noise(i * 5 + 1) * 6)).truncatingRemainder(dividingBy: Double(c.w)))
             let y = Int((noise(i * 5 + 2) * Double(g) + t * (10 + noise(i * 5 + 3) * 10)).truncatingRemainder(dividingBy: Double(g)))
             c.px(x, y, white.alpha(0.8))
+        }
+    }
+
+    // The Rancor — its pit under Jabba's palace: rough stone, bones, the keeper's gate, light through the grate.
+    static func rancorPit(_ c: PixelCanvas, _ g: Int) {
+        c.gradient(0, g, C(0x2A2018), C(0x4A3A2C), bands: 5)
+        for i in 0..<(c.w * g / 14) {                                         // rough cave stone
+            c.rect(Int(noise(i * 5) * Double(c.w)), Int(noise(i * 5 + 1) * Double(g)), 2, 1,
+                   noise(i * 5 + 2) > 0.5 ? C(0x3A2E22) : C(0x564434))
+        }
+        // the keeper's gate: a heavy barred door
+        let gx = c.w * 3 / 4
+        c.rect(gx - 12, g - 26, 24, 26, C(0x1A140F))
+        for x in stride(from: gx - 11, to: gx + 12, by: 4) { c.rect(x, g - 26, 2, 26, C(0x6E6A60)) }
+        c.rect(gx - 13, g - 27, 26, 2, C(0x8A8274))
+        // bones scattered about
+        for (i, x) in stride(from: 10, to: c.w - 10, by: 23).enumerated() {
+            let y = g + 2 + Int(noise(i * 3) * 3)
+            c.rect(x, y, 6, 1, C(0xE8DCC0)); c.px(x - 1, y - 1, C(0xE8DCC0)); c.px(x + 6, y + 1, C(0xE8DCC0))
+            if i % 3 == 0 { c.ellipse(x + 10, g - 2, 3, 2, C(0xE8DCC0)); c.px(x + 9, g - 2, C(0x2A2018)); c.px(x + 11, g - 2, C(0x2A2018)) }
+        }
+        c.ground(g, C(0x3A2E22), edge: C(0x5A4A38), speck: C(0x2E241A), seed: 21)
+        for (i, x) in stride(from: 10, to: c.w - 10, by: 23).enumerated() {  // bones on top of the floor
+            let y = g + 2 + Int(noise(i * 3) * 3)
+            c.rect(x, y, 6, 1, C(0xE8DCC0)); c.px(x - 1, y - 1, C(0xE8DCC0))
+        }
+    }
+
+    static func grateLight(_ c: PixelCanvas, _ g: Int, t: Double) {
+        // light falling through the grate above, with dust drifting in it
+        let x0 = c.w / 3
+        for y in 0..<g {
+            let spread = y / 4
+            c.rect(x0 - 6 - spread, y, 12 + spread * 2, 1, C(0xF2D8A0, 0.07))
+        }
+        for x in stride(from: x0 - 6, to: x0 + 7, by: 3) { c.rect(x, 0, 1, 2, C(0x1A140F)) }
+        for i in 0..<10 {
+            let y = Int((noise(i * 7) * Double(g) + t * (3 + noise(i * 7 + 1) * 3)).truncatingRemainder(dividingBy: Double(g)))
+            c.px(x0 - 6 + Int(noise(i * 7 + 2) * 12) + y / 8, y, C(0xF2D8A0, 0.5))
         }
     }
 }

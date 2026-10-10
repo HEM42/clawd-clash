@@ -73,7 +73,7 @@ enum StatusPaths {
 
 enum StatusStore {
     static let companionCount = 15
-    static let leaderCount = 13
+    static let leaderCount = 14
 
     // Stale timeouts: Stop never fires when the user hits Esc, so states must decay on their own.
     static let thinkingTTL: Double = 10 * 60

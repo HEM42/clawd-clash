@@ -25,7 +25,7 @@ extension Companion {
 }
 
 enum Leader: Int, CaseIterable {
-    case vader, kylo, maul, boba, trooper, emperor, rogr, dooku, gamorrean, jabba, ig88, atst, atat
+    case vader, kylo, maul, boba, trooper, emperor, rogr, dooku, gamorrean, jabba, ig88, atst, atat, rancor
 
     var name: String {
         switch self {
@@ -42,6 +42,7 @@ enum Leader: Int, CaseIterable {
         case .ig88: return "IG-88"
         case .atst: return "AT-ST"
         case .atat: return "AT-AT"
+        case .rancor: return "The Rancor"
         }
     }
 
@@ -49,7 +50,7 @@ enum Leader: Int, CaseIterable {
         switch self {
         case .vader, .kylo, .maul: return .saber
         case .boba, .trooper, .rogr, .ig88, .atst, .atat: return .blaster
-        case .dooku, .gamorrean: return .saber      // the Gamorrean's vibro-axe fights like a blade
+        case .dooku, .gamorrean, .rancor: return .saber   // vibro-axe and claws fight up close like a blade
         case .jabba: return .none
         case .emperor: return .lightning
         }
@@ -71,6 +72,7 @@ enum Leader: Int, CaseIterable {
         case .ig88: return 9
         case .atst: return 10
         case .atat: return 11
+        case .rancor: return 7
         }
     }
 
@@ -229,6 +231,7 @@ func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, wal
     case .ig88: drawIG88(c, step: step, lift: breathe)
     case .atst: drawATST(c, step: step, lift: breathe)
     case .atat: drawATAT(c, step: step, lift: breathe)
+    case .rancor: drawRancor(c, step: step, lift: breathe)
     case .emperor: drawEmperor(c, lift: breathe, armRaise: armRaise)
     }
 
@@ -254,6 +257,8 @@ func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, wal
             }
         case .gamorrean:
             drawAxe(c, angle: lit ? angle : 80)
+        case .rancor:
+            drawClaw(c, angle: lit ? angle : 70)
         default:
             if lit {
                 drawSaber(c, angle: angle, core: C(0xFFE3E3), glow: C(0xFF1E2D), lit: true, trail: trail)
@@ -542,6 +547,44 @@ private func drawIG88(_ c: PixelCanvas, step: Int, lift: Int) {
     c.pattern(23, 9, ["..MMMMMM..", ".MMLMMMMM.", "MMLMMMMMMM", "MMLMMMMMMM", "RRRRRRRRRR", "MMLMMMMMMM",
                       "MMLMMMMMMM", "MMLMMMMMMM", "RRRRRRRRRR", "MMLMMMMMMM", "MMMMMMMMMM", ".MMMMMMMM.", "..MMMMMM.."],
               ["M": metal, "L": metalLight, "R": C(0xC0392B)])
+}
+
+/// The rancor: a hulking brown beast-Clawd with a huge fanged mouth, tiny eyes and short thick legs.
+private func drawRancor(_ c: PixelCanvas, step: Int, lift: Int) {
+    let base = c.oy
+    let hide = C(0x7A5A3E), shade = C(0x5A402A), light = C(0x9A7A56)
+    for (i, lx) in [18, 30].enumerated() {                          // thick legs
+        let up = step >= 0 && i == step ? 1 : 0
+        c.rect(lx, 36, 7, 7 - up, shade)
+        c.rect(lx - 1, 42 - up, 9, 2, C(0x4A3220))
+        for k in 0..<3 { c.px(lx + k * 3, 43 - up, C(0xE8DCC0)) }  // toe claws
+    }
+    c.oy = base + lift
+    // hunched body
+    c.rect(14, 18, 30, 19, hide)
+    c.rect(16, 14, 24, 5, hide)
+    c.rect(14, 34, 30, 3, shade)
+    for (x, y) in [(18, 22), (24, 27), (30, 20), (36, 30), (20, 31), (33, 25)] { c.rect(x, y, 2, 1, light) }   // warty hide
+    // the left arm hangs down behind
+    c.rect(11, 22, 4, 14, shade); for k in 0..<3 { c.px(11 + k, 36, C(0xE8DCC0)) }
+    // head thrust forward with the enormous mouth
+    c.rect(38, 10, 14, 15, hide)
+    c.rect(38, 10, 14, 2, light)
+    c.px(43, 13, C(0xFFD23D)); c.px(48, 13, C(0xFFD23D))              // tiny eyes
+    c.rect(39, 17, 13, 6, C(0x3A1A12))                                // gaping mouth
+    for k in 0..<6 { c.px(39 + k * 2, 17, C(0xF0E6CC)); c.px(40 + k * 2, 22, C(0xF0E6CC)) }   // fangs
+}
+
+/// The rancor's swiping arm: a long, thick forearm ending in three claws.
+private func drawClaw(_ c: PixelCanvas, angle: Double) {
+    let hx = Sprite.hand.x - 2, hy = Sprite.hand.y - 6
+    let r = angle * .pi / 180, ux = cos(r), uy = sin(r)
+    c.glowLine(hx, hy, hx + ux * 15, hy + uy * 15, core: C(0x6E4E34), glow: C(0, 0), coreR: 1.8, glowR: 1.9)
+    let tx = hx + ux * 15, ty = hy + uy * 15
+    for k in -1...1 {
+        let a = r + Double(k) * 0.35
+        c.glowLine(tx, ty, tx + cos(a) * 5, ty + sin(a) * 5, core: C(0xF0E6CC), glow: C(0, 0), coreR: 0.6, glowR: 0.7)
+    }
 }
 
 /// AT-ST: a grey cockpit Clawd on two long jointed legs, chin guns forward.
