@@ -6,7 +6,7 @@ import AppKit
 
 enum Location: String, CaseIterable {
     case cantina, deathStar, sarlaccPit, jabbasPalace, supremacy, theed, emperorThrone, geonosis, naboo, executor
-    case larsFarm, obiWanHut, sandcrawler, dagobah, falcon, tantive, tuskenDesert, jakku, jediCouncil
+    case larsFarm, obiWanHut, sandcrawler, dagobah, falcon, tantive, tuskenDesert, jakku, jediCouncil, endor, hoth
 
     var name: String {
         switch self {
@@ -29,6 +29,8 @@ enum Location: String, CaseIterable {
         case .tuskenDesert: return "Jundland Wastes"
         case .jakku: return "Jakku"
         case .jediCouncil: return "Jedi Council Chamber"
+        case .endor: return "Forest Moon of Endor"
+        case .hoth: return "Battle of Hoth"
         }
     }
 
@@ -44,6 +46,8 @@ enum Location: String, CaseIterable {
         case .dooku: return .geonosis
         case .rogr: return .naboo
         case .ig88: return .executor
+        case .atst: return .endor
+        case .atat: return .hoth
         }
     }
 
@@ -58,6 +62,7 @@ enum Location: String, CaseIterable {
         case .quigon: return .tuskenDesert
         case .rey: return .jakku
         case .mace, .ahsoka: return .jediCouncil
+        case .ewok: return .endor
         }
     }
 
@@ -81,6 +86,8 @@ enum Location: String, CaseIterable {
         case .falcon: return c(0x1E1F21)
         case .tantive: return c(0x1C2229)
         case .jediCouncil: return c(0x22180F)
+        case .endor: return c(0x15200F)
+        case .hoth: return c(0x1C2430)
         }
     }
 
@@ -107,6 +114,8 @@ enum Location: String, CaseIterable {
         case .tuskenDesert: Scenes.tuskenDesert(c, g)
         case .jakku: Scenes.jakku(c, g)
         case .jediCouncil: Scenes.jediCouncil(c, g)
+        case .endor: Scenes.endor(c, g)
+        case .hoth: Scenes.hoth(c, g)
         }
     }
 
@@ -123,6 +132,7 @@ enum Location: String, CaseIterable {
         case .dagobah: Scenes.swampFog(c, g, t: t)
         case .falcon: Scenes.dejarik(c, g, t: t)
         case .sandcrawler: Scenes.crawlerLights(c, g, t: t)
+        case .hoth: Scenes.snowfall(c, g, t: t)
         default: break
         }
     }
@@ -605,5 +615,54 @@ enum Scenes {
         for x in stride(from: 10, to: c.w, by: 32) { c.rect(x, g - 9, 10, 9, C(0x4A3624)); c.rect(x + 1, g - 12, 8, 3, C(0x5A4430)) }   // council seats
         c.ground(g, C(0x8A6A48), edge: C(0xB08A60), speck: C(0x7A5C3E), seed: 18)
         for x in stride(from: 0, to: c.w, by: 10) { c.rect(x, g + 2, 5, 1, C(0x9A7A56)) }
+    }
+
+    // AT-ST / Ewoks — the forest moon of Endor: giant redwoods, ferns, and the Ewok village up in the trees.
+    static func endor(_ c: PixelCanvas, _ g: Int) {
+        c.gradient(0, g, C(0x3E5A3A), C(0x6E8A5A), bands: 5)
+        for (i, x) in stride(from: 4, to: c.w, by: 28).enumerated() {        // distant trunks
+            c.rect(x + Int(noise(i) * 10), 0, 4, g, C(0x4A5E3A))
+        }
+        for (i, x) in stride(from: 14, to: c.w, by: 56).enumerated() {       // giant redwoods
+            let tw = 9 + Int(noise(i + 20) * 5)
+            c.rect(x, 0, tw, g, C(0x5A3A26)); c.rect(x + 1, 0, 2, g, C(0x7A5236)); c.rect(x + tw - 2, 0, 2, g, C(0x3E2618))
+            c.rect(x - 3, g - 4, tw + 6, 4, C(0x5A3A26))
+            if i % 2 == 0 {                                                   // an Ewok hut on a platform
+                let py = g / 3
+                c.rect(x - 10, py, tw + 20, 2, C(0x8A6238))
+                c.ellipse(x + tw / 2, py - 4, 7, 4, C(0x9A7A48)); c.rect(x + tw / 2 - 1, py - 3, 3, 3, C(0x3A2416))
+                c.rect(x + tw + 10, py + 2, 1, 10, C(0x8A6238, 0.8))         // rope ladder
+            }
+        }
+        for (i, x) in stride(from: 0, to: c.w, by: 9).enumerated() {        // ferns
+            let fh = 3 + Int(noise(i * 3 + 40) * 4)
+            c.rect(x, g - fh, 1, fh, C(0x3E7A30)); c.px(x - 1, g - fh + 1, C(0x5A9A40)); c.px(x + 1, g - fh + 1, C(0x5A9A40))
+        }
+        c.ground(g, C(0x3A2E1E), edge: C(0x5A4A2E), speck: C(0x4E3E26), seed: 19)
+    }
+
+    // AT-AT — the Battle of Hoth: snowfield, grey sky, the shield generator and the trench.
+    static func hoth(_ c: PixelCanvas, _ g: Int) {
+        c.gradient(0, g, C(0xA8B4C4), C(0xDCE4EC), bands: 5)
+        c.dunes(base: g - 14, amp: 6, freq: 0.03, phase: 0.8, bottom: g, C(0xC8D2DE), shade: C(0xE8EEF4))   // mountains
+        c.dunes(base: g - 6, amp: 2, freq: 0.06, phase: 0.2, bottom: g, C(0xE4EAF0))
+        // shield generator: a big dish on a tower
+        let sx = c.w * 4 / 5
+        c.rect(sx, g - 18, 4, 18, C(0x8A8F9C))
+        c.ellipse(sx + 2, g - 20, 10, 3, C(0x9AA0A8)); c.ellipse(sx + 2, g - 21, 8, 2, C(0xC8CED6))
+        c.px(sx + 2, g - 24, C(0xE0303A))
+        // the Rebel trench with a turret
+        let tx = c.w / 5
+        c.rect(tx - 20, g - 2, 40, 2, C(0x8A939E))
+        c.rect(tx - 3, g - 6, 7, 4, C(0x6E7480)); c.rect(tx + 3, g - 5, 6, 1, C(0x3A3D46))
+        c.ground(g, C(0xEEF2F6), edge: C(0xFFFFFF), speck: C(0xD0D8E2), seed: 20)
+    }
+
+    static func snowfall(_ c: PixelCanvas, _ g: Int, t: Double) {
+        for i in 0..<(c.w / 3) {
+            let x = Int((noise(i * 5) * Double(c.w) + t * (6 + noise(i * 5 + 1) * 6)).truncatingRemainder(dividingBy: Double(c.w)))
+            let y = Int((noise(i * 5 + 2) * Double(g) + t * (10 + noise(i * 5 + 3) * 10)).truncatingRemainder(dividingBy: Double(g)))
+            c.px(x, y, white.alpha(0.8))
+        }
     }
 }

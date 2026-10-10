@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.9.0 — 2026-10-10
+
+### Added
+- **AT-ST** villain: a grey cockpit Clawd (viewport slit, side pods, chin guns) on two long, backward-bending legs with wide feet that step when walking. Fires from its chin guns. Home: the Forest Moon of Endor.
+- **AT-AT** villain: Clawd as the walker's body (it already had four legs), with armour plates, neck, head with viewport and snout, and heavy chin cannons. Home: the Battle of Hoth.
+- **Wicket the Ewok** hero: a small furry Clawd in a leather hood with ears poking through, big dark eyes, and a stone-tipped spear that fights as a melee weapon (duels sabers). Home: Endor.
+- Two locations: **Forest Moon of Endor** (giant redwoods, Ewok huts on platforms with rope ladders, ferns, forest floor) and **Battle of Hoth** (snowfields and mountains, the shield generator dish, the Rebel trench with a turret, falling snow).
+- `Leader.muzzle`, so a walker's bolts leave from its chin guns in fights.
+
+### Changed
+- The window's title bar shows only the location name, right-aligned in crawl-yellow. The CLAWD WARS title and the yellow rule under the bar are removed.
+
 ## 2.8.0 — 2026-10-10
 
 ### Changed

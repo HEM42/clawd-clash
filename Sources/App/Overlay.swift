@@ -746,6 +746,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
                 let lift = a.isLeader ? 0 : (ls - cs) * 8
                 var muzzle = (x: 52.0, y: 32.0)
                 if case .companion(let who) = a.kind { muzzle = who.muzzle }
+                if case .leader(let who) = a.kind { muzzle = (Double(who.muzzle.x), Double(who.muzzle.y)) }
                 return Fighter(weapon: weapon(a), x: Double((a.x - left) / ls), k: Double(sc / ls),
                                top: Double((CGFloat(Sprite.height) * (ls - sc) - lift) / ls), side: side, muzzle: muzzle)
             }
@@ -1272,7 +1273,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         let weapons: [Leader: String] = [.vader: "red saber", .kylo: "crossguard saber", .maul: "double saber",
                                          .boba: "EE-3 blaster", .trooper: "E-11 blaster", .emperor: "Force lightning",
                                          .rogr: "E-5 blaster", .dooku: "curved-hilt saber",
-                                         .gamorrean: "vibro-axe", .jabba: "unarmed — laughs", .ig88: "blaster rifle"]
+                                         .gamorrean: "vibro-axe", .jabba: "unarmed — laughs", .ig88: "blaster rifle",
+                                         .atst: "chin blasters", .atat: "heavy chin cannons"]
         for l in Leader.allCases {
             let order = picked.firstIndex(of: l.rawValue).map { "   #\($0 + 1)" } ?? ""
             let item = NSMenuItem(title: "\(l.name) (\(weapons[l] ?? ""))\(order)",

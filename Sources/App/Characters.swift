@@ -13,7 +13,7 @@ enum Sprite {
 }
 
 enum Companion: Int, CaseIterable {
-    case luke, han, leia, obiwan, r2d2, c3po, quigon, mace, yoda, jawa, chewie, rey, ahsoka
+    case luke, han, leia, obiwan, r2d2, c3po, quigon, mace, yoda, jawa, chewie, rey, ahsoka, ewok
 
     var name: String {
         switch self {
@@ -30,6 +30,7 @@ enum Companion: Int, CaseIterable {
         case .chewie: return "Chewbacca"
         case .rey: return "Rey"
         case .ahsoka: return "Ahsoka Tano"
+        case .ewok: return "Wicket the Ewok"
         }
     }
 
@@ -45,6 +46,7 @@ enum Companion: Int, CaseIterable {
         case .mace: return 26
         case .yoda: return 24
         case .ahsoka: return 16
+        case .ewok: return 22
         }
     }
 }
@@ -270,6 +272,7 @@ func drawCompanion(_ c: PixelCanvas, _ who: Companion, t: Double, walking: Bool,
     case .r2d2: drawR2(c, t: t, walking: walking)
     case .c3po: drawC3PO(c, t: t, walking: walking)
     case .quigon, .mace, .yoda, .rey, .ahsoka: drawJedi(c, who, t: t, walking: walking, role: role)
+    case .ewok: drawEwok(c, t: t, walking: walking, role: role)
     case .jawa, .chewie: drawGunner(c, who, t: t, walking: walking, role: role)
     }
 }
@@ -637,4 +640,39 @@ private func drawGunner(_ c: PixelCanvas, _ who: Companion, t: Double, walking: 
     } else {
         c.pattern(40, 32, ["KKKKKK", "KKSSK.", "KK...."], ["K": C(0x4A4A52), "S": C(0x9AA0AE)])
     }
+}
+
+/// Wicket: a small furry Clawd in a leather hood, with big dark eyes and a stone-tipped spear.
+private func drawEwok(_ c: PixelCanvas, t: Double, walking: Bool, role: FightRole) {
+    let p = saberPose(t, walking: walking, role: role, speed: 1.1, offset: 0.9)
+    let step = walkStep(t, walking)
+    c.ox = Int(p.dx.rounded()); c.oy = Int(p.dy.rounded())
+    let fur = C(0x6E4A2A), furDark = C(0x52361E), furLight = C(0x8A6238)
+    let look = Look(body: fur, shade: furDark, leg: furDark, arm: fur, eye: nil)
+    drawLegs(c, look, step: step)
+    c.oy += step == 0 ? -1 : 0
+    drawBody(c, look)
+    for (x, y) in [(20, 33), (27, 35), (33, 32), (23, 30), (31, 36)] { c.px(x, y, furLight) }
+    // leather hood with little ears poking through
+    c.pattern(17, 22, [
+        "..E...............E...",
+        ".EEH.HHHHHHHHHHH.HEE..",
+        ".HHHHHHHHhHHHHHHHHHH..",
+        "HHHHHHhHHHHHHHhHHHHHH.",
+        "HH..................HH",
+        "HH..................HH",
+    ], ["H": C(0xB07A42), "h": C(0x8A5A2E), "E": furDark])
+    c.rect(22, 29, 3, 3, C(0x0E0A08)); c.rect(31, 29, 3, 3, C(0x0E0A08))   // big dark eyes
+    c.px(23, 29, C(0x6A5A4A)); c.px(32, 29, C(0x6A5A4A))
+    c.rect(27, 32, 2, 1, C(0x2A1A10))                                      // little nose
+    drawSpear(c, angle: p.angle)
+}
+
+/// A wooden spear with a stone tip, held like a saber (same pivot, same choreography).
+func drawSpear(_ c: PixelCanvas, angle: Double) {
+    let hx = Sprite.hand.x, hy = Sprite.hand.y
+    let r = angle * .pi / 180, ux = cos(r), uy = sin(r)
+    c.glowLine(hx - ux * 4, hy - uy * 4, hx + ux * 18, hy + uy * 18, core: C(0x8A6238), glow: C(0, 0), coreR: 0.7, glowR: 0.8)
+    c.glowLine(hx + ux * 18, hy + uy * 18, hx + ux * 22, hy + uy * 22, core: C(0x9AA0A8), glow: C(0, 0), coreR: 1.1, glowR: 1.2)
+    c.glowLine(hx + ux * 16, hy + uy * 16, hx + ux * 17, hy + uy * 17, core: C(0xC8B48A), glow: C(0, 0), coreR: 1.0, glowR: 1.1)  // binding
 }

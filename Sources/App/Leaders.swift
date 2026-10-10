@@ -8,6 +8,7 @@ extension Companion {
     var weapon: Weapon {
         switch self {
         case .luke, .obiwan, .quigon, .mace, .yoda, .rey, .ahsoka: return .saber
+        case .ewok: return .saber     // a spear — fights up close like a blade
         case .han, .leia, .jawa, .chewie: return .blaster
         case .r2d2, .c3po: return .none
         }
@@ -24,7 +25,7 @@ extension Companion {
 }
 
 enum Leader: Int, CaseIterable {
-    case vader, kylo, maul, boba, trooper, emperor, rogr, dooku, gamorrean, jabba, ig88
+    case vader, kylo, maul, boba, trooper, emperor, rogr, dooku, gamorrean, jabba, ig88, atst, atat
 
     var name: String {
         switch self {
@@ -39,13 +40,15 @@ enum Leader: Int, CaseIterable {
         case .gamorrean: return "Gamorrean Guard"
         case .jabba: return "Jabba the Hutt"
         case .ig88: return "IG-88"
+        case .atst: return "AT-ST"
+        case .atat: return "AT-AT"
         }
     }
 
     var weapon: Weapon {
         switch self {
         case .vader, .kylo, .maul: return .saber
-        case .boba, .trooper, .rogr, .ig88: return .blaster
+        case .boba, .trooper, .rogr, .ig88, .atst, .atat: return .blaster
         case .dooku, .gamorrean: return .saber      // the Gamorrean's vibro-axe fights like a blade
         case .jabba: return .none
         case .emperor: return .lightning
@@ -66,6 +69,17 @@ enum Leader: Int, CaseIterable {
         case .gamorrean: return 17
         case .jabba: return 19
         case .ig88: return 9
+        case .atst: return 10
+        case .atat: return 11
+        }
+    }
+
+    /// Where its blaster bolts come out (canvas pixels). Walkers fire from their chin guns.
+    var muzzle: (x: Int, y: Int) {
+        switch self {
+        case .atst: return (47, 22)
+        case .atat: return (64, 21)
+        default: return (52, 32)
         }
     }
 
@@ -213,6 +227,8 @@ func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, wal
     case .gamorrean: drawGamorrean(c, step: step, lift: breathe)
     case .jabba: drawJabba(c, t: t, lift: breathe)
     case .ig88: drawIG88(c, step: step, lift: breathe)
+    case .atst: drawATST(c, step: step, lift: breathe)
+    case .atat: drawATAT(c, step: step, lift: breathe)
     case .emperor: drawEmperor(c, lift: breathe, armRaise: armRaise)
     }
 
@@ -248,7 +264,7 @@ func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, wal
     case .blaster:
         var recoil = 0
         if let fire {
-            recoil = fireBlaster(c, t: fire.t, period: blasterPeriod, muzzleX: rifleMuzzle.x, muzzleY: rifleMuzzle.y,
+            recoil = fireBlaster(c, t: fire.t, period: blasterPeriod, muzzleX: who.muzzle.x, muzzleY: who.muzzle.y,
                                  bolt: fire.bolt)
         }
         c.oy = hop + breathe - recoil
@@ -256,6 +272,7 @@ func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, wal
         case .boba: drawEE3(c, x: 38, y: 30)
         case .rogr: drawE5(c, x: 39, y: 31)
         case .ig88: drawE11(c, x: 37, y: 30)
+        case .atst, .atat: break                       // chin guns are part of the walker
         default: drawE11(c, x: 37, y: 30)
         }
     case .lightning:
@@ -525,6 +542,57 @@ private func drawIG88(_ c: PixelCanvas, step: Int, lift: Int) {
     c.pattern(23, 9, ["..MMMMMM..", ".MMLMMMMM.", "MMLMMMMMMM", "MMLMMMMMMM", "RRRRRRRRRR", "MMLMMMMMMM",
                       "MMLMMMMMMM", "MMLMMMMMMM", "RRRRRRRRRR", "MMLMMMMMMM", "MMMMMMMMMM", ".MMMMMMMM.", "..MMMMMM.."],
               ["M": metal, "L": metalLight, "R": C(0xC0392B)])
+}
+
+/// AT-ST: a grey cockpit Clawd on two long jointed legs, chin guns forward.
+private func drawATST(_ c: PixelCanvas, step: Int, lift: Int) {
+    let base = c.oy
+    let metal = C(0x8A8F9C), dark = C(0x5C616C), light = C(0xB4BAC6)
+    // Legs: hip → backward knee → ankle → wide foot. The lifted leg steps up a pixel.
+    for (i, hx) in [22, 32].enumerated() {
+        let up = step >= 0 && i == step ? 1 : 0
+        c.rect(hx, 24, 3, 8 - up, dark)                    // thigh
+        c.rect(hx - 3, 31 - up, 4, 2, metal)               // knee joint (bends back)
+        c.rect(hx - 2, 32 - up, 3, 10, metal)              // shin
+        c.rect(hx - 5, 42 - up, 10, 2, dark)               // foot
+        c.rect(hx - 5, 42 - up, 2, 1, light)
+    }
+    c.oy = base + lift
+    // The cockpit: Clawd-shaped head with a viewport slit, side guns and chin cannons.
+    c.rect(18, 12, 20, 12, metal)
+    c.rect(18, 12, 20, 2, light)
+    c.rect(37, 12, 1, 12, dark)
+    c.rect(22, 16, 13, 2, C(0x1A1C21))                     // viewport
+    c.px(24, 16, C(0xE0303A))
+    c.rect(16, 15, 2, 6, dark); c.rect(38, 17, 3, 3, dark) // side pods
+    c.rect(38, 21, 9, 1, C(0x3A3D46)); c.rect(38, 23, 7, 1, C(0x3A3D46))   // chin guns
+    c.rect(24, 24, 8, 2, dark)                             // hip block
+}
+
+/// AT-AT: Clawd as the walker's body — it already has four legs — with the neck, the head and chin cannons.
+private func drawATAT(_ c: PixelCanvas, step: Int, lift: Int) {
+    let base = c.oy
+    let metal = C(0x9A9EA8), dark = C(0x6A6F7A), light = C(0xC4C8D0)
+    for (i, lx) in [16, 22, 34, 40].enumerated() {
+        let up = step >= 0 && i % 2 == step ? 1 : 0
+        c.rect(lx, 26, 3, 7 - up, metal)                   // upper leg
+        c.rect(lx - 1, 32 - up, 5, 2, dark)                // knee
+        c.rect(lx, 34 - up, 3, 8, metal)                   // lower leg
+        c.rect(lx - 1, 42 - up, 5, 2, dark)                // round foot
+    }
+    c.oy = base + lift
+    // Body
+    c.rect(13, 14, 32, 12, metal)
+    c.rect(13, 14, 32, 2, light)
+    c.rect(13, 24, 32, 2, dark)
+    for x in stride(from: 17, to: 44, by: 6) { c.rect(x, 17, 1, 6, dark) }   // armour plates
+    // Neck and head
+    c.rect(45, 17, 4, 4, dark)
+    c.rect(49, 13, 13, 9, metal)
+    c.rect(49, 13, 13, 2, light)
+    c.rect(52, 16, 6, 2, C(0x1A1C21))                      // viewport
+    c.rect(62, 15, 2, 5, dark)                             // snout
+    c.rect(56, 21, 8, 1, C(0x3A3D46)); c.rect(58, 22, 4, 1, C(0x3A3D46))  // chin cannons
 }
 
 /// R0-GR, a B1 battle droid: tan, skinny-limbed, with the long forward-pointing snout head.

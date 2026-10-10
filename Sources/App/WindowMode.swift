@@ -132,7 +132,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     }
 }
 
-/// The themed title bar: the location's colours, CLAWD WARS in crawl-yellow, and where the crew is.
+/// The themed title bar: the location's colours and, on the right in crawl-yellow, where the crew is.
 /// The traffic lights sit on its left; drag anywhere else on it to move the window.
 final class HeaderView: NSView {
     weak var controller: OverlayController?
@@ -144,23 +144,18 @@ final class HeaderView: NSView {
         let base = controller?.location.panel ?? NSColor(white: 0.12, alpha: 1)
         (base.blended(withFraction: 0.45, of: .black) ?? base).setFill()
         b.fill()
-        // a faint stripe of the location's tone, and a thin yellow rule underneath
+        // a faint highlight of the location's tone along the top
         (base.blended(withFraction: 0.15, of: .white) ?? base).withAlphaComponent(0.35).setFill()
         NSRect(x: 0, y: b.height - 1, width: b.width, height: 1).fill()
-        Self.yellow.withAlphaComponent(0.55).setFill()
-        NSRect(x: 0, y: 0, width: b.width, height: 1).fill()
 
-        let titleFont = NSFont(name: "Futura-CondensedExtraBold", size: 15)
-            ?? NSFont(name: "HelveticaNeue-CondensedBlack", size: 15) ?? .systemFont(ofSize: 14, weight: .black)
-        let title = NSMutableAttributedString(string: "CLAWD WARS", attributes: [
-            .font: titleFont, .foregroundColor: Self.yellow, .kern: 2.2])
+        // Just where the crew is, on the right (the traffic lights have the left).
         if let where_ = controller?.location.name {
-            title.append(NSAttributedString(string: "   ·   " + where_.uppercased(), attributes: [
-                .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold), .foregroundColor: NSColor(white: 0.78, alpha: 1),
-                .kern: 1.2]))
+            let label = NSAttributedString(string: where_.uppercased(), attributes: [
+                .font: NSFont(name: "Futura-CondensedExtraBold", size: 12.5) ?? .systemFont(ofSize: 11, weight: .heavy),
+                .foregroundColor: Self.yellow, .kern: 1.6])
+            let ls = label.size()
+            label.draw(at: NSPoint(x: b.width - ls.width - 14, y: (b.height - ls.height) / 2))
         }
-        let ts = title.size()
-        title.draw(at: NSPoint(x: 80, y: (b.height - ts.height) / 2))
     }
 
     override func mouseDown(with event: NSEvent) {

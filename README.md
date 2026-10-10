@@ -12,11 +12,11 @@ A desktop overlay for macOS that shows what Claude Code is doing. The sprite is 
 | waiting on a permission prompt    | holds his saber upright and shows a red **!** bubble                |
 | idle while agents are still running | stands guard with his saber lit                                   |
 
-Each subagent appears next to its Claude as a random hero: **Luke**, **Obi-Wan**, **Qui-Gon**, **Mace Windu**, **Yoda**, **Rey** and **Ahsoka** (sabers), **Han** (DL-44), **Leia** (Defender), **Chewbacca** (bowcaster) and a **Jawa** (ion blaster), or the unarmed **R2-D2** and **C-3PO**. Agents fade in when they spawn and fade out when they finish.
+Each subagent appears next to its Claude as a random hero: **Luke**, **Obi-Wan**, **Qui-Gon**, **Mace Windu**, **Yoda**, **Rey** and **Ahsoka** (sabers), **Han** (DL-44), **Leia** (Defender), **Chewbacca** (bowcaster), a **Jawa** (ion blaster), **Wicket the Ewok** (spear), or the unarmed **R2-D2** and **C-3PO**. Agents fade in when they spawn and fade out when they finish.
 
 ### Several Claudes at once
 
-Each Claude Code session gets a random villain: **Vader**, **Kylo Ren** (unstable crossguard saber), **Darth Maul** (double-bladed saber), **Boba Fett** (EE-3), a **Stormtrooper** (E-11), **the Emperor** (Force lightning) **R0-GR** (a B1 battle droid with an E-5 who says "Roger roger!"), **Count Dooku**, the **Gamorrean Guard** (vibro-axe), **IG-88** or **Jabba the Hutt** (unarmed: he laughs and cheers). Vader and Kylo never spawn one right after the other. A label above each one's head shows the project folder it's working in.
+Each Claude Code session gets a random villain: **Vader**, **Kylo Ren** (unstable crossguard saber), **Darth Maul** (double-bladed saber), **Boba Fett** (EE-3), a **Stormtrooper** (E-11), **the Emperor** (Force lightning) **R0-GR** (a B1 battle droid with an E-5 who says "Roger roger!"), **Count Dooku**, the **Gamorrean Guard** (vibro-axe), **IG-88** or **Jabba the Hutt** (unarmed: he laughs and cheers), an **AT-ST** or an **AT-AT**. Vader and Kylo never spawn one right after the other. A label above each one's head shows the project folder it's working in.
 
 Claudes always fight Claudes, and agents fight agents (across sessions too). Saber users pair first. If a Claude and an agent are both left over, they fight each other. Anyone else left over cheers. R2-D2 and C-3PO are bystanders.
 
