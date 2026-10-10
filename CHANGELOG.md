@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.6.0 — 2026-10-10
+
+### Added
+- The window sizes its height to its content: the scene strip plus one card per Claude, agent lists included. It grows and shrinks as Claudes and agents come and go, keeps its top edge in place, and stops at the screen's visible height (the cards scroll beyond that). The width stays under your control. Checked: 296 pt of content for one Claude, 524 pt for three.
+
 ## 2.5.1 — 2026-10-10
 
 ### Changed

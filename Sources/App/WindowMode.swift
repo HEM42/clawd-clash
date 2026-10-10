@@ -40,7 +40,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
                           backing: .buffered, defer: false)
         super.init()
         window.title = "Clawd Wars"
-        window.minSize = NSSize(width: 520, height: 380)
+        window.minSize = NSSize(width: 520, height: 240)
         window.backgroundColor = NSColor(srgbRed: 0.17, green: 0.13, blue: 0.10, alpha: 1)
         window.isReleasedWhenClosed = false
         window.delegate = self
@@ -73,6 +73,22 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         accessory.layoutAttribute = .trailing
         window.addTitlebarAccessoryViewController(accessory)
         applyPin()
+    }
+
+    /// Make the window exactly as tall as the scene plus the cards (one per Claude), keeping its top edge
+    /// where it is and never taller than the screen — past that the cards scroll.
+    func fitToContent() {
+        guard let screen = window.screen ?? NSScreen.main else { return }
+        let chrome = window.frame.height - window.contentLayoutRect.height       // title bar
+        let vf = screen.visibleFrame
+        let wanted = min(max(sceneHeight + cardsView.contentHeight, sceneHeight + 60), vf.height - chrome)
+        let delta = wanted - window.contentLayoutRect.height
+        guard abs(delta) > 1 else { return }
+        var f = window.frame
+        f.size.height += delta
+        f.origin.y -= delta
+        if f.minY < vf.minY { f.origin.y = vf.minY }
+        window.setFrame(f, display: true, animate: true)
     }
 
     var sceneScreenRect: NSRect { window.convertToScreen(sceneView.convert(sceneView.bounds, to: nil)) }
@@ -169,6 +185,8 @@ final class CardsView: NSView {
     private var cards: [CardModel] = []
     private var banner: String?
     private var hitRects: [(NSRect, Int32?)] = []
+    /// Height the cards actually need (the window sizes itself to this).
+    private(set) var contentHeight: CGFloat = 0
 
     override var isFlipped: Bool { true }
 
@@ -192,6 +210,8 @@ final class CardsView: NSView {
     func relayout() {
         var h = Self.pad + (banner == nil ? 0 : 34)
         for c in cards { h += cardHeight(c) + 10 }
+        if cards.isEmpty { h += 30 }
+        contentHeight = h
         let minH = enclosingScrollView?.contentSize.height ?? 0
         setFrameSize(NSSize(width: frame.width, height: max(h, minH)))
         needsDisplay = true

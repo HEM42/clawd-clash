@@ -1063,6 +1063,7 @@ final class OverlayController: NSObject, NSMenuDelegate {
         let banner: String? = (playground == nil && !demo && !HookInstaller.isInstalled)
             ? "Claude Code hooks aren't installed — live status is off. Install them from the right-click menu." : nil
         w.cardsView.update(cards: cards, banner: banner)
+        w.fitToContent()
     }
 
     /// CLAWD_SHOT=/path.png: write the rendered scene (or the whole window) every 5 s — for checking
