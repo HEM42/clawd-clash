@@ -4,7 +4,7 @@ import Foundation
 /// Finds running Claude Code sessions directly from the process table, so sessions show up even
 /// before (or without) their hooks firing, and vanish the moment their process exits.
 enum ClaudeProcesses {
-    struct Info { let pid: Int32; let project: String; var assistant = "claude" }
+    struct Info { let pid: Int32; let project: String; var assistant = "claude"; var started: Double = 0 }
 
     private static let shells: Set<String> = ["sh", "bash", "zsh", "dash", "fish", "env"]
 
@@ -98,7 +98,9 @@ enum ClaudeProcesses {
                         "exec", "login", "logout", "app-server", "mcp-server", "completion", "proto"]
             if args.dropFirst().contains(where: { skip.contains($0) }) { continue }
             let project = cwd(pid).map { ($0 as NSString).lastPathComponent } ?? ""
-            found.append(Info(pid: pid, project: project, assistant: isCodex ? "codex" : (isQwen ? "qwen" : "claude")))
+            let st = info.kp_proc.p_starttime
+            found.append(Info(pid: pid, project: project, assistant: isCodex ? "codex" : (isQwen ? "qwen" : "claude"),
+                              started: Double(st.tv_sec) + Double(st.tv_usec) / 1e6))
         }
         // A claude launched by another claude (e.g. a nested tool) isn't a separate session.
         let ids = Set(found.map(\.pid))

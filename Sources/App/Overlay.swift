@@ -1,5 +1,6 @@
 import AppKit
 import ServiceManagement
+import UserNotifications
 
 /// Borderless, transparent, never-key panel that floats above every app (and full-screen spaces).
 final class OverlayPanel: NSPanel {
@@ -43,7 +44,7 @@ private let fadeOut = 0.6
 private let falconExit = 6.0      // Han's agent finishing: the Falcon lands, he boards, it flies off
 private let fightLinger = 3.0      // keep fighting through brief gaps between tool calls
 
-final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
+final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     private let panel: OverlayPanel
     private let view: OverlayView
     private var sessions: [SessionSnapshot] = []
@@ -95,6 +96,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
     private var offlineReason: String?
     private var lastHookCheck = 0.0
     private var hooksInstalled = true
+    /// Something the user has to do so an AI that's on this Mac reports to us. Only AIs actually installed count.
+    struct HookIssue { let text: String; let install: String?; let pid: Int32? }   // install = AI to hook up; pid = session to jump to
+    private var hookIssues: [HookIssue] = []
+    private var hooksSince: [String: Double] = [:]  // assistant → when its hook file last changed (only if our hooks are in it)
+    private var missingHooks: [String] = []          // AIs on this Mac without our hooks
+    private var notifiedSilent: Set<Int32> = []
+    private var seenBusy: Set<Int32> = []            // pids seen working (a turn ran, so a working hook would have fired)
     private let shotPath = ProcessInfo.processInfo.environment["CLAWD_SHOT"]     // "%d" in the path → numbered frames
     private let shotEvery = Double(ProcessInfo.processInfo.environment["CLAWD_SHOT_EVERY"] ?? "") ?? 5
     private var shotCount = 0
@@ -269,8 +277,39 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
                       !sessions[i].agents.contains(where: { now - $0.lastSeen < 60 }) else { continue }
                 sessions[i].stalled = true
             }
-            if now - lastHookCheck > 10 { lastHookCheck = now; hooksInstalled = HookInstaller.isInstalled }
-            offlineReason = hooksInstalled ? nil : "OFFLINE — Claude Code hooks aren't installed"
+            if now - lastHookCheck > 10 {
+                lastHookCheck = now
+                hooksInstalled = HookInstaller.isInstalled
+                func changed(_ url: URL) -> Double? {
+                    (try? FileManager.default.attributesOfItem(atPath: url.path)[.modificationDate] as? Date)?.timeIntervalSince1970
+                }
+                hooksSince = [:]
+                missingHooks = []
+                if hooksInstalled { hooksSince["claude"] = changed(HookInstaller.settingsURL) }
+                else if HookInstaller.claudeAvailable { missingHooks.append("claude") }
+                for ai in HookInstaller.others where HookInstaller.available(ai) {
+                    if HookInstaller.installed(ai) { hooksSince[ai.name] = changed(ai.file) } else { missingHooks.append(ai.name) }
+                }
+            }
+            // A session that started after our hooks were in place and has run a turn, but never reported, has its
+            // hook switched off — for Codex that means it hasn't been approved in /hooks yet.
+            let startedAt = Dictionary(processes.map { ($0.pid, $0.started) }, uniquingKeysWith: { a, _ in a })
+            for i in sessions.indices where !sessions[i].live {
+                guard let pid = sessions[i].pid else { continue }
+                if sessions[i].mood == .working { seenBusy.insert(pid) }
+                if let since = hooksSince[sessions[i].assistant], let st = startedAt[pid], st > since + 2, seenBusy.contains(pid) {
+                    sessions[i].hookSilent = true
+                }
+            }
+            hookIssues = missingHooks.map {
+                HookIssue(text: "\(HookInstaller.displayName($0)) isn't connected — live status is off. Connect it from the menu.",
+                          install: $0, pid: nil)
+            } + sessions.filter(\.hookSilent).map {
+                HookIssue(text: "\(HookInstaller.displayName($0.assistant))\($0.project.isEmpty ? "" : " (\($0.project))") isn't reporting — "
+                              + HookInstaller.silentFix($0.assistant), install: nil, pid: $0.pid)
+            }
+            for s in sessions where s.hookSilent { if let pid = s.pid { notifySilent(pid: pid, assistant: s.assistant, project: s.project) } }
+            offlineReason = nil
             if FileManager.default.fileExists(atPath: StatusPaths.state.path) && StatusStore.load() == nil {
                 offlineReason = "OFFLINE — can't read the status file"
             }
@@ -700,6 +739,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         let held = Self.duration(now - since(s, now: now))
         switch s.mood {
         case _ where s.stalled: lines.append("Not reporting — restart this Claude session")
+        case _ where s.hookSilent: lines.append("Not reporting — " + HookInstaller.silentFix(s.assistant))
         case _ where !s.live: lines.append(s.mood == .working ? "Busy (no live status — no hooks)" : "No live status — no hooks")
         case .working: lines.append("Working · \(held)")
         case .thinking: lines.append("Thinking · \(held)")
@@ -971,7 +1011,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         }
 
         // OFFLINE banner on the desktop (the window shows it above the cards): never show stale data silently.
-        if let reason = offlineReason, !windowMode, let first = actors.first(where: { $0.isLeader && $0.leaving == nil }) {
+        if let reason = offlineReason ?? hookBanner, !windowMode, let first = actors.first(where: { $0.isLeader && $0.leaving == nil }) {
             let text = NSAttributedString(string: reason, attributes: [
                 .font: NSFont.systemFont(ofSize: 11, weight: .bold), .foregroundColor: NSColor(srgbRed: 1, green: 0.72, blue: 0.72, alpha: 1)])
             let ts = text.size()
@@ -1108,18 +1148,33 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         Jump.toSession(pid: pid)
     }
 
-    /// Installed from a download (Homebrew) rather than build.sh: offer to connect to Claude Code once.
+    /// Installed from a download (Homebrew) rather than build.sh: offer once to connect every AI that's on this
+    /// Mac but not hooked up yet (also catches Codex / Qwen Code added after Claude was already connected).
     private func offerHooksOnFirstLaunch() {
-        guard !HookInstaller.isInstalled, !UserDefaults.standard.bool(forKey: "offeredHooks"),
-              playground == nil, !demo, shotPath == nil else { return }
-        UserDefaults.standard.set(true, forKey: "offeredHooks")
+        guard playground == nil, !demo, shotPath == nil, chaosSeconds == nil else { return }
+        let d = UserDefaults.standard
+        let claude = !HookInstaller.isInstalled && !d.bool(forKey: "offeredHooks")
+        let others = HookInstaller.others.filter {
+            HookInstaller.available($0) && !HookInstaller.installed($0) && !d.bool(forKey: "offeredHooks.\($0.name)")
+        }
+        guard claude || !others.isEmpty else { return }
+        if claude { d.set(true, forKey: "offeredHooks") }
+        for ai in others { d.set(true, forKey: "offeredHooks.\(ai.name)") }
+        let names = (claude ? ["Claude Code"] : []) + others.map { $0.name == "codex" ? "Codex" : "Qwen Code" }
+        let list = names.count > 1 ? names.dropLast().joined(separator: ", ") + " and " + names.last! : names[0]
+        let codex = others.contains { $0.name == "codex" }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             NSApp.activate(ignoringOtherApps: true)
             let a = NSAlert()
-            a.messageText = "Connect Clawd Wars to Claude Code?"
+            a.messageText = "Connect Clawd Wars to \(list)?"
             a.informativeText = """
-                Clawd Wars learns what your Claude sessions are doing from Claude Code hooks. This adds a small \
-                hook to ~/.claude/settings.json (a backup is kept). Sessions already running pick it up after a restart.
+                Clawd Wars learns what your sessions are doing from hooks. This adds a small hook to each one's \
+                settings (a backup is kept). Sessions already running pick it up after a restart.\(codex ? """
+
+
+                Codex asks you to approve new hooks once: type /hooks in Codex and approve Clawd Wars. \
+                You'll get a reminder if a Codex session isn't reporting yet.
+                """ : "")
 
                 You can do this later from Settings in the menu bar helmet.
                 """
@@ -1127,11 +1182,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             a.addButton(withTitle: "Not Now")
             if a.runModal() == .alertFirstButtonReturn {
                 do {
-                    try HookInstaller.install()
-                    for ai in HookInstaller.others where HookInstaller.available(ai) { try HookInstaller.install(ai) }
-                    if HookInstaller.codexAvailable {
-                        self.alert("One more step for Codex", "Codex only runs new hooks after you trust them: run /hooks in Codex once and approve them.")
-                    }
+                    if claude { try HookInstaller.install() }
+                    for ai in others { try HookInstaller.install(ai) }
                 } catch { self.alert("Couldn't install hooks", error.localizedDescription) }
                 self.lastHookCheck = 0
             }
@@ -1226,6 +1278,46 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         }
         FileHandle.standardOutput.write(report.data(using: .utf8)!)
         exit(violations.isEmpty ? 0 : 1)
+    }
+
+    // MARK: Notifications
+
+    /// The first hook issue, for the banner (with a count when there are more).
+    private var hookBanner: String? {
+        guard let first = hookIssues.first else { return nil }
+        return hookIssues.count > 1 ? first.text + "  (+\(hookIssues.count - 1) more in the menu)" : first.text
+    }
+
+    /// Once per session: a macOS notification saying what to do; clicking it jumps to that session.
+    private func notifySilent(pid: Int32, assistant: String, project: String) {
+        guard !notifiedSilent.contains(pid), playground == nil, !demo, chaosSeconds == nil, shotPath == nil else { return }
+        notifiedSilent.insert(pid)
+        let center = UNUserNotificationCenter.current()
+        center.delegate = self
+        center.requestAuthorization(options: [.alert, .sound]) { granted, _ in
+            guard granted else { return }
+            let content = UNMutableNotificationContent()
+            let name = HookInstaller.displayName(assistant)
+            content.title = assistant == "codex" ? "Approve Clawd Wars in Codex" : "\(name) isn't reporting to Clawd Wars"
+            let fix = HookInstaller.silentFix(assistant)
+            content.body = fix.prefix(1).uppercased() + fix.dropFirst()
+                + "\(project.isEmpty ? "" : " (\(project))") to see its live status. Click to jump there."
+            content.userInfo = ["pid": Int(pid)]
+            center.add(UNNotificationRequest(identifier: "silent-\(pid)", content: content, trigger: nil))
+        }
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
+                                withCompletionHandler done: @escaping () -> Void) {
+        if let pid = response.notification.request.content.userInfo["pid"] as? Int {
+            DispatchQueue.main.async { Jump.toSession(pid: Int32(pid)) }
+        }
+        done()
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+                                withCompletionHandler done: @escaping (UNNotificationPresentationOptions) -> Void) {
+        done([.banner, .sound])
     }
 
     // MARK: Menu bar
@@ -1393,6 +1485,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             let held = Self.duration(now - since(s, now: now))
             var status: String, color: NSColor
             switch (s.mood, actor?.bubble) {
+            case (_, _) where s.hookSilent: status = s.assistant == "codex" ? "APPROVE IN /hooks" : "NOT REPORTING"; color = NSColor(srgbRed: 1, green: 0.69, blue: 0.24, alpha: 1)
             case (_, _) where s.stalled: status = "NOT REPORTING"; color = NSColor(srgbRed: 1, green: 0.69, blue: 0.24, alpha: 1)
             case (.working, _) where !s.live: status = "BUSY (CPU)"; color = NSColor(srgbRed: 1, green: 0.69, blue: 0.24, alpha: 1)
             case (.working, _): status = "WORKING · \(held)"; color = NSColor(srgbRed: 0.42, green: 0.9, blue: 0.46, alpha: 1)
@@ -1417,9 +1510,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
                 if let c = r.created { stats.append("up " + Self.duration(now - c)) }
                 if let cwd = s.cwd { stats.append(cwd.hasPrefix(home) ? "~" + cwd.dropFirst(home.count) : cwd) }
                 if !stats.isEmpty { lines.append((stats.joined(separator: "  ·  "), dim)) }
+            } else if s.hookSilent {
+                lines.append(("The Clawd Wars hook isn't running in this session, so it can't report what it's doing.", soft))
+                let fix = HookInstaller.silentFix(s.assistant)
+                lines.append((fix.prefix(1).uppercased() + fix.dropFirst() + " — click this card to jump there.", dim))
             } else if !s.live {
                 lines.append(("Started before the hooks were installed, so it can't report what it's doing.", soft))
-                lines.append(("Restart it for live status: /exit, then claude --continue", dim))
+                lines.append((s.assistant == "claude" ? "Restart it for live status: /exit, then claude --continue"
+                                                      : "Restart this \(s.assistant.capitalized) session for live status.", dim))
                 if let cwd = s.cwd { lines.append((cwd.hasPrefix(home) ? "~" + cwd.dropFirst(home.count) : cwd, dim)) }
             }
 
@@ -1439,7 +1537,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
                 portrait: portrait("l\(leader.id)") { leader.draw($0, t: 0.1, mode: .idle, walking: false, role: .none, asSession: true) },
                 pid: s.pid))
         }
-        let banner: String? = offlineReason.map { $0 + " — live status is off. Fix it from Settings in the menu." }
+        let banner: String? = offlineReason.map { $0 + " — live status is off. Fix it from Settings in the menu." } ?? hookBanner
         w.cardsView.update(cards: cards, banner: banner)
         w.header.needsDisplay = true
         w.fitToContent()
@@ -1481,6 +1579,16 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
 
     func menu() -> NSMenu {
         let m = NSMenu()
+        for issue in hookIssues {
+            let title: String
+            if let ai = issue.install { title = "⚠︎ Connect \(HookInstaller.displayName(ai))…" }
+            else { title = "⚠︎ " + issue.text.replacingOccurrences(of: " — ", with: ": ") }
+            let item = NSMenuItem(title: title, action: #selector(fixHookIssue(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = issue.install ?? issue.pid.map { "jump:\($0)" }
+            m.addItem(item)
+        }
+        if !hookIssues.isEmpty { m.addItem(.separator()) }
         for s in sessions {
             let leader = Cast(id: s.leader)
             let status: String = {
@@ -1493,7 +1601,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             }()
             let project = s.project.isEmpty ? "" : " — \(s.project)"
             let ai = s.id == "home" ? "" : " [\(s.assistant.capitalized)]"
-            m.addItem(disabled: "\(leader.name)\(ai)\(project): \(s.live ? status : "no live status (restart this session)")")
+            m.addItem(disabled: "\(leader.name)\(ai)\(project): \(s.live ? status : s.hookSilent ? "not reporting (\(HookInstaller.silentFix(s.assistant)))" : "no live status (restart this session)")")
             for a in s.agents {
                 let who = Cast.of(a)
                 m.addItem(disabled: "     \(who.name) — \(a.task ?? a.type)")
@@ -1743,6 +1851,19 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         } catch {
             alert("Couldn't change Launch at Login", error.localizedDescription)
         }
+    }
+
+    /// Menu fix for a hook issue: connect the AI, or jump to the silent session.
+    @objc private func fixHookIssue(_ sender: NSMenuItem) {
+        guard let what = sender.representedObject as? String else { return }
+        if what.hasPrefix("jump:"), let pid = Int32(what.dropFirst(5)) { Jump.toSession(pid: pid); return }
+        switch what {
+        case "claude": installHooks()
+        case "codex": installCodexHooks()
+        case "qwen": installQwenHooks()
+        default: break
+        }
+        lastHookCheck = 0
     }
 
     @objc private func installHooks() {

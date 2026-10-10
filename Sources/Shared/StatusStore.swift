@@ -65,6 +65,7 @@ struct SessionSnapshot {
     var record: SessionRecord?   // everything the hooks know (nil for sessions without hooks)
     var assistant = "claude"     // which AI runs this session: "claude" or "codex"
     var stalled = false          // hooks say idle, but the process has been busy for a minute: not reporting
+    var hookSilent = false       // started after our hooks were installed and ran a turn, yet never reported (e.g. Codex: not approved)
     var cwd: String?
 }
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.20.0 — 2026-10-10
+
+### Added
+- **Hook health checks for every supported AI, but only the ones installed on this Mac.** Claude Code counts as installed when `~/.claude/projects`, `~/.claude.json` or `~/.claude/settings.json` exists (`~/.claude` alone isn't enough, since Clawd Wars keeps its own state there). Codex and Qwen Code count when `~/.codex` or `~/.qwen` exists. Two things are checked every 10 s:
+  - **Installed but not connected.** A banner says "Codex isn't connected", and a **⚠︎ Connect Codex…** item at the top of the menu installs the hooks in one click.
+  - **Connected but silent.** A session started after our hooks were written, has been seen working (so a turn ran and a live hook would have fired), yet never reported. For Codex this means the hook hasn't been approved in `/hooks`. The card shows "APPROVE IN /hooks" (other AIs: "NOT REPORTING"), and the hover card, menu line and banner say what to type.
+  - Requiring the session to have been busy avoids a false alarm on a freshly opened, idle Codex that hasn't fired any event yet.
+- **macOS notification for silent sessions**, once per session: "Approve Clawd Wars in Codex — type /hooks in Codex and approve Clawd Wars (project) to see its live status." Clicking it jumps to that session. Notifications are skipped in playground, demo, chaos and frame-dump runs.
+- Process scan records each process's start time (`kp_proc.p_starttime`); the silent check compares it with the hook file's modification time.
+
+### Changed
+- **The first-launch offer covers every AI that's on the Mac and not yet connected**, not just Claude Code. Each AI is offered once (`offeredHooks.<name>`), so someone who connected Claude Code earlier and installs Codex later is asked about Codex on next launch. The offer explains Codex's one-time `/hooks` approval up front.
+- The red OFFLINE banner is now only for an unreadable status file. A missing hook shows as the AI-specific banner above, and no longer appears when Claude Code isn't installed at all (e.g. Codex-only users).
+
 ## 2.19.0 — 2026-10-10
 
 ### Added

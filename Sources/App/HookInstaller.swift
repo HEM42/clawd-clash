@@ -114,6 +114,27 @@ enum HookInstaller {
 
     static let others = [codex, qwen]
 
+    /// Is Claude Code on this Mac? ~/.claude alone isn't proof: Clawd Wars keeps its own state in there.
+    static var claudeAvailable: Bool {
+        [".claude/projects", ".claude.json", ".claude/settings.json"].contains {
+            FileManager.default.fileExists(atPath: home($0).path)
+        }
+    }
+
+    /// Display name for an assistant id ("claude", "codex", "qwen").
+    static func displayName(_ assistant: String) -> String {
+        switch assistant { case "codex": return "Codex"; case "qwen": return "Qwen Code"; default: return "Claude Code" }
+    }
+
+    /// What to do when this AI's session runs but our hook never reports.
+    static func silentFix(_ assistant: String) -> String {
+        switch assistant {
+        case "codex": return "type /hooks in Codex and approve Clawd Wars"
+        case "qwen": return "type /hooks in Qwen Code and make sure clawd-wars is enabled"
+        default: return "type /hooks in Claude Code and check the Clawd Wars hooks are listed"
+        }
+    }
+
     private static func home(_ path: String) -> URL { FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(path) }
 
     static func available(_ ai: OtherAI) -> Bool { FileManager.default.fileExists(atPath: ai.dir.path) }

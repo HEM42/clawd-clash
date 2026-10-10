@@ -115,7 +115,9 @@ Hover over anyone for the details — what that Claude is doing right now, your 
 | sitting on the floor | idle for 2+ minutes |
 | zZz | idle for 5+ minutes |
 | `?` and NOT REPORTING | the hooks stopped reporting for that session while it's clearly busy — restart it |
-| red OFFLINE banner | the hooks aren't installed (or the status file can't be read) — never silently stale |
+| `?` and APPROVE IN /hooks | a Codex session is working but its hook hasn't been approved yet — type `/hooks` in Codex and approve Clawd Wars |
+| banner + ⚠︎ menu item | an AI on your Mac isn't connected, or one of its sessions isn't reporting; the menu item fixes it (connect, or jump to the session) |
+| red OFFLINE banner | the status file can't be read — never silently stale |
 | bobbing yellow ◆ | the Claude whose terminal you're looking at right now |
 | matching label colours | a Claude and its agents share their project's colour |
 | label above the head | the project (Claudes) or the task (agents) |
@@ -131,7 +133,9 @@ Hover over anyone for the details — what that Claude is doing right now, your 
 
 Needs macOS 13+ (Apple Silicon or Intel) and at least one of [Claude Code](https://claude.com/claude-code), [Codex](https://developers.openai.com/codex) or [Qwen Code](https://github.com/QwenLM/qwen-code). Hooks are added for every one of them installed on your Mac (`~/.claude/settings.json`, `~/.codex/hooks.json`, `~/.qwen/settings.json`).
 
-> **Codex users:** Codex only runs hooks you've approved. After installing, run **`/hooks`** in Codex once and approve the Clawd Wars hook — until then your Codex sessions still show up, but with a `?` instead of live status.
+> **Codex users:** Codex only runs hooks you've approved. After installing, run **`/hooks`** in Codex once and approve the Clawd Wars hook — until then your Codex sessions still show up, but with a `?` instead of live status. You don't have to remember: when a Codex session starts working without reporting, Clawd Wars sends a notification telling you to approve it (click it to jump to that session).
+
+Clawd Wars only checks the AIs actually on your Mac. If one is installed but not connected (say you install Codex later), you get a banner and a **⚠︎ Connect Codex…** item at the top of the menu, and the app offers to connect it on next launch.
 
 **With Homebrew** (easiest):
 
@@ -139,7 +143,7 @@ Needs macOS 13+ (Apple Silicon or Intel) and at least one of [Claude Code](https
 brew install --cask rodclemen/tap/clawd-wars
 ```
 
-Or download the zip from [Releases](https://github.com/rodclemen/clawd-wars/releases), unzip it and drag **Clawd Wars** to Applications. On first launch it offers to connect to Claude Code (it adds a small hook to `~/.claude/settings.json`, keeping a backup).
+Or download the zip from [Releases](https://github.com/rodclemen/clawd-wars/releases), unzip it and drag **Clawd Wars** to Applications. On first launch it offers to connect every supported AI it finds — Claude Code, Codex, Qwen Code — adding a small hook to each one's settings and keeping a backup.
 
 **From source** (needs Xcode Command Line Tools — `xcode-select --install`):
 
