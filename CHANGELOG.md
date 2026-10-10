@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.15.2 — 2026-10-10
+
+### Changed
+- Releases are notarized by Apple and stapled (via the `clawd-wars` notarytool keychain profile), so the downloaded app opens without a Gatekeeper warning. The Homebrew cask no longer needs to clear the quarantine flag.
+
 ## 2.15.1 — 2026-10-10
 
 ### Fixed
