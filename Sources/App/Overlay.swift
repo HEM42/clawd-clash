@@ -945,11 +945,28 @@ final class OverlayController: NSObject, NSMenuDelegate {
             }
             clawdWindow = w
         }
-        // A real window gets a Dock icon and a menu bar while it's open.
-        NSApp.setActivationPolicy(.regular)
+        // A real window gets a Dock icon and a menu bar while it's open — unless that's switched off,
+        // in which case the menu bar helmet is the way in.
+        NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
         NSApp.mainMenu = makeMainMenu()
         clawdWindow?.window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private var showInDock: Bool {
+        get { UserDefaults.standard.object(forKey: "showInDock") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "showInDock") }
+    }
+
+    @objc private func toggleDock() {
+        showInDock.toggle()
+        guard windowMode else { return }
+        NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
+        // Leaving .regular hides the window along with the app; bring it back.
+        DispatchQueue.main.async {
+            self.clawdWindow?.window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
     }
 
     private var sceneHeight: CGFloat { max(170, (CGFloat(Sprite.height) * Self.leaderScale + 70) * Self.windowZoom + windowFloor) }
@@ -1137,6 +1154,7 @@ final class OverlayController: NSObject, NSMenuDelegate {
         if windowMode { m.addItem(disabled: "Size (desktop only)") } else { m.addItem(size) }
         m.addItem(action: windowMode ? "Show on Desktop" : "Show in Window", #selector(toggleWindowMode), target: self)
         if windowMode { m.addItem(locationMenu()) }
+        m.addItem(action: "Show Dock Icon in Window Mode", #selector(toggleDock), target: self, on: showInDock)
         m.addItem(action: "Show Project Names", #selector(toggleLabels), target: self, on: showLabels)
         // Developer toys: only with ⌘ held while opening the menu (or while one is running, so you can leave it).
         if NSEvent.modifierFlags.contains(.command) || playground != nil || demo {

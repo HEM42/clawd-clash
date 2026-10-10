@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.6.1 — 2026-10-10
+
+### Added
+- "Show Dock Icon in Window Mode" toggle (on by default). With it off, window mode keeps the app as an accessory: no Dock icon and no app menu bar. The menu bar helmet still has every option. Toggling it while the window is open re-shows the window, because changing the activation policy hides it.
+
 ## 2.6.0 — 2026-10-10
 
 ### Added
