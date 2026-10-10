@@ -75,13 +75,16 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
 
     /// Make the window exactly as tall as the scene plus the cards (one per Claude), keeping its top edge
     /// where it is and never taller than the screen — past that the cards scroll.
+    /// Settings → Show Session List in Window. Off: the window is just the header and the scene.
+    static var listShown: Bool { UserDefaults.standard.object(forKey: "windowList") as? Bool ?? true }
+
     func fitToContent() {
-        // Don't fight the user mid-drag; it settles to the right height when they let go.
-        guard UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true,
+        let top = Self.headerHeight + sceneHeight
+        // Without the list the window is exactly header + scene, whatever "fit height" says.
+        guard Self.listShown ? UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true : true,
               !window.inLiveResize, let screen = window.screen ?? NSScreen.main else { return }
         let vf = screen.visibleFrame
-        let top = Self.headerHeight + sceneHeight
-        let wanted = min(max(top + cardsView.contentHeight, top + 60), vf.height)
+        let wanted = Self.listShown ? min(max(top + cardsView.contentHeight, top + 60), vf.height) : top
         let delta = wanted - window.frame.height
         guard abs(delta) > 1 else { return }
         var f = window.frame
@@ -95,7 +98,27 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
 
     func setSceneHeight(_ h: CGFloat) {
         sceneHeight = h
+        if !Self.listShown { window.minSize.height = Self.headerHeight + h; window.maxSize.height = Self.headerHeight + h }
         layout()
+    }
+
+    /// Show or hide the session list (Settings → Show Session List in Window).
+    func applyListShown() {
+        let top = Self.headerHeight + sceneHeight
+        scroll.isHidden = !Self.listShown
+        window.minSize = NSSize(width: 520, height: Self.listShown ? 240 : top)
+        window.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: Self.listShown ? .greatestFiniteMagnitude : top)
+        if Self.listShown, !(UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true) {
+            // Back to the height it had before the list was hidden.
+            let h = UserDefaults.standard.double(forKey: "windowListHeight")
+            if h > top {
+                var f = window.frame
+                f.origin.y -= h - f.height
+                f.size.height = h
+                window.setFrame(f, display: true, animate: true)
+            }
+        }
+        fitToContent()
     }
 
     private func layout() {

@@ -677,7 +677,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
         // Which character is the mouse over? (desktop and window alike: both work in screen coordinates)
         let mouseNow = NSEvent.mouseLocation
-        var hovered = (windowMode && clawdWindow?.window.isVisible != true) ? nil
+        // In the window the list below already shows everything, so hover cards only appear when it's hidden.
+        var hovered = (windowMode && (clawdWindow?.window.isVisible != true || ClawdWindow.listShown)) ? nil
             : hitRects().first { $0.1.contains(mouseNow) }?.0
         if let forced = ProcessInfo.processInfo.environment["CLAWD_HOVER"] {   // debug: pretend to hover a character
             hovered = actors.first { $0.key.contains(forced) }?.key
@@ -1393,6 +1394,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 self.snapActors()
             }
             clawdWindow = w
+            if !ClawdWindow.listShown { w.applyListShown() }
         }
         applyDockPolicy()
         clawdWindow?.window.makeKeyAndOrderFront(nil)
@@ -1689,7 +1691,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         sm.addItem(disabled: "Window mode")
         sm.addItem(action: "Keep Window on Top", #selector(togglePin), target: self,
                    on: UserDefaults.standard.bool(forKey: "windowPinned"))
-        sm.addItem(action: "Fit Window Height to Claudes", #selector(toggleAutoHeight), target: self,
+        sm.addItem(action: "Show Session List in Window", #selector(toggleWindowList), target: self, on: ClawdWindow.listShown)
+        sm.addItem(action: "Fit Window Height to Sessions", #selector(toggleAutoHeight), target: self,
                    on: UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true)
         sm.addItem(.separator())
         sm.addItem(action: "Show Dock Icon", #selector(toggleDock), target: self, on: showInDock)
@@ -1717,6 +1720,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let on = !UserDefaults.standard.bool(forKey: "windowPinned")
         UserDefaults.standard.set(on, forKey: "windowPinned")
         clawdWindow?.applyPin()
+    }
+
+    @objc private func toggleWindowList() {
+        let show = !ClawdWindow.listShown
+        if !show, let w = clawdWindow?.window { UserDefaults.standard.set(Double(w.frame.height), forKey: "windowListHeight") }
+        UserDefaults.standard.set(show, forKey: "windowList")
+        clawdWindow?.applyListShown()
     }
 
     @objc private func toggleAutoHeight() {

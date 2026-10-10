@@ -98,11 +98,11 @@ The scene is set **where the first Claude belongs** — the Death Star for Vader
   <img src="docs/locations.png" alt="All 22 locations" width="760">
 </p>
 
-The window sizes itself to the number of Claudes (or keep your own height), has a themed title bar, can stay on top, and can hide its Dock icon. Project names float over the Claudes on the desktop; in the window the cards carry them instead — each mode remembers your choice.
+The window sizes itself to the number of sessions (or keep your own height), can hide the session list to become just the scene strip, has a themed title bar, can stay on top, and can hide its Dock icon. Project names float over the Claudes on the desktop; in the window the cards carry them instead — each mode remembers your choice.
 
 ## The little things
 
-Hover over anyone for the details — what that Claude is doing right now, your last prompt, its agents:
+Hover over anyone for the details — what that session is doing right now, your last prompt, its agents (on the desktop, or in the window when its session list is hidden):
 
 <p align="center">
   <img src="docs/hover.png" alt="Hover card over Darth Vader" width="640">

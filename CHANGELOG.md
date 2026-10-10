@@ -21,6 +21,9 @@
 - **npm-installed AIs that launch a child process.** The scan found both the npm wrapper and the real process, kept the wrapper, and dropped the process actually running the hooks. For Codex, Qwen, Gemini and Copilot it now keeps the child; Claude keeps its old rule for nested runs.
 
 ### Changed
+- **Settings → Show Session List in Window** (on by default). Turned off, the window becomes just its header and the location scene: the list is hidden and the window locks to that height. Turning it back on restores the height you had, or fits the sessions if Fit Window Height is on.
+- **Hover cards in window mode only appear when the session list is hidden.** With the list showing, the same details are already right below the scene, so the pop-up just got in the way. The desktop is unchanged.
+- "Fit Window Height to Claudes" is now "Fit Window Height to Sessions", since the window lists every AI, not just Claude.
 - Window cards lose the thick accent bar on their left edge. The card's border, in the project colour, is now the same width all the way round.
 - Settings lists Install/Remove Hooks for every supported AI found on the Mac, generated from `HookInstaller.others`. Cards name the reply's author by AI ("Gemini: …") instead of always "Claude:".
 

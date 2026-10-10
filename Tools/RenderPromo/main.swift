@@ -1,27 +1,63 @@
 import AppKit
 import AVFoundation
 
-// Renders the 13-second promo with the app's own sprite code: a storyboard sheet of key frames,
-// or every frame of the video (1920×1080, 30 fps).
+// Renders the promo with the app's own sprite code: a storyboard sheet of key frames, or the video
+// (1920×1080, 30 fps). Build it, then run it from the repo root (it reads docs/icon.png):
 //   swiftc -O -swift-version 5 Sources/App/Pixel.swift Sources/App/Characters.swift Sources/App/Leaders.swift \
 //          Sources/App/Cast.swift Sources/App/Cantina.swift Sources/App/Locations.swift Sources/Shared/*.swift \
-//          Tools/RenderPromo/main.swift -o build/renderpromo
-//   build/renderpromo storyboard build/promo        → storyboard.png + one PNG per key frame
-//   build/renderpromo frames build/promo/frames     → frame-000.png … frame-389.png
-//   build/renderpromo video build/promo             → clawd-wars-promo.mp4 (H.264, silent)
+//          Tools/RenderPromo/main.swift -o /tmp/renderpromo
+//   /tmp/renderpromo storyboard promo     → storyboard.png + one PNG per key frame
+//   /tmp/renderpromo video promo          → clawd-wars-promo.mp4 (H.264, silent)
+//   /tmp/renderpromo frame promo 9.5      → a single frame at 9.5 s
 
-let W = 1920, H = 1080, fps = 30.0, duration = 13.0
-let S = 6.0                      // screen pixels per sprite pixel for a session; agents are 2/3 of that
-let groundY = 150.0              // fx-row of the floor line (fx canvas is W/S × H/S, y down)
+let W = 1920, H = 1080, fps = 30.0, duration = 16.2
+
+// The stage the crew stands on. The whole frame by default; window mode narrows it to the scene strip.
+var S = 6.0                      // screen pixels per sprite pixel for a session; agents are 2/3 of that
+var groundY = 150.0              // fx-row of the floor line (the fx canvas is stageW/S × stageH/S, y down)
+var stageW = Double(W), stageH = Double(H)
+
+/// Runs `body` with the stage moved into `rect` (screen coordinates, y up), at `scale`, floor on fx-row `ground`.
+func onStage(_ ctx: CGContext, _ rect: CGRect, scale: Double, ground: Double, _ body: () -> Void) {
+    let saved = (S, groundY, stageW, stageH)
+    ctx.saveGState()
+    ctx.translateBy(x: rect.minX, y: rect.minY)
+    ctx.clip(to: CGRect(origin: .zero, size: rect.size))
+    (S, groundY, stageW, stageH) = (scale, ground, Double(rect.width), Double(rect.height))
+    body()
+    (S, groundY, stageW, stageH) = saved
+    ctx.restoreGState()
+}
 
 // MARK: Palette
 
 let yellow = NSColor(srgbRed: 1, green: 0.91, blue: 0.12, alpha: 1)
 let claudeOrange = CGColor(red: 0.85, green: 0.47, blue: 0.34, alpha: 1)
-enum AI: String { case claude, codex, qwen
-    var hex: UInt32 { switch self { case .claude: return 0xFFFFFF; case .codex: return 0x6FD3FF; case .qwen: return 0xC08CFF } }
-    var ns: NSColor { NSColor(srgbRed: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255,
-                              blue: CGFloat(hex & 0xFF) / 255, alpha: 1) }
+func hexColor(_ h: UInt32) -> NSColor {
+    NSColor(srgbRed: CGFloat((h >> 16) & 0xFF) / 255, green: CGFloat((h >> 8) & 0xFF) / 255, blue: CGFloat(h & 0xFF) / 255, alpha: 1)
+}
+
+/// Every AI Clawd Wars supports, with its outline colour from `AIStyle`.
+enum AI: CaseIterable { case claude, desktop, codex, qwen, gemini, copilot
+    var hex: UInt32 {
+        switch self {
+        case .claude: return 0xFFFFFF; case .desktop: return 0xFF9E7A; case .codex: return 0x6FD3FF
+        case .qwen: return 0xC08CFF; case .gemini: return 0xFFD166; case .copilot: return 0x7CF5A4
+        }
+    }
+    var ns: NSColor { hexColor(hex) }
+    var name: String {
+        switch self {
+        case .claude: return "Claude Code"; case .desktop: return "Claude Desktop"; case .codex: return "Codex"
+        case .qwen: return "Qwen Code"; case .gemini: return "Gemini CLI"; case .copilot: return "Copilot CLI"
+        }
+    }
+    var tag: String {
+        switch self {
+        case .claude: return "CLAUDE"; case .desktop: return "DESKTOP"; case .codex: return "CODEX"
+        case .qwen: return "QWEN"; case .gemini: return "GEMINI"; case .copilot: return "COPILOT"
+        }
+    }
 }
 
 // MARK: Easing
@@ -45,14 +81,25 @@ struct Actor {
     var urgent = false
     var bubble: BubbleKind? = nil
     var label: String? = nil
+    var labelSize: CGFloat? = nil
     var ai: AI = .claude
     var lift = 0.0                        // fx units off the floor (jumps, drop-ins)
     var alpha = 1.0
-    var k: Double { session ? 1 : 2.0 / 3 }
+    var grow = 1.0                        // extra size (Claude stands a head taller in the line-up)
+    var k: Double { (session ? 1 : 2.0 / 3) * grow }
     var top: Double { groundY - 44 * k - lift }
     var fighter: Fighter {
         Fighter(weapon: cast.weapon, x: x, k: k, top: top, side: facing, muzzle: cast.muzzle)
     }
+}
+
+/// A character's sprite with its AI's outline, for portraits.
+func portrait(_ who: Cast, ai: AI, t: Double = 0.4) -> CGImage? {
+    let c = PixelCanvas(Sprite.width, Sprite.height)
+    who.draw(c, t: t, mode: .working, walking: false, role: .none, asSession: true)
+    c.addOutline(C(ai.hex, 0.92))
+    guard let b = c.opaqueBounds() else { return nil }
+    return c.makeImage()?.cropping(to: b)
 }
 
 /// Draws one actor (sprite, speech bubble, label) into a CG context whose units are screen pixels, y up.
@@ -66,7 +113,7 @@ func draw(_ a: Actor, _ ctx: CGContext, t: Double) {
     let x0 = (a.facing > 0 ? a.x - Sprite.bodyCenterX * a.k : a.x - (Double(Sprite.width) - Sprite.bodyCenterX) * a.k) * S
     let yTop = a.top * S
     ctx.saveGState(); ctx.setAlpha(CGFloat(a.alpha))
-    ctx.draw(img, in: CGRect(x: x0, y: Double(H) - yTop - Double(Sprite.height) * px,
+    ctx.draw(img, in: CGRect(x: x0, y: stageH - yTop - Double(Sprite.height) * px,
                              width: Double(Sprite.width) * px, height: Double(Sprite.height) * px))
     // Speech bubble beside the head, tail pointing back at it.
     if let kind = a.bubble {
@@ -76,14 +123,15 @@ func draw(_ a: Actor, _ ctx: CGContext, t: Double) {
             let headRow = a.top + Double(a.cast.headTop) * a.k
             let bx = a.facing > 0 ? a.x + 7 * a.k : a.x - 7 * a.k - Double(Bubble.width)
             let by = headRow - Double(Bubble.height) + 2
-            ctx.draw(bi, in: CGRect(x: bx * S, y: Double(H) - (by + Double(Bubble.height)) * S,
+            ctx.draw(bi, in: CGRect(x: bx * S, y: stageH - (by + Double(Bubble.height)) * S,
                                     width: Double(Bubble.width) * S, height: Double(Bubble.height) * S))
         }
     }
     if let l = a.label {
         let headRow = a.top + Double(a.cast.headTop) * a.k
-        chip(l, ctx, centerX: a.x * S, bottomY: Double(H) - headRow * S + (a.session ? 22 : 16),
-             size: a.session ? 30 : 23, agent: !a.session, accent: a.ai)
+        let z = S / 6
+        chip(l, ctx, centerX: a.x * S, bottomY: stageH - headRow * S + (a.session ? 22 : 16) * z,
+             size: a.labelSize ?? max(15, (a.session ? 30 : 23) * z), agent: !a.session, accent: a.ai)
     }
     ctx.restoreGState()
 }
@@ -106,39 +154,59 @@ func chip(_ s: String, _ ctx: CGContext, centerX: Double, bottomY: Double, size:
     text.draw(in: CGRect(x: r.minX, y: r.minY + size * 0.2, width: r.width, height: ts.height))
 }
 
-/// Bolts, sparks and lightning between pairs, drawn on one fx-resolution pixel canvas over the whole frame.
+/// Bolts, sparks and lightning between pairs, drawn on one fx-resolution pixel canvas over the whole stage.
 func drawFX(_ pairs: [(Actor, Actor)], _ ctx: CGContext, t: Double) {
     guard !pairs.isEmpty else { return }
-    let c = PixelCanvas(Int(Double(W) / S), Int(Double(H) / S))
+    let c = PixelCanvas(Int(stageW / S) + 1, Int(stageH / S) + 1)
     for (l, r) in pairs { drawFightFX(c, t: t, left: l.fighter, right: r.fighter) }
-    if let img = c.makeImage() { ctx.draw(img, in: CGRect(x: 0, y: 0, width: W, height: H)) }
+    if let img = c.makeImage() {
+        ctx.draw(img, in: CGRect(x: 0, y: stageH - Double(c.h) * S, width: Double(c.w) * S, height: Double(c.h) * S))
+    }
 }
 
 // MARK: Text
 
-func text(_ s: String, _ ctx: CGContext, x: Double? = nil, y: Double, size: CGFloat, weight: NSFont.Weight = .heavy,
-          color: NSColor = .white, alpha: Double = 1, font: NSFont? = nil, kern: CGFloat = 0) {
-    let f = font ?? NSFont.systemFont(ofSize: size, weight: weight)
+func attributed(_ s: String, size: CGFloat, weight: NSFont.Weight = .heavy, color: NSColor = .white, alpha: Double = 1,
+                font: NSFont? = nil, kern: CGFloat = 0) -> NSAttributedString {
     let shadow = NSShadow(); shadow.shadowColor = NSColor.black.withAlphaComponent(0.6 * alpha)
     shadow.shadowBlurRadius = 12; shadow.shadowOffset = NSSize(width: 0, height: -3)
-    let a = NSAttributedString(string: s, attributes: [.font: f, .foregroundColor: color.withAlphaComponent(alpha),
-                                                       .kern: kern, .shadow: shadow])
-    let w = a.size().width
-    a.draw(at: NSPoint(x: x ?? (Double(W) - w) / 2, y: y))
+    return NSAttributedString(string: s, attributes: [.font: font ?? NSFont.systemFont(ofSize: size, weight: weight),
+                                                      .foregroundColor: color.withAlphaComponent(alpha), .kern: kern, .shadow: shadow])
+}
+
+func text(_ s: String, _ ctx: CGContext, x: Double? = nil, y: Double, size: CGFloat, weight: NSFont.Weight = .heavy,
+          color: NSColor = .white, alpha: Double = 1, font: NSFont? = nil, kern: CGFloat = 0) {
+    let a = attributed(s, size: size, weight: weight, color: color, alpha: alpha, font: font, kern: kern)
+    a.draw(at: NSPoint(x: x ?? (Double(W) - a.size().width) / 2, y: y))
 }
 
 /// A caption that slides up and fades in at `start` (shot-local seconds).
 func caption(_ s: String, _ ctx: CGContext, local: Double, start: Double = 0.1, y: Double = 900, size: CGFloat = 64,
-             color: NSColor = .white) {
+             color: NSColor = .white, weight: NSFont.Weight = .heavy) {
     let f = easeOut((local - start) / 0.35)
     guard f > 0 else { return }
-    text(s, ctx, y: y - 30 * (1 - f), size: size, color: color, alpha: f)
+    text(s, ctx, y: y - 30 * (1 - f), size: size, weight: weight, color: color, alpha: f)
+}
+
+/// A small pill naming the mode on show ("DESKTOP MODE", "WINDOW MODE"), top-left.
+func modeBadge(_ s: String, _ ctx: CGContext, local: Double) {
+    let f = easeOut((local - 0.2) / 0.3)
+    guard f > 0 else { return }
+    let a = NSAttributedString(string: s, attributes: [.font: NSFont.monospacedSystemFont(ofSize: 26, weight: .heavy),
+                                                       .foregroundColor: NSColor.black, .kern: 3])
+    let sz = a.size()
+    let r = CGRect(x: 60 - 40 * (1 - f), y: 980, width: sz.width + 36, height: sz.height + 16)
+    ctx.saveGState(); ctx.setAlpha(CGFloat(f))
+    ctx.addPath(CGPath(roundedRect: r, cornerWidth: r.height / 2, cornerHeight: r.height / 2, transform: nil))
+    ctx.setFillColor(yellow.cgColor); ctx.fillPath()
+    a.draw(at: NSPoint(x: r.minX + 18, y: r.minY + 8))
+    ctx.restoreGState()
 }
 
 // MARK: Backgrounds
 
 /// The user's desktop: a dusky wallpaper with three terminal windows (dimmed once the battle starts).
-func desktop(_ ctx: CGContext, dim: Double, statusDots: Bool = false, t: Double = 0) {
+func desktop(_ ctx: CGContext, dim: Double, floor: Bool = true) {
     let g = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
                        colors: [CGColor(red: 0.20, green: 0.21, blue: 0.29, alpha: 1),
                                 CGColor(red: 0.12, green: 0.12, blue: 0.18, alpha: 1)] as CFArray, locations: [0, 1])!
@@ -146,8 +214,8 @@ func desktop(_ ctx: CGContext, dim: Double, statusDots: Bool = false, t: Double 
     // menu bar
     ctx.setFillColor(CGColor(gray: 0, alpha: 0.35)); ctx.fill(CGRect(x: 0, y: H - 34, width: W, height: 34))
     let lines = [["claude ▸ refactor the hook installer", "● Reading HookInstaller.swift", "● Editing 3 files…", "✻ Thinking…"],
-                 ["claude ▸ write the changelog", "● Bash(git log --oneline)", "", "Allow this command?  ❯ Yes   No"],
-                 ["claude ▸ add a tauntaun", "✓ Done in 4m 12s", "", "> _"]]
+                 ["codex ▸ write the changelog", "● Bash(git log --oneline)", "", "Allow this command?  ❯ Yes   No"],
+                 ["gemini ▸ add a tauntaun", "✓ Done in 4m 12s", "", "> _"]]
     for i in 0..<3 {
         let r = CGRect(x: 110 + Double(i) * 580, y: 330 + Double(i % 2) * 70, width: 540, height: 360)
         ctx.saveGState(); ctx.setAlpha(CGFloat(1 - dim * 0.75))
@@ -155,20 +223,27 @@ func desktop(_ ctx: CGContext, dim: Double, statusDots: Bool = false, t: Double 
         ctx.addPath(CGPath(roundedRect: r, cornerWidth: 14, cornerHeight: 14, transform: nil))
         ctx.setFillColor(CGColor(red: 0.09, green: 0.09, blue: 0.11, alpha: 1)); ctx.fillPath()
         ctx.setShadow(offset: .zero, blur: 0)
-        for (j, col) in [CGColor(red: 1, green: 0.37, blue: 0.34, alpha: 1), CGColor(red: 1, green: 0.74, blue: 0.18, alpha: 1),
-                         CGColor(red: 0.16, green: 0.79, blue: 0.25, alpha: 1)].enumerated() {
-            ctx.setFillColor(col); ctx.fillEllipse(in: CGRect(x: r.minX + 18 + Double(j) * 24, y: r.maxY - 30, width: 14, height: 14))
-        }
+        trafficLights(ctx, x: r.minX + 18, y: r.maxY - 30)
         for (j, l) in lines[i].enumerated() {
-            let col: NSColor = j == 0 ? NSColor(srgbRed: 0.85, green: 0.47, blue: 0.34, alpha: 1) : NSColor(white: 0.8, alpha: 1)
+            let col: NSColor = j > 0 ? NSColor(white: 0.8, alpha: 1) : (i == 0 ? NSColor(cgColor: claudeOrange)! : [AI.codex, .gemini][i - 1].ns)
             NSAttributedString(string: l, attributes: [.font: NSFont.monospacedSystemFont(ofSize: 21, weight: .medium),
-                                                       .foregroundColor: col]).draw(at: NSPoint(x: r.minX + 24, y: r.maxY - 90 - Double(j) * 44))
+                                                       .foregroundColor: col])
+                .draw(at: NSPoint(x: r.minX + 24, y: r.maxY - 90 - Double(j) * 44))
         }
         ctx.restoreGState()
     }
     // the dark floor band the battle stands on
-    ctx.setFillColor(CGColor(red: 0.10, green: 0.10, blue: 0.14, alpha: dim * 0.55))
-    ctx.fill(CGRect(x: 0, y: 0, width: W, height: Int(Double(H) - groundY * S + 6)))
+    if floor {
+        ctx.setFillColor(CGColor(red: 0.10, green: 0.10, blue: 0.14, alpha: dim * 0.55))
+        ctx.fill(CGRect(x: 0, y: 0, width: W, height: Int(Double(H) - groundY * S + 6)))
+    }
+}
+
+func trafficLights(_ ctx: CGContext, x: Double, y: Double, d: Double = 14) {
+    for (j, col) in [CGColor(red: 1, green: 0.37, blue: 0.34, alpha: 1), CGColor(red: 1, green: 0.74, blue: 0.18, alpha: 1),
+                     CGColor(red: 0.16, green: 0.79, blue: 0.25, alpha: 1)].enumerated() {
+        ctx.setFillColor(col); ctx.fillEllipse(in: CGRect(x: x + Double(j) * d * 1.7, y: y, width: d, height: d))
+    }
 }
 
 func space(_ ctx: CGContext, t: Double) {
@@ -190,12 +265,149 @@ func space(_ ctx: CGContext, t: Double) {
 
 let appIcon: CGImage? = NSImage(contentsOfFile: "docs/icon.png")?.cgImage(forProposedRect: nil, context: nil, hints: nil)
 
+// MARK: Window mode
+
+/// One card in the window, as the app draws it: portrait, name · project, status pill, a few lines, agents.
+struct Card {
+    var who: Cast; var ai: AI; var name: String; var project: String
+    var status: String; var statusColor: NSColor
+    var lines: [(String, NSColor)]
+    var agents: [(Cast, String, String, String)] = []   // portrait, name, task, detail
+}
+
+let dimText = NSColor(white: 0.62, alpha: 1), bodyText = NSColor(white: 0.9, alpha: 1)
+
+/// Draws a card with its top-left at (x, top); returns its height. `z` scales the app's point sizes.
+@discardableResult
+func drawCard(_ c: Card, _ ctx: CGContext, x: Double, top: Double, width: Double, panel: NSColor, z: Double) -> Double {
+    let pad = 14 * z, lineH = 19 * z, agentH = 36 * z
+    let h = pad * 2 + 22 * z + Double(c.lines.count) * lineH + (c.agents.isEmpty ? 0 : 6 * z + Double(c.agents.count) * agentH)
+    let r = CGRect(x: x, y: top - h, width: width, height: h)
+    let box = CGPath(roundedRect: r, cornerWidth: 8 * z, cornerHeight: 8 * z, transform: nil)
+    ctx.addPath(box); ctx.setFillColor((panel.blended(withFraction: 0.35, of: .black) ?? panel).withAlphaComponent(0.94).cgColor); ctx.fillPath()
+    ctx.addPath(box); ctx.setStrokeColor(c.ai.ns.withAlphaComponent(0.55).cgColor); ctx.setLineWidth(1.5 * z); ctx.strokePath()
+
+    func put(_ s: NSAttributedString, _ px: Double, _ py: Double) { s.draw(at: NSPoint(x: px, y: py)) }
+    func str(_ s: String, _ size: Double, _ w: NSFont.Weight, _ col: NSColor, mono: Bool = false) -> NSAttributedString {
+        NSAttributedString(string: s, attributes: [.font: mono ? NSFont.monospacedSystemFont(ofSize: size * z, weight: w)
+                                                                : NSFont.systemFont(ofSize: size * z, weight: w), .foregroundColor: col])
+    }
+    // portrait, pixel-crisp, bottom-centred in a 96×80 (app points) box
+    if let img = portrait(c.who, ai: c.ai) {
+        let k = (min(96 * z / Double(img.width), 80 * z / Double(img.height), 2 * z)).rounded(.down)
+        let w = Double(img.width) * k, ih = Double(img.height) * k
+        ctx.saveGState(); ctx.interpolationQuality = .none
+        ctx.draw(img, in: CGRect(x: r.minX + 10 * z + (96 * z - w) / 2, y: r.maxY - pad - 80 * z, width: w, height: ih))
+        ctx.restoreGState()
+    }
+    let tx = r.minX + 26 * z + 96 * z
+    var ty = r.maxY - pad - 18 * z
+    let status = str(c.status, 11, .bold, c.statusColor, mono: true)
+    let sw = status.size().width
+    let pill = CGRect(x: r.maxX - 12 * z - sw - 14 * z, y: ty - 3 * z, width: sw + 14 * z, height: 19 * z)
+    ctx.addPath(CGPath(roundedRect: pill, cornerWidth: 9.5 * z, cornerHeight: 9.5 * z, transform: nil))
+    ctx.setFillColor(c.statusColor.withAlphaComponent(0.16).cgColor); ctx.fillPath()
+    put(status, pill.minX + 7 * z, pill.minY + 2 * z)
+    let header = NSMutableAttributedString(attributedString: str(c.name, 14, .bold, .white))
+    header.append(str("  ·  " + c.project, 13, .semibold, c.ai.ns))
+    put(header, tx, ty)
+    ty -= 22 * z
+    for (l, col) in c.lines { put(str(l, 11.5, .regular, col), tx, ty); ty -= lineH }
+    if !c.agents.isEmpty {
+        ty -= 6 * z
+        for (who, name, task, detail) in c.agents {
+            if let img = portrait(who, ai: c.ai) {
+                let k = (min(36 * z / Double(img.width), 30 * z / Double(img.height))).rounded(.down)
+                ctx.saveGState(); ctx.interpolationQuality = .none
+                ctx.draw(img, in: CGRect(x: tx - 4 * z, y: ty - 14 * z, width: Double(img.width) * k, height: Double(img.height) * k))
+                ctx.restoreGState()
+            }
+            let title = NSMutableAttributedString(attributedString: str(name, 11.5, .semibold, .white))
+            title.append(str("  —  " + task, 11.5, .regular, c.ai.ns))
+            put(title, tx + 40 * z, ty)
+            put(str(detail, 10.5, .regular, dimText), tx + 40 * z, ty - 16 * z)
+            ty -= agentH
+        }
+    }
+    return h
+}
+
+/// The "Show in Window" window: themed title bar, the cantina with the crew in it, a card per session.
+func windowMode(_ ctx: CGContext, frame r: CGRect, local: Double, t: Double) {
+    let loc = Location.cantina
+    let panel = loc.panel
+    let z = 2.0                                   // app points → screen pixels
+    ctx.saveGState()
+    ctx.setShadow(offset: CGSize(width: 0, height: -20), blur: 60, color: CGColor(gray: 0, alpha: 0.6))
+    let outline = CGPath(roundedRect: r, cornerWidth: 22, cornerHeight: 22, transform: nil)
+    ctx.addPath(outline); ctx.setFillColor((panel.blended(withFraction: 0.45, of: .black) ?? panel).cgColor); ctx.fillPath()
+    ctx.restoreGState()
+    ctx.saveGState()
+    ctx.addPath(outline); ctx.clip()
+    // title bar
+    let barH = 30 * z
+    trafficLights(ctx, x: r.minX + 20, y: r.maxY - barH / 2 - 7, d: 15)
+    let where_ = NSAttributedString(string: loc.name.uppercased(), attributes: [
+        .font: NSFont.systemFont(ofSize: 10.5 * z, weight: .semibold), .foregroundColor: NSColor(white: 0.78, alpha: 1), .kern: 1.2 * z])
+    where_.draw(at: NSPoint(x: r.maxX - where_.size().width - 28, y: r.maxY - barH / 2 - where_.size().height / 2))
+    // the scene strip: the cantina at 2 px per pixel in the app, so 4 here
+    let px = Double(Cantina.pixel) * z
+    let stripH = 120.0 * z
+    let strip = CGRect(x: r.minX, y: r.maxY - barH - stripH, width: r.width, height: stripH)
+    let cw = Int((strip.width / px).rounded(.up)), ch = Int(stripH / px)
+    let floorRows = Int(20 / Double(Cantina.pixel))
+    let room = PixelCanvas(cw, ch); loc.drawStatic(room, floorRows: floorRows)
+    let live = PixelCanvas(cw, ch); loc.drawAnimated(live, floorRows: floorRows, t: t)
+    ctx.saveGState(); ctx.interpolationQuality = .none
+    for c in [room, live] { if let img = c.makeImage() { ctx.draw(img, in: CGRect(x: strip.minX, y: strip.minY, width: Double(cw) * px, height: Double(ch) * px)) } }
+    ctx.restoreGState()
+    // the crew in the cantina (sessions at the app's Small size: 2 pt per pixel → 4 px)
+    let needsYou = local > 1.3
+    onStage(ctx, strip, scale: px, ground: Double(ch) - Double(floorRows) * 0.45) {
+        let vader = Actor(cast: .villain(.vader), x: 200, facing: -1, role: .duel)
+        var luke = Actor(cast: .hero(.luke), x: 143, role: .duel, ai: .codex)
+        if needsYou { luke.role = .none; luke.mode = .waiting; luke.bubble = .waiting; luke.urgent = true; luke.lift = abs(sin(t * 2 * .pi * 1.6)) * 4 }
+        var v = vader; if needsYou { v.role = .none }
+        let han = Actor(cast: .hero(.han), x: 260, facing: -1, session: false, role: .cheer, label: "Run the tests")
+        let chewie = Actor(cast: .hero(.chewie), x: 300, facing: -1, session: false, role: .cheer, label: "Check git history")
+        let r2 = Actor(cast: .hero(.r2d2), x: 95, facing: 1, session: false, ai: .codex)
+        for a in [r2, luke, v, han, chewie] { draw(a, ctx, t: t) }
+        if !needsYou { drawFX([(luke, vader)], ctx, t: t) }
+    }
+    // cards
+    let ticks = Int(local * 1.0)
+    let now = ["Now: Read Overlay.swift", "Now: Edit WindowMode.swift", "Now: Bash: swift build"][min(2, Int(local / 0.9))]
+    var top = strip.minY - 10 * z
+    let x = r.minX + 10 * z, w = r.width - 20 * z
+    top -= drawCard(Card(who: .villain(.vader), ai: .claude, name: "Darth Vader", project: "idle-claude",
+                         status: "WORKING · \(24 + ticks)s", statusColor: NSColor(srgbRed: 0.45, green: 0.85, blue: 0.45, alpha: 1),
+                         lines: [("claude-opus-5-5", dimText), (now, bodyText), ("You: “add a tauntaun”", bodyText)],
+                         agents: [(.hero(.han), "Han Solo", "Run the tests", "Bash: swift test · \(34 + ticks)s · 9 tool calls"),
+                                  (.hero(.chewie), "Chewbacca", "Check git history", "Bash: git log · 1m \(21 + ticks)s · 25 tool calls")]),
+                    ctx, x: x, top: top, width: w, panel: panel, z: z) + 10 * z
+    // the Codex group divider, then its card
+    let g = NSAttributedString(string: "CODEX", attributes: [.font: NSFont.systemFont(ofSize: 10.5 * z, weight: .heavy), .kern: 1.2 * z,
+                                                             .foregroundColor: AI.codex.ns])
+    let gs = g.size()
+    g.draw(at: NSPoint(x: x + 2 * z, y: top - gs.height - 2 * z))
+    ctx.setFillColor(AI.codex.ns.withAlphaComponent(0.35).cgColor)
+    ctx.fill(CGRect(x: x + gs.width + 10 * z, y: top - gs.height / 2 - 2 * z, width: w - gs.width - 12 * z, height: z))
+    top -= 22 * z
+    drawCard(Card(who: .hero(.luke), ai: .codex, name: "Luke Skywalker", project: "website",
+                  status: needsYou ? "NEEDS YOU · \(max(1, Int((local - 1.3) * 1.0) + 1))s" : "THINKING",
+                  statusColor: needsYou ? NSColor(srgbRed: 1, green: 0.42, blue: 0.42, alpha: 1) : NSColor(white: 0.85, alpha: 1),
+                  lines: [("gpt-5-codex", dimText), (needsYou ? "Wants to run: npm run deploy" : "Now: Thinking…", bodyText),
+                          ("You: “make the hero section pop”", bodyText)]),
+             ctx, x: x, top: top, width: w, panel: panel, z: z)
+    ctx.restoreGState()
+}
+
 // MARK: Shots
 
 struct Shot { let name: String; let start: Double; let end: Double; let render: (CGContext, Double, Double) -> Void }
 
 let shots: [Shot] = [
-    // 1 · The hook: three busy terminals — which one needs you?
+    // 1 · The hook: three AIs at work in three terminals, and one overwhelmed human.
     Shot(name: "hook", start: 0, end: 2.0) { ctx, local, t in
         let zoom = 1 + 0.03 * local
         ctx.saveGState()
@@ -203,37 +415,40 @@ let shots: [Shot] = [
         ctx.translateBy(x: -Double(W) / 2, y: -Double(H) / 2)
         desktop(ctx, dim: 0)
         ctx.restoreGState()
-        caption("Three AI sessions running.", ctx, local: local, start: 0.05, y: 860)
-        caption("Which one needs you?", ctx, local: local, start: 0.6, y: 120, size: 76, color: yellow)
+        caption("Three AIs. Nine agents. One very confused human.", ctx, local: local, start: 0.05, y: 860, size: 60)
+        caption("Sound familiar?", ctx, local: local, start: 0.7, y: 120, size: 76, color: yellow)
     },
-    // 2 · The reveal: they're a Star Wars battle along the bottom of the screen.
-    Shot(name: "battle", start: 2.0, end: 4.6) { ctx, local, t in
+    // 2 · Desktop mode: they become a Star Wars brawl along the bottom of the screen.
+    Shot(name: "desktop", start: 2.0, end: 4.6) { ctx, local, t in
         desktop(ctx, dim: easeOut(local / 0.4))
         let drop = { (d: Double) -> Double in max(0, 40 * (1 - easeIn((local - d) / 0.3))) }
         var vader = Actor(cast: .villain(.vader), x: 62, mode: .working, role: .duel, label: "idle-claude")
-        var kylo = Actor(cast: .villain(.kylo), x: 119, facing: -1, mode: .working, role: .duel, label: "website")
+        var luke = Actor(cast: .hero(.luke), x: 119, facing: -1, mode: .working, role: .duel, label: "website", ai: .codex)
         var han = Actor(cast: .hero(.han), x: 190, session: false, role: .shoot(offset: 0), label: "Run the test suite")
-        var yoda = Actor(cast: .hero(.yoda), x: 246, facing: -1, session: false, role: .deflect, label: "Review Overlay.swift")
-        vader.lift = drop(0); kylo.lift = drop(0.12); han.lift = drop(0.24); yoda.lift = drop(0.32)
-        for a in [vader, kylo, han, yoda] where a.lift < 40 { draw(a, ctx, t: t) }
-        if local > 0.45 { drawFX([(vader, kylo), (han, yoda)], ctx, t: t) }
-        caption("…are a pixel-art Star Wars battle", ctx, local: local, start: 0.35, y: 900)
-        caption("on your desktop.", ctx, local: local, start: 0.55, y: 815)
+        var trooper = Actor(cast: .villain(.trooper), x: 246, facing: -1, session: false, role: .shoot(offset: blasterPeriod / 2),
+                            label: "Review Overlay.swift", ai: .codex)
+        vader.lift = drop(0); luke.lift = drop(0.12); han.lift = drop(0.24); trooper.lift = drop(0.32)
+        for a in [vader, luke, han, trooper] where a.lift < 40 { draw(a, ctx, t: t) }
+        if local > 0.45 { drawFX([(vader, luke), (han, trooper)], ctx, t: t) }
+        modeBadge("DESKTOP MODE", ctx, local: local)
+        caption("Now they're a pixel-art Star Wars brawl", ctx, local: local, start: 0.35, y: 900)
+        caption("along the bottom of your screen. They fight while they work.", ctx, local: local, start: 0.6, y: 830,
+                size: 40, color: yellow, weight: .bold)
     },
-    // 3 · Status at a glance: working, thinking, needs you, done.
-    Shot(name: "status", start: 4.6, end: 7.0) { ctx, local, t in
+    // 3 · Status at a glance: working, thinking, needs you, napping.
+    Shot(name: "status", start: 4.6, end: 6.8) { ctx, local, t in
         desktop(ctx, dim: 1)
-        let cast: [(Cast, VaderMode, BubbleKind?, String, NSColor)] = [
-            (.villain(.vader), .working, nil, "WORKING", NSColor(srgbRed: 0.45, green: 0.85, blue: 0.45, alpha: 1)),
-            (.villain(.emperor), .thinking, .thinking, "THINKING", NSColor(white: 0.9, alpha: 1)),
-            (.villain(.boba), .waiting, .waiting, "NEEDS YOU", NSColor(srgbRed: 1, green: 0.4, blue: 0.4, alpha: 1)),
-            (.villain(.jabba), .idle, .sleeping, "DONE · ASLEEP", NSColor(srgbRed: 0.6, green: 0.55, blue: 1, alpha: 1)),
+        let cast: [(Cast, AI, VaderMode, BubbleKind?, String, NSColor)] = [
+            (.villain(.vader), .claude, .working, nil, "WORKING", NSColor(srgbRed: 0.45, green: 0.85, blue: 0.45, alpha: 1)),
+            (.villain(.emperor), .qwen, .thinking, .thinking, "THINKING…", NSColor(white: 0.9, alpha: 1)),
+            (.villain(.boba), .gemini, .waiting, .waiting, "NEEDS YOU!", NSColor(srgbRed: 1, green: 0.4, blue: 0.4, alpha: 1)),
+            (.villain(.jabba), .copilot, .idle, .sleeping, "NAPPING", NSColor(srgbRed: 0.6, green: 0.55, blue: 1, alpha: 1)),
         ]
-        for (i, (who, mode, bubble, word, col)) in cast.enumerated() {
+        for (i, (who, ai, mode, bubble, word, col)) in cast.enumerated() {
             let d = 0.1 + Double(i) * 0.22
             let f = backOut((local - d) / 0.35)
             guard local > d else { continue }
-            var a = Actor(cast: who, x: 48 + Double(i) * 75, mode: mode, bubble: bubble)
+            var a = Actor(cast: who, x: 48 + Double(i) * 75, mode: mode, bubble: bubble, ai: ai)
             a.urgent = mode == .waiting
             if a.urgent { a.lift = abs(sin(t * 2 * .pi * 1.6)) * 6 }      // ignored for a minute: it jumps
             a.lift += (1 - f) * -8
@@ -242,10 +457,12 @@ let shots: [Shot] = [
             let w = NSAttributedString(string: word, attributes: [.font: NSFont.systemFont(ofSize: 40, weight: .black), .kern: 2]).size().width
             text(word, ctx, x: a.x * S - w / 2, y: 70, size: 40, weight: .black, color: col, alpha: clamp(f), kern: 2)
         }
-        caption("Know what every session is doing — at a glance.", ctx, local: local, start: 0.05, y: 900, size: 58)
+        caption("All fun and games — and you still see everything.", ctx, local: local, start: 0.05, y: 900, size: 58)
+        caption("(Leave Boba waiting and he starts jumping.)", ctx, local: local, start: 0.9, y: 835, size: 36,
+                color: yellow, weight: .bold)
     },
     // 4 · Subagents march in, each labelled with its task.
-    Shot(name: "agents", start: 7.0, end: 9.0) { ctx, local, t in
+    Shot(name: "agents", start: 6.8, end: 8.8) { ctx, local, t in
         desktop(ctx, dim: 1)
         draw(Actor(cast: .villain(.vader), x: 262, facing: -1, mode: .standGuard, label: "idle-claude"), ctx, t: t)
         let crew: [(Companion, String, Double)] = [(.luke, "Find hook events", 190), (.leia, "Write changelog", 140),
@@ -256,29 +473,65 @@ let shots: [Shot] = [
             let x = lerp(-30, stop, f)
             draw(Actor(cast: .hero(who), x: x, session: false, walking: f < 0.98, label: task), ctx, t: t)
         }
-        caption("Every subagent joins the fight.", ctx, local: local, start: 0.1, y: 900)
+        caption("Every subagent reports for duty.", ctx, local: local, start: 0.1, y: 900)
+        caption("Its job is right there on its label. No more guessing.", ctx, local: local, start: 0.45, y: 835, size: 40,
+                color: yellow, weight: .bold)
     },
-    // 5 · Claude vs Codex vs Qwen: each AI takes a side and gets its own outline.
-    Shot(name: "versus", start: 9.0, end: 10.8) { ctx, local, t in
+    // 5 · Window mode: the crew in the cantina, a live card for every session.
+    Shot(name: "window", start: 8.8, end: 11.6) { ctx, local, t in
+        desktop(ctx, dim: 1, floor: false)
+        let f = easeOut(local / 0.6), s = 0.94 + 0.06 * f
+        let base = CGRect(x: 300, y: 30, width: 1320, height: 780)
+        let r = CGRect(x: base.midX - base.width * s / 2, y: base.minY + 20 * (1 - f), width: base.width * s, height: base.height * s)
+        windowMode(ctx, frame: r, local: local, t: t)
+        modeBadge("WINDOW MODE", ctx, local: local)
+        caption("Prefer a window? Grab the popcorn.", ctx, local: local, start: 0.1, y: 940, size: 58)
+        caption("A live card per session: what it's doing, your last prompt, every agent.", ctx, local: local, start: 0.4,
+                y: 878, size: 34, color: yellow, weight: .bold)
+    },
+    // 6 · Every AI it supports, Claude first and biggest, each with its own outline.
+    Shot(name: "ais", start: 11.6, end: 14.0) { ctx, local, t in
         desktop(ctx, dim: 1)
-        let vader = Actor(cast: .villain(.vader), x: 92, role: .duel, label: "CLAUDE", ai: .claude)
-        let luke = Actor(cast: .hero(.luke), x: 149, facing: -1, role: .duel, label: "CODEX", ai: .codex)
-        let push = easeOut(local / 0.3)
-        var v = vader, l = luke
-        v.x -= 30 * (1 - push); l.x += 30 * (1 - push)
-        var qwen = Actor(cast: .hero(.yoda), x: 236, facing: -1, role: .cheer, label: "QWEN", ai: .qwen)
-        qwen.alpha = clamp((local - 0.3) / 0.2)
-        for a in [v, l, qwen] { draw(a, ctx, t: t) }
-        if push > 0.99 { drawFX([(v, l)], ctx, t: t) }
-        caption("Claude vs Codex vs Qwen Code.", ctx, local: local, start: 0.05, y: 900)
-        caption("Light side vs dark side — literally.", ctx, local: local, start: 0.35, y: 820, size: 48, color: yellow)
+        // the line-up: Claude a head taller, duelling Codex; everyone else cheering
+        let lineup: [(Cast, AI, Double, Double, FightRole)] = [
+            (.villain(.kylo), .desktop, 36, -1, .cheer), (.villain(.vader), .claude, 104, 1, .duel), (.hero(.luke), .codex, 165, -1, .duel),
+            (.hero(.yoda), .qwen, 216, -1, .cheer), (.hero(.leia), .gemini, 256, -1, .cheer), (.hero(.han), .copilot, 296, -1, .cheer),
+        ]
+        var actors: [Actor] = []
+        for (i, (who, ai, x, facing, role)) in lineup.enumerated() {
+            let d = 0.15 + Double(i) * 0.1
+            guard local > d else { continue }
+            let f = backOut((local - d) / 0.3)
+            var a = Actor(cast: who, x: x, facing: facing, role: role, label: ai.tag, ai: ai)
+            if ai == .claude { a.grow = 1.25; a.labelSize = 36 } else { a.labelSize = 22 }
+            a.lift = (1 - f) * -10; a.alpha = clamp(f)
+            actors.append(a)
+            draw(a, ctx, t: t)
+        }
+        if actors.count >= 3 { drawFX([(actors[1], actors[2])], ctx, t: t) }
+        // the names: Claude Code biggest, the rest in their own colours
+        let fc = easeOut((local - 0.05) / 0.35)
+        if fc > 0 {
+            let tf = NSFont(name: "Futura-CondensedExtraBold", size: 140) ?? .systemFont(ofSize: 130, weight: .black)
+            text("CLAUDE CODE", ctx, y: 790 - 30 * (1 - fc), size: 140, alpha: fc, font: tf, kern: 8)
+        }
+        let fr = easeOut((local - 0.35) / 0.35)
+        if fr > 0 {
+            let row = NSMutableAttributedString(attributedString: attributed("+  ", size: 40, weight: .heavy, color: dimText, alpha: fr))
+            for (i, ai) in AI.allCases.dropFirst().enumerated() {
+                if i > 0 { row.append(attributed("  ·  ", size: 40, weight: .heavy, color: dimText, alpha: fr)) }
+                row.append(attributed(ai.name, size: 40, weight: .heavy, color: ai.ns, alpha: fr))
+            }
+            row.draw(at: NSPoint(x: (Double(W) - row.size().width) / 2, y: 720 - 20 * (1 - fr)))
+        }
+        caption("Everyone picks a side. Nobody plays nice.", ctx, local: local, start: 0.7, y: 640, size: 40, color: yellow, weight: .bold)
     },
-    // 6 · End card: the Falcon flies through, the title lands.
-    Shot(name: "endcard", start: 10.8, end: 13.0) { ctx, local, t in
+    // 7 · End card: the Falcon flies through, the title lands.
+    Shot(name: "endcard", start: 14.0, end: 16.2) { ctx, local, t in
         space(ctx, t: local)
         // the Falcon streaks across the sky
-        let fp = local / 0.9
-        if fp < 1 {
+        let fp = local / 1.1
+        if fp > 0 && fp < 1 {
             let fc = PixelCanvas(66, 29)
             drawFalcon(fc, ramp: 0, engines: true, gear: false)
             fc.addOutline(C(0xFFFFFF, 0.92))
@@ -287,28 +540,31 @@ let shots: [Shot] = [
                 ctx.draw(img, in: CGRect(x: x, y: 560 + 200 * fp, width: 66 * 6, height: 29 * 6))
             }
         }
-        // the crew on the horizon
-        let crew: [(Cast, FightRole, AI)] = [(.villain(.boba), .shoot(offset: 0), .claude), (.villain(.vader), .duel, .claude),
-                                             (.hero(.luke), .duel, .codex), (.hero(.han), .none, .codex),
-                                             (.hero(.yoda), .cheer, .qwen), (.hero(.leia), .none, .qwen)]
+        // the crew on the horizon, one of every AI's colours
+        let crew: [(Cast, FightRole, AI)] = [(.villain(.kylo), .cheer, .desktop), (.villain(.vader), .duel, .claude),
+                                             (.hero(.luke), .duel, .codex), (.hero(.han), .none, .copilot),
+                                             (.hero(.yoda), .cheer, .qwen), (.hero(.leia), .none, .gemini)]
+        var placed: [Actor] = []
         for (i, (who, role, ai)) in crew.enumerated() {
-            var a = Actor(cast: who, x: 30 + Double(i) * 52, facing: i < 2 ? 1 : -1, role: role, ai: ai)
+            var a = Actor(cast: who, x: [28.0, 80, 137, 190, 240, 290][i], facing: i < 2 ? 1 : -1, role: role, ai: ai)
             a.lift = groundY - (Double(H) - 242) / S        // feet on the orange horizon
             a.alpha = clamp((local - 0.15 - Double(i) * 0.05) / 0.2)
             draw(a, ctx, t: t)
+            placed.append(a)
         }
+        if local > 0.5 { drawFX([(placed[1], placed[2])], ctx, t: t) }
         let f = backOut((local - 0.35) / 0.4)
         if local > 0.35 {
             let tf = NSFont(name: "Futura-CondensedExtraBold", size: 190) ?? .systemFont(ofSize: 170, weight: .black)
             ctx.saveGState()
-            ctx.translateBy(x: Double(W) / 2, y: 690); ctx.scaleBy(x: f, y: f); ctx.translateBy(x: -Double(W) / 2, y: -690)
-            text("CLAWD WARS", ctx, y: 600, size: 190, color: yellow, font: tf, kern: 14)
+            ctx.translateBy(x: Double(W) / 2, y: 700); ctx.scaleBy(x: f, y: f); ctx.translateBy(x: -Double(W) / 2, y: -700)
+            text("CLAWD WARS", ctx, y: 620, size: 190, color: yellow, font: tf, kern: 14)
             ctx.restoreGState()
         }
-        caption("Free for macOS · Claude Code · Codex · Qwen Code", ctx, local: local, start: 0.6, y: 510, size: 40,
-                color: NSColor(white: 0.9, alpha: 1))
+        caption("Have fun. Keep track.", ctx, local: local, start: 0.6, y: 540, size: 56)
+        caption("Free for macOS", ctx, local: local, start: 0.8, y: 480, size: 34, color: NSColor(white: 0.8, alpha: 1), weight: .bold)
         // the app icon and where to get it, in the floor band
-        let ff = easeOut((local - 0.7) / 0.3)
+        let ff = easeOut((local - 0.9) / 0.3)
         if ff > 0, let icon = appIcon {
             ctx.saveGState(); ctx.setAlpha(CGFloat(ff)); ctx.interpolationQuality = .high
             ctx.draw(icon, in: CGRect(x: 640, y: 50, width: 140, height: 140))
@@ -359,7 +615,7 @@ func frame(_ t: Double) -> NSBitmapImageRep {
         renderShot(shots[shots.lastIndex(where: { t >= $0.start }) ?? 0], at: t, into: ctx)
     }
     // fade in from / out to black
-    let black = max(1 - t / 0.2, 0)
+    let black = max(1 - t / 0.2, (t - (duration - 0.3)) / 0.3, 0)
     if black > 0 { ctx.setFillColor(CGColor(gray: 0, alpha: black)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H)) }
     NSGraphicsContext.current = nil
     return rep
@@ -372,18 +628,20 @@ func save(_ rep: NSBitmapImageRep, _ path: String) {
 // MARK: Storyboard sheet
 
 let beats: [(title: String, action: String, onScreen: String, sound: String)] = [
-    ("THE HOOK", "Three busy terminals on a dusky Mac desktop, slow push-in. One thinking, one waiting on a permission prompt, one long done.",
-     "“Three AI sessions running.”  →  “Which one needs you?”", "low synth hum, keyboard clicks"),
-    ("THE REVEAL", "Star Wars wipe. Desktop dims; Vader and Kylo drop onto the bottom edge and duel (sparks where blades meet). Agent Han fires at Yoda, who deflects every bolt. Real labels: project names and agent tasks.",
-     "“…are a pixel-art Star Wars battle on your desktop.”", "saber ignite + clash, blaster pew"),
-    ("AT A GLANCE", "Four Claudes pop in left to right: Vader swings his kata, the Emperor's bubble fills with dots, Boba's red ! jumps (ignored for a minute), Jabba snoozes with zZz.",
-     "“Know what every session is doing — at a glance.”  ·  WORKING · THINKING · NEEDS YOU · DONE", "one 8-bit blip per pop"),
-    ("SUBAGENTS", "Vader stands guard on the right. R2-D2, Chewie, Leia and Luke march in from the left one after another, each with its task label, and fall into line.",
-     "“Every subagent joins the fight.”", "marching footsteps, R2 beep"),
-    ("PICK A SIDE", "Claude's Vader (white outline) and Codex's Luke (cyan outline) slide in and lock sabers; Qwen's Yoda (lavender) fades in cheering with sparkles.",
-     "“Claude vs Codex vs Qwen Code.”  ·  “Light side vs dark side — literally.”", "big saber clash"),
-    ("END CARD", "Wipe to space. The Millennium Falcon streaks across; the crew lines up on the orange horizon; the title punches in, then the icon and link.",
-     "CLAWD WARS  ·  Free for macOS · Claude Code · Codex · Qwen Code  ·  github.com/rodclemen/clawd-wars", "Falcon flyby whoosh, final sting"),
+    ("THE HOOK", "Three busy terminals (Claude, Codex, Gemini) on a dusky Mac desktop, slow push-in. One thinking, one waiting on a permission prompt, one long done.",
+     "“Three AIs. Nine agents. One very confused human.”  →  “Sound familiar?”", "low synth hum, keyboard clicks"),
+    ("DESKTOP MODE", "Desktop dims; Claude's Vader and Codex's Luke drop onto the bottom edge and duel. Agent Han trades shots with a Codex Stormtrooper. Project names and agent tasks on the labels.",
+     "DESKTOP MODE badge  ·  “Now they're a pixel-art Star Wars brawl along the bottom of your screen. They fight while they work.”", "saber ignite + clash, blaster pew"),
+    ("AT A GLANCE", "Four sessions pop in, each in its AI's outline: Vader swings his kata, the Emperor's bubble fills with dots, Boba's red ! jumps, Jabba snoozes with zZz.",
+     "“All fun and games — and you still see everything.”  ·  WORKING · THINKING… · NEEDS YOU! · NAPPING", "one 8-bit blip per pop"),
+    ("SUBAGENTS", "Vader stands guard. R2-D2, Chewie, Leia and Luke march in one after another, each with its task label, and fall into line.",
+     "“Every subagent reports for duty.”  ·  “Its job is right there on its label. No more guessing.”", "marching footsteps, R2 beep"),
+    ("WINDOW MODE", "The app window slides up: the cantina with its band, Vader duelling Codex's Luke, agents cheering; below, live cards whose timers tick and whose “Now:” line changes. Then Luke stops, jumps with a red ! and his card flips to NEEDS YOU.",
+     "WINDOW MODE badge  ·  “Prefer a window? Grab the popcorn.”  ·  “A live card per session…”", "cantina band, notification ping"),
+    ("EVERY AI", "Six sessions pop in, one per AI outline. Claude's Vader stands a head taller and duels Codex's Luke; the rest cheer.",
+     "CLAUDE CODE (huge)  ·  + Claude Desktop · Codex · Qwen Code · Gemini CLI · Copilot CLI  ·  “Everyone picks a side. Nobody plays nice.”", "big saber clash"),
+    ("END CARD", "Wipe to space. The Millennium Falcon streaks across; the crew lines up on the horizon in all six colours; the title punches in, then the tagline, icon and link.",
+     "CLAWD WARS  ·  “Have fun. Keep track.”  ·  Free for macOS  ·  github.com/rodclemen/clawd-wars", "Falcon flyby whoosh, final sting"),
 ]
 
 func storyboard(_ frames: [NSBitmapImageRep]) -> NSBitmapImageRep {
@@ -405,7 +663,7 @@ func storyboard(_ frames: [NSBitmapImageRep]) -> NSBitmapImageRep {
     let tf = NSFont(name: "Futura-CondensedExtraBold", size: 64) ?? .systemFont(ofSize: 60, weight: .black)
     NSAttributedString(string: "CLAWD WARS", attributes: [.font: tf, .foregroundColor: yellow, .kern: 5])
         .draw(at: NSPoint(x: margin, y: Double(sh) - 110))
-    put("13-second promo · storyboard · 1920×1080 · 30 fps · every sprite drawn by the app's own code",
+    put(String(format: "%.0f-second promo · storyboard", duration) + " · 1920×1080 · 30 fps · every sprite drawn by the app's own code",
         margin, Double(sh) - 150, 26, .medium, NSColor(white: 0.75, alpha: 1))
     let dim = NSColor(white: 0.62, alpha: 1), body = NSColor(white: 0.92, alpha: 1)
     for (i, f) in frames.enumerated() {
@@ -484,7 +742,7 @@ if cmd == "video" {
     let t = Double(args[3]) ?? 0
     save(frame(t), "\(out)/t\(args[3]).png"); print("wrote \(out)/t\(args[3]).png")
 } else {
-    let keys: [Double] = [1.2, 3.6, 6.1, 8.2, 9.95, 12.6]
+    let keys: [Double] = [1.1, 3.6, 6.0, 8.3, 10.6, 13.0, 15.6]
     let frames = keys.map(frame)
     for (i, f) in frames.enumerated() { save(f, "\(out)/key-\(i + 1).png") }
     save(storyboard(frames), "\(out)/storyboard.png")
