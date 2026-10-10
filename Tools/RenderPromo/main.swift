@@ -48,8 +48,8 @@ enum AI: CaseIterable { case claude, desktop, codex, qwen, gemini, copilot
     var ns: NSColor { hexColor(hex) }
     var name: String {
         switch self {
-        case .claude: return "Claude Code"; case .desktop: return "Claude Desktop"; case .codex: return "Codex"
-        case .qwen: return "Qwen Code"; case .gemini: return "Gemini CLI"; case .copilot: return "Copilot CLI"
+        case .claude: return "Claude Code"; case .desktop: return "Claude Desktop"; case .codex: return "OpenAI Codex"
+        case .qwen: return "Qwen Code"; case .gemini: return "Gemini CLI"; case .copilot: return "GitHub Copilot CLI"
         }
     }
     var tag: String {
@@ -639,7 +639,7 @@ let beats: [(title: String, action: String, onScreen: String, sound: String)] = 
     ("WINDOW MODE", "The app window slides up: the cantina with its band, Vader duelling Codex's Luke, agents cheering; below, live cards whose timers tick and whose “Now:” line changes. Then Luke stops, jumps with a red ! and his card flips to NEEDS YOU.",
      "WINDOW MODE badge  ·  “Prefer a window? Grab the popcorn.”  ·  “A live card per session…”", "cantina band, notification ping"),
     ("EVERY AI", "Six sessions pop in, one per AI outline (Copilot gets R2-D2). Claude's Vader stands a head taller and duels Codex's Luke; the rest cheer.",
-     "CLAUDE CODE (huge)  ·  + Claude Desktop · Codex · Qwen Code · Gemini CLI · Copilot CLI  ·  “Everyone picks a side. Nobody plays nice.”", "big saber clash"),
+     "CLAUDE CODE (huge)  ·  + Claude Desktop · OpenAI Codex · Qwen Code · Gemini CLI · GitHub Copilot CLI  ·  “Everyone picks a side. Nobody plays nice.”", "big saber clash"),
     ("END CARD", "Wipe to space. The Millennium Falcon streaks across; the crew lines up on the horizon in all six colours; the title punches in, then the tagline, icon and link.",
      "CLAWD WARS  ·  “Have fun. Keep track.”  ·  Free for macOS  ·  github.com/rodclemen/clawd-wars", "Falcon flyby whoosh, final sting"),
 ]

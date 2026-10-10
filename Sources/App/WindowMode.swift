@@ -219,8 +219,9 @@ final class HeaderView: NSView {
             label.draw(at: NSPoint(x: 14, y: (b.height - label.size().height) / 2))
         }
 
-        // Minimize (hides the list; a chevron brings it back) and close.
-        let symbols: [(Button, String)] = [(.minimize, ClawdWindow.listShown ? "minus" : "chevron.down"), (.close, "xmark")]
+        // Collapse to just the scene (arrows in) / back to the full view (arrows out), and close.
+        let symbols: [(Button, String)] = [(.minimize, ClawdWindow.listShown ? "rectangle.compress.vertical" : "rectangle.expand.vertical"),
+                                           (.close, "xmark")]
         for (button, name) in symbols {
             let r = rect(button)
             if hovered == button {
