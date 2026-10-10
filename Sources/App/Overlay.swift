@@ -30,6 +30,7 @@ private struct Actor {
     var focused = false          // its terminal is the one in front
     var sitting = false          // idle 2+ minutes: sat down on the floor
     var detail: [String] = []    // hover card lines
+    var exit: (landX: CGFloat, dir: CGFloat, startX: CGFloat)?   // Han's departure on the Falcon
 
     var isLeader: Bool { if case .leader = kind { return true } else { return false } }
 }
@@ -38,6 +39,7 @@ private struct Fight { let a: String, b: String }
 
 private let fadeIn = 0.5
 private let fadeOut = 0.6
+private let falconExit = 6.0      // Han's agent finishing: the Falcon lands, he boards, it flies off
 private let fightLinger = 3.0      // keep fighting through brief gaps between tool calls
 
 final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
@@ -92,7 +94,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
     private var offlineReason: String?
     private var lastHookCheck = 0.0
     private var hooksInstalled = true
-    private let shotPath = ProcessInfo.processInfo.environment["CLAWD_SHOT"]
+    private let shotPath = ProcessInfo.processInfo.environment["CLAWD_SHOT"]     // "%d" in the path → numbered frames
+    private let shotEvery = Double(ProcessInfo.processInfo.environment["CLAWD_SHOT_EVERY"] ?? "") ?? 5
+    private var shotCount = 0
+    private let dismissAfter = Double(ProcessInfo.processInfo.environment["CLAWD_DISMISS_AFTER"] ?? "")   // debug: Playground agents finish
     private var clawdWindow: ClawdWindow?
     private var windowMode: Bool {
         get { UserDefaults.standard.bool(forKey: "windowMode") }
@@ -236,6 +241,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             sessions = chaosStep(now)
         } else if let playground {
             offlineReason = nil
+            if let d = dismissAfter, now - start > d { playgroundAgents = [] }
             sessions = playgroundSessions(playground)
         } else if demo {
             offlineReason = nil
@@ -526,6 +532,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         }
         for idx in actors.indices where actors[idx].leaving == nil && !seen.contains(actors[idx].key) {
             actors[idx].leaving = now
+            // Han doesn't just fade out: the Falcon comes to pick him up.
+            if case .companion(.han) = actors[idx].kind {
+                let st = stage, hx = actors[idx].x
+                let dir: CGFloat = hx < st.midX ? 1 : -1
+                actors[idx].exit = (hx + dir * 70 * zoom, dir, hx)
+            }
         }
         if !sessions.isEmpty { hasLaidOut = true }
     }
@@ -598,7 +610,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         let now = Date().timeIntervalSince1970
         let dt = CGFloat(min(0.1, now - lastTick))
         lastTick = now
-        actors.removeAll { $0.leaving.map { now - $0 > fadeOut } ?? false }
+        actors.removeAll { a in a.leaving.map { now - $0 > (a.exit == nil ? fadeOut : falconExit) } ?? false }
 
         for i in actors.indices {
             if now < actors[i].born { continue }        // waiting for its turn to walk in
@@ -632,7 +644,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         guard busy || hoverChanged || frameCount % 3 == 0 else { return }
 
         items = buildItems(now: now)
-        if let shotPath, now - lastShot > 5 { lastShot = now; writeShot(to: shotPath) }
+        if let shotPath, now - lastShot > shotEvery {
+            lastShot = now
+            shotCount += 1
+            writeShot(to: shotPath.replacingOccurrences(of: "%d", with: String(format: "%02d", shotCount)))
+        }
         if chaosSeconds != nil, now - lastCheck > 0.25 { lastCheck = now; checkInvariants(now) }
 
         if windowMode {
@@ -743,9 +759,30 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         var labels: [(item: DrawItem, leader: Bool, focused: Bool)] = []
         var bubbleRects: [NSRect] = []
         // Companions first so leaders (and their sabers) draw on top.
-        for actor in actors.sorted(by: { !$0.isLeader && $1.isLeader }) {
-            let walking = actor.walkDir != 0
-            let facing = walking ? actor.walkDir : actor.facing
+        var falconItems: [DrawItem] = []
+        for var actor in actors.sorted(by: { !$0.isLeader && $1.isLeader }) {
+            var walking = actor.walkDir != 0
+            var facing = walking ? actor.walkDir : actor.facing
+            var aboard = false
+            if let exit = actor.exit, let left = actor.leaving {
+                // Falcon departure, by phase: fly in (0–0.3), ramp down, Han walks up (0.36–0.62),
+                // ramp up, lift off and away (0.72–1).
+                let p = min(1, (now - left) / falconExit)
+                let cs0 = Self.companionScale * z
+                let rampFoot = exit.landX - exit.dir * 14 * cs0
+                if p >= 0.36 && p < 0.62 {
+                    let k = (p - 0.36) / 0.26
+                    actor.x = exit.startX + (rampFoot - exit.startX) * CGFloat(k)
+                    walking = true; facing = exit.dir
+                } else if p >= 0.62 {
+                    aboard = true
+                } else {
+                    actor.x = exit.startX
+                    facing = exit.dir
+                }
+                falconItems.append(falconItem(exit, p: p, ground: ground + (ls - cs0) * 8 + 8 * cs0, scale: cs0))
+            }
+            if aboard { continue }
             let canvas = PixelCanvas(Sprite.width, Sprite.height)
             let scale: CGFloat
             let y: CGFloat
@@ -766,7 +803,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             if now < actor.born { continue }             // not on stage yet
             var alpha = min(1, (now - actor.born) / 0.25)
             var drop = 0.0
-            if let left = actor.leaving {
+            if let left = actor.leaving, actor.exit == nil {
                 let f = min(1, (now - left) / fadeOut)
                 alpha = min(alpha, 1 - f)
                 drop = -f * 30
@@ -858,6 +895,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             }
         }
 
+        overlay += falconItems
+
         // Bolts, deflections, lightning and sparks between fighters.
         for (l, r) in fx {
             let margin = 24.0
@@ -941,6 +980,34 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
                                     alpha: 0.75 + 0.25 * CGFloat(sin(t * 4)), boxed: true, accent: NSColor(srgbRed: 0.9, green: 0.2, blue: 0.2, alpha: 1)))
         }
         return out + overlay
+    }
+
+    /// The Millennium Falcon at phase `p` of Han's departure. `feet` is the ground line in screen coordinates.
+    private func falconItem(_ exit: (landX: CGFloat, dir: CGFloat, startX: CGFloat), p: Double, ground feet: CGFloat,
+                            scale s: CGFloat) -> DrawItem {
+        let z = zoom
+        var x = exit.landX, lift: CGFloat = 0
+        var ramp = 0.0, engines = false, gear = true
+        if p < 0.3 {                                   // swoops in over Han's head and settles
+            let e = CGFloat(1 - pow(1 - p / 0.3, 2))
+            x = exit.landX - exit.dir * 260 * z * (1 - e)
+            lift = 150 * z * (1 - e) * (1 - e)
+            engines = true; gear = p > 0.22
+        } else if p < 0.72 {                           // landed: ramp down, Han boards, ramp up
+            ramp = p < 0.36 ? (p - 0.3) / 0.06 : (p < 0.64 ? 1 : max(0, 1 - (p - 0.64) / 0.06))
+            engines = p > 0.66
+        } else {                                       // lift off and away
+            let e = CGFloat(pow((p - 0.72) / 0.28, 2))
+            x = exit.landX + exit.dir * 320 * z * e
+            lift = 170 * z * e
+            engines = true; gear = p < 0.78
+        }
+        let c = PixelCanvas(66, 29)
+        drawFalcon(c, ramp: ramp, engines: engines, gear: gear)
+        c.addOutline(C(0xFFFFFF, 0.92))
+        let w = 66 * s, h = 29 * s
+        return DrawItem(image: c.makeImage(), rect: NSRect(x: (x - w / 2).rounded(), y: (feet - 1 * s + lift).rounded(), width: w, height: h),
+                        mirrored: exit.dir < 0, alpha: 1)
     }
 
     /// What an agent is doing: its task description, else a readable version of its type.

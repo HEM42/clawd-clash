@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.17.0 — 2026-10-10
+
+### Added
+- **Han leaves on the Millennium Falcon.** When Han Solo's agent finishes, instead of fading out:
+  1. the Falcon swoops in over his head toward the open side of the screen and lands beside him (landing gear down);
+  2. the ramp lowers, Han walks over and up it, and the ramp closes;
+  3. the engines glow blue and it lifts off and flies away.
+  The whole thing takes 6 s. The Falcon is drawn in code as a saucer seen slightly from above: central hatch, split front mandibles with the cargo gap, side cockpit, radar dish, engine glow.
+- Developer aids: `CLAWD_SHOT` accepts `%d` for numbered frame sequences, with `CLAWD_SHOT_EVERY=<seconds>` (default 5), and `CLAWD_DISMISS_AFTER=<seconds>` makes Playground agents finish, for testing departures.
+
 ## 2.16.0 — 2026-10-10
 
 ### Added
