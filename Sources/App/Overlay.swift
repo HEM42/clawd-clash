@@ -10,7 +10,7 @@ final class OverlayPanel: NSPanel {
 
 /// One character on screen. Positions are screen coordinates of the body centre.
 private struct Actor {
-    enum Kind { case leader(Leader), companion(Companion) }
+    enum Kind { case leader(Cast), agent(Cast) }   // a whole session (drawn large) or an agent (small)
     let key: String
     var kind: Kind
     var x: CGFloat
@@ -33,6 +33,7 @@ private struct Actor {
     var exit: (landX: CGFloat, dir: CGFloat, startX: CGFloat)?   // Han's departure on the Falcon
 
     var isLeader: Bool { if case .leader = kind { return true } else { return false } }
+    var cast: Cast { switch kind { case .leader(let c), .agent(let c): return c } }
 }
 
 private struct Fight { let a: String, b: String }
@@ -227,7 +228,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
     /// first-spawned Claude — Vader on the Death Star, Boba at the sarlacc pit, Jabba in his palace…
     var location: Location {
         if let raw = UserDefaults.standard.string(forKey: "location"), let l = Location(rawValue: raw) { return l }
-        return sessions.first.map { Location.home(of: Leader(index: $0.leader)) } ?? .cantina
+        return sessions.first.map { Cast(id: $0.leader).home } ?? .cantina
     }
 
     /// Height of the cantina floor in the window's scene strip; feet stand a little way into it.
@@ -348,11 +349,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         var newFights: [Fight] = []
 
         func agentUnit(_ a: AgentRecord, _ facing: CGFloat) -> Unit {
-            Unit(key: "A:" + a.id, kind: .companion(Companion(rawValue: a.character % Companion.allCases.count) ?? .luke),
+            Unit(key: "A:" + a.id, kind: .agent(Cast.of(a)),
                  facing: facing, fwd: Self.agentReach.fwd * z, back: Self.agentReach.back * z, agent: a)
         }
         func leaderUnit(_ s: SessionSnapshot, _ facing: CGFloat) -> Unit {
-            Unit(key: "L:" + s.id, kind: .leader(Leader(index: s.leader)), facing: facing,
+            Unit(key: "L:" + s.id, kind: .leader(Cast(id: s.leader)), facing: facing,
                  fwd: Self.leaderReach.fwd * z, back: Self.leaderReach.back * z, session: s)
         }
 
@@ -360,11 +361,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         struct Member { var unit: Unit; let weapon: Weapon; let isLeader: Bool; let order: Int }
         var members: [Member] = []
         for s in sessions {
-            members.append(Member(unit: leaderUnit(s, 1), weapon: Leader(index: s.leader).weapon, isLeader: true,
+            members.append(Member(unit: leaderUnit(s, 1), weapon: Cast(id: s.leader).weapon, isLeader: true,
                                   order: members.count))
             for ag in s.agents {
-                let who = Companion(rawValue: ag.character % Companion.allCases.count) ?? .luke
-                members.append(Member(unit: agentUnit(ag, 1), weapon: who.weapon, isLeader: false, order: members.count))
+                members.append(Member(unit: agentUnit(ag, 1), weapon: Cast.of(ag).weapon, isLeader: false, order: members.count))
             }
         }
 
@@ -484,7 +484,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             if let s = u.session {
                 mood = s.mood
                 mode = s.mood == .idle && !s.agents.isEmpty ? .standGuard : VaderMode(s.mood)
-                label = s.project.isEmpty ? (s.id == "home" ? "" : Leader(index: s.leader).name) : s.project
+                label = s.project.isEmpty ? (s.id == "home" ? "" : Cast(id: s.leader).name) : s.project
                 let held = now - since(s, now: now)
                 switch s.mood {
                 case .thinking: bubble = .thinking
@@ -535,7 +535,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         for idx in actors.indices where actors[idx].leaving == nil && !seen.contains(actors[idx].key) {
             actors[idx].leaving = now
             // Han doesn't just fade out: the Falcon comes to pick him up.
-            if case .companion(.han) = actors[idx].kind {
+            if actors[idx].cast.isHan {          // Han, as an agent or a whole session
                 let st = stage, hx = actors[idx].x
                 let dir: CGFloat = hx < st.midX ? 1 : -1
                 actors[idx].exit = (hx + dir * 70 * zoom, dir, hx)
@@ -684,19 +684,19 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
     /// Lines for the hover card.
     private func hoverDetail(_ s: SessionSnapshot?, _ a: AgentRecord?, now: Double) -> [String] {
         if let a {
-            let who = Companion(rawValue: a.character % Companion.allCases.count) ?? .luke
+            let who = Cast.of(a)
             var lines = ["\(who.name) — \(Self.agentLabel(a).isEmpty ? "Agent" : Self.agentLabel(a))"]
             var info = [a.activity ?? "Starting…", Self.duration(now - a.started)]
             if let n = a.tools { info.append("\(n) tool call\(n == 1 ? "" : "s")") }
             lines.append(info.joined(separator: "  ·  "))
             if let owner = sessions.first(where: { $0.id == a.session }) {
                 let p = owner.project.isEmpty ? "" : " (\(owner.project))"
-                lines.append("Agent of \(Leader(index: owner.leader).name)\(p)")
+                lines.append("Agent of \(Cast(id: owner.leader).name)\(p) · \(owner.assistant.capitalized)")
             }
             return lines
         }
         guard let s else { return [] }
-        var lines = [Leader(index: s.leader).name + (s.project.isEmpty ? "" : " — " + s.project)]
+        var lines = [Cast(id: s.leader).name + (s.project.isEmpty ? "" : " — " + s.project) + (s.id == "home" ? "" : " · " + s.assistant.capitalized)]
         let held = Self.duration(now - since(s, now: now))
         switch s.mood {
         case _ where s.stalled: lines.append("Not reporting — restart this Claude session")
@@ -735,7 +735,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
 
         // Fight roles for pairs that have arrived (not walking); the odd one out cheers.
         func weapon(_ a: Actor) -> Weapon {
-            switch a.kind { case .leader(let w): return w.weapon; case .companion(let w): return w.weapon }
+            a.cast.weapon
         }
         var roles: [String: FightRole] = [:]
         var fx: [(Actor, Actor)] = []
@@ -791,12 +791,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             switch actor.kind {
             case .leader(let who):
                 let role = roles[actor.key]
-                drawLeader(canvas, who, t: t, mode: role != nil ? .working : actor.mode,
-                           walking: walking, role: role ?? .none, urgent: actor.urgent && role == nil, sitting: actor.sitting)
+                who.draw(canvas, t: t, mode: role != nil ? .working : actor.mode, walking: walking, role: role ?? .none,
+                         urgent: actor.urgent && role == nil, sitting: actor.sitting, asSession: true)
                 scale = ls; y = ground
-            case .companion(let who):
+            case .agent(let who):
                 let role = roles[actor.key]
-                drawCompanion(canvas, who, t: role != nil ? t : t + actor.phase, walking: walking, role: role ?? .none)
+                who.draw(canvas, t: role != nil ? t : t + actor.phase, mode: .working, walking: walking,
+                         role: role ?? .none, asSession: false)
                 scale = cs; y = ground + (ls - cs) * 8
             }
             canvas.addOutline(C(0xFFFFFF, 0.92))
@@ -842,7 +843,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
 
             // R0-GR acknowledges orders and Jabba laughs, now and then.
             let callouts: [Leader: String] = [.rogr: "Roger roger!", .jabba: "Ho ho ho!"]
-            if case .leader(let who) = actor.kind, let line = callouts[who], actor.walkDir == 0,
+            if case .leader(.villain(let who)) = actor.kind, let line = callouts[who], actor.walkDir == 0,
                (t / 5 + actor.phase).truncatingRemainder(dividingBy: 1) < 0.3 {
                 let callout = NSAttributedString(string: line, attributes: [
                     .font: NSFont.monospacedSystemFont(ofSize: max(9, 10 * z), weight: .heavy),
@@ -883,7 +884,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
                 let headTop: CGFloat
                 switch actor.kind {
                 case .leader(let who): headTop = CGFloat(Sprite.height - who.headTop) * ls + 8 * z
-                case .companion(let who): headTop = CGFloat(Sprite.height - who.headTop) * cs + 5 * z
+                case .agent(let who): headTop = CGFloat(Sprite.height - who.headTop) * cs + 5 * z
                 }
                 do {
                     var ly = y + CGFloat(drop) * z + headTop
@@ -910,8 +911,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
                 let sc = a.isLeader ? ls : cs
                 let lift = a.isLeader ? 0 : (ls - cs) * 8
                 var muzzle = (x: 52.0, y: 32.0)
-                if case .companion(let who) = a.kind { muzzle = who.muzzle }
-                if case .leader(let who) = a.kind { muzzle = (Double(who.muzzle.x), Double(who.muzzle.y)) }
+                muzzle = a.cast.muzzle
                 return Fighter(weapon: weapon(a), x: Double((a.x - left) / ls), k: Double(sc / ls),
                                top: Double((CGFloat(Sprite.height) * (ls - sc) - lift) / ls), side: side, muzzle: muzzle)
             }
@@ -1141,7 +1141,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         let moods: [Mood] = [.working, .working, .thinking, .waiting, .idle]
         if chaos.isEmpty || (chaos.count < 7 && roll(0.15)) {
             let used = Set(chaos.map(\.leader))
-            if let l = (0..<StatusStore.leaderCount).filter({ !used.contains($0) }).randomElement() {
+            if let l = (StatusStore.darkCast + StatusStore.lightCast).filter({ !used.contains($0) }).randomElement() {
                 chaos.append(SessionSnapshot(id: "chaos-\(l)-\(Int(now * 1000))", leader: l, project: "project-\(l)",
                                              mood: moods.randomElement()!, agents: []))
             }
@@ -1153,7 +1153,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             chaosAgentSerial += 1
             let i = Int.random(in: 0..<chaos.count)
             chaos[i].agents.append(AgentRecord(id: "chaos-a\(chaosAgentSerial)", session: chaos[i].id, type: "chaos",
-                                               character: Int.random(in: 0..<StatusStore.companionCount),
+                                               character: 0,
+                                               cast: (StatusStore.darkCast + StatusStore.lightCast).randomElement(),
                                                started: now, lastSeen: now,
                                                task: Self.sampleTasks.randomElement()))
         }
@@ -1381,7 +1382,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         var cards: [CardModel] = []
         for s in sessions where s.id != "home" || !s.agents.isEmpty {
-            let leader = Leader(index: s.leader)
+            let leader = Cast(id: s.leader)
             let actor = actors.first { $0.key == "L:" + s.id }
             let held = Self.duration(now - since(s, now: now))
             var status: String, color: NSColor
@@ -1417,19 +1418,19 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             }
 
             let agents: [CardModel.Agent] = s.agents.map { a in
-                let who = Companion(rawValue: a.character % Companion.allCases.count) ?? .luke
+                let who = Cast.of(a)
                 var detail = [a.activity ?? "Starting…", Self.duration(now - a.started)]
                 if let n = a.tools { detail.append("\(n) tool call\(n == 1 ? "" : "s")") }
                 if a.type != "general-purpose" && a.type != "playground" && a.type != "demo" { detail.append(a.type) }
                 return CardModel.Agent(name: who.name, task: Self.agentLabel(a).isEmpty ? "Agent" : Self.agentLabel(a),
                                        detail: detail.joined(separator: "  ·  "),
-                                       portrait: portrait("c\(who.rawValue)") { drawCompanion($0, who, t: 0.3, walking: false) })
+                                       portrait: portrait("a\(who.id)") { who.draw($0, t: 0.3, mode: .idle, walking: false, role: .rest, asSession: true) })
             }
             cards.append(CardModel(
-                villain: leader.name, project: s.project, accent: Accents.color(for: s.project) ?? NSColor(white: 0.5, alpha: 1),
+                villain: leader.name + (s.id == "home" ? "" : "  ·  " + s.assistant.capitalized), project: s.project, accent: Accents.color(for: s.project) ?? NSColor(white: 0.5, alpha: 1),
                 status: status, statusColor: color, focused: s.pid != nil && s.pid == focusedPid,
                 lines: lines, agents: agents,
-                portrait: portrait("l\(leader.rawValue)") { drawLeader($0, leader, t: 0.1, mode: .idle, walking: false) },
+                portrait: portrait("l\(leader.id)") { leader.draw($0, t: 0.1, mode: .idle, walking: false, role: .none, asSession: true) },
                 pid: s.pid))
         }
         let banner: String? = offlineReason.map { $0 + " — live status is off. Fix it from Settings in the menu." }
@@ -1475,7 +1476,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
     func menu() -> NSMenu {
         let m = NSMenu()
         for s in sessions {
-            let leader = Leader(index: s.leader)
+            let leader = Cast(id: s.leader)
             let status: String = {
                 switch s.mood {
                 case .idle: return s.agents.isEmpty ? "Idle" : "Idle (agents running)"
@@ -1485,9 +1486,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
                 }
             }()
             let project = s.project.isEmpty ? "" : " — \(s.project)"
-            m.addItem(disabled: "\(leader.name)\(project): \(s.live ? status : "no live status (restart this Claude session)")")
+            let ai = s.id == "home" ? "" : " [\(s.assistant.capitalized)]"
+            m.addItem(disabled: "\(leader.name)\(ai)\(project): \(s.live ? status : "no live status (restart this session)")")
             for a in s.agents {
-                let who = Companion(rawValue: a.character % Companion.allCases.count) ?? .luke
+                let who = Cast.of(a)
                 m.addItem(disabled: "     \(who.name) — \(a.task ?? a.type)")
             }
         }
@@ -1553,6 +1555,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             sm.addItem(action: "Remove Claude Code Hooks", #selector(removeHooks), target: self)
         } else {
             sm.addItem(action: "Install Claude Code Hooks", #selector(installHooks), target: self)
+        }
+        if HookInstaller.codexAvailable {
+            if HookInstaller.codexInstalled {
+                sm.addItem(action: "Remove Codex Hooks", #selector(removeCodexHooks), target: self)
+            } else {
+                sm.addItem(action: "Install Codex Hooks", #selector(installCodexHooks), target: self)
+            }
         }
         root.submenu = sm
         return root
@@ -1725,6 +1734,17 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
 
     @objc private func installHooks() {
         do { try HookInstaller.install() } catch { alert("Couldn't install hooks", error.localizedDescription) }
+    }
+
+    @objc private func installCodexHooks() {
+        do {
+            try HookInstaller.installCodex()
+            alert("Codex hooks installed", "Codex only runs new hooks after you trust them: run /hooks in Codex and approve them. Codex sessions that are already open pick them up after a restart.")
+        } catch { alert("Couldn't install Codex hooks", error.localizedDescription) }
+    }
+
+    @objc private func removeCodexHooks() {
+        do { try HookInstaller.uninstallCodex() } catch { alert("Couldn't remove Codex hooks", error.localizedDescription) }
     }
 
     @objc private func removeHooks() {

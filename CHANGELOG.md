@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.18.0 — 2026-10-10
+
+### Added
+- **Codex support.** OpenAI's Codex CLI sessions show up next to Claude's, with the same live status (working, thinking, needs you, subagents and their tasks, current tool) and click-to-jump.
+  - Codex's hooks use the same event names and payload fields as Claude Code's, so one hook binary serves both: `--assistant codex` tells it which AI is calling.
+  - The installer writes `~/.codex/hooks.json` (backup kept, existing hooks preserved). Codex runs new hooks only after you trust them with `/hooks`.
+  - Codex's `Interrupt` (Esc) event sets the session idle straight away.
+  - Its `apply_patch` edits show as "Edit <file>", and its shell tools as "Bash: …".
+  - `codex` processes are found too, so Codex sessions without hooks still appear.
+  - Cards, hover cards and the menu say Claude or Codex for each session. Settings has Install/Remove Codex Hooks, and `--install-hooks` / `--uninstall-hooks` handle both.
+- **Light side vs dark side.** Heroes and villains are now one cast of 30, and anyone can be a session (drawn large) or an agent (drawn small).
+  - With one AI running, characters are random from the whole cast.
+  - When a second AI starts, the AI that was there first keeps the side it mostly has (ties go to its first character's side), and the other AI takes the opposite side. Claude with Vader means Codex gets heroes. Each AI's agents join their session's side.
+  - A side borrows from the other only when all its own characters are on screen.
+  - When one AI closes, it's random again. Existing characters never change.
+  - Verified with simulated scenarios: one AI, Claude-first, light-majority-first, closing an AI, exhausted side, agent sides, and Vader/Kylo spacing.
+- A hero leading an idle session rests: saber off, blaster lowered. Han gets his Falcon exit as a session too.
+
+### Changed
+- Cast ids: villains keep 0…, heroes are 100 + hero index. Agent records carry `cast` (older records fall back to their hero index), and session records carry `assistant`.
+
 ## 2.17.4 — 2026-10-10
 
 ### Changed

@@ -5,8 +5,8 @@
 <h1 align="center">Clawd Wars</h1>
 
 <p align="center">
-  <b>Your Claude Code sessions, as a pixel-art Star Wars battle on your desktop.</b><br>
-  Every Claude is a villain. Every subagent is a Rebel. They fight while they work.
+  <b>Your Claude Code and Codex sessions, as a pixel-art Star Wars battle on your desktop.</b><br>
+  Every session is a hero or a villain, every subagent joins in, and they fight while they work.
 </p>
 
 <p align="center">
@@ -41,6 +41,10 @@ It sits on the bottom of your screen, above every window, and it's click-through
 
 And it's genuinely fun. Run two Claudes and they duel. Spawn a Han Solo and he shoots at Vader, who deflects every bolt into the sky. The Emperor catches Force lightning on Kylo's crossguard. Jabba laughs at all of it.
 
+## Claude vs Codex
+
+Run **Claude Code** and **OpenAI Codex** at the same time and they pick sides: whichever was there first keeps its side, the other takes the opposite — Claude has Vader, so Codex gets the heroes — and each one's agents fight for their own side. Light side versus dark side, literally. Close one and everyone's random again.
+
 ## The roster
 
 Every character is Clawd — Claude Code's little pixel mascot — in costume, drawn in code: no sprite sheets, no image assets (even the app icon is rendered by the same code).
@@ -49,9 +53,9 @@ Every character is Clawd — Claude Code's little pixel mascot — in costume, d
   <img src="docs/roster.png" alt="All villains and heroes" width="760">
 </p>
 
-**The dark side — one per Claude session**, picked at random (Vader and Kylo never spawn back to back): Darth Vader, Kylo Ren, Darth Maul, Boba Fett, a Stormtrooper, the Emperor, R0-GR the battle droid (*"Roger roger!"*), Count Dooku, a Gamorrean Guard, Jabba the Hutt (*"Ho ho ho!"*), IG-88, an AT-ST, an AT-AT, the Rancor and Greedo.
+Anyone can be a session (drawn large) or an agent (drawn small). **The dark side** (Vader and Kylo never spawn back to back): Darth Vader, Kylo Ren, Darth Maul, Boba Fett, a Stormtrooper, the Emperor, R0-GR the battle droid (*"Roger roger!"*), Count Dooku, a Gamorrean Guard, Jabba the Hutt (*"Ho ho ho!"*), IG-88, an AT-ST, an AT-AT, the Rancor and Greedo.
 
-**The Rebels — your subagents**: Luke, Han, Leia, Obi-Wan, R2-D2, C-3PO, Qui-Gon, Mace Windu, Yoda, a Jawa, Chewbacca, Rey, Ahsoka, Wicket the Ewok and a tauntaun.
+**The light side**: Luke, Han, Leia, Obi-Wan, R2-D2, C-3PO, Qui-Gon, Mace Windu, Yoda, a Jawa, Chewbacca, Rey, Ahsoka, Wicket the Ewok and a tauntaun.
 
 Blasters are drawn from the film props — Han's DL-44, Leia's Defender, the Stormtrooper's E-11, Boba's EE-3 — and so are the fights:
 
@@ -125,7 +129,7 @@ Hover over anyone for the details — what that Claude is doing right now, your 
 
 ## Install
 
-Needs macOS 13+ (Apple Silicon or Intel) and [Claude Code](https://claude.com/claude-code).
+Needs macOS 13+ (Apple Silicon or Intel) and [Claude Code](https://claude.com/claude-code) and/or [Codex](https://developers.openai.com/codex). If Codex is installed, its hooks go into `~/.codex/hooks.json` too — run `/hooks` in Codex once to trust them.
 
 **With Homebrew** (easiest):
 

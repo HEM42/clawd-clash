@@ -4,7 +4,7 @@ import Foundation
 /// Finds running Claude Code sessions directly from the process table, so sessions show up even
 /// before (or without) their hooks firing, and vanish the moment their process exits.
 enum ClaudeProcesses {
-    struct Info { let pid: Int32; let project: String }
+    struct Info { let pid: Int32; let project: String; var assistant = "claude" }
 
     private static let shells: Set<String> = ["sh", "bash", "zsh", "dash", "fish", "env"]
 
@@ -89,13 +89,15 @@ enum ClaudeProcesses {
             guard sysctl(&mib, 4, &info, &size, nil, 0) == 0, info.kp_eproc.e_ucred.cr_uid == me else { continue }
             let args = arguments(pid)
             guard let first = args.first else { continue }
-            let isClaude = (first as NSString).lastPathComponent == "claude"
-                || args.contains { $0.hasSuffix("@anthropic-ai/claude-code/cli.js") }
-            guard isClaude else { continue }
-            let skip = ["-p", "--print", "--chrome-native-host", "mcp", "--version", "-v", "update", "doctor"]
+            let exe = (first as NSString).lastPathComponent
+            let isClaude = exe == "claude" || args.contains { $0.hasSuffix("@anthropic-ai/claude-code/cli.js") }
+            let isCodex = exe == "codex" || args.contains { $0.contains("@openai/codex") && $0.hasSuffix(".js") }
+            guard isClaude || isCodex else { continue }
+            let skip = ["-p", "--print", "--chrome-native-host", "mcp", "--version", "-v", "update", "doctor",
+                        "exec", "login", "logout", "app-server", "mcp-server", "completion", "proto"]
             if args.dropFirst().contains(where: { skip.contains($0) }) { continue }
             let project = cwd(pid).map { ($0 as NSString).lastPathComponent } ?? ""
-            found.append(Info(pid: pid, project: project))
+            found.append(Info(pid: pid, project: project, assistant: isCodex ? "codex" : "claude"))
         }
         // A claude launched by another claude (e.g. a nested tool) isn't a separate session.
         let ids = Set(found.map(\.pid))

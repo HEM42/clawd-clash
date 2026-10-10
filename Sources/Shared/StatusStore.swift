@@ -6,7 +6,7 @@ import Foundation
 struct SessionRecord: Codable {
     var state: String      // idle | thinking | working | waiting
     var updated: Double
-    var leader: Int?       // which dark-side Clawd represents this session (0 = Vader)
+    var leader: Int?       // cast id of this session's character (see Cast: <100 dark side, 100+ light side)
     var project: String?   // last path component of the session's cwd
     var lastTool: Double?  // last PreToolUse, so brief "thinking" gaps between tools still read as working
     var pid: Int32?        // the claude process, so the session disappears as soon as it exits
@@ -19,13 +19,15 @@ struct SessionRecord: Codable {
     var model: String?
     var tools: Int?        // tool calls this session
     var prompts: Int?      // prompts this session
+    var assistant: String? // "claude" or "codex" (nil = claude, from before Codex support)
 }
 
 struct AgentRecord: Codable {
     var id: String
     var session: String
     var type: String
-    var character: Int     // index into Companion
+    var character: Int     // legacy hero index (Companion); `cast` supersedes it
+    var cast: Int?         // cast id: <100 villains (Leader), 100+ heroes (Companion)
     var started: Double
     var lastSeen: Double
     var task: String?      // the Agent tool's short description, e.g. "Find hook events"
@@ -61,6 +63,7 @@ struct SessionSnapshot {
     var live = true        // false = found in the process table but its hooks never fired
     var pid: Int32?        // the claude process, for jumping to its terminal
     var record: SessionRecord?   // everything the hooks know (nil for sessions without hooks)
+    var assistant = "claude"     // which AI runs this session: "claude" or "codex"
     var stalled = false          // hooks say idle, but the process has been busy for a minute: not reporting
     var cwd: String?
 }
@@ -103,7 +106,7 @@ enum StatusStore {
     }
 
     /// Apply one Claude Code hook event (the JSON Claude Code pipes to the hook on stdin).
-    static func apply(event json: [String: Any], now: Double = Date().timeIntervalSince1970) {
+    static func apply(event json: [String: Any], assistant: String = "claude", now: Double = Date().timeIntervalSince1970) {
         let event = json["hook_event_name"] as? String ?? ""
         let session = json["session_id"] as? String ?? "default"
         let agentId = json["agent_id"] as? String
@@ -114,12 +117,13 @@ enum StatusStore {
             prune(&s, now: now)
             if event != "SessionEnd" {
                 if s.sessions[session] == nil {
-                    var rec = SessionRecord(state: "idle", updated: now, leader: nextLeader(s.sessions), project: project)
+                    var rec = SessionRecord(state: "idle", updated: now, leader: nextLeader(s.sessions, assistant: assistant), project: project)
+                    rec.assistant = assistant
                     rec.created = now
                     s.sessions[session] = rec
                 }
                 if s.sessions[session]?.leader == nil {
-                    let leader = nextLeader(s.sessions)
+                    let leader = nextLeader(s.sessions, assistant: assistant)
                     s.sessions[session]?.leader = leader
                 }
                 if let project, agentId == nil { s.sessions[session]?.project = project }
@@ -188,7 +192,7 @@ enum StatusStore {
                 let type = json["notification_type"] as? String ?? ""
                 let message = (json["message"] as? String ?? "").lowercased()
                 if type == "permission_prompt" || message.contains("permission") { set("waiting") }
-            case "Stop", "StopFailure":
+            case "Stop", "StopFailure", "Interrupt":
                 set("idle")
                 s.sessions[session]?.lastTool = nil
                 s.sessions[session]?.activity = nil
@@ -205,7 +209,7 @@ enum StatusStore {
                     s.pending = pending
                     s.agents.append(AgentRecord(
                         id: id, session: session, type: type,
-                        character: nextCharacter(s.agents),
+                        character: 0, cast: nextAgentCast(s, session: session),
                         started: now, lastSeen: now, task: task))
                 }
             case "SubagentStop":
@@ -232,7 +236,13 @@ enum StatusStore {
             return flat.count > n ? String(flat.prefix(n - 1)) + "…" : flat
         }
         switch tool {
-        case "Bash": return "Bash: " + short(str("description") ?? str("command") ?? "")
+        case "Bash", "shell", "exec_command", "local_shell":
+            return "Bash: " + short(str("description") ?? str("command") ?? (input["command"] as? [String])?.joined(separator: " ") ?? "")
+        case "apply_patch":   // Codex edits files with patches: name the first file it touches
+            let patch = str("command") ?? str("input") ?? ""
+            let file = patch.components(separatedBy: "\n").first { $0.hasPrefix("*** ") && $0.contains("File: ") }
+                .map { ($0.components(separatedBy: "File: ").last ?? "") as NSString }
+            return "Edit " + (file?.lastPathComponent ?? "files")
         case "Read", "Edit", "Write", "MultiEdit": return "\(tool) \(file("file_path") ?? "")"
         case "NotebookEdit": return "Edit \(file("notebook_path") ?? "")"
         case "Grep": return "Grep " + short(str("pattern") ?? "", 32)
@@ -252,23 +262,65 @@ enum StatusStore {
     }
 
     /// A random hero not already on screen (repeats only once all of them are out).
-    static func nextCharacter(_ agents: [AgentRecord]) -> Int {
-        let used = Set(agents.map(\.character))
-        return (0..<companionCount).filter { !used.contains($0) }.randomElement() ?? Int.random(in: 0..<companionCount)
+    // MARK: Cast and sides
+    //
+    // Cast ids: 0..<leaderCount are the dark side (Leader), 100..<100+companionCount the light side (Companion).
+    // One AI running: every new character is random from the whole cast. Two AIs running (Claude and Codex):
+    // the AI that was there first keeps the side it mostly has, the other AI takes the opposite, and each one's
+    // agents join their session's side. Each side is preferred as much as possible; if it's all on screen
+    // already, the other side lends someone.
+
+    static let heroBase = 100
+    static func isDark(_ cast: Int) -> Bool { cast < heroBase }
+    static var darkCast: [Int] { Array(0..<leaderCount) }
+    static var lightCast: [Int] { Array(heroBase..<(heroBase + companionCount)) }
+
+    static func assistantOf(_ r: SessionRecord) -> String { r.assistant ?? "claude" }
+
+    /// The side `assistant` should use right now, or nil when it's the only AI running (anything goes).
+    static func side(for assistant: String, in sessions: [String: SessionRecord]) -> Bool? {
+        let live = sessions.values.filter { $0.leader != nil }
+        guard live.contains(where: { assistantOf($0) != assistant }) else { return nil }
+        // Whoever has been running longest keeps the side it mostly has (ties: its first character's side).
+        guard let first = live.min(by: { ($0.created ?? $0.updated) < ($1.created ?? $1.updated) }) else { return nil }
+        let firstAI = assistantOf(first)
+        let theirs = live.filter { assistantOf($0) == firstAI }.sorted { ($0.created ?? $0.updated) < ($1.created ?? $1.updated) }
+        let dark = theirs.filter { isDark($0.leader!) }.count, light = theirs.count - dark
+        let firstSideDark = dark == light ? isDark(theirs[0].leader!) : dark > light
+        return firstAI == assistant ? firstSideDark : !firstSideDark
     }
 
-    /// Villain for a new session: a random free villain, except that Vader and Kylo
-    /// never spawn one right after the other.
-    static func nextLeader(_ sessions: [String: SessionRecord]) -> Int {
+    /// Character for a new session: random from the whole cast, or from this AI's side when two AIs are running
+    /// (borrowing from the other side only when its own is all on screen). Vader and Kylo never spawn back to back.
+    static func nextLeader(_ sessions: [String: SessionRecord], assistant: String = "claude") -> Int {
         let used = Set(sessions.values.compactMap(\.leader))
         let latest = sessions.values.filter { $0.leader != nil }.max { ($0.created ?? $0.updated) < ($1.created ?? $1.updated) }
-        return pickLeader(used: used, previous: latest?.leader)
+        let pool: [Int]
+        switch side(for: assistant, in: sessions) {
+        case .some(true): pool = darkCast.filter { !used.contains($0) }.isEmpty ? lightCast : darkCast
+        case .some(false): pool = lightCast.filter { !used.contains($0) }.isEmpty ? darkCast : lightCast
+        case nil: pool = darkCast + lightCast
+        }
+        return pickLeader(used: used, previous: latest?.leader, pool: pool)
+    }
+
+    /// Character for a new agent: its session's side when two AIs are running, otherwise anyone;
+    /// someone not already on screen whenever possible.
+    static func nextAgentCast(_ s: StatusFile, session: String) -> Int {
+        let onScreen = Set(s.agents.compactMap { $0.cast ?? (heroBase + $0.character) } + s.sessions.values.compactMap(\.leader))
+        var pool = darkCast + lightCast
+        if let rec = s.sessions[session], let leader = rec.leader, side(for: assistantOf(rec), in: s.sessions) != nil {
+            pool = isDark(leader) ? darkCast : lightCast
+        }
+        let free = pool.filter { !onScreen.contains($0) }
+        return (free.isEmpty ? pool : free).randomElement()!
     }
 
     /// `seed` makes the choice deterministic (for sessions found by the process scan, re-evaluated every refresh).
-    static func pickLeader(used: Set<Int>, previous: Int?, seed: UInt64? = nil) -> Int {
-        var free = (0..<leaderCount).filter { !used.contains($0) }
-        if free.isEmpty { free = Array(0..<leaderCount) }   // more sessions than villains: repeats are fine
+    static func pickLeader(used: Set<Int>, previous: Int?, seed: UInt64? = nil, pool: [Int]? = nil) -> Int {
+        let pool = pool ?? darkCast
+        var free = pool.filter { !used.contains($0) }
+        if free.isEmpty { free = pool }                      // the whole pool is on screen: repeats are fine
         let rivals: Set<Int> = [0, 1]                        // Vader, Kylo
         if let p = previous, rivals.contains(p) {
             let spaced = free.filter { !rivals.contains($0) || $0 == p }
@@ -334,7 +386,7 @@ enum StatusStore {
             previous = leader
             result.append(SessionSnapshot(id: id, leader: leader, project: rec.project ?? "",
                                           mood: mood(rec, now: now), agents: [], pid: rec.pid, record: rec,
-                                          cwd: rec.pid.flatMap { ClaudeProcesses.cwd($0) }))
+                                          assistant: assistantOf(rec), cwd: rec.pid.flatMap { ClaudeProcesses.cwd($0) }))
         }
         if let processes {
             // Records from before pids were tracked are matched to a process by project folder.
@@ -349,12 +401,13 @@ enum StatusStore {
             }
             for p in processes where !claimed.contains(p.pid) {
                 // Seeded by pid so the same process keeps the same villain across refreshes.
-                let leader = pickLeader(used: used, previous: previous, seed: UInt64(p.pid) &* 2654435761)
+                let leader = pickLeader(used: used, previous: previous, seed: UInt64(p.pid) &* 2654435761,
+                                        pool: darkCast + lightCast)
                 used.insert(leader)
                 previous = leader
                 result.append(SessionSnapshot(id: "pid-\(p.pid)", leader: leader, project: p.project,
                                               mood: .idle, agents: [], live: false, pid: p.pid,
-                                              cwd: ClaudeProcesses.cwd(p.pid)))
+                                              assistant: p.assistant, cwd: ClaudeProcesses.cwd(p.pid)))
             }
         }
         if result.isEmpty {   // no Claude running: an idle Vader keeps the spot warm

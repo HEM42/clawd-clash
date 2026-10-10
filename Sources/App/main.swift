@@ -7,9 +7,14 @@ if args.contains("--install-hooks") || args.contains("--uninstall-hooks") {
         if args.contains("--install-hooks") {
             try HookInstaller.install()
             print("Installed Claude Code hooks → \(HookInstaller.hookBinary)")
+            if HookInstaller.codexAvailable {
+                try HookInstaller.installCodex()
+                print("Installed Codex hooks → ~/.codex/hooks.json (trust them once with /hooks in Codex)")
+            }
         } else {
             try HookInstaller.uninstall()
-            print("Removed Claude Code hooks")
+            try HookInstaller.uninstallCodex()
+            print("Removed Claude Code and Codex hooks")
         }
         exit(0)
     } catch {

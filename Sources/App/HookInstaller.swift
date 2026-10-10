@@ -83,4 +83,67 @@ enum HookInstaller {
         root["hooks"] = hooks.isEmpty ? nil : hooks
         try writeSettings(root)
     }
+
+    // MARK: Codex (~/.codex/hooks.json)
+
+    static let codexEvents = [
+        "SessionStart", "SessionEnd", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PermissionRequest",
+        "Stop", "Interrupt", "SubagentStart", "SubagentStop",
+    ]
+    static var codexDir: URL { FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".codex") }
+    static var codexHooksURL: URL { codexDir.appendingPathComponent("hooks.json") }
+    static var codexAvailable: Bool { FileManager.default.fileExists(atPath: codexDir.path) }
+
+    private static func readCodexHooks() throws -> [String: Any] {
+        guard let data = try? Data(contentsOf: codexHooksURL), !data.isEmpty else { return [:] }
+        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NSError(domain: "ClawdWars", code: 2, userInfo: [NSLocalizedDescriptionKey: "~/.codex/hooks.json is not a JSON object"])
+        }
+        return root
+    }
+
+    static var codexInstalled: Bool {
+        guard let root = try? readCodexHooks(), let hooks = root["hooks"] as? [String: Any] else { return false }
+        return codexEvents.allSatisfy { e in
+            (hooks[e] as? [[String: Any]] ?? []).contains { g in
+                (g["hooks"] as? [[String: Any]] ?? []).contains { (($0["command"] as? String) ?? "").contains(marker) }
+            }
+        }
+    }
+
+    /// Adds our hook (with `--assistant codex`) to every Codex event, keeping whatever else is in the file.
+    /// Codex runs new hooks only after you trust them: `/hooks` in Codex.
+    static func installCodex() throws {
+        guard codexAvailable else { return }
+        var root = try readCodexHooks()
+        let backup = codexHooksURL.appendingPathExtension("before-clawd-wars")
+        if FileManager.default.fileExists(atPath: codexHooksURL.path), !FileManager.default.fileExists(atPath: backup.path) {
+            try? FileManager.default.copyItem(at: codexHooksURL, to: backup)
+        }
+        var hooks = root["hooks"] as? [String: Any] ?? [:]
+        for e in codexEvents {
+            var groups = withoutOurs(hooks[e] as? [[String: Any]] ?? [])
+            // SessionEnd and Interrupt allow at most 3 s; the hook takes milliseconds anyway.
+            let handler: [String: Any] = ["type": "command", "command": "\"\(hookBinary)\" --assistant codex",
+                                          "timeout": ["SessionEnd", "Interrupt"].contains(e) ? 3 : 5]
+            groups.append(["hooks": [handler]])
+            hooks[e] = groups
+        }
+        root["hooks"] = hooks
+        let data = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .withoutEscapingSlashes])
+        try data.write(to: codexHooksURL, options: .atomic)
+    }
+
+    static func uninstallCodex() throws {
+        guard FileManager.default.fileExists(atPath: codexHooksURL.path) else { return }
+        var root = try readCodexHooks()
+        guard var hooks = root["hooks"] as? [String: Any] else { return }
+        for e in codexEvents {
+            let groups = withoutOurs(hooks[e] as? [[String: Any]] ?? [])
+            hooks[e] = groups.isEmpty ? nil : groups
+        }
+        root["hooks"] = hooks.isEmpty ? nil : hooks
+        let data = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .withoutEscapingSlashes])
+        try data.write(to: codexHooksURL, options: .atomic)
+    }
 }

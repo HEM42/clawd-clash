@@ -346,11 +346,16 @@ private func saberPose(_ t: Double, walking: Bool, role: FightRole, speed: Doubl
         return (-60, noise(Int(t * 30)) > 0.5 ? 1 : -1, 0, [])
     case .cheer:
         return (-95 + 18 * sin(t * 9), 0, Double(cheerHop(t)), [])
+    case .rest:
+        return (75, 0, 0, [])                // saber lowered and switched off
     default:
         let p = kataPose(t * speed + offset)
         return (p.angle, p.dx, p.dy, saberTrail(t + offset / speed, speed: speed))
     }
 }
+
+/// Lightsabers are switched off while a hero rests.
+func saberLit(_ role: FightRole) -> Bool { if case .rest = role { return false } else { return true } }
 
 func walkStep(_ t: Double, _ walking: Bool) -> Int { walking ? Int(t * 8) % 2 : -1 }
 
@@ -373,7 +378,7 @@ private func drawLuke(_ c: PixelCanvas, t: Double, walking: Bool, role: FightRol
     c.rect(18, 33, 19, 5, C(0xEFE9DA))
     c.rect(26, 33, 4, 1, clawdOrange)
     c.rect(18, 36, 19, 1, C(0x6B4A2B))
-    drawSaber(c, angle: p.angle, core: C(0xEAFFEA), glow: C(0x3FE85A), lit: true, trail: p.trail)
+    drawSaber(c, angle: p.angle, core: C(0xEAFFEA), glow: C(0x3FE85A), lit: saberLit(role), trail: p.trail)
 }
 
 private func drawObiWan(_ c: PixelCanvas, t: Double, walking: Bool, role: FightRole) {
@@ -396,7 +401,7 @@ private func drawObiWan(_ c: PixelCanvas, t: Double, walking: Bool, role: FightR
         "...FFFFFF...",
     ], ["F": C(0xC9A27A), "f": C(0xA9825A)])
     c.rect(18, 37, 20, 1, C(0x5A3A22))
-    drawSaber(c, angle: p.angle, core: C(0xE6F4FF), glow: C(0x3D9BFF), lit: true, trail: p.trail)
+    drawSaber(c, angle: p.angle, core: C(0xE6F4FF), glow: C(0x3D9BFF), lit: saberLit(role), trail: p.trail)
 }
 
 func drawHood(_ c: PixelCanvas, _ main: Px, _ dark: Px) {
@@ -429,6 +434,8 @@ private func agentFire(_ c: PixelCanvas, t: Double, walking: Bool, role: FightRo
         return (0, noise(Int(t * 30)) > 0.5 ? 1 : -1)
     case .cheer:
         return (-cheerHop(t) + 1, 0)
+    case .rest:
+        return (0, 0)                        // blaster lowered, not firing
     default:
         return (fireBlaster(c, t: t + phase, period: period, muzzleX: muzzleX, muzzleY: 32), 0)
     }
@@ -628,10 +635,10 @@ private func drawJedi(_ c: PixelCanvas, _ who: Companion, t: Double, walking: Bo
     if who == .ahsoka {
         // Second, shorter shoto from the other hand, held in reverse grip.
         c.ox -= 24; c.oy += 1
-        drawSaber(c, angle: 180 - p.angle * 0.6 + 40, core: core, glow: glow, lit: true, length: 12)
+        drawSaber(c, angle: 180 - p.angle * 0.6 + 40, core: core, glow: glow, lit: saberLit(role), length: 12)
         c.ox += 24; c.oy -= 1
     }
-    drawSaber(c, angle: p.angle, core: core, glow: glow, lit: true, trail: p.trail, length: who == .yoda ? 14 : 20)
+    drawSaber(c, angle: p.angle, core: core, glow: glow, lit: saberLit(role), trail: p.trail, length: who == .yoda ? 14 : 20)
 }
 
 /// Blaster-carrying agents: Chewbacca (bowcaster) and a Jawa (ion blaster).

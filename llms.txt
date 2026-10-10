@@ -1,6 +1,6 @@
 # Clawd Wars
 
-> A native macOS app (Swift + AppKit, no dependencies) that shows running Claude Code sessions as pixel-art Star Wars characters on the desktop or in a window. Each Claude session is a villain, each subagent a Rebel hero; they fight while they work. Status comes from Claude Code hooks. Every sprite, effect, location and the app icon are drawn in code — there are no image assets.
+> A native macOS app (Swift + AppKit, no dependencies) that shows running Claude Code and OpenAI Codex sessions as pixel-art Star Wars characters on the desktop or in a window. Every session and subagent is a hero or a villain (one shared cast; with two AIs running they take opposite sides); they fight while they work. Status comes from Claude Code and Codex hooks (same hook binary, `--assistant codex` for Codex). Every sprite, effect, location and the app icon are drawn in code — there are no image assets.
 
 ## Build and run
 
@@ -26,6 +26,7 @@
 
 - Sprites are 72×52 canvases facing right; the body is x 18…37, y 26…37, feet end at row 43, the hand pivot is (41.5, 34.5). Characters facing left are mirrored by the renderer. `C(0xRRGGBB)` makes a colour; `canvas.pattern(x, y, rows, palette)` draws string art.
 - Adding a villain: a case in `Leader` (name, weapon, headTop, optional muzzle), a `draw…` costume, a home in `Location.home(of:)`, a Playground weapon label in `Overlay.swift`, and bump `StatusStore.leaderCount`. Heroes likewise with `Companion` and `companionCount`.
+- Cast ids: villains are `Leader.rawValue` (< 100), heroes `100 + Companion.rawValue`; `Cast` (Sources/App/Cast.swift) wraps both and draws either as a session or an agent. Side rules live in `StatusStore.side(for:in:)`, `nextLeader` and `nextAgentCast`.
 - Fight rules: Claudes fight Claudes, agents fight agents, a leftover Claude and agent fight each other, anyone else left over cheers; unarmed characters are bystanders.
 - Commits follow Conventional Commits; every change gets a CHANGELOG entry.
 

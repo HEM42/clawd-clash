@@ -110,6 +110,7 @@ enum FightRole {
     case zap                     // lightning (arcs drawn by the FX layer)
     case hit                     // non-saber caught by lightning: shake
     case cheer                   // odd one out: bounce and wave the weapon
+    case rest                    // a hero leading an idle session: saber off, blaster lowered
 }
 
 func fightRoles(_ a: Weapon, _ b: Weapon) -> (FightRole, FightRole) {
@@ -203,7 +204,7 @@ func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, wal
                 case .lightning: zap = false
                 default: break
                 }
-            case .none:
+            case .none, .rest:
                 switch who.weapon {
                 case .saber:
                     let p = kataPose(lt)
