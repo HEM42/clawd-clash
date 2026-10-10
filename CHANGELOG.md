@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.4.1 — 2026-10-10
+
+### Changed
+- Size is disabled in window mode; the menu shows "Size (desktop only)". The window always draws the crew at full size and shrinks it only to fit the window width, with a fixed scene height. Before, the desktop size setting also shrank the crew and the scene strip inside the window.
+
 ## 2.4.0 — 2026-10-10
 
 ### Added

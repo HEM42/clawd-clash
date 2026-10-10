@@ -83,7 +83,7 @@ final class OverlayController: NSObject {
 
     /// The chosen size, shrunk in window mode when the crew is too wide for the window.
     private var zoom: CGFloat {
-        get { baseZoom * (windowMode ? windowFit : 1) }
+        get { windowMode ? windowFit : baseZoom }
         set { UserDefaults.standard.set(newValue, forKey: "zoom") }
     }
     private var baseZoom: CGFloat { let z = UserDefaults.standard.double(forKey: "zoom"); return z > 0 ? z : 1 }
@@ -913,7 +913,7 @@ final class OverlayController: NSObject {
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    private var sceneHeight: CGFloat { max(200, (CGFloat(Sprite.height) * Self.leaderScale + 70) * baseZoom + windowFloor) }
+    private var sceneHeight: CGFloat { max(200, CGFloat(Sprite.height) * Self.leaderScale + 70 + windowFloor) }
 
     private func makeMainMenu() -> NSMenu {
         let main = NSMenu()
@@ -1083,11 +1083,12 @@ final class OverlayController: NSObject {
             let item = NSMenuItem(title: title, action: #selector(setZoom(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = z
-            item.state = abs(zoom - z) < 0.01 ? .on : .off
+            item.state = abs(baseZoom - z) < 0.01 ? .on : .off
             sub.addItem(item)
         }
         size.submenu = sub
-        m.addItem(size)
+        // In the window the crew always fits the window, so Size only applies on the desktop.
+        if windowMode { m.addItem(disabled: "Size (desktop only)") } else { m.addItem(size) }
         m.addItem(action: windowMode ? "Show on Desktop" : "Show in Window", #selector(toggleWindowMode), target: self)
         if windowMode { m.addItem(locationMenu()) }
         m.addItem(action: "Show Project Names", #selector(toggleLabels), target: self, on: showLabels)
@@ -1110,7 +1111,6 @@ final class OverlayController: NSObject {
 
     @objc private func setZoom(_ sender: NSMenuItem) {
         zoom = sender.representedObject as? Double ?? 1
-        clawdWindow?.setSceneHeight(sceneHeight)
         home = clampHome(home)
         relayout()
         snapActors()
