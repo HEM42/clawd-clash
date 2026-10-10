@@ -44,6 +44,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         // Our own themed title bar instead of the system one; the traffic lights stay.
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
+        window.standardWindowButton(.zoomButton)?.isHidden = true   // no maximise / full screen
         window.minSize = NSSize(width: 520, height: 240)
         window.backgroundColor = NSColor(srgbRed: 0.17, green: 0.13, blue: 0.10, alpha: 1)
         window.isReleasedWhenClosed = false
@@ -119,7 +120,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
 
     private func applyPin() {
         window.level = header.pinned ? .floating : .normal
-        window.collectionBehavior = header.pinned ? [.canJoinAllSpaces, .fullScreenAuxiliary] : []
+        window.collectionBehavior = header.pinned ? [.canJoinAllSpaces, .fullScreenAuxiliary, .fullScreenNone] : [.fullScreenNone]
         header.needsDisplay = true
     }
 
@@ -187,7 +188,6 @@ final class HeaderView: NSView {
     override func mouseDown(with event: NSEvent) {
         let p = convert(event.locationInWindow, from: nil)
         if pinRect.contains(p) { onPin?(); return }
-        if event.clickCount == 2 { window?.zoom(nil); return }
         window?.performDrag(with: event)
     }
 

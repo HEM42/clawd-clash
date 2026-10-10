@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.7.2 — 2026-10-10
+
+### Changed
+- The window's green maximise button is hidden, full screen is disabled (`.fullScreenNone`), and double-clicking the title bar no longer zooms. Width is resized by dragging the edge, and height follows the Claudes (or is set by hand when auto-height is off).
+
 ## 2.7.1 — 2026-10-10
 
 ### Fixed
