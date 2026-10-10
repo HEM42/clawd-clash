@@ -320,8 +320,19 @@ let shots: [Shot] = [
 
 // MARK: Frame
 
-/// A Star Wars wipe between shots: the next shot is revealed by a soft-edged line sweeping left to right.
-let wipe = 0.25
+/// A Star Wars wipe between shots: a soft, feathered edge travels across the frame at a constant speed,
+/// uncovering the next shot behind it while both shots keep playing. Centred on each cut.
+let wipe = 0.7, feather = 220.0
+
+/// Greyscale mask that is white (keep the outgoing shot) to the right of `edge`, ramping softly across `feather`.
+func wipeMask(edge: Double) -> CGImage {
+    var row = [UInt8](repeating: 0, count: W)
+    for x in 0..<W { row[x] = UInt8(clamp((Double(x) - edge) / feather + 0.5) * 255) }
+    let provider = CGDataProvider(data: Data(row) as CFData)!
+    return CGImage(width: W, height: 1, bitsPerComponent: 8, bitsPerPixel: 8, bytesPerRow: W,
+                   space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGBitmapInfo(rawValue: 0),
+                   provider: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent)!
+}
 
 func renderShot(_ s: Shot, at t: Double, into ctx: CGContext) {
     ctx.saveGState(); s.render(ctx, t - s.start, t); ctx.restoreGState()
@@ -334,16 +345,18 @@ func frame(_ t: Double) -> NSBitmapImageRep {
     NSGraphicsContext.current = gc
     let ctx = gc.cgContext
     ctx.interpolationQuality = .none
-    let i = shots.lastIndex(where: { t >= $0.start }) ?? 0
-    renderShot(shots[i], at: t, into: ctx)
-    // The outgoing shot stays on the right of the wipe line for the first `wipe` seconds of a shot.
-    if i > 0, t - shots[i].start < wipe {
-        let edge = easeOut((t - shots[i].start) / wipe) * Double(W + 120) - 60
+    if let j = shots.indices.dropFirst().first(where: { abs(t - shots[$0].start) < wipe / 2 }) {
+        // Mid-wipe: the incoming shot underneath, the outgoing one on top, masked to the right of the edge.
+        let p = (t - shots[j].start + wipe / 2) / wipe
+        let edge = lerp(-feather / 2, Double(W) + feather / 2, p)
+        renderShot(shots[j], at: t, into: ctx)
         ctx.saveGState()
-        ctx.clip(to: CGRect(x: edge, y: 0, width: Double(W) - edge, height: Double(H)))
-        renderShot(shots[i - 1], at: t, into: ctx)
+        ctx.clip(to: CGRect(x: 0, y: 0, width: W, height: H), mask: wipeMask(edge: edge))
+        ctx.interpolationQuality = .none
+        renderShot(shots[j - 1], at: t, into: ctx)
         ctx.restoreGState()
-        ctx.setFillColor(CGColor(gray: 1, alpha: 0.85)); ctx.fill(CGRect(x: edge - 3, y: 0, width: 6, height: Double(H)))
+    } else {
+        renderShot(shots[shots.lastIndex(where: { t >= $0.start }) ?? 0], at: t, into: ctx)
     }
     // fade in from / out to black
     let black = max(1 - t / 0.2, 0)

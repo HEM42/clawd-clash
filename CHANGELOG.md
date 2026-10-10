@@ -13,7 +13,7 @@
 - **Claude Desktop vs Claude Code CLI.** Claude Code sessions started from the Claude desktop app get their own "Claude Desktop" section in the window and the menu, and are labelled "Claude Desktop" on cards, hover cards and menu lines. VS Code sessions say "Claude · VS Code".
   - The hook reads `CLAUDE_CODE_ENTRYPOINT`, which Claude Code passes to every hook. Verified on this Mac: `claude-desktop` for the desktop app and `cli` in a terminal. It's stored per session as `client`.
   - Sessions without hooks are recognised by where the `claude` binary lives: `~/Library/Application Support/Claude/claude-code/…` is the desktop app, and `…/extensions/anthropic.claude-code…` is VS Code.
-  - Same AI, same side and white outline; only the list sections and labels differ. Clicking a desktop session brings the Claude app forward.
+  - Desktop sessions (and their agents) get a coral outline so they stand out from terminal Claude's white. The same colour is used for their section header and card portraits. They're still Claude, so they take Claude's side. Clicking a desktop session brings the Claude app forward.
 - The hook takes `--event <name>` for AIs whose payloads don't name the event or use their own names. `StatusStore.normalize` translates the payload before `apply`.
 
 ### Fixed

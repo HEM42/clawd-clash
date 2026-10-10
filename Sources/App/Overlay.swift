@@ -25,7 +25,7 @@ private struct Actor {
     var mode: VaderMode = .idle
     var label = ""
     var pid: Int32?              // the Claude process (an agent carries its parent's)
-    var assistant = "claude"     // which AI: sets the outline colour (an agent carries its parent's)
+    var assistant = "claude"     // which AI (its list group, e.g. "claude-desktop"): sets the outline colour; agents carry their session's
     var bubble: BubbleKind?
     var urgent = false           // "needs you" ignored for over a minute
     var accent: NSColor?         // project colour, shared with its agents
@@ -514,7 +514,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
         let projectOf = Dictionary(sessions.map { ($0.id, $0.project) }, uniquingKeysWith: { a, _ in a })
         let pidOf = Dictionary(sessions.map { ($0.id, $0.pid) }, uniquingKeysWith: { a, _ in a })
-        let aiOf = Dictionary(sessions.map { ($0.id, $0.assistant) }, uniquingKeysWith: { a, _ in a })
+        let aiOf = Dictionary(sessions.map { ($0.id, $0.group) }, uniquingKeysWith: { a, _ in a })
 
         // Reconcile actors.
         var seen = Set<String>()
@@ -524,7 +524,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let facing = dir * u.facing
             var mood = Mood.idle, mode = VaderMode.idle, label = ""
             var pid = u.session?.pid
-            var assistant = u.session?.assistant ?? "claude"
+            var assistant = u.session?.group ?? "claude"
             var bubble: BubbleKind?, urgent = false, accent: NSColor?
             if let s = u.session {
                 mood = s.mood
@@ -1545,16 +1545,16 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 if a.type != "general-purpose" && a.type != "playground" && a.type != "demo" { detail.append(a.type) }
                 return CardModel.Agent(name: who.name, task: Self.agentLabel(a).isEmpty ? "Agent" : Self.agentLabel(a),
                                        detail: detail.joined(separator: "  ·  "),
-                                       portrait: portrait("a\(who.id)", assistant: s.assistant) { who.draw($0, t: 0.3, mode: .idle, walking: false, role: .rest, asSession: true) })
+                                       portrait: portrait("a\(who.id)", assistant: s.group) { who.draw($0, t: 0.3, mode: .idle, walking: false, role: .rest, asSession: true) })
             }
             cards.append(CardModel(
                 villain: leader.name + (s.id == "home" ? "" : "  ·  " + s.aiLabel), project: s.project, accent: Accents.color(for: s.project) ?? NSColor(white: 0.5, alpha: 1),
                 status: status, statusColor: color, focused: s.pid != nil && s.pid == focusedPid,
                 lines: lines, agents: agents,
-                portrait: portrait("l\(leader.id)", assistant: s.assistant) { leader.draw($0, t: 0.1, mode: .idle, walking: false, role: .none, asSession: true) },
+                portrait: portrait("l\(leader.id)", assistant: s.group) { leader.draw($0, t: 0.1, mode: .idle, walking: false, role: .none, asSession: true) },
                 pid: s.pid))
             if severalAIs && s.group != lastAI {
-                cards[cards.count - 1].group = (HookInstaller.displayName(s.group), AIStyle.color(s.assistant))
+                cards[cards.count - 1].group = (HookInstaller.displayName(s.group), AIStyle.color(s.group))
             }
             lastAI = s.group
         }

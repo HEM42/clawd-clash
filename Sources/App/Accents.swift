@@ -44,6 +44,7 @@ enum AIStyle {
         case "qwen": return 0xC08CFF      // lavender
         case "gemini": return 0xFFD166    // gold
         case "copilot": return 0x7CF5A4   // mint
+        case "claude-desktop": return 0xFF9E7A   // coral: Claude, but in the desktop app
         default: return 0xFFFFFF          // Claude: white
         }
     }
