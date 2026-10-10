@@ -3,6 +3,12 @@
 ## 2.22.0 — 2026-10-11
 
 ### Changed
+- **Dagobah redrawn from The Empire Strikes Back.** It used to be a row of identical straight trunks. Now:
+  - layered murk: pale misty trees far back, dark twisted trunks with hanging vines in front;
+  - the gnarled tree over the **dark side cave**: twisted trunk strands, roots arching over the black cave mouth, branches dripping moss;
+  - **Luke's X-wing sinking nose-up in the bog**: thick fuselage, red stripes, canopy, an S-foil with its cannon sticking up and another going under, the engine glowing, and a reflection on the water;
+  - Yoda's mud hut with a glowing round window, a lit doorway and a chimney;
+  - animated: drifting fog, fireflies blinking, bubbles rising in the bog, and every so often a pair of yellow eyes surfacing in the water.
 - **The Jawa Sandcrawler is now a junk hold.** It used to be a tidy row of droids for sale. Now:
   - heaps of scavenged junk are packed solid at both ends and piled lower along the back: broken R2 domes, gold protocol-droid heads (one eye still lit), GONK power droids, mouse droids, bent arms, wheels, pipes, crates and scrap plates;
   - cables sag from the ceiling, and a magnet crane holds a dangling R2 unit;

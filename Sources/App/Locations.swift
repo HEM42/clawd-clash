@@ -719,25 +719,88 @@ enum Scenes {
         if sway != 0 { c.px(mx + sway * 3, 31, C(0xC8CCD4, 0.25)) }
     }
 
-    // Yoda — Dagobah: misty swamp, gnarled trees, Yoda's hut glowing in the murk.
+    // Yoda — Dagobah (The Empire Strikes Back): misty layered swamp, the gnarled tree over the dark side cave,
+    // Luke's X-wing sinking nose-up in the bog, vines and moss, and Yoda's mud hut glowing in the murk.
     static func dagobah(_ c: PixelCanvas, _ g: Int) {
-        c.gradient(0, g, C(0x2E4A3A), C(0x6E8A6E), bands: 5)
-        for (i, x) in stride(from: 8, to: c.w, by: 38).enumerated() {
-            let tw = 5 + Int(noise(i) * 4)
-            c.rect(x, 0, tw, g, C(0x2A2A1E))
-            c.rect(x - 3, g - 6, tw + 6, 6, C(0x2A2A1E))
-            c.rect(x - 6, g - 3, 4, 3, C(0x2A2A1E)); c.rect(x + tw + 2, g - 3, 4, 3, C(0x2A2A1E))
-            c.rect(x + tw, g / 3, 10, 2, C(0x2A2A1E))
-            for y in stride(from: g / 3 + 2, to: g / 3 + 12, by: 3) { c.px(x + tw + 4, y, C(0x4A6A3A)) }   // hanging moss
+        // Murky green air, palest in the fog band near the ground.
+        c.gradient(0, g / 2, C(0x14241A), C(0x3E5A44), bands: 5)
+        c.gradient(g / 2, g, C(0x3E5A44), C(0x7A9478), bands: 4)
+        // Far trees: pale silhouettes in the mist.
+        for i in 0..<9 {
+            let x = Int(noise(i * 5 + 40) * Double(c.w)), tw = 3 + i % 3
+            c.rect(x, 0, tw, g, C(0x4E6A54, 0.55))
+            c.ellipse(x + tw / 2, 6 + i % 3 * 4, 14 + i % 4 * 3, 6, C(0x405C46, 0.5))
         }
-        // Yoda's hut
-        let hx = c.w * 3 / 5
-        c.ellipse(hx, g - 1, 12, 9, C(0x6A6A4A)); c.ellipse(hx - 3, g - 6, 3, 2, C(0xFFC86A)); c.circle(hx - 3, g - 6, 6, C(0xFFC86A, 0.15))
-        c.rect(0, g, c.w, c.h - g, C(0x2E3A28))
+
+        // The gnarled tree over the dark side cave (left), roots arching over its mouth.
+        let tx = 46
+        c.rect(tx - 8, 0, 16, g - 18, C(0x1E1C14))
+        for (j, (dx, w)) in [(-14, 6), (10, 5), (-4, 4)].enumerated() {   // twisted trunk strands
+            for y in 0..<(g - 18) { c.rect(tx + dx / 2 + Int(sin(Double(y) * 0.15 + Double(j)) * 3), y, w, 1, C(0x2A2618)) }
+        }
+        c.ellipse(tx, g - 4, 26, 14, C(0x1E1C14))                          // the root mass
+        c.ellipse(tx + 2, g - 2, 11, 9, C(0x050806))                      // the cave mouth
+        c.ellipse(tx + 2, g - 1, 7, 5, C(0x020302))
+        for (rx, rw) in [(-24, 10), (20, 12), (-34, 8)] {                 // roots arching into the ground
+            for k in 0..<rw { c.px(tx + rx + k, g - 3 - Int(sin(Double(k) / Double(rw) * .pi) * 6), C(0x2A2618)) }
+        }
+        // its branches with hanging moss
+        for (bx, by, bl) in [(tx, 12, 40), (tx - 6, 22, -30)] {
+            for k in 0..<abs(bl) { c.px(bx + (bl > 0 ? k : -k), by - k / 6, C(0x1E1C14)); c.px(bx + (bl > 0 ? k : -k), by - k / 6 + 1, C(0x1E1C14)) }
+            for k in stride(from: 4, to: abs(bl), by: 5) {
+                let mx = bx + (bl > 0 ? k : -k)
+                c.rect(mx, by - k / 6 + 2, 1, 4 + k % 7, C(0x5A7A44))
+            }
+        }
+
+        // Mid trees: dark, twisted, with vines.
+        for (i, x) in [118, 158, 236, 288].enumerated() {
+            let tw = 5 + i % 2 * 2
+            for y in 0..<g { c.rect(x + Int(sin(Double(y) * 0.11 + Double(i)) * 2), y, tw, 1, C(0x26281C)) }
+            c.rect(x - 3, g - 4, tw + 6, 4, C(0x26281C))
+            for k in 0..<3 { let vx = x + tw + 2 + k * 4; c.rect(vx, 0, 1, 10 + (i + k) % 3 * 7, C(0x4A6A3A)) }
+        }
+
+        // Ground: muddy bank, and the bog spreading under the X-wing on the right.
+        c.rect(0, g, c.w, c.h - g, C(0x2A3420))
         c.rect(0, g, c.w, 1, C(0x5A7A4A))
-        for i in 0..<(c.w / 3) { c.rect(Int(noise(i * 7) * Double(c.w)), g + 2 + Int(noise(i * 7 + 1) * Double(max(1, c.h - g - 3))), 4, 1, C(0x4A5E3A)) }
+        for i in 0..<(c.w / 3) { c.rect(Int(noise(i * 7) * Double(c.w)), g + 2 + Int(noise(i * 7 + 1) * Double(max(1, c.h - g - 3))), 3, 1, C(0x3E4E30)) }
+        let bx = c.w - 120
+        c.rect(bx - 30, g, 120, c.h - g, C(0x1E2E26))
+        c.rect(bx - 30, g, 120, 1, C(0x4E6A5A))
+        for i in 0..<10 { c.rect(bx - 26 + Int(noise(i * 3 + 70) * 110), g + 2 + i % 3 * 2, 6, 1, C(0x5E7E6E, 0.5)) }   // ripples
+
+        // Luke's X-wing, nose up and half sunk: a thick fuselage rising out of the bog, two S-foils splayed in an X
+        // with engines at their roots, red stripes and the canopy.
+        let xw = bx - 6
+        let white = C(0xDCDCD4), shade = C(0x9A9A92), red = C(0xC03A2A)
+        for k in 0..<34 {                                                  // fuselage (4 px thick), tapering to the nose
+            let x = xw + k, y = g - k * 3 / 4
+            let thick = k > 26 ? 2 : 4
+            c.rect(x, y - thick + 2, 2, thick, white); c.px(x, y + 1, shade)
+        }
+        c.rect(xw + 33, g - 26, 3, 2, C(0xC8C8C0))                         // nose tip
+        c.rect(xw + 8, g - 7, 3, 4, red); c.rect(xw + 20, g - 16, 3, 4, red)   // stripes
+        c.rect(xw + 13, g - 13, 5, 3, C(0x2E4A6A)); c.px(xw + 14, g - 13, C(0x8AB0D0))   // canopy
+        // the S-foils: one wing up and back, one down into the water, engines at the roots
+        for k in 0..<18 {
+            c.rect(xw + 4 - k / 3, g - 6 - k, 3, 1, k % 6 == 0 ? red : white)   // upper wing
+            c.rect(xw + 6 + k / 2, g - 2 + k / 4, 3, 1, white.alpha(max(0, 1 - Double(k) / 8)))   // lower wing, going under
+        }
+        c.rect(xw - 2, g - 22, 2, 5, C(0x6A6A70))                          // upper wing-tip cannon
+        c.rect(xw + 1, g - 8, 5, 4, C(0x8A8A90)); c.px(xw + 2, g - 6, C(0xFF8A3A))   // engine
+        c.rect(xw - 6, g, 46, 1, C(0x8AA89A, 0.5))                         // where it meets the water
+        c.ellipse(xw + 14, g + 1, 22, 1, C(0x8AA89A, 0.18))                // its reflection
+
+        // Yoda's hut on the far right: a mud dome with a glowing round window and doorway.
+        let hx = c.w - 26
+        c.ellipse(hx, g - 1, 16, 12, C(0x5A5438)); c.ellipse(hx, g - 2, 14, 10, C(0x6E6644))
+        c.circle(hx - 5, g - 7, 2, C(0xFFC86A)); c.circle(hx - 5, g - 7, 7, C(0xFFC86A, 0.14))
+        c.rect(hx + 3, g - 6, 4, 6, C(0x2A2414)); c.rect(hx + 4, g - 5, 2, 5, C(0xFFB050, 0.6))
+        c.rect(hx + 8, g - 14, 2, 4, C(0x4A4430))                          // the chimney
     }
 
+    /// Drifting fog, fireflies, bubbles rising in the bog, and eyes surfacing in the water now and then.
     static func swampFog(_ c: PixelCanvas, _ g: Int, t: Double) {
         for i in 0..<3 {
             let y = g - 6 - i * 7
@@ -746,6 +809,22 @@ enum Scenes {
                 c.ellipse((x + off) % (c.w + 60), y, 26, 2, C(0xDDE8DD, 0.10))
             }
         }
+        // fireflies
+        for i in 0..<8 {
+            let x = Int(noise(i * 11 + 3) * Double(c.w)) + Int(sin(t * 0.7 + Double(i)) * 6)
+            let y = g / 3 + Int(noise(i * 11 + 4) * Double(g / 2)) + Int(cos(t * 0.9 + Double(i) * 2) * 3)
+            let on = (t * 0.8 + Double(i) * 0.31).truncatingRemainder(dividingBy: 1) < 0.6
+            if on { c.px(x, y, C(0xE8FF8A)); c.circle(x, y, 2, C(0xE8FF8A, 0.15)) }
+        }
+        // bubbles in the bog
+        let bx = c.w - 120
+        for i in 0..<3 {
+            let p = (t * 0.5 + Double(i) * 0.33).truncatingRemainder(dividingBy: 1)
+            if p < 0.3 { c.circle(bx - 20 + i * 37, g + 3, p < 0.2 ? 1 : 0, C(0xA8C8B8, 0.7)) }
+        }
+        // something in the water, watching
+        let e = (t * 0.07).truncatingRemainder(dividingBy: 1)
+        if e > 0.82 && e < 0.94 { c.px(bx + 68, g + 3, C(0xFFE84A)); c.px(bx + 71, g + 3, C(0xFFE84A)) }
     }
 
     // Han / Chewbacca — the Millennium Falcon's hold: curved walls, pipes, the dejarik table.
