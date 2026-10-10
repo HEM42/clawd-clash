@@ -118,7 +118,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
 /// The scene strip: the Mos Eisley cantina, with the crew standing on its floor.
 final class SceneView: NSView {
     weak var controller: OverlayController?
-    private var room: (size: NSSize, image: CGImage)?
+    private var room: (size: NSSize, location: Location, image: CGImage)?
 
     override var isFlipped: Bool { false }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
@@ -132,20 +132,19 @@ final class SceneView: NSView {
         let drawRect = CGRect(x: 0, y: 0, width: CGFloat(pw) * p, height: CGFloat(ph) * p)
         ctx.interpolationQuality = .none
 
-        // The room only changes when the window is resized.
-        if room?.size != b.size {
+        // The place only changes when the window is resized or the location changes.
+        let location = controller.location
+        if room?.size != b.size || room?.location != location {
             let c = PixelCanvas(pw, ph)
-            Cantina.drawRoom(c, floorRows: floorRows)
-            if let img = c.makeImage() { room = (b.size, img) }
+            location.drawStatic(c, floorRows: floorRows)
+            if let img = c.makeImage() { room = (b.size, location, img) }
         }
         if let img = room?.image { ctx.draw(img, in: drawRect) }
 
-        // The band plays on.
-        let band = PixelCanvas(min(pw, 48), ph)
-        Cantina.drawBand(band, floorRows: floorRows, t: Date().timeIntervalSince1970)
-        if let img = band.makeImage() {
-            ctx.draw(img, in: CGRect(x: 0, y: 0, width: CGFloat(band.w) * p, height: drawRect.height))
-        }
+        // Whatever moves there: the cantina band, sarlacc tentacles, torches, laser gates, fog…
+        let live = PixelCanvas(pw, ph)
+        location.drawAnimated(live, floorRows: floorRows, t: Date().timeIntervalSince1970)
+        if let img = live.makeImage() { ctx.draw(img, in: drawRect) }
 
         guard let window else { return }
         let origin = window.convertToScreen(convert(bounds, to: nil)).origin
@@ -202,13 +201,14 @@ final class CardsView: NSView {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
         ctx.interpolationQuality = .none
         hitRects = []
-        // Cantina adobe: warm dark plaster with a hand-finished texture.
-        NSColor(srgbRed: 0.17, green: 0.13, blue: 0.10, alpha: 1).setFill()
+        // The location's tone, with a faint texture, so the whole window feels like the place.
+        let panel = controller?.location.panel ?? NSColor(srgbRed: 0.17, green: 0.13, blue: 0.10, alpha: 1)
+        panel.setFill()
         bounds.fill()
         for i in 0..<Int(bounds.width * bounds.height / 260) {
             let x = noise(i * 13) * Double(bounds.width), y = noise(i * 13 + 1) * Double(bounds.height)
-            (noise(i * 13 + 2) > 0.5 ? NSColor(srgbRed: 0.22, green: 0.17, blue: 0.13, alpha: 1)
-                                     : NSColor(srgbRed: 0.14, green: 0.105, blue: 0.08, alpha: 1)).setFill()
+            (noise(i * 13 + 2) > 0.5 ? panel.blended(withFraction: 0.12, of: .white)
+                                     : panel.blended(withFraction: 0.25, of: .black))?.setFill()
             NSRect(x: CGFloat(x).rounded(), y: CGFloat(y).rounded(), width: 2, height: 2).fill()
         }
         var y = Self.pad
@@ -232,7 +232,7 @@ final class CardsView: NSView {
             let r = NSRect(x: x, y: y, width: w, height: h)
             hitRects.append((r, c.pid))
             let box = NSBezierPath(roundedRect: r, xRadius: 8, yRadius: 8)
-            NSColor(srgbRed: 0.11, green: 0.085, blue: 0.065, alpha: 0.96).setFill()
+            (controller?.location.panel.blended(withFraction: 0.35, of: .black) ?? NSColor.black).withAlphaComponent(0.94).setFill()
             box.fill()
             (c.focused ? NSColor(srgbRed: 1, green: 0.88, blue: 0.29, alpha: 0.9) : c.accent.withAlphaComponent(0.55)).setStroke()
             box.lineWidth = c.focused ? 2 : 1

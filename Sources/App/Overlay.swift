@@ -192,6 +192,13 @@ final class OverlayController: NSObject {
         return NSPoint(x: st.minX + 60 * zoom, y: st.minY + windowFloor - Self.footroom * zoom)
     }
 
+    /// Where the window's scene is set: chosen in the Location menu, or (Automatic) the home of the
+    /// first-spawned Claude — Vader on the Death Star, Boba at the sarlacc pit, Jabba in his palace…
+    var location: Location {
+        if let raw = UserDefaults.standard.string(forKey: "location"), let l = Location(rawValue: raw) { return l }
+        return sessions.first.map { Location.home(of: Leader(index: $0.leader)) } ?? .cantina
+    }
+
     /// Height of the cantina floor in the window's scene strip; feet stand a little way into it.
     static let cantinaFloor: CGFloat = 30
     var windowFloor: CGFloat { 24 }
@@ -1082,6 +1089,7 @@ final class OverlayController: NSObject {
         size.submenu = sub
         m.addItem(size)
         m.addItem(action: windowMode ? "Show on Desktop" : "Show in Window", #selector(toggleWindowMode), target: self)
+        if windowMode { m.addItem(locationMenu()) }
         m.addItem(action: "Show Project Names", #selector(toggleLabels), target: self, on: showLabels)
         m.addItem(playgroundMenu())
         m.addItem(action: "Demo Mode", #selector(toggleDemo), target: self, on: demo)
@@ -1109,6 +1117,39 @@ final class OverlayController: NSObject {
     }
 
     @objc private func toggleLabels() { showLabels.toggle() }
+
+    private func locationMenu() -> NSMenuItem {
+        let root = NSMenuItem(title: "Location: \(location.name)", action: nil, keyEquivalent: "")
+        let lm = NSMenu()
+        let picked = UserDefaults.standard.string(forKey: "location")
+        let auto = NSMenuItem(title: "Automatic (where the first Claude belongs)", action: #selector(setLocation(_:)), keyEquivalent: "")
+        auto.target = self
+        auto.state = picked == nil ? .on : .off
+        lm.addItem(auto)
+        lm.addItem(.separator())
+        let owners: [Location: [String]] = Dictionary(grouping: Leader.allCases.map { (Location.home(of: $0), $0.name) }
+            + Companion.allCases.map { (Location.home(of: $0), $0.name) }, by: \.0).mapValues { $0.map(\.1) }
+        for l in Location.allCases {
+            let who = owners[l]?.joined(separator: ", ") ?? ""
+            let item = NSMenuItem(title: who.isEmpty ? l.name : "\(l.name)  —  \(who)", action: #selector(setLocation(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = l.rawValue
+            item.state = picked == l.rawValue ? .on : .off
+            lm.addItem(item)
+        }
+        root.submenu = lm
+        return root
+    }
+
+    @objc private func setLocation(_ sender: NSMenuItem) {
+        if let raw = sender.representedObject as? String {
+            UserDefaults.standard.set(raw, forKey: "location")
+        } else {
+            UserDefaults.standard.removeObject(forKey: "location")
+        }
+        clawdWindow?.sceneView.needsDisplay = true
+        clawdWindow?.cardsView.needsDisplay = true
+    }
 
     private func playgroundMenu() -> NSMenuItem {
         let root = NSMenuItem(title: "Playground", action: nil, keyEquivalent: "")

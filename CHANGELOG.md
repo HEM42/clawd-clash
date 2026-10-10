@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.4.0 — 2026-10-10
+
+### Added
+- 19 window-mode locations (`Locations.swift`), each drawn as pixel art in code on shared helpers (banded gradients, stars, dunes, circles and ellipses, textured ground). On Automatic, the first-spawned Claude decides where the crew is:
+  - Vader: Death Star corridor, with a viewport onto space
+  - Boba Fett: Great Pit of Carkoon, with the sarlacc (tentacles waving) and Jabba's sail barge
+  - Jabba / Gamorrean Guard: Jabba's palace throne room (dais, hookah, rancor grate, flickering torches)
+  - Stormtrooper: the Mos Eisley cantina
+  - Kylo Ren: Snoke's red throne room on the *Supremacy*, with Praetorian guards
+  - Darth Maul: the Theed generator complex, with pulsing laser gates
+  - The Emperor: Death Star II throne room, with Endor and the battle flashing in the round window
+  - Count Dooku: Geonosis rock spires
+  - R0-GR: the plains of Naboo, with Trade Federation tanks
+  - IG-88: the *Executor*'s bridge (Star Destroyers outside, crew pits, blinking consoles)
+  - Hero homes, chosen from the Location menu: Lars homestead under the twin suns (Luke), Obi-Wan's hut, the Jawa sandcrawler (Jawa, R2-D2), Dagobah with drifting fog (Yoda), the Millennium Falcon hold with a flickering dejarik game (Han, Chewbacca), the Tantive IV (Leia, C-3PO), the Jundland Wastes with a Tusken Raider and a bantha (Qui-Gon), Jakku with the crashed Star Destroyer (Rey), and the Jedi Council chamber over the Coruscant skyline (Mace Windu, Ahsoka).
+- Window right-click menu → Location: Automatic (where the first Claude belongs), or pin any scene. Each entry lists who it belongs to.
+- The card area takes on each location's tone (desert sand, Death Star grey, Supremacy red, Dagobah green…).
+
+### Changed
+- Each scene is cached per window size and location; only its animated layer is redrawn per frame.
+
 ## 2.3.0 — 2026-10-10
 
 ### Added
