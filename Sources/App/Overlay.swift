@@ -118,8 +118,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
                                       "Search for usages", "Fix failing build", "Write changelog", "Audit permissions",
                                       "Explore codebase", "Check git history", "Draft README", "Profile CPU usage",
                                       "Verify the fix"]
-    /// Empty canvas rows under the feet (8 px at leader scale), allowed to hang off the bottom of the screen.
-    private static let footroom: CGFloat = 8 * leaderScale
+    /// Canvas rows under the feet that may hang off the bottom of the screen: 8 empty rows minus the one
+    /// holding the feet's white outline, which should sit on the screen edge, not just below it.
+    private static let footroom: CGFloat = 7 * leaderScale
 
     override init() {
         panel = OverlayPanel(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10),

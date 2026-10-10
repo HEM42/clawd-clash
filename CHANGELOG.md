@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.15.1 — 2026-10-10
+
+### Fixed
+- Snapping the crew to the bottom of a screen put them 1 pixel too low. The snap treated all 8 canvas rows under the feet as empty, but the bottom row holds the feet's white outline, which ended up just below the screen edge. The snap now leaves 7 rows, so the outline sits on the edge.
+- The Homebrew cask uses the current Homebrew syntax: `depends_on macos: :ventura`, and the quarantine-clearing step as a `postflight_steps` `run` step with an `{{appdir}}` path (was the deprecated `postflight` / `system_command`). `brew style` and `brew audit` pass. `release.sh` writes the new form.
+
 ## 2.15.0 — 2026-10-10
 
 ### Added
