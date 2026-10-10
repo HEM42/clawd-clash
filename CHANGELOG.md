@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.5.1 — 2026-10-10
+
+### Changed
+- Playground and Demo Mode are hidden unless ⌘ is held while opening the menu: the Crew menu, the menu bar helmet or the right-click menu. While either is running, both stay visible so you can leave.
+
 ## 2.5.0 — 2026-10-10
 
 ### Added

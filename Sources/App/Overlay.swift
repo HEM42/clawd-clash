@@ -1137,8 +1137,11 @@ final class OverlayController: NSObject, NSMenuDelegate {
         m.addItem(action: windowMode ? "Show on Desktop" : "Show in Window", #selector(toggleWindowMode), target: self)
         if windowMode { m.addItem(locationMenu()) }
         m.addItem(action: "Show Project Names", #selector(toggleLabels), target: self, on: showLabels)
-        m.addItem(playgroundMenu())
-        m.addItem(action: "Demo Mode", #selector(toggleDemo), target: self, on: demo)
+        // Developer toys: only with ⌘ held while opening the menu (or while one is running, so you can leave it).
+        if NSEvent.modifierFlags.contains(.command) || playground != nil || demo {
+            m.addItem(playgroundMenu())
+            m.addItem(action: "Demo Mode", #selector(toggleDemo), target: self, on: demo)
+        }
         m.addItem(action: "Forget Idle Sessions", #selector(forgetIdle), target: self)
         m.addItem(action: "Reset Position", #selector(resetPosition), target: self)
         m.addItem(action: "Launch at Login", #selector(toggleLogin), target: self,
