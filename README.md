@@ -34,7 +34,7 @@ Speech bubbles flip to whichever side of the head has room. The whole crew lines
 
 ### Window mode
 
-Right-click a villain and choose **Show in Window** to swap the desktop overlay for a regular window set where the first Claude belongs — the Death Star for Vader, the sarlacc pit for Boba, Jabba's palace, the Supremacy, Theed, Geonosis… (19 locations; pick one yourself under **Location**): the crew fighting on the cantina floor, and a card per Claude with its status and how long it's been in it, what it's doing right now, your last prompt, its last reply, prompt and tool counts, and every agent's task and current tool. Click a card to jump to that session; tick **Keep on top** to pin the window.
+Right-click a villain and choose **Show in Window** to swap the desktop overlay for a regular window set where the first Claude belongs — the Death Star for Vader, the sarlacc pit for Boba, Jabba's palace, the Supremacy, Theed, Geonosis… (19 locations; pick one yourself under **Location**): the crew fighting on the cantina floor, and a card per Claude with its status and how long it's been in it, what it's doing right now, your last prompt, its last reply, prompt and tool counts, and every agent's task and current tool. Click a card to jump to that session; click **PIN** in the title bar to keep the window on top.
 
 ### Little signals
 

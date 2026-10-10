@@ -1095,6 +1095,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         let banner: String? = (playground == nil && !demo && !HookInstaller.isInstalled)
             ? "Claude Code hooks aren't installed — live status is off. Install them from the right-click menu." : nil
         w.cardsView.update(cards: cards, banner: banner)
+        w.header.needsDisplay = true
         w.fitToContent()
     }
 
@@ -1231,6 +1232,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         }
         clawdWindow?.sceneView.needsDisplay = true
         clawdWindow?.cardsView.needsDisplay = true
+        clawdWindow?.header.needsDisplay = true
     }
 
     private func playgroundMenu() -> NSMenuItem {

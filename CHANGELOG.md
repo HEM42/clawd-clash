@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.7.0 — 2026-10-10
+
+### Changed
+- Window mode has a themed title bar instead of the grey system one. The window uses a full-size content view with a transparent, title-less system bar, and the traffic lights stay. In their place is a `HeaderView` in the current location's colours, with a thin crawl-yellow rule, **CLAWD WARS** in condensed bold crawl-yellow (Futura Condensed ExtraBold, falling back to Helvetica Neue Condensed Black), and the location's name. Dragging the bar moves the window and double-clicking zooms it. The "Keep on top" checkbox is replaced by a yellow pin capsule in the bar (filled "◉ ON TOP" when pinned). The bar redraws when the location changes, and auto-height includes it.
+
 ## 2.6.2 — 2026-10-10
 
 ### Changed

@@ -28,7 +28,8 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     let sceneView = SceneView()
     let cardsView = CardsView()
     private let scroll = NSScrollView()
-    private let pin = NSButton(checkboxWithTitle: "Keep on top", target: nil, action: nil)
+    let header = HeaderView()
+    static let headerHeight: CGFloat = 30
     var onClose: (() -> Void)?
     var onGeometryChange: (() -> Void)?
     private(set) var sceneHeight: CGFloat
@@ -36,10 +37,13 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     init(controller: OverlayController, sceneHeight: CGFloat) {
         self.sceneHeight = sceneHeight
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 620),
-                          styleMask: [.titled, .closable, .miniaturizable, .resizable],
+                          styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                           backing: .buffered, defer: false)
         super.init()
         window.title = "Clawd Wars"
+        // Our own themed title bar instead of the system one; the traffic lights stay.
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
         window.minSize = NSSize(width: 520, height: 240)
         window.backgroundColor = NSColor(srgbRed: 0.17, green: 0.13, blue: 0.10, alpha: 1)
         window.isReleasedWhenClosed = false
@@ -50,7 +54,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         sceneView.controller = controller
         cardsView.controller = controller
 
-        let content = NSView(frame: window.contentLayoutRect)
+        let content = NSView(frame: NSRect(origin: .zero, size: window.frame.size))
         content.autoresizingMask = [.width, .height]
         window.contentView = content
         scroll.documentView = cardsView
@@ -59,19 +63,11 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         scroll.autohidesScrollers = true
         content.addSubview(sceneView)
         content.addSubview(scroll)
+        content.addSubview(header)
+        header.controller = controller
+        header.pinned = UserDefaults.standard.bool(forKey: "windowPinned")
+        header.onPin = { [weak self] in self?.togglePin() }
         layout()
-
-        pin.target = self
-        pin.action = #selector(togglePin)
-        pin.state = UserDefaults.standard.bool(forKey: "windowPinned") ? .on : .off
-        pin.controlSize = .small
-        let accessory = NSTitlebarAccessoryViewController()
-        let holder = NSView(frame: NSRect(x: 0, y: 0, width: 110, height: 22))
-        pin.frame = NSRect(x: 4, y: 2, width: 104, height: 18)
-        holder.addSubview(pin)
-        accessory.view = holder
-        accessory.layoutAttribute = .trailing
-        window.addTitlebarAccessoryViewController(accessory)
         applyPin()
     }
 
@@ -79,10 +75,10 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     /// where it is and never taller than the screen — past that the cards scroll.
     func fitToContent() {
         guard let screen = window.screen ?? NSScreen.main else { return }
-        let chrome = window.frame.height - window.contentLayoutRect.height       // title bar
         let vf = screen.visibleFrame
-        let wanted = min(max(sceneHeight + cardsView.contentHeight, sceneHeight + 60), vf.height - chrome)
-        let delta = wanted - window.contentLayoutRect.height
+        let top = Self.headerHeight + sceneHeight
+        let wanted = min(max(top + cardsView.contentHeight, top + 60), vf.height)
+        let delta = wanted - window.frame.height
         guard abs(delta) > 1 else { return }
         var f = window.frame
         f.size.height += delta
@@ -101,21 +97,26 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     private func layout() {
         guard let content = window.contentView else { return }
         let b = content.bounds
-        sceneView.frame = NSRect(x: 0, y: b.height - sceneHeight, width: b.width, height: sceneHeight)
+        let hh = Self.headerHeight
+        header.frame = NSRect(x: 0, y: b.height - hh, width: b.width, height: hh)
+        header.autoresizingMask = [.width, .minYMargin]
+        sceneView.frame = NSRect(x: 0, y: b.height - hh - sceneHeight, width: b.width, height: sceneHeight)
         sceneView.autoresizingMask = [.width, .minYMargin]
-        scroll.frame = NSRect(x: 0, y: 0, width: b.width, height: max(0, b.height - sceneHeight))
+        scroll.frame = NSRect(x: 0, y: 0, width: b.width, height: max(0, b.height - hh - sceneHeight))
         scroll.autoresizingMask = [.width, .height]
         cardsView.frame.size.width = scroll.contentSize.width
     }
 
-    @objc private func togglePin() {
-        UserDefaults.standard.set(pin.state == .on, forKey: "windowPinned")
+    private func togglePin() {
+        header.pinned.toggle()
+        UserDefaults.standard.set(header.pinned, forKey: "windowPinned")
         applyPin()
     }
 
     private func applyPin() {
-        window.level = pin.state == .on ? .floating : .normal
-        window.collectionBehavior = pin.state == .on ? [.canJoinAllSpaces, .fullScreenAuxiliary] : []
+        window.level = header.pinned ? .floating : .normal
+        window.collectionBehavior = header.pinned ? [.canJoinAllSpaces, .fullScreenAuxiliary] : []
+        header.needsDisplay = true
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
@@ -129,6 +130,62 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         cardsView.relayout()
         onGeometryChange?()
     }
+}
+
+/// The themed title bar: the location's colours, CLAWD WARS in crawl-yellow, where the crew is, and a pin.
+/// The traffic lights sit on its left; drag anywhere else on it to move the window.
+final class HeaderView: NSView {
+    weak var controller: OverlayController?
+    var pinned = false { didSet { needsDisplay = true } }
+    var onPin: (() -> Void)?
+    private var pinRect = NSRect.zero
+
+    static let yellow = NSColor(srgbRed: 1, green: 0.91, blue: 0.12, alpha: 1)   // the opening-crawl yellow
+
+    override func draw(_ dirtyRect: NSRect) {
+        let b = bounds
+        let base = controller?.location.panel ?? NSColor(white: 0.12, alpha: 1)
+        (base.blended(withFraction: 0.45, of: .black) ?? base).setFill()
+        b.fill()
+        // a faint stripe of the location's tone, and a thin yellow rule underneath
+        (base.blended(withFraction: 0.15, of: .white) ?? base).withAlphaComponent(0.35).setFill()
+        NSRect(x: 0, y: b.height - 1, width: b.width, height: 1).fill()
+        Self.yellow.withAlphaComponent(0.55).setFill()
+        NSRect(x: 0, y: 0, width: b.width, height: 1).fill()
+
+        let titleFont = NSFont(name: "Futura-CondensedExtraBold", size: 15)
+            ?? NSFont(name: "HelveticaNeue-CondensedBlack", size: 15) ?? .systemFont(ofSize: 14, weight: .black)
+        let title = NSMutableAttributedString(string: "CLAWD WARS", attributes: [
+            .font: titleFont, .foregroundColor: Self.yellow, .kern: 2.2])
+        if let where_ = controller?.location.name {
+            title.append(NSAttributedString(string: "   ·   " + where_.uppercased(), attributes: [
+                .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold), .foregroundColor: NSColor(white: 0.78, alpha: 1),
+                .kern: 1.2]))
+        }
+        let ts = title.size()
+        title.draw(at: NSPoint(x: 80, y: (b.height - ts.height) / 2))
+
+        // Pin toggle on the right
+        let label = NSAttributedString(string: pinned ? "◉  ON TOP" : "○  PIN", attributes: [
+            .font: NSFont.systemFont(ofSize: 10, weight: .bold), .foregroundColor: pinned ? NSColor.black : Self.yellow, .kern: 0.8])
+        let ls = label.size()
+        pinRect = NSRect(x: b.width - ls.width - 30, y: (b.height - 18) / 2, width: ls.width + 18, height: 18)
+        let capsule = NSBezierPath(roundedRect: pinRect, xRadius: 9, yRadius: 9)
+        if pinned { Self.yellow.setFill(); capsule.fill() }
+        Self.yellow.withAlphaComponent(pinned ? 1 : 0.7).setStroke()
+        capsule.lineWidth = 1
+        capsule.stroke()
+        label.draw(at: NSPoint(x: pinRect.minX + 9, y: pinRect.minY + (18 - ls.height) / 2))
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        let p = convert(event.locationInWindow, from: nil)
+        if pinRect.contains(p) { onPin?(); return }
+        if event.clickCount == 2 { window?.zoom(nil); return }
+        window?.performDrag(with: event)
+    }
+
+    override func resetCursorRects() { addCursorRect(pinRect, cursor: .pointingHand) }
 }
 
 /// The scene strip: the Mos Eisley cantina, with the crew standing on its floor.
