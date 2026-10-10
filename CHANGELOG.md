@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.15.3 — 2026-10-10
+
+### Fixed
+- Everyone now stands on the same pixel row. Measured every character's lowest pixel; feet should end on row 43:
+  - Vader, Kylo, Dooku, the Emperor, Leia and the Jawa stood 1 px lower because their capes, robes and gowns hung one row past the feet. Hems now end on row 43.
+  - The tauntaun stood 1 px higher (feet one row short).
+  - Jabba floated 1 px when laughing. His belly now stays planted and only the upper body bobs.
+  - The Gamorrean's resting axe and the Rancor's resting claw poked below the floor. The axe is now shouldered and the claw hangs forward.
+- Positions saved under the older snap rule were still 1 px too low after the snap fix, because the fix only ran while dragging. The saved position is now re-snapped on launch and on Reset Position.
+
 ## 2.15.2 — 2026-10-10
 
 ### Changed

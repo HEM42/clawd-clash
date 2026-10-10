@@ -437,7 +437,7 @@ private func drawLeia(_ c: PixelCanvas, t: Double, walking: Bool, role: FightRol
     let gown = C(0xF4F4F0), gownShade = C(0xD9DADF)
     var look = Look(arm: gown)
     look.legs = false
-    for y in 38...44 {
+    for y in 38...43 {
         let k = (y - 38) / 2
         c.rect(18 - k, y, 20 + k * 2, 1, gown)
         c.px(18 - k, y, gownShade); c.px(37 + k, y, gownShade)
@@ -624,7 +624,7 @@ private func drawGunner(_ c: PixelCanvas, _ who: Companion, t: Double, walking: 
         let robe = C(0x7A5A3A), robeDark = C(0x5A4028)
         var look = Look(body: robe, shade: robeDark, arm: robe, eye: nil)
         look.legs = false
-        for y in 38...44 {
+        for y in 38...43 {
             let k = (y - 38) / 2
             c.rect(18 - k, y, 20 + k * 2, 1, robe)
             c.px(18 - k, y, robeDark); c.px(37 + k, y, robeDark)
@@ -696,8 +696,8 @@ private func drawTauntaun(_ c: PixelCanvas, t: Double, walking: Bool) {
     // Two strong legs with big feet
     for (i, lx) in [21, 31].enumerated() {
         let up = step == i ? 1 : 0
-        c.rect(lx, 34, 4, 8 - up, furShade)
-        c.rect(lx - 1, 41 - up, 6, 2, furDark)
+        c.rect(lx, 34, 4, 9 - up, furShade)
+        c.rect(lx - 1, 42 - up, 6, 2, furDark)
     }
     // Tail swishing behind
     let sway = Int((sin(t * 2) * 2).rounded())

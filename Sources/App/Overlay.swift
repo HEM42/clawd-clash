@@ -138,7 +138,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         panel.ignoresMouseEvents = true
         panel.contentView = view
 
-        home = savedHome()
+        home = clampHome(savedHome())     // re-applies the edge snap, so positions saved under older rules are corrected
         if windowMode { openWindow() }
         refreshStatus()
         snapActors()
@@ -1534,7 +1534,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
     @objc private func resetPosition() {
         UserDefaults.standard.removeObject(forKey: "anchorX")
         UserDefaults.standard.removeObject(forKey: "anchorY")
-        home = savedHome()
+        home = clampHome(savedHome())     // re-applies the edge snap, so positions saved under older rules are corrected
         relayout()
         snapActors()
     }

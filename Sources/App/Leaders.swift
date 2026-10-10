@@ -271,9 +271,9 @@ func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, wal
                 c.rect(36, 37, 2, 5, C(0x3A3A42)); c.rect(35, 38, 4, 1, C(0x3A3A42))
             }
         case .gamorrean:
-            drawAxe(c, angle: lit ? angle : 80)
+            drawAxe(c, angle: lit ? angle : -75)      // resting: axe shouldered, not through the floor
         case .rancor:
-            drawClaw(c, angle: lit ? angle : 70)
+            drawClaw(c, angle: lit ? angle : 30)      // resting: arm hangs forward, claws above the floor
         default:
             if lit {
                 drawSaber(c, angle: angle, core: C(0xFFE3E3), glow: C(0xFF1E2D), lit: true, trail: trail)
@@ -314,8 +314,8 @@ func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, wal
 }
 
 private func drawCape(_ c: PixelCanvas, t: Double, speed: Double, color: Px, edge: Px, extra: Double = 0) {
-    for y in 27...44 where y + c.oy <= 44 {      // a seated character's cape stops at the floor
-        let k = Double(y - 27) / 17
+    for y in 27...43 where y + c.oy <= 43 {      // hem ends on the feet's row (43), never below
+        let k = Double(y - 27) / 16
         let hw = 10.5 + k * (4.5 + extra)
         let sway = sin(t * speed + k * 2.2) * k * 1.6
         let l = Int((Sprite.bodyCenterX - hw + sway).rounded())
@@ -534,6 +534,12 @@ private func drawJabba(_ c: PixelCanvas, t: Double, lift: Int) {
     let laugh = sin(t * 9) > 0 ? -1 : 0
     // Tail curling off behind, then the big slug body (no legs).
     c.pattern(4, 36, ["......SSSS", "...SSSSSSS", ".SSSSSSSSS", "SSSSSSSSSS", "SS........"], ["S": dark])
+    // the belly stays planted on the floor; only the upper body bobs as he laughs
+    for y in 40...43 {
+        let hw = 10 + Double(y - 22) / 21 * 7
+        let l = Int((Sprite.bodyCenterX - hw).rounded()), r = Int((Sprite.bodyCenterX + hw).rounded())
+        c.rect(l, y, r - l, 1, skin)
+    }
     c.oy += lift + laugh
     for y in 22...43 {
         let k = Double(y - 22) / 21
@@ -726,7 +732,7 @@ func drawE5(_ c: PixelCanvas, x: Int, y: Int) {
 
 private func drawEmperor(_ c: PixelCanvas, lift: Int, armRaise: Int) {
     let robe = C(0x1A1A20), robeEdge = C(0x2E2E38)
-    for y in 36...44 {
+    for y in 36...43 {
         let k = (y - 36) / 2
         c.rect(17 - k, y, 22 + k * 2, 1, robe)
         c.px(17 - k, y, robeEdge); c.px(38 + k, y, robeEdge)
