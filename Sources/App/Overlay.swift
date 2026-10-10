@@ -481,16 +481,33 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
     }
 
     private func playgroundSessions(_ villains: [Int]) -> [SessionSnapshot] {
-        let crew = playgroundAgents.map {
-            AgentRecord(id: "pg-a\($0)", session: "pg", type: "playground", character: $0, started: start, lastSeen: 0,
-                        task: Self.sampleTasks[$0 % Self.sampleTasks.count])
+        let activities = ["Read Overlay.swift", "Grep fightRoles", "Bash: swift build", "Edit Leaders.swift",
+                          "Fetch github.com", "Glob **/*.swift", "Bash: run the tests", "Read README.md"]
+        let crew = playgroundAgents.enumerated().map { i, c in
+            AgentRecord(id: "pg-a\(c)", session: "pg", type: "playground", character: c, started: start - Double(30 + i * 47),
+                        lastSeen: 0, task: Self.sampleTasks[c % Self.sampleTasks.count],
+                        activity: activities[(c + i) % activities.count], tools: 3 + (c * 7) % 23)
         }
         guard !villains.isEmpty else {
             return [SessionSnapshot(id: "home", leader: 0, project: "", mood: .idle, agents: crew)]
         }
+        // Sample details so the Playground's cards look like live ones.
+        let prompts = ["add a tauntaun", "make the window resize to fit the Claudes", "why does the duel not start?",
+                       "write a nice README with screenshots", "fix the portrait crop for wide characters"]
+        let nowActs = ["Edit WindowMode.swift", "Bash: swift build", "Read Locations.swift", "Grep opaqueBounds", "Agent: Review the diff"]
         // Agents join the first villain. Empty project → the label shows the villain's name.
         return villains.enumerated().map { i, l in
-            SessionSnapshot(id: "pg-\(l)", leader: l, project: "", mood: playgroundMood, agents: i == 0 ? crew : [])
+            var rec = SessionRecord(state: playgroundMood.rawValue, updated: start, leader: l, project: "")
+            rec.created = start - Double(600 + i * 1700)
+            rec.since = start - Double(20 + i * 35)
+            rec.model = "claude-opus-5-5"
+            rec.prompt = prompts[i % prompts.count]
+            rec.activity = nowActs[i % nowActs.count]
+            rec.reply = "Done. The crew now fits the window and everyone still gets a fight."
+            rec.prompts = 4 + i * 3
+            rec.tools = 38 + i * 21
+            return SessionSnapshot(id: "pg-\(l)", leader: l, project: "", mood: playgroundMood, agents: i == 0 ? crew : [],
+                                   record: rec)
         }
     }
 

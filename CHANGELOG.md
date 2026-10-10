@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.13.0 — 2026-10-10
+
+### Added
+- A GitHub README with the pitch up top, the icon, a desktop battle strip, the full roster, window-mode screenshots in the Mos Eisley Cantina and on Hoth, and a grid of all 22 locations. Images live in `docs/`.
+- `Tools/RenderDocs`: renders `docs/roster.png` (every villain and hero, labelled, mid-action) and `docs/locations.png` (every location with its animation frame) with the app's own sprite code. Window and desktop screenshots are made with `CLAWD_SHOT` and the Playground.
+- Playground sessions get realistic sample details (model, current activity, last prompt and reply, prompt and tool counts, uptime, and each agent's activity, age and tool count), so their cards look like live ones.
+
 ## 2.12.0 — 2026-10-10
 
 ### Added
