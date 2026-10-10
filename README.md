@@ -57,7 +57,7 @@ Right-click a villain and choose **Show in Window** to swap the desktop overlay 
 
 - **Click a villain** to jump to its Claude session (the exact Terminal/iTerm tab, or the VS Code/Cursor window for that project; asks once for Accessibility permission).
 - **Drag any villain** to move the whole crew. The position is saved, and Vader stays fully on screen.
-- **Right-click a villain** for every session's status and agents, Show in Window, Size, Show Project Names, Playground (pick villains and agents and watch them fight), Demo Mode (cycles every scene, fights included), Forget Idle Sessions, Reset Position, Launch at Login, Install/Remove hooks and Quit.
+- **Right-click a villain** — or click the helmet in the menu bar — for every session's status and agents, Show in Window, Size, Show Project Names, Playground (pick villains and agents and watch them fight), Demo Mode (cycles every scene, fights included), Forget Idle Sessions, Reset Position, Launch at Login, Install/Remove hooks and Quit.
 - The rest of the overlay is click-through, so it never blocks the window underneath.
 - The overlay floats above every app, including full-screen spaces, on all desktops.
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.5.0 — 2026-10-10
+
+### Added
+- Menu bar icon: a Vader Clawd helmet cropped from the sprite, always present in desktop and window mode. It opens the same menu as right-clicking a villain (session status and agents, Show in Window / on Desktop, Location, Size, Playground, Demo, hooks, Quit). Checked with `VADER_DEBUG`: the item is visible on screen in the main display's menu bar.
+- In window mode the app's menu bar gains a **Crew** menu with the same items.
+- Both menus are rebuilt from live state each time they open (`NSMenuDelegate.menuNeedsUpdate`).
+
 ## 2.4.2 — 2026-10-10
 
 ### Changed

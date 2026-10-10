@@ -38,7 +38,7 @@ private let fadeIn = 0.5
 private let fadeOut = 0.6
 private let fightLinger = 3.0      // keep fighting through brief gaps between tool calls
 
-final class OverlayController: NSObject {
+final class OverlayController: NSObject, NSMenuDelegate {
     private let panel: OverlayPanel
     private let view: OverlayView
     private var sessions: [SessionSnapshot] = []
@@ -134,6 +134,7 @@ final class OverlayController: NSObject {
         snapActors()
         tick()
         if !windowMode { panel.orderFrontRegardless() }
+        installStatusItem()
 
         Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.refreshStatus() }
         let frame = Timer(timeInterval: 1.0 / 30, repeats: true) { [weak self] _ in self?.tick() }
@@ -880,6 +881,42 @@ final class OverlayController: NSObject {
         Jump.toSession(pid: pid)
     }
 
+    // MARK: Menu bar
+
+    private var statusItem: NSStatusItem?
+
+    /// A Vader Clawd helmet in the menu bar, opening the same menu as right-clicking a villain.
+    private func installStatusItem() {
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        let c = PixelCanvas(Sprite.width, Sprite.height)
+        drawLeader(c, .vader, t: 0, mode: .idle, walking: false)
+        if let cg = c.makeImage()?.cropping(to: CGRect(x: 14, y: 13, width: 28, height: 26)) {
+            let img = NSImage(cgImage: cg, size: NSSize(width: 19, height: 18))
+            item.button?.image = img
+            item.button?.imageScaling = .scaleProportionallyDown
+        }
+        item.button?.toolTip = "Clawd Wars"
+        let menu = NSMenu()
+        menu.delegate = self
+        item.menu = menu
+        statusItem = item
+        if debug {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                let w = item.button?.window
+                FileHandle.standardError.write("status item: visible=\(item.isVisible) window=\(w?.frame ?? .zero) onscreen=\(w?.isVisible ?? false)\n".data(using: .utf8)!)
+            }
+        }
+    }
+
+    /// Rebuild the menu bar and Crew menus from the live state each time they open.
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        menu.removeAllItems()
+        let fresh = self.menu()
+        let items = fresh.items
+        fresh.removeAllItems()
+        items.forEach { menu.addItem($0) }
+    }
+
     // MARK: Window mode
 
     @objc func toggleWindowMode() {
@@ -928,6 +965,12 @@ final class OverlayController: NSObject {
         app.addItem(withTitle: "Quit Clawd Wars", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = app
         main.addItem(appItem)
+        // The same options as right-clicking a villain, as a "Crew" menu.
+        let crewItem = NSMenuItem()
+        let crew = NSMenu(title: "Crew")
+        crew.delegate = self
+        crewItem.submenu = crew
+        main.addItem(crewItem)
         let winItem = NSMenuItem()
         let win = NSMenu(title: "Window")
         win.addItem(withTitle: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
