@@ -466,7 +466,27 @@ final class CardsView: NSView {
 
             if !c.agents.isEmpty {
                 ty += 6
+                // A tree: a trunk from the session down the left, a branch into each agent (├ … └).
+                let trunkX = tx + 5.5, indent: CGFloat = 20, top = ty - 4
+                let branch = NSBezierPath()
+                branch.lineWidth = 1.5
+                for (i, _) in c.agents.enumerated() {
+                    let mid = ty + CGFloat(i) * Self.agentH + 15.5
+                    if i == c.agents.count - 1 {   // └ with a rounded corner
+                        branch.move(to: NSPoint(x: trunkX, y: top))
+                        branch.line(to: NSPoint(x: trunkX, y: mid - 5))
+                        branch.curve(to: NSPoint(x: trunkX + 5, y: mid), controlPoint1: NSPoint(x: trunkX, y: mid - 2),
+                                     controlPoint2: NSPoint(x: trunkX + 2, y: mid))
+                        branch.line(to: NSPoint(x: tx + indent - 2, y: mid))
+                    } else {
+                        branch.move(to: NSPoint(x: trunkX, y: mid))
+                        branch.line(to: NSPoint(x: tx + indent - 2, y: mid))
+                    }
+                }
+                c.accent.withAlphaComponent(0.5).setStroke()
+                branch.stroke()
                 for a in c.agents {
+                    let tx = tx + indent, tw = tw - indent
                     if let img = a.portrait {
                         draw(img, fitting: NSRect(x: tx - 4, y: ty, width: 36, height: 30), in: ctx, maxScale: 1)
                     }
