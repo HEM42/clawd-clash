@@ -1,0 +1,198 @@
+# Changelog
+
+## 2.1.1 — 2026-10-10
+
+### Added
+- Version control: the project is now a git repository, pushed to a private GitHub repo (`rodclemen/clawd-wars`). `.gitignore` excludes `build/` (recreated by `build.sh`), personal `.vscode/` settings and `.DS_Store`.
+
+## 2.1.0 — 2026-10-10
+
+### Added
+- Agents show what they're doing, in a label box above their head. `SubagentStart` only carries the agent's type, so the hook queues the `description` from each Agent/Task `PreToolUse` and gives it to the next agent of that type that starts in the same session (oldest first, any type as a fallback). Agents without a description, such as workflow agents, show their type ("Workflow Agent", "Explore"; general-purpose shows "Agent"). Checked with the live hook: two agents started in reverse order each got the right task.
+- Agent label boxes are blue-tinted with a smaller font and an 88 pt × zoom max width (two lines), so they fit between neighbours and stand apart from the grey project-name boxes over Claudes.
+- The right-click menu lists each agent as "Hero — task". Playground and Demo agents get sample tasks.
+
+### Changed
+- `AgentRecord` gains `task` and `StatusFile` gains a `pending` queue, pruned after 120 s or when the session ends. Both are optional, so state written by older versions still loads. Each companion also has a `headTop` so labels sit just above its hair, dome or helmet.
+
+## 2.0.1 — 2026-10-10
+
+### Changed
+- Speech bubbles are about half the size: an 18×13 canvas with a 15×9 box, down from 28×18 and 23×12. They only ever hold three thinking dots or a "!", so the extra room was wasted. The dots are 2×2 squares and the "!" is a 3-pixel bar with a dot. Because the bubbles are smaller, a label pushed over a bubble needs to rise less.
+
+## 2.0.0 — 2026-10-10
+
+### Changed
+- Renamed to **Clawd Wars**. The app installs as `~/Applications/Clawd Wars.app` and the executable is `ClawdWars`. `build.sh` removes the old `VaderClaude.app`, stops either process name, and re-points the Claude Code hooks at the new path (quoted, since it contains a space). The bundle ID (`com.rodclemen.vaderclaude`), the hook binary name and `~/.claude/vader-status` are unchanged, so the Accessibility grant, saved position and size carry over. Checked after the rename: the hook fires and Accessibility is still trusted.
+
+### Added
+- App icon: Vader Clawd and Luke crossing red and green sabers with a clash spark, on a pixel starfield over a Claude-orange horizon. It's drawn by `Tools/MakeIcon` with the app's own sprite code (outline included), stored as `Resources/AppIcon.png`, and turned into `AppIcon.icns` by `build.sh` (sips + iconutil).
+
+### Fixed
+- The project label of the rightmost Claude could run off the right edge of the screen, especially with two busy Claudes and their speech bubbles. Labels (and the "Roger roger!" / "Ho ho ho!" callouts) are now kept inside the screen. When the clamp pulls a label back over a speech bubble, it moves up to sit on top of the bubble.
+
+## 1.9.5 — 2026-10-10
+
+### Fixed
+- Jumping to a VS Code native tab actually switches the tab now. Traced with the new `--jump` diagnostic: AXPress on the tab's AXRadioButton returned success (0), but VS Code (Electron) ignored it, even after being activated first. Jump still activates the app and presses the tab, then checks whether the window title changed. If it didn't, it opens the project folder in the same app. That folder is already open as a tab, so VS Code just focuses that tab and opens no new window. The folder path is cut from the session's cwd at the exact folder whose name matched a tab title, so a subfolder never opens a fresh window. Checked live: another project's tab came forward.
+
+### Added
+- `--jump=<pid> <logfile>` diagnostic: runs the click-to-jump path for a Claude process and logs each step (host app, cwd, windows and tabs seen, press result, fallback taken).
+
+## 1.9.4 — 2026-10-10
+
+### Fixed
+- Clicking a villain now selects the right VS Code tab when `window.nativeTabs` is on. With native tabs, macOS exposes only one window per tab group, titled after the selected tab. The other projects exist only as AXRadioButton tabs in its AXTabGroup, so the old window-title search found nothing and just activated VS Code. Jump now searches every window's tab bar first and presses the tab whose title matches the session's project folder (deepest folder first, exact before substring), then raises that window. It falls back to window titles for apps without native tabs.
+
+### Added
+- `--ax-dump=<pid> [file]` diagnostic: lists the Accessibility trust status, the host app, the session's cwd, and every window and tab title the app can see. Run it with `open -n VaderClaude.app --args …` so it uses the app's own Accessibility grant.
+
+## 1.9.3 — 2026-10-10
+
+### Changed
+- Project label boxes sit 5 pt higher above each villain's head (8 pt instead of 3 pt × zoom), so the box doesn't crowd the helmet or hood.
+
+## 1.9.2 — 2026-10-10
+
+### Changed
+- Long project names wrap onto two centred lines in the label box (max width about 110 pt × zoom, roughly a villain's width). Lines break at spaces, dashes and underscores. A single word too long for one line fills the first line and continues on the second, and anything past two lines ends in "…". For example, "my long project name" shows as "my long / project name".
+
+## 1.9.1 — 2026-10-10
+
+### Fixed
+- On stacked monitors the crew couldn't stand on the bottom edge of the upper monitor. The drag clamp chose the screen from the canvas bottom, which sits 8 rows below the feet. Once that point crossed into the lower monitor, the clamp used the lower monitor's limits and stopped the drag. Now the clamp uses the screen under the cursor while dragging (otherwise the one under the feet). The empty rows under the feet may hang off the edge, and feet dropped within 12 pt of a bottom edge snap onto it. Checked against the real layout: dragging past the upper monitor's bottom puts the feet exactly on its bottom edge, and the same on the lower monitor.
+- Saved positions are validated by where the feet are, so a crew standing on an edge at a large size isn't reset on launch.
+
+## 1.9.0 — 2026-10-10
+
+### Added
+- Four new villains:
+  - Count Dooku: red saber, dark cape, white hair and pointed beard.
+  - Gamorrean Guard: green pig face, horned leather cap and tusks; swings a vibro-axe (fights as melee, drawn as an axe, no glow).
+  - Jabba the Hutt: a big slug body with a tail and slit eyes. Unarmed, so he joins the cheerers and calls "Ho ho ho!" instead of being paired into a fight.
+  - IG-88: grey droid with a tall striped sensor head and a blaster rifle.
+- Seven new heroes:
+  - Saber users: Qui-Gon Jinn (long hair and beard, green), Mace Windu (bald, brown robes, purple), Yoda (green with big ears and a short green blade), Rey (buns, wraps, blue) and Ahsoka Tano (striped montrals, facial markings, twin white sabers).
+  - Blaster users: Chewbacca (fur, bandolier, bowcaster) and a Jawa (hooded robe, glowing yellow eyes, ion blaster).
+- White 1px outline around every character, so dark sprites read on a black desktop. Only fully opaque pixels are outlined, so saber glows and bolts stay clean.
+- Project labels sit in a dark rounded box with white text and a faint border, readable on any wallpaper.
+
+### Changed
+- Agents are now random heroes not already on screen, the same way villains are. Before, the lowest free one was picked, so the new heroes would only appear with 7+ agents at once.
+- The crew can sit right on the bottom edge of the screen. Each sprite has 8 empty pixel rows under its feet (24 pt at normal size), and dragging used to stop that empty space, not the feet, at the edge. "Reset Position" also puts the feet on the edge now.
+
+## 1.8.0 — 2026-10-10
+
+### Added
+- R0-GR, a B1 battle droid, as a seventh villain. It's a tan droid Clawd with the long forward snout head on a thin neck, skinny legs and an E-5 blaster. It fights like the other blaster villains, and every 5 s it calls out "Roger roger!" on the side of its head away from the speech bubble. It's in the random spawn pool and the Playground.
+
+### Changed
+- Vader is no longer always first. The first session gets a random villain like everyone else, and the Vader/Kylo spacing rule still applies. Simulation: Vader came first in 287 of 2000 runs, about 1 in 7, with zero back-to-back Vader/Kylo spawns. The first-spawned villain stands on the saved spot and the crew lines up from there. An idle Vader appears only as a placeholder when no Claude sessions are running.
+
+## 1.7.0 — 2026-10-10
+
+### Changed
+- Villains are assigned at random instead of in fixed order. The first session is still Vader (the crew forms around him). After that, each new session gets a random free villain, and Vader and Kylo never spawn one right after the other. A simulation of 2000 four-session sequences found zero Vader→Kylo or Kylo→Vader spawns. Sessions found only by the process scan use a pid-seeded pick so they keep the same villain between refreshes.
+- Sessions are recorded with a `created` time, and the line is ordered by spawn order (Vader first) instead of villain index, so "who came after whom" matches what you see.
+
+## 1.6.0 — 2026-10-10
+
+### Changed
+- New fight rules:
+  1. Claudes always fight Claudes, whatever each one is doing. Their bubbles and labels still show status.
+  2. Agents fight agents, across sessions.
+  3. If one Claude and one agent are left over, they fight each other (one Claude + one agent = Vader vs Luke).
+  4. Anyone else left over cheers, so a second session's Claude starts duelling Vader while a lone agent cheers them on.
+  5. A lone Claude with nobody to fight does its normal kata when working.
+  Within each group saber users pair first. R2-D2 and C-3PO remain bystanders.
+- Fighting no longer depends on activity, so the activity window and the working/thinking check for fights are gone.
+
+## 1.5.0 — 2026-10-10
+
+### Added
+- Everyone fights. Every armed character on screen pairs off, active villains and agents alike. R2-D2 and C-3PO stay unarmed bystanders. Pairing is greedy in priority order: villain vs agent saber duels (Vader vs Luke) first, then any saber vs saber, then villain vs agent, then whoever is left. Villains fight while their Claude is working or thinking (with a 3 s linger) and step out when idle or waiting on you.
+- With an odd number of fighters, the leftover cheers: it hops twice a second, waves its saber overhead (blasters are raised, the Emperor crackles) and has blinking stars above its head.
+- Agents take fight roles. Luke and Obi-Wan duel, deflect bolts and block lightning. Han and Leia shoot at their opponent with bolts drawn by the effects layer, and shake when zapped.
+- `--agents=0,1,…` launch flag (pairs with `--playground=`) for testing.
+
+### Changed
+- Fight effects work between different-sized sprites. Each side is described by a `Fighter` (position, scale, canvas offset, facing, muzzle). Clash sparks are placed where the two mirrored blades actually intersect, bolts aim at the deflecting blade's peak position (or the target's body), and lightning targets the blocking blade.
+- Saber duel distance scales with both sprites, so blades cross whether it's villain vs villain (170 pt), villain vs agent (~126 pt) or agent vs agent.
+- `Weapon` is a top-level type shared by villains and agents. `fightRoles` and `fightIsCloseQuarters` take weapons instead of villains.
+
+## 1.4.1 — 2026-10-10
+
+### Fixed
+- Duels never started with real sessions that predate the hooks. Those sessions only came from the process scan and were always idle, so they never counted as active and couldn't fight. Vader ended up swinging at an idle Kylo. Hook-less sessions now count as working while their claude process uses more than 3% CPU, sampled every 3 s and held for 6 s (measured: idle about 0.3%, working 5–10%). They still can't report thinking, permission prompts or agents until they're restarted with hooks.
+
+### Added
+- Debug aids: `--playground=0,1,…` starts the Playground with those villains, and `VADER_DEBUG=1` logs each villain's position, facing, mood and fight role twice a second.
+
+## 1.4.0 — 2026-10-10
+
+### Added
+- Click a villain to jump to its Claude session. The app walks up from the claude process to the GUI app hosting it. In Terminal.app or iTerm2 it selects the exact tab by tty (AppleScript). In VS Code, Cursor and other editors it raises the window whose title names the session's project (Accessibility API). The project is matched deepest folder first and never opens a new window. A click is told apart from a drag by under 4 pt of movement. Playground and demo villains, which have no process, just beep.
+- `build.sh` signs with your Developer ID / Apple Development certificate when one exists, so the Accessibility grant survives rebuilds. It falls back to ad-hoc signing.
+
+### Changed
+- Fight pairing is now dynamic instead of fixed slots (1st+2nd, 3rd+4th). Active saber users are paired with each other first, then the remaining active Claudes pair in order, and idle Claudes stand aside. Before, a third lightsaber Claude practised next to a duelling pair, facing the same way as its neighbour. Now any two active saber Claudes walk over and duel. The line keeps session order, so it only reshuffles when someone starts or stops working.
+
+## 1.3.0 — 2026-10-10
+
+### Added
+- Playground (right-click → Playground) for previewing villains and matchups without real Claude sessions:
+  - Tick any of the six villains to put them on screen. They pair up and fight in the order you add them, so you pick the matchups (e.g. Boba then Vader to watch deflections, Emperor then Maul for saber-vs-lightning).
+  - Tick any of the six agents; they join the first villain.
+  - "Villains Are…" switches everyone between Working (fighting), Thinking, Waiting for you and Idle.
+  - "Add All Villains" adds the whole roster; "Exit Playground" goes back to live status.
+  - Turning on Demo Mode leaves the Playground, and vice versa.
+
+### Changed
+- Project labels now sit just above each villain's helmet or hood instead of under its feet. Each villain has its own head height (Boba's clears his antenna), and if a speech bubble is showing on that side, the label slides away from it.
+
+## 1.2.0 — 2026-10-10
+
+### Added
+- Session discovery from the process table (`Sources/Shared/Processes.swift`). The app scans for interactive `claude` processes every 3 s and reads each one's working directory, so every open Claude Code session gets a villain and project label even if its hooks never fired. Claude Code only loads hooks at startup, so sessions started before the install were invisible. Sessions found this way show as idle, and the menu marks them "no live status (restart this Claude session)".
+- The hook records the PID of the Claude process that ran it. The app and the hook both drop a session (and its agents) the moment that process exits, which replaces the 3-hour stale timeout for anything with a PID.
+
+### Changed
+- Records without a PID are matched to a running process by project folder, so a session isn't counted twice while it upgrades.
+
+## 1.1.0 — 2026-10-10
+
+### Added
+- Several Claudes at once: each Claude Code session gets its own Clawd villain (Vader, Kylo Ren, Darth Maul, Boba Fett, Stormtrooper, Emperor) with its own mood and its own agents. The hook stores the leader index and project folder per session, and the overlay labels each villain with its project name. You can turn the labels off in the menu.
+- Fights between paired Claudes when both are working. Saber vs saber steps in to a synced duel with clash sparks where the blades cross. Blaster vs saber shoots bolts, and the defender's swing is timed to deflect each one up and away. Emperor lightning is caught on a saber blade or zaps a blaster user. Blaster vs blaster is a shootout. A fight carries on for 3 s after one side stops working, so the gaps between tool calls don't break it up.
+- Proper blasters drawn from the film designs: Han's DL-44 (scope, conical flash hider, wood grip), Leia's Defender sporting blaster (chrome slide), the Stormtrooper's E-11 (scope, magazine, cooling holes) and Boba's EE-3 (brass fittings). Boba's jetpack fires while he shoots.
+- Walking: every character walks (stepping legs, facing the way it's going) to its spot in the formation, so the crew shifts as a group to stay on screen and walks back home afterwards.
+- Menu items: Show Project Names and Forget Idle Sessions (clears sessions whose terminal closed without a clean exit). There's also a `--demo` launch flag.
+
+### Changed
+- Layout: the fixed slot window is replaced by a formation laid out toward the side of the screen with more room. Every sprite faces open space, the window resizes to fit what's drawn, and the layout reserves saber room so the crew doesn't jitter between thinking and working.
+- Thought and "!" bubbles are drawn separately from the sprite and flip to whichever side of the head fits on screen.
+- A "thinking" status within 3 s of a tool call still counts as working, so the lightsaber kata no longer flickers between tool calls.
+- Dragging keeps Vader and his bubble fully on screen. Any villain can be grabbed to move the whole crew.
+- Idle scenes render at 10 fps instead of 30 to cut CPU use.
+
+### Fixed
+- Sessions recorded before 1.1 had no leader assigned. The hook now fills one in on the next event, so an existing session doesn't keep showing as the wrong villain.
+
+## 1.0.0 — 2026-10-10
+
+### Added
+- Darth Clawd: a transparent, always-on-top desktop overlay (status-bar window level, every Space, full-screen apps) showing Clawd in a Vader helmet, cape and chest box. All sprites are procedural pixel art drawn at runtime, so there are no image assets.
+- Mood animations: idle breathing, a thought bubble while thinking, a looping lightsaber kata while running tools (with motion trails), a red "!" bubble while a permission prompt waits, and a lit-saber guard stance while agents run after Claude itself has stopped.
+- Subagent companions, assigned in this order: Luke (green saber kata), Han and Leia (blaster fire with muzzle flash and bolts), Obi-Wan (blue saber), R2-D2 (rocking, blinking dome light, music notes) and C-3PO (flailing arms). They fade in and out, sit in slots around Vader, gather on the side with more screen room, and mirror on the left so their weapons point outward.
+- Drag-to-place: only Vader's body takes clicks and the rest of the overlay is click-through. The position is saved between launches, and the agents follow him.
+- Right-click menu: live status and agent roster, Size (Small/Medium/Large/Huge), Demo Mode, Reset Position, Launch at Login, Install/Remove hooks, Quit.
+- `vader-hook`: a Foundation-only binary for fast startup that Claude Code runs on 12 hook events. It writes `~/.claude/vader-status/state.json` under `flock`, merges multiple sessions, and expires stuck states because Esc interrupts fire no hook.
+- `build.sh`: builds the app, ad-hoc signs it, installs to `~/Applications`, merges the hooks into `~/.claude/settings.json` (backup in `settings.json.before-vader`) and launches it.
+
+### Fixed
+- The overlay had dropped to floating level: `isFloatingPanel = true` was overriding the status-bar level, so some windows could cover it.
+- First launch now places Vader on the screen under the mouse. Before, it used AppKit's "main" screen, which on a stacked two-display setup can be the display you're not looking at.
+
+---
+
+*Taught a crab the ways of the Sith, then gave it rivals. Spent more time on the blaster deflection angles than on anything with actual business value.*

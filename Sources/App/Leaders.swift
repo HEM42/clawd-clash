@@ -1,0 +1,728 @@
+import Foundation
+
+// One dark-side Clawd per running Claude Code session. Session #1 is always Vader.
+
+enum Weapon { case saber, blaster, lightning, none }
+
+extension Companion {
+    var weapon: Weapon {
+        switch self {
+        case .luke, .obiwan, .quigon, .mace, .yoda, .rey, .ahsoka: return .saber
+        case .han, .leia, .jawa, .chewie: return .blaster
+        case .r2d2, .c3po: return .none
+        }
+    }
+
+    /// Muzzle position on the companion's canvas (blaster users only).
+    var muzzle: (x: Double, y: Double) {
+        switch self {
+        case .han: return (53, 32)
+        case .chewie: return (54, 31)
+        default: return (46, 32)
+        }
+    }
+}
+
+enum Leader: Int, CaseIterable {
+    case vader, kylo, maul, boba, trooper, emperor, rogr, dooku, gamorrean, jabba, ig88
+
+    var name: String {
+        switch self {
+        case .vader: return "Darth Vader"
+        case .kylo: return "Kylo Ren"
+        case .maul: return "Darth Maul"
+        case .boba: return "Boba Fett"
+        case .trooper: return "Stormtrooper"
+        case .emperor: return "The Emperor"
+        case .rogr: return "R0-GR"
+        case .dooku: return "Count Dooku"
+        case .gamorrean: return "Gamorrean Guard"
+        case .jabba: return "Jabba the Hutt"
+        case .ig88: return "IG-88"
+        }
+    }
+
+    var weapon: Weapon {
+        switch self {
+        case .vader, .kylo, .maul: return .saber
+        case .boba, .trooper, .rogr, .ig88: return .blaster
+        case .dooku, .gamorrean: return .saber      // the Gamorrean's vibro-axe fights like a blade
+        case .jabba: return .none
+        case .emperor: return .lightning
+        }
+    }
+
+    /// Top row of the helmet/hood/hair on the 72x52 canvas, for placing the project label.
+    var headTop: Int {
+        switch self {
+        case .vader: return 14
+        case .kylo: return 15
+        case .maul: return 23
+        case .boba: return 11   // rangefinder antenna
+        case .trooper: return 16
+        case .emperor: return 19
+        case .rogr: return 15
+        case .dooku: return 21
+        case .gamorrean: return 17
+        case .jabba: return 19
+        case .ig88: return 9
+        }
+    }
+
+    init(index: Int) { self = Leader(rawValue: index % Leader.allCases.count) ?? .vader }
+}
+
+/// What a leader is doing on screen.
+enum VaderMode {
+    case idle, thinking, working, waiting
+    case standGuard     // Claude is idle but its agents are still out on missions
+}
+
+/// Role in a fight between two neighbouring Claudes that are both working.
+enum FightRole {
+    case none
+    case duel                    // saber vs saber, both on the shared clock so blades meet
+    case shoot(offset: Double)   // blaster: fire at the opponent (bolts are drawn by the FX layer)
+    case deflect                 // saber vs blaster: swing to meet each incoming bolt
+    case block                   // saber vs lightning: hold the blade into the arc
+    case zap                     // lightning (arcs drawn by the FX layer)
+    case hit                     // non-saber caught by lightning: shake
+    case cheer                   // odd one out: bounce and wave the weapon
+}
+
+func fightRoles(_ a: Weapon, _ b: Weapon) -> (FightRole, FightRole) {
+    switch (a, b) {
+    case (.saber, .saber): return (.duel, .duel)
+    case (.blaster, .saber): return (.shoot(offset: 0), .deflect)
+    case (.saber, .blaster): return (.deflect, .shoot(offset: 0))
+    case (.blaster, .blaster): return (.shoot(offset: 0), .shoot(offset: blasterPeriod / 2))
+    case (.lightning, .saber): return (.zap, .block)
+    case (.saber, .lightning): return (.block, .zap)
+    case (.lightning, .blaster): return (.zap, .hit)
+    case (.blaster, .lightning): return (.hit, .zap)
+    case (.lightning, .lightning): return (.zap, .zap)
+    case (.none, _), (_, .none): return (.none, .none)
+    }
+}
+
+/// Saber fighters close in for a duel; ranged fights keep normal spacing.
+func fightIsCloseQuarters(_ a: Weapon, _ b: Weapon) -> Bool { a == .saber && b == .saber }
+
+let blasterPeriod = 0.9
+private let boltArrival = 0.4          // fraction of the period a bolt spends in flight
+private let rifleMuzzle = (x: 52, y: 32)
+private let deflectPeak = -15.0
+
+private func frac(_ v: Double) -> Double { v - floor(v) }
+
+func deflectAngle(_ t: Double) -> Double {
+    let d = frac(t / blasterPeriod) - boltArrival
+    return -75 + 60 * exp(-pow(d / 0.07, 2))
+}
+
+// MARK: - Drawing
+
+func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, walking: Bool, role: FightRole = .none) {
+    let lt = t + Double(who.rawValue) * 0.77     // personal clock so solo leaders aren't in lockstep
+    let step = walkStep(t, walking)
+    var breathe = walking ? (step == 0 ? -1 : 0) : (sin(lt * 2 * .pi / 2.6) > 0.35 ? -1 : 0)
+    var dx = 0, hop = 0
+    var saber: Double?                // blade angle; nil = holstered
+    var trail: [Double] = []
+    var fire: (t: Double, bolt: Bool)?
+    var zap: Bool?                    // true = draw the arc in-canvas
+    var capeSpeed = 1.6
+    var armRaise = 0
+
+    if walking {
+        if mode != .idle && mode != .thinking { saber = -60 }
+    } else {
+        switch mode {
+        case .idle, .thinking:
+            break
+        case .waiting:
+            saber = -90 + 2 * sin(t * 3)
+        case .standGuard:
+            saber = -65 + 3 * sin(t * 2.2)
+            capeSpeed = 2.2
+        case .working:
+            capeSpeed = 4.5
+            switch role {
+            case .duel:
+                let p = duelPose(t)
+                saber = p.angle; dx = Int(p.dx.rounded()); hop = Int(p.dy.rounded()); breathe = 0
+                trail = saberTrail(t, pose: { duelPose($0).angle })
+            case .deflect:
+                saber = deflectAngle(t)
+                trail = saberTrail(t, pose: deflectAngle)
+            case .block:
+                saber = -60 + 2 * sin(t * 37)
+                dx = -1
+            case .shoot(let offset):
+                fire = (t + offset, false)
+            case .zap:
+                zap = false
+            case .hit:
+                dx = noise(Int(t * 30)) > 0.5 ? 1 : -1
+                hop = noise(Int(t * 30) + 7) > 0.6 ? -1 : 0
+            case .cheer:
+                hop = cheerHop(t); breathe = 0
+                switch who.weapon {
+                case .saber: saber = -95 + 18 * sin(t * 9)
+                case .lightning: zap = false
+                default: break
+                }
+            case .none:
+                switch who.weapon {
+                case .saber:
+                    let p = kataPose(lt)
+                    saber = p.angle; dx = Int(p.dx.rounded()); hop = Int(p.dy.rounded()); breathe = 0
+                    trail = saberTrail(lt)
+                case .blaster: fire = (lt, true)
+                case .lightning: zap = true
+                case .none: break
+                }
+            }
+        }
+    }
+    if zap != nil { armRaise = 2 }
+
+    if case .cheer = role, mode == .working, !walking { drawCheerSparkles(c, t: t) }
+
+    // Back layer moves with hops but not with breathing.
+    c.ox = dx; c.oy = hop
+    switch who {
+    case .vader, .kylo: drawCape(c, t: t, speed: capeSpeed, color: C(0x0E0E12), edge: C(0x2C2C36))
+    case .dooku: drawCape(c, t: t, speed: capeSpeed, color: C(0x2A1A14), edge: C(0x4A3024))
+    case .emperor: drawCape(c, t: t, speed: capeSpeed * 0.6, color: C(0x111116), edge: C(0x2A2A33), extra: 1.5)
+    case .boba: drawJetpack(c, t: t, burning: fire.map { frac($0.t / blasterPeriod) > 0.7 } ?? false)
+    default: break
+    }
+
+    switch who {
+    case .vader: drawVaderCostume(c, step: step, lift: breathe)
+    case .kylo: drawKylo(c, step: step, lift: breathe)
+    case .maul: drawMaul(c, step: step, lift: breathe)
+    case .boba: drawBoba(c, step: step, lift: breathe)
+    case .trooper: drawTrooper(c, step: step, lift: breathe)
+    case .rogr: drawBattleDroid(c, step: step, lift: breathe)
+    case .dooku: drawDooku(c, step: step, lift: breathe)
+    case .gamorrean: drawGamorrean(c, step: step, lift: breathe)
+    case .jabba: drawJabba(c, t: t, lift: breathe)
+    case .ig88: drawIG88(c, step: step, lift: breathe)
+    case .emperor: drawEmperor(c, lift: breathe, armRaise: armRaise)
+    }
+
+    // Weapon
+    switch who.weapon {
+    case .saber:
+        let lit = saber != nil
+        let angle = saber ?? 0
+        switch who {
+        case .maul:
+            if lit {
+                drawSaber(c, angle: angle + 180, core: C(0xFFE3E3), glow: C(0xFF1E2D), lit: true, length: 15)
+                drawSaber(c, angle: angle, core: C(0xFFE3E3), glow: C(0xFF1E2D), lit: true, trail: trail, length: 15)
+            } else {
+                c.rect(36, 34, 2, 8, C(0x2A2A2F)); c.rect(36, 37, 2, 2, C(0xB9BEC8))
+            }
+        case .kylo:
+            if lit {
+                drawSaber(c, angle: angle, core: C(0xFFD6D6), glow: C(0xFF2A1A), lit: true, trail: trail,
+                          crossguard: true, unstable: true)
+            } else {
+                c.rect(36, 37, 2, 5, C(0x3A3A42)); c.rect(35, 38, 4, 1, C(0x3A3A42))
+            }
+        case .gamorrean:
+            drawAxe(c, angle: lit ? angle : 80)
+        default:
+            if lit {
+                drawSaber(c, angle: angle, core: C(0xFFE3E3), glow: C(0xFF1E2D), lit: true, trail: trail)
+            } else {
+                c.rect(36, 37, 2, 5, C(0xB9BEC8)); c.rect(36, 39, 2, 1, C(0x2A2A2F))
+            }
+        }
+    case .blaster:
+        var recoil = 0
+        if let fire {
+            recoil = fireBlaster(c, t: fire.t, period: blasterPeriod, muzzleX: rifleMuzzle.x, muzzleY: rifleMuzzle.y,
+                                 bolt: fire.bolt)
+        }
+        c.oy = hop + breathe - recoil
+        switch who {
+        case .boba: drawEE3(c, x: 38, y: 30)
+        case .rogr: drawE5(c, x: 39, y: 31)
+        case .ig88: drawE11(c, x: 37, y: 30)
+        default: drawE11(c, x: 37, y: 30)
+        }
+    case .lightning:
+        c.oy = hop + breathe
+        if zap == true {
+            drawLightning(c, from: (41.5, 32.5), to: (70, 30), t: t)
+        } else if zap == false || mode == .waiting {
+            // crackle between the fingers
+            let i = Int(t * 20)
+            c.px(41 + Int(noise(i) * 3), 31 + Int(noise(i + 1) * 3), C(0xBFD8FF))
+            c.px(41 + Int(noise(i + 2) * 3), 31 + Int(noise(i + 3) * 3), C(0xFFFFFF))
+        }
+    case .none:
+        break
+    }
+    c.ox = 0; c.oy = 0
+}
+
+private func drawCape(_ c: PixelCanvas, t: Double, speed: Double, color: Px, edge: Px, extra: Double = 0) {
+    for y in 27...44 {
+        let k = Double(y - 27) / 17
+        let hw = 10.5 + k * (4.5 + extra)
+        let sway = sin(t * speed + k * 2.2) * k * 1.6
+        let l = Int((Sprite.bodyCenterX - hw + sway).rounded())
+        let r = Int((Sprite.bodyCenterX + hw + sway).rounded()) - 1
+        c.rect(l, y, r - l + 1, 1, color)
+        c.px(l, y, edge)
+        c.px(r, y, edge)
+    }
+}
+
+private func drawJetpack(_ c: PixelCanvas, t: Double, burning: Bool) {
+    let pack = C(0x7D8A6E), packShade = C(0x5E6A52)
+    for x in [13, 38] {
+        c.rect(x, 23, 5, 11, pack)
+        c.rect(x + 4, 23, 1, 11, packShade)
+        c.rect(x, 34, 5, 1, C(0x4A4A52))
+    }
+    c.rect(13, 21, 5, 2, C(0xC8402A))   // the missile
+    c.rect(14, 20, 3, 1, C(0xC8402A))
+    if burning {
+        for x in [14, 39] {
+            let len = 3 + Int(noise(Int(t * 30) + x) * 3)
+            c.rect(x, 35, 3, len, C(0xFF9A2A))
+            c.rect(x + 1, 35, 1, len + 1, C(0xFFE27A))
+        }
+    }
+}
+
+// MARK: Costumes
+
+private func drawVaderCostume(_ c: PixelCanvas, step: Int, lift: Int) {
+    let base = c.oy
+    drawLegs(c, Look(leg: C(0x2E2F36)), step: step)
+    c.oy = base + lift
+    drawBody(c, Look())
+    c.rect(15, 33, 1, 3, ink)
+    c.rect(40, 33, 1, 3, ink)
+    c.pattern(15, 14, [
+        ".........KKKKKKKK.........",
+        ".......KKKKKKKKKKKK.......",
+        "......KKKHHKKKKKKKKK......",
+        ".....KKKHHKKKKKKKKKKK.....",
+        ".....KKHHKKKKKKKKKKKK.....",
+        "....KKKHKKKKKKKKKKKKKK....",
+        "....KKKKKKKKKKKKKKKKKK....",
+        "....KKKKKKKKKKKKKKKKKK....",
+        "...KKKKKKKKKKKKKKKKKKKK...",
+        "...KKKKKKKKKKKKKKKKKKKK...",
+        "..KKKKKKKKKKKKKKKKKKKKKK..",
+        "..KKKGGGGGGGGGGGGGGGGKKK..",
+        ".KKKK................KKKK.",
+        ".KKK..................KKK.",
+        "KKKK..................KKKK",
+        "KKK....................KKK",
+        "KK......................KK",
+        "K........................K",
+    ], ["K": ink, "H": C(0x5C6070), "G": C(0x3A3D46)])
+    c.pattern(25, 32, [".GGGG.", "GSGGSG", ".GSSG."], ["G": C(0x3A3D46), "S": C(0x9AA0AE)])
+    c.pattern(31, 34, ["GGGGG", "GRgBG", "GGGGG"],
+              ["G": C(0x3A3D46), "R": C(0xE0303A), "g": C(0x3BD15A), "B": C(0x3A7BEA)])
+    c.rect(18, 37, 20, 1, C(0x2A2B31))
+    c.rect(26, 37, 4, 1, C(0x9AA0AE))
+}
+
+private func drawKylo(_ c: PixelCanvas, step: Int, lift: Int) {
+    let base = c.oy
+    let black = C(0x1E1E24), silver = C(0xA9AEB8)
+    drawLegs(c, Look(leg: black), step: step)
+    c.oy = base + lift
+    drawBody(c, Look(arm: black))
+    c.pattern(16, 15, [
+        "......KKKKKKKKKKKK......",
+        "....KKKKKKKKKKKKKKKK....",
+        "...KKKKKKKKKKKKKKKKKK...",
+        "..KKKKKKKKKKKKKKKKKKKK..",
+        "..KKKKKKKKKKKKKKKKKKKK..",
+        "..KKKKKKKKKKKKKKKKKKKK..",
+        "..KKSSSSSSSSSSSSSSSSKK..",
+        "..KKKKKKKKKSSKKKKKKKKK..",
+        "..KKKKKKKKKSSKKKKKKKKK..",
+        ".KKKKKKKKKKSSKKKKKKKKKK.",
+        ".KKKKKKKKKKSSKKKKKKKKKK.",
+        ".KKK.......SS.......KKK.",
+        "KKKK................KKKK",
+        "KKK..................KKK",
+        "KK....................KK",
+    ], ["K": C(0x16161B), "S": silver])
+    c.rect(27, 27, 2, 4, silver)
+    c.rect(21, 28, 4, 1, silver)
+    c.rect(31, 28, 4, 1, silver)
+    c.rect(18, 33, 20, 5, black)
+    c.rect(18, 35, 20, 1, C(0x3A3A42))
+}
+
+private func drawMaul(_ c: PixelCanvas, step: Int, lift: Int) {
+    let base = c.oy
+    let robe = C(0x1A1A1F)
+    drawLegs(c, Look(leg: robe), step: step)
+    c.oy = base + lift
+    drawBody(c, Look(body: C(0xC0262D), shade: C(0x8E1A20), arm: robe, eye: C(0xF5D547)))
+    let K: [Character: Px] = ["K": C(0x111114)]
+    c.pattern(18, 26, ["KK...K..KKKK..K...KK", "K....KK..KK..KK....K"], K)
+    c.pattern(18, 32, ["..KK....KKKK....KK..", "...KKK..KKKK..KKK..."], K)
+    c.px(21, 29, C(0x111114)); c.px(34, 29, C(0x111114))
+    c.pattern(18, 23, ["..h..h...hh...h..h..", "..H..H...HH...H..H..", "..H..H..H..H..H..H.."], ["H": C(0xF0E6CC), "h": C(0xFFF8E6)])
+    c.rect(18, 34, 20, 4, robe)
+    c.rect(18, 35, 20, 1, C(0x3A3A42))
+}
+
+private func drawBoba(_ c: PixelCanvas, step: Int, lift: Int) {
+    let base = c.oy
+    let armor = C(0x6B7A5E), armorShade = C(0x4E5A44)
+    drawLegs(c, Look(leg: C(0x6E6A5A)), step: step)
+    c.oy = base + lift
+    drawBody(c, Look(body: armor, shade: armorShade, arm: C(0x9A8F72), eye: nil))
+    c.pattern(16, 17, [
+        "......GGGGGGGGGGGG......",
+        "....GGGGGGGGGGGGGGGG....",
+        "...GGGGGRRGGGGGGGGGGG...",
+        "..GGGGGGRRGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGGGGG..",
+        "..GGGGGGGGGGGGGGGGGGGG..",
+        ".GGGGGGGGGGGGGGGGGGGGGG.",
+        ".GGGGGGGGGGGGGGGGGGGGGG.",
+    ], ["G": armor, "R": C(0xA8442E)])
+    c.rect(20, 28, 16, 2, ink)       // T visor
+    c.rect(27, 30, 2, 5, ink)
+    c.rect(38, 11, 1, 8, C(0x9AA0AE)) // rangefinder antenna
+    c.rect(37, 17, 2, 2, C(0x9AA0AE))
+    c.rect(18, 35, 20, 1, armorShade)
+    c.rect(18, 37, 20, 1, C(0x6B4A2B))
+    c.rect(21, 37, 2, 1, C(0xB08D57)); c.rect(32, 37, 2, 1, C(0xB08D57))
+}
+
+private func drawTrooper(_ c: PixelCanvas, step: Int, lift: Int) {
+    let base = c.oy
+    let armor = C(0xF2F3F5), edge = C(0x8C93A0)
+    // Faint outline so the white armour still reads on a white window.
+    c.rect(18, 36, 2, 1, edge)
+    drawLegs(c, Look(leg: C(0xC3C9D2)), step: step)
+    for lx in [19, 23, 31, 35] { c.rect(lx, 39, 2, 1, edge) }
+    c.oy = base + lift
+    c.rect(17, 25, 22, 14, edge)
+    drawBody(c, Look(body: armor, shade: C(0xC9CED6), arm: armor, eye: nil))
+    c.pattern(15, 16, [
+        ".......oooooooooooo.......",
+        ".....ooWWWWWWWWWWWWoo.....",
+        "....oWWWWWWWWWWWWWWWWo....",
+        "...oWWWWWWWWWWWWWWWWWWo...",
+        "..oWWWWWWWWWWWWWWWWWWWWo..",
+        "..oWWWWWWWWWWWWWWWWWWWWo..",
+        "..oWWWWWWWWWWWWWWWWWWWWo..",
+        "..oggggggggggggggggggggo..",
+        ".oWWWWWWWWWWWWWWWWWWWWWWo.",
+        ".oWWWWWWWWWWWWWWWWWWWWWWo.",
+    ], ["W": armor, "g": C(0x9AA0AE), "o": edge])
+    c.rect(21, 28, 4, 3, ink)
+    c.rect(31, 28, 4, 3, ink)
+    c.rect(25, 32, 6, 2, C(0x9AA0AE))
+    c.px(26, 32, ink); c.px(28, 32, ink); c.px(30, 32, ink)
+    c.rect(18, 36, 20, 1, ink)
+    c.rect(27, 36, 2, 1, armor)
+}
+
+/// The Gamorrean guard's vibro-axe: a long haft with a heavy blade at the end.
+private func drawAxe(_ c: PixelCanvas, angle: Double) {
+    let hx = Sprite.hand.x, hy = Sprite.hand.y
+    let r = angle * .pi / 180, ux = cos(r), uy = sin(r)
+    c.glowLine(hx - ux * 3, hy - uy * 3, hx + ux * 17, hy + uy * 17, core: C(0x5A3A22), glow: C(0, 0), coreR: 0.8, glowR: 0.9)
+    // Blade: a wedge on one side of the haft near the end
+    let px = -uy, py = ux
+    for i in 0..<6 {
+        let along = 12.0 + Double(i)
+        let width = 4.5 - abs(Double(i) - 2.5) * 0.6
+        c.glowLine(hx + ux * along, hy + uy * along, hx + ux * along + px * width, hy + uy * along + py * width,
+                   core: C(0xA9AEB8), glow: C(0, 0), coreR: 0.7, glowR: 0.8)
+    }
+    c.glowLine(hx + ux * 12 + px * 4.5, hy + uy * 12 + py * 4.5, hx + ux * 17 + px * 4.5, hy + uy * 17 + py * 4.5,
+               core: C(0xE4E8EE), glow: C(0, 0), coreR: 0.6, glowR: 0.7)
+}
+
+private func drawDooku(_ c: PixelCanvas, step: Int, lift: Int) {
+    let base = c.oy
+    let robe = C(0x2A1A14)
+    drawLegs(c, Look(leg: C(0x1E1410)), step: step)
+    c.oy = base + lift
+    drawBody(c, Look(arm: robe))
+    let W = C(0xDCDCDC), w = C(0xB4B4B4)
+    c.pattern(18, 22, ["....WWWWWWWWWWWW....", "..WWwWWWWWWWWWWwWW..", ".WW..............WW.", "WW................WW"], ["W": W, "w": w])
+    c.pattern(24, 32, ["WW....WW", ".WWWWWW.", "..WWWW..", "...WW..."], ["W": W])   // pointed beard
+    c.rect(18, 33, 20, 5, robe)
+    c.pattern(24, 32, ["WW....WW", ".WWWWWW.", "..WWWW..", "...WW..."], ["W": W])
+    c.rect(18, 36, 20, 1, C(0x8A6A3A))
+    c.rect(26, 35, 4, 1, C(0xC9A44A))   // cape clasp chain
+}
+
+private func drawGamorrean(_ c: PixelCanvas, step: Int, lift: Int) {
+    let base = c.oy
+    let green = C(0x6E8B3D), greenDark = C(0x55702C), leather = C(0x5A3A22)
+    drawLegs(c, Look(leg: greenDark), step: step)
+    c.oy = base + lift
+    drawBody(c, Look(body: green, shade: greenDark, arm: green, eye: nil))
+    c.pattern(17, 18, ["H..................H", "HH..LLLLLLLLLLLL..HH", ".HLLLLLLLLLLLLLLLLH.", "..LLLLLLLLLLLLLLLL..",
+                       ".LLLLLLLLLLLLLLLLLL.", "LLLLLLLLLLLLLLLLLLLL", "LL................LL"],
+              ["L": leather, "H": C(0xE8DCC0)])                 // leather cap with horns
+    c.rect(23, 28, 2, 2, C(0x1A1A10)); c.rect(32, 28, 2, 2, C(0x1A1A10))   // small piggy eyes
+    c.pattern(25, 30, [".PPPPP.", "PPkPkPP", ".PPPPP."], ["P": C(0x9AB070), "k": C(0x2A2A18)])   // snout
+    c.px(23, 34, C(0xF4EEDC)); c.px(33, 34, C(0xF4EEDC))      // tusks
+    c.rect(18, 35, 20, 3, C(0x6A4A2A))                          // fur loincloth
+    for x in stride(from: 19, to: 38, by: 3) { c.px(x, 37, C(0x4A3020)) }
+}
+
+private func drawJabba(_ c: PixelCanvas, t: Double, lift: Int) {
+    let skin = C(0x8E8B4E), dark = C(0x6E6B38), belly = C(0xB0A86A)
+    let laugh = sin(t * 9) > 0 ? -1 : 0
+    // Tail curling off behind, then the big slug body (no legs).
+    c.pattern(4, 36, ["......SSSS", "...SSSSSSS", ".SSSSSSSSS", "SSSSSSSSSS", "SS........"], ["S": dark])
+    c.oy += lift + laugh
+    for y in 22...43 {
+        let k = Double(y - 22) / 21
+        let hw = 10 + k * 7
+        let l = Int((Sprite.bodyCenterX - hw).rounded()), r = Int((Sprite.bodyCenterX + hw).rounded())
+        c.rect(l, y, r - l, 1, skin)
+        c.px(l, y, dark); c.px(r - 1, y, dark)
+    }
+    c.rect(20, 34, 18, 9, belly)
+    for y in stride(from: 35, to: 43, by: 2) { c.rect(21, y, 16, 1, C(0x9A925A)) }
+    c.pattern(21, 26, ["OOO.....OOO", "OKO.....OKO"], ["O": C(0xE08A2A), "K": C(0x2A1A0A)])   // slit eyes
+    c.rect(19, 31, 20, 1, C(0x4A4626))                          // the enormous mouth
+    c.rect(20, 32, 18, 1, laugh < 0 ? C(0x7A3A3A) : dark)
+    c.rect(38, 33, 4, 2, skin)                                  // tiny arm
+}
+
+private func drawIG88(_ c: PixelCanvas, step: Int, lift: Int) {
+    let base = c.oy
+    let metal = C(0x6F747C), metalDark = C(0x4C5058), metalLight = C(0x9AA0A8)
+    drawLegs(c, Look(leg: metalDark), step: step)
+    for lx in [19, 23, 31, 35] { c.rect(lx, 39, 2, 1, metalLight) }
+    c.oy = base + lift
+    drawBody(c, Look(body: metal, shade: metalDark, arm: metalDark, eye: nil))
+    c.rect(20, 28, 16, 2, metalDark); c.rect(22, 31, 12, 4, metalDark)    // chest plating
+    c.rect(24, 32, 2, 2, C(0xE0303A)); c.rect(30, 32, 2, 2, C(0xE0303A))
+    c.rect(27, 22, 2, 4, metalDark)                                       // neck
+    // Tall cylindrical sensor head
+    c.pattern(23, 9, ["..MMMMMM..", ".MMLMMMMM.", "MMLMMMMMMM", "MMLMMMMMMM", "RRRRRRRRRR", "MMLMMMMMMM",
+                      "MMLMMMMMMM", "MMLMMMMMMM", "RRRRRRRRRR", "MMLMMMMMMM", "MMMMMMMMMM", ".MMMMMMMM.", "..MMMMMM.."],
+              ["M": metal, "L": metalLight, "R": C(0xC0392B)])
+}
+
+/// R0-GR, a B1 battle droid: tan, skinny-limbed, with the long forward-pointing snout head.
+private func drawBattleDroid(_ c: PixelCanvas, step: Int, lift: Int) {
+    let base = c.oy
+    let tan = C(0xD4C08F), tanShade = C(0xA8946A), dark = C(0x6E5E3E)
+    let look = Look(body: tan, shade: tanShade, leg: C(0xC2AE7E), arm: tan, eye: nil)
+    // Thin droid legs: draw them, then carve them narrower.
+    drawLegs(c, look, step: step)
+    for lx in [19, 23, 31, 35] { c.rect(lx, 38, 1, 4, dark) }
+    c.oy = base + lift
+    drawBody(c, look)
+    c.rect(20, 28, 16, 1, tanShade)          // chest plates
+    c.rect(20, 31, 16, 1, tanShade)
+    c.rect(26, 27, 4, 8, C(0xC7B282))
+    c.rect(24, 34, 8, 2, dark)               // backpack strap / power unit
+    c.rect(27, 22, 2, 4, dark)               // neck
+    c.pattern(21, 15, [
+        "....HHHHHH......",
+        "..HHHHHHHHHHH...",
+        ".HHEEHHHHHHHHHHH",
+        ".HHEEHHHHHHHHHHs",
+        "..HHHHHHHHHHHss.",
+        "....hhhhhhhh....",
+        ".....hhhhh......",
+    ], ["H": tan, "h": tanShade, "s": tanShade, "E": C(0x2A2418)])
+}
+
+/// The B1's E-5 blaster: slim tan-brown rifle with a shoulder stock.
+func drawE5(_ c: PixelCanvas, x: Int, y: Int) {
+    c.pattern(x, y, [
+        "..BBBBBBBBBBB",
+        "BBBBBBbBb....",
+        "BB...BB......",
+    ], ["B": C(0x5A4A32), "b": C(0x8A7652)])
+}
+
+private func drawEmperor(_ c: PixelCanvas, lift: Int, armRaise: Int) {
+    let robe = C(0x1A1A20), robeEdge = C(0x2E2E38)
+    for y in 36...44 {
+        let k = (y - 36) / 2
+        c.rect(17 - k, y, 22 + k * 2, 1, robe)
+        c.px(17 - k, y, robeEdge); c.px(38 + k, y, robeEdge)
+    }
+    c.oy += lift
+    var look = Look(body: C(0xD08A6C), shade: C(0xA86A50), arm: robe, eye: C(0xF5D547))
+    look.legs = false
+    drawBody(c, look, armRight: armRaise)
+    drawHood(c, robe, robeEdge)
+    c.rect(18, 33, 20, 5, robe)
+    c.rect(26, 33, 4, 1, C(0xA86A50))
+}
+
+// MARK: - Effects
+
+func drawLightning(_ c: PixelCanvas, from a: (Double, Double), to b: (Double, Double), t: Double) {
+    let seed = Int(t * 20)
+    for bolt in 0..<2 {
+        var prev = a
+        let n = 6
+        let dx = b.0 - a.0, dy = b.1 - a.1
+        let len = max(sqrt(dx * dx + dy * dy), 0.01)
+        let nx = -dy / len, ny = dx / len
+        for i in 1...n {
+            let f = Double(i) / Double(n)
+            let off = i == n ? 0 : (noise(seed * 31 + bolt * 7 + i) - 0.5) * 7
+            let p = (a.0 + dx * f + nx * off, a.1 + dy * f + ny * off)
+            c.glowLine(prev.0, prev.1, p.0, p.1, core: C(0xF4F8FF), glow: C(0x7FB2FF), coreR: 0.5, glowR: 1.8,
+                       strength: bolt == 0 ? 1 : 0.6)
+            prev = p
+        }
+    }
+}
+
+func drawSparks(_ c: PixelCanvas, x: Double, y: Double, t: Double, size: Double = 3) {
+    let seed = Int(t * 30)
+    c.glowLine(x, y, x, y, core: white, glow: C(0xFFD25A), coreR: 0.8, glowR: 2.2)
+    for i in 0..<6 {
+        let a = noise(seed * 13 + i) * 2 * .pi
+        let r = 1 + noise(seed * 17 + i) * size
+        c.px(Int(x + cos(a) * r), Int(y + sin(a) * r), noise(seed + i) > 0.5 ? white : C(0xFFC23A))
+    }
+}
+
+/// One side of a fight, in FX-canvas units (leader pixels, y down from the top of a leader canvas).
+struct Fighter {
+    let weapon: Weapon
+    let x: Double                        // body centre
+    let k: Double                        // sprite scale relative to a leader (agents are 2/3)
+    let top: Double                      // y of this sprite's canvas top
+    let side: Double                     // +1 facing right, -1 facing left
+    let muzzle: (x: Double, y: Double)   // in its own canvas coordinates
+
+    /// A point given in the sprite's own (right-facing) canvas coordinates.
+    func point(_ cx: Double, _ cy: Double) -> (x: Double, y: Double) {
+        (x + side * (cx - Sprite.bodyCenterX) * k, top + cy * k)
+    }
+    var hand: (x: Double, y: Double) { point(Sprite.hand.x, Sprite.hand.y) }
+    var body: (x: Double, y: Double) { point(Sprite.bodyCenterX + 9, 31) }
+    /// Where this fighter's blade sits along its length `u` (in its own pixels) at `angle`.
+    func blade(_ angle: Double, _ u: Double, dx: Double = 0) -> (x: Double, y: Double) {
+        let r = angle * .pi / 180, h = point(Sprite.hand.x + dx, Sprite.hand.y)
+        return (h.x + side * cos(r) * u * k, h.y + sin(r) * u * k)
+    }
+}
+
+/// Bolts, deflections, lightning and clash sparks between two fighters (villains or agents).
+func drawFightFX(_ c: PixelCanvas, t: Double, left: Fighter, right: Fighter) {
+    let (lRole, rRole) = fightRoles(left.weapon, right.weapon)
+
+    // Saber duel: sparks where the two (mirrored, possibly different-sized) blades cross.
+    if case .duel = lRole {
+        let p = duelPose(t)
+        guard p.clash else { return }
+        let r = p.angle * .pi / 180
+        let a = left.point(Sprite.hand.x + p.dx, Sprite.hand.y), b = right.point(Sprite.hand.x + p.dx, Sprite.hand.y)
+        let cs = cos(r), sn = sin(r)
+        guard cs > 0.2 else { return }
+        var s: Double, u: Double
+        if abs(sn) < 0.05 {
+            s = (b.x - a.x) / cs / 2; u = s
+        } else {
+            let sum = (b.x - a.x) / cs, diff = (b.y - a.y) / sn
+            s = (sum + diff) / 2; u = (sum - diff) / 2
+        }
+        guard s >= 3 * left.k, s <= 23 * left.k, u >= 3 * right.k, u <= 23 * right.k else { return }
+        drawSparks(c, x: a.x + cs * s, y: a.y + sn * s, t: t)
+        return
+    }
+
+    for (me, role, foe, foeRole) in [(left, lRole, right, rRole), (right, rRole, left, lRole)] {
+        switch role {
+        case .shoot(let offset):
+            let f = frac((t + offset) / blasterPeriod)
+            let m = me.point(me.muzzle.x + 2, me.muzzle.y + 0.5)
+            var impact = foe.body
+            var deflects = false
+            if case .deflect = foeRole {
+                // Where the defender's blade sits at the peak of its swing; the bolt is aimed there.
+                let pr = deflectPeak * .pi / 180
+                let u = min(max((m.y - foe.hand.y) / sin(pr) / foe.k, 4), 20)
+                impact = foe.blade(deflectPeak, u)
+                deflects = true
+            }
+            if f < boltArrival {
+                let g = f / boltArrival
+                let x = m.x + (impact.x - m.x) * g, y = m.y + (impact.y - m.y) * g
+                let len = hypot(impact.x - m.x, impact.y - m.y)
+                let ux = (impact.x - m.x) / max(len, 0.01), uy = (impact.y - m.y) / max(len, 0.01)
+                c.glowLine(x - ux * 5, y - uy * 5, x, y, core: C(0xFFE0E0), glow: C(0xFF2A2A), coreR: 0.6, glowR: 1.8)
+            } else if f < boltArrival + 0.06 {
+                drawSparks(c, x: impact.x, y: impact.y, t: t, size: 2)
+            }
+            if deflects && f >= boltArrival && f < boltArrival + 0.35 {
+                // Bounced bolt flies off up and back over the shooter's head.
+                let g = (f - boltArrival) / 0.35
+                let x = impact.x - foe.side * -g * 30, yy = impact.y - g * 34
+                c.glowLine(x, yy, x - foe.side * 3, yy + 3.4,
+                           core: C(0xFFE0E0).alpha(1 - g), glow: C(0xFF2A2A).alpha(1 - g), coreR: 0.6, glowR: 1.8)
+            }
+        case .zap:
+            let h = me.hand
+            let from = (h.x, h.y - 2 * me.k)
+            let to: (x: Double, y: Double)
+            switch foeRole {
+            case .block: to = foe.blade(-60, 13)
+            case .zap: to = ((me.x + foe.x) / 2, h.y - 4)
+            default: to = foe.body
+            }
+            drawLightning(c, from: from, to: (to.x, to.y), t: t + me.side)
+            drawSparks(c, x: to.x, y: to.y, t: t + me.side, size: 2.5)
+        default:
+            break
+        }
+    }
+}
+
+// MARK: - Speech bubbles (drawn separately so they can flip to whichever side has room)
+
+enum Bubble { static let width = 18, height = 13 }
+
+/// Compact bubble — it only ever holds three thinking dots or a "!".
+func drawBubble(_ c: PixelCanvas, mood: Mood, t: Double) {
+    let border: Px
+    if mood == .waiting {
+        border = sin(t * 6) > 0 ? C(0xE0303A) : C(0xFF6A6A)
+    } else {
+        border = outline
+    }
+    c.rect(5, 1, 11, 7, white)
+    c.rect(4, 2, 13, 5, white)
+    c.rect(5, 0, 11, 1, border); c.rect(5, 8, 11, 1, border)
+    c.rect(3, 2, 1, 5, border); c.rect(17, 2, 1, 5, border)
+    c.px(4, 1, border); c.px(16, 1, border); c.px(4, 7, border); c.px(16, 7, border)
+    c.rect(1, 10, 2, 2, white); c.px(1, 10, border)
+    c.px(0, 12, border)
+    if mood == .waiting {
+        c.rect(9, 2, 2, 3, border)
+        c.rect(9, 6, 2, 1, border)
+    } else {
+        let step = Int(t * 3) % 4
+        for i in 0..<3 where step > i { c.rect(6 + i * 3, 3, 2, 2, border) }
+    }
+}

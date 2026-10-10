@@ -1,0 +1,8 @@
+# Build output (build.sh)
+build/
+
+# Personal editor settings
+.vscode/
+
+# macOS
+.DS_Store
