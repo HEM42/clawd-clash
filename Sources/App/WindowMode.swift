@@ -228,9 +228,21 @@ final class HeaderView: NSView {
                 (button == .close ? NSColor(srgbRed: 0.85, green: 0.25, blue: 0.25, alpha: 0.9) : NSColor(white: 1, alpha: 0.14)).setFill()
                 NSBezierPath(roundedRect: r, xRadius: 5, yRadius: 5).fill()
             }
+            let tint = NSColor(white: hovered == button ? 1 : 0.72, alpha: 1)
+            if button == .close {
+                // Drawn by hand, centred exactly on the bar: the xmark symbol's odd pixel height sat half a pixel low.
+                let c = NSPoint(x: r.midX, y: b.height / 2), d: CGFloat = 4.5
+                let x = NSBezierPath()
+                x.move(to: NSPoint(x: c.x - d, y: c.y - d)); x.line(to: NSPoint(x: c.x + d, y: c.y + d))
+                x.move(to: NSPoint(x: c.x - d, y: c.y + d)); x.line(to: NSPoint(x: c.x + d, y: c.y - d))
+                x.lineWidth = 1.7
+                x.lineCapStyle = .round
+                tint.setStroke()
+                x.stroke()
+                continue
+            }
             let config = NSImage.SymbolConfiguration(pointSize: 11, weight: .bold)
             guard let img = NSImage(systemSymbolName: name, accessibilityDescription: nil)?.withSymbolConfiguration(config) else { continue }
-            let tint = NSColor(white: hovered == button ? 1 : 0.72, alpha: 1)
             let tinted = NSImage(size: img.size, flipped: false) { rr in
                 img.draw(in: rr)
                 tint.set()
