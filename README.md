@@ -107,7 +107,17 @@ The window sizes itself to the number of Claudes, has a themed title bar, can st
 
 ## Install
 
-Needs macOS 13+, Xcode Command Line Tools (`xcode-select --install`) and [Claude Code](https://claude.com/claude-code).
+Needs macOS 13+ (Apple Silicon or Intel) and [Claude Code](https://claude.com/claude-code).
+
+**With Homebrew** (easiest):
+
+```sh
+brew install --cask rodclemen/tap/clawd-wars
+```
+
+Or download the zip from [Releases](https://github.com/rodclemen/clawd-wars/releases), unzip it and drag **Clawd Wars** to Applications. On first launch it offers to connect to Claude Code (it adds a small hook to `~/.claude/settings.json`, keeping a backup).
+
+**From source** (needs Xcode Command Line Tools — `xcode-select --install`):
 
 ```sh
 git clone https://github.com/rodclemen/clawd-wars.git
@@ -130,7 +140,9 @@ Clicking to jump to a session asks once for **Accessibility** permission.
 
 ## Uninstall
 
-Menu bar helmet → **Settings → Remove Claude Code Hooks**, then **Quit**. Then:
+With Homebrew: `brew uninstall --cask clawd-wars` (removes the hooks too; add `--zap` to also remove its settings and status file).
+
+Otherwise: menu bar helmet → **Settings → Remove Claude Code Hooks**, then **Quit**. Then:
 
 ```sh
 rm -rf ~/Applications/"Clawd Wars.app" ~/.claude/vader-status

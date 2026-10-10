@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.15.0 — 2026-10-10
+
+### Added
+- **Homebrew install**: `brew install --cask rodclemen/tap/clawd-wars`. `release.sh <version>` does the whole release:
+  1. builds a universal app (arm64 + x86_64, via `lipo`), signed with the Developer ID, hardened runtime, a secure timestamp, and the Apple Events entitlement so click-to-jump keeps working;
+  2. notarizes and staples it when a `notarytool` keychain profile named `clawd-wars` exists;
+  3. zips it, tags it and publishes a GitHub release with the CHANGELOG section as notes;
+  4. writes the cask into `rodclemen/homebrew-tap`. Until releases are notarized, the cask clears the quarantine flag after install. Uninstalling the cask removes the hooks; `--zap` also removes settings and the status file.
+- `build.sh --release <version>` makes the universal, distribution-signed build without installing it. The app version now comes from the newest CHANGELOG entry.
+- **First-launch offer** to connect to Claude Code (install the hooks) when the app wasn't set up by `build.sh`, e.g. installed from Homebrew. It's asked once and can be done later from Settings.
+- **`llms.txt`**: a guide to the repo for AI coding tools (build and run, code map, sprite conventions, how to add characters, fight rules).
+
 ## 2.14.0 — 2026-10-10
 
 ### Added

@@ -1,0 +1,35 @@
+# Clawd Wars
+
+> A native macOS app (Swift + AppKit, no dependencies) that shows running Claude Code sessions as pixel-art Star Wars characters on the desktop or in a window. Each Claude session is a villain, each subagent a Rebel hero; they fight while they work. Status comes from Claude Code hooks. Every sprite, effect, location and the app icon are drawn in code — there are no image assets.
+
+## Build and run
+
+- `./build.sh` compiles with `swiftc` (no Xcode project, no SwiftPM), signs, installs `~/Applications/Clawd Wars.app`, merges the hooks into `~/.claude/settings.json` and launches it. `./build.sh --no-hooks` skips the hooks.
+- `./release.sh <version>` builds a universal (arm64 + x86_64) release zip, publishes it as a GitHub release and updates the Homebrew cask in `rodclemen/homebrew-tap`.
+- There are no unit tests. Check visuals with the frame dump: `CLAWD_SHOT=/tmp/shot.png <app binary> --playground=0,1 --agents=0,1 [--mood=idle]` writes the rendered scene every 5 s (`defaults write <domain> windowMode -bool true` for window mode). `CLAWD_HOVER=<actor key>` fakes a hover; `VADER_DEBUG=1` logs layout and fight roles.
+- `Tools/RenderDocs` renders `docs/roster.png`, `docs/locations.png` and `docs/social-preview.png`; `Tools/MakeIcon` renders `Resources/AppIcon.png`.
+
+## Code map
+
+- [Sources/Shared/StatusStore.swift](Sources/Shared/StatusStore.swift): the state shared by hook and app (`~/.claude/vader-status/state.json`, written under `flock`). Turns hook events into session/agent records, assigns villains (random, Vader and Kylo never back to back) and heroes, and builds `SessionSnapshot`s.
+- [Sources/Shared/Processes.swift](Sources/Shared/Processes.swift): finds `claude` processes, their cwd and CPU time (sessions without hooks, dead-session pruning, "busy" detection).
+- [Sources/Hook/main.swift](Sources/Hook/main.swift): the `vader-hook` binary Claude Code runs; reads hook JSON from stdin, never prints, always exits 0.
+- [Sources/App/Overlay.swift](Sources/App/Overlay.swift): `OverlayController` — refresh loop, status debounce, fight pairing and formation layout, walking, labels, bubbles, hover cards, menus, window-mode glue, frame dump. `OverlayView.render` draws a list of `DrawItem`s (screen coordinates).
+- [Sources/App/Characters.swift](Sources/App/Characters.swift): the shared Clawd body, saber choreography (`kataPose`, `duelPose`), blasters, and all heroes (`Companion`).
+- [Sources/App/Leaders.swift](Sources/App/Leaders.swift): all villains (`Leader`), weapons, `FightRole`s, fight effects (`drawFightFX`, `Fighter`), speech bubbles.
+- [Sources/App/Locations.swift](Sources/App/Locations.swift) and [Sources/App/Cantina.swift](Sources/App/Cantina.swift): window-mode scenes (`Location`), static layer + animated layer, plus drawing helpers.
+- [Sources/App/WindowMode.swift](Sources/App/WindowMode.swift): the window (themed header, scene strip, per-Claude cards, auto height).
+- [Sources/App/Jump.swift](Sources/App/Jump.swift): click-to-jump to a session's terminal tab or editor window (AppleScript for Terminal/iTerm2, Accessibility API for VS Code/Cursor incl. native tabs).
+- [Sources/App/HookInstaller.swift](Sources/App/HookInstaller.swift), [Sources/App/Accents.swift](Sources/App/Accents.swift), [Sources/App/Pixel.swift](Sources/App/Pixel.swift) (the `PixelCanvas` all art is drawn on).
+
+## Conventions
+
+- Sprites are 72×52 canvases facing right; the body is x 18…37, y 26…37, feet end at row 43, the hand pivot is (41.5, 34.5). Characters facing left are mirrored by the renderer. `C(0xRRGGBB)` makes a colour; `canvas.pattern(x, y, rows, palette)` draws string art.
+- Adding a villain: a case in `Leader` (name, weapon, headTop, optional muzzle), a `draw…` costume, a home in `Location.home(of:)`, a Playground weapon label in `Overlay.swift`, and bump `StatusStore.leaderCount`. Heroes likewise with `Companion` and `companionCount`.
+- Fight rules: Claudes fight Claudes, agents fight agents, a leftover Claude and agent fight each other, anyone else left over cheers; unarmed characters are bystanders.
+- Commits follow Conventional Commits; every change gets a CHANGELOG entry.
+
+## Docs
+
+- [README.md](README.md): what it is, screenshots, install.
+- [CHANGELOG.md](CHANGELOG.md): detailed history of every change and why.

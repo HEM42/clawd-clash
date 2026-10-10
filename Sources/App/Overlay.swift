@@ -145,6 +145,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         if !windowMode { panel.orderFrontRegardless() }
         installStatusItem()
         applyDockPolicy()
+        offerHooksOnFirstLaunch()
 
         Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.refreshStatus() }
         let frame = Timer(timeInterval: 1.0 / 30, repeats: true) { [weak self] _ in self?.tick() }
@@ -1022,6 +1023,30 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         }) else { return }
         guard let pid = actor.pid else { NSSound.beep(); return }
         Jump.toSession(pid: pid)
+    }
+
+    /// Installed from a download (Homebrew) rather than build.sh: offer to connect to Claude Code once.
+    private func offerHooksOnFirstLaunch() {
+        guard !HookInstaller.isInstalled, !UserDefaults.standard.bool(forKey: "offeredHooks"),
+              playground == nil, !demo, shotPath == nil else { return }
+        UserDefaults.standard.set(true, forKey: "offeredHooks")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            NSApp.activate(ignoringOtherApps: true)
+            let a = NSAlert()
+            a.messageText = "Connect Clawd Wars to Claude Code?"
+            a.informativeText = """
+                Clawd Wars learns what your Claude sessions are doing from Claude Code hooks. This adds a small \
+                hook to ~/.claude/settings.json (a backup is kept). Sessions already running pick it up after a restart.
+
+                You can do this later from Settings in the menu bar helmet.
+                """
+            a.addButton(withTitle: "Connect")
+            a.addButton(withTitle: "Not Now")
+            if a.runModal() == .alertFirstButtonReturn {
+                do { try HookInstaller.install() } catch { self.alert("Couldn't install hooks", error.localizedDescription) }
+                self.lastHookCheck = 0
+            }
+        }
     }
 
     // MARK: Menu bar
