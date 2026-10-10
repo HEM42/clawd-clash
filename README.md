@@ -17,7 +17,7 @@
   <img src="https://img.shields.io/badge/free-to%20use-brightgreen" alt="Free to use">
 </p>
 
-https://github.com/user-attachments/assets/44082e64-69bb-4f5a-b270-498fa6db2c63
+https://github.com/user-attachments/assets/84cbea65-6fb8-452a-b4d6-811c69c301cc
 
 <p align="center"><sub>▶ The 45-second trailer (sound on). Full 1080p version: <a href="promo/clawd-wars-promo.mp4">promo/clawd-wars-promo.mp4</a></sub></p>
 
