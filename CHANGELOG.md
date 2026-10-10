@@ -10,6 +10,10 @@
   - Copilot's `SubagentStop` carries an id its start event never sent, so a Copilot agent that can't be matched by id removes the oldest agent of the same type.
   - Like Gemini, it only counts as installed when a `copilot` command exists. A `~/.copilot` folder alone can come from Copilot in VS Code.
 - Gemini CLI (gold) and Copilot CLI (mint) get their own outline colours and list sections, take sides like the others, and are covered by the hook health checks, the first-launch offer and Settings → Install/Remove … Hooks.
+- **Claude Desktop vs Claude Code CLI.** Claude Code sessions started from the Claude desktop app get their own "Claude Desktop" section in the window and the menu, and are labelled "Claude Desktop" on cards, hover cards and menu lines. VS Code sessions say "Claude · VS Code".
+  - The hook reads `CLAUDE_CODE_ENTRYPOINT`, which Claude Code passes to every hook. Verified on this Mac: `claude-desktop` for the desktop app and `cli` in a terminal. It's stored per session as `client`.
+  - Sessions without hooks are recognised by where the `claude` binary lives: `~/Library/Application Support/Claude/claude-code/…` is the desktop app, and `…/extensions/anthropic.claude-code…` is VS Code.
+  - Same AI, same side and white outline; only the list sections and labels differ. Clicking a desktop session brings the Claude app forward.
 - The hook takes `--event <name>` for AIs whose payloads don't name the event or use their own names. `StatusStore.normalize` translates the payload before `apply`.
 
 ### Fixed

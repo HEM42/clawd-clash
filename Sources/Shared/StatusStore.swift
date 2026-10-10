@@ -19,7 +19,8 @@ struct SessionRecord: Codable {
     var model: String?
     var tools: Int?        // tool calls this session
     var prompts: Int?      // prompts this session
-    var assistant: String? // "claude" or "codex" (nil = claude, from before Codex support)
+    var assistant: String? // "claude", "codex", "qwen", "gemini", "copilot" (nil = claude, from before Codex support)
+    var client: String?    // where Claude Code runs: CLAUDE_CODE_ENTRYPOINT ("cli", "claude-desktop", "claude-vscode"…)
 }
 
 struct AgentRecord: Codable {
@@ -67,6 +68,20 @@ struct SessionSnapshot {
     var stalled = false          // hooks say idle, but the process has been busy for a minute: not reporting
     var hookSilent = false       // started after our hooks were installed and ran a turn, yet never reported (e.g. Codex: not approved)
     var cwd: String?
+    var client: String?          // Claude Code's entrypoint: "cli", "claude-desktop", "claude-vscode"…
+
+    /// What the list groups by: Claude Desktop gets its own section; everything else groups by AI.
+    var group: String { assistant == "claude" && client == "claude-desktop" ? "claude-desktop" : assistant }
+
+    /// Short name for cards and the menu: "Claude", "Claude Desktop", "Claude · VS Code", "Codex"…
+    var aiLabel: String {
+        guard assistant == "claude" else { return assistant.capitalized }
+        switch client {
+        case "claude-desktop": return "Claude Desktop"
+        case "claude-vscode": return "Claude · VS Code"
+        default: return "Claude"
+        }
+    }
 }
 
 enum StatusPaths {
@@ -149,6 +164,10 @@ enum StatusStore {
                 }
                 if let project, agentId == nil { s.sessions[session]?.project = project }
                 if let owner { s.sessions[session]?.pid = owner }
+                // Claude Code tells its hooks where it was started from (terminal, desktop app, VS Code…).
+                if assistant == "claude", let entry = ProcessInfo.processInfo.environment["CLAUDE_CODE_ENTRYPOINT"], !entry.isEmpty {
+                    s.sessions[session]?.client = entry
+                }
             }
             func set(_ state: String) {
                 if s.sessions[session]?.state != state || s.sessions[session]?.since == nil { s.sessions[session]?.since = now }
@@ -424,7 +443,8 @@ enum StatusStore {
             previous = leader
             result.append(SessionSnapshot(id: id, leader: leader, project: rec.project ?? "",
                                           mood: mood(rec, now: now), agents: [], pid: rec.pid, record: rec,
-                                          assistant: assistantOf(rec), cwd: rec.pid.flatMap { ClaudeProcesses.cwd($0) }))
+                                          assistant: assistantOf(rec), cwd: rec.pid.flatMap { ClaudeProcesses.cwd($0) },
+                                          client: rec.client ?? processes?.first { $0.pid == rec.pid }?.client))
         }
         if let processes {
             // Records from before pids were tracked are matched to a process by project folder.
@@ -445,7 +465,7 @@ enum StatusStore {
                 previous = leader
                 result.append(SessionSnapshot(id: "pid-\(p.pid)", leader: leader, project: p.project,
                                               mood: .idle, agents: [], live: false, pid: p.pid,
-                                              assistant: p.assistant, cwd: ClaudeProcesses.cwd(p.pid)))
+                                              assistant: p.assistant, cwd: ClaudeProcesses.cwd(p.pid), client: p.client))
             }
         }
         if result.isEmpty {   // no Claude running: an idle Vader keeps the spot warm

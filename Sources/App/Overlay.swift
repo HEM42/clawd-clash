@@ -739,12 +739,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             lines.append(info.joined(separator: "  ·  "))
             if let owner = sessions.first(where: { $0.id == a.session }) {
                 let p = owner.project.isEmpty ? "" : " (\(owner.project))"
-                lines.append("Agent of \(Cast(id: owner.leader).name)\(p) · \(owner.assistant.capitalized)")
+                lines.append("Agent of \(Cast(id: owner.leader).name)\(p) · \(owner.aiLabel)")
             }
             return lines
         }
         guard let s else { return [] }
-        var lines = [Cast(id: s.leader).name + (s.project.isEmpty ? "" : " — " + s.project) + (s.id == "home" ? "" : " · " + s.assistant.capitalized)]
+        var lines = [Cast(id: s.leader).name + (s.project.isEmpty ? "" : " — " + s.project) + (s.id == "home" ? "" : " · " + s.aiLabel)]
         let held = Self.duration(now - since(s, now: now))
         switch s.mood {
         case _ where s.stalled: lines.append("Not reporting — restart this Claude session")
@@ -1492,9 +1492,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         // Grouped by AI (stable within a group); with more than one AI each group gets a small header.
         let listed = sessions.enumerated()
             .filter { $0.element.id != "home" || !$0.element.agents.isEmpty }
-            .sorted { (AIStyle.rank($0.element.assistant), $0.offset) < (AIStyle.rank($1.element.assistant), $1.offset) }
+            .sorted { (AIStyle.rank($0.element.group), $0.offset) < (AIStyle.rank($1.element.group), $1.offset) }
             .map(\.element)
-        let severalAIs = Set(listed.map(\.assistant)).count > 1
+        let severalAIs = Set(listed.map(\.group)).count > 1
         var lastAI: String?
         for s in listed {
             let leader = Cast(id: s.leader)
@@ -1520,7 +1520,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 if !meta.isEmpty { lines.append((meta, dim)) }
                 if let a = r.activity, s.mood != .idle { lines.append(("Now: " + a, .white)) }
                 if let p = r.prompt { lines.append(("You: “" + p + "”", soft)) }
-                if let reply = r.reply, s.mood == .idle { lines.append((s.assistant.capitalized + ": “" + reply + "”", soft)) }
+                if let reply = r.reply, s.mood == .idle { lines.append((s.aiLabel.components(separatedBy: " · ")[0] + ": “" + reply + "”", soft)) }
                 var stats: [String] = []
                 if let n = r.prompts { stats.append("\(n) prompt\(n == 1 ? "" : "s")") }
                 if let n = r.tools { stats.append("\(n) tool call\(n == 1 ? "" : "s")") }
@@ -1548,15 +1548,15 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                                        portrait: portrait("a\(who.id)", assistant: s.assistant) { who.draw($0, t: 0.3, mode: .idle, walking: false, role: .rest, asSession: true) })
             }
             cards.append(CardModel(
-                villain: leader.name + (s.id == "home" ? "" : "  ·  " + s.assistant.capitalized), project: s.project, accent: Accents.color(for: s.project) ?? NSColor(white: 0.5, alpha: 1),
+                villain: leader.name + (s.id == "home" ? "" : "  ·  " + s.aiLabel), project: s.project, accent: Accents.color(for: s.project) ?? NSColor(white: 0.5, alpha: 1),
                 status: status, statusColor: color, focused: s.pid != nil && s.pid == focusedPid,
                 lines: lines, agents: agents,
                 portrait: portrait("l\(leader.id)", assistant: s.assistant) { leader.draw($0, t: 0.1, mode: .idle, walking: false, role: .none, asSession: true) },
                 pid: s.pid))
-            if severalAIs && s.assistant != lastAI {
-                cards[cards.count - 1].group = (HookInstaller.displayName(s.assistant), AIStyle.color(s.assistant))
+            if severalAIs && s.group != lastAI {
+                cards[cards.count - 1].group = (HookInstaller.displayName(s.group), AIStyle.color(s.assistant))
             }
-            lastAI = s.assistant
+            lastAI = s.group
         }
         let banner: String? = offlineReason.map { $0 + " — live status is off. Fix it from Settings in the menu." } ?? hookBanner
         w.cardsView.update(cards: cards, banner: banner)
@@ -1611,15 +1611,15 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
         if !hookIssues.isEmpty { m.addItem(.separator()) }
         let listed = sessions.enumerated()
-            .sorted { (AIStyle.rank($0.element.assistant), $0.offset) < (AIStyle.rank($1.element.assistant), $1.offset) }
+            .sorted { (AIStyle.rank($0.element.group), $0.offset) < (AIStyle.rank($1.element.group), $1.offset) }
             .map(\.element)
-        let severalAIs = Set(listed.filter { $0.id != "home" }.map(\.assistant)).count > 1
+        let severalAIs = Set(listed.filter { $0.id != "home" }.map(\.group)).count > 1
         var lastAI: String?
         for s in listed {
-            if severalAIs && s.id != "home" && s.assistant != lastAI {
+            if severalAIs && s.id != "home" && s.group != lastAI {
                 if lastAI != nil { m.addItem(.separator()) }
-                m.addItem(disabled: HookInstaller.displayName(s.assistant).uppercased())
-                lastAI = s.assistant
+                m.addItem(disabled: HookInstaller.displayName(s.group).uppercased())
+                lastAI = s.group
             }
             let leader = Cast(id: s.leader)
             let status: String = {
@@ -1631,7 +1631,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 }
             }()
             let project = s.project.isEmpty ? "" : " — \(s.project)"
-            let ai = s.id == "home" ? "" : " [\(s.assistant.capitalized)]"
+            let ai = s.id == "home" ? "" : " [\(s.aiLabel)]"
             m.addItem(disabled: "\(leader.name)\(ai)\(project): \(s.live ? status : s.hookSilent ? "not reporting (\(HookInstaller.silentFix(s.assistant)))" : "no live status (restart this session)")")
             for a in s.agents {
                 let who = Cast.of(a)

@@ -1,4 +1,5 @@
 import AppKit
+import AVFoundation
 
 // Renders the 10-second promo with the app's own sprite code: a storyboard sheet of key frames,
 // or every frame of the video (1920×1080, 30 fps).
@@ -7,6 +8,7 @@ import AppKit
 //          Tools/RenderPromo/main.swift -o build/renderpromo
 //   build/renderpromo storyboard build/promo        → storyboard.png + one PNG per key frame
 //   build/renderpromo frames build/promo/frames     → frame-000.png … frame-299.png
+//   build/renderpromo video build/promo             → clawd-wars-promo.mp4 (H.264, silent)
 
 let W = 1920, H = 1080, fps = 30.0, duration = 10.0
 let S = 6.0                      // screen pixels per sprite pixel for a session; agents are 2/3 of that
@@ -372,7 +374,7 @@ let beats: [(title: String, action: String, onScreen: String, sound: String)] = 
 ]
 
 func storyboard(_ frames: [NSBitmapImageRep]) -> NSBitmapImageRep {
-    let cols = 2, pw = 900.0, ph = pw * 9 / 16, textH = 250.0, gap = 60.0, margin = 70.0, headH = 170.0
+    let cols = 2, pw = 900.0, ph = pw * 9 / 16, textH = 260.0, gap = 60.0, margin = 70.0, headH = 200.0
     let rows = (frames.count + cols - 1) / cols
     let sw = Int(margin * 2 + pw * Double(cols) + gap * Double(cols - 1))
     let sh = Int(headH + Double(rows) * (ph + textH) + Double(rows - 1) * gap * 0.5 + margin)
@@ -384,14 +386,14 @@ func storyboard(_ frames: [NSBitmapImageRep]) -> NSBitmapImageRep {
     ctx.setFillColor(CGColor(red: 0.07, green: 0.075, blue: 0.11, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: sw, height: sh))
     func put(_ s: String, _ x: Double, _ y: Double, _ size: CGFloat, _ weight: NSFont.Weight, _ col: NSColor, width: Double = 0) {
         let a = NSAttributedString(string: s, attributes: [.font: NSFont.systemFont(ofSize: size, weight: weight), .foregroundColor: col])
-        if width > 0 { a.draw(with: NSRect(x: x, y: y, width: width, height: 200), options: [.usesLineFragmentOrigin]) }
+        if width > 0 { a.draw(with: NSRect(x: x, y: y - 200, width: width, height: 200), options: [.usesLineFragmentOrigin]) }   // y = top edge
         else { a.draw(at: NSPoint(x: x, y: y)) }
     }
     let tf = NSFont(name: "Futura-CondensedExtraBold", size: 64) ?? .systemFont(ofSize: 60, weight: .black)
     NSAttributedString(string: "CLAWD WARS", attributes: [.font: tf, .foregroundColor: yellow, .kern: 5])
         .draw(at: NSPoint(x: margin, y: Double(sh) - 110))
     put("10-second promo · storyboard · 1920×1080 · 30 fps · every sprite drawn by the app's own code",
-        margin + 400, Double(sh) - 92, 26, .medium, NSColor(white: 0.75, alpha: 1))
+        margin, Double(sh) - 150, 26, .medium, NSColor(white: 0.75, alpha: 1))
     let dim = NSColor(white: 0.62, alpha: 1), body = NSColor(white: 0.92, alpha: 1)
     for (i, f) in frames.enumerated() {
         let s = shots[i], b = beats[i]
@@ -405,9 +407,9 @@ func storyboard(_ frames: [NSBitmapImageRep]) -> NSBitmapImageRep {
         let ty = top - ph - 44
         put("\(i + 1)  \(b.title)", x, ty, 30, .heavy, yellow)
         put(String(format: "%.1f – %.1f s", s.start, s.end), x + pw - 170, ty + 2, 26, .semibold, dim)
-        put(b.action, x, ty - 96, 21, .regular, body, width: pw)
-        put("ON SCREEN  " + b.onScreen, x, ty - 150, 20, .semibold, NSColor(srgbRed: 0.75, green: 0.85, blue: 1, alpha: 1), width: pw)
-        put("SOUND  " + b.sound, x, ty - 186, 20, .semibold, dim, width: pw)
+        put(b.action, x, ty - 14, 21, .regular, body, width: pw)
+        put("ON SCREEN  " + b.onScreen, x, ty - 100, 20, .semibold, NSColor(srgbRed: 0.75, green: 0.85, blue: 1, alpha: 1), width: pw)
+        put("SOUND  " + b.sound, x, ty - 180, 20, .semibold, dim, width: pw)
     }
     NSGraphicsContext.current = nil
     return rep
@@ -420,7 +422,48 @@ let cmd = args.count > 1 ? args[1] : "storyboard"
 let out = args.count > 2 ? args[2] : "build/promo"
 try? FileManager.default.createDirectory(atPath: out, withIntermediateDirectories: true)
 
-if cmd == "frames" {
+/// Encodes every frame straight into an H.264 MP4 with AVAssetWriter (no ffmpeg needed).
+func writeVideo(to path: String) {
+    let url = URL(fileURLWithPath: path)
+    try? FileManager.default.removeItem(at: url)
+    let writer = try! AVAssetWriter(outputURL: url, fileType: .mp4)
+    let input = AVAssetWriterInput(mediaType: .video, outputSettings: [
+        AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: W, AVVideoHeightKey: H,
+        AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: 16_000_000, AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel],
+    ])
+    let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: input, sourcePixelBufferAttributes: [
+        kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32ARGB, kCVPixelBufferWidthKey as String: W,
+        kCVPixelBufferHeightKey as String: H,
+    ])
+    writer.add(input)
+    writer.startWriting(); writer.startSession(atSourceTime: .zero)
+    let n = Int(duration * fps)
+    for f in 0..<n {
+        autoreleasepool {
+            while !input.isReadyForMoreMediaData { Thread.sleep(forTimeInterval: 0.005) }
+            var pb: CVPixelBuffer?
+            CVPixelBufferPoolCreatePixelBuffer(nil, adaptor.pixelBufferPool!, &pb)
+            let buf = pb!
+            CVPixelBufferLockBaseAddress(buf, [])
+            let ctx = CGContext(data: CVPixelBufferGetBaseAddress(buf), width: W, height: H, bitsPerComponent: 8,
+                                bytesPerRow: CVPixelBufferGetBytesPerRow(buf), space: CGColorSpaceCreateDeviceRGB(),
+                                bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue)!
+            ctx.draw(frame(Double(f) / fps).cgImage!, in: CGRect(x: 0, y: 0, width: W, height: H))
+            CVPixelBufferUnlockBaseAddress(buf, [])
+            adaptor.append(buf, withPresentationTime: CMTime(value: CMTimeValue(f), timescale: CMTimeScale(fps)))
+        }
+    }
+    input.markAsFinished()
+    let done = DispatchSemaphore(value: 0)
+    writer.finishWriting { done.signal() }
+    done.wait()
+    if writer.status != .completed { print("video failed: \(String(describing: writer.error))"); exit(1) }
+    print("wrote \(path)")
+}
+
+if cmd == "video" {
+    writeVideo(to: "\(out)/clawd-wars-promo.mp4")
+} else if cmd == "frames" {
     let n = Int(duration * fps)
     for f in 0..<n { autoreleasepool { save(frame(Double(f) / fps), "\(out)/frame-\(String(format: "%03d", f)).png") } }
     print("wrote \(n) frames to \(out)")

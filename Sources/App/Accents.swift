@@ -36,7 +36,7 @@ enum Accents {
 /// Each AI's look: the outline round its sprites (always light, never black, so it reads on any desktop) and
 /// the order its group appears in lists. Claude keeps the classic white.
 enum AIStyle {
-    static let order = ["claude", "codex", "qwen", "gemini", "copilot"]
+    static let order = ["claude", "claude-desktop", "codex", "qwen", "gemini", "copilot"]
 
     static func outlineHex(_ assistant: String) -> UInt32 {
         switch assistant {

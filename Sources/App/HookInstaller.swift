@@ -159,6 +159,7 @@ enum HookInstaller {
         case "qwen": return "Qwen Code"
         case "gemini": return "Gemini CLI"
         case "copilot": return "Copilot CLI"
+        case "claude-desktop": return "Claude Desktop"
         default: return "Claude Code"
         }
     }

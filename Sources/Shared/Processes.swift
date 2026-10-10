@@ -4,7 +4,7 @@ import Foundation
 /// Finds running Claude Code sessions directly from the process table, so sessions show up even
 /// before (or without) their hooks firing, and vanish the moment their process exits.
 enum ClaudeProcesses {
-    struct Info { let pid: Int32; let project: String; var assistant = "claude"; var started: Double = 0 }
+    struct Info { let pid: Int32; let project: String; var assistant = "claude"; var started: Double = 0; var client: String? = nil }
 
     private static let shells: Set<String> = ["sh", "bash", "zsh", "dash", "fish", "env"]
 
@@ -103,8 +103,12 @@ enum ClaudeProcesses {
             let project = cwd(pid).map { ($0 as NSString).lastPathComponent } ?? ""
             let st = info.kp_proc.p_starttime
             let assistant = isCodex ? "codex" : isQwen ? "qwen" : isGemini ? "gemini" : isCopilot ? "copilot" : "claude"
+            // Claude Code bundled with the desktop app or the VS Code extension, told apart by where it lives.
+            let client: String? = !isClaude ? nil
+                : first.contains("/Application Support/Claude/claude-code/") ? "claude-desktop"
+                : first.contains("/extensions/anthropic.claude-code") ? "claude-vscode" : nil
             found.append(Info(pid: pid, project: project, assistant: assistant,
-                              started: Double(st.tv_sec) + Double(st.tv_usec) / 1e6))
+                              started: Double(st.tv_sec) + Double(st.tv_usec) / 1e6, client: client))
         }
         // A claude launched by another claude (e.g. a nested tool) isn't a separate session. The other AIs are
         // often an npm wrapper (or Gemini/Qwen relaunching itself) starting the real process: keep that child,
