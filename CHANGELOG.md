@@ -2,6 +2,15 @@
 
 ## 2.22.0 — 2026-10-11
 
+### Changed
+- **Jabba's Palace redrawn to look like the Return of the Jedi throne room.** The old version was a generic brown wall with black arches and could have been any dungeon. Now:
+  - smoky amber sandstone with a back ledge, softly lit rounded alcoves, and dusty light shafts falling from vents high in the wall;
+  - **Han Solo frozen in carbonite** on the wall (raised hands, face relief, the little control lights);
+  - Jabba's two-tier curved dais with red and gold cushions and the hookah, its hose curling back toward the throne and smoke drifting up;
+  - the round trapdoor grate over the rancor pit in front of the dais;
+  - hanging braziers that flicker, replacing the generic torches;
+  - the Max Rebo Band stays on the right.
+
 ### Added
 - **Blaster shoot-outs have saves now.** When two blaster characters fight (Han vs Boba Fett, Leia vs a stormtrooper…), most bolts no longer just land. Each shot plays one move from a fixed cycle, so the show varies without random flicker, and both shooters run through it out of step:
   - **Hit:** still in the mix now and then.

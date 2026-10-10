@@ -135,7 +135,7 @@ enum Location: String, CaseIterable {
             Cantina.drawBarCrowd(c, floorRows: f, t: t)
         case .deathStar, .executor: Scenes.blinkLights(c, g, t: t, seed: self == .deathStar ? 1 : 2)
         case .sarlaccPit: Scenes.sarlaccTentacles(c, g, t: t)
-        case .jabbasPalace: Scenes.torches(c, g, t: t); Scenes.maxReboBand(c, g, t: t)
+        case .jabbasPalace: Scenes.jabbaLamps(c, g, t: t); Scenes.maxReboBand(c, g, t: t)
         case .theed: Scenes.laserGates(c, g, t: t)
         case .emperorThrone: Scenes.spaceBattle(c, g, t: t)
         case .dagobah: Scenes.swampFog(c, g, t: t)
@@ -280,28 +280,97 @@ enum Scenes {
         }
     }
 
-    // Jabba / Gamorrean — the throne room: stone, arches, the dais and the rancor grate.
+    // Jabba / Gamorrean — the throne room in Return of the Jedi: smoky amber sandstone with rounded alcoves and light
+    // falling from vents above, Han Solo frozen in carbonite on the wall, Jabba's tiered dais with cushions and the
+    // hookah, and the round trapdoor over the rancor pit in front of it.
     static func jabbasPalace(_ c: PixelCanvas, _ g: Int) {
-        c.gradient(0, g, C(0x3A2E24), C(0x5A4636), bands: 4)
-        for i in 0..<(c.w * g / 30) { c.px(Int(noise(i * 9) * Double(c.w)), Int(noise(i * 9 + 1) * Double(g)), C(0x2E241C)) }
-        var x = 30
-        while x + 22 < c.w {
-            for y in (g - 30)..<g {
-                let top = g - 30, r = 11
+        // Walls: dark, smoky ceiling down to warm sandstone.
+        c.gradient(0, g, C(0x1A110B), C(0x6E4C30), bands: 7)
+        for i in 0..<(c.w * g / 22) {   // plaster grain
+            c.px(Int(noise(i * 9) * Double(c.w)), Int(noise(i * 9 + 1) * Double(g)), C(0x2A1C12, 0.35))
+        }
+        // A ledge running along the back wall.
+        c.rect(0, g - 34, c.w, 2, C(0x8A6444, 0.55)); c.rect(0, g - 32, c.w, 1, C(0x2A1C12, 0.6))
+
+        // Rounded alcoves, softly lit from inside (between the throne end and the band).
+        var ax = 150
+        while ax + 26 < c.w - 70 {
+            let top = g - 28, r = 9
+            for y in top..<(g - 2) {
                 var half = r
                 if y - top < r { let dy = Double(r - (y - top)); half = Int((Double(r * r) - dy * dy).squareRoot()) }
-                c.rect(x + r - half, y, half * 2, 1, C(0x1E1712))
+                let k = Double(y - top) / Double(g - 2 - top)
+                c.rect(ax + r - half, y, half * 2, 1, lerp(C(0x2A1A10), C(0x5A3A22), k))
             }
-            x += 52
+            c.ellipse(ax + r, g - 8, 6, 3, C(0xFFB050, 0.10))      // the glow of whatever's burning in there
+            ax += 48
         }
-        // dais with the hookah
-        c.rect(4, g - 6, 44, 6, C(0x6E5440)); c.rect(4, g - 6, 44, 1, C(0x8A6E54))
-        c.rect(30, g - 14, 3, 8, C(0xB08D57)); c.circle(31, g - 15, 2, C(0xC9A44A))
-        // rancor grate in the floor
-        c.ground(g, C(0x4A3A2C), edge: C(0x6E5440), speck: C(0x3E3024), seed: 3)
-        let gx = c.w / 2 - 15
-        c.rect(gx, g + 2, 30, max(3, c.h - g - 4), C(0x1E1712))
-        for i in stride(from: gx, to: gx + 30, by: 3) { c.rect(i, g + 2, 1, max(3, c.h - g - 4), C(0x8A7660)) }
+
+        // Vents high in the wall, with dusty light shafts falling from them.
+        for (i, vx) in [96, 210, 300].enumerated() where vx < c.w - 70 {
+            c.ellipse(vx, 6, 5, 2, C(0xFFD9A0, 0.55)); c.ellipse(vx, 6, 3, 1, C(0xFFF0D0, 0.8))
+            for y in 8..<(g - 2) {
+                let spread = 3 + (y - 8) / 4, shift = (y - 8) / 3 * (i % 2 == 0 ? 1 : -1)
+                c.rect(vx - spread + shift, y, spread * 2, 1, C(0xFFD9A0, 0.05))
+            }
+        }
+
+        // Han Solo in carbonite, hanging on the wall.
+        let hx = 112, hy = g - 40
+        c.rect(hx - 1, hy - 1, 20, 34, C(0x3A3530))                   // shadow / mount
+        c.rect(hx, hy, 18, 32, C(0x5E6266))                            // the slab
+        c.rect(hx, hy, 18, 1, C(0x8C9196)); c.rect(hx, hy, 1, 32, C(0x7A7F84))
+        c.rect(hx + 17, hy, 1, 32, C(0x44474B)); c.rect(hx, hy + 31, 18, 1, C(0x44474B))
+        c.rect(hx + 2, hy + 2, 14, 28, C(0x6A6E72))                    // the relief panel
+        c.circle(hx + 9, hy + 9, 3, C(0x7E8388)); c.px(hx + 8, hy + 8, C(0x9AA0A5))   // face
+        c.rect(hx + 3, hy + 4, 2, 5, C(0x7E8388)); c.rect(hx + 13, hy + 4, 2, 5, C(0x7E8388))  // hands up
+        c.rect(hx + 6, hy + 13, 7, 12, C(0x767A7F)); c.rect(hx + 7, hy + 25, 2, 4, C(0x767A7F)); c.rect(hx + 10, hy + 25, 2, 4, C(0x767A7F))
+        c.rect(hx + 5, hy + 12, 9, 1, C(0x9AA0A5, 0.6))
+        for (i, col) in [C(0xFF5A3A), C(0x6CFF7A), C(0xFFD24A)].enumerated() { c.px(hx + 4 + i * 2, hy + 29, col) }   // the control panel
+
+        // Jabba's dais: two curved tiers, cushions and the hookah.
+        func tier(_ x0: Int, _ w: Int, _ top: Int, _ h: Int, _ face: Px, _ lip: Px) {
+            for y in top..<(top + h) {
+                let dy = Double(y - top) / Double(max(1, h - 1))
+                let curve = Int((1 - dy) * 4)                         // rounded front edge
+                c.rect(x0, y, w - curve, 1, face)
+            }
+            c.rect(x0, top, w - 4, 1, lip)
+        }
+        tier(0, 84, g - 6, 6, C(0x5A3E28), C(0x8A6444))
+        tier(0, 66, g - 12, 6, C(0x6A4A30), C(0x9A7452))
+        c.rect(8, g - 15, 18, 3, C(0x8E2A1E)); c.rect(8, g - 15, 18, 1, C(0xB8452E))   // cushions
+        c.rect(28, g - 14, 12, 2, C(0x7A5A1E)); c.rect(28, g - 14, 12, 1, C(0xA88A3A))
+        // the hookah: base, glass bowl, stem, and a hose curling back toward the throne
+        let kx = 52
+        c.rect(kx - 3, g - 14, 7, 2, C(0x8A6A2A))
+        c.ellipse(kx, g - 18, 3, 3, C(0x7AB0A0, 0.85)); c.px(kx - 1, g - 19, C(0xD8F0E8))
+        c.rect(kx, g - 30, 1, 10, C(0xC9A44A)); c.ellipse(kx, g - 31, 2, 1, C(0xE0B85A))
+        for i in 0..<14 { c.px(kx - 2 - i, g - 22 + Int(sin(Double(i) * 0.45) * 3), C(0x6A3A2A)) }
+
+        // Floor, and the round trapdoor over the rancor pit in front of the dais.
+        c.ground(g, C(0x5A4230), edge: C(0x8A6444), speck: C(0x4A3424), seed: 3)
+        let tx = 104, ty = g + (c.h - g) / 2
+        c.ellipse(tx, ty, 17, max(2, (c.h - g) / 2 - 1), C(0x2A1C12))
+        c.ellipse(tx, ty, 15, max(1, (c.h - g) / 2 - 2), C(0x120B07))
+        for i in stride(from: tx - 14, through: tx + 14, by: 3) { c.rect(i, ty - (c.h - g) / 2 + 2, 1, max(1, c.h - g - 4), C(0x8A7660)) }
+    }
+
+    /// Jabba's hanging braziers (flickering) and smoke drifting up from the hookah.
+    static func jabbaLamps(_ c: PixelCanvas, _ g: Int, t: Double) {
+        for (i, x) in [78, 176, 268].enumerated() where x < c.w - 70 {
+            let f = noise(Int(t * 9) + i * 7)
+            c.rect(x, 0, 1, g - 44, C(0x2A1C12))                       // chain
+            c.rect(x - 3, g - 44, 7, 2, C(0x6E4A24)); c.rect(x - 2, g - 42, 5, 1, C(0x4A3018))
+            c.rect(x - 1, g - 47, 3, 3, C(0xFF8A2A)); c.px(x + (f > 0.5 ? 1 : 0), g - 48, C(0xFFE27A))
+            c.circle(x, g - 45, 7, C(0xFF9A2A, 0.07 + f * 0.05))
+        }
+        // hookah smoke: a few soft puffs rising and drifting
+        for i in 0..<4 {
+            let p = (t * 0.25 + Double(i) * 0.25).truncatingRemainder(dividingBy: 1)
+            let y = g - 32 - Int(p * 26), x = 52 + Int(sin(p * 5 + Double(i)) * 4 + p * 8)
+            c.circle(x, y, 1 + Int(p * 3), C(0xD8CFC0, 0.18 * (1 - p)))
+        }
     }
 
     static func torches(_ c: PixelCanvas, _ g: Int, t: Double) {
