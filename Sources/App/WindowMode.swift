@@ -68,8 +68,6 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         content.addSubview(scroll)
         content.addSubview(header)
         header.controller = controller
-        header.pinned = UserDefaults.standard.bool(forKey: "windowPinned")
-        header.onPin = { [weak self] in self?.togglePin() }
         layout()
         applyPin()
     }
@@ -112,16 +110,11 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         cardsView.frame.size.width = scroll.bounds.width
     }
 
-    private func togglePin() {
-        header.pinned.toggle()
-        UserDefaults.standard.set(header.pinned, forKey: "windowPinned")
-        applyPin()
-    }
-
-    private func applyPin() {
-        window.level = header.pinned ? .floating : .normal
-        window.collectionBehavior = header.pinned ? [.canJoinAllSpaces, .fullScreenAuxiliary, .fullScreenNone] : [.fullScreenNone]
-        header.needsDisplay = true
+    /// Settings → Keep Window on Top.
+    func applyPin() {
+        let pinned = UserDefaults.standard.bool(forKey: "windowPinned")
+        window.level = pinned ? .floating : .normal
+        window.collectionBehavior = pinned ? [.canJoinAllSpaces, .fullScreenAuxiliary, .fullScreenNone] : [.fullScreenNone]
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
@@ -139,13 +132,10 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     }
 }
 
-/// The themed title bar: the location's colours, CLAWD WARS in crawl-yellow, where the crew is, and a pin.
+/// The themed title bar: the location's colours, CLAWD WARS in crawl-yellow, and where the crew is.
 /// The traffic lights sit on its left; drag anywhere else on it to move the window.
 final class HeaderView: NSView {
     weak var controller: OverlayController?
-    var pinned = false { didSet { needsDisplay = true } }
-    var onPin: (() -> Void)?
-    private var pinRect = NSRect.zero
 
     static let yellow = NSColor(srgbRed: 1, green: 0.91, blue: 0.12, alpha: 1)   // the opening-crawl yellow
 
@@ -171,27 +161,11 @@ final class HeaderView: NSView {
         }
         let ts = title.size()
         title.draw(at: NSPoint(x: 80, y: (b.height - ts.height) / 2))
-
-        // Pin toggle on the right
-        let label = NSAttributedString(string: pinned ? "◉  ON TOP" : "○  PIN", attributes: [
-            .font: NSFont.systemFont(ofSize: 10, weight: .bold), .foregroundColor: pinned ? NSColor.black : Self.yellow, .kern: 0.8])
-        let ls = label.size()
-        pinRect = NSRect(x: b.width - ls.width - 30, y: (b.height - 18) / 2, width: ls.width + 18, height: 18)
-        let capsule = NSBezierPath(roundedRect: pinRect, xRadius: 9, yRadius: 9)
-        if pinned { Self.yellow.setFill(); capsule.fill() }
-        Self.yellow.withAlphaComponent(pinned ? 1 : 0.7).setStroke()
-        capsule.lineWidth = 1
-        capsule.stroke()
-        label.draw(at: NSPoint(x: pinRect.minX + 9, y: pinRect.minY + (18 - ls.height) / 2))
     }
 
     override func mouseDown(with event: NSEvent) {
-        let p = convert(event.locationInWindow, from: nil)
-        if pinRect.contains(p) { onPin?(); return }
         window?.performDrag(with: event)
     }
-
-    override func resetCursorRects() { addCursorRect(pinRect, cursor: .pointingHand) }
 }
 
 /// The scene strip: the Mos Eisley cantina, with the crew standing on its floor.

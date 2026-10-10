@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.8.0 — 2026-10-10
+
+### Changed
+- New **Settings** submenu in every menu (menu bar helmet, Crew, right-click) holding the preferences: Size (desktop only), Show Project Names, Keep Window on Top, Fit Window Height to Claudes, Show Dock Icon, Launch at Login, and Install/Remove Claude Code Hooks. The top level keeps the everyday actions: session status, Show in Window/Desktop, Location, Forget Idle Sessions, Reset Position (desktop only) and Quit, plus Playground and Demo with ⌘.
+- The pin capsule is gone from the window's title bar; it's now Settings → Keep Window on Top.
+
 ## 2.7.2 — 2026-10-10
 
 ### Changed

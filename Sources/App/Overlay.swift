@@ -1166,31 +1166,17 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             sub.addItem(item)
         }
         size.submenu = sub
-        // In the window the crew always fits the window, so Size only applies on the desktop.
-        if windowMode { m.addItem(disabled: "Size (desktop only)") } else { m.addItem(size) }
         m.addItem(action: windowMode ? "Show on Desktop" : "Show in Window", #selector(toggleWindowMode), target: self)
-        if windowMode {
-            m.addItem(locationMenu())
-            m.addItem(action: "Fit Window Height to Claudes", #selector(toggleAutoHeight), target: self,
-                      on: UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true)
-        }
-        m.addItem(action: "Show Dock Icon", #selector(toggleDock), target: self, on: showInDock)
-        m.addItem(action: "Show Project Names", #selector(toggleLabels), target: self, on: showLabels)
+        if windowMode { m.addItem(locationMenu()) }
+        m.addItem(settingsMenu(size: size))
+        m.addItem(.separator())
         // Developer toys: only with ⌘ held while opening the menu (or while one is running, so you can leave it).
         if NSEvent.modifierFlags.contains(.command) || playground != nil || demo {
             m.addItem(playgroundMenu())
             m.addItem(action: "Demo Mode", #selector(toggleDemo), target: self, on: demo)
         }
         m.addItem(action: "Forget Idle Sessions", #selector(forgetIdle), target: self)
-        m.addItem(action: "Reset Position", #selector(resetPosition), target: self)
-        m.addItem(action: "Launch at Login", #selector(toggleLogin), target: self,
-                  on: SMAppService.mainApp.status == .enabled)
-        m.addItem(.separator())
-        if HookInstaller.isInstalled {
-            m.addItem(action: "Remove Claude Code Hooks", #selector(removeHooks), target: self)
-        } else {
-            m.addItem(action: "Install Claude Code Hooks", #selector(installHooks), target: self)
-        }
+        if !windowMode { m.addItem(action: "Reset Position", #selector(resetPosition), target: self) }
         m.addItem(.separator())
         m.addItem(action: "Quit", #selector(quit), target: self)
         return m
@@ -1204,6 +1190,39 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
     }
 
     @objc private func toggleLabels() { showLabels.toggle() }
+
+    /// Preferences, gathered in one place.
+    private func settingsMenu(size: NSMenuItem) -> NSMenuItem {
+        let root = NSMenuItem(title: "Settings", action: nil, keyEquivalent: "")
+        let sm = NSMenu()
+        // In the window the crew always fits the window, so Size only applies on the desktop.
+        if windowMode { sm.addItem(disabled: "Size (desktop only)") } else { sm.addItem(size) }
+        sm.addItem(action: "Show Project Names", #selector(toggleLabels), target: self, on: showLabels)
+        sm.addItem(.separator())
+        sm.addItem(disabled: "Window mode")
+        sm.addItem(action: "Keep Window on Top", #selector(togglePin), target: self,
+                   on: UserDefaults.standard.bool(forKey: "windowPinned"))
+        sm.addItem(action: "Fit Window Height to Claudes", #selector(toggleAutoHeight), target: self,
+                   on: UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true)
+        sm.addItem(.separator())
+        sm.addItem(action: "Show Dock Icon", #selector(toggleDock), target: self, on: showInDock)
+        sm.addItem(action: "Launch at Login", #selector(toggleLogin), target: self,
+                   on: SMAppService.mainApp.status == .enabled)
+        sm.addItem(.separator())
+        if HookInstaller.isInstalled {
+            sm.addItem(action: "Remove Claude Code Hooks", #selector(removeHooks), target: self)
+        } else {
+            sm.addItem(action: "Install Claude Code Hooks", #selector(installHooks), target: self)
+        }
+        root.submenu = sm
+        return root
+    }
+
+    @objc private func togglePin() {
+        let on = !UserDefaults.standard.bool(forKey: "windowPinned")
+        UserDefaults.standard.set(on, forKey: "windowPinned")
+        clawdWindow?.applyPin()
+    }
 
     @objc private func toggleAutoHeight() {
         let on = !(UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true)
