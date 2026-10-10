@@ -766,31 +766,34 @@ enum Scenes {
         c.rect(0, g, c.w, 1, C(0x5A7A4A))
         for i in 0..<(c.w / 3) { c.rect(Int(noise(i * 7) * Double(c.w)), g + 2 + Int(noise(i * 7 + 1) * Double(max(1, c.h - g - 3))), 3, 1, C(0x3E4E30)) }
         let bx = c.w - 120
-        c.rect(bx - 30, g, 120, c.h - g, C(0x1E2E26))
-        c.rect(bx - 30, g, 120, 1, C(0x4E6A5A))
+        c.rect(bx - 40, g, 140, c.h - g, C(0x1E2E26))
+        c.rect(bx - 40, g, 140, 1, C(0x4E6A5A))
         for i in 0..<10 { c.rect(bx - 26 + Int(noise(i * 3 + 70) * 110), g + 2 + i % 3 * 2, 6, 1, C(0x5E7E6E, 0.5)) }   // ripples
 
         // Luke's X-wing, nose up and half sunk: a thick fuselage rising out of the bog, two S-foils splayed in an X
-        // with engines at their roots, red stripes and the canopy.
-        let xw = bx - 6
+        // with engines at their roots, red stripes and the canopy. Drawn in its own units, scaled up by `xs`.
+        let xw = bx - 18, xs = 1.7
+        func part(_ x: Double, _ y: Double, _ w: Double, _ h: Double, _ col: Px) {   // local units, y up from the water
+            let x0 = xw + Int((x * xs).rounded()), x1 = xw + Int(((x + w) * xs).rounded())
+            let y0 = g - Int(((y + h) * xs).rounded()), y1 = g - Int((y * xs).rounded())
+            c.rect(x0, y0, max(1, x1 - x0), max(1, y1 - y0), col)
+        }
         let white = C(0xDCDCD4), shade = C(0x9A9A92), red = C(0xC03A2A)
-        for k in 0..<34 {                                                  // fuselage (4 px thick), tapering to the nose
-            let x = xw + k, y = g - k * 3 / 4
-            let thick = k > 26 ? 2 : 4
-            c.rect(x, y - thick + 2, 2, thick, white); c.px(x, y + 1, shade)
+        for k in 0..<34 {                                                  // fuselage, tapering to the nose
+            let y = Double(k) * 0.75, thick = k > 26 ? 2.0 : 4.0
+            part(Double(k), y - 1, 1, thick, white); part(Double(k), y - 1, 1, 1, shade)
         }
-        c.rect(xw + 33, g - 26, 3, 2, C(0xC8C8C0))                         // nose tip
-        c.rect(xw + 8, g - 7, 3, 4, red); c.rect(xw + 20, g - 16, 3, 4, red)   // stripes
-        c.rect(xw + 13, g - 13, 5, 3, C(0x2E4A6A)); c.px(xw + 14, g - 13, C(0x8AB0D0))   // canopy
-        // the S-foils: one wing up and back, one down into the water, engines at the roots
-        for k in 0..<18 {
-            c.rect(xw + 4 - k / 3, g - 6 - k, 3, 1, k % 6 == 0 ? red : white)   // upper wing
-            c.rect(xw + 6 + k / 2, g - 2 + k / 4, 3, 1, white.alpha(max(0, 1 - Double(k) / 8)))   // lower wing, going under
+        part(33, 24, 3, 2, C(0xC8C8C0))                                    // nose tip
+        part(8, 4, 3, 4, red); part(20, 13, 3, 4, red)                     // stripes
+        part(13, 10, 5, 3, C(0x2E4A6A)); part(14, 12, 1, 1, C(0x8AB0D0))   // canopy
+        for k in 0..<18 {                                                  // the S-foils
+            part(4 - Double(k) / 3, 6 + Double(k), 3, 1, k % 6 == 0 ? red : white)        // one wing up and back
+            part(6 + Double(k) / 2, 1 - Double(k) / 4, 3, 1, white.alpha(max(0, 1 - Double(k) / 8)))   // one going under
         }
-        c.rect(xw - 2, g - 22, 2, 5, C(0x6A6A70))                          // upper wing-tip cannon
-        c.rect(xw + 1, g - 8, 5, 4, C(0x8A8A90)); c.px(xw + 2, g - 6, C(0xFF8A3A))   // engine
-        c.rect(xw - 6, g, 46, 1, C(0x8AA89A, 0.5))                         // where it meets the water
-        c.ellipse(xw + 14, g + 1, 22, 1, C(0x8AA89A, 0.18))                // its reflection
+        part(-2, 17, 2, 5, C(0x6A6A70))                                    // wing-tip cannon
+        part(1, 4, 5, 4, C(0x8A8A90)); part(2, 5, 1, 1, C(0xFF8A3A))       // engine
+        c.rect(xw - 10, g, Int(60 * xs), 1, C(0x8AA89A, 0.5))              // where it meets the water
+        c.ellipse(xw + Int(24 * xs), g + 1, Int(30 * xs), 1, C(0x8AA89A, 0.18))   // its reflection
 
         // Yoda's hut on the far right: a mud dome with a glowing round window and doorway.
         let hx = c.w - 26
