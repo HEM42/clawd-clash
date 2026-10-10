@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.11.2 — 2026-10-10
+
+### Fixed
+- The Rancor's card portrait was shown at 1× because the redrawn upright rancor is 42 px tall. The portrait box is now sized from measured maxima across all villains (widest: AT-AT, 53 px; tallest: Rancor, 42 px) to 112×86 pt, so every portrait fits at 2×.
+
 ## 2.11.1 — 2026-10-10
 
 ### Changed

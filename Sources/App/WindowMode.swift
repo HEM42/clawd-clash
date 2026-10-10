@@ -230,8 +230,8 @@ final class CardsView: NSView {
 
     private static let pad: CGFloat = 12
     private static let portraitScale: CGFloat = 2          // portraits are cropped to 46×38 sprite pixels
-    // Wide enough for the AT-AT (54 px) and tall enough for the rancor (39 px) at 2×.
-    private static let portraitSize = NSSize(width: 56 * portraitScale, height: 40 * portraitScale)
+    // Measured: the widest portrait is the AT-AT (53 px), the tallest the Rancor (42 px) — both fit at 2×.
+    private static let portraitSize = NSSize(width: 56 * portraitScale, height: 43 * portraitScale)
     private static let lineH: CGFloat = 16
     private static let agentH: CGFloat = 34
 
