@@ -25,7 +25,7 @@ extension Companion {
 }
 
 enum Leader: Int, CaseIterable {
-    case vader, kylo, maul, boba, trooper, emperor, rogr, dooku, gamorrean, jabba, ig88, atst, atat, rancor
+    case vader, kylo, maul, boba, trooper, emperor, rogr, dooku, gamorrean, jabba, ig88, atst, atat, rancor, greedo
 
     var name: String {
         switch self {
@@ -43,13 +43,14 @@ enum Leader: Int, CaseIterable {
         case .atst: return "AT-ST"
         case .atat: return "AT-AT"
         case .rancor: return "Rancor"
+        case .greedo: return "Greedo"
         }
     }
 
     var weapon: Weapon {
         switch self {
         case .vader, .kylo, .maul: return .saber
-        case .boba, .trooper, .rogr, .ig88, .atst, .atat: return .blaster
+        case .boba, .trooper, .rogr, .ig88, .atst, .atat, .greedo: return .blaster
         case .dooku, .gamorrean, .rancor: return .saber   // vibro-axe and claws fight up close like a blade
         case .jabba: return .none
         case .emperor: return .lightning
@@ -73,6 +74,7 @@ enum Leader: Int, CaseIterable {
         case .atst: return 10
         case .atat: return 11
         case .rancor: return 8
+        case .greedo: return 19
         }
     }
 
@@ -81,6 +83,7 @@ enum Leader: Int, CaseIterable {
         switch self {
         case .atst: return (47, 22)
         case .atat: return (64, 21)
+        case .greedo: return (47, 32)
         default: return (52, 32)
         }
     }
@@ -232,6 +235,7 @@ func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, wal
     case .atst: drawATST(c, step: step, lift: breathe)
     case .atat: drawATAT(c, step: step, lift: breathe)
     case .rancor: drawRancor(c, step: step, lift: breathe)
+    case .greedo: drawGreedo(c, step: step, lift: breathe)
     case .emperor: drawEmperor(c, lift: breathe, armRaise: armRaise)
     }
 
@@ -278,6 +282,8 @@ func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, wal
         case .rogr: drawE5(c, x: 39, y: 31)
         case .ig88: drawE11(c, x: 37, y: 30)
         case .atst, .atat: break                       // chin guns are part of the walker
+        case .greedo:
+            c.pattern(40, 31, [".KKKKK", "KKKKSK", "KK....", "KK...."], ["K": C(0x2A2A30), "S": C(0x8A8F9C)])
         default: drawE11(c, x: 37, y: 30)
         }
     case .lightning:
@@ -547,6 +553,30 @@ private func drawIG88(_ c: PixelCanvas, step: Int, lift: Int) {
     c.pattern(23, 9, ["..MMMMMM..", ".MMLMMMMM.", "MMLMMMMMMM", "MMLMMMMMMM", "RRRRRRRRRR", "MMLMMMMMMM",
                       "MMLMMMMMMM", "MMLMMMMMMM", "RRRRRRRRRR", "MMLMMMMMMM", "MMMMMMMMMM", ".MMMMMMMM.", "..MMMMMM.."],
               ["M": metal, "L": metalLight, "R": C(0xC0392B)])
+}
+
+/// Greedo: a green Rodian Clawd — huge glossy black eyes, a tapir snout, spines on top, a vest and a pistol.
+private func drawGreedo(_ c: PixelCanvas, step: Int, lift: Int) {
+    let base = c.oy
+    let skin = C(0x5E9A4A), skinShade = C(0x467A36), skinLight = C(0x7AB860)
+    drawLegs(c, Look(leg: C(0x4A4A52)), step: step)
+    c.oy = base + lift
+    drawBody(c, Look(body: skin, shade: skinShade, arm: skin, eye: nil))
+    // head spines and the little ear fans
+    c.pattern(19, 21, ["...S..S..S...S..S...", "..SSS.SS.SS..SS.SSS.", ".SSSSSSSSSSSSSSSSSS."], ["S": skinShade])
+    c.pattern(14, 27, ["EE", "EEE", "EE"], ["E": skinLight]); c.pattern(39, 27, [".EE", "EEE", ".EE"], ["E": skinLight])
+    for (x, y) in [(20, 27), (35, 26), (24, 35), (31, 34)] { c.px(x, y, skinLight) }
+    // the big multifaceted eyes
+    for ex in [20, 31] {
+        c.rect(ex, 27, 5, 5, C(0x0A0C10)); c.rect(ex + 1, 26, 3, 7, C(0x0A0C10))
+        c.px(ex + 1, 28, C(0x6A8AB0)); c.px(ex + 2, 27, C(0xBFD8F0))
+    }
+    // tapir snout
+    c.rect(26, 31, 4, 3, skinShade); c.rect(27, 34, 2, 2, skinShade); c.px(27, 35, C(0x2A3A20))
+    // vest over a pale tunic
+    c.rect(18, 33, 20, 5, C(0xC8BCA0))
+    c.rect(18, 33, 5, 5, C(0x3A3A2E)); c.rect(33, 33, 5, 5, C(0x3A3A2E))
+    c.rect(18, 37, 20, 1, C(0x5A4A32))
 }
 
 /// The rancor: a towering, hunched reptile that stands upright on two short, stubby legs, with a flat face

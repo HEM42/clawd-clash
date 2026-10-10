@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.12.0 — 2026-10-10
+
+### Added
+- **Greedo** villain: a green Rodian Clawd with huge glossy black eyes, a tapir snout, head spines and ear fans, a dark vest over a pale tunic, and his small blaster pistol (bolts leave from its muzzle). Home: the Mos Eisley Cantina.
+
 ## 2.11.2 — 2026-10-10
 
 ### Fixed

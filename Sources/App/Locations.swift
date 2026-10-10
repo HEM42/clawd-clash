@@ -50,6 +50,7 @@ enum Location: String, CaseIterable {
         case .atst: return .endor
         case .atat: return .hoth
         case .rancor: return .rancorPit
+        case .greedo: return .cantina
         }
     }
 
