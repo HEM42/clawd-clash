@@ -171,7 +171,7 @@ enum StatusStore {
                     s.sessions[session]?.tools = toolsCount
                     // Remember the task of each agent Claude launches; SubagentStart picks it up.
                     let tool = json["tool_name"] as? String ?? ""
-                    if tool == "Agent" || tool == "Task", let input = json["tool_input"] as? [String: Any],
+                    if ["Agent", "Task", "task", "agent"].contains(tool), let input = json["tool_input"] as? [String: Any],
                        let task = (input["description"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !task.isEmpty {
                         s.pending = (s.pending ?? []) + [PendingAgent(session: session,
                             type: input["subagent_type"] as? String ?? "general-purpose", task: task, at: now)]
@@ -236,7 +236,7 @@ enum StatusStore {
             return flat.count > n ? String(flat.prefix(n - 1)) + "…" : flat
         }
         switch tool {
-        case "Bash", "shell", "exec_command", "local_shell":
+        case "Bash", "shell", "exec_command", "local_shell", "run_shell_command":
             return "Bash: " + short(str("description") ?? str("command") ?? (input["command"] as? [String])?.joined(separator: " ") ?? "")
         case "apply_patch":   // Codex edits files with patches: name the first file it touches
             let patch = str("command") ?? str("input") ?? ""
@@ -244,6 +244,16 @@ enum StatusStore {
                 .map { ($0.components(separatedBy: "File: ").last ?? "") as NSString }
             return "Edit " + (file?.lastPathComponent ?? "files")
         case "Read", "Edit", "Write", "MultiEdit": return "\(tool) \(file("file_path") ?? "")"
+        // Qwen Code's tools
+        case "read_file", "read_many_files": return "Read " + (file("file_path") ?? file("absolute_path") ?? file("path") ?? "files")
+        case "write_file": return "Write " + (file("file_path") ?? file("absolute_path") ?? "")
+        case "edit", "replace": return "Edit " + (file("file_path") ?? file("absolute_path") ?? "")
+        case "grep_search", "search_file_content": return "Grep " + short(str("pattern") ?? "", 32)
+        case "glob": return "Glob " + short(str("pattern") ?? "", 32)
+        case "web_fetch": return "Fetch " + (str("url").flatMap { URL(string: $0)?.host } ?? "the web")
+        case "web_search", "google_web_search": return "Search: " + short(str("query") ?? "", 40)
+        case "todo_write": return "Updating todos"
+        case "task", "agent": return "Agent: " + short(str("description") ?? "", 40)
         case "NotebookEdit": return "Edit \(file("notebook_path") ?? "")"
         case "Grep": return "Grep " + short(str("pattern") ?? "", 32)
         case "Glob": return "Glob " + short(str("pattern") ?? "", 32)

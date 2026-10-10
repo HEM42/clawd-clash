@@ -1,6 +1,6 @@
 # Clawd Wars
 
-> A native macOS app (Swift + AppKit, no dependencies) that shows running Claude Code and OpenAI Codex sessions as pixel-art Star Wars characters on the desktop or in a window. Every session and subagent is a hero or a villain (one shared cast; with two AIs running they take opposite sides); they fight while they work. Status comes from Claude Code and Codex hooks (same hook binary, `--assistant codex` for Codex). Every sprite, effect, location and the app icon are drawn in code — there are no image assets.
+> A native macOS app (Swift + AppKit, no dependencies) that shows running Claude Code, OpenAI Codex and Qwen Code sessions as pixel-art Star Wars characters on the desktop or in a window. Every session and subagent is a hero or a villain (one shared cast; with two AIs running they take opposite sides); they fight while they work. Status comes from Claude Code, Codex and Qwen Code hooks (same hook binary, `--assistant codex|qwen`; config in `HookInstaller.OtherAI`). Every sprite, effect, location and the app icon are drawn in code — there are no image assets.
 
 ## Build and run
 

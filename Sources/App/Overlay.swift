@@ -1126,7 +1126,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             a.addButton(withTitle: "Connect")
             a.addButton(withTitle: "Not Now")
             if a.runModal() == .alertFirstButtonReturn {
-                do { try HookInstaller.install() } catch { self.alert("Couldn't install hooks", error.localizedDescription) }
+                do {
+                    try HookInstaller.install()
+                    for ai in HookInstaller.others where HookInstaller.available(ai) { try HookInstaller.install(ai) }
+                    if HookInstaller.codexAvailable {
+                        self.alert("One more step for Codex", "Codex only runs new hooks after you trust them: run /hooks in Codex once and approve them.")
+                    }
+                } catch { self.alert("Couldn't install hooks", error.localizedDescription) }
                 self.lastHookCheck = 0
             }
         }
@@ -1563,6 +1569,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
                 sm.addItem(action: "Install Codex Hooks", #selector(installCodexHooks), target: self)
             }
         }
+        if HookInstaller.available(HookInstaller.qwen) {
+            if HookInstaller.installed(HookInstaller.qwen) {
+                sm.addItem(action: "Remove Qwen Code Hooks", #selector(removeQwenHooks), target: self)
+            } else {
+                sm.addItem(action: "Install Qwen Code Hooks", #selector(installQwenHooks), target: self)
+            }
+        }
         root.submenu = sm
         return root
     }
@@ -1741,6 +1754,17 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             try HookInstaller.installCodex()
             alert("Codex hooks installed", "Codex only runs new hooks after you trust them: run /hooks in Codex and approve them. Codex sessions that are already open pick them up after a restart.")
         } catch { alert("Couldn't install Codex hooks", error.localizedDescription) }
+    }
+
+    @objc private func installQwenHooks() {
+        do {
+            try HookInstaller.install(HookInstaller.qwen)
+            alert("Qwen Code hooks installed", "Qwen Code sessions that are already open pick them up after a restart.")
+        } catch { alert("Couldn't install Qwen Code hooks", error.localizedDescription) }
+    }
+
+    @objc private func removeQwenHooks() {
+        do { try HookInstaller.uninstall(HookInstaller.qwen) } catch { alert("Couldn't remove Qwen Code hooks", error.localizedDescription) }
     }
 
     @objc private func removeCodexHooks() {

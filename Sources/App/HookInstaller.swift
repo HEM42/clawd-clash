@@ -84,66 +84,98 @@ enum HookInstaller {
         try writeSettings(root)
     }
 
-    // MARK: Codex (~/.codex/hooks.json)
+    // MARK: Other AIs (Codex, Qwen Code)
+    //
+    // Both read Claude Code-style hook config: { "hooks": { Event: [ { matcher?, hooks: [ {type, command, timeout} ] } ] } }.
+    // Our handler runs the same hook binary with `--assistant <name>` so it knows which AI is calling.
 
-    static let codexEvents = [
-        "SessionStart", "SessionEnd", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PermissionRequest",
-        "Stop", "Interrupt", "SubagentStart", "SubagentStop",
-    ]
-    static var codexDir: URL { FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".codex") }
-    static var codexHooksURL: URL { codexDir.appendingPathComponent("hooks.json") }
-    static var codexAvailable: Bool { FileManager.default.fileExists(atPath: codexDir.path) }
+    struct OtherAI {
+        let name: String            // "codex" / "qwen" — passed to the hook as --assistant
+        let dir: URL                // ~/.codex, ~/.qwen
+        let file: URL               // hooks.json / settings.json
+        let events: [String]
+        let toolEvents: Set<String> // events that take a matcher
+        let matcherAll: String?     // how this AI spells "match every tool" (nil = omit the matcher)
+        let shortTimeoutEvents: Set<String>
+    }
 
-    private static func readCodexHooks() throws -> [String: Any] {
-        guard let data = try? Data(contentsOf: codexHooksURL), !data.isEmpty else { return [:] }
+    static let codex = OtherAI(
+        name: "codex", dir: home(".codex"), file: home(".codex/hooks.json"),
+        events: ["SessionStart", "SessionEnd", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PermissionRequest",
+                 "Stop", "Interrupt", "SubagentStart", "SubagentStop"],
+        toolEvents: [], matcherAll: nil, shortTimeoutEvents: ["SessionEnd", "Interrupt"])   // these allow ≤ 3 s
+
+    static let qwen = OtherAI(
+        name: "qwen", dir: home(".qwen"), file: home(".qwen/settings.json"),
+        events: ["SessionStart", "SessionEnd", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PostToolUseFailure",
+                 "PermissionRequest", "Notification", "Stop", "StopFailure", "SubagentStart", "SubagentStop"],
+        toolEvents: ["PreToolUse", "PostToolUse", "PostToolUseFailure", "PermissionRequest"],
+        matcherAll: ".*", shortTimeoutEvents: [])                                              // Qwen matchers are regexes
+
+    static let others = [codex, qwen]
+
+    private static func home(_ path: String) -> URL { FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(path) }
+
+    static func available(_ ai: OtherAI) -> Bool { FileManager.default.fileExists(atPath: ai.dir.path) }
+
+    private static func read(_ ai: OtherAI) throws -> [String: Any] {
+        guard let data = try? Data(contentsOf: ai.file), !data.isEmpty else { return [:] }
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw NSError(domain: "ClawdWars", code: 2, userInfo: [NSLocalizedDescriptionKey: "~/.codex/hooks.json is not a JSON object"])
+            throw NSError(domain: "ClawdWars", code: 2,
+                          userInfo: [NSLocalizedDescriptionKey: "\(ai.file.path) is not a JSON object"])
         }
         return root
     }
 
-    static var codexInstalled: Bool {
-        guard let root = try? readCodexHooks(), let hooks = root["hooks"] as? [String: Any] else { return false }
-        return codexEvents.allSatisfy { e in
+    static func installed(_ ai: OtherAI) -> Bool {
+        guard let root = try? read(ai), let hooks = root["hooks"] as? [String: Any] else { return false }
+        return ai.events.allSatisfy { e in
             (hooks[e] as? [[String: Any]] ?? []).contains { g in
                 (g["hooks"] as? [[String: Any]] ?? []).contains { (($0["command"] as? String) ?? "").contains(marker) }
             }
         }
     }
 
-    /// Adds our hook (with `--assistant codex`) to every Codex event, keeping whatever else is in the file.
-    /// Codex runs new hooks only after you trust them: `/hooks` in Codex.
-    static func installCodex() throws {
-        guard codexAvailable else { return }
-        var root = try readCodexHooks()
-        let backup = codexHooksURL.appendingPathExtension("before-clawd-wars")
-        if FileManager.default.fileExists(atPath: codexHooksURL.path), !FileManager.default.fileExists(atPath: backup.path) {
-            try? FileManager.default.copyItem(at: codexHooksURL, to: backup)
+    /// Adds our hook to every event, keeping everything else in the file (a backup is kept the first time).
+    static func install(_ ai: OtherAI) throws {
+        guard available(ai) else { return }
+        var root = try read(ai)
+        let backup = ai.file.appendingPathExtension("before-clawd-wars")
+        if FileManager.default.fileExists(atPath: ai.file.path), !FileManager.default.fileExists(atPath: backup.path) {
+            try? FileManager.default.copyItem(at: ai.file, to: backup)
         }
         var hooks = root["hooks"] as? [String: Any] ?? [:]
-        for e in codexEvents {
+        for e in ai.events {
             var groups = withoutOurs(hooks[e] as? [[String: Any]] ?? [])
-            // SessionEnd and Interrupt allow at most 3 s; the hook takes milliseconds anyway.
-            let handler: [String: Any] = ["type": "command", "command": "\"\(hookBinary)\" --assistant codex",
-                                          "timeout": ["SessionEnd", "Interrupt"].contains(e) ? 3 : 5]
-            groups.append(["hooks": [handler]])
+            var handler: [String: Any] = ["type": "command", "command": "\"\(hookBinary)\" --assistant \(ai.name)",
+                                          "timeout": ai.shortTimeoutEvents.contains(e) ? 3 : 5]
+            if ai.name == "qwen" { handler["name"] = "clawd-wars" }        // lets Qwen toggle it in /hooks
+            var group: [String: Any] = ["hooks": [handler]]
+            if ai.toolEvents.contains(e), let all = ai.matcherAll { group["matcher"] = all }
+            groups.append(group)
             hooks[e] = groups
         }
         root["hooks"] = hooks
         let data = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .withoutEscapingSlashes])
-        try data.write(to: codexHooksURL, options: .atomic)
+        try data.write(to: ai.file, options: .atomic)
     }
 
-    static func uninstallCodex() throws {
-        guard FileManager.default.fileExists(atPath: codexHooksURL.path) else { return }
-        var root = try readCodexHooks()
+    static func uninstall(_ ai: OtherAI) throws {
+        guard FileManager.default.fileExists(atPath: ai.file.path) else { return }
+        var root = try read(ai)
         guard var hooks = root["hooks"] as? [String: Any] else { return }
-        for e in codexEvents {
+        for e in ai.events {
             let groups = withoutOurs(hooks[e] as? [[String: Any]] ?? [])
             hooks[e] = groups.isEmpty ? nil : groups
         }
         root["hooks"] = hooks.isEmpty ? nil : hooks
         let data = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .withoutEscapingSlashes])
-        try data.write(to: codexHooksURL, options: .atomic)
+        try data.write(to: ai.file, options: .atomic)
     }
+
+    // Codex conveniences used by the app and CLI
+    static var codexAvailable: Bool { available(codex) }
+    static var codexInstalled: Bool { installed(codex) }
+    static func installCodex() throws { try install(codex) }
+    static func uninstallCodex() throws { try uninstall(codex) }
 }

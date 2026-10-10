@@ -92,12 +92,13 @@ enum ClaudeProcesses {
             let exe = (first as NSString).lastPathComponent
             let isClaude = exe == "claude" || args.contains { $0.hasSuffix("@anthropic-ai/claude-code/cli.js") }
             let isCodex = exe == "codex" || args.contains { $0.contains("@openai/codex") && $0.hasSuffix(".js") }
-            guard isClaude || isCodex else { continue }
+            let isQwen = exe == "qwen" || args.contains { $0.contains("@qwen-code/qwen-code") && $0.hasSuffix(".js") }
+            guard isClaude || isCodex || isQwen else { continue }
             let skip = ["-p", "--print", "--chrome-native-host", "mcp", "--version", "-v", "update", "doctor",
                         "exec", "login", "logout", "app-server", "mcp-server", "completion", "proto"]
             if args.dropFirst().contains(where: { skip.contains($0) }) { continue }
             let project = cwd(pid).map { ($0 as NSString).lastPathComponent } ?? ""
-            found.append(Info(pid: pid, project: project, assistant: isCodex ? "codex" : "claude"))
+            found.append(Info(pid: pid, project: project, assistant: isCodex ? "codex" : (isQwen ? "qwen" : "claude")))
         }
         // A claude launched by another claude (e.g. a nested tool) isn't a separate session.
         let ids = Set(found.map(\.pid))

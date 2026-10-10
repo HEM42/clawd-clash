@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.19.0 — 2026-10-10
+
+### Added
+- **Qwen Code support.** Qwen Code's hooks are Claude Code-compatible (same events and payload fields), so the same hook binary runs with `--assistant qwen`.
+  - Installed into `~/.qwen/settings.json`: existing settings and the user's own hooks are kept, a backup is made, ours use matcher `.*` (Qwen matchers are regexes) and a name so they can be toggled in Qwen's `/hooks`. No trust step is needed.
+  - Qwen's tools are described like the others: `run_shell_command` → "Bash: …", `edit` / `write_file` / `read_file` → "Edit/Write/Read <file>", plus grep, glob, web fetch and search, todos, and `task` subagents (whose descriptions become agent tasks).
+  - `qwen` processes are found too, so sessions without hooks still appear.
+  - Settings has Install/Remove Qwen Code Hooks. `--install-hooks` and the first-launch offer install hooks for every AI found on the Mac.
+  - Verified against a sandbox `settings.json` (install, keep, uninstall) and with simulated Qwen events. Qwen sessions take sides like Codex.
+- After installing hooks, the app says when Codex needs its one-time `/hooks` approval.
+
+### Changed
+- `HookInstaller` describes other AIs generically (`OtherAI`: config file, events, matcher spelling, timeouts). Codex and Qwen share the install/uninstall code.
+- With three or more AIs running, the first AI keeps its side and every other AI takes the opposite one.
+
 ## 2.18.0 — 2026-10-10
 
 ### Added

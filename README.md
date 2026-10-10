@@ -5,7 +5,7 @@
 <h1 align="center">Clawd Wars</h1>
 
 <p align="center">
-  <b>Your Claude Code and Codex sessions, as a pixel-art Star Wars battle on your desktop.</b><br>
+  <b>Your Claude Code, Codex and Qwen Code sessions, as a pixel-art Star Wars battle on your desktop.</b><br>
   Every session is a hero or a villain, every subagent joins in, and they fight while they work.
 </p>
 
@@ -41,9 +41,9 @@ It sits on the bottom of your screen, above every window, and it's click-through
 
 And it's genuinely fun. Run two Claudes and they duel. Spawn a Han Solo and he shoots at Vader, who deflects every bolt into the sky. The Emperor catches Force lightning on Kylo's crossguard. Jabba laughs at all of it.
 
-## Claude vs Codex
+## Claude vs Codex (vs Qwen)
 
-Run **Claude Code** and **OpenAI Codex** at the same time and they pick sides: whichever was there first keeps its side, the other takes the opposite — Claude has Vader, so Codex gets the heroes — and each one's agents fight for their own side. Light side versus dark side, literally. Close one and everyone's random again.
+Run **Claude Code** alongside **OpenAI Codex** or **Qwen Code** and they pick sides: whichever was there first keeps its side, the other takes the opposite — Claude has Vader, so Codex gets the heroes — and each one's agents fight for their own side. Light side versus dark side, literally. Close one and everyone's random again.
 
 ## The roster
 
@@ -129,7 +129,9 @@ Hover over anyone for the details — what that Claude is doing right now, your 
 
 ## Install
 
-Needs macOS 13+ (Apple Silicon or Intel) and [Claude Code](https://claude.com/claude-code) and/or [Codex](https://developers.openai.com/codex). If Codex is installed, its hooks go into `~/.codex/hooks.json` too — run `/hooks` in Codex once to trust them.
+Needs macOS 13+ (Apple Silicon or Intel) and at least one of [Claude Code](https://claude.com/claude-code), [Codex](https://developers.openai.com/codex) or [Qwen Code](https://github.com/QwenLM/qwen-code). Hooks are added for every one of them installed on your Mac (`~/.claude/settings.json`, `~/.codex/hooks.json`, `~/.qwen/settings.json`).
+
+> **Codex users:** Codex only runs hooks you've approved. After installing, run **`/hooks`** in Codex once and approve the Clawd Wars hook — until then your Codex sessions still show up, but with a `?` instead of live status.
 
 **With Homebrew** (easiest):
 
