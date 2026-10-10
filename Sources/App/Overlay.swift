@@ -114,9 +114,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
     private var baseZoom: CGFloat { let z = UserDefaults.standard.double(forKey: "zoom"); return z > 0 ? z : 1 }
     private var windowFit: CGFloat = 1
 
+    /// Project names over the Claudes, remembered per mode: on by default on the desktop, off in the window
+    /// (its cards already name every project). Agents' task labels always show.
     private var showLabels: Bool {
-        get { UserDefaults.standard.object(forKey: "labels") as? Bool ?? true }
-        set { UserDefaults.standard.set(newValue, forKey: "labels") }
+        get { UserDefaults.standard.object(forKey: windowMode ? "labelsWindow" : "labels") as? Bool ?? !windowMode }
+        set { UserDefaults.standard.set(newValue, forKey: windowMode ? "labelsWindow" : "labels") }
     }
 
     // Layout constants in points at zoom 1.
@@ -858,7 +860,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
             }
 
             // Project name (Claudes) or task (agents) just above the head, clear of any speech bubble.
-            if showLabels && !actor.label.isEmpty {
+            if (showLabels || !actor.isLeader) && !actor.label.isEmpty {
                 let font = actor.isLeader ? NSFont.monospacedSystemFont(ofSize: max(9, 10 * z), weight: .bold)
                                           : NSFont.monospacedSystemFont(ofSize: max(8, 8.5 * z), weight: .semibold)
                 let centered = NSMutableParagraphStyle()
@@ -1534,7 +1536,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate {
         let sm = NSMenu()
         // In the window the crew always fits the window, so Size only applies on the desktop.
         if windowMode { sm.addItem(disabled: "Size (desktop only)") } else { sm.addItem(size) }
-        sm.addItem(action: "Show Project Names", #selector(toggleLabels), target: self, on: showLabels)
+        sm.addItem(action: windowMode ? "Show Project Names in Window" : "Show Project Names on Desktop",
+                   #selector(toggleLabels), target: self, on: showLabels)
         sm.addItem(.separator())
         sm.addItem(disabled: "Window mode")
         sm.addItem(action: "Keep Window on Top", #selector(togglePin), target: self,

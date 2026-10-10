@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.17.3 — 2026-10-10
+
+### Changed
+- Project names over the Claudes are remembered per mode: shown by default on the desktop, hidden by default in the window (its cards already name every project). Settings → "Show Project Names on Desktop" / "… in Window" toggles the current mode's choice, which is saved and survives restarts; existing desktop settings carry over. Agents' task labels always show.
+
 ## 2.17.2 — 2026-10-10
 
 ### Changed
