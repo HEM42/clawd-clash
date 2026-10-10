@@ -4,7 +4,7 @@
 
 ### Added
 - Ready to share as a public repo:
-  - MIT `LICENSE`, so the code is free to use, change and share, with a note that it covers the code only (Star Wars belongs to Lucasfilm/Disney, Claude and Clawd to Anthropic).
+  - MIT `LICENSE`, so the code is free to use, change and share. It's the plain MIT text so GitHub recognises it; the trademark note (Star Wars belongs to Lucasfilm/Disney, Claude and Clawd to Anthropic) lives in the README footer.
   - README badges (MIT, macOS 13+, Swift, for Claude Code, free to use), a Contributing section on how to add a villain, hero or location, and a License section.
   - `docs/social-preview.png` (1280×640), the link card for X, Slack, Discord and iMessage, rendered by `Tools/RenderDocs`.
   - GitHub description and topics.
