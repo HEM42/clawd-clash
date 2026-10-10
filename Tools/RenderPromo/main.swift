@@ -10,7 +10,7 @@ import AVFoundation
 //   /tmp/renderpromo video promo          → clawd-wars-promo.mp4 (H.264, silent)
 //   /tmp/renderpromo frame promo 9.5      → a single frame at 9.5 s
 
-let W = 1920, H = 1080, fps = 30.0, duration = 16.2
+let W = 1920, H = 1080, fps = 30.0, duration = 23.2
 
 // The stage the crew stands on. The whole frame by default; window mode narrows it to the scene strip.
 var S = 6.0                      // screen pixels per sprite pixel for a session; agents are 2/3 of that
@@ -336,7 +336,7 @@ func drawCard(_ c: Card, _ ctx: CGContext, x: Double, top: Double, width: Double
 func windowMode(_ ctx: CGContext, frame r: CGRect, local: Double, t: Double) {
     let loc = Location.cantina
     let panel = loc.panel
-    let z = 2.0                                   // app points → screen pixels
+    let z = 2.0, cz = 1.5                         // app points → screen pixels (window chrome, cards)
     ctx.saveGState()
     ctx.setShadow(offset: CGSize(width: 0, height: -20), blur: 60, color: CGColor(gray: 0, alpha: 0.6))
     let outline = CGPath(roundedRect: r, cornerWidth: 22, cornerHeight: 22, transform: nil)
@@ -352,7 +352,7 @@ func windowMode(_ ctx: CGContext, frame r: CGRect, local: Double, t: Double) {
     where_.draw(at: NSPoint(x: r.maxX - where_.size().width - 28, y: r.maxY - barH / 2 - where_.size().height / 2))
     // the scene strip: the cantina at 2 px per pixel in the app, so 4 here
     let px = Double(Cantina.pixel) * z
-    let stripH = 120.0 * z
+    let stripH = 100.0 * z
     let strip = CGRect(x: r.minX, y: r.maxY - barH - stripH, width: r.width, height: stripH)
     let cw = Int((strip.width / px).rounded(.up)), ch = Int(stripH / px)
     let floorRows = Int(20 / Double(Cantina.pixel))
@@ -362,7 +362,7 @@ func windowMode(_ ctx: CGContext, frame r: CGRect, local: Double, t: Double) {
     for c in [room, live] { if let img = c.makeImage() { ctx.draw(img, in: CGRect(x: strip.minX, y: strip.minY, width: Double(cw) * px, height: Double(ch) * px)) } }
     ctx.restoreGState()
     // the crew in the cantina (sessions at the app's Small size: 2 pt per pixel → 4 px)
-    let needsYou = local > 1.3
+    let needsYou = local > 2.0
     onStage(ctx, strip, scale: px, ground: Double(ch) - Double(floorRows) * 0.45) {
         let vader = Actor(cast: .villain(.vader), x: 200, facing: -1, role: .duel)
         var luke = Actor(cast: .hero(.luke), x: 143, role: .duel, ai: .codex)
@@ -377,28 +377,28 @@ func windowMode(_ ctx: CGContext, frame r: CGRect, local: Double, t: Double) {
     // cards
     let ticks = Int(local * 1.0)
     let now = ["Now: Read Overlay.swift", "Now: Edit WindowMode.swift", "Now: Bash: swift build"][min(2, Int(local / 0.9))]
-    var top = strip.minY - 10 * z
-    let x = r.minX + 10 * z, w = r.width - 20 * z
+    var top = strip.minY - 10 * cz
+    let x = r.minX + 10 * cz, w = r.width - 20 * cz
     top -= drawCard(Card(who: .villain(.vader), ai: .claude, name: "Darth Vader", project: "idle-claude",
                          status: "WORKING · \(24 + ticks)s", statusColor: NSColor(srgbRed: 0.45, green: 0.85, blue: 0.45, alpha: 1),
                          lines: [("claude-opus-5-5", dimText), (now, bodyText), ("You: “add a tauntaun”", bodyText)],
                          agents: [(.hero(.han), "Han Solo", "Run the tests", "Bash: swift test · \(34 + ticks)s · 9 tool calls"),
                                   (.hero(.chewie), "Chewbacca", "Check git history", "Bash: git log · 1m \(21 + ticks)s · 25 tool calls")]),
-                    ctx, x: x, top: top, width: w, panel: panel, z: z) + 10 * z
+                    ctx, x: x, top: top, width: w, panel: panel, z: cz) + 10 * cz
     // the Codex group divider, then its card
-    let g = NSAttributedString(string: "CODEX", attributes: [.font: NSFont.systemFont(ofSize: 10.5 * z, weight: .heavy), .kern: 1.2 * z,
+    let g = NSAttributedString(string: "CODEX", attributes: [.font: NSFont.systemFont(ofSize: 10.5 * cz, weight: .heavy), .kern: 1.2 * cz,
                                                              .foregroundColor: AI.codex.ns])
     let gs = g.size()
-    g.draw(at: NSPoint(x: x + 2 * z, y: top - gs.height - 2 * z))
+    g.draw(at: NSPoint(x: x + 2 * cz, y: top - gs.height - 2 * cz))
     ctx.setFillColor(AI.codex.ns.withAlphaComponent(0.35).cgColor)
-    ctx.fill(CGRect(x: x + gs.width + 10 * z, y: top - gs.height / 2 - 2 * z, width: w - gs.width - 12 * z, height: z))
-    top -= 22 * z
+    ctx.fill(CGRect(x: x + gs.width + 10 * cz, y: top - gs.height / 2 - 2 * cz, width: w - gs.width - 12 * cz, height: cz))
+    top -= 22 * cz
     drawCard(Card(who: .hero(.luke), ai: .codex, name: "Luke Skywalker", project: "website",
-                  status: needsYou ? "NEEDS YOU · \(max(1, Int((local - 1.3) * 1.0) + 1))s" : "THINKING",
+                  status: needsYou ? "NEEDS YOU · \(max(1, Int(local - 2.0) + 1))s" : "THINKING",
                   statusColor: needsYou ? NSColor(srgbRed: 1, green: 0.42, blue: 0.42, alpha: 1) : NSColor(white: 0.85, alpha: 1),
                   lines: [("gpt-5-codex", dimText), (needsYou ? "Wants to run: npm run deploy" : "Now: Thinking…", bodyText),
                           ("You: “make the hero section pop”", bodyText)]),
-             ctx, x: x, top: top, width: w, panel: panel, z: z)
+             ctx, x: x, top: top, width: w, panel: panel, z: cz)
     ctx.restoreGState()
 }
 
@@ -408,7 +408,7 @@ struct Shot { let name: String; let start: Double; let end: Double; let render: 
 
 let shots: [Shot] = [
     // 1 · The hook: three AIs at work in three terminals, and one overwhelmed human.
-    Shot(name: "hook", start: 0, end: 2.0) { ctx, local, t in
+    Shot(name: "hook", start: 0, end: 3.0) { ctx, local, t in
         let zoom = 1 + 0.03 * local
         ctx.saveGState()
         ctx.translateBy(x: Double(W) / 2, y: Double(H) / 2); ctx.scaleBy(x: zoom, y: zoom)
@@ -419,7 +419,7 @@ let shots: [Shot] = [
         caption("Sound familiar?", ctx, local: local, start: 0.7, y: 120, size: 76, color: yellow)
     },
     // 2 · Desktop mode: they become a Star Wars brawl along the bottom of the screen.
-    Shot(name: "desktop", start: 2.0, end: 4.6) { ctx, local, t in
+    Shot(name: "desktop", start: 3.0, end: 6.6) { ctx, local, t in
         desktop(ctx, dim: easeOut(local / 0.4))
         let drop = { (d: Double) -> Double in max(0, 40 * (1 - easeIn((local - d) / 0.3))) }
         var vader = Actor(cast: .villain(.vader), x: 62, mode: .working, role: .duel, label: "idle-claude")
@@ -436,7 +436,7 @@ let shots: [Shot] = [
                 size: 40, color: yellow, weight: .bold)
     },
     // 3 · Status at a glance: working, thinking, needs you, napping.
-    Shot(name: "status", start: 4.6, end: 6.8) { ctx, local, t in
+    Shot(name: "status", start: 6.6, end: 9.8) { ctx, local, t in
         desktop(ctx, dim: 1)
         let cast: [(Cast, AI, VaderMode, BubbleKind?, String, NSColor)] = [
             (.villain(.vader), .claude, .working, nil, "WORKING", NSColor(srgbRed: 0.45, green: 0.85, blue: 0.45, alpha: 1)),
@@ -462,7 +462,7 @@ let shots: [Shot] = [
                 color: yellow, weight: .bold)
     },
     // 4 · Subagents march in, each labelled with its task.
-    Shot(name: "agents", start: 6.8, end: 8.8) { ctx, local, t in
+    Shot(name: "agents", start: 9.8, end: 12.8) { ctx, local, t in
         desktop(ctx, dim: 1)
         draw(Actor(cast: .villain(.vader), x: 262, facing: -1, mode: .standGuard, label: "idle-claude"), ctx, t: t)
         let crew: [(Companion, String, Double)] = [(.luke, "Find hook events", 190), (.leia, "Write changelog", 140),
@@ -478,24 +478,24 @@ let shots: [Shot] = [
                 color: yellow, weight: .bold)
     },
     // 5 · Window mode: the crew in the cantina, a live card for every session.
-    Shot(name: "window", start: 8.8, end: 11.6) { ctx, local, t in
+    Shot(name: "window", start: 12.8, end: 16.6) { ctx, local, t in
         desktop(ctx, dim: 1, floor: false)
         let f = easeOut(local / 0.6), s = 0.94 + 0.06 * f
-        let base = CGRect(x: 300, y: 30, width: 1320, height: 780)
+        let base = CGRect(x: 300, y: 20, width: 1320, height: 800)
         let r = CGRect(x: base.midX - base.width * s / 2, y: base.minY + 20 * (1 - f), width: base.width * s, height: base.height * s)
         windowMode(ctx, frame: r, local: local, t: t)
         modeBadge("WINDOW MODE", ctx, local: local)
-        caption("Prefer a window? Grab the popcorn.", ctx, local: local, start: 0.1, y: 940, size: 58)
+        caption("Prefer a window? Grab the popcorn.", ctx, local: local, start: 0.1, y: 955, size: 56)
         caption("A live card per session: what it's doing, your last prompt, every agent.", ctx, local: local, start: 0.4,
-                y: 878, size: 34, color: yellow, weight: .bold)
+                y: 890, size: 32, color: yellow, weight: .bold)
     },
     // 6 · Every AI it supports, Claude first and biggest, each with its own outline.
-    Shot(name: "ais", start: 11.6, end: 14.0) { ctx, local, t in
+    Shot(name: "ais", start: 16.6, end: 20.0) { ctx, local, t in
         desktop(ctx, dim: 1)
         // the line-up: Claude a head taller, duelling Codex; everyone else cheering
         let lineup: [(Cast, AI, Double, Double, FightRole)] = [
             (.villain(.kylo), .desktop, 36, -1, .cheer), (.villain(.vader), .claude, 104, 1, .duel), (.hero(.luke), .codex, 165, -1, .duel),
-            (.hero(.yoda), .qwen, 216, -1, .cheer), (.hero(.leia), .gemini, 256, -1, .cheer), (.hero(.han), .copilot, 296, -1, .cheer),
+            (.hero(.yoda), .qwen, 216, -1, .cheer), (.hero(.leia), .gemini, 258, -1, .cheer), (.hero(.r2d2), .copilot, 298, -1, .cheer),
         ]
         var actors: [Actor] = []
         for (i, (who, ai, x, facing, role)) in lineup.enumerated() {
@@ -527,7 +527,7 @@ let shots: [Shot] = [
         caption("Everyone picks a side. Nobody plays nice.", ctx, local: local, start: 0.7, y: 640, size: 40, color: yellow, weight: .bold)
     },
     // 7 · End card: the Falcon flies through, the title lands.
-    Shot(name: "endcard", start: 14.0, end: 16.2) { ctx, local, t in
+    Shot(name: "endcard", start: 20.0, end: 23.2) { ctx, local, t in
         space(ctx, t: local)
         // the Falcon streaks across the sky
         let fp = local / 1.1
@@ -542,7 +542,7 @@ let shots: [Shot] = [
         }
         // the crew on the horizon, one of every AI's colours
         let crew: [(Cast, FightRole, AI)] = [(.villain(.kylo), .cheer, .desktop), (.villain(.vader), .duel, .claude),
-                                             (.hero(.luke), .duel, .codex), (.hero(.han), .none, .copilot),
+                                             (.hero(.luke), .duel, .codex), (.hero(.r2d2), .none, .copilot),
                                              (.hero(.yoda), .cheer, .qwen), (.hero(.leia), .none, .gemini)]
         var placed: [Actor] = []
         for (i, (who, role, ai)) in crew.enumerated() {
@@ -578,7 +578,7 @@ let shots: [Shot] = [
 
 /// A Star Wars wipe between shots: a soft, feathered edge travels across the frame at a constant speed,
 /// uncovering the next shot behind it while both shots keep playing. Centred on each cut.
-let wipe = 1.2, feather = 220.0
+let wipe = 1.7, feather = 220.0
 
 /// Greyscale mask that is white (keep the outgoing shot) to the right of `edge`, ramping softly across `feather`.
 func wipeMask(edge: Double) -> CGImage {
@@ -638,7 +638,7 @@ let beats: [(title: String, action: String, onScreen: String, sound: String)] = 
      "“Every subagent reports for duty.”  ·  “Its job is right there on its label. No more guessing.”", "marching footsteps, R2 beep"),
     ("WINDOW MODE", "The app window slides up: the cantina with its band, Vader duelling Codex's Luke, agents cheering; below, live cards whose timers tick and whose “Now:” line changes. Then Luke stops, jumps with a red ! and his card flips to NEEDS YOU.",
      "WINDOW MODE badge  ·  “Prefer a window? Grab the popcorn.”  ·  “A live card per session…”", "cantina band, notification ping"),
-    ("EVERY AI", "Six sessions pop in, one per AI outline. Claude's Vader stands a head taller and duels Codex's Luke; the rest cheer.",
+    ("EVERY AI", "Six sessions pop in, one per AI outline (Copilot gets R2-D2). Claude's Vader stands a head taller and duels Codex's Luke; the rest cheer.",
      "CLAUDE CODE (huge)  ·  + Claude Desktop · Codex · Qwen Code · Gemini CLI · Copilot CLI  ·  “Everyone picks a side. Nobody plays nice.”", "big saber clash"),
     ("END CARD", "Wipe to space. The Millennium Falcon streaks across; the crew lines up on the horizon in all six colours; the title punches in, then the tagline, icon and link.",
      "CLAWD WARS  ·  “Have fun. Keep track.”  ·  Free for macOS  ·  github.com/rodclemen/clawd-wars", "Falcon flyby whoosh, final sting"),
@@ -742,7 +742,7 @@ if cmd == "video" {
     let t = Double(args[3]) ?? 0
     save(frame(t), "\(out)/t\(args[3]).png"); print("wrote \(out)/t\(args[3]).png")
 } else {
-    let keys: [Double] = [1.1, 3.6, 6.0, 8.3, 10.6, 13.0, 15.6]
+    let keys: [Double] = [1.6, 5.0, 8.4, 11.4, 15.3, 18.6, 22.4]
     let frames = keys.map(frame)
     for (i, f) in frames.enumerated() { save(f, "\(out)/key-\(i + 1).png") }
     save(storyboard(frames), "\(out)/storyboard.png")

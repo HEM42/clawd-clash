@@ -45,7 +45,8 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         // Our own themed title bar instead of the system one; the traffic lights stay.
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
-        window.standardWindowButton(.zoomButton)?.isHidden = true   // no maximise / full screen
+        // Our header has its own close and minimize (which hides the list); no system traffic lights.
+        for b in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] { window.standardWindowButton(b)?.isHidden = true }
         window.minSize = NSSize(width: 520, height: 240)
         window.backgroundColor = NSColor(srgbRed: 0.17, green: 0.13, blue: 0.10, alpha: 1)
         window.isReleasedWhenClosed = false
@@ -160,8 +161,46 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
 /// The traffic lights sit on its left; drag anywhere else on it to move the window.
 final class HeaderView: NSView {
     weak var controller: OverlayController?
+    var onClose: (() -> Void)?
+    var onToggleList: (() -> Void)?
 
     static let yellow = NSColor(srgbRed: 1, green: 0.91, blue: 0.12, alpha: 1)   // the opening-crawl yellow
+
+    private enum Button { case minimize, close }
+    private var hovered: Button?
+    private static let buttonSize: CGFloat = 22
+
+    /// Our own buttons on the right (the system traffic lights are hidden): minimize, then close.
+    private func rect(_ b: Button) -> NSRect {
+        let s = Self.buttonSize, y = ((bounds.height - s) / 2).rounded()
+        let closeX = bounds.width - 8 - s
+        return NSRect(x: b == .close ? closeX : closeX - 4 - s, y: y, width: s, height: s)
+    }
+
+    private func button(at p: NSPoint) -> Button? {
+        [Button.minimize, .close].first { rect($0).contains(p) }
+    }
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        addTrackingArea(NSTrackingArea(rect: bounds, options: [.mouseMoved, .mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+                                       owner: self))
+        removeAllToolTips()
+        addToolTip(rect(.close), owner: "Close the window (back to the desktop)" as NSString, userData: nil)
+        addToolTip(rect(.minimize), owner: "Show or hide the session list" as NSString, userData: nil)
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        let now = button(at: convert(event.locationInWindow, from: nil))
+        if now != hovered { hovered = now; needsDisplay = true }
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        if hovered != nil { hovered = nil; needsDisplay = true }
+    }
 
     override func draw(_ dirtyRect: NSRect) {
         let b = bounds
@@ -172,18 +211,42 @@ final class HeaderView: NSView {
         (base.blended(withFraction: 0.15, of: .white) ?? base).withAlphaComponent(0.35).setFill()
         NSRect(x: 0, y: b.height - 1, width: b.width, height: 1).fill()
 
-        // Just where the crew is, on the right (the traffic lights have the left).
+        // Where the crew is, on the left.
         if let where_ = controller?.location.name {
             let label = NSAttributedString(string: where_.uppercased(), attributes: [
                 .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold), .foregroundColor: NSColor(white: 0.78, alpha: 1),
                 .kern: 1.2])
-            let ls = label.size()
-            label.draw(at: NSPoint(x: b.width - ls.width - 14, y: (b.height - ls.height) / 2))
+            label.draw(at: NSPoint(x: 14, y: (b.height - label.size().height) / 2))
+        }
+
+        // Minimize (hides the list; a chevron brings it back) and close.
+        let symbols: [(Button, String)] = [(.minimize, ClawdWindow.listShown ? "minus" : "chevron.down"), (.close, "xmark")]
+        for (button, name) in symbols {
+            let r = rect(button)
+            if hovered == button {
+                (button == .close ? NSColor(srgbRed: 0.85, green: 0.25, blue: 0.25, alpha: 0.9) : NSColor(white: 1, alpha: 0.14)).setFill()
+                NSBezierPath(roundedRect: r, xRadius: 5, yRadius: 5).fill()
+            }
+            let config = NSImage.SymbolConfiguration(pointSize: 11, weight: .bold)
+            guard let img = NSImage(systemSymbolName: name, accessibilityDescription: nil)?.withSymbolConfiguration(config) else { continue }
+            let tint = NSColor(white: hovered == button ? 1 : 0.72, alpha: 1)
+            let tinted = NSImage(size: img.size, flipped: false) { rr in
+                img.draw(in: rr)
+                tint.set()
+                rr.fill(using: .sourceAtop)
+                return true
+            }
+            tinted.draw(in: NSRect(x: (r.midX - img.size.width / 2).rounded(), y: (r.midY - img.size.height / 2).rounded(),
+                                   width: img.size.width, height: img.size.height))
         }
     }
 
     override func mouseDown(with event: NSEvent) {
-        window?.performDrag(with: event)
+        switch button(at: convert(event.locationInWindow, from: nil)) {
+        case .close?: onClose?()
+        case .minimize?: onToggleList?(); needsDisplay = true
+        case nil: window?.performDrag(with: event)
+        }
     }
 }
 

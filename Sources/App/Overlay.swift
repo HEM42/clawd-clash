@@ -1388,6 +1388,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         if clawdWindow == nil {
             let w = ClawdWindow(controller: self, sceneHeight: sceneHeight)
             w.onClose = { [weak self] in self?.toggleWindowMode() }
+            w.header.onClose = { [weak w] in w?.window.performClose(nil) }
+            w.header.onToggleList = { [weak self] in self?.toggleWindowList() }
             w.onGeometryChange = { [weak self] in
                 guard let self else { return }
                 self.relayout()

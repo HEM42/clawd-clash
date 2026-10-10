@@ -21,6 +21,10 @@
 - **npm-installed AIs that launch a child process.** The scan found both the npm wrapper and the real process, kept the wrapper, and dropped the process actually running the hooks. For Codex, Qwen, Gemini and Copilot it now keeps the child; Claude keeps its old rule for nested runs.
 
 ### Changed
+- **Window title bar redesigned.** The system close/minimize buttons are gone. The location name moves to the left, and the right side has our own buttons:
+  - **–** hides the session list, leaving just the scene strip. It turns into a chevron that brings the list back.
+  - **×** closes the window and returns to desktop mode, as before.
+  - Both highlight on hover (the close button turns red) and have tooltips. The rest of the bar still drags the window, and ⌘W still closes it.
 - **Settings → Show Session List in Window** (on by default). Turned off, the window becomes just its header and the location scene: the list is hidden and the window locks to that height. Turning it back on restores the height you had, or fits the sessions if Fit Window Height is on.
 - **Hover cards in window mode only appear when the session list is hidden.** With the list showing, the same details are already right below the scene, so the pop-up just got in the way. The desktop is unchanged.
 - "Fit Window Height to Claudes" is now "Fit Window Height to Sessions", since the window lists every AI, not just Claude.
