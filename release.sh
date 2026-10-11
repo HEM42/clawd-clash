@@ -115,6 +115,8 @@ $QUARANTINE
 
   zap trash: [
     "~/.claude/vader-status",
+    "~/Library/Application Support/Clawd Wars",
+    "~/Library/Screen Savers/Clawd Wars.saver",
     "~/Library/Preferences/com.rodclemen.vaderclaude.plist",
   ]
 end

@@ -48,6 +48,7 @@ enum Cantina {
             }
             x += 46
         }
+        if c.h >= Scenes.tallRows { drawGallery(c, wallBottom: wallBottom, archTop: wallBottom - archH, bar: barStart..<barEnd) }
 
         // Hanging lamps and soft light shafts
         for lx in stride(from: 18, to: w, by: 46) {
@@ -98,6 +99,43 @@ enum Cantina {
             let fx = Int(noise(i * 11 + 3) * Double(w)), fy = wallBottom + 1 + Int(noise(i * 11 + 4) * Double(max(1, floorRows - 1)))
             c.px(fx, fy, floorSpeck)
         }
+    }
+
+    /// Full screen only: the room's upper level. A gallery with its own booths, the bright doorway out to the
+    /// street, and a big lamp hanging over the bar.
+    private static func drawGallery(_ c: PixelCanvas, wallBottom: Int, archTop: Int, bar: Range<Int>) {
+        let w = c.w, s = Scenes.unit(wallBottom)
+        let vault = wallBottom / 8
+        for y in 5..<vault { c.rect(0, y, w, 1, ceiling.alpha(0.3 * Double(vault - y) / Double(vault))) }   // the vault's shadow
+        let gy = archTop - max(10, wallBottom / 12)                 // the gallery floor
+        let doorX = 12, doorW = 34 * s, doorH = min(gy - 16, 46 * s)
+        var x = doorX + doorW + 24
+        while x + 20 < w {                                          // booths up on the gallery
+            if !(x + 20 > bar.lowerBound + 10 && x < bar.upperBound - 10) {
+                drawAlcove(c, x: x, bottom: gy, width: 20, height: min(32, gy - 16))
+            }
+            x += 46
+        }
+        // the doorway, with the sunlit street and a domed house across it
+        let top = gy - doorH, r = doorW / 2
+        for y in (top - 2)..<gy {
+            let dy = y - top
+            var half = r
+            if dy < r { let d = Double(r - dy); half = Int(max(0, Double(r * r) - d * d).squareRoot().rounded()) }
+            c.rect(doorX + r - half - 2, y, half * 2 + 4, 1, C(0xEFE4CF))
+            if y >= top { c.rect(doorX + r - half, y, half * 2, 1, y < gy - doorH / 3 ? C(0xFFF8E8) : C(0xF2DCA8)) }
+        }
+        c.ellipse(doorX + r + 6 * s, gy - doorH / 3, 10 * s, 7 * s, C(0xE8D4B0))
+        c.rect(doorX + r - 4 * s, gy - doorH / 3, 20 * s, doorH / 3, C(0xE8D4B0)); c.rect(doorX + r + 3 * s, gy - doorH / 3 + 2 * s, 3 * s, 4 * s, C(0x9C8C70))
+        c.rect(doorX, gy - doorH / 3, doorW, 1, C(0xD8C090))
+        c.circle(doorX + r, gy, doorW, C(0xFFF4D8, 0.08))           // daylight spilling in
+        // the gallery's parapet
+        c.rect(0, gy, w, 6 * s, plasterShade); c.rect(0, gy, w, 1, C(0xEFE4CF)); c.rect(0, gy + 6 * s, w, 2, plasterDark.alpha(0.6))
+        // a big lamp over the bar
+        let lx = (bar.lowerBound + bar.upperBound) / 2, ly = gy - 10 * s
+        c.rect(lx, 5, 1, ly - 5, ceiling)
+        c.circle(lx, ly + 2 * s, 14 * s, glow.alpha(0.08))
+        c.ellipse(lx, ly, 9 * s, 3 * s, C(0x6E5440)); c.rect(lx - 6 * s, ly + 2 * s, 12 * s, 2 * s, lamp); c.rect(lx - 4 * s, ly + 4 * s, 8 * s, s, glow)
     }
 
     private static func drawAlcove(_ c: PixelCanvas, x: Int, bottom: Int, width: Int, height: Int) {

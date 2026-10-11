@@ -47,9 +47,46 @@ compile() {
 }
 
 echo "→ compiling app"
-compile "$APP/Contents/MacOS/ClawdWars" Sources/Shared/*.swift Sources/App/*.swift
+# The app carries the screen saver's view too: the window's third view is the screen saver itself.
+compile "$APP/Contents/MacOS/ClawdWars" -framework ScreenSaver Sources/Shared/*.swift Sources/App/*.swift Sources/Saver/*.swift
 echo "→ compiling hook"
 compile "$APP/Contents/MacOS/vader-hook" Sources/Shared/*.swift Sources/Hook/main.swift
+
+# The screen saver: a plug-in bundle macOS's screen saver host loads, carried inside the app, which installs it
+# (Settings → Install Screen Saver) and keeps the installed copy up to date. It shares the sprite and location code.
+echo "→ compiling screen saver"
+SAVER="$APP/Contents/Resources/Clawd Wars.saver"
+mkdir -p "$SAVER/Contents/MacOS"
+compile "$SAVER/Contents/MacOS/ClawdWarsSaver" -module-name ClawdWarsSaver -emit-library -framework ScreenSaver \
+    -Xlinker -install_name -Xlinker @rpath/ClawdWarsSaver \
+    Sources/Shared/*.swift Sources/App/{Pixel,Characters,Leaders,Cantina,Locations,Cast,Accents}.swift Sources/Saver/*.swift
+# Its picture under "Other" in System Settings: the title card at 0:04 of promo/clawd-wars-promo.mp4, cropped to 180×116.
+mkdir -p "$SAVER/Contents/Resources"
+cp Resources/SaverThumbnail.png "$SAVER/Contents/Resources/thumbnail@2x.png"
+sips -z 58 90 Resources/SaverThumbnail.png --out "$SAVER/Contents/Resources/thumbnail.png" >/dev/null
+# Both sizes in one file too, as Xcode packages them ("combine high resolution artwork").
+tiffutil -cathidpicheck "$SAVER/Contents/Resources/thumbnail.png" "$SAVER/Contents/Resources/thumbnail@2x.png" \
+    -out "$SAVER/Contents/Resources/thumbnail.tiff" >/dev/null
+cat > "$SAVER/Contents/Info.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key><string>en</string>
+    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+    <key>CFBundleSupportedPlatforms</key><array><string>MacOSX</string></array>
+    <key>CFBundleIdentifier</key><string>com.rodclemen.vaderclaude.saver</string>
+    <key>CFBundleName</key><string>Clawd Wars</string>
+    <key>CFBundleDisplayName</key><string>Clawd Wars</string>
+    <key>CFBundleExecutable</key><string>ClawdWarsSaver</string>
+    <key>CFBundlePackageType</key><string>BNDL</string>
+    <key>CFBundleShortVersionString</key><string>$VERSION</string>
+    <key>CFBundleVersion</key><string>$VERSION</string>
+    <key>NSPrincipalClass</key><string>ClawdWarsSaverView</string>
+    <key>LSMinimumSystemVersion</key><string>13.0</string>
+</dict>
+</plist>
+PLIST
 
 echo "→ icon"
 ICONSET=build/AppIcon.iconset
@@ -97,12 +134,14 @@ if [[ $MODE == release ]]; then
 <plist version="1.0"><dict><key>com.apple.security.automation.apple-events</key><true/></dict></plist>
 ENT
     codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP/Contents/MacOS/vader-hook"
+    codesign --force --options runtime --timestamp --sign "$IDENTITY" "$SAVER"
     codesign --force --options runtime --timestamp --entitlements build/entitlements.plist \
         --sign "$IDENTITY" "$APP"
 else
     IDENTITY=$(echo "$IDENTITIES" | grep -m1 -oE '"(Developer ID Application|Apple Development)[^"]*"' | tr -d '"' || true)
     sign_local() {
         codesign --force --timestamp=none --sign "$1" "$APP/Contents/MacOS/vader-hook" \
+            && codesign --force --timestamp=none --sign "$1" "$SAVER" \
             && codesign --force --timestamp=none --sign "$1" "$APP"
     }
     if [[ -z "$IDENTITY" ]] || ! sign_local "$IDENTITY" >/dev/null 2>&1; then

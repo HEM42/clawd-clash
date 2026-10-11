@@ -278,11 +278,26 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         return NSPoint(x: st.minX + 60 * zoom, y: st.minY + windowFloor - Self.footroom * zoom)
     }
 
-    /// Where the window's scene is set: chosen in the Location menu, or (Automatic) the home of the
-    /// first-spawned Claude — Vader on the Death Star, Boba at the sarlacc pit, Jabba in his palace…
+    /// Where the window's scene is set: chosen in the Location menu, Random (somewhere new every ten minutes), or
+    /// (Automatic) the home of the first-spawned Claude — Vader on the Death Star, Boba at the sarlacc pit, Jabba in
+    /// his palace…
     var location: Location {
-        if let raw = UserDefaults.standard.string(forKey: "location"), let l = Location(rawValue: raw) { return l }
+        let raw = UserDefaults.standard.string(forKey: "location")
+        if raw == Self.randomLocation { return randomPlace() }
+        if let raw, let l = Location(rawValue: raw) { return l }
         return sessions.first.map { Cast(id: $0.leader).home } ?? .cantina
+    }
+
+    static let randomLocation = "random"
+    private var random: (place: Location, slot: Int)?
+
+    /// The Random location: a new place (never the one before) at each ten minutes of the clock.
+    private func randomPlace() -> Location {
+        let slot = Int(Date().timeIntervalSince1970 / 600)
+        if let r = random, r.slot == slot { return r.place }
+        let place = Location.allCases.filter { $0 != random?.place }.randomElement() ?? .cantina
+        random = (place, slot)
+        return place
     }
 
     /// Height of the cantina floor in the window's scene strip; feet stand a little way into it.
@@ -398,16 +413,85 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         debounceMoods(now)
         Accents.update(visible: sessions.map(\.project))
         relayout()
-        // Automatic location follows the first session: when that changes, the header's name and tint must follow.
+        // Automatic follows the first session and Random moves on every ten minutes: when the place changes, the
+        // scene, the cards' tint, the header's name and tint must follow.
         if location != shownLocation {
             shownLocation = location
+            clawdWindow?.sceneView.showFrame()
+            clawdWindow?.cardsView.needsDisplay = true
             clawdWindow?.header.needsDisplay = true
             clawdWindow?.redrawScroller()
         }
         if windowMode && onScreen { updateCards(now) }
+        publishSaverFeed(now)
     }
 
     private var shownLocation: Location?
+
+    // MARK: Screen saver feed
+
+    private var lastFeed = 0.0, lastSaverCheck = -100.0, saverInstalled = false
+    private var feedEvents: [SaverFeed.Event] = []
+    /// What each session and agent looked like at the last publish, to tell what happened since.
+    private var feedSeen: [String: (mood: String, asleep: Bool, name: String, project: String, prompt: String?)] = [:]
+    private var feedAgents: [String: (name: String, task: String, leader: String)] = [:]
+
+    /// The latest feed, for the window's screen-saver view.
+    private(set) var saverFeed: SaverFeed?
+
+    /// About once a second, while the screen saver is installed or the window shows its view: what it should show
+    /// (see `SaverFeed`). Only real sessions are written to the file; the Playground, demo and test runs leave it alone.
+    private func publishSaverFeed(_ now: Double) {
+        let real = playground == nil && !demo && chaosSeconds == nil && shotPath == nil
+        if real && now - lastSaverCheck > 10 { lastSaverCheck = now; saverInstalled = SaverFeed.installedSaver != nil }
+        let board = windowMode && ClawdWindow.view == .board
+        guard (real && saverInstalled) || board, now - lastFeed >= 1 else { return }
+        lastFeed = now
+        var out: [SaverFeed.Session] = []
+        var seenNow: [String: (mood: String, asleep: Bool, name: String, project: String, prompt: String?)] = [:]
+        var agentsNow: [String: (name: String, task: String, leader: String)] = [:]
+        for s in sessions where s.id != "home" {
+            let actor = actors.first { $0.key == "L:" + s.id }
+            let cast = Cast(id: s.leader)
+            let asleep = actor?.bubble == .sleeping
+            let hex = Accents.color(for: s.project).flatMap { $0.usingColorSpace(.sRGB) }.map {
+                UInt32($0.redComponent * 255) << 16 | UInt32($0.greenComponent * 255) << 8 | UInt32($0.blueComponent * 255)
+            }
+            let agents = s.agents.map { a in
+                SaverFeed.Agent(id: a.id, cast: Cast.of(a).id, task: Self.agentLabel(a).isEmpty ? "Agent" : Self.agentLabel(a))
+            }
+            out.append(SaverFeed.Session(
+                id: s.id, cast: cast.id, assistant: s.group, project: s.project, remote: s.pid == nil ? nil : (s.remote ?? "Local"),
+                accent: hex, mood: s.mood.rawValue, urgent: actor?.urgent ?? false, asleep: asleep, sitting: actor?.sitting ?? false,
+                unknown: !s.live || s.hookSilent, since: since(s, now: now),
+                activity: s.mood == .idle ? nil : s.record?.activity, prompt: s.record?.prompt, agents: agents))
+            seenNow[s.id] = (s.mood.rawValue, asleep, cast.name, s.project, s.record?.prompt)
+            for (a, fa) in zip(s.agents, agents) { agentsNow[a.id] = (Cast.of(a).name, fa.task, cast.name) }
+        }
+        // What happened since last time, for the saver's ticker.
+        func event(_ text: String) { feedEvents.append(SaverFeed.Event(at: now, text: text)) }
+        func short(_ s: String) -> String { s.count > 48 ? String(s.prefix(47)) + "…" : s }
+        let first = feedSeen.isEmpty && feedAgents.isEmpty
+        for (id, n) in seenNow where !first {
+            let place = n.project.isEmpty ? "" : " in \(n.project)"
+            guard let was = feedSeen[id] else { event("\(n.name) arrived\(place)"); continue }
+            if n.mood == "waiting" && was.mood != "waiting" { event("\(n.name) is waiting on you\(place)") }
+            else if n.mood == "idle" && (was.mood == "working" || was.mood == "thinking") {
+                event("\(n.name) finished\(n.prompt.map { " “" + short($0) + "”" } ?? "")\(place)")
+            } else if n.asleep && !was.asleep { event("\(n.name) fell asleep\(place)") }
+        }
+        for (id, was) in feedSeen where seenNow[id] == nil && !first {
+            event("\(was.name) left\(was.project.isEmpty ? "" : " " + was.project)")
+        }
+        for (id, a) in agentsNow where feedAgents[id] == nil && !first { event("\(a.name) joined \(a.leader): \(short(a.task))") }
+        for (id, a) in feedAgents where agentsNow[id] == nil && !first { event("\(a.name) is done: \(short(a.task))") }
+        feedSeen = seenNow
+        feedAgents = agentsNow
+        feedEvents = Array(feedEvents.suffix(12))
+        let feed = SaverFeed(at: now, location: location.rawValue, sessions: out, events: feedEvents)
+        saverFeed = feed
+        if real && saverInstalled { feed.save() }
+    }
 
     private func debounceMoods(_ now: Double) {
         var next: [String: (confirmed: Mood, pending: Mood?, ticks: Int)] = [:]
@@ -778,6 +862,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         // always get one: a card folds away all but its first few.
         let listShowsSessions = windowMode && (clawdWindow?.window.isVisible != true || ClawdWindow.listShown)
         var hovered = hitRects().first { $0.1.contains(mouseNow) && !(listShowsSessions && !$0.0.hasPrefix("A:")) }?.0
+        if windowMode && ClawdWindow.view == .board { hovered = nil }   // the scene is hidden behind the board
         if let forced = Self.forcedHover {   // debug: pretend to hover a character
             hovered = actors.first { $0.key.contains(forced) }?.key
         }
@@ -1279,6 +1364,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// Mac but not hooked up yet (also catches Codex / Qwen Code added after Claude was already connected).
     private func offerHooksOnFirstLaunch() {
         guard playground == nil, !demo, shotPath == nil, chaosSeconds == nil else { return }
+        SaverInstaller.refreshIfOutdated()
         // The app was moved since the hooks went in: point them here (already agreed to, so no need to ask).
         for ai in HookInstaller.repairMoved() { NSLog("Clawd Wars: re-pointed \(HookInstaller.displayName(ai)) hooks at \(HookInstaller.hookBinary)") }
         let d = UserDefaults.standard
@@ -1573,14 +1659,16 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let w = ClawdWindow(controller: self, sceneHeight: sceneHeight)
             w.onClose = { [weak self] in self?.toggleWindowMode() }
             w.header.onClose = { NSApp.terminate(nil) }   // × quits; window mode is remembered for next launch
-            w.header.onToggleList = { [weak self] in self?.toggleWindowList() }
+            w.header.onToggleList = { [weak self] in self?.cycleWindowView() }
+            w.board.feedSource = { [weak self] in self?.saverFeed }
+            w.board.contextMenu = { [weak self] in self?.menu() }
             w.onGeometryChange = { [weak self] in
                 guard let self else { return }
                 self.relayout()
                 self.snapActors()
             }
             clawdWindow = w
-            if !ClawdWindow.listShown { w.applyListShown() }
+            if ClawdWindow.view == .board { w.applyBoard() } else if !ClawdWindow.listShown { w.applyListShown() }
         }
         applyDockPolicy()
         clawdWindow?.window.makeKeyAndOrderFront(nil)
@@ -1920,7 +2008,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                    on: UserDefaults.standard.bool(forKey: "windowPinned"))
         sm.addItem(action: "Small Window (75%)", #selector(toggleSmallWindow), target: self,
                    on: ClawdWindow.small)
-        sm.addItem(action: "Show Session List in Window", #selector(toggleWindowList), target: self, on: ClawdWindow.listShown)
+        sm.addItem(action: "Show Session List in Window", #selector(toggleWindowList), target: self,
+                   on: ClawdWindow.listShown && ClawdWindow.view != .board)
+        sm.addItem(action: "Screen Saver View in Window", #selector(toggleBoard), target: self, on: ClawdWindow.view == .board)
         sm.addItem(action: "Fit Window Height to Sessions", #selector(toggleAutoHeight), target: self,
                    on: UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true)
         sm.addItem(.separator())
@@ -1941,6 +2031,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             item.representedObject = ai.name
             sm.addItem(item)
         }
+        if SaverInstaller.bundled != nil {
+            sm.addItem(.separator())
+            if SaverInstaller.isInstalled {
+                sm.addItem(action: "Remove Screen Saver", #selector(removeSaver), target: self)
+            } else {
+                sm.addItem(action: "Install Screen Saver…", #selector(installSaver), target: self)
+            }
+        }
         root.submenu = sm
         return root
     }
@@ -1956,7 +2054,32 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         clawdWindow?.applySmall()
     }
 
+    /// The header's view button: scene and list → just the scene → the screen-saver view → back.
+    private func cycleWindowView() {
+        switch ClawdWindow.view {
+        case .list: toggleWindowList()
+        case .scene: setBoard(true)
+        case .board: toggleWindowList()
+        }
+    }
+
+    private func setBoard(_ on: Bool) {
+        UserDefaults.standard.set(on, forKey: "windowBoard")
+        lastFeed = 0                     // a feed straight away, not up to a second later
+        if on { publishSaverFeed(Date().timeIntervalSince1970) }
+        clawdWindow?.applyBoard()
+    }
+
+    @objc private func toggleBoard() { setBoard(ClawdWindow.view != .board) }
+
+    /// Settings → Show Session List in Window (and the view button's last step): from the screen-saver view, back to
+    /// the scene with the list.
     @objc private func toggleWindowList() {
+        if ClawdWindow.view == .board {
+            setBoard(false)
+            if !ClawdWindow.listShown { UserDefaults.standard.set(true, forKey: "windowList"); clawdWindow?.applyListShown() }
+            return
+        }
         let show = !ClawdWindow.listShown
         if !show, let w = clawdWindow?.window { UserDefaults.standard.set(Double(w.frame.height), forKey: "windowListHeight") }
         UserDefaults.standard.set(show, forKey: "windowList")
@@ -1977,6 +2100,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         auto.target = self
         auto.state = picked == nil ? .on : .off
         lm.addItem(auto)
+        let random = NSMenuItem(title: "Random (somewhere new every 10 minutes)", action: #selector(setLocation(_:)), keyEquivalent: "")
+        random.target = self
+        random.representedObject = Self.randomLocation
+        random.state = picked == Self.randomLocation ? .on : .off
+        lm.addItem(random)
         lm.addItem(.separator())
         let owners: [Location: [String]] = Dictionary(grouping: Leader.allCases.map { (Location.home(of: $0), $0.name) }
             + Companion.allCases.map { (Location.home(of: $0), $0.name) }, by: \.0).mapValues { $0.map(\.1) }
@@ -2143,6 +2271,24 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         if what.hasPrefix("jump:"), let pid = Int32(what.dropFirst(5)) { Jump.toSession(pid: pid); return }
         if what == "claude" { installHooks() } else { installOther(what) }
         lastHookCheck = 0
+    }
+
+    @objc private func installSaver() {
+        do { try SaverInstaller.install() } catch {
+            alert("Couldn't install the screen saver", error.localizedDescription)
+            return
+        }
+        lastSaverCheck = -100   // start publishing as soon as it's in place
+        SaverInstaller.openSettings()
+        alert("Clawd Wars screen saver installed",
+              "In the Wallpaper settings that just opened, go to Screen Saver and pick Clawd Wars (with the other screen savers, near the end of the list). Clawd Wars needs to be running for the crew to show.")
+    }
+
+    @objc private func removeSaver() {
+        if !SaverInstaller.remove() {
+            alert("Couldn't remove the screen saver", "Delete /Library/Screen Savers/Clawd Wars.saver in Finder (it asks for an admin password).")
+        }
+        lastSaverCheck = -100
     }
 
     @objc private func ignoreHookIssue(_ sender: NSMenuItem) {

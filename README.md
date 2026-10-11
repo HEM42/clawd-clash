@@ -110,6 +110,18 @@ The scene is set **where the first session's character belongs** — the Death S
 
 Several sessions in the same project are grouped under one project header as a tree, and a card lists four agents with a chevron to unfold the rest (hover any agent in the scene for its details). The window sizes itself to the number of sessions, up to three (more scroll), or keeps your own height, opens at a 75% **Small Window** size (a smaller scene and compact cards with normal-size text; turn it off in Settings for full size), can hide the session list to become just the scene strip (the collapse button in its title bar), has a themed title bar with its own close and minimize buttons, can stay on top, and can hide its Dock icon. Project names float over the Claudes on the desktop; in the window the cards carry them instead — each mode remembers your choice.
 
+## Screen saver
+
+Clawd Wars comes with a screen saver: the window's location at full screen and the crew fighting across its floor. Every Claude and agent wears a name tag over its head. Each session has a card floating above the crew, in its project's colour as in the window, with a dashed beam down to its name. The card shows the status (green working, blue thinking, red **NEEDS YOU**, purple asleep), what it's doing, your last prompt and its agents. With many sessions the cards stagger over two rows. A clock sits top right, and what happened lately (finished prompts, agents joining, sessions falling asleep) crawls along the bottom.
+
+Every 10 minutes it does a Star Wars wipe (a hard edge or a clock wipe) to somewhere new: the home of another character on screen, or anywhere if there's only one. Against burn-in, the clock and the place name swap corners at the same time, and the cards and name tags move up clear of where they were. Ten minutes later they go back.
+
+Install it from the menu bar helmet: **Settings → Install Screen Saver…**. That copies it into your `~/Library/Screen Savers` and opens System Settings → **Wallpaper** (on macOS 14 and earlier, **Screen Saver**), where you pick **Clawd Wars** under **Other**. macOS shows a generic swirl for third-party screen savers in that list. After an app update, the installed copy is updated too.
+
+The screen saver shows what the running app sees, so Clawd Wars needs to be running. When it isn't, you get the empty location and a note saying so. **Settings → Remove Screen Saver** takes it out again.
+
+The window can show the same view: its title bar button steps through the scene with the session list, just the scene, and the screen-saver view (hover a card there to see it larger). The Location menu's **Random** moves the window somewhere new every 10 minutes, with the same wipe.
+
 ## The little things
 
 Hover over anyone for the details — what that session is doing right now, your last prompt, its agents (on the desktop, or in the window when its session list is hidden):

@@ -49,6 +49,10 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     let cardsView = CardsView()
     private let scroll = NSScrollView()
     let header = HeaderView()
+    /// The third view: the screen saver itself, in the window (fed by the app, not the file).
+    let board = ClawdWarsSaverView(frame: NSRect(x: 0, y: 0, width: 960, height: 600), isPreview: false)!
+    private var boardTimer: Timer?
+    private var boardOn = false
     static let headerHeight: CGFloat = 30
     /// Settings → Small Window: the whole window — header, scene, characters, cards — drawn at 75%. Every view keeps
     /// its normal (logical) size in its bounds and is shown in a frame `scale` times as big.
@@ -64,7 +68,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
 
     init(controller: OverlayController, sceneHeight: CGFloat) {
         self.sceneHeight = sceneHeight
-        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 620),
+        window = NSWindow(contentRect: NSRect(origin: .zero, size: Self.defaultSize),
                           styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                           backing: .buffered, defer: false)
         super.init()
@@ -107,6 +111,9 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         content.addSubview(sceneView)
         sceneView.roomView = roomView
         content.addSubview(scroll)
+        board.isHidden = true
+        board.inWindow = true
+        content.addSubview(board)
         content.addSubview(header)
         header.controller = controller
         header.scene = sceneView
@@ -119,6 +126,14 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     /// where it is and never taller than the screen — past that the cards scroll.
     /// Settings → Show Session List in Window. Off: the window is just the header and the scene.
     static var listShown: Bool { UserDefaults.standard.object(forKey: "windowList") as? Bool ?? true }
+
+    /// What the window shows, stepped through by the header's view button: the scene with the session list, just the
+    /// scene, or the screen-saver view.
+    enum View { case list, scene, board }
+    static var view: View {
+        if UserDefaults.standard.bool(forKey: "windowBoard") { return .board }
+        return listShown ? .list : .scene
+    }
     /// How many session cards "fit height" makes room for before the list scrolls.
     static let cardsShown = 3
 
@@ -126,7 +141,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         let k = Self.scale
         let top = (Self.headerHeight + sceneHeight) * k
         // Without the list the window is exactly header + scene, whatever "fit height" says.
-        guard Self.listShown ? UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true : true,
+        guard Self.view != .board, Self.listShown ? UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true : true,
               !window.inLiveResize, let screen = window.screen ?? NSScreen.main else { return }
         let vf = screen.visibleFrame
         // Up to three sessions fit; more scroll, with a sliver of the next card showing so it's clear there are more.
@@ -165,12 +180,13 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     func setSceneHeight(_ h: CGFloat) {
         sceneHeight = h
         let top = (Self.headerHeight + h) * Self.scale
-        if !Self.listShown { window.minSize.height = top; window.maxSize.height = top }
+        if Self.view == .scene { window.minSize.height = top; window.maxSize.height = top }
         layout()
     }
 
     /// Show or hide the session list (Settings → Show Session List in Window).
     func applyListShown() {
+        guard Self.view != .board else { return }
         let top = (Self.headerHeight + sceneHeight) * Self.scale
         scroll.isHidden = !Self.listShown
         window.minSize = NSSize(width: 520 * Self.scale, height: Self.listShown ? 240 * Self.scale : top)
@@ -188,6 +204,50 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         fitToContent()
     }
 
+    /// Into the screen-saver view, or back out: it has its own window size (remembered), and leaving it puts back the
+    /// size the window had before.
+    func applyBoard() {
+        let on = Self.view == .board
+        guard on != boardOn else { return }
+        boardOn = on
+        let k = Self.scale, d = UserDefaults.standard
+        if on {
+            d.set(NSStringFromRect(window.frame), forKey: "windowFrameBeforeBoard")
+            window.minSize = NSSize(width: 520 * k, height: 320 * k)
+            window.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
+            var f = window.frame
+            let saved = d.string(forKey: "windowBoardSize").map(NSSizeFromString) ?? .zero
+            f.size = saved.width > 0 ? saved : presetSize(.board)
+            f.origin.y = window.frame.maxY - f.height
+            board.isHidden = false
+            [sceneView, roomView, scroll].forEach { $0.isHidden = true }
+            window.setFrame(onScreen(f), display: true, animate: true)
+            layout()
+            board.animateOneFrame()
+            let t = Timer(timeInterval: 1.0 / 15, repeats: true) { [weak self] _ in self?.board.animateOneFrame() }
+            RunLoop.main.add(t, forMode: .common)      // on through live resizes too
+            boardTimer = t
+        } else {
+            d.set(NSStringFromSize(window.frame.size), forKey: "windowBoardSize")
+            boardTimer?.invalidate(); boardTimer = nil
+            board.isHidden = true
+            [sceneView, roomView].forEach { $0.isHidden = false }
+            window.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
+            window.minSize = NSSize(width: 520 * k, height: 0)
+            if let before = d.string(forKey: "windowFrameBeforeBoard").map(NSRectFromString), before.width > 0 {
+                var f = window.frame
+                f.size = before.size
+                f.origin.y = window.frame.maxY - f.height
+                window.setFrame(onScreen(f), display: true, animate: true)
+            }
+            layout()
+            applyListShown()
+        }
+        header.needsDisplay = true
+        header.updateTrackingAreas()
+        onGeometryChange?()
+    }
+
     private func layout() {
         guard let content = window.contentView else { return }
         let b = content.bounds, k = Self.scale
@@ -200,6 +260,8 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         roomView.autoresizingMask = sceneView.autoresizingMask
         scroll.frame = NSRect(x: 0, y: 0, width: b.width, height: max(0, b.height - hh - sh))
         scroll.autoresizingMask = [.width, .height]
+        board.frame = NSRect(x: 0, y: 0, width: b.width, height: max(0, b.height - hh))
+        board.autoresizingMask = [.width, .height]
         applyScale()
     }
 
@@ -224,23 +286,74 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         cardsView.relayout()
     }
 
-    /// Settings → Small Window toggled: the window itself shrinks (or grows back) by the same factor, keeping its top
-    /// left corner, then the layout is redone at the new scale and refit.
+    /// The window's size when it first opens; the Small Window is exactly this at 75%.
+    static let defaultSize = NSSize(width: 760, height: 620)
+    /// The screen-saver view's size, likewise.
+    static let boardSize = NSSize(width: 960, height: 600 + headerHeight)
+
+    /// The set size for a view at the current scale: the list's (refit to the sessions with Fit Window Height), just
+    /// the header and scene, or the screen-saver view's.
+    private func presetSize(_ view: View) -> NSSize {
+        let k = Self.scale
+        switch view {
+        case .list: return NSSize(width: (Self.defaultSize.width * k).rounded(), height: (Self.defaultSize.height * k).rounded())
+        case .scene: return NSSize(width: (Self.defaultSize.width * k).rounded(), height: (Self.headerHeight + sceneHeight) * k)
+        case .board: return NSSize(width: (Self.boardSize.width * k).rounded(), height: (Self.boardSize.height * k).rounded())
+        }
+    }
+
+    /// How small (and, for just the scene, how tall) the window may be in its view at the current scale.
+    private func applyLimits() {
+        let k = Self.scale
+        window.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
+        switch Self.view {
+        case .list: window.minSize = NSSize(width: 520 * k, height: 240 * k)
+        case .scene:
+            window.minSize = NSSize(width: 520 * k, height: (Self.headerHeight + sceneHeight) * k)
+            window.maxSize.height = (Self.headerHeight + sceneHeight) * k
+        case .board: window.minSize = NSSize(width: 520 * k, height: 320 * k)
+        }
+    }
+
+    /// Settings → Small Window toggled: the window takes the set size for its view (the default, or exactly 75% of
+    /// it), keeping its top left corner, and is drawn at that scale. Out of the screen-saver view, it goes back to the
+    /// list or scene's set size.
     func applySmall() {
-        let factor = Self.scale < 1 ? 0.75 : 1 / 0.75
         var f = window.frame
         let top = f.maxY
-        f.size.width = (f.width * factor).rounded()
-        f.size.height = (f.height * factor).rounded()
+        f.size = presetSize(Self.view)
         f.origin.y = top - f.height
-        window.minSize = NSSize(width: 520 * Self.scale, height: 0)          // let it shrink below the old minimum
+        window.minSize = NSSize(width: 0, height: 0)          // free to shrink or grow past the old limits
+        window.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
         window.setFrame(onScreen(f), display: true, animate: true)
-        window.minSize = NSSize(width: 520 * Self.scale, height: Self.listShown ? 240 * Self.scale : (Self.headerHeight + sceneHeight) * Self.scale)
-        if !Self.listShown { window.maxSize.height = (Self.headerHeight + sceneHeight) * Self.scale }
+        if Self.view == .board {
+            UserDefaults.standard.set(NSStringFromSize(f.size), forKey: "windowBoardSize")
+            let back = presetSize(Self.listShown ? .list : .scene)
+            UserDefaults.standard.set(NSStringFromRect(NSRect(origin: f.origin, size: back)), forKey: "windowFrameBeforeBoard")
+        }
+        applyLimits()
         layout()
         header.updateTrackingAreas()
         onGeometryChange?()
         fitToContent()
+    }
+
+    /// Resized by hand while Small: it isn't the Small Window any more. The window keeps its new size (only the
+    /// scene-only view's height follows the scene, now drawn at full size) and everything is drawn at 100% again.
+    private func leaveSmallAfterResize() {
+        Self.small = false
+        if Self.view == .scene {
+            var f = window.frame
+            let top = f.maxY
+            f.size.height = Self.headerHeight + sceneHeight
+            f.origin.y = top - f.height
+            window.maxSize.height = .greatestFiniteMagnitude
+            window.setFrame(onScreen(f), display: true, animate: true)
+        }
+        applyLimits()
+        layout()
+        header.updateTrackingAreas()
+        onGeometryChange?()
     }
 
     /// Settings → Keep Window on Top.
@@ -256,7 +369,10 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     }
 
     func windowDidMove(_ notification: Notification) { onGeometryChange?() }
-    func windowDidEndLiveResize(_ notification: Notification) { fitToContent() }
+    func windowDidEndLiveResize(_ notification: Notification) {
+        if Self.small { leaveSmallAfterResize() }
+        fitToContent()
+    }
     func windowDidResize(_ notification: Notification) {
         scroll.scrollerStyle = .legacy           // the system can switch it back when the trackpad/mouse changes
         applyScale()
@@ -287,7 +403,7 @@ final class ThemedScroller: NSScroller {
 
 /// The themed title bar: the location's colours and, on the right, where the crew is.
 /// The traffic lights sit on its left; drag anywhere else on it to move the window.
-final class HeaderView: NSView {
+final class HeaderView: NSView, NSViewToolTipOwner {
     weak var controller: OverlayController?
     weak var scene: SceneView?
     var onClose: (() -> Void)?
@@ -301,7 +417,7 @@ final class HeaderView: NSView {
 
     /// The vertical centre of the bar as you see it. Some scenes start with a dark ceiling (the cantina's beam) that
     /// reads as part of the bar, so centre on bar + that band rather than on the bar alone.
-    private var midY: CGFloat { (bounds.height - min(scene?.darkTop ?? 0, 10)) / 2 }
+    private var midY: CGFloat { (bounds.height - (ClawdWindow.view == .board ? 0 : min(scene?.darkTop ?? 0, 10))) / 2 }
 
     /// Our own buttons on the right (the system traffic lights are hidden): minimize, then close.
     private func rect(_ b: Button) -> NSRect {
@@ -322,8 +438,19 @@ final class HeaderView: NSView {
         addTrackingArea(NSTrackingArea(rect: bounds, options: [.mouseMoved, .mouseEnteredAndExited, .activeAlways, .inVisibleRect],
                                        owner: self))
         removeAllToolTips()
-        addToolTip(rect(.close), owner: "Quit Clawd Wars" as NSString, userData: nil)
-        addToolTip(rect(.minimize), owner: "Show or hide the session list" as NSString, userData: nil)
+        // The view answers for its tips itself: AppKit doesn't keep a tip's owner alive, and a bridged string passed
+        // as the owner was freed, so showing its tip crashed.
+        addToolTip(rect(.close), owner: self, userData: nil)
+        addToolTip(rect(.minimize), owner: self, userData: nil)
+    }
+
+    func view(_ view: NSView, stringForToolTip tag: NSView.ToolTipTag, point: NSPoint, userData data: UnsafeMutableRawPointer?) -> String {
+        guard button(at: point) != .close else { return "Quit Clawd Wars" }
+        switch ClawdWindow.view {
+        case .list: return "Hide the session list"
+        case .scene: return "Show the screen saver view"
+        case .board: return "Back to the scene and the session list"
+        }
     }
 
     override func mouseMoved(with event: NSEvent) {
@@ -352,38 +479,41 @@ final class HeaderView: NSView {
             label.draw(at: NSPoint(x: 14, y: (midY - label.size().height / 2).rounded()))
         }
 
-        // Collapse to just the scene (arrows in) / back to the full view (arrows out), and close.
-        let symbols: [(Button, String)] = [(.minimize, ClawdWindow.listShown ? "rectangle.compress.vertical" : "rectangle.expand.vertical"),
-                                           (.close, "xmark")]
-        for (button, name) in symbols {
+        // The view button shows what a click does next: collapse to just the scene (arrows in), on to the screen-saver
+        // view (a screen), back to the full view (arrows out); then close. All drawn by hand, centred exactly on the
+        // bar and the same size: the symbols sat off-centre, and the expand one came out small.
+        for button in [Button.minimize, .close] {
             let r = rect(button)
             if hovered == button {
                 (button == .close ? NSColor(srgbRed: 0.85, green: 0.25, blue: 0.25, alpha: 0.9) : NSColor(white: 1, alpha: 0.14)).setFill()
                 NSBezierPath(roundedRect: r, xRadius: 5, yRadius: 5).fill()
             }
-            let tint = NSColor(white: hovered == button ? 1 : 0.72, alpha: 1)
+            let c = NSPoint(x: r.midX, y: midY), d: CGFloat = 4.5
+            let path = NSBezierPath()
             if button == .close {
-                // Drawn by hand, centred exactly on the bar: the xmark symbol's odd pixel height sat half a pixel low.
-                let c = NSPoint(x: r.midX, y: midY), d: CGFloat = 4.5
-                let x = NSBezierPath()
-                x.move(to: NSPoint(x: c.x - d, y: c.y - d)); x.line(to: NSPoint(x: c.x + d, y: c.y + d))
-                x.move(to: NSPoint(x: c.x - d, y: c.y + d)); x.line(to: NSPoint(x: c.x + d, y: c.y - d))
-                x.lineWidth = 1.7
-                x.lineCapStyle = .round
-                tint.setStroke()
-                x.stroke()
-                continue
+                path.move(to: NSPoint(x: c.x - d, y: c.y - d)); path.line(to: NSPoint(x: c.x + d, y: c.y + d))
+                path.move(to: NSPoint(x: c.x - d, y: c.y + d)); path.line(to: NSPoint(x: c.x + d, y: c.y - d))
+            } else if ClawdWindow.view == .scene {
+                // A little screen on a stand.
+                path.append(NSBezierPath(roundedRect: NSRect(x: c.x - 6, y: c.y - 2, width: 12, height: 7.5), xRadius: 1.5, yRadius: 1.5))
+                path.move(to: NSPoint(x: c.x, y: c.y - 2)); path.line(to: NSPoint(x: c.x, y: c.y - 4.5))
+                path.move(to: NSPoint(x: c.x - 3, y: c.y - 4.5)); path.line(to: NSPoint(x: c.x + 3, y: c.y - 4.5))
+            } else {
+                // A line across the middle, with a chevron above and below: pointing at it (collapse) or away (expand).
+                let inward = ClawdWindow.view == .list
+                let near: CGFloat = 2.6, far: CGFloat = 5.6, w: CGFloat = 3.5   // same reach both ways
+                path.move(to: NSPoint(x: c.x - d - 0.5, y: c.y)); path.line(to: NSPoint(x: c.x + d + 0.5, y: c.y))
+                for side: CGFloat in [1, -1] {
+                    let tip = c.y + side * (inward ? near : far), arms = c.y + side * (inward ? far : near)
+                    path.move(to: NSPoint(x: c.x - w, y: arms)); path.line(to: NSPoint(x: c.x, y: tip))
+                    path.line(to: NSPoint(x: c.x + w, y: arms))
+                }
             }
-            let config = NSImage.SymbolConfiguration(pointSize: 11, weight: .bold)
-            guard let img = NSImage(systemSymbolName: name, accessibilityDescription: nil)?.withSymbolConfiguration(config) else { continue }
-            let tinted = NSImage(size: img.size, flipped: false) { rr in
-                img.draw(in: rr)
-                tint.set()
-                rr.fill(using: .sourceAtop)
-                return true
-            }
-            tinted.draw(in: NSRect(x: (r.midX - img.size.width / 2).rounded(), y: (r.midY - img.size.height / 2).rounded(),
-                                   width: img.size.width, height: img.size.height))
+            path.lineWidth = 1.7
+            path.lineCapStyle = .round
+            path.lineJoinStyle = .round
+            NSColor(white: hovered == button ? 1 : 0.72, alpha: 1).setStroke()
+            path.stroke()
         }
     }
 
@@ -422,6 +552,11 @@ final class SceneView: NSView {
     private var room: (size: NSSize, location: Location, image: CGImage)?
     /// The animated layer's canvas, reused every frame until the scene's pixel size changes.
     private var live: PixelCanvas?
+    private var lastLive: CGImage?
+    /// Changing place: the old picture, frozen, wiped away over the new one (a hard edge and a clock wipe, taking
+    /// turns), as the screen saver does.
+    private var wipe: (old: CGImage, start: Double, clock: Bool)?
+    private var clockWipeNext = false
     private let sprites = SpriteLayers()
     /// CLAWD_SHOT captures the window by drawing its views, which can't see layers: draw the old way then.
     static let drawsItself = ProcessInfo.processInfo.environment["CLAWD_SHOT"] != nil
@@ -444,6 +579,11 @@ final class SceneView: NSView {
         let g = geometry, location = controller.location
         if room?.location != location && location == .cantina { Cantina.maxReboTonight = Bool.random() }   // a new night
         guard room?.size != bounds.size || room?.location != location else { return }
+        if let old = room, old.size == bounds.size, old.location != location,
+           let frozen = Wipe.flatten([old.image] + (old.location.hasAnimatedLayer ? lastLive.map { [$0] } ?? [] : [])) {
+            wipe = (frozen, Date().timeIntervalSince1970, clockWipeNext)
+            clockWipeNext.toggle()
+        }
         let c = PixelCanvas(g.pw, g.ph)
         location.drawStatic(c, floorRows: g.floorRows)
         if let img = c.makeImage() {
@@ -461,14 +601,32 @@ final class SceneView: NSView {
     /// What moves there (the cantina band, sarlacc tentacles, laser gates, fog…) and the crew, as one frame.
     private func frameItems(origin: NSPoint) -> [OverlayController.DrawItem] {
         guard let controller else { return [] }
-        let g = geometry
-        guard controller.location.hasAnimatedLayer else { return controller.items }   // a still picture: nothing to add
-        let canvas: PixelCanvas
-        if let live, live.w == g.pw, live.h == g.ph { canvas = live; canvas.clear() } else { canvas = PixelCanvas(g.pw, g.ph); live = canvas }
-        controller.location.drawAnimated(canvas, floorRows: g.floorRows, t: Date().timeIntervalSince1970)
+        let g = geometry, now = Date().timeIntervalSince1970
         var items: [OverlayController.DrawItem] = []
-        if let img = canvas.makeImage() {   // in screen coordinates, like the crew's items
-            items.append(OverlayController.DrawItem(image: img, rect: g.drawRect.offsetBy(dx: origin.x, dy: origin.y)))
+        if controller.location.hasAnimatedLayer {   // a still picture has nothing to add
+            let canvas: PixelCanvas
+            if let live, live.w == g.pw, live.h == g.ph { canvas = live; canvas.clear() } else { canvas = PixelCanvas(g.pw, g.ph); live = canvas }
+            controller.location.drawAnimated(canvas, floorRows: g.floorRows, t: now)
+            if let img = canvas.makeImage() {   // in screen coordinates, like the crew's items
+                lastLive = img
+                items.append(OverlayController.DrawItem(image: img, rect: g.drawRect.offsetBy(dx: origin.x, dy: origin.y)))
+            }
+        }
+        // The old place over the new, less of it each frame; under the crew.
+        if let w = wipe {
+            let k = (now - w.start) / Wipe.duration
+            if k >= 1 {
+                wipe = nil
+            } else if let ctx = CGContext(data: nil, width: w.old.width, height: w.old.height, bitsPerComponent: 8, bytesPerRow: 0,
+                                          space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) {
+                let r = CGRect(x: 0, y: 0, width: w.old.width, height: w.old.height)
+                ctx.addPath(Wipe.remaining(k, clock: w.clock, in: r)); ctx.clip()
+                ctx.draw(w.old, in: r)
+                if let img = ctx.makeImage() {
+                    items.append(OverlayController.DrawItem(image: img, rect: g.drawRect.offsetBy(dx: origin.x, dy: origin.y)))
+                }
+            }
         }
         return items + controller.items
     }
