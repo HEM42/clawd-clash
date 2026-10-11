@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Builds "Clawd Wars.app", installs it to ~/Applications, wires up the Claude Code hooks and launches it.
+# Builds "Clawd Wars.app", installs it to /Applications, wires up the Claude Code hooks and launches it.
 #   ./build.sh                     build + install + hooks + launch
 #   ./build.sh --no-hooks          build + install + launch (leave ~/.claude/settings.json alone)
 #   ./build.sh --release <version> universal (arm64 + x86_64) build into build/, signed for distribution;
@@ -22,8 +22,8 @@ done
 [[ -z "$VERSION" ]] && VERSION=$(grep -m1 -oE '^## [0-9]+\.[0-9]+\.[0-9]+' CHANGELOG.md | cut -c4-)
 
 APP="build/Clawd Wars.app"
-DEST="$HOME/Applications/Clawd Wars.app"
-OLD_DEST="$HOME/Applications/VaderClaude.app"   # pre-rename install
+DEST="/Applications/Clawd Wars.app"
+OLD_DESTS=("$HOME/Applications/Clawd Wars.app" "$HOME/Applications/VaderClaude.app")   # earlier installs
 FLAGS=(-O -swift-version 5)
 
 rm -rf build && mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
@@ -111,8 +111,7 @@ fi
 echo "→ installing to $DEST"
 pkill -x VaderClaude 2>/dev/null || true
 pkill -x ClawdWars 2>/dev/null || true
-mkdir -p "$HOME/Applications"
-rm -rf "$DEST" "$OLD_DEST" && cp -R "$APP" "$DEST"
+rm -rf "$DEST" "${OLD_DESTS[@]}" && cp -R "$APP" "$DEST"
 
 if [[ $HOOKS == 1 ]]; then
     "$DEST/Contents/MacOS/ClawdWars" --install-hooks

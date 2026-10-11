@@ -164,7 +164,7 @@ Or download the zip from [Releases](https://github.com/rodclemen/clawd-wars/rele
 ```sh
 git clone https://github.com/rodclemen/clawd-wars.git
 cd clawd-wars
-./build.sh            # build, install "Clawd Wars.app" to ~/Applications, add the Claude Code hooks, launch
+./build.sh            # build, install "Clawd Wars.app" to /Applications, add the Claude Code hooks, launch
 ./build.sh --no-hooks # the same, but leave ~/.claude/settings.json alone
 ```
 
@@ -187,7 +187,7 @@ With Homebrew: `brew uninstall --cask clawd-wars` (removes the hooks too; add `-
 Otherwise: menu bar helmet → **Settings → Remove Claude Code Hooks**, then **Quit**. Then:
 
 ```sh
-rm -rf ~/Applications/"Clawd Wars.app" ~/.claude/vader-status
+rm -rf /Applications/"Clawd Wars.app" ~/.claude/vader-status
 ```
 
 ## Contributing
