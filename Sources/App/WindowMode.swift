@@ -392,10 +392,20 @@ final class CardsView: NSView {
 
     override var isFlipped: Bool { true }
 
+    static let focusYellow = NSColor(srgbRed: 1, green: 0.88, blue: 0.29, alpha: 1)
+    private var fadeTimer: Timer?
+
     func update(cards: [CardModel], banner: String?) {
         self.cards = cards
         self.banner = banner
         relayout()
+        // Redraw smoothly only while a card's project name is fading.
+        let fading = cards.contains(where: \.focused)
+        if fading, fadeTimer == nil {
+            fadeTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 20, repeats: true) { [weak self] _ in self?.needsDisplay = true }
+        } else if !fading {
+            fadeTimer?.invalidate(); fadeTimer = nil
+        }
     }
 
     private static let pad: CGFloat = 12
@@ -470,8 +480,8 @@ final class CardsView: NSView {
             let box = NSBezierPath(roundedRect: r, xRadius: 8, yRadius: 8)
             (controller?.location.panel.blended(withFraction: 0.35, of: .black) ?? NSColor.black).withAlphaComponent(0.94).setFill()
             box.fill()
-            (c.focused ? NSColor(srgbRed: 1, green: 0.88, blue: 0.29, alpha: 0.9) : c.accent.withAlphaComponent(0.55)).setStroke()
-            box.lineWidth = c.focused ? 2 : 1
+            c.accent.withAlphaComponent(0.55).setStroke()     // steady; the focused card's project name fades instead
+            box.lineWidth = 1
             box.stroke()
 
             // Portrait (drawn upright: this view is flipped)
@@ -493,13 +503,19 @@ final class CardsView: NSView {
             let header = NSMutableAttributedString(string: c.villain, attributes: [
                 .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: NSColor.white])
             if !c.project.isEmpty {
+                // The session you're in: its project name fades slowly between its colour and the "you're here" yellow.
+                var color = c.accent
+                if c.focused {
+                    let f = 0.5 - 0.5 * cos(Date().timeIntervalSince1970 * 2 * .pi / 2.4)
+                    color = c.accent.blended(withFraction: CGFloat(f), of: Self.focusYellow) ?? c.accent
+                }
                 header.append(NSAttributedString(string: "  ·  " + c.project, attributes: [
-                    .font: NSFont.systemFont(ofSize: 13, weight: .semibold), .foregroundColor: c.accent]))
+                    .font: NSFont.systemFont(ofSize: 13, weight: .semibold), .foregroundColor: color]))
             }
             if c.focused {
                 header.append(NSAttributedString(string: "   ◆ you're here", attributes: [
                     .font: NSFont.systemFont(ofSize: 11, weight: .semibold),
-                    .foregroundColor: NSColor(srgbRed: 1, green: 0.88, blue: 0.29, alpha: 1)]))
+                    .foregroundColor: Self.focusYellow]))
             }
             header.draw(with: NSRect(x: tx, y: ty, width: chip.minX - tx - 8, height: 20),
                         options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])

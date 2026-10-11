@@ -83,6 +83,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private var debounce: [String: (confirmed: Mood, pending: Mood?, ticks: Int)] = [:]
     private var moodSince: [String: Double] = [:]
     private var focusedPid: Int32?
+    private var focusCandidate: Int32??         // a different answer seen once; adopted if it repeats
     private var lastFocusCheck = 0.0
     private var lastShot = 0.0
     // Chaos test (--chaos[=seconds]): random sessions/agents/moods, with layout invariants checked continuously.
@@ -326,9 +327,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             }
             if now - lastFocusCheck >= 1 {
                 lastFocusCheck = now
-                focusedPid = Jump.focusedSession(among: sessions.compactMap { s in
+                // Sticky: only switch when the same answer comes back twice, so a momentary miss doesn't flicker.
+                let seen = Jump.focusedSession(among: sessions.compactMap { s in
                     s.pid.map { ($0, s.cwd.map { ($0 as NSString).lastPathComponent } ?? s.project) }
                 })
+                if seen == focusedPid { focusCandidate = nil }
+                else if seen == focusCandidate { focusedPid = seen; focusCandidate = nil }
+                else { focusCandidate = seen }
             }
         }
         debounceMoods(now)
