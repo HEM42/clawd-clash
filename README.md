@@ -136,6 +136,7 @@ Hover over anyone for the details — what that session is doing right now, your
 | GitHub / GitLab / Local pill | where the project's git remote lives, each host in its own colour (cards in the window); the project is named after the repo, or its folder when there's no remote |
 
 - **Several Claudes at once** — each gets its own villain and project label; sessions that predate the hooks are still found from the process table.
+- **Double-click the menu bar helmet** to hide or show Clawd Wars (right-click it for the menu without the short wait).
 - **Hover** any villain or agent for a details card; agents also show which Claude they work for.
 - **Newcomers walk in** from the side of the screen, one at a time, instead of popping up.
 - **Drag** the crew anywhere — they'll stand right on the bottom edge of either monitor. Bubbles and labels never go off-screen; if the line is too long, everyone walks over to make room.

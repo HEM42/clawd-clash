@@ -1358,8 +1358,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     // MARK: Menu bar
 
     private var statusItem: NSStatusItem?
+    private let statusMenu = NSMenu()
+    private var pendingStatusMenu: DispatchWorkItem?
+    /// Hidden from the menu bar helmet (double-click): neither the crew nor the window shows. Not remembered across launches.
+    private(set) var hidden = false
 
     /// A Vader Clawd helmet in the menu bar, opening the same menu as right-clicking a villain.
+    /// Double-clicking it hides or shows Clawd Wars, so a single click opens the menu only once the
+    /// double-click time has passed; right-click (or ⌃-click) opens it straight away.
     private func installStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         let c = PixelCanvas(Sprite.width, Sprite.height)
@@ -1369,16 +1375,52 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             item.button?.image = img
             item.button?.imageScaling = .scaleProportionallyDown
         }
-        item.button?.toolTip = "Clawd Wars"
-        let menu = NSMenu()
-        menu.delegate = self
-        item.menu = menu
+        item.button?.toolTip = "Clawd Wars — double-click to hide or show"
+        statusMenu.delegate = self
+        item.button?.target = self
+        item.button?.action = #selector(statusItemClicked)
+        item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
         statusItem = item
         if debug {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 let w = item.button?.window
                 FileHandle.standardError.write("status item: visible=\(item.isVisible) window=\(w?.frame ?? .zero) onscreen=\(w?.isVisible ?? false)\n".data(using: .utf8)!)
             }
+        }
+    }
+
+    @objc private func statusItemClicked() {
+        guard let event = NSApp.currentEvent else { return }
+        pendingStatusMenu?.cancel()
+        pendingStatusMenu = nil
+        if event.type == .rightMouseUp || event.modifierFlags.contains(.control) {
+            showStatusMenu()
+        } else if event.clickCount == 2 {
+            toggleHidden()
+        } else if event.clickCount == 1 {
+            let open = DispatchWorkItem { [weak self] in self?.showStatusMenu() }
+            pendingStatusMenu = open
+            DispatchQueue.main.asyncAfter(deadline: .now() + NSEvent.doubleClickInterval, execute: open)
+        }
+    }
+
+    /// Attaching the menu only while it opens keeps clicks coming to `statusItemClicked`.
+    private func showStatusMenu() {
+        guard let item = statusItem else { return }
+        item.menu = statusMenu
+        item.button?.performClick(nil)   // returns once the menu closes
+        item.menu = nil
+    }
+
+    @objc func toggleHidden() {
+        hidden.toggle()
+        if hidden {
+            panel.orderOut(nil)
+            clawdWindow?.window.orderOut(nil)
+        } else if windowMode {
+            openWindow()
+        } else {
+            panel.orderFrontRegardless()
         }
     }
 
@@ -1394,6 +1436,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     // MARK: Window mode
 
     @objc func toggleWindowMode() {
+        hidden = false   // switching where it shows means you want to see it
         windowMode.toggle()
         if windowMode {
             openWindow()
@@ -1450,6 +1493,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             NSApp.mainMenu = makeMainMenu()
         } else {
             // Dropping the Dock icon can take our windows down with it; keep them up, without stealing focus.
+            if hidden { return }
             if windowMode { clawdWindow?.window.orderFrontRegardless() } else { panel.orderFrontRegardless() }
         }
     }
@@ -1459,6 +1503,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         applyDockPolicy()
         // Changing the activation policy can hide our windows; bring them back.
         DispatchQueue.main.async {
+            guard !self.hidden else { return }
             if self.windowMode {
                 self.clawdWindow?.window.makeKeyAndOrderFront(nil)
                 NSApp.activate(ignoringOtherApps: true)
@@ -1470,7 +1515,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     /// Clicking the Dock icon brings the window forward in window mode.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if windowMode { clawdWindow?.window.makeKeyAndOrderFront(nil) }
+        if hidden { toggleHidden() }
+        else if windowMode { clawdWindow?.window.makeKeyAndOrderFront(nil) }
         return true
     }
 
@@ -1691,6 +1737,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             sub.addItem(item)
         }
         size.submenu = sub
+        m.addItem(action: hidden ? "Show Clawd Wars" : "Hide Clawd Wars", #selector(toggleHidden), target: self)
         m.addItem(action: windowMode ? "Show on Desktop" : "Show in Window", #selector(toggleWindowMode), target: self)
         if windowMode { m.addItem(locationMenu()) }
         m.addItem(settingsMenu(size: size))
