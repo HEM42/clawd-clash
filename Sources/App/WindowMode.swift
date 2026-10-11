@@ -91,7 +91,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         guard Self.listShown ? UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true : true,
               !window.inLiveResize, let screen = window.screen ?? NSScreen.main else { return }
         let vf = screen.visibleFrame
-        let wanted = Self.listShown ? min(max(top + cardsView.contentHeight * k, top + 60 * k), vf.height) : top
+        let wanted = Self.listShown ? min(max(top + cardsView.contentHeight, top + 60), vf.height) : top
         let delta = wanted - window.frame.height
         guard abs(delta) > 1 else { return }
         var f = window.frame
@@ -399,9 +399,10 @@ final class CardsView: NSView {
     }
 
     private static let pad: CGFloat = 12
-    private static let portraitScale: CGFloat = 2          // portraits are cropped to 46×38 sprite pixels
+    // Portraits are cropped to 46×38 sprite pixels; the Small Window draws them at 1.5× to save height.
+    private static var portraitScale: CGFloat { ClawdWindow.scale < 1 ? 1.5 : 2 }
     // Measured: the widest portrait is the AT-AT (53 px), the tallest the Rancor (42 px) — both fit at 2×.
-    private static let portraitSize = NSSize(width: 56 * portraitScale, height: 43 * portraitScale)
+    private static var portraitSize: NSSize { NSSize(width: 56 * portraitScale, height: 43 * portraitScale) }
     private static let lineH: CGFloat = 16
     private static let agentH: CGFloat = 34
     private static let groupH: CGFloat = 22
@@ -416,10 +417,9 @@ final class CardsView: NSView {
         for c in cards { h += cardHeight(c) + 10 + (c.group == nil ? 0 : Self.groupH) }
         if cards.isEmpty { h += 30 }
         contentHeight = h
-        let k = ClawdWindow.scale
+        // The cards keep normal-size text even in the Small Window (they get more compact instead).
         let minH = enclosingScrollView?.bounds.height ?? 0
-        setFrameSize(NSSize(width: frame.width, height: max(h * k, minH)))
-        setBoundsSize(NSSize(width: frame.width / k, height: frame.height / k))   // drawn at the window's scale
+        setFrameSize(NSSize(width: frame.width, height: max(h, minH)))
         needsDisplay = true
     }
 
@@ -477,7 +477,7 @@ final class CardsView: NSView {
             // Portrait (drawn upright: this view is flipped)
             let pw = Self.portraitSize.width, ph = Self.portraitSize.height
             if let img = c.portrait {
-                draw(img, fitting: NSRect(x: r.minX + 10, y: r.minY + Self.pad, width: pw, height: ph), in: ctx, maxScale: 2)
+                draw(img, fitting: NSRect(x: r.minX + 10, y: r.minY + Self.pad, width: pw, height: ph), in: ctx, maxScale: Self.portraitScale)
             }
 
             let tx = r.minX + 16 + pw, tw = r.maxX - tx - 12
@@ -566,7 +566,7 @@ final class CardsView: NSView {
     private func draw(_ img: CGImage, fitting box: NSRect, in ctx: CGContext, maxScale: CGFloat) {
         let iw = CGFloat(img.width), ih = CGFloat(img.height)
         var k = min(box.width / iw, box.height / ih, maxScale)
-        if k >= 1 { k = k.rounded(.down) }
+        if k >= 1 { k = (k * 2).rounded(.down) / 2 }   // whole or half steps (1.5× in the Small Window)
         let w = iw * k, h = ih * k
         ctx.saveGState()
         ctx.interpolationQuality = .none

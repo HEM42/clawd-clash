@@ -1524,6 +1524,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         guard let w = clawdWindow else { return }
         let dim = NSColor(white: 0.62, alpha: 1), soft = NSColor(white: 0.85, alpha: 1)
         let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let compact = ClawdWindow.scale < 1          // Small Window: no project path, one line of conversation
         var cards: [CardModel] = []
         // Grouped by AI (stable within a group); with more than one AI each group gets a small header.
         let listed = sessions.enumerated()
@@ -1555,13 +1556,19 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 let meta = [r.model, r.title].compactMap { $0 }.joined(separator: "  ·  ")
                 if !meta.isEmpty { lines.append((meta, dim)) }
                 if let a = r.activity, s.mood != .idle { lines.append(("Now: " + a, .white)) }
-                if let p = r.prompt { lines.append(("You: “" + p + "”", soft)) }
-                if let reply = r.reply, s.mood == .idle { lines.append((s.aiLabel.components(separatedBy: " · ")[0] + ": “" + reply + "”", soft)) }
+                let reply = s.mood == .idle ? r.reply.map { s.aiLabel.components(separatedBy: " · ")[0] + ": “" + $0 + "”" } : nil
+                if compact {
+                    // Small Window: one line of the conversation — the reply once it's done, otherwise your prompt.
+                    if let line = reply ?? r.prompt.map({ "You: “" + $0 + "”" }) { lines.append((line, soft)) }
+                } else {
+                    if let p = r.prompt { lines.append(("You: “" + p + "”", soft)) }
+                    if let reply { lines.append((reply, soft)) }
+                }
                 var stats: [String] = []
                 if let n = r.prompts { stats.append("\(n) prompt\(n == 1 ? "" : "s")") }
                 if let n = r.tools { stats.append("\(n) tool call\(n == 1 ? "" : "s")") }
                 if let c = r.created { stats.append("up " + Self.duration(now - c)) }
-                if let cwd = s.cwd { stats.append(cwd.hasPrefix(home) ? "~" + cwd.dropFirst(home.count) : cwd) }
+                if let cwd = s.cwd, !compact { stats.append(cwd.hasPrefix(home) ? "~" + cwd.dropFirst(home.count) : cwd) }
                 if !stats.isEmpty { lines.append((stats.joined(separator: "  ·  "), dim)) }
             } else if s.hookSilent {
                 lines.append(("The Clawd Wars hook isn't running in this session, so it can't report what it's doing.", soft))
@@ -1571,7 +1578,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 lines.append(("Started before the hooks were installed, so it can't report what it's doing.", soft))
                 lines.append((s.assistant == "claude" ? "Restart it for live status: /exit, then claude --continue"
                                                       : "Restart this \(s.assistant.capitalized) session for live status.", dim))
-                if let cwd = s.cwd { lines.append((cwd.hasPrefix(home) ? "~" + cwd.dropFirst(home.count) : cwd, dim)) }
+                if let cwd = s.cwd, !compact { lines.append((cwd.hasPrefix(home) ? "~" + cwd.dropFirst(home.count) : cwd, dim)) }
             }
 
             let agents: [CardModel.Agent] = s.agents.map { a in

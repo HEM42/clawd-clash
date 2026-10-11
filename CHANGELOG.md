@@ -3,8 +3,12 @@
 ## 2.23.0 — 2026-10-11
 
 ### Added
-- **Settings → Small Window (75%).** In window mode, everything is drawn 25% smaller: the title bar, the scene and its characters, and the cards (text, portraits, tree, spacing). The layout is identical, just smaller. Turning it on shrinks the window by the same factor, keeping its top-left corner; turning it off grows it back.
-  - Each view keeps its normal logical size in its bounds and is shown in a frame 0.75 times as big. Nothing inside needed new numbers.
+- **Settings → Small Window (75%).** In window mode, the title bar and the scene with its characters are drawn 25% smaller. Turning it on shrinks the window by the same factor, keeping its top-left corner; turning it off grows it back.
+  - The session list keeps **normal-size text** and gets compact instead:
+    - no project path;
+    - one line of conversation: the reply once it's done, otherwise your last prompt;
+    - portraits at 1.5× instead of 2× (they can now scale in half steps).
+  - The title bar and scene keep their normal logical size in their bounds and are shown in a frame 0.75 times as big, so nothing inside needed new numbers.
   - The stage the crew is laid out on reports its logical size, and mouse positions are mapped back (`ClawdWindow.toStage`), so hover cards and click-to-jump still hit the right character.
   - The setting is remembered (`windowSmall`). Fit Window Height, the collapsed scene-only view and the screen-edge clamp all work at the smaller size.
 
