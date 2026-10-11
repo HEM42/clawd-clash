@@ -1222,7 +1222,57 @@ enum Scenes {
         c.ground(g, C(0xEEF2F6), edge: C(0xFFFFFF), speck: C(0xD0D8E2), seed: 20)
     }
 
+    /// A distant AT-AT, `k` pixels per unit (1 = smallest), walking left; `phase` drives its stride.
+    static func distantATAT(_ c: PixelCanvas, x: Int, base: Int, k: Int, phase: Double, col: Px, dark: Px) {
+        let bob = Int((sin(phase * 2) * 0.5 + 0.5) * Double(k)) / max(1, k)    // a slight rise and fall
+        let bodyY = base - 13 * k - bob
+        c.rect(x, bodyY, 16 * k, 6 * k, col)                                    // the body
+        c.rect(x, bodyY, 16 * k, max(1, k), C(0xD0D6DE).alpha(Double(col.a) / 255))
+        c.rect(x + 2 * k, bodyY + 6 * k, 12 * k, max(1, k), dark)
+        c.rect(x - 2 * k, bodyY + 1 * k, 2 * k, 2 * k, dark)                    // neck
+        c.rect(x - 7 * k, bodyY - 1 * k + bob, 6 * k, 4 * k, col)               // the head, facing left
+        c.px(x - 7 * k, bodyY + 2 * k + bob, dark)
+        // four legs, front and back pairs swinging out of step
+        for (i, lx) in [x + 2 * k, x + 4 * k, x + 11 * k, x + 13 * k].enumerated() {
+            let swing = sin(phase + (i % 2 == 0 ? 0 : .pi)) * Double(k) * 1.5
+            let foot = lx + Int(swing)
+            for y in (bodyY + 6 * k)..<base {
+                let u = Double(y - (bodyY + 6 * k)) / Double(max(1, base - bodyY - 6 * k))
+                c.rect(lx + Int(Double(foot - lx) * u), y, max(1, k), 1, i % 2 == 0 ? col : dark)
+            }
+            c.rect(foot - k / 2, base - max(1, k / 2), max(2, k + 1), max(1, k / 2), dark)   // foot pad
+        }
+    }
+
     static func snowfall(_ c: PixelCanvas, _ g: Int, t: Double) {
+        // AT-ATs marching on the horizon toward the trench: hazy with distance, the nearer ones bigger.
+        let horizon = g - 9
+        // Faded toward the snowy haze so they read as far off: the farthest are nearly sky-coloured.
+        for (i, (k, speed, alpha, start)) in [(1, 1.1, 0.42, 0.15), (2, 1.6, 0.5, 0.55), (1, 0.9, 0.34, 0.85)].enumerated() {
+            let span = Double(c.w + 60 * k)
+            let x = Int(span - ((t * speed + start * span).truncatingRemainder(dividingBy: span))) - 30 * k
+            let base = horizon + (k - 1) * 4 + i % 2
+            distantATAT(c, x: x, base: base, k: k, phase: t * 1.4 * speed + Double(i),
+                        col: C(0xA8B2C0, alpha), dark: C(0x96A0B0, alpha))
+            // now and then a red bolt from the head
+            let f = (t * 0.6 + Double(i) * 0.37).truncatingRemainder(dividingBy: 1)
+            if f < 0.18 {
+                let hx = x - 7 * k, hy = base - 12 * k
+                let d = Int(f / 0.18 * 40)
+                c.rect(hx - d - 4, hy + d / 8, 4, 1, C(0xFF7A5A, 0.55)); c.px(hx - d, hy + d / 8, C(0xFFD0A0, 0.6))
+            }
+        }
+        // a pair of snowspeeders streaking past now and then
+        let sp = (t * 0.08).truncatingRemainder(dividingBy: 1)
+        if sp < 0.25 {
+            let u = sp / 0.25
+            for (j, dy) in [0, 5].enumerated() {
+                let x = Int(u * Double(c.w + 40)) - 20 - j * 10, y = 14 + dy + Int(sin(u * 6) * 2)
+                c.rect(x, y, 6, 2, C(0xE8E4DC)); c.px(x + 5, y, C(0xE87A2A)); c.px(x, y + 1, C(0xC86A2A))
+                c.rect(x - 3, y + 1, 3, 1, C(0xC8D8F0, 0.4))   // exhaust trail
+            }
+        }
+
         for i in 0..<(c.w / 3) {
             let x = Int((noise(i * 5) * Double(c.w) + t * (6 + noise(i * 5 + 1) * 6)).truncatingRemainder(dividingBy: Double(c.w)))
             let y = Int((noise(i * 5 + 2) * Double(g) + t * (10 + noise(i * 5 + 3) * 10)).truncatingRemainder(dividingBy: Double(g)))

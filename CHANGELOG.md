@@ -3,6 +3,7 @@
 ## 2.22.0 — 2026-10-11
 
 ### Changed
+- **The Battle of Hoth gets AT-ATs marching on the horizon.** Three distant walkers at different distances (one nearer and twice the size) march slowly toward the Rebel trench. Their legs step out of phase, their bodies rise and fall, and now and then a faint red bolt fires from a head. They're faded toward the colour of the snowy haze, the farthest almost sky-coloured, so they read as far away and never compete with the characters. A pair of snowspeeders also streaks across the sky every so often.
 - **The Forest Moon of Endor redrawn from Return of the Jedi.** It used to be a row of evenly spaced identical trunks, each with the same little hut. Now:
   - depth: pale misty trees far back, grooved red redwoods in the middle, huge dark trunks framing the foreground, and sunbeams slanting through the canopy;
   - the **Ewok village**: thatched cone huts on platforms at different heights, linked by sagging rope bridges, with lanterns;
