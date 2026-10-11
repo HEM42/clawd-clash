@@ -688,7 +688,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
 
         // Which character is the mouse over? (desktop and window alike: both work in screen coordinates)
-        let mouseNow = NSEvent.mouseLocation
+        var mouseNow = NSEvent.mouseLocation
+        if windowMode, let w = clawdWindow { mouseNow = w.toStage(mouseNow) }   // the window may be drawn smaller
         // In the window the list below already shows everything, so hover cards only appear when it's hidden.
         var hovered = (windowMode && (clawdWindow?.window.isVisible != true || ClawdWindow.listShown)) ? nil
             : hitRects().first { $0.1.contains(mouseNow) }?.0
@@ -1697,6 +1698,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         sm.addItem(disabled: "Window mode")
         sm.addItem(action: "Keep Window on Top", #selector(togglePin), target: self,
                    on: UserDefaults.standard.bool(forKey: "windowPinned"))
+        sm.addItem(action: "Small Window (75%)", #selector(toggleSmallWindow), target: self,
+                   on: UserDefaults.standard.bool(forKey: "windowSmall"))
         sm.addItem(action: "Show Session List in Window", #selector(toggleWindowList), target: self, on: ClawdWindow.listShown)
         sm.addItem(action: "Fit Window Height to Sessions", #selector(toggleAutoHeight), target: self,
                    on: UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true)
@@ -1726,6 +1729,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let on = !UserDefaults.standard.bool(forKey: "windowPinned")
         UserDefaults.standard.set(on, forKey: "windowPinned")
         clawdWindow?.applyPin()
+    }
+
+    @objc private func toggleSmallWindow() {
+        UserDefaults.standard.set(!UserDefaults.standard.bool(forKey: "windowSmall"), forKey: "windowSmall")
+        clawdWindow?.applySmall()
     }
 
     @objc private func toggleWindowList() {

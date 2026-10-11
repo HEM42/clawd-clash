@@ -108,7 +108,7 @@ The scene is set **where the first session's character belongs** — the Death S
   <img src="docs/locations.png" alt="All 22 locations" width="760">
 </p>
 
-The window sizes itself to the number of sessions (or keep your own height), can hide the session list to become just the scene strip (the collapse button in its title bar), has a themed title bar with its own close and minimize buttons, can stay on top, and can hide its Dock icon. Project names float over the Claudes on the desktop; in the window the cards carry them instead — each mode remembers your choice.
+The window sizes itself to the number of sessions (or keep your own height), has a 75% **Small Window** option where everything shrinks together, can hide the session list to become just the scene strip (the collapse button in its title bar), has a themed title bar with its own close and minimize buttons, can stay on top, and can hide its Dock icon. Project names float over the Claudes on the desktop; in the window the cards carry them instead — each mode remembers your choice.
 
 ## The little things
 

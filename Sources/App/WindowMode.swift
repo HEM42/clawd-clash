@@ -31,6 +31,9 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     private let scroll = NSScrollView()
     let header = HeaderView()
     static let headerHeight: CGFloat = 30
+    /// Settings → Small Window: the whole window — header, scene, characters, cards — drawn at 75%. Every view keeps
+    /// its normal (logical) size in its bounds and is shown in a frame `scale` times as big.
+    static var scale: CGFloat { UserDefaults.standard.bool(forKey: "windowSmall") ? 0.75 : 1 }
     var onClose: (() -> Void)?
     var onGeometryChange: (() -> Void)?
     private(set) var sceneHeight: CGFloat
@@ -47,7 +50,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         window.titleVisibility = .hidden
         // Our header has its own close and minimize (which hides the list); no system traffic lights.
         for b in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] { window.standardWindowButton(b)?.isHidden = true }
-        window.minSize = NSSize(width: 520, height: 240)
+        window.minSize = NSSize(width: 520 * Self.scale, height: 240 * Self.scale)
         window.backgroundColor = NSColor(srgbRed: 0.17, green: 0.13, blue: 0.10, alpha: 1)
         window.isReleasedWhenClosed = false
         window.delegate = self
@@ -82,12 +85,13 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     static var listShown: Bool { UserDefaults.standard.object(forKey: "windowList") as? Bool ?? true }
 
     func fitToContent() {
-        let top = Self.headerHeight + sceneHeight
+        let k = Self.scale
+        let top = (Self.headerHeight + sceneHeight) * k
         // Without the list the window is exactly header + scene, whatever "fit height" says.
         guard Self.listShown ? UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true : true,
               !window.inLiveResize, let screen = window.screen ?? NSScreen.main else { return }
         let vf = screen.visibleFrame
-        let wanted = Self.listShown ? min(max(top + cardsView.contentHeight, top + 60), vf.height) : top
+        let wanted = Self.listShown ? min(max(top + cardsView.contentHeight * k, top + 60 * k), vf.height) : top
         let delta = wanted - window.frame.height
         guard abs(delta) > 1 else { return }
         var f = window.frame
@@ -107,19 +111,29 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         return f
     }
 
-    var sceneScreenRect: NSRect { window.convertToScreen(sceneView.convert(sceneView.bounds, to: nil)) }
+    /// The stage the crew is laid out on: where the scene sits on screen, at its logical (unscaled) size.
+    var sceneScreenRect: NSRect {
+        NSRect(origin: window.convertToScreen(sceneView.convert(sceneView.bounds, to: nil)).origin, size: sceneView.bounds.size)
+    }
+
+    /// A point on screen, in the stage's logical coordinates (for hovering and clicking characters).
+    func toStage(_ p: NSPoint) -> NSPoint {
+        let o = sceneScreenRect.origin, k = Self.scale
+        return NSPoint(x: o.x + (p.x - o.x) / k, y: o.y + (p.y - o.y) / k)
+    }
 
     func setSceneHeight(_ h: CGFloat) {
         sceneHeight = h
-        if !Self.listShown { window.minSize.height = Self.headerHeight + h; window.maxSize.height = Self.headerHeight + h }
+        let top = (Self.headerHeight + h) * Self.scale
+        if !Self.listShown { window.minSize.height = top; window.maxSize.height = top }
         layout()
     }
 
     /// Show or hide the session list (Settings → Show Session List in Window).
     func applyListShown() {
-        let top = Self.headerHeight + sceneHeight
+        let top = (Self.headerHeight + sceneHeight) * Self.scale
         scroll.isHidden = !Self.listShown
-        window.minSize = NSSize(width: 520, height: Self.listShown ? 240 : top)
+        window.minSize = NSSize(width: 520 * Self.scale, height: Self.listShown ? 240 * Self.scale : top)
         window.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: Self.listShown ? .greatestFiniteMagnitude : top)
         if Self.listShown, !(UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true) {
             // Back to the height it had before the list was hidden.
@@ -136,15 +150,44 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
 
     private func layout() {
         guard let content = window.contentView else { return }
-        let b = content.bounds
-        let hh = Self.headerHeight
+        let b = content.bounds, k = Self.scale
+        let hh = Self.headerHeight * k, sh = sceneHeight * k
         header.frame = NSRect(x: 0, y: b.height - hh, width: b.width, height: hh)
         header.autoresizingMask = [.width, .minYMargin]
-        sceneView.frame = NSRect(x: 0, y: b.height - hh - sceneHeight, width: b.width, height: sceneHeight)
+        sceneView.frame = NSRect(x: 0, y: b.height - hh - sh, width: b.width, height: sh)
         sceneView.autoresizingMask = [.width, .minYMargin]
-        scroll.frame = NSRect(x: 0, y: 0, width: b.width, height: max(0, b.height - hh - sceneHeight))
+        scroll.frame = NSRect(x: 0, y: 0, width: b.width, height: max(0, b.height - hh - sh))
         scroll.autoresizingMask = [.width, .height]
+        applyScale()
+    }
+
+    /// Keep each view's logical size in its bounds, `1 / scale` times its frame, after any resize.
+    private func applyScale() {
+        let k = Self.scale
+        header.setBoundsSize(NSSize(width: header.frame.width / k, height: Self.headerHeight))
+        sceneView.setBoundsSize(NSSize(width: sceneView.frame.width / k, height: sceneHeight))
         cardsView.frame.size.width = scroll.bounds.width
+        cardsView.relayout()
+        header.needsDisplay = true; sceneView.needsDisplay = true
+    }
+
+    /// Settings → Small Window toggled: the window itself shrinks (or grows back) by the same factor, keeping its top
+    /// left corner, then the layout is redone at the new scale and refit.
+    func applySmall() {
+        let factor = Self.scale < 1 ? 0.75 : 1 / 0.75
+        var f = window.frame
+        let top = f.maxY
+        f.size.width = (f.width * factor).rounded()
+        f.size.height = (f.height * factor).rounded()
+        f.origin.y = top - f.height
+        window.minSize = NSSize(width: 520 * Self.scale, height: 0)          // let it shrink below the old minimum
+        window.setFrame(onScreen(f), display: true, animate: true)
+        window.minSize = NSSize(width: 520 * Self.scale, height: Self.listShown ? 240 * Self.scale : (Self.headerHeight + sceneHeight) * Self.scale)
+        if !Self.listShown { window.maxSize.height = (Self.headerHeight + sceneHeight) * Self.scale }
+        layout()
+        header.updateTrackingAreas()
+        onGeometryChange?()
+        fitToContent()
     }
 
     /// Settings → Keep Window on Top.
@@ -163,8 +206,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     func windowDidEndLiveResize(_ notification: Notification) { fitToContent() }
     func windowDidResize(_ notification: Notification) {
         scroll.scrollerStyle = .overlay          // the system can switch it back when a mouse is plugged in
-        cardsView.frame.size.width = scroll.bounds.width
-        cardsView.relayout()
+        applyScale()
         onGeometryChange?()
     }
 }
@@ -327,8 +369,10 @@ final class SceneView: NSView {
 
     override func mouseUp(with event: NSEvent) {
         guard let window else { return }
-        let p = window.convertPoint(toScreen: event.locationInWindow)
-        controller?.click(at: p)
+        // In the stage's logical coordinates: where the scene sits on screen, plus the (unscaled) point in it.
+        let local = convert(event.locationInWindow, from: nil)
+        let origin = window.convertToScreen(convert(bounds, to: nil)).origin
+        controller?.click(at: NSPoint(x: origin.x + local.x, y: origin.y + local.y))
     }
 
     override func rightMouseDown(with event: NSEvent) {
@@ -372,8 +416,10 @@ final class CardsView: NSView {
         for c in cards { h += cardHeight(c) + 10 + (c.group == nil ? 0 : Self.groupH) }
         if cards.isEmpty { h += 30 }
         contentHeight = h
+        let k = ClawdWindow.scale
         let minH = enclosingScrollView?.bounds.height ?? 0
-        setFrameSize(NSSize(width: frame.width, height: max(h, minH)))
+        setFrameSize(NSSize(width: frame.width, height: max(h * k, minH)))
+        setBoundsSize(NSSize(width: frame.width / k, height: frame.height / k))   // drawn at the window's scale
         needsDisplay = true
     }
 
