@@ -19,7 +19,7 @@ struct CardModel {
     let portrait: CGImage?
     let pid: Int32?
     var group: (title: String, color: NSColor)? = nil   // first card of an AI's group, when several AIs run
-    var spriteColor = NSColor.white                     // the character's outline colour (its AI), for the name pill
+    var spriteColor = NSColor.white                     // the character's main colour, for the name pill
 }
 
 /// "Show in Window" mode: a normal window with the crew in a scene strip on top and a card per Claude
@@ -499,11 +499,17 @@ final class CardsView: NSView {
                 .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: c.project.isEmpty ? NSColor.white : c.accent])
             var namePill: NSRect?
             if !c.project.isEmpty {
+                // Tinted with the character's main colour; the text lightened enough to read on the dark card,
+                // and very dark costumes (Vader) lifted a little so the pill still shows.
+                let base = c.spriteColor.usingColorSpace(.sRGB) ?? c.spriteColor
+                let lum = 0.2126 * base.redComponent + 0.7152 * base.greenComponent + 0.0722 * base.blueComponent
+                let fill = lum < 0.2 ? (base.blended(withFraction: 0.35, of: .white) ?? base) : base
+                let text = base.blended(withFraction: max(0.35, 0.85 - lum), of: .white) ?? .white
                 let name = NSAttributedString(string: c.villain, attributes: [
-                    .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold), .foregroundColor: c.spriteColor])
+                    .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold), .foregroundColor: text])
                 let nw = name.size().width
                 let pill = NSRect(x: r.maxX - 12 - nw - 14, y: chip.maxY + 5, width: nw + 14, height: 17)
-                c.spriteColor.withAlphaComponent(0.16).setFill()   // tinted like the sprite's outline
+                fill.withAlphaComponent(0.28).setFill()
                 NSBezierPath(roundedRect: pill, xRadius: 8.5, yRadius: 8.5).fill()
                 name.draw(at: NSPoint(x: pill.minX + 7, y: pill.minY + 2))
                 namePill = pill

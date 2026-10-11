@@ -3,7 +3,7 @@
 ## 2.23.0 — 2026-10-11
 
 ### Changed
-- **Card headers are just the project**, bold in its colour. The character's name moves into a small pill on the right, under the status pill, tinted in the sprite's outline colour (white for Claude Code, coral for Claude Desktop, cyan for Codex, and so on), and the text beside it stops short of it. The AI isn't repeated either: with several AIs running, the section header above says which AI it is. A card without a project keeps the character as its title.
+- **Card headers are just the project**, bold in its colour. The character's name moves into a small pill on the right, under the status pill, tinted with the character's main colour: Yoda green, Vader black, Maul red, Rey sand. That colour is measured from the sprite's pixels (the most common colour, leaving out the shared Clawd body and the eyes) and cached per character. The text is lightened to stay readable, and very dark costumes are lifted a little so the pill still shows; and the text beside it stops short of it. The AI isn't repeated either: with several AIs running, the section header above says which AI it is. A card without a project keeps the character as its title.
 
 ### Fixed
 - **A project's colour no longer flips when several sessions share it.** With three sessions in the same project (e.g. two Claude Code sessions and one in Claude Desktop), its accent flipped between two colours every half second, on cards, borders and labels. To decide whether a remembered colour clashed with another project, `Accents.update` counted every session with that colour, so the project clashed with itself and was re-coloured on every refresh. Projects are now deduplicated first. Found by capturing the real window four times a second and diffing the frames.

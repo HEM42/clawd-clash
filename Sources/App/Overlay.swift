@@ -1504,6 +1504,19 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     func click(at point: NSPoint) { jump(at: point) }
 
     private var portraitCache: [String: CGImage] = [:]
+    private var spriteColorCache: [Int: NSColor] = [:]
+
+    /// A character's main colour (its costume: Yoda green, Vader black…), measured from its sprite, leaving out
+    /// the Clawd body underneath and the eyes. Cached per character.
+    private func spriteColor(_ who: Cast) -> NSColor {
+        if let c = spriteColorCache[who.id] { return c }
+        let canvas = PixelCanvas(Sprite.width, Sprite.height)
+        who.draw(canvas, t: 0.1, mode: .idle, walking: false, role: .rest, asSession: true)
+        let d = canvas.dominantColor(excluding: [clawdOrange, clawdShade, ink]) ?? (0.6, 0.6, 0.6)
+        let c = NSColor(srgbRed: CGFloat(d.r), green: CGFloat(d.g), blue: CGFloat(d.b), alpha: 1)
+        spriteColorCache[who.id] = c
+        return c
+    }
 
     private func portrait(_ key: String, assistant: String, _ draw: (PixelCanvas) -> Void) -> CGImage? {
         let key = key + ":" + assistant
@@ -1602,7 +1615,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 lines: lines, agents: agents,
                 portrait: portrait("l\(leader.id)", assistant: s.group) { leader.draw($0, t: 0.1, mode: .idle, walking: false, role: .none, asSession: true) },
                 pid: s.pid))
-            cards[cards.count - 1].spriteColor = AIStyle.color(s.group)
+            cards[cards.count - 1].spriteColor = spriteColor(leader)
             if severalAIs && s.group != lastAI {
                 cards[cards.count - 1].group = (HookInstaller.displayName(s.group), AIStyle.color(s.group))
             }
