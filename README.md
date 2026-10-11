@@ -164,8 +164,8 @@ Or download the zip from [Releases](https://github.com/rodclemen/clawd-wars/rele
 ```sh
 git clone https://github.com/rodclemen/clawd-wars.git
 cd clawd-wars
-./build.sh            # build, install "Clawd Wars.app" to /Applications, add the Claude Code hooks, launch
-./build.sh --no-hooks # the same, but leave ~/.claude/settings.json alone
+./build.sh            # build, install "Clawd Wars.app" to /Applications, add the hooks for every supported AI it finds, launch
+./build.sh --no-hooks # the same, but leave every AI's settings alone
 ```
 
 Claude Code sessions that were already running pick up the hooks after a restart (`/exit`, then `claude --continue`). Until then they still show up — as a villain with a `?`.
@@ -178,15 +178,17 @@ Clicking to jump to a session asks once for **Accessibility** permission.
 - It records what each session is doing: its state and since when, the current tool call (`Edit Overlay.swift`, `Bash: swift build`), your last prompt and Claude's last reply, the model and session title, and each subagent's task.
 - The app reads that twice a second, finds sessions without hooks from the process table, and drops a session the moment its process exits.
 - Everything you see — characters, weapons, effects, 22 locations, the icon — is pixel art drawn in Swift at runtime. `Tools/RenderDocs` renders the roster and location sheets above; `CLAWD_SHOT=/path.png` makes the app dump its own frames.
-- The first install backs up your settings to `~/.claude/settings.json.before-vader`.
+- The first install backs up your settings to `~/.claude/settings.json.before-vader` (other AIs get a `.before-clawd-wars` copy next to their file).
+- The hooks point at the app by its full path. Move the app and, the next time it launches, it re-points any hook whose binary is gone at its new location (Codex then asks you to approve it again in `/hooks`).
 
 ## Uninstall
 
 With Homebrew: `brew uninstall --cask clawd-wars` (removes the hooks too; add `--zap` to also remove its settings and status file).
 
-Otherwise: menu bar helmet → **Settings → Remove Claude Code Hooks**, then **Quit**. Then:
+Otherwise: menu bar helmet → **Settings → Remove … Hooks** for each connected AI, then **Quit**. Or remove them all at once from the terminal, then delete the app:
 
 ```sh
+"/Applications/Clawd Wars.app/Contents/MacOS/ClawdWars" --uninstall-hooks
 rm -rf /Applications/"Clawd Wars.app" ~/.claude/vader-status
 ```
 
