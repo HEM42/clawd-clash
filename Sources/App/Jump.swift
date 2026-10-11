@@ -13,40 +13,76 @@ enum Jump {
         guard let app = hostApp(of: pid) else { log?("no host app for \(pid)"); NSSound.beep(); return }
         log?("host \(app.bundleIdentifier ?? "?") pid \(app.processIdentifier); cwd \(ClaudeProcesses.cwd(pid) ?? "?")")
         let tty = ttyPath(pid)
-
-        switch app.bundleIdentifier {
-        case "com.apple.Terminal":
-            if let tty, run(terminalScript(tty)) { return }
-        case "com.googlecode.iterm2":
-            if let tty, run(iTermScript(tty)) { return }
-        default:
-            break
-        }
         let cwd = ClaudeProcesses.cwd(pid) ?? ""
-        let folders = cwd.split(separator: "/").map(String.init)
-            .filter { !["Users", "Volumes", NSUserName()].contains($0) }
-        log?("folders (deepest first): \(Array(folders.reversed()))")
-        raiseWindow(of: app, matching: folders.reversed(), cwd: cwd)
+        // Every component up to and including each folder, so the editor fallback opens exactly that folder.
+        let components = cwd.split(separator: "/").map(String.init)
+        let folders = components.indices
+            .filter { !["Users", "Volumes", NSUserName()].contains(components[$0]) }
+            .map { (name: components[$0], path: "/" + components[...$0].joined(separator: "/")) }
+        func editor() {
+            log?("folders (deepest first): \(folders.reversed().map(\.name))")
+            raiseWindow(of: app, matching: folders.reversed())
+        }
+
+        let script: String?
+        switch app.bundleIdentifier {
+        case "com.apple.Terminal": script = tty.map(terminalScript)
+        case "com.googlecode.iterm2": script = tty.map(iTermScript)
+        default: script = nil
+        }
+        guard let script else { editor(); return }
+        // Apple Events wait on the terminal (and on the Automation prompt): keep them off the main thread.
+        scriptQueue.async {
+            let ok = run(script)
+            DispatchQueue.main.async { if !ok { editor() } }
+        }
     }
 
-    private static var hostCache: [Int32: pid_t] = [:]
+    private static let scriptQueue = DispatchQueue(label: "clawd-wars.jump.applescript")
+
+    /// Host app per session pid, with the session's start time so a reused pid is looked up again.
+    private static var hostCache: [Int32: (started: Double?, host: pid_t)] = [:]
 
     /// Which of these sessions is the one you're looking at: its host app is frontmost and, when several
     /// sessions share that app (VS Code windows or native tabs), the focused window's title names its project.
     static func focusedSession(among sessions: [(pid: Int32, project: String)]) -> Int32? {
         guard let front = NSWorkspace.shared.frontmostApplication else { return nil }
+        let live = Set(sessions.map(\.pid))
+        hostCache = hostCache.filter { live.contains($0.key) }
         let inFront = sessions.filter { s in
-            if let host = hostCache[s.pid] { return host == front.processIdentifier }
+            let started = startTime(s.pid)
+            if let cached = hostCache[s.pid], cached.started == started { return cached.host == front.processIdentifier }
             guard let app = hostApp(of: s.pid) else { return false }
-            hostCache[s.pid] = app.processIdentifier
+            hostCache[s.pid] = (started, app.processIdentifier)
             return app.processIdentifier == front.processIdentifier
         }
         if inFront.count <= 1 { return inFront.first?.pid }
         guard AXIsProcessTrusted() else { return nil }
-        let axApp = AXUIElementCreateApplication(front.processIdentifier)
+        let axApp = axApplication(front.processIdentifier)
         guard let window = attribute(axApp, kAXFocusedWindowAttribute) else { return nil }
-        let parts = titleParts(attribute(window as! AXUIElement, kAXTitleAttribute) as? String)
-        return inFront.first { parts.contains($0.project) }?.pid
+        let title = attribute(window as! AXUIElement, kAXTitleAttribute) as? String
+        return inFront.first { titleNames(title, $0.project) }?.pid
+    }
+
+    /// Accessibility element for an app, with a short messaging timeout: a hung editor can't stall the main
+    /// thread for the default ~6 s per query. The same timeout is set globally, for the windows and tabs
+    /// queried through it.
+    private static let globalAXTimeout: Void = { AXUIElementSetMessagingTimeout(AXUIElementCreateSystemWide(), 0.25) }()
+
+    private static func axApplication(_ pid: pid_t) -> AXUIElement {
+        _ = globalAXTimeout
+        let el = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(el, 0.25)
+        return el
+    }
+
+    private static func startTime(_ pid: Int32) -> Double? {
+        var info = kinfo_proc()
+        var size = MemoryLayout<kinfo_proc>.stride
+        var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, pid]
+        guard sysctl(&mib, 4, &info, &size, nil, 0) == 0, size > 0 else { return nil }
+        let st = info.kp_proc.p_starttime
+        return Double(st.tv_sec) + Double(st.tv_usec) / 1e6
     }
 
     /// First GUI app up the process tree (e.g. Code Helper → Visual Studio Code).
@@ -70,39 +106,52 @@ enum Jump {
         return "/dev/" + String(cString: name)
     }
 
-    private static func raiseWindow(of app: NSRunningApplication, matching folders: [String], cwd: String) {
-        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-        guard AXIsProcessTrustedWithOptions(options) else { log?("not trusted"); activate(app); return }
+    /// Asks for Accessibility once per launch (the system prompt), then just checks.
+    private static var askedForAccessibility = false
 
-        let axApp = AXUIElementCreateApplication(app.processIdentifier)
+    private static func raiseWindow(of app: NSRunningApplication, matching folders: [(name: String, path: String)]) {
+        let trusted: Bool
+        if askedForAccessibility {
+            trusted = AXIsProcessTrusted()
+        } else {
+            askedForAccessibility = true
+            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+            trusted = AXIsProcessTrustedWithOptions(options)
+        }
+        guard trusted else { log?("not trusted"); activate(app); return }
+
+        let axApp = axApplication(app.processIdentifier)
         let windows = (attribute(axApp, kAXWindowsAttribute) as? [AXUIElement]) ?? []
 
         // Native window tabs (e.g. VS Code with "window.nativeTabs"): every project is a tab in a shared
         // window, and only the selected tab's title is the window title.
-        var tabs: [(tab: AXUIElement, window: AXUIElement, parts: [String])] = []
+        var tabs: [(tab: AXUIElement, window: AXUIElement, title: String)] = []
         for w in windows {
             for group in descendants(of: w, role: kAXTabGroupRole, depth: 3) {
                 for tab in (attribute(group, kAXChildrenAttribute) as? [AXUIElement]) ?? []
                 where (attribute(tab, kAXRoleAttribute) as? String) == kAXRadioButtonRole {
-                    tabs.append((tab, w, titleParts(attribute(tab, kAXTitleAttribute) as? String)))
+                    tabs.append((tab, w, attribute(tab, kAXTitleAttribute) as? String ?? ""))
                 }
             }
         }
-        let titled = windows.map { ($0, titleParts(attribute($0, kAXTitleAttribute) as? String)) }
-        log?("windows: \(titled.map(\.1)); tabs: \(tabs.map(\.parts))")
+        let titled = windows.map { (window: $0, title: attribute($0, kAXTitleAttribute) as? String ?? "") }
+        log?("windows: \(titled.map(\.title)); tabs: \(tabs.map(\.title))")
 
-        // Deepest folder first, exact title segment before substring match.
-        for folder in folders {
-            if let hit = tabs.first(where: { $0.parts.contains(folder) })
-                ?? tabs.first(where: { $0.parts.contains { $0.contains(folder) } }) {
-                selectTab(hit.tab, window: hit.window, app: app, axApp: axApp, folder: folder, cwd: cwd)
-                return
-            }
-            if let hit = titled.first(where: { $0.1.contains(folder) })
-                ?? titled.first(where: { $0.1.contains { $0.contains(folder) } }) {
-                bringForward(hit.0, in: axApp)
-                activate(app)
-                return
+        // Exact title segment for every folder (deepest first) before any substring match; short folder
+        // names ("src", "app") only count as a whole segment.
+        for exact in [true, false] {
+            for folder in folders where exact || folder.name.count >= 4 {
+                func matches(_ title: String) -> Bool { exact ? titleNames(title, folder.name) : title.contains(folder.name) }
+                if let hit = tabs.first(where: { matches($0.title) }) {
+                    selectTab(hit.tab, window: hit.window, app: app, axApp: axApp, folder: folder.name,
+                              reopen: exact ? folder.path : nil)
+                    return
+                }
+                if let hit = titled.first(where: { matches($0.title) }) {
+                    bringForward(hit.window, in: axApp)
+                    activate(app)
+                    return
+                }
             }
         }
         activate(app)
@@ -110,10 +159,11 @@ enum Jump {
 
     /// Electron apps ignore AXPress on a native tab while they're in the background, so: bring the app
     /// forward, press the tab, and if the window still shows another project, ask the app to open that
-    /// project folder — which, because it's already open in that tab, just focuses the tab.
+    /// project folder (`reopen`, only given for an exact title match) — which, because it's already open
+    /// in that tab, just focuses the tab.
     private static func selectTab(_ tab: AXUIElement, window: AXUIElement, app: NSRunningApplication,
-                                  axApp: AXUIElement, folder: String, cwd: String) {
-        func selected() -> Bool { titleParts(attribute(window, kAXTitleAttribute) as? String).contains(folder) }
+                                  axApp: AXUIElement, folder: String, reopen: String?) {
+        func selected() -> Bool { titleNames(attribute(window, kAXTitleAttribute) as? String, folder) }
         activate(app)
         AXUIElementSetAttributeValue(axApp, kAXFrontmostAttribute as CFString, kCFBooleanTrue)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
@@ -122,8 +172,7 @@ enum Jump {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 if selected() { log?("tab selected via AX"); bringForward(window, in: axApp); return }
                 // Fall back: reopen the folder (only the exact folder whose name is an open tab's title).
-                guard let range = cwd.range(of: "/" + folder), let appURL = app.bundleURL else { return }
-                let path = String(cwd[..<range.upperBound])
+                guard let path = reopen, let appURL = app.bundleURL else { return }
                 log?("AX press ignored; opening \(path) in \(appURL.lastPathComponent)")
                 let config = NSWorkspace.OpenConfiguration()
                 config.activates = true
@@ -138,10 +187,15 @@ enum Jump {
         AXUIElementSetAttributeValue(app, kAXFrontmostAttribute as CFString, kCFBooleanTrue)
     }
 
-    /// VS Code-style titles: "file.swift — project — Visual Studio Code" → ["file.swift", "project", "Visual Studio Code"]
-    private static func titleParts(_ title: String?) -> [String] {
-        (title ?? "").components(separatedBy: " — ").flatMap { $0.components(separatedBy: " - ") }
-            .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+    /// Whether a VS Code-style title ("file.swift — project — Visual Studio Code") has `folder` as a whole
+    /// segment. Tested against the title itself rather than split parts, so a folder like "- CODE -" that
+    /// contains a separator still matches.
+    private static func titleNames(_ title: String?, _ folder: String) -> Bool {
+        guard let title = title?.trimmingCharacters(in: .whitespaces), !folder.isEmpty else { return false }
+        if title == folder { return true }
+        return [" — ", " - "].contains { sep in
+            title.hasPrefix(folder + sep) || title.hasSuffix(sep + folder) || title.contains(sep + folder + sep)
+        }
     }
 
     private static func attribute(_ el: AXUIElement, _ name: String) -> CFTypeRef? {
@@ -165,7 +219,7 @@ enum Jump {
         guard let app = hostApp(of: pid) else { return out + "no host app\n" }
         out += "host: \(app.localizedName ?? "?") \(app.bundleIdentifier ?? "")\n"
         out += "cwd: \(ClaudeProcesses.cwd(pid) ?? "?")\n"
-        let axApp = AXUIElementCreateApplication(app.processIdentifier)
+        let axApp = axApplication(app.processIdentifier)
         for w in (attribute(axApp, kAXWindowsAttribute) as? [AXUIElement]) ?? [] {
             out += "window: \(attribute(w, kAXTitleAttribute) as? String ?? "?")\n"
             for group in descendants(of: w, role: kAXTabGroupRole, depth: 3) {

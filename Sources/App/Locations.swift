@@ -98,6 +98,7 @@ enum Location: String, CaseIterable {
 
     /// The parts of the scene that never move (cached per window size).
     func drawStatic(_ c: PixelCanvas, floorRows f: Int) {
+        guard c.w > 0, c.h > f, f >= 0 else { return }
         let g = c.h - f    // ground line
         switch self {
         case .cantina: Cantina.drawRoom(c, floorRows: f)
@@ -125,8 +126,18 @@ enum Location: String, CaseIterable {
         }
     }
 
+    /// Whether `drawAnimated` draws anything here (the rest are still pictures, with no per-frame layer).
+    var hasAnimatedLayer: Bool {
+        switch self {
+        case .supremacy, .geonosis, .naboo, .larsFarm, .tantive, .tuskenDesert, .jediCouncil: return false
+        case .cantina, .deathStar, .executor, .sarlaccPit, .jabbasPalace, .theed, .emperorThrone, .dagobah, .falcon,
+             .sandcrawler, .obiWanHut, .jakku, .endor, .hoth, .rancorPit: return true
+        }
+    }
+
     /// The moving bits, drawn every frame on a transparent canvas of the same size.
     func drawAnimated(_ c: PixelCanvas, floorRows f: Int, t: Double) {
+        guard hasAnimatedLayer, c.w > 0, c.h > f, f >= 0 else { return }
         let g = c.h - f
         switch self {
         case .cantina:
@@ -146,7 +157,7 @@ enum Location: String, CaseIterable {
         case .endor: Scenes.endorForest(c, g, t: t)
         case .hoth: Scenes.snowfall(c, g, t: t)
         case .rancorPit: Scenes.grateLight(c, g, t: t)
-        default: break
+        case .supremacy, .geonosis, .naboo, .larsFarm, .tantive, .tuskenDesert, .jediCouncil: break
         }
     }
 }
@@ -237,7 +248,7 @@ enum Scenes {
         c.stars(10, 10 + vh, density: 25, seed: 3, x0: vx, x1: vx + vw)
         c.circle(vx + vw * 3 / 4, 10 + vh * 2 / 3, max(4, vh / 3), C(0x3A6FB0))
         c.circle(vx + vw * 3 / 4 - 1, 10 + vh * 2 / 3 - 1, max(3, vh / 3 - 2), C(0x5C92D6))
-        for x in stride(from: vx + vw / 3, to: vx + vw, by: vw / 3) { c.rect(x, 10, 1, vh, C(0x15171B)) }
+        for x in stride(from: vx + vw / 3, to: vx + vw, by: max(1, vw / 3)) { c.rect(x, 10, 1, vh, C(0x15171B)) }
         c.ground(g, C(0x1C1E23), edge: C(0x6E7480), speck: C(0x2A2D33), seed: 1)
         for x in stride(from: 0, to: c.w, by: 12) { c.rect(x, g + 2, 6, 1, C(0x30343B)) }
     }
@@ -373,16 +384,6 @@ enum Scenes {
             let p = (t * 0.25 + Double(i) * 0.25).truncatingRemainder(dividingBy: 1)
             let y = g - 32 - Int(p * 26), x = 52 + Int(sin(p * 5 + Double(i)) * 4 + p * 8)
             c.circle(x, y, 1 + Int(p * 3), C(0xD8CFC0, 0.18 * (1 - p)))
-        }
-    }
-
-    static func torches(_ c: PixelCanvas, _ g: Int, t: Double) {
-        for (i, x) in stride(from: 52, to: c.w - 4, by: 52).enumerated() {
-            let f = noise(Int(t * 10) + i * 7)
-            c.rect(x, g - 22, 2, 4, C(0x3A2C22))
-            c.rect(x, g - 25, 2, 3, C(0xFF9A2A))
-            c.px(x + (f > 0.5 ? 1 : 0), g - 26, C(0xFFE27A))
-            c.circle(x + 1, g - 23, 5, C(0xFF9A2A, 0.08 + f * 0.05))
         }
     }
 
@@ -807,11 +808,13 @@ enum Scenes {
 
     /// Drifting fog, fireflies, bubbles rising in the bog, and eyes surfacing in the water now and then.
     static func swampFog(_ c: PixelCanvas, _ g: Int, t: Double) {
+        guard c.w > 0, g > 0 else { return }
+        let span = c.w + 120                 // puffs wrap from 60 px past the right edge to 60 px before the left
         for i in 0..<3 {
             let y = g - 6 - i * 7
-            let off = Int((t * (4 + Double(i) * 2)).truncatingRemainder(dividingBy: Double(c.w)))
+            let off = Int((t * (4 + Double(i) * 2)).truncatingRemainder(dividingBy: Double(span)))
             for x in stride(from: -60, to: c.w + 60, by: 60) {
-                c.ellipse((x + off) % (c.w + 60), y, 26, 2, C(0xDDE8DD, 0.10))
+                c.ellipse(((x + 60 + off) % span + span) % span - 60, y, 26, 2, C(0xDDE8DD, 0.10))
             }
         }
         // fireflies
@@ -1245,6 +1248,7 @@ enum Scenes {
     }
 
     static func snowfall(_ c: PixelCanvas, _ g: Int, t: Double) {
+        guard c.w > 0, g > 0 else { return }
         // AT-ATs marching on the horizon toward the trench: hazy with distance, the nearer ones bigger.
         let horizon = g - 9
         // Faded toward the snowy haze so they read as far off: the farthest are nearly sky-coloured.

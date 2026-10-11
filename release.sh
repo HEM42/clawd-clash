@@ -1,19 +1,38 @@
 #!/bin/zsh
 # Publishes a release: universal build → (optional) notarization → zip → GitHub release → Homebrew cask.
-#   ./release.sh 2.14.0
+#   ./release.sh 2.14.0            refuses if tag v2.14.0 or its GitHub release already exists
+#   ./release.sh 2.14.0 --force    replaces an existing tag and GitHub release
+# HEAD must be pushed: it has to equal origin/main.
 # Notarization runs when a notarytool keychain profile named "clawd-wars" exists:
 #   xcrun notarytool store-credentials clawd-wars --apple-id <you@example.com> --team-id <TEAMID>
 # Without it the cask clears the quarantine flag on install instead (like many open-source casks).
 set -euo pipefail
 cd "${0:A:h}"
 
-VERSION="${1:?usage: ./release.sh <version>}"
+VERSION="${1:?usage: ./release.sh <version> [--force]}"
+FORCE=0
+case "${2:-}" in
+    "") ;;
+    --force) FORCE=1 ;;
+    *) echo "unknown option: $2 (usage: ./release.sh <version> [--force])" >&2; exit 2 ;;
+esac
 TAG="v$VERSION"
 ZIP="build/Clawd-Wars-$VERSION.zip"
 TAP_REPO="rodclemen/homebrew-tap"
 
 [[ -z "$(git status --porcelain)" ]] || { echo "commit your changes first" >&2; exit 1; }
 grep -q "^## $VERSION " CHANGELOG.md || { echo "add a '## $VERSION' entry to CHANGELOG.md first" >&2; exit 1; }
+git fetch -q origin
+[[ "$(git rev-parse HEAD)" == "$(git rev-parse origin/main)" ]] \
+    || { echo "HEAD isn't origin/main: push (or pull) first" >&2; exit 1; }
+if [[ $FORCE == 0 ]]; then
+    if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null || git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+        echo "tag $TAG already exists (pass --force to replace it)" >&2; exit 1
+    fi
+    if gh release view "$TAG" >/dev/null 2>&1; then
+        echo "GitHub release $TAG already exists (pass --force to replace it)" >&2; exit 1
+    fi
+fi
 
 ./build.sh --release "$VERSION"
 APP="build/Clawd Wars.app"
@@ -35,8 +54,12 @@ SHA=$(shasum -a 256 "$ZIP" | cut -d' ' -f1)
 
 echo "→ GitHub release $TAG"
 NOTES=$(awk "/^## $VERSION /{f=1;next} /^## /{f=0} f" CHANGELOG.md)
-git tag -f "$TAG" && git push -f origin "$TAG"
-gh release delete "$TAG" --yes >/dev/null 2>&1 || true
+if [[ $FORCE == 1 ]]; then
+    git tag -f "$TAG" && git push -f origin "$TAG"
+    gh release delete "$TAG" --yes >/dev/null 2>&1 || true
+else
+    git tag "$TAG" && git push origin "$TAG"
+fi
 gh release create "$TAG" "$ZIP" --title "Clawd Wars $VERSION" --notes "$NOTES
 
 **Install:** \`brew install --cask rodclemen/tap/clawd-wars\` — or download the zip, unzip, and move *Clawd Wars.app* to Applications."
@@ -73,6 +96,8 @@ cask "clawd-wars" do
 
   app "Clawd Wars.app"
 $QUARANTINE
+  # brew runs this on upgrade too (uninstall, then install): the hooks come out, and the new app puts
+  # them back on its next launch.
   uninstall quit:   "com.rodclemen.vaderclaude",
             script: {
               executable: "#{appdir}/Clawd Wars.app/Contents/MacOS/ClawdWars",

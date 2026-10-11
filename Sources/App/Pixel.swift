@@ -17,6 +17,8 @@ final class PixelCanvas {
     let w: Int, h: Int
     private(set) var buf: [UInt8]   // premultiplied RGBA
     var ox = 0, oy = 0               // translation applied to every draw call
+    var baseY = 0                    // extra vertical shift under `oy`: moves a whole sprite (a hop, sitting down)
+                                     // whose drawing code sets `oy` itself
 
     init(_ w: Int, _ h: Int) {
         self.w = w; self.h = h
@@ -24,7 +26,7 @@ final class PixelCanvas {
     }
 
     func px(_ x: Int, _ y: Int, _ c: Px) {
-        let x = x + ox, y = y + oy
+        let x = x + ox, y = y + oy + baseY
         guard x >= 0, y >= 0, x < w, y < h, c.a > 0 else { return }
         let i = (y * w + x) * 4
         let sa = Double(c.a) / 255
@@ -41,12 +43,11 @@ final class PixelCanvas {
     }
 
     /// Draw string art. Each character maps to a colour in `palette`; anything else is transparent.
-    func pattern(_ x: Int, _ y: Int, _ rows: [String], _ palette: [Character: Px], flip: Bool = false) {
+    func pattern(_ x: Int, _ y: Int, _ rows: [String], _ palette: [Character: Px]) {
         for (r, row) in rows.enumerated() {
-            let chars = Array(row)
-            for (c, ch) in chars.enumerated() {
+            for (c, ch) in row.enumerated() {
                 guard let col = palette[ch] else { continue }
-                px(x + (flip ? chars.count - 1 - c : c), y + r, col)
+                px(x + c, y + r, col)
             }
         }
     }
@@ -102,22 +103,26 @@ final class PixelCanvas {
     /// 1px outline around every solid pixel, so dark sprites still read on a dark desktop.
     /// Only fully opaque pixels count as solid, so saber glows and bolts don't get outlined.
     func addOutline(_ c: Px) {
-        let src = buf
+        guard w > 0, h > 0 else { return }
         let a = Double(c.a) / 255
-        for y in 0..<h {
-            for x in 0..<w {
-                let i = (y * w + x) * 4
-                guard src[i + 3] <= 60 else { continue }
-                var edge = false
-                for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
-                    let nx = x + dx, ny = y + dy
-                    if nx >= 0, ny >= 0, nx < w, ny < h, src[(ny * w + nx) * 4 + 3] >= 250 { edge = true; break }
+        let cr = Double(c.r) * a, cg = Double(c.g) * a, cb = Double(c.b) * a, ca = Double(c.a), keep = 1 - a
+        let (w, h) = (w, h)
+        buf.withUnsafeMutableBufferPointer { b in
+            // Which pixels are solid, taken before any outline is written (only the alpha matters, not a full copy).
+            var solid = [Bool](repeating: false, count: w * h)
+            for p in 0..<(w * h) { solid[p] = b[p * 4 + 3] >= 250 }
+            for y in 0..<h {
+                for x in 0..<w {
+                    let p = y * w + x, i = p * 4
+                    guard b[i + 3] <= 60 else { continue }
+                    let edge = (x + 1 < w && solid[p + 1]) || (x > 0 && solid[p - 1])
+                        || (y + 1 < h && solid[p + w]) || (y > 0 && solid[p - w])
+                    guard edge else { continue }
+                    b[i] = UInt8(min(255, cr + Double(b[i]) * keep))
+                    b[i + 1] = UInt8(min(255, cg + Double(b[i + 1]) * keep))
+                    b[i + 2] = UInt8(min(255, cb + Double(b[i + 2]) * keep))
+                    b[i + 3] = UInt8(min(255, ca + Double(b[i + 3]) * keep))
                 }
-                guard edge else { continue }
-                buf[i] = UInt8(min(255, Double(c.r) * a + Double(src[i]) * (1 - a)))
-                buf[i + 1] = UInt8(min(255, Double(c.g) * a + Double(src[i + 1]) * (1 - a)))
-                buf[i + 2] = UInt8(min(255, Double(c.b) * a + Double(src[i + 2]) * (1 - a)))
-                buf[i + 3] = UInt8(min(255, Double(c.a) + Double(src[i + 3]) * (1 - a)))
             }
         }
     }
@@ -146,6 +151,12 @@ final class PixelCanvas {
             sum += 0.2126 * Double(buf[i]) + 0.7152 * Double(buf[i + 1]) + 0.0722 * Double(buf[i + 2])
         }
         return sum / Double(w) / 255
+    }
+
+    /// Wipe to transparent (and drop any translation), so one canvas can be reused frame after frame.
+    func clear() {
+        buf.withUnsafeMutableBytes { _ = $0.initializeMemory(as: UInt8.self, repeating: 0) }
+        ox = 0; oy = 0; baseY = 0
     }
 
     func makeImage() -> CGImage? {

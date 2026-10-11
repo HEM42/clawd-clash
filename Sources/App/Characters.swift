@@ -51,6 +51,15 @@ enum Companion: Int, CaseIterable {
         case .tauntaun: return 14
         }
     }
+
+    /// Whether it sits down when its session has been idle a while (not the droid on wheels-and-legs, the tauntaun,
+    /// or anyone whose gown or robe already reaches the floor).
+    var canSit: Bool {
+        switch self {
+        case .r2d2, .tauntaun, .leia, .jawa: return false
+        case .luke, .han, .obiwan, .c3po, .quigon, .mace, .yoda, .chewie, .rey, .ahsoka, .ewok: return true
+        }
+    }
 }
 
 // MARK: - Palette
@@ -173,7 +182,7 @@ func drawBody(_ c: PixelCanvas, _ look: Look, armLeft: Int = 0, armRight: Int = 
     }
 }
 
-func drawSaber(_ c: PixelCanvas, angle: Double, core: Px, glow: Px, lit: Bool,
+func drawSaber(_ c: PixelCanvas, t: Double, angle: Double, core: Px, glow: Px, lit: Bool,
                trail: [Double] = [], length: Double = 20, crossguard: Bool = false, unstable: Bool = false) {
     let hx = Sprite.hand.x, hy = Sprite.hand.y
     if lit {
@@ -189,10 +198,9 @@ func drawSaber(_ c: PixelCanvas, angle: Double, core: Px, glow: Px, lit: Bool,
                core: C(0xB9BEC8), glow: C(0x000000, 0), coreR: 0.85, glowR: 0.9)
     c.px(Int(hx - ux * 0.5), Int(hy - uy * 0.5), C(0x2A2A2F))
     guard lit else { return }
-    let now = Date().timeIntervalSince1970
-    let flicker = unstable ? 0.75 + 0.25 * noise(Int(now * 30)) : 0.92 + 0.08 * sin(now * 40)
+    let flicker = unstable ? 0.75 + 0.25 * noise(Int(t * 30)) : 0.92 + 0.08 * sin(t * 40)
     c.glowLine(hx + ux * 3, hy + uy * 3, hx + ux * (3 + length), hy + uy * (3 + length),
-               core: core, glow: glow, glowR: unstable ? 2.4 + noise(Int(now * 25)) : 2.4, strength: flicker)
+               core: core, glow: glow, glowR: unstable ? 2.4 + noise(Int(t * 25)) : 2.4, strength: flicker)
     if crossguard {
         // Kylo Ren's quillons vent sideways from the emitter.
         let bx = hx + ux * 3.5, by = hy + uy * 3.5
@@ -271,7 +279,19 @@ func drawEE3(_ c: PixelCanvas, x: Int, y: Int) {
 
 // MARK: - Companions
 
-func drawCompanion(_ c: PixelCanvas, _ who: Companion, t: Double, walking: Bool, role: FightRole = .none) {
+/// `mode`, `urgent` and `sitting` are for a hero leading a session, as in `drawLeader`: it rests (saber off, blaster
+/// lowered) unless it's working or fighting, holds its weapon up while Claude waits for you (waving it and hopping
+/// once that's urgent), and sits down when it's been idle a while. Agents keep the default `.working`.
+func drawCompanion(_ c: PixelCanvas, _ who: Companion, t: Double, walking: Bool, role: FightRole = .none,
+                   mode: VaderMode = .working, urgent: Bool = false, sitting: Bool = false) {
+    var role = role
+    if case .none = role, mode != .working { role = mode == .waiting ? .ready(urgent: urgent) : .rest }
+    var resting = false
+    if case .rest = role { resting = true }
+    let seated = sitting && who.canSit && !walking && resting && (mode == .idle || mode == .standGuard)
+    seatedPose = seated
+    c.baseY = seated ? 4 : (urgent && mode == .waiting && !walking ? cheerHop(t * 1.5) : 0)
+    defer { seatedPose = false; c.baseY = 0 }
     if case .cheer = role, !walking { drawCheerSparkles(c, t: t) }
     switch who {
     case .luke: drawLuke(c, t: t, walking: walking, role: role)
@@ -348,6 +368,8 @@ private func saberPose(_ t: Double, walking: Bool, role: FightRole, speed: Doubl
         return (-95 + 18 * sin(t * 9), 0, Double(cheerHop(t)), [])
     case .rest:
         return (75, 0, 0, [])                // saber lowered and switched off
+    case .ready(let urgent):
+        return (urgent ? -90 + 25 * sin(t * 12) : -90 + 2 * sin(t * 3), 0, 0, [])   // held up; waved when urgent
     default:
         let p = kataPose(t * speed + offset)
         return (p.angle, p.dx, p.dy, saberTrail(t + offset / speed, speed: speed))
@@ -378,7 +400,7 @@ private func drawLuke(_ c: PixelCanvas, t: Double, walking: Bool, role: FightRol
     c.rect(18, 33, 19, 5, C(0xEFE9DA))
     c.rect(26, 33, 4, 1, clawdOrange)
     c.rect(18, 36, 19, 1, C(0x6B4A2B))
-    drawSaber(c, angle: p.angle, core: C(0xEAFFEA), glow: C(0x3FE85A), lit: saberLit(role), trail: p.trail)
+    drawSaber(c, t: t, angle: p.angle, core: C(0xEAFFEA), glow: C(0x3FE85A), lit: saberLit(role), trail: p.trail)
 }
 
 private func drawObiWan(_ c: PixelCanvas, t: Double, walking: Bool, role: FightRole) {
@@ -401,7 +423,7 @@ private func drawObiWan(_ c: PixelCanvas, t: Double, walking: Bool, role: FightR
         "...FFFFFF...",
     ], ["F": C(0xC9A27A), "f": C(0xA9825A)])
     c.rect(18, 37, 20, 1, C(0x5A3A22))
-    drawSaber(c, angle: p.angle, core: C(0xE6F4FF), glow: C(0x3D9BFF), lit: saberLit(role), trail: p.trail)
+    drawSaber(c, t: t, angle: p.angle, core: C(0xE6F4FF), glow: C(0x3D9BFF), lit: saberLit(role), trail: p.trail)
 }
 
 func drawHood(_ c: PixelCanvas, _ main: Px, _ dark: Px) {
@@ -434,7 +456,7 @@ private func agentFire(_ c: PixelCanvas, t: Double, walking: Bool, role: FightRo
         return (0, noise(Int(t * 30)) > 0.5 ? 1 : -1)
     case .cheer:
         return (-cheerHop(t) + 1, 0)
-    case .rest:
+    case .rest, .ready:
         return (0, 0)                        // blaster lowered, not firing
     default:
         return (fireBlaster(c, t: t + phase, period: period, muzzleX: muzzleX, muzzleY: 32), 0)
@@ -559,8 +581,18 @@ private func drawC3PO(_ c: PixelCanvas, t: Double, walking: Bool) {
 
 /// Saber-wielding agents: Qui-Gon, Mace Windu, Yoda, Rey and Ahsoka (twin blades).
 private func drawJedi(_ c: PixelCanvas, _ who: Companion, t: Double, walking: Bool, role: FightRole) {
-    let offsets: [Companion: Double] = [.quigon: 0.6, .mace: 2.1, .yoda: 0.3, .rey: 1.7, .ahsoka: 2.6]
-    let p = saberPose(t, walking: walking, role: role, speed: who == .yoda ? 1.15 : 0.9, offset: offsets[who] ?? 0)
+    // Each Jedi's kata offset and blade colours (core, glow).
+    let offset: Double, core: Px, glow: Px
+    switch who {
+    case .quigon: (offset, core, glow) = (0.6, C(0xEAFFEA), C(0x3FE85A))
+    case .mace: (offset, core, glow) = (2.1, C(0xF6E6FF), C(0xB04CFF))
+    case .yoda: (offset, core, glow) = (0.3, C(0xEAFFEA), C(0x3FE85A))
+    case .rey: (offset, core, glow) = (1.7, C(0xE6F4FF), C(0x3D9BFF))
+    case .ahsoka: (offset, core, glow) = (2.6, C(0xFFFFFF), C(0xC9D6FF))
+    case .luke, .han, .leia, .obiwan, .r2d2, .c3po, .jawa, .chewie, .ewok, .tauntaun:   // not Jedi: never drawn here
+        (offset, core, glow) = (0, C(0xEAFFEA), C(0x3FE85A))
+    }
+    let p = saberPose(t, walking: walking, role: role, speed: who == .yoda ? 1.15 : 0.9, offset: offset)
     let step = walkStep(t, walking)
     c.ox = Int(p.dx.rounded()); c.oy = Int(p.dy.rounded())
     let cream = C(0xE4D3B0), robe = C(0x7A5532), belt = C(0x5A3A22)
@@ -627,18 +659,13 @@ private func drawJedi(_ c: PixelCanvas, _ who: Companion, t: Double, walking: Bo
         break
     }
 
-    let colors: [Companion: (Px, Px)] = [
-        .quigon: (C(0xEAFFEA), C(0x3FE85A)), .mace: (C(0xF6E6FF), C(0xB04CFF)), .yoda: (C(0xEAFFEA), C(0x3FE85A)),
-        .rey: (C(0xE6F4FF), C(0x3D9BFF)), .ahsoka: (C(0xFFFFFF), C(0xC9D6FF)),
-    ]
-    let (core, glow) = colors[who]!
     if who == .ahsoka {
         // Second, shorter shoto from the other hand, held in reverse grip.
         c.ox -= 24; c.oy += 1
-        drawSaber(c, angle: 180 - p.angle * 0.6 + 40, core: core, glow: glow, lit: saberLit(role), length: 12)
+        drawSaber(c, t: t, angle: 180 - p.angle * 0.6 + 40, core: core, glow: glow, lit: saberLit(role), length: 12)
         c.ox += 24; c.oy -= 1
     }
-    drawSaber(c, angle: p.angle, core: core, glow: glow, lit: saberLit(role), trail: p.trail, length: who == .yoda ? 14 : 20)
+    drawSaber(c, t: t, angle: p.angle, core: core, glow: glow, lit: saberLit(role), trail: p.trail, length: who == .yoda ? 14 : 20)
 }
 
 /// Blaster-carrying agents: Chewbacca (bowcaster) and a Jawa (ion blaster).
@@ -711,7 +738,7 @@ private func drawEwok(_ c: PixelCanvas, t: Double, walking: Bool, role: FightRol
     c.rect(22, 29, 3, 3, C(0x0E0A08)); c.rect(31, 29, 3, 3, C(0x0E0A08))   // big dark eyes
     c.px(23, 29, C(0x6A5A4A)); c.px(32, 29, C(0x6A5A4A))
     c.rect(27, 32, 2, 1, C(0x2A1A10))                                      // little nose
-    drawSpear(c, angle: p.angle)
+    drawSpear(c, angle: saberLit(role) ? p.angle : -75)   // resting: spear shouldered, not through the floor
 }
 
 /// A wooden spear with a stone tip, held like a saber (same pivot, same choreography).

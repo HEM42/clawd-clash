@@ -14,13 +14,23 @@ enum ClaudeProcesses {
         return String(cString: buf)
     }
 
-    static func parent(_ pid: Int32) -> Int32? {
+    private static func kinfo(_ pid: Int32) -> kinfo_proc? {
         var info = kinfo_proc()
         var size = MemoryLayout<kinfo_proc>.stride
         var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, pid]
         guard sysctl(&mib, 4, &info, &size, nil, 0) == 0, size > 0 else { return nil }
-        let p = info.kp_eproc.e_ppid
+        return info
+    }
+
+    static func parent(_ pid: Int32) -> Int32? {
+        guard let p = kinfo(pid)?.kp_eproc.e_ppid else { return nil }
         return p > 1 ? p : nil
+    }
+
+    /// When a process started (seconds since 1970), so a recycled pid can be told from the process that had it.
+    static func startTime(_ pid: Int32) -> Double? {
+        guard let st = kinfo(pid)?.kp_proc.p_starttime, st.tv_sec > 0 else { return nil }
+        return Double(st.tv_sec) + Double(st.tv_usec) / 1e6
     }
 
     /// The Claude Code process that ran this hook: the first ancestor that isn't a shell.
@@ -80,15 +90,27 @@ enum ClaudeProcesses {
     private static var kinds: [Int32: Kind] = [:]
 
     /// Interactive `claude` sessions (not `claude -p` one-shots, MCP servers or the Chrome bridge).
-    static func running() -> [Info] {
+    /// Empty if the process table can't be read; see `runningOrNil`.
+    static func running() -> [Info] { runningOrNil() ?? [] }
+
+    /// Like `running`, but nil when the process table can't be read, so callers can keep the last list
+    /// instead of dropping every session.
+    static func runningOrNil() -> [Info]? {
         // All of this user's processes in one call, instead of one call per process on the Mac.
         var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_UID, Int32(bitPattern: getuid())]
-        var size = 0
-        guard sysctl(&mib, 4, nil, &size, nil, 0) == 0 else { return [] }
         let stride = MemoryLayout<kinfo_proc>.stride
-        size += 64 * stride   // room for processes started in between
-        var procs = [kinfo_proc](repeating: kinfo_proc(), count: size / stride)
-        guard sysctl(&mib, 4, &procs, &size, nil, 0) == 0 else { return [] }
+        var procs: [kinfo_proc] = []
+        var size = 0
+        var ok = false
+        for _ in 0..<2 {   // ENOMEM: more processes appeared than the extra room allows; measure again once
+            size = 0
+            guard sysctl(&mib, 4, nil, &size, nil, 0) == 0 else { return nil }
+            size += 64 * stride   // room for processes started in between
+            procs = [kinfo_proc](repeating: kinfo_proc(), count: size / stride)
+            if sysctl(&mib, 4, &procs, &size, nil, 0) == 0 { ok = true; break }
+            if errno != ENOMEM { return nil }
+        }
+        guard ok else { return nil }
         var found: [Info] = []
         var seen: [Int32: Kind] = [:]
         for info in procs.prefix(size / stride) {
@@ -121,6 +143,42 @@ enum ClaudeProcesses {
         return found.filter { !drop.contains($0.pid) }.sorted { $0.pid < $1.pid }
     }
 
+    private static let names: Set<String> = ["claude", "codex", "qwen", "gemini", "copilot"]
+    /// Per AI, since they don't agree: Codex's `-p` is `--profile`, an interactive session.
+    private static let oneShotFlags: [String: Set<String>] = [
+        "claude": ["-p", "--print", "--chrome-native-host", "--version", "-v"],
+        "codex": ["--version", "-V"],
+        "qwen": ["-p", "--prompt", "--version", "-v"],
+        "gemini": ["-p", "--prompt", "--version", "-v"],
+        "copilot": ["-p", "--prompt", "--version", "-v"],
+    ]
+    private static let subcommands: [String: Set<String>] = [
+        "claude": ["mcp", "update", "doctor", "install", "config", "setup-token", "migrate-installer", "plugin"],
+        "codex": ["exec", "e", "login", "logout", "mcp", "mcp-server", "app-server", "completion", "proto", "apply", "sandbox", "debug"],
+        "qwen": ["mcp", "extensions"],
+        "gemini": ["mcp", "extensions"],
+        "copilot": ["update", "help", "version"],
+    ]
+
+    /// Background servers editors start (the VS Code ChatGPT extension runs `codex -c … app-server`): never a prompt
+    /// word, so they count anywhere on the command line.
+    private static let helpers: Set<String> = ["app-server", "mcp-server", "proto"]
+    /// Flags that take the next argument as their value, so that value isn't mistaken for the subcommand.
+    private static let valueFlags: Set<String> = ["-c", "--config", "-m", "--model", "-p", "--profile", "-C", "--cd",
+                                                  "-s", "--sandbox", "-a", "--ask-for-approval", "-i", "--image",
+                                                  "--enable", "--disable", "--add-dir", "--settings", "--permission-mode"]
+
+    /// The first argument that isn't a flag or a flag's value: where a subcommand would be.
+    private static func firstWord(_ args: ArraySlice<String>) -> String? {
+        var skipNext = false
+        for a in args {
+            if skipNext { skipNext = false; continue }
+            if a.hasPrefix("-") { skipNext = valueFlags.contains(a); continue }
+            return a
+        }
+        return nil
+    }
+
     /// Which AI an interactive session process belongs to (nil if it isn't one), and Claude Code's client.
     private static func classify(_ pid: Int32) -> (assistant: String?, client: String?) {
         let args = arguments(pid)
@@ -133,10 +191,15 @@ enum ClaudeProcesses {
         // "@github/copilot/" with the slash: not VS Code's copilot-language-server
         let isCopilot = exe == "copilot" || args.contains { $0.contains("@github/copilot/") && $0.hasSuffix(".js") }
         guard isClaude || isCodex || isQwen || isGemini || isCopilot else { return (nil, nil) }
-        let skip = ["-p", "--print", "--chrome-native-host", "mcp", "--version", "-v", "update", "doctor",
-                    "exec", "login", "logout", "app-server", "mcp-server", "completion", "proto"]
-        if args.dropFirst().contains(where: { skip.contains($0) }) { return (nil, nil) }
         let assistant = isCodex ? "codex" : isQwen ? "qwen" : isGemini ? "gemini" : isCopilot ? "copilot" : "claude"
+        // The AI's own arguments: after the executable, or after the script when node runs it.
+        let script = names.contains(exe) ? 0 : args.firstIndex { $0.hasSuffix(".js") } ?? 0
+        let own = args.dropFirst(script + 1)
+        // One-shots and helpers aren't sessions. Flags count anywhere; subcommands only as the first word
+        // (`claude "update the docs"` is a session, `claude update` isn't).
+        if own.contains(where: { (oneShotFlags[assistant] ?? []).contains($0) }) { return (nil, nil) }
+        if own.contains(where: helpers.contains) { return (nil, nil) }
+        if let sub = firstWord(own), (subcommands[assistant] ?? []).contains(sub) { return (nil, nil) }
         // Claude Code bundled with the desktop app or the VS Code extension, told apart by where it lives.
         let client: String? = !isClaude ? nil
             : first.contains("/Application Support/Claude/claude-code/") ? "claude-desktop"

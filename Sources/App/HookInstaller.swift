@@ -17,18 +17,63 @@ enum HookInstaller {
         Bundle.main.bundleURL.appendingPathComponent("Contents/MacOS/vader-hook").path
     }
 
-    private static func readSettings() throws -> [String: Any] {
-        guard let data = try? Data(contentsOf: settingsURL), !data.isEmpty else { return [:] }
-        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw NSError(domain: "VaderClaude", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: "settings.json is not a JSON object"])
+    /// The hook command's executable, single-quoted for the shell (a `'` in the path becomes `'\''`).
+    static var quotedBinary: String { "'" + hookBinary.replacingOccurrences(of: "'", with: "'\\''") + "'" }
+
+    private static func readSettings() throws -> [String: Any] { try readJSON(settingsURL) }
+
+    private static func writeSettings(_ root: [String: Any]) throws { try writeJSON(root, to: settingsURL) }
+
+    /// A settings file as a JSON object ([:] when it's missing or empty).
+    private static func readJSON(_ url: URL) throws -> [String: Any] {
+        guard let data = try? Data(contentsOf: url), !data.isEmpty else { return [:] }
+        let parsed: Any
+        do { parsed = try JSONSerialization.jsonObject(with: data) } catch {
+            // Comments are allowed by some of these AIs, but rewriting the file would drop them: leave it alone.
+            let message = hasComments(String(decoding: data, as: UTF8.self))
+                ? "\(url.path) has comments in it (JSONC), which Clawd Wars can't keep when it edits the file. "
+                    + "Remove the comments, or add the hooks by hand."
+                : "\(url.path) isn't valid JSON: \(error.localizedDescription)"
+            throw NSError(domain: "ClawdWars", code: 3, userInfo: [NSLocalizedDescriptionKey: message])
+        }
+        guard let root = parsed as? [String: Any] else {
+            throw NSError(domain: "ClawdWars", code: 2,
+                          userInfo: [NSLocalizedDescriptionKey: "\(url.path) is not a JSON object"])
         }
         return root
     }
 
-    private static func writeSettings(_ root: [String: Any]) throws {
-        let data = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .withoutEscapingSlashes])
-        try data.write(to: settingsURL, options: .atomic)
+    /// `//` or `/* */` outside of strings.
+    private static func hasComments(_ text: String) -> Bool {
+        var inString = false, escaped = false, previous: Character = " "
+        for c in text {
+            if inString {
+                if escaped { escaped = false } else if c == "\\" { escaped = true } else if c == "\"" { inString = false }
+            } else if c == "\"" {
+                inString = true
+            } else if previous == "/" && (c == "/" || c == "*") {
+                return true
+            }
+            previous = inString ? " " : c
+        }
+        return false
+    }
+
+    /// Writes through a symlink (dotfile managers link these files) and creates the folder if it's missing.
+    private static func writeJSON(_ root: [String: Any], to url: URL) throws {
+        let target = url.resolvingSymlinksInPath()
+        try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let data = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .withoutEscapingSlashes, .sortedKeys])
+        try data.write(to: target, options: .atomic)
+    }
+
+    /// Keeps a copy of a file the first time we change it.
+    private static func backUp(_ url: URL, as ext: String) {
+        let source = url.resolvingSymlinksInPath()
+        let backup = source.appendingPathExtension(ext)
+        if FileManager.default.fileExists(atPath: source.path), !FileManager.default.fileExists(atPath: backup.path) {
+            try? FileManager.default.copyItem(at: source, to: backup)
+        }
     }
 
     private static func withoutOurs(_ groups: [[String: Any]]) -> [[String: Any]] {
@@ -57,14 +102,11 @@ enum HookInstaller {
 
     static func install() throws {
         var root = try readSettings()
-        let backup = settingsURL.appendingPathExtension("before-vader")
-        if FileManager.default.fileExists(atPath: settingsURL.path), !FileManager.default.fileExists(atPath: backup.path) {
-            try? FileManager.default.copyItem(at: settingsURL, to: backup)
-        }
+        backUp(settingsURL, as: "before-vader")
         var hooks = root["hooks"] as? [String: Any] ?? [:]
         for e in events {
             var groups = withoutOurs(hooks[e] as? [[String: Any]] ?? [])
-            var group: [String: Any] = ["hooks": [["type": "command", "command": "\"\(hookBinary)\"", "timeout": 5]]]
+            var group: [String: Any] = ["hooks": [["type": "command", "command": quotedBinary, "timeout": 5]]]
             if toolEvents.contains(e) { group["matcher"] = "*" }
             groups.append(group)
             hooks[e] = groups
@@ -196,14 +238,7 @@ enum HookInstaller {
         return FileManager.default.fileExists(atPath: ai.dir.path)
     }
 
-    private static func read(_ ai: OtherAI) throws -> [String: Any] {
-        guard let data = try? Data(contentsOf: ai.file), !data.isEmpty else { return [:] }
-        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw NSError(domain: "ClawdWars", code: 2,
-                          userInfo: [NSLocalizedDescriptionKey: "\(ai.file.path) is not a JSON object"])
-        }
-        return root
-    }
+    private static func read(_ ai: OtherAI) throws -> [String: Any] { try readJSON(ai.file) }
 
     /// An entry (group or flat handler) is ours if any command in it runs our hook.
     private static func isOurs(_ entry: [String: Any]) -> Bool {
@@ -224,16 +259,12 @@ enum HookInstaller {
     static func install(_ ai: OtherAI) throws {
         guard available(ai) else { return }
         var root = try read(ai)
-        let backup = ai.file.appendingPathExtension("before-clawd-wars")
-        if !ai.ownFile, FileManager.default.fileExists(atPath: ai.file.path), !FileManager.default.fileExists(atPath: backup.path) {
-            try? FileManager.default.copyItem(at: ai.file, to: backup)
-        }
-        try FileManager.default.createDirectory(at: ai.file.deletingLastPathComponent(), withIntermediateDirectories: true)
+        if !ai.ownFile { backUp(ai.file, as: "before-clawd-wars") }
         if ai.flat { root["version"] = 1 }
         var hooks = root["hooks"] as? [String: Any] ?? [:]
         for e in ai.events {
             var entries = withoutOurs(ai, hooks[e] as? [[String: Any]] ?? [])
-            var command = "\"\(hookBinary)\" --assistant \(ai.name)"
+            var command = "\(quotedBinary) --assistant \(ai.name)"
             if ai.passEvent { command += " --event \(ai.eventAliases[e] ?? e)" }
             var handler: [String: Any] = ["type": "command", ai.commandKey: command,
                                           ai.timeoutKey: (ai.shortTimeoutEvents.contains(e) ? 3 : 5) * ai.timeoutScale]
@@ -248,8 +279,7 @@ enum HookInstaller {
             hooks[e] = entries
         }
         root["hooks"] = hooks
-        let data = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .withoutEscapingSlashes])
-        try data.write(to: ai.file, options: .atomic)
+        try writeJSON(root, to: ai.file)
     }
 
     static func uninstall(_ ai: OtherAI) throws {
@@ -265,8 +295,7 @@ enum HookInstaller {
             return
         }
         root["hooks"] = hooks.isEmpty ? nil : hooks
-        let data = try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .withoutEscapingSlashes])
-        try data.write(to: ai.file, options: .atomic)
+        try writeJSON(root, to: ai.file)
     }
 
     // MARK: Moved app
@@ -284,10 +313,20 @@ enum HookInstaller {
         return commands.filter { $0.contains(marker) }.map(binary)
     }
 
-    /// The executable a command runs: the quoted path we write, or the first word.
+    /// The executable a command runs: the quoted path we write ('…' now, "…" before), or the first word.
     private static func binary(_ command: String) -> String {
-        guard command.hasPrefix("\"") else { return String(command.prefix { $0 != " " }) }
-        return String(command.dropFirst().prefix { $0 != "\"" })
+        if command.hasPrefix("\"") { return String(command.dropFirst().prefix { $0 != "\"" }) }
+        guard command.hasPrefix("'") else { return String(command.prefix { $0 != " " }) }
+        // Shell single quotes: everything literal up to the next ', where '\'' stands for a quote in the path.
+        var path = "", rest = command.dropFirst()
+        while let end = rest.firstIndex(of: "'") {
+            path += rest[..<end]
+            rest = rest[rest.index(after: end)...]
+            guard rest.hasPrefix("\\''") else { return path }
+            path += "'"
+            rest = rest.dropFirst(3)
+        }
+        return path + rest
     }
 
     private static func isStale(_ root: [String: Any]) -> Bool {
@@ -304,6 +343,56 @@ enum HookInstaller {
             if let root = try? read(ai), isStale(root), (try? install(ai)) != nil { repaired.append(ai.name) }
         }
         return repaired
+    }
+
+    // MARK: Everything at once (CLI, first launch)
+
+    /// Connects every AI on this Mac (Claude Code only when it's installed). One failing doesn't stop the
+    /// others; returns the ones connected and an error message per failure.
+    static func installAll(_ names: [String]? = nil) -> (installed: [String], errors: [String]) {
+        var done: [String] = [], errors: [String] = []
+        if names?.contains("claude") ?? true, claudeAvailable {
+            do { try install(); done.append("claude") } catch { errors.append("Claude Code: \(error.localizedDescription)") }
+        }
+        for ai in others where (names?.contains(ai.name) ?? true) && available(ai) {
+            do { try install(ai); done.append(ai.name) } catch { errors.append("\(displayName(ai.name)): \(error.localizedDescription)") }
+        }
+        return (done, errors)
+    }
+
+    /// Disconnects every AI; returns the ones that had our hooks and an error message per failure.
+    static func uninstallAll() -> (removed: [String], errors: [String]) {
+        var done: [String] = [], errors: [String] = []
+        let claudeHad = (try? readSettings()).map { !ourBinaries(in: $0).isEmpty } ?? false
+        do { try uninstall(); if claudeHad { done.append("claude") } } catch { errors.append("Claude Code: \(error.localizedDescription)") }
+        for ai in others {
+            let had = (try? read(ai)).map { !ourBinaries(in: $0).isEmpty } ?? false
+            do { try uninstall(ai); if had { done.append(ai.name) } } catch { errors.append("\(displayName(ai.name)): \(error.localizedDescription)") }
+        }
+        return (done, errors)
+    }
+
+    // MARK: Homebrew upgrade
+    //
+    // The cask's uninstall step runs `--uninstall-hooks`, and `brew upgrade` runs it too, which would quietly
+    // disconnect everything. So `--uninstall-hooks` leaves a note of what it removed, and the next launch puts
+    // exactly those back. Removing hooks from the Settings menu calls `uninstall` directly and leaves no note.
+
+    static let removedMarker = StatusPaths.dir.appendingPathComponent("hooks-removed")
+
+    static func rememberRemoved(_ names: [String]) {
+        guard !names.isEmpty else { return }
+        try? FileManager.default.createDirectory(at: StatusPaths.dir, withIntermediateDirectories: true)
+        try? (names.joined(separator: "\n") + "\n").write(to: removedMarker, atomically: true, encoding: .utf8)
+    }
+
+    /// Reconnects the AIs a `--uninstall-hooks` removed (those still on this Mac), then forgets the note.
+    @discardableResult
+    static func restoreRemoved() -> (installed: [String], errors: [String]) {
+        guard let text = try? String(contentsOf: removedMarker, encoding: .utf8) else { return ([], []) }
+        try? FileManager.default.removeItem(at: removedMarker)
+        let names = text.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }
+        return names.isEmpty ? ([], []) : installAll(names)
     }
 
     // Codex conveniences used by the app and CLI

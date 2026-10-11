@@ -58,7 +58,12 @@ enum Leader: Int, CaseIterable {
     }
 
     /// Armour or a metal shell: blaster bolts ricochet off it.
-    var armoured: Bool { [.boba, .trooper, .rogr, .ig88, .atst, .atat].contains(self) }
+    var armoured: Bool {
+        switch self {
+        case .boba, .trooper, .rogr, .ig88, .atst, .atat: return true
+        case .vader, .kylo, .maul, .emperor, .dooku, .gamorrean, .jabba, .rancor, .greedo: return false
+        }
+    }
 
     /// Top row of the helmet/hood/hair on the 72x52 canvas, for placing the project label.
     var headTop: Int {
@@ -82,7 +87,21 @@ enum Leader: Int, CaseIterable {
     }
 
     /// Whether it sits down when it's been idle a while (walkers, slugs, monsters and the Emperor don't).
-    var canSit: Bool { ![.atst, .atat, .jabba, .rancor, .emperor].contains(self) }
+    var canSit: Bool {
+        switch self {
+        case .atst, .atat, .jabba, .rancor, .emperor: return false
+        case .vader, .kylo, .maul, .boba, .trooper, .rogr, .dooku, .gamorrean, .ig88, .greedo: return true
+        }
+    }
+
+    /// Where its weapon pivots (canvas pixels): the hand, except the Rancor's claw, which swings from the shoulder.
+    var weaponPivot: (x: Double, y: Double) {
+        switch self {
+        case .rancor: return rancorShoulder
+        case .vader, .kylo, .maul, .boba, .trooper, .emperor, .rogr, .dooku, .gamorrean, .jabba, .ig88, .atst, .atat,
+             .greedo: return Sprite.hand
+        }
+    }
 
     /// Where its blaster bolts come out (canvas pixels). Walkers fire from their chin guns.
     var muzzle: (x: Int, y: Int) {
@@ -114,6 +133,7 @@ enum FightRole {
     case hit                     // non-saber caught by lightning: shake
     case cheer                   // odd one out: bounce and wave the weapon
     case rest                    // a hero leading an idle session: saber off, blaster lowered
+    case ready(urgent: Bool)     // a hero whose session needs you: weapon held up (waved, with hops, when urgent)
 }
 
 func fightRoles(_ a: Weapon, _ b: Weapon) -> (FightRole, FightRole) {
@@ -228,7 +248,7 @@ func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, wal
                 case .lightning: zap = false
                 default: break
                 }
-            case .none, .rest:
+            case .none, .rest, .ready:
                 switch who.weapon {
                 case .saber:
                     let p = kataPose(lt)
@@ -283,14 +303,14 @@ func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, wal
         switch who {
         case .maul:
             if lit {
-                drawSaber(c, angle: angle + 180, core: C(0xFFE3E3), glow: C(0xFF1E2D), lit: true, length: 15)
-                drawSaber(c, angle: angle, core: C(0xFFE3E3), glow: C(0xFF1E2D), lit: true, trail: trail, length: 15)
+                drawSaber(c, t: t, angle: angle + 180, core: C(0xFFE3E3), glow: C(0xFF1E2D), lit: true, length: 15)
+                drawSaber(c, t: t, angle: angle, core: C(0xFFE3E3), glow: C(0xFF1E2D), lit: true, trail: trail, length: 15)
             } else {
                 c.rect(36, 34, 2, 8, C(0x2A2A2F)); c.rect(36, 37, 2, 2, C(0xB9BEC8))
             }
         case .kylo:
             if lit {
-                drawSaber(c, angle: angle, core: C(0xFFD6D6), glow: C(0xFF2A1A), lit: true, trail: trail,
+                drawSaber(c, t: t, angle: angle, core: C(0xFFD6D6), glow: C(0xFF2A1A), lit: true, trail: trail,
                           crossguard: true, unstable: true)
             } else {
                 c.rect(36, 37, 2, 5, C(0x3A3A42)); c.rect(35, 38, 4, 1, C(0x3A3A42))
@@ -301,7 +321,7 @@ func drawLeader(_ c: PixelCanvas, _ who: Leader, t: Double, mode: VaderMode, wal
             drawClaw(c, angle: lit ? angle : 30)      // resting: arm hangs forward, claws above the floor
         default:
             if lit {
-                drawSaber(c, angle: angle, core: C(0xFFE3E3), glow: C(0xFF1E2D), lit: true, trail: trail)
+                drawSaber(c, t: t, angle: angle, core: C(0xFFE3E3), glow: C(0xFF1E2D), lit: true, trail: trail)
             } else {
                 c.rect(36, 37, 2, 5, C(0xB9BEC8)); c.rect(36, 39, 2, 1, C(0x2A2A2F))
             }
@@ -657,9 +677,12 @@ private func drawRancor(_ c: PixelCanvas, step: Int, lift: Int) {
     c.rect(35, 22, 12, 1, shade)                                    // jaw
 }
 
+/// The Rancor's shoulder, below the jaw: its claw arm pivots here (the fight effects need it too).
+private let rancorShoulder = (x: 35.0, y: 25.0)
+
 /// The rancor's reaching arm: very long, thick, ending in three claws.
 private func drawClaw(_ c: PixelCanvas, angle: Double) {
-    let hx = 35.0, hy = 25.0                                         // shoulder, below the jaw
+    let (hx, hy) = rancorShoulder
     let r = angle * .pi / 180, ux = cos(r), uy = sin(r)
     c.glowLine(hx, hy, hx + ux * 20, hy + uy * 20, core: C(0x7A6A54), glow: C(0, 0), coreR: 1.8, glowR: 1.9)
     let tx = hx + ux * 20, ty = hy + uy * 20
@@ -811,16 +834,17 @@ struct Fighter {
     let side: Double                     // +1 facing right, -1 facing left
     let muzzle: (x: Double, y: Double)   // in its own canvas coordinates
     var armoured = false                 // bolts ricochet off it
+    var pivot = Sprite.hand              // where its weapon swings from (`Cast.weaponPivot`), own canvas coordinates
 
     /// A point given in the sprite's own (right-facing) canvas coordinates.
     func point(_ cx: Double, _ cy: Double) -> (x: Double, y: Double) {
         (x + side * (cx - Sprite.bodyCenterX) * k, top + cy * k)
     }
-    var hand: (x: Double, y: Double) { point(Sprite.hand.x, Sprite.hand.y) }
+    var hand: (x: Double, y: Double) { point(pivot.x, pivot.y) }
     var body: (x: Double, y: Double) { point(Sprite.bodyCenterX + 9, 31) }
     /// Where this fighter's blade sits along its length `u` (in its own pixels) at `angle`.
     func blade(_ angle: Double, _ u: Double, dx: Double = 0) -> (x: Double, y: Double) {
-        let r = angle * .pi / 180, h = point(Sprite.hand.x + dx, Sprite.hand.y)
+        let r = angle * .pi / 180, h = point(pivot.x + dx, pivot.y)
         return (h.x + side * cos(r) * u * k, h.y + sin(r) * u * k)
     }
 }
@@ -902,6 +926,15 @@ private func drawShootout(_ c: PixelCanvas, f: Double, t: Double, m: (x: Double,
     }
 }
 
+/// Whether `drawFightFX` has anything to draw at `t`: a saber duel only sparks while the blades clash.
+func fightFXVisible(t: Double, _ a: Weapon, _ b: Weapon) -> Bool {
+    switch fightRoles(a, b).0 {
+    case .duel: return duelPose(t).clash
+    case .none: return false
+    default: return true
+    }
+}
+
 /// Bolts, deflections, lightning and clash sparks between two fighters (villains or agents).
 func drawFightFX(_ c: PixelCanvas, t: Double, left: Fighter, right: Fighter) {
     let (lRole, rRole) = fightRoles(left.weapon, right.weapon)
@@ -911,7 +944,7 @@ func drawFightFX(_ c: PixelCanvas, t: Double, left: Fighter, right: Fighter) {
         let p = duelPose(t)
         guard p.clash else { return }
         let r = p.angle * .pi / 180
-        let a = left.point(Sprite.hand.x + p.dx, Sprite.hand.y), b = right.point(Sprite.hand.x + p.dx, Sprite.hand.y)
+        let a = left.point(left.pivot.x + p.dx, left.pivot.y), b = right.point(right.pivot.x + p.dx, right.pivot.y)
         let cs = cos(r), sn = sin(r)
         guard cs > 0.2 else { return }
         var s: Double, u: Double

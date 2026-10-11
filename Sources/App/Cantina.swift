@@ -132,7 +132,7 @@ enum Cantina {
         let base = c.h - floorRows - 4
         let skin = C(0xE3D8C4), skinShade = C(0xBDB09A), robe = C(0x2E2A30)
         let black = C(0x161618), silver = C(0xC9CED6), brass = C(0xD8B048), brassDark = C(0xA8842E)
-        enum Instrument { case kloo, fizzz, fanfar, bandfill, ommni }
+        enum Instrument { case kloo, fizzz, fanfar }
         let band: [Instrument] = [.kloo, .fizzz, .fanfar, .fanfar]
         for (i, instrument) in band.enumerated() {
             let x = 4 + i * 11
@@ -160,13 +160,6 @@ enum Cantina {
             case .fanfar:                                                    // brass horn, bell up and forward
                 c.rect(x + 5, base - 10, 1, 3, brass); c.rect(x + 6, base - 11, 2, 1, brass)
                 c.rect(x + 8, base - 13, 2, 3, brass); c.px(x + 9, base - 14, brassDark)
-            case .bandfill:                                                  // big curved bass horn
-                c.rect(x + 4, base - 10, 1, 7, brassDark)
-                c.rect(x + 4, base - 3, 4, 1, brassDark); c.rect(x + 7, base - 9, 1, 6, brass)
-                c.rect(x + 6, base - 12, 3, 3, brass); c.px(x + 7, base - 12, brassDark)
-            case .ommni:                                                     // ommni box with glowing keys
-                c.rect(x + 1, base - 8, 7, 4, black)
-                for k in 0..<3 { c.px(x + 2 + k * 2, base - 7, (Int(t * 4) + k) % 3 == 0 ? C(0x7AFFB0) : silver) }
             }
             c.oy = 0
         }

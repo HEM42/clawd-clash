@@ -108,7 +108,7 @@ The scene is set **where the first session's character belongs** — the Death S
   <img src="docs/locations.png" alt="All 22 locations" width="760">
 </p>
 
-The window sizes itself to the number of sessions (or keep your own height), has a 75% **Small Window** option (a smaller scene and compact cards with normal-size text), can hide the session list to become just the scene strip (the collapse button in its title bar), has a themed title bar with its own close and minimize buttons, can stay on top, and can hide its Dock icon. Project names float over the Claudes on the desktop; in the window the cards carry them instead — each mode remembers your choice.
+Several sessions in the same project are grouped under one project header as a tree, and a card lists four agents with a chevron to unfold the rest (hover any agent in the scene for its details). The window sizes itself to the number of sessions, up to three (more scroll), or keeps your own height, has a 75% **Small Window** option (a smaller scene and compact cards with normal-size text), can hide the session list to become just the scene strip (the collapse button in its title bar), has a themed title bar with its own close and minimize buttons, can stay on top, and can hide its Dock icon. Project names float over the Claudes on the desktop; in the window the cards carry them instead — each mode remembers your choice.
 
 ## The little things
 
@@ -172,7 +172,7 @@ cd clawd-wars
 
 Claude Code sessions that were already running pick up the hooks after a restart (`/exit`, then `claude --continue`). Until then they still show up — as a villain with a `?`.
 
-Clicking to jump to a session asks once for **Accessibility** permission.
+Clicking to jump to a session in Terminal or iTerm2 asks once for **Automation** permission (Apple Events) to control that terminal; jumping to an editor (VS Code, Cursor) asks once for **Accessibility** permission.
 
 ## How it works
 

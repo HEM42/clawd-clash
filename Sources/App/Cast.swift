@@ -51,6 +51,11 @@ enum Cast: Hashable {
         }
     }
 
+    /// Where its weapon swings from (canvas pixels): the hand, or the Rancor's shoulder.
+    var weaponPivot: (x: Double, y: Double) {
+        if case .villain(let l) = self { return l.weaponPivot } else { return Sprite.hand }
+    }
+
     /// Bolts ricochet off it (armour or a metal shell).
     var armoured: Bool { if case .villain(let l) = self { return l.armoured } else { return false } }
 
@@ -65,10 +70,8 @@ enum Cast: Hashable {
             drawLeader(c, l, t: t, mode: asSession ? mode : .working, walking: walking, role: role,
                        urgent: asSession && urgent, sitting: asSession && sitting)
         case .hero(let h):
-            // A hero leading a session rests (saber off, blaster lowered) unless it's working or fighting.
-            var r = role
-            if asSession, case .none = role, mode != .working { r = .rest }
-            drawCompanion(c, h, t: t, walking: walking, role: r)
+            drawCompanion(c, h, t: t, walking: walking, role: role, mode: asSession ? mode : .working,
+                          urgent: asSession && urgent, sitting: asSession && sitting)
         }
     }
 }

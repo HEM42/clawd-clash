@@ -8,6 +8,7 @@ final class SpriteLayers {
     let root = CALayer()
     private var pool: [CALayer] = []
     private var textCache: [TextKey: CGImage] = [:]
+    private var textCacheBytes = 0
     /// Room around a text image for the box's stroke, which straddles the box's edge.
     private static let textPad: CGFloat = 2
 
@@ -89,8 +90,10 @@ final class SpriteLayers {
         OverlayView.render([flat], origin: .zero, in: ctx)
         NSGraphicsContext.restoreGraphicsState()
         let image = ctx.makeImage()
-        if textCache.count > 300 { textCache.removeAll() }   // labels fade and change; don't keep every look forever
+        // Labels change and hover cards are big: don't keep every look forever (by count, and by memory).
+        if textCache.count > 300 || textCacheBytes > 16 << 20 { textCache.removeAll(); textCacheBytes = 0 }
         textCache[key] = image
+        textCacheBytes += image.map { $0.bytesPerRow * $0.height } ?? 0
         return image
     }
 }

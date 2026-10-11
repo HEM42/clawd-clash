@@ -64,6 +64,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// `--ais=claude,codex`: which AI each playground session belongs to (cycled), to check outlines and grouping.
     private let playgroundAIs: [String] = CommandLine.arguments.first { $0.hasPrefix("--ais=") }
         .map { $0.dropFirst(6).split(separator: ",").map(String.init) } ?? []
+    /// `--projects=clawd-wars,clawd-wars,tasuke`: each playground session's project (cycled), to check project trees.
+    private let playgroundProjects: [String] = CommandLine.arguments.first { $0.hasPrefix("--projects=") }
+        .map { $0.dropFirst(11).split(separator: ",").map(String.init) } ?? []
     private var playgroundMood: Mood = CommandLine.arguments.first { $0.hasPrefix("--mood=") }
         .flatMap { Mood(rawValue: String($0.dropFirst(7))) } ?? .working
     private var dragging = false
@@ -154,6 +157,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private static let footroom: CGFloat = 7 * leaderScale
 
     override init() {
+        // The hook only knows the cast sizes; a villain or hero added without bumping them would never be picked.
+        assert(StatusStore.leaderCount == Leader.allCases.count && StatusStore.companionCount == Companion.allCases.count)
         panel = OverlayPanel(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10),
                              styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         view = OverlayView()
@@ -166,6 +171,18 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         NotificationCenter.default.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
             self?.updateFrontPolicy(active: false)
         }
+        // A monitor unplugged, the lid closed, a resolution or arrangement change: put the crew back on a screen.
+        NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.screensChanged()
+        }
+        // Nothing to draw for while the displays sleep or the screen is locked (the desktop panel still counts as visible).
+        let ws = NSWorkspace.shared.notificationCenter
+        for (name, asleep) in [(NSWorkspace.screensDidSleepNotification, true), (NSWorkspace.screensDidWakeNotification, false),
+                               (NSWorkspace.sessionDidResignActiveNotification, true), (NSWorkspace.sessionDidBecomeActiveNotification, false)] {
+            ws.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in self?.screensAsleep = asleep }
+        }
+        // Set early, so clicking a notification left over from an earlier run still reaches us. Needs an app bundle.
+        if Bundle.main.bundleIdentifier != nil { UNUserNotificationCenter.current().delegate = self }
 
         panel.isOpaque = false
         panel.backgroundColor = .clear
@@ -201,8 +218,17 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             if NSScreen.screens.contains(where: { $0.frame.insetBy(dx: -20, dy: -20).contains(feet) }) { return p }
         }
         let mouse = NSEvent.mouseLocation
-        let vf = (NSScreen.screens.first { $0.frame.contains(mouse) } ?? NSScreen.main ?? NSScreen.screens[0]).visibleFrame
+        // No screen at all (a headless Mac, or the lid closed at login): any spot will do until one appears.
+        guard let vf = (NSScreen.screens.first { $0.frame.contains(mouse) } ?? NSScreen.main ?? NSScreen.screens.first)?.visibleFrame
+        else { return NSPoint(x: 200, y: 0) }
         return NSPoint(x: vf.maxX - 140 * zoom, y: vf.minY - Self.footroom * zoom)
+    }
+
+    private func screensChanged() {
+        guard !windowMode else { return }   // the window keeps itself on screen
+        home = clampHome(savedHome())
+        relayout()
+        snapActors()
     }
 
     private func saveHome() {
@@ -271,12 +297,30 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             offlineReason = nil
             sessions = demoSessions(now - demoStart)
         } else {
-            if now - lastScan > 3 {
-                processes = ClaudeProcesses.running()
+            if lastScan == 0 {
+                // The first scan is done here and now, so the crew is there from the first frame.
                 lastScan = now
-                sampleCPU(now)
+                if let found = ClaudeProcesses.runningOrNil() { processes = found; sampleCPU(now, cpu: Self.cpuTimes(found)) }
+            } else if now - lastScan > 3 && !scanning {
+                // Later ones run in the background: a process scan is a handful of system calls per process, and the
+                // main thread draws the animation. Only this queue ever calls `runningOrNil` after the first scan.
+                lastScan = now
+                scanning = true
+                Self.scanQueue.async { [weak self] in
+                    let found = ClaudeProcesses.runningOrNil()
+                    let cpu = found.map(Self.cpuTimes) ?? [:]
+                    DispatchQueue.main.async {
+                        guard let self else { return }
+                        self.scanning = false
+                        // A failed scan keeps the last list rather than dropping every session.
+                        guard let found else { return }
+                        self.processes = found
+                        self.sampleCPU(Date().timeIntervalSince1970, cpu: cpu)
+                    }
+                }
             }
-            sessions = StatusStore.snapshot(StatusStore.load() ?? StatusFile(), now: now, processes: processes)
+            let file = StatusStore.load()   // read once: it also tells us whether the file is readable
+            sessions = StatusStore.snapshot(file ?? StatusFile(), now: now, processes: processes)
             // Sessions without hooks can't report status, but a busy Claude burns CPU (idle ≈ 0.3%,
             // working ≈ 5–10%), so treat sustained CPU as "working" for them.
             for i in sessions.indices where !sessions[i].live {
@@ -289,6 +333,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                       let busy = busySince[pid], now - busy > 60, now - rec.updated > 60,
                       !sessions[i].agents.contains(where: { now - $0.lastSeen < 60 }) else { continue }
                 sessions[i].stalled = true
+            }
+            // No hook fires when a permission request is approved, so "waiting" would last the whole tool run.
+            // CPU busy for two samples in a row (about 6 s) since the request went up means it's running again.
+            for i in sessions.indices where sessions[i].mood == .waiting {
+                guard let pid = sessions[i].pid, let asked = sessions[i].record?.since, let busy = busySince[pid],
+                      busy > asked, now - busy >= 6, (busyUntil[pid] ?? 0) > now else { continue }
+                sessions[i].mood = .working
             }
             if now - lastHookCheck > 10 {
                 lastHookCheck = now
@@ -323,7 +374,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             }
             for s in sessions where s.hookSilent { if let pid = s.pid { notifySilent(pid: pid, assistant: s.assistant, project: s.project) } }
             offlineReason = nil
-            if FileManager.default.fileExists(atPath: StatusPaths.state.path) && StatusStore.load() == nil {
+            if file == nil && FileManager.default.fileExists(atPath: StatusPaths.state.path) {
                 offlineReason = "OFFLINE — can't read the status file"
             }
             if now - lastFocusCheck >= 1 {
@@ -340,8 +391,16 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         debounceMoods(now)
         Accents.update(visible: sessions.map(\.project))
         relayout()
+        // Automatic location follows the first session: when that changes, the header's name and tint must follow.
+        if location != shownLocation {
+            shownLocation = location
+            clawdWindow?.header.needsDisplay = true
+            clawdWindow?.redrawScroller()
+        }
         if windowMode && onScreen { updateCards(now) }
     }
+
+    private var shownLocation: Location?
 
     private func debounceMoods(_ now: Double) {
         var next: [String: (confirmed: Mood, pending: Mood?, ticks: Int)] = [:]
@@ -372,10 +431,20 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         return moodSince[s.id] ?? now
     }
 
-    private func sampleCPU(_ now: Double) {
+    private static let scanQueue = DispatchQueue(label: "clawdwars.process-scan", qos: .utility)
+    private var scanning = false
+
+    /// Each process's CPU time so far, in seconds.
+    private static func cpuTimes(_ processes: [ClaudeProcesses.Info]) -> [Int32: Double] {
+        var out: [Int32: Double] = [:]
+        for p in processes { out[p.pid] = ClaudeProcesses.cpuSeconds(p.pid) }
+        return out
+    }
+
+    private func sampleCPU(_ now: Double, cpu times: [Int32: Double]) {
         var next: [Int32: (at: Double, cpu: Double)] = [:]
         for p in processes {
-            guard let cpu = ClaudeProcesses.cpuSeconds(p.pid) else { continue }
+            guard let cpu = times[p.pid] else { continue }
             if let prev = cpuSamples[p.pid], now > prev.at {
                 let usage = (cpu - prev.cpu) / (now - prev.at)
                 if usage > 0.03 {
@@ -504,7 +573,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             lo = min(lo, x - ext.0); hi = max(hi, x + ext.1)
         }
         // Window mode: shrink the whole crew to fit the window (grow back when there's room again).
-        if windowMode && !refitting {
+        // (Nobody left: nothing to measure, and leaving the fit alone lets the last ones fade out at their size.)
+        if windowMode && !refitting && !units.isEmpty && hi > lo {
             let needed = hi - lo, avail = sf.width - 8
             var fit = windowFit
             if needed > avail { fit = max(0.35, windowFit * avail / needed) }
@@ -637,7 +707,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             rec.reply = "Done. The crew now fits the window and everyone still gets a fight."
             rec.prompts = 4 + i * 3
             rec.tools = 38 + i * 21
-            var snap = SessionSnapshot(id: "pg-\(l)", leader: l, project: "", mood: playgroundMood, agents: i == 0 ? crew : [],
+            let project = playgroundProjects.isEmpty ? "" : playgroundProjects[i % playgroundProjects.count]
+            var snap = SessionSnapshot(id: "pg-\(l)", leader: l, project: project, mood: playgroundMood, agents: i == 0 ? crew : [],
                                        record: rec)
             if !playgroundAIs.isEmpty {
                 snap.assistant = playgroundAIs[i % playgroundAIs.count]
@@ -696,9 +767,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         // Which character is the mouse over? (desktop and window alike: both work in screen coordinates)
         var mouseNow = NSEvent.mouseLocation
         if windowMode, let w = clawdWindow { mouseNow = w.toStage(mouseNow) }   // the window may be drawn smaller
-        // In the window the list below already shows everything, so hover cards only appear when it's hidden.
-        var hovered = (windowMode && (clawdWindow?.window.isVisible != true || ClawdWindow.listShown)) ? nil
-            : hitRects().first { $0.1.contains(mouseNow) }?.0
+        // In the window the list below shows the sessions, so their hover cards only appear when it's hidden. Agents
+        // always get one: a card folds away all but its first few.
+        let listShowsSessions = windowMode && (clawdWindow?.window.isVisible != true || ClawdWindow.listShown)
+        var hovered = hitRects().first { $0.1.contains(mouseNow) && !(listShowsSessions && !$0.0.hasPrefix("A:")) }?.0
         if let forced = Self.forcedHover {   // debug: pretend to hover a character
             hovered = actors.first { $0.key.contains(forced) }?.key
         }
@@ -857,6 +929,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 falconItems.append(falconItem(exit, p: p, ground: ground + (ls - cs0) * 8 + 8 * cs0, scale: cs0))
             }
             if aboard { continue }
+            if now < actor.born { continue }             // not on stage yet: don't draw what won't be shown
             let canvas = PixelCanvas(Sprite.width, Sprite.height)
             let scale: CGFloat
             let y: CGFloat
@@ -874,8 +947,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             }
             canvas.addOutline(AIStyle.outline(actor.assistant))
             guard let img = canvas.makeImage() else { continue }
-
-            if now < actor.born { continue }             // not on stage yet
             var alpha = min(1, (now - actor.born) / 0.25)
             var drop = 0.0
             if let left = actor.leaving, actor.exit == nil {
@@ -921,8 +992,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                (t / 5 + actor.phase).truncatingRemainder(dividingBy: 1) < 0.3 {
                 let callout = NSAttributedString(string: line, attributes: [
                     .font: NSFont.monospacedSystemFont(ofSize: max(9, 10 * z), weight: .heavy),
-                    .foregroundColor: NSColor(calibratedRed: 1, green: 0.85, blue: 0.4, alpha: alpha),
-                    .strokeColor: NSColor.black.withAlphaComponent(alpha),
+                    .foregroundColor: NSColor(calibratedRed: 1, green: 0.85, blue: 0.4, alpha: 1),
+                    .strokeColor: NSColor.black,
                     .strokeWidth: -4.0,
                 ])
                 let size = callout.size()
@@ -931,7 +1002,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 let cx = min(max(onLeft ? actor.x - 16 * ls - size.width : actor.x + 16 * ls, screenFrame.minX + 2),
                              screenFrame.maxX - size.width - 2)
                 overlay.append(DrawItem(text: callout, rect: NSRect(x: cx.rounded(), y: y + 33 * ls,
-                                                                    width: size.width, height: size.height)))
+                                                                    width: size.width, height: size.height), alpha: CGFloat(alpha)))
             }
 
             // Project name (Claudes) or task (agents) just above the head, clear of any speech bubble.
@@ -943,7 +1014,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 let lines = wrapLabel(actor.label, font: font, maxWidth: (actor.isLeader ? 110 : 88) * z)
                 let text = NSAttributedString(string: lines.joined(separator: "\n"), attributes: [
                     .font: font,
-                    .foregroundColor: NSColor.white.withAlphaComponent(alpha),
+                    .foregroundColor: NSColor.white,
                     .paragraphStyle: centered,
                 ])
                 let textSize = text.size()
@@ -988,10 +1059,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 muzzle = a.cast.muzzle
                 return Fighter(weapon: weapon(a), x: Double((a.x - left) / ls), k: Double(sc / ls),
                                top: Double((CGFloat(Sprite.height) * (ls - sc) - lift) / ls), side: side, muzzle: muzzle,
-                               armoured: a.cast.armoured)
+                               armoured: a.cast.armoured, pivot: a.cast.weaponPivot)
             }
+            let fl = fighter(l, side: 1), fr = fighter(r, side: -1)
+            guard fightFXVisible(t: t, fl.weapon, fr.weapon) else { continue }   // e.g. a duel between clashes
             let c = PixelCanvas(width, Sprite.height)
-            drawFightFX(c, t: t, left: fighter(l, side: 1), right: fighter(r, side: -1))
+            drawFightFX(c, t: t, left: fl, right: fr)
             if let img = c.makeImage() {
                 overlay.append(DrawItem(image: img, rect: NSRect(x: left.rounded(), y: ground,
                                                                  width: CGFloat(width) * ls,
@@ -1098,7 +1171,19 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     }
 
     /// Word-wrap a project name onto at most two lines of `maxWidth`; whatever still doesn't fit gets "…".
+    /// Wrapped labels by text, font and width: measuring them was done for every label on every frame.
+    private var wrapCache: [String: [String]] = [:]
+
     private func wrapLabel(_ label: String, font: NSFont, maxWidth: CGFloat) -> [String] {
+        let key = "\(label)\u{1}\(font.fontName)\u{1}\(font.pointSize)\u{1}\(maxWidth)"
+        if let hit = wrapCache[key] { return hit }
+        if wrapCache.count > 200 { wrapCache.removeAll() }
+        let lines = wrapLabelUncached(label, font: font, maxWidth: maxWidth)
+        wrapCache[key] = lines
+        return lines
+    }
+
+    private func wrapLabelUncached(_ label: String, font: NSFont, maxWidth: CGFloat) -> [String] {
         func width(_ s: String) -> CGFloat { (s as NSString).size(withAttributes: [.font: font]).width }
         guard width(label) > maxWidth else { return [label] }
         // Break on spaces, dashes and underscores (keeping the dash/underscore at the end of the line).
@@ -1190,7 +1275,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         // The app was moved since the hooks went in: point them here (already agreed to, so no need to ask).
         for ai in HookInstaller.repairMoved() { NSLog("Clawd Wars: re-pointed \(HookInstaller.displayName(ai)) hooks at \(HookInstaller.hookBinary)") }
         let d = UserDefaults.standard
-        let claude = !HookInstaller.isInstalled && !d.bool(forKey: "offeredHooks")
+        let claude = HookInstaller.claudeAvailable && !HookInstaller.isInstalled && !d.bool(forKey: "offeredHooks")
         let others = HookInstaller.others.filter {
             HookInstaller.available($0) && !HookInstaller.installed($0) && !d.bool(forKey: "offeredHooks.\($0.name)")
         }
@@ -1218,10 +1303,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             a.addButton(withTitle: "Connect")
             a.addButton(withTitle: "Not Now")
             if a.runModal() == .alertFirstButtonReturn {
-                do {
-                    if claude { try HookInstaller.install() }
-                    for ai in others { try HookInstaller.install(ai) }
-                } catch { self.alert("Couldn't install hooks", error.localizedDescription) }
+                // Each on its own: one that fails doesn't stop the others, and every failure is listed.
+                let errors = HookInstaller.installAll((claude ? ["claude"] : []) + others.map(\.name)).errors
+                if !errors.isEmpty { self.alert("Couldn't install some hooks", errors.joined(separator: "\n")) }
                 self.lastHookCheck = 0
             }
         }
@@ -1363,11 +1447,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private let statusMenu = NSMenu()
     /// Hidden from the menu bar helmet (double-click): neither the crew nor the window shows. Not remembered across launches.
     private(set) var hidden = false
+    /// The displays are asleep or the screen is locked.
+    private var screensAsleep = false
 
     /// Whether anything we draw can be seen: not hidden, and the window not fully covered or minimised.
     /// The desktop panel only counts as visible once it shows something, so asking it would never draw a first frame.
     private var onScreen: Bool {
-        guard !hidden else { return false }
+        guard !hidden, !screensAsleep else { return false }
         guard windowMode else { return panel.isVisible }
         return clawdWindow?.window.occlusionState.contains(.visible) ?? false
     }
@@ -1379,6 +1465,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         let c = PixelCanvas(Sprite.width, Sprite.height)
         drawLeader(c, .vader, t: 0, mode: .idle, walking: false)
+        c.addOutline(C(0xFFFFFF, 0.92))   // the black helmet would vanish on a dark menu bar
         if let cg = c.makeImage()?.cropping(to: CGRect(x: 14, y: 13, width: 28, height: 26)) {
             let img = NSImage(cgImage: cg, size: NSSize(width: 19, height: 18))
             item.button?.image = img
@@ -1613,13 +1700,24 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let compact = ClawdWindow.scale < 1          // Small Window: no project path, one line of conversation
         var cards: [CardModel] = []
         // Grouped by AI (stable within a group); with more than one AI each group gets a small header.
-        let listed = sessions.enumerated()
+        var listed = sessions.enumerated()
             .filter { $0.element.id != "home" || !$0.element.agents.isEmpty }
             .sorted { (AIStyle.rank($0.element.group), $0.offset) < (AIStyle.rank($1.element.group), $1.offset) }
             .map(\.element)
+        // Several sessions of one AI in the same project sit together, under the first one's spot, as a tree.
+        func projectKey(_ s: SessionSnapshot) -> String? {
+            s.project.isEmpty ? nil : s.group + "\u{1}" + s.project + "\u{1}" + (s.remote ?? "")
+        }
+        var firstSeen: [String: Int] = [:]
+        for (i, s) in listed.enumerated() { if let k = projectKey(s), firstSeen[k] == nil { firstSeen[k] = i } }
+        listed = listed.enumerated()
+            .sorted { (projectKey($0.element).flatMap { firstSeen[$0] } ?? $0.offset, $0.offset)
+                    < (projectKey($1.element).flatMap { firstSeen[$0] } ?? $1.offset, $1.offset) }
+            .map(\.element)
+        let perProject = Dictionary(grouping: listed.compactMap(projectKey), by: { $0 }).mapValues(\.count)
         let severalAIs = Set(listed.map(\.group)).count > 1
         var lastAI: String?
-        for s in listed {
+        for (index, s) in listed.enumerated() {
             let leader = Cast(id: s.leader)
             let actor = actors.first { $0.key == "L:" + s.id }
             let held = Self.duration(now - since(s, now: now))
@@ -1683,10 +1781,16 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 lines: lines, agents: agents,
                 portrait: portrait("l\(leader.id)", assistant: s.group) { leader.draw($0, t: 0.1, mode: .idle, walking: false, role: .none, asSession: true) },
                 pid: s.pid))
+            cards[cards.count - 1].id = s.id
             cards[cards.count - 1].spriteColor = spriteColor(leader)
             if s.pid != nil { cards[cards.count - 1].remote = s.remote ?? "Local" }
             if severalAIs && s.group != lastAI {
                 cards[cards.count - 1].group = (HookInstaller.displayName(s.group), AIStyle.color(s.group))
+            }
+            if let k = projectKey(s), let n = perProject[k], n > 1 {
+                let first = index == 0 || projectKey(listed[index - 1]) != k
+                let last = index == listed.count - 1 || projectKey(listed[index + 1]) != k
+                cards[cards.count - 1].tree = CardModel.Tree(sessions: first ? n : nil, last: last)
             }
             lastAI = s.group
         }
@@ -1877,6 +1981,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         clawdWindow?.sceneView.showFrame()
         clawdWindow?.cardsView.needsDisplay = true
         clawdWindow?.header.needsDisplay = true
+        clawdWindow?.redrawScroller()
     }
 
     private func playgroundMenu() -> NSMenuItem {
@@ -1884,14 +1989,28 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let pm = NSMenu()
         let picked = playground ?? []
         pm.addItem(disabled: "Villains — they pair up in the order you add them")
-        let weapons: [Leader: String] = [.vader: "red saber", .kylo: "crossguard saber", .maul: "double saber",
-                                         .boba: "EE-3 blaster", .trooper: "E-11 blaster", .emperor: "Force lightning",
-                                         .rogr: "E-5 blaster", .dooku: "curved-hilt saber",
-                                         .gamorrean: "vibro-axe", .jabba: "unarmed — laughs", .ig88: "blaster rifle",
-                                         .atst: "chin blasters", .atat: "heavy chin cannons", .rancor: "long clawed arms", .greedo: "blaster pistol"]
+        func weaponLabel(_ l: Leader) -> String {
+            switch l {
+            case .vader: return "red saber"
+            case .kylo: return "crossguard saber"
+            case .maul: return "double saber"
+            case .boba: return "EE-3 blaster"
+            case .trooper: return "E-11 blaster"
+            case .emperor: return "Force lightning"
+            case .rogr: return "E-5 blaster"
+            case .dooku: return "curved-hilt saber"
+            case .gamorrean: return "vibro-axe"
+            case .jabba: return "unarmed — laughs"
+            case .ig88: return "blaster rifle"
+            case .atst: return "chin blasters"
+            case .atat: return "heavy chin cannons"
+            case .rancor: return "long clawed arms"
+            case .greedo: return "blaster pistol"
+            }
+        }
         for l in Leader.allCases {
             let order = picked.firstIndex(of: l.rawValue).map { "   #\($0 + 1)" } ?? ""
-            let item = NSMenuItem(title: "\(l.name) (\(weapons[l] ?? ""))\(order)",
+            let item = NSMenuItem(title: "\(l.name) (\(weaponLabel(l)))\(order)",
                                   action: #selector(togglePlaygroundVillain(_:)), keyEquivalent: "")
             item.target = self
             item.tag = l.rawValue
@@ -2097,17 +2216,22 @@ final class OverlayView: NSView {
         for item in items {
             let r = item.rect.offsetBy(dx: -o.x, dy: -o.y)
             if let text = item.text {
+                // Text is built opaque and faded here as a whole (as a layer's opacity does), so a fading label's
+                // look doesn't change from frame to frame and `SpriteLayers` can cache it.
+                ctx.saveGState()
+                ctx.setAlpha(item.alpha)
+                defer { ctx.restoreGState() }
                 if item.boxed {
                     let box = NSBezierPath(roundedRect: r, xRadius: 4, yRadius: 4)
-                    (item.agentBox ? NSColor(calibratedRed: 0.05, green: 0.10, blue: 0.24, alpha: 0.82 * item.alpha)
-                                   : NSColor(white: 0.08, alpha: 0.82 * item.alpha)).setFill()
+                    (item.agentBox ? NSColor(calibratedRed: 0.05, green: 0.10, blue: 0.24, alpha: 0.82)
+                                   : NSColor(white: 0.08, alpha: 0.82)).setFill()
                     box.fill()
                     if let accent = item.accent {
-                        accent.withAlphaComponent(0.9 * item.alpha).setStroke()
+                        accent.withAlphaComponent(0.9).setStroke()
                         box.lineWidth = 1.5
                     } else {
-                        (item.agentBox ? NSColor(calibratedRed: 0.45, green: 0.65, blue: 1, alpha: 0.5 * item.alpha)
-                                       : NSColor(white: 1, alpha: 0.35 * item.alpha)).setStroke()
+                        (item.agentBox ? NSColor(calibratedRed: 0.45, green: 0.65, blue: 1, alpha: 0.5)
+                                       : NSColor(white: 1, alpha: 0.35)).setStroke()
                         box.lineWidth = 1
                     }
                     box.stroke()

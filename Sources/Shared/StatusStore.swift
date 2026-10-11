@@ -10,6 +10,7 @@ struct SessionRecord: Codable {
     var project: String?   // last path component of the session's cwd
     var lastTool: Double?  // last PreToolUse, so brief "thinking" gaps between tools still read as working
     var pid: Int32?        // the claude process, so the session disappears as soon as it exits
+    var pidStart: Double?  // when that process started, so a recycled pid doesn't keep a dead session alive
     var created: Double?   // when the session first appeared, for spawn order
     var since: Double?     // when `state` last changed (status durations, long-idle sleep, ignored "!")
     var activity: String?  // what it's doing right now, e.g. "Edit Overlay.swift" or "Bash: swift build"
@@ -48,6 +49,21 @@ struct StatusFile: Codable {
     var sessions: [String: SessionRecord] = [:]
     var agents: [AgentRecord] = []
     var pending: [PendingAgent]? = []
+}
+
+/// Decodes to nil instead of failing, so one bad record doesn't cost every other one.
+private struct Lenient<T: Decodable>: Decodable {
+    let value: T?
+    init(from decoder: Decoder) throws { value = try? T(from: decoder) }
+}
+
+extension StatusFile {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        sessions = (try? c.decode([String: Lenient<SessionRecord>].self, forKey: .sessions))?.compactMapValues(\.value) ?? [:]
+        agents = (try? c.decode([Lenient<AgentRecord>].self, forKey: .agents))?.compactMap(\.value) ?? []
+        pending = (try? c.decode([Lenient<PendingAgent>].self, forKey: .pending))?.compactMap(\.value) ?? []
+    }
 }
 
 enum Mood: String {
@@ -102,6 +118,9 @@ enum StatusStore {
     static let waitingTTL: Double = 15 * 60
     static let agentTTL: Double = 20 * 60
     static let sessionTTL: Double = 3 * 60 * 60
+    /// A session with no known process can't be checked for being alive: past this it no longer counts when
+    /// picking sides and characters.
+    static let noPidTTL: Double = 30 * 60
     /// A "thinking" this soon after a tool call is just the gap between tools.
     static let toolGrace: Double = 3
 
@@ -110,12 +129,31 @@ enum StatusStore {
         return try? JSONDecoder().decode(StatusFile.self, from: data)
     }
 
+    /// Runs `body` on the state under the lock and writes the result. Without the lock nothing is written:
+    /// skipping one event beats two writers clobbering each other.
     static func withLock(_ body: (inout StatusFile) -> Void) {
         try? FileManager.default.createDirectory(at: StatusPaths.dir, withIntermediateDirectories: true)
         let fd = open(StatusPaths.lock.path, O_CREAT | O_RDWR, 0o644)
-        if fd >= 0 { flock(fd, LOCK_EX) }
-        defer { if fd >= 0 { flock(fd, LOCK_UN); close(fd) } }
-        var status = load() ?? StatusFile()
+        guard fd >= 0 else { return }
+        defer { close(fd) }
+        var locked = flock(fd, LOCK_EX) == 0
+        while !locked && errno == EINTR { locked = flock(fd, LOCK_EX) == 0 }
+        guard locked else { return }
+        defer { flock(fd, LOCK_UN) }
+        var status: StatusFile
+        if let data = try? Data(contentsOf: StatusPaths.state), !data.isEmpty {
+            if let decoded = try? JSONDecoder().decode(StatusFile.self, from: data) {
+                status = decoded
+            } else {
+                // Not even the outline decodes: keep a copy to look at before starting over.
+                let corrupt = StatusPaths.state.appendingPathExtension("corrupt")
+                try? FileManager.default.removeItem(at: corrupt)
+                try? data.write(to: corrupt)
+                status = StatusFile()
+            }
+        } else {
+            status = StatusFile()
+        }
         body(&status)
         if let data = try? JSONEncoder().encode(status) {
             try? data.write(to: StatusPaths.state, options: .atomic)
@@ -149,22 +187,35 @@ enum StatusStore {
         let agentId = json["agent_id"] as? String
         let project = (json["cwd"] as? String).map { URL(fileURLWithPath: $0).lastPathComponent }
         let owner = agentId == nil ? ClaudeProcesses.hookOwner() : nil
+        let ownerStart = owner.flatMap(ClaudeProcesses.startTime)
 
         withLock { s in
             prune(&s, now: now)
             if event != "SessionEnd" {
                 if s.sessions[session] == nil {
-                    var rec = SessionRecord(state: "idle", updated: now, leader: nextLeader(s.sessions, assistant: assistant), project: project)
+                    var rec = SessionRecord(state: "idle", updated: now,
+                                            leader: nextLeader(castable(s.sessions, now: now), assistant: assistant), project: project)
                     rec.assistant = assistant
                     rec.created = now
                     s.sessions[session] = rec
                 }
                 if s.sessions[session]?.leader == nil {
-                    let leader = nextLeader(s.sessions, assistant: assistant)
+                    let leader = nextLeader(castable(s.sessions, now: now), assistant: assistant)
                     s.sessions[session]?.leader = leader
                 }
                 if let project, agentId == nil { s.sessions[session]?.project = project }
-                if let owner { s.sessions[session]?.pid = owner }
+                if let owner {
+                    s.sessions[session]?.pid = owner
+                    s.sessions[session]?.pidStart = ownerStart
+                    // A process hosts one live session: any other one on it was replaced (e.g. /clear starts a new
+                    // session id in the same process) and will never hear another event.
+                    let replaced = s.sessions.filter { id, rec in
+                        id != session && rec.pid == owner && samePID(rec.pidStart, ownerStart)
+                    }.map(\.key)
+                    for id in replaced { s.sessions[id] = nil }
+                    s.agents.removeAll { replaced.contains($0.session) }
+                    s.pending = s.pending?.filter { !replaced.contains($0.session) }
+                }
                 // Claude Code tells its hooks where it was started from (terminal, desktop app, VS Code…).
                 if assistant == "claude", let entry = ProcessInfo.processInfo.environment["CLAUDE_CODE_ENTRYPOINT"], !entry.isEmpty {
                     s.sessions[session]?.client = entry
@@ -175,8 +226,16 @@ enum StatusStore {
                 s.sessions[session]?.state = state
                 s.sessions[session]?.updated = now
             }
+            // Agents at work keep their session fresh too (without changing its state), so a long subagent run
+            // doesn't let the parent decay to idle or be pruned.
+            func touchSession(_ id: String) {
+                if s.sessions[id] != nil { s.sessions[id]?.updated = now }
+            }
             func touchAgent(_ id: String) {
-                if let i = s.agents.firstIndex(where: { $0.id == id }) { s.agents[i].lastSeen = now }
+                if let i = s.agents.firstIndex(where: { $0.id == id }) {
+                    s.agents[i].lastSeen = now
+                    touchSession(s.agents[i].session)
+                }
             }
             func clip(_ v: Any?, _ n: Int) -> String? {
                 guard let t = (v as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !t.isEmpty else { return nil }
@@ -239,6 +298,7 @@ enum StatusStore {
                 s.sessions[session]?.activity = nil
                 if let r = clip(json["last_assistant_message"], 240) { s.sessions[session]?.reply = r }
             case "SubagentStart":
+                touchSession(session)
                 let id = agentId ?? UUID().uuidString
                 if !s.agents.contains(where: { $0.id == id }) {
                     let type = json["agent_type"] as? String ?? "agent"
@@ -250,17 +310,19 @@ enum StatusStore {
                     s.pending = pending
                     s.agents.append(AgentRecord(
                         id: id, session: session, type: type,
-                        character: 0, cast: nextAgentCast(s, session: session),
+                        character: 0, cast: nextAgentCast(s, session: session, now: now),
                         started: now, lastSeen: now, task: task))
                 }
             case "SubagentStop":
+                touchSession(session)
                 if let a = agentId, s.agents.contains(where: { $0.id == a }) {
                     s.agents.removeAll { $0.id == a }
                 } else if agentId == nil || assistant == "copilot" {
-                    // No id, or (Copilot) an id its SubagentStart didn't give us: the oldest agent of that type.
+                    // No id, or (Copilot) an id its SubagentStart didn't give us: the oldest agent of that type
+                    // (the oldest of any type when the type is missing or unknown).
                     let type = json["agent_type"] as? String
                     if let i = s.agents.firstIndex(where: { $0.session == session && $0.type == type })
-                        ?? s.agents.lastIndex(where: { $0.session == session }) {
+                        ?? s.agents.firstIndex(where: { $0.session == session }) {
                         s.agents.remove(at: i)
                     }
                 }
@@ -364,7 +426,9 @@ enum StatusStore {
 
     /// Character for a new agent: its session's side when two AIs are running, otherwise anyone;
     /// someone not already on screen whenever possible.
-    static func nextAgentCast(_ s: StatusFile, session: String) -> Int {
+    static func nextAgentCast(_ s: StatusFile, session: String, now: Double = Date().timeIntervalSince1970) -> Int {
+        var s = s
+        s.sessions = castable(s.sessions, now: now)
         let onScreen = Set(s.agents.compactMap { $0.cast ?? (heroBase + $0.character) } + s.sessions.values.compactMap(\.leader))
         var pool = darkCast + lightCast
         if let rec = s.sessions[session], let leader = rec.leader, side(for: assistantOf(rec), in: s.sessions) != nil {
@@ -388,17 +452,53 @@ enum StatusStore {
         return free.randomElement()!
     }
 
+    /// Sessions that count when picking sides and characters: one with no known process only while it's recent,
+    /// since nothing tells us when it ends.
+    static func castable(_ sessions: [String: SessionRecord], now: Double) -> [String: SessionRecord] {
+        sessions.filter { $0.value.pid != nil || now - $0.value.updated < noPidTTL }
+    }
+
+    /// Times from the future (the clock was set back) would keep a record fresh for as long as the jump: treat them as now.
+    static func clampFuture(_ s: inout StatusFile, now: Double) {
+        func fix(_ t: inout Double) { if t > now + 60 { t = now } }
+        func fix(_ t: inout Double?) { if let v = t, v > now + 60 { t = now } }
+        for id in s.sessions.keys {
+            fix(&s.sessions[id]!.updated); fix(&s.sessions[id]!.since)
+            fix(&s.sessions[id]!.lastTool); fix(&s.sessions[id]!.created)
+        }
+        for i in s.agents.indices { fix(&s.agents[i].lastSeen); fix(&s.agents[i].started) }
+        for i in (s.pending ?? []).indices { fix(&s.pending![i].at) }
+    }
+
     static func prune(_ s: inout StatusFile, now: Double) {
+        clampFuture(&s, now: now)
         s.agents.removeAll { now - $0.lastSeen > agentTTL }
-        s.sessions = s.sessions.filter { now - $0.value.updated < sessionTTL && isAlive($0.value.pid) }
+        s.sessions = s.sessions.filter { now - $0.value.updated < sessionTTL && isAlive($0.value.pid, started: $0.value.pidStart) }
         let sessions = Set(s.sessions.keys)
         s.agents.removeAll { !sessions.contains($0.session) && now - $0.started > 60 }
         s.pending = (s.pending ?? []).filter { now - $0.at < 120 && sessions.contains($0.session) }
     }
 
-    static func isAlive(_ pid: Int32?) -> Bool {
+    /// Is the session's process still running? With its start time known, a different process that has
+    /// since been given the same pid doesn't count.
+    static func isAlive(_ pid: Int32?, started: Double? = nil) -> Bool {
         guard let pid else { return true }
-        return kill(pid, 0) == 0 || errno != ESRCH
+        guard kill(pid, 0) == 0 || errno != ESRCH else { return false }
+        guard let started, let current = ClaudeProcesses.startTime(pid) else { return true }
+        return abs(current - started) < 1
+    }
+
+    /// Two records on the same pid are the same process unless both start times are known and differ.
+    static func samePID(_ a: Double?, _ b: Double?) -> Bool {
+        guard let a, let b else { return true }
+        return abs(a - b) < 1
+    }
+
+    /// FNV-1a over the UTF-8 bytes: the same on every launch, unlike `hashValue`.
+    static func stableHash(_ text: String) -> UInt64 {
+        var h: UInt64 = 0xcbf29ce484222325
+        for b in text.utf8 { h = (h ^ UInt64(b)) &* 0x100000001b3 }
+        return h
     }
 
     /// Drop idle sessions with no agents (e.g. terminals closed without a clean exit). They return on their next event.
@@ -431,11 +531,23 @@ enum StatusStore {
     /// `processes` (from `ClaudeProcesses.running()`) adds sessions whose hooks never fired and drops dead ones.
     static func snapshot(_ s: StatusFile, now: Double = Date().timeIntervalSince1970,
                          processes: [ClaudeProcesses.Info]? = nil) -> [SessionSnapshot] {
-        var live = s.sessions.filter { now - $0.value.updated < sessionTTL && isAlive($0.value.pid) }
+        var s = s
+        clampFuture(&s, now: now)
+        var live = s.sessions.filter { now - $0.value.updated < sessionTTL && isAlive($0.value.pid, started: $0.value.pidStart) }
         if let processes {
             let running = Set(processes.map(\.pid))
             live = live.filter { $0.value.pid.map { running.contains($0) } ?? true }
         }
+        // One live session per process: the newest wins (the others were replaced, e.g. by /clear; the hook
+        // drops them on its next event).
+        var newest: [Int32: (id: String, updated: Double)] = [:]
+        for (id, rec) in live {
+            guard let pid = rec.pid else { continue }
+            if let n = newest[pid], n.updated > rec.updated || (n.updated == rec.updated && n.id > id) { continue }
+            newest[pid] = (id, rec.updated)
+        }
+        let replaced = Set(live.filter { id, rec in rec.pid.map { newest[$0]?.id != id } ?? false }.map(\.key))
+        live = live.filter { !replaced.contains($0.key) }
         var used = Set(live.values.compactMap(\.leader))
         var result: [SessionSnapshot] = []
         var previous: Int?
@@ -443,7 +555,7 @@ enum StatusStore {
         for (id, rec) in live.sorted(by: { ($0.value.created ?? $0.value.updated) < ($1.value.created ?? $1.value.updated) }) {
             var leader = rec.leader ?? -1
             if leader < 0 {   // records written before leaders existed
-                leader = pickLeader(used: used, previous: previous, seed: UInt64(abs(id.hashValue)))
+                leader = pickLeader(used: used, previous: previous, seed: stableHash(id))
                 used.insert(leader)
             }
             previous = leader
@@ -485,7 +597,7 @@ enum StatusStore {
             result.append(SessionSnapshot(id: "home", leader: 0, project: "", mood: .idle, agents: []))
         }
 
-        let agents = s.agents.filter { now - $0.lastSeen <= agentTTL }.sorted { $0.started < $1.started }
+        let agents = s.agents.filter { now - $0.lastSeen <= agentTTL && !replaced.contains($0.session) }.sorted { $0.started < $1.started }
         for a in agents {
             // Agents whose session we never heard from stand with the first villain.
             let i = result.firstIndex { $0.id == a.session } ?? 0

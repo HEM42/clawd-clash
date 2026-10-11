@@ -1,7 +1,7 @@
 #!/bin/zsh
-# Builds "Clawd Wars.app", installs it to /Applications, wires up the Claude Code hooks and launches it.
+# Builds "Clawd Wars.app", installs it to /Applications, hooks up every installed AI and launches it.
 #   ./build.sh                     build + install + hooks + launch
-#   ./build.sh --no-hooks          build + install + launch (leave ~/.claude/settings.json alone)
+#   ./build.sh --no-hooks          build + install + launch (leave every AI's settings alone)
 #   ./build.sh --release <version> universal (arm64 + x86_64) build into build/, signed for distribution;
 #                                  no install, no hooks (used by release.sh)
 set -euo pipefail
@@ -19,7 +19,10 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 # Default version: the newest entry in the CHANGELOG.
-[[ -z "$VERSION" ]] && VERSION=$(grep -m1 -oE '^## [0-9]+\.[0-9]+\.[0-9]+' CHANGELOG.md | cut -c4-)
+if [[ -z "$VERSION" ]]; then
+    VERSION=$(grep -m1 -oE '^## [0-9]+\.[0-9]+\.[0-9]+' CHANGELOG.md | cut -c4- || true)
+    [[ -n "$VERSION" ]] || { echo "error: no '## X.Y.Z' version heading found in CHANGELOG.md" >&2; exit 1; }
+fi
 
 APP="build/Clawd Wars.app"
 DEST="/Applications/Clawd Wars.app"
@@ -73,21 +76,18 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSUIElement</key><true/>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSHumanReadableCopyright</key><string>MIT licensed. A Star Wars fan project for Claude Code.</string>
-    <key>NSAppleEventsUsageDescription</key><string>Clicking a villain selects the Terminal or iTerm tab running that Claude session.</string>
+    <key>NSAppleEventsUsageDescription</key><string>Clicking a character (hero or villain) selects the Terminal or iTerm tab running that AI session.</string>
 </dict>
 </plist>
 PLIST
 
-# Sign. Releases prefer a Developer ID (for distribution); local builds take any real identity so macOS keeps
-# the Accessibility grant across rebuilds. Falls back to ad-hoc.
+# Sign. Releases need a Developer ID (for distribution) and fail without one; local builds take any real
+# identity so macOS keeps the Accessibility grant across rebuilds, and fall back to ad-hoc.
+# No --deep (deprecated): the nested hook binary is signed on its own first, then the bundle.
 IDENTITIES=$(security find-identity -v -p codesigning 2>/dev/null || true)
 if [[ $MODE == release ]]; then
     IDENTITY=$(echo "$IDENTITIES" | grep -m1 -oE '"Developer ID Application[^"]*"' | tr -d '"' || true)
-else
-    IDENTITY=$(echo "$IDENTITIES" | grep -m1 -oE '"(Developer ID Application|Apple Development)[^"]*"' | tr -d '"' || true)
-fi
-SIGN_FLAGS=(--force --deep)
-if [[ $MODE == release && -n "$IDENTITY" ]]; then
+    [[ -n "$IDENTITY" ]] || { echo "error: no 'Developer ID Application' signing identity in the keychain" >&2; exit 1; }
     # Hardened runtime + secure timestamp: what notarization requires. Apple Events entitlement keeps
     # click-to-jump working for Terminal and iTerm2.
     cat > build/entitlements.plist <<'ENT'
@@ -95,12 +95,20 @@ if [[ $MODE == release && -n "$IDENTITY" ]]; then
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict><key>com.apple.security.automation.apple-events</key><true/></dict></plist>
 ENT
-    SIGN_FLAGS+=(--options runtime --timestamp --entitlements build/entitlements.plist)
+    codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP/Contents/MacOS/vader-hook"
+    codesign --force --options runtime --timestamp --entitlements build/entitlements.plist \
+        --sign "$IDENTITY" "$APP"
 else
-    SIGN_FLAGS+=(--timestamp=none)
+    IDENTITY=$(echo "$IDENTITIES" | grep -m1 -oE '"(Developer ID Application|Apple Development)[^"]*"' | tr -d '"' || true)
+    sign_local() {
+        codesign --force --timestamp=none --sign "$1" "$APP/Contents/MacOS/vader-hook" \
+            && codesign --force --timestamp=none --sign "$1" "$APP"
+    }
+    if [[ -z "$IDENTITY" ]] || ! sign_local "$IDENTITY" >/dev/null 2>&1; then
+        IDENTITY=""
+        sign_local - >/dev/null
+    fi
 fi
-codesign "${SIGN_FLAGS[@]}" --sign "${IDENTITY:--}" "$APP" >/dev/null 2>&1 \
-    || { IDENTITY=""; codesign --force --deep --sign - "$APP" >/dev/null; }
 echo "→ signed with: ${IDENTITY:-ad-hoc} (version $VERSION)"
 
 if [[ $MODE == release ]]; then

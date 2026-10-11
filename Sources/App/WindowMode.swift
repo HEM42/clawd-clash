@@ -21,11 +21,18 @@ struct CardModel {
     var group: (title: String, color: NSColor)? = nil   // first card of an AI's group, when several AIs run
     var spriteColor = NSColor.white                     // the character's main colour, for the name pill
     var remote: String? = nil                           // "GitHub", "GitLab"… or "Local", in a pill by the name
+    /// One of several sessions in the same project, drawn on a tree under a project header.
+    struct Tree: Equatable {
+        let sessions: Int?   // on the first card only: the header goes above it, saying how many there are
+        let last: Bool       // the last card, where the tree line ends (└)
+    }
+    var tree: Tree? = nil
+    var id = ""                                         // the session's id: which cards have their agents unfolded
 
     /// The card's visible content as text (portraits are cached per character, so the villain's name stands in).
     var signature: String {
-        var parts = [villain, project, accent.description, status, statusColor.description, "\(focused)", "\(pid ?? 0)",
-                     group?.title ?? "", remote ?? ""]
+        var parts = [id, villain, project, accent.description, status, statusColor.description, "\(focused)", "\(pid ?? 0)",
+                     group?.title ?? "", remote ?? "", tree.map { "\($0.sessions ?? 0)/\($0.last)" } ?? ""]
         parts += lines.map { $0.text + "\u{2}" + $0.color.description }
         parts += agents.map { $0.name + "\u{2}" + $0.task + "\u{2}" + $0.detail }
         return parts.joined(separator: "\u{3}")
@@ -71,6 +78,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
 
         sceneView.controller = controller
         cardsView.controller = controller
+        cardsView.onHeightChange = { [weak self] in self?.fitToContent() }
 
         let content = NSView(frame: NSRect(origin: .zero, size: window.frame.size))
         content.autoresizingMask = [.width, .height]
@@ -79,8 +87,17 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         scroll.hasVerticalScroller = true
         scroll.drawsBackground = false
         scroll.autohidesScrollers = true
-        // Overlay scrollers float over the cards instead of reserving a column for themselves.
-        scroll.scrollerStyle = .overlay
+        // A real scrollbar, shown whenever the list is longer than the window (past three sessions with fit height):
+        // overlay scrollers only appear while scrolling, so nothing said there were more. Dark, to sit on the panel.
+        scroll.scrollerStyle = .legacy
+        let scroller = ThemedScroller()
+        scroller.panel = { [weak controller] in controller?.location.panel }
+        scroll.verticalScroller = scroller
+        // The scrollbar takes a column when it appears, so the cards follow the visible width.
+        scroll.contentView.postsFrameChangedNotifications = true
+        NotificationCenter.default.addObserver(forName: NSView.frameDidChangeNotification, object: scroll.contentView,
+                                               queue: .main) { [weak self] _ in self?.fitCardsWidth() }
+        sceneView.wantsLayer = true    // `showFrame` hands its sprites to this layer
         content.addSubview(roomView)   // behind the scene: the place itself, redrawn only when it changes
         content.addSubview(sceneView)
         sceneView.roomView = roomView
@@ -97,6 +114,8 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     /// where it is and never taller than the screen — past that the cards scroll.
     /// Settings → Show Session List in Window. Off: the window is just the header and the scene.
     static var listShown: Bool { UserDefaults.standard.object(forKey: "windowList") as? Bool ?? true }
+    /// How many session cards "fit height" makes room for before the list scrolls.
+    static let cardsShown = 3
 
     func fitToContent() {
         let k = Self.scale
@@ -105,7 +124,9 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         guard Self.listShown ? UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true : true,
               !window.inLiveResize, let screen = window.screen ?? NSScreen.main else { return }
         let vf = screen.visibleFrame
-        let wanted = Self.listShown ? min(max(top + cardsView.contentHeight, top + 60), vf.height) : top
+        // Up to three sessions fit; more scroll, with a sliver of the next card showing so it's clear there are more.
+        let list = min(cardsView.contentHeight, cardsView.height(showingCards: Self.cardsShown), cardsView.maxListHeight)
+        let wanted = Self.listShown ? min(max(top + list, top + 60), vf.height) : top
         let delta = wanted - window.frame.height
         guard abs(delta) > 1 else { return }
         var f = window.frame
@@ -183,9 +204,19 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         header.setBoundsSize(NSSize(width: header.frame.width / k, height: Self.headerHeight))
         sceneView.setBoundsSize(NSSize(width: sceneView.frame.width / k, height: sceneHeight))
         roomView.setBoundsSize(sceneView.bounds.size)
-        cardsView.frame.size.width = scroll.bounds.width
-        cardsView.relayout()
+        cardsView.frame.size.width = scroll.contentView.bounds.width
+        cardsView.relayout()   // always: the Small Window changes the cards' heights, not just their width
         header.needsDisplay = true; sceneView.showFrame()
+    }
+
+    /// The scrollbar's track takes the location's colour.
+    func redrawScroller() { scroll.verticalScroller?.needsDisplay = true }
+
+    private func fitCardsWidth() {
+        let w = scroll.contentView.bounds.width
+        guard cardsView.frame.width != w else { return }
+        cardsView.frame.size.width = w
+        cardsView.relayout()
     }
 
     /// Settings → Small Window toggled: the window itself shrinks (or grows back) by the same factor, keeping its top
@@ -222,9 +253,30 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     func windowDidMove(_ notification: Notification) { onGeometryChange?() }
     func windowDidEndLiveResize(_ notification: Notification) { fitToContent() }
     func windowDidResize(_ notification: Notification) {
-        scroll.scrollerStyle = .overlay          // the system can switch it back when a mouse is plugged in
+        scroll.scrollerStyle = .legacy           // the system can switch it back when the trackpad/mouse changes
         applyScale()
         onGeometryChange?()
+    }
+}
+
+/// The cards' scrollbar, quiet and in the location's colours: the track is the cards' own panel colour (so it reads
+/// as part of the list, not a column beside it) and the knob a thin, faint bar.
+final class ThemedScroller: NSScroller {
+    var panel: () -> NSColor? = { nil }
+
+    override class var isCompatibleWithOverlayScrollers: Bool { false }
+    override class func scrollerWidth(for controlSize: NSControl.ControlSize, scrollerStyle: NSScroller.Style) -> CGFloat { 10 }
+
+    override func drawKnobSlot(in slotRect: NSRect, highlight flag: Bool) {
+        (panel() ?? NSColor(srgbRed: 0.17, green: 0.13, blue: 0.10, alpha: 1)).setFill()
+        bounds.fill()
+    }
+
+    override func drawKnob() {
+        let r = rect(for: .knob).insetBy(dx: 2.5, dy: 4)
+        guard r.height > 0 else { return }
+        NSColor(white: 1, alpha: 0.16).setFill()
+        NSBezierPath(roundedRect: r, xRadius: r.width / 2, yRadius: r.width / 2).fill()
     }
 }
 
@@ -363,6 +415,8 @@ final class SceneView: NSView {
     /// How many points at the top of the scene are a dark band that looks like part of the title bar.
     private(set) var darkTop: CGFloat = 0
     private var room: (size: NSSize, location: Location, image: CGImage)?
+    /// The animated layer's canvas, reused every frame until the scene's pixel size changes.
+    private var live: PixelCanvas?
     private let sprites = SpriteLayers()
     /// CLAWD_SHOT captures the window by drawing its views, which can't see layers: draw the old way then.
     static let drawsItself = ProcessInfo.processInfo.environment["CLAWD_SHOT"] != nil
@@ -399,14 +453,16 @@ final class SceneView: NSView {
         if dark != darkTop { darkTop = dark; onDarkTopChange?() }
     }
 
-    /// What moves there (the cantina band, sarlacc tentacles, torches, laser gates, fog…) and the crew, as one frame.
+    /// What moves there (the cantina band, sarlacc tentacles, laser gates, fog…) and the crew, as one frame.
     private func frameItems(origin: NSPoint) -> [OverlayController.DrawItem] {
         guard let controller else { return [] }
         let g = geometry
-        let live = PixelCanvas(g.pw, g.ph)
-        controller.location.drawAnimated(live, floorRows: g.floorRows, t: Date().timeIntervalSince1970)
+        guard controller.location.hasAnimatedLayer else { return controller.items }   // a still picture: nothing to add
+        let canvas: PixelCanvas
+        if let live, live.w == g.pw, live.h == g.ph { canvas = live; canvas.clear() } else { canvas = PixelCanvas(g.pw, g.ph); live = canvas }
+        controller.location.drawAnimated(canvas, floorRows: g.floorRows, t: Date().timeIntervalSince1970)
         var items: [OverlayController.DrawItem] = []
-        if let img = live.makeImage() {   // in screen coordinates, like the crew's items
+        if let img = canvas.makeImage() {   // in screen coordinates, like the crew's items
             items.append(OverlayController.DrawItem(image: img, rect: g.drawRect.offsetBy(dx: origin.x, dy: origin.y)))
         }
         return items + controller.items
@@ -453,6 +509,11 @@ final class CardsView: NSView {
     private var cards: [CardModel] = []
     private var banner: String?
     private var hitRects: [(NSRect, Int32?)] = []
+    /// The "▸ 25 more agents" / "▾ Show fewer" rows, by the session they fold.
+    private var toggleRects: [(NSRect, String)] = []
+    /// Sessions whose agents are all shown. Not remembered across launches.
+    private var unfolded: Set<String> = []
+    var onHeightChange: (() -> Void)?
     /// Height the cards actually need (the window sizes itself to this).
     private(set) var contentHeight: CGFloat = 0
 
@@ -464,7 +525,8 @@ final class CardsView: NSView {
     private var shown = ""
 
     func update(cards: [CardModel], banner: String?) {
-        let now = ([banner ?? ""] + cards.map(\.signature)).joined(separator: "\u{1}")
+        // The cards are tinted with the location's colours, so a new location redraws them too.
+        let now = ([banner ?? "", controller?.location.rawValue ?? ""] + cards.map(\.signature)).joined(separator: "\u{1}")
         guard now != shown else { return }
         shown = now
         self.cards = cards
@@ -479,7 +541,13 @@ final class CardsView: NSView {
     private static var portraitSize: NSSize { NSSize(width: 56 * portraitScale, height: 43 * portraitScale) }
     private static let lineH: CGFloat = 16
     private static let agentH: CGFloat = 34
+    /// A card shows this many agents; more fold behind a chevron row.
+    private static let agentsShown = 4
+    private static let toggleH: CGFloat = 22
     private static let groupH: CGFloat = 22
+    private static let projectH: CGFloat = 24
+    /// How far a project's cards sit in from its header, to make room for the tree line.
+    private static let treeIndent: CGFloat = 20
 
     /// Each host its own colour (its brand's where it has a recognisable one); grey for Local, pink for any other host.
     static func remoteColor(_ remote: String) -> NSColor {
@@ -498,15 +566,35 @@ final class CardsView: NSView {
         }
     }
 
+    private func shownAgents(_ c: CardModel) -> ArraySlice<CardModel.Agent> {
+        c.agents.count > Self.agentsShown && !unfolded.contains(c.id) ? c.agents.prefix(Self.agentsShown) : c.agents[...]
+    }
+
     private func cardHeight(_ c: CardModel) -> CGFloat {
-        let text = 22 + CGFloat(c.lines.count) * Self.lineH + (c.agents.isEmpty ? 0 : 6 + CGFloat(c.agents.count) * Self.agentH)
+        let rows = CGFloat(shownAgents(c).count) * Self.agentH + (c.agents.count > Self.agentsShown ? Self.toggleH : 0)
+        let text = 22 + CGFloat(c.lines.count) * Self.lineH + (c.agents.isEmpty ? 0 : 6 + rows)
         return max(Self.portraitSize.height + 4, text) + Self.pad * 2
     }
 
-    func relayout() {
+    /// The tallest the list gets before it scrolls, whatever is in it: about three plain cards and a peek at a fourth,
+    /// so one session with a crowd of agents unfolded doesn't stretch the window either.
+    var maxListHeight: CGFloat {
+        Self.pad + (banner == nil ? 0 : 34) + 3 * (Self.portraitSize.height + 4 + Self.pad * 2 + 10) + 28
+    }
+
+    /// Height of the list cut off after `n` cards, plus a sliver of the next card when there is one.
+    func height(showingCards n: Int) -> CGFloat {
         var h = Self.pad + (banner == nil ? 0 : 34)
-        for c in cards { h += cardHeight(c) + 10 + (c.group == nil ? 0 : Self.groupH) }
-        if cards.isEmpty { h += 30 }
+        for (i, c) in cards.enumerated() {
+            let above = (c.group == nil ? 0 : Self.groupH) + (c.tree?.sessions == nil ? 0 : Self.projectH)
+            if i == n { return h + above + 28 }
+            h += cardHeight(c) + 10 + above
+        }
+        return h + (cards.isEmpty ? 30 : 0)
+    }
+
+    func relayout() {
+        let h = height(showingCards: .max)
         contentHeight = h
         // The cards keep normal-size text even in the Small Window (they get more compact instead).
         let minH = enclosingScrollView?.bounds.height ?? 0
@@ -518,6 +606,7 @@ final class CardsView: NSView {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
         ctx.interpolationQuality = .none
         hitRects = []
+        toggleRects = []
         // The location's tone, with a faint texture, so the whole window feels like the place.
         let panel = controller?.location.panel ?? NSColor(srgbRed: 0.17, green: 0.13, blue: 0.10, alpha: 1)
         panel.setFill()
@@ -546,9 +635,10 @@ final class CardsView: NSView {
         }
         if cards.isEmpty {
             draw("No Claude sessions running.", at: NSPoint(x: x + 4, y: y + 4), width: w,
-                 font: .systemFont(ofSize: 13), color: .secondaryLabelColor)
+                 font: .systemFont(ofSize: 13), color: NSColor(white: 0.62, alpha: 1))   // the panel is dark in light mode too
         }
 
+        var treeTop: CGFloat = 0   // where the current project's tree line continues from
         for c in cards {
             if let g = c.group {
                 // A small divider naming the AI: "CODEX ─────"
@@ -560,8 +650,40 @@ final class CardsView: NSView {
                 NSRect(x: x + ts.width + 10, y: (y + 2 + ts.height / 2).rounded(), width: w - ts.width - 12, height: 1).fill()
                 y += Self.groupH
             }
+            if let n = c.tree?.sessions {
+                // The project header: its name in its colour, then where it lives and how many sessions are in it.
+                let title = NSMutableAttributedString(string: c.project, attributes: [
+                    .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: c.accent])
+                title.append(NSAttributedString(string: "   " + [c.remote, "\(n) sessions"].compactMap { $0 }.joined(separator: "  ·  "),
+                                                attributes: [.font: NSFont.systemFont(ofSize: 11, weight: .semibold),
+                                                             .foregroundColor: NSColor(white: 0.62, alpha: 1)]))
+                title.draw(with: NSRect(x: x + 2, y: y + 1, width: w - 4, height: 20),
+                           options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
+                y += Self.projectH
+                treeTop = y - 4
+            }
             let h = cardHeight(c)
-            let r = NSRect(x: x, y: y, width: w, height: h)
+            var r = NSRect(x: x, y: y, width: w, height: h)
+            if let tree = c.tree {
+                // ├ into each card at its title, └ (rounded) into the last.
+                r.origin.x += Self.treeIndent; r.size.width -= Self.treeIndent
+                let trunkX = x + 7.5, mid = r.minY + 22
+                let line = NSBezierPath()
+                line.lineWidth = 1.5
+                line.move(to: NSPoint(x: trunkX, y: treeTop))
+                if tree.last {
+                    line.line(to: NSPoint(x: trunkX, y: mid - 5))
+                    line.curve(to: NSPoint(x: trunkX + 5, y: mid), controlPoint1: NSPoint(x: trunkX, y: mid - 2),
+                               controlPoint2: NSPoint(x: trunkX + 2, y: mid))
+                } else {
+                    line.line(to: NSPoint(x: trunkX, y: r.maxY + 10))   // on past this card to the next
+                    line.move(to: NSPoint(x: trunkX, y: mid))
+                }
+                line.line(to: NSPoint(x: r.minX, y: mid))
+                c.accent.withAlphaComponent(0.5).setStroke()
+                line.stroke()
+                treeTop = r.maxY + 10
+            }
             hitRects.append((r, c.pid))
             let box = NSBezierPath(roundedRect: r, xRadius: 8, yRadius: 8)
             (controller?.location.panel.blended(withFraction: 0.35, of: .black) ?? NSColor.black).withAlphaComponent(0.94).setFill()
@@ -588,10 +710,13 @@ final class CardsView: NSView {
             status.draw(at: NSPoint(x: chip.minX + 7, y: chip.minY + 2))
             // The project as the title, in its colour; the character in a pill on the right under the status.
             // (No project? Then the character is the title and there's no pill.)
-            let header = NSMutableAttributedString(string: c.project.isEmpty ? c.villain : c.project, attributes: [
+            // In a project's tree the header above names the project and where it lives, so the card is titled with
+            // the character instead, in the project's colour, and needs no pills.
+            let inTree = c.tree != nil
+            let header = NSMutableAttributedString(string: inTree || c.project.isEmpty ? c.villain : c.project, attributes: [
                 .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: c.project.isEmpty ? NSColor.white : c.accent])
             var namePill: NSRect?
-            if !c.project.isEmpty {
+            if !c.project.isEmpty && !inTree {
                 // Tinted with the character's main colour; the text lightened enough to read on the dark card,
                 // and very dark costumes (Vader) lifted a little so the pill still shows.
                 let base = c.spriteColor.usingColorSpace(.sRGB) ?? c.spriteColor
@@ -641,11 +766,13 @@ final class CardsView: NSView {
                 ty += 6
                 // A tree: a trunk from the session down the left, a branch into each agent (├ … └).
                 let trunkX = tx + 5.5, indent: CGFloat = 20, top = ty - 4
+                let shown = shownAgents(c)
+                let folds = c.agents.count > Self.agentsShown
                 let branch = NSBezierPath()
                 branch.lineWidth = 1.5
-                for (i, _) in c.agents.enumerated() {
+                for i in 0..<shown.count {
                     let mid = ty + CGFloat(i) * Self.agentH + 15.5
-                    if i == c.agents.count - 1 {   // └ with a rounded corner
+                    if i == shown.count - 1 && !folds {   // └ with a rounded corner
                         branch.move(to: NSPoint(x: trunkX, y: top))
                         branch.line(to: NSPoint(x: trunkX, y: mid - 5))
                         branch.curve(to: NSPoint(x: trunkX + 5, y: mid), controlPoint1: NSPoint(x: trunkX, y: mid - 2),
@@ -656,9 +783,17 @@ final class CardsView: NSView {
                         branch.line(to: NSPoint(x: tx + indent - 2, y: mid))
                     }
                 }
+                if folds {   // the trunk runs on to the chevron row, which gets the └
+                    let mid = ty + CGFloat(shown.count) * Self.agentH + Self.toggleH / 2
+                    branch.move(to: NSPoint(x: trunkX, y: top))
+                    branch.line(to: NSPoint(x: trunkX, y: mid - 5))
+                    branch.curve(to: NSPoint(x: trunkX + 5, y: mid), controlPoint1: NSPoint(x: trunkX, y: mid - 2),
+                                 controlPoint2: NSPoint(x: trunkX + 2, y: mid))
+                    branch.line(to: NSPoint(x: tx + indent - 2, y: mid))
+                }
                 c.accent.withAlphaComponent(0.5).setStroke()
                 branch.stroke()
-                for a in c.agents {
+                for a in shown {
                     let tx = tx + indent, tw = tw - indent
                     if let img = a.portrait {
                         draw(img, fitting: NSRect(x: tx - 4, y: ty, width: 36, height: 30), in: ctx, maxScale: 1)
@@ -682,6 +817,25 @@ final class CardsView: NSView {
                     draw(a.detail, at: NSPoint(x: tx + 40, y: ty + 17), width: tw - 40,
                          font: .systemFont(ofSize: 10.5), color: NSColor(white: 0.62, alpha: 1))
                     ty += Self.agentH
+                }
+                if folds {
+                    let open = unfolded.contains(c.id)
+                    let label = open ? "Show fewer" : "\(c.agents.count - shown.count) more agent\(c.agents.count - shown.count == 1 ? "" : "s")"
+                    let text = NSAttributedString(string: label, attributes: [
+                        .font: NSFont.systemFont(ofSize: 11, weight: .semibold), .foregroundColor: c.accent])
+                    let ts = text.size()
+                    let row = NSRect(x: tx + indent, y: ty + 1, width: 18 + ts.width + 8, height: Self.toggleH - 2)
+                    if let img = NSImage(systemSymbolName: open ? "chevron.down" : "chevron.right", accessibilityDescription: nil)?
+                        .withSymbolConfiguration(.init(pointSize: 9, weight: .bold)) {
+                        let tinted = NSImage(size: img.size, flipped: false) { rr in
+                            img.draw(in: rr); c.accent.set(); rr.fill(using: .sourceAtop); return true
+                        }
+                        tinted.draw(in: NSRect(x: row.minX + 4, y: (row.midY - img.size.height / 2).rounded(),
+                                               width: img.size.width, height: img.size.height))
+                    }
+                    text.draw(at: NSPoint(x: row.minX + 18, y: (row.midY - ts.height / 2).rounded()))
+                    toggleRects.append((row, c.id))
+                    ty += Self.toggleH
                 }
             }
             y += h + 10
@@ -713,12 +867,20 @@ final class CardsView: NSView {
 
     override func mouseUp(with event: NSEvent) {
         let p = convert(event.locationInWindow, from: nil)
+        if let toggle = toggleRects.first(where: { $0.0.contains(p) }) {
+            if unfolded.remove(toggle.1) == nil { unfolded.insert(toggle.1) }
+            relayout()
+            window?.invalidateCursorRects(for: self)
+            onHeightChange?()
+            return
+        }
         guard let hit = hitRects.first(where: { $0.0.contains(p) }) else { return }
         if let pid = hit.1 { Jump.toSession(pid: pid) } else { NSSound.beep() }
     }
 
     override func resetCursorRects() {
         for (r, pid) in hitRects where pid != nil { addCursorRect(r, cursor: .pointingHand) }
+        for (r, _) in toggleRects { addCursorRect(r, cursor: .pointingHand) }
     }
 
     override func rightMouseDown(with event: NSEvent) {
