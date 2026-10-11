@@ -71,6 +71,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private var lastTick = Date().timeIntervalSince1970
     private let start = Date().timeIntervalSince1970
     private var frameCount = 0
+    private static let forcedHover = ProcessInfo.processInfo.environment["CLAWD_HOVER"]   // read once: it showed up in profiles
     private var refitting = false
     private let debug = ProcessInfo.processInfo.environment["VADER_DEBUG"] != nil
     private var lastDebug = 0
@@ -186,7 +187,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         offerHooksOnFirstLaunch()
 
         Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.refreshStatus() }
-        let frame = Timer(timeInterval: 1.0 / 20, repeats: true) { [weak self] _ in self?.tick() }
+        let frame = Timer(timeInterval: 1.0 / 15, repeats: true) { [weak self] _ in self?.tick() }
         RunLoop.main.add(frame, forMode: .common)
     }
 
@@ -698,13 +699,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         // In the window the list below already shows everything, so hover cards only appear when it's hidden.
         var hovered = (windowMode && (clawdWindow?.window.isVisible != true || ClawdWindow.listShown)) ? nil
             : hitRects().first { $0.1.contains(mouseNow) }?.0
-        if let forced = ProcessInfo.processInfo.environment["CLAWD_HOVER"] {   // debug: pretend to hover a character
+        if let forced = Self.forcedHover {   // debug: pretend to hover a character
             hovered = actors.first { $0.key.contains(forced) }?.key
         }
         let hoverChanged = hovered != hoveredKey
         hoveredKey = hovered
 
-        // Idle scenes only breathe, so 10 fps is plenty; 20 fps when anything is moving (chunky pixel art needs no more).
+        // Idle scenes only breathe, so 7.5 fps is plenty; 15 fps when anything is moving (chunky pixel art needs no more).
         frameCount += 1
         let busy = dragging || !fights.isEmpty || actors.contains {
             $0.walkDir != 0 || $0.leaving != nil || now - $0.born < fadeIn || !$0.isLeader
@@ -1689,7 +1690,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
         let banner: String? = offlineReason.map { $0 + " — live status is off. Fix it from Settings in the menu." } ?? hookBanner
         w.cardsView.update(cards: cards, banner: banner)
-        w.header.needsDisplay = true
         w.fitToContent()
     }
 

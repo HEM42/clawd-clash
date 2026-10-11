@@ -21,6 +21,15 @@ struct CardModel {
     var group: (title: String, color: NSColor)? = nil   // first card of an AI's group, when several AIs run
     var spriteColor = NSColor.white                     // the character's main colour, for the name pill
     var remote: String? = nil                           // "GitHub", "GitLab"… or "Local", in a pill by the name
+
+    /// The card's visible content as text (portraits are cached per character, so the villain's name stands in).
+    var signature: String {
+        var parts = [villain, project, accent.description, status, statusColor.description, "\(focused)", "\(pid ?? 0)",
+                     group?.title ?? "", remote ?? ""]
+        parts += lines.map { $0.text + "\u{2}" + $0.color.description }
+        parts += agents.map { $0.name + "\u{2}" + $0.task + "\u{2}" + $0.detail }
+        return parts.joined(separator: "\u{3}")
+    }
 }
 
 /// "Show in Window" mode: a normal window with the crew in a scene strip on top and a card per Claude
@@ -423,7 +432,13 @@ final class CardsView: NSView {
 
     static let focusYellow = NSColor(srgbRed: 1, green: 0.88, blue: 0.29, alpha: 1)
 
+    /// Everything the cards show, so an update that changes nothing (most of them) doesn't redraw.
+    private var shown = ""
+
     func update(cards: [CardModel], banner: String?) {
+        let now = ([banner ?? ""] + cards.map(\.signature)).joined(separator: "\u{1}")
+        guard now != shown else { return }
+        shown = now
         self.cards = cards
         self.banner = banner
         relayout()
