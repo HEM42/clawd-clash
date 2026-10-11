@@ -19,6 +19,7 @@ struct CardModel {
     let portrait: CGImage?
     let pid: Int32?
     var group: (title: String, color: NSColor)? = nil   // first card of an AI's group, when several AIs run
+    var idle = false                                    // its project name fades slowly between its colour and yellow
 }
 
 /// "Show in Window" mode: a normal window with the crew in a scene strip on top and a card per Claude
@@ -400,7 +401,7 @@ final class CardsView: NSView {
         self.banner = banner
         relayout()
         // Redraw smoothly only while a card's project name is fading.
-        let fading = cards.contains(where: \.focused)
+        let fading = cards.contains(where: \.idle)
         if fading, fadeTimer == nil {
             fadeTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 20, repeats: true) { [weak self] _ in self?.needsDisplay = true }
         } else if !fading {
@@ -503,9 +504,9 @@ final class CardsView: NSView {
             let header = NSMutableAttributedString(string: c.villain, attributes: [
                 .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: NSColor.white])
             if !c.project.isEmpty {
-                // The session you're in: its project name fades slowly between its colour and the "you're here" yellow.
+                // Idle sessions: the project name fades slowly between its colour and yellow.
                 var color = c.accent
-                if c.focused {
+                if c.idle {
                     let f = 0.5 - 0.5 * cos(Date().timeIntervalSince1970 * 2 * .pi / 2.4)
                     color = c.accent.blended(withFraction: CGFloat(f), of: Self.focusYellow) ?? c.accent
                 }

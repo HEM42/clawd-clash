@@ -8,7 +8,7 @@
 ### Changed
 - **No more flickering "you're here" border.** The card of the session you're in used to get a thick yellow border that switched on and off whenever the once-a-second focus check briefly got a different answer. Now:
   - every card keeps a steady thin border in its project colour;
-  - the focused card shows it by its **project name slowly fading** between the project colour and that yellow (a 2.4 s cycle, redrawn at 20 fps only while something is fading);
+  - **idle sessions' project names fade slowly** between the project colour and yellow (a 2.4 s cycle, redrawn at 20 fps only while something is fading). It's the purple ↔ yellow "blink" from before, now smooth and deliberate. Working sessions stay steady;
   - the focus check is sticky: a new answer has to come back twice in a row before the focus moves, so a one-off miss no longer flips it (this also steadies the desktop's focus marker).
 
 ### Added
