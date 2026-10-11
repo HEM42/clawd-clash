@@ -54,7 +54,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     private var boardTimer: Timer?
     private var boardOn = false
     static let headerHeight: CGFloat = 30
-    /// Settings → Small Window: the whole window — header, scene, characters, cards — drawn at 75%. Every view keeps
+    /// Settings → Compact Window: the whole window — header, scene, characters, cards — drawn at 75%. Every view keeps
     /// its normal (logical) size in its bounds and is shown in a frame `scale` times as big.
     static var scale: CGFloat { small ? 0.75 : 1 }
     /// On until turned off in Settings.
@@ -127,8 +127,8 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     /// Settings → Show Session List in Window. Off: the window is just the header and the scene.
     static var listShown: Bool { UserDefaults.standard.object(forKey: "windowList") as? Bool ?? true }
 
-    /// What the window shows, stepped through by the header's view button: the scene with the session list, just the
-    /// scene, or the screen-saver view.
+    /// What the window shows: the scene with the session list or just the scene (the header's view button switches
+    /// between them), or the screen-saver view (Settings only; the view button leaves it).
     enum View { case list, scene, board }
     static var view: View {
         if UserDefaults.standard.bool(forKey: "windowBoard") { return .board }
@@ -160,7 +160,11 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     private func onScreen(_ frame: NSRect) -> NSRect {
         guard let vf = (window.screen ?? NSScreen.main)?.visibleFrame else { return frame }
         var f = frame
+        // Both ways: the screen-saver view's wider window, opened near the right edge, ran off the desktop.
+        f.size.width = min(f.width, vf.width)
         f.size.height = min(f.height, vf.height)
+        if f.minX < vf.minX { f.origin.x = vf.minX }
+        if f.maxX > vf.maxX { f.origin.x = vf.maxX - f.width }
         if f.minY < vf.minY { f.origin.y = vf.minY }
         if f.maxY > vf.maxY { f.origin.y = vf.maxY - f.height }
         return f
@@ -272,7 +276,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         sceneView.setBoundsSize(NSSize(width: sceneView.frame.width / k, height: sceneHeight))
         roomView.setBoundsSize(sceneView.bounds.size)
         cardsView.frame.size.width = scroll.contentView.bounds.width
-        cardsView.relayout()   // always: the Small Window changes the cards' heights, not just their width
+        cardsView.relayout()   // always: the Compact Window changes the cards' heights, not just their width
         header.needsDisplay = true; sceneView.showFrame()
     }
 
@@ -286,7 +290,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         cardsView.relayout()
     }
 
-    /// The window's size when it first opens; the Small Window is exactly this at 75%.
+    /// The window's size when it first opens; the Compact Window is exactly this at 75%.
     static let defaultSize = NSSize(width: 760, height: 620)
     /// The screen-saver view's size, likewise.
     static let boardSize = NSSize(width: 960, height: 600 + headerHeight)
@@ -315,7 +319,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         }
     }
 
-    /// Settings → Small Window toggled: the window takes the set size for its view (the default, or exactly 75% of
+    /// Settings → Compact Window toggled: the window takes the set size for its view (the default, or exactly 75% of
     /// it), keeping its top left corner, and is drawn at that scale. Out of the screen-saver view, it goes back to the
     /// list or scene's set size.
     func applySmall() {
@@ -338,7 +342,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         fitToContent()
     }
 
-    /// Resized by hand while Small: it isn't the Small Window any more. The window keeps its new size (only the
+    /// Resized by hand while Compact: it isn't the Compact Window any more. The window keeps its new size (only the
     /// scene-only view's height follows the scene, now drawn at full size) and everything is drawn at 100% again.
     private func leaveSmallAfterResize() {
         Self.small = false
@@ -448,7 +452,7 @@ final class HeaderView: NSView, NSViewToolTipOwner {
         guard button(at: point) != .close else { return "Quit Clawd Wars" }
         switch ClawdWindow.view {
         case .list: return "Hide the session list"
-        case .scene: return "Show the screen saver view"
+        case .scene: return "Show the session list"
         case .board: return "Back to the scene and the session list"
         }
     }
@@ -479,9 +483,9 @@ final class HeaderView: NSView, NSViewToolTipOwner {
             label.draw(at: NSPoint(x: 14, y: (midY - label.size().height / 2).rounded()))
         }
 
-        // The view button shows what a click does next: collapse to just the scene (arrows in), on to the screen-saver
-        // view (a screen), back to the full view (arrows out); then close. All drawn by hand, centred exactly on the
-        // bar and the same size: the symbols sat off-centre, and the expand one came out small.
+        // The view button shows what a click does next: collapse to just the scene (arrows in), or back to the full
+        // view (arrows out); then close. Both drawn by hand, centred exactly on the bar and the same size: the
+        // symbols sat off-centre, and the expand one came out small.
         for button in [Button.minimize, .close] {
             let r = rect(button)
             if hovered == button {
@@ -493,11 +497,6 @@ final class HeaderView: NSView, NSViewToolTipOwner {
             if button == .close {
                 path.move(to: NSPoint(x: c.x - d, y: c.y - d)); path.line(to: NSPoint(x: c.x + d, y: c.y + d))
                 path.move(to: NSPoint(x: c.x - d, y: c.y + d)); path.line(to: NSPoint(x: c.x + d, y: c.y - d))
-            } else if ClawdWindow.view == .scene {
-                // A little screen on a stand.
-                path.append(NSBezierPath(roundedRect: NSRect(x: c.x - 6, y: c.y - 2, width: 12, height: 7.5), xRadius: 1.5, yRadius: 1.5))
-                path.move(to: NSPoint(x: c.x, y: c.y - 2)); path.line(to: NSPoint(x: c.x, y: c.y - 4.5))
-                path.move(to: NSPoint(x: c.x - 3, y: c.y - 4.5)); path.line(to: NSPoint(x: c.x + 3, y: c.y - 4.5))
             } else {
                 // A line across the middle, with a chevron above and below: pointing at it (collapse) or away (expand).
                 let inward = ClawdWindow.view == .list
@@ -637,7 +636,7 @@ final class SceneView: NSView {
         guard let window, let host = layer else { return }
         prepareRoom()
         let origin = window.convertToScreen(convert(bounds, to: nil)).origin
-        // The layer works in the view's bounds, which AppKit already shows at 75% in the Small Window; the text
+        // The layer works in the view's bounds, which AppKit already shows at 75% in the Compact Window; the text
         // only needs rendering at the resolution it ends up at.
         let k = frame.width / max(bounds.width, 1)
         sprites.update(frameItems(origin: origin), origin: origin, in: host, pixelsPerPoint: window.backingScaleFactor * k)
@@ -703,7 +702,7 @@ final class CardsView: NSView {
     }
 
     private static let pad: CGFloat = 12
-    // Portraits are cropped to 46×38 sprite pixels; the Small Window draws them at 1.5× to save height.
+    // Portraits are cropped to 46×38 sprite pixels; the Compact Window draws them at 1.5× to save height.
     private static var portraitScale: CGFloat { ClawdWindow.scale < 1 ? 1.5 : 2 }
     // Measured: the widest portrait is the AT-AT (53 px), the tallest the Rancor (42 px) — both fit at 2×.
     private static var portraitSize: NSSize { NSSize(width: 56 * portraitScale, height: 43 * portraitScale) }
@@ -764,7 +763,7 @@ final class CardsView: NSView {
     func relayout() {
         let h = height(showingCards: .max)
         contentHeight = h
-        // The cards keep normal-size text even in the Small Window (they get more compact instead).
+        // The cards keep normal-size text even in the Compact Window (they get more compact instead).
         let minH = enclosingScrollView?.bounds.height ?? 0
         setFrameSize(NSSize(width: frame.width, height: max(h, minH)))
         needsDisplay = true
@@ -1027,7 +1026,7 @@ final class CardsView: NSView {
     private func draw(_ img: CGImage, fitting box: NSRect, in ctx: CGContext, maxScale: CGFloat) {
         let iw = CGFloat(img.width), ih = CGFloat(img.height)
         var k = min(box.width / iw, box.height / ih, maxScale)
-        if k >= 1 { k = (k * 2).rounded(.down) / 2 }   // whole or half steps (1.5× in the Small Window)
+        if k >= 1 { k = (k * 2).rounded(.down) / 2 }   // whole or half steps (1.5× in the Compact Window)
         let w = iw * k, h = ih * k
         ctx.saveGState()
         ctx.interpolationQuality = .none

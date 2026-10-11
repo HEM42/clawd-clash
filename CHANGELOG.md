@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased
+## 2.26.2 — 2026-10-11
+
+### Changed
+- **"Small Window (75%)" is now "Compact Window".** Same thing (the window at 75% of its full size, scene and cards included), a better name. The setting underneath (`windowSmall`) is unchanged, so the choice carries over.
+- **The title bar's view button only hides and shows the session list.** It no longer steps on to the screen-saver view: that's in **Settings → Screen Saver View in Window** only. Pressed in the screen-saver view, the button goes back to the scene with the session list. The little screen icon is gone; the button shows arrows in (hide the list) or arrows out (show it, or leave the screen-saver view), with matching tooltips.
+
+### Fixed
+- **The window stays on the desktop when it changes size.** Keeping it on screen only checked top and bottom, so switching to the screen-saver view (960 wide) near the right edge ran the window off the desktop. Every resize the app makes (entering and leaving the screen-saver view, Compact Window, fitting the list to the sessions) now shrinks the window to the screen's usable area if it's bigger and moves it fully inside, clear of the menu bar and Dock (`ClawdWindow.onScreen`).
 
 ### Docs
 - **README images match the current scenes.** `docs/locations.png` re-rendered (the Death Star viewport's planet curve, Dagobah's new X-wing, the bigger Lars homestead, the throne room's stars inside its window, solid AT-ATs on Hoth), and `docs/window-hoth.png` re-shot from a Playground run with the new view-button icon. The Screen saver section now opens with `docs/screensaver.png`: the Lars homestead at 1440 × 900 with five sessions, a duel, agents and one needing you.

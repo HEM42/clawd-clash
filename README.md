@@ -108,7 +108,7 @@ The scene is set **where the first session's character belongs** — the Death S
   <img src="docs/locations.png" alt="All 22 locations" width="760">
 </p>
 
-Several sessions in the same project are grouped under one project header as a tree, and a card lists four agents with a chevron to unfold the rest (hover any agent in the scene for its details). The window sizes itself to the number of sessions, up to three (more scroll), or keeps your own height, opens at a 75% **Small Window** size (a smaller scene and compact cards with normal-size text; turn it off in Settings for full size), steps from scene and session list to just the scene strip to the screen-saver view with the button in its title bar, has a themed title bar with its own close and minimize buttons, can stay on top, and can hide its Dock icon. Project names float over the Claudes on the desktop; in the window the cards carry them instead — each mode remembers your choice. The project you're in (its terminal or editor window in front) has its name 15% larger, there and in the screen saver.
+Several sessions in the same project are grouped under one project header as a tree, and a card lists four agents with a chevron to unfold the rest (hover any agent in the scene for its details). The window sizes itself to the number of sessions, up to three (more scroll), or keeps your own height, opens as a **Compact Window**, 75% of the full size (a smaller scene and compact cards with normal-size text; turn it off in Settings for full size, and resizing it by hand turns it off too), can hide the session list to become just the scene strip (the button in its title bar), can show the screen saver instead (Settings → Screen Saver View in Window), has a themed title bar with its own close and minimize buttons, can stay on top, and can hide its Dock icon. Project names float over the Claudes on the desktop; in the window the cards carry them instead — each mode remembers your choice. The project you're in (its terminal or editor window in front) has its name 15% larger, there and in the screen saver.
 
 ## Screen saver
 
@@ -124,7 +124,7 @@ Install it from the menu bar helmet: **Settings → Install Screen Saver…**. T
 
 The screen saver shows what the running app sees, so Clawd Wars needs to be running. When it isn't, you get the empty location and a note saying so. **Settings → Remove Screen Saver** takes it out again.
 
-The window can show the same view: its title bar button steps through the scene with the session list, just the scene, and the screen-saver view (hover a card there to see it larger). The Location menu's **Random** moves the window somewhere new every 10 minutes, with the same wipe.
+The window can show the same view: **Settings → Screen Saver View in Window** (hover a card there to see it larger; the title bar button takes you back). The Location menu's **Random** moves the window somewhere new every 10 minutes, with the same wipe.
 
 ## The little things
 

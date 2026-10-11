@@ -1816,7 +1816,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         guard let w = clawdWindow else { return }
         let dim = NSColor(white: 0.62, alpha: 1), soft = NSColor(white: 0.85, alpha: 1)
         let home = FileManager.default.homeDirectoryForCurrentUser.path
-        let compact = ClawdWindow.scale < 1          // Small Window: no project path, one line of conversation
+        let compact = ClawdWindow.scale < 1          // Compact Window: no project path, one line of conversation
         var cards: [CardModel] = []
         // Grouped by AI (stable within a group); with more than one AI each group gets a small header.
         var listed = sessions.enumerated()
@@ -1861,7 +1861,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 if let a = r.activity, s.mood != .idle { lines.append(("Now: " + a, .white)) }
                 let reply = s.mood == .idle ? r.reply.map { s.aiLabel.components(separatedBy: " · ")[0] + ": “" + $0 + "”" } : nil
                 if compact {
-                    // Small Window: one line of the conversation — the reply once it's done, otherwise your prompt.
+                    // Compact Window: one line of the conversation — the reply once it's done, otherwise your prompt.
                     if let line = reply ?? r.prompt.map({ "You: “" + $0 + "”" }) { lines.append((line, soft)) }
                 } else {
                     if let p = r.prompt { lines.append(("You: “" + p + "”", soft)) }
@@ -2027,7 +2027,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         sm.addItem(disabled: "Window mode")
         sm.addItem(action: "Keep Window on Top", #selector(togglePin), target: self,
                    on: UserDefaults.standard.bool(forKey: "windowPinned"))
-        sm.addItem(action: "Small Window (75%)", #selector(toggleSmallWindow), target: self,
+        sm.addItem(action: "Compact Window", #selector(toggleSmallWindow), target: self,
                    on: ClawdWindow.small)
         sm.addItem(action: "Show Session List in Window", #selector(toggleWindowList), target: self,
                    on: ClawdWindow.listShown && ClawdWindow.view != .board)
@@ -2075,14 +2075,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         clawdWindow?.applySmall()
     }
 
-    /// The header's view button: scene and list → just the scene → the screen-saver view → back.
-    private func cycleWindowView() {
-        switch ClawdWindow.view {
-        case .list: toggleWindowList()
-        case .scene: setBoard(true)
-        case .board: toggleWindowList()
-        }
-    }
+    /// The header's view button: the scene with the list ↔ just the scene; from the screen-saver view (Settings
+    /// only), back to the scene with the list.
+    private func cycleWindowView() { toggleWindowList() }
 
     private func setBoard(_ on: Bool) {
         UserDefaults.standard.set(on, forKey: "windowBoard")
