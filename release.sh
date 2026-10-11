@@ -1,5 +1,6 @@
 #!/bin/zsh
 # Publishes a release: universal build → (optional) notarization → zip → GitHub release → Homebrew cask.
+# Only the newest two GitHub releases are kept; older ones are deleted (their tags stay).
 #   ./release.sh 2.14.0            refuses if tag v2.14.0 or its GitHub release already exists
 #   ./release.sh 2.14.0 --force    replaces an existing tag and GitHub release
 # HEAD must be pushed: it has to equal origin/main.
@@ -19,6 +20,7 @@ esac
 TAG="v$VERSION"
 ZIP="build/Clawd-Wars-$VERSION.zip"
 TAP_REPO="rodclemen/homebrew-tap"
+KEEP_RELEASES=2   # this one and the one before it
 
 [[ -z "$(git status --porcelain)" ]] || { echo "commit your changes first" >&2; exit 1; }
 grep -q "^## $VERSION " CHANGELOG.md || { echo "add a '## $VERSION' entry to CHANGELOG.md first" >&2; exit 1; }
@@ -63,6 +65,13 @@ fi
 gh release create "$TAG" "$ZIP" --title "Clawd Wars $VERSION" --notes "$NOTES
 
 **Install:** \`brew install --cask rodclemen/tap/clawd-wars\` — or download the zip, unzip, and move *Clawd Wars.app* to Applications."
+
+# Keep the newest $KEEP_RELEASES releases: older zips are never used (the cask names only the latest), and the one
+# before the latest stays as a quick rollback. Tags are kept, so every version's code is still marked in git.
+for old in $(gh release list --limit 200 --exclude-drafts --json tagName,createdAt \
+                 --jq "sort_by(.createdAt) | reverse | .[$KEEP_RELEASES:] | .[].tagName"); do
+    gh release delete "$old" --yes && echo "→ removed old release $old (tag kept)"
+done
 
 echo "→ Homebrew cask ($TAP_REPO)"
 gh repo view "$TAP_REPO" >/dev/null 2>&1 || gh repo create "$TAP_REPO" --public \

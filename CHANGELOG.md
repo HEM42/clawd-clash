@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- **`release.sh` keeps only the newest two GitHub releases.** After publishing it deletes every older release, keeping their git tags. Old zips were never downloaded (the Homebrew cask names only the latest), and the release before the latest stays as a quick rollback. Set by `KEEP_RELEASES=2` at the top of the script.
+
 ## 2.25.0 — 2026-10-11
 
 ### Added
