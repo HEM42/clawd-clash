@@ -142,6 +142,7 @@ enum Location: String, CaseIterable {
         case .falcon: Scenes.dejarik(c, g, t: t)
         case .sandcrawler: Scenes.crawlerLights(c, g, t: t)
         case .obiWanHut: Scenes.obiWanHologram(c, g, t: t)
+        case .jakku: Scenes.jakkuWind(c, g, t: t)
         case .hoth: Scenes.snowfall(c, g, t: t)
         case .rancorPit: Scenes.grateLight(c, g, t: t)
         default: break
@@ -972,19 +973,110 @@ enum Scenes {
         c.ground(g, C(0xD8B07A), edge: C(0xE8C894), speck: C(0xC09A66), seed: 16)
     }
 
-    // Rey — Jakku: dunes and the half-buried Star Destroyer.
+    // Rey — Jakku, the Graveyard of Giants (The Force Awakens): a HUGE crashed Star Destroyer half-buried across the
+    // whole scene, Rey's salvaged speeder and a TIE wing in the sand, under a white-hot sun (heat shimmer, blowing
+    // sand and BB-8 rolling about in `jakkuWind`).
     static func jakku(_ c: PixelCanvas, _ g: Int) {
-        c.gradient(0, g, C(0xA8C8E0), C(0xF4DCA8), bands: 5)
-        let sx = c.w / 2
-        // the half-buried Star Destroyer: a sunlit top face and a shadowed side
-        for k in 0..<40 {
-            c.rect(sx - 34 + k, g - 24 + k / 3, 76 - k, 1, k < 6 ? C(0xA8AEB8) : C(0x7A808C))
-            c.px(sx + 42 - k, g - 24 + k / 3, C(0x4E535C))
+        // Bleached sky, hazy toward the horizon, and the sun with its glare.
+        c.gradient(0, g, C(0x9EBCD4), C(0xF6E2B8), bands: 7)
+        let sunX = 40, sunY = 12
+        for r in stride(from: 20, through: 6, by: -7) { c.circle(sunX, sunY, r, C(0xFFF6DC, 0.12)) }
+        c.circle(sunX, sunY, 5, C(0xFFFCF0))
+
+        // The crashed Star Destroyer, HUGE: nose buried in the sand on the left, the hull rising across most of the
+        // sky to its stern on the right, with the stepped superstructure, the bridge tower and three engine bells on
+        // its back face. Washed out by distance.
+        let base = g - 6
+        let noseX = 8, sternX = c.w - 62
+        let deck = Double(base - 3 - 24) / Double(sternX - noseX)          // slope: the stern deck sits 24 px from the top
+        let hull = C(0xB4BAC2), hullDark = C(0x949AA4), hullLight = C(0xD2D6DC), seam = C(0xA2A8B0)
+        func deckY(_ x: Int) -> Int { base - Int(Double(x - noseX) * deck) - 3 }
+        for x in noseX...sternX {
+            let top = deckY(x)
+            c.rect(x, top, 1, base - top, (x - noseX) % 23 == 0 ? hullDark : hull)
+            c.px(x, top, hullLight)
+            // the lower flank in shadow, a band under the deck edge
+            let flank = top + max(3, (base - top) / 3)
+            c.rect(x, flank, 1, base - flank, hullDark)
+            if (x - noseX) % 9 == 0 { c.rect(x, top + 2, 1, max(1, (flank - top) - 3), seam) }   // plating
         }
-        for k in 0..<7 { c.rect(sx - 14 + k * 7, g - 21, 1, 7, C(0x5A606A)) }
-        c.rect(sx - 6, g - 29, 12, 5, C(0x8A909A)); c.rect(sx - 6, g - 29, 12, 1, C(0xB8BEC8))
-        c.dunes(base: g - 6, amp: 4, freq: 0.035, phase: 0.3, bottom: g, C(0xDDB477), shade: C(0xEACB94))
-        c.ground(g, C(0xE0B87C), edge: C(0xF0CC94), speck: C(0xC8A066), seed: 17)
+        // the stepped superstructure on the rear half, following the deck's tilt
+        for (i, (from, len, rise)) in [(0.42, 0.58, 4), (0.6, 0.4, 8), (0.76, 0.24, 12)].enumerated() {
+            let x0 = noseX + Int(Double(sternX - noseX) * from), x1 = min(sternX, x0 + Int(Double(sternX - noseX) * len))
+            for x in x0..<x1 {
+                let top = deckY(x) - rise
+                c.rect(x, top, 1, rise, i % 2 == 0 ? hull : C(0xBEC4CA)); c.px(x, top, hullLight)
+            }
+        }
+        // the bridge tower and its two shield domes, near the stern
+        let bx = sternX - 26, by = deckY(bx) - 12
+        c.rect(bx - 2, by - 6, 5, 6, hull); c.rect(bx - 10, by - 9, 21, 3, C(0xC4CAD0)); c.rect(bx - 10, by - 9, 21, 1, hullLight)
+        c.ellipse(bx - 8, by - 10, 3, 1, C(0xCCD2D8)); c.ellipse(bx + 8, by - 10, 3, 1, C(0xCCD2D8))
+        // the stern face with its three engine bells
+        let sTop = deckY(sternX) - 12
+        c.rect(sternX, sTop, 10, base - sTop, hullDark); c.rect(sternX, sTop, 1, base - sTop, hullLight)
+        for (k, ey) in [sTop + 9, sTop + 21, sTop + 33].enumerated() where ey < base - 4 {
+            let r = k == 0 ? 6 : 5
+            c.circle(sternX + 8, ey, r, C(0x7A808A)); c.circle(sternX + 8, ey, r - 2, C(0x4A4E56))
+        }
+        // sand heaped against it and spilling over the buried nose
+        c.dunes(base: base, amp: 3, freq: 0.06, phase: 1.1, bottom: g, C(0xE4C68E), shade: C(0xF0D6A2))
+        c.ellipse(noseX + 8, base - 1, 22, 4, C(0xE4C68E))
+
+        // Back dunes.
+        c.dunes(base: g - 8, amp: 5, freq: 0.03, phase: 0.6, bottom: g, C(0xE6C488), shade: C(0xF2D8A2))
+
+        // A crashed TIE wing stuck in the sand (far right, past the stern).
+        let tw = c.w - 34
+        for k in 0..<18 {                                                  // a hexagonal wing panel stuck in the sand at a tilt
+            c.rect(tw + k / 3, g - 4 - k, 12, 1, k % 6 == 0 ? C(0x3A3E46) : C(0x4E545E))
+        }
+        for k in 0..<4 { c.rect(tw + 2 + k * 3 + k / 2, g - 20 + k, 1, 14, C(0x2A2E36)) }
+
+        // Rey's speeder, parked in the foreground: the big intake, the tarp and the net of salvage.
+        let px = 60
+        c.rect(px, g - 9, 22, 5, C(0x8A8A82)); c.rect(px, g - 9, 22, 1, C(0xB0B0A6))
+        c.circle(px + 3, g - 7, 4, C(0x5A5A54)); c.circle(px + 3, g - 7, 2, C(0x2A2A28))   // the intake
+        c.rect(px + 10, g - 13, 10, 4, C(0x8E6A44)); c.rect(px + 10, g - 13, 10, 1, C(0xA8845A))   // tarp-wrapped salvage
+        for k in 0..<5 { c.px(px + 11 + k * 2, g - 12, C(0x5A4A3A)) }     // the net
+        c.rect(px + 4, g - 4, 14, 1, C(0x000000, 0.18))                    // its shadow, hovering
+
+        // Foreground sand.
+        c.ground(g, C(0xE0B87C), edge: C(0xF4D49C), speck: C(0xC8A066), seed: 17)
+    }
+
+    /// Heat shimmer off the sand, blowing grit, and BB-8 rolling back and forth.
+    static func jakkuWind(_ c: PixelCanvas, _ g: Int, t: Double) {
+        // BB-8: a white ball with orange rings, rolling, its domed head riding on top and bobbing.
+        let span = Double(c.w - 140), p = (t * 0.045).truncatingRemainder(dividingBy: 2)
+        let u = p < 1 ? p : 2 - p                                          // there and back
+        let bx = 120 + Int(u * span), dir = p < 1 ? 1.0 : -1.0
+        let by = g + 1, roll = t * 5 * dir
+        c.circle(bx, by - 5, 5, C(0xF2F0EA)); c.circle(bx, by - 5, 5, C(0xF2F0EA))
+        for k in 0..<2 {                                                   // the orange rings turn as it rolls
+            let a = roll + Double(k) * .pi
+            let rx = bx + Int(cos(a) * 3), ry = by - 5 + Int(sin(a) * 3)
+            c.circle(rx, ry, 1, C(0xE8862A)); c.px(rx, ry, C(0xC8C8C0))
+        }
+        c.rect(bx - 5, by - 1, 11, 1, C(0x000000, 0.15))                   // its shadow
+        let bob = Int(abs(sin(t * 6)) * 1)
+        c.ellipse(bx + Int(dir), by - 11 - bob, 3, 2, C(0xF2F0EA))         // the head
+        c.rect(bx - 3 + Int(dir), by - 10 - bob, 7, 1, C(0xE8862A))
+        c.px(bx + Int(dir * 2), by - 12 - bob, C(0x1A1A1E))                // the eye
+        c.px(bx + Int(dir), by - 14 - bob, C(0x9A9A9A))                     // antenna
+
+        for i in 0..<5 {   // shimmer: faint wavering bands just above the dunes
+            let y = g - 10 - i * 3
+            for x in stride(from: 0, to: c.w, by: 6) {
+                let o = sin(Double(x) * 0.15 + t * 3 + Double(i)) * 1.2
+                c.px(x + Int(o), y, C(0xFFF4DC, 0.10))
+            }
+        }
+        for i in 0..<26 {  // grit blowing across, low over the ground
+            let p = (t * (0.18 + noise(i * 5) * 0.12) + noise(i * 7)).truncatingRemainder(dividingBy: 1)
+            let x = Int(p * Double(c.w + 20)) - 10, y = g - 2 - Int(noise(i * 3) * 14) + Int(sin(t * 2 + Double(i)) * 1.5)
+            c.px(x, y, C(0xF0D29C, 0.6)); c.px(x - 1, y, C(0xF0D29C, 0.3))
+        }
     }
 
     // Mace Windu / Ahsoka — the Jedi Council chamber: tall windows onto the Coruscant skyline.
