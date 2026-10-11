@@ -19,6 +19,7 @@ struct CardModel {
     let portrait: CGImage?
     let pid: Int32?
     var group: (title: String, color: NSColor)? = nil   // first card of an AI's group, when several AIs run
+    var spriteColor = NSColor.white                     // the character's outline colour (its AI), for the name pill
 }
 
 /// "Show in Window" mode: a normal window with the crew in a scene strip on top and a card per Claude
@@ -499,10 +500,10 @@ final class CardsView: NSView {
             var namePill: NSRect?
             if !c.project.isEmpty {
                 let name = NSAttributedString(string: c.villain, attributes: [
-                    .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold), .foregroundColor: NSColor(white: 0.82, alpha: 1)])
+                    .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold), .foregroundColor: c.spriteColor])
                 let nw = name.size().width
                 let pill = NSRect(x: r.maxX - 12 - nw - 14, y: chip.maxY + 5, width: nw + 14, height: 17)
-                NSColor(white: 1, alpha: 0.09).setFill()
+                c.spriteColor.withAlphaComponent(0.16).setFill()   // tinted like the sprite's outline
                 NSBezierPath(roundedRect: pill, xRadius: 8.5, yRadius: 8.5).fill()
                 name.draw(at: NSPoint(x: pill.minX + 7, y: pill.minY + 2))
                 namePill = pill
