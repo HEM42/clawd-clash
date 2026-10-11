@@ -441,9 +441,12 @@ enum StatusStore {
                 used.insert(leader)
             }
             previous = leader
-            result.append(SessionSnapshot(id: id, leader: leader, project: rec.project ?? "",
+            // The live cwd beats the hooks' copy: after a folder rename the hooks can report a stale path.
+            let cwd = rec.pid.flatMap { ClaudeProcesses.cwd($0) }
+            result.append(SessionSnapshot(id: id, leader: leader,
+                                          project: cwd.map { ($0 as NSString).lastPathComponent } ?? rec.project ?? "",
                                           mood: mood(rec, now: now), agents: [], pid: rec.pid, record: rec,
-                                          assistant: assistantOf(rec), cwd: rec.pid.flatMap { ClaudeProcesses.cwd($0) },
+                                          assistant: assistantOf(rec), cwd: cwd,
                                           client: rec.client ?? processes?.first { $0.pid == rec.pid }?.client))
         }
         if let processes {
