@@ -10,6 +10,11 @@
 ### Fixed
 - **Renaming a project's folder no longer leaves the card titled after its parent.** After a session's folder was renamed (e.g. to `/Volumes/8TB/- CODE -/workbench`), the card showed `- CODE -`, the parent folder. The name came from the `cwd` in the hook events, and the folder had been renamed while the session was open in it, so the old path no longer existed and the hooks reported the parent instead. The info lines were already right because they read the live process's working directory. `StatusStore.snapshot` now names a session after the live process's working directory whenever it knows the pid, and only falls back to the hook's `cwd` when it doesn't.
 
+### Docs
+- **README and `llms.txt` describe the new card titles, the host pill and the menu bar helmet.** The README's window section says cards are titled with the repo name (the folder name when there's no remote) and shows where the repo lives. The menu bar bullet lists Hide/Show Clawd Wars. `llms.txt` adds `Sources/Shared/GitRemote.swift` to the code map, notes that project names come from the live process cwd, and that the helmet opens the menu on click and hides or shows the app on double-click.
+
+- Learned that a menu bar icon reports every click as a first click. Double-clicks are a social construct.
+
 ## 2.23.1 — 2026-10-11
 
 ### Fixed

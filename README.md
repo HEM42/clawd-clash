@@ -90,7 +90,7 @@ And when Han Solo's agent is done, he doesn't just fade away — the Millennium 
 
 ## Window mode
 
-Prefer a window? **Show in Window** puts the whole crew in a scene and gives every session a card: what it's doing *right now*, your last prompt, its last reply, how long it's been at it — with its agents hanging underneath in a little tree, each with its task and current tool call. With more than one AI running, every AI gets its own section.
+Prefer a window? **Show in Window** puts the whole crew in a scene and gives every session a card, titled with its project (the repo's name when it has a git remote, otherwise the folder's) and a pill saying where the repo lives (GitHub, GitLab, … or Local): what it's doing *right now*, your last prompt, its last reply, how long it's been at it — with its agents hanging underneath in a little tree, each with its task and current tool call. With more than one AI running, every AI gets its own section.
 
 <p align="center">
   <img src="docs/window-cantina.png" alt="Window mode in the Mos Eisley Cantina" width="760">
@@ -141,7 +141,7 @@ Hover over anyone for the details — what that session is doing right now, your
 - **Newcomers walk in** from the side of the screen, one at a time, instead of popping up.
 - **Drag** the crew anywhere — they'll stand right on the bottom edge of either monitor. Bubbles and labels never go off-screen; if the line is too long, everyone walks over to make room.
 - **Click** a villain (or a card) to jump to the session: the exact tab in Terminal or iTerm2, or the right window — even the right *native tab* — in VS Code or Cursor.
-- **Menu bar helmet** and right-click give you everything: status, Show in Window, Location, Settings. Hold **⌘** for the Playground (put any villains and heroes on stage and watch them fight) and Demo Mode.
+- **Menu bar helmet** and right-click give you everything: status, Hide/Show Clawd Wars, Show in Window, Location, Settings. Hold **⌘** for the Playground (put any villains and heroes on stage and watch them fight) and Demo Mode.
 
 ## Install
 
