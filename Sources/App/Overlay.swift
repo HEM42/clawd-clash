@@ -1359,7 +1359,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     private var statusItem: NSStatusItem?
     private let statusMenu = NSMenu()
-    private var pendingStatusMenu: DispatchWorkItem?
     /// Hidden from the menu bar helmet (double-click): neither the crew nor the window shows. Not remembered across launches.
     private(set) var hidden = false
 
@@ -1389,27 +1388,35 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
     }
 
+    /// A click on the helmet this soon after the menu opened counts as a double-click. Our own, not the system's
+    /// double-click time (that can be set to seconds), and the status item reports every click with a clickCount
+    /// of 1 anyway. The menu takes ~0.35 s to open and close again on a quick double-click.
+    private static let statusDoubleClick: TimeInterval = 0.6
+    private var ignoreStatusClickUntil: TimeInterval = 0
+
     @objc private func statusItemClicked() {
-        guard let event = NSApp.currentEvent else { return }
-        pendingStatusMenu?.cancel()
-        pendingStatusMenu = nil
-        if event.type == .rightMouseUp || event.modifierFlags.contains(.control) {
-            showStatusMenu()
-        } else if event.clickCount == 2 {
-            toggleHidden()
-        } else if event.clickCount == 1 {
-            let open = DispatchWorkItem { [weak self] in self?.showStatusMenu() }
-            pendingStatusMenu = open
-            DispatchQueue.main.asyncAfter(deadline: .now() + NSEvent.doubleClickInterval, execute: open)
-        }
+        // The mouse-up of a double-click that already closed the menu and hid us: don't reopen the menu.
+        if ProcessInfo.processInfo.systemUptime < ignoreStatusClickUntil { return }
+        showStatusMenu()
     }
 
-    /// Attaching the menu only while it opens keeps clicks coming to `statusItemClicked`.
+    /// The menu opens at once. Clicking the helmet again right away closes it and hides (or shows) Clawd Wars.
     private func showStatusMenu() {
-        guard let item = statusItem else { return }
-        item.menu = statusMenu
-        item.button?.performClick(nil)   // returns once the menu closes
+        guard let item = statusItem, let button = item.button else { return }
+        let opened = ProcessInfo.processInfo.systemUptime
+        item.menu = statusMenu   // attached only while it opens, so clicks keep coming to `statusItemClicked`
+        button.performClick(nil)   // returns once the menu closes
         item.menu = nil
+        let now = ProcessInfo.processInfo.systemUptime
+        // Closed by a left click on the helmet itself (not on a menu item, not by Escape)?
+        let closer = NSApp.currentEvent
+        let onHelmet = button.window.map { $0.convertToScreen(button.convert(button.bounds, to: nil)) }?
+            .contains(NSEvent.mouseLocation) ?? false
+        if now - opened < Self.statusDoubleClick, onHelmet,
+           closer?.type == .leftMouseDown || closer?.type == .leftMouseUp {
+            ignoreStatusClickUntil = now + 0.5
+            toggleHidden()
+        }
     }
 
     @objc func toggleHidden() {
@@ -1417,6 +1424,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         if hidden {
             panel.orderOut(nil)
             clawdWindow?.window.orderOut(nil)
+        } else if windowMode, let window = clawdWindow?.window {
+            window.orderFrontRegardless()   // back on screen without taking focus from the app you're in
         } else if windowMode {
             openWindow()
         } else {
