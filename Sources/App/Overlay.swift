@@ -186,7 +186,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         offerHooksOnFirstLaunch()
 
         Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.refreshStatus() }
-        let frame = Timer(timeInterval: 1.0 / 30, repeats: true) { [weak self] _ in self?.tick() }
+        let frame = Timer(timeInterval: 1.0 / 20, repeats: true) { [weak self] _ in self?.tick() }
         RunLoop.main.add(frame, forMode: .common)
     }
 
@@ -339,7 +339,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         debounceMoods(now)
         Accents.update(visible: sessions.map(\.project))
         relayout()
-        if windowMode { updateCards(now) }
+        if windowMode && onScreen { updateCards(now) }
     }
 
     private func debounceMoods(_ now: Double) {
@@ -704,13 +704,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let hoverChanged = hovered != hoveredKey
         hoveredKey = hovered
 
-        // Idle scenes only breathe, so 10 fps is plenty; full 30 fps when anything is moving.
+        // Idle scenes only breathe, so 10 fps is plenty; 20 fps when anything is moving (chunky pixel art needs no more).
         frameCount += 1
         let busy = dragging || !fights.isEmpty || actors.contains {
             $0.walkDir != 0 || $0.leaving != nil || now - $0.born < fadeIn || !$0.isLeader
                 || $0.mode == .working || $0.mode == .waiting
         }
-        guard busy || hoverChanged || frameCount % 3 == 0 else { return }
+        guard busy || hoverChanged || frameCount % 2 == 0 else { return }
+        guard onScreen || shotPath != nil else { return }   // hidden or fully covered: nothing would show
 
         items = buildItems(now: now)
         if let shotPath, now - lastShot > shotEvery {
@@ -1361,6 +1362,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private let statusMenu = NSMenu()
     /// Hidden from the menu bar helmet (double-click): neither the crew nor the window shows. Not remembered across launches.
     private(set) var hidden = false
+
+    /// Whether anything we draw can be seen: not hidden, and the window (or desktop panel) not fully covered or minimised.
+    private var onScreen: Bool {
+        guard !hidden else { return false }
+        let window: NSWindow? = windowMode ? clawdWindow?.window : panel
+        return window?.occlusionState.contains(.visible) ?? false
+    }
 
     /// A Vader Clawd helmet in the menu bar, opening the same menu as right-clicking a villain.
     /// Double-clicking it hides or shows Clawd Wars, so a single click opens the menu only once the

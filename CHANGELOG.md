@@ -10,6 +10,14 @@
 ### Fixed
 - **Renaming a project's folder no longer leaves the card titled after its parent.** After a session's folder was renamed (e.g. to `/Volumes/8TB/- CODE -/workbench`), the card showed `- CODE -`, the parent folder. The name came from the `cwd` in the hook events, and the folder had been renamed while the session was open in it, so the old path no longer existed and the hooks reported the parent instead. The info lines were already right because they read the live process's working directory. `StatusStore.snapshot` now names a session after the live process's working directory whenever it knows the pid, and only falls back to the hook's `cwd` when it doesn't.
 
+### Performance
+- **About half the CPU: from a steady ~18% of a core to ~10% (window mode, three sessions, Hoth).** Memory was already small (~40 MB, flat over time, no leak) and is unchanged. Profiling with `sample` found four costs:
+  - **The scene's background was redrawn every frame.** The location's static picture was scaled up to Retina size 10–30 times a second. It now lives in its own `RoomView` behind the scene, which only redraws when the window is resized or the location changes. AppKit keeps its pixels in between. The scene view draws only what moves.
+  - **The card background blended two colours per speck.** About a thousand 2×2 specks, each with an `NSColor.blended(…)` call, made up half of `CardsView.draw`. The two colours are now computed once and the specks filled in two batches.
+  - **The process scan made one system call per process on the Mac**, then read the command line of every process you own, every 3 seconds (~95 ms per scan). `ClaudeProcesses.running` now gets all of your processes in one `KERN_PROC_UID` call and remembers what each one is, by pid, start time and name. Arguments are only read for processes it hasn't seen before. The working directory is still read fresh each scan, so folder renames still show.
+  - **Frames were built even when nothing could be seen.** Frames and card updates now stop while Clawd Wars is hidden (double-click on the helmet) or its window or desktop crew is completely covered or minimised.
+- **Animation runs at 20 fps instead of 30 while something moves**, and stays at 10 fps when idle. The pixel art doesn't need more, and all animation is time-based, so nothing moves slower. Dragging the crew is drawn at 20 fps too.
+
 ### Docs
 - **README and `llms.txt` describe the new card titles, the host pill and the menu bar helmet.** The README's window section says cards are titled with the repo name (the folder name when there's no remote) and shows where the repo lives. The menu bar bullet lists Hide/Show Clawd Wars. `llms.txt` adds `Sources/Shared/GitRemote.swift` to the code map, notes that project names come from the live process cwd, and that the helmet opens the menu on click and hides or shows the app on double-click.
 

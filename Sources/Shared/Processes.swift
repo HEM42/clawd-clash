@@ -74,42 +74,41 @@ enum ClaudeProcesses {
         }
     }
 
+    /// What a process turned out to be, remembered so its arguments are only read once. Keyed by pid and
+    /// checked against start time and name, so a reused pid or an `exec` is looked at again.
+    private struct Kind { let started: Double; let comm: String; let assistant: String?; let client: String? }
+    private static var kinds: [Int32: Kind] = [:]
+
     /// Interactive `claude` sessions (not `claude -p` one-shots, MCP servers or the Chrome bridge).
     static func running() -> [Info] {
-        let count = proc_listallpids(nil, 0)
-        guard count > 0 else { return [] }
-        var pids = [Int32](repeating: 0, count: Int(count) + 64)
-        let n = proc_listallpids(&pids, Int32(pids.count * MemoryLayout<Int32>.size))
-        let me = getuid()
+        // All of this user's processes in one call, instead of one call per process on the Mac.
+        var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_UID, Int32(bitPattern: getuid())]
+        var size = 0
+        guard sysctl(&mib, 4, nil, &size, nil, 0) == 0 else { return [] }
+        let stride = MemoryLayout<kinfo_proc>.stride
+        size += 64 * stride   // room for processes started in between
+        var procs = [kinfo_proc](repeating: kinfo_proc(), count: size / stride)
+        guard sysctl(&mib, 4, &procs, &size, nil, 0) == 0 else { return [] }
         var found: [Info] = []
-        for pid in pids.prefix(Int(max(n, 0))) where pid > 0 {
-            var info = kinfo_proc()
-            var size = MemoryLayout<kinfo_proc>.stride
-            var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, pid]
-            guard sysctl(&mib, 4, &info, &size, nil, 0) == 0, info.kp_eproc.e_ucred.cr_uid == me else { continue }
-            let args = arguments(pid)
-            guard let first = args.first else { continue }
-            let exe = (first as NSString).lastPathComponent
-            let isClaude = exe == "claude" || args.contains { $0.hasSuffix("@anthropic-ai/claude-code/cli.js") }
-            let isCodex = exe == "codex" || args.contains { $0.contains("@openai/codex") && $0.hasSuffix(".js") }
-            let isQwen = exe == "qwen" || args.contains { $0.contains("@qwen-code/qwen-code") && $0.hasSuffix(".js") }
-            let isGemini = exe == "gemini" || args.contains { $0.contains("@google/gemini-cli/") && $0.hasSuffix(".js") }
-            // "@github/copilot/" with the slash: not VS Code's copilot-language-server
-            let isCopilot = exe == "copilot" || args.contains { $0.contains("@github/copilot/") && $0.hasSuffix(".js") }
-            guard isClaude || isCodex || isQwen || isGemini || isCopilot else { continue }
-            let skip = ["-p", "--print", "--chrome-native-host", "mcp", "--version", "-v", "update", "doctor",
-                        "exec", "login", "logout", "app-server", "mcp-server", "completion", "proto"]
-            if args.dropFirst().contains(where: { skip.contains($0) }) { continue }
-            let project = cwd(pid).map { ($0 as NSString).lastPathComponent } ?? ""
+        var seen: [Int32: Kind] = [:]
+        for info in procs.prefix(size / stride) {
+            let pid = info.kp_proc.p_pid
+            guard pid > 0 else { continue }
             let st = info.kp_proc.p_starttime
-            let assistant = isCodex ? "codex" : isQwen ? "qwen" : isGemini ? "gemini" : isCopilot ? "copilot" : "claude"
-            // Claude Code bundled with the desktop app or the VS Code extension, told apart by where it lives.
-            let client: String? = !isClaude ? nil
-                : first.contains("/Application Support/Claude/claude-code/") ? "claude-desktop"
-                : first.contains("/extensions/anthropic.claude-code") ? "claude-vscode" : nil
-            found.append(Info(pid: pid, project: project, assistant: assistant,
-                              started: Double(st.tv_sec) + Double(st.tv_usec) / 1e6, client: client))
+            let started = Double(st.tv_sec) + Double(st.tv_usec) / 1e6
+            let comm = withUnsafeBytes(of: info.kp_proc.p_comm) { String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self) }
+            var kind = kinds[pid]
+            if kind?.started != started || kind?.comm != comm {
+                let (assistant, client) = classify(pid)
+                kind = Kind(started: started, comm: comm, assistant: assistant, client: client)
+            }
+            seen[pid] = kind
+            guard let kind, let assistant = kind.assistant else { continue }
+            // The cwd is read every time: it follows a folder rename.
+            let project = cwd(pid).map { ($0 as NSString).lastPathComponent } ?? ""
+            found.append(Info(pid: pid, project: project, assistant: assistant, started: started, client: kind.client))
         }
+        kinds = seen
         // A claude launched by another claude (e.g. a nested tool) isn't a separate session. The other AIs are
         // often an npm wrapper (or Gemini/Qwen relaunching itself) starting the real process: keep that child,
         // since it's the one that runs the hooks.
@@ -120,5 +119,28 @@ enum ClaudeProcesses {
             drop.insert(info.assistant == "claude" ? info.pid : up.pid)
         }
         return found.filter { !drop.contains($0.pid) }.sorted { $0.pid < $1.pid }
+    }
+
+    /// Which AI an interactive session process belongs to (nil if it isn't one), and Claude Code's client.
+    private static func classify(_ pid: Int32) -> (assistant: String?, client: String?) {
+        let args = arguments(pid)
+        guard let first = args.first else { return (nil, nil) }
+        let exe = (first as NSString).lastPathComponent
+        let isClaude = exe == "claude" || args.contains { $0.hasSuffix("@anthropic-ai/claude-code/cli.js") }
+        let isCodex = exe == "codex" || args.contains { $0.contains("@openai/codex") && $0.hasSuffix(".js") }
+        let isQwen = exe == "qwen" || args.contains { $0.contains("@qwen-code/qwen-code") && $0.hasSuffix(".js") }
+        let isGemini = exe == "gemini" || args.contains { $0.contains("@google/gemini-cli/") && $0.hasSuffix(".js") }
+        // "@github/copilot/" with the slash: not VS Code's copilot-language-server
+        let isCopilot = exe == "copilot" || args.contains { $0.contains("@github/copilot/") && $0.hasSuffix(".js") }
+        guard isClaude || isCodex || isQwen || isGemini || isCopilot else { return (nil, nil) }
+        let skip = ["-p", "--print", "--chrome-native-host", "mcp", "--version", "-v", "update", "doctor",
+                    "exec", "login", "logout", "app-server", "mcp-server", "completion", "proto"]
+        if args.dropFirst().contains(where: { skip.contains($0) }) { return (nil, nil) }
+        let assistant = isCodex ? "codex" : isQwen ? "qwen" : isGemini ? "gemini" : isCopilot ? "copilot" : "claude"
+        // Claude Code bundled with the desktop app or the VS Code extension, told apart by where it lives.
+        let client: String? = !isClaude ? nil
+            : first.contains("/Application Support/Claude/claude-code/") ? "claude-desktop"
+            : first.contains("/extensions/anthropic.claude-code") ? "claude-vscode" : nil
+        return (assistant, client)
     }
 }

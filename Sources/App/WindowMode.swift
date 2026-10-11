@@ -29,6 +29,7 @@ struct CardModel {
 final class ClawdWindow: NSObject, NSWindowDelegate {
     let window: NSWindow
     let sceneView = SceneView()
+    let roomView = RoomView()
     let cardsView = CardsView()
     private let scroll = NSScrollView()
     let header = HeaderView()
@@ -71,7 +72,9 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         scroll.autohidesScrollers = true
         // Overlay scrollers float over the cards instead of reserving a column for themselves.
         scroll.scrollerStyle = .overlay
+        content.addSubview(roomView)   // behind the scene: the place itself, redrawn only when it changes
         content.addSubview(sceneView)
+        sceneView.roomView = roomView
         content.addSubview(scroll)
         content.addSubview(header)
         header.controller = controller
@@ -158,6 +161,8 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         header.autoresizingMask = [.width, .minYMargin]
         sceneView.frame = NSRect(x: 0, y: b.height - hh - sh, width: b.width, height: sh)
         sceneView.autoresizingMask = [.width, .minYMargin]
+        roomView.frame = sceneView.frame
+        roomView.autoresizingMask = sceneView.autoresizingMask
         scroll.frame = NSRect(x: 0, y: 0, width: b.width, height: max(0, b.height - hh - sh))
         scroll.autoresizingMask = [.width, .height]
         applyScale()
@@ -168,6 +173,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         let k = Self.scale
         header.setBoundsSize(NSSize(width: header.frame.width / k, height: Self.headerHeight))
         sceneView.setBoundsSize(NSSize(width: sceneView.frame.width / k, height: sceneHeight))
+        roomView.setBoundsSize(sceneView.bounds.size)
         cardsView.frame.size.width = scroll.bounds.width
         cardsView.relayout()
         header.needsDisplay = true; sceneView.needsDisplay = true
@@ -325,8 +331,25 @@ final class HeaderView: NSView {
 }
 
 /// The scene strip: the Mos Eisley cantina, with the crew standing on its floor.
+/// The location's static picture, behind `SceneView`. Its own view so its pixels are kept between frames:
+/// redrawing it 10–30 times a second was most of the window's CPU time.
+final class RoomView: NSView {
+    var image: CGImage? { didSet { needsDisplay = true } }
+    var drawRect = CGRect.zero
+
+    override var isFlipped: Bool { false }
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }   // clicks go to the scene above
+
+    override func draw(_ dirtyRect: NSRect) {
+        guard let ctx = NSGraphicsContext.current?.cgContext, let image else { return }
+        ctx.interpolationQuality = .none
+        ctx.draw(image, in: drawRect)
+    }
+}
+
 final class SceneView: NSView {
     weak var controller: OverlayController?
+    weak var roomView: RoomView?
     var onDarkTopChange: (() -> Void)?
     /// How many points at the top of the scene are a dark band that looks like part of the title bar.
     private(set) var darkTop: CGFloat = 0
@@ -350,14 +373,18 @@ final class SceneView: NSView {
         if room?.size != b.size || room?.location != location {
             let c = PixelCanvas(pw, ph)
             location.drawStatic(c, floorRows: floorRows)
-            if let img = c.makeImage() { room = (b.size, location, img) }
+            if let img = c.makeImage() {
+                room = (b.size, location, img)
+                roomView?.drawRect = drawRect
+                roomView?.image = img
+            }
             // Dark rows along the top (row 0 is the top), minus whatever overhangs the view and is clipped.
             var rows = 0
             while rows < min(ph, 8), c.rowLuminance(rows) < 0.24 { rows += 1 }
             let dark = max(0, CGFloat(rows) * p - (CGFloat(ph) * p - b.height))
             if dark != darkTop { darkTop = dark; onDarkTopChange?() }
         }
-        if let img = room?.image { ctx.draw(img, in: drawRect) }
+        if roomView == nil, let img = room?.image { ctx.draw(img, in: drawRect) }
 
         // Whatever moves there: the cantina band, sarlacc tentacles, torches, laser gates, fog…
         let live = PixelCanvas(pw, ph)
@@ -452,12 +479,17 @@ final class CardsView: NSView {
         let panel = controller?.location.panel ?? NSColor(srgbRed: 0.17, green: 0.13, blue: 0.10, alpha: 1)
         panel.setFill()
         bounds.fill()
+        // Two colours, filled in two batches: blending a colour per speck was half of this view's drawing time.
+        var light: [CGRect] = [], dark: [CGRect] = []
         for i in 0..<Int(bounds.width * bounds.height / 260) {
             let x = noise(i * 13) * Double(bounds.width), y = noise(i * 13 + 1) * Double(bounds.height)
-            (noise(i * 13 + 2) > 0.5 ? panel.blended(withFraction: 0.12, of: .white)
-                                     : panel.blended(withFraction: 0.25, of: .black))?.setFill()
-            NSRect(x: CGFloat(x).rounded(), y: CGFloat(y).rounded(), width: 2, height: 2).fill()
+            let speck = CGRect(x: CGFloat(x).rounded(), y: CGFloat(y).rounded(), width: 2, height: 2)
+            if noise(i * 13 + 2) > 0.5 { light.append(speck) } else { dark.append(speck) }
         }
+        ctx.setFillColor((panel.blended(withFraction: 0.12, of: .white) ?? panel).cgColor)
+        ctx.fill(light)
+        ctx.setFillColor((panel.blended(withFraction: 0.25, of: .black) ?? panel).cgColor)
+        ctx.fill(dark)
         var y = Self.pad
         let x = Self.pad, w = bounds.width - Self.pad * 2
 
