@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Docs
+- **README images match the current scenes.** `docs/locations.png` re-rendered (the Death Star viewport's planet curve, Dagobah's new X-wing, the bigger Lars homestead, the throne room's stars inside its window, solid AT-ATs on Hoth), and `docs/window-hoth.png` re-shot from a Playground run with the new view-button icon. The Screen saver section now opens with `docs/screensaver.png`: the Lars homestead at 1440 × 900 with five sessions, a duel, agents and one needing you.
+
 ## 2.26.1 — 2026-10-11
 
 ### Changed
