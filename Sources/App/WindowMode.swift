@@ -19,7 +19,6 @@ struct CardModel {
     let portrait: CGImage?
     let pid: Int32?
     var group: (title: String, color: NSColor)? = nil   // first card of an AI's group, when several AIs run
-    var idle = false                                    // its project name fades slowly between its colour and yellow
 }
 
 /// "Show in Window" mode: a normal window with the crew in a scene strip on top and a card per Claude
@@ -394,19 +393,11 @@ final class CardsView: NSView {
     override var isFlipped: Bool { true }
 
     static let focusYellow = NSColor(srgbRed: 1, green: 0.88, blue: 0.29, alpha: 1)
-    private var fadeTimer: Timer?
 
     func update(cards: [CardModel], banner: String?) {
         self.cards = cards
         self.banner = banner
         relayout()
-        // Redraw smoothly only while a card's project name is fading.
-        let fading = cards.contains(where: \.idle)
-        if fading, fadeTimer == nil {
-            fadeTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 20, repeats: true) { [weak self] _ in self?.needsDisplay = true }
-        } else if !fading {
-            fadeTimer?.invalidate(); fadeTimer = nil
-        }
     }
 
     private static let pad: CGFloat = 12
@@ -504,14 +495,8 @@ final class CardsView: NSView {
             let header = NSMutableAttributedString(string: c.villain, attributes: [
                 .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: NSColor.white])
             if !c.project.isEmpty {
-                // Idle sessions: the project name fades slowly between its colour and yellow.
-                var color = c.accent
-                if c.idle {
-                    let f = 0.5 - 0.5 * cos(Date().timeIntervalSince1970 * 2 * .pi / 2.4)
-                    color = c.accent.blended(withFraction: CGFloat(f), of: Self.focusYellow) ?? c.accent
-                }
                 header.append(NSAttributedString(string: "  ·  " + c.project, attributes: [
-                    .font: NSFont.systemFont(ofSize: 13, weight: .semibold), .foregroundColor: color]))
+                    .font: NSFont.systemFont(ofSize: 13, weight: .semibold), .foregroundColor: c.accent]))
             }
             if c.focused {
                 header.append(NSAttributedString(string: "   ◆ you're here", attributes: [
