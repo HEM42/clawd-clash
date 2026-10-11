@@ -633,7 +633,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             rec.tools = 38 + i * 21
             var snap = SessionSnapshot(id: "pg-\(l)", leader: l, project: "", mood: playgroundMood, agents: i == 0 ? crew : [],
                                        record: rec)
-            if !playgroundAIs.isEmpty { snap.assistant = playgroundAIs[i % playgroundAIs.count] }
+            if !playgroundAIs.isEmpty {
+                snap.assistant = playgroundAIs[i % playgroundAIs.count]
+                // a sample model name that matches the AI, for screenshots
+                let models = ["codex": "gpt-5-codex", "qwen": "qwen3-coder", "gemini": "gemini-3-pro", "copilot": "copilot-cli"]
+                if let m = models[snap.assistant] { snap.record?.model = m }
+            }
             return snap
         }
     }

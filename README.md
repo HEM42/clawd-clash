@@ -71,10 +71,16 @@ Blasters are drawn from the film props — Han's DL-44, Leia's Defender, the Sto
 | blaster vs saber | bolts fly, the saber deflects each one off into the sky |
 | Force lightning vs saber | the blade catches the lightning |
 | lightning vs blaster | the gunner gets zapped |
-| blaster vs blaster | shootout |
+| blaster vs blaster | a proper shoot-out — they duck, bolts collide mid-air, shields flash, and bolts ping off armour |
 | odd one out | cheers the others on, with sparkles |
 
 Claudes fight Claudes, agents fight agents, and leftovers pair up or cheer. R2-D2, C-3PO and the tauntaun stay out of it.
+
+Two gunslingers never just shoot each other — most bolts get saved:
+
+<p align="center">
+  <img src="docs/shootout.png" alt="Blaster shoot-out: a shield flash, a duck, two bolts colliding mid-air, and a bolt ricocheting off Boba Fett's armour" width="900">
+</p>
 
 And when Han Solo's agent is done, he doesn't just fade away — the Millennium Falcon comes to pick him up:
 
@@ -84,19 +90,19 @@ And when Han Solo's agent is done, he doesn't just fade away — the Millennium 
 
 ## Window mode
 
-Prefer a window? **Show in Window** puts the whole crew in a scene and gives every Claude a card: what it's doing *right now*, your last prompt, its last reply, how long it's been at it, and every agent's task and current tool call.
+Prefer a window? **Show in Window** puts the whole crew in a scene and gives every session a card: what it's doing *right now*, your last prompt, its last reply, how long it's been at it — with its agents hanging underneath in a little tree, each with its task and current tool call. With more than one AI running, every AI gets its own section.
 
 <p align="center">
   <img src="docs/window-cantina.png" alt="Window mode in the Mos Eisley Cantina" width="760">
 </p>
 
-The scene is set **where the first Claude belongs** — the Death Star for Vader, the sarlacc pit for Boba, Jabba's palace, Hoth for the AT-AT:
+The scene is set **where the first session's character belongs** — the Death Star for Vader, the sarlacc pit for Boba, Jabba's palace, Hoth for the AT-AT (with more of them marching on the horizon):
 
 <p align="center">
   <img src="docs/window-hoth.png" alt="Window mode on Hoth" width="760">
 </p>
 
-22 hand-built locations, each with its own little animation — Figrin D'an and the Modal Nodes (or, some nights, the Max Rebo Band) play in the cantina while Wuher polishes glasses and Dr. Evazan looks for trouble at the bar, the Max Rebo Band plays for Jabba, the sarlacc's tentacles wave, Theed's laser gates pulse, snow falls on Hoth, fog drifts across Dagobah:
+22 hand-built locations, each with its own little animation — Figrin D'an and the Modal Nodes (or, some nights, the Max Rebo Band) play in the cantina while Wuher polishes glasses and Dr. Evazan looks for trouble at the bar; Han hangs in carbonite in Jabba's throne room; Leia's "help me" hologram flickers in Obi-Wan's hut; Jawas' eyes glow over heaps of droid junk in the sandcrawler; Luke's X-wing sinks in Dagobah's bog; the Falcon jumps to hyperspace past its cockpit window; BB-8 rolls past a Star Destroyer buried in Jakku's sand; Ewok lanterns flicker on Endor; AT-ATs march across Hoth; and Jabba's court peers down into the rancor pit:
 
 <p align="center">
   <img src="docs/locations.png" alt="All 22 locations" width="760">

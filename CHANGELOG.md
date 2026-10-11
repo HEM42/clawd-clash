@@ -2,6 +2,12 @@
 
 ## 2.22.0 — 2026-10-11
 
+### Docs
+- **README images re-rendered to match the app.** `locations.png` shows all the redrawn locations. `window-cantina.png` and `window-hoth.png` show the new title bar, the per-AI sections (Claude Code, Codex, Gemini CLI, Copilot CLI) with their outline colours, the agent tree and AGENT tags. `roster.png` and `social-preview.png` are refreshed.
+- New `docs/shootout.png`: four frames of a Boba Fett vs Han Solo shoot-out (shield, duck, bolts colliding, armour ricochet).
+- The README text covers the shoot-outs, agents shown as a tree, per-AI sections, and what each redrawn location shows.
+- Playground: `--ais=` also gives each session a sample model name that fits its AI, so screenshots don't show a Claude model on a Codex card.
+
 ### Changed
 - **The Rancor Pit redrawn from Return of the Jedi.** It used to be a flat speckled wall with a thin light cone and evenly spaced bones. Now:
   - a craggy cave: jagged rock faces with lit edges and cracks, stalactites along the top, and dark sides closing in;
