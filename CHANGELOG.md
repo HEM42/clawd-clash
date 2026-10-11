@@ -3,7 +3,7 @@
 ## 2.23.0 — 2026-10-11
 
 ### Changed
-- Card headers in the window no longer repeat the AI, and lead with the project: "Darth Vader · Claude · idle claude" is now "idle claude · Darth Vader". The project is in its colour and bold; the character follows in white. With several AIs running, the section header above already says which AI it is.
+- **Card headers are just the project**, bold in its colour. The character's name moves into a small grey pill on the right, under the status pill, and the text beside it stops short of it. The AI isn't repeated either: with several AIs running, the section header above says which AI it is. A card without a project keeps the character as its title.
 
 ### Fixed
 - **A project's colour no longer flips when several sessions share it.** With three sessions in the same project (e.g. two Claude Code sessions and one in Claude Desktop), its accent flipped between two colours every half second, on cards, borders and labels. To decide whether a remembered colour clashed with another project, `Accents.update` counted every session with that colour, so the project clashed with itself and was re-coloured on every refresh. Projects are now deduplicated first. Found by capturing the real window four times a second and diffing the frames.

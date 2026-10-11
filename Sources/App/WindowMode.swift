@@ -492,14 +492,21 @@ final class CardsView: NSView {
             c.statusColor.withAlphaComponent(0.16).setFill()
             NSBezierPath(roundedRect: chip, xRadius: 9.5, yRadius: 9.5).fill()
             status.draw(at: NSPoint(x: chip.minX + 7, y: chip.minY + 2))
-            // Project first (in its colour), then the character.
-            let header = NSMutableAttributedString()
+            // The project as the title, in its colour; the character in a pill on the right under the status.
+            // (No project? Then the character is the title and there's no pill.)
+            let header = NSMutableAttributedString(string: c.project.isEmpty ? c.villain : c.project, attributes: [
+                .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: c.project.isEmpty ? NSColor.white : c.accent])
+            var namePill: NSRect?
             if !c.project.isEmpty {
-                header.append(NSAttributedString(string: c.project + "  ·  ", attributes: [
-                    .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: c.accent]))
+                let name = NSAttributedString(string: c.villain, attributes: [
+                    .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold), .foregroundColor: NSColor(white: 0.82, alpha: 1)])
+                let nw = name.size().width
+                let pill = NSRect(x: r.maxX - 12 - nw - 14, y: chip.maxY + 5, width: nw + 14, height: 17)
+                NSColor(white: 1, alpha: 0.09).setFill()
+                NSBezierPath(roundedRect: pill, xRadius: 8.5, yRadius: 8.5).fill()
+                name.draw(at: NSPoint(x: pill.minX + 7, y: pill.minY + 2))
+                namePill = pill
             }
-            header.append(NSAttributedString(string: c.villain, attributes: [
-                .font: NSFont.systemFont(ofSize: 13, weight: .semibold), .foregroundColor: NSColor.white]))
             if c.focused {
                 header.append(NSAttributedString(string: "   ◆ you're here", attributes: [
                     .font: NSFont.systemFont(ofSize: 11, weight: .semibold),
@@ -510,7 +517,10 @@ final class CardsView: NSView {
             ty += 22
 
             for line in c.lines {
-                draw(line.text, at: NSPoint(x: tx, y: ty), width: tw, font: .systemFont(ofSize: 11.5), color: line.color)
+                // Lines level with the name pill stop short of it.
+                let beside = namePill.map { ty < $0.maxY && ty + Self.lineH > $0.minY } ?? false
+                let width = beside ? namePill!.minX - tx - 8 : tw
+                draw(line.text, at: NSPoint(x: tx, y: ty), width: width, font: .systemFont(ofSize: 11.5), color: line.color)
                 ty += Self.lineH
             }
 
