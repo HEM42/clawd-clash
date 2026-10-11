@@ -2,6 +2,9 @@
 
 ## 2.23.0 — 2026-10-11
 
+### Fixed
+- **A project's colour no longer flips when several sessions share it.** With three sessions in the same project (e.g. two Claude Code sessions and one in Claude Desktop), its accent flipped between two colours every half second, on cards, borders and labels. To decide whether a remembered colour clashed with another project, `Accents.update` counted every session with that colour, so the project clashed with itself and was re-coloured on every refresh. Projects are now deduplicated first. Found by capturing the real window four times a second and diffing the frames.
+
 ### Changed
 - **No more flickering "you're here" border.** The card of the session you're in used to get a thick yellow border that switched on and off whenever the once-a-second focus check briefly got a different answer. Now:
   - every card keeps a steady thin border in its project colour;

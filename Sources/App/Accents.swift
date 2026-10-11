@@ -14,7 +14,11 @@ enum Accents {
     }
 
     /// Assign colours for the projects currently on screen (call once per refresh), then look them up.
-    static func update(visible projects: [String]) {
+    static func update(visible all: [String]) {
+        // Each project once: several sessions in the same project share its colour, and must not count as a clash
+        // with themselves (that made a shared project's colour flip every refresh).
+        var seen = Set<String>()
+        let projects = all.filter { seen.insert($0).inserted }
         var map = assigned
         var used = Set(projects.compactMap { map[$0] })
         for p in projects where !p.isEmpty {
