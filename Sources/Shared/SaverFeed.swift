@@ -21,6 +21,7 @@ struct SaverFeed: Codable {
         var asleep = false         // idle for a long time
         var sitting = false
         var unknown = false        // no hooks: we can't tell what it's doing
+        var focused: Bool?         // its terminal is the one in front (the project you're in)
         var since: Double          // when the current mood began
         var activity: String?      // "Edit WindowMode.swift"
         var prompt: String?        // your last prompt

@@ -20,7 +20,6 @@ final class ClawdWarsSaverView: ScreenSaverView {
     private var feed: SaverFeed?
     private var lastRead = 0.0
     private var lastLocation = Location.cantina
-    private var tops: [Int: Int] = [:]          // `spriteTop`, per character
     /// Inside the app (the window's screen-saver view) it's handed the feed directly instead of reading the file.
     var feedSource: (() -> SaverFeed?)?
     /// Shown in the app's window rather than as the screen saver: no clock (the menu bar has one), a bigger place
@@ -157,7 +156,9 @@ final class ClawdWarsSaverView: ScreenSaverView {
 
     private func render(_ now: Double) {
         guard let root = host.layer else { return }
-        let running = feed.map { now - $0.at < SaverFeed.staleAfter } ?? false
+        // Fed by the app (the window's view), it's running by definition: during a live resize the app's timers
+        // pause and the feed ages past `staleAfter`, which put up "isn't running" until the mouse let go.
+        let running = feed.map { feedSource != nil || now - $0.at < SaverFeed.staleAfter } ?? false
         // Stale or not, the feed says where the crew was last: the place stays when Clawd Wars quits.
         if let f = feed, let l = Location(rawValue: f.location) { lastLocation = l }
         let location = visit ?? lastLocation
@@ -466,7 +467,7 @@ final class ClawdWarsSaverView: ScreenSaverView {
     /// A small tag floating over a head.
     private func tag(_ text: String, over p: Placed, top: CGFloat, color: NSColor, avoid bodies: [CGRect],
                      taken: inout [CGRect]) -> Item {
-        let img = chip(text, border: color, agent: !p.m.isLeader), size = sized(img)
+        let img = chip(text, border: color, agent: !p.m.isLeader, big: p.m.isLeader && p.m.session.focused == true), size = sized(img)
         var r = CGRect(x: p.x - size.width / 2, y: top + (shifted ? size.height + 3 * u : 0), width: size.width, height: size.height)
         r.origin.x = min(max(r.minX, 8 * u), bounds.width - r.width - 8 * u)
         // Up past any other tag, and off anyone's head.
@@ -481,26 +482,22 @@ final class ClawdWarsSaverView: ScreenSaverView {
     /// different heights carry their names at different heights.
     private func headTop(_ p: Placed, ls: CGFloat, cs: CGFloat, base: CGFloat) -> CGFloat {
         let k = p.m.isLeader ? ls : cs, feet = p.m.isLeader ? base : base + (ls - cs) * 8
-        return feet + CGFloat(Sprite.height - spriteTop(p.m.cast) + 3) * k
+        return feet + CGFloat(Sprite.height - p.m.cast.drawnTop() + 3) * k
     }
 
-    /// The space a character takes up (its body, not what floats off it), for keeping name tags off heads.
-    private func body(_ p: Placed, ls: CGFloat, cs: CGFloat, base: CGFloat) -> CGRect {
+    /// The space a character takes up, column by column from its drawn outline (not what floats off it), for keeping
+    /// name tags off heads: a box round each character was much wider than most of them, so a tag next to a tall
+    /// neighbour was lifted right over it.
+    private func body(_ p: Placed, ls: CGFloat, cs: CGFloat, base: CGFloat) -> [CGRect] {
         let k = p.m.isLeader ? ls : cs, feet = p.m.isLeader ? base : base + (ls - cs) * 8
-        return CGRect(x: p.x - 14 * k, y: feet, width: 28 * k, height: CGFloat(Sprite.height - spriteTop(p.m.cast)) * k)
-    }
-
-    /// The top row of a character as drawn, within 14 art pixels of its body's centre: the hand-measured `headTop`
-    /// misses some (the tauntaun's horns), and the band leaves out what floats above (R2's notes, the Ewok's spear).
-    private func spriteTop(_ cast: Cast) -> Int {
-        if let hit = tops[cast.id] { return hit }
-        let c = PixelCanvas(Sprite.width, Sprite.height)
-        cast.draw(c, t: 0, mode: .idle, walking: false, role: .none, asSession: true)
-        let mid = Int(Sprite.bodyCenterX)
-        var top = cast.headTop
-        rows: for y in 0..<top { for x in (mid - 14)...(mid + 14) where c.buf[(y * c.w + x) * 4 + 3] > 0 { top = y; break rows } }
-        tops[cast.id] = top
-        return top
+        let mirrored = p.facing < 0
+        let left = p.x - (mirrored ? CGFloat(Sprite.width) - CGFloat(Sprite.bodyCenterX) : CGFloat(Sprite.bodyCenterX)) * k
+        let profile = p.m.cast.drawnProfile()
+        return (0..<Sprite.width).compactMap { col in
+            let top = profile[mirrored ? Sprite.width - 1 - col : col]
+            guard top < Sprite.height else { return nil }
+            return CGRect(x: left + CGFloat(col) * k, y: feet, width: k, height: CGFloat(Sprite.height - top) * k)
+        }
     }
 
     /// The board: a card per session floating over the crew, in the crew's order and at uneven heights, each with a
@@ -511,7 +508,7 @@ final class ClawdWarsSaverView: ScreenSaverView {
         guard !crew.isEmpty else { return [] }
         let looks = crew.map { look($0.p.m.session, now: now) }
         var tags: [Item] = [], taken: [CGRect] = [], targets: [CGRect] = []
-        let bodies = placed.map { body($0, ls: ls, cs: cs, base: base) }
+        let bodies = placed.flatMap { body($0, ls: ls, cs: cs, base: base) }
         for (i, c) in crew.enumerated() {
             let s = c.p.m.session
             let name = (looks[i].alert ? "⚠ " : "") + Self.clip(s.project.isEmpty ? c.p.m.cast.name : s.project, 16)
@@ -634,11 +631,12 @@ final class ClawdWarsSaverView: ScreenSaverView {
     }
 
     /// A name tag as the window draws them: white on dark (bluish for agents), rounded, framed in the project's colour.
-    private func chip(_ s: String, border: NSColor, agent: Bool) -> CGImage {
-        let key = "chip" + s + border.description + "\(agent)\(u)\(scale)"
+    /// `big`: the project you're in, its name 15% larger.
+    private func chip(_ s: String, border: NSColor, agent: Bool, big: Bool = false) -> CGImage {
+        let key = "chip" + s + border.description + "\(agent)\(big)\(u)\(scale)"
         if let hit = textCache[key] { return hit }
         let t = NSAttributedString(string: Self.clip(s, 28), attributes: [
-            .font: NSFont.monospacedSystemFont(ofSize: (agent ? 12 : 13) * u, weight: agent ? .semibold : .bold),
+            .font: NSFont.monospacedSystemFont(ofSize: (agent ? 12 : 13) * u * (big ? 1.15 : 1), weight: agent ? .semibold : .bold),
             .foregroundColor: NSColor.white])
         let ts = t.size()
         let img = image(CGSize(width: ts.width + 16 * u, height: ts.height + 6 * u)) { ctx, size in

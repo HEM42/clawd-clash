@@ -52,6 +52,11 @@ final class SpriteLayers {
             if let text = item.text {
                 if !item.boxed { r.size = text.size() }   // plain text is drawn at its origin, at its own size
                 r = r.insetBy(dx: -Self.textPad, dy: -Self.textPad)
+                // Shown at exactly the image's whole pixels, on the pixel grid: a fraction of a pixel smaller and the
+                // nearest-neighbour filter dropped a whole row, cutting the tops off a name's letters.
+                let k = pixelsPerPoint
+                r = CGRect(x: (r.minX * k).rounded() / k, y: (r.minY * k).rounded() / k,
+                           width: (r.width * k).rounded(.up) / k, height: (r.height * k).rounded(.up) / k)
                 layer.contents = textImage(item, size: r.size, scale: pixelsPerPoint)
                 layer.contentsScale = pixelsPerPoint
             } else {

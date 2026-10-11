@@ -463,7 +463,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             out.append(SaverFeed.Session(
                 id: s.id, cast: cast.id, assistant: s.group, project: s.project, remote: s.pid == nil ? nil : (s.remote ?? "Local"),
                 accent: hex, mood: s.mood.rawValue, urgent: actor?.urgent ?? false, asleep: asleep, sitting: actor?.sitting ?? false,
-                unknown: !s.live || s.hookSilent, since: since(s, now: now),
+                unknown: !s.live || s.hookSilent, focused: s.pid != nil && s.pid == focusedPid, since: since(s, now: now),
                 activity: s.mood == .idle ? nil : s.record?.activity, prompt: s.record?.prompt, agents: agents))
             seenNow[s.id] = (s.mood.rawValue, asleep, cast.name, s.project, s.record?.prompt)
             for (a, fa) in zip(s.agents, agents) { agentsNow[a.id] = (Cast.of(a).name, fa.task, cast.name) }
@@ -994,8 +994,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
 
         let screenFrame = stage, ground = anchor.y
-        var labels: [(item: DrawItem, leader: Bool, focused: Bool)] = []
-        var bubbleRects: [NSRect] = []
+        var labels: [(item: DrawItem, leader: Bool, focused: Bool, key: String)] = []
+        // Speech bubbles are placed after the names (see below), so they're kept here till then.
+        var bubbles: [(key: String, x: CGFloat, y: CGFloat, kind: BubbleKind, urgent: Bool, preferRight: Bool, alpha: CGFloat)] = []
         // Companions first so leaders (and their sabers) draw on top.
         var falconItems: [DrawItem] = []
         for var actor in actors.sorted(by: { !$0.isLeader && $1.isLeader }) {
@@ -1065,17 +1066,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     .min { abs($0.x - actor.x) < abs($1.x - actor.x) }
                 let preferRight = nearest.map { $0.x < actor.x } ?? true
                 let onRight = preferRight ? rightX + w <= screenFrame.maxX : leftX < screenFrame.minX
-                let bc = PixelCanvas(Bubble.width, Bubble.height)
-                drawBubble(bc, kind: kind, t: t, urgent: actor.urgent, tailRight: !onRight)
-                if let bimg = bc.makeImage() {
-                    let h = CGFloat(Bubble.height) * ls
-                    let by = y + CGFloat(Sprite.height - 1 - Bubble.height) * ls
-                    let bx = onRight ? rightX : leftX
-                    bubbleSpan = (bx, bx + w, by + h)
-                    bubbleRects.append(NSRect(x: bx, y: by, width: w, height: h))
-                    overlay.append(DrawItem(image: bimg, rect: NSRect(x: bx.rounded(), y: by, width: w, height: h),
-                                            alpha: CGFloat(alpha)))
-                }
+                let h = CGFloat(Bubble.height) * ls
+                let by = y + CGFloat(Sprite.height - 1 - Bubble.height) * ls
+                let bx = onRight ? rightX : leftX
+                bubbleSpan = (bx, bx + w, by + h)
+                bubbles.append((actor.key, actor.x, by, kind, actor.urgent, onRight, CGFloat(alpha)))
             }
 
             // R0-GR acknowledges orders and Jabba laughs, now and then.
@@ -1097,13 +1092,15 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                                                                     width: size.width, height: size.height), alpha: CGFloat(alpha)))
             }
 
-            // Project name (Claudes) or task (agents) just above the head, clear of any speech bubble.
+            // Project name (Claudes) or task (agents) just above the head, centred on it. Speech bubbles make way for it.
             if (showLabels || !actor.isLeader) && !actor.label.isEmpty {
-                let font = actor.isLeader ? NSFont.monospacedSystemFont(ofSize: max(9, 10 * z), weight: .bold)
+                // The project you're in (its terminal in front) gets its name 15% larger.
+                let big: CGFloat = actor.isLeader && actor.focused ? 1.15 : 1
+                let font = actor.isLeader ? NSFont.monospacedSystemFont(ofSize: max(9, 10 * z) * big, weight: .bold)
                                           : NSFont.monospacedSystemFont(ofSize: max(8, 8.5 * z), weight: .semibold)
                 let centered = NSMutableParagraphStyle()
                 centered.alignment = .center
-                let lines = wrapLabel(actor.label, font: font, maxWidth: (actor.isLeader ? 110 : 88) * z)
+                let lines = wrapLabel(actor.label, font: font, maxWidth: (actor.isLeader ? 110 * big : 88) * z)
                 let text = NSAttributedString(string: lines.joined(separator: "\n"), attributes: [
                     .font: font,
                     .foregroundColor: NSColor.white,
@@ -1112,25 +1109,22 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 let textSize = text.size()
                 let size = NSSize(width: textSize.width + 10 * z, height: textSize.height + 4 * z)
                 var lx = actor.x - size.width / 2
-                if let b = bubbleSpan {
-                    if b.minX > actor.x { lx = min(lx, b.minX - size.width - 2 * z) }
-                    else { lx = max(lx, b.maxX + 2 * z) }
-                }
                 // Never past the screen edge.
                 lx = min(max(lx, screenFrame.minX + 2), screenFrame.maxX - size.width - 2)
                 let headTop: CGFloat
                 switch actor.kind {
-                case .leader(let who): headTop = CGFloat(Sprite.height - who.headTop) * ls + 8 * z
-                case .agent(let who): headTop = CGFloat(Sprite.height - who.headTop) * cs + 5 * z
+                case .leader(let who):
+                    // Its drawn top (the tauntaun's horns), lower when it's sitting down.
+                    let seated = actor.sitting && roles[actor.key] == nil && !walking && (actor.mode == .idle || actor.mode == .standGuard)
+                    headTop = CGFloat(Sprite.height - who.drawnTop(sitting: seated)) * ls + 8 * z
+                case .agent(let who): headTop = CGFloat(Sprite.height - who.drawnTop()) * cs + 5 * z
                 }
                 do {
-                    var ly = y + CGFloat(drop) * z + headTop
-                    // Pulled back over a speech bubble by the edge clamp? Sit on top of the bubble instead.
-                    if let b = bubbleSpan, lx < b.maxX, lx + size.width > b.minX { ly = max(ly, b.maxY + 3 * z) }
+                    let ly = y + CGFloat(drop) * z + headTop
                     labels.append((DrawItem(text: text, rect: NSRect(x: lx.rounded(), y: ly,
                                                                      width: size.width, height: size.height),
                                             alpha: CGFloat(alpha), boxed: true, agentBox: !actor.isLeader, accent: actor.accent),
-                                   actor.isLeader, actor.focused))
+                                   actor.isLeader, actor.focused, actor.key))
                 }
             }
         }
@@ -1164,9 +1158,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             }
         }
 
-        // Labels never overlap (from agent-view): Claudes' labels get first pick, then agents';
-        // anything that would collide moves up a row.
-        var placed = bubbleRects
+        // Names never overlap (from agent-view): Claudes' get first pick, then agents'; one that would collide with
+        // another moves up a row. Speech bubbles don't move names: they're placed after, round them.
+        var placed: [NSRect] = []
+        var named: [(item: DrawItem, focused: Bool, key: String)] = []
         for l in labels.sorted(by: { $0.leader && !$1.leader }) {
             var r = l.item.rect
             var tries = 0
@@ -1175,11 +1170,37 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 tries += 1
             }
             placed.append(r)
-            var item = l.item
-            item = DrawItem(text: item.text, rect: r, alpha: item.alpha, boxed: true, agentBox: item.agentBox, accent: item.accent)
-            overlay.append(item)
-            if l.focused {
+            let item = l.item
+            named.append((DrawItem(text: item.text, rect: r, alpha: item.alpha, boxed: true, agentBox: item.agentBox, accent: item.accent),
+                          l.focused, l.key))
+        }
+        // Each speech bubble beside its Claude's head, on the side away from its nearest neighbour; else the other
+        // side; else just above its own name. Whichever first stays on screen and clear of every name and bubble.
+        var taken = placed
+        for b in bubbles {
+            let w = CGFloat(Bubble.width) * ls, h = CGFloat(Bubble.height) * ls
+            let right = NSRect(x: b.x + 13 * ls, y: b.y, width: w, height: h)
+            let left = NSRect(x: b.x - 13 * ls - w, y: b.y, width: w, height: h)
+            let own = named.first { $0.key == b.key }?.item.rect
+            let above = NSRect(x: b.x - w / 2, y: max(b.y, (own?.maxY ?? b.y) + 2 * z), width: w, height: h)
+            let free = { (r: NSRect) in
+                r.minX >= screenFrame.minX && r.maxX <= screenFrame.maxX
+                    && !taken.contains { $0.insetBy(dx: -2 * z, dy: -1 * z).intersects(r) }
+            }
+            let sides = b.preferRight ? [right, left] : [left, right]
+            let r = sides.first(where: free) ?? above
+            taken.append(r)
+            let bc = PixelCanvas(Bubble.width, Bubble.height)
+            drawBubble(bc, kind: b.kind, t: t, urgent: b.urgent, tailRight: r.midX < b.x)
+            if let bimg = bc.makeImage() {
+                overlay.append(DrawItem(image: bimg, rect: NSRect(x: r.minX.rounded(), y: r.minY, width: w, height: h), alpha: b.alpha))
+            }
+        }
+        for n in named {
+            overlay.append(n.item)
+            if n.focused {
                 // Bobbing marker over the Claude whose terminal you're in.
+                let r = n.item.rect
                 let caret = PixelCanvas(3, 3)
                 drawFocusCaret(caret)
                 if let img = caret.makeImage() {
@@ -2416,8 +2437,10 @@ final class OverlayView: NSView {
                         box.lineWidth = 1
                     }
                     box.stroke()
-                    let ts = text.size()
-                    text.draw(in: NSRect(x: r.midX - ts.width / 2, y: r.midY - ts.height / 2, width: ts.width, height: ts.height))
+                    // Rounded up, plus a point: drawn into exactly its measured (fractional) width, a line could
+                    // wrap onto one that doesn't fit and be cut off.
+                    let ts = text.size(), tw = ts.width.rounded(.up) + 1, th = ts.height.rounded(.up) + 1
+                    text.draw(in: NSRect(x: r.midX - tw / 2, y: r.midY - th / 2, width: tw, height: th))
                     continue
                 }
                 text.draw(at: r.origin)

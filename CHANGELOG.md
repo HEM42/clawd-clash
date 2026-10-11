@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.26.1 — 2026-10-11
+
+### Changed
+- **The project you're in has a bigger name.** The Claude whose terminal or editor window is in front (the one with the bobbing marker) now has its name plate 15% larger, in the window, on the desktop, in the screen saver and in the window's screen-saver view. The app now tells the screen saver which session that is (`SaverFeed.Session.focused`, optional so an older feed file still reads).
+- **Speech bubbles make way for names.** Names now keep their place, centred just above each head, and only move up for another name. Each "z z", "…", "?" or "!" bubble is placed after them: beside its Claude's head on the side away from its nearest neighbour, else the other side, else just above its own name, whichever first stays on screen and clear of every name and bubble. Its tail points back at its Claude.
+
+### Fixed
+- **Name plates no longer jump far above a head.** In the window and on the desktop, a name touching any speech bubble, its own or a neighbour's, moved up a whole row, so a sleeping Claude's name ended up high above it, past its "z z". Fixed by the bubble change above.
+- **Name plates sit on the head they belong to, standing or sitting.** The window's labels used the hand-entered `headTop`, which puts the Tauntaun's below its horns and doesn't know a seated character sits 4 rows lower. Each character's top is now measured from its sprite, standing and sitting (`Cast.drawnTop`), shared with the screen saver.
+- **In the screen saver, tags are kept off heads by the real outline.** Every character counted as a 28-pixel-wide box, much wider than most, so in a smaller view (the window's screen-saver view) a tag next to a tall neighbour was lifted right over it: R2's over the Tauntaun, Luke's over Dooku. Tags now clear each character's drawn outline column by column (`Cast.drawnProfile`).
+- **The tops of a name's letters were cut off at some window widths.** A name is rendered to an image of whole pixels, rounded up, but shown in a layer of its exact fractional size; the nearest-neighbour filter then dropped a whole row of pixels. Text layers now sit on the pixel grid at exactly the image's size (`SpriteLayers.update`). Boxed text is also drawn into a rect a point wider than measured.
+- **Resizing the window in the screen-saver view no longer says Clawd Wars isn't running.** The app's timers pause during a live resize, so the feed aged past 5 seconds and the view treated it as stale until the mouse let go. Fed directly by the app, it never counts the feed as stale.
+
 ## 2.26.0 — 2026-10-11
 
 ### Added

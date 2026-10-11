@@ -75,3 +75,44 @@ enum Cast: Hashable {
         }
     }
 }
+
+extension Cast {
+    private static var measuredTops: [String: Int] = [:]
+
+    /// The top row of this character as drawn at rest, standing or sitting, within 14 px of its body's centre: the
+    /// hand-measured `headTop` misses some (the tauntaun's horns) and doesn't know a seated character sits lower, and
+    /// the band leaves out what floats above (R2's notes, the Ewok's spear). Standing, never lower than `headTop`
+    /// says; sitting, as much lower as the sprite really drops (nothing, for those that don't sit). Measured once per
+    /// character and pose; name tags sit just above it.
+    /// Its outline from above, standing at rest: for each column within 14 px of the body's centre, the top row drawn
+    /// there (`Sprite.height` where nothing is, and outside that band). What a name tag must clear.
+    func drawnProfile() -> [Int] {
+        if let hit = Self.profiles[id] { return hit }
+        let c = PixelCanvas(Sprite.width, Sprite.height)
+        draw(c, t: 0, mode: .idle, walking: false, role: .none, asSession: true)
+        let mid = Int(Sprite.bodyCenterX)
+        let profile = (0..<Sprite.width).map { x -> Int in
+            guard abs(x - mid) <= 14 else { return Sprite.height }
+            return (0..<c.h).first { c.buf[($0 * c.w + x) * 4 + 3] > 0 } ?? Sprite.height
+        }
+        Self.profiles[id] = profile
+        return profile
+    }
+    private static var profiles: [Int: [Int]] = [:]
+
+    func drawnTop(sitting: Bool = false) -> Int {
+        let key = "\(id)/\(sitting)"
+        if let hit = Self.measuredTops[key] { return hit }
+        func measure(_ seated: Bool) -> Int {
+            let c = PixelCanvas(Sprite.width, Sprite.height)
+            draw(c, t: 0, mode: .idle, walking: false, role: .none, sitting: seated, asSession: true)
+            let mid = Int(Sprite.bodyCenterX)
+            for y in 0..<c.h { for x in (mid - 14)...(mid + 14) where c.buf[(y * c.w + x) * 4 + 3] > 0 { return y } }
+            return c.h
+        }
+        let standing = measure(false)
+        let result = min(standing, headTop) + (sitting ? max(0, measure(true) - standing) : 0)
+        Self.measuredTops[key] = result
+        return result
+    }
+}
