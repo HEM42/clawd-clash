@@ -3,6 +3,13 @@
 ## 2.22.0 — 2026-10-11
 
 ### Changed
+- **The Forest Moon of Endor redrawn from Return of the Jedi.** It used to be a row of evenly spaced identical trunks, each with the same little hut. Now:
+  - depth: pale misty trees far back, grooved red redwoods in the middle, huge dark trunks framing the foreground, and sunbeams slanting through the canopy;
+  - the **Ewok village**: thatched cone huts on platforms at different heights, linked by sagging rope bridges, with lanterns;
+  - the **Imperial bunker** of the shield generator: a grey blast door with its panel light, set into a mossy mound;
+  - a **scout trooper's speeder bike** crashed against a redwood, smoking;
+  - arching ferns, flared roots and a fallen log on the forest floor;
+  - animated: dust floating in the sunbeams, leaves drifting down, and the lanterns flickering.
 - **Jakku overhauled as the Graveyard of Giants (The Force Awakens).** It used to be a small grey slab on flat dunes. Now:
   - a **HUGE crashed Star Destroyer** spans the whole scene: its nose is buried in the sand on the far left, and the hull rises along a tilted deck to the stern on the right, with the stepped superstructure, the bridge tower and its shield domes, and three engine bells on the stern face. It's hazy with distance, and sand is heaped against it.
   - **BB-8 rolls** back and forth across the sand, its orange rings turning and its head bobbing;

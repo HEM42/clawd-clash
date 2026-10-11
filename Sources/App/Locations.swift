@@ -143,6 +143,7 @@ enum Location: String, CaseIterable {
         case .sandcrawler: Scenes.crawlerLights(c, g, t: t)
         case .obiWanHut: Scenes.obiWanHologram(c, g, t: t)
         case .jakku: Scenes.jakkuWind(c, g, t: t)
+        case .endor: Scenes.endorForest(c, g, t: t)
         case .hoth: Scenes.snowfall(c, g, t: t)
         case .rancorPit: Scenes.grateLight(c, g, t: t)
         default: break
@@ -1100,28 +1101,108 @@ enum Scenes {
         for x in stride(from: 0, to: c.w, by: 10) { c.rect(x, g + 2, 5, 1, C(0x9A7A56)) }
     }
 
-    // AT-ST / Ewoks — the forest moon of Endor: giant redwoods, ferns, and the Ewok village up in the trees.
+    // AT-ST / Ewoks — the forest moon of Endor (Return of the Jedi): layered giant redwoods with sunbeams through the
+    // canopy, the Ewok village of thatched huts and rope bridges up in the trees, the Imperial bunker of the shield
+    // generator in a mossy mound, a scout trooper's speeder bike crashed against a trunk, and ferns everywhere.
     static func endor(_ c: PixelCanvas, _ g: Int) {
-        c.gradient(0, g, C(0x3E5A3A), C(0x6E8A5A), bands: 5)
-        for (i, x) in stride(from: 4, to: c.w, by: 28).enumerated() {        // distant trunks
-            c.rect(x + Int(noise(i) * 10), 0, 4, g, C(0x4A5E3A))
+        // Deep green-blue haze, brighter toward the canopy gaps.
+        c.gradient(0, g, C(0x1E3A2E), C(0x5E7E56), bands: 6)
+        // Far trees: pale and misty.
+        for i in 0..<14 {
+            let x = Int(noise(i * 7 + 90) * Double(c.w)), tw = 3 + i % 3
+            c.rect(x, 0, tw, g, C(0x4E6A54, 0.6))
         }
-        for (i, x) in stride(from: 14, to: c.w, by: 56).enumerated() {       // giant redwoods
-            let tw = 9 + Int(noise(i + 20) * 5)
-            c.rect(x, 0, tw, g, C(0x5A3A26)); c.rect(x + 1, 0, 2, g, C(0x7A5236)); c.rect(x + tw - 2, 0, 2, g, C(0x3E2618))
-            c.rect(x - 3, g - 4, tw + 6, 4, C(0x5A3A26))
-            if i % 2 == 0 {                                                   // an Ewok hut on a platform
-                let py = g / 3
-                c.rect(x - 10, py, tw + 20, 2, C(0x8A6238))
-                c.ellipse(x + tw / 2, py - 4, 7, 4, C(0x9A7A48)); c.rect(x + tw / 2 - 1, py - 3, 3, 3, C(0x3A2416))
-                c.rect(x + tw + 10, py + 2, 1, 10, C(0x8A6238, 0.8))         // rope ladder
+        // Sunbeams slanting down through the canopy.
+        for (i, sx) in [70, 170, 260].enumerated() {
+            for y in 0..<g {
+                let w = 5 + y / 6, x = sx + y / 2 + i * 3
+                c.rect(x - w / 2, y, w, 1, C(0xF4F0C0, 0.06))
             }
         }
-        for (i, x) in stride(from: 0, to: c.w, by: 9).enumerated() {        // ferns
-            let fh = 3 + Int(noise(i * 3 + 40) * 4)
-            c.rect(x, g - fh, 1, fh, C(0x3E7A30)); c.px(x - 1, g - fh + 1, C(0x5A9A40)); c.px(x + 1, g - fh + 1, C(0x5A9A40))
+        // Mid redwoods: tall, reddish, with bark grooves.
+        func redwood(_ x: Int, _ tw: Int, _ bark: Px, _ light: Px, _ dark: Px) {
+            c.rect(x, 0, tw, g, bark)
+            c.rect(x + 1, 0, max(1, tw / 4), g, light); c.rect(x + tw - max(1, tw / 4), 0, max(1, tw / 4), g, dark)
+            for k in stride(from: 2, to: tw - 2, by: 3) { c.rect(x + k, 0, 1, g, dark.alpha(0.5)) }   // grooves
+            c.rect(x - tw / 3, g - 5, tw + tw * 2 / 3, 5, bark)                                   // flared roots
+            c.rect(x - tw / 2, g - 2, tw * 2, 2, dark)
         }
-        c.ground(g, C(0x3A2E1E), edge: C(0x5A4A2E), speck: C(0x4E3E26), seed: 19)
+        for (i, x) in [40, 104, 222, 300].enumerated() { redwood(x, 10 + i % 2 * 4, C(0x6A4028), C(0x8A5636), C(0x4A2A1A)) }
+
+        // The Ewok village up in the trees: platforms, thatched cone huts, rope bridges, lanterns.
+        let huts: [(x: Int, y: Int)] = [(46, 18), (110, 10), (228, 16), (306, 8)]
+        for (i, h) in huts.enumerated() {
+            c.rect(h.x - 12, h.y + 8, 30, 2, C(0x8A6238)); c.rect(h.x - 12, h.y + 10, 30, 1, C(0x5A3A20))   // platform
+            for k in 0..<10 {                                                 // the cone roof
+                let half = 1 + k * 7 / 10
+                c.rect(h.x + 3 - half, h.y - 4 + k, half * 2 + 1, 1, k % 3 == 0 ? C(0x8A6A3A) : C(0xA8844A))
+            }
+            c.rect(h.x - 3, h.y + 5, 13, 4, C(0x9A7448)); c.rect(h.x + 2, h.y + 6, 3, 3, C(0x2A1A0E))   // walls and door
+            c.px(h.x - 6, h.y + 6, C(0xFFB050)); c.circle(h.x - 6, h.y + 6, 3, C(0xFFB050, 0.15))       // lantern
+            if i + 1 < huts.count {                                           // a rope bridge to the next tree
+                let n = huts[i + 1]
+                let x0 = h.x + 18, x1 = n.x - 12, y0 = h.y + 9, y1 = n.y + 9
+                guard x1 > x0 else { continue }
+                for x in x0...x1 {
+                    let u = Double(x - x0) / Double(x1 - x0)
+                    let y = y0 + Int(Double(y1 - y0) * u + sin(u * .pi) * 6)
+                    c.px(x, y, C(0x7A5A32)); if x % 3 == 0 { c.px(x, y - 3, C(0x5A4228)); c.px(x, y - 2, C(0x5A4228)) }
+                }
+            }
+        }
+
+        // The Imperial bunker of the shield generator, built into a mossy mound (right).
+        let bx = c.w - 54
+        c.ellipse(bx, g, 40, 22, C(0x3E5A30)); c.ellipse(bx, g + 1, 36, 19, C(0x4E6E3A))
+        c.rect(bx - 16, g - 18, 32, 18, C(0x6A6E72)); c.rect(bx - 16, g - 18, 32, 2, C(0x8A8E92))
+        c.rect(bx - 12, g - 14, 24, 14, C(0x3A3E44))                       // blast door
+        for k in 0..<3 { c.rect(bx - 12, g - 12 + k * 4, 24, 1, C(0x2A2E34)) }
+        c.rect(bx + 13, g - 11, 2, 2, C(0xE0303A))                         // the door panel light
+        for k in 0..<5 { c.rect(bx - 16 + k * 8, g - 20, 4, 2, C(0x5A7A40)) } // moss hanging over the top
+
+        // Huge foreground trunks framing the scene, dark and close.
+        redwood(-6, 22, C(0x4A2C1A), C(0x6A4028), C(0x2E1A0E))
+        redwood(156, 16, C(0x52321E), C(0x74482C), C(0x341E10))
+
+        // A scout trooper's speeder bike, crashed against the trunk.
+        let sx = 52                                                        // against the left redwood, clear of the crew
+        c.rect(sx, g - 8, 18, 4, C(0xC8CCD0)); c.rect(sx, g - 8, 18, 1, C(0xE4E8EC))
+        c.rect(sx + 14, g - 11, 6, 3, C(0x8A8E92))                         // the steering vanes, crumpled
+        c.rect(sx + 2, g - 4, 10, 2, C(0x6A6E72))
+        c.px(sx + 5, g - 7, C(0x2A2E34)); c.px(sx + 19, g - 10, C(0xE0303A))
+        c.rect(sx + 3, g - 12, 2, 3, C(0x5A5E62, 0.6))                     // a wisp of smoke
+
+        // Forest floor: ferns, roots and a fallen log.
+        c.ground(g, C(0x2E2416), edge: C(0x4A3A22), speck: C(0x3E301C), seed: 19)
+        c.rect(98, g - 4, 34, 4, C(0x5A3A22)); c.rect(98, g - 4, 34, 1, C(0x7A5232)); c.circle(132, g - 2, 2, C(0x8A6A42))   // log
+        for (i, x) in stride(from: 2, to: c.w, by: 7).enumerated() {         // ferns: arching fronds
+            let fh = 4 + Int(noise(i * 3 + 40) * 6)
+            let col = i % 3 == 0 ? C(0x3E7A30) : C(0x4E8E3A)
+            for k in 0..<fh {
+                c.px(x - k / 2, g - k, col); c.px(x + k / 2, g - k, col)
+                if k % 2 == 0 { c.px(x - k / 2 - 1, g - k + 1, col); c.px(x + k / 2 + 1, g - k + 1, col) }
+            }
+        }
+    }
+
+    /// Dust floating in the sunbeams, leaves drifting down, and the Ewok lanterns flickering.
+    static func endorForest(_ c: PixelCanvas, _ g: Int, t: Double) {
+        for (i, sx) in [70, 170, 260].enumerated() {
+            for k in 0..<5 {
+                let p = (t * 0.04 + Double(k) / 5 + Double(i) * 0.13).truncatingRemainder(dividingBy: 1)
+                let y = Int(p * Double(g)), x = sx + y / 2 + i * 3 + Int(sin(t + Double(k * 3)) * 3)
+                c.px(x, y, C(0xFFF8D0, 0.45 * sin(p * .pi)))
+            }
+        }
+        for i in 0..<6 {
+            let p = (t * 0.07 + noise(i * 9)).truncatingRemainder(dividingBy: 1)
+            let x = Int(noise(i * 9 + 1) * Double(c.w)) + Int(sin(t * 1.5 + Double(i)) * 5), y = Int(p * Double(g))
+            c.px(x, y, i % 2 == 0 ? C(0x8AA040) : C(0xB8843A))
+        }
+        for (i, (x, y)) in [(40, 24), (104, 16), (222, 22), (300, 14)].enumerated() {
+            let f = noise(Int(t * 8) + i * 5)
+            c.circle(x, y, 3 + Int(f * 2), C(0xFFB050, 0.08 + f * 0.06))
+        }
     }
 
     // AT-AT — the Battle of Hoth: snowfield, grey sky, the shield generator and the trench.
