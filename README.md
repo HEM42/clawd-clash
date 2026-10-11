@@ -112,6 +112,10 @@ Several sessions in the same project are grouped under one project header as a t
 
 ## Screen saver
 
+<p align="center">
+  <img src="docs/screensaver.png" alt="The screen saver at the Lars homestead: five sessions' cards over the crew, one needing you, with name tags and beams" width="900">
+</p>
+
 Clawd Wars comes with a screen saver: the window's location at full screen and the crew fighting across its floor. Every Claude and agent wears a name tag over its head. Each session has a card floating above the crew, in its project's colour as in the window, with a dashed beam down to its name. The card shows the status (green working, blue thinking, red **NEEDS YOU**, purple asleep), what it's doing, your last prompt and its agents. With many sessions the cards stagger over two rows. A clock sits top right, and what happened lately (finished prompts, agents joining, sessions falling asleep) crawls along the bottom.
 
 Every 10 minutes it does a Star Wars wipe (a hard edge or a clock wipe) to somewhere new: the home of another character on screen, or anywhere if there's only one. Against burn-in, the clock and the place name swap corners at the same time, and the cards and name tags move up clear of where they were. Ten minutes later they go back.
