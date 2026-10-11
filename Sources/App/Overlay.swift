@@ -723,7 +723,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         if chaosSeconds != nil, now - lastCheck > 0.25 { lastCheck = now; checkInvariants(now) }
 
         if windowMode {
-            clawdWindow?.sceneView.needsDisplay = true
+            clawdWindow?.sceneView.showFrame()
             return
         }
 
@@ -738,7 +738,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let passThrough = !(dragging || hitRects().contains { $0.1.contains(mouse) })
         if panel.ignoresMouseEvents != passThrough { panel.ignoresMouseEvents = passThrough }
 
-        view.needsDisplay = true
+        view.showFrame()
     }
 
     /// Where each character can be hovered or clicked (villains first, so they win overlaps).
@@ -1364,11 +1364,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// Hidden from the menu bar helmet (double-click): neither the crew nor the window shows. Not remembered across launches.
     private(set) var hidden = false
 
-    /// Whether anything we draw can be seen: not hidden, and the window (or desktop panel) not fully covered or minimised.
+    /// Whether anything we draw can be seen: not hidden, and the window not fully covered or minimised.
+    /// The desktop panel only counts as visible once it shows something, so asking it would never draw a first frame.
     private var onScreen: Bool {
         guard !hidden else { return false }
-        let window: NSWindow? = windowMode ? clawdWindow?.window : panel
-        return window?.occlusionState.contains(.visible) ?? false
+        guard windowMode else { return panel.isVisible }
+        return clawdWindow?.window.occlusionState.contains(.visible) ?? false
     }
 
     /// A Vader Clawd helmet in the menu bar, opening the same menu as right-clicking a villain.
@@ -1873,7 +1874,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         } else {
             UserDefaults.standard.removeObject(forKey: "location")
         }
-        clawdWindow?.sceneView.needsDisplay = true
+        clawdWindow?.sceneView.showFrame()
         clawdWindow?.cardsView.needsDisplay = true
         clawdWindow?.header.needsDisplay = true
     }
@@ -2073,13 +2074,20 @@ private extension NSMenu {
 final class OverlayView: NSView {
     weak var controller: OverlayController?
 
+    private let sprites = SpriteLayers()
+
     override var isOpaque: Bool { false }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override var wantsUpdateLayer: Bool { true }
+    override func updateLayer() {}
 
-    override func draw(_ dirtyRect: NSRect) {
-        guard let ctx = NSGraphicsContext.current?.cgContext, let controller else { return }
-        ctx.clear(bounds)
-        Self.render(controller.items, origin: controller.panelOrigin, in: ctx)
+    /// A new frame: the crew as Core Animation layers, scaled and composited on the GPU.
+    func showFrame() {
+        guard let controller else { return }
+        wantsLayer = true
+        guard let host = layer else { return }
+        sprites.update(controller.items, origin: controller.panelOrigin, in: host,
+                       pixelsPerPoint: window?.backingScaleFactor ?? 2)
     }
 
     /// Draw the scene's items (in screen coordinates) into the current context, offset by `origin`.

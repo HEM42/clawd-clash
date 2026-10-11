@@ -185,7 +185,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         roomView.setBoundsSize(sceneView.bounds.size)
         cardsView.frame.size.width = scroll.bounds.width
         cardsView.relayout()
-        header.needsDisplay = true; sceneView.needsDisplay = true
+        header.needsDisplay = true; sceneView.showFrame()
     }
 
     /// Settings → Small Window toggled: the window itself shrinks (or grows back) by the same factor, keeping its top
@@ -363,46 +363,74 @@ final class SceneView: NSView {
     /// How many points at the top of the scene are a dark band that looks like part of the title bar.
     private(set) var darkTop: CGFloat = 0
     private var room: (size: NSSize, location: Location, image: CGImage)?
+    private let sprites = SpriteLayers()
+    /// CLAWD_SHOT captures the window by drawing its views, which can't see layers: draw the old way then.
+    static let drawsItself = ProcessInfo.processInfo.environment["CLAWD_SHOT"] != nil
 
     override var isFlipped: Bool { false }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override var wantsUpdateLayer: Bool { !Self.drawsItself }
+    override func updateLayer() { layer?.masksToBounds = true }
 
-    override func draw(_ dirtyRect: NSRect) {
-        guard let ctx = NSGraphicsContext.current?.cgContext, let controller else { return }
-        let b = bounds
-        let p = Cantina.pixel
+    private var geometry: (pw: Int, ph: Int, floorRows: Int, drawRect: CGRect) {
+        let b = bounds, p = Cantina.pixel
         let pw = Int((b.width / p).rounded(.up)), ph = Int((b.height / p).rounded(.up))
-        let floorRows = Int((OverlayController.cantinaFloor / p).rounded())
-        let drawRect = CGRect(x: 0, y: 0, width: CGFloat(pw) * p, height: CGFloat(ph) * p)
-        ctx.interpolationQuality = .none
+        return (pw, ph, Int((OverlayController.cantinaFloor / p).rounded()),
+                CGRect(x: 0, y: 0, width: CGFloat(pw) * p, height: CGFloat(ph) * p))
+    }
 
-        // The place only changes when the window is resized or the location changes.
-        let location = controller.location
+    /// The place only changes when the window is resized or the location changes; `RoomView` shows it.
+    private func prepareRoom() {
+        guard let controller else { return }
+        let g = geometry, location = controller.location
         if room?.location != location && location == .cantina { Cantina.maxReboTonight = Bool.random() }   // a new night
-        if room?.size != b.size || room?.location != location {
-            let c = PixelCanvas(pw, ph)
-            location.drawStatic(c, floorRows: floorRows)
-            if let img = c.makeImage() {
-                room = (b.size, location, img)
-                roomView?.drawRect = drawRect
-                roomView?.image = img
-            }
-            // Dark rows along the top (row 0 is the top), minus whatever overhangs the view and is clipped.
-            var rows = 0
-            while rows < min(ph, 8), c.rowLuminance(rows) < 0.24 { rows += 1 }
-            let dark = max(0, CGFloat(rows) * p - (CGFloat(ph) * p - b.height))
-            if dark != darkTop { darkTop = dark; onDarkTopChange?() }
+        guard room?.size != bounds.size || room?.location != location else { return }
+        let c = PixelCanvas(g.pw, g.ph)
+        location.drawStatic(c, floorRows: g.floorRows)
+        if let img = c.makeImage() {
+            room = (bounds.size, location, img)
+            roomView?.drawRect = g.drawRect
+            roomView?.image = img
         }
-        if roomView == nil, let img = room?.image { ctx.draw(img, in: drawRect) }
+        // Dark rows along the top (row 0 is the top), minus whatever overhangs the view and is clipped.
+        var rows = 0
+        while rows < min(g.ph, 8), c.rowLuminance(rows) < 0.24 { rows += 1 }
+        let dark = max(0, CGFloat(rows) * Cantina.pixel - (CGFloat(g.ph) * Cantina.pixel - bounds.height))
+        if dark != darkTop { darkTop = dark; onDarkTopChange?() }
+    }
 
-        // Whatever moves there: the cantina band, sarlacc tentacles, torches, laser gates, fog…
-        let live = PixelCanvas(pw, ph)
-        location.drawAnimated(live, floorRows: floorRows, t: Date().timeIntervalSince1970)
-        if let img = live.makeImage() { ctx.draw(img, in: drawRect) }
+    /// What moves there (the cantina band, sarlacc tentacles, torches, laser gates, fog…) and the crew, as one frame.
+    private func frameItems(origin: NSPoint) -> [OverlayController.DrawItem] {
+        guard let controller else { return [] }
+        let g = geometry
+        let live = PixelCanvas(g.pw, g.ph)
+        controller.location.drawAnimated(live, floorRows: g.floorRows, t: Date().timeIntervalSince1970)
+        var items: [OverlayController.DrawItem] = []
+        if let img = live.makeImage() {   // in screen coordinates, like the crew's items
+            items.append(OverlayController.DrawItem(image: img, rect: g.drawRect.offsetBy(dx: origin.x, dy: origin.y)))
+        }
+        return items + controller.items
+    }
 
-        guard let window else { return }
+    /// A new frame: handed to Core Animation, which scales and composites it on the GPU.
+    func showFrame() {
+        guard !Self.drawsItself else { needsDisplay = true; return }
+        guard let window, let host = layer else { return }
+        prepareRoom()
         let origin = window.convertToScreen(convert(bounds, to: nil)).origin
-        OverlayView.render(controller.items, origin: origin, in: ctx)
+        // The layer works in the view's bounds, which AppKit already shows at 75% in the Small Window; the text
+        // only needs rendering at the resolution it ends up at.
+        let k = frame.width / max(bounds.width, 1)
+        sprites.update(frameItems(origin: origin), origin: origin, in: host, pixelsPerPoint: window.backingScaleFactor * k)
+    }
+
+    override func draw(_ dirtyRect: NSRect) {   // CLAWD_SHOT only
+        guard let ctx = NSGraphicsContext.current?.cgContext, let window else { return }
+        prepareRoom()
+        ctx.interpolationQuality = .none
+        if roomView == nil, let img = room?.image { ctx.draw(img, in: geometry.drawRect) }
+        let origin = window.convertToScreen(convert(bounds, to: nil)).origin
+        OverlayView.render(frameItems(origin: origin), origin: origin, in: ctx)
     }
 
     override func mouseUp(with event: NSEvent) {
