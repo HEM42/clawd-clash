@@ -1280,42 +1280,133 @@ enum Scenes {
         }
     }
 
-    // The Rancor — its pit under Jabba's palace: rough stone, bones, the keeper's gate, light through the grate.
+    // The Rancor — its pit under Jabba's palace (Return of the Jedi): a craggy cave with stalactites, the trapdoor
+    // grate in the ceiling pouring light down (Jabba's court peering through it, in `grateLight`), the heavy portcullis
+    // half raised in a stone arch, the keepers' barred window, damp puddles, and bone piles with skulls, ribcages and
+    // the big femur Luke jammed in its jaws.
     static func rancorPit(_ c: PixelCanvas, _ g: Int) {
-        c.gradient(0, g, C(0x2A2018), C(0x4A3A2C), bands: 5)
-        for i in 0..<(c.w * g / 14) {                                         // rough cave stone
-            c.rect(Int(noise(i * 5) * Double(c.w)), Int(noise(i * 5 + 1) * Double(g)), 2, 1,
-                   noise(i * 5 + 2) > 0.5 ? C(0x3A2E22) : C(0x564434))
+        c.gradient(0, g, C(0x150F0A), C(0x3E3022), bands: 6)
+        // Craggy rock: big boulder shapes in two tones, then grain.
+        for i in 0..<34 {   // jagged rock faces: each row's width jitters, a lit top edge and a dark crack below
+            let x = Int(noise(i * 5 + 300) * Double(c.w)), y = Int(noise(i * 5 + 301) * Double(g))
+            let rx = 8 + Int(noise(i * 5 + 302) * 16), ry = 5 + Int(noise(i * 5 + 303) * 9)
+            let col = noise(i * 5 + 304) > 0.5 ? C(0x2E2318, 0.85) : C(0x46372A, 0.75)
+            for dy in -ry...ry {
+                let k = 1 - Double(dy * dy) / Double(ry * ry)
+                let jitter = Int((noise(i * 97 + dy + 50) - 0.5) * 6)
+                let half = max(0, Int(Double(rx) * k.squareRoot()) + jitter)
+                let left = x - half + Int((noise(i * 61 + dy) - 0.5) * 3)
+                c.rect(left, y + dy, half * 2, 1, col)
+                if dy == -ry + 1 { c.rect(left + 1, y + dy, max(1, half * 2 - 2), 1, C(0x6A5640, 0.6)) }   // lit top edge
+            }
+            c.rect(x - rx + 2, y + ry, rx * 2 - 4, 1, C(0x120C08, 0.7))     // the crack under it
         }
-        // the keeper's gate: a heavy barred door
-        let gx = c.w * 3 / 4
-        c.rect(gx - 12, g - 26, 24, 26, C(0x1A140F))
-        for x in stride(from: gx - 11, to: gx + 12, by: 4) { c.rect(x, g - 26, 2, 26, C(0x6E6A60)) }
-        c.rect(gx - 13, g - 27, 26, 2, C(0x8A8274))
-        // bones scattered about
-        for (i, x) in stride(from: 10, to: c.w - 10, by: 23).enumerated() {
-            let y = g + 2 + Int(noise(i * 3) * 3)
-            c.rect(x, y, 6, 1, C(0xE8DCC0)); c.px(x - 1, y - 1, C(0xE8DCC0)); c.px(x + 6, y + 1, C(0xE8DCC0))
-            if i % 3 == 0 { c.ellipse(x + 10, g - 2, 3, 2, C(0xE8DCC0)); c.px(x + 9, g - 2, C(0x2A2018)); c.px(x + 11, g - 2, C(0x2A2018)) }
+        for i in 0..<(c.w * g / 12) {
+            c.px(Int(noise(i * 5) * Double(c.w)), Int(noise(i * 5 + 1) * Double(g)), noise(i * 5 + 2) > 0.5 ? C(0x241A12) : C(0x5A4834))
         }
-        c.ground(g, C(0x3A2E22), edge: C(0x5A4A38), speck: C(0x2E241A), seed: 21)
-        for (i, x) in stride(from: 10, to: c.w - 10, by: 23).enumerated() {  // bones on top of the floor
-            let y = g + 2 + Int(noise(i * 3) * 3)
-            c.rect(x, y, 6, 1, C(0xE8DCC0)); c.px(x - 1, y - 1, C(0xE8DCC0))
+        // Stalactites along the top.
+        for i in 0..<30 {
+            let x = Int(noise(i * 3 + 500) * Double(c.w)), len = 3 + Int(noise(i * 3 + 501) * 9)
+            for k in 0..<len { let w = max(1, (len - k) / 3); c.rect(x - w / 2, k, w, 1, C(0x241A12)) }
+        }
+        // Dark edges: the pit closes in at the sides.
+        for x in 0..<28 { c.rect(x, 0, 1, g, C(0x0A0705, 0.5 * Double(28 - x) / 28)); c.rect(c.w - 1 - x, 0, 1, g, C(0x0A0705, 0.5 * Double(28 - x) / 28)) }
+
+        // The trapdoor grate in the ceiling (left of centre), its rim.
+        let tx = c.w / 3
+        c.ellipse(tx, 2, 22, 4, C(0x0A0705)); c.ellipse(tx, 2, 20, 3, C(0xF2D8A0, 0.5))
+        for x in stride(from: tx - 18, through: tx + 18, by: 4) { c.rect(x, 0, 1, 5, C(0x3A2E22)) }
+
+        // The keepers' barred window, high on the right wall.
+        let wx = c.w * 3 / 4 - 50, wy = g - 52
+        c.rect(wx - 1, wy - 1, 20, 12, C(0x5A4A38)); c.rect(wx, wy, 18, 10, C(0x0E0A06))
+        c.rect(wx + 2, wy + 6, 14, 4, C(0xFFB050, 0.12))                   // torchlight inside
+        for x in stride(from: wx + 2, to: wx + 18, by: 4) { c.rect(x, wy, 1, 10, C(0x7A7266)) }
+
+        // The heavy portcullis in a stone arch (right), half raised, with its chain.
+        let gx = c.w * 3 / 4, gw = 40, top = g - 44
+        for y in top..<g {                                                 // the arch of fitted stones
+            let r = gw / 2 + 5, dy = y - top
+            var half = r
+            if dy < r { half = Int((Double(r * r) - Double((r - dy) * (r - dy))).squareRoot()) }
+            c.rect(gx - half, y, half * 2, 1, (y / 4 + (y % 2)) % 2 == 0 ? C(0x6A5A46) : C(0x5A4A38))
+        }
+        for y in (top + 5)..<g {                                           // the dark passage beyond
+            let r = gw / 2, dy = y - top - 5
+            var half = r
+            if dy < r { half = Int((Double(r * r) - Double((r - dy) * (r - dy))).squareRoot()) }
+            c.rect(gx - half, y, half * 2, 1, C(0x0A0705))
+        }
+        let raised = g - 14                                                // bars stop here: the gate is half up
+        for x in stride(from: gx - gw / 2 + 2, to: gx + gw / 2 - 1, by: 5) {
+            c.rect(x, top + 8, 2, raised - top - 8, C(0x6E6A60)); c.rect(x, top + 8, 1, raised - top - 8, C(0x8E8A80))
+            c.rect(x, raised - 1, 2, 3, C(0x8E8A80))                       // spiked ends
+        }
+        for y in stride(from: top + 14, to: raised, by: 9) { c.rect(gx - gw / 2 + 1, y, gw - 2, 2, C(0x5A564E)) }
+        for k in 0..<12 { c.px(gx + gw / 2 + 4, top + 2 + k * 2, C(0x8A8274)); c.px(gx + gw / 2 + 5, top + 3 + k * 2, C(0x6A6458)) }   // chain
+
+        // Floor: damp stone, puddles, rubble.
+        c.ground(g, C(0x2E241A), edge: C(0x4A3A2C), speck: C(0x241A12), seed: 21)
+        for (px, pw) in [(c.w / 3 - 10, 24), (c.w / 2 + 40, 16)] { c.ellipse(px, g + 3, pw / 2, 1, C(0x5A6A6A, 0.5)); c.rect(px - pw / 4, g + 3, pw / 2, 1, C(0xA8B8B0, 0.3)) }
+
+        // Bone piles in the corners: skulls, ribcages, long bones — and the big femur.
+        func skull(_ x: Int, _ y: Int, big: Bool = false) {
+            let r = big ? 4 : 2
+            c.ellipse(x, y, r + 1, r, C(0xE0D2B4)); c.rect(x - r / 2 - 1, y + r - 1, r + 2, 2, C(0xD0C2A4))
+            c.px(x - r / 2, y, C(0x1A140F)); c.px(x + r / 2, y, C(0x1A140F))
+            if big { c.px(x - r / 2 + 1, y, C(0x1A140F)); c.px(x + r / 2 - 1, y, C(0x1A140F)) }
+        }
+        func pile(_ cx: Int, _ rx: Int, _ ry: Int, seed: Int) {
+            c.ellipse(cx, g, rx, ry, C(0x8A7C64)); c.ellipse(cx, g + 1, rx - 2, ry - 2, C(0xA89A7E))
+            for i in 0..<(rx * ry / 6) {
+                let u = noise(seed * 50 + i * 2) * 2 - 1
+                let x = cx + Int(u * Double(rx - 2)), y = g - Int(Double(ry) * (1 - u * u).squareRoot() * noise(seed * 50 + i * 2 + 1)) - 1
+                switch i % 5 {
+                case 0: skull(x, y - 1)
+                case 1: c.rect(x - 3, y, 7, 1, C(0xE8DCC0)); c.px(x - 4, y - 1, C(0xE8DCC0)); c.px(x + 4, y + 1, C(0xE8DCC0))
+                case 2: for k in 0..<4 { c.rect(x - 3 + k * 2, y - 2, 1, 3, C(0xD8CAAC)) }   // ribs
+                default: c.px(x, y, C(0xE8DCC0)); c.px(x + 1, y, C(0xC8BA9C))
+                }
+            }
+        }
+        pile(20, 30, 14, seed: 1)
+        pile(c.w - 18, 26, 12, seed: 2)
+        skull(c.w - 30, g - 13, big: true)                                  // something big didn't make it
+        // the femur Luke jammed in the rancor's jaws, lying where it fell
+        let fx = c.w / 2 - 70
+        c.rect(fx, g + 1, 18, 2, C(0xE8DCC0)); c.ellipse(fx, g + 2, 2, 2, C(0xE8DCC0)); c.ellipse(fx + 18, g + 2, 2, 2, C(0xE8DCC0))
+        // scattered bones on the floor
+        for (i, x) in stride(from: 40, to: c.w - 40, by: 37).enumerated() {
+            let y = g + 3 + Int(noise(i * 3) * 3)
+            c.rect(x, y, 5, 1, C(0xD8CAAC)); c.px(x - 1, y - 1, C(0xD8CAAC))
         }
     }
 
     static func grateLight(_ c: PixelCanvas, _ g: Int, t: Double) {
-        // light falling through the grate above, with dust drifting in it
+        // A strong shaft of light falling through the ceiling grate, the bars' shadows in it, and dust drifting.
         let x0 = c.w / 3
-        for y in 0..<g {
-            let spread = y / 4
-            c.rect(x0 - 6 - spread, y, 12 + spread * 2, 1, C(0xF2D8A0, 0.07))
+        for y in 3..<g {
+            let spread = 18 + y / 3
+            c.rect(x0 - spread, y, spread * 2, 1, C(0xF2D8A0, 0.09))
+            for x in stride(from: x0 - 16, through: x0 + 16, by: 4) { c.px(x + (x - x0) * y / 60, y, C(0x0A0705, 0.08)) }
         }
-        for x in stride(from: x0 - 6, to: x0 + 7, by: 3) { c.rect(x, 0, 1, 2, C(0x1A140F)) }
-        for i in 0..<10 {
+        c.ellipse(x0, g + 2, 34, 2, C(0xF2D8A0, 0.12))                     // the pool of light on the floor
+        for i in 0..<16 {
             let y = Int((noise(i * 7) * Double(g) + t * (3 + noise(i * 7 + 1) * 3)).truncatingRemainder(dividingBy: Double(g)))
-            c.px(x0 - 6 + Int(noise(i * 7 + 2) * 12) + y / 8, y, C(0xF2D8A0, 0.5))
+            c.px(x0 - 16 + Int(noise(i * 7 + 2) * 32) + y / 6, y, C(0xF2D8A0, 0.5))
+        }
+        // Jabba's court peering over the edge of the grate.
+        for (i, dx) in [-14, -5, 6, 15].enumerated() {
+            let bob = Int(sin(t * 1.3 + Double(i) * 1.7) * 1.5)
+            let up = (t * 0.2 + Double(i) * 0.3).truncatingRemainder(dividingBy: 1) < 0.75
+            if up { c.ellipse(x0 + dx, 1 + bob, 3, 2, C(0x1A140F)); if i == 1 { c.px(x0 + dx - 1, 1 + bob, C(0xE0A040)) } }
+        }
+        // water dripping from the ceiling
+        for (i, dxp) in [0.2, 0.62, 0.88].enumerated() {
+            let p = (t * 0.6 + Double(i) * 0.41).truncatingRemainder(dividingBy: 1)
+            let x = Int(dxp * Double(c.w)), y = Int(p * p * Double(g))
+            c.px(x, y, C(0xA8C8D0, 0.7))
+            if p > 0.95 { c.px(x - 1, g + 1, C(0xA8C8D0, 0.6)); c.px(x + 1, g + 1, C(0xA8C8D0, 0.6)) }
         }
     }
 

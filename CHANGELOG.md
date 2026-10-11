@@ -3,6 +3,12 @@
 ## 2.22.0 — 2026-10-11
 
 ### Changed
+- **The Rancor Pit redrawn from Return of the Jedi.** It used to be a flat speckled wall with a thin light cone and evenly spaced bones. Now:
+  - a craggy cave: jagged rock faces with lit edges and cracks, stalactites along the top, and dark sides closing in;
+  - the **trapdoor grate** in the ceiling, pouring a strong shaft of light (the bars' shadows in it, dust drifting), with Jabba's court bobbing as they peer over the edge;
+  - the **heavy portcullis** half raised in an arch of fitted stones, with spiked bars and its chain, and the keepers' barred window lit from inside;
+  - **bone piles** heaped in both corners (skulls, ribcages, long bones), one big skull, and the femur Luke jammed in its jaws lying on the floor;
+  - damp puddles and water dripping from the ceiling.
 - **The Battle of Hoth gets AT-ATs marching on the horizon.** Three distant walkers at different distances (one nearer and twice the size) march slowly toward the Rebel trench. Their legs step out of phase, their bodies rise and fall, and now and then a faint red bolt fires from a head. They're faded toward the colour of the snowy haze, the farthest almost sky-coloured, so they read as far away and never compete with the characters. A pair of snowspeeders also streaks across the sky every so often.
 - **The Forest Moon of Endor redrawn from Return of the Jedi.** It used to be a row of evenly spaced identical trunks, each with the same little hut. Now:
   - depth: pale misty trees far back, grooved red redwoods in the middle, huge dark trunks framing the foreground, and sunbeams slanting through the canopy;
