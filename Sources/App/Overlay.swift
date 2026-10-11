@@ -1185,6 +1185,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// Mac but not hooked up yet (also catches Codex / Qwen Code added after Claude was already connected).
     private func offerHooksOnFirstLaunch() {
         guard playground == nil, !demo, shotPath == nil, chaosSeconds == nil else { return }
+        // The app was moved since the hooks went in: point them here (already agreed to, so no need to ask).
+        for ai in HookInstaller.repairMoved() { NSLog("Clawd Wars: re-pointed \(HookInstaller.displayName(ai)) hooks at \(HookInstaller.hookBinary)") }
         let d = UserDefaults.standard
         let claude = !HookInstaller.isInstalled && !d.bool(forKey: "offeredHooks")
         let others = HookInstaller.others.filter {

@@ -269,6 +269,43 @@ enum HookInstaller {
         try data.write(to: ai.file, options: .atomic)
     }
 
+    // MARK: Moved app
+    //
+    // Hooks remember the absolute path of the hook binary. If the app is moved (or reinstalled somewhere else) they
+    // point at nothing and every event fails, yet `isInstalled` still sees our marker. Only a missing binary counts
+    // as stale, so a dev copy run from build/ never steals hooks that still work.
+
+    /// The hook binaries our registered commands run, in any of the shapes above.
+    private static func ourBinaries(in root: [String: Any]) -> [String] {
+        guard let hooks = root["hooks"] as? [String: Any] else { return [] }
+        let entries: [[String: Any]] = hooks.values.flatMap { $0 as? [[String: Any]] ?? [] }
+        let handlers: [[String: Any]] = entries.flatMap { ($0["hooks"] as? [[String: Any]] ?? []) + [$0] }
+        let commands: [String] = handlers.flatMap { h in ["command", "bash"].compactMap { h[$0] as? String } }
+        return commands.filter { $0.contains(marker) }.map(binary)
+    }
+
+    /// The executable a command runs: the quoted path we write, or the first word.
+    private static func binary(_ command: String) -> String {
+        guard command.hasPrefix("\"") else { return String(command.prefix { $0 != " " }) }
+        return String(command.dropFirst().prefix { $0 != "\"" })
+    }
+
+    private static func isStale(_ root: [String: Any]) -> Bool {
+        ourBinaries(in: root).contains { !FileManager.default.isExecutableFile(atPath: $0) }
+    }
+
+    /// Re-points hooks whose binary is gone at this copy of the app. Returns the assistants repaired.
+    @discardableResult
+    static func repairMoved() -> [String] {
+        guard FileManager.default.isExecutableFile(atPath: hookBinary) else { return [] }
+        var repaired: [String] = []
+        if let root = try? readSettings(), isStale(root), (try? install()) != nil { repaired.append("claude") }
+        for ai in others where available(ai) {
+            if let root = try? read(ai), isStale(root), (try? install(ai)) != nil { repaired.append(ai.name) }
+        }
+        return repaired
+    }
+
     // Codex conveniences used by the app and CLI
     static var codexAvailable: Bool { available(codex) }
     static var codexInstalled: Bool { installed(codex) }
