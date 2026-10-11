@@ -68,6 +68,7 @@ struct SessionSnapshot {
     var stalled = false          // hooks say idle, but the process has been busy for a minute: not reporting
     var hookSilent = false       // started after our hooks were installed and ran a turn, yet never reported (e.g. Codex: not approved)
     var cwd: String?
+    var remote: String?          // where the repo's remote lives ("GitHub", "GitLab"…); nil = local only
     var client: String?          // Claude Code's entrypoint: "cli", "claude-desktop", "claude-vscode"…
 
     /// What the list groups by: Claude Desktop gets its own section; everything else groups by AI.
@@ -421,6 +422,11 @@ enum StatusStore {
         }
     }
 
+    /// A session's name: the repo's, when it has a remote; otherwise its folder's.
+    static func projectName(cwd: String?, git: GitRemote?) -> String? {
+        git?.name ?? cwd.map { ($0 as NSString).lastPathComponent }
+    }
+
     /// Every live session in spawn order (an idle Vader placeholder if there are none).
     /// `processes` (from `ClaudeProcesses.running()`) adds sessions whose hooks never fired and drops dead ones.
     static func snapshot(_ s: StatusFile, now: Double = Date().timeIntervalSince1970,
@@ -443,10 +449,11 @@ enum StatusStore {
             previous = leader
             // The live cwd beats the hooks' copy: after a folder rename the hooks can report a stale path.
             let cwd = rec.pid.flatMap { ClaudeProcesses.cwd($0) }
+            let git = cwd.flatMap { GitRemote.of($0, now: now) }
             result.append(SessionSnapshot(id: id, leader: leader,
-                                          project: cwd.map { ($0 as NSString).lastPathComponent } ?? rec.project ?? "",
+                                          project: projectName(cwd: cwd, git: git) ?? rec.project ?? "",
                                           mood: mood(rec, now: now), agents: [], pid: rec.pid, record: rec,
-                                          assistant: assistantOf(rec), cwd: cwd,
+                                          assistant: assistantOf(rec), cwd: cwd, remote: git?.host,
                                           client: rec.client ?? processes?.first { $0.pid == rec.pid }?.client))
         }
         if let processes {
@@ -466,9 +473,12 @@ enum StatusStore {
                                         pool: darkCast + lightCast)
                 used.insert(leader)
                 previous = leader
-                result.append(SessionSnapshot(id: "pid-\(p.pid)", leader: leader, project: p.project,
+                let cwd = ClaudeProcesses.cwd(p.pid)
+                let git = cwd.flatMap { GitRemote.of($0, now: now) }
+                result.append(SessionSnapshot(id: "pid-\(p.pid)", leader: leader,
+                                              project: projectName(cwd: cwd, git: git) ?? p.project,
                                               mood: .idle, agents: [], live: false, pid: p.pid,
-                                              assistant: p.assistant, cwd: ClaudeProcesses.cwd(p.pid), client: p.client))
+                                              assistant: p.assistant, cwd: cwd, remote: git?.host, client: p.client))
             }
         }
         if result.isEmpty {   // no Claude running: an idle Vader keeps the spot warm

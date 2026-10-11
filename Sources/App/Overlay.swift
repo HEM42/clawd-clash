@@ -1618,6 +1618,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 portrait: portrait("l\(leader.id)", assistant: s.group) { leader.draw($0, t: 0.1, mode: .idle, walking: false, role: .none, asSession: true) },
                 pid: s.pid))
             cards[cards.count - 1].spriteColor = spriteColor(leader)
+            if s.pid != nil { cards[cards.count - 1].remote = s.remote ?? "Local" }
             if severalAIs && s.group != lastAI {
                 cards[cards.count - 1].group = (HookInstaller.displayName(s.group), AIStyle.color(s.group))
             }

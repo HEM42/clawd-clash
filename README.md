@@ -133,6 +133,7 @@ Hover over anyone for the details — what that session is doing right now, your
 | bobbing yellow ◆ | the Claude whose terminal you're looking at right now |
 | matching label colours | a Claude and its agents share their project's colour |
 | label above the head | the project (Claudes) or the task (agents) |
+| GitHub / GitLab / Local pill | where the project's git remote lives, each host in its own colour (cards in the window); the project is named after the repo, or its folder when there's no remote |
 
 - **Several Claudes at once** — each gets its own villain and project label; sessions that predate the hooks are still found from the process table.
 - **Hover** any villain or agent for a details card; agents also show which Claude they work for.

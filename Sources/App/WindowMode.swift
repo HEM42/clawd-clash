@@ -20,6 +20,7 @@ struct CardModel {
     let pid: Int32?
     var group: (title: String, color: NSColor)? = nil   // first card of an AI's group, when several AIs run
     var spriteColor = NSColor.white                     // the character's main colour, for the name pill
+    var remote: String? = nil                           // "GitHub", "GitLab"… or "Local", in a pill by the name
 }
 
 /// "Show in Window" mode: a normal window with the crew in a scene strip on top and a card per Claude
@@ -410,6 +411,23 @@ final class CardsView: NSView {
     private static let agentH: CGFloat = 34
     private static let groupH: CGFloat = 22
 
+    /// Each host its own colour (its brand's where it has a recognisable one); grey for Local, pink for any other host.
+    static func remoteColor(_ remote: String) -> NSColor {
+        func rgb(_ hex: Int) -> NSColor {
+            NSColor(srgbRed: CGFloat(hex >> 16 & 0xff) / 255, green: CGFloat(hex >> 8 & 0xff) / 255, blue: CGFloat(hex & 0xff) / 255, alpha: 1)
+        }
+        switch remote {
+        case "GitHub": return rgb(0xA371F7)        // GitHub's purple
+        case "GitLab": return rgb(0xFC6D26)        // GitLab orange
+        case "Bitbucket": return rgb(0x2684FF)     // Atlassian blue
+        case "Azure DevOps": return rgb(0x4CC2FF)  // lighter blue, to tell it from Bitbucket
+        case "Codeberg": return rgb(0x2FBF8F)
+        case "SourceHut": return rgb(0xE0C050)
+        case "Local": return NSColor(white: 0.6, alpha: 1)
+        default: return rgb(0xE06C9F)              // self-hosted and anything else
+        }
+    }
+
     private func cardHeight(_ c: CardModel) -> CGFloat {
         let text = 22 + CGFloat(c.lines.count) * Self.lineH + (c.agents.isEmpty ? 0 : 6 + CGFloat(c.agents.count) * Self.agentH)
         return max(Self.portraitSize.height + 4, text) + Self.pad * 2
@@ -513,6 +531,19 @@ final class CardsView: NSView {
                 NSBezierPath(roundedRect: pill, xRadius: 8.5, yRadius: 8.5).fill()
                 name.draw(at: NSPoint(x: pill.minX + 7, y: pill.minY + 2))
                 namePill = pill
+                // Where the repo lives, in a pill to its left, in that host's colour.
+                if let remote = c.remote {
+                    let hue = Self.remoteColor(remote)
+                    let label = NSAttributedString(string: remote, attributes: [
+                        .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold),
+                        .foregroundColor: hue.blended(withFraction: 0.45, of: .white) ?? hue])
+                    let lw = label.size().width
+                    let rp = NSRect(x: pill.minX - 6 - lw - 14, y: pill.minY, width: lw + 14, height: pill.height)
+                    hue.withAlphaComponent(0.24).setFill()
+                    NSBezierPath(roundedRect: rp, xRadius: 8.5, yRadius: 8.5).fill()
+                    label.draw(at: NSPoint(x: rp.minX + 7, y: rp.minY + 2))
+                    namePill = pill.union(rp)
+                }
             }
             if c.focused {
                 header.append(NSAttributedString(string: "   ◆ you're here", attributes: [
@@ -524,7 +555,7 @@ final class CardsView: NSView {
             ty += 22
 
             for line in c.lines {
-                // Lines level with the name pill stop short of it.
+                // Lines level with the pills stop short of them.
                 let beside = namePill.map { ty < $0.maxY && ty + Self.lineH > $0.minY } ?? false
                 let width = beside ? namePill!.minX - tx - 8 : tw
                 draw(line.text, at: NSPoint(x: tx, y: ty), width: width, font: .systemFont(ofSize: 11.5), color: line.color)
