@@ -1596,10 +1596,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         return img
     }
 
+    /// Seconds only for the first minute, then whole minutes: a card with a ticking second counter redraws every second.
     private static func duration(_ seconds: Double) -> String {
         let s = Int(max(0, seconds))
         if s < 60 { return "\(s)s" }
-        if s < 3600 { return "\(s / 60)m \(s % 60)s" }
+        if s < 3600 { return "\(s / 60)m" }
         return "\(s / 3600)h \(s % 3600 / 60)m"
     }
 
