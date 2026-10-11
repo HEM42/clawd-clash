@@ -492,12 +492,14 @@ final class CardsView: NSView {
             c.statusColor.withAlphaComponent(0.16).setFill()
             NSBezierPath(roundedRect: chip, xRadius: 9.5, yRadius: 9.5).fill()
             status.draw(at: NSPoint(x: chip.minX + 7, y: chip.minY + 2))
-            let header = NSMutableAttributedString(string: c.villain, attributes: [
-                .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: NSColor.white])
+            // Project first (in its colour), then the character.
+            let header = NSMutableAttributedString()
             if !c.project.isEmpty {
-                header.append(NSAttributedString(string: "  ·  " + c.project, attributes: [
-                    .font: NSFont.systemFont(ofSize: 13, weight: .semibold), .foregroundColor: c.accent]))
+                header.append(NSAttributedString(string: c.project + "  ·  ", attributes: [
+                    .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: c.accent]))
             }
+            header.append(NSAttributedString(string: c.villain, attributes: [
+                .font: NSFont.systemFont(ofSize: 13, weight: .semibold), .foregroundColor: NSColor.white]))
             if c.focused {
                 header.append(NSAttributedString(string: "   ◆ you're here", attributes: [
                     .font: NSFont.systemFont(ofSize: 11, weight: .semibold),
