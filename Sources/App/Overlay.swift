@@ -110,6 +110,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private var hookIssues: [HookIssue] = []
     private var hooksSince: [String: Double] = [:]  // assistant → when its hook file last changed (only if our hooks are in it)
     private var missingHooks: [String] = []          // AIs on this Mac without our hooks
+    /// AIs you've said you don't use with Clawd Wars: installed, not connected, and no reminders about it. Connecting
+    /// one (Settings or the menu) takes it off the list; removing its hooks from Settings puts it on.
+    static var ignoredHooks: Set<String> {
+        get { Set(UserDefaults.standard.stringArray(forKey: "ignoredHooks") ?? []) }
+        set { UserDefaults.standard.set(newValue.sorted(), forKey: "ignoredHooks") }
+    }
     private var notifiedSilent: Set<Int32> = []
     private var seenBusy: Set<Int32> = []            // pids seen working (a turn ran, so a working hook would have fired)
     private let shotPath = ProcessInfo.processInfo.environment["CLAWD_SHOT"]     // "%d" in the path → numbered frames
@@ -118,7 +124,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private let dismissAfter = Double(ProcessInfo.processInfo.environment["CLAWD_DISMISS_AFTER"] ?? "")   // debug: Playground agents finish
     private var clawdWindow: ClawdWindow?
     private var windowMode: Bool {
-        get { UserDefaults.standard.bool(forKey: "windowMode") }
+        get { UserDefaults.standard.object(forKey: "windowMode") as? Bool ?? true }   // the window, until you choose
         set { UserDefaults.standard.set(newValue, forKey: "windowMode") }
     }
 
@@ -129,7 +135,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     }
     /// Window mode always uses the Small size (the scene backdrop's pixels match it: 2 pt).
     private static let windowZoom: CGFloat = 0.67
-    private var baseZoom: CGFloat { let z = UserDefaults.standard.double(forKey: "zoom"); return z > 0 ? z : 1 }
+    /// Desktop size: Small until one is chosen.
+    private var baseZoom: CGFloat { let z = UserDefaults.standard.double(forKey: "zoom"); return z > 0 ? z : 0.67 }
     private var windowFit: CGFloat = 1
 
     /// Project names over the Claudes, remembered per mode: on by default on the desktop, off in the window
@@ -365,7 +372,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     sessions[i].hookSilent = true
                 }
             }
-            hookIssues = missingHooks.map {
+            hookIssues = missingHooks.filter { !Self.ignoredHooks.contains($0) }.map {
                 HookIssue(text: "\(HookInstaller.displayName($0)) isn't connected — live status is off. Connect it from the menu.",
                           install: $0, pid: nil)
             } + sessions.filter(\.hookSilent).map {
@@ -1275,9 +1282,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         // The app was moved since the hooks went in: point them here (already agreed to, so no need to ask).
         for ai in HookInstaller.repairMoved() { NSLog("Clawd Wars: re-pointed \(HookInstaller.displayName(ai)) hooks at \(HookInstaller.hookBinary)") }
         let d = UserDefaults.standard
+        let ignored = Self.ignoredHooks
         let claude = HookInstaller.claudeAvailable && !HookInstaller.isInstalled && !d.bool(forKey: "offeredHooks")
+            && !ignored.contains("claude")
         let others = HookInstaller.others.filter {
             HookInstaller.available($0) && !HookInstaller.installed($0) && !d.bool(forKey: "offeredHooks.\($0.name)")
+                && !ignored.contains($0.name)
         }
         guard claude || !others.isEmpty else { return }
         if claude { d.set(true, forKey: "offeredHooks") }
@@ -1795,7 +1805,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             lastAI = s.group
         }
         let banner: String? = offlineReason.map { $0 + " — live status is off. Fix it from Settings in the menu." } ?? hookBanner
-        w.cardsView.update(cards: cards, banner: banner)
+        // An AI that isn't connected can be waved off with the banner's ×; other problems can't.
+        let dismissible = offlineReason == nil ? hookIssues.first?.install : nil
+        w.cardsView.update(cards: cards, banner: banner, dismiss: dismissible.map { ai in { [weak self] in self?.ignoreHooks(for: ai) } })
         w.fitToContent()
     }
 
@@ -1843,6 +1855,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             item.target = self
             item.representedObject = issue.install ?? issue.pid.map { "jump:\($0)" }
             m.addItem(item)
+            if let ai = issue.install {
+                let ignore = NSMenuItem(title: "Don't Remind Me About \(HookInstaller.displayName(ai))", action: #selector(ignoreHookIssue(_:)),
+                                        keyEquivalent: "")
+                ignore.target = self
+                ignore.representedObject = ai
+                ignore.indentationLevel = 1
+                m.addItem(ignore)
+            }
         }
         if !hookIssues.isEmpty { m.addItem(.separator()) }
         // No session list here: the window's list and the desktop's hover cards already show every session.
@@ -1899,7 +1919,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         sm.addItem(action: "Keep Window on Top", #selector(togglePin), target: self,
                    on: UserDefaults.standard.bool(forKey: "windowPinned"))
         sm.addItem(action: "Small Window (75%)", #selector(toggleSmallWindow), target: self,
-                   on: UserDefaults.standard.bool(forKey: "windowSmall"))
+                   on: ClawdWindow.small)
         sm.addItem(action: "Show Session List in Window", #selector(toggleWindowList), target: self, on: ClawdWindow.listShown)
         sm.addItem(action: "Fit Window Height to Sessions", #selector(toggleAutoHeight), target: self,
                    on: UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true)
@@ -1932,7 +1952,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     }
 
     @objc private func toggleSmallWindow() {
-        UserDefaults.standard.set(!UserDefaults.standard.bool(forKey: "windowSmall"), forKey: "windowSmall")
+        ClawdWindow.small.toggle()
         clawdWindow?.applySmall()
     }
 
@@ -2125,7 +2145,19 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         lastHookCheck = 0
     }
 
+    @objc private func ignoreHookIssue(_ sender: NSMenuItem) {
+        if let ai = sender.representedObject as? String { ignoreHooks(for: ai) }
+    }
+
+    /// Stop nagging about an AI that's installed but deliberately not connected (the banner's ×, or the menu).
+    func ignoreHooks(for ai: String) {
+        Self.ignoredHooks.insert(ai)
+        hookIssues.removeAll { $0.install == ai }
+        if windowMode { updateCards(Date().timeIntervalSince1970) }
+    }
+
     @objc private func installHooks() {
+        Self.ignoredHooks.remove("claude")
         do { try HookInstaller.install() } catch { alert("Couldn't install hooks", error.localizedDescription) }
     }
 
@@ -2134,6 +2166,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private func installOther(_ name: String) {
         guard let ai = HookInstaller.other(name) else { return }
         let display = HookInstaller.displayName(name)
+        Self.ignoredHooks.remove(name)
         do {
             try HookInstaller.install(ai)
             alert("\(display) hooks installed", name == "codex"
@@ -2144,10 +2177,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     @objc private func removeOtherHooks(_ sender: NSMenuItem) {
         guard let name = sender.representedObject as? String, let ai = HookInstaller.other(name) else { return }
+        Self.ignoredHooks.insert(name)   // removed on purpose: no "isn't connected" reminders
         do { try HookInstaller.uninstall(ai) } catch { alert("Couldn't remove \(HookInstaller.displayName(name)) hooks", error.localizedDescription) }
     }
 
     @objc private func removeHooks() {
+        Self.ignoredHooks.insert("claude")
         do { try HookInstaller.uninstall() } catch { alert("Couldn't remove hooks", error.localizedDescription) }
     }
 

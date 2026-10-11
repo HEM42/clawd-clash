@@ -1,6 +1,7 @@
 #!/bin/zsh
-# Builds "Clawd Wars.app", installs it to /Applications, hooks up every installed AI and launches it.
-#   ./build.sh                     build + install + hooks + launch
+# Builds "Clawd Wars.app", installs it to /Applications, refreshes the hooks of the AIs you've connected and launches it.
+# It never connects a new AI: the app offers that, and Settings in its menu does it.
+#   ./build.sh                     build + install + refresh connected hooks + launch
 #   ./build.sh --no-hooks          build + install + launch (leave every AI's settings alone)
 #   ./build.sh --release <version> universal (arm64 + x86_64) build into build/, signed for distribution;
 #                                  no install, no hooks (used by release.sh)
@@ -122,7 +123,7 @@ pkill -x ClawdWars 2>/dev/null || true
 rm -rf "$DEST" "${OLD_DESTS[@]}" && cp -R "$APP" "$DEST"
 
 if [[ $HOOKS == 1 ]]; then
-    "$DEST/Contents/MacOS/ClawdWars" --install-hooks
+    "$DEST/Contents/MacOS/ClawdWars" --update-hooks
 fi
 
 open "$DEST"

@@ -52,7 +52,12 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     static let headerHeight: CGFloat = 30
     /// Settings → Small Window: the whole window — header, scene, characters, cards — drawn at 75%. Every view keeps
     /// its normal (logical) size in its bounds and is shown in a frame `scale` times as big.
-    static var scale: CGFloat { UserDefaults.standard.bool(forKey: "windowSmall") ? 0.75 : 1 }
+    static var scale: CGFloat { small ? 0.75 : 1 }
+    /// On until turned off in Settings.
+    static var small: Bool {
+        get { UserDefaults.standard.object(forKey: "windowSmall") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "windowSmall") }
+    }
     var onClose: (() -> Void)?
     var onGeometryChange: (() -> Void)?
     private(set) var sceneHeight: CGFloat
@@ -524,9 +529,14 @@ final class CardsView: NSView {
     /// Everything the cards show, so an update that changes nothing (most of them) doesn't redraw.
     private var shown = ""
 
-    func update(cards: [CardModel], banner: String?) {
+    /// The banner's ×, when what it says can be waved off.
+    private var bannerDismiss: (() -> Void)?
+    private var bannerClose = NSRect.zero
+
+    func update(cards: [CardModel], banner: String?, dismiss: (() -> Void)? = nil) {
+        bannerDismiss = dismiss
         // The cards are tinted with the location's colours, so a new location redraws them too.
-        let now = ([banner ?? "", controller?.location.rawValue ?? ""] + cards.map(\.signature)).joined(separator: "\u{1}")
+        let now = ([banner ?? "", "\(dismiss != nil)", controller?.location.rawValue ?? ""] + cards.map(\.signature)).joined(separator: "\u{1}")
         guard now != shown else { return }
         shown = now
         self.cards = cards
@@ -629,8 +639,20 @@ final class CardsView: NSView {
             let r = NSRect(x: x, y: y, width: w, height: 26)
             NSColor(srgbRed: 0.35, green: 0.08, blue: 0.10, alpha: 1).setFill()
             NSBezierPath(roundedRect: r, xRadius: 6, yRadius: 6).fill()
-            draw(banner, at: NSPoint(x: r.minX + 10, y: r.minY + 5), width: r.width - 20,
-                 font: .systemFont(ofSize: 12, weight: .semibold), color: NSColor(srgbRed: 1, green: 0.7, blue: 0.7, alpha: 1))
+            let pink = NSColor(srgbRed: 1, green: 0.7, blue: 0.7, alpha: 1)
+            bannerClose = bannerDismiss == nil ? .zero : NSRect(x: r.maxX - 26, y: r.minY + 3, width: 20, height: 20)
+            draw(banner, at: NSPoint(x: r.minX + 10, y: r.minY + 5), width: r.width - 20 - (bannerDismiss == nil ? 0 : 22),
+                 font: .systemFont(ofSize: 12, weight: .semibold), color: pink)
+            if bannerDismiss != nil {   // × : don't remind me about this AI
+                let c = NSPoint(x: bannerClose.midX, y: bannerClose.midY), d: CGFloat = 4
+                let x = NSBezierPath()
+                x.move(to: NSPoint(x: c.x - d, y: c.y - d)); x.line(to: NSPoint(x: c.x + d, y: c.y + d))
+                x.move(to: NSPoint(x: c.x - d, y: c.y + d)); x.line(to: NSPoint(x: c.x + d, y: c.y - d))
+                x.lineWidth = 1.6
+                x.lineCapStyle = .round
+                pink.setStroke()
+                x.stroke()
+            }
             y += 34
         }
         if cards.isEmpty {
@@ -867,6 +889,7 @@ final class CardsView: NSView {
 
     override func mouseUp(with event: NSEvent) {
         let p = convert(event.locationInWindow, from: nil)
+        if let dismiss = bannerDismiss, bannerClose.contains(p) { dismiss(); return }
         if let toggle = toggleRects.first(where: { $0.0.contains(p) }) {
             if unfolded.remove(toggle.1) == nil { unfolded.insert(toggle.1) }
             relayout()
@@ -881,6 +904,7 @@ final class CardsView: NSView {
     override func resetCursorRects() {
         for (r, pid) in hitRects where pid != nil { addCursorRect(r, cursor: .pointingHand) }
         for (r, _) in toggleRects { addCursorRect(r, cursor: .pointingHand) }
+        if bannerDismiss != nil { addCursorRect(bannerClose, cursor: .pointingHand) }
     }
 
     override func rightMouseDown(with event: NSEvent) {

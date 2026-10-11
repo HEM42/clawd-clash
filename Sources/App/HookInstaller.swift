@@ -290,11 +290,13 @@ enum HookInstaller {
             let entries = withoutOurs(ai, hooks[e] as? [[String: Any]] ?? [])
             hooks[e] = entries.isEmpty ? nil : entries
         }
-        if ai.ownFile && hooks.isEmpty {
+        root["hooks"] = hooks.isEmpty ? nil : hooks
+        // Nothing of anyone's left (our own file, or one that only ever held our hooks, like a hooks.json we
+        // created): delete it rather than leave an empty file behind.
+        if ai.ownFile && hooks.isEmpty || root.keys.allSatisfy({ $0 == "version" }) {
             try FileManager.default.removeItem(at: ai.file)
             return
         }
-        root["hooks"] = hooks.isEmpty ? nil : hooks
         try writeJSON(root, to: ai.file)
     }
 
@@ -388,6 +390,17 @@ enum HookInstaller {
 
     /// Reconnects the AIs a `--uninstall-hooks` removed (those still on this Mac), then forgets the note.
     @discardableResult
+    /// The AIs that have any of our hooks: the ones you've connected. `--update-hooks` refreshes only these.
+    static func connected() -> [String] {
+        var names: [String] = []
+        if let root = try? readSettings(), !ourBinaries(in: root).isEmpty { names.append("claude") }
+        for ai in others {
+            guard let hooks = (try? read(ai))?["hooks"] as? [String: Any] else { continue }
+            if hooks.values.contains(where: { ($0 as? [[String: Any]] ?? []).contains(where: isOurs) }) { names.append(ai.name) }
+        }
+        return names
+    }
+
     static func restoreRemoved() -> (installed: [String], errors: [String]) {
         guard let text = try? String(contentsOf: removedMarker, encoding: .utf8) else { return ([], []) }
         try? FileManager.default.removeItem(at: removedMarker)

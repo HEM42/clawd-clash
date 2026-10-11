@@ -2,17 +2,22 @@ import AppKit
 
 let args = CommandLine.arguments
 
-if args.contains("--install-hooks") || args.contains("--uninstall-hooks") {
+if args.contains("--install-hooks") || args.contains("--update-hooks") || args.contains("--uninstall-hooks") {
     // Each AI on its own: one that fails doesn't stop the others, and every failure is reported.
     let errors: [String]
-    if args.contains("--install-hooks") {
-        let result = HookInstaller.installAll()
+    if args.contains("--install-hooks") || args.contains("--update-hooks") {
+        // --install-hooks connects every AI on this Mac; --update-hooks (build.sh) only refreshes the ones already
+        // connected, so a rebuild never adds hooks to an AI you haven't chosen to connect.
+        let update = args.contains("--update-hooks")
+        let names = update ? HookInstaller.connected() : nil
+        if update && names?.isEmpty == true { print("No AI is connected yet: connect them from the app") }
+        let result = names?.isEmpty == true ? (installed: [], errors: []) : HookInstaller.installAll(names)
         for name in result.installed {
             let file = HookInstaller.other(name)?.file.path ?? HookInstaller.settingsURL.path
             print("Installed \(HookInstaller.displayName(name)) hooks → \(file)"
                   + (name == "codex" ? " (trust them once: run /hooks in Codex and approve)" : ""))
         }
-        if !HookInstaller.claudeAvailable { print("Claude Code isn't installed: skipped it") }
+        if !update && !HookInstaller.claudeAvailable { print("Claude Code isn't installed: skipped it") }
         errors = result.errors
     } else {
         let result = HookInstaller.uninstallAll()

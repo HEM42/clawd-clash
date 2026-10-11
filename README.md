@@ -90,7 +90,7 @@ And when Han Solo's agent is done, he doesn't just fade away — the Millennium 
 
 ## Window mode
 
-Prefer a window? **Show in Window** puts the whole crew in a scene and gives every session a card, titled with its project (the repo's name when it has a git remote, otherwise the folder's) and a pill saying where the repo lives (GitHub, GitLab, … or Local): what it's doing *right now*, your last prompt, its last reply, how long it's been at it — with its agents hanging underneath in a little tree, each with its task and current tool call. With more than one AI running, every AI gets its own section.
+Clawd Wars opens in a window by default (switch to the desktop from the menu; the crew starts there at the Small size). **Show in Window** puts the whole crew in a scene and gives every session a card, titled with its project (the repo's name when it has a git remote, otherwise the folder's) and a pill saying where the repo lives (GitHub, GitLab, … or Local): what it's doing *right now*, your last prompt, its last reply, how long it's been at it — with its agents hanging underneath in a little tree, each with its task and current tool call. With more than one AI running, every AI gets its own section.
 
 <p align="center">
   <img src="docs/window-cantina.png" alt="Window mode in the Mos Eisley Cantina" width="760">
@@ -108,7 +108,7 @@ The scene is set **where the first session's character belongs** — the Death S
   <img src="docs/locations.png" alt="All 22 locations" width="760">
 </p>
 
-Several sessions in the same project are grouped under one project header as a tree, and a card lists four agents with a chevron to unfold the rest (hover any agent in the scene for its details). The window sizes itself to the number of sessions, up to three (more scroll), or keeps your own height, has a 75% **Small Window** option (a smaller scene and compact cards with normal-size text), can hide the session list to become just the scene strip (the collapse button in its title bar), has a themed title bar with its own close and minimize buttons, can stay on top, and can hide its Dock icon. Project names float over the Claudes on the desktop; in the window the cards carry them instead — each mode remembers your choice.
+Several sessions in the same project are grouped under one project header as a tree, and a card lists four agents with a chevron to unfold the rest (hover any agent in the scene for its details). The window sizes itself to the number of sessions, up to three (more scroll), or keeps your own height, opens at a 75% **Small Window** size (a smaller scene and compact cards with normal-size text; turn it off in Settings for full size), can hide the session list to become just the scene strip (the collapse button in its title bar), has a themed title bar with its own close and minimize buttons, can stay on top, and can hide its Dock icon. Project names float over the Claudes on the desktop; in the window the cards carry them instead — each mode remembers your choice.
 
 ## The little things
 
@@ -145,13 +145,13 @@ Hover over anyone for the details — what that session is doing right now, your
 
 ## Install
 
-Needs macOS 13+ (Apple Silicon or Intel) and at least one of [Claude Code](https://claude.com/claude-code), [Codex](https://developers.openai.com/codex) [Qwen Code](https://github.com/QwenLM/qwen-code), [Gemini CLI](https://github.com/google-gemini/gemini-cli) or [GitHub Copilot CLI](https://github.com/github/copilot-cli). Hooks are added for every one of them installed on your Mac (`~/.claude/settings.json`, `~/.codex/hooks.json`, `~/.qwen/settings.json`, `~/.gemini/settings.json`, `~/.copilot/hooks/clawd-wars.json`).
+Needs macOS 13+ (Apple Silicon or Intel) and at least one of [Claude Code](https://claude.com/claude-code), [Codex](https://developers.openai.com/codex) [Qwen Code](https://github.com/QwenLM/qwen-code), [Gemini CLI](https://github.com/google-gemini/gemini-cli) or [GitHub Copilot CLI](https://github.com/github/copilot-cli). Clawd Wars asks before connecting any of them, and only touches the ones you connect (`~/.claude/settings.json`, `~/.codex/hooks.json`, `~/.qwen/settings.json`, `~/.gemini/settings.json`, `~/.copilot/hooks/clawd-wars.json`).
 
 > Google's newer **Antigravity CLI** (`agy`) isn't supported yet: its hooks have to answer some events with decisions, which needs testing against a real install first.
 
 > **Codex users:** Codex only runs hooks you've approved. After installing, run **`/hooks`** in Codex once and approve the Clawd Wars hook — until then your Codex sessions still show up, but with a `?` instead of live status. You don't have to remember: when a Codex session starts working without reporting, Clawd Wars sends a notification telling you to approve it (click it to jump to that session).
 
-Clawd Wars only checks the AIs actually on your Mac. If one is installed but not connected (say you install Codex later), you get a banner and a **⚠︎ Connect Codex…** item at the top of the menu, and the app offers to connect it on next launch.
+Clawd Wars only checks the AIs actually on your Mac. If one is installed but not connected (say you install Codex later), you get a banner and a **⚠︎ Connect Codex…** item at the top of the menu, and the app offers to connect it on next launch. Don't use it with Clawd Wars? Click the **×** on the banner (or **Don't Remind Me About …** in the menu) and it stops asking; you can still connect it later from Settings.
 
 **With Homebrew** (easiest):
 
@@ -166,7 +166,7 @@ Or download the zip from [Releases](https://github.com/rodclemen/clawd-wars/rele
 ```sh
 git clone https://github.com/rodclemen/clawd-wars.git
 cd clawd-wars
-./build.sh            # build, install "Clawd Wars.app" to /Applications, add the hooks for every supported AI it finds, launch
+./build.sh            # build, install "Clawd Wars.app" to /Applications, refresh the hooks of AIs you've connected, launch
 ./build.sh --no-hooks # the same, but leave every AI's settings alone
 ```
 

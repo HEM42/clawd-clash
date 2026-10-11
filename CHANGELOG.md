@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.25.0 — 2026-10-11
+
+### Added
+- **Wave off an AI you don't use.** An AI that's installed but not connected (say Codex, which you have but don't use with Clawd Wars) kept a red "isn't connected" banner on screen forever. The banner now has a **×** in the window, and the menu has **Don't Remind Me About Codex** under its ⚠︎ item (the desktop banner can't be clicked). Either one stops the banner, the menu warning and the first-launch offer for that AI. Connecting it later from Settings takes it off the list, and removing an AI's hooks from Settings puts it on, since that's a clear "I don't want this". Kept in `ignoredHooks`.
+
+### Changed
+- **Hooks are only added to an AI you've connected.** `build.sh` ran `--install-hooks`, which connected every AI installed on the Mac on every build, whether or not you'd chosen to. It now runs the new `--update-hooks`, which refreshes only the AIs that already have Clawd Wars hooks (`HookInstaller.connected()`), and never creates a hook file for one that doesn't. New AIs are connected only when you say so: the first-launch offer, the ⚠︎ menu item, Settings, or an explicit `--install-hooks`. Reconnecting after a `brew upgrade` only puts back what was there before.
+- **Clawd Wars opens in a window by default.** The window shows the most at a glance (cards with what every session is doing), so a first launch now opens it instead of putting the crew on the desktop. Anyone who already chose a mode keeps it: only an unset `windowMode` defaults to the window.
+- **The window starts at the Small Window size (75%).** Like the window itself, it's what a first launch gets; turning it off in Settings is remembered.
+- **The desktop crew starts at the Small size.** Switching to the desktop without ever picking a size now uses Small (0.67) instead of Medium, matching the size the window draws the crew at. A size picked in Settings is kept.
+
 ## 2.24.0 — 2026-10-11
 
 ### Added
