@@ -51,6 +51,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private let view: OverlayView
     private var sessions: [SessionSnapshot] = []
     private var actors: [Actor] = []
+    /// Everyone on screen, for the comic transitions' sound effects.
+    var onStage: [Cast] { actors.map(\.cast) }
     private var fights: [Fight] = []
     private var cheering: Set<String> = []
     private var fightUntil: [String: Double] = [:]

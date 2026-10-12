@@ -41,6 +41,11 @@ final class ClawdClashSaverView: ScreenSaverView {
     private let wipeLayer = CALayer(), wipeMask = CAShapeLayer()
     private var wipe: (start: Double, clock: Bool)?
     private var trips = 0                       // the wipes take turns: a hard edge, then a clock
+    /// In Marvel, a comic-book transition instead (`ComicWipe`): each frame drawn whole, old place and new, into
+    /// `comicLayer`.
+    private let comicLayer = CALayer()
+    private var comic: (kind: ComicWipe, start: Double, old: CGImage, word: String, caption: String)?
+    private var lastComic: ComicWipe?
     /// With Clawd Clash not running: a made-up crew, cast for `demoPlace` (a local or two among them), off somewhere
     /// new every `demoEvery`.
     private var demo: [SaverFeed.Session] = []
@@ -109,6 +114,10 @@ final class ClawdClashSaverView: ScreenSaverView {
         wipeMask.actions = ["path": NSNull()]
         wipeLayer.mask = wipeMask
         root.addSublayer(wipeLayer)
+        comicLayer.anchorPoint = .zero
+        comicLayer.actions = Self.noAnimations
+        comicLayer.isHidden = true
+        root.addSublayer(comicLayer)
     }
 
     required init?(coder: NSCoder) { super.init(coder: coder) }
@@ -182,6 +191,7 @@ final class ClawdClashSaverView: ScreenSaverView {
     /// across the screen and a clock wipe, taking turns).
     private func travel(_ now: Double) {
         lastTrip = now
+        let onStage = (crewed(now) ? feed?.sessions ?? [] : demo).flatMap { [$0.cast] + $0.agents.map(\.cast) }.map { Cast(id: $0) }
         if feedSource == nil, (feed?.saverUniverse ?? Self.choice) == "random" {
             tripUniverse = Universe.allCases.randomElement()
             Universe.shown = tripUniverse ?? .starWars
@@ -193,7 +203,15 @@ final class ClawdClashSaverView: ScreenSaverView {
                 : Location.all(in: .shown).filter({ $0 != here }).randomElement() else { return }
         if let room {
             let liveNow = liveLayer.contents.flatMap { CFGetTypeID($0 as CFTypeRef) == CGImage.typeID ? ($0 as! CGImage) : nil }
-            if let frozen = Wipe.flatten([room.image] + (liveNow.map { [$0] } ?? [])) {
+            if let frozen = Wipe.flatten([room.image] + (liveNow.map { [$0] } ?? [])), next.universe == .marvel {
+                let kind = ComicWipe.next(after: lastComic)
+                lastComic = kind
+                wipe = nil
+                wipeLayer.isHidden = true
+                comic = (kind, now, frozen, ComicWipe.word(for: onStage), ComicWipe.caption(to: next, cast: onStage))
+            } else if let frozen = Wipe.flatten([room.image] + (liveNow.map { [$0] } ?? [])) {
+                comic = nil
+                comicLayer.isHidden = true
                 CATransaction.begin()
                 CATransaction.setDisableActions(true)
                 wipeLayer.contents = frozen
@@ -285,6 +303,24 @@ final class ClawdClashSaverView: ScreenSaverView {
                 wipeLayer.contents = nil
             } else {
                 wipeMask.path = Wipe.remaining(k, clock: w.clock, in: wipeLayer.bounds)
+            }
+        }
+        if let w = comic {
+            let k = (now - w.start) / w.kind.duration
+            if k >= 1 {
+                comic = nil
+                comicLayer.isHidden = true
+                comicLayer.contents = nil
+            } else if let room, let new = Wipe.flatten([room.image] + (liveLayer.contents.map { [$0 as! CGImage] } ?? [])),
+                      let ctx = CGContext(data: nil, width: Int(picture.width), height: Int(picture.height), bitsPerComponent: 8,
+                                          bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) {
+                // Drawn a screen point to a pixel: the art scaled up crisp, the lettering sharp enough.
+                w.kind.draw(ctx, old: w.old, new: new, k: k, in: CGRect(x: 0, y: 0, width: ctx.width, height: ctx.height),
+                            word: w.word, caption: w.caption)
+                comicLayer.contents = ctx.makeImage()
+                comicLayer.frame = picture
+                comicLayer.isHidden = false
             }
         }
 

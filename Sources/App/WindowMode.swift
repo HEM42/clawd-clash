@@ -558,9 +558,10 @@ final class SceneView: NSView {
     private var live: PixelCanvas?
     private var lastLive: CGImage?
     /// Changing place: the old picture, frozen, wiped away over the new one (a hard edge and a clock wipe, taking
-    /// turns), as the screen saver does.
-    private var wipe: (old: CGImage, start: Double, clock: Bool)?
+    /// turns), as the screen saver does; in Marvel, one of the comic-book transitions (`ComicWipe`) instead.
+    private var wipe: (old: CGImage, start: Double, clock: Bool, comic: ComicWipe?, word: String, caption: String)?
     private var clockWipeNext = false
+    private var lastComic: ComicWipe?
     private let sprites = SpriteLayers()
     /// CLAWD_SHOT captures the window by drawing its views, which can't see layers: draw the old way then.
     static let drawsItself = ProcessInfo.processInfo.environment["CLAWD_SHOT"] != nil
@@ -584,8 +585,15 @@ final class SceneView: NSView {
         guard room?.size != bounds.size || room?.location != location else { return }
         if let old = room, old.size == bounds.size, old.location != location,
            let frozen = Wipe.flatten([old.image] + (old.location.hasAnimatedLayer ? lastLive.map { [$0] } ?? [] : [])) {
-            wipe = (frozen, Date().timeIntervalSince1970, clockWipeNext)
-            clockWipeNext.toggle()
+            if location.universe == .marvel {
+                let comic = ComicWipe.next(after: lastComic), cast = controller.onStage
+                lastComic = comic
+                wipe = (frozen, Date().timeIntervalSince1970, false, comic, ComicWipe.word(for: cast),
+                        ComicWipe.caption(to: location, cast: cast))
+            } else {
+                wipe = (frozen, Date().timeIntervalSince1970, clockWipeNext, nil, "", "")
+                clockWipeNext.toggle()
+            }
         }
         let c = PixelCanvas(g.pw, g.ph)
         location.drawStatic(c, floorRows: g.floorRows)
@@ -601,21 +609,33 @@ final class SceneView: NSView {
         guard let controller else { return [] }
         let g = geometry, now = Date().timeIntervalSince1970
         var items: [OverlayController.DrawItem] = []
+        var liveNow: CGImage?
         if controller.location.hasAnimatedLayer {   // a still picture has nothing to add
             let canvas: PixelCanvas
             if let live, live.w == g.pw, live.h == g.ph { canvas = live; canvas.clear() } else { canvas = PixelCanvas(g.pw, g.ph); live = canvas }
             controller.location.drawAnimated(canvas, floorRows: g.floorRows, t: now)
             if let img = canvas.makeImage() {   // in screen coordinates, like the crew's items
                 lastLive = img
+                liveNow = img
                 items.append(OverlayController.DrawItem(image: img, rect: g.drawRect.offsetBy(dx: origin.x, dy: origin.y)))
             }
         }
         // The old place over the new, less of it each frame; under the crew.
         if let w = wipe {
-            let k = (now - w.start) / Wipe.duration
+            let k = (now - w.start) / (w.comic?.duration ?? Wipe.duration)
             if k >= 1 {
                 wipe = nil
-            } else if let ctx = CGContext(data: nil, width: w.old.width, height: w.old.height, bitsPerComponent: 8, bytesPerRow: 0,
+            } else if let comic = w.comic, let new = room.flatMap({ Wipe.flatten([$0.image] + (liveNow.map { [$0] } ?? [])) }),
+                      let ctx = CGContext(data: nil, width: w.old.width * 4, height: w.old.height * 4, bitsPerComponent: 8,
+                                          bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) {
+                // Four pixels to every art pixel, so the lettering stays sharp.
+                comic.draw(ctx, old: w.old, new: new, k: k, in: CGRect(x: 0, y: 0, width: ctx.width, height: ctx.height),
+                           word: w.word, caption: w.caption)
+                if let img = ctx.makeImage() {
+                    items.append(OverlayController.DrawItem(image: img, rect: g.drawRect.offsetBy(dx: origin.x, dy: origin.y)))
+                }
+            } else if w.comic == nil, let ctx = CGContext(data: nil, width: w.old.width, height: w.old.height, bitsPerComponent: 8, bytesPerRow: 0,
                                           space: CGColorSpace(name: CGColorSpace.sRGB)!,
                                           bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) {
                 let r = CGRect(x: 0, y: 0, width: w.old.width, height: w.old.height)
