@@ -352,11 +352,11 @@ func windowMode(_ ctx: CGContext, frame r: CGRect, local: Double, t: Double) {
         .font: NSFont.systemFont(ofSize: 10.5 * z, weight: .semibold), .foregroundColor: NSColor(white: 0.78, alpha: 1), .kern: 1.2 * z])
     where_.draw(at: NSPoint(x: r.maxX - where_.size().width - 28, y: r.maxY - barH / 2 - where_.size().height / 2))
     // the scene strip: the cantina at 2 px per pixel in the app, so 4 here
-    let px = Double(Cantina.pixel) * z
+    let px = Double(Scenes.pixel) * z
     let stripH = 100.0 * z
     let strip = CGRect(x: r.minX, y: r.maxY - barH - stripH, width: r.width, height: stripH)
     let cw = Int((strip.width / px).rounded(.up)), ch = Int(stripH / px)
-    let floorRows = Int(20 / Double(Cantina.pixel))
+    let floorRows = Int(20 / Double(Scenes.pixel))
     let room = PixelCanvas(cw, ch); loc.drawStatic(room, floorRows: floorRows)
     let live = PixelCanvas(cw, ch); loc.drawAnimated(live, floorRows: floorRows, t: t)
     ctx.saveGState(); ctx.interpolationQuality = .none

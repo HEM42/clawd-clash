@@ -20,7 +20,7 @@ final class AvengersClawdWarsSaverView: ScreenSaverView {
     private var textCache: [String: CGImage] = [:]
     private var feed: SaverFeed?
     private var lastRead = 0.0
-    private var lastLocation = Location.cantina
+    private var lastLocation = Location.avengersTower
     /// Inside the app (the window's screen-saver view) it's handed the feed directly instead of reading the file.
     var feedSource: (() -> SaverFeed?)?
     /// Shown in the app's window rather than as the screen saver: no clock (the menu bar has one), a bigger place
@@ -311,11 +311,15 @@ final class AvengersClawdWarsSaverView: ScreenSaverView {
         let active = { (m: Member) in !m.isLeader || m.session.mood == "working" || m.session.mood == "thinking" }
         var leaders = members.filter { $0.isLeader && $0.weapon != .none && active($0) }
         var agents = members.filter { !$0.isLeader && $0.weapon != .none }
-        if let han = (leaders + agents).first(where: { $0.cast.isHan }),
-           let greedo = (leaders + agents).first(where: { $0.cast.isGreedo }) {
-            pairs.append((han, greedo))
-            leaders.removeAll { $0.key == han.key || $0.key == greedo.key }
-            agents.removeAll { $0.key == han.key || $0.key == greedo.key }
+        // Arch-enemies face off first (`Cast.nemeses`).
+        var fighters = leaders + agents
+        while let i = fighters.indices.first(where: { i in fighters.indices.contains { fighters[i].cast.isNemesis(of: fighters[$0].cast) } }),
+              let j = fighters.indices.first(where: { fighters[i].cast.isNemesis(of: fighters[$0].cast) }) {
+            let a = fighters[i], b = fighters[j]
+            pairs.append((a, b))
+            fighters.removeAll { $0.key == a.key || $0.key == b.key }
+            leaders.removeAll { $0.key == a.key || $0.key == b.key }
+            agents.removeAll { $0.key == a.key || $0.key == b.key }
         }
         pairUp(&leaders)
         pairUp(&agents)
@@ -390,7 +394,7 @@ final class AvengersClawdWarsSaverView: ScreenSaverView {
                 let lift = p.m.isLeader ? 0 : (ls - cs) * 8
                 return Fighter(weapon: p.m.weapon, x: Double((p.x - left) / ls), k: Double(sc / ls),
                                top: Double((CGFloat(Sprite.height) * (ls - sc) - lift) / ls), side: side, muzzle: p.m.cast.muzzle,
-                               armoured: p.m.cast.armoured, pivot: p.m.cast.weaponPivot)
+                               armoured: p.m.cast.armoured, pivot: p.m.cast.weaponPivot).dressed(as: p.m.cast)
             }
             let c = PixelCanvas(width, Sprite.height)
             drawFightFX(c, t: t, left: fighter(l, side: 1), right: fighter(r, side: -1))
@@ -752,7 +756,7 @@ final class AvengersClawdWarsSaverView: ScreenSaverView {
     /// among them (whoever calls the place home), up to two of them agents at someone's side.
     private func cast(for place: Location, now: Double) -> [SaverFeed.Session] {
         let armed = (Array(0..<Leader.allCases.count) + Companion.allCases.map { StatusStore.heroBase + $0.rawValue })
-            .filter { Cast(id: $0).weapon != .none }
+            .filter { Cast(id: $0).weapon != .none && !StatusStore.agentOnly.contains($0) }
         let locals = armed.filter { Cast(id: $0).home == place }.shuffled().prefix(2)
         var dark = armed.filter { StatusStore.isDark($0) && !locals.contains($0) }.shuffled()
         var light = armed.filter { !StatusStore.isDark($0) && !locals.contains($0) }.shuffled()

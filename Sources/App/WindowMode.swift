@@ -571,7 +571,7 @@ final class SceneView: NSView {
     override func updateLayer() { layer?.masksToBounds = true }
 
     private var geometry: (pw: Int, ph: Int, floorRows: Int, drawRect: CGRect) {
-        let b = bounds, p = Cantina.pixel
+        let b = bounds, p = Scenes.pixel
         let pw = Int((b.width / p).rounded(.up)), ph = Int((b.height / p).rounded(.up))
         return (pw, ph, Int((OverlayController.cantinaFloor / p).rounded()),
                 CGRect(x: 0, y: 0, width: CGFloat(pw) * p, height: CGFloat(ph) * p))
@@ -581,7 +581,6 @@ final class SceneView: NSView {
     private func prepareRoom() {
         guard let controller else { return }
         let g = geometry, location = controller.location
-        if room?.location != location && location == .cantina { Cantina.maxReboTonight = Bool.random() }   // a new night
         guard room?.size != bounds.size || room?.location != location else { return }
         if let old = room, old.size == bounds.size, old.location != location,
            let frozen = Wipe.flatten([old.image] + (old.location.hasAnimatedLayer ? lastLive.map { [$0] } ?? [] : [])) {

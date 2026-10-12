@@ -92,10 +92,10 @@ enum Legend {
 
     // MARK: Icons
 
-    /// Darth Vader as a session draws him, cropped to what's drawn, with the white outline Claude's characters wear.
+    /// Iron Man as a session draws him, cropped to what's drawn, with the white outline Claude's characters wear.
     private static func character(mode: VaderMode, t: Double, sitting: Bool = false) -> NSImage? {
         let c = PixelCanvas(Sprite.width, Sprite.height)
-        drawLeader(c, .vader, t: t, mode: mode, walking: false, sitting: sitting)
+        drawPersona(c, .hero(.ironMan), t: t, mode: mode, walking: false, role: .none, sitting: sitting)
         c.addOutline(AIStyle.outline("claude"))
         return image(c)
     }

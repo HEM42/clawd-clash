@@ -32,7 +32,8 @@ private struct Actor {
     var focused = false          // its terminal is the one in front
     var sitting = false          // idle 2+ minutes: sat down on the floor
     var detail: [String] = []    // hover card lines
-    var exit: (landX: CGFloat, dir: CGFloat, startX: CGFloat)?   // Han's departure on the Falcon
+    var exit: (landX: CGFloat, dir: CGFloat, startX: CGFloat)?   // picked up by its ship (`Cast.ride`)
+    var air: CGFloat = 0         // a flyer: 0 on the ground … 1 cruising in the air
 
     var isLeader: Bool { if case .leader = kind { return true } else { return false } }
     var cast: Cast { switch kind { case .leader(let c), .agent(let c): return c } }
@@ -42,7 +43,7 @@ private struct Fight { let a: String, b: String }
 
 private let fadeIn = 0.5
 private let fadeOut = 0.6
-private let falconExit = 6.0      // Han's agent finishing: the Falcon lands, he boards, it flies off
+private let falconExit = 6.0      // an agent with a ride finishing: its ship lands, it boards, they fly off
 private let fightLinger = 3.0      // keep fighting through brief gaps between tool calls
 
 final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, UNUserNotificationCenterDelegate {
@@ -52,9 +53,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private var actors: [Actor] = []
     private var fights: [Fight] = []
     private var cheering: Set<String> = []
-    /// Han shoots first (`GreedoShot`): who's who, when Han fired (it plays out from there) and Greedo's line after.
-    private var greedoShot: (han: String, greedo: String, start: Double, line: String)?
-    private var nextGreedoShot: Double?
     private var fightUntil: [String: Double] = [:]
     private var home = NSPoint.zero    // Vader's resting spot (between his feet)
     private var demo = CommandLine.arguments.contains("--demo")
@@ -173,6 +171,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     override init() {
         // The hook only knows the cast sizes; a villain or hero added without bumping them would never be picked.
         assert(StatusStore.leaderCount == Leader.allCases.count && StatusStore.companionCount == Companion.allCases.count)
+        assert(StatusStore.agentOnly == [Leader.ultronSentry.rawValue, Leader.doombot.rawValue])   // small fry: agents only
         panel = OverlayPanel(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10),
                              styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         view = OverlayView()
@@ -292,7 +291,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let raw = UserDefaults.standard.string(forKey: "location")
         if raw == Self.randomLocation { return randomPlace() }
         if let raw, let l = Location(rawValue: raw) { return l }
-        return sessions.first.map { Cast(id: $0.leader).home } ?? .cantina
+        return sessions.first.map { Cast(id: $0.leader).home } ?? .avengersTower
     }
 
     static let randomLocation = "random"
@@ -302,7 +301,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private func randomPlace() -> Location {
         let slot = Int(Date().timeIntervalSince1970 / 600)
         if let r = random, r.slot == slot { return r.place }
-        let place = Location.allCases.filter { $0 != random?.place }.randomElement() ?? .cantina
+        let place = Location.allCases.filter { $0 != random?.place }.randomElement() ?? .avengersTower
         random = (place, slot)
         return place
     }
@@ -603,8 +602,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         // between tools doesn't walk in and out); idle ones and ones waiting for you step aside, to sit and sleep.
         //  1. Claudes fight Claudes (saber duels first).
         //  2. Agents fight agents — their own or other Claudes' (saber duels first).
-        //  3. A leftover Claude and a leftover agent fight each other (one Claude + one agent = Vader vs Luke).
-        //  4. Anyone still left over cheers the fighters on. R2-D2 and C-3PO are unarmed bystanders.
+        //  3. A leftover Claude and a leftover agent fight each other.
+        //  4. Anyone still left over cheers the fighters on. The unarmed (Mantis, Professor X…) are bystanders.
         // A lone Claude with nobody to fight just practises its kata when working.
         var pairs: [(Member, Member)] = []
         func pairUp(_ pool: inout [Member]) {
@@ -623,14 +622,17 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         var villains = members.filter { $0.isLeader && $0.weapon != .none && active($0) }
         let unarmedVillains = members.filter { $0.isLeader && $0.weapon == .none && active($0) }
         var agents = members.filter { !$0.isLeader && $0.weapon != .none }
-        // 0. Han and Greedo always face off when both are fighting, Claude or agent, wherever they are in the line: everyone between them
-        //    walks over to make room (and now and then Han shoots first, see `GreedoShot`).
+        // 0. Arch-enemies face off first when both are fighting, Claude or agent, wherever they are in the line
+        //    (`Cast.nemeses`): everyone between them walks over to make room.
         func cast(_ m: Member) -> Cast { switch m.unit.kind { case .leader(let c), .agent(let c): return c } }
-        if let han = (villains + agents).first(where: { cast($0).isHan }),
-           let greedo = (villains + agents).first(where: { cast($0).isGreedo }) {
-            pairs.append((han, greedo))
-            villains.removeAll { $0.unit.key == han.unit.key || $0.unit.key == greedo.unit.key }
-            agents.removeAll { $0.unit.key == han.unit.key || $0.unit.key == greedo.unit.key }
+        var fighters = villains + agents
+        while let i = fighters.indices.first(where: { i in fighters.indices.contains { cast(fighters[i]).isNemesis(of: cast(fighters[$0])) } }),
+              let j = fighters.indices.first(where: { cast(fighters[i]).isNemesis(of: cast(fighters[$0])) }) {
+            let a = fighters[i], b = fighters[j]
+            pairs.append((a, b))
+            fighters.removeAll { $0.unit.key == a.unit.key || $0.unit.key == b.unit.key }
+            villains.removeAll { $0.unit.key == a.unit.key || $0.unit.key == b.unit.key }
+            agents.removeAll { $0.unit.key == a.unit.key || $0.unit.key == b.unit.key }
         }
         pairUp(&villains)
         pairUp(&agents)
@@ -781,8 +783,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
         for idx in actors.indices where actors[idx].leaving == nil && !seen.contains(actors[idx].key) {
             actors[idx].leaving = now
-            // Han doesn't just fade out: the Falcon comes to pick him up.
-            if actors[idx].cast.isHan {          // Han, as an agent or a whole session
+            // Some don't just fade out: their ship comes to pick them up (`Cast.ride`), as an agent or a whole session.
+            if actors[idx].cast.ride != nil {
                 let st = stage, hx = actors[idx].x
                 let dir: CGFloat = hx < st.midX ? 1 : -1
                 actors[idx].exit = (hx + dir * 70 * zoom, dir, hx)
@@ -884,6 +886,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 let stepLen = min(abs(d), Self.walkSpeed * zoom * dt)
                 actors[i].x += d > 0 ? stepLen : -stepLen
                 actors[i].walkDir = d > 0 ? 1 : -1
+            }
+            // Flyers take off when they set out and come down to land as they arrive (about half a second each way).
+            if actors[i].cast.motion == .fly {
+                let up: CGFloat = actors[i].walkDir != 0 && abs(d) > 24 * zoom ? 1 : 0
+                actors[i].air += max(-dt * 2.2, min(dt * 2.2, up - actors[i].air))
             }
         }
 
@@ -1018,36 +1025,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
         for a in actors where cheering.contains(a.key) && a.walkDir == 0 && a.leaving == nil { roles[a.key] = .cheer }
 
-        // Han shoots first: while the two stand facing off, now and then his bolt gets through. It starts on one of
-        // Han's own shots, so the bolt leaves his blaster; anyone walking off or leaving calls it off.
-        var shot: (han: String, greedo: String, e: Double, line: String)?
-        if let pair = fx.first(where: { ($0.0.cast.isHan && $0.1.cast.isGreedo) || ($0.0.cast.isGreedo && $0.1.cast.isHan) }) {
-            let han = pair.0.cast.isHan ? pair.0 : pair.1, greedo = pair.0.cast.isHan ? pair.1 : pair.0
-            if let s = greedoShot, s.han != han.key || s.greedo != greedo.key { greedoShot = nil }
-            if let s = greedoShot, now - s.start > GreedoShot.done {
-                greedoShot = nil
-                nextGreedoShot = now + GreedoShot.delay(first: false)
-            }
-            if greedoShot == nil {
-                if let next = nextGreedoShot, now >= next, case .shoot(let offset)? = roles[han.key] {
-                    let fire = (floor((t + offset) / blasterPeriod) + 1) * blasterPeriod - offset
-                    greedoShot = (han.key, greedo.key, start + fire, GreedoShot.greedoSays.randomElement() ?? "That hurt!")
-                    nextGreedoShot = nil
-                } else if nextGreedoShot == nil {
-                    nextGreedoShot = now + GreedoShot.delay(first: true)
-                }
-            }
-            if let s = greedoShot, now >= s.start {
-                let e = now - s.start
-                shot = (s.han, s.greedo, e, s.line)
-                incoming[s.han] = nil; incoming[s.greedo] = nil   // nobody ducks: Greedo doesn't see it coming
-                if e > GreedoShot.hit + 0.3 { roles[s.han] = .rest }   // blaster down, job done
-            }
-        } else {
-            greedoShot = nil
-            nextGreedoShot = nil
-        }
-
         if debug, Int(now * 2) != lastDebug {
             lastDebug = Int(now * 2)
             let line = actors.map { a in
@@ -1068,7 +1045,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             var facing = walking ? actor.walkDir : actor.facing
             var aboard = false
             if let exit = actor.exit, let left = actor.leaving {
-                // Falcon departure, by phase: fly in (0–0.3), ramp down, Han walks up (0.36–0.62),
+                // Picked up by its ship, by phase: fly in (0–0.3), ramp down, it walks up (0.36–0.62),
                 // ramp up, lift off and away (0.72–1).
                 let p = min(1, (now - left) / falconExit)
                 let cs0 = Self.companionScale * z
@@ -1083,7 +1060,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     actor.x = exit.startX
                     facing = exit.dir
                 }
-                falconItems.append(falconItem(exit, p: p, ground: ground + (ls - cs0) * 8 + 8 * cs0, scale: cs0))
+                if let ride = actor.cast.ride {
+                    falconItems.append(falconItem(exit, ride: ride, p: p, ground: ground + (ls - cs0) * 8 + 8 * cs0, scale: cs0))
+                }
             }
             if aboard { continue }
             if now < actor.born { continue }             // not on stage yet: don't draw what won't be shown
@@ -1094,25 +1073,25 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             case .leader(let who):
                 let role = roles[actor.key]
                 who.draw(canvas, t: t, mode: role != nil ? .working : actor.mode, walking: walking, role: role ?? .none,
-                         urgent: actor.urgent && role == nil, sitting: actor.sitting, asSession: true)
+                         urgent: actor.urgent && role == nil, sitting: actor.sitting, asSession: true, airborne: actor.air > 0.3)
                 scale = ls; y = ground
             case .agent(let who):
                 let role = roles[actor.key]
                 who.draw(canvas, t: role != nil ? t : t + actor.phase, mode: .working, walking: walking,
-                         role: role ?? .none, asSession: false)
+                         role: role ?? .none, asSession: false, airborne: actor.air > 0.3)
                 scale = cs; y = ground + (ls - cs) * 8
             }
-            // Greedo, shot: knocked head over heels, flat on his back, back on his feet (his own, bigger canvas).
-            var pivotX = Sprite.bodyCenterX, knockedTop: Int?, lift: CGFloat = 0
-            if let s = shot, actor.key == s.greedo, s.e >= GreedoShot.hit {
-                let pose = GreedoShot.pose(s.e), who = actor.cast
-                let knocked = GreedoShot.sprite(e: s.e, t: t) { c in
-                    who.draw(c, t: t, mode: .idle, walking: pose.walking, role: .none, asSession: true)
+            // Flyers ride up to `flightHeight` while they travel; Spider-Man swings along in arcs on a web line.
+            let pivotX = Sprite.bodyCenterX
+            var lift = actor.air * Self.flightHeight * scale
+            if actor.cast.motion == .swing, walking {
+                let swing = actor.x / (70 * z)
+                lift = abs(sin(swing * .pi)) * 16 * scale
+                if let web = webLine(from: NSPoint(x: actor.x + facing * 13 * scale, y: y + lift + 18 * scale),
+                                     anchor: NSPoint(x: (floor(swing) + 0.5) * 70 * z + facing * 20 * z, y: y + 90 * scale),
+                                     scale: scale) {
+                    out.append(web)
                 }
-                canvas = knocked.canvas; knockedTop = knocked.top; pivotX = GreedoShot.pivotX
-                actor.x -= facing * CGFloat(pose.back) * scale
-                lift = CGFloat(pose.lift) * scale
-                walking = pose.walking
             }
             canvas.addOutline(AIStyle.outline(actor.assistant))
             guard let img = canvas.makeImage() else { continue }
@@ -1121,7 +1100,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             if let left = actor.leaving, actor.exit == nil {
                 let f = min(1, (now - left) / fadeOut)
                 alpha = min(alpha, 1 - f)
-                drop = -f * 30
+                drop = actor.cast.motion == .fly ? f * 60 : -f * 30   // flyers take off; the rest sink away
             }
             let mirrored = facing < 0
             let bodyX = (mirrored ? CGFloat(canvas.w) - CGFloat(pivotX) : CGFloat(pivotX)) * scale
@@ -1149,14 +1128,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 bubbles.append((actor.key, actor.x, by, kind, actor.urgent, onRight, CGFloat(alpha)))
             }
 
-            // Some sessions have a line they say now and then (`Cast.callout`). Han and Greedo have words after a shot.
-            var line: String?, overHead = false   // Han's and Greedo's lines go over their heads, clear of the fight
+            // Some sessions have a line they say now and then (`Cast.callout`).
+            var line: String?
+            let overHead = false
             if case .leader(let who) = actor.kind, let said = who.callout, actor.walkDir == 0,
                (t / 5 + actor.phase).truncatingRemainder(dividingBy: 1) < 0.3 { line = said }
-            if let s = shot {
-                if actor.key == s.han, s.e >= GreedoShot.hanLine.from, s.e < GreedoShot.hanLine.to { line = GreedoShot.hanSays; overHead = true }
-                if actor.key == s.greedo, s.e >= GreedoShot.standing { line = s.line; overHead = true }
-            }
             if let line {
                 let sc = actor.isLeader ? ls : cs
                 let callout = NSAttributedString(string: line, attributes: [
@@ -1207,7 +1183,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     headTop = CGFloat(Sprite.height - who.drawnTop(sitting: seated)) * ls + 8 * z
                 case .agent(let who): headTop = CGFloat(Sprite.height - who.drawnTop()) * cs + 5 * z
                 }
-                if let top = knockedTop { headTop = CGFloat(canvas.h - top) * scale + (actor.isLeader ? 8 : 5) * z + lift }
+                headTop += lift
                 do {
                     let ly = y + CGFloat(drop) * z + headTop
                     labels.append((DrawItem(text: text, rect: NSRect(x: lx.rounded(), y: ly,
@@ -1234,17 +1210,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 muzzle = a.cast.muzzle
                 return Fighter(weapon: weapon(a), x: Double((a.x - left) / ls), k: Double(sc / ls),
                                top: Double((CGFloat(Sprite.height) * (ls - sc) - lift) / ls), side: side, muzzle: muzzle,
-                               armoured: a.cast.armoured, pivot: a.cast.weaponPivot)
+                               armoured: a.cast.armoured, pivot: a.cast.weaponPivot).dressed(as: a.cast)
             }
             let fl = fighter(l, side: 1), fr = fighter(r, side: -1)
-            let shotHere = shot.flatMap { s in Set([l.key, r.key]) == [s.han, s.greedo] ? s : nil }
-            guard shotHere != nil || fightFXVisible(t: t, fl.weapon, fr.weapon) else { continue }   // e.g. a duel between clashes
+            guard fightFXVisible(t: t, fl.weapon, fr.weapon) else { continue }   // e.g. a duel between clashes
             let c = PixelCanvas(width, Sprite.height)
-            if let s = shotHere {
-                GreedoShot.drawFX(c, e: s.e, t: t, han: l.key == s.han ? fl : fr, greedo: l.key == s.han ? fr : fl)
-            } else {
-                drawFightFX(c, t: t, left: fl, right: fr)
-            }
+            drawFightFX(c, t: t, left: fl, right: fr)
             if let img = c.makeImage() {
                 overlay.append(DrawItem(image: img, rect: NSRect(x: left.rounded(), y: ground,
                                                                  width: CGFloat(width) * ls,
@@ -1344,18 +1315,35 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         return out + overlay
     }
 
-    /// The Millennium Falcon at phase `p` of Han's departure. `feet` is the ground line in screen coordinates.
-    private func falconItem(_ exit: (landX: CGFloat, dir: CGFloat, startX: CGFloat), p: Double, ground feet: CGFloat,
+    /// How high a flyer cruises, in canvas pixels.
+    static let flightHeight: CGFloat = 16
+
+    /// A web line from a swinging hand up to where it's stuck, as a thin white line `scale` points per pixel.
+    private func webLine(from a: NSPoint, anchor b: NSPoint, scale: CGFloat) -> DrawItem? {
+        let minX = min(a.x, b.x), minY = min(a.y, b.y)
+        let w = Int(abs(b.x - a.x) / scale) + 3, h = Int(abs(b.y - a.y) / scale) + 3
+        guard w > 0, h > 0, w < 2000, h < 2000 else { return nil }
+        let c = PixelCanvas(w, h)
+        // Canvas rows run top down, screen y bottom up.
+        let ax = Double((a.x - minX) / scale) + 1, ay = Double(h) - 1 - Double((a.y - minY) / scale)
+        let bx = Double((b.x - minX) / scale) + 1, by = Double(h) - 1 - Double((b.y - minY) / scale)
+        c.glowLine(ax, ay, bx, by, core: C(0xF4F4F8, 0.9), glow: C(0xFFFFFF, 0), coreR: 0.35, glowR: 0.4)
+        return DrawItem(image: c.makeImage(), rect: NSRect(x: (minX - scale).rounded(), y: (minY - scale).rounded(),
+                                                           width: CGFloat(w) * scale, height: CGFloat(h) * scale))
+    }
+
+    /// The ship (`ride`) at phase `p` of picking someone up. `feet` is the ground line in screen coordinates.
+    private func falconItem(_ exit: (landX: CGFloat, dir: CGFloat, startX: CGFloat), ride: Ride, p: Double, ground feet: CGFloat,
                             scale s: CGFloat) -> DrawItem {
         let z = zoom
         var x = exit.landX, lift: CGFloat = 0
         var ramp = 0.0, engines = false, gear = true
-        if p < 0.3 {                                   // swoops in over Han's head and settles
+        if p < 0.3 {                                   // swoops in overhead and settles
             let e = CGFloat(1 - pow(1 - p / 0.3, 2))
             x = exit.landX - exit.dir * 260 * z * (1 - e)
             lift = 150 * z * (1 - e) * (1 - e)
             engines = true; gear = p > 0.22
-        } else if p < 0.72 {                           // landed: ramp down, Han boards, ramp up
+        } else if p < 0.72 {                           // landed: ramp down, they board, ramp up
             ramp = p < 0.36 ? (p - 0.3) / 0.06 : (p < 0.64 ? 1 : max(0, 1 - (p - 0.64) / 0.06))
             engines = p > 0.66
         } else {                                       // lift off and away
@@ -1364,10 +1352,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             lift = 170 * z * e
             engines = true; gear = p < 0.78
         }
-        let c = PixelCanvas(66, 29)
-        drawFalcon(c, ramp: ramp, engines: engines, gear: gear)
+        let c = PixelCanvas(Ride.width, Ride.height)
+        drawRide(c, ride, ramp: ramp, engines: engines, gear: gear)
         c.addOutline(C(0xFFFFFF, 0.92))
-        let w = 66 * s, h = 29 * s
+        let w = CGFloat(Ride.width) * s, h = CGFloat(Ride.height) * s
         return DrawItem(image: c.makeImage(), rect: NSRect(x: (x - w / 2).rounded(), y: (feet - 1 * s + lift).rounded(), width: w, height: h),
                         mirrored: exit.dir < 0, alpha: 1)
     }
@@ -1696,27 +1684,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         statusItem?.button?.image = statusIcon(mono: monoMenuBarIcon)
     }
 
-    /// Vader's helmet for the menu bar. In colour it gets a white outline (the black helmet would vanish on a dark
-    /// menu bar); monochrome keeps only its dark pixels, so the face under the helmet is cut out with its eyes left
-    /// in, and macOS tints what's left to match the menu bar.
+    /// Captain America's shield for the menu bar (`drawMenuBarShield`). In colour it gets a white outline so it
+    /// reads on a dark menu bar; monochrome is a template image that macOS tints to match the menu bar.
     private func statusIcon(mono: Bool) -> NSImage? {
-        let c = PixelCanvas(Sprite.width, Sprite.height)
-        drawLeader(c, .vader, t: 0, mode: .idle, walking: false)
-        var icon = c
-        if mono {
-            icon = PixelCanvas(c.w, c.h)
-            let b = c.buf
-            for y in 0..<c.h {
-                for x in 0..<c.w {
-                    let i = (y * c.w + x) * 4
-                    let luma = (Int(b[i]) * 3 + Int(b[i + 1]) * 6 + Int(b[i + 2])) / 10
-                    if b[i + 3] > 0, luma < 60 { icon.px(x, y, Px(r: 0, g: 0, b: 0, a: b[i + 3])) }
-                }
-            }
-        } else {
-            c.addOutline(C(0xFFFFFF, 0.92))
-        }
-        guard let cg = icon.makeImage()?.cropping(to: CGRect(x: 14, y: 13, width: 28, height: 26)) else { return nil }
+        let c = PixelCanvas(28, 26)
+        drawMenuBarShield(c, mono: mono)
+        if !mono { c.addOutline(C(0xFFFFFF, 0.92)) }
+        guard let cg = c.makeImage() else { return nil }
         let img = NSImage(cgImage: cg, size: NSSize(width: 19, height: 18))
         img.isTemplate = mono
         return img
@@ -2290,50 +2264,21 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let picked = playground ?? []
         pm.addItem(disabled: "Villains — they pair up in the order you add them")
         func weaponLabel(_ l: Leader) -> String {
-            switch l {
-            case .vader: return "red saber"
-            case .kylo: return "crossguard saber"
-            case .maul: return "double saber"
-            case .boba: return "EE-3 blaster"
-            case .trooper: return "E-11 blaster"
-            case .emperor: return "Force lightning"
-            case .rogr: return "E-5 blaster"
-            case .dooku: return "curved-hilt saber"
-            case .gamorrean: return "vibro-axe"
-            case .jabba: return "unarmed — laughs"
-            case .ig88: return "blaster rifle"
-            case .atst: return "chin blasters"
-            case .atat: return "heavy chin cannons"
-            case .rancor: return "long clawed arms"
-            case .greedo: return "blaster pistol"
-            case .royalGuard: return "force pike"
-            case .sebulba: return "pod racer flame jet"
-            case .salacious: return "unarmed — cackles"
-            case .grievous: return "four sabers"
-            case .tusken: return "gaffi stick"
-            case .cadBane: return "twin blasters"
-            case .thrawn: return "blaster pistol"
-            case .hammerhead: return "unarmed"
-            case .mse6, .id9: return "agent only"
-            case .baylan, .shinHati: return "orange saber"
-            case .grandInquisitor, .secondSister: return "spinning double saber"
-            case .bantha: return "unarmed — Tusken mount"
-            case .bibFortuna: return "unarmed"
-            case .watto: return "unarmed — haggles"
-            case .moffGideon: return "the Darksaber"
-            case .deathTrooper: return "E-11D blaster"
-            case .scoutTrooper: return "speeder bike cannon"
-            case .ventress: return "twin red sabers"
-            case .savageOpress: return "double saber"
-            case .jangoFett: return "twin pistols"
-            case .bossk: return "blaster rifle"
-            case .dengar: return "long blaster rifle"
-            case .droideka: return "twin blasters, shield"
-            case .phasma: return "chrome blaster"
-            case .krennic: return "blaster pistol"
-            case .tarkin: return "unarmed — fires when ready"
-            case .fifthBrother, .reva: return "spinning double saber"
+            let p = l.persona
+            var label: String
+            switch p.weapon {
+            case .saber: label = "melee"
+            case .blaster: label = "ranged"
+            case .lightning: label = "magic"
+            case .none: label = p.callout.map { "unarmed — “\($0)”" } ?? "unarmed"
             }
+            switch p.motion {
+            case .fly: label += ", flies"
+            case .hover: label += ", hovers"
+            case .swing: label += ", swings"
+            case .walk: break
+            }
+            return label
         }
         for l in Leader.allCases where !StatusStore.agentOnly.contains(l.rawValue) {
             let order = picked.firstIndex(of: l.rawValue).map { "   #\($0 + 1)" } ?? ""

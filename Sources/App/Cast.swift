@@ -1,14 +1,14 @@
 import Foundation
 
-/// Anyone in the cast: a dark-side villain or a light-side hero. Any of them can be a session (drawn large)
-/// or an agent (drawn small). Ids match `StatusStore`: villains < 100, heroes 100 + Companion.
+/// Anyone in the cast: a villain or a hero. Any of them can be a session (drawn large) or an agent (drawn small).
+/// Ids match `StatusStore`: villains < 100, heroes 100 + Companion.
 enum Cast: Hashable {
     case villain(Leader)
     case hero(Companion)
 
     init(id: Int) {
         if id >= StatusStore.heroBase {
-            self = .hero(Companion(rawValue: (id - StatusStore.heroBase) % Companion.allCases.count) ?? .luke)
+            self = .hero(Companion(rawValue: (id - StatusStore.heroBase) % Companion.allCases.count) ?? .ironMan)
         } else {
             self = .villain(Leader(index: id))
         }
@@ -24,14 +24,8 @@ enum Cast: Hashable {
         }
     }
 
-    var name: String {
-        switch self { case .villain(let l): return l.name; case .hero(let h): return h.name }
-    }
-
-    var weapon: Weapon {
-        switch self { case .villain(let l): return l.weapon; case .hero(let h): return h.weapon }
-    }
-
+    var name: String { persona.name }
+    var weapon: Weapon { persona.weapon }
     var isDark: Bool { if case .villain = self { return true } else { return false } }
 
     var home: Location {
@@ -39,68 +33,31 @@ enum Cast: Hashable {
     }
 
     /// Top row of the head on the 72×52 canvas (for labels).
-    var headTop: Int {
-        switch self { case .villain(let l): return l.headTop; case .hero(let h): return h.headTop }
-    }
-
-    /// Where blaster bolts leave from (canvas pixels).
-    var muzzle: (x: Double, y: Double) {
-        switch self {
-        case .villain(let l): return (Double(l.muzzle.x), Double(l.muzzle.y))
-        case .hero(let h): return h.muzzle
-        }
-    }
-
-    /// Where its weapon swings from (canvas pixels): the hand, or the Rancor's shoulder.
-    var weaponPivot: (x: Double, y: Double) {
-        if case .villain(let l) = self { return l.weaponPivot } else { return Sprite.hand }
-    }
-
-    /// Bolts ricochet off it (armour or a metal shell).
-    var armoured: Bool { if case .villain(let l) = self { return l.armoured } else { return false } }
-
-    /// What it says now and then while leading a session: R0-GR acknowledges orders, Jabba laughs, Watto haggles, Tarkin gives the order, Kuiil has spoken.
-    var callout: String? {
-        switch self {
-        case .villain(.rogr): return "Roger roger!"
-        case .villain(.jabba): return "Ho ho ho!"
-        case .villain(.watto): return "No money, no parts, no deal!"
-        case .villain(.tarkin): return "You may fire when ready."
-        case .hero(.kuiil): return "I have spoken."
-        default: return nil
-        }
-    }
-
-    var isHan: Bool { if case .hero(.han) = self { return true } else { return false } }
-    var isGreedo: Bool { if case .villain(.greedo) = self { return true } else { return false } }
+    var headTop: Int { persona.headTop }
+    /// Where its shots leave from (canvas pixels).
+    var muzzle: (x: Double, y: Double) { persona.muzzle }
+    /// Where its weapon swings from (canvas pixels).
+    var weaponPivot: (x: Double, y: Double) { persona.pivot }
+    /// Shots ricochet off it (armour, metal, rock).
+    var armoured: Bool { persona.armoured }
+    /// What it says now and then while leading a session.
+    var callout: String? { persona.callout }
 
     /// Draw this character. `asSession` = it's a whole Claude/Codex session (it has moods: idle, thinking,
-    /// waiting…); agents are always at work.
+    /// waiting…); agents are always at work. `airborne`: a flyer on its way somewhere.
     func draw(_ c: PixelCanvas, t: Double, mode: VaderMode, walking: Bool, role: FightRole,
-              urgent: Bool = false, sitting: Bool = false, asSession: Bool) {
+              urgent: Bool = false, sitting: Bool = false, asSession: Bool, airborne: Bool = false) {
         // Idle habits (`Habits.swift`): only an idle session standing about, not fighting, walking or sitting.
         var idle = asSession && mode == .idle && !walking && !sitting
-        if case .none = role {} else { idle = false }
+        switch role { case .none, .rest: break; default: idle = false }
         let play = idle ? habit(at: t) : nil
         idleHabit = play
         defer {
             idleHabit = nil
-            if let play {
-                // Heroes' blasters don't come up much when held ready, so the smoke shows what they're doing.
-                if case .hero = self, play.kind == .checkWeapon, play.p > 0.4 {
-                    drawBarrelSmoke(c, x: muzzle.x, y: muzzle.y, (play.p - 0.4) / 0.6)
-                }
-                applyHabitTransform(c, play)
-            }
+            if let play { applyHabitTransform(c, play) }
         }
-        switch self {
-        case .villain(let l):
-            drawLeader(c, l, t: t, mode: asSession ? mode : .working, walking: walking, role: role,
-                       urgent: asSession && urgent, sitting: asSession && sitting)
-        case .hero(let h):
-            drawCompanion(c, h, t: t, walking: walking, role: role, mode: asSession ? mode : .working,
-                          urgent: asSession && urgent, sitting: asSession && sitting)
-        }
+        drawPersona(c, self, t: t, mode: asSession ? mode : .working, walking: walking, role: role,
+                    urgent: asSession && urgent, sitting: asSession && sitting, airborne: airborne)
     }
 }
 
@@ -108,8 +65,8 @@ extension Cast {
     private static var measuredTops: [String: Int] = [:]
 
     /// The top row of this character as drawn at rest, standing or sitting, within 14 px of its body's centre: the
-    /// hand-measured `headTop` misses some (the tauntaun's horns) and doesn't know a seated character sits lower, and
-    /// the band leaves out what floats above (R2's notes, the Ewok's spear). Standing, never lower than `headTop`
+    /// hand-measured `headTop` misses some (horns, wings) and doesn't know a seated character sits lower, and
+    /// the band leaves out what floats above (a raised hammer). Standing, never lower than `headTop`
     /// says; sitting, as much lower as the sprite really drops (nothing, for those that don't sit). Measured once per
     /// character and pose; name tags sit just above it.
     /// Its outline from above, standing at rest: for each column within 14 px of the body's centre, the top row drawn

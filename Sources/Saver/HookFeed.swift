@@ -23,6 +23,6 @@ extension SaverFeed {
                 agents: s.agents.map { Agent(id: $0.id, cast: Cast.of($0).id, task: $0.label.isEmpty ? "Agent" : $0.label) })
         }
         guard !sessions.isEmpty else { return nil }
-        return SaverFeed(at: now, location: last?.location ?? Location.cantina.rawValue, sessions: sessions, events: [])
+        return SaverFeed(at: now, location: last?.location ?? Location.avengersTower.rawValue, sessions: sessions, events: [])
     }
 }

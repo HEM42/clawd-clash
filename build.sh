@@ -50,7 +50,7 @@ compile() {
 
 echo "→ compiling app"
 # The app carries the screen saver's view too: the window's third view is the screen saver itself.
-compile "$APP/Contents/MacOS/AvengersClawdWars" -framework ScreenSaver Sources/Shared/*.swift Sources/App/*.swift Sources/Saver/*.swift
+compile "$APP/Contents/MacOS/AvengersClawdWars" -framework ScreenSaver Sources/Shared/*.swift Sources/App/*.swift Sources/App/Art/*.swift Sources/App/Places/*.swift Sources/Saver/*.swift
 echo "→ compiling hook"
 compile "$APP/Contents/MacOS/avengers-hook" Sources/Shared/*.swift Sources/Hook/main.swift
 
@@ -61,7 +61,8 @@ SAVER="$APP/Contents/Resources/Avengers Clawd Wars.saver"
 mkdir -p "$SAVER/Contents/MacOS"
 compile "$SAVER/Contents/MacOS/AvengersClawdWarsSaver" -module-name AvengersClawdWarsSaver -emit-library -framework ScreenSaver \
     -Xlinker -install_name -Xlinker @rpath/AvengersClawdWarsSaver \
-    Sources/Shared/*.swift Sources/App/{Pixel,Characters,Recruits,Leaders,Cantina,Locations,Cast,Accents,Habits}.swift Sources/Saver/*.swift
+    Sources/Shared/*.swift Sources/App/{Pixel,Characters,Fights,Roster,Pose,Locations,Cast,Accents,Habits}.swift \
+    Sources/App/Art/*.swift Sources/App/Places/*.swift Sources/Saver/*.swift
 # Its picture under "Other" in System Settings: the title card at 0:04 of promo/clawd-wars-promo.mp4, cropped to 180×116.
 mkdir -p "$SAVER/Contents/Resources"
 cp Resources/SaverThumbnail.png "$SAVER/Contents/Resources/thumbnail@2x.png"

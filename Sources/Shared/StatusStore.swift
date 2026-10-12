@@ -119,7 +119,7 @@ enum StatusPaths {
 }
 
 enum StatusStore {
-    static let companionCount = 35
+    static let companionCount = 46
     static let leaderCount = 46
 
     // Stale timeouts: Stop never fires when the user hits Esc, so states must decay on their own.
@@ -405,17 +405,21 @@ enum StatusStore {
     static var darkCast: [Int] { Array(0..<leaderCount) }
     static var lightCast: [Int] { Array(heroBase..<(heroBase + companionCount)) }
     /// Only ever an agent, never a session: the MSE-6 mouse droid and the ID9 seeker droid.
-    static let agentOnly: Set<Int> = [23, 26]
+    static let agentOnly: Set<Int> = [11, 33]   // Ultron Sentry, Doombot
     /// Who can lead a session (everyone but the agent-only).
     static var leaderCast: [Int] { (darkCast + lightCast).filter { !agentOnly.contains($0) } }
 
     static func assistantOf(_ r: SessionRecord) -> String { r.assistant ?? "claude" }
 
-    /// The side `assistant` should use right now, or nil when it's the only AI running (anything goes).
+    /// The side `assistant` should use right now (true: villains), or nil when it's the only AI running (anything
+    /// goes). Claude Code is the heroes whenever another AI is running, and the others the villains; with no Claude
+    /// among them, whoever has been running longest keeps the side it mostly has and the rest take the other.
     static func side(for assistant: String, in sessions: [String: SessionRecord]) -> Bool? {
         let live = sessions.values.filter { $0.leader != nil }
         guard live.contains(where: { assistantOf($0) != assistant }) else { return nil }
-        // Whoever has been running longest keeps the side it mostly has (ties: its first character's side).
+        let isClaude = { (ai: String) in ai == "claude" || ai.hasPrefix("claude-") }
+        if isClaude(assistant) { return false }
+        if live.contains(where: { isClaude(assistantOf($0)) }) { return true }
         // (A record without `created` predates that field, so it's older than any that has one.)
         guard let first = live.min(by: { ($0.created ?? 0) < ($1.created ?? 0) }) else { return nil }
         let firstAI = assistantOf(first)
@@ -426,7 +430,7 @@ enum StatusStore {
     }
 
     /// Character for a new session: random from the whole cast, or from this AI's side when two AIs are running
-    /// (borrowing from the other side only when its own is all on screen). Vader and Kylo never spawn back to back.
+    /// (borrowing from the other side only when its own is all on screen).
     static func nextLeader(_ sessions: [String: SessionRecord], assistant: String = "claude") -> Int {
         let used = Set(sessions.values.compactMap(\.leader))
         let latest = sessions.values.filter { $0.leader != nil }.max { ($0.created ?? $0.updated) < ($1.created ?? $1.updated) }
@@ -458,11 +462,6 @@ enum StatusStore {
         let pool = (pool ?? darkCast).filter { !agentOnly.contains($0) }
         var free = pool.filter { !used.contains($0) }
         if free.isEmpty { free = pool }                      // the whole pool is on screen: repeats are fine
-        let rivals: Set<Int> = [0, 1]                        // Vader, Kylo
-        if let p = previous, rivals.contains(p) {
-            let spaced = free.filter { !rivals.contains($0) || $0 == p }
-            if !spaced.isEmpty { free = spaced }
-        }
         if let seed { return free[Int(seed % UInt64(free.count))] }
         return free.randomElement()!
     }

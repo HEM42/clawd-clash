@@ -2,16 +2,16 @@ import Foundation
 
 // Idle habits: a session that's done doesn't just stand there. Every 11–19 s (its own rhythm) its character does
 // something small for a second or two: looks over its shoulder, shifts its weight, or handles its weapon the way it
-// would — a Sith lights and spins its saber, a gunner raises its blaster and blows the smoke off, the Emperor lets
-// a little lightning crackle. Only while idle and still standing: once it sits down (2 min) it's just resting.
+// would — a hammer or shield swung round, a gun raised and the smoke blown off, magic crackling in a raised hand.
+// Only while idle and still standing: once it sits down (2 min) it's just resting.
 
 enum IdleHabit {
     case glance        // looks back over its shoulder
     case shuffle       // shifts its weight from foot to foot
     case bounce        // a little bounce on the spot (the unarmed ones)
-    case flourish      // saber: lit, spun once, switched off; axes, pikes and claws swing up and back
-    case checkWeapon   // blaster raised to eye level, then the smoke blown off the barrel
-    case crackle       // lightning flickering between the fingers, hand raised
+    case flourish      // melee weapon swung up, round once and back down
+    case checkWeapon   // gun raised to eye level, then the smoke blown off the barrel
+    case crackle       // magic flickering between the fingers, hand raised
     case signature     // its own thing, drawn by its own drawing code (`Cast.hasSignature`)
 
     var length: Double {
@@ -47,24 +47,12 @@ var forcedHabit: HabitPlay?
 extension Cast {
     /// What this character does when idle: its weapon habit (if it handles one by hand) comes up twice as often.
     var habits: [IdleHabit] {
-        if case .villain(.royalGuard) = self { return [] }     // the Emperor's guard doesn't fidget: it stands guard
         var weaponHabit: IdleHabit?
-        switch self {
-        case .villain(let l):
-            switch l.weapon {
-            case .saber: weaponHabit = .flourish
-            case .blaster:
-                // Walkers, the pod racer, the speeder bike and the droideka have their guns built in.
-                if ![.atst, .atat, .sebulba, .scoutTrooper, .droideka].contains(l) { weaponHabit = .checkWeapon }
-            case .lightning: weaponHabit = .crackle
-            case .none: break
-            }
-        case .hero(let h):
-            switch h.weapon {
-            case .saber: weaponHabit = .flourish
-            case .blaster, .lightning: weaponHabit = .checkWeapon
-            case .none: break
-            }
+        switch weapon {
+        case .saber: weaponHabit = .flourish
+        case .blaster: if persona.handGun { weaponHabit = .checkWeapon }
+        case .lightning: weaponHabit = .crackle
+        case .none: break
         }
         var list: [IdleHabit] = [.glance, .shuffle]
         list += weaponHabit.map { [$0, $0] } ?? [.bounce]
@@ -72,29 +60,8 @@ extension Cast {
         return list
     }
 
-    /// Characters with a move of their own, and how long it takes:
-    /// - Vader works the switches on his chest panel; Luke spins his unlit hilt; a stormtrooper bumps his head and
-    ///   sees stars; Boba swings his rangefinder down over his visor.
-    /// - R2-D2 projects Leia's message; C-3PO throws his arms up ("We're doomed"); Chewbacca roars; Han spins his
-    ///   blaster on a finger and holsters it; Obi-Wan strokes his beard; Yoda leans on his gimer stick, ears
-    ///   drooping; the tauntaun shakes its head and snorts; Maz adjusts her goggles; Grogu nibbles a cookie.
-    /// - Grievous has a coughing fit; Kylo has a tantrum; Phasma's chrome catches the light; Jabba licks his lips;
-    ///   IG-88's head lights spin; the Rancor roars.
-    var signatureLength: Double? {
-        switch self {
-        case .villain(.vader), .villain(.trooper), .villain(.boba), .hero(.luke): return 2.6
-        case .hero(.r2d2): return 4
-        case .hero(.c3po), .hero(.chewie), .villain(.rancor): return 2
-        case .hero(.han): return 3
-        case .hero(.obiwan), .hero(.grogu): return 3.2
-        case .hero(.yoda): return 3.4
-        case .hero(.tauntaun), .hero(.maz), .villain(.jabba), .villain(.ig88): return 2.4
-        case .villain(.grievous): return 2.2
-        case .villain(.kylo): return 1.8
-        case .villain(.phasma): return 1.4
-        default: return nil
-        }
-    }
+    /// How long its own move takes, for characters that have one (`Persona.signature`).
+    var signatureLength: Double? { persona.signature }
 
     var hasSignature: Bool { signatureLength != nil }
 
