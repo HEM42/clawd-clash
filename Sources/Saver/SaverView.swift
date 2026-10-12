@@ -421,7 +421,7 @@ final class AvengersClawdWarsSaverView: ScreenSaverView {
                 let sa = a.isLeader ? ls : cs, sb = b.isLeader ? ls : cs
                 let ax = x + reach(a).back
                 let distance = fightIsCloseQuarters(a.weapon, b.weapon)
-                    ? 13.5 * (sa + sb) + 29.7 * min(sa, sb)
+                    ? 13.5 * (sa + sb) + 29.7 * min(sa, sb) + CGFloat(a.cast.persona.bulk) * sa + CGFloat(b.cast.persona.bulk) * sb
                     : reach(a).fwd + reach(b).fwd + gap * 2
                 out.append(Placed(m: a, x: ax, facing: 1))
                 out.append(Placed(m: b, x: ax + distance, facing: -1))

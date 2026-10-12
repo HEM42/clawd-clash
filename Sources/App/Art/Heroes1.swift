@@ -11,7 +11,7 @@ let heroes1: [Companion: Persona] = [
                   draw: drawCaptainAmerica),
     .thor: Persona(name: "Thor", weapon: .saber, motion: .fly, headTop: 14, signature: 3.2, callout: "For Asgard!",
                   draw: drawThor),
-    .hulk: Persona(name: "Hulk", weapon: .saber, pivot: hulkShoulder, headTop: 18, signature: 3.0, callout: "HULK SMASH!",
+    .hulk: Persona(name: "Hulk", weapon: .saber, pivot: hulkShoulder, bulk: 5, headTop: 18, signature: 3.0, callout: "HULK SMASH!",
                   draw: drawHulk),
     .blackWidow: Persona(name: "Black Widow", weapon: .blaster, shot: .bullet, muzzle: (47, 32), headTop: 20, signature: 2.6,
                   draw: drawBlackWidow),

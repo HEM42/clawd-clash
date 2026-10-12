@@ -6,7 +6,7 @@ let heroes4: [Companion: Persona] = [
     .humanTorch: Persona(name: "Human Torch", weapon: .blaster, motion: .fly, shot: .fire, muzzle: (44, 32), handGun: false,
                   headTop: 15, signature: 3.2, callout: "Flame on!",
                   draw: drawHumanTorch),
-    .thing: Persona(name: "The Thing", weapon: .saber, armoured: true, pivot: (41.5, 33.5), headTop: 22, signature: 2.6,
+    .thing: Persona(name: "The Thing", weapon: .saber, armoured: true, pivot: (41.5, 33.5), bulk: 2, headTop: 22, signature: 2.6,
                   callout: "It\'s clobberin\' time!",
                   draw: drawThing),
     .mrFantastic: Persona(name: "Mr. Fantastic", weapon: .saber, headTop: 21, signature: 2.8,

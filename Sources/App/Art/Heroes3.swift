@@ -17,7 +17,7 @@ let heroes3: [Companion: Persona] = [
                   draw: drawJeanGrey),
     .professorX: Persona(name: "Professor X", motion: .hover, canSit: false, headTop: 22, signature: 3.2,
                   draw: drawProfessorX),
-    .beast: Persona(name: "Beast", weapon: .saber, pivot: (41.5, 33.5), headTop: 18, signature: 3.5,
+    .beast: Persona(name: "Beast", weapon: .saber, pivot: (41.5, 33.5), bulk: 2, headTop: 18, signature: 3.5,
                   draw: drawBeast),
     .nightcrawler: Persona(name: "Nightcrawler", weapon: .saber, headTop: 21, signature: 2.8,
                   draw: drawNightcrawler),
@@ -28,7 +28,7 @@ let heroes3: [Companion: Persona] = [
     .iceman: Persona(name: "Iceman", weapon: .blaster, motion: .fly, shot: .ice, muzzle: (40, 33.5), handGun: false,
                   headTop: 22, signature: 2.8,
                   draw: drawIceman),
-    .colossus: Persona(name: "Colossus", weapon: .saber, armoured: true, pivot: (42.5, 33.5), headTop: 20, signature: 3.2,
+    .colossus: Persona(name: "Colossus", weapon: .saber, armoured: true, pivot: (42.5, 33.5), bulk: 2, headTop: 20, signature: 3.2,
                   draw: drawColossus),
 ]
 

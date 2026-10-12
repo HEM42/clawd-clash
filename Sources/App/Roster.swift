@@ -109,6 +109,9 @@ struct Persona {
     /// Its ranged weapon is held in the hand (so it raises it to check it, idle). False when it's built in:
     /// repulsors, optic blasts, a Sentinel's palms.
     var handGun = true
+    /// How many pixels further forward than plain Clawd its body reaches (the Hulk, the Juggernaut…): duels stand
+    /// that much further apart so the other's weapon doesn't go through its face.
+    var bulk = 0.0
     /// Top row of the head/helmet/hair on the canvas, for placing its label (the drawn sprite is measured too).
     var headTop = 21
     /// Length in seconds of its idle signature move, if it has one (`Pose.signature` runs 0…1 through it).

@@ -4,7 +4,7 @@ import Foundation
 
 let villains1: [Leader: Persona] = [
     .thanos: Persona(name: "Thanos", weapon: .lightning, magic: Magic(core: C(0xF4E0FF), glow: C(0xA040FF)),
-                  pivot: (42.5, 31.5), headTop: 12, signature: 3.2, callout: "I am inevitable.",
+                  pivot: (42.5, 31.5), bulk: 2, headTop: 12, signature: 3.2, callout: "I am inevitable.",
                   draw: drawThanos),
     .loki: Persona(name: "Loki", weapon: .lightning, magic: Magic(core: C(0xE0FFE8), glow: C(0x3AD06A), jagged: false),
                   pivot: (41.5, 24.5), headTop: 5, signature: 3.0, callout: "I am burdened with glorious purpose.",

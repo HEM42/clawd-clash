@@ -142,7 +142,7 @@ case "fight":
     let a = cast(named: names[0])[0], b = cast(named: names[1])[0]
     let (ra, rb) = fightRoles(a.weapon, b.weapon)
     let close = fightIsCloseQuarters(a.weapon, b.weapon)
-    let gap = close ? 30.0 : 64.0, margin = 24.0
+    let gap = close ? 30.0 + a.persona.bulk + b.persona.bulk : 64.0, margin = 24.0
     let width = Int(gap + margin * 2 + 36)
     let moments = [0.05, 0.2, 0.33, 0.45, 0.6, 0.75, 0.9, 1.3, 2.1]
     let cellW = CGFloat(width) * scale + 8, cellH = CGFloat(Sprite.height) * scale + 8

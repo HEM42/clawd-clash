@@ -662,7 +662,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 // Close enough that the two blades cross, whatever the sprite sizes.
                 let sa = g[0].isLeader ? Self.leaderScale : Self.companionScale
                 let sb = g[1].isLeader ? Self.leaderScale : Self.companionScale
-                b.fixedDistance = (13.5 * (sa + sb) + 29.7 * min(sa, sb)) * z
+                b.fixedDistance = (13.5 * (sa + sb) + 29.7 * min(sa, sb)
+                                   + CGFloat(cast(g[0]).persona.bulk) * sa + CGFloat(cast(g[1]).persona.bulk) * sb) * z
             }
             units.append(a)
             units.append(b)
