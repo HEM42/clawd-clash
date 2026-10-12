@@ -17,11 +17,13 @@
   <img src="https://img.shields.io/badge/free-to%20use-brightgreen" alt="Free to use">
 </p>
 
-<p align="center">
-  <a href="promo/avengers-clawd-wars-promo.mp4"><img src="promo/storyboard.png" alt="The promo's storyboard: the invasion of New York, the heroes on the street, desktop and window mode, every AI" width="760"></a>
-</p>
+https://github.com/user-attachments/assets/680f0163-d165-4647-b261-8017b8f0a504
 
-<p align="center"><sub>🎬 <b>Watch the 50-second promo</b> (1080p, with sound): <a href="promo/avengers-clawd-wars-promo.mp4">promo/avengers-clawd-wars-promo.mp4</a></sub></p>
+<p align="center"><sub>🔊 <b>Click the speaker in the player for sound</b>: GitHub starts videos muted. Full 1080p version: <a href="promo/avengers-clawd-wars-promo.mp4">promo/avengers-clawd-wars-promo.mp4</a></sub></p>
+
+<p align="center">
+  <img src="docs/social-preview.png" alt="Thor, Spider-Man, Captain America and Iron Man facing Thanos, Loki, the Green Goblin and Venom" width="760">
+</p>
 
 The sister app of [Clawd Wars](https://github.com/rodclemen/clawd-wars), the Star Wars one: same engine, same habits, a different universe.
 
