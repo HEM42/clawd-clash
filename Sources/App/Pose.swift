@@ -209,7 +209,9 @@ func shotRecoil(t: Double) -> Int { frac(t / blasterPeriod) < 0.15 ? 1 : 0 }
 func drawMuzzleShot(_ c: PixelCanvas, t: Double, muzzle: (x: Double, y: Double), style: ShotStyle, bolt: Bool, gunY: Int) {
     let f = frac(t / blasterPeriod)
     let mx = muzzle.x, my = muzzle.y + Double(gunY)
-    if case .beam = style {} else if case .web = style {} else if case .ice = style {} else if f < 0.08 {
+    var flash = true                     // no flash from a bow, a web-shooter or an ice stream
+    switch style { case .beam, .web, .ice, .arrow: flash = false; default: break }
+    if flash, f < 0.08 {
         c.rect(Int(mx), Int(my) - 1, 2, 3, C(0xFFE27A))
         c.px(Int(mx) + 2, Int(my), C(0xFFF6C8))
     }
