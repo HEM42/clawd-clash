@@ -58,9 +58,20 @@ final class ClawdClashSaverView: ScreenSaverView {
 
     // MARK: Options (System Settings' Options… button): which universe the screen saver shows
 
-    private static let options = ScreenSaverDefaults(forModuleWithName: "com.rodclemen.clawdclash.saver")
+    /// Kept in a file of the screen saver's own, read afresh each time, rather than in ScreenSaverDefaults: on recent
+    /// macOS the screen-saver host keeps running between uses and never sees a newer value saved by another of its
+    /// processes (the Options sheet runs in one, the screen saver often in another), so only the first pick after
+    /// installing ever stuck. Sandboxed, the folder is inside the host's container, which all its processes share.
+    private static var optionsFile: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Clawd Clash Saver/options.json")
+    }
     /// "same" (the app's), "starWars", "marvel" or "random" (a new pick on each trip).
-    static var choice: String { options?.string(forKey: "universe") ?? "same" }
+    static var choice: String {
+        guard let data = try? Data(contentsOf: optionsFile),
+              let options = try? JSONDecoder().decode([String: String].self, from: data) else { return "same" }
+        return options["universe"] ?? "same"
+    }
     private var sheet: NSWindow?
     private let picker = NSPopUpButton(frame: NSRect(x: 20, y: 60, width: 280, height: 26), pullsDown: false)
     private static let choices = [("same", "The same as Clawd Clash"), ("starWars", "Star Wars"), ("marvel", "Marvel"),
@@ -89,8 +100,13 @@ final class ClawdClashSaverView: ScreenSaverView {
     }
 
     private func options(set value: String) {
-        Self.options?.set(value, forKey: "universe")
-        Self.options?.synchronize()
+        let url = Self.optionsFile
+        do {
+            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try JSONEncoder().encode(["universe": value]).write(to: url, options: .atomic)
+        } catch {
+            NSLog("Clawd Clash: couldn't save the screen saver's options: \(error.localizedDescription)")
+        }
     }
 
     override init?(frame: NSRect, isPreview: Bool) {
