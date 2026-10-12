@@ -57,5 +57,7 @@ Avengers: Clawd Wars is the sister app of [Clawd Wars](https://github.com/rodcle
 - **A centred social preview**: four heroes facing four villains under the title, instead of a line running off one side.
 - **"Sister app", not "fork"**: the README, changelog, llms.txt and the GitHub description describe Avengers: Clawd Wars as Clawd Wars' sister app.
 - **No em dashes** anywhere in the docs, menus, hover cards, banners or code comments.
+- **The README's roster and places cover everyone**: all 105 heroes and 88 villains are listed, the place count is 43, and the roster and location sheets are re-rendered.
+- **The last five places are drawn**: New York City's streets, the Savage Land Citadel, Tony Stark's workshop, the Red Room and Ta Lo. Nothing is a stand-in any more.
 
 Eleven artists drew ninety-two Clawds in an afternoon, and all of them argued about whose hammer was coolest.
