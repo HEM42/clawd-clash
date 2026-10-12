@@ -39,7 +39,7 @@ struct CardModel {
     }
 }
 
-/// "Show in Window" mode: a normal window with the crew in a scene strip on top and a card per Claude
+/// Window Mode: a normal window with the crew in a scene strip on top and a card per Claude
 /// below. The crew is laid out and drawn by the same code as the desktop overlay; the scene strip just
 /// acts as the "screen" they stand on.
 final class ClawdWindow: NSObject, NSWindowDelegate {

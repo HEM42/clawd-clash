@@ -1930,7 +1930,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let app = NSMenu()
         app.addItem(withTitle: "About Clawd Clash", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         app.addItem(.separator())
-        app.addItem(action: windowMode ? "Show on Desktop" : "Show in Window", #selector(toggleWindowMode), target: self)
+        app.addItem(action: windowMode ? "Desktop Mode" : "Window Mode", #selector(toggleWindowMode), target: self)
         app.addItem(.separator())
         app.addItem(withTitle: "Quit Clawd Clash", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = app
@@ -2167,11 +2167,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
         size.submenu = sub
         m.addItem(action: hidden ? "Show Clawd Clash" : "Hide Clawd Clash", #selector(toggleHidden), target: self)
-        m.addItem(action: windowMode ? "Show on Desktop" : "Show in Window", #selector(toggleWindowMode), target: self)
-        m.addItem(universeMenu())
+        m.addItem(action: windowMode ? "Desktop Mode" : "Window Mode", #selector(toggleWindowMode), target: self)
         if windowMode { m.addItem(locationMenu()) }
         m.addItem(settingsMenu(size: size))
         m.addItem(statusSymbolsMenu())
+        m.addItem(universeMenu())
         m.addItem(.separator())
         // Developer toys: only with ⌘ held while opening the menu (or while one is running, so you can leave it).
         if NSEvent.modifierFlags.contains(.command) || playground != nil || demo {
