@@ -14,6 +14,15 @@ enum HookInstaller {
     static func isOurs(command: String) -> Bool {
         command.contains(binaryName) || replacedBinaries.contains { command.contains($0) }
     }
+    /// Runs Clawd Clash's own hook (not one of the apps it replaces): what "connected" means.
+    static func isCurrent(command: String) -> Bool { command.contains(binaryName) }
+
+    /// The AI (by name) still runs Clawd Wars' or Avengers: Clawd Wars' hook, so it reports to that app instead.
+    static func reportsToReplacedApp(_ name: String) -> Bool {
+        let file = name == "claude" ? settingsURL : others.first { $0.name == name }?.file
+        guard let file, let text = try? String(contentsOf: file, encoding: .utf8) else { return false }
+        return replacedBinaries.contains { text.contains($0) }
+    }
 
     static var settingsURL: URL {
         FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude/settings.json")
@@ -100,7 +109,7 @@ enum HookInstaller {
             let groups = hooks[e] as? [[String: Any]] ?? []
             return groups.contains { g in
                 (g["hooks"] as? [[String: Any]] ?? []).contains {
-                    isOurs(command: ($0["command"] as? String) ?? "")
+                    isCurrent(command: ($0["command"] as? String) ?? "")   // an old app's hook doesn't count
                 }
             }
         }
@@ -258,7 +267,11 @@ enum HookInstaller {
 
     static func installed(_ ai: OtherAI) -> Bool {
         guard let root = try? read(ai), let hooks = root["hooks"] as? [String: Any] else { return false }
-        return ai.events.allSatisfy { e in (hooks[e] as? [[String: Any]] ?? []).contains(where: isOurs) }
+        func current(_ entry: [String: Any]) -> Bool {   // an old app's hook doesn't count
+            let handlers = (entry["hooks"] as? [[String: Any]] ?? []) + [entry]
+            return handlers.contains { h in ["command", "bash"].contains { isCurrent(command: (h[$0] as? String) ?? "") } }
+        }
+        return ai.events.allSatisfy { e in (hooks[e] as? [[String: Any]] ?? []).contains(where: current) }
     }
 
     /// Adds our hook to every event, keeping everything else in the file (a backup is kept the first time).
@@ -412,6 +425,33 @@ enum HookInstaller {
         try? FileManager.default.removeItem(at: removedMarker)
         let names = text.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }
         return names.isEmpty ? ([], []) : installAll(names)
+    }
+
+    // MARK: Taking over from the apps Clawd Clash replaces
+    //
+    // Someone coming from Clawd Wars or Avengers: Clawd Wars already chose which AIs to connect. On launch, Clawd
+    // Clash takes those over without asking again:
+    //  - an AI whose hooks still run the old app's hook (the old app is still installed, or was dragged to the Bin)
+    //    gets Clawd Clash's hook instead (connecting replaces the old app's entries, `isOurs`);
+    //  - a Homebrew upgrade of the old cask ran the old app's `--uninstall-hooks`, which left a note of what it
+    //    removed in the old app's status folder: those AIs get connected again.
+
+    private static let replacedNotes = [".claude/vader-status/hooks-removed", ".claude/avengers-status/hooks-removed"]
+
+    @discardableResult
+    static func takeOverReplacedApps() -> (installed: [String], errors: [String]) {
+        var names: [String] = []
+        if claudeAvailable, reportsToReplacedApp("claude"), !isInstalled { names.append("claude") }
+        for ai in others where available(ai) && reportsToReplacedApp(ai.name) && !installed(ai) { names.append(ai.name) }
+        for note in replacedNotes {
+            let url = URL(fileURLWithPath: SaverFeed.home).appendingPathComponent(note)
+            guard let text = try? String(contentsOf: url, encoding: .utf8) else { continue }
+            try? FileManager.default.removeItem(at: url)
+            names += text.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        }
+        var unique: [String] = []
+        for n in names where !unique.contains(n) { unique.append(n) }
+        return unique.isEmpty ? ([], []) : installAll(unique)
     }
 
     // Codex conveniences used by the app and CLI

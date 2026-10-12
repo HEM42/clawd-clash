@@ -405,7 +405,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 }
             }
             hookIssues = missingHooks.filter { !Self.ignoredHooks.contains($0) }.map {
-                HookIssue(text: "\(HookInstaller.displayName($0)) isn't connected: live status is off. Connect it from the menu.",
+                HookIssue(text: HookInstaller.reportsToReplacedApp($0)
+                            ? "\(HookInstaller.displayName($0)) still reports to Clawd Wars or Avengers: Clawd Wars. Connect it to Clawd Clash from the menu."
+                            : "\(HookInstaller.displayName($0)) isn't connected: live status is off. Connect it from the menu.",
                           install: $0, pid: nil)
             } + sessions.filter(\.hookSilent).map {
                 HookIssue(text: "\(HookInstaller.displayName($0.assistant))\($0.project.isEmpty ? "" : " (\($0.project))") isn't reporting: "
