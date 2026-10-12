@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Builds "Clawd Wars.app", installs it to /Applications, refreshes the hooks of the AIs you've connected and launches it.
+# Builds "Avengers Clawd Wars.app", installs it to /Applications, refreshes the hooks of the AIs you've connected and launches it.
 # It never connects a new AI: the app offers that, and Settings in its menu does it.
 #   ./build.sh                     build + install + refresh connected hooks + launch
 #   ./build.sh --no-hooks          build + install + launch (leave every AI's settings alone)
@@ -27,9 +27,9 @@ if [[ -z "$VERSION" ]]; then
     [[ -n "$VERSION" ]] || { echo "error: no '## X.Y.Z' version heading found in CHANGELOG.md" >&2; exit 1; }
 fi
 
-APP="build/Clawd Wars.app"
-DEST="/Applications/Clawd Wars.app"
-OLD_DESTS=("$HOME/Applications/Clawd Wars.app" "$HOME/Applications/VaderClaude.app")   # earlier installs
+APP="build/Avengers Clawd Wars.app"
+DEST="/Applications/Avengers Clawd Wars.app"
+OLD_DESTS=("$HOME/Applications/Avengers Clawd Wars.app" )   # earlier installs
 FLAGS=(-O -swift-version 5)
 
 rm -rf build && mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
@@ -50,17 +50,17 @@ compile() {
 
 echo "→ compiling app"
 # The app carries the screen saver's view too: the window's third view is the screen saver itself.
-compile "$APP/Contents/MacOS/ClawdWars" -framework ScreenSaver Sources/Shared/*.swift Sources/App/*.swift Sources/Saver/*.swift
+compile "$APP/Contents/MacOS/AvengersClawdWars" -framework ScreenSaver Sources/Shared/*.swift Sources/App/*.swift Sources/Saver/*.swift
 echo "→ compiling hook"
-compile "$APP/Contents/MacOS/clawd-wars-hook" Sources/Shared/*.swift Sources/Hook/main.swift
+compile "$APP/Contents/MacOS/avengers-hook" Sources/Shared/*.swift Sources/Hook/main.swift
 
 # The screen saver: a plug-in bundle macOS's screen saver host loads, carried inside the app, which installs it
 # (Settings → Install Screen Saver) and keeps the installed copy up to date. It shares the sprite and location code.
 echo "→ compiling screen saver"
-SAVER="$APP/Contents/Resources/Clawd Wars.saver"
+SAVER="$APP/Contents/Resources/Avengers Clawd Wars.saver"
 mkdir -p "$SAVER/Contents/MacOS"
-compile "$SAVER/Contents/MacOS/ClawdWarsSaver" -module-name ClawdWarsSaver -emit-library -framework ScreenSaver \
-    -Xlinker -install_name -Xlinker @rpath/ClawdWarsSaver \
+compile "$SAVER/Contents/MacOS/AvengersClawdWarsSaver" -module-name AvengersClawdWarsSaver -emit-library -framework ScreenSaver \
+    -Xlinker -install_name -Xlinker @rpath/AvengersClawdWarsSaver \
     Sources/Shared/*.swift Sources/App/{Pixel,Characters,Recruits,Leaders,Cantina,Locations,Cast,Accents,Habits}.swift Sources/Saver/*.swift
 # Its picture under "Other" in System Settings: the title card at 0:04 of promo/clawd-wars-promo.mp4, cropped to 180×116.
 mkdir -p "$SAVER/Contents/Resources"
@@ -77,14 +77,14 @@ cat > "$SAVER/Contents/Info.plist" <<PLIST
     <key>CFBundleDevelopmentRegion</key><string>en</string>
     <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
     <key>CFBundleSupportedPlatforms</key><array><string>MacOSX</string></array>
-    <key>CFBundleIdentifier</key><string>com.rodclemen.vaderclaude.saver</string>
-    <key>CFBundleName</key><string>Clawd Wars</string>
-    <key>CFBundleDisplayName</key><string>Clawd Wars</string>
-    <key>CFBundleExecutable</key><string>ClawdWarsSaver</string>
+    <key>CFBundleIdentifier</key><string>com.rodclemen.avengersavengersclawdwars.saver</string>
+    <key>CFBundleName</key><string>Avengers: Clawd Wars</string>
+    <key>CFBundleDisplayName</key><string>Avengers: Clawd Wars</string>
+    <key>CFBundleExecutable</key><string>AvengersClawdWarsSaver</string>
     <key>CFBundlePackageType</key><string>BNDL</string>
     <key>CFBundleShortVersionString</key><string>$VERSION</string>
     <key>CFBundleVersion</key><string>$VERSION</string>
-    <key>NSPrincipalClass</key><string>ClawdWarsSaverView</string>
+    <key>NSPrincipalClass</key><string>AvengersClawdWarsSaverView</string>
     <key>LSMinimumSystemVersion</key><string>13.0</string>
 </dict>
 </plist>
@@ -104,10 +104,10 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleIdentifier</key><string>com.rodclemen.vaderclaude</string>
-    <key>CFBundleName</key><string>Clawd Wars</string>
-    <key>CFBundleDisplayName</key><string>Clawd Wars</string>
-    <key>CFBundleExecutable</key><string>ClawdWars</string>
+    <key>CFBundleIdentifier</key><string>com.rodclemen.avengersclawdwars</string>
+    <key>CFBundleName</key><string>Avengers: Clawd Wars</string>
+    <key>CFBundleDisplayName</key><string>Avengers: Clawd Wars</string>
+    <key>CFBundleExecutable</key><string>AvengersClawdWars</string>
     <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>$VERSION</string>
@@ -135,14 +135,14 @@ if [[ $MODE == release ]]; then
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict><key>com.apple.security.automation.apple-events</key><true/></dict></plist>
 ENT
-    codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP/Contents/MacOS/clawd-wars-hook"
+    codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP/Contents/MacOS/avengers-hook"
     codesign --force --options runtime --timestamp --sign "$IDENTITY" "$SAVER"
     codesign --force --options runtime --timestamp --entitlements build/entitlements.plist \
         --sign "$IDENTITY" "$APP"
 else
     IDENTITY=$(echo "$IDENTITIES" | grep -m1 -oE '"(Developer ID Application|Apple Development)[^"]*"' | tr -d '"' || true)
     sign_local() {
-        codesign --force --timestamp=none --sign "$1" "$APP/Contents/MacOS/clawd-wars-hook" \
+        codesign --force --timestamp=none --sign "$1" "$APP/Contents/MacOS/avengers-hook" \
             && codesign --force --timestamp=none --sign "$1" "$SAVER" \
             && codesign --force --timestamp=none --sign "$1" "$APP"
     }
@@ -158,14 +158,13 @@ if [[ $MODE == release ]]; then
     exit 0
 fi
 
-# Only one Clawd Wars runs at a time (a second copy quits at launch), so stop whichever one is running.
-pkill -x VaderClaude 2>/dev/null || true
-pkill -x ClawdWars 2>/dev/null || true
+# Only one Avengers: Clawd Wars runs at a time (a second copy quits at launch), so stop whichever one is running.
+pkill -x AvengersClawdWars 2>/dev/null || true
 
 if [[ $MODE == local ]]; then
     # Not installed: the build/ copy never takes over hooks that still point at a working app (HookInstaller.repairMoved).
     open "$APP"
-    echo "✓ Clawd Wars is running from $APP (not installed). Right-click any villain for options."
+    echo "✓ Avengers: Clawd Wars is running from $APP (not installed). Right-click any villain for options."
     exit 0
 fi
 
@@ -173,8 +172,8 @@ echo "→ installing to $DEST"
 rm -rf "$DEST" "${OLD_DESTS[@]}" && cp -R "$APP" "$DEST"
 
 if [[ $HOOKS == 1 ]]; then
-    "$DEST/Contents/MacOS/ClawdWars" --update-hooks
+    "$DEST/Contents/MacOS/AvengersClawdWars" --update-hooks
 fi
 
 open "$DEST"
-echo "✓ Clawd Wars is running. Right-click any villain for options."
+echo "✓ Avengers: Clawd Wars is running. Right-click any villain for options."

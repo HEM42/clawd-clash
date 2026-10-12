@@ -38,7 +38,7 @@ enum Jump {
         }
     }
 
-    private static let scriptQueue = DispatchQueue(label: "clawd-wars.jump.applescript")
+    private static let scriptQueue = DispatchQueue(label: "avengers-clawd-wars.jump.applescript")
 
     /// Host app per session pid, with the session's start time so a reused pid is looked up again.
     private static var hostCache: [Int32: (started: Double?, host: pid_t)] = [:]

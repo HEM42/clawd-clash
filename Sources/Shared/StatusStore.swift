@@ -1,7 +1,7 @@
 import Foundation
 
 // Shared state between the Claude Code hook binary (writer) and the overlay app (reader).
-// Lives at ~/.claude/vader-status/state.json.
+// Lives at ~/.claude/avengers-status/state.json.
 
 struct SessionRecord: Codable {
     var state: String      // idle | thinking | working | waiting
@@ -113,7 +113,7 @@ struct SessionSnapshot {
 
 enum StatusPaths {
     /// The real home (`SaverFeed.home`): the screen saver reads this too, and in its sandbox the usual home is its container.
-    static let dir = URL(fileURLWithPath: SaverFeed.home).appendingPathComponent(".claude/vader-status", isDirectory: true)
+    static let dir = URL(fileURLWithPath: SaverFeed.home).appendingPathComponent(".claude/avengers-status", isDirectory: true)
     static let state = dir.appendingPathComponent("state.json")
     static let lock = dir.appendingPathComponent("state.lock")
 }

@@ -2,16 +2,16 @@ import ScreenSaver
 import AppKit
 import QuartzCore
 
-/// The Clawd Wars screen saver: the window's location at full screen, the crew fighting on its floor, and each
+/// The Avengers: Clawd Wars screen saver: the window's location at full screen, the crew fighting on its floor, and each
 /// session's state as a hologram over its head. It shows what the running app publishes (`SaverFeed`); with
-/// Clawd Wars not running, what the hooks last wrote (`SaverFeed.fromHooks`). With no session running at all it puts
+/// Avengers: Clawd Wars not running, what the hooks last wrote (`SaverFeed.fromHooks`). With no session running at all it puts
 /// on a show instead (a made-up crew duelling, somewhere new every few minutes).
 ///
 /// Runs inside macOS's sandboxed screen saver host, one instance per display (and one for the System Settings
 /// preview). Everything is Core Animation layers: the location's picture and pixel art scaled on the GPU with
 /// nearest-neighbour filtering, text rendered once per look and cached.
-@objc(ClawdWarsSaverView)
-final class ClawdWarsSaverView: ScreenSaverView {
+@objc(AvengersClawdWarsSaverView)
+final class AvengersClawdWarsSaverView: ScreenSaverView {
     private let host = NSView()
     private let roomLayer = CALayer(), liveLayer = CALayer()
     private var pool: [CALayer] = []
@@ -39,7 +39,7 @@ final class ClawdWarsSaverView: ScreenSaverView {
     private let wipeLayer = CALayer(), wipeMask = CAShapeLayer()
     private var wipe: (start: Double, clock: Bool)?
     private var trips = 0                       // the wipes take turns: a hard edge, then a clock
-    /// With Clawd Wars not running: a made-up crew, cast for `demoPlace` (a local or two among them), off somewhere
+    /// With Avengers: Clawd Wars not running: a made-up crew, cast for `demoPlace` (a local or two among them), off somewhere
     /// new every `demoEvery`.
     private var demo: [SaverFeed.Session] = []
     private var demoPlace: Location?
@@ -113,7 +113,7 @@ final class ClawdWarsSaverView: ScreenSaverView {
         if now - lastRead >= 1 {
             lastRead = now
             if let feedSource { feed = feedSource() } else {
-                // Clawd Wars closed (its feed gone stale): the hooks still say who's running.
+                // Avengers: Clawd Wars closed (its feed gone stale): the hooks still say who's running.
                 let app = SaverFeed.load()
                 feed = app.flatMap { now - $0.at < SaverFeed.staleAfter ? $0 : nil } ?? SaverFeed.fromHooks(now: now, last: app) ?? app
             }
@@ -188,7 +188,7 @@ final class ClawdWarsSaverView: ScreenSaverView {
     private func render(_ now: Double) {
         guard let root = host.layer else { return }
         let running = running(now)
-        // Stale or not, the feed says where the crew was last: the place stays when Clawd Wars quits.
+        // Stale or not, the feed says where the crew was last: the place stays when Avengers: Clawd Wars quits.
         if let f = feed, let l = Location(rawValue: f.location) { lastLocation = l }
         let location = visit ?? lastLocation
         let P = self.P

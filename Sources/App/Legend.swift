@@ -28,7 +28,7 @@ enum Legend {
             Entry(title: "Asleep", detail: "zZz: idle for 5+ minutes",
                   icon: bubble(.sleeping, t: 0)),
             Entry(title: "No live status", detail: "A “?”: the session started before the hooks were installed, or they stopped "
-                  + "reporting. Restart it (/exit, then claude --continue). Codex: approve Clawd Wars in /hooks",
+                  + "reporting. Restart it (/exit, then claude --continue). Codex: approve Avengers: Clawd Wars in /hooks",
                   icon: bubble(.unknown, t: 0)),
             Entry(title: "You're here", detail: "A little yellow marker bobbing over its head: the session whose terminal you're looking at",
                   icon: caret()),

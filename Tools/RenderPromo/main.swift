@@ -38,7 +38,7 @@ func hexColor(_ h: UInt32) -> NSColor {
     NSColor(srgbRed: CGFloat((h >> 16) & 0xFF) / 255, green: CGFloat((h >> 8) & 0xFF) / 255, blue: CGFloat(h & 0xFF) / 255, alpha: 1)
 }
 
-/// Every AI Clawd Wars supports, with its outline colour from `AIStyle`.
+/// Every AI Avengers: Clawd Wars supports, with its outline colour from `AIStyle`.
 enum AI: CaseIterable { case claude, desktop, codex, qwen, gemini, copilot
     var hex: UInt32 {
         switch self {

@@ -3,7 +3,7 @@ import Foundation
 
 /// A project's name and where its remote lives, read from the repo's `.git/config` on disk (no network needed).
 struct GitRemote {
-    let name: String    // the repo name from the remote's URL, e.g. "clawd-wars"
+    let name: String    // the repo name from the remote's URL, e.g. "avengers-clawd-wars"
     let host: String    // "GitHub", "GitLab", "Bitbucket", "Codeberg", or the bare host name
 
     private struct Entry { var remote: GitRemote?; var checked: Double; var used: Double; var refreshing = false }

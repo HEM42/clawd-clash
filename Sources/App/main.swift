@@ -23,8 +23,8 @@ if args.contains("--install-hooks") || args.contains("--update-hooks") || args.c
         let result = HookInstaller.uninstallAll()
         // `brew upgrade` runs this too: the next launch puts back exactly what was removed here.
         HookInstaller.rememberRemoved(result.removed)
-        print(result.removed.isEmpty ? "No Clawd Wars hooks were installed"
-              : "Removed the Clawd Wars hooks from " + result.removed.map(HookInstaller.displayName).joined(separator: ", "))
+        print(result.removed.isEmpty ? "No Avengers: Clawd Wars hooks were installed"
+              : "Removed the Avengers: Clawd Wars hooks from " + result.removed.map(HookInstaller.displayName).joined(separator: ", "))
         errors = result.errors
     }
     for e in errors { FileHandle.standardError.write("Error: \(e)\n".data(using: .utf8)!) }
@@ -47,7 +47,7 @@ if let arg = args.first(where: { $0.hasPrefix("--ax-dump=") }), let pid = Int32(
     exit(0)
 }
 
-// Only one Clawd Wars at a time.
+// Only one Avengers: Clawd Wars at a time.
 if let id = Bundle.main.bundleIdentifier,
    NSRunningApplication.runningApplications(withBundleIdentifier: id).count > 1 {
     exit(0)
@@ -57,8 +57,8 @@ if let id = Bundle.main.bundleIdentifier,
 // normal launch: test and screenshot runs (--playground, --chaos…) may be a dev copy that shouldn't take the hooks.
 if !args.dropFirst().contains(where: { $0.hasPrefix("--") }), ProcessInfo.processInfo.environment["CLAWD_SHOT"] == nil {
     let restored = HookInstaller.restoreRemoved()
-    if !restored.installed.isEmpty { NSLog("Clawd Wars: reconnected \(restored.installed.joined(separator: ", ")) after an upgrade") }
-    for e in restored.errors { NSLog("Clawd Wars: couldn't reconnect hooks: \(e)") }
+    if !restored.installed.isEmpty { NSLog("Avengers: Clawd Wars: reconnected \(restored.installed.joined(separator: ", ")) after an upgrade") }
+    for e in restored.errors { NSLog("Avengers: Clawd Wars: couldn't reconnect hooks: \(e)") }
 }
 
 let app = NSApplication.shared

@@ -1,10 +1,10 @@
 import AppKit
 
-/// The screen saver carried inside the app (`Contents/Resources/Clawd Wars.saver`, see build.sh): installing it,
+/// The screen saver carried inside the app (`Contents/Resources/Avengers Clawd Wars.saver`, see build.sh): installing it,
 /// keeping the installed copy as new as the app, and removing it.
 enum SaverInstaller {
-    static var bundled: URL? { Bundle.main.url(forResource: "Clawd Wars", withExtension: "saver") }
-    private static var userCopy: URL { URL(fileURLWithPath: SaverFeed.home + "/Library/Screen Savers/Clawd Wars.saver") }
+    static var bundled: URL? { Bundle.main.url(forResource: "Avengers: Clawd Wars", withExtension: "saver") }
+    private static var userCopy: URL { URL(fileURLWithPath: SaverFeed.home + "/Library/Screen Savers/Avengers Clawd Wars.saver") }
 
     static var isInstalled: Bool { SaverFeed.installedSaver != nil }
 
@@ -27,10 +27,10 @@ enum SaverInstaller {
     }
 
     /// A copy installed for all users (/Library) can only go with an admin's password.
-    static var installedForEveryone: Bool { FileManager.default.fileExists(atPath: "/Library/Screen Savers/Clawd Wars.saver") }
+    static var installedForEveryone: Bool { FileManager.default.fileExists(atPath: "/Library/Screen Savers/Avengers Clawd Wars.saver") }
 
     static func removeForEveryone() -> Bool {
-        let script = "do shell script \"rm -rf '/Library/Screen Savers/Clawd Wars.saver'\" with administrator privileges"
+        let script = "do shell script \"rm -rf '/Library/Screen Savers/Avengers Clawd Wars.saver'\" with administrator privileges"
         var error: NSDictionary?
         NSAppleScript(source: script)?.executeAndReturnError(&error)
         if error == nil { restartHost() }
@@ -46,9 +46,9 @@ enum SaverInstaller {
             try FileManager.default.removeItem(at: userCopy)
             try FileManager.default.copyItem(at: bundled, to: userCopy)
             restartHost()
-            NSLog("Clawd Wars: updated the screen saver to \(version(of: bundled) ?? "?")")
+            NSLog("Avengers: Clawd Wars: updated the screen saver to \(version(of: bundled) ?? "?")")
         } catch {
-            NSLog("Clawd Wars: couldn't update the screen saver: \(error.localizedDescription)")
+            NSLog("Avengers: Clawd Wars: couldn't update the screen saver: \(error.localizedDescription)")
         }
     }
 
@@ -65,7 +65,7 @@ enum SaverInstaller {
     /// The saver's compiled code and the seal over its other files (thumbnail, Info.plist): compared rather than the
     /// version, which every local build of a release shares.
     private static func code(of saver: URL) -> [Data?] {
-        ["Contents/MacOS/ClawdWarsSaver", "Contents/_CodeSignature/CodeResources"]
+        ["Contents/MacOS/AvengersClawdWarsSaver", "Contents/_CodeSignature/CodeResources"]
             .map { try? Data(contentsOf: saver.appendingPathComponent($0)) }
     }
 

@@ -1,15 +1,15 @@
 import Foundation
 
-/// Adds/removes the clawd-wars-hook entries in ~/.claude/settings.json, leaving everything else untouched.
+/// Adds/removes the avengers-hook entries in ~/.claude/settings.json, leaving everything else untouched.
 enum HookInstaller {
     static let events = [
         "SessionStart", "SessionEnd", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PostToolUseFailure",
         "PermissionRequest", "Notification", "Stop", "StopFailure", "SubagentStart", "SubagentStop",
     ]
     static let toolEvents: Set<String> = ["PreToolUse", "PostToolUse", "PostToolUseFailure", "PermissionRequest"]
-    /// The hook binary's name. Commands running the one before it (`vader-hook`) are ours too, so they get replaced.
-    static let binaryName = "clawd-wars-hook"
-    static func isOurs(command: String) -> Bool { command.contains(binaryName) || command.contains("vader-hook") }
+    /// The hook binary's name. It must not contain Clawd Wars' `clawd-wars-hook` (or vice versa): each app treats hooks whose command contains its name as its own.
+    static let binaryName = "avengers-hook"
+    static func isOurs(command: String) -> Bool { command.contains(binaryName) }
 
     static var settingsURL: URL {
         FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude/settings.json")
@@ -33,13 +33,13 @@ enum HookInstaller {
         do { parsed = try JSONSerialization.jsonObject(with: data) } catch {
             // Comments are allowed by some of these AIs, but rewriting the file would drop them: leave it alone.
             let message = hasComments(String(decoding: data, as: UTF8.self))
-                ? "\(url.path) has comments in it (JSONC), which Clawd Wars can't keep when it edits the file. "
+                ? "\(url.path) has comments in it (JSONC), which Avengers: Clawd Wars can't keep when it edits the file. "
                     + "Remove the comments, or add the hooks by hand."
                 : "\(url.path) isn't valid JSON: \(error.localizedDescription)"
-            throw NSError(domain: "ClawdWars", code: 3, userInfo: [NSLocalizedDescriptionKey: message])
+            throw NSError(domain: "AvengersClawdWars", code: 3, userInfo: [NSLocalizedDescriptionKey: message])
         }
         guard let root = parsed as? [String: Any] else {
-            throw NSError(domain: "ClawdWars", code: 2,
+            throw NSError(domain: "AvengersClawdWars", code: 2,
                           userInfo: [NSLocalizedDescriptionKey: "\(url.path) is not a JSON object"])
         }
         return root
@@ -165,7 +165,7 @@ enum HookInstaller {
         events: ["SessionStart", "SessionEnd", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PostToolUseFailure",
                  "PermissionRequest", "Notification", "Stop", "StopFailure", "SubagentStart", "SubagentStop"],
         toolEvents: ["PreToolUse", "PostToolUse", "PostToolUseFailure", "PermissionRequest"],
-        matcherAll: ".*", name_: "clawd-wars")                                                // Qwen matchers are regexes
+        matcherAll: ".*", name_: "avengers-clawd-wars")                                                // Qwen matchers are regexes
 
     /// Gemini CLI: its own event names (BeforeAgent, AfterTool…), translated by the hook. ~/.gemini is shared with
     /// Antigravity, so only a `gemini` command counts as installed.
@@ -173,12 +173,12 @@ enum HookInstaller {
         name: "gemini", dir: home(".gemini"), file: home(".gemini/settings.json"),
         events: ["SessionStart", "SessionEnd", "BeforeAgent", "AfterAgent", "BeforeTool", "AfterTool", "Notification"],
         toolEvents: ["BeforeTool", "AfterTool"], matcherAll: ".*",
-        binaries: ["gemini"], timeoutScale: 1000, passEvent: true, name_: "clawd-wars")
+        binaries: ["gemini"], timeoutScale: 1000, passEvent: true, name_: "avengers-clawd-wars")
 
     /// GitHub Copilot CLI: a file of our own in ~/.copilot/hooks. PascalCase event names select its Claude-compatible
     /// payloads (snake_case fields, Claude tool names); SubagentStart only exists as camelCase.
     static let copilot = OtherAI(
-        name: "copilot", dir: home(".copilot"), file: home(".copilot/hooks/clawd-wars.json"),
+        name: "copilot", dir: home(".copilot"), file: home(".copilot/hooks/avengers-clawd-wars.json"),
         events: ["SessionStart", "SessionEnd", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PostToolUseFailure",
                  "PermissionRequest", "Notification", "Stop", "subagentStart", "SubagentStop"],
         toolEvents: [], matcherAll: nil,
@@ -189,7 +189,7 @@ enum HookInstaller {
 
     static func other(_ name: String) -> OtherAI? { others.first { $0.name == name } }
 
-    /// Is Claude Code on this Mac? ~/.claude alone isn't proof: Clawd Wars keeps its own state in there.
+    /// Is Claude Code on this Mac? ~/.claude alone isn't proof: Avengers: Clawd Wars keeps its own state in there.
     static var claudeAvailable: Bool {
         [".claude/projects", ".claude.json", ".claude/settings.json"].contains {
             FileManager.default.fileExists(atPath: home($0).path)
@@ -211,11 +211,11 @@ enum HookInstaller {
     /// What to do when this AI's session runs but our hook never reports.
     static func silentFix(_ assistant: String) -> String {
         switch assistant {
-        case "codex": return "type /hooks in Codex and approve Clawd Wars"
+        case "codex": return "type /hooks in Codex and approve Avengers: Clawd Wars"
         case "qwen": return "type /hooks in Qwen Code and make sure clawd-wars is enabled"
         case "gemini": return "type /hooks panel in Gemini CLI and make sure clawd-wars is enabled"
         case "copilot": return "check hooks aren't turned off (disableAllHooks) and restart Copilot CLI"
-        default: return "type /hooks in Claude Code and check the Clawd Wars hooks are listed"
+        default: return "type /hooks in Claude Code and check the Avengers: Clawd Wars hooks are listed"
         }
     }
 
@@ -261,7 +261,7 @@ enum HookInstaller {
     static func install(_ ai: OtherAI) throws {
         guard available(ai) else { return }
         var root = try read(ai)
-        if !ai.ownFile { backUp(ai.file, as: "before-clawd-wars") }
+        if !ai.ownFile { backUp(ai.file, as: "before-avengers-clawd-wars") }
         if ai.flat { root["version"] = 1 }
         var hooks = root["hooks"] as? [String: Any] ?? [:]
         for e in ai.events {

@@ -1,7 +1,7 @@
 import Foundation
 
 extension SaverFeed {
-    /// With Clawd Wars closed: the crew straight from what the hooks keep writing (`~/.claude/vader-status/state.json`),
+    /// With Avengers: Clawd Wars closed: the crew straight from what the hooks keep writing (`~/.claude/avengers-status/state.json`),
     /// so the saver still shows the sessions that are running. Rougher than the app's feed: the saver's sandbox can't
     /// scan processes, so sessions without hooks don't show, and one that died without saying goodbye stays until its
     /// state times out. No events either (the app makes those). Nil when no session is running.

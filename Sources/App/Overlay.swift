@@ -113,7 +113,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private var hookIssues: [HookIssue] = []
     private var hooksSince: [String: Double] = [:]  // assistant → when its hook file last changed (only if our hooks are in it)
     private var missingHooks: [String] = []          // AIs on this Mac without our hooks
-    /// AIs you've said you don't use with Clawd Wars: installed, not connected, and no reminders about it. Connecting
+    /// AIs you've said you don't use with Avengers: Clawd Wars: installed, not connected, and no reminders about it. Connecting
     /// one (Settings or the menu) takes it off the list; removing its hooks from Settings puts it on.
     static var ignoredHooks: Set<String> {
         get { Set(UserDefaults.standard.stringArray(forKey: "ignoredHooks") ?? []) }
@@ -537,7 +537,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         return moodSince[s.id] ?? now
     }
 
-    private static let scanQueue = DispatchQueue(label: "clawdwars.process-scan", qos: .utility)
+    private static let scanQueue = DispatchQueue(label: "avengersclawdwars.process-scan", qos: .utility)
     private var scanning = false
 
     /// Each process's CPU time so far, in seconds.
@@ -1476,7 +1476,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         guard playground == nil, !demo, shotPath == nil, chaosSeconds == nil else { return }
         SaverInstaller.refreshIfOutdated()
         // The app was moved since the hooks went in: point them here (already agreed to, so no need to ask).
-        for ai in HookInstaller.repairMoved() { NSLog("Clawd Wars: re-pointed \(HookInstaller.displayName(ai)) hooks at \(HookInstaller.hookBinary)") }
+        for ai in HookInstaller.repairMoved() { NSLog("Avengers: Clawd Wars: re-pointed \(HookInstaller.displayName(ai)) hooks at \(HookInstaller.hookBinary)") }
         let d = UserDefaults.standard
         let ignored = Self.ignoredHooks
         let claude = HookInstaller.claudeAvailable && !HookInstaller.isInstalled && !d.bool(forKey: "offeredHooks")
@@ -1494,13 +1494,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             NSApp.activate(ignoringOtherApps: true)
             let a = NSAlert()
-            a.messageText = "Connect Clawd Wars to \(list)?"
+            a.messageText = "Connect Avengers: Clawd Wars to \(list)?"
             a.informativeText = """
-                Clawd Wars learns what your sessions are doing from hooks. This adds a small hook to each one's \
+                Avengers: Clawd Wars learns what your sessions are doing from hooks. This adds a small hook to each one's \
                 settings (a backup is kept). Sessions already running pick it up after a restart.\(codex ? """
 
 
-                Codex asks you to approve new hooks once: type /hooks in Codex and approve Clawd Wars. \
+                Codex asks you to approve new hooks once: type /hooks in Codex and approve Avengers: Clawd Wars. \
                 You'll get a reminder if a Codex session isn't reporting yet.
                 """ : "")
 
@@ -1625,7 +1625,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             guard granted else { return }
             let content = UNMutableNotificationContent()
             let name = HookInstaller.displayName(assistant)
-            content.title = assistant == "codex" ? "Approve Clawd Wars in Codex" : "\(name) isn't reporting to Clawd Wars"
+            content.title = assistant == "codex" ? "Approve Avengers: Clawd Wars in Codex" : "\(name) isn't reporting to Avengers: Clawd Wars"
             let fix = HookInstaller.silentFix(assistant)
             content.body = fix.prefix(1).uppercased() + fix.dropFirst()
                 + "\(project.isEmpty ? "" : " (\(project))") to see its live status. Click to jump there."
@@ -1665,13 +1665,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     }
 
     /// A Vader Clawd helmet in the menu bar, opening the same menu as right-clicking a villain.
-    /// Double-clicking it hides or shows Clawd Wars, so a single click opens the menu only once the
+    /// Double-clicking it hides or shows Avengers: Clawd Wars, so a single click opens the menu only once the
     /// double-click time has passed; right-click (or ⌃-click) opens it straight away.
     private func installStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         item.button?.image = statusIcon(mono: monoMenuBarIcon)
         item.button?.imageScaling = .scaleProportionallyDown
-        item.button?.toolTip = "Clawd Wars — double-click to hide or show"
+        item.button?.toolTip = "Avengers: Clawd Wars — double-click to hide or show"
         statusMenu.delegate = self
         item.button?.target = self
         item.button?.action = #selector(statusItemClicked)
@@ -1734,7 +1734,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         showStatusMenu()
     }
 
-    /// The menu opens at once. Clicking the helmet again right away closes it and hides (or shows) Clawd Wars.
+    /// The menu opens at once. Clicking the helmet again right away closes it and hides (or shows) Avengers: Clawd Wars.
     private func showStatusMenu() {
         guard let item = statusItem, let button = item.button else { return }
         let opened = ProcessInfo.processInfo.systemUptime
@@ -1871,11 +1871,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let main = NSMenu()
         let appItem = NSMenuItem()
         let app = NSMenu()
-        app.addItem(withTitle: "About Clawd Wars", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        app.addItem(withTitle: "About Avengers: Clawd Wars", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         app.addItem(.separator())
         app.addItem(action: windowMode ? "Show on Desktop" : "Show in Window", #selector(toggleWindowMode), target: self)
         app.addItem(.separator())
-        app.addItem(withTitle: "Quit Clawd Wars", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        app.addItem(withTitle: "Quit Avengers: Clawd Wars", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = app
         main.addItem(appItem)
         // The same options as right-clicking a villain, as a "Crew" menu.
@@ -1994,7 +1994,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 if let cwd = s.cwd, !compact { stats.append(cwd.hasPrefix(home) ? "~" + cwd.dropFirst(home.count) : cwd) }
                 if !stats.isEmpty { lines.append((stats.joined(separator: "  ·  "), dim)) }
             } else if s.hookSilent {
-                lines.append(("The Clawd Wars hook isn't running in this session, so it can't report what it's doing.", soft))
+                lines.append(("The Avengers: Clawd Wars hook isn't running in this session, so it can't report what it's doing.", soft))
                 let fix = HookInstaller.silentFix(s.assistant)
                 lines.append((fix.prefix(1).uppercased() + fix.dropFirst() + " — click this card to jump there.", dim))
             } else if !s.live {
@@ -2109,7 +2109,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             sub.addItem(item)
         }
         size.submenu = sub
-        m.addItem(action: hidden ? "Show Clawd Wars" : "Hide Clawd Wars", #selector(toggleHidden), target: self)
+        m.addItem(action: hidden ? "Show Avengers: Clawd Wars" : "Hide Avengers: Clawd Wars", #selector(toggleHidden), target: self)
         m.addItem(action: windowMode ? "Show on Desktop" : "Show in Window", #selector(toggleWindowMode), target: self)
         if windowMode { m.addItem(locationMenu()) }
         m.addItem(settingsMenu(size: size))
@@ -2467,13 +2467,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
         lastSaverCheck = -100   // start publishing as soon as it's in place
         SaverInstaller.openSettings()
-        alert("Clawd Wars screen saver installed",
-              "In the Wallpaper settings that just opened, go to Screen Saver and pick Clawd Wars (with the other screen savers, near the end of the list). Clawd Wars needs to be running for the crew to show.")
+        alert("Avengers: Clawd Wars screen saver installed",
+              "In the Wallpaper settings that just opened, go to Screen Saver and pick Avengers: Clawd Wars (with the other screen savers, near the end of the list). Avengers: Clawd Wars needs to be running for the crew to show.")
     }
 
     @objc private func removeSaver() {
         if !SaverInstaller.remove() {
-            alert("Couldn't remove the screen saver", "Delete /Library/Screen Savers/Clawd Wars.saver in Finder (it asks for an admin password).")
+            alert("Couldn't remove the screen saver", "Delete /Library/Screen Savers/Avengers Clawd Wars.saver in Finder (it asks for an admin password).")
         }
         lastSaverCheck = -100
     }

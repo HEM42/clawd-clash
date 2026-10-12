@@ -50,7 +50,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     private let scroll = NSScrollView()
     let header = HeaderView()
     /// The third view: the screen saver itself, in the window (fed by the app, not the file).
-    let board = ClawdWarsSaverView(frame: NSRect(x: 0, y: 0, width: 960, height: 600), isPreview: false)!
+    let board = AvengersClawdWarsSaverView(frame: NSRect(x: 0, y: 0, width: 960, height: 600), isPreview: false)!
     private var boardTimer: Timer?
     private var boardOn = false
     static let headerHeight: CGFloat = 30
@@ -72,7 +72,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
                           styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                           backing: .buffered, defer: false)
         super.init()
-        window.title = "Clawd Wars"
+        window.title = "Avengers: Clawd Wars"
         // Our own themed title bar instead of the system one; the traffic lights stay.
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
@@ -82,8 +82,8 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         window.backgroundColor = NSColor(srgbRed: 0.17, green: 0.13, blue: 0.10, alpha: 1)
         window.isReleasedWhenClosed = false
         window.delegate = self
-        window.setFrameAutosaveName("ClawdWarsWindow")
-        if !window.setFrameUsingName("ClawdWarsWindow") { window.center() }
+        window.setFrameAutosaveName("AvengersClawdWarsWindow")
+        if !window.setFrameUsingName("AvengersClawdWarsWindow") { window.center() }
 
         sceneView.controller = controller
         cardsView.controller = controller
@@ -445,7 +445,7 @@ final class HeaderView: NSView, NSViewToolTipOwner {
     }
 
     func view(_ view: NSView, stringForToolTip tag: NSView.ToolTipTag, point: NSPoint, userData data: UnsafeMutableRawPointer?) -> String {
-        guard button(at: point) != .close else { return "Quit Clawd Wars" }
+        guard button(at: point) != .close else { return "Quit Avengers: Clawd Wars" }
         switch ClawdWindow.view {
         case .list: return "Hide the session list"
         case .scene: return "Show the session list"
