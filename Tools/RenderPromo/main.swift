@@ -548,7 +548,7 @@ func openingInvasion(_ ctx: CGContext, local l: Double, t: Double) {
 /// The heroes' ring: six of them back to back on the street, the camera circling round them.
 func openingAssemble(_ ctx: CGContext, local l: Double, t: Double) {
     blit(newYork(t, floorRows: 26), ctx)
-    let heroes: [Companion] = [.captainAmerica, .ironMan, .thor, .hulk, .blackWidow, .hawkeye]
+    let heroes: [MarvelHero] = [.captainAmerica, .ironMan, .thor, .hulk, .blackWidow, .hawkeye]
     let spin = -l * 0.55
     var ring: [(Actor, Double)] = []
     for (i, h) in heroes.enumerated() {
@@ -683,7 +683,7 @@ let shots: [Shot] = [
     Shot(name: "agents", start: 32.8, end: 36.8) { ctx, local, t in
         desktop(ctx, dim: 1)
         draw(Actor(cast: .hero(.ironMan), x: 262, facing: -1, mode: .standGuard, label: "idle-claude"), ctx, t: t)
-        let crew: [(Companion, String, Double)] = [(.spiderMan, "Find hook events", 190), (.blackWidow, "Write changelog", 140),
+        let crew: [(MarvelHero, String, Double)] = [(.spiderMan, "Find hook events", 190), (.blackWidow, "Write changelog", 140),
                                                    (.groot, "Check git history", 90), (.rocket, "Plan the refactor", 40)]
         for (i, (who, task, stop)) in crew.enumerated() {
             let d = Double(i) * 0.18

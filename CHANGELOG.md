@@ -8,7 +8,6 @@ Clawd Clash brings Clawd Wars (Star Wars) and Avengers: Clawd Wars (Marvel) toge
 - **Two universes, one app.** Pick **Star Wars** or **Marvel** from the new **Universe** menu. A scene only ever shows one universe: switching recasts everyone (each character becomes the one in the same place on the same side of the other cast), moves the scene to one of the new universe's places, changes the menu bar icon (Vader's helmet or Captain America's shield) and the Status Symbols character, and new sessions and agents are cast from it. Star Wars brings Clawd Wars' 81 characters and 22 places; Marvel brings 193 characters and 43 places.
 - **The screen saver chooses its own universe**: its **Options…** button in System Settings offers the same universe as the app, Star Wars, Marvel, or Random (a new pick on each trip somewhere new).
 - **Each universe keeps its own rules.** Star Wars: Han and Greedo face off first and Han shoots first, the Falcon picks Han up, whoever came first keeps their side when two AIs run, and Vader and Kylo never lead back to back. Marvel: arch-enemies face off first, the Quinjet and the Milano pick people up, flyers take to the air, and Claude Code plays the heroes when another AI runs.
-
 - **Keep Characters on Top** (Settings, desktop mode): on, the crew stands above every window as before; off, it lives on the desktop itself, just above the icons and behind your windows. In window mode the same item is still Keep Window on Top.
 - **A new icon**: Darth Vader's saber clashing on Captain America's shield, one from each universe.
 
