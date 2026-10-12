@@ -10,6 +10,7 @@ Clawd Clash brings Clawd Wars (Star Wars) and Avengers: Clawd Wars (Marvel) toge
 - **Each universe keeps its own rules.** Star Wars: Han and Greedo face off first and Han shoots first, the Falcon picks Han up, whoever came first keeps their side when two AIs run, and Vader and Kylo never lead back to back. Marvel: arch-enemies face off first, the Quinjet and the Milano pick people up, flyers take to the air, and Claude Code plays the heroes when another AI runs.
 - **Keep Characters on Top** (Settings, desktop mode): on, the crew stands above every window as before; off, it lives on the desktop itself, just above the icons and behind your windows. In window mode the same item is still Keep Window on Top.
 - **A new icon**: Darth Vader's saber clashing on Captain America's shield, one from each universe.
+- **A screen-saver thumbnail for both universes**: the Clawd Clash title over Luke and Vader, Captain America and Thanos, in System Settings' screen saver list (it was the Avengers one).
 
 ### Changed
 - **The Star Wars cast is Clawd Wars' own, ported frame by frame.** All 81 characters were rebuilt on the shared pipeline and checked pixel by pixel against Clawd Wars' drawing code in hundreds of poses each. Star Wars also keeps Clawd Wars' gun handling: no gun raised while waiting or cheering, heroes check their guns without raising them, the flash stays at the resting muzzle, bolts run as they did, and each hero keeps its own practice rhythm (`Persona.soloFire`). The Emperor's crackle is pale blue and white again.
