@@ -92,7 +92,7 @@ It opens in a window by default (switch to the desktop from the menu): the whole
   <img src="docs/window-cantina.png" alt="Window mode in the Mos Eisley cantina" width="760">
 </p>
 
-**The screen saver** (Settings → Install Screen Saver…) shows the place full screen with the crew fighting across its floor, a card per session, name tags, a clock and a crawl of what happened lately, and moves somewhere new every 10 minutes: with a Star Wars wipe, or in Marvel with a comic-book transition (halftone dots, a SNIKT! or THWIP! starburst for whoever's on screen, panels, speed lines, or "MEANWHILE…"). Its **Options…** button in System Settings picks the universe: the same as the app, Star Wars, Marvel, or Random (a new pick on each trip).
+**The screen saver** (Settings → Install Screen Saver…) shows the place full screen with the crew fighting across its floor, a card per session, name tags, a clock and a crawl of what happened lately, and moves somewhere new every 10 minutes: with a Star Wars wipe, or in Marvel with a comic-book transition (halftone dots, a SNIKT!, BAMF!, THWIP! or KAPOW! for whoever's on screen, panels, speed lines, "MEANWHILE…", and with Deadpool about, Deadpool peeling the page off the screen or surfing past on a chimichanga). Its **Options…** button in System Settings picks the universe: the same as the app, Star Wars, Marvel, or Random (a new pick on each trip).
 
 <p align="center">
   <img src="docs/screensaver.png" alt="The screen saver" width="760">

@@ -559,7 +559,7 @@ final class SceneView: NSView {
     private var lastLive: CGImage?
     /// Changing place: the old picture, frozen, wiped away over the new one (a hard edge and a clock wipe, taking
     /// turns), as the screen saver does; in Marvel, one of the comic-book transitions (`ComicWipe`) instead.
-    private var wipe: (old: CGImage, start: Double, clock: Bool, comic: ComicWipe?, word: String, caption: String)?
+    private var wipe: (old: CGImage, start: Double, clock: Bool, comic: ComicTrip?)?
     private var clockWipeNext = false
     private var lastComic: ComicWipe?
     private let sprites = SpriteLayers()
@@ -586,12 +586,11 @@ final class SceneView: NSView {
         if let old = room, old.size == bounds.size, old.location != location,
            let frozen = Wipe.flatten([old.image] + (old.location.hasAnimatedLayer ? lastLive.map { [$0] } ?? [] : [])) {
             if location.universe == .marvel {
-                let comic = ComicWipe.next(after: lastComic), cast = controller.onStage
-                lastComic = comic
-                wipe = (frozen, Date().timeIntervalSince1970, false, comic, ComicWipe.word(for: cast),
-                        ComicWipe.caption(to: location, cast: cast))
+                let comic = ComicTrip.pick(after: lastComic, cast: controller.onStage, to: location)
+                lastComic = comic.kind
+                wipe = (frozen, Date().timeIntervalSince1970, false, comic)
             } else {
-                wipe = (frozen, Date().timeIntervalSince1970, clockWipeNext, nil, "", "")
+                wipe = (frozen, Date().timeIntervalSince1970, clockWipeNext, nil)
                 clockWipeNext.toggle()
             }
         }
@@ -630,8 +629,7 @@ final class SceneView: NSView {
                                           bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
                                           bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) {
                 // Four pixels to every art pixel, so the lettering stays sharp.
-                comic.draw(ctx, old: w.old, new: new, k: k, in: CGRect(x: 0, y: 0, width: ctx.width, height: ctx.height),
-                           word: w.word, caption: w.caption)
+                comic.draw(ctx, old: w.old, new: new, k: k, in: CGRect(x: 0, y: 0, width: ctx.width, height: ctx.height))
                 if let img = ctx.makeImage() {
                     items.append(OverlayController.DrawItem(image: img, rect: g.drawRect.offsetBy(dx: origin.x, dy: origin.y)))
                 }

@@ -32,23 +32,28 @@ struct Transition {
     let draw: (CGContext, CGImage, CGImage, Double) -> Void     // ctx, old, new, k 0…1
 }
 
-/// The app's own transitions (`ComicWipe`), the starburst once for each kind of word it can say.
-func shown(_ kind: ComicWipe, _ key: String, _ title: String, word: String = "KAPOW!", caption: String? = nil) -> Transition {
-    Transition(key: key, title: title, duration: kind.duration) { ctx, old, new, k in
-        kind.draw(ctx, old: old, new: new, k: k, in: full, word: word, caption: caption ?? "MEANWHILE, IN \(to.name.uppercased())…")
+/// The app's own transitions (`ComicTrip`): every sound effect, and Deadpool's.
+func shown(_ kind: ComicWipe, _ key: String, _ title: String, sound: ComicSound = .kapow, caption: String? = nil,
+           quip: String = "Psst. Yes, you. Hold on, I'll change the set.") -> Transition {
+    let trip = ComicTrip(kind: kind, sound: sound, caption: caption ?? "MEANWHILE, IN \(to.name.uppercased())…", quip: quip)
+    return Transition(key: key, title: title, duration: kind.duration) { ctx, old, new, k in
+        trip.draw(ctx, old: old, new: new, k: k, in: full)
     }
 }
 
 let transitions: [Transition] = [
     shown(.halftone, "1-halftone", "Halftone dots"),
-    shown(.burst, "2-burst-kapow", "Starburst: KAPOW! (nobody in particular)"),
-    shown(.burst, "2-burst-snikt", "Starburst: SNIKT! (Wolverine)", word: "SNIKT!"),
-    shown(.burst, "2-burst-krakatoom", "Starburst: KRAKATOOM! (Thor)", word: "KRAKATOOM!"),
-    shown(.burst, "2-burst-deadpool", "Starburst: Deadpool", word: "FOURTH WALL: BROKEN!"),
+    shown(.burst, "2-burst-kapow", "KAPOW! (nobody in particular)"),
+    shown(.burst, "2-burst-snikt", "SNIKT! (Wolverine, X-23)", sound: .snikt),
+    shown(.burst, "2-burst-bamf", "BAMF! (Nightcrawler)", sound: .bamf),
+    shown(.burst, "2-burst-krakatoom", "KRAKATOOM! (Thor)", sound: .krakatoom),
+    shown(.burst, "2-burst-thwip", "THWIP! (Spider-Man, Miles, Spider-Gwen)", sound: .thwip),
+    shown(.burst, "2-burst-baroom", "BAROOM! (Hulk, the Thing)", sound: .baroom),
     shown(.panels, "3-panels", "Panels slam in"),
     shown(.speedLines, "4-speedlines", "Speed-line zoom"),
     shown(.meanwhile, "5-meanwhile", "Iris and caption"),
-    shown(.meanwhile, "5-meanwhile-deadpool", "Iris and caption: Deadpool", caption: "MEANWHILE, ON A SMALLER BUDGET…"),
+    shown(.fourthWall, "6-deadpool-fourth-wall", "Deadpool peels the page"),
+    shown(.chimichanga, "7-deadpool-chimichanga", "Deadpool's chimichanga"),
 ]
 
 // MARK: Rendering
@@ -128,5 +133,17 @@ func sheet() {
     print("wrote \(outDir)/transitions.png")
 }
 
+/// FRAMES="key:0.3,0.6" writes just those moments of one transition, full size, as PNGs.
+if let spec = ProcessInfo.processInfo.environment["FRAMES"], let colon = spec.firstIndex(of: ":"),
+   let tr = transitions.first(where: { $0.key == String(spec[..<colon]) }) {
+    let old = placeImage(from, t: 1), new = placeImage(to, t: 1)
+    for part in spec[spec.index(after: colon)...].split(separator: ",") { guard let k = Double(part) else { continue }
+        let f = frameContext(); f.interpolationQuality = .none
+        tr.draw(f, old, new, k)
+        try! NSBitmapImageRep(cgImage: f.makeImage()!).representation(using: .png, properties: [:])!
+            .write(to: URL(fileURLWithPath: "\(outDir)/\(tr.key)-\(part).png"))
+    }
+    exit(0)
+}
 sheet()
 for tr in transitions { clip(tr) }

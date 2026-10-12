@@ -44,7 +44,7 @@ final class ClawdClashSaverView: ScreenSaverView {
     /// In Marvel, a comic-book transition instead (`ComicWipe`): each frame drawn whole, old place and new, into
     /// `comicLayer`.
     private let comicLayer = CALayer()
-    private var comic: (kind: ComicWipe, start: Double, old: CGImage, word: String, caption: String)?
+    private var comic: (trip: ComicTrip, start: Double, old: CGImage)?
     private var lastComic: ComicWipe?
     /// With Clawd Clash not running: a made-up crew, cast for `demoPlace` (a local or two among them), off somewhere
     /// new every `demoEvery`.
@@ -204,11 +204,11 @@ final class ClawdClashSaverView: ScreenSaverView {
         if let room {
             let liveNow = liveLayer.contents.flatMap { CFGetTypeID($0 as CFTypeRef) == CGImage.typeID ? ($0 as! CGImage) : nil }
             if let frozen = Wipe.flatten([room.image] + (liveNow.map { [$0] } ?? [])), next.universe == .marvel {
-                let kind = ComicWipe.next(after: lastComic)
-                lastComic = kind
+                let trip = ComicTrip.pick(after: lastComic, cast: onStage, to: next)
+                lastComic = trip.kind
                 wipe = nil
                 wipeLayer.isHidden = true
-                comic = (kind, now, frozen, ComicWipe.word(for: onStage), ComicWipe.caption(to: next, cast: onStage))
+                comic = (trip, now, frozen)
             } else if let frozen = Wipe.flatten([room.image] + (liveNow.map { [$0] } ?? [])) {
                 comic = nil
                 comicLayer.isHidden = true
@@ -306,7 +306,7 @@ final class ClawdClashSaverView: ScreenSaverView {
             }
         }
         if let w = comic {
-            let k = (now - w.start) / w.kind.duration
+            let k = (now - w.start) / w.trip.duration
             if k >= 1 {
                 comic = nil
                 comicLayer.isHidden = true
@@ -316,8 +316,7 @@ final class ClawdClashSaverView: ScreenSaverView {
                                           bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
                                           bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) {
                 // Drawn a screen point to a pixel: the art scaled up crisp, the lettering sharp enough.
-                w.kind.draw(ctx, old: w.old, new: new, k: k, in: CGRect(x: 0, y: 0, width: ctx.width, height: ctx.height),
-                            word: w.word, caption: w.caption)
+                w.trip.draw(ctx, old: w.old, new: new, k: k, in: CGRect(x: 0, y: 0, width: ctx.width, height: ctx.height))
                 comicLayer.contents = ctx.makeImage()
                 comicLayer.frame = picture
                 comicLayer.isHidden = false
