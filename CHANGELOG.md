@@ -1,6 +1,6 @@
 # Changelog
 
-Avengers: Clawd Wars is a fork of [Clawd Wars](https://github.com/rodclemen/clawd-wars) 2.28.1. Its history up to the fork is in [CHANGELOG-clawd-wars.md](CHANGELOG-clawd-wars.md).
+Avengers: Clawd Wars is the sister app of [Clawd Wars](https://github.com/rodclemen/clawd-wars), and grew out of Clawd Wars 2.28.1. Their shared history up to then is in [CHANGELOG-clawd-wars.md](CHANGELOG-clawd-wars.md).
 
 ## 0.1.0 (unreleased)
 
@@ -50,6 +50,6 @@ Avengers: Clawd Wars is a fork of [Clawd Wars](https://github.com/rodclemen/claw
 - **Flyers take to the air now and then**: every half minute or so a flyer takes off where it stands, hangs in the air for a few seconds and lands; in a fight, ranged and magic flyers go up every few seconds and keep shooting or casting from up there, with the shots and streams following them. Melee flyers stay down to duel. In the overlay, the window and the screen saver.
 
 ### Fixed (from Clawd Wars)
-- **"Needs you" waits as long as it takes**: a session waiting for your answer no longer gives up after 15 minutes and falls asleep; it keeps its "!" until you answer, and goes idle at once if you press Esc (read from the session's transcript). Ported from a Clawd Wars fix made after the fork.
+- **"Needs you" waits as long as it takes**: a session waiting for your answer no longer gives up after 15 minutes and falls asleep; it keeps its "!" until you answer, and goes idle at once if you press Esc (read from the session's transcript). Brought over from a fix in Clawd Wars.
 
 Eleven artists drew ninety-two Clawds in an afternoon, and all of them argued about whose hammer was coolest.

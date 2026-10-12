@@ -116,24 +116,32 @@ let social = canvas(1280, 640) { ctx in
                                  attributes: [.font: NSFont.systemFont(ofSize: 26, weight: .semibold), .foregroundColor: NSColor(white: 0.9, alpha: 1)])
     sub.draw(at: NSPoint(x: (1280 - sub.size().width) / 2, y: 418))
     // the crew, standing on the horizon
-    let crew: [(PixelCanvas) -> Void] = [
-        { Cast.hero(.ironMan).draw($0, t: 0.3, mode: .working, walking: false, role: .shoot(offset: 0), asSession: true) },
-        { Cast.hero(.spiderMan).draw($0, t: 0.2, mode: .working, walking: false, role: .none, asSession: false) },
-        { Cast.hero(.captainAmerica).draw($0, t: 0.62, mode: .working, walking: false, role: .duel, asSession: true) },
-        { Cast.villain(.loki).draw($0, t: 0.62, mode: .working, walking: false, role: .zap, asSession: true) },
-        { Cast.hero(.groot).draw($0, t: 0.9, mode: .working, walking: false, role: .none, asSession: false) },
-        { Cast.villain(.thanos).draw($0, t: 0.1, mode: .idle, walking: false, role: .none, asSession: true) },
-    ]
-    let scales: [CGFloat] = [4, 3, 4, 3, 3, 4]
-    var x: CGFloat = 40
-    for (i, draw) in crew.enumerated() {
+    // Heroes on the left facing right, villains on the right facing them, the whole line centred.
+    // Waiting poses: weapons held up, nothing streaming off across the picture.
+    func pose(_ who: Cast) -> (PixelCanvas) -> Void {
+        { who.draw($0, t: 0.3, mode: .waiting, walking: false, role: .none, asSession: true) }
+    }
+    let heroes = [Cast.hero(.thor), .hero(.spiderMan), .hero(.captainAmerica), .hero(.ironMan)].map(pose)
+    let villains = [Cast.villain(.thanos), .villain(.loki), .villain(.greenGoblin), .villain(.venom)].map(pose)
+    var s: CGFloat = 4, gap: CGFloat = 26, middle: CGFloat = 90
+    var sprites: [(img: CGImage, w: CGFloat, h: CGFloat, bottomGap: CGFloat)] = []
+    for (i, draw) in (heroes + villains).enumerated() {
         let c = PixelCanvas(Sprite.width, Sprite.height); draw(c)
+        if i >= heroes.count { c.flipHorizontally() }
         c.addOutline(C(0xFFFFFF, 0.92))
         guard let b = c.opaqueBounds(), let img = c.makeImage()?.cropping(to: b) else { continue }
-        let s = scales[i], w = b.width * s
-        let bottomGap = CGFloat(Sprite.height) - b.maxY
-        ctx.draw(img, in: CGRect(x: x, y: 150 + (bottomGap - 8) * s, width: w, height: b.height * s))
-        x += w + 26
+        sprites.append((img, b.width * s, b.height * s, CGFloat(Sprite.height) - b.maxY))
+    }
+    var total = sprites.reduce(0) { $0 + $1.w } + gap * CGFloat(sprites.count - 2) + middle
+    if total > 1200 {                       // too wide: shrink everyone (and the spacing) to fit with margins
+        let k = 1200 / total
+        s *= k; gap *= k; middle *= k; total = 1200
+        sprites = sprites.map { ($0.img, $0.w * k, $0.h * k, $0.bottomGap) }
+    }
+    var x = (1280 - total) / 2
+    for (i, sp) in sprites.enumerated() {
+        ctx.draw(sp.img, in: CGRect(x: x, y: 150 + (sp.bottomGap - 8) * s, width: sp.w, height: sp.h))
+        x += sp.w + (i == heroes.count - 1 ? middle : gap)
     }
 }
 save(social, "social-preview.png")

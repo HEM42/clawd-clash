@@ -1,6 +1,6 @@
 # Avengers: Clawd Wars
 
-> A native macOS app (Swift + AppKit, no dependencies) that shows running Claude Code, OpenAI Codex, Qwen Code, Gemini CLI and GitHub Copilot CLI sessions as pixel-art Marvel characters on the desktop or in a window. A fork of Clawd Wars (Star Wars; the fork point is tagged `clawd-wars-2.28.1`). Every session and subagent is a hero or a villain (one shared cast of 92; Claude Code is the heroes whenever another AI runs, alone it gets anyone); they fight while they work, and flyers fly. Status comes from Claude Code, Codex, Qwen Code, Gemini CLI and Copilot CLI hooks (same hook binary, `--assistant codex|qwen|gemini|copilot` and `--event <name>`; per-AI config in `HookInstaller.OtherAI`, payloads translated by `StatusStore.normalize`). Every sprite, effect, location and the app icon are drawn in code; there are no image assets.
+> A native macOS app (Swift + AppKit, no dependencies) that shows running Claude Code, OpenAI Codex, Qwen Code, Gemini CLI and GitHub Copilot CLI sessions as pixel-art Marvel characters on the desktop or in a window. The sister app of Clawd Wars (Star Wars); it grew out of Clawd Wars 2.28.1, tagged `clawd-wars-2.28.1`. Every session and subagent is a hero or a villain (one shared cast of 92; Claude Code is the heroes whenever another AI runs, alone it gets anyone); they fight while they work, and flyers fly. Status comes from Claude Code, Codex, Qwen Code, Gemini CLI and Copilot CLI hooks (same hook binary, `--assistant codex|qwen|gemini|copilot` and `--event <name>`; per-AI config in `HookInstaller.OtherAI`, payloads translated by `StatusStore.normalize`). Every sprite, effect, location and the app icon are drawn in code; there are no image assets.
 
 ## Build and run
 
@@ -48,4 +48,4 @@
 
 - [README.md](README.md): what it is, screenshots, install.
 - [CHANGELOG.md](CHANGELOG.md): detailed history of every change and why.
-- [CHANGELOG-clawd-wars.md](CHANGELOG-clawd-wars.md): Clawd Wars' history up to the fork.
+- [CHANGELOG-clawd-wars.md](CHANGELOG-clawd-wars.md): the shared history with Clawd Wars up to 2.28.1.

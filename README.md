@@ -21,7 +21,7 @@
   <img src="docs/social-preview.png" alt="Iron Man, Spider-Man, Captain America, Loki, Groot and Thanos" width="760">
 </p>
 
-A fork of [Clawd Wars](https://github.com/rodclemen/clawd-wars), the Star Wars original: same app, same engine, a different universe.
+The sister app of [Clawd Wars](https://github.com/rodclemen/clawd-wars), the Star Wars one: same engine, same habits, a different universe.
 
 ---
 
