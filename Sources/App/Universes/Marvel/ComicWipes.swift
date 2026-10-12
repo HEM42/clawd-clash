@@ -441,7 +441,7 @@ struct ComicTrip {
     /// old place off the screen like a comic page, the new place underneath.
     private func drawFourthWall(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
         let s = r.height / 800, ease = Self.ease, clamp = Self.clamp
-        let corner = CGPoint(x: r.maxX, y: r.minY), far = hypot(r.width, r.height)
+        let corner = CGPoint(x: r.maxX, y: r.minY)
         let u = CGPoint(x: -0.7071, y: 0.7071)                            // from the corner towards the top left
         let reach = r.width * 0.7071 + r.height * 0.7071                  // the far corner's distance along `u`
         let fold = CGFloat(ease(clamp((k - 0.4) / 0.55))) * reach * 1.02   // how far the page has been peeled back
