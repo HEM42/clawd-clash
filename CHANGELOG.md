@@ -27,3 +27,19 @@ Avengers: Clawd Wars is a fork of [Clawd Wars](https://github.com/rodclemen/claw
 
 ### Changed (tools)
 - **`Tools/MakeIcon`** now renders Captain America holding his shield into Thanos' gauntlet blast, and **`Tools/RenderDocs`** draws the roster as heroes and villains with the new pipeline.
+
+### Added (art)
+- **All 92 characters are drawn**, each one Clawd in costume, replacing the stand-ins, and nearly every one has a signature move: Iron Man flips his faceplate up, Cap tosses his shield and catches it, Thor twirls Mjolnir and calls lightning, the Hulk pounds his chest and roars, Wolverine pops his claws, Nightcrawler BAMFs away and back, Star-Lord dances with his Walkman, Ant-Man shrinks to ant size, Drax "goes invisible", Deadpool eats a chimichanga, the Torch flames off and on, Thanos snaps, Loki turns into a snake, Mystique and the Skrull turn into plain Clawd and back, the Grandmaster dances and laughs, Doc Ock's tentacles snap, Sandman crumbles and rises, Kingpin taps his cane, Batroc high-kicks. Flyers have proper flight poses (Iron Man's boot jets, Thor's cape, Falcon's wings, the Goblin and the Surfer on their glider and board), Spider-Man swings with his hand up on the web line, Professor X rides his hover-chair, and the giants (Sentinel, Fin Fang Foom, Juggernaut, Apocalypse, Abomination, Thanos, Groot) are drawn big.
+- **The Quinjet and the Milano**, drawn properly with lowering ramps, landing gear and thrusters.
+- **All 22 places are drawn**, each with a moving layer and extra scenery at screen-saver size: Avengers Tower over the Manhattan skyline, the Sanctum Sanctorum's seal window and staircase, Wakanda's Golden City at sunset, Asgard and the Bifrost, the Sakaar arena, Knowhere's neon streets, ruined Titan, the Helicarrier's flight deck above the clouds, Xavier's School, rainy Hell's Kitchen rooftops, Vormir, the Quantum Realm, Castle Doom over Latveria, a Hydra base, the Daily Bugle's roof, Ego's planet, Kamar-Taj, the Raft, the Battle of New York, the Dark Dimension, Attilan and the Savage Land.
+- **New app icon** (Captain America holding his shield into Thanos' gauntlet blast), roster and location sheets, social preview and screen-saver thumbnail, all rendered from the art.
+
+### Fixed
+- **Giants no longer duel face-first into each other**: `Persona.bulk` says how far a body reaches past plain Clawd, and duels stand that much further apart (overlay, screen saver and preview).
+- **No muzzle flash from a bow**: Hawkeye's arrows leave quietly, like webs, beams and ice.
+- Callouts rise with a flying character; the over-the-head speech lines only Han and Greedo used are gone.
+
+### Docs
+- **README and `llms.txt` rewritten** for the Marvel version: cast, fights, flight, places, living next to Clawd Wars, building, and the preview tool. Out-of-date Star Wars screenshots are removed until new ones are taken.
+
+Eleven artists drew ninety-two Clawds in an afternoon, and all of them argued about whose hammer was coolest.
