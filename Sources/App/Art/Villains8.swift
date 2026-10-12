@@ -92,7 +92,7 @@ private func roarLines(_ c: PixelCanvas, x: Int, y: Int, s: Double, _ col: Px) {
 /// Where Nefaria's ionic blasts leave his palm.
 private let nefariaPalm = (x: 45.0, y: 33.5)
 
-/// Count Nefaria: the aristocrat of crime — pale Clawd with slicked black hair (grey at the temples, a widow's peak),
+/// Count Nefaria: the aristocrat of crime, pale Clawd with slicked black hair (grey at the temples, a widow's peak),
 /// a thin curled moustache, a dark three-piece suit with a white shirt-front and red cravat, and a black opera cape
 /// with a red lining and a high collar. Fires ionic blasts from his bare hand. Signature: he lifts a hand and twirls
 /// the tip of his moustache, which curls tighter and catches the light.
@@ -162,7 +162,7 @@ private func drawCountNefaria(_ c: PixelCanvas, _ p: Pose) {
 
 /// The Leader: a green-skinned Clawd crowned by his enormous, elongated cranium, the brain's folds faintly showing
 /// through, a smug narrow-eyed look and a purple jumpsuit with a high collar. Casts green psionic rays.
-/// Signature: his brain pulses — the dome swells, its folds glow and rings of thought ripple out.
+/// Signature: his brain pulses, the dome swells, its folds glow and rings of thought ripple out.
 private func drawTheLeader(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0x6AB04A), shade = C(0x4E8A36), light = C(0x9AD878), suit = C(0x5A2A7A), suitDark = C(0x3E1C56)
     let glow = C(0xC8FF7A)
@@ -217,7 +217,7 @@ private func drawTheLeader(_ c: PixelCanvas, _ p: Pose) {
 /// Maestro's shoulder: his fist swings from here.
 private let maestroShoulder = (x: 39.0, y: 17.0)
 
-/// Maestro: the Hulk of a ruined future, old and gone bad — a huge green body, long grey hair and a full grey beard,
+/// Maestro: the Hulk of a ruined future, old and gone bad, a huge green body, long grey hair and a full grey beard,
 /// an open black leather coat over his bare chest, a belt with a heavy buckle, leather bracers. Fights with his fists.
 /// Signature: a slow, nasty grin, then he cracks his neck to one side and the other.
 private func drawMaestro(_ c: PixelCanvas, _ p: Pose) {
@@ -297,8 +297,8 @@ private func drawMaestro(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Malekith
 
-/// Malekith the Accursed (the comics): a dark elf whose face is split down the middle — one half pale, one half a
-/// deep midnight blue with a glowing eye — under a wild mane of white hair, pointed ears, a high-collared black and
+/// Malekith the Accursed (the comics): a dark elf whose face is split down the middle, one half pale, one half a
+/// deep midnight blue with a glowing eye, under a wild mane of white hair, pointed ears, a high-collared black and
 /// violet tunic and a cape. Casts dark magic. Signature: the line where his face divides shimmers, light rippling
 /// down the scar and across the dark half.
 private func drawMalekith(_ c: PixelCanvas, _ p: Pose) {
@@ -367,7 +367,7 @@ private let surturShoulder = (x: 41.0, y: 21.0)
 /// The same shoulder in his drawing coordinates (everything above the legs is drawn 3 px lower).
 private let surturArm = (x: 41.0, y: 18.0)
 
-/// Surtur: a fire demon filling the canvas — a body of black rock cracked through with molten lava, burning eyes and
+/// Surtur: a fire demon filling the canvas, a body of black rock cracked through with molten lava, burning eyes and
 /// mouth, a crown of great horns with flames licking between its spikes, and the Twilight Sword, a huge blade glowing
 /// like a forge. Signature: his crown flares up into a tower of fire, embers whirling up off it.
 private func drawSurtur(_ c: PixelCanvas, _ p: Pose) {
@@ -444,7 +444,7 @@ private func drawSurtur(_ c: PixelCanvas, _ p: Pose) {
 /// Kurse's shoulder: his fist swings from here.
 private let kurseShoulder = (x: 42.0, y: 27.0)
 
-/// Kurse: the dark elf Algrim made into a brute — a broad, hulking Clawd in heavy blue-grey plate, a great horned
+/// Kurse: the dark elf Algrim made into a brute, a broad, hulking Clawd in heavy blue-grey plate, a great horned
 /// helmet with only a glowing red eye-slit and a fanged grille showing, a tattered dark red loincloth and an
 /// armoured fist. Signature: he throws his head back and roars, eyes blazing.
 private func drawKurse(_ c: PixelCanvas, _ p: Pose) {
@@ -599,7 +599,7 @@ private func drawFrostGiant(_ c: PixelCanvas, _ p: Pose) {
 
 /// A Hydra super soldier: a heavier, elite trooper in black body armour with red shoulder plates, a full black
 /// helmet with a red T-visor, the red Hydra skull on the chest, and an electrified stun baton crackling red.
-/// Signature: baton tucked away, both fists thrown up — Hail Hydra — as the visor flares.
+/// Signature: baton tucked away, both fists thrown up (Hail Hydra) as the visor flares.
 private func drawHydraSuperSoldier(_ c: PixelCanvas, _ p: Pose) {
     let black = C(0x1E1E24), dark = C(0x121216), light = C(0x4A4A56), armour = C(0x3A3A46), red = C(0xC8202A), redDark = C(0x8A141C)
     let glow = C(0xFF3A2A)
@@ -656,7 +656,7 @@ private func drawHydraSuperSoldier(_ c: PixelCanvas, _ p: Pose) {
 
 /// A Kree soldier in the green-and-blue uniform of Captain Marvel's original Kree: a blue-skinned Clawd in a green
 /// helmet with the tall Kree fin, a green tunic with blue chest and shoulder armour, a blue belt and boots, and a
-/// long energy rifle with a glowing power cell. Signature: he stands the rifle up and checks its charge — the cell's
+/// long energy rifle with a glowing power cell. Signature: he stands the rifle up and checks its charge, the cell's
 /// bars light up one by one, then flash full.
 private func drawKreeSoldier(_ c: PixelCanvas, _ p: Pose) {
     let green = C(0x3A8A4A), greenDark = C(0x266A34), greenLight = C(0x5AB06A)

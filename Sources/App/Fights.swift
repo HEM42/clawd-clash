@@ -304,9 +304,9 @@ enum BubbleKind {
     case sleeping       // idle for a long time
 }
 
-/// Compact bubble — it only ever holds three thinking dots, a "!", a "?" or zZz.
+/// Compact bubble, it only ever holds three thinking dots, a "!", a "?" or zZz.
 /// `tailRight`: the bubble sits left of the head, so its tail points right. Only the frame is
-/// mirrored for that — the symbol inside never reads backwards.
+/// mirrored for that, the symbol inside never reads backwards.
 func drawBubble(_ c: PixelCanvas, kind: BubbleKind, t: Double, urgent: Bool = false, tailRight: Bool = false) {
     let border: Px
     switch kind {

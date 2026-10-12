@@ -12,7 +12,7 @@ import Foundation
 //     (on its back, at its belt, shield on the arm); `p.trail` holds earlier angles of a fast swing, for a smear;
 //   - a held gun `p.gunY` higher or lower than its resting place (recoil, raised to check it);
 //   - a magic caster's hand raised `p.armRaise` pixels; the stream itself is drawn for you;
-//   - `p.flying`: on the move through the air — draw it in flight; `p.signature`: 0…1 through its signature move.
+//   - `p.flying`: on the move through the air, draw it in flight; `p.signature`: 0…1 through its signature move.
 // Restore nothing: `drawPersona` resets the canvas offsets afterwards.
 
 struct Pose {

@@ -41,7 +41,7 @@ extension Scenes {
 
     /// Avengers Tower at night: the crew is out on the tower's top-floor terrace behind its glass rail. Behind them the
     /// Manhattan skyline glitters (the Empire State and the Chrysler stand out), a moon hangs over the East River, and
-    /// the tower itself rises at the right — slanted glass crown, landing pad jutting out and the glowing "A" up top,
+    /// the tower itself rises at the right, slanted glass crown, landing pad jutting out and the glowing "A" up top,
     /// with the warm glass lounge at its foot.
     static func avengersTower(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c)
@@ -312,7 +312,7 @@ extension Scenes {
         c.ellipse(win.x + win.r / 3, g + (c.h - g) / 2, win.r, max(2, (c.h - g) / 3), C(0xC8DCF8, 0.08))
     }
 
-    /// The round window: night sky behind the Seal of the Vishanti — rings and four sweeping arms.
+    /// The round window: night sky behind the Seal of the Vishanti, rings and four sweeping arms.
     static func sanctumWindowDraw(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), w = sanctumWindow(c, g), r = w.r
         c.circle(w.x, w.y, r + 5 * s, C(0x1A0F09))
@@ -477,7 +477,7 @@ extension Scenes {
 
 extension Scenes {
     /// Wakanda at sunset: a purple-to-gold sky, Mount Bashenga's great dark bulk behind the Golden City, whose towers
-    /// — rounded vibranium spires, thatch-crowned towers and slender needles — catch the last light, with a maglev line
+    /// (rounded vibranium spires, thatch-crowned towers and slender needles) catch the last light, with a maglev line
     /// on stilts running in front, acacias, and red earth with a woven pattern underfoot. Talon fighters drift by and
     /// a maglev train glides along its rail.
     static func wakanda(_ c: PixelCanvas, _ g: Int) {
@@ -776,7 +776,7 @@ extension Scenes {
 
     /// Sakaar, the Grandmaster's arena: a sand floor ringed by a wall striped in Sakaaran colours, tiers of a
     /// cheering crowd, the Grandmaster's gilded box, and beyond the rim the garbage planet's mountains of junk under a
-    /// teal sky torn open by wormholes — the biggest, the Devil's Anus, swirling red and orange.
+    /// teal sky torn open by wormholes, the biggest, the Devil's Anus, swirling red and orange.
     static func sakaar(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), st = sakaarStands(c, g)
         c.gradient(0, st.top, C(0x1E3A5A), C(0xD8A88A), bands: 6)
@@ -1043,7 +1043,7 @@ extension Scenes {
         }
     }
 
-    /// Up high: the skull's vault — great ribs of bone arching across — and a rent in it open on to the stars, with
+    /// Up high: the skull's vault (great ribs of bone arching across) and a rent in it open on to the stars, with
     /// light falling through.
     static func knowhereHigh(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), vault = Int(Double(g) * 0.3)
@@ -1113,8 +1113,8 @@ extension Scenes {
     }
 
     /// Titan, Thanos' ruined homeworld: a dusty orange sky with a cracked moon, a great band of debris arcing overhead,
-    /// a hazy dead city and a broken ring-structure on the horizon, and huge tilted spires — snapped off, collared,
-    /// leaning on one another — over a cracked plain strewn with rubble.
+    /// a hazy dead city and a broken ring-structure on the horizon, and huge tilted spires, snapped off, collared,
+    /// leaning on one another, over a cracked plain strewn with rubble.
     static func titan(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c)
         c.gradient(0, g, C(0x7A2C18), C(0xF4A852), bands: 7)

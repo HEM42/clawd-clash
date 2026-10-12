@@ -105,7 +105,7 @@ extension Scenes {
         return [(c.w * 52 / 100, g - 6 * s, k), (c.w * 83 / 100, g - 7 * s, k)]
     }
 
-    /// Madripoor — Lowtown at night: a row of crowded shophouses with vertical neon signs and red lanterns under
+    /// Madripoor, Lowtown at night: a row of crowded shophouses with vertical neon signs and red lanterns under
     /// their arcades, the Princess Bar's sign on the last of them, junks with battened red sails riding in the harbour,
     /// and Hightown's glittering towers on the hill across the bay under a moon.
     static func madripoor(_ c: PixelCanvas, _ g: Int) {
@@ -344,7 +344,7 @@ extension Scenes {
         return Int(17 * (1 - pow(e, 1.6)) + 2 + noise(u * 3 + 811) * 3)
     }
 
-    /// Sokovia — the Battle of Sokovia: the heart of Novi Grad torn out of the ground and hanging in the sky, its
+    /// Sokovia, the Battle of Sokovia: the heart of Novi Grad torn out of the ground and hanging in the sky, its
     /// church's bell tower standing among the old town's red roofs on top and raw rock dangling underneath; on the
     /// ground, the rest of the old town around the smoking crater it came from, with rubble and a shattered wall
     /// in front.
@@ -580,7 +580,7 @@ extension Scenes {
         return out
     }
 
-    /// Galactus' Worldship — inside the devourer's vessel: walls of vast purple machinery, ribbed and studded with
+    /// Galactus' Worldship, inside the devourer's vessel: walls of vast purple machinery, ribbed and studded with
     /// Kirby-style discs and vents, glowing conduits running along them, and a great round viewport looking out on
     /// a blue-green world being torn apart and drawn up into the ship along beams of cosmic energy.
     static func worldship(_ c: PixelCanvas, _ g: Int) {
@@ -809,7 +809,7 @@ extension Scenes {
         return (a - 4 * s, g - 21 * s, 72 * s, 10 * s)
     }
 
-    /// Harlem — a block at sunset: a row of brownstones and brick tenements with stoops, cornices and fire
+    /// Harlem, a block at sunset: a row of brownstones and brick tenements with stoops, cornices and fire
     /// escapes, Pop's Barber Shop with its striped awning and pole, and the Apollo Theater's tall red sign and
     /// marquee, under an orange and pink sky with pigeons on the cornices.
     static func harlem(_ c: PixelCanvas, _ g: Int) {
@@ -1062,7 +1062,7 @@ extension Scenes {
         return (x, top, half, x + half / 6, top + (g - top) * 42 / 100, max(3 * s, half / 5))
     }
 
-    /// K'un-Lun — the hidden city in the mountains: sheer karst peaks fading back into the mist, red pagodas perched
+    /// K'un-Lun, the hidden city in the mountains: sheer karst peaks fading back into the mist, red pagodas perched
     /// on their summits among pines and on a cliff to the left, the cave of the dragon Shou-Lao glowing orange high
     /// in the tallest peak, a red gate standing in the courtyard and a cherry tree in blossom.
     static func kunLun(_ c: PixelCanvas, _ g: Int) {

@@ -24,7 +24,7 @@ enum Companion: Int, CaseIterable {
     case wong, hercules, sentry, cosmo, kraglin, adamWarlock, nova, kittyPryde, jubilee, psylocke
     // more X-Men and the Spider-heroes.
     case bishop, cable, havok, emmaFrost, banshee, angel, domino, x23, milesMorales, spiderGwen
-    // the street — Defenders, Punisher, Blade and friends.
+    // the street, Defenders, Punisher, Blade and friends.
     case spiderWoman, blackCat, lukeCage, ironFist, jessicaJones, punisher, elektra, blade, blackKnight
     // mystics, cosmic and the funny ones.
     case monicaRambeau, clea, doctorVoodoo, howardTheDuck, squirrelGirl, jeffTheLandShark, throg, lockjaw, forbushMan
@@ -76,9 +76,9 @@ enum Leader: Int, CaseIterable {
 // MARK: - Personas
 
 /// How a character fights. The cases keep Clawd Wars' names; in the Marvel cast they mean:
-/// - `saber`: up close — shields, hammers, claws, fists, swords, staffs. Deflects shots, blocks magic.
-/// - `blaster`: at range — repulsors, webs, arrows, bullets, optic blasts, fire, ice… (`Persona.shot` says which).
-/// - `lightning`: magic and energy streams — sorcery, telekinesis, Thanos' gauntlet (`Persona.magic` says how it looks).
+/// - `saber`: up close, shields, hammers, claws, fists, swords, staffs. Deflects shots, blocks magic.
+/// - `blaster`: at range, repulsors, webs, arrows, bullets, optic blasts, fire, ice… (`Persona.shot` says which).
+/// - `lightning`: magic and energy streams, sorcery, telekinesis, Thanos' gauntlet (`Persona.magic` says how it looks).
 /// - `none`: stays out of it.
 enum Weapon { case saber, blaster, lightning, none }
 

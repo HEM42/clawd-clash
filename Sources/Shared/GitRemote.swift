@@ -111,7 +111,7 @@ struct GitRemote {
         for raw in config.split(whereSeparator: \.isNewline) {
             let line = raw.trimmingCharacters(in: .whitespaces)
             if line.hasPrefix("[") {
-                // [remote "origin"] — the subsection is quoted and may hold "]", so look for the bracket after it.
+                // [remote "origin"], the subsection is quoted and may hold "]", so look for the bracket after it.
                 let quoted = line.split(separator: "\"", omittingEmptySubsequences: false)
                 let close = quoted.count >= 3 ? line.lastIndex(of: "]") : line.firstIndex(of: "]")
                 let header = line[line.index(after: line.startIndex)..<(close ?? line.endIndex)]

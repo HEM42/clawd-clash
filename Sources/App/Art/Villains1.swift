@@ -74,7 +74,7 @@ private func drawHa(_ c: PixelCanvas, x: Int, y: Int, _ col: Px) {
 
 // MARK: - Thanos
 
-/// Thanos: a big purple Clawd in the comics' blue and gold — the finned gold helmet, the grooved chin, gold boots
+/// Thanos: a big purple Clawd in the comics' blue and gold, the finned gold helmet, the grooved chin, gold boots
 /// and the Infinity Gauntlet on his casting hand. Signature: he raises the Gauntlet high, the six stones light one
 /// after another, and he snaps.
 private func drawThanos(_ c: PixelCanvas, _ p: Pose) {
@@ -161,7 +161,7 @@ private func drawThanos(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Loki
 
-/// Loki: the classic green and gold — a pale face framed by black hair and the gold helmet with its long curling
+/// Loki: the classic green and gold, a pale face framed by black hair and the gold helmet with its long curling
 /// horns, a green cape, and the sceptre's blue gem as his casting point. Signature: a green shimmer runs over him
 /// and he turns into a snake (it was him, he was the snake), then back.
 private func drawLoki(_ c: PixelCanvas, _ p: Pose) {
@@ -309,7 +309,7 @@ private func drawUltron(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Red Skull
 
-/// Red Skull: the grinning red skull — black sockets, a nose hole and bared teeth — on a black officer's coat,
+/// Red Skull: the grinning red skull (black sockets, a nose hole and bared teeth) on a black officer's coat,
 /// with a Hydra pistol that fires blue Tesseract energy. Signature: he holds the Tesseract up, glowing blue.
 private func drawRedSkull(_ c: PixelCanvas, _ p: Pose) {
     let red = C(0xC8322A), redDark = C(0x9A221C), redLight = C(0xE45A48), coat = C(0x1E1E24), coatLight = C(0x3A3A44)
@@ -354,7 +354,7 @@ private func drawRedSkull(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Doctor Doom
 
-/// Doctor Doom: the iron mask — eye slits, a riveted mouth grille — under a green hood and cloak, a green tunic
+/// Doctor Doom: the iron mask (eye slits, a riveted mouth grille) under a green hood and cloak, a green tunic
 /// belted with a gold buckle over grey armour. Signature: he sweeps his cloak round in a grand flourish, green
 /// sorcery crackling in his gauntlet.
 private func drawDoctorDoom(_ c: PixelCanvas, _ p: Pose) {
@@ -394,7 +394,7 @@ private func drawDoctorDoom(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Hela
 
-/// Hela: the films' goddess of death — pale face, smoky black eyes, black and green suit and cape, and the great
+/// Hela: the films' goddess of death, pale face, smoky black eyes, black and green suit and cape, and the great
 /// antlered headdress. She fights with a black necrosword. Signature: the headdress melts to slicked-back hair,
 /// then grows back out of black wisps, tine by tine.
 private func drawHela(_ c: PixelCanvas, _ p: Pose) {

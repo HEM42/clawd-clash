@@ -54,7 +54,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     private var boardTimer: Timer?
     private var boardOn = false
     static let headerHeight: CGFloat = 30
-    /// Settings → Compact Window: the whole window — header, scene, characters, cards — drawn at 75%. Every view keeps
+    /// Settings → Compact Window: the whole window (header, scene, characters, cards) drawn at 75%. Every view keeps
     /// its normal (logical) size in its bounds and is shown in a frame `scale` times as big.
     static var scale: CGFloat { small ? 0.75 : 1 }
     /// On until turned off in Settings.
@@ -121,7 +121,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     }
 
     /// Make the window exactly as tall as the scene plus the cards (one per Claude), keeping its top edge
-    /// where it is and never taller than the screen — past that the cards scroll.
+    /// where it is and never taller than the screen, past that the cards scroll.
     /// Settings → Show Session List in Window. Off: the window is just the header and the scene.
     static var listShown: Bool { UserDefaults.standard.object(forKey: "windowList") as? Bool ?? true }
 
@@ -703,7 +703,7 @@ final class CardsView: NSView {
     private static let pad: CGFloat = 12
     // Portraits are cropped to 46×38 sprite pixels; the Compact Window draws them at 1.5× to save height.
     private static var portraitScale: CGFloat { ClawdWindow.scale < 1 ? 1.5 : 2 }
-    // Measured: the widest portrait is the AT-AT (53 px), the tallest the Rancor (42 px) — both fit at 2×.
+    // Measured: the widest portrait is the AT-AT (53 px), the tallest the Rancor (42 px), both fit at 2×.
     private static var portraitSize: NSSize { NSSize(width: 56 * portraitScale, height: 43 * portraitScale) }
     private static let lineH: CGFloat = 16
     private static let agentH: CGFloat = 34
@@ -988,7 +988,7 @@ final class CardsView: NSView {
                     let ax = chip.maxX + 6
                     let title = NSMutableAttributedString(string: a.name, attributes: [
                         .font: NSFont.systemFont(ofSize: 11.5, weight: .semibold), .foregroundColor: NSColor.white])
-                    title.append(NSAttributedString(string: "  —  " + a.task, attributes: [
+                    title.append(NSAttributedString(string: "  ·  " + a.task, attributes: [
                         .font: NSFont.systemFont(ofSize: 11.5), .foregroundColor: c.accent]))
                     title.draw(with: NSRect(x: ax, y: ty + 1, width: tx + tw - ax, height: 16),
                                options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])

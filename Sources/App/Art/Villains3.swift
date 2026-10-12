@@ -318,8 +318,8 @@ private func drawSabretooth(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Mystique
 
 /// Mystique (the movie look, which reads best small): a blue-scaled Clawd with slicked-back red hair and yellow eyes,
-/// a short knife in hand. Signature: a ripple of scales sweeps across her and she's suddenly plain Clawd — for a
-/// moment — before rippling back.
+/// a short knife in hand. Signature: a ripple of scales sweeps across her and she's suddenly plain Clawd, for a
+/// moment, before rippling back.
 private func drawMystique(_ c: PixelCanvas, _ p: Pose) {
     guard let s = p.signature, s > 0.05, s < 0.95 else { mystique(c, p); return }
     // 0.05…0.35 the ripple sweeps right to left into Clawd; 0.65…0.95 it sweeps back.
@@ -550,7 +550,7 @@ private func drawSentinel(_ c: PixelCanvas, _ p: Pose) {
 /// The Abomination's shoulder: his clawed arm swings from here.
 private let abominationShoulder = (x: 39.0, y: 18.0)
 
-/// The Abomination: a hulking green reptilian brute — scaly hide, a bony ridge down his back, the wide head with
+/// The Abomination: a hulking green reptilian brute, scaly hide, a bony ridge down his back, the wide head with
 /// fin-like ears, a jutting brow, beady yellow eyes and the great lipped mouth; ragged shorts and a long clawed arm.
 /// Signature: he throws his head back and roars.
 private func drawAbomination(_ c: PixelCanvas, _ p: Pose) {
@@ -618,7 +618,7 @@ private func drawAbomination(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Fin Fang Foom
 
-/// Fin Fang Foom: a towering green Chinese dragon standing upright in his purple shorts — yellow belly plates, a
+/// Fin Fang Foom: a towering green Chinese dragon standing upright in his purple shorts, yellow belly plates, a
 /// curling spiked tail, and a long-snouted head with purple fins, red eyes, a fanged open mouth and drooping
 /// whiskers. Breathes fire. Signature: a lazy puff of smoke from his nostrils and a lick of flame.
 private func drawFinFangFoom(_ c: PixelCanvas, _ p: Pose) {
@@ -699,7 +699,7 @@ private func drawFinFangFoom(_ c: PixelCanvas, _ p: Pose) {
 /// MODOK's headband emitter: his mental beam fires from here.
 private let modokEmitter = (x: 48.5, y: 12.5)
 
-/// MODOK: an enormous head — a tiny scowling face low on the front, the gold headband with its beam emitter — riding
+/// MODOK: an enormous head (a tiny scowling face low on the front, the gold headband with its beam emitter) riding
 /// in the gold Doomsday Chair, tiny arms on the controls and tiny legs dangling. Signature: his whole face screws up
 /// into a furious frown and the headband flickers, sparking.
 private func drawModok(_ c: PixelCanvas, _ p: Pose) {
@@ -813,7 +813,7 @@ private func drawDormammu(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Doombot
 
-/// A Doombot: Doctor Doom's robot stand-in, plainer and smaller — green-tinted grey armour, no cloak or hood, the
+/// A Doombot: Doctor Doom's robot stand-in, plainer and smaller, green-tinted grey armour, no cloak or hood, the
 /// riveted Doom mask with glowing green eye slits and the grille mouth; blasts from its palm. Signature: its eyes
 /// glitch and flicker and its head twitches.
 private func drawDoombot(_ c: PixelCanvas, _ p: Pose) {

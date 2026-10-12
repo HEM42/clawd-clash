@@ -1,6 +1,6 @@
 import Foundation
 
-// Heroes: the street — Defenders, Punisher, Blade and friends. Clawd in costume, classic comic colours: masks, hair,
+// Heroes: the street, Defenders, Punisher, Blade and friends. Clawd in costume, classic comic colours: masks, hair,
 // leather and armour over the blocky body; where a face shows, it's Clawd's own orange.
 
 let heroes8: [Companion: Persona] = [
@@ -387,7 +387,7 @@ private func drawJessicaJones(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - The Punisher
 
 /// The Punisher: a black-shirted Clawd with a buzz cut and a permanent scowl, the big white skull across his chest,
-/// classic white gloves and boots, and an assault rifle. Signature: he reloads — the empty magazine drops, a fresh one
+/// classic white gloves and boots, and an assault rifle. Signature: he reloads, the empty magazine drops, a fresh one
 /// slaps in, he racks the bolt and brings the rifle back up.
 private func drawPunisher(_ c: PixelCanvas, _ p: Pose) {
     let shirt = C(0x1A1A20), bone = C(0xECECEE), glove = C(0xE0E0E8), hair = C(0x16161B)
@@ -441,7 +441,7 @@ private func drawPunisher(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Elektra
 
 /// Elektra: long black hair under the long red headband whose tails stream out behind, the red wrapped costume with
-/// a sash, wraps round the arms and legs, and a sai in each hand — the left held reversed along her forearm, the right
+/// a sash, wraps round the arms and legs, and a sai in each hand, the left held reversed along her forearm, the right
 /// for fighting. Signature: she spins the sai round her fingers and snaps it to guard.
 private func drawElektra(_ c: PixelCanvas, _ p: Pose) {
     let red = C(0xC0182A), redDark = C(0x84101A), hair = C(0x1A1418), hairShade = C(0x3A2E34)

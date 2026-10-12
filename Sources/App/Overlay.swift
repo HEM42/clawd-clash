@@ -253,7 +253,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     }
 
     /// The screen the crew is standing on. `p` is the home point (bottom of the canvas); the feet are
-    /// `footroom` above it, and that's what counts — the empty rows under the feet may hang off the edge.
+    /// `footroom` above it, and that's what counts, the empty rows under the feet may hang off the edge.
     private func screen(at p: NSPoint) -> NSScreen? {
         let feet = NSPoint(x: p.x, y: p.y + Self.footroom * zoom + 1)
         return NSScreen.screens.first { $0.frame.contains(feet) } ?? NSScreen.main
@@ -288,7 +288,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     }
 
     /// Where the window's scene is set: chosen in the Location menu, Random (somewhere new every ten minutes), or
-    /// (Automatic) the home of the first-spawned Claude — Vader on the Death Star, Boba at the sarlacc pit, Jabba in
+    /// (Automatic) the home of the first-spawned Claude, Vader on the Death Star, Boba at the sarlacc pit, Jabba in
     /// his palace…
     var location: Location {
         let raw = UserDefaults.standard.string(forKey: "location")
@@ -363,7 +363,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 if let pid = sessions[i].pid, (busyUntil[pid] ?? 0) > now { sessions[i].mood = .working }
             }
             // Not reporting: the hooks say idle, but the process has been busy for over a minute and no
-            // agent has reported in that time — the hooks have stopped firing for it.
+            // agent has reported in that time, the hooks have stopped firing for it.
             for i in sessions.indices where sessions[i].live {
                 guard let pid = sessions[i].pid, let rec = sessions[i].record, rec.state == "idle",
                       let busy = busySince[pid], now - busy > 60, now - rec.updated > 60,
@@ -392,7 +392,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 }
             }
             // A session that started after our hooks were in place and has run a turn, but never reported, has its
-            // hook switched off — for Codex that means it hasn't been approved in /hooks yet.
+            // hook switched off, for Codex that means it hasn't been approved in /hooks yet.
             // A session that quits drops its record at SessionEnd but lingers (busy) for a moment while it shuts down:
             // having reported once, it isn't silent.
             let startedAt = Dictionary(processes.map { ($0.pid, $0.started) }, uniquingKeysWith: { a, _ in a })
@@ -405,16 +405,16 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 }
             }
             hookIssues = missingHooks.filter { !Self.ignoredHooks.contains($0) }.map {
-                HookIssue(text: "\(HookInstaller.displayName($0)) isn't connected — live status is off. Connect it from the menu.",
+                HookIssue(text: "\(HookInstaller.displayName($0)) isn't connected: live status is off. Connect it from the menu.",
                           install: $0, pid: nil)
             } + sessions.filter(\.hookSilent).map {
-                HookIssue(text: "\(HookInstaller.displayName($0.assistant))\($0.project.isEmpty ? "" : " (\($0.project))") isn't reporting — "
+                HookIssue(text: "\(HookInstaller.displayName($0.assistant))\($0.project.isEmpty ? "" : " (\($0.project))") isn't reporting: "
                               + HookInstaller.silentFix($0.assistant), install: nil, pid: $0.pid)
             }
             for s in sessions where s.hookSilent { if let pid = s.pid { notifySilent(pid: pid, assistant: s.assistant, project: s.project) } }
             offlineReason = nil
             if file == nil && FileManager.default.fileExists(atPath: StatusPaths.state.path) {
-                offlineReason = "OFFLINE — can't read the status file"
+                offlineReason = "OFFLINE: can't read the status file"
             }
             if now - lastFocusCheck >= 1 {
                 lastFocusCheck = now
@@ -604,7 +604,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         // Who fights whom. Only Claudes that are working or thinking fight (with a short linger, so one that pauses
         // between tools doesn't walk in and out); idle ones and ones waiting for you step aside, to sit and sleep.
         //  1. Claudes fight Claudes (saber duels first).
-        //  2. Agents fight agents — their own or other Claudes' (saber duels first).
+        //  2. Agents fight agents, their own or other Claudes' (saber duels first).
         //  3. A leftover Claude and a leftover agent fight each other.
         //  4. Anyone still left over cheers the fighters on. The unarmed (Mantis, Professor X…) are bystanders.
         // A lone Claude with nobody to fight just practises its kata when working.
@@ -962,7 +962,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private func hoverDetail(_ s: SessionSnapshot?, _ a: AgentRecord?, now: Double) -> [String] {
         if let a {
             let who = Cast.of(a)
-            var lines = ["\(who.name) — \(a.label.isEmpty ? "Agent" : a.label)"]
+            var lines = ["\(who.name) · \(a.label.isEmpty ? "Agent" : a.label)"]
             var info = [a.activity ?? "Starting…", Self.duration(now - a.started)]
             if let n = a.tools { info.append("\(n) tool call\(n == 1 ? "" : "s")") }
             lines.append(info.joined(separator: "  ·  "))
@@ -973,12 +973,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             return lines
         }
         guard let s else { return [] }
-        var lines = [Cast(id: s.leader).name + (s.project.isEmpty ? "" : " — " + s.project) + (s.id == "home" ? "" : " · " + s.aiLabel)]
+        var lines = [Cast(id: s.leader).name + (s.project.isEmpty ? "" : " · " + s.project) + (s.id == "home" ? "" : " · " + s.aiLabel)]
         let held = Self.duration(now - since(s, now: now))
         switch s.mood {
-        case _ where s.stalled: lines.append("Not reporting — restart this Claude session")
-        case _ where s.hookSilent: lines.append("Not reporting — " + HookInstaller.silentFix(s.assistant))
-        case _ where !s.live: lines.append(s.mood == .working ? "Busy (no live status — no hooks)" : "No live status — no hooks")
+        case _ where s.stalled: lines.append("Not reporting: restart this Claude session")
+        case _ where s.hookSilent: lines.append("Not reporting: " + HookInstaller.silentFix(s.assistant))
+        case _ where !s.live: lines.append(s.mood == .working ? "Busy (no live status, no hooks)" : "No live status (no hooks)")
         case .working: lines.append("Working · \(held)")
         case .thinking: lines.append("Thinking · \(held)")
         case .waiting: lines.append("Needs you · \(held)")
@@ -1319,7 +1319,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private var lastLift: [String: CGFloat] = [:]
 
     /// How far up (0…1 of `flightHeight`) `a` is right now: taking off or landing on a trip along the line, or out on a
-    /// sortie (`sortieAir`) — never while sitting, waiting for you, cheering or on its way out.
+    /// sortie (`sortieAir`), never while sitting, waiting for you, cheering or on its way out.
     private func air(_ a: Actor, role: FightRole?, walking: Bool, t: Double) -> CGFloat {
         var fighting = false, cheering = false
         if let role { if case .cheer = role { cheering = true } else { fighting = true } }
@@ -1669,7 +1669,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         item.button?.image = statusIcon(mono: monoMenuBarIcon)
         item.button?.imageScaling = .scaleProportionallyDown
-        item.button?.toolTip = "Avengers: Clawd Wars — double-click to hide or show"
+        item.button?.toolTip = "Avengers: Clawd Wars (double-click to hide or show)"
         statusMenu.delegate = self
         item.button?.target = self
         item.button?.action = #selector(statusItemClicked)
@@ -1805,7 +1805,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         set { UserDefaults.standard.set(newValue, forKey: "showInDock") }
     }
 
-    /// Dock icon (and an app menu bar with the Crew menu) in both modes, or neither — then the
+    /// Dock icon (and an app menu bar with the Crew menu) in both modes, or neither, then the
     /// menu bar helmet is the way in.
     private func applyDockPolicy() {
         NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
@@ -1965,7 +1965,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 if let a = r.activity, s.mood != .idle { lines.append(("Now: " + a, .white)) }
                 let reply = s.mood == .idle ? r.reply.map { s.aiLabel.components(separatedBy: " · ")[0] + ": “" + $0 + "”" } : nil
                 if compact {
-                    // Compact Window: one line of the conversation — the reply once it's done, otherwise your prompt.
+                    // Compact Window: one line of the conversation, the reply once it's done, otherwise your prompt.
                     if let line = reply ?? r.prompt.map({ "You: “" + $0 + "”" }) { lines.append((line, soft)) }
                 } else {
                     if let p = r.prompt { lines.append(("You: “" + p + "”", soft)) }
@@ -1980,7 +1980,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             } else if s.hookSilent {
                 lines.append(("The Avengers: Clawd Wars hook isn't running in this session, so it can't report what it's doing.", soft))
                 let fix = HookInstaller.silentFix(s.assistant)
-                lines.append((fix.prefix(1).uppercased() + fix.dropFirst() + " — click this card to jump there.", dim))
+                lines.append((fix.prefix(1).uppercased() + fix.dropFirst() + ": click this card to jump there.", dim))
             } else if !s.live {
                 lines.append(("Started before the hooks were installed, so it can't report what it's doing.", soft))
                 lines.append((s.assistant == "claude" ? "Restart it for live status: /exit, then claude --continue"
@@ -2017,14 +2017,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             }
             lastAI = s.group
         }
-        let banner: String? = offlineReason.map { $0 + " — live status is off. Fix it from Settings in the menu." } ?? hookBanner
+        let banner: String? = offlineReason.map { $0 + ". Live status is off. Fix it from Settings in the menu." } ?? hookBanner
         // An AI that isn't connected can be waved off with the banner's ×; other problems can't.
         let dismissible = offlineReason == nil ? hookIssues.first?.install : nil
         w.cardsView.update(cards: cards, banner: banner, dismiss: dismissible.map { ai in { [weak self] in self?.ignoreHooks(for: ai) } })
         w.fitToContent()
     }
 
-    /// CLAWD_SHOT=/path.png: write the rendered scene (or the whole window) every 5 s — for checking
+    /// CLAWD_SHOT=/path.png: write the rendered scene (or the whole window) every 5 s, for checking
     /// visuals without screen-recording permission (from agent-view's AGENTVIEW_SHOT).
     private func writeShot(to path: String) {
         var rep: NSBitmapImageRep?
@@ -2063,7 +2063,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         for issue in hookIssues {
             let title: String
             if let ai = issue.install { title = "⚠︎ Connect \(HookInstaller.displayName(ai))…" }
-            else { title = "⚠︎ " + issue.text.replacingOccurrences(of: " — ", with: ": ") }
+            else { title = "⚠︎ " + issue.text }
             let item = NSMenuItem(title: title, action: #selector(fixHookIssue(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = issue.install ?? issue.pid.map { "jump:\($0)" }
@@ -2246,7 +2246,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             + Companion.allCases.map { (Location.home(of: $0), $0.name) }, by: \.0).mapValues { $0.map(\.1) }
         for l in Location.allCases {
             let who = owners[l]?.joined(separator: ", ") ?? ""
-            let item = NSMenuItem(title: who.isEmpty ? l.name : "\(l.name)  —  \(who)", action: #selector(setLocation(_:)), keyEquivalent: "")
+            let item = NSMenuItem(title: who.isEmpty ? l.name : "\(l.name)  ·  \(who)", action: #selector(setLocation(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = l.rawValue
             item.state = picked == l.rawValue ? .on : .off
@@ -2272,7 +2272,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let root = NSMenuItem(title: "Playground", action: nil, keyEquivalent: "")
         let pm = NSMenu()
         let picked = playground ?? []
-        pm.addItem(disabled: "Villains — they pair up in the order you add them")
+        pm.addItem(disabled: "Villains (they pair up in the order you add them)")
         func weaponLabel(_ l: Leader) -> String {
             let p = l.persona
             var label: String
@@ -2280,7 +2280,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             case .saber: label = "melee"
             case .blaster: label = "ranged"
             case .lightning: label = "magic"
-            case .none: label = p.callout.map { "unarmed — “\($0)”" } ?? "unarmed"
+            case .none: label = p.callout.map { "unarmed, “\($0)”" } ?? "unarmed"
             }
             switch p.motion {
             case .fly: label += ", flies"
@@ -2300,7 +2300,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             pm.addItem(item)
         }
         pm.addItem(.separator())
-        pm.addItem(disabled: "Agents — they join the first villain")
+        pm.addItem(disabled: "Agents (they join the first villain)")
         for c in Companion.allCases {
             let item = NSMenuItem(title: c.name, action: #selector(togglePlaygroundAgent(_:)), keyEquivalent: "")
             item.target = self

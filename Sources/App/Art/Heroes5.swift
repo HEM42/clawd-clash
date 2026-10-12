@@ -33,7 +33,7 @@ let heroes5: [Companion: Persona] = [
 
 // MARK: - War Machine
 
-/// War Machine: Iron Man's chunkier gunmetal cousin — a dark grey helmet round a silver faceplate with pale eye slits,
+/// War Machine: Iron Man's chunkier gunmetal cousin, a dark grey helmet round a silver faceplate with pale eye slits,
 /// a dim arc reactor, and the shoulder-mounted gatling over his right shoulder, which is what he shoots with. In
 /// flight he leans into it, boots and gauntlets firing. Signature: the gatling spins up, faster and faster, until the
 /// barrels glow hot, then winds down and smokes.
@@ -118,7 +118,7 @@ private func drawGatling(_ c: PixelCanvas, spin: Double, t: Double, lift: Int) {
 
 // MARK: - Wiccan
 
-/// Wiccan: the Young Avengers' sorcerer — black curly hair under a red headband whose tails flutter behind, a dark
+/// Wiccan: the Young Avengers' sorcerer, black curly hair under a red headband whose tails flutter behind, a dark
 /// suit with a red chevron and silver clasps, red boots and a long red cape. He flies, cape streaming, and his magic is
 /// blue lightning from the raised hand. Signature: he chants (mouth moving), both hands up, and glowing blue runes
 /// circle round him.
@@ -342,7 +342,7 @@ private func drawFlurry(_ c: PixelCanvas, angle: Double, trail: [Double], t: Dou
 // MARK: - Kate Bishop
 
 /// Kate Bishop: long straight black hair, a purple jacket over a black top, a purple quiver on her back and a
-/// purple recurve bow, an arrow nocked when she means business. Signature: a trick arrow — she draws one with a
+/// purple recurve bow, an arrow nocked when she means business. Signature: a trick arrow, she draws one with a
 /// glowing purple head, lets it fly up and away, and it bursts into purple and pink fireworks.
 private func drawKateBishop(_ c: PixelCanvas, _ p: Pose) {
     let purple = C(0x7A34B0), purpleDark = C(0x4E1C72), lavender = C(0xB890E0), top = C(0x1E1A24)
@@ -601,7 +601,7 @@ private func drawSpear(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Doub
 
 /// Shuri: braided hair up in a bun, a black outfit with a purple vibranium triangle pattern and a silver pendant,
 /// kimoyo beads on her wrist. To fight she wears a panther-head gauntlet that fires purple sonic blasts from its
-/// mouth. Signature: she lifts her wrist and the kimoyo beads project a purple hologram — a panther and a readout.
+/// mouth. Signature: she lifts her wrist and the kimoyo beads project a purple hologram, a panther and a readout.
 private func drawShuri(_ c: PixelCanvas, _ p: Pose) {
     let suit = C(0x22222C), purple = C(0x8A5AE0), silver = C(0xC8CCD4)
     let hair = C(0x1A1A20), hairLight = C(0x3A3440)

@@ -80,7 +80,7 @@ extension Scenes {
 
     // MARK: - S.H.I.E.L.D. Helicarrier
 
-    /// S.H.I.E.L.D. Helicarrier — out on the flight deck high above the clouds: a bright sky over a sea of cloud tops,
+    /// S.H.I.E.L.D. Helicarrier, out on the flight deck high above the clouds: a bright sky over a sea of cloud tops,
     /// a lift rotor turning in its housing at the deck's edge, a Quinjet parked on its gear and the grey bridge
     /// tower with its slanted windows, radar mast and the S.H.I.E.L.D. eagle; the deck is painted with runway lines.
     static func helicarrier(_ c: PixelCanvas, _ g: Int) {
@@ -237,7 +237,7 @@ extension Scenes {
 
     // MARK: - Xavier's School
 
-    /// Xavier's School for Gifted Youngsters — the mansion in Westchester on a fine afternoon: the grey stone house
+    /// Xavier's School for Gifted Youngsters, the mansion in Westchester on a fine afternoon: the grey stone house
     /// with its slate gables, chimneys and copper-domed tower, a fountain before the door, hedges and old oaks on the
     /// lawn, and the wrought-iron gates with the X in their crest.
     static func xMansion(_ c: PixelCanvas, _ g: Int) {
@@ -390,7 +390,7 @@ extension Scenes {
 
     // MARK: - Hell's Kitchen
 
-    /// Hell's Kitchen — a rooftop at night in the rain: the city's glow turning the low sky red, the Empire State far
+    /// Hell's Kitchen, a rooftop at night in the rain: the city's glow turning the low sky red, the Empire State far
     /// off and a church steeple among the tenements, a brick wall with zigzag fire escapes, a hotel's upright neon
     /// sign and a bar's sign across the street, and a wooden water tower on its stilts.
     static func hellsKitchen(_ c: PixelCanvas, _ g: Int) {
@@ -549,7 +549,7 @@ extension Scenes {
 
     // MARK: - Vormir
 
-    /// Vormir — the summit where the Soul Stone waits: a deep violet night with a huge ringed planet hanging overhead,
+    /// Vormir, the summit where the Soul Stone waits: a deep violet night with a huge ringed planet hanging overhead,
     /// black rock spires standing out of a sea of cloud, and the two carved monoliths at the cliff's edge with the
     /// altar stone between them.
     static func vormir(_ c: PixelCanvas, _ g: Int) {
@@ -673,7 +673,7 @@ extension Scenes {
 
     // MARK: - Quantum Realm
 
-    /// The Quantum Realm — the strange world beneath the subatomic: a violet void ringed with fractal halos,
+    /// The Quantum Realm, the strange world beneath the subatomic: a violet void ringed with fractal halos,
     /// iridescent bubbles drifting in clusters, and bulbous organic towers with glowing tips growing from a dark,
     /// dotted floor.
     static func quantumRealm(_ c: PixelCanvas, _ g: Int) {
@@ -811,7 +811,7 @@ extension Scenes {
 
     // MARK: - Latveria
 
-    /// Latveria — Castle Doom under a storm: brooding green-grey cloud, dark mountains, the castle's walls and pointed
+    /// Latveria, Castle Doom under a storm: brooding green-grey cloud, dark mountains, the castle's walls and pointed
     /// towers on a black crag hung with green banners bearing Doom's mask, and the half-timbered village huddled
     /// below with its church and lit windows, cobbles underfoot.
     static func latveria(_ c: PixelCanvas, _ g: Int) {
@@ -970,7 +970,7 @@ extension Scenes {
 
     // MARK: - Hydra Base
 
-    /// A Hydra base at night — a grim concrete bunker dug into a pine-dark mountainside: the steel blast door under red
+    /// A Hydra base at night, a grim concrete bunker dug into a pine-dark mountainside: the steel blast door under red
     /// lamps and the painted Hydra skull, the red skull banners hanging either side, searchlight towers at the
     /// corners, a Hydra tank, crates and fuel drums on the oil-stained apron.
     static func hydraBase(_ c: PixelCanvas, _ g: Int) {
@@ -1131,8 +1131,8 @@ extension Scenes {
 
     // MARK: - Daily Bugle
 
-    /// The Daily Bugle — up on the Bugle's roof on a bright day: the paper's big DAILY BUGLE letters on their steel
-    /// frame, a wooden water tower and the stair hut, pigeons along the parapet, and Midtown behind — the Empire State
+    /// The Daily Bugle, up on the Bugle's roof on a bright day: the paper's big DAILY BUGLE letters on their steel
+    /// frame, a wooden water tower and the stair hut, pigeons along the parapet, and Midtown behind, the Empire State
     /// and the Chrysler Building over rows of towers with water tanks on their roofs.
     static func dailyBugle(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g)

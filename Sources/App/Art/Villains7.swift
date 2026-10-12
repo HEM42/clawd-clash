@@ -129,7 +129,7 @@ private func baldDome(_ c: PixelCanvas, _ skin: Px, _ shine: Px) {
 
 // MARK: - Brood
 
-/// Brood: Clawd as an insectoid alien queen-spawn — a black carapace with a long crest swept back off the skull, slanted
+/// Brood: Clawd as an insectoid alien queen-spawn, a black carapace with a long crest swept back off the skull, slanted
 /// acid-green eyes, bony mandibles, translucent wings folded up on its back and a curling stinger tail; fights with
 /// its claws. Signature: it rears and hisses, jaws gaping wide, wings buzzing, drool dripping from the fangs.
 private func drawBrood(_ c: PixelCanvas, _ p: Pose) {
@@ -191,7 +191,7 @@ private func drawBrood(_ c: PixelCanvas, _ p: Pose) {
     for x in stride(from: 25, to: 36, by: 2) { c.px(x, 32, bone); if gape > 0 { c.px(x + 1, 32 + gape, bone) } }
     c.pattern(35, 30, ["BB..", ".BBB", "..BB", "...B"], ["B": bone])
     if gape > 0 { c.pattern(35, 33 + gape, ["..BB", "...B"], ["B": bone]) }
-    // Signature: the hiss — drool and a rattle of sound in front of it.
+    // Signature: the hiss, drool and a rattle of sound in front of it.
     if let s = p.signature, hiss > 0.3 {
         for k in 0..<2 {
             let f = frac(s * 2.5 + Double(k) * 0.5)
@@ -329,7 +329,7 @@ private func rock(_ c: PixelCanvas, _ x: Int, _ y: Int, _ kind: Int, _ glow: Px)
 /// What the Absorbing Man's skin is made of right now.
 private enum Matter { case flesh, stone, steel }
 
-/// The Absorbing Man: Crusher Creel — a bald, heavy-browed, stubbly Clawd in a black-and-white striped prison shirt
+/// The Absorbing Man: Crusher Creel, a bald, heavy-browed, stubbly Clawd in a black-and-white striped prison shirt
 /// and grey trousers, the wrecking ball still chained to his wrist; he swings it as his weapon and drags it about.
 /// Signature: his skin turns to stone from the head down, then to steel (with a gleam), then back to flesh.
 private func drawAbsorbingMan(_ c: PixelCanvas, _ p: Pose) {
@@ -413,7 +413,7 @@ private func absorbingMan(_ c: PixelCanvas, _ p: Pose, _ m: Matter) {
 
 // MARK: - Crimson Dynamo
 
-/// Crimson Dynamo: a hulking suit of red Soviet battle armour — a great domed helmet with a T-visor and glowing yellow
+/// Crimson Dynamo: a hulking suit of red Soviet battle armour, a great domed helmet with a T-visor and glowing yellow
 /// eye slits, big rounded pauldrons, a slatted steel chest grille, steel fists and boots; fires repulsor blasts from
 /// an outstretched palm. Signature: the armour overheats and vents jets of steam from its shoulders and back.
 private func drawCrimsonDynamo(_ c: PixelCanvas, _ p: Pose) {
@@ -546,8 +546,8 @@ private func drawWrecker(_ c: PixelCanvas, _ p: Pose) {
 
 /// Baron Mordo: a sorcerer Clawd with black hair in a sharp widow's peak, pointed sideburns and a goatee, the
 /// towering dark green collar behind his head, and green robes to the floor trimmed in gold; casts green magic.
-/// Signature: he raises his hand and conjures a dark spell circle in the air before him — rings, a hexagram and
-/// runes turning in green fire — that flares and fades.
+/// Signature: he raises his hand and conjures a dark spell circle in the air before him, rings, a hexagram and
+/// runes turning in green fire, that flares and fades.
 private func drawBaronMordo(_ c: PixelCanvas, _ p: Pose) {
     let robe = C(0x2E6A34), robeDark = C(0x1C4A22), collar = C(0x14381A), gold = C(0xE8B530), goldDark = C(0xA8801E)
     let skin = C(0xE0B890), skinShade = C(0xC0987A), hair = C(0x1E1A1A), magic = C(0x3AE05A), magicCore = C(0xC8FFC8)
@@ -624,7 +624,7 @@ private func drawBaronMordo(_ c: PixelCanvas, _ p: Pose) {
 
 /// The Enchantress: Amora, a Clawd with long golden hair flowing down her back, a green-and-gold horned headdress,
 /// green-shadowed eyes and red lips, in a green gown with a gold belt; hovers and casts green magic. Signature: she
-/// lifts her hand to her lips and blows a kiss — a pink heart floats off towards you.
+/// lifts her hand to her lips and blows a kiss, a pink heart floats off towards you.
 private func drawEnchantress(_ c: PixelCanvas, _ p: Pose) {
     let green = C(0x2AA04A), greenDark = C(0x1A7034), gold = C(0xF0C040), goldDark = C(0xB8901E)
     let hair = C(0xF4D050), hairDark = C(0xC8A02A), skin = C(0xF4D8C4), skinShade = C(0xD8B8A0)
@@ -707,10 +707,10 @@ private func drawEnchantress(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Arnim Zola
 
-/// Arnim Zola: a maroon robot Clawd with no head of his own — a boxy ESP unit with an antenna and green sensor lights
+/// Arnim Zola: a maroon robot Clawd with no head of his own, a boxy ESP unit with an antenna and green sensor lights
 /// sits on his shoulders, and his bespectacled face looks out from a TV screen set in his chest; green collar, gloves
-/// and boots; blasts green energy from his palm. Signature: the screen glitches — static, rolling bars, his face
-/// jumping about — before it settles.
+/// and boots; blasts green energy from his palm. Signature: the screen glitches, static, rolling bars, his face
+/// jumping about, before it settles.
 private func drawArnimZola(_ c: PixelCanvas, _ p: Pose) {
     let body = C(0x9A2E3E), dark = C(0x6A1A28), light = C(0xC8505A), green = C(0x5A9A3A), greenDark = C(0x3A6A24)
     let frame = C(0x2A2A33), screen = C(0x9ABCA0), face = C(0xE0D0A8), faceShade = C(0xB8A880), lens = C(0x8AFF6A)

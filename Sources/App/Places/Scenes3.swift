@@ -376,7 +376,7 @@ extension Scenes {
                 lit: C(0xA8B8D2), shade: C(0x8696B6), snowLit: C(0xF8FAFE), snowShade: C(0xCCD8EA), snow: 0.6)
     }
 
-    /// Full screen: more of the monastery climbing the slope behind — a pagoda tower and outbuildings.
+    /// Full screen: more of the monastery climbing the slope behind, a pagoda tower and outbuildings.
     static func kamarTajUpper(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g)
         let y = g - 40 * s

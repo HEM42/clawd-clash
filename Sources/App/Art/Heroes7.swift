@@ -197,9 +197,9 @@ private func unpremultiplied(_ s: PixelCanvas, _ i: Int) -> Px {
 
 // MARK: - Bishop
 
-/// Bishop: the 90s look — dark brown skin, long black hair swept back to his shoulders, the red "M" tattooed over his
+/// Bishop: the 90s look, dark brown skin, long black hair swept back to his shoulders, the red "M" tattooed over his
 /// right eye, a navy vest with gold straps and a pouch belt, and a big plasma rifle with a glowing orange cell.
-/// Signature: he soaks up energy — orange motes stream in from all round him into his chest, which glows, until his
+/// Signature: he soaks up energy, orange motes stream in from all round him into his chest, which glows, until his
 /// eyes burn with it.
 private func drawBishop(_ c: PixelCanvas, _ p: Pose) {
     let brown = C(0x7A4A2E), brownShade = C(0x5A3420), hair = C(0x16161B), hairHi = C(0x3A3A46)
@@ -405,7 +405,7 @@ private func drawHavok(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Emma Frost
 
-/// Emma Frost: the White Queen — a big blonde bouffant swept to one side, a white corset with the X-belt, white
+/// Emma Frost: the White Queen, a big blonde bouffant swept to one side, a white corset with the X-belt, white
 /// gloves and a white cape. Her telepathy is a cold white beam. Signature: she turns to diamond, the change sweeping
 /// down her from head to toe (hair, skin and costume all faceted crystal, glinting), holds it, and sweeps back.
 private func drawEmmaFrost(_ c: PixelCanvas, _ p: Pose) {
@@ -492,7 +492,7 @@ private func drawEmma(_ c: PixelCanvas, _ p: Pose, diamond: Bool) {
 
 // MARK: - Banshee
 
-/// Banshee: Sean Cassidy — swept-back red hair and a bushy moustache, the green suit with the yellow gloves, boots
+/// Banshee: Sean Cassidy, swept-back red hair and a bushy moustache, the green suit with the yellow gloves, boots
 /// and the yellow wing-flaps from wrist to hip. His sonic scream pours from his mouth; flying, he spreads his arms and
 /// glides on the flaps. Signature: he throws his arms out and screams, rings of sound rolling out ahead of him.
 private func drawBanshee(_ c: PixelCanvas, _ p: Pose) {
@@ -563,7 +563,7 @@ private func drawBanshee(_ c: PixelCanvas, _ p: Pose) {
 
 private let angelShoulder = (x: 37.5, y: 29.5)
 
-/// Angel: Warren Worthington III in the classic blue-and-white — blond hair, a blue suit with the white wing-shaped
+/// Angel: Warren Worthington III in the classic blue-and-white, blond hair, a blue suit with the white wing-shaped
 /// yoke and red belt, and the great white feathered wings, folded up behind his shoulders. He slashes with his right
 /// wing, and flies with both beating. Signature: he spreads his wings to their full span, beats them twice, and a few
 /// loose feathers drift down.
@@ -649,7 +649,7 @@ private func drawWingBlade(_ c: PixelCanvas, angle: Double, alpha: Double = 1) {
 // MARK: - Domino
 
 /// Domino: chalk-white skin with the black patch round her left eye, a sleek black bob, a black tactical suit and a
-/// pistol. Signature: luck — she flips a gold coin off her thumb, it spins up high and drops back into her hand, and
+/// pistol. Signature: luck, she flips a gold coin off her thumb, it spins up high and drops back into her hand, and
 /// she winks.
 private func drawDomino(_ c: PixelCanvas, _ p: Pose) {
     let chalk = C(0xE6E6EC), chalkShade = C(0xB8B8C4), suit = C(0x1E1E26), suitLight = C(0x4A4A58), hair = C(0x16161B)
@@ -702,8 +702,8 @@ private func drawDomino(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - X-23
 
-/// X-23: Laura Kinney in her dark X-Force suit — long straight black hair parted in the middle, green eyes, a black
-/// suit with a grey belt — two claws from each fist and one from her foot. Signature: SNIKT — both fists come up and
+/// X-23: Laura Kinney in her dark X-Force suit, long straight black hair parted in the middle, green eyes, a black
+/// suit with a grey belt (two claws from each fist and one from her foot. Signature: SNIKT) both fists come up and
 /// the claws shoot out, the foot claw too, a glint running up the blades.
 private func drawX23(_ c: PixelCanvas, _ p: Pose) {
     let suit = C(0x26262E), suitDark = C(0x16161B), trim = C(0x5A5A6E), hair = C(0x1A1A22), hairHi = C(0x3A3A4C)
@@ -776,8 +776,8 @@ private func drawTwinClaws(_ c: PixelCanvas, at h: (Double, Double), angle: Doub
 // MARK: - Miles Morales
 
 /// Miles Morales: the black suit with the red web lines over the mask and shoulders, white eye lenses, the big red
-/// spider on his chest and red soles. Travelling, he swings on a web line. Signature: he goes invisible — the
-/// camouflage fades him almost out, shimmering — then snaps back with his venom blast crackling yellow round his fists.
+/// spider on his chest and red soles. Travelling, he swings on a web line. Signature: he goes invisible, the
+/// camouflage fades him almost out, shimmering, then snaps back with his venom blast crackling yellow round his fists.
 private func drawMilesMorales(_ c: PixelCanvas, _ p: Pose) {
     guard let s = p.signature else { drawMiles(c, p, venom: 0); return }
     let fade = s < 0.62 ? habitArc(s / 0.62, hold: 0.45) : 0

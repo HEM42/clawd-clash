@@ -149,9 +149,9 @@ private func drawFFSuit(_ c: PixelCanvas) {
 
 // MARK: - Fantastic Four
 
-/// Human Torch: Clawd as a living flame — red-orange body with a white-hot core, flames streaming off his head and back,
+/// Human Torch: Clawd as a living flame, red-orange body with a white-hot core, flames streaming off his head and back,
 /// a fireball in his hand; in flight his legs become a comet's tail. Signature: he flames off (Johnny in the blue FF suit,
-/// blond hair) and bursts back alight, bigger than before — "Flame on!".
+/// blond hair) and bursts back alight, bigger than before, "Flame on!".
 private func drawHumanTorch(_ c: PixelCanvas, _ p: Pose) {
     var flame = 1.0, burst = 0.0
     if let s = p.signature {
@@ -222,7 +222,7 @@ private func drawTorchAflame(_ c: PixelCanvas, _ p: Pose, size: Double) {
 }
 
 /// The Thing: a bigger Clawd built of orange rock plates, heavy brow over small blue eyes, a grim crack of a mouth,
-/// blue shorts, fists like boulders. Signature: he cracks his rocky knuckles, one fist in the other — pop, pop.
+/// blue shorts, fists like boulders. Signature: he cracks his rocky knuckles, one fist in the other, pop, pop.
 private func drawThing(_ c: PixelCanvas, _ p: Pose) {
     let rock = C(0xE0803A), dark = C(0x9A4A1C), light = C(0xF6AA62), shorts = C(0x2A4FB0)
     // Thick stubby legs.
@@ -393,7 +393,7 @@ private func drawSue(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - The cosmic
 
 /// Silver Surfer: a chrome Clawd with a smooth bald dome, always standing on his gleaming surfboard (never sits);
-/// in flight the board trails cosmic sparkle. Power cosmic streams from his raised hand. Signature: a kickflip — he
+/// in flight the board trails cosmic sparkle. Power cosmic streams from his raised hand. Signature: a kickflip, he
 /// hops up, the board flips over twice under him, and he lands back on it.
 private func drawSilverSurfer(_ c: PixelCanvas, _ p: Pose) {
     let chrome = C(0xC8D2E0), shade = C(0x7E8AA2), shine = C(0xF8FBFF), line = C(0x98A4B8)
@@ -447,7 +447,7 @@ private func drawSilverSurfer(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - The street
 
 /// Daredevil: a red Clawd in the horned cowl, dark lenses, the double-D on his chest; he fights with a red billy club,
-/// holstered on his thigh between fights. Signature: his radar sense — red rings pulse out from his head.
+/// holstered on his thigh between fights. Signature: his radar sense, red rings pulse out from his head.
 private func drawDaredevil(_ c: PixelCanvas, _ p: Pose) {
     let red = C(0xC0141E), shade = C(0x84101A), dark = C(0x5A0A10)
     drawLegs(c, Look(leg: red), step: p.step)
@@ -579,8 +579,8 @@ private func drawTenRing(_ c: PixelCanvas, _ x: Double, _ y: Double, glow: Px, m
 }
 
 /// Ms. Marvel: Clawd with Kamala's dark hair, in her navy tunic with the gold lightning bolt and the red scarf, red
-/// boots; she punches with a fist that embiggens on the big swings. Signature: she raises her fist and embiggens it —
-/// huge — then shrinks it back.
+/// boots; she punches with a fist that embiggens on the big swings. Signature: she raises her fist and embiggens it,
+/// huge, then shrinks it back.
 private func drawMsMarvel(_ c: PixelCanvas, _ p: Pose) {
     let navy = C(0x24306E), navyShade = C(0x18204A), red = C(0xC8202A), gold = C(0xF2C230)
     let skin = clawdOrange, dark = clawdShade, light = C(0xEE9A7A)
@@ -658,7 +658,7 @@ private func drawMoonKnight(_ c: PixelCanvas, _ p: Pose) {
 }
 
 /// Ghost Rider: a flaming skull on a black leather jacket with studs and spiked shoulders; he lashes a burning chain.
-/// Signature: hellfire — the skull's flames roar up twice as high, the eye sockets blazing, embers flying.
+/// Signature: hellfire, the skull's flames roar up twice as high, the eye sockets blazing, embers flying.
 private func drawGhostRider(_ c: PixelCanvas, _ p: Pose) {
     let leather = C(0x1E1E24), leatherShade = C(0x101014), bone = C(0xEDE6D2), boneShade = C(0xBEB49A)
     let stud = C(0xB8BCC6), socket = C(0x16100C)

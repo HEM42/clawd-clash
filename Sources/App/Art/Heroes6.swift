@@ -100,7 +100,7 @@ private func drawWong(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Hercules
 
-/// Hercules: the comic-book Prince of Power — Clawd with a mop of black curls and a big curly beard, bare-chested over
+/// Hercules: the comic-book Prince of Power, Clawd with a mop of black curls and a big curly beard, bare-chested over
 /// a gold belt and the blue-and-gold Greek war skirt, gold armbands and laced sandals. His golden mace rests on his
 /// shoulder and swings from the hand. Signature: the mace goes down and he flexes both arms, biceps pumping, with a
 /// twinkle.
@@ -207,7 +207,7 @@ private func drawFlexArm(_ c: PixelCanvas, left: Bool, pump: Int, skin: Px, shad
 
 /// Sentry: Clawd with neat swept blond hair in the golden suit with the blue "S" on the chest, blue gloves, boots and
 /// belt and a long blue cape; he fights with his fists and flies leaning into it, cape streaming. Signature: a golden
-/// glow flares round him, rays and all, then for a moment it all goes dark — the Void, eyes burning — and the light
+/// glow flares round him, rays and all, then for a moment it all goes dark (the Void, eyes burning) and the light
 /// comes back.
 private func drawSentry(_ c: PixelCanvas, _ p: Pose) {
     let s = p.signature ?? -1
@@ -280,7 +280,7 @@ private func drawSentryBody(_ c: PixelCanvas, _ p: Pose) {
 /// Cosmo the Spacedog: a golden retriever in a red cosmonaut suit (Clawd's block of a body on Clawd's four legs, with
 /// golden paws), her head out front under the white helmet with "CCCP" in red, a floppy ear and a black nose, and a
 /// fluffy tail behind. Her telekinesis glows lavender from her head. Signature: tail going like mad, tongue out,
-/// and up float a heart and a sparkle — good dog.
+/// and up float a heart and a sparkle, good dog.
 private func drawCosmo(_ c: PixelCanvas, _ p: Pose) {
     let fur = C(0xD8A048), furDark = C(0xA8742A), furLight = C(0xF0CC80), suit = C(0xC8282A), suitDark = C(0x8A1418)
     let helm = C(0xE2E4EA), helmDark = C(0xA8ACB8), letters = C(0xC8202A)
@@ -599,8 +599,8 @@ private func drawNovaBody(_ c: PixelCanvas, _ p: Pose) {
 
 /// Kitty Pryde: Clawd with a brown ponytail and bangs in the blue-and-yellow X-Men suit (yellow shoulders, gloves,
 /// boots and belt with the red X), with Lockheed, her little purple dragon, perched on her head. She fights with her
-/// fists, and phases see-through when she's hit, so it goes through her. Signature: she phases right out — faded,
-/// shimmering — while Lockheed stays put, solid.
+/// fists, and phases see-through when she's hit, so it goes through her. Signature: she phases right out, faded,
+/// shimmering, while Lockheed stays put, solid.
 private func drawKittyPryde(_ c: PixelCanvas, _ p: Pose) {
     let phase = max(p.signature.map { habitArc($0, hold: 0.5) } ?? 0, p.hit ? 0.7 : 0)
     if phase > 0.05 {

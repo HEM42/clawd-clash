@@ -38,7 +38,7 @@ let heroes1: [Companion: Persona] = [
 
 // MARK: - Iron Man
 
-/// Iron Man: Clawd in the red-and-gold armour — a red helmet round a gold faceplate with glowing eye slits, the arc
+/// Iron Man: Clawd in the red-and-gold armour, a red helmet round a gold faceplate with glowing eye slits, the arc
 /// reactor on his chest and gold gauntlets; the right palm is the repulsor. In flight he leans into it, legs together,
 /// boots and palms burning. Signature: the faceplate flips up to show Tony (goatee and all), he blinks, and it snaps
 /// back down.
@@ -826,7 +826,7 @@ private func drawHex(_ c: PixelCanvas, at: (x: Double, y: Double), t: Double, r:
 
 private let visionGem = (x: 29.5, y: 29.0)
 
-/// Vision: the comic-book synthezoid — a red Clawd face with dark grooves, the yellow Mind Stone set in his brow,
+/// Vision: the comic-book synthezoid, a red Clawd face with dark grooves, the yellow Mind Stone set in his brow,
 /// green suit with a yellow diamond and belt, a tall-collared yellow cape. His beam fires from the gem in his brow. In
 /// flight he leans in, cape streaming. Signature: he phases, fading half see-through while an after-image drifts off behind him.
 private func drawVision(_ c: PixelCanvas, _ p: Pose) {
@@ -882,7 +882,7 @@ private func drawVisionBody(_ c: PixelCanvas, _ p: Pose) {
 
 /// Captain Marvel: Clawd with long blonde hair, the blue-and-red suit with the gold eight-pointed star on her chest,
 /// red gloves and boots; photon blasts from her fist. In flight she punches forward, fists glowing, legs trailing.
-/// Signature: she goes binary — a fiery gold aura flares round her, her hair lifts and her eyes blaze.
+/// Signature: she goes binary, a fiery gold aura flares round her, her hair lifts and her eyes blaze.
 private func drawCaptainMarvel(_ c: PixelCanvas, _ p: Pose) {
     let binary = p.signature.map { habitArc($0, hold: 0.5) } ?? 0
     if binary > 0.05 {

@@ -136,7 +136,7 @@ enum HookInstaller {
     // doesn't say (or uses that AI's own event names, which the hook translates).
 
     struct OtherAI {
-        let name: String            // "codex" / "qwen" / "gemini" / "copilot" — passed to the hook as --assistant
+        let name: String            // "codex" / "qwen" / "gemini" / "copilot", passed to the hook as --assistant
         let dir: URL                // ~/.codex, ~/.qwen, ~/.gemini, ~/.copilot
         let file: URL               // the file our hooks go in
         let events: [String]

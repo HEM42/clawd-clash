@@ -113,7 +113,7 @@ private func twinkle(_ c: PixelCanvas, _ x: Int, _ y: Int, _ col: Px) {
 // MARK: - Wolverine
 
 /// Wolverine: yellow and blue, the cowl's two black-edged fins sweeping up off his head, blue gloves, yellow legs in
-/// tall blue boots. Fights with his claws, which stay retracted when he's not using them. Signature: SNIKT — he
+/// tall blue boots. Fights with his claws, which stay retracted when he's not using them. Signature: SNIKT, he
 /// raises a fist and the three claws shoot out, glinting, then slide back in.
 private func drawWolverine(_ c: PixelCanvas, _ p: Pose) {
     let yellow = C(0xF2C230), yShade = C(0xC89A1A), blue = C(0x2A4FB0), blueDark = C(0x1C3478), black = C(0x16161B)
@@ -378,7 +378,7 @@ private func drawProfessorX(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Beast
 
 /// Beast: big, blue and furry, a mop of dark hair, fangs, black trunks, huge hands and feet. Fights with his fists.
-/// Signature: the scholar — tiny round glasses on, a book open in his paws, a page turned.
+/// Signature: the scholar, tiny round glasses on, a book open in his paws, a page turned.
 private func drawBeast(_ c: PixelCanvas, _ p: Pose) {
     let fur = C(0x3A4ABA), furShade = C(0x2A3488), furLight = C(0x5A6AD8), hair = C(0x1A1E4A), trunks = C(0x1E1E26)
     if seatedPose {
@@ -442,7 +442,7 @@ private func drawBeast(_ c: PixelCanvas, _ p: Pose) {
 
 /// Nightcrawler: indigo skin, pointed ears, glowing yellow eyes and a fanged grin; red and black suit with white
 /// gloves and a spade-tipped tail that never keeps still. He fences with a rapier, swashbuckler that he is.
-/// Signature: BAMF — he vanishes in a puff of brimstone smoke and pops back out of another.
+/// Signature: BAMF, he vanishes in a puff of brimstone smoke and pops back out of another.
 private func drawNightcrawler(_ c: PixelCanvas, _ p: Pose) {
     let indigo = C(0x3A3F8A), indigoShade = C(0x2A2E6A), hair = C(0x16163A), red = C(0xB8202A), black = C(0x1A1A22)
     let eye = C(0xF5E04A)
@@ -565,7 +565,7 @@ private func drawGambit(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Rogue
 
 /// Rogue: big auburn hair with the white streak, green and yellow suit, brown bomber jacket, yellow gloves and boots.
-/// Flies fist-first, and fights with her fists. Signature: she peels off a glove — careful, that touch is dangerous.
+/// Flies fist-first, and fights with her fists. Signature: she peels off a glove, careful, that touch is dangerous.
 private func drawRogue(_ c: PixelCanvas, _ p: Pose) {
     let hairC = C(0x7A3A1E), hairDark = C(0x5A2814), streak = C(0xF4F4F4), green = C(0x2E8A3A), yellow = C(0xF0C830)
     let jacket = C(0x7A4A28), jacketShade = C(0x5A3418)
@@ -616,7 +616,7 @@ private func drawRogue(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Iceman
 
 /// Iceman: a Clawd made of ice, pale glowing eyes, frost highlights and a crown of icicles. Flies on an ice slide
-/// that grows under his feet; fires frost from his hand. Signature: he ices over even harder — spikes of ice bristle
+/// that grows under his feet; fires frost from his hand. Signature: he ices over even harder, spikes of ice bristle
 /// up across his head and shoulders, sparkle, and melt away.
 private func drawIceman(_ c: PixelCanvas, _ p: Pose) {
     let ice = C(0xA8E0F8), iceShade = C(0x6AB8E0), frost = C(0xE8FAFF), deep = C(0x3A88B8)
@@ -669,7 +669,7 @@ private func drawIceman(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Colossus
 
 /// Colossus: a big steel Clawd, rivet-seamed, short black hair, red suit with a yellow trim and belt, red legs and
-/// steel feet. Armoured — shots ring off him — and fights with his fists. Signature: he armours up, flesh turning to
+/// steel feet. Armoured (shots ring off him) and fights with his fists. Signature: he armours up, flesh turning to
 /// steel from the head down, with a gleam to finish.
 private func drawColossus(_ c: PixelCanvas, _ p: Pose) {
     let steel = C(0xB8BEC8), steelShade = C(0x8A909C), seam = C(0x6A707C), red = C(0xC8202A), yellow = C(0xF0C030)

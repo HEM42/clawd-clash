@@ -1,6 +1,6 @@
 import Foundation
 
-// Heroes: mystics, cosmic and the funny ones. Clawd in costume again — except Jeff and Lockjaw, who are a shark and
+// Heroes: mystics, cosmic and the funny ones. Clawd in costume again, except Jeff and Lockjaw, who are a shark and
 // a dog (blocky ones, at least).
 
 let heroes9: [Companion: Persona] = [
@@ -29,9 +29,9 @@ let heroes9: [Companion: Persona] = [
 
 // MARK: - Monica Rambeau
 
-/// Monica Rambeau: the classic Captain Marvel/Photon look — a big round afro, a black bodysuit with the white
+/// Monica Rambeau: the classic Captain Marvel/Photon look, a big round afro, a black bodysuit with the white
 /// starburst across the chest and white gloves; light blasts from her fist. In flight she punches forward, legs
-/// trailing light. Signature: she turns into light — a glow swells round her and she goes bright white-blue, then back.
+/// trailing light. Signature: she turns into light, a glow swells round her and she goes bright white-blue, then back.
 private func drawMonicaRambeau(_ c: PixelCanvas, _ p: Pose) {
     let light = p.signature.map { habitArc($0, hold: 0.45) } ?? 0
     let core = C(0xF4FAFF), glow = C(0x8AC8FF)
@@ -102,7 +102,7 @@ private func drawMonicaRambeau(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Clea
 
-/// Clea: the Dark Dimension's sorceress — long white hair, a purple bodysuit with a magenta V and a gold belt; she
+/// Clea: the Dark Dimension's sorceress, long white hair, a purple bodysuit with a magenta V and a gold belt; she
 /// hovers on a faint purple shimmer and purple wisps curl round her casting hand. Signature: her hair flares up into
 /// purple-white Dark Dimension flame and her eyes glow.
 private func drawClea(_ c: PixelCanvas, _ p: Pose) {
@@ -174,7 +174,7 @@ private func drawClea(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Doctor Voodoo
 
-/// Doctor Voodoo: Jericho Drumm as Sorcerer Supreme — skull face paint (white sockets, a painted grin), a purple suit
+/// Doctor Voodoo: Jericho Drumm as Sorcerer Supreme, skull face paint (white sockets, a painted grin), a purple suit
 /// with gold trim, a tall gold-edged collar and purple cape, and a gold amulet with a green eye at his throat; green
 /// magic. Signature: the spirit of his brother Daniel rises beside him, a green ghost with the same skull face, while
 /// Jericho's eyes and amulet glow green.
@@ -251,7 +251,7 @@ private func drawDaniel(_ c: PixelCanvas, _ p: Pose, k: Double) {
 
 /// Howard the Duck: a white duck under a blue fedora, a big orange bill with a cigar in the corner, a blue suit jacket
 /// over a white shirt and red tie, orange webbed feet and a little pistol; he always looks fed up. Signature: he
-/// takes a long puff — the cigar glows, smoke rises — and grumbles a grawlix.
+/// takes a long puff (the cigar glows, smoke rises) and grumbles a grawlix.
 private func drawHowardTheDuck(_ c: PixelCanvas, _ p: Pose) {
     let feather = C(0xF2EEE6), featherShade = C(0xC4BCB0), bill = C(0xF0A030), billDark = C(0xC07418)
     let blue = C(0x2A4A9A), blueDark = C(0x1A2E6A), red = C(0xC8202A), shirt = C(0xE0E4EC)
@@ -448,7 +448,7 @@ private func drawTippyToe(_ c: PixelCanvas, s: Double, t: Double) {
 
 // MARK: - Jeff the Land Shark
 
-/// Jeff the Land Shark: a tiny, very good shark — blue-grey on top, white belly, a dorsal fin, a forked tail and four
+/// Jeff the Land Shark: a tiny, very good shark, blue-grey on top, white belly, a dorsal fin, a forked tail and four
 /// stubby legs, with a big toothy grin. He fights by biting: the jaw drops open and he lunges. Signature: chomp chomp,
 /// then his eyes go happy and a little heart floats up.
 private func drawJeffTheLandShark(_ c: PixelCanvas, _ p: Pose) {
@@ -521,7 +521,7 @@ private func drawJeffTheLandShark(_ c: PixelCanvas, _ p: Pose) {
 
 /// Throg, the Frog of Thunder: a green frog-Clawd with big gold frog eyes and a wide mouth, under a winged silver
 /// helmet, in a dark tunic with a gold belt and a red cape; he fights with Frogjolnir, a tiny hammer. Signature: a fly
-/// buzzes past, his tongue snaps it up, gulp — then he raises the hammer and lightning strikes it.
+/// buzzes past, his tongue snaps it up, gulp, then he raises the hammer and lightning strikes it.
 private func drawThrog(_ c: PixelCanvas, _ p: Pose) {
     let green = C(0x5AA83A), greenDark = C(0x3A7A26), cape = C(0xC8202A), capeDark = C(0x7A1018)
     let silver = C(0xC8CCD4), silverDark = C(0x8A8F9C), tunic = C(0x2A3050), gold = C(0xE8C02A)
@@ -627,7 +627,7 @@ private func drawFrogjolnir(_ c: PixelCanvas, at: (x: Double, y: Double), angle:
 
 // MARK: - Lockjaw
 
-/// Lockjaw: the Inhumans' giant teleporting bulldog — a big blocky grey-brown body, a huge head with a jutting
+/// Lockjaw: the Inhumans' giant teleporting bulldog, a big blocky grey-brown body, a huge head with a jutting
 /// underbite and two fangs, tiny eyes, a dark nose, folded ears and the gold tuning-fork antenna on his brow. He doesn't
 /// fight. Signature: the fork glows and crackles, he vanishes in a flash and pops back in another.
 private func drawLockjaw(_ c: PixelCanvas, _ p: Pose) {

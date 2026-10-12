@@ -62,7 +62,7 @@ let places: [Location: Place] = scenes1.merging(scenes2) { a, _ in a }.merging(s
 
 
 /// The wipes between places, shared by the window and the screen saver: what's left of the old
-/// picture `k` of the way through — right of an edge sweeping left to right, or what a clock hand sweeping round from
+/// picture `k` of the way through, right of an edge sweeping left to right, or what a clock hand sweeping round from
 /// twelve hasn't reached yet.
 enum Wipe {
     static let duration = 1.2

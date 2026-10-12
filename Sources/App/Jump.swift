@@ -159,7 +159,7 @@ enum Jump {
 
     /// Electron apps ignore AXPress on a native tab while they're in the background, so: bring the app
     /// forward, press the tab, and if the window still shows another project, ask the app to open that
-    /// project folder (`reopen`, only given for an exact title match) — which, because it's already open
+    /// project folder (`reopen`, only given for an exact title match), which, because it's already open
     /// in that tab, just focuses the tab.
     private static func selectTab(_ tab: AXUIElement, window: AXUIElement, app: NSRunningApplication,
                                   axApp: AXUIElement, folder: String, reopen: String?) {
@@ -187,13 +187,14 @@ enum Jump {
         AXUIElementSetAttributeValue(app, kAXFrontmostAttribute as CFString, kCFBooleanTrue)
     }
 
-    /// Whether a VS Code-style title ("file.swift — project — Visual Studio Code") has `folder` as a whole
+    /// Whether a VS Code-style title ("file.swift (project) Visual Studio Code") has `folder` as a whole
     /// segment. Tested against the title itself rather than split parts, so a folder like "- CODE -" that
     /// contains a separator still matches.
     private static func titleNames(_ title: String?, _ folder: String) -> Bool {
         guard let title = title?.trimmingCharacters(in: .whitespaces), !folder.isEmpty else { return false }
         if title == folder { return true }
-        return [" — ", " - "].contains { sep in
+        // Window titles separate the folder with an em dash (written as an escape here) or a hyphen.
+        return [" \u{2014} ", " - "].contains { sep in
             title.hasPrefix(folder + sep) || title.hasSuffix(sep + folder) || title.contains(sep + folder + sep)
         }
     }

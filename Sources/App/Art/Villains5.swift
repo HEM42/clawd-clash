@@ -130,7 +130,7 @@ private func stamp(_ c: PixelCanvas, _ l: PixelCanvas, dx: Int = 0, dy: Int = 0,
 /// Galactus's forward palm, held out to cast.
 private let galactusPalm = (x: 53.0, y: 22.0)
 
-/// Galactus: the giant of the cast, filling the canvas top to bottom — blue bodysuit under purple armour, the V-shaped
+/// Galactus: the giant of the cast, filling the canvas top to bottom, blue bodysuit under purple armour, the V-shaped
 /// chest plate with the big G, purple boots and gloves, and the great purple helmet with the blue crest, the ear discs
 /// and a forked horn on each side, his stern pale face in its opening. Casts cosmic power from his outstretched palm.
 /// Signature: his eyes blaze and cosmic energy spirals in to a growing orb over his palm.
@@ -233,7 +233,7 @@ private func drawGalactus(_ c: PixelCanvas, _ p: Pose) {
 
 /// Kang the Conqueror: a green-suited Clawd with the blue mask face, framed by the purple helmet with its green ear
 /// discs, and a towering purple collar fanned out behind his head; purple gloves, boots and belt, a ray gun in hand.
-/// Signature: he glitches through time — cyan and violet afterimages split off him and rows of him slip sideways.
+/// Signature: he glitches through time, cyan and violet afterimages split off him and rows of him slip sideways.
 private func drawKang(_ c: PixelCanvas, _ p: Pose) {
     guard let s = p.signature, s > 0.06, s < 0.94 else { kang(c, p); return }
     let k = habitArc((s - 0.06) / 0.88, hold: 0.6)
@@ -374,7 +374,7 @@ private func drawMephisto(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Knull
 
-/// Knull: the pale god of the symbiotes — ash-grey Clawd with long black hair down his back, dark eyes and a sneer,
+/// Knull: the pale god of the symbiotes, ash-grey Clawd with long black hair down his back, dark eyes and a sneer,
 /// black symbiote armour with white tendril markings, and the All-Black necrosword: a jagged black blade with a pale
 /// edge (slung on his back when put away). Signature: symbiote tendrils burst from his back and writhe.
 private func drawKnull(_ c: PixelCanvas, _ p: Pose) {
@@ -517,7 +517,7 @@ private func drawAnnihilus(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - The High Evolutionary
 
 /// The High Evolutionary (the movie look): a purple-armoured Clawd under a smooth purple helmet with a sculpted
-/// lavender face plate — slit eyes, no mouth — a tall white collar, and a long purple coat flaring to the hem. Hovers;
+/// lavender face plate (slit eyes, no mouth) a tall white collar, and a long purple coat flaring to the hem. Hovers;
 /// casts from a white-gloved hand. Signature: the face plate glitches, flickering to show the raw, scarred face beneath.
 private func drawHighEvolutionary(_ c: PixelCanvas, _ p: Pose) {
     let purple = C(0x8A2A9A), purpleDark = C(0x5E1A6E), purpleLight = C(0xB04AC8)
@@ -723,7 +723,7 @@ private let shockerGauntlet = (x: 44.0, y: 33.0)
 
 /// The Shocker: Clawd in the yellow suit quilted with brown diamond stitching, a quilted hood with black goggles, brown
 /// gloves, boots and belt, and the bulky steel vibro-gauntlets with blue emitters that fire his shock beams.
-/// Signature: both gauntlets thrum — he shudders as shock rings ripple out of them.
+/// Signature: both gauntlets thrum, he shudders as shock rings ripple out of them.
 private func drawShocker(_ c: PixelCanvas, _ p: Pose) {
     let yellow = C(0xE8C02A), yellowDark = C(0xB8901A), brown = C(0x8A5A2A), brownDark = C(0x5E3A1A)
     let steel = C(0x9AA0AE), steelDark = C(0x5E6470), emitter = C(0x8AC8FF)

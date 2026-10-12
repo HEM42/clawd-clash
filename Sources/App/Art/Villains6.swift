@@ -206,7 +206,7 @@ private func morbius(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Mister Negative
 
-/// Mister Negative (Martin Li, comics): a photographic negative of a man — near-black skin, white hair and white eyes,
+/// Mister Negative (Martin Li, comics): a photographic negative of a man, near-black skin, white hair and white eyes,
 /// a white suit over a black shirt and white tie; he casts a black-and-white stream of negative energy. Signature: the
 /// negative flickers off and he is plain Martin Li for a moment (tan skin, black hair, black suit), then flickers back.
 private func drawMisterNegative(_ c: PixelCanvas, _ p: Pose) {
@@ -265,8 +265,8 @@ private func misterNegative(_ c: PixelCanvas, _ p: Pose, normal: Bool) {
 
 // MARK: - Chameleon
 
-/// The Chameleon (classic comics): a smooth, blank white mask for a face — an egg-dome with two small eyes and no
-/// mouth — over a purple tunic with a high collar and gold buttons; he carries a pistol. Signature: a shimmer sweeps
+/// The Chameleon (classic comics): a smooth, blank white mask for a face, an egg-dome with two small eyes and no
+/// mouth, over a purple tunic with a high collar and gold buttons; he carries a pistol. Signature: a shimmer sweeps
 /// over his face and he's suddenly wearing a Spider-Man mask, before it sweeps back to blank.
 private func drawChameleon(_ c: PixelCanvas, _ p: Pose) {
     guard let s = p.signature, s > 0.08, s < 0.92 else { chameleon(c, p, disguised: false); return }
@@ -341,7 +341,7 @@ private func chameleon(_ c: PixelCanvas, _ p: Pose, disguised: Bool) {
 
 // MARK: - Tombstone
 
-/// Tombstone (Lonnie Lincoln): an albino Clawd — chalky pink-white skin, a flat white crew cut, pink eyes — in a
+/// Tombstone (Lonnie Lincoln): an albino Clawd (chalky pink-white skin, a flat white crew cut, pink eyes) in a
 /// charcoal suit with a white shirt and red tie, grinning with teeth filed to points; he fights with his fists.
 /// Signature: the grin spreads, wide and slow, showing every sharpened tooth.
 private func drawTombstone(_ c: PixelCanvas, _ p: Pose) {
@@ -523,7 +523,7 @@ private func tentacle(_ c: PixelCanvas, from s: (x: Double, y: Double), angle: D
 private let toadMouth = (x: 37.5, y: 32.5)
 
 /// Toad (Mortimer Toynbee, comics): a hunched green Clawd with a lumpy back, bulging yellow eyes, a scruffy brown mop
-/// and a wide frog mouth, in a ragged brown tunic; his long pink tongue is his whip. Signature: a fly buzzes past —
+/// and a wide frog mouth, in a ragged brown tunic; his long pink tongue is his whip. Signature: a fly buzzes past,
 /// his tongue snaps out, catches it, and he swallows it with a pleased gulp.
 private func drawToad(_ c: PixelCanvas, _ p: Pose) {
     let green = C(0x7A9A3A), greenDark = C(0x56722A), greenLight = C(0x9ABA5A), tunic = C(0x8A6A3A), tunicDark = C(0x5E4626)
@@ -684,7 +684,7 @@ private func drawPyro(_ c: PixelCanvas, _ p: Pose) {
 /// Where the Blob's slapping fist swings from.
 private let blobFist = (x: 44.5, y: 31.5)
 
-/// The Blob (Fred Dukes, comics): an enormous round Clawd — all belly — with a little buzz-cut on top, beady eyes,
+/// The Blob (Fred Dukes, comics): an enormous round Clawd (all belly) with a little buzz-cut on top, beady eyes,
 /// stubby arms and legs, blue trunks under a yellow belt with the red X buckle. He fights by bouncing his gut forward
 /// with a stubby slap. Signature: he pats his belly and it jiggles in waves.
 private func drawBlob(_ c: PixelCanvas, _ p: Pose) {

@@ -2,7 +2,7 @@ import Foundation
 
 // Idle habits: a session that's done doesn't just stand there. Every 11–19 s (its own rhythm) its character does
 // something small for a second or two: looks over its shoulder, shifts its weight, or handles its weapon the way it
-// would — a hammer or shield swung round, a gun raised and the smoke blown off, magic crackling in a raised hand.
+// would, a hammer or shield swung round, a gun raised and the smoke blown off, magic crackling in a raised hand.
 // Only while idle and still standing: once it sits down (2 min) it's just resting.
 
 enum IdleHabit {
