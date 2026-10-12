@@ -70,6 +70,9 @@ struct Persona {
     var callout: String? = nil
     /// Does idle habits (glancing, shuffling, handling its weapon). False: it just stands guard.
     var fidgets = true
+    /// Its own target-practice rhythm when working alone (seconds between shots, and where in that it starts), on the
+    /// shared clock; nil: every `blasterPeriod` on its own clock. Clawd Wars' heroes each had one.
+    var soloFire: (period: Double, phase: Double)? = nil
     /// Draws it facing right on the 72×52 canvas.
     let draw: (PixelCanvas, Pose) -> Void
 

@@ -31,6 +31,7 @@ struct Pose {
     var melee: Double?         // melee weapon angle in degrees; nil = put away
     var trail: [Double] = []   // earlier angles of a fast swing
     var fire: (t: Double, bolt: Bool)?   // ranged: firing on this clock (`bolt`: the shot is drawn in-canvas too)
+    var firePeriod = blasterPeriod       // seconds between its shots
     var recoil = 0             // 1 as the gun kicks
     var gunLift = 0            // idle habit: weapon raised to eye level
     var smoke: Double?         // idle habit: 0…1 through blowing the smoke off the barrel
@@ -71,6 +72,9 @@ func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walk
     if case .rest = role { mode = .idle }
     if case .ready(let u) = role { mode = .waiting; role = .none; _ = u }
     let lt = t + Double(who.id) * 0.77
+    // Star Wars draws guns as Clawd Wars did: never raised while waiting or cheering, the flash at the resting
+    // muzzle, and heroes don't raise theirs to check them either (the smoke shows what they're doing).
+    let classic = who.universe == .starWars
     var p = Pose(who: who, t: t, lt: lt, mode: mode, role: role, walking: walking)
     p.flying = airborne || (walking && persona.motion == .fly)
     p.urgent = urgent
@@ -101,8 +105,12 @@ func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walk
                     if h.p > 0.25 && h.p < 0.75 { p.trail = saberTrail(t, pose: spin) }
                 }
             case .checkWeapon:
-                p.gunLift = Int((2 * habitArc(min(1, h.p / 0.55), hold: 0.5)).rounded())
-                if h.p > 0.45 { p.smoke = (h.p - 0.45) / 0.55 }
+                if classic && !who.isDark {
+                    if h.p > 0.4 { p.smoke = (h.p - 0.4) / 0.6 }
+                } else {
+                    p.gunLift = Int((2 * habitArc(min(1, h.p / 0.55), hold: 0.5)).rounded())
+                    if h.p > 0.45 { p.smoke = (h.p - 0.45) / 0.55 }
+                }
             case .crackle:
                 p.zap = false; p.armRaise = 2
             case .signature:
@@ -111,7 +119,7 @@ func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walk
             }
         case .waiting:
             p.melee = urgent ? -90 + 25 * sin(t * 12) : -90 + 2 * sin(t * 3)
-            if persona.weapon == .blaster { p.gunLift = 1 }
+            if persona.weapon == .blaster && !classic { p.gunLift = 1 }
             if persona.weapon == .lightning { p.zap = false; p.armRaise = 2 }
             if urgent { p.hop = cheerHop(t * 1.5); p.breathe = 0 }
         case .standGuard:
@@ -142,7 +150,7 @@ func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walk
                 switch persona.weapon {
                 case .saber: p.melee = -95 + 18 * sin(t * 9)
                 case .lightning: p.zap = false; p.armRaise = 2
-                case .blaster: p.gunLift = -cheerHop(t) + 1
+                case .blaster: if !classic { p.gunLift = -cheerHop(t) + 1 }
                 case .none: break
                 }
             case .none, .rest, .ready:
@@ -151,14 +159,16 @@ func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walk
                     let k = kataPose(lt)
                     p.melee = k.angle; p.dx = Int(k.dx.rounded()); p.hop = Int(k.dy.rounded()); p.breathe = 0
                     p.trail = saberTrail(lt)
-                case .blaster: p.fire = (lt, true)
+                case .blaster:
+                    if let solo = persona.soloFire { p.fire = (t + solo.phase, true); p.firePeriod = solo.period }
+                    else { p.fire = (lt, true) }
                 case .lightning: p.zap = true; p.armRaise = 2
                 case .none: break
                 }
             }
         }
     }
-    if let fire = p.fire { p.recoil = shotRecoil(t: fire.t) }
+    if let fire = p.fire { p.recoil = shotRecoil(t: fire.t, period: p.firePeriod) }
     if p.seated { p.hop += 4 }
     // Hovering: a few pixels off the ground, bobbing gently (not when sitting down, or flying past).
     var float = 0
@@ -177,17 +187,19 @@ func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walk
     switch persona.weapon {
     case .blaster:
         if let fire = p.fire {
-            drawMuzzleShot(c, t: fire.t, muzzle: persona.muzzle, style: persona.shot, bolt: fire.bolt, gunY: p.gunY)
+            drawMuzzleShot(c, t: fire.t, period: p.firePeriod, muzzle: persona.muzzle, style: persona.shot, bolt: fire.bolt,
+                           gunY: classic ? 0 : p.gunY, classic: classic)
         }
-        if let smoke = p.smoke { drawBarrelSmoke(c, x: persona.muzzle.x, y: persona.muzzle.y + Double(p.gunY), smoke) }
+        if let smoke = p.smoke { drawBarrelSmoke(c, x: persona.muzzle.x, y: persona.muzzle.y + Double(classic ? 0 : p.gunY), smoke) }
     case .lightning:
         let hand = (persona.pivot.x, persona.pivot.y - Double(p.armRaise))
         if p.zap == true {
-            drawMagic(c, persona.magic, from: hand, to: (70, hand.1 - 2), t: t)
+            drawMagic(c, persona.magic, from: hand, to: (70, hand.1 - (classic ? 2.5 : 2)), t: t)
         } else if p.zap == false {
-            let i = Int(t * 20)
-            c.px(Int(hand.0) + Int(noise(i) * 3) - 1, Int(hand.1) + Int(noise(i + 1) * 3) - 1, persona.magic.glow)
-            c.px(Int(hand.0) + Int(noise(i + 2) * 3) - 1, Int(hand.1) + Int(noise(i + 3) * 3) - 1, persona.magic.core)
+            // Crackling between the fingers (the Emperor's, as in Clawd Wars: pale blue and white, a pixel further on).
+            let i = Int(t * 20), dx = classic ? 0 : -1
+            c.px(Int(hand.0) + Int(noise(i) * 3) + dx, Int(hand.1) + Int(noise(i + 1) * 3) - 1, classic ? C(0xBFD8FF) : persona.magic.glow)
+            c.px(Int(hand.0) + Int(noise(i + 2) * 3) + dx, Int(hand.1) + Int(noise(i + 3) * 3) - 1, classic ? white : persona.magic.core)
         }
     default: break
     }
@@ -225,11 +237,13 @@ func drawAirWash(_ c: PixelCanvas, t: Double) {
 // MARK: - Shots
 
 /// 1 while a gun on clock `t` is kicking back from a shot.
-func shotRecoil(t: Double) -> Int { frac(t / blasterPeriod) < 0.15 ? 1 : 0 }
+func shotRecoil(t: Double, period: Double = blasterPeriod) -> Int { frac(t / period) < 0.15 ? 1 : 0 }
 
-/// Muzzle flash, and (solo practice) the shot flying off to the canvas edge.
-func drawMuzzleShot(_ c: PixelCanvas, t: Double, muzzle: (x: Double, y: Double), style: ShotStyle, bolt: Bool, gunY: Int) {
-    let f = frac(t / blasterPeriod)
+/// Muzzle flash, and (solo practice) the shot flying off to the canvas edge. `classic`: Clawd Wars' bolt, which runs
+/// 5 px ahead of where it's got to.
+func drawMuzzleShot(_ c: PixelCanvas, t: Double, period: Double = blasterPeriod, muzzle: (x: Double, y: Double),
+                    style: ShotStyle, bolt: Bool, gunY: Int, classic: Bool = false) {
+    let f = frac(t / period)
     let mx = muzzle.x, my = muzzle.y + Double(gunY)
     var flash = true                     // no flash from a bow, a web-shooter or an ice stream
     switch style { case .beam, .web, .ice, .arrow: flash = false; default: break }
@@ -238,7 +252,7 @@ func drawMuzzleShot(_ c: PixelCanvas, t: Double, muzzle: (x: Double, y: Double),
         c.px(Int(mx) + 2, Int(my), C(0xFFF6C8))
     }
     guard bolt, f < 0.4 else { return }
-    let x = mx + 2 + f / 0.4 * (Double(Sprite.width) - mx)
+    let x = mx + 2 + f / 0.4 * (Double(Sprite.width) - mx) + (classic ? 5 : 0)
     drawProjectile(c, style, from: (mx + 2, my + 0.5), head: (x, my + 0.5), t: t)
 }
 
