@@ -210,7 +210,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         panel.contentView = view
 
         Universe.shown = Self.universe
-        StatusStore.setUniverse(Self.universe, saver: Self.saverUniverse)   // the hook casts from it
+        StatusStore.setUniverse(Self.universe, saver: nil)   // the hook casts from it
         home = clampHome(savedHome())     // re-applies the edge snap, so positions saved under older rules are corrected
         if windowMode { openWindow() }
         refreshStatus()
@@ -510,7 +510,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         feedAgents = agentsNow
         feedEvents = Array(feedEvents.suffix(12))
         let feed = SaverFeed(at: now, location: location.rawValue, sessions: out, events: feedEvents,
-                             universe: Universe.shown.rawValue, saverUniverse: Self.saverUniverse)
+                             universe: Universe.shown.rawValue, saverUniverse: nil)
         saverFeed = feed
         if real && saverInstalled { feed.save() }
     }
@@ -2241,36 +2241,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 sm.addItem(action: "Install Screen Saver…", #selector(installSaver), target: self)
             }
         }
-        if SaverInstaller.bundled != nil {
-            let su = NSMenuItem(title: "Screen Saver Universe", action: nil, keyEquivalent: "")
-            let sum = NSMenu()
-            for (key, title) in [("same", "The Same as the App"), ("starWars", "Star Wars"), ("marvel", "Marvel"),
-                                 ("random", "Random (a new one on each trip)")] {
-                let item = NSMenuItem(title: title, action: #selector(setSaverUniverse(_:)), keyEquivalent: "")
-                item.target = self
-                item.representedObject = key
-                item.state = (Self.saverUniverse ?? "same") == key ? .on : .off
-                sum.addItem(item)
-            }
-            su.submenu = sum
-            sm.addItem(su)
-        }
         root.submenu = sm
         return root
-    }
-
-    /// Which universe the screen saver shows. Here rather than only in the screen saver's Options: macOS's
-    /// screen-saver host often can't open a third-party screen saver's Options sheet.
-    /// Nil until picked here, so a choice made in the screen saver's own Options (where they open) still counts.
-    static var saverUniverse: String? {
-        get { UserDefaults.standard.string(forKey: "saverUniverse") }
-        set { UserDefaults.standard.set(newValue, forKey: "saverUniverse") }
-    }
-
-    @objc private func setSaverUniverse(_ sender: NSMenuItem) {
-        guard let key = sender.representedObject as? String else { return }
-        Self.saverUniverse = key
-        StatusStore.setUniverse(Universe.shown, saver: key)
     }
 
     /// Status Symbols: a key to the bubbles, poses and colours (`Legend`). Nothing to pick, so its rows are
@@ -2379,7 +2351,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         guard let u = Universe(rawValue: sender.tag), u != Universe.shown else { return }
         Self.universe = u
         Universe.shown = u
-        StatusStore.setUniverse(u, saver: Self.saverUniverse)
+        StatusStore.setUniverse(u, saver: nil)
         if let raw = UserDefaults.standard.string(forKey: "location"), raw != Self.randomLocation,
            Location(rawValue: raw)?.universe != u {
             UserDefaults.standard.removeObject(forKey: "location")     // a place from the other universe: back to automatic
