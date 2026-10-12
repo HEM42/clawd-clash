@@ -74,13 +74,17 @@ enum SaverInstaller {
         NSDictionary(contentsOf: saver.appendingPathComponent("Contents/Info.plist"))?["CFBundleVersion"] as? String
     }
 
-    /// macOS's screen saver host caches loaded bundles; it starts again by itself when next needed.
+    /// macOS's screen saver host caches loaded bundles, and on macOS 14 and later the extension that lists third-party
+    /// savers in System Settings (WallpaperLegacyExtension) caches the list: a saver removed and put back while it ran
+    /// stays missing from the list until it restarts. Both start again by themselves when next needed.
     private static func restartHost() {
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: "/usr/bin/killall")
-        p.arguments = ["legacyScreenSaver"]
-        p.standardOutput = FileHandle.nullDevice
-        p.standardError = FileHandle.nullDevice
-        try? p.run()
+        for name in ["legacyScreenSaver", "WallpaperLegacyExtension"] {
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: "/usr/bin/killall")
+            p.arguments = [name]
+            p.standardOutput = FileHandle.nullDevice
+            p.standardError = FileHandle.nullDevice
+            try? p.run()
+        }
     }
 }

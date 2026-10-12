@@ -12,6 +12,9 @@ Clawd Clash brings Clawd Wars (Star Wars) and Avengers: Clawd Wars (Marvel) toge
 - **A new icon**: Darth Vader's saber clashing on Captain America's shield, one from each universe.
 - **A screen-saver thumbnail for both universes**: the Clawd Clash title over Luke and Vader, Captain America and Thanos, in System Settings' screen saver list (it was the Avengers one).
 
+### Fixed
+- **The screen saver vanishing from System Settings' list.** On macOS 14 and later, the list of third-party screen savers comes from a background process (WallpaperLegacyExtension) that remembers what it found. A saver removed and put back while that process ran (a reinstall, an update, a removal) stayed missing from the list, although it was installed in the right place (`~/Library/Screen Savers`). Installing, updating and removing the screen saver now restart that process along with the screen saver host, so the list is rebuilt each time.
+
 ### Changed
 - **The Star Wars cast is Clawd Wars' own, ported frame by frame.** All 81 characters were rebuilt on the shared pipeline and checked pixel by pixel against Clawd Wars' drawing code in hundreds of poses each. Star Wars also keeps Clawd Wars' gun handling: no gun raised while waiting or cheering, heroes check their guns without raising them, the flash stays at the resting muzzle, bolts run as they did, and each hero keeps its own practice rhythm (`Persona.soloFire`). The Emperor's crackle is pale blue and white again.
 - **One engine for both**: every character in both universes is a `Persona` drawn through the same pose pipeline (`Pose.swift`), and each universe is a `Theme` in its own folder (`Sources/App/Universes/StarWars`, `.../Marvel`).
