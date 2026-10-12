@@ -2,14 +2,14 @@ import AppKit
 import AVFoundation
 
 // Renders the promo with the app's own sprite code: a storyboard sheet of key frames, or the video
-// (1920×1080, 30 fps). Build it, then run it from the repo root (it reads docs/icon.png):
-//   swiftc -O -swift-version 5 Sources/App/Pixel.swift Sources/App/Characters.swift Sources/App/Leaders.swift \
-//          Sources/App/Cast.swift Sources/App/Habits.swift Sources/App/Cantina.swift Sources/App/Locations.swift Sources/Shared/*.swift \
-//          Tools/RenderPromo/main.swift -o /tmp/renderpromo
-//   /tmp/renderpromo storyboard promo     → storyboard.png + one PNG per key frame
-//   /tmp/renderpromo video promo          → clawd-wars-promo.mp4 (H.264 + AAC soundtrack)
-//   /tmp/renderpromo audio promo          → clawd-wars-promo.wav (just the soundtrack)
-//   /tmp/renderpromo frame promo 9.5      → a single frame at 9.5 s
+// (1920×1080, 30 fps). Build it, then run it from the repo root (it reads Resources/AppIcon.png):
+//   swiftc -O -swift-version 5 Sources/App/{Pixel,Characters,Fights,Roster,Pose,Locations,Cast,Habits,Accents,Icon}.swift \
+//          Sources/App/Art/*.swift Sources/App/Places/*.swift Sources/Shared/*.swift \
+//          Tools/RenderPromo/main.swift -o build/renderpromo
+//   build/renderpromo storyboard promo     → storyboard.png + one PNG per key frame
+//   build/renderpromo video promo          → avengers-clawd-wars-promo.mp4 (H.264 + AAC soundtrack)
+//   build/renderpromo audio promo          → the soundtrack alone, as a .wav
+//   build/renderpromo frame promo 9.5      → a single frame at 9.5 s
 
 let W = 1920, H = 1080, fps = 30.0, duration = 50.2
 
@@ -481,11 +481,15 @@ func title(_ ctx: CGContext, center: CGPoint, scale s: Double, alpha: Double = 1
                                    ("CLAWD WARS", yellow.withAlphaComponent(alpha), 1.0)].enumerated() {
         let f = NSFont(descriptor: tf.fontDescriptor, size: 200 * size) ?? tf
         let base: [NSAttributedString.Key: Any] = [.font: f, .kern: 10 * size]
-        var outlined = base; outlined[.strokeColor] = NSColor.black.withAlphaComponent(alpha); outlined[.strokeWidth] = 14
+        var outlined = base; outlined[.foregroundColor] = NSColor.black.withAlphaComponent(alpha)
         var filled = base; filled[.foregroundColor] = col
         let sz = NSAttributedString(string: word, attributes: base).size()
         let p = NSPoint(x: -sz.width / 2, y: i == 0 ? 40 : -sz.height + 40)
-        NSAttributedString(string: word, attributes: outlined).draw(at: p)
+        let ink = NSAttributedString(string: word, attributes: outlined), r = 12 * size
+        for k in 0..<16 {                                   // a thick, round outline: the word stamped in black all round
+            let a = Double(k) / 16 * 2 * .pi
+            ink.draw(at: NSPoint(x: p.x + cos(a) * r, y: p.y + sin(a) * r))
+        }
         NSAttributedString(string: word, attributes: filled).draw(at: p)
     }
     ctx.restoreGState()
@@ -776,6 +780,15 @@ let shots: [Shot] = [
         if local > 0.35 { title(ctx, center: CGPoint(x: Double(W) / 2, y: 760), scale: backOut((local - 0.35) / 0.4) * 0.8) }
         caption("Have fun. Keep track.", ctx, local: local, start: 0.6, y: 520, size: 56)
         caption("Free for macOS", ctx, local: local, start: 0.8, y: 462, size: 34, color: NSColor(white: 0.85, alpha: 1), weight: .bold)
+        // the app icon and where to get it, on a dark band along the bottom
+        let ff = easeOut((local - 0.9) / 0.3)
+        if ff > 0, let icon = appIcon {
+            ctx.setFillColor(CGColor(red: 0.04, green: 0.05, blue: 0.09, alpha: 0.8 * ff)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: 170))
+            ctx.saveGState(); ctx.setAlpha(CGFloat(ff)); ctx.interpolationQuality = .high
+            ctx.draw(icon, in: CGRect(x: 520, y: 20, width: 130, height: 130))
+            ctx.restoreGState()
+            text("github.com/rodclemen/avengers-clawd-wars", ctx, x: 680, y: 60, size: 44, weight: .bold, alpha: ff)
+        }
     },
 ]
 
@@ -854,7 +867,7 @@ let beats: [(title: String, action: String, onScreen: String, sound: String)] = 
     ("EVERY AI", "Six sessions pop in, one per AI outline. Claude's Cap stands a head taller, holding his shield into Thanos' gauntlet blast; Iron Man (Claude Desktop) and the villains of the other AIs cheer.",
      "CLAUDE CODE (huge)  ·  + Claude Desktop · OpenAI Codex · Qwen Code · Gemini CLI · GitHub Copilot CLI  ·  “Claude plays the heroes. Everyone else gets to be the villain.”", "shield blocking the beam"),
     ("END CARD", "Avengers Tower at night. The Quinjet streaks across; the crew lines up on the street in all six colours; the title lands.",
-     "AVENGERS / CLAWD WARS  ·  “Have fun. Keep track.”  ·  Free for macOS", "Quinjet flyby, final sting"),
+     "AVENGERS / CLAWD WARS  ·  “Have fun. Keep track.”  ·  Free for macOS  ·  github.com/rodclemen/avengers-clawd-wars", "Quinjet flyby, final sting"),
 ]
 
 func storyboard(_ frames: [NSBitmapImageRep]) -> NSBitmapImageRep {
@@ -996,7 +1009,10 @@ final class Mix {
         tone(t + 0.12, 0.45, 1760, wave: .sine, vol: vol, release: 0.35, decay: 0.2)
     }
     func step(_ t: Double, vol: Double = 0.05) { noise(t, 0.04, vol: vol, cutoff: 0.15, decay: 0.012, seed: Int(t * 997)) }
-    func click(_ t: Double, vol: Double = 0.04) { noise(t, 0.02, vol: vol, cutoff: 0.8, decay: 0.006, highpass: true, seed: Int(t * 541)) }
+    func click(_ t: Double, vol: Double = 0.1) {                      // a laptop key
+        noise(t, 0.025, vol: vol, cutoff: 0.3, decay: 0.008, highpass: true, seed: Int(t * 541))
+        noise(t, 0.03, vol: vol * 0.5, cutoff: 0.15, decay: 0.01, seed: Int(t * 613))
+    }
     func r2(_ t: Double, vol: Double = 0.07) {                       // a little droid chirp
         for k in 0..<10 {
             let f = 1100 + hashNoise(Int(t * 10) + k * 3) * 1700
@@ -1050,48 +1066,111 @@ func shotTimes(_ a: Double, _ b: Double, offset: Double) -> [Double] {
     return out
 }
 
+// Marvel sound effects
+extension Mix {
+    func type(_ t: Double, vol: Double = 0.22) {                     // a typewriter key: the strike, then the thunk
+        noise(t, 0.04, vol: vol, cutoff: 0.25, decay: 0.012, highpass: true, seed: Int(t * 733))
+        noise(t, 0.06, vol: vol * 0.8, cutoff: 0.12, decay: 0.02, seed: Int(t * 977))
+        tone(t, 0.05, 150, to: 90, wave: .triangle, vol: vol * 0.7, decay: 0.018)
+    }
+    func ding(_ t: Double, vol: Double = 0.12) {                     // the bell at the end of the line
+        tone(t, 0.9, 2093, wave: .sine, vol: vol, release: 0.6, decay: 0.35)
+        tone(t, 0.6, 4186, wave: .sine, vol: vol * 0.3, release: 0.4, decay: 0.2)
+    }
+    func flip(_ t: Double, vol: Double = 0.06) {                     // a comic page turning
+        noise(t, 0.09, vol: vol, cutoff: 0.05, cutoffTo: 0.5, attack: 0.03, release: 0.04, seed: Int(t * 389))
+    }
+    func clang(_ t: Double, vol: Double = 0.12) {                    // a shot off Cap's shield
+        for (f, d) in [(1250.0, 0.35), (1870.0, 0.25), (2930.0, 0.18)] { tone(t, d, f, wave: .sine, vol: vol / 2, release: 0.1, decay: d / 3) }
+        noise(t, 0.03, vol: vol * 0.7, cutoff: 0.9, decay: 0.01, highpass: true, seed: Int(t * 91))
+    }
+    func repulsor(_ t: Double, vol: Double = 0.1) {                  // Iron Man's palm blast
+        tone(t, 0.28, 2400, to: 700, wave: .sine, vol: vol, release: 0.1, decay: 0.12)
+        noise(t, 0.2, vol: vol * 0.7, cutoff: 0.5, cutoffTo: 0.05, decay: 0.08, seed: Int(t * 57))
+    }
+    func thwip(_ t: Double, vol: Double = 0.1) {                     // a web shot
+        noise(t, 0.12, vol: vol, cutoff: 0.1, cutoffTo: 0.9, attack: 0.01, release: 0.05, seed: Int(t * 211))
+        tone(t, 0.1, 600, to: 1600, wave: .triangle, vol: vol * 0.4, release: 0.04)
+    }
+    func bomb(_ t: Double, vol: Double = 0.1) {                      // a pumpkin bomb: lobbed, then a pop
+        tone(t, 0.18, 400, to: 900, wave: .square(0.3), vol: vol * 0.4, release: 0.05)
+        noise(t + 0.36, 0.25, vol: vol, cutoff: 0.3, cutoffTo: 0.03, decay: 0.09, seed: Int(t * 17))
+    }
+    func roar(_ t: Double, _ dur: Double, vol: Double = 0.2) {       // a Leviathan bellowing
+        tone(t, dur, 75, to: 48, wave: .saw, vol: vol, attack: 0.15, release: dur * 0.4, vibrato: 0.06)
+        tone(t, dur, 112, to: 70, wave: .saw, vol: vol * 0.6, attack: 0.2, release: dur * 0.4, vibrato: 0.08)
+        noise(t, dur, vol: vol * 0.7, cutoff: 0.04, cutoffTo: 0.015, attack: 0.15, release: dur * 0.4, seed: Int(t * 3))
+    }
+    func crackle(_ t: Double, _ dur: Double, vol: Double = 0.05) {   // a magic beam, Thanos' gauntlet
+        tone(t, dur, 160, wave: .saw, vol: vol, attack: 0.1, release: 0.2, vibrato: 0.04)
+        noise(t, dur, vol: vol * 0.8, cutoff: 0.6, attack: 0.1, release: 0.2, highpass: true, seed: Int(t * 29))
+    }
+    func groot(_ t: Double, vol: Double = 0.08) {                    // a low, friendly rumble, three notes
+        for (k, n) in [43, 45, 40].enumerated() {
+            tone(t + Double(k) * 0.22, 0.24, midi(n), wave: .triangle, vol: vol, attack: 0.03, release: 0.08, vibrato: 0.02)
+        }
+    }
+    func jet(_ t: Double, _ dur: Double, vol: Double = 0.06) {       // the Quinjet going by
+        tone(t, dur, 700, to: 1100, wave: .saw, vol: vol * 0.4, attack: dur * 0.4, release: dur * 0.5)
+        noise(t, dur, vol: vol * 2, cutoff: 0.02, cutoffTo: 0.3, attack: dur * 0.45, release: dur * 0.5, seed: 77)
+    }
+}
+
+/// When a ranged fighter with `offset` lets a shot go between `a` and `b`.
+func fireTimes(_ a: Double, _ b: Double, offset: Double) -> [Double] { shotTimes(a, b, offset: offset) }
+
 func soundtrack() -> [Float] {
     let m = Mix(seconds: duration)
     let half = wipe / 2
 
     // ── Opening ────────────────────────────────────────────────────────────────
-    // "A long time ago…": silence, as in the film.
-    // The logo: a big hit and an original fanfare.
-    let logo = shotStart("logo")
-    m.boom(logo, vol: 0.55)
-    m.noise(logo, 1.6, vol: 0.12, cutoff: 0.9, decay: 0.5, highpass: true, seed: 3)          // crash cymbal
-    for n in [48, 55, 60, 64, 67] { m.tone(logo, 1.1, midi(n), wave: .saw, vol: 0.05, release: 0.6, decay: 0.7) }
-    let fanfare: [(Double, Double, Int)] = [(0.3, 0.28, 64), (0.6, 0.28, 67), (0.9, 0.85, 72), (1.8, 0.28, 71),
-                                            (2.1, 0.28, 69), (2.4, 1.05, 74)]
-    for (s, d, n) in fanfare {
-        m.tone(logo + s, d, midi(n + 12), wave: .square(0.5), vol: 0.07, release: 0.08, vibrato: 0.006)
-        m.tone(logo + s, d, midi(n), wave: .saw, vol: 0.05, release: 0.08)
-    }
-    for (s, d, chord) in [(0.0, 0.9, [48, 52, 55]), (0.9, 0.9, [45, 48, 52]), (1.8, 0.6, [41, 45, 48]), (2.4, 1.1, [43, 47, 50])] {
-        for n in chord { m.tone(logo + s, d, midi(n), wave: .triangle, vol: 0.07, attack: 0.03, release: 0.15) }
-    }
-    m.tone(logo + 2.4, 1.1, midi(31), wave: .sine, vol: 0.2, release: 0.3)
+    // "Meanwhile…": a key for every letter as the caption types itself out.
+    let mw = shotStart("meanwhile")
+    let line = 35.0
+    for i in 0..<35 { m.type(mw + 0.3 + Double(i) / line * 1.6 + noise(i) * 0.02, vol: 0.18 + noise(i + 50) * 0.08) }
+    m.ding(mw + 2.0)
+    m.tone(mw + 0.2, 3.0, midi(33), wave: .sine, vol: 0.05, attack: 1.0, release: 0.8)          // a low drone
 
-    // The Star Destroyer: a dark pulsing build, turbolasers, and a rumble that grows as it passes overhead.
-    let sd = shotStart("destroyer")
+    // The panels: pages flipping, then the title hits with an original fanfare.
+    let pn = shotStart("panels")
+    for i in 0..<16 { m.flip(pn + Double(i) * 0.11, vol: 0.04 + Double(i) * 0.003) }
+    let hit = pn + 1.7
+    m.boom(hit, vol: 0.55)
+    m.noise(hit, 1.6, vol: 0.12, cutoff: 0.9, decay: 0.5, highpass: true, seed: 3)
+    for n in [48, 55, 60, 64, 67] { m.tone(hit, 1.0, midi(n), wave: .saw, vol: 0.05, release: 0.5, decay: 0.6) }
+    for (s, d, n) in [(0.25, 0.22, 67), (0.5, 0.22, 72), (0.75, 0.5, 76), (1.3, 0.5, 74)] as [(Double, Double, Int)] {
+        m.tone(hit + s, d, midi(n + 12), wave: .square(0.5), vol: 0.07, release: 0.08, vibrato: 0.006)
+        m.tone(hit + s, d, midi(n), wave: .saw, vol: 0.045, release: 0.08)
+    }
+
+    // The invasion: the portal humming, a dark pulse, the Leviathan's roars, the rumble as it fills the sky,
+    // Iron Man's thrusters and repulsors.
+    let inv = shotStart("invasion")
+    m.tone(inv, 8.5 + half, 110, wave: .sine, vol: 0.05, attack: 1, release: 1.5, vibrato: 0.03)          // the portal
     for i in 0..<Int((8.5 + half) / 0.25) {
-        let t = sd + Double(i) * 0.25
         let grow = min(1, Double(i) / 30)
-        m.tone(t, 0.22, midi(i % 8 == 7 ? 37 : 36), wave: .square(0.25), vol: 0.05 + 0.06 * grow, release: 0.04)
+        m.tone(inv + Double(i) * 0.25, 0.22, midi(i % 8 == 7 ? 37 : 36), wave: .square(0.25), vol: 0.04 + 0.06 * grow, release: 0.04)
     }
     for (s, chord) in [(0.0, [48, 51, 55]), (2.0, [44, 48, 51]), (4.0, [46, 50, 53]), (6.0, [48, 51, 55]), (7.0, [43, 47, 50])] {
-        for n in chord { m.tone(sd + s, 1.8, midi(n), wave: .saw, vol: 0.04, attack: 0.05, release: 0.6) }
+        for n in chord { m.tone(inv + s, 1.8, midi(n), wave: .saw, vol: 0.035, attack: 0.05, release: 0.6) }
     }
-    for k in 0..<12 { m.tone(sd + 2.4 + Double(k) * 0.05, 0.08, 70, to: 55, wave: .sine, vol: 0.06 + Double(k) * 0.012, decay: 0.05) }  // timpani roll
-    m.boom(sd + 3.0, vol: 0.4)                                                                            // its nose appears
-    m.noise(sd + 2.6, 6.5, vol: 0.32, cutoff: 0.004, cutoffTo: 0.03, attack: 3.0, release: 2.0, seed: 5)  // the rumble
-    m.tone(sd + 2.6, 6.5, 41, wave: .sine, vol: 0.18, attack: 3.0, release: 2.0)
-    m.tone(sd + 1.4, 5.0, 620, to: 560, wave: .triangle, vol: 0.02, attack: 0.5, release: 1.5)            // the runner's engines
-    for i in 0..<40 {                                                                                      // one per bolt on screen
-        let t = sd + 1.3 + Double(i) * 0.17
-        if t < sd + 8.5 + half { m.turbolaser(t, pitch: noise(i * 7) > 0.5 ? 1 : 0.8, vol: 0.07) }
+    m.roar(inv + 2.6, 1.6, vol: 0.22)                                                                         // it noses out
+    m.roar(inv + 5.6, 2.2, vol: 0.3)                                                                          // and dives
+    m.noise(inv + 3.0, 6.5, vol: 0.3, cutoff: 0.004, cutoffTo: 0.03, attack: 3.0, release: 1.5, seed: 5)      // the rumble
+    m.tone(inv + 3.0, 6.5, 41, wave: .sine, vol: 0.16, attack: 3.0, release: 1.5)
+    m.noise(inv + 4.2, 4.0, vol: 0.1, cutoff: 0.05, cutoffTo: 0.2, attack: 0.6, release: 1.2, seed: 12)       // thrusters
+    for i in 0..<10 { let b = inv + 4.9 + Double(i) * 0.3; if b < inv + 8.5 { m.repulsor(b, vol: 0.08) } }
+
+    // The ring: a heroic swell, an original horn line over C F G C.
+    let ring = shotStart("assemble")
+    for k in 0..<10 { m.tone(ring - 0.5 + Double(k) * 0.05, 0.08, 70, to: 55, wave: .sine, vol: 0.05 + Double(k) * 0.012, decay: 0.05) }
+    for (s, d, chord) in [(0.0, 1.1, [48, 52, 55, 60]), (1.1, 1.1, [41, 45, 48, 53]), (2.2, 1.1, [43, 47, 50, 55]), (3.3, 1.6, [48, 52, 55, 60])] {
+        for n in chord { m.tone(ring + s, d, midi(n), wave: .saw, vol: 0.035, attack: 0.15, release: 0.4) }
+        m.tone(ring + s, d, midi(chord[0] - 12), wave: .sine, vol: 0.16, attack: 0.05, release: 0.4)
     }
-    m.tone(sd + 6.6, 3.0, midi(24), wave: .sine, vol: 0.12, attack: 0.4, release: 1.5)                   // engines passing
+    for (s, d, n) in [(0.2, 0.4, 67), (0.6, 0.5, 72), (1.1, 0.9, 74), (2.2, 0.4, 71), (2.6, 0.5, 74), (3.3, 1.4, 79)] as [(Double, Double, Int)] {
+        m.tone(ring + s, d, midi(n), wave: .square(0.5), vol: 0.06, attack: 0.02, release: 0.12, vibrato: 0.006)
+    }
 
     // ── The promo: an original chiptune groove, Am F C G ────────────────────────
     let g0 = shotStart("hook"), beat = 0.5, bar = 2.0
@@ -1104,8 +1183,8 @@ func soundtrack() -> [Float] {
     let grooveBars = Int(((shotStart("endcard") - g0) / bar).rounded())
     for b in 0..<grooveBars {
         let t0 = g0 + Double(b) * bar, c = b % 4
-        let full = b >= 2                                  // the hook is sparse; the band kicks in with desktop mode
-        for e in 0..<8 {                                   // bass, eighths, octave bounce
+        let full = b >= 2
+        for e in 0..<8 {
             m.tone(t0 + Double(e) * beat / 2, beat / 2 * 0.9, midi(roots[c] - 12 + (e % 2) * 12), wave: .square(0.25),
                    vol: full ? 0.075 : 0.05, release: 0.02)
             m.hat(t0 + Double(e) * beat / 2, vol: e % 2 == 1 ? 0.04 : 0.025)
@@ -1114,7 +1193,7 @@ func soundtrack() -> [Float] {
         if full {
             m.kick(t0 + 2 * beat); m.kick(t0 + 2.5 * beat, vol: 0.18)
             m.snare(t0 + beat); m.snare(t0 + 3 * beat)
-            for s in 0..<16 {                              // the arpeggio
+            for s in 0..<16 {
                 m.tone(t0 + Double(s) * beat / 4, beat / 4 * 0.8, midi(triads[c][s % 3] - 12 + (s / 3 % 2) * 12),
                        wave: .triangle, vol: 0.03, release: 0.02)
             }
@@ -1125,7 +1204,7 @@ func soundtrack() -> [Float] {
                 tt += d * beat
             }
         }
-        if b == grooveBars - 1 {                           // snare roll into the end card
+        if b == grooveBars - 1 {
             for k in 0..<8 { m.snare(t0 + 2 * beat + Double(k) * beat / 4, vol: 0.06 + Double(k) * 0.01) }
         }
     }
@@ -1137,46 +1216,40 @@ func soundtrack() -> [Float] {
         m.tone(end + s, d, midi(lead), wave: .square(0.5), vol: 0.06, release: d > 1 ? 1.6 : 0.1, vibrato: 0.006)
         m.tone(end + s, d, midi(chord[0] - 24), wave: .sine, vol: 0.2, release: d > 1 ? 1.6 : 0.1)
     }
-    m.boom(end + 0.35, vol: 0.45)                          // the title lands
+    m.boom(end + 0.35, vol: 0.45)
     m.noise(end + 1.4, 2.5, vol: 0.08, cutoff: 0.9, decay: 0.8, highpass: true, seed: 8)
-    m.whoosh(end + 0.55, 1.1, vol: 0.22)                   // the Falcon flies by
-    m.tone(end, 1.1, 300, to: 900, wave: .saw, vol: 0.025, attack: 0.4, release: 0.5)
+    m.jet(end, 1.2, vol: 0.08)                                                               // the Quinjet goes by
+    m.crackle(end + 0.5, duration - end - 0.5, vol: 0.025)                                  // Thanos still at it
 
     // ── Sound effects in the promo ──────────────────────────────────────────────
-    for s in shots.dropFirst() where !s.cut { m.whoosh(s.start, wipe, vol: 0.07) }       // every wipe
+    for s in shots.dropFirst() where !s.cut { m.whoosh(s.start, wipe, vol: 0.07) }
 
-    let hook = shotStart("hook")                           // somebody typing
+    let hook = shotStart("hook")
     for i in 0..<26 { m.click(hook + 0.2 + Double(i) * 0.13 + noise(i) * 0.06) }
 
-    let desk = shotStart("desktop")                        // the drop-ins, the duel and the shootout
+    let desk = shotStart("desktop")                       // drop-ins; Red Skull shoots, Cap's shield clangs; webs and bombs
     for (i, d) in [0.0, 0.12, 0.24, 0.32].enumerated() { m.step(desk + d + 0.3, vol: 0.1 + Double(i % 2) * 0.03) }
-    m.ignite(desk + 0.45)
-    m.hum(desk + 0.45, 4.6 - 0.45 + half)
-    for t in clashTimes(desk + 0.45, desk + 4.6 + half) { m.clash(t) }
-    for t in shotTimes(desk + 0.45, desk + 4.6 + half, offset: 0) { m.pew(t) }
-    for t in shotTimes(desk + 0.45, desk + 4.6 + half, offset: blasterPeriod / 2) { m.pew(t, vol: 0.12) }
+    let deskEnd = shotStart("status") + half
+    for t in fireTimes(desk + 0.45, deskEnd, offset: 0) { m.pew(t, vol: 0.1); m.clang(t + boltArrival * blasterPeriod) }
+    for t in fireTimes(desk + 0.45, deskEnd, offset: 0) { m.thwip(t + 0.02, vol: 0.07) }
+    for t in fireTimes(desk + 0.45, deskEnd, offset: blasterPeriod / 2) { m.bomb(t, vol: 0.08) }
 
-    let status = shotStart("status")                       // the four pop in; Boba's alert
+    let status = shotStart("status")
     for i in 0..<4 { m.pop(status + 0.1 + Double(i) * 0.22, step: i) }
     for k in 0..<5 { m.tone(status + 1.2 + Double(k) * 0.62, 0.08, 1568, wave: .square(0.5), vol: 0.035, release: 0.03) }
 
-    let agents = shotStart("agents")                       // marching in, and R2
+    let agents = shotStart("agents")
     for k in 0..<14 { m.step(agents + Double(k) * 0.125, vol: 0.06) }
-    m.r2(agents + 1.4)
+    m.groot(agents + 1.4)
 
-    let win = shotStart("window")                          // the cantina duel, the cards, and the ping
-    m.hum(win, 2.5, vol: 0.02)
-    for t in clashTimes(win, win + 2.5) { m.clash(t, vol: 0.09) }
+    let win = shotStart("window")                         // the strip: Red Skull firing at Cap, the cards, the ping
+    for t in fireTimes(win, win + 2.5, offset: 0) { m.pew(t, vol: 0.05); m.clang(t + boltArrival * blasterPeriod, vol: 0.05) }
     for k in [0.9, 1.8] { m.click(win + k, vol: 0.06) }
     m.ping(win + 2.5)
 
-    let ais = shotStart("ais")                             // six pop in, Claude vs Codex
+    let ais = shotStart("ais")                            // six pop in; Thanos' beam on Cap's shield
     for i in 0..<6 { m.pop(ais + 0.15 + Double(i) * 0.1, step: i % 4) }
-    m.ignite(ais + 0.3, vol: 0.12)
-    m.hum(ais + 0.35, 4.4 - 0.35 + half)
-    for t in clashTimes(ais + 0.35, ais + 4.4 + half) { m.clash(t) }
-
-    for t in clashTimes(end + 0.5, duration) { m.clash(t, vol: 0.12) }                     // the duel on the horizon
+    m.crackle(ais + 0.4, shotStart("endcard") + half - ais - 0.4, vol: 0.045)
 
     // Master: gentle saturation, normalise, fade out.
     var peak: Float = 0

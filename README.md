@@ -18,8 +18,10 @@
 </p>
 
 <p align="center">
-  <img src="docs/social-preview.png" alt="Iron Man, Spider-Man, Captain America, Loki, Groot and Thanos" width="760">
+  <a href="promo/avengers-clawd-wars-promo.mp4"><img src="promo/storyboard.png" alt="The promo's storyboard: the invasion of New York, the heroes on the street, desktop and window mode, every AI" width="760"></a>
 </p>
+
+<p align="center"><sub>🎬 <b>Watch the 50-second promo</b> (1080p, with sound): <a href="promo/avengers-clawd-wars-promo.mp4">promo/avengers-clawd-wars-promo.mp4</a></sub></p>
 
 The sister app of [Clawd Wars](https://github.com/rodclemen/clawd-wars), the Star Wars one: same engine, same habits, a different universe.
 
