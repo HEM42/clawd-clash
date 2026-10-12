@@ -172,7 +172,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         // The hook only knows the cast sizes; a villain or hero added without bumping them would never be picked.
         assert(StatusStore.leaderCount == Leader.allCases.count && StatusStore.companionCount == Companion.allCases.count)
         assert(StatusStore.agentOnly == [Leader.ultronSentry.rawValue, Leader.doombot.rawValue,
-                                         StatusStore.heroBase + Companion.jeffTheLandShark.rawValue])   // small fry: agents only
+                                         StatusStore.heroBase + Companion.jeffTheLandShark.rawValue,
+                                         StatusStore.heroBase + Companion.zabu.rawValue, StatusStore.heroBase + Companion.morris.rawValue,
+                                         StatusStore.heroBase + Companion.dumE.rawValue])   // small fry: agents only
         panel = OverlayPanel(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10),
                              styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         view = OverlayView()

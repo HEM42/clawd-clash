@@ -52,8 +52,8 @@ func put(_ c: PixelCanvas, _ ctx: CGContext, x: CGFloat, y: CGFloat, outline: Bo
 }
 
 func cast(named n: String) -> [Cast] {
-    let heroBatches = [heroes1, heroes2, heroes3, heroes4, heroes5, heroes6, heroes7, heroes8, heroes9]
-    let villainBatches = [villains1, villains2, villains3, villains4, villains5, villains6, villains7, villains8]
+    let heroBatches = [heroes1, heroes2, heroes3, heroes4, heroes5, heroes6, heroes7, heroes8, heroes9, heroes10]
+    let villainBatches = [villains1, villains2, villains3, villains4, villains5, villains6, villains7, villains8, villains9]
     var batches: [String: [Cast]] = [
         "heroes": Companion.allCases.map { .hero($0) },
         "villains": Leader.allCases.map { .villain($0) },

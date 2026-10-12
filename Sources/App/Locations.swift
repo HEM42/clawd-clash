@@ -12,6 +12,8 @@ enum Location: String, CaseIterable {
     case quantumRealm, latveria, hydraBase, dailyBugle, egosPlanet, kamarTaj, raft, battleOfNewYork, darkDimension
     case attilan, savageLand
     case baxterBuilding, jotunheim, muspelheim, hala, genosha, madripoor, sokovia, worldship, harlem, kunLun
+    case xandar, avengersCompound, tva, krakoa, morlockTunnels, asteroidM, newYorkStreets, savageLandCitadel, starkWorkshop
+    case redRoom, taLo
 
     var place: Place { places[self] ?? Place(name: rawValue, panel: 0x16181D, still: { _, _ in }) }
 
@@ -56,7 +58,7 @@ struct Place {
 
 /// Every place, from the Scenes*.swift files.
 let places: [Location: Place] = scenes1.merging(scenes2) { a, _ in a }.merging(scenes3) { a, _ in a }
-    .merging(scenes4) { a, _ in a }.merging(scenes5) { a, _ in a }
+    .merging(scenes4) { a, _ in a }.merging(scenes5) { a, _ in a }.merging(scenes6) { a, _ in a }.merging(scenes7) { a, _ in a }
 
 
 /// The wipes between places, shared by the window and the screen saver: what's left of the old

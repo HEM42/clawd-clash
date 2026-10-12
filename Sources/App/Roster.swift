@@ -28,6 +28,8 @@ enum Companion: Int, CaseIterable {
     case spiderWoman, blackCat, lukeCage, ironFist, jessicaJones, punisher, elektra, blade, blackKnight
     // mystics, cosmic and the funny ones.
     case monicaRambeau, clea, doctorVoodoo, howardTheDuck, squirrelGirl, jeffTheLandShark, throg, lockjaw, forbushMan
+    // The TVA, the Red Room, the Savage Land, Stark's workshop and Ta Lo
+    case mobius, sylvie, kidLoki, alligatorLoki, hunterB15, redGuardian, kaZar, rescue, zabu, morris, dumE
 
     var persona: Persona { heroPersonas[self] ?? Persona.missing(String(describing: self)) }
     var name: String { persona.name }
@@ -56,6 +58,8 @@ enum Leader: Int, CaseIterable {
     case brood, cassandraNova, graviton, absorbingMan, crimsonDynamo, wrecker, baronMordo, enchantress, arnimZola
     // gamma, Asgard's enemies and foot soldiers.
     case countNefaria, theLeader, maestro, malekith, surtur, kurse, frostGiant, hydraSuperSoldier, kreeSoldier
+    // The TVA, the Morlock Tunnels, Asteroid M, Ta Lo and the Red Room
+    case missMinutes, callisto, exodus, soulEater, redRoomWidow
 
     var persona: Persona { villainPersonas[self] ?? Persona.missing(String(describing: self)) }
     var name: String { persona.name }
@@ -149,10 +153,11 @@ let heroPersonas: [Companion: Persona] = heroes1.merging(heroes2) { a, _ in a }.
     .merging(heroes4) { a, _ in a }
     .merging(heroes5) { a, _ in a }.merging(heroes6) { a, _ in a }.merging(heroes7) { a, _ in a }
     .merging(heroes8) { a, _ in a }.merging(heroes9) { a, _ in a }
+    .merging(heroes10) { a, _ in a }
 let villainPersonas: [Leader: Persona] = villains1.merging(villains2) { a, _ in a }.merging(villains3) { a, _ in a }
     .merging(villains4) { a, _ in a }
     .merging(villains5) { a, _ in a }.merging(villains6) { a, _ in a }.merging(villains7) { a, _ in a }
-    .merging(villains8) { a, _ in a }
+    .merging(villains8) { a, _ in a }.merging(villains9) { a, _ in a }
 
 // MARK: - Homes
 
@@ -169,9 +174,10 @@ extension Location {
         case .grandmaster, .abomination, .finFangFoom: return .sakaar
         case .greenGoblin, .venom, .docOck, .mysterio: return .dailyBugle
         case .carnage, .electro, .rhino, .sandman, .taskmaster: return .raft
-        case .lizard, .kraven, .magneto, .sabretooth: return .savageLand
+        case .lizard, .kraven, .sabretooth: return .savageLand
+        case .magneto: return .asteroidM
         case .juggernaut, .mystique, .sentinel: return .xMansion
-        case .apocalypse: return .attilan
+        case .apocalypse: return .krakoa
         case .modok, .hydraAgent, .aimAgent, .zemo: return .hydraBase
         case .dormammu: return .darkDimension
         case .kingpin, .bullseye, .handNinja: return .hellsKitchen
@@ -200,17 +206,23 @@ extension Location {
         case .maestro: return .sakaar
         case .malekith, .frostGiant: return .jotunheim
         case .surtur, .kurse: return .muspelheim
+        case .missMinutes: return .tva
+        case .callisto: return .morlockTunnels
+        case .exodus: return .asteroidM
+        case .soulEater: return .taLo
+        case .redRoomWidow: return .redRoom
         }
     }
 
     static func home(of hero: Companion) -> Location {
         switch hero {
-        case .ironMan, .vision: return .avengersTower
+        case .vision: return .avengersTower
+        case .ironMan: return .starkWorkshop
         case .captainAmerica, .blackWidow, .falcon, .nickFury: return .helicarrier
         case .thor: return .asgard
         case .hulk: return .sakaar
         case .hawkeye: return .battleOfNewYork
-        case .spiderMan: return .dailyBugle
+        case .spiderMan: return .newYorkStreets
         case .blackPanther: return .wakanda
         case .doctorStrange: return .sanctum
         case .scarletWitch, .winterSoldier: return .hydraBase
@@ -223,21 +235,25 @@ extension Location {
         case .cyclops, .storm, .jeanGrey, .professorX, .beast, .nightcrawler, .iceman: return .xMansion
         case .humanTorch, .mrFantastic, .invisibleWoman, .thing: return .baxterBuilding
         case .daredevil, .deadpool, .moonKnight: return .hellsKitchen
-        case .shangChi: return .kamarTaj
+        case .shangChi: return .taLo
         case .msMarvel: return .attilan
         case .ghostRider: return .darkDimension
-        case .warMachine, .sentry, .blackKnight: return .avengersTower
+        case .sentry, .blackKnight: return .avengersTower
+        case .warMachine: return .avengersCompound
         case .wiccan, .speed, .quicksilver: return .sokovia
         case .kateBishop, .spiderGwen: return .dailyBugle
-        case .yelena, .psylocke, .domino, .x23, .blade: return .madripoor
+        case .psylocke, .domino, .x23, .blade: return .madripoor
+        case .yelena: return .redRoom
         case .okoye, .shuri: return .wakanda
         case .valkyrie, .korg: return .sakaar
         case .wong: return .kamarTaj
         case .hercules, .throg: return .asgard
         case .cosmo, .kraglin, .adamWarlock, .howardTheDuck: return .knowhere
-        case .nova, .monicaRambeau: return .hala
+        case .monicaRambeau: return .hala
+        case .nova: return .xandar
         case .kittyPryde, .jubilee, .banshee, .angel: return .xMansion
-        case .bishop, .cable, .havok, .emmaFrost: return .genosha
+        case .bishop, .cable, .havok: return .genosha
+        case .emmaFrost: return .krakoa
         case .milesMorales, .lukeCage: return .harlem
         case .spiderWoman: return .helicarrier
         case .blackCat, .jessicaJones, .punisher: return .hellsKitchen
@@ -246,6 +262,12 @@ extension Location {
         case .doctorVoodoo: return .sanctum
         case .squirrelGirl, .jeffTheLandShark, .forbushMan: return .baxterBuilding
         case .lockjaw: return .attilan
+        case .mobius, .sylvie, .kidLoki, .alligatorLoki, .hunterB15: return .tva
+        case .redGuardian: return .redRoom
+        case .kaZar, .zabu: return .savageLandCitadel
+        case .rescue: return .avengersCompound
+        case .morris: return .taLo
+        case .dumE: return .starkWorkshop
         }
     }
 }
@@ -267,6 +289,7 @@ extension Cast {
         (.spiderMan, .scorpion), (.milesMorales, .hobgoblin), (.rocket, .highEvolutionary), (.captainMarvel, .kreeSoldier),
         (.lukeCage, .tombstone), (.ironFist, .handNinja), (.thor, .absorbingMan), (.mrFantastic, .annihilus),
         (.ironMan, .crimsonDynamo), (.thor, .frostGiant), (.spiderGwen, .lizard),
+        (.sylvie, .missMinutes), (.blackWidow, .redRoomWidow), (.shangChi, .soulEater), (.storm, .callisto), (.cyclops, .exodus),
     ]
 
     func isNemesis(of other: Cast) -> Bool {
