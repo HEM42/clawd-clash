@@ -98,7 +98,7 @@ cask "avengers-clawd-wars" do
 
   url "https://github.com/rodclemen/avengers-clawd-wars/releases/download/v#{version}/Avengers-Clawd-Wars-#{version}.zip"
   name "Avengers: Clawd Wars"
-  desc "Claude Code sessions as a pixel-art Star Wars battle on your desktop"
+  desc "Claude Code sessions as a pixel-art Marvel battle on your desktop"
   homepage "https://github.com/rodclemen/avengers-clawd-wars"
 
   depends_on macos: :ventura
