@@ -1,9 +1,10 @@
 import AppKit
 
-// Renders Resources/AppIcon.png (1024²): Captain America holding his shield into Thanos' gauntlet blast on a
-// starfield, drawn with the app's own sprite code. build.sh turns it into AppIcon.icns.
-//   swiftc Sources/App/{Pixel,Characters,Fights,Roster,Pose,Locations,Cast,Habits}.swift Sources/App/Art/*.swift \
-//          Sources/App/Places/*.swift Sources/Shared/*.swift Tools/MakeIcon/main.swift -o build/makeicon \
+// Renders Resources/AppIcon.png (1024²): Darth Vader and Captain America mid-duel, saber against shield, on a
+// starfield: one from each of Clawd Clash's universes, drawn with the app's own sprite code. build.sh turns it into
+// AppIcon.icns.
+//   swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Icon,Rides}.swift \
+//          Sources/App/Universes/**/*.swift Sources/Shared/*.swift Tools/MakeIcon/main.swift -o build/makeicon \
 //          && build/makeicon Resources/AppIcon.png
 
 let size: CGFloat = 1024
@@ -42,7 +43,7 @@ ctx.fill(CGRect(x: 0, y: 0, width: size, height: 318))
 ctx.setFillColor(CGColor(red: 0.85, green: 0.47, blue: 0.34, alpha: 1))   // Claude-orange horizon
 ctx.fill(CGRect(x: 0, y: 318, width: size, height: p))
 
-// The fight, frozen mid-blast: Thanos on the left, Cap on the right blocking with his shield
+// The duel, frozen on a clash: Vader on the left, Cap on the right
 let t = 0.55
 let dist = 170.0 / 3                     // duel distance in sprite pixels, as in the app
 let centerL = 512 - CGFloat(dist) / 2 * p, centerR = 512 + CGFloat(dist) / 2 * p
@@ -61,7 +62,7 @@ func put(_ c: PixelCanvas, center: CGFloat, mirrored: Bool) {
     }
     ctx.restoreGState()
 }
-let left = Cast.villain(.thanos), right = Cast.hero(.captainAmerica)
+let left = Cast.villain(SWVillain.vader), right = Cast.hero(MarvelHero.captainAmerica)   // one from each universe, mid-duel
 let (lRole, rRole) = fightRoles(left.weapon, right.weapon)
 let lc = PixelCanvas(72, 52)
 left.draw(lc, t: t, mode: .working, walking: false, role: lRole, asSession: true)
