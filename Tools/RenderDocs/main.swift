@@ -1,8 +1,8 @@
 import AppKit
 
 // Renders the README's roster and locations images with the app's own sprite code.
-//   swiftc -swift-version 5 Sources/App/{Pixel,Characters,Fights,Roster,Pose,Locations,Cast,Habits}.swift \
-//          Sources/App/Art/*.swift Sources/App/Places/*.swift Sources/Shared/*.swift \
+//   swiftc -swift-version 5 Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Icon,Rides}.swift \
+//          Sources/App/Universes/**/*.swift Sources/Shared/*.swift \
 //          Tools/RenderDocs/main.swift -o build/renderdocs && build/renderdocs docs
 
 let out = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "docs"
@@ -41,37 +41,35 @@ func put(_ c: PixelCanvas, in ctx: CGContext, cellX: CGFloat, cellW: CGFloat, gr
                              width: b.width * scale, height: b.height * scale))
 }
 
-// MARK: Roster
+// MARK: Roster (one sheet per universe)
 
 let scale: CGFloat = 3, cellW: CGFloat = 190, rowH: CGFloat = 190, cols = 5
-let villains = Leader.allCases, heroes = Companion.allCases
-let vRows = (villains.count + cols - 1) / cols, hRows = (heroes.count + cols - 1) / cols
 let titleH: CGFloat = 54
-let rosterH = Int(titleH * 2 + CGFloat(vRows + hRows) * rowH + 20)
-let roster = canvas(Int(cellW) * cols, rosterH) { ctx in
-    var top = CGFloat(rosterH)
-    func section(_ title: String, _ count: Int, rows: Int, _ draw: (Int, PixelCanvas) -> String) {
-        top -= titleH
-        label(title, 20, top + 16, size: 20, color: NSColor(srgbRed: 1, green: 0.91, blue: 0.12, alpha: 1))
-        for i in 0..<count {
-            let c = PixelCanvas(Sprite.width, Sprite.height)
-            let name = draw(i, c)
-            let x = CGFloat(i % cols) * cellW, rowTop = top - CGFloat(i / cols + 1) * rowH
-            put(c, in: ctx, cellX: x, cellW: cellW, ground: rowTop + 34, scale: scale)
-            label(name, x, rowTop + 10, width: cellW)
+func roster(_ u: Universe) {
+    let theme = Theme.of(u)
+    let villains = theme.cast.filter(\.isDark), heroes = theme.cast.filter { !$0.isDark }
+    let vRows = (villains.count + cols - 1) / cols, hRows = (heroes.count + cols - 1) / cols
+    let rosterH = Int(titleH * 2 + CGFloat(vRows + hRows) * rowH + 20)
+    let sheet = canvas(Int(cellW) * cols, rosterH) { ctx in
+        var top = CGFloat(rosterH)
+        func section(_ title: String, _ who: [Cast], rows: Int, t: Double) {
+            top -= titleH
+            label(title, 20, top + 16, size: 20, color: NSColor(srgbRed: 1, green: 0.91, blue: 0.12, alpha: 1))
+            for (i, w) in who.enumerated() {
+                let c = PixelCanvas(Sprite.width, Sprite.height)
+                w.draw(c, t: t, mode: .working, walking: false, role: .none, asSession: false)
+                let x = CGFloat(i % cols) * cellW, rowTop = top - CGFloat(i / cols + 1) * rowH
+                put(c, in: ctx, cellX: x, cellW: cellW, ground: rowTop + 34, scale: scale)
+                label(w.name, x, rowTop + 10, width: cellW)
+            }
+            top -= CGFloat(rows) * rowH
         }
-        top -= CGFloat(rows) * rowH
+        section("THE HEROES", heroes, rows: hRows, t: 0.4)
+        section("THE VILLAINS", villains, rows: vRows, t: 0.62)
     }
-    section("THE HEROES", heroes.count, rows: hRows) { i, c in
-        Cast.hero(heroes[i]).draw(c, t: 0.4, mode: .working, walking: false, role: .none, asSession: false)
-        return heroes[i].name
-    }
-    section("THE VILLAINS", villains.count, rows: vRows) { i, c in
-        Cast.villain(villains[i]).draw(c, t: 0.62, mode: .working, walking: false, role: .none, asSession: false)
-        return villains[i].name
-    }
+    save(sheet, "roster-\(u.key.lowercased()).png")
 }
-save(roster, "roster.png")
+for u in Universe.allCases { roster(u) }
 
 // MARK: Desktop
 
@@ -143,27 +141,33 @@ let desktop = canvas(2600, 400) { ctx in
 save(desktop, "desktop.png")
 print("wrote \(out)/desktop.png")
 
-// MARK: Locations
+// MARK: Locations (one sheet per universe)
 
 let lw = 250, lh = 70, lscale: CGFloat = 2, lcols = 3
-let locs = Location.allCases
-let lRows = (locs.count + lcols - 1) / lcols
 let cellLW = CGFloat(lw) * lscale, cellLH = CGFloat(lh) * lscale + 26
-let locations = canvas(Int(cellLW) * lcols + (lcols - 1) * 8, Int(cellLH) * lRows) { ctx in
-    for (i, l) in locs.enumerated() {
-        let c = PixelCanvas(lw, lh); l.drawStatic(c, floorRows: 10)
-        let a = PixelCanvas(lw, lh); l.drawAnimated(a, floorRows: 10, t: 1.3)
-        let x = CGFloat(i % lcols) * (cellLW + 8), y = CGFloat(lRows - 1 - i / lcols) * cellLH
-        ctx.draw(c.makeImage()!, in: CGRect(x: x, y: y + 22, width: cellLW, height: CGFloat(lh) * lscale))
-        ctx.draw(a.makeImage()!, in: CGRect(x: x, y: y + 22, width: cellLW, height: CGFloat(lh) * lscale))
-        label(l.name, x, y + 4, size: 12, color: NSColor(white: 0.85, alpha: 1), width: cellLW)
+func locationSheet(_ u: Universe) {
+    let locs = Location.all(in: u)
+    let lRows = (locs.count + lcols - 1) / lcols
+    let sheet = canvas(Int(cellLW) * lcols + (lcols - 1) * 8, Int(cellLH) * lRows) { ctx in
+        for (i, l) in locs.enumerated() {
+            let c = PixelCanvas(lw, lh); l.drawStatic(c, floorRows: 10)
+            let a = PixelCanvas(lw, lh); l.drawAnimated(a, floorRows: 10, t: 1.3)
+            let x = CGFloat(i % lcols) * (cellLW + 8), y = CGFloat(lRows - 1 - i / lcols) * cellLH
+            ctx.draw(c.makeImage()!, in: CGRect(x: x, y: y + 22, width: cellLW, height: CGFloat(lh) * lscale))
+            ctx.draw(a.makeImage()!, in: CGRect(x: x, y: y + 22, width: cellLW, height: CGFloat(lh) * lscale))
+            label(l.name, x, y + 4, size: 12, color: NSColor(white: 0.85, alpha: 1), width: cellLW)
+        }
     }
+    save(sheet, "locations-\(u.key.lowercased()).png")
 }
-save(locations, "locations.png")
-print("wrote \(out)/roster.png and \(out)/locations.png")
+for u in Universe.allCases { locationSheet(u) }
+print("wrote the roster and location sheets to \(out)")
 
 // MARK: Social preview (1280×640, for GitHub → Settings → Social preview)
 
+/// A 1280×640 preview: a title, a line under it, and face-offs on the horizon. Each group's first half faces right,
+/// its second half left; groups (one per universe) stand apart.
+func socialPreview(title: String, subtitle: String, groups: [[Cast]], file: String) {
 let social = canvas(1280, 640) { ctx in
     let space = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
                            colors: [CGColor(red: 0.16, green: 0.10, blue: 0.30, alpha: 1),
@@ -180,9 +184,9 @@ let social = canvas(1280, 640) { ctx in
     // title
     let yellow = NSColor(srgbRed: 1, green: 0.91, blue: 0.12, alpha: 1)
     let titleFont = NSFont(name: "Futura-CondensedExtraBold", size: 80) ?? .systemFont(ofSize: 84, weight: .black)
-    let title = NSAttributedString(string: "AVENGERS: CLAWD WARS", attributes: [.font: titleFont, .foregroundColor: yellow, .kern: 8])
+    let title = NSAttributedString(string: title, attributes: [.font: titleFont, .foregroundColor: yellow, .kern: 8])
     title.draw(at: NSPoint(x: (1280 - title.size().width) / 2, y: 470))
-    let sub = NSAttributedString(string: "Your Claude Code sessions as a pixel-art Marvel battle on your desktop",
+    let sub = NSAttributedString(string: subtitle,
                                  attributes: [.font: NSFont.systemFont(ofSize: 26, weight: .semibold), .foregroundColor: NSColor(white: 0.9, alpha: 1)])
     sub.draw(at: NSPoint(x: (1280 - sub.size().width) / 2, y: 418))
     // the crew, standing on the horizon
@@ -191,28 +195,46 @@ let social = canvas(1280, 640) { ctx in
     func pose(_ who: Cast) -> (PixelCanvas) -> Void {
         { who.draw($0, t: 0.3, mode: .waiting, walking: false, role: .none, asSession: true) }
     }
-    let heroes = [Cast.hero(.thor), .hero(.spiderMan), .hero(.captainAmerica), .hero(.ironMan)].map(pose)
-    let villains = [Cast.villain(.thanos), .villain(.loki), .villain(.greenGoblin), .villain(.venom)].map(pose)
     var s: CGFloat = 4, gap: CGFloat = 26, middle: CGFloat = 90
     var sprites: [(img: CGImage, w: CGFloat, h: CGFloat, bottomGap: CGFloat)] = []
-    for (i, draw) in (heroes + villains).enumerated() {
-        let c = PixelCanvas(Sprite.width, Sprite.height); draw(c)
-        if i >= heroes.count { c.flipHorizontally() }
+    var breaks: Set<Int> = []                       // sprite indexes after which a wider gap comes
+    var flat: [(Cast, Bool)] = []
+    for g in groups {
+        for (k, who) in g.enumerated() { flat.append((who, k >= g.count / 2)) }
+        breaks.insert(flat.count - 1 - g.count / 2); breaks.insert(flat.count - 1)
+    }
+    for (who, facingLeft) in flat {
+        let c = PixelCanvas(Sprite.width, Sprite.height); pose(who)(c)
+        if facingLeft { c.flipHorizontally() }
         c.addOutline(C(0xFFFFFF, 0.92))
         guard let b = c.opaqueBounds(), let img = c.makeImage()?.cropping(to: b) else { continue }
         sprites.append((img, b.width * s, b.height * s, CGFloat(Sprite.height) - b.maxY))
     }
-    var total = sprites.reduce(0) { $0 + $1.w } + gap * CGFloat(sprites.count - 2) + middle
+    let gaps = (0..<(sprites.count - 1)).map { breaks.contains($0) ? middle : gap }
+    var total = sprites.reduce(0) { $0 + $1.w } + gaps.reduce(0, +)
+    var k: CGFloat = 1
     if total > 1200 {                       // too wide: shrink everyone (and the spacing) to fit with margins
-        let k = 1200 / total
-        s *= k; gap *= k; middle *= k; total = 1200
+        k = 1200 / total
+        s *= k; total = 1200
         sprites = sprites.map { ($0.img, $0.w * k, $0.h * k, $0.bottomGap) }
     }
     var x = (1280 - total) / 2
     for (i, sp) in sprites.enumerated() {
         ctx.draw(sp.img, in: CGRect(x: x, y: 150 + (sp.bottomGap - 8) * s, width: sp.w, height: sp.h))
-        x += sp.w + (i == heroes.count - 1 ? middle : gap)
+        if i < gaps.count { x += sp.w + gaps[i] * k }
     }
 }
-save(social, "social-preview.png")
-print("wrote \(out)/social-preview.png")
+save(social, file)
+}
+socialPreview(title: "CLAWD CLASH", subtitle: "Your Claude Code sessions as a pixel-art Star Wars or Marvel battle",
+              groups: [[.hero(SWHero.luke), .villain(SWVillain.vader)], [.hero(MarvelHero.captainAmerica), .villain(MarvelVillain.thanos)]],
+              file: "social-preview.png")
+socialPreview(title: "CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Star Wars battle on your desktop",
+              groups: [[.hero(SWHero.luke), .hero(SWHero.han), .hero(SWHero.leia), .hero(SWHero.yoda),
+                        .villain(SWVillain.vader), .villain(SWVillain.boba), .villain(SWVillain.kylo), .villain(SWVillain.trooper)]],
+              file: "social-preview-starwars.png")
+socialPreview(title: "AVENGERS: CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Marvel battle on your desktop",
+              groups: [[.hero(MarvelHero.thor), .hero(MarvelHero.spiderMan), .hero(MarvelHero.captainAmerica), .hero(MarvelHero.ironMan),
+                        .villain(MarvelVillain.thanos), .villain(MarvelVillain.loki), .villain(MarvelVillain.greenGoblin), .villain(MarvelVillain.venom)]],
+              file: "social-preview-marvel.png")
+print("wrote the social previews to \(out)")
