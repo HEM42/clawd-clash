@@ -52,4 +52,10 @@ Avengers: Clawd Wars is the sister app of [Clawd Wars](https://github.com/rodcle
 ### Fixed (from Clawd Wars)
 - **"Needs you" waits as long as it takes**: a session waiting for your answer no longer gives up after 15 minutes and falls asleep; it keeps its "!" until you answer, and goes idle at once if you press Esc (read from the session's transcript). Brought over from a fix in Clawd Wars.
 
+### Docs (later)
+- **The promo**: a 50-second 1080p trailer with its own soundtrack (`promo/avengers-clawd-wars-promo.mp4`) and its storyboard, rendered by `Tools/RenderPromo` from the app's art, linked from the top of the README.
+- **A centred social preview**: four heroes facing four villains under the title, instead of a line running off one side.
+- **"Sister app", not "fork"**: the README, changelog, llms.txt and the GitHub description describe Avengers: Clawd Wars as Clawd Wars' sister app.
+- **No em dashes** anywhere in the docs, menus, hover cards, banners or code comments.
+
 Eleven artists drew ninety-two Clawds in an afternoon, and all of them argued about whose hammer was coolest.
