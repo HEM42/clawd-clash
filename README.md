@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="Resources/AppIcon.png" width="180" alt="Avengers: Clawd Wars icon">
+  <img src="Resources/AppIcon.png" width="180" alt="Clawd Clash icon: Darth Vader and Captain America mid-duel">
 </p>
 
-<h1 align="center">Avengers: Clawd Wars</h1>
+<h1 align="center">Clawd Clash</h1>
 
 <p align="center">
-  <b>Your Claude Code, Codex, Qwen Code, Gemini CLI and GitHub Copilot CLI sessions, as a pixel-art Marvel battle on your desktop.</b><br>
+  <b>Your Claude Code, Codex, Qwen Code, Gemini CLI and GitHub Copilot CLI sessions, as a pixel-art Star Wars or Marvel battle on your desktop.</b><br>
   Every session is a hero or a villain, every subagent joins in, and they fight while they work.
 </p>
 
@@ -17,94 +17,86 @@
   <img src="https://img.shields.io/badge/free-to%20use-brightgreen" alt="Free to use">
 </p>
 
-https://github.com/user-attachments/assets/ed78aa3c-79ec-4827-a56b-b6590f905686
-
-<p align="center"><sub>🔊 <b>Click the speaker in the player for sound</b>: GitHub starts videos muted. Full 1080p version: <a href="promo/avengers-clawd-wars-promo.mp4">promo/avengers-clawd-wars-promo.mp4</a></sub></p>
-
 <p align="center">
-  <img src="docs/desktop.png" alt="Sessions and agents fighting along the bottom of the screen: Thanos blasting Iron Man in the air, Spider-Man webbing the Green Goblin, Wolverine and Sabretooth, Red Skull firing at Captain America's shield">
+  <img src="docs/social-preview.png" alt="Luke against Vader, Captain America against Thanos" width="760">
 </p>
 
-The sister app of [Clawd Wars](https://github.com/rodclemen/clawd-wars), the Star Wars one: same engine, same habits, a different universe.
+Clawd Clash is one app with two universes: **Star Wars** (formerly [Clawd Wars](https://github.com/rodclemen/clawd-wars)) and **Marvel** (formerly [Avengers: Clawd Wars](https://github.com/rodclemen/avengers-clawd-wars)). Pick one from the menu; a scene never mixes them. Those two pages show each universe on its own; this one is the app.
+
+| Star Wars | Marvel |
+|---|---|
+| https://github.com/user-attachments/assets/84cbea65-6fb8-452a-b4d6-811c69c301cc | https://github.com/user-attachments/assets/ed78aa3c-79ec-4827-a56b-b6590f905686 |
+
+<p align="center"><sub>🔊 Click the speaker in a player for sound: GitHub starts videos muted.</sub></p>
 
 ---
 
 ## Contents
 
-- [Why you want this](#why-you-want-this)
-- [Claude vs Codex vs everyone](#claude-vs-codex-vs-everyone)
-- [The roster](#the-roster)
-- [How they fight](#how-they-fight)
+- [What it does](#what-it-does)
+- [Two universes](#two-universes)
 - [Window mode and the screen saver](#window-mode-and-the-screen-saver)
 - [The little things](#the-little-things)
 - [Install](#install)
+- [Coming from Clawd Wars or Avengers: Clawd Wars](#coming-from-clawd-wars-or-avengers-clawd-wars)
 - [How it works](#how-it-works)
 - [Uninstall](#uninstall)
 - [Contributing](#contributing)
 - [License](#license)
 
-## Why you want this
+## What it does
 
-You run Claude Code in three terminals. One is thinking, one is waiting for your permission, one finished ten minutes ago and you didn't notice. You alt-tab around to find out.
+You run Claude Code in three terminals. One is thinking, one is waiting for your permission, one finished ten minutes ago and you didn't notice. Clawd Clash tells you at a glance, without switching windows.
 
-**Avengers: Clawd Wars tells you at a glance, without switching windows.**
-
-- 🛡️ **Working?** Your Claude fights: Cap swings his shield, Iron Man fires repulsors, Doctor Strange casts.
-- 💭 **Thinking?** A thought bubble.
-- ❗ **Needs you?** A red `!`, and if you ignore it for a minute, it starts jumping up and down. It keeps asking until you answer, however long that takes; press Esc instead and it stands down.
-- 😴 **Done and idle?** It stops fighting and stands about with habits of its own every 10–20 seconds: it glances over its shoulder, shifts its weight, swings its hammer round, checks its gun, lets magic crackle in its hand. And nearly everyone has a move all their own: Iron Man flips his faceplate up, Wolverine pops his claws (SNIKT), Thanos snaps, Loki turns into a snake, Star-Lord dances with his Walkman, Nightcrawler BAMFs away and back, Deadpool eats a chimichanga, the Grandmaster dances and laughs. After a couple of minutes it sits down; after five it's asleep (zZz).
-- 🦸 **Spawned subagents?** They walk (or fly, or swing) in one by one, each labelled with *what it's doing*, and they leave when they finish. Flyers take off; Cap, Black Widow, Hawkeye, Nick Fury and the Hulk get picked up by the Quinjet, and the Guardians by the Milano.
-- 🔍 **Want details?** Hover any character: status, how long, the tool it's running right now, your last prompt.
-- 🖱️ **Click any of them** to jump straight to that session's terminal or VS Code tab.
-
-It sits on the bottom of your screen, above every window, and it's click-through everywhere except the characters. No dashboard to open, no tab to check.
-
-## Claude vs Codex vs everyone
-
-**Claude Code plays the heroes.** Run it alongside **OpenAI Codex**, **Qwen Code**, **Gemini CLI** or **GitHub Copilot CLI** and Claude's sessions and agents are Avengers, X-Men and friends, while the other AI's are Thanos, Doom, Magneto and the rest. With only Claude running, anyone can turn up, so heroes and villains mix.
-
-You can tell the AIs apart at a glance: Claude's characters keep the white outline; Codex gets cyan, Qwen Code lavender, Gemini CLI gold and Copilot CLI mint. Claude Code sessions in the **Claude desktop app** have a coral outline.
-
-## The roster
-
-Every character is Clawd (Claude Code's little pixel mascot) in costume, drawn in code: no sprite sheets, no image assets (even the app icon is rendered by the same code). Mostly classic comic looks, the film version where it reads better. Nearly every one has a signature move it does when idle.
+- **Working?** Your Claude fights: a lightsaber, a shield, repulsors, a spell.
+- **Thinking?** A thought bubble.
+- **Needs you?** A red `!`, and if you ignore it for a minute, it starts jumping up and down. It keeps asking until you answer; press Esc instead and it stands down.
+- **Done and idle?** It stops fighting and passes the time with habits of its own, and most characters have a signature move (R2-D2 plays Leia's message, Han spins his blaster, Iron Man flips his faceplate up, Thanos snaps). After a couple of minutes it sits down; after five it's asleep (zZz).
+- **Spawned subagents?** They walk (or fly, or swing) in one by one, each labelled with what it's doing, and leave when they finish.
+- **Hover** any character for the details; **click** it to jump straight to that session's terminal or editor tab.
 
 <p align="center">
-  <img src="docs/roster.png" alt="All heroes and villains" width="760">
+  <img src="docs/desktop-starwars.png" alt="Star Wars sessions and agents fighting along the bottom of the screen"><br>
+  <img src="docs/desktop-marvel.png" alt="Marvel sessions and agents fighting along the bottom of the screen">
 </p>
 
-**105 heroes**: Iron Man, Captain America, Thor, Hulk, Black Widow, Hawkeye, Spider-Man, Black Panther, Doctor Strange, Scarlet Witch, Vision, Captain Marvel, Ant-Man, Wasp, Falcon, Winter Soldier, Star-Lord, Gamora, Drax, Rocket, Groot, Mantis, Nick Fury, She-Hulk, Wolverine, Cyclops, Storm, Jean Grey, Professor X, Beast, Nightcrawler, Gambit, Rogue, Iceman, Colossus, Human Torch, The Thing, Mr. Fantastic, Invisible Woman, Silver Surfer, Daredevil, Deadpool, Shang-Chi, Ms. Marvel, Moon Knight, Ghost Rider, War Machine, Wiccan, Speed, Quicksilver, Kate Bishop, Yelena Belova, Okoye, Shuri, Valkyrie, Korg, Wong, Hercules, Sentry, Cosmo, Kraglin, Adam Warlock, Nova, Kitty Pryde, Jubilee, Psylocke, Bishop, Cable, Havok, Emma Frost, Banshee, Angel, Domino, X-23, Miles Morales, Spider-Gwen, Spider-Woman, Black Cat, Luke Cage, Iron Fist, Jessica Jones, The Punisher, Elektra, Blade, Black Knight, Monica Rambeau, Clea, Doctor Voodoo, Howard the Duck, Squirrel Girl, Jeff the Land Shark, Throg, Lockjaw, Forbush Man, Mobius, Sylvie, Kid Loki, Alligator Loki, Hunter B-15, Red Guardian, Ka-Zar, Rescue, Zabu, Morris and Dum-E. Jeff the Land Shark, Zabu, Morris and Dum-E only ever show up as agents.
+## Two universes
 
-**88 villains**: Thanos, Loki, Ultron, Red Skull, Doctor Doom, Hela, Ronan, Nebula, Ebony Maw, Chitauri, Grandmaster, Ultron Sentry, Green Goblin, Venom, Carnage, Doctor Octopus, Mysterio, Electro, Vulture, Rhino, Sandman, Lizard, Kraven, Magneto, Juggernaut, Sabretooth, Mystique, Apocalypse, Sentinel, Abomination, Fin Fang Foom, MODOK, Dormammu, Doombot, Kingpin, Bullseye, Hand Ninja, Hydra Agent, A.I.M. Agent, Skrull, Taskmaster, Baron Zemo, Whiplash, Mandarin, Killmonger, Batroc, Galactus, Kang, Mephisto, Knull, Annihilus, High Evolutionary, Morgan le Fay, Scorpion, Shocker, Hobgoblin, Morbius, Mister Negative, Chameleon, Tombstone, Mister Sinister, Omega Red, Toad, Pyro, Blob, Brood, Cassandra Nova, Graviton, Absorbing Man, Crimson Dynamo, Wrecker, Baron Mordo, Enchantress, Arnim Zola, Count Nefaria, The Leader, Maestro, Malekith, Surtur, Kurse, Frost Giant, Hydra Super Soldier, Kree Soldier, Miss Minutes, Callisto, Exodus, Soul Eater and Red Room Widow. The Ultron Sentry and the Doombot only ever show up as agents.
+Choose from the menu bar icon: **Universe → Star Wars** or **Marvel**. Switching recasts everyone on screen (each character becomes the one in the same place in the other cast, on the same side), moves the scene to one of the new universe's places, and changes the menu bar icon (Vader's helmet or Captain America's shield).
 
-## How they fight
-
-| Style | Who | What happens |
+| | Star Wars | Marvel |
 |---|---|---|
-| melee vs melee | shields, hammers, claws, fists, swords | they close in and duel; blows clash with sparks (the giants stand back a bit) |
-| ranged vs melee | repulsors, webs, arrows, bullets vs Cap, Thor, Wolverine… | the shots come in, the shield or hammer knocks each one away |
-| magic vs melee | Strange, Wanda, Loki, Thanos' gauntlet vs a blade or shield | the weapon holds the stream back |
-| magic vs ranged | | the gunner gets zapped |
-| ranged vs ranged | | a proper shoot-out: they duck, shots collide mid-air, shields flash, shots ping off armour |
-| odd one out | | cheers the others on, with sparkles |
+| Cast | 46 villains, 35 heroes | 88 villains, 105 heroes |
+| Places | 22, from the Mos Eisley cantina to Hoth | 43, from Avengers Tower to Ta Lo |
+| Weapons | lightsabers, blasters, Force lightning | shields, hammers, claws, repulsors, webs, arrows, magic |
+| Set pieces | Han and Greedo face off, and Han shoots first; the Falcon picks Han up | arch-enemies face off first; the Quinjet and the Milano pick people up; flyers take to the air and fight from there |
+| Sides | whoever came first keeps their side; Vader and Kylo never lead back to back | Claude Code plays the heroes when another AI runs |
 
-Every shooter has its own shots: Iron Man's and Captain Marvel's blasts, Cyclops' and the Sentinels' beams, Spider-Man's webs, Hawkeye's arrows, the Torch's and Fin Fang Foom's fire, Iceman's ice, Gambit's charged cards, Bullseye's knives, the Goblin's pumpkin bombs. Magic streams come in each caster's colours: Strange orange, Wanda red, Loki green, Thanos purple, Storm and Electro as forked lightning.
+<details>
+<summary><b>The Star Wars cast and places</b></summary>
+<p align="center"><img src="docs/roster-starwars.png" alt="All Star Wars characters" width="760"></p>
+<p align="center"><img src="docs/locations-starwars.png" alt="All Star Wars places" width="760"></p>
+</details>
 
-**Arch-enemies find each other first**: whenever both are fighting, Captain America takes on Red Skull, Thor takes Loki or Hela, Spider-Man the Green Goblin or Venom, Wolverine Sabretooth, Black Panther Killmonger, Doctor Strange Dormammu, the Hulk the Abomination, Daredevil the Kingpin or Bullseye, and more, wherever they are in the line.
-
-**They move like themselves**: Iron Man, Thor, Captain Marvel, Vision, Storm, the Surfer and the other flyers take off when they cross the stage and land where they're going (and fly away when they're done); Doctor Strange, Magneto, MODOK and Dormammu hover; Spider-Man swings on a web line.
+<details>
+<summary><b>The Marvel cast and places</b></summary>
+<p align="center"><img src="docs/roster-marvel.png" alt="All Marvel characters" width="760"></p>
+<p align="center"><img src="docs/locations-marvel.png" alt="All Marvel places" width="760"></p>
+</details>
 
 ## Window mode and the screen saver
 
-It opens in a window by default (switch to the desktop from the menu): the whole crew in a scene, with a card for every session: its project, what it's doing right now, your last prompt, its last reply, and its agents in a little tree.
-
-The scene is set **where the first session's character belongs**: Avengers Tower for Iron Man, the Sanctum for Doctor Strange, Wakanda for Black Panther, Titan for Thanos. 43 places, each with something moving: windows lighting up and a Quinjet crossing the Manhattan skyline, the Seal of the Vishanti in the Sanctum's window, Talon fighters over the Golden City, the Bifrost shimmering, the Sakaar crowd cheering, Knowhere's neon flickering, rain over Hell's Kitchen, Castle Doom in a lightning storm, the Chitauri pouring out of the portal over New York, Dormammu's face looming, pterodactyls over the Savage Land, Galactus devouring a planet past the Worldship's viewport, the TVA's clock ticking, Miss Minutes and all, the Quinjet on the Avengers Compound's pad, a hologram turning in Tony Stark's workshop, cabs and pigeons in Spider-Man's New York, lanterns over Ta Lo:
+It opens in a window by default (switch to the desktop from the menu): the whole crew in a scene set where the first session's character belongs, with a card for every session: its project, what it's doing right now, your last prompt, its last reply, and its agents in a little tree.
 
 <p align="center">
-  <img src="docs/locations.png" alt="All 43 locations" width="760">
+  <img src="docs/window-cantina.png" alt="Window mode in the Mos Eisley cantina" width="760">
 </p>
 
-**The screen saver** (Settings → Install Screen Saver…) shows the window's place full screen with the crew fighting across its floor, a card per session, name tags over every head, a clock and a crawl of what happened lately. Every 10 minutes it wipes to somewhere new. With nothing running, it puts on a show of its own: a random crew of heroes against villains, a local or two among them.
+**The screen saver** (Settings → Install Screen Saver…) shows the place full screen with the crew fighting across its floor, a card per session, name tags, a clock and a crawl of what happened lately, and wipes to somewhere new every 10 minutes. Its **Options…** button in System Settings picks the universe: the same as the app, Star Wars, Marvel, or Random (a new pick on each trip).
+
+<p align="center">
+  <img src="docs/screensaver.png" alt="The screen saver" width="760">
+</p>
 
 ## The little things
 
@@ -117,57 +109,72 @@ The scene is set **where the first session's character belongs**: Avengers Tower
 | sitting on the floor | idle for 2+ minutes |
 | zZz | idle for 5+ minutes |
 | bobbing yellow marker | the Claude whose terminal you're looking at right now |
-| matching label colours | a Claude and its agents share their project's colour |
+| outline colour | which AI: Claude white, Claude desktop app coral, Codex cyan, Qwen lavender, Gemini gold, Copilot mint |
 
-- **Double-click the menu bar shield** to hide or show the crew; a single click opens the menu.
-- **Drag** the crew anywhere on either monitor; **hover** for a details card; **click** to jump to the exact terminal tab or editor window.
-- **Status Symbols** in the menu is the same key, drawn with the app's own sprites.
+<p align="center">
+  <img src="docs/hover.png" alt="The hover card" width="640">
+</p>
+
+- **Double-click the menu bar icon** to hide or show the crew; a single click opens the menu.
+- **Keep Window on Top** (window mode) or **Keep Characters on Top** (desktop mode): off, the window behaves like any other, and the desktop crew lives on the desktop behind your windows.
+- **Drag** the crew anywhere on either monitor.
+- **Status Symbols** in the menu is this key, drawn with the app's own sprites.
 - Hold **⌘** in the menu for the **Playground** (put anyone on stage and watch them fight) and Demo Mode.
 
 ## Install
 
-Needs macOS 13+ (Apple Silicon or Intel) and at least one of [Claude Code](https://claude.com/claude-code), [Codex](https://developers.openai.com/codex), [Qwen Code](https://github.com/QwenLM/qwen-code), [Gemini CLI](https://github.com/google-gemini/gemini-cli) or [GitHub Copilot CLI](https://github.com/github/copilot-cli). It asks before connecting any of them, and only touches the ones you connect.
+Needs macOS 13+ (Apple Silicon or Intel) and at least one of [Claude Code](https://claude.com/claude-code), [Codex](https://developers.openai.com/codex), [Qwen Code](https://github.com/QwenLM/qwen-code), [Gemini CLI](https://github.com/google-gemini/gemini-cli) or [GitHub Copilot CLI](https://github.com/github/copilot-cli). Clawd Clash asks before connecting any of them, and only touches the ones you connect.
 
-**It lives happily next to Clawd Wars.** It has its own name, hook (`avengers-hook`), status file and screen saver, and each app only ever adds or removes its own hook entries.
+**With Homebrew:**
+
+```sh
+brew install --cask rodclemen/tap/clawd-clash
+```
+
+`rodclemen/tap/clawd-wars` and `rodclemen/tap/avengers-clawd-wars` install the same app, starting in Star Wars or Marvel. Or download the zip from [Releases](https://github.com/rodclemen/clawd-clash/releases), unzip it and drag **Clawd Clash** to Applications.
 
 **From source** (no Xcode project, no packages, only Apple's free Command Line Tools):
 
 ```sh
 xcode-select --install     # one time, if you don't have the developer tools
-git clone https://github.com/rodclemen/avengers-clawd-wars.git && cd avengers-clawd-wars
+git clone https://github.com/rodclemen/clawd-clash.git && cd clawd-clash
 ./build.sh --no-install    # build and run the copy in build/: nothing installed, no AI's settings changed
-./build.sh                 # build, install "Avengers Clawd Wars.app" to /Applications, refresh connected hooks, launch
+./build.sh                 # build, install "Clawd Clash.app" to /Applications, refresh connected hooks, launch
 ```
 
 Claude Code sessions that were already running pick up the hooks after a restart (`/exit`, then `claude --continue`). Until then they still show up, with a `?`.
 
-> **Codex users:** Codex only runs hooks you've approved. After connecting it, run **`/hooks`** in Codex once and approve Avengers: Clawd Wars.
+> **Codex users:** Codex only runs hooks you've approved. After connecting it, run **`/hooks`** in Codex once and approve Clawd Clash.
 
-Clicking to jump to a session in Terminal or iTerm2 asks once for **Automation** permission; jumping to VS Code or Cursor asks once for **Accessibility** permission. Building, signing and toolchain troubleshooting work exactly as in [Clawd Wars' README](https://github.com/rodclemen/clawd-wars#building-from-source-what-you-need).
+Clicking to jump to a session in Terminal or iTerm2 asks once for **Automation** permission; jumping to VS Code or Cursor asks once for **Accessibility** permission.
+
+## Coming from Clawd Wars or Avengers: Clawd Wars
+
+Clawd Clash replaces both. Through Homebrew, upgrading the `clawd-wars` or `avengers-clawd-wars` cask installs Clawd Clash in that universe. Installed by hand, it starts in the universe of the app it finds, and when it connects an AI it swaps the old app's hook for its own, so the old app can go. Star Wars keeps Clawd Wars' characters for sessions that are already running.
 
 ## How it works
 
-- A tiny Foundation-only binary, `avengers-hook`, is registered for each connected AI's hook events (session start/end, prompts, tool calls, permission requests, subagents, stop). It writes `~/.claude/avengers-status/state.json` under a file lock and exits silently, so it can never get in Claude's way.
+- A tiny Foundation-only binary, `clawd-clash-hook`, is registered for each connected AI's hook events (session start/end, prompts, tool calls, permission requests, subagents, stop). It writes `~/.claude/clawd-clash/state.json` under a file lock and exits silently, so it can never get in Claude's way. It casts new characters from the universe on show.
 - The app reads that twice a second, finds sessions without hooks from the process table, and drops a session the moment its process exits.
-- Everything you see (the characters, weapons, effects, locations, ships and the icon) is pixel art drawn in Swift at runtime. The whole app, art included, is a couple of megabytes; only the characters and the place on screen are ever drawn.
-- The first install backs up each AI's settings (`…before-avengers-clawd-wars`).
+- Everything you see (274 characters, their weapons and effects, 65 places, the ships, the icon) is pixel art drawn in Swift at runtime. The whole app is about 10 MB; only the characters and the place on screen are ever drawn.
 
 ## Uninstall
 
-Menu bar shield → **Settings → Remove … Hooks** for each connected AI, then **Quit**. Or from the terminal:
+With Homebrew: `brew uninstall --cask clawd-clash` (add `--zap` to also remove its settings and status file). Otherwise: menu bar icon → **Settings → Remove … Hooks** for each connected AI, then **Quit**, or from the terminal:
 
 ```sh
-"/Applications/Avengers Clawd Wars.app/Contents/MacOS/AvengersClawdWars" --uninstall-hooks
-rm -rf "/Applications/Avengers Clawd Wars.app" ~/.claude/avengers-status
+"/Applications/Clawd Clash.app/Contents/MacOS/ClawdClash" --uninstall-hooks
+rm -rf "/Applications/Clawd Clash.app" ~/.claude/clawd-clash
 ```
 
 ## Contributing
 
-Characters and places are data plus drawing code, with no assets to wrangle:
+Each universe lives in its own folder, `Sources/App/Universes/StarWars` and `Sources/App/Universes/Marvel`:
 
-- **A character** is a `Persona` (name, weapon, how it moves, what its shots or magic look like, its signature move) registered next to its drawing function in one of the `Sources/App/Art/*.swift` files. Add its case at the **end** of `Companion` (heroes) or `Leader` (villains) in `Sources/App/Roster.swift` (ids are saved, so never reorder), give it a home in `Location.home(of:)`, and bump the count in `Sources/Shared/StatusStore.swift`. `Sources/App/Pose.swift` explains what a drawing function gets and must do.
-- **A place** is a `Place` in one of the `Sources/App/Places/*.swift` files: a still picture and an optional moving layer.
-- **Check it** with the preview tool: `Tools/Preview/build.sh`, then `build/preview cast out.png thor` (every pose), `build/preview fight out.png thor loki`, `build/preview place out.png asgard`, `build/preview rides out.png`. Regenerate the README sheets with `Tools/RenderDocs` and the icon with `Tools/MakeIcon`.
+- **A character** is a `Persona` (name, weapon, how it moves, what its shots or magic look like, its signature move) registered next to its drawing function in the universe's `Art/*.swift` files. Add its case at the **end** of the universe's hero or villain enum (ids are saved, so never reorder), give it a home in the roster file, and bump the count in `Sources/Shared/Universe.swift`. `Sources/App/Pose.swift` explains what a drawing function gets and must do.
+- **A place** is a `Place` in the universe's `Places/` files: a still picture and an optional moving layer.
+- **A whole universe** is a `Theme` (`Sources/App/Theme.swift`): its cast, places, homes, arch-enemies, ships, menu bar icon. Add a case to `Universe` and a theme folder.
+- **Check it** with `Tools/Preview/build.sh`, then `build/preview cast out.png vader thor` (every pose), `build/preview fight out.png luke vader`, `build/preview place out.png cantina asgard`. `Tools/RenderDocs` renders this page's sheets, `Tools/MakeIcon` the icon.
 
 ## License
 
@@ -175,4 +182,4 @@ Characters and places are data plus drawing code, with no assets to wrangle:
 
 ---
 
-<p align="center"><sub>A fan project. Marvel and its characters belong to Marvel/Disney; Claude and Clawd belong to Anthropic.<br>Not affiliated with or endorsed by either.</sub></p>
+<p align="center"><sub>A fan project. Star Wars belongs to Lucasfilm/Disney, Marvel to Marvel/Disney; Claude and Clawd belong to Anthropic.<br>Not affiliated with or endorsed by any of them.</sub></p>

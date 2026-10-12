@@ -138,8 +138,8 @@ let desktop = canvas(2600, 400) { ctx in
                                             height: CGFloat(Sprite.height + headroom) * S))
     }
 }
-save(desktop, "desktop.png")
-print("wrote \(out)/desktop.png")
+save(desktop, "desktop-marvel.png")
+print("wrote \(out)/desktop-marvel.png")
 
 // MARK: Locations (one sheet per universe)
 
