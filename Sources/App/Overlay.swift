@@ -1031,6 +1031,36 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
         for a in actors where cheering.contains(a.key) && a.walkDir == 0 && a.leaving == nil { roles[a.key] = .cheer }
 
+        // Han shoots first: while the two stand facing off, now and then his bolt gets through. It starts on one of
+        // Han's own shots, so the bolt leaves his blaster; anyone walking off or leaving calls it off.
+        var shot: (han: String, greedo: String, e: Double, line: String)?
+        if let pair = fx.first(where: { ($0.0.cast.isHan && $0.1.cast.isGreedo) || ($0.0.cast.isGreedo && $0.1.cast.isHan) }) {
+            let han = pair.0.cast.isHan ? pair.0 : pair.1, greedo = pair.0.cast.isHan ? pair.1 : pair.0
+            if let s = greedoShot, s.han != han.key || s.greedo != greedo.key { greedoShot = nil }
+            if let s = greedoShot, now - s.start > GreedoShot.done {
+                greedoShot = nil
+                nextGreedoShot = now + GreedoShot.delay(first: false)
+            }
+            if greedoShot == nil {
+                if let next = nextGreedoShot, now >= next, case .shoot(let offset)? = roles[han.key] {
+                    let fire = (floor((t + offset) / blasterPeriod) + 1) * blasterPeriod - offset
+                    greedoShot = (han.key, greedo.key, start + fire, GreedoShot.greedoSays.randomElement() ?? "That hurt!")
+                    nextGreedoShot = nil
+                } else if nextGreedoShot == nil {
+                    nextGreedoShot = now + GreedoShot.delay(first: true)
+                }
+            }
+            if let s = greedoShot, now >= s.start {
+                let e = now - s.start
+                shot = (s.han, s.greedo, e, s.line)
+                incoming[s.han] = nil; incoming[s.greedo] = nil   // nobody ducks: Greedo doesn't see it coming
+                if e > GreedoShot.hit + 0.3 { roles[s.han] = .rest }   // blaster down, job done
+            }
+        } else {
+            greedoShot = nil
+            nextGreedoShot = nil
+        }
+
         if debug, Int(now * 2) != lastDebug {
             lastDebug = Int(now * 2)
             let line = actors.map { a in
@@ -1042,6 +1072,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let screenFrame = stage, ground = anchor.y
         var labels: [(item: DrawItem, leader: Bool, focused: Bool, key: String)] = []
         // Speech bubbles are placed after the names (see below), so they're kept here till then.
+        var speeches: [(key: String, item: DrawItem)] = []   // lines said over a head, placed above its name tag
         var bubbles: [(key: String, x: CGFloat, y: CGFloat, kind: BubbleKind, urgent: Bool, preferRight: Bool, alpha: CGFloat)] = []
         // Companions first so leaders (and their sabers) draw on top.
         var falconItems: [DrawItem] = []
@@ -1071,7 +1102,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             }
             if aboard { continue }
             if now < actor.born { continue }             // not on stage yet: don't draw what won't be shown
-            let canvas = PixelCanvas(Sprite.width, Sprite.height)
+            var canvas = PixelCanvas(Sprite.width, Sprite.height)
             let scale: CGFloat
             let y: CGFloat
             // Flyers ride up to `flightHeight` while they travel, and now and then take to the air where they stand
@@ -1090,8 +1121,19 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                          role: role ?? .none, asSession: false, airborne: walking && air > 0.3, aloft: !walking && air > 0.3)
                 scale = cs; y = ground + (ls - cs) * 8
             }
-            let pivotX = Sprite.bodyCenterX
+            var pivotX = Sprite.bodyCenterX, knockedTop: Int?
             var lift = air * Self.flightHeight * scale
+            // Greedo, shot: knocked head over heels, flat on his back, back on his feet (his own, bigger canvas).
+            if let s = shot, actor.key == s.greedo, s.e >= GreedoShot.hit {
+                let pose = GreedoShot.pose(s.e), who = actor.cast
+                let knocked = GreedoShot.sprite(e: s.e, t: t) { c in
+                    who.draw(c, t: t, mode: .idle, walking: pose.walking, role: .none, asSession: true)
+                }
+                canvas = knocked.canvas; knockedTop = knocked.top; pivotX = GreedoShot.pivotX
+                actor.x -= facing * CGFloat(pose.back) * scale
+                lift = CGFloat(pose.lift) * scale
+                walking = pose.walking
+            }
             if actor.cast.motion == .swing, walking {
                 let swing = actor.x / (70 * z)
                 lift = abs(sin(swing * .pi)) * 16 * scale
@@ -1137,10 +1179,15 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 bubbles.append((actor.key, actor.x, by, kind, actor.urgent, onRight, CGFloat(alpha)))
             }
 
-            // Some sessions have a line they say now and then (`Cast.callout`).
-            var line: String?
+            // Some sessions have a line they say now and then (`Cast.callout`). Han and Greedo have words after a shot,
+            // over their heads, clear of the fight.
+            var line: String?, overHead = false
             if case .leader(let who) = actor.kind, let said = who.callout, actor.walkDir == 0,
                (t / 5 + actor.phase).truncatingRemainder(dividingBy: 1) < 0.3 { line = said }
+            if let s = shot {
+                if actor.key == s.han, s.e >= GreedoShot.hanLine.from, s.e < GreedoShot.hanLine.to { line = GreedoShot.hanSays; overHead = true }
+                if actor.key == s.greedo, s.e >= GreedoShot.standing { line = s.line; overHead = true }
+            }
             if let line {
                 let sc = actor.isLeader ? ls : cs
                 let callout = NSAttributedString(string: line, attributes: [
@@ -1153,11 +1200,16 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 // On the side away from the speech bubble, level with the head.
                 let onLeft = bubbleSpan.map { $0.minX > actor.x } ?? (facing > 0)
                 var cx = onLeft ? actor.x - 16 * sc - size.width : actor.x + 16 * sc
-                let cy = y + 33 * sc + lift
+                var cy = y + 33 * sc + lift
+                if overHead {
+                    // Over the head; once the name tags are placed, it moves up above this one's (see below).
+                    cx = actor.x - size.width / 2
+                    cy = y + CGFloat(Sprite.height - actor.cast.drawnTop()) * sc + 8 * z
+                }
                 cx = min(max(cx, screenFrame.minX + 2), screenFrame.maxX - size.width - 2)
                 let item = DrawItem(text: callout, rect: NSRect(x: cx.rounded(), y: cy, width: size.width, height: size.height),
                                     alpha: CGFloat(alpha))
-                overlay.append(item)
+                if overHead { speeches.append((actor.key, item)) } else { overlay.append(item) }
             }
 
             // Project name (Claudes) or task (agents) just above the head, centred on it. Speech bubbles make way for it.
@@ -1188,6 +1240,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 case .agent(let who): headTop = CGFloat(Sprite.height - who.drawnTop()) * cs + 5 * z
                 }
                 headTop += lift
+                if let top = knockedTop { headTop = CGFloat(canvas.h - top) * scale + (actor.isLeader ? 8 : 5) * z + lift }
                 do {
                     let ly = y + CGFloat(drop) * z + headTop
                     labels.append((DrawItem(text: text, rect: NSRect(x: lx.rounded(), y: ly,
@@ -1217,9 +1270,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                                muzzle: a.cast.muzzle, armoured: a.cast.armoured, pivot: a.cast.weaponPivot).dressed(as: a.cast)
             }
             let fl = fighter(l, side: 1), fr = fighter(r, side: -1)
-            guard fightFXVisible(t: t, fl.weapon, fr.weapon) else { continue }   // e.g. a duel between clashes
+            let shotHere = shot.flatMap { s in Set([l.key, r.key]) == [s.han, s.greedo] ? s : nil }
+            guard shotHere != nil || fightFXVisible(t: t, fl.weapon, fr.weapon) else { continue }   // e.g. a duel between clashes
             let c = PixelCanvas(width, Sprite.height + headroom)
-            drawFightFX(c, t: t, left: fl, right: fr)
+            if let s = shotHere {
+                GreedoShot.drawFX(c, e: s.e, t: t, han: l.key == s.han ? fl : fr, greedo: l.key == s.han ? fr : fl)
+            } else {
+                drawFightFX(c, t: t, left: fl, right: fr)
+            }
             if let img = c.makeImage() {
                 overlay.append(DrawItem(image: img, rect: NSRect(x: left.rounded(), y: ground,
                                                                  width: CGFloat(width) * ls,
@@ -1279,6 +1337,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 }
             }
         }
+        for sp in speeches {
+            var r = sp.item.rect
+            if let tag = named.first(where: { $0.key == sp.key })?.item.rect { r.origin.y = max(r.minY, tag.maxY + 2 * z) }
+            overlay.append(DrawItem(text: sp.item.text, rect: r, alpha: sp.item.alpha))
+        }
         // Hover card (from agent-view's hover-for-details): next to the character, kept on screen.
         if let key = hoveredKey, let actor = actors.first(where: { $0.key == key && $0.leaving == nil }), !actor.detail.isEmpty {
             let text = NSMutableAttributedString()
@@ -1318,6 +1381,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     static let flightHeight: CGFloat = 16
     /// How far each character was lifted in the last frame (flying, swinging), for hit testing.
     private var lastLift: [String: CGFloat] = [:]
+    /// Han shoots first (`GreedoShot`, Star Wars): who's who, when Han fired (it plays out from there) and Greedo's
+    /// line after.
+    private var greedoShot: (han: String, greedo: String, start: Double, line: String)?
+    private var nextGreedoShot: Double?
 
     /// How far up (0…1 of `flightHeight`) `a` is right now: taking off or landing on a trip along the line, or out on a
     /// sortie (`sortieAir`), never while sitting, waiting for you, cheering or on its way out.
