@@ -23,3 +23,7 @@ Avengers: Clawd Wars is a fork of [Clawd Wars](https://github.com/rodclemen/claw
 
 ### Removed
 - The Star Wars cast, locations, Han shooting first and the cantina band.
+- The Star Wars promo video and `Tools/RenderPromo` (they live on in Clawd Wars).
+
+### Changed (tools)
+- **`Tools/MakeIcon`** now renders Captain America holding his shield into Thanos' gauntlet blast, and **`Tools/RenderDocs`** draws the roster as heroes and villains with the new pipeline.
