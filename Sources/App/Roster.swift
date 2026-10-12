@@ -18,6 +18,16 @@ enum Companion: Int, CaseIterable {
     // Fantastic Four, the street and the rest
     case humanTorch, thing, mrFantastic, invisibleWoman, silverSurfer, daredevil, deadpool, shangChi, msMarvel
     case moonKnight, ghostRider
+    // War Machine, the Maximoff kids, Wakanda and Sakaar.
+    case warMachine, wiccan, speed, quicksilver, kateBishop, yelena, okoye, shuri, valkyrie, korg
+    // Kamar-Taj, the cosmos and the younger X-Men.
+    case wong, hercules, sentry, cosmo, kraglin, adamWarlock, nova, kittyPryde, jubilee, psylocke
+    // more X-Men and the Spider-heroes.
+    case bishop, cable, havok, emmaFrost, banshee, angel, domino, x23, milesMorales, spiderGwen
+    // the street — Defenders, Punisher, Blade and friends.
+    case spiderWoman, blackCat, lukeCage, ironFist, jessicaJones, punisher, elektra, blade, blackKnight
+    // mystics, cosmic and the funny ones.
+    case monicaRambeau, clea, doctorVoodoo, howardTheDuck, squirrelGirl, jeffTheLandShark, throg, lockjaw, forbushMan
 
     var persona: Persona { heroPersonas[self] ?? Persona.missing(String(describing: self)) }
     var name: String { persona.name }
@@ -38,6 +48,14 @@ enum Leader: Int, CaseIterable {
     // The street, spies and soldiers
     case kingpin, bullseye, handNinja, hydraAgent, aimAgent, skrull, taskmaster, zemo, whiplash, mandarin, killmonger
     case batroc
+    // cosmic powers and more of Spider-Man's rogues.
+    case galactus, kang, mephisto, knull, annihilus, highEvolutionary, morganLeFay, scorpion, shocker, hobgoblin
+    // the street and the mutant foes.
+    case morbius, misterNegative, chameleon, tombstone, misterSinister, omegaRed, toad, pyro, blob
+    // aliens, Avengers foes and sorcerers.
+    case brood, cassandraNova, graviton, absorbingMan, crimsonDynamo, wrecker, baronMordo, enchantress, arnimZola
+    // gamma, Asgard's enemies and foot soldiers.
+    case countNefaria, theLeader, maestro, malekith, surtur, kurse, frostGiant, hydraSuperSoldier, kreeSoldier
 
     var persona: Persona { villainPersonas[self] ?? Persona.missing(String(describing: self)) }
     var name: String { persona.name }
@@ -129,8 +147,12 @@ struct Persona {
 
 let heroPersonas: [Companion: Persona] = heroes1.merging(heroes2) { a, _ in a }.merging(heroes3) { a, _ in a }
     .merging(heroes4) { a, _ in a }
+    .merging(heroes5) { a, _ in a }.merging(heroes6) { a, _ in a }.merging(heroes7) { a, _ in a }
+    .merging(heroes8) { a, _ in a }.merging(heroes9) { a, _ in a }
 let villainPersonas: [Leader: Persona] = villains1.merging(villains2) { a, _ in a }.merging(villains3) { a, _ in a }
     .merging(villains4) { a, _ in a }
+    .merging(villains5) { a, _ in a }.merging(villains6) { a, _ in a }.merging(villains7) { a, _ in a }
+    .merging(villains8) { a, _ in a }
 
 // MARK: - Homes
 
@@ -156,6 +178,28 @@ extension Location {
         case .skrull, .batroc: return .helicarrier
         case .mandarin: return .kamarTaj
         case .killmonger: return .wakanda
+        case .galactus: return .worldship
+        case .kang: return .quantumRealm
+        case .mephisto, .knull: return .darkDimension
+        case .annihilus: return .baxterBuilding
+        case .highEvolutionary: return .knowhere
+        case .morganLeFay: return .latveria
+        case .scorpion, .chameleon, .absorbingMan, .theLeader: return .raft
+        case .shocker, .hobgoblin: return .dailyBugle
+        case .morbius, .omegaRed, .countNefaria: return .madripoor
+        case .misterNegative, .tombstone: return .harlem
+        case .misterSinister, .toad, .pyro, .cassandraNova: return .genosha
+        case .blob: return .xMansion
+        case .brood, .kreeSoldier: return .hala
+        case .graviton: return .helicarrier
+        case .crimsonDynamo, .hydraSuperSoldier: return .sokovia
+        case .wrecker: return .battleOfNewYork
+        case .baronMordo: return .kamarTaj
+        case .enchantress: return .asgard
+        case .arnimZola: return .hydraBase
+        case .maestro: return .sakaar
+        case .malekith, .frostGiant: return .jotunheim
+        case .surtur, .kurse: return .muspelheim
         }
     }
 
@@ -165,7 +209,7 @@ extension Location {
         case .captainAmerica, .blackWidow, .falcon, .nickFury: return .helicarrier
         case .thor: return .asgard
         case .hulk: return .sakaar
-        case .hawkeye, .thing: return .battleOfNewYork
+        case .hawkeye: return .battleOfNewYork
         case .spiderMan: return .dailyBugle
         case .blackPanther: return .wakanda
         case .doctorStrange: return .sanctum
@@ -177,11 +221,31 @@ extension Location {
         case .sheHulk, .colossus: return .raft
         case .wolverine, .gambit, .rogue: return .savageLand
         case .cyclops, .storm, .jeanGrey, .professorX, .beast, .nightcrawler, .iceman: return .xMansion
-        case .humanTorch, .mrFantastic, .invisibleWoman: return .latveria
+        case .humanTorch, .mrFantastic, .invisibleWoman, .thing: return .baxterBuilding
         case .daredevil, .deadpool, .moonKnight: return .hellsKitchen
         case .shangChi: return .kamarTaj
         case .msMarvel: return .attilan
         case .ghostRider: return .darkDimension
+        case .warMachine, .sentry, .blackKnight: return .avengersTower
+        case .wiccan, .speed, .quicksilver: return .sokovia
+        case .kateBishop, .spiderGwen: return .dailyBugle
+        case .yelena, .psylocke, .domino, .x23, .blade: return .madripoor
+        case .okoye, .shuri: return .wakanda
+        case .valkyrie, .korg: return .sakaar
+        case .wong: return .kamarTaj
+        case .hercules, .throg: return .asgard
+        case .cosmo, .kraglin, .adamWarlock, .howardTheDuck: return .knowhere
+        case .nova, .monicaRambeau: return .hala
+        case .kittyPryde, .jubilee, .banshee, .angel: return .xMansion
+        case .bishop, .cable, .havok, .emmaFrost: return .genosha
+        case .milesMorales, .lukeCage: return .harlem
+        case .spiderWoman: return .helicarrier
+        case .blackCat, .jessicaJones, .punisher: return .hellsKitchen
+        case .ironFist, .elektra: return .kunLun
+        case .clea: return .darkDimension
+        case .doctorVoodoo: return .sanctum
+        case .squirrelGirl, .jeffTheLandShark, .forbushMan: return .baxterBuilding
+        case .lockjaw: return .attilan
         }
     }
 }
@@ -197,6 +261,12 @@ extension Cast {
         (.starLord, .ronan), (.thor, .hela), (.shangChi, .mandarin), (.mrFantastic, .doctorDoom),
         (.blackWidow, .taskmaster), (.ironMan, .whiplash), (.captainMarvel, .skrull), (.cyclops, .magneto),
         (.storm, .apocalypse), (.captainAmerica, .zemo),
+        (.silverSurfer, .galactus), (.antMan, .kang), (.ghostRider, .mephisto), (.doctorStrange, .baronMordo),
+        (.thor, .malekith), (.thor, .surtur), (.valkyrie, .hela), (.punisher, .kingpin), (.wolverine, .omegaRed),
+        (.cyclops, .misterSinister), (.hulk, .theLeader), (.hulk, .maestro), (.blade, .morbius), (.elektra, .bullseye),
+        (.spiderMan, .scorpion), (.milesMorales, .hobgoblin), (.rocket, .highEvolutionary), (.captainMarvel, .kreeSoldier),
+        (.lukeCage, .tombstone), (.ironFist, .handNinja), (.thor, .absorbingMan), (.mrFantastic, .annihilus),
+        (.ironMan, .crimsonDynamo), (.thor, .frostGiant), (.spiderGwen, .lizard),
     ]
 
     func isNemesis(of other: Cast) -> Bool {
@@ -209,8 +279,10 @@ extension Cast {
     /// When this one's agent is done, its ship comes to pick it up instead of it just fading out.
     var ride: Ride? {
         switch self {
-        case .hero(.captainAmerica), .hero(.blackWidow), .hero(.hawkeye), .hero(.nickFury), .hero(.hulk): return .quinjet
-        case .hero(.starLord), .hero(.gamora), .hero(.drax), .hero(.rocket), .hero(.groot), .hero(.mantis): return .milano
+        case .hero(.captainAmerica), .hero(.blackWidow), .hero(.hawkeye), .hero(.nickFury), .hero(.hulk),
+             .hero(.kateBishop), .hero(.yelena): return .quinjet
+        case .hero(.starLord), .hero(.gamora), .hero(.drax), .hero(.rocket), .hero(.groot), .hero(.mantis),
+             .hero(.kraglin), .hero(.cosmo): return .milano
         default: return nil
         }
     }

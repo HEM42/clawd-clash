@@ -171,7 +171,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     override init() {
         // The hook only knows the cast sizes; a villain or hero added without bumping them would never be picked.
         assert(StatusStore.leaderCount == Leader.allCases.count && StatusStore.companionCount == Companion.allCases.count)
-        assert(StatusStore.agentOnly == [Leader.ultronSentry.rawValue, Leader.doombot.rawValue])   // small fry: agents only
+        assert(StatusStore.agentOnly == [Leader.ultronSentry.rawValue, Leader.doombot.rawValue,
+                                         StatusStore.heroBase + Companion.jeffTheLandShark.rawValue])   // small fry: agents only
         panel = OverlayPanel(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10),
                              styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         view = OverlayView()
@@ -2288,7 +2289,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             item.state = playground != nil && playgroundAgents.contains(c.rawValue) ? .on : .off
             pm.addItem(item)
         }
-        for id in StatusStore.agentOnly.sorted() {
+        for id in StatusStore.agentOnly.sorted() where id < StatusStore.heroBase {   // agent-only heroes are listed above
             let tag = Self.playgroundVillainAgent + id
             let item = NSMenuItem(title: Leader(index: id).name, action: #selector(togglePlaygroundAgent(_:)), keyEquivalent: "")
             item.target = self

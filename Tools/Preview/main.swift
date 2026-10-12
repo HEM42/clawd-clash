@@ -52,19 +52,15 @@ func put(_ c: PixelCanvas, _ ctx: CGContext, x: CGFloat, y: CGFloat, outline: Bo
 }
 
 func cast(named n: String) -> [Cast] {
-    let batches: [String: [Cast]] = [
-        "heroes1": heroes1.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) },
-        "heroes2": heroes2.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) },
-        "heroes3": heroes3.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) },
-        "heroes4": heroes4.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) },
-        "villains1": villains1.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) },
-        "villains2": villains2.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) },
-        "villains3": villains3.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) },
-        "villains4": villains4.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) },
+    let heroBatches = [heroes1, heroes2, heroes3, heroes4, heroes5, heroes6, heroes7, heroes8, heroes9]
+    let villainBatches = [villains1, villains2, villains3, villains4, villains5, villains6, villains7, villains8]
+    var batches: [String: [Cast]] = [
         "heroes": Companion.allCases.map { .hero($0) },
         "villains": Leader.allCases.map { .villain($0) },
         "all": Companion.allCases.map { .hero($0) } + Leader.allCases.map { .villain($0) },
     ]
+    for (i, b) in heroBatches.enumerated() { batches["heroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
+    for (i, b) in villainBatches.enumerated() { batches["villains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
     if let b = batches[n] { return b }
     if let h = Companion.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
     if let v = Leader.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
