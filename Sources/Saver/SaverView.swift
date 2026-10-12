@@ -160,7 +160,7 @@ final class ClawdClashSaverView: ScreenSaverView {
             // feed's, unless it says Random, which picks afresh on each trip somewhere new (see `travel`).
             if feedSource == nil {
                 let appUniverse = feed?.universe.flatMap(Universe.init(rawValue:)) ?? .starWars
-                switch Self.choice {
+                switch feed?.saverUniverse ?? Self.choice {
                 case "starWars": tripUniverse = .starWars
                 case "marvel": tripUniverse = .marvel
                 case "random": if tripUniverse == nil { tripUniverse = Universe.allCases.randomElement() }
@@ -182,7 +182,7 @@ final class ClawdClashSaverView: ScreenSaverView {
     /// across the screen and a clock wipe, taking turns).
     private func travel(_ now: Double) {
         lastTrip = now
-        if feedSource == nil, Self.choice == "random" {
+        if feedSource == nil, (feed?.saverUniverse ?? Self.choice) == "random" {
             tripUniverse = Universe.allCases.randomElement()
             Universe.shown = tripUniverse ?? .starWars
         }
