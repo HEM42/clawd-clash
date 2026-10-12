@@ -48,6 +48,43 @@ final class ClawdClashSaverView: ScreenSaverView {
     private var lastTrip = Date().timeIntervalSince1970
     private static let demoEvery = 180.0        // three minutes
 
+    // MARK: Options (System Settings' Options… button): which universe the screen saver shows
+
+    private static let options = ScreenSaverDefaults(forModuleWithName: "com.rodclemen.clawdclash.saver")
+    /// "same" (the app's), "starWars", "marvel" or "random" (a new pick on each trip).
+    static var choice: String { options?.string(forKey: "universe") ?? "same" }
+    private var sheet: NSWindow?
+    private let picker = NSPopUpButton(frame: NSRect(x: 20, y: 60, width: 280, height: 26), pullsDown: false)
+    private static let choices = [("same", "The same as Clawd Clash"), ("starWars", "Star Wars"), ("marvel", "Marvel"),
+                                  ("random", "Random (a new one on each trip)")]
+
+    override var hasConfigureSheet: Bool { true }
+    override var configureSheet: NSWindow? {
+        let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 320, height: 130), styleMask: [.titled], backing: .buffered, defer: false)
+        let label = NSTextField(labelWithString: "Universe to show:")
+        label.frame = NSRect(x: 20, y: 92, width: 280, height: 20)
+        picker.removeAllItems()
+        for (_, title) in Self.choices { picker.addItem(withTitle: title) }
+        picker.selectItem(at: Self.choices.firstIndex { $0.0 == Self.choice } ?? 0)
+        let ok = NSButton(title: "OK", target: self, action: #selector(closeOptions))
+        ok.frame = NSRect(x: 220, y: 14, width: 80, height: 32)
+        ok.keyEquivalent = "\r"
+        for v in [label, picker, ok] { w.contentView?.addSubview(v) }
+        sheet = w
+        return w
+    }
+
+    @objc private func closeOptions() {
+        options(set: Self.choices[max(0, picker.indexOfSelectedItem)].0)
+        if let sheet { sheet.sheetParent?.endSheet(sheet) }
+        tripUniverse = nil
+    }
+
+    private func options(set value: String) {
+        Self.options?.set(value, forKey: "universe")
+        Self.options?.synchronize()
+    }
+
     override init?(frame: NSRect, isPreview: Bool) {
         super.init(frame: frame, isPreview: isPreview)
         animationTimeInterval = 1.0 / 15
@@ -123,7 +160,12 @@ final class ClawdClashSaverView: ScreenSaverView {
             // feed's, unless it says Random, which picks afresh on each trip somewhere new (see `travel`).
             if feedSource == nil {
                 let appUniverse = feed?.universe.flatMap(Universe.init(rawValue:)) ?? .starWars
-                if feed?.saverUniverse != SaverUniverse.random.rawValue || tripUniverse == nil { tripUniverse = appUniverse }
+                switch Self.choice {
+                case "starWars": tripUniverse = .starWars
+                case "marvel": tripUniverse = .marvel
+                case "random": if tripUniverse == nil { tripUniverse = Universe.allCases.randomElement() }
+                default: tripUniverse = appUniverse
+                }
                 Universe.shown = tripUniverse ?? appUniverse
             }
         }
@@ -140,7 +182,7 @@ final class ClawdClashSaverView: ScreenSaverView {
     /// across the screen and a clock wipe, taking turns).
     private func travel(_ now: Double) {
         lastTrip = now
-        if feedSource == nil, feed?.saverUniverse == SaverUniverse.random.rawValue {
+        if feedSource == nil, Self.choice == "random" {
             tripUniverse = Universe.allCases.randomElement()
             Universe.shown = tripUniverse ?? .starWars
         }

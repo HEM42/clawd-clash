@@ -208,7 +208,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         panel.contentView = view
 
         Universe.shown = Self.universe
-        StatusStore.setUniverse(Self.universe, saver: Self.saverUniverse)   // the hook casts from it
+        StatusStore.setUniverse(Self.universe)   // the hook casts from it
         home = clampHome(savedHome())     // re-applies the edge snap, so positions saved under older rules are corrected
         if windowMode { openWindow() }
         refreshStatus()
@@ -506,7 +506,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         feedAgents = agentsNow
         feedEvents = Array(feedEvents.suffix(12))
         let feed = SaverFeed(at: now, location: location.rawValue, sessions: out, events: feedEvents,
-                             universe: Universe.shown.rawValue, saverUniverse: Self.saverUniverse.rawValue)
+                             universe: Universe.shown.rawValue)
         saverFeed = feed
         if real && saverInstalled { feed.save() }
     }
@@ -2169,10 +2169,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 sm.addItem(action: "Install Screen Saver…", #selector(installSaver), target: self)
             }
         }
-        sm.addItem(.separator())
-        sm.addItem(disabled: "Screen saver shows")
-        sm.addItem(action: "The Same Universe as the App", #selector(saverSameUniverse), target: self, on: Self.saverUniverse == .same)
-        sm.addItem(action: "A Random Universe", #selector(saverRandomUniverse), target: self, on: Self.saverUniverse == .random)
         root.submenu = sm
         return root
     }
@@ -2250,12 +2246,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         set { UserDefaults.standard.set(newValue.key, forKey: "universe") }
     }
 
-    /// Which universe the screen saver shows: the app's, or a random one on each trip.
-    static var saverUniverse: SaverUniverse {
-        get { UserDefaults.standard.string(forKey: "saverUniverse").flatMap(SaverUniverse.init(rawValue:)) ?? .same }
-        set { UserDefaults.standard.set(newValue.rawValue, forKey: "saverUniverse") }
-    }
-
     private func universeMenu() -> NSMenuItem {
         let root = NSMenuItem(title: "Universe: \(Universe.shown.title)", action: nil, keyEquivalent: "")
         let um = NSMenu()
@@ -2276,7 +2266,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         guard let u = Universe(rawValue: sender.tag), u != Universe.shown else { return }
         Self.universe = u
         Universe.shown = u
-        StatusStore.setUniverse(u, saver: Self.saverUniverse)
+        StatusStore.setUniverse(u)
         if let raw = UserDefaults.standard.string(forKey: "location"), raw != Self.randomLocation,
            Location(rawValue: raw)?.universe != u {
             UserDefaults.standard.removeObject(forKey: "location")     // a place from the other universe: back to automatic
@@ -2291,12 +2281,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         clawdWindow?.redrawScroller()
     }
 
-    @objc private func saverSameUniverse() { setSaverUniverse(.same) }
-    @objc private func saverRandomUniverse() { setSaverUniverse(.random) }
-    private func setSaverUniverse(_ mode: SaverUniverse) {
-        Self.saverUniverse = mode
-        StatusStore.setUniverse(Universe.shown, saver: mode)
-    }
 
     private func locationMenu() -> NSMenuItem {
         let root = NSMenuItem(title: "Location: \(location.name)", action: nil, keyEquivalent: "")

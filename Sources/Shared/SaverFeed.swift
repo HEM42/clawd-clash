@@ -9,7 +9,6 @@ struct SaverFeed: Codable {
     var sessions: [Session]
     var events: [Event]
     var universe: Int?             // `Universe.rawValue` the app shows (nil: from before universes, Star Wars)
-    var saverUniverse: String?     // `SaverUniverse.rawValue`: the app's, or random
 
     struct Session: Codable {
         var id: String

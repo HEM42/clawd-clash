@@ -48,9 +48,3 @@ enum Universe: Int, CaseIterable, Codable {
                                    : base + StatusStore.heroBase + (local - StatusStore.heroBase) % heroCount
     }
 }
-
-/// Which universe the screen saver shows.
-enum SaverUniverse: String, Codable, CaseIterable {
-    case same      // the app's
-    case random    // a different one now and then, picked afresh on each trip somewhere new
-}

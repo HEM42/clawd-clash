@@ -25,6 +25,6 @@ extension SaverFeed {
         guard !sessions.isEmpty else { return nil }
         let universe = file.shownUniverse
         return SaverFeed(at: now, location: last?.location ?? Location.all(in: universe)[0].rawValue, sessions: sessions, events: [],
-                         universe: universe.rawValue, saverUniverse: file.saverUniverse)
+                         universe: universe.rawValue)
     }
 }
