@@ -1037,7 +1037,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         var labels: [(item: DrawItem, leader: Bool, focused: Bool, key: String)] = []
         // Speech bubbles are placed after the names (see below), so they're kept here till then.
         var bubbles: [(key: String, x: CGFloat, y: CGFloat, kind: BubbleKind, urgent: Bool, preferRight: Bool, alpha: CGFloat)] = []
-        var speeches: [(key: String, item: DrawItem)] = []   // lines said over a head, placed above its name tag
         // Companions first so leaders (and their sabers) draw on top.
         var falconItems: [DrawItem] = []
         for var actor in actors.sorted(by: { !$0.isLeader && $1.isLeader }) {
@@ -1066,7 +1065,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             }
             if aboard { continue }
             if now < actor.born { continue }             // not on stage yet: don't draw what won't be shown
-            var canvas = PixelCanvas(Sprite.width, Sprite.height)
+            let canvas = PixelCanvas(Sprite.width, Sprite.height)
             let scale: CGFloat
             let y: CGFloat
             switch actor.kind {
@@ -1130,7 +1129,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
             // Some sessions have a line they say now and then (`Cast.callout`).
             var line: String?
-            let overHead = false
             if case .leader(let who) = actor.kind, let said = who.callout, actor.walkDir == 0,
                (t / 5 + actor.phase).truncatingRemainder(dividingBy: 1) < 0.3 { line = said }
             if let line {
@@ -1144,16 +1142,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 let size = callout.size()
                 // On the side away from the speech bubble, level with the head.
                 let onLeft = bubbleSpan.map { $0.minX > actor.x } ?? (facing > 0)
-                var cx = onLeft ? actor.x - 16 * sc - size.width : actor.x + 16 * sc, cy = y + 33 * sc
-                if overHead {
-                    // Over the head; once the name tags are placed, it moves up above this one's (see below).
-                    cx = actor.x - size.width / 2
-                    cy = y + CGFloat(Sprite.height - actor.cast.drawnTop()) * sc + 8 * z
-                }
+                var cx = onLeft ? actor.x - 16 * sc - size.width : actor.x + 16 * sc
+                let cy = y + 33 * sc + lift
                 cx = min(max(cx, screenFrame.minX + 2), screenFrame.maxX - size.width - 2)
                 let item = DrawItem(text: callout, rect: NSRect(x: cx.rounded(), y: cy, width: size.width, height: size.height),
                                     alpha: CGFloat(alpha))
-                if overHead { speeches.append((actor.key, item)) } else { overlay.append(item) }
+                overlay.append(item)
             }
 
             // Project name (Claudes) or task (agents) just above the head, centred on it. Speech bubbles make way for it.
@@ -1274,11 +1268,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                                                                      width: cw, height: cw)))
                 }
             }
-        }
-        for sp in speeches {
-            var r = sp.item.rect
-            if let tag = named.first(where: { $0.key == sp.key })?.item.rect { r.origin.y = max(r.minY, tag.maxY + 2 * z) }
-            overlay.append(DrawItem(text: sp.item.text, rect: r, alpha: sp.item.alpha))
         }
         // Hover card (from agent-view's hover-for-details): next to the character, kept on screen.
         if let key = hoveredKey, let actor = actors.first(where: { $0.key == key && $0.leaving == nil }), !actor.detail.isEmpty {
