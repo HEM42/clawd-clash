@@ -1,9 +1,9 @@
 import AppKit
 
 // Renders the README's roster and locations images with the app's own sprite code.
-//   swiftc -swift-version 5 Sources/App/Pixel.swift Sources/App/Characters.swift Sources/App/Recruits.swift Sources/App/Leaders.swift \
-//          Sources/App/Cantina.swift Sources/App/Locations.swift Sources/App/Cast.swift Sources/App/Habits.swift Sources/Shared/*.swift \
-//          Tools/RenderDocs/main.swift -o /tmp/renderdocs && /tmp/renderdocs docs
+//   swiftc -swift-version 5 Sources/App/{Pixel,Characters,Fights,Roster,Pose,Locations,Cast,Habits}.swift \
+//          Sources/App/Art/*.swift Sources/App/Places/*.swift Sources/Shared/*.swift \
+//          Tools/RenderDocs/main.swift -o build/renderdocs && build/renderdocs docs
 
 let out = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "docs"
 let bg = CGColor(red: 0.07, green: 0.075, blue: 0.11, alpha: 1)
@@ -62,18 +62,18 @@ let roster = canvas(Int(cellW) * cols, rosterH) { ctx in
         }
         top -= CGFloat(rows) * rowH
     }
-    section("THE DARK SIDE — one per Claude session", villains.count, rows: vRows) { i, c in
-        drawLeader(c, villains[i], t: 0.62, mode: .working, walking: false); return villains[i].name
+    section("THE HEROES", heroes.count, rows: hRows) { i, c in
+        Cast.hero(heroes[i]).draw(c, t: 0.4, mode: .working, walking: false, role: .none, asSession: false)
+        return heroes[i].name
     }
-    section("THE REBELS — your subagents", heroes.count, rows: hRows) { i, c in
-        drawCompanion(c, heroes[i], t: 0.4, walking: false); return heroes[i].name
+    section("THE VILLAINS", villains.count, rows: vRows) { i, c in
+        Cast.villain(villains[i]).draw(c, t: 0.62, mode: .working, walking: false, role: .none, asSession: false)
+        return villains[i].name
     }
 }
 save(roster, "roster.png")
 
 // MARK: Locations
-
-Cantina.maxReboTonight = false      // the sheet shows the Modal Nodes (the Max Rebo Band is in Jabba's palace)
 
 let lw = 250, lh = 70, lscale: CGFloat = 2, lcols = 3
 let locs = Location.allCases
@@ -109,20 +109,20 @@ let social = canvas(1280, 640) { ctx in
     ctx.setFillColor(CGColor(red: 0.85, green: 0.47, blue: 0.34, alpha: 1)); ctx.fill(CGRect(x: 0, y: 147, width: 1280, height: 4))
     // title
     let yellow = NSColor(srgbRed: 1, green: 0.91, blue: 0.12, alpha: 1)
-    let titleFont = NSFont(name: "Futura-CondensedExtraBold", size: 92) ?? .systemFont(ofSize: 84, weight: .black)
-    let title = NSAttributedString(string: "CLAWD WARS", attributes: [.font: titleFont, .foregroundColor: yellow, .kern: 8])
+    let titleFont = NSFont(name: "Futura-CondensedExtraBold", size: 80) ?? .systemFont(ofSize: 84, weight: .black)
+    let title = NSAttributedString(string: "AVENGERS: CLAWD WARS", attributes: [.font: titleFont, .foregroundColor: yellow, .kern: 8])
     title.draw(at: NSPoint(x: (1280 - title.size().width) / 2, y: 470))
-    let sub = NSAttributedString(string: "Your Claude Code sessions as a pixel-art Star Wars battle on your desktop",
+    let sub = NSAttributedString(string: "Your Claude Code sessions as a pixel-art Marvel battle on your desktop",
                                  attributes: [.font: NSFont.systemFont(ofSize: 26, weight: .semibold), .foregroundColor: NSColor(white: 0.9, alpha: 1)])
     sub.draw(at: NSPoint(x: (1280 - sub.size().width) / 2, y: 418))
     // the crew, standing on the horizon
     let crew: [(PixelCanvas) -> Void] = [
-        { drawLeader($0, .boba, t: 0.3, mode: .working, walking: false, role: .shoot(offset: 0)) },
-        { drawCompanion($0, .han, t: 0.2, walking: false) },
-        { drawLeader($0, .vader, t: 0.62, mode: .working, walking: false, role: .duel) },
-        { drawCompanion($0, .luke, t: 0.62, walking: false, role: .duel) },
-        { drawCompanion($0, .yoda, t: 0.9, walking: false) },
-        { drawLeader($0, .atat, t: 0.1, mode: .idle, walking: false) },
+        { Cast.hero(.ironMan).draw($0, t: 0.3, mode: .working, walking: false, role: .shoot(offset: 0), asSession: true) },
+        { Cast.hero(.spiderMan).draw($0, t: 0.2, mode: .working, walking: false, role: .none, asSession: false) },
+        { Cast.hero(.captainAmerica).draw($0, t: 0.62, mode: .working, walking: false, role: .duel, asSession: true) },
+        { Cast.villain(.loki).draw($0, t: 0.62, mode: .working, walking: false, role: .zap, asSession: true) },
+        { Cast.hero(.groot).draw($0, t: 0.9, mode: .working, walking: false, role: .none, asSession: false) },
+        { Cast.villain(.thanos).draw($0, t: 0.1, mode: .idle, walking: false, role: .none, asSession: true) },
     ]
     let scales: [CGFloat] = [4, 3, 4, 3, 3, 4]
     var x: CGFloat = 40

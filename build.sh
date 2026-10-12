@@ -63,7 +63,7 @@ compile "$SAVER/Contents/MacOS/AvengersClawdWarsSaver" -module-name AvengersClaw
     -Xlinker -install_name -Xlinker @rpath/AvengersClawdWarsSaver \
     Sources/Shared/*.swift Sources/App/{Pixel,Characters,Fights,Roster,Pose,Locations,Cast,Accents,Habits}.swift \
     Sources/App/Art/*.swift Sources/App/Places/*.swift Sources/Saver/*.swift
-# Its picture under "Other" in System Settings: the title card at 0:04 of promo/clawd-wars-promo.mp4, cropped to 180×116.
+# Its picture under "Other" in System Settings (180×116).
 mkdir -p "$SAVER/Contents/Resources"
 cp Resources/SaverThumbnail.png "$SAVER/Contents/Resources/thumbnail@2x.png"
 sips -z 58 90 Resources/SaverThumbnail.png --out "$SAVER/Contents/Resources/thumbnail.png" >/dev/null
@@ -116,7 +116,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSMinimumSystemVersion</key><string>13.0</string>
     <key>LSUIElement</key><true/>
     <key>NSHighResolutionCapable</key><true/>
-    <key>NSHumanReadableCopyright</key><string>MIT licensed. A Star Wars fan project for Claude Code.</string>
+    <key>NSHumanReadableCopyright</key><string>MIT licensed. A Marvel fan project for Claude Code.</string>
     <key>NSAppleEventsUsageDescription</key><string>Clicking a character (hero or villain) selects the Terminal or iTerm tab running that AI session.</string>
 </dict>
 </plist>

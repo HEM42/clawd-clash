@@ -17,7 +17,7 @@ enum Legend {
 
     private static var crew: [Entry] {
         [
-            Entry(title: "Working", detail: "Swinging a lightsaber (or firing): running tools",
+            Entry(title: "Working", detail: "Fighting: swinging, firing or casting while it runs tools",
                   icon: character(mode: .working, t: 0.35)),
             Entry(title: "Thinking", detail: "Three dots filling up",
                   icon: bubble(.thinking, t: 1.2)),

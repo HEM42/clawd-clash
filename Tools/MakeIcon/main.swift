@@ -1,10 +1,10 @@
 import AppKit
 
-// Renders Resources/AppIcon.png (1024²): Vader Clawd and Luke crossing sabers on a starfield,
-// drawn with the app's own sprite code. build.sh turns it into AppIcon.icns.
-//   swiftc Sources/App/Pixel.swift Sources/App/Characters.swift Sources/App/Leaders.swift \
-//          Sources/App/Locations.swift Sources/App/Cantina.swift Sources/App/Cast.swift Sources/App/Habits.swift \
-//          Sources/Shared/*.swift Tools/MakeIcon/main.swift -o /tmp/makeicon && /tmp/makeicon Resources/AppIcon.png
+// Renders Resources/AppIcon.png (1024²): Captain America holding his shield into Thanos' gauntlet blast on a
+// starfield, drawn with the app's own sprite code. build.sh turns it into AppIcon.icns.
+//   swiftc Sources/App/{Pixel,Characters,Fights,Roster,Pose,Locations,Cast,Habits}.swift Sources/App/Art/*.swift \
+//          Sources/App/Places/*.swift Sources/Shared/*.swift Tools/MakeIcon/main.swift -o build/makeicon \
+//          && build/makeicon Resources/AppIcon.png
 
 let size: CGFloat = 1024
 let p: CGFloat = 9                      // icon pixels per sprite pixel
@@ -42,7 +42,7 @@ ctx.fill(CGRect(x: 0, y: 0, width: size, height: 318))
 ctx.setFillColor(CGColor(red: 0.85, green: 0.47, blue: 0.34, alpha: 1))   // Claude-orange horizon
 ctx.fill(CGRect(x: 0, y: 318, width: size, height: p))
 
-// The duel, frozen on a clash
+// The fight, frozen mid-blast: Thanos on the left, Cap on the right blocking with his shield
 let t = 0.55
 let dist = 170.0 / 3                     // duel distance in sprite pixels, as in the app
 let centerL = 512 - CGFloat(dist) / 2 * p, centerR = 512 + CGFloat(dist) / 2 * p
@@ -61,18 +61,22 @@ func put(_ c: PixelCanvas, center: CGFloat, mirrored: Bool) {
     }
     ctx.restoreGState()
 }
-let vader = PixelCanvas(72, 52)
-drawLeader(vader, .vader, t: t, mode: .working, walking: false, role: .duel)
-let luke = PixelCanvas(72, 52)
-drawCompanion(luke, .luke, t: t, walking: false, role: .duel)
-put(vader, center: centerL, mirrored: false)
-put(luke, center: centerR, mirrored: true)
+let left = Cast.villain(.thanos), right = Cast.hero(.captainAmerica)
+let (lRole, rRole) = fightRoles(left.weapon, right.weapon)
+let lc = PixelCanvas(72, 52)
+left.draw(lc, t: t, mode: .working, walking: false, role: lRole, asSession: true)
+let rc = PixelCanvas(72, 52)
+right.draw(rc, t: t, mode: .working, walking: false, role: rRole, asSession: true)
+put(lc, center: centerL, mirrored: false)
+put(rc, center: centerR, mirrored: true)
 
 let margin = 24.0
 let fx = PixelCanvas(Int(dist + margin * 2), 52)
-drawFightFX(fx, t: t,
-            left: Fighter(weapon: .saber, x: margin, k: 1, top: 0, side: 1, muzzle: (52, 32)),
-            right: Fighter(weapon: .saber, x: margin + dist, k: 1, top: 0, side: -1, muzzle: (52, 32)))
+func fighter(_ who: Cast, x: Double, side: Double) -> Fighter {
+    Fighter(weapon: who.weapon, x: x, k: 1, top: 0, side: side, muzzle: who.muzzle, armoured: who.armoured,
+            pivot: who.weaponPivot).dressed(as: who)
+}
+drawFightFX(fx, t: t, left: fighter(left, x: margin, side: 1), right: fighter(right, x: margin + dist, side: -1))
 ctx.draw(fx.makeImage()!, in: CGRect(x: centerL - CGFloat(margin) * p, y: canvasBottom,
                                      width: CGFloat(fx.w) * p, height: CGFloat(fx.h) * p))
 ctx.restoreGState()

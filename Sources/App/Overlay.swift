@@ -1492,7 +1492,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 You'll get a reminder if a Codex session isn't reporting yet.
                 """ : "")
 
-                You can do this later from Settings in the menu bar helmet.
+                You can do this later from Settings in the menu bar shield.
                 """
             a.addButton(withTitle: "Connect")
             a.addButton(withTitle: "Not Now")
@@ -1639,7 +1639,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     private var statusItem: NSStatusItem?
     private let statusMenu = NSMenu()
-    /// Hidden from the menu bar helmet (double-click): neither the crew nor the window shows. Not remembered across launches.
+    /// Hidden from the menu bar shield (double-click): neither the crew nor the window shows. Not remembered across launches.
     private(set) var hidden = false
     /// The displays are asleep or the screen is locked.
     private var screensAsleep = false
@@ -1652,7 +1652,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         return clawdWindow?.window.occlusionState.contains(.visible) ?? false
     }
 
-    /// A Vader Clawd helmet in the menu bar, opening the same menu as right-clicking a villain.
+    /// Captain America's shield in the menu bar, opening the same menu as right-clicking a character.
     /// Double-clicking it hides or shows Avengers: Clawd Wars, so a single click opens the menu only once the
     /// double-click time has passed; right-click (or ⌃-click) opens it straight away.
     private func installStatusItem() {
@@ -1673,7 +1673,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
     }
 
-    /// Settings → Monochrome Menu Bar Icon: the helmet as a template image, tinted by macOS like the system icons.
+    /// Settings → Monochrome Menu Bar Icon: the shield as a template image, tinted by macOS like the system icons.
     private var monoMenuBarIcon: Bool {
         get { UserDefaults.standard.bool(forKey: "menuBarMono") }
         set { UserDefaults.standard.set(newValue, forKey: "menuBarMono") }
@@ -1718,9 +1718,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let now = ProcessInfo.processInfo.systemUptime
         // Closed by a left click on the helmet itself (not on a menu item, not by Escape)?
         let closer = NSApp.currentEvent
-        let onHelmet = button.window.map { $0.convertToScreen(button.convert(button.bounds, to: nil)) }?
+        let onIcon = button.window.map { $0.convertToScreen(button.convert(button.bounds, to: nil)) }?
             .contains(NSEvent.mouseLocation) ?? false
-        if now - opened < Self.statusDoubleClick, onHelmet,
+        if now - opened < Self.statusDoubleClick, onIcon,
            closer?.type == .leftMouseDown || closer?.type == .leftMouseUp {
             ignoreStatusClickUntil = now + 0.5
             toggleHidden()
