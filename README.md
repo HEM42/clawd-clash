@@ -47,7 +47,7 @@ You run Claude Code in three terminals. One is thinking, one is waiting for your
 
 - 🛡️ **Working?** Your Claude fights: Cap swings his shield, Iron Man fires repulsors, Doctor Strange casts.
 - 💭 **Thinking?** A thought bubble.
-- ❗ **Needs you?** A red `!` — and if you ignore it for a minute, it starts jumping up and down.
+- ❗ **Needs you?** A red `!` — and if you ignore it for a minute, it starts jumping up and down. It keeps asking until you answer, however long that takes; press Esc instead and it stands down.
 - 😴 **Done and idle?** It stops fighting and stands about with habits of its own every 10–20 seconds: it glances over its shoulder, shifts its weight, swings its hammer round, checks its gun, lets magic crackle in its hand. And nearly everyone has a move all their own: Iron Man flips his faceplate up, Wolverine pops his claws (SNIKT), Thanos snaps, Loki turns into a snake, Star-Lord dances with his Walkman, Nightcrawler BAMFs away and back, Deadpool eats a chimichanga, the Grandmaster dances and laughs. After a couple of minutes it sits down; after five it's asleep (zZz).
 - 🦸 **Spawned subagents?** They walk (or fly, or swing) in one by one, each labelled with *what it's doing* — and they leave when they finish. Flyers take off; Cap, Black Widow, Hawkeye, Nick Fury and the Hulk get picked up by the Quinjet, and the Guardians by the Milano.
 - 🔍 **Want details?** Hover any character: status, how long, the tool it's running right now, your last prompt.
