@@ -61,8 +61,9 @@ struct Pose {
 }
 
 /// Draw `who` this frame. `airborne`: a flyer on the move (the renderer lifts it off the ground too).
+/// `aloft`: lifted off the ground in place (a flyer's sortie, or fighting from the air): it gets an air wash under its feet.
 func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walking: Bool, role: FightRole,
-                 urgent: Bool = false, sitting: Bool = false, airborne: Bool = false) {
+                 urgent: Bool = false, sitting: Bool = false, airborne: Bool = false, aloft: Bool = false) {
     let persona = who.persona
     var role = role
     // A session's mood becomes a role: waiting for you holds the weapon up, the rest is resting.
@@ -164,6 +165,7 @@ func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walk
     if persona.motion == .hover && !p.seated && !p.flying { float = -3 + (sin(lt * 2.4) > 0 ? -1 : 0) }
 
     if p.cheering, !walking { drawCheerSparkles(c, t: t) }
+    if aloft, !p.flying { drawAirWash(c, t: t) }
     seatedPose = p.seated
     let baseY = c.baseY
     c.baseY += float
@@ -198,6 +200,32 @@ extension Cast {
         switch self { case .villain(let l): return l.persona; case .hero(let h): return h.persona }
     }
     var motion: Motion { persona.motion }
+}
+
+// MARK: - Flight
+
+/// How high (0…1 of `flightHeight`) a flyer is on a sortie at `t`: now and then it takes off, hangs in the air and comes
+/// back down. Ranged and magic flyers do it in fights too, more often, and keep shooting from up there; melee flyers
+/// stay down to duel. `seed` (0…1) keeps everyone on their own schedule. Stateless, so the screen saver can use it.
+func sortieAir(_ who: Cast, seed: Double, fighting: Bool, t: Double) -> Double {
+    guard who.motion == .fly else { return 0 }
+    if fighting && !(who.weapon == .blaster || who.weapon == .lightning) { return 0 }
+    let period = fighting ? 9.0 : 26.0, share = fighting ? 0.4 : 0.15
+    let f = frac(t / period + seed)
+    guard f < share else { return 0 }
+    let k = f / share, ramp = 0.2
+    if k < ramp { return 0.5 - 0.5 * cos(k / ramp * .pi) }
+    if k > 1 - ramp { return 0.5 - 0.5 * cos((1 - k) / ramp * .pi) }
+    return 1
+}
+
+/// Air pushed down under someone hanging in the air: a few pale streaks flickering below the feet.
+func drawAirWash(_ c: PixelCanvas, t: Double) {
+    let i = Int(t * 18)
+    for k in 0..<3 {
+        let x = 20 + k * 6 + Int(noise(i + k * 5) * 3), y = 45 + Int(noise(i * 3 + k) * 4)
+        c.rect(x, y, 3 + Int(noise(i + k) * 3), 1, C(0xE8F4FF, 0.35 + 0.3 * noise(i * 7 + k)))
+    }
 }
 
 // MARK: - Shots

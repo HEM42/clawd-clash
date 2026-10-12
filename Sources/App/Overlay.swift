@@ -952,8 +952,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private func hitRects() -> [(String, NSRect)] {
         let s = Self.leaderScale * zoom, c = Self.companionScale * zoom
         return actors.filter { $0.leaving == nil }.sorted { $0.isLeader && !$1.isLeader }.map {
-            $0.isLeader ? ($0.key, NSRect(x: $0.x - 16 * s, y: anchor.y + 5 * s, width: 32 * s, height: 35 * s))
-                        : ($0.key, NSRect(x: $0.x - 16 * c, y: anchor.y + (s - c) * 8 + 5 * c, width: 32 * c, height: 35 * c))
+            let up = lastLift[$0.key] ?? 0   // in the air: the hit box goes up with it
+            return $0.isLeader ? ($0.key, NSRect(x: $0.x - 16 * s, y: anchor.y + 5 * s + up, width: 32 * s, height: 35 * s))
+                               : ($0.key, NSRect(x: $0.x - 16 * c, y: anchor.y + (s - c) * 8 + 5 * c + up, width: 32 * c, height: 35 * c))
         }
     }
 
@@ -1072,21 +1073,24 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let canvas = PixelCanvas(Sprite.width, Sprite.height)
             let scale: CGFloat
             let y: CGFloat
+            // Flyers ride up to `flightHeight` while they travel, and now and then take to the air where they stand
+            // (fighting from up there, if they shoot or cast); Spider-Man swings along in arcs on a web line.
+            let air = self.air(actor, role: roles[actor.key], walking: walking, t: t)
             switch actor.kind {
             case .leader(let who):
                 let role = roles[actor.key]
                 who.draw(canvas, t: t, mode: role != nil ? .working : actor.mode, walking: walking, role: role ?? .none,
-                         urgent: actor.urgent && role == nil, sitting: actor.sitting, asSession: true, airborne: actor.air > 0.3)
+                         urgent: actor.urgent && role == nil, sitting: actor.sitting, asSession: true,
+                         airborne: walking && air > 0.3, aloft: !walking && air > 0.3)
                 scale = ls; y = ground
             case .agent(let who):
                 let role = roles[actor.key]
                 who.draw(canvas, t: role != nil ? t : t + actor.phase, mode: .working, walking: walking,
-                         role: role ?? .none, asSession: false, airborne: actor.air > 0.3)
+                         role: role ?? .none, asSession: false, airborne: walking && air > 0.3, aloft: !walking && air > 0.3)
                 scale = cs; y = ground + (ls - cs) * 8
             }
-            // Flyers ride up to `flightHeight` while they travel; Spider-Man swings along in arcs on a web line.
             let pivotX = Sprite.bodyCenterX
-            var lift = actor.air * Self.flightHeight * scale
+            var lift = air * Self.flightHeight * scale
             if actor.cast.motion == .swing, walking {
                 let swing = actor.x / (70 * z)
                 lift = abs(sin(swing * .pi)) * 16 * scale
@@ -1096,6 +1100,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     out.append(web)
                 }
             }
+            lastLift[actor.key] = lift
             canvas.addOutline(AIStyle.outline(actor.assistant))
             guard let img = canvas.makeImage() else { continue }
             var alpha = min(1, (now - actor.born) / 0.25)
@@ -1125,7 +1130,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 let preferRight = nearest.map { $0.x < actor.x } ?? true
                 let onRight = preferRight ? rightX + w <= screenFrame.maxX : leftX < screenFrame.minX
                 let h = CGFloat(Bubble.height) * ls
-                let by = y + CGFloat(Sprite.height - 1 - Bubble.height) * ls
+                let by = y + lift + CGFloat(Sprite.height - 1 - Bubble.height) * ls
                 let bx = onRight ? rightX : leftX
                 bubbleSpan = (bx, bx + w, by + h)
                 bubbles.append((actor.key, actor.x, by, kind, actor.urgent, onRight, CGFloat(alpha)))
@@ -1201,23 +1206,23 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let width = Int(dist + margin * 2)
             guard width > 0, width < 4000 else { continue }
             let left = l.x - CGFloat(margin) * ls
+            // The effects canvas reaches `headroom` rows above a standing leader's, for whoever is fighting from the air.
+            let headroom = Int(Self.flightHeight) + 8
             func fighter(_ a: Actor, side: Double) -> Fighter {
                 let sc = a.isLeader ? ls : cs
-                let lift = a.isLeader ? 0 : (ls - cs) * 8
-                var muzzle = (x: 52.0, y: 32.0)
-                muzzle = a.cast.muzzle
+                let lift = (a.isLeader ? 0 : (ls - cs) * 8) + self.air(a, role: roles[a.key], walking: false, t: t) * Self.flightHeight * sc
                 return Fighter(weapon: weapon(a), x: Double((a.x - left) / ls), k: Double(sc / ls),
-                               top: Double((CGFloat(Sprite.height) * (ls - sc) - lift) / ls), side: side, muzzle: muzzle,
-                               armoured: a.cast.armoured, pivot: a.cast.weaponPivot).dressed(as: a.cast)
+                               top: Double((CGFloat(Sprite.height) * (ls - sc) - lift) / ls) + Double(headroom), side: side,
+                               muzzle: a.cast.muzzle, armoured: a.cast.armoured, pivot: a.cast.weaponPivot).dressed(as: a.cast)
             }
             let fl = fighter(l, side: 1), fr = fighter(r, side: -1)
             guard fightFXVisible(t: t, fl.weapon, fr.weapon) else { continue }   // e.g. a duel between clashes
-            let c = PixelCanvas(width, Sprite.height)
+            let c = PixelCanvas(width, Sprite.height + headroom)
             drawFightFX(c, t: t, left: fl, right: fr)
             if let img = c.makeImage() {
                 overlay.append(DrawItem(image: img, rect: NSRect(x: left.rounded(), y: ground,
                                                                  width: CGFloat(width) * ls,
-                                                                 height: CGFloat(Sprite.height) * ls)))
+                                                                 height: CGFloat(Sprite.height + headroom) * ls)))
             }
         }
 
@@ -1310,6 +1315,18 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     /// How high a flyer cruises, in canvas pixels.
     static let flightHeight: CGFloat = 16
+    /// How far each character was lifted in the last frame (flying, swinging), for hit testing.
+    private var lastLift: [String: CGFloat] = [:]
+
+    /// How far up (0…1 of `flightHeight`) `a` is right now: taking off or landing on a trip along the line, or out on a
+    /// sortie (`sortieAir`) — never while sitting, waiting for you, cheering or on its way out.
+    private func air(_ a: Actor, role: FightRole?, walking: Bool, t: Double) -> CGFloat {
+        var fighting = false, cheering = false
+        if let role { if case .cheer = role { cheering = true } else { fighting = true } }
+        let grounded = walking || a.sitting || a.mode == .waiting || a.leaving != nil || cheering
+        let sortie = grounded ? 0 : sortieAir(a.cast, seed: frac(a.phase / 7), fighting: fighting, t: t)
+        return max(a.air, CGFloat(sortie))
+    }
 
     /// A web line from a swinging hand up to where it's stuck, as a thin white line `scale` points per pixel.
     private func webLine(from a: NSPoint, anchor b: NSPoint, scale: CGFloat) -> DrawItem? {

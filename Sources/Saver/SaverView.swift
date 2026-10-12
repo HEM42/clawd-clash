@@ -364,20 +364,23 @@ final class AvengersClawdWarsSaverView: ScreenSaverView {
             let s = p.m.isLeader ? ls : cs
             let c = PixelCanvas(Sprite.width, Sprite.height)
             let role = roles[p.m.key]
+            let up = air(p, role: role, t: t)
             if p.m.isLeader {
                 let sess = p.m.session
                 p.m.cast.draw(c, t: t, mode: role != nil ? .working : mode(sess), walking: false, role: role ?? .none,
-                              urgent: sess.urgent && role == nil, sitting: sess.sitting && role == nil, asSession: true)
+                              urgent: sess.urgent && role == nil, sitting: sess.sitting && role == nil, asSession: true,
+                              aloft: up > 0.3)
             } else {
                 let phase = Double(abs(p.m.key.hashValue % 100)) / 37
-                p.m.cast.draw(c, t: role != nil ? t : t + phase, mode: .working, walking: false, role: role ?? .none, asSession: false)
+                p.m.cast.draw(c, t: role != nil ? t : t + phase, mode: .working, walking: false, role: role ?? .none, asSession: false,
+                              aloft: up > 0.3)
             }
             c.addOutline(AIStyle.outline(p.m.session.assistant))
             guard let img = c.makeImage() else { continue }
             let mirrored = p.facing < 0
             let bodyX = (mirrored ? CGFloat(Sprite.width) - CGFloat(Sprite.bodyCenterX) : CGFloat(Sprite.bodyCenterX)) * s
             let duck = incoming[p.m.key].map { CGFloat(duckAmount(t: t, shooterOffset: $0, armoured: p.m.cast.armoured)) } ?? 0
-            let y = p.m.isLeader ? base : base + (ls - cs) * 8
+            let y = (p.m.isLeader ? base : base + (ls - cs) * 8) + up * flightHeight * s
             items.append(Item(image: img, rect: CGRect(x: (p.x - bodyX).rounded(), y: y, width: CGFloat(Sprite.width) * s,
                                                        height: (CGFloat(Sprite.height) * s * (1 - 0.22 * duck)).rounded()),
                               mirrored: mirrored))
@@ -389,23 +392,36 @@ final class AvengersClawdWarsSaverView: ScreenSaverView {
             let width = Int(Double((r.x - l.x) / ls) + margin * 2)
             guard width > 0, width < 4000 else { continue }
             let left = l.x - CGFloat(margin) * ls
+            let headroom = Int(flightHeight) + 8   // rows above a standing leader's canvas, for fighting from the air
             func fighter(_ p: Placed, side: Double) -> Fighter {
                 let sc = p.m.isLeader ? ls : cs
-                let lift = p.m.isLeader ? 0 : (ls - cs) * 8
+                let lift = (p.m.isLeader ? 0 : (ls - cs) * 8) + air(p, role: roles[p.m.key], t: t) * flightHeight * sc
                 return Fighter(weapon: p.m.weapon, x: Double((p.x - left) / ls), k: Double(sc / ls),
-                               top: Double((CGFloat(Sprite.height) * (ls - sc) - lift) / ls), side: side, muzzle: p.m.cast.muzzle,
-                               armoured: p.m.cast.armoured, pivot: p.m.cast.weaponPivot).dressed(as: p.m.cast)
+                               top: Double((CGFloat(Sprite.height) * (ls - sc) - lift) / ls) + Double(headroom), side: side,
+                               muzzle: p.m.cast.muzzle, armoured: p.m.cast.armoured, pivot: p.m.cast.weaponPivot).dressed(as: p.m.cast)
             }
-            let c = PixelCanvas(width, Sprite.height)
+            let c = PixelCanvas(width, Sprite.height + headroom)
             drawFightFX(c, t: t, left: fighter(l, side: 1), right: fighter(r, side: -1))
             if let img = c.makeImage() {
                 items.append(Item(image: img, rect: CGRect(x: left.rounded(), y: base, width: CGFloat(width) * ls,
-                                                           height: CGFloat(Sprite.height) * ls)))
+                                                           height: CGFloat(Sprite.height + headroom) * ls)))
             }
         }
         // The System Settings thumbnail is too small for words: just the crew there.
         if !isPreview { items += board(placed, ls: ls, cs: cs, base: base, now: t, cards: cards) }
         return items
+    }
+
+    /// How high a flyer goes on a sortie, in canvas pixels (as in the window).
+    private let flightHeight: CGFloat = 16
+
+    /// How far up (0…1 of `flightHeight`) `p` is right now (`sortieAir`): never while sitting, waiting or cheering.
+    private func air(_ p: Placed, role: FightRole?, t: Double) -> CGFloat {
+        var fighting = false
+        if let role { if case .cheer = role { return 0 } else { fighting = true } }
+        if p.m.isLeader, role == nil, p.m.session.sitting || p.m.session.urgent || mode(p.m.session) == .waiting { return 0 }
+        let seed = Double(abs(p.m.key.hashValue % 1000)) / 1000
+        return CGFloat(sortieAir(p.m.cast, seed: seed, fighting: fighting, t: t))
     }
 
     /// Positions along the floor (body centres), pairs at fighting distance, everyone else a step apart.

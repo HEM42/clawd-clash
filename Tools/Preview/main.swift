@@ -141,24 +141,27 @@ case "fight":
     let gap = close ? 30.0 + a.persona.bulk + b.persona.bulk : 64.0, margin = 24.0
     let width = Int(gap + margin * 2 + 36)
     let moments = [0.05, 0.2, 0.33, 0.45, 0.6, 0.75, 0.9, 1.3, 2.1]
-    let cellW = CGFloat(width) * scale + 8, cellH = CGFloat(Sprite.height) * scale + 8
+    let headroom = 24   // flyers fight from the air now and then (`sortieAir`)
+    let cellW = CGFloat(width) * scale + 8, cellH = CGFloat(Sprite.height + headroom) * scale + 8
     let w = Int(cellW * 3), h = Int(cellH * CGFloat((moments.count + 2) / 3) + 26)
     save(sheet(w, h) { ctx in
         label("\(a.name) (\(ra)) vs \(b.name) (\(rb))", 6, CGFloat(h) - 20)
         for (i, t) in moments.enumerated() {
-            let c = PixelCanvas(width, Sprite.height)
+            let c = PixelCanvas(width, Sprite.height + headroom)
             let lx = margin + 10, rx = lx + gap
+            let ua = Int((sortieAir(a, seed: 0, fighting: true, t: t) * 16).rounded())
+            let ub = Int((sortieAir(b, seed: 0.5, fighting: true, t: t) * 16).rounded())
             let ca = PixelCanvas(Sprite.width, Sprite.height), cb = PixelCanvas(Sprite.width, Sprite.height)
-            a.draw(ca, t: t, mode: .working, walking: false, role: ra, asSession: false)
-            b.draw(cb, t: t, mode: .working, walking: false, role: rb, asSession: false)
+            a.draw(ca, t: t, mode: .working, walking: false, role: ra, asSession: false, aloft: ua > 4)
+            b.draw(cb, t: t, mode: .working, walking: false, role: rb, asSession: false, aloft: ub > 4)
             cb.flipHorizontally()
-            c.paste(ca, x: Int(lx - Sprite.bodyCenterX))
-            c.paste(cb, x: Int(rx - (Double(Sprite.width) - Sprite.bodyCenterX)))
-            func fighter(_ who: Cast, x: Double, side: Double) -> Fighter {
-                Fighter(weapon: who.weapon, x: x, k: 1, top: 0, side: side, muzzle: who.muzzle, armoured: who.armoured,
-                        pivot: who.weaponPivot).dressed(as: who)
+            c.paste(ca, x: Int(lx - Sprite.bodyCenterX), y: headroom - ua)
+            c.paste(cb, x: Int(rx - (Double(Sprite.width) - Sprite.bodyCenterX)), y: headroom - ub)
+            func fighter(_ who: Cast, x: Double, side: Double, up: Int) -> Fighter {
+                Fighter(weapon: who.weapon, x: x, k: 1, top: Double(headroom - up), side: side, muzzle: who.muzzle,
+                        armoured: who.armoured, pivot: who.weaponPivot).dressed(as: who)
             }
-            drawFightFX(c, t: t, left: fighter(a, x: lx, side: 1), right: fighter(b, x: rx, side: -1))
+            drawFightFX(c, t: t, left: fighter(a, x: lx, side: 1, up: ua), right: fighter(b, x: rx, side: -1, up: ub))
             put(c, ctx, x: CGFloat(i % 3) * cellW, y: CGFloat(h) - 26 - cellH * CGFloat(i / 3 + 1), outline: false)
             label("t=\(t)", CGFloat(i % 3) * cellW + 4, CGFloat(h) - 26 - cellH * CGFloat(i / 3) - 16, size: 10)
         }

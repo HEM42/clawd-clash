@@ -46,7 +46,7 @@ enum Cast: Hashable {
     /// Draw this character. `asSession` = it's a whole Claude/Codex session (it has moods: idle, thinking,
     /// waiting…); agents are always at work. `airborne`: a flyer on its way somewhere.
     func draw(_ c: PixelCanvas, t: Double, mode: VaderMode, walking: Bool, role: FightRole,
-              urgent: Bool = false, sitting: Bool = false, asSession: Bool, airborne: Bool = false) {
+              urgent: Bool = false, sitting: Bool = false, asSession: Bool, airborne: Bool = false, aloft: Bool = false) {
         // Idle habits (`Habits.swift`): only an idle session standing about, not fighting, walking or sitting.
         var idle = asSession && mode == .idle && !walking && !sitting
         switch role { case .none, .rest: break; default: idle = false }
@@ -57,7 +57,7 @@ enum Cast: Hashable {
             if let play { applyHabitTransform(c, play) }
         }
         drawPersona(c, self, t: t, mode: asSession ? mode : .working, walking: walking, role: role,
-                    urgent: asSession && urgent, sitting: asSession && sitting, airborne: airborne)
+                    urgent: asSession && urgent, sitting: asSession && sitting, airborne: airborne, aloft: aloft)
     }
 }
 
