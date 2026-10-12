@@ -73,6 +73,76 @@ let roster = canvas(Int(cellW) * cols, rosterH) { ctx in
 }
 save(roster, "roster.png")
 
+// MARK: Desktop
+
+// What it looks like along the bottom of your screen: sessions (name tags) and their agents (task labels) fighting,
+// heroes against villains, Iron Man fighting from the air. The app's own sizes: a session is drawn 3 points per sprite
+// pixel, an agent 2; this sheet is twice that, as on a Retina screen.
+struct Extra { let who: Cast; let leader: Bool; let label: String; let x: Double; let facing: Double; let role: FightRole
+               var up = 0.0 }
+let S: CGFloat = 6, gy: CGFloat = 46, momentT = 0.25
+let ak = 2.0 / 3
+let lineup: [[Extra]] = [
+    [Extra(who: .villain(.thanos), leader: true, label: "Thanos", x: 30, facing: 1, role: .zap),
+     Extra(who: .hero(.ironMan), leader: true, label: "Iron Man", x: 98, facing: -1, role: .hit, up: 10)],
+    [Extra(who: .hero(.spiderMan), leader: false, label: "Check git history", x: 132, facing: 1, role: .shoot(offset: 0)),
+     Extra(who: .villain(.greenGoblin), leader: false, label: "Write changelog", x: 182, facing: -1, role: .shoot(offset: blasterPeriod / 2))],
+    [Extra(who: .hero(.wolverine), leader: false, label: "Plan the refactor", x: 214, facing: 1, role: .duel),
+     Extra(who: .villain(.sabretooth), leader: false, label: "Review Overlay.swift", x: 244, facing: -1, role: .duel)],
+    [Extra(who: .hero(.captainAmerica), leader: true, label: "Captain America", x: 282, facing: 1, role: .deflect),
+     Extra(who: .villain(.redSkull), leader: true, label: "Red Skull", x: 352, facing: -1, role: .shoot(offset: 0))],
+    [Extra(who: .hero(.groot), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
+]
+let desktop = canvas(2600, 400) { ctx in
+    var tags: [CGRect] = []   // labels already placed: one that would overlap moves up a row, as in the app
+    func sprite(_ e: Extra) {
+        let c = PixelCanvas(Sprite.width, Sprite.height)
+        e.who.draw(c, t: momentT, mode: .working, walking: false, role: e.role, asSession: e.leader, aloft: e.up > 4)
+        if e.facing < 0 { c.flipHorizontally() }
+        c.addOutline(C(0xFFFFFF, 0.92))
+        let k: CGFloat = e.leader ? 1 : CGFloat(ak)
+        let bodyX = (e.facing < 0 ? CGFloat(Sprite.width) - CGFloat(Sprite.bodyCenterX) : CGFloat(Sprite.bodyCenterX)) * S * k
+        let y = gy + (e.leader ? 0 : 8 * S * (1 - k)) + CGFloat(e.up) * S * k
+        ctx.draw(c.makeImage()!, in: CGRect(x: CGFloat(e.x) * S - bodyX, y: y, width: CGFloat(Sprite.width) * S * k,
+                                           height: CGFloat(Sprite.height) * S * k))
+        // Its label above the head, as the app boxes it: sessions dark grey, agents dark blue.
+        let font = e.leader ? NSFont.monospacedSystemFont(ofSize: 20, weight: .bold) : NSFont.monospacedSystemFont(ofSize: 17, weight: .semibold)
+        let text = NSAttributedString(string: e.label, attributes: [.font: font, .foregroundColor: NSColor.white])
+        let ts = text.size()
+        let top = y + CGFloat(Sprite.height - e.who.drawnTop()) * S * k + (e.leader ? 16 : 10)
+        var box = CGRect(x: CGFloat(e.x) * S - ts.width / 2 - 10, y: top, width: ts.width + 20, height: ts.height + 8)
+        while tags.contains(where: { $0.insetBy(dx: -4, dy: -2).intersects(box) }) { box.origin.y += box.height + 4 }
+        tags.append(box)
+        let path = CGPath(roundedRect: box, cornerWidth: 8, cornerHeight: 8, transform: nil)
+        ctx.addPath(path)
+        ctx.setFillColor(e.leader ? CGColor(gray: 0.08, alpha: 0.85) : CGColor(red: 0.05, green: 0.10, blue: 0.24, alpha: 0.85))
+        ctx.fillPath()
+        ctx.addPath(path)
+        ctx.setStrokeColor(e.leader ? CGColor(gray: 1, alpha: 0.35) : CGColor(red: 0.45, green: 0.65, blue: 1, alpha: 0.5))
+        ctx.setLineWidth(2); ctx.strokePath()
+        text.draw(at: NSPoint(x: box.minX + 10, y: box.minY + 4))
+    }
+    for group in lineup {
+        for e in group where !e.leader { sprite(e) }   // agents first, sessions on top
+        for e in group where e.leader { sprite(e) }
+        guard group.count == 2 else { continue }
+        // The fight between them, from the app's effects code.
+        let l = group[0], r = group[1], margin = 24.0, headroom = 24
+        let left = l.x - margin, width = Int(r.x - l.x + margin * 2)
+        func fighter(_ e: Extra, side: Double) -> Fighter {
+            let k = e.leader ? 1 : ak
+            return Fighter(weapon: e.who.weapon, x: e.x - left, k: k, top: 44 * (1 - k) - e.up * k + Double(headroom), side: side,
+                           muzzle: e.who.muzzle, armoured: e.who.armoured, pivot: e.who.weaponPivot).dressed(as: e.who)
+        }
+        let fx = PixelCanvas(width, Sprite.height + headroom)
+        drawFightFX(fx, t: momentT, left: fighter(l, side: 1), right: fighter(r, side: -1))
+        ctx.draw(fx.makeImage()!, in: CGRect(x: CGFloat(left) * S, y: gy, width: CGFloat(width) * S,
+                                            height: CGFloat(Sprite.height + headroom) * S))
+    }
+}
+save(desktop, "desktop.png")
+print("wrote \(out)/desktop.png")
+
 // MARK: Locations
 
 let lw = 250, lh = 70, lscale: CGFloat = 2, lcols = 3

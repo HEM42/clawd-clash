@@ -54,6 +54,7 @@ Avengers: Clawd Wars is the sister app of [Clawd Wars](https://github.com/rodcle
 
 ### Docs (later)
 - **The promo**: a 50-second 1080p trailer with its own soundtrack (`promo/avengers-clawd-wars-promo.mp4`) and its storyboard, rendered by `Tools/RenderPromo` from the app's art. The top of the README plays a 720p upload of it inline (GitHub's web uploads stop at 10 MB), with the full 1080p file linked under it. The inline copy opens on the end card for a moment, so its thumbnail isn't a black frame.
+- **A desktop shot under the video**, like Clawd Wars': sessions with name tags and agents with task labels fighting along the bottom of the screen (Thanos blasting Iron Man in the air, Spider-Man and the Green Goblin, Wolverine and Sabretooth, Red Skull against Cap's shield), rendered by `Tools/RenderDocs` as `docs/desktop.png`.
 - **A centred social preview**: four heroes facing four villains under the title, instead of a line running off one side.
 - **"Sister app", not "fork"**: the README, changelog, llms.txt and the GitHub description describe Avengers: Clawd Wars as Clawd Wars' sister app.
 - **No em dashes** anywhere in the docs, menus, hover cards, banners or code comments.

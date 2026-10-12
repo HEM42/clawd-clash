@@ -22,7 +22,7 @@ https://github.com/user-attachments/assets/ed78aa3c-79ec-4827-a56b-b6590f905686
 <p align="center"><sub>🔊 <b>Click the speaker in the player for sound</b>: GitHub starts videos muted. Full 1080p version: <a href="promo/avengers-clawd-wars-promo.mp4">promo/avengers-clawd-wars-promo.mp4</a></sub></p>
 
 <p align="center">
-  <img src="docs/social-preview.png" alt="Thor, Spider-Man, Captain America and Iron Man facing Thanos, Loki, the Green Goblin and Venom" width="760">
+  <img src="docs/desktop.png" alt="Sessions and agents fighting along the bottom of the screen: Thanos blasting Iron Man in the air, Spider-Man webbing the Green Goblin, Wolverine and Sabretooth, Red Skull firing at Captain America's shield">
 </p>
 
 The sister app of [Clawd Wars](https://github.com/rodclemen/clawd-wars), the Star Wars one: same engine, same habits, a different universe.
