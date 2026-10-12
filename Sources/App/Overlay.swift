@@ -111,7 +111,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private var hookIssues: [HookIssue] = []
     private var hooksSince: [String: Double] = [:]  // assistant → when its hook file last changed (only if our hooks are in it)
     private var missingHooks: [String] = []          // AIs on this Mac without our hooks
-    /// AIs you've said you don't use with Avengers: Clawd Wars: installed, not connected, and no reminders about it. Connecting
+    /// AIs you've said you don't use with Clawd Clash: installed, not connected, and no reminders about it. Connecting
     /// one (Settings or the menu) takes it off the list; removing its hooks from Settings puts it on.
     static var ignoredHooks: Set<String> {
         get { Set(UserDefaults.standard.stringArray(forKey: "ignoredHooks") ?? []) }
@@ -169,12 +169,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private static let footroom: CGFloat = 7 * leaderScale
 
     override init() {
-        // The hook only knows the cast sizes; a villain or hero added without bumping them would never be picked.
-        assert(StatusStore.leaderCount == Leader.allCases.count && StatusStore.companionCount == Companion.allCases.count)
-        assert(StatusStore.agentOnly == [Leader.ultronSentry.rawValue, Leader.doombot.rawValue,
-                                         StatusStore.heroBase + Companion.jeffTheLandShark.rawValue,
-                                         StatusStore.heroBase + Companion.zabu.rawValue, StatusStore.heroBase + Companion.morris.rawValue,
-                                         StatusStore.heroBase + Companion.dumE.rawValue])   // small fry: agents only
+        // The hook only knows the cast sizes (`Universe`); a character added without bumping them would never be picked.
+        for u in Universe.allCases {
+            assert(Theme.of(u).villains.count == u.villainCount && Theme.of(u).heroes.count == u.heroCount, "\(u) cast size")
+        }
         panel = OverlayPanel(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10),
                              styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         view = OverlayView()
@@ -209,6 +207,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         panel.ignoresMouseEvents = true
         panel.contentView = view
 
+        Universe.shown = Self.universe
+        StatusStore.setUniverse(Self.universe, saver: Self.saverUniverse)   // the hook casts from it
         home = clampHome(savedHome())     // re-applies the edge snap, so positions saved under older rules are corrected
         if windowMode { openWindow() }
         refreshStatus()
@@ -293,8 +293,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     var location: Location {
         let raw = UserDefaults.standard.string(forKey: "location")
         if raw == Self.randomLocation { return randomPlace() }
-        if let raw, let l = Location(rawValue: raw) { return l }
-        return sessions.first.map { Cast(id: $0.leader).home } ?? .avengersTower
+        if let raw, let l = Location(rawValue: raw), l.universe == .shown { return l }
+        return sessions.first.map { Cast(id: $0.leader).home } ?? Location.all(in: .shown)[0]
     }
 
     static let randomLocation = "random"
@@ -304,7 +304,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private func randomPlace() -> Location {
         let slot = Int(Date().timeIntervalSince1970 / 600)
         if let r = random, r.slot == slot { return r.place }
-        let place = Location.allCases.filter { $0 != random?.place }.randomElement() ?? .avengersTower
+        let place = Location.all(in: .shown).filter { $0 != random?.place }.randomElement() ?? Location.all(in: .shown)[0]
         random = (place, slot)
         return place
     }
@@ -505,7 +505,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         feedSeen = seenNow
         feedAgents = agentsNow
         feedEvents = Array(feedEvents.suffix(12))
-        let feed = SaverFeed(at: now, location: location.rawValue, sessions: out, events: feedEvents)
+        let feed = SaverFeed(at: now, location: location.rawValue, sessions: out, events: feedEvents,
+                             universe: Universe.shown.rawValue, saverUniverse: Self.saverUniverse.rawValue)
         saverFeed = feed
         if real && saverInstalled { feed.save() }
     }
@@ -539,7 +540,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         return moodSince[s.id] ?? now
     }
 
-    private static let scanQueue = DispatchQueue(label: "avengersclawdwars.process-scan", qos: .utility)
+    private static let scanQueue = DispatchQueue(label: "clawdclash.process-scan", qos: .utility)
     private var scanning = false
 
     /// Each process's CPU time so far, in seconds.
@@ -810,7 +811,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private func playgroundSessions(_ villains: [Int]) -> [SessionSnapshot] {
         let activities = ["Read Overlay.swift", "Grep fightRoles", "Bash: swift build", "Edit Leaders.swift",
                           "Fetch github.com", "Glob **/*.swift", "Bash: run the tests", "Read README.md"]
-        // Heroes by `Companion` index; the agent-only villains as `playgroundVillainAgent` + their cast id.
+        // Heroes by `MarvelHero` index; the agent-only villains as `playgroundVillainAgent` + their cast id.
         let crew = playgroundAgents.enumerated().map { i, c in
             AgentRecord(id: "pg-a\(c)", session: "pg", type: "playground", character: c >= Self.playgroundVillainAgent ? 0 : c,
                         cast: c >= Self.playgroundVillainAgent ? c - Self.playgroundVillainAgent : nil, started: start - Double(30 + i * 47),
@@ -1474,7 +1475,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         guard playground == nil, !demo, shotPath == nil, chaosSeconds == nil else { return }
         SaverInstaller.refreshIfOutdated()
         // The app was moved since the hooks went in: point them here (already agreed to, so no need to ask).
-        for ai in HookInstaller.repairMoved() { NSLog("Avengers: Clawd Wars: re-pointed \(HookInstaller.displayName(ai)) hooks at \(HookInstaller.hookBinary)") }
+        for ai in HookInstaller.repairMoved() { NSLog("Clawd Clash: re-pointed \(HookInstaller.displayName(ai)) hooks at \(HookInstaller.hookBinary)") }
         let d = UserDefaults.standard
         let ignored = Self.ignoredHooks
         let claude = HookInstaller.claudeAvailable && !HookInstaller.isInstalled && !d.bool(forKey: "offeredHooks")
@@ -1492,13 +1493,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             NSApp.activate(ignoringOtherApps: true)
             let a = NSAlert()
-            a.messageText = "Connect Avengers: Clawd Wars to \(list)?"
+            a.messageText = "Connect Clawd Clash to \(list)?"
             a.informativeText = """
-                Avengers: Clawd Wars learns what your sessions are doing from hooks. This adds a small hook to each one's \
+                Clawd Clash learns what your sessions are doing from hooks. This adds a small hook to each one's \
                 settings (a backup is kept). Sessions already running pick it up after a restart.\(codex ? """
 
 
-                Codex asks you to approve new hooks once: type /hooks in Codex and approve Avengers: Clawd Wars. \
+                Codex asks you to approve new hooks once: type /hooks in Codex and approve Clawd Clash. \
                 You'll get a reminder if a Codex session isn't reporting yet.
                 """ : "")
 
@@ -1524,7 +1525,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let moods: [Mood] = [.working, .working, .thinking, .waiting, .idle]
         if chaos.isEmpty || (chaos.count < 7 && roll(0.15)) {
             let used = Set(chaos.map(\.leader))
-            if let l = StatusStore.leaderCast.filter({ !used.contains($0) }).randomElement() {
+            let u = Universe.shown
+            if let l = (u.darkCast + u.lightCast).filter({ !used.contains($0) && !u.agentOnly.contains($0) }).randomElement() {
                 chaos.append(SessionSnapshot(id: "chaos-\(l)-\(Int(now * 1000))", leader: l, project: "project-\(l)",
                                              mood: moods.randomElement()!, agents: []))
             }
@@ -1537,7 +1539,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let i = Int.random(in: 0..<chaos.count)
             chaos[i].agents.append(AgentRecord(id: "chaos-a\(chaosAgentSerial)", session: chaos[i].id, type: "chaos",
                                                character: 0,
-                                               cast: (StatusStore.darkCast + StatusStore.lightCast).randomElement(),
+                                               cast: (Universe.shown.darkCast + Universe.shown.lightCast).randomElement(),
                                                started: now, lastSeen: now,
                                                task: Self.sampleTasks.randomElement()))
         }
@@ -1623,7 +1625,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             guard granted else { return }
             let content = UNMutableNotificationContent()
             let name = HookInstaller.displayName(assistant)
-            content.title = assistant == "codex" ? "Approve Avengers: Clawd Wars in Codex" : "\(name) isn't reporting to Avengers: Clawd Wars"
+            content.title = assistant == "codex" ? "Approve Clawd Clash in Codex" : "\(name) isn't reporting to Clawd Clash"
             let fix = HookInstaller.silentFix(assistant)
             content.body = fix.prefix(1).uppercased() + fix.dropFirst()
                 + "\(project.isEmpty ? "" : " (\(project))") to see its live status. Click to jump there."
@@ -1663,13 +1665,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     }
 
     /// Captain America's shield in the menu bar, opening the same menu as right-clicking a character.
-    /// Double-clicking it hides or shows Avengers: Clawd Wars, so a single click opens the menu only once the
+    /// Double-clicking it hides or shows Clawd Clash, so a single click opens the menu only once the
     /// double-click time has passed; right-click (or ⌃-click) opens it straight away.
     private func installStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         item.button?.image = statusIcon(mono: monoMenuBarIcon)
         item.button?.imageScaling = .scaleProportionallyDown
-        item.button?.toolTip = "Avengers: Clawd Wars (double-click to hide or show)"
+        item.button?.toolTip = "Clawd Clash (double-click to hide or show)"
         statusMenu.delegate = self
         item.button?.target = self
         item.button?.action = #selector(statusItemClicked)
@@ -1694,11 +1696,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         statusItem?.button?.image = statusIcon(mono: monoMenuBarIcon)
     }
 
-    /// Captain America's shield for the menu bar (`drawMenuBarShield`). In colour it gets a white outline so it
-    /// reads on a dark menu bar; monochrome is a template image that macOS tints to match the menu bar.
+    /// The universe's menu bar icon (`Theme.menuIcon`: Vader's helmet, Captain America's shield). In colour it gets
+    /// a white outline so it reads on a dark menu bar; monochrome is a template image macOS tints to match the bar.
     private func statusIcon(mono: Bool) -> NSImage? {
         let c = PixelCanvas(28, 26)
-        drawMenuBarShield(c, mono: mono)
+        Theme.of(.shown).menuIcon(c, mono)
         if !mono { c.addOutline(C(0xFFFFFF, 0.92)) }
         guard let cg = c.makeImage() else { return nil }
         let img = NSImage(cgImage: cg, size: NSSize(width: 19, height: 18))
@@ -1718,7 +1720,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         showStatusMenu()
     }
 
-    /// The menu opens at once. Clicking the helmet again right away closes it and hides (or shows) Avengers: Clawd Wars.
+    /// The menu opens at once. Clicking the helmet again right away closes it and hides (or shows) Clawd Clash.
     private func showStatusMenu() {
         guard let item = statusItem, let button = item.button else { return }
         let opened = ProcessInfo.processInfo.systemUptime
@@ -1855,11 +1857,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let main = NSMenu()
         let appItem = NSMenuItem()
         let app = NSMenu()
-        app.addItem(withTitle: "About Avengers: Clawd Wars", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        app.addItem(withTitle: "About Clawd Clash", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         app.addItem(.separator())
         app.addItem(action: windowMode ? "Show on Desktop" : "Show in Window", #selector(toggleWindowMode), target: self)
         app.addItem(.separator())
-        app.addItem(withTitle: "Quit Avengers: Clawd Wars", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        app.addItem(withTitle: "Quit Clawd Clash", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = app
         main.addItem(appItem)
         // The same options as right-clicking a villain, as a "Crew" menu.
@@ -1978,7 +1980,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 if let cwd = s.cwd, !compact { stats.append(cwd.hasPrefix(home) ? "~" + cwd.dropFirst(home.count) : cwd) }
                 if !stats.isEmpty { lines.append((stats.joined(separator: "  ·  "), dim)) }
             } else if s.hookSilent {
-                lines.append(("The Avengers: Clawd Wars hook isn't running in this session, so it can't report what it's doing.", soft))
+                lines.append(("The Clawd Clash hook isn't running in this session, so it can't report what it's doing.", soft))
                 let fix = HookInstaller.silentFix(s.assistant)
                 lines.append((fix.prefix(1).uppercased() + fix.dropFirst() + ": click this card to jump there.", dim))
             } else if !s.live {
@@ -2093,8 +2095,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             sub.addItem(item)
         }
         size.submenu = sub
-        m.addItem(action: hidden ? "Show Avengers: Clawd Wars" : "Hide Avengers: Clawd Wars", #selector(toggleHidden), target: self)
+        m.addItem(action: hidden ? "Show Clawd Clash" : "Hide Clawd Clash", #selector(toggleHidden), target: self)
         m.addItem(action: windowMode ? "Show on Desktop" : "Show in Window", #selector(toggleWindowMode), target: self)
+        m.addItem(universeMenu())
         if windowMode { m.addItem(locationMenu()) }
         m.addItem(settingsMenu(size: size))
         m.addItem(statusSymbolsMenu())
@@ -2166,6 +2169,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 sm.addItem(action: "Install Screen Saver…", #selector(installSaver), target: self)
             }
         }
+        sm.addItem(.separator())
+        sm.addItem(disabled: "Screen saver shows")
+        sm.addItem(action: "The Same Universe as the App", #selector(saverSameUniverse), target: self, on: Self.saverUniverse == .same)
+        sm.addItem(action: "A Random Universe", #selector(saverRandomUniverse), target: self, on: Self.saverUniverse == .random)
         root.submenu = sm
         return root
     }
@@ -2228,6 +2235,69 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         if on { clawdWindow?.fitToContent() }
     }
 
+    // MARK: Universe
+
+    /// The universe on show: Star Wars or Marvel. Never both in one scene. A fresh install takes after whichever
+    /// app it replaces (Clawd Wars: Star Wars; Avengers: Clawd Wars: Marvel); the Homebrew casks preset it.
+    static var universe: Universe {
+        get {
+            let d = UserDefaults.standard
+            if let key = d.string(forKey: "universe"), let u = Universe(key: key) { return u }
+            if UserDefaults(suiteName: "com.rodclemen.avengersclawdwars")?.object(forKey: "windowMode") != nil,
+               UserDefaults(suiteName: "com.rodclemen.vaderclaude")?.object(forKey: "windowMode") == nil { return .marvel }
+            return .starWars
+        }
+        set { UserDefaults.standard.set(newValue.key, forKey: "universe") }
+    }
+
+    /// Which universe the screen saver shows: the app's, or a random one on each trip.
+    static var saverUniverse: SaverUniverse {
+        get { UserDefaults.standard.string(forKey: "saverUniverse").flatMap(SaverUniverse.init(rawValue:)) ?? .same }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: "saverUniverse") }
+    }
+
+    private func universeMenu() -> NSMenuItem {
+        let root = NSMenuItem(title: "Universe: \(Universe.shown.title)", action: nil, keyEquivalent: "")
+        let um = NSMenu()
+        for u in Universe.allCases {
+            let item = NSMenuItem(title: u.title, action: #selector(setUniverse(_:)), keyEquivalent: "")
+            item.target = self
+            item.tag = u.rawValue
+            item.state = u == Universe.shown ? .on : .off
+            um.addItem(item)
+        }
+        root.submenu = um
+        return root
+    }
+
+    /// Everyone is recast in the new universe (same places in its cast, so they keep their sides), the scene moves to
+    /// one of its places, the menu bar icon changes, and the hook casts new arrivals from it.
+    @objc private func setUniverse(_ sender: NSMenuItem) {
+        guard let u = Universe(rawValue: sender.tag), u != Universe.shown else { return }
+        Self.universe = u
+        Universe.shown = u
+        StatusStore.setUniverse(u, saver: Self.saverUniverse)
+        if let raw = UserDefaults.standard.string(forKey: "location"), raw != Self.randomLocation,
+           Location(rawValue: raw)?.universe != u {
+            UserDefaults.standard.removeObject(forKey: "location")     // a place from the other universe: back to automatic
+        }
+        random = nil
+        statusItem?.button?.image = statusIcon(mono: monoMenuBarIcon)
+        actors.removeAll()                                           // walk back in, recast
+        refreshStatus()
+        clawdWindow?.sceneView.showFrame()
+        clawdWindow?.cardsView.needsDisplay = true
+        clawdWindow?.header.needsDisplay = true
+        clawdWindow?.redrawScroller()
+    }
+
+    @objc private func saverSameUniverse() { setSaverUniverse(.same) }
+    @objc private func saverRandomUniverse() { setSaverUniverse(.random) }
+    private func setSaverUniverse(_ mode: SaverUniverse) {
+        Self.saverUniverse = mode
+        StatusStore.setUniverse(Universe.shown, saver: mode)
+    }
+
     private func locationMenu() -> NSMenuItem {
         let root = NSMenuItem(title: "Location: \(location.name)", action: nil, keyEquivalent: "")
         let lm = NSMenu()
@@ -2242,9 +2312,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         random.state = picked == Self.randomLocation ? .on : .off
         lm.addItem(random)
         lm.addItem(.separator())
-        let owners: [Location: [String]] = Dictionary(grouping: Leader.allCases.map { (Location.home(of: $0), $0.name) }
-            + Companion.allCases.map { (Location.home(of: $0), $0.name) }, by: \.0).mapValues { $0.map(\.1) }
-        for l in Location.allCases {
+        let owners: [Location: [String]] = Dictionary(grouping: Theme.of(.shown).cast.map { ($0.home, $0.name) }, by: \.0)
+            .mapValues { $0.map(\.1) }
+        for l in Location.all(in: .shown) {
             let who = owners[l]?.joined(separator: ", ") ?? ""
             let item = NSMenuItem(title: who.isEmpty ? l.name : "\(l.name)  ·  \(who)", action: #selector(setLocation(_:)), keyEquivalent: "")
             item.target = self
@@ -2273,8 +2343,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let pm = NSMenu()
         let picked = playground ?? []
         pm.addItem(disabled: "Villains (they pair up in the order you add them)")
-        func weaponLabel(_ l: Leader) -> String {
-            let p = l.persona
+        let theme = Theme.of(.shown)
+        func weaponLabel(_ p: Persona) -> String {
             var label: String
             switch p.weapon {
             case .saber: label = "melee"
@@ -2290,27 +2360,28 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             }
             return label
         }
-        for l in Leader.allCases where !StatusStore.agentOnly.contains(l.rawValue) {
-            let order = picked.firstIndex(of: l.rawValue).map { "   #\($0 + 1)" } ?? ""
-            let item = NSMenuItem(title: "\(l.name) (\(weaponLabel(l)))\(order)",
+        // Tags are local ids (villain index, hero index); `Cast(id:)` puts them in the universe on show.
+        for (i, p) in theme.villains.enumerated() where !theme.universe.agentOnly.contains(theme.universe.base + i) {
+            let order = picked.firstIndex(of: i).map { "   #\($0 + 1)" } ?? ""
+            let item = NSMenuItem(title: "\(p.name) (\(weaponLabel(p)))\(order)",
                                   action: #selector(togglePlaygroundVillain(_:)), keyEquivalent: "")
             item.target = self
-            item.tag = l.rawValue
-            item.state = picked.contains(l.rawValue) ? .on : .off
+            item.tag = i
+            item.state = picked.contains(i) ? .on : .off
             pm.addItem(item)
         }
         pm.addItem(.separator())
         pm.addItem(disabled: "Agents (they join the first villain)")
-        for c in Companion.allCases {
-            let item = NSMenuItem(title: c.name, action: #selector(togglePlaygroundAgent(_:)), keyEquivalent: "")
+        for (i, p) in theme.heroes.enumerated() {
+            let item = NSMenuItem(title: p.name, action: #selector(togglePlaygroundAgent(_:)), keyEquivalent: "")
             item.target = self
-            item.tag = c.rawValue
-            item.state = playground != nil && playgroundAgents.contains(c.rawValue) ? .on : .off
+            item.tag = i
+            item.state = playground != nil && playgroundAgents.contains(i) ? .on : .off
             pm.addItem(item)
         }
-        for id in StatusStore.agentOnly.sorted() where id < StatusStore.heroBase {   // agent-only heroes are listed above
-            let tag = Self.playgroundVillainAgent + id
-            let item = NSMenuItem(title: Leader(index: id).name, action: #selector(togglePlaygroundAgent(_:)), keyEquivalent: "")
+        for id in theme.universe.agentOnly.sorted() where Universe.isDark(id) {   // agent-only heroes are listed above
+            let tag = Self.playgroundVillainAgent + id % 1000
+            let item = NSMenuItem(title: Cast(id: id).name, action: #selector(togglePlaygroundAgent(_:)), keyEquivalent: "")
             item.target = self
             item.tag = tag
             item.state = playground != nil && playgroundAgents.contains(tag) ? .on : .off
@@ -2366,7 +2437,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     @objc private func addAllVillains() {
         enterPlayground()
-        for l in Leader.allCases where !playground!.contains(l.rawValue) && !StatusStore.agentOnly.contains(l.rawValue) { playground!.append(l.rawValue) }
+        let u = Universe.shown
+        for i in 0..<u.villainCount where !playground!.contains(i) && !u.agentOnly.contains(u.base + i) { playground!.append(i) }
         refreshStatus()
     }
 
@@ -2422,13 +2494,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
         lastSaverCheck = -100   // start publishing as soon as it's in place
         SaverInstaller.openSettings()
-        alert("Avengers: Clawd Wars screen saver installed",
-              "In the Wallpaper settings that just opened, go to Screen Saver and pick Avengers: Clawd Wars (with the other screen savers, near the end of the list). Avengers: Clawd Wars needs to be running for the crew to show.")
+        alert("Clawd Clash screen saver installed",
+              "In the Wallpaper settings that just opened, go to Screen Saver and pick Clawd Clash (with the other screen savers, near the end of the list). Clawd Clash needs to be running for the crew to show.")
     }
 
     @objc private func removeSaver() {
         if !SaverInstaller.remove() {
-            alert("Couldn't remove the screen saver", "Delete /Library/Screen Savers/Avengers Clawd Wars.saver in Finder (it asks for an admin password).")
+            alert("Couldn't remove the screen saver", "Delete /Library/Screen Savers/Clawd Clash.saver in Finder (it asks for an admin password).")
         }
         lastSaverCheck = -100
     }

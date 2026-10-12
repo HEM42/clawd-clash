@@ -1,7 +1,7 @@
 import Foundation
 
 // Shared state between the Claude Code hook binary (writer) and the overlay app (reader).
-// Lives at ~/.claude/avengers-status/state.json.
+// Lives at ~/.claude/clawd-clash/state.json.
 
 struct SessionRecord: Codable {
     var state: String      // idle | thinking | working | waiting
@@ -59,6 +59,12 @@ struct StatusFile: Codable {
     var sessions: [String: SessionRecord] = [:]
     var agents: [AgentRecord] = []
     var pending: [PendingAgent]? = []
+    /// The universe on show (`Universe.rawValue`), set by the app; the hook casts new characters from it.
+    var universe: Int?
+    /// Which universe the screen saver shows (`SaverUniverse.rawValue`), set by the app.
+    var saverUniverse: String?
+
+    var shownUniverse: Universe { universe.flatMap(Universe.init(rawValue:)) ?? .starWars }
 }
 
 /// Decodes to nil instead of failing, so one bad record doesn't cost every other one.
@@ -73,6 +79,8 @@ extension StatusFile {
         sessions = (try? c.decode([String: Lenient<SessionRecord>].self, forKey: .sessions))?.compactMapValues(\.value) ?? [:]
         agents = (try? c.decode([Lenient<AgentRecord>].self, forKey: .agents))?.compactMap(\.value) ?? []
         pending = (try? c.decode([Lenient<PendingAgent>].self, forKey: .pending))?.compactMap(\.value) ?? []
+        universe = try? c.decode(Int.self, forKey: .universe)
+        saverUniverse = try? c.decode(String.self, forKey: .saverUniverse)
     }
 }
 
@@ -113,14 +121,12 @@ struct SessionSnapshot {
 
 enum StatusPaths {
     /// The real home (`SaverFeed.home`): the screen saver reads this too, and in its sandbox the usual home is its container.
-    static let dir = URL(fileURLWithPath: SaverFeed.home).appendingPathComponent(".claude/avengers-status", isDirectory: true)
+    static let dir = URL(fileURLWithPath: SaverFeed.home).appendingPathComponent(".claude/clawd-clash", isDirectory: true)
     static let state = dir.appendingPathComponent("state.json")
     static let lock = dir.appendingPathComponent("state.lock")
 }
 
 enum StatusStore {
-    static let companionCount = 105
-    static let leaderCount = 88
 
     // Stale timeouts: Stop never fires when the user hits Esc, so states must decay on their own.
     static let thinkingTTL: Double = 10 * 60
@@ -205,13 +211,13 @@ enum StatusStore {
             if event != "SessionEnd" {
                 if s.sessions[session] == nil {
                     var rec = SessionRecord(state: "idle", updated: now,
-                                            leader: nextLeader(castable(s.sessions, now: now), assistant: assistant), project: project)
+                                            leader: nextLeader(castable(s.sessions, now: now), assistant: assistant, universe: s.shownUniverse), project: project)
                     rec.assistant = assistant
                     rec.created = now
                     s.sessions[session] = rec
                 }
                 if s.sessions[session]?.leader == nil {
-                    let leader = nextLeader(castable(s.sessions, now: now), assistant: assistant)
+                    let leader = nextLeader(castable(s.sessions, now: now), assistant: assistant, universe: s.shownUniverse)
                     s.sessions[session]?.leader = leader
                 }
                 if let project, agentId == nil { s.sessions[session]?.project = project }
@@ -394,32 +400,27 @@ enum StatusStore {
     /// A random hero not already on screen (repeats only once all of them are out).
     // MARK: Cast and sides
     //
-    // Cast ids: 0..<leaderCount are the dark side (Leader), 100..<100+companionCount the light side (Companion).
-    // One AI running: every new character is random from the whole cast. Two AIs running (Claude and Codex):
-    // the AI that was there first keeps the side it mostly has, the other AI takes the opposite, and each one's
-    // agents join their session's side. Each side is preferred as much as possible; if it's all on screen
-    // already, the other side lends someone.
+    // Cast ids: see `Universe` (villains local 0..<100, heroes 100…, plus the universe's base). One AI running: every
+    // new character is random from the universe's whole cast. Two AIs running: the universe's `claudeSide` says which
+    // side Claude takes; otherwise the AI that was there first keeps the side it mostly has and the other takes the
+    // opposite. Each one's agents join their session's side. If a side is all on screen, the other lends someone.
 
     static let heroBase = 100
-    static func isDark(_ cast: Int) -> Bool { cast < heroBase }
-    static var darkCast: [Int] { Array(0..<leaderCount) }
-    static var lightCast: [Int] { Array(heroBase..<(heroBase + companionCount)) }
-    /// Only ever an agent, never a session: the MSE-6 mouse droid and the ID9 seeker droid.
-    static let agentOnly: Set<Int> = [11, 33, 190, 202, 203, 204]   // Ultron Sentry, Doombot, Jeff, Zabu, Morris, Dum-E
-    /// Who can lead a session (everyone but the agent-only).
-    static var leaderCast: [Int] { (darkCast + lightCast).filter { !agentOnly.contains($0) } }
+    static func isDark(_ cast: Int) -> Bool { Universe.isDark(cast) }
 
     static func assistantOf(_ r: SessionRecord) -> String { r.assistant ?? "claude" }
 
     /// The side `assistant` should use right now (true: villains), or nil when it's the only AI running (anything
     /// goes). Claude Code is the heroes whenever another AI is running, and the others the villains; with no Claude
     /// among them, whoever has been running longest keeps the side it mostly has and the rest take the other.
-    static func side(for assistant: String, in sessions: [String: SessionRecord]) -> Bool? {
+    static func side(for assistant: String, in sessions: [String: SessionRecord], universe: Universe) -> Bool? {
         let live = sessions.values.filter { $0.leader != nil }
         guard live.contains(where: { assistantOf($0) != assistant }) else { return nil }
         let isClaude = { (ai: String) in ai == "claude" || ai.hasPrefix("claude-") }
-        if isClaude(assistant) { return false }
-        if live.contains(where: { isClaude(assistantOf($0)) }) { return true }
+        if let claudeSide = universe.claudeSide {
+            if isClaude(assistant) { return claudeSide }
+            if live.contains(where: { isClaude(assistantOf($0)) }) { return !claudeSide }
+        }
         // (A record without `created` predates that field, so it's older than any that has one.)
         guard let first = live.min(by: { ($0.created ?? 0) < ($1.created ?? 0) }) else { return nil }
         let firstAI = assistantOf(first)
@@ -431,14 +432,15 @@ enum StatusStore {
 
     /// Character for a new session: random from the whole cast, or from this AI's side when two AIs are running
     /// (borrowing from the other side only when its own is all on screen).
-    static func nextLeader(_ sessions: [String: SessionRecord], assistant: String = "claude") -> Int {
+    static func nextLeader(_ sessions: [String: SessionRecord], assistant: String = "claude", universe: Universe) -> Int {
         let used = Set(sessions.values.compactMap(\.leader))
         let latest = sessions.values.filter { $0.leader != nil }.max { ($0.created ?? $0.updated) < ($1.created ?? $1.updated) }
         let pool: [Int]
-        switch side(for: assistant, in: sessions) {
-        case .some(true): pool = darkCast.filter { !used.contains($0) }.isEmpty ? lightCast : darkCast
-        case .some(false): pool = lightCast.filter { !used.contains($0) }.isEmpty ? darkCast : lightCast
-        case nil: pool = leaderCast
+        let dark = universe.darkCast, light = universe.lightCast
+        switch side(for: assistant, in: sessions, universe: universe) {
+        case .some(true): pool = dark.filter { !used.contains($0) }.isEmpty ? light : dark
+        case .some(false): pool = light.filter { !used.contains($0) }.isEmpty ? dark : light
+        case nil: pool = dark + light
         }
         return pickLeader(used: used, previous: latest?.leader, pool: pool)
     }
@@ -449,19 +451,26 @@ enum StatusStore {
         var s = s
         s.sessions = castable(s.sessions, now: now)
         let onScreen = Set(s.agents.compactMap { $0.cast ?? (heroBase + $0.character) } + s.sessions.values.compactMap(\.leader))
-        var pool = darkCast + lightCast
-        if let rec = s.sessions[session], let leader = rec.leader, side(for: assistantOf(rec), in: s.sessions) != nil {
-            pool = isDark(leader) ? darkCast : lightCast
+        let u = s.shownUniverse
+        var pool = u.darkCast + u.lightCast
+        if let rec = s.sessions[session], let leader = rec.leader, side(for: assistantOf(rec), in: s.sessions, universe: u) != nil {
+            pool = isDark(leader) ? u.darkCast : u.lightCast
         }
         let free = pool.filter { !onScreen.contains($0) }
         return (free.isEmpty ? pool : free).randomElement()!
     }
 
     /// `seed` makes the choice deterministic (for sessions found by the process scan, re-evaluated every refresh).
-    static func pickLeader(used: Set<Int>, previous: Int?, seed: UInt64? = nil, pool: [Int]? = nil) -> Int {
-        let pool = (pool ?? darkCast).filter { !agentOnly.contains($0) }
+    static func pickLeader(used: Set<Int>, previous: Int?, seed: UInt64? = nil, pool: [Int]) -> Int {
+        let universe = Universe.of(pool.first ?? 0)
+        let pool = pool.filter { !universe.agentOnly.contains($0) }
         var free = pool.filter { !used.contains($0) }
         if free.isEmpty { free = pool }                      // the whole pool is on screen: repeats are fine
+        let rivals = universe.rivals                         // Vader and Kylo never lead two sessions back to back
+        if let p = previous, rivals.contains(p) {
+            let spaced = free.filter { !rivals.contains($0) || $0 == p }
+            if !spaced.isEmpty { free = spaced }
+        }
         if let seed { return free[Int(seed % UInt64(free.count))] }
         return free.randomElement()!
     }
@@ -516,6 +525,11 @@ enum StatusStore {
     }
 
     /// Drop idle sessions with no agents (e.g. terminals closed without a clean exit). They return on their next event.
+    /// Tell the hook (and the screen saver, when the app isn't running) which universe is on show.
+    static func setUniverse(_ universe: Universe, saver: SaverUniverse) {
+        withLock { s in s.universe = universe.rawValue; s.saverUniverse = saver.rawValue }
+    }
+
     static func forgetIdleSessions() {
         withLock { s in
             let busy = Set(s.agents.map(\.session))
@@ -610,14 +624,17 @@ enum StatusStore {
         }
         let replaced = Set(live.filter { id, rec in rec.pid.map { newest[$0]?.id != id } ?? false }.map(\.key))
         live = live.filter { !replaced.contains($0.key) }
-        var used = Set(live.values.compactMap(\.leader))
+        // Everyone is shown in the universe on show; characters cast in another one take the same place in this one.
+        let universe = s.shownUniverse
+        let cast = universe.darkCast + universe.lightCast
+        var used = Set(live.values.compactMap(\.leader).map(universe.adopt))
         var result: [SessionSnapshot] = []
         var previous: Int?
         // Spawn order, so "who came after whom" is meaningful.
         for (id, rec) in live.sorted(by: { ($0.value.created ?? $0.value.updated) < ($1.value.created ?? $1.value.updated) }) {
-            var leader = rec.leader ?? -1
+            var leader = rec.leader.map(universe.adopt) ?? -1
             if leader < 0 {   // records written before leaders existed
-                leader = pickLeader(used: used, previous: previous, seed: stableHash(id))
+                leader = pickLeader(used: used, previous: previous, seed: stableHash(id), pool: cast)
                 used.insert(leader)
             }
             previous = leader
@@ -643,8 +660,7 @@ enum StatusStore {
             }
             for p in processes where !claimed.contains(p.pid) {
                 // Seeded by pid so the same process keeps the same villain across refreshes.
-                let leader = pickLeader(used: used, previous: previous, seed: UInt64(p.pid) &* 2654435761,
-                                        pool: darkCast + lightCast)
+                let leader = pickLeader(used: used, previous: previous, seed: UInt64(p.pid) &* 2654435761, pool: cast)
                 used.insert(leader)
                 previous = leader
                 let cwd = ClaudeProcesses.cwd(p.pid)
@@ -658,7 +674,7 @@ enum StatusStore {
         let agents = s.agents.filter { now - $0.lastSeen <= agentTTL && !replaced.contains($0.session) }.sorted { $0.started < $1.started }
         // No AI running: the stage stays empty. Only stray agents still reporting in get a placeholder Vader to stand with.
         if result.isEmpty && !agents.isEmpty {
-            result.append(SessionSnapshot(id: "home", leader: 0, project: "", mood: .idle, agents: []))
+            result.append(SessionSnapshot(id: "home", leader: universe.base, project: "", mood: .idle, agents: []))
         }
         for a in agents {
             // Agents whose session we never heard from stand with the first villain.

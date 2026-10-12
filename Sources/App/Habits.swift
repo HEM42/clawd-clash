@@ -47,6 +47,7 @@ var forcedHabit: HabitPlay?
 extension Cast {
     /// What this character does when idle: its weapon habit (if it handles one by hand) comes up twice as often.
     var habits: [IdleHabit] {
+        guard persona.fidgets else { return [] }
         var weaponHabit: IdleHabit?
         switch weapon {
         case .saber: weaponHabit = .flourish

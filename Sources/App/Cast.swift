@@ -1,36 +1,35 @@
 import Foundation
 
-/// Anyone in the cast: a villain or a hero. Any of them can be a session (drawn large) or an agent (drawn small).
-/// Ids match `StatusStore`: villains < 100, heroes 100 + Companion.
-enum Cast: Hashable {
-    case villain(Leader)
-    case hero(Companion)
+/// Anyone in the cast of a universe: a villain or a hero. Any of them can be a session (drawn large) or an agent (drawn
+/// small). Its id is what `StatusStore` keeps: the universe's base, plus 0…99 for villains or 100… for heroes.
+struct Cast: Hashable {
+    let universe: Universe
+    let isDark: Bool
+    let index: Int
 
-    init(id: Int) {
-        if id >= StatusStore.heroBase {
-            self = .hero(Companion(rawValue: (id - StatusStore.heroBase) % Companion.allCases.count) ?? .ironMan)
-        } else {
-            self = .villain(Leader(index: id))
-        }
+    init(universe: Universe, isDark: Bool, index: Int) {
+        self.universe = universe; self.isDark = isDark
+        self.index = index % max(1, isDark ? universe.villainCount : universe.heroCount)
+    }
+
+    /// The character with this id, as one of the universe on show (`Universe.shown`): an id from another universe
+    /// becomes the character in the same place here.
+    init(id: Int, in universe: Universe = .shown) {
+        let id = universe.adopt(id), local = id % 1000
+        self.init(universe: universe, isDark: Universe.isDark(id),
+                  index: Universe.isDark(id) ? local : local - StatusStore.heroBase)
     }
 
     /// An agent's character (records from before the shared cast only have a hero index).
     static func of(_ a: AgentRecord) -> Cast { Cast(id: a.cast ?? StatusStore.heroBase + a.character) }
 
-    var id: Int {
-        switch self {
-        case .villain(let l): return l.rawValue
-        case .hero(let h): return StatusStore.heroBase + h.rawValue
-        }
-    }
+    var id: Int { universe.base + (isDark ? 0 : StatusStore.heroBase) + index }
 
+    var persona: Persona { Theme.of(universe).persona(self) }
     var name: String { persona.name }
     var weapon: Weapon { persona.weapon }
-    var isDark: Bool { if case .villain = self { return true } else { return false } }
-
-    var home: Location {
-        switch self { case .villain(let l): return Location.home(of: l); case .hero(let h): return Location.home(of: h) }
-    }
+    var motion: Motion { persona.motion }
+    var home: Location { Theme.of(universe).home(self) }
 
     /// Top row of the head on the 72×52 canvas (for labels).
     var headTop: Int { persona.headTop }

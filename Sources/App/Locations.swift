@@ -1,19 +1,28 @@
 import AppKit
 
-// Window-mode backdrops: one Marvel location per character, drawn as pixel art in code.
+// Window-mode backdrops: one location per character, drawn as pixel art in code, in each universe.
 // The first-spawned Claude decides where the crew is (or pick one from the Location menu).
 // Every scene gets a canvas of w×h pixels whose bottom `floorRows` rows are the ground the crew stands on.
 //
-// Each place is a `Place` registered in one of the Scenes*.swift files: its name, the tint of the window's card
-// area, the still picture and (optionally) what moves there. Who lives where is `Location.home(of:)` in Roster.swift.
+// Each place is a `Place` registered in a universe's scene files (Universes/*/Places): its name, the tint of the
+// window's card area, the still picture and (optionally) what moves there. Each universe's `Theme` lists its places in
+// order and says who lives where.
 
-enum Location: String, CaseIterable {
-    case avengersTower, sanctum, wakanda, asgard, sakaar, knowhere, titan, helicarrier, xMansion, hellsKitchen, vormir
-    case quantumRealm, latveria, hydraBase, dailyBugle, egosPlanet, kamarTaj, raft, battleOfNewYork, darkDimension
-    case attilan, savageLand
-    case baxterBuilding, jotunheim, muspelheim, hala, genosha, madripoor, sokovia, worldship, harlem, kunLun
-    case xandar, avengersCompound, tva, krakoa, morlockTunnels, asteroidM, newYorkStreets, savageLandCitadel, starkWorkshop
-    case redRoom, taLo
+/// A place, by its key (stored in settings and the screen-saver feed). The keys are unique across universes.
+struct Location: Hashable, RawRepresentable {
+    let rawValue: String
+    init(_ key: String) { rawValue = key }
+    /// Only places that exist.
+    init?(rawValue: String) {
+        guard places[Location(rawValue)] != nil else { return nil }
+        self.rawValue = rawValue
+    }
+
+    /// The universe it's in.
+    var universe: Universe { Universe.allCases.first { Theme.of($0).places.contains(self) } ?? .starWars }
+
+    /// Every place in `universe`, in order.
+    static func all(in universe: Universe) -> [Location] { Theme.of(universe).places }
 
     var place: Place { places[self] ?? Place(name: rawValue, panel: 0x16181D, still: { _, _ in }) }
 
@@ -56,9 +65,8 @@ struct Place {
     var moving: ((PixelCanvas, Int, Double) -> Void)? = nil
 }
 
-/// Every place, from the Scenes*.swift files.
-let places: [Location: Place] = scenes1.merging(scenes2) { a, _ in a }.merging(scenes3) { a, _ in a }
-    .merging(scenes4) { a, _ in a }.merging(scenes5) { a, _ in a }.merging(scenes6) { a, _ in a }.merging(scenes7) { a, _ in a }
+/// Every place in every universe, from the universes' scene files.
+let places: [Location: Place] = marvelPlaces.merging(starWarsPlaces) { a, _ in a }
 
 
 /// The wipes between places, shared by the window and the screen saver: what's left of the old

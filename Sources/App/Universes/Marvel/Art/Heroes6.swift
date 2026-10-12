@@ -3,7 +3,7 @@ import Foundation
 // Heroes: Kamar-Taj, the cosmos and the younger X-Men. Each one is Clawd in costume (Cosmo is a dog in a spacesuit,
 // but she keeps Clawd's block of a body and its four legs).
 
-let heroes6: [Companion: Persona] = [
+let heroes6: [MarvelHero: Persona] = [
     .wong: Persona(name: "Wong", weapon: .lightning, magic: Magic(core: C(0xFFE8B0), glow: C(0xFF8A1E), jagged: false),
                   headTop: 22, signature: 3.2,
                   draw: drawWong),

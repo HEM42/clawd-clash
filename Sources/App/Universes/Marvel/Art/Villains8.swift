@@ -2,11 +2,11 @@ import Foundation
 
 // Villains: gamma, Asgard's enemies and foot soldiers.
 
-let villains8: [Leader: Persona] = [
+let villains8: [MarvelVillain: Persona] = [
     .countNefaria: Persona(name: "Count Nefaria", weapon: .blaster, shot: .energy(core: C(0xFFE0E0), glow: C(0xFF4A2A)),
                   muzzle: nefariaPalm, handGun: false, headTop: 22, signature: 2.8,
                   draw: drawCountNefaria),
-    .theLeader: Persona(name: "The Leader", weapon: .lightning, magic: Magic(core: C(0xF0FFE0), glow: C(0x8AE04A), jagged: false),
+    .theLeader: Persona(name: "The MarvelVillain", weapon: .lightning, magic: Magic(core: C(0xF0FFE0), glow: C(0x8AE04A), jagged: false),
                   headTop: 4, signature: 3.0,
                   draw: drawTheLeader),
     .maestro: Persona(name: "Maestro", weapon: .saber, canSit: false, pivot: maestroShoulder,
@@ -158,9 +158,9 @@ private func drawCountNefaria(_ c: PixelCanvas, _ p: Pose) {
     }
 }
 
-// MARK: - The Leader
+// MARK: - The MarvelVillain
 
-/// The Leader: a green-skinned Clawd crowned by his enormous, elongated cranium, the brain's folds faintly showing
+/// The MarvelVillain: a green-skinned Clawd crowned by his enormous, elongated cranium, the brain's folds faintly showing
 /// through, a smug narrow-eyed look and a purple jumpsuit with a high collar. Casts green psionic rays.
 /// Signature: his brain pulses, the dome swells, its folds glow and rings of thought ripple out.
 private func drawTheLeader(_ c: PixelCanvas, _ p: Pose) {

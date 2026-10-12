@@ -1,13 +1,14 @@
 import Foundation
 
-// The Marvel cast: 46 heroes and 46 villains. Any of them can lead a session (drawn large) or be an agent (small).
-// Who they are, how they fight and how they move is a `Persona`, registered in one of the Art/*.swift files next to
-// its drawing code; who lives where, who fights whom first and who gets picked up is decided here.
+// The Marvel universe: 105 heroes, 88 villains and 43 places. Any character can lead a session (drawn large) or be an
+// agent (small). Who they are, how they fight and how they move is a `Persona`, registered in one of the Art/*.swift
+// files next to its drawing code; who lives where, who fights whom first and who gets picked up is decided here, in
+// `marvelTheme`.
 //
-// Ids are stored in the status file: villains are `Leader.rawValue` (< 100), heroes 100 + `Companion.rawValue`.
-// Only ever append cases, so running sessions keep their characters across an update.
+// Ids are stored in the status file: `Universe.marvel.base` plus `MarvelVillain.rawValue` (< 100) or
+// 100 + `MarvelHero.rawValue`. Only ever append cases, so running sessions keep their characters across an update.
 
-enum Companion: Int, CaseIterable {
+enum MarvelHero: Int, CaseIterable {
     // Avengers
     case ironMan, captainAmerica, thor, hulk, blackWidow, hawkeye, spiderMan, blackPanther, doctorStrange, scarletWitch
     case vision, captainMarvel
@@ -32,14 +33,9 @@ enum Companion: Int, CaseIterable {
     case mobius, sylvie, kidLoki, alligatorLoki, hunterB15, redGuardian, kaZar, rescue, zabu, morris, dumE
 
     var persona: Persona { heroPersonas[self] ?? Persona.missing(String(describing: self)) }
-    var name: String { persona.name }
-    var weapon: Weapon { persona.weapon }
-    var headTop: Int { persona.headTop }
-    var canSit: Bool { persona.canSit }
-    var muzzle: (x: Double, y: Double) { persona.muzzle }
 }
 
-enum Leader: Int, CaseIterable {
+enum MarvelVillain: Int, CaseIterable {
     // Cosmic and Avengers foes
     case thanos, loki, ultron, redSkull, doctorDoom, hela, ronan, nebula, ebonyMaw, chitauri, grandmaster, ultronSentry
     // Spider-Man's rogues
@@ -62,99 +58,15 @@ enum Leader: Int, CaseIterable {
     case missMinutes, callisto, exodus, soulEater, redRoomWidow
 
     var persona: Persona { villainPersonas[self] ?? Persona.missing(String(describing: self)) }
-    var name: String { persona.name }
-    var weapon: Weapon { persona.weapon }
-    var headTop: Int { persona.headTop }
-    var canSit: Bool { persona.canSit }
-    var armoured: Bool { persona.armoured }
-    var weaponPivot: (x: Double, y: Double) { persona.pivot }
-    var muzzle: (x: Int, y: Int) { (Int(persona.muzzle.x), Int(persona.muzzle.y)) }
 
-    init(index: Int) { self = Leader(rawValue: index % Leader.allCases.count) ?? .thanos }
 }
 
-// MARK: - Personas
-
-/// How a character fights. The cases keep Clawd Wars' names; in the Marvel cast they mean:
-/// - `saber`: up close, shields, hammers, claws, fists, swords, staffs. Deflects shots, blocks magic.
-/// - `blaster`: at range, repulsors, webs, arrows, bullets, optic blasts, fire, ice… (`Persona.shot` says which).
-/// - `lightning`: magic and energy streams, sorcery, telekinesis, Thanos' gauntlet (`Persona.magic` says how it looks).
-/// - `none`: stays out of it.
-enum Weapon { case saber, blaster, lightning, none }
-
-/// How a character gets about when it moves along the line.
-enum Motion {
-    case walk
-    case fly       // takes off to travel and lands where it's going (Iron Man, Thor, Captain Marvel…)
-    case hover     // never quite touches the ground (Doctor Strange, Magneto, MODOK…)
-    case swing     // swings on a web line (Spider-Man)
-}
-
-/// What a ranged character's shots look like.
-enum ShotStyle {
-    case energy(core: Px, glow: Px)   // a glowing streak: repulsors, photon blasts, Hydra rifles
-    case beam(core: Px, glow: Px)     // a continuous ray from the muzzle: Cyclops, Sentinels
-    case bullet                       // a small hot tracer
-    case arrow                        // a feathered arrow
-    case web                          // a web line with a blob on the end
-    case fire                         // a fireball
-    case ice                          // a frosty stream
-    case card                         // a glowing playing card (Gambit)
-    case thrown(Px)                   // something spinning: knives, pumpkin bombs, shuriken
-}
-
-/// What a magic or energy stream looks like.
-struct Magic {
-    var core: Px
-    var glow: Px
-    var jagged = true                 // forked like lightning; false: a steady, wavering ray
-    static let lightning = Magic(core: C(0xF4F8FF), glow: C(0x7FB2FF))
-}
-
-/// One character: who it is and how it's drawn. Registered in an Art/*.swift file next to its drawing function.
-struct Persona {
-    let name: String
-    var weapon: Weapon = .none
-    var motion: Motion = .walk
-    /// Ranged characters: what the shots look like.
-    var shot: ShotStyle = .energy(core: C(0xFFE0E0), glow: C(0xFF2A2A))
-    /// Magic characters: what the stream looks like.
-    var magic: Magic = .lightning
-    /// Shots ricochet off it (armour, metal, rock).
-    var armoured = false
-    /// Sits down when its session has been idle a while.
-    var canSit = true
-    /// Where shots leave from, canvas pixels, facing right.
-    var muzzle: (x: Double, y: Double) = (52, 32)
-    /// Where its melee weapon swings from, or where magic leaves its hand.
-    var pivot: (x: Double, y: Double) = Sprite.hand
-    /// Its ranged weapon is held in the hand (so it raises it to check it, idle). False when it's built in:
-    /// repulsors, optic blasts, a Sentinel's palms.
-    var handGun = true
-    /// How many pixels further forward than plain Clawd its body reaches (the Hulk, the Juggernaut…): duels stand
-    /// that much further apart so the other's weapon doesn't go through its face.
-    var bulk = 0.0
-    /// Top row of the head/helmet/hair on the canvas, for placing its label (the drawn sprite is measured too).
-    var headTop = 21
-    /// Length in seconds of its idle signature move, if it has one (`Pose.signature` runs 0…1 through it).
-    var signature: Double? = nil
-    /// What it says now and then while leading a session.
-    var callout: String? = nil
-    /// Draws it facing right on the 72×52 canvas.
-    let draw: (PixelCanvas, Pose) -> Void
-
-    /// A placeholder for a character whose persona isn't registered (shouldn't happen).
-    static func missing(_ name: String) -> Persona {
-        Persona(name: name, draw: { c, p in drawStandIn(c, p, body: C(0x8A8A96), trim: C(0x5A5A66)) })
-    }
-}
-
-let heroPersonas: [Companion: Persona] = heroes1.merging(heroes2) { a, _ in a }.merging(heroes3) { a, _ in a }
+let heroPersonas: [MarvelHero: Persona] = heroes1.merging(heroes2) { a, _ in a }.merging(heroes3) { a, _ in a }
     .merging(heroes4) { a, _ in a }
     .merging(heroes5) { a, _ in a }.merging(heroes6) { a, _ in a }.merging(heroes7) { a, _ in a }
     .merging(heroes8) { a, _ in a }.merging(heroes9) { a, _ in a }
     .merging(heroes10) { a, _ in a }
-let villainPersonas: [Leader: Persona] = villains1.merging(villains2) { a, _ in a }.merging(villains3) { a, _ in a }
+let villainPersonas: [MarvelVillain: Persona] = villains1.merging(villains2) { a, _ in a }.merging(villains3) { a, _ in a }
     .merging(villains4) { a, _ in a }
     .merging(villains5) { a, _ in a }.merging(villains6) { a, _ in a }.merging(villains7) { a, _ in a }
     .merging(villains8) { a, _ in a }.merging(villains9) { a, _ in a }
@@ -162,7 +74,7 @@ let villainPersonas: [Leader: Persona] = villains1.merging(villains2) { a, _ in 
 // MARK: - Homes
 
 extension Location {
-    static func home(of leader: Leader) -> Location {
+    static func marvelHome(of leader: MarvelVillain) -> Location {
         switch leader {
         case .thanos, .nebula, .ebonyMaw: return .titan
         case .loki, .hela: return .asgard
@@ -214,7 +126,7 @@ extension Location {
         }
     }
 
-    static func home(of hero: Companion) -> Location {
+    static func marvelHome(of hero: MarvelHero) -> Location {
         switch hero {
         case .vision: return .avengersTower
         case .ironMan: return .starkWorkshop
@@ -272,43 +184,73 @@ extension Location {
     }
 }
 
-// MARK: - Rivalries and rides
+// MARK: - The theme
 
 extension Cast {
-    /// Arch-enemies: whenever both are fighting, they're paired with each other first, wherever they are in the line.
-    static let nemeses: [(Companion, Leader)] = [
-        (.captainAmerica, .redSkull), (.thor, .loki), (.spiderMan, .greenGoblin), (.spiderMan, .venom),
-        (.wolverine, .sabretooth), (.blackPanther, .killmonger), (.doctorStrange, .dormammu), (.hulk, .abomination),
-        (.vision, .ultron), (.ironMan, .ultron), (.daredevil, .kingpin), (.daredevil, .bullseye), (.gamora, .nebula),
-        (.starLord, .ronan), (.thor, .hela), (.shangChi, .mandarin), (.mrFantastic, .doctorDoom),
-        (.blackWidow, .taskmaster), (.ironMan, .whiplash), (.captainMarvel, .skrull), (.cyclops, .magneto),
-        (.storm, .apocalypse), (.captainAmerica, .zemo),
-        (.silverSurfer, .galactus), (.antMan, .kang), (.ghostRider, .mephisto), (.doctorStrange, .baronMordo),
-        (.thor, .malekith), (.thor, .surtur), (.valkyrie, .hela), (.punisher, .kingpin), (.wolverine, .omegaRed),
-        (.cyclops, .misterSinister), (.hulk, .theLeader), (.hulk, .maestro), (.blade, .morbius), (.elektra, .bullseye),
-        (.spiderMan, .scorpion), (.milesMorales, .hobgoblin), (.rocket, .highEvolutionary), (.captainMarvel, .kreeSoldier),
-        (.lukeCage, .tombstone), (.ironFist, .handNinja), (.thor, .absorbingMan), (.mrFantastic, .annihilus),
-        (.ironMan, .crimsonDynamo), (.thor, .frostGiant), (.spiderGwen, .lizard),
-        (.sylvie, .missMinutes), (.blackWidow, .redRoomWidow), (.shangChi, .soulEater), (.storm, .callisto), (.cyclops, .exodus),
-    ]
-
-    func isNemesis(of other: Cast) -> Bool {
-        switch (self, other) {
-        case (.hero(let h), .villain(let v)), (.villain(let v), .hero(let h)): return Self.nemeses.contains { $0 == (h, v) }
-        default: return false
-        }
-    }
-
-    /// When this one's agent is done, its ship comes to pick it up instead of it just fading out.
-    var ride: Ride? {
-        switch self {
-        case .hero(.captainAmerica), .hero(.blackWidow), .hero(.hawkeye), .hero(.nickFury), .hero(.hulk),
-             .hero(.kateBishop), .hero(.yelena): return .quinjet
-        case .hero(.starLord), .hero(.gamora), .hero(.drax), .hero(.rocket), .hero(.groot), .hero(.mantis),
-             .hero(.kraglin), .hero(.cosmo): return .milano
-        default: return nil
-        }
-    }
+    static func hero(_ h: MarvelHero) -> Cast { Cast(universe: .marvel, isDark: false, index: h.rawValue) }
+    static func villain(_ v: MarvelVillain) -> Cast { Cast(universe: .marvel, isDark: true, index: v.rawValue) }
 }
 
-enum Ride { case quinjet, milano }
+/// Arch-enemies: whenever both are fighting, they're paired with each other first, wherever they are in the line.
+private let marvelNemeses: [(MarvelHero, MarvelVillain)] = [
+    (.captainAmerica, .redSkull), (.thor, .loki), (.spiderMan, .greenGoblin), (.spiderMan, .venom),
+    (.wolverine, .sabretooth), (.blackPanther, .killmonger), (.doctorStrange, .dormammu), (.hulk, .abomination),
+    (.vision, .ultron), (.ironMan, .ultron), (.daredevil, .kingpin), (.daredevil, .bullseye), (.gamora, .nebula),
+    (.starLord, .ronan), (.thor, .hela), (.shangChi, .mandarin), (.mrFantastic, .doctorDoom),
+    (.blackWidow, .taskmaster), (.ironMan, .whiplash), (.captainMarvel, .skrull), (.cyclops, .magneto),
+    (.storm, .apocalypse), (.captainAmerica, .zemo),
+    (.silverSurfer, .galactus), (.antMan, .kang), (.ghostRider, .mephisto), (.doctorStrange, .baronMordo),
+    (.thor, .malekith), (.thor, .surtur), (.valkyrie, .hela), (.punisher, .kingpin), (.wolverine, .omegaRed),
+    (.cyclops, .misterSinister), (.hulk, .theLeader), (.hulk, .maestro), (.blade, .morbius), (.elektra, .bullseye),
+    (.spiderMan, .scorpion), (.milesMorales, .hobgoblin), (.rocket, .highEvolutionary), (.captainMarvel, .kreeSoldier),
+    (.lukeCage, .tombstone), (.ironFist, .handNinja), (.thor, .absorbingMan), (.mrFantastic, .annihilus),
+    (.ironMan, .crimsonDynamo), (.thor, .frostGiant), (.spiderGwen, .lizard),
+    (.sylvie, .missMinutes), (.blackWidow, .redRoomWidow), (.shangChi, .soulEater), (.storm, .callisto), (.cyclops, .exodus),
+]
+
+/// When these agents are done, their ship comes to pick them up instead of them just fading out.
+private let quinjetCrew: [MarvelHero] = [.captainAmerica, .blackWidow, .hawkeye, .nickFury, .hulk, .kateBishop, .yelena]
+private let milanoCrew: [MarvelHero] = [.starLord, .gamora, .drax, .rocket, .groot, .mantis, .kraglin, .cosmo]
+
+let marvelTheme = Theme(
+    universe: .marvel,
+    villains: MarvelVillain.allCases.map(\.persona),
+    heroes: MarvelHero.allCases.map(\.persona),
+    places: [.avengersTower, .sanctum, .wakanda, .asgard, .sakaar, .knowhere, .titan, .helicarrier, .xMansion, .hellsKitchen,
+             .vormir, .quantumRealm, .latveria, .hydraBase, .dailyBugle, .egosPlanet, .kamarTaj, .raft, .battleOfNewYork,
+             .darkDimension, .attilan, .savageLand, .baxterBuilding, .jotunheim, .muspelheim, .hala, .genosha, .madripoor,
+             .sokovia, .worldship, .harlem, .kunLun, .xandar, .avengersCompound, .tva, .krakoa, .morlockTunnels, .asteroidM,
+             .newYorkStreets, .savageLandCitadel, .starkWorkshop, .redRoom, .taLo],
+    home: { c in
+        c.isDark ? .marvelHome(of: MarvelVillain(rawValue: c.index) ?? .thanos) : .marvelHome(of: MarvelHero(rawValue: c.index) ?? .ironMan)
+    },
+    nemeses: marvelNemeses.map { (.hero($0.0), .villain($0.1)) },
+    ride: { c in
+        guard c.universe == .marvel, !c.isDark, let h = MarvelHero(rawValue: c.index) else { return nil }
+        return quinjetCrew.contains(h) ? .quinjet : milanoCrew.contains(h) ? .milano : nil
+    },
+    menuIcon: drawMenuBarShield,
+    legend: .hero(.ironMan))
+
+// MARK: - Places
+
+extension Location {
+    static let avengersTower = Location("avengersTower"), sanctum = Location("sanctum"), wakanda = Location("wakanda")
+    static let asgard = Location("asgard"), sakaar = Location("sakaar"), knowhere = Location("knowhere"), titan = Location("titan")
+    static let helicarrier = Location("helicarrier"), xMansion = Location("xMansion"), hellsKitchen = Location("hellsKitchen")
+    static let vormir = Location("vormir"), quantumRealm = Location("quantumRealm"), latveria = Location("latveria")
+    static let hydraBase = Location("hydraBase"), dailyBugle = Location("dailyBugle"), egosPlanet = Location("egosPlanet")
+    static let kamarTaj = Location("kamarTaj"), raft = Location("raft"), battleOfNewYork = Location("battleOfNewYork")
+    static let darkDimension = Location("darkDimension"), attilan = Location("attilan"), savageLand = Location("savageLand")
+    static let baxterBuilding = Location("baxterBuilding"), jotunheim = Location("jotunheim"), muspelheim = Location("muspelheim")
+    static let hala = Location("hala"), genosha = Location("genosha"), madripoor = Location("madripoor"), sokovia = Location("sokovia")
+    static let worldship = Location("worldship"), harlem = Location("harlem"), kunLun = Location("kunLun"), xandar = Location("xandar")
+    static let avengersCompound = Location("avengersCompound"), tva = Location("tva"), krakoa = Location("krakoa")
+    static let morlockTunnels = Location("morlockTunnels"), asteroidM = Location("asteroidM")
+    static let newYorkStreets = Location("newYorkStreets"), savageLandCitadel = Location("savageLandCitadel")
+    static let starkWorkshop = Location("starkWorkshop"), redRoom = Location("redRoom"), taLo = Location("taLo")
+}
+
+/// Every Marvel place, from the Places/Scenes*.swift files.
+let marvelPlaces: [Location: Place] = scenes1.merging(scenes2) { a, _ in a }.merging(scenes3) { a, _ in a }
+    .merging(scenes4) { a, _ in a }.merging(scenes5) { a, _ in a }.merging(scenes6) { a, _ in a }.merging(scenes7) { a, _ in a }

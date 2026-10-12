@@ -3,7 +3,7 @@ import Foundation
 // Heroes: mystics, cosmic and the funny ones. Clawd in costume again, except Jeff and Lockjaw, who are a shark and
 // a dog (blocky ones, at least).
 
-let heroes9: [Companion: Persona] = [
+let heroes9: [MarvelHero: Persona] = [
     .monicaRambeau: Persona(name: "Monica Rambeau", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xFFFFFF), glow: C(0x8AC8FF)),
                   muzzle: (43, 34), handGun: false, headTop: 17, signature: 3.0,
                   draw: drawMonicaRambeau),

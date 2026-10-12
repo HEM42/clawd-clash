@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: the street and the mutant foes.
 
-let villains6: [Leader: Persona] = [
+let villains6: [MarvelVillain: Persona] = [
     .morbius: Persona(name: "Morbius", weapon: .saber, motion: .fly,
                   headTop: 17, signature: 3.0,
                   draw: drawMorbius),

@@ -3,7 +3,7 @@ import Foundation
 // Heroes: the X-Men, in their 90s animated-series colours. Clawd in costume, as ever: the body is the face (Clawd
 // orange where the hero shows skin), with cowls, hair and suits drawn over it.
 
-let heroes3: [Companion: Persona] = [
+let heroes3: [MarvelHero: Persona] = [
     .wolverine: Persona(name: "Wolverine", weapon: .saber, headTop: 16, signature: 2.6,
                   draw: drawWolverine),
     .cyclops: Persona(name: "Cyclops", weapon: .blaster, shot: .beam(core: C(0xFFE0E0), glow: C(0xFF2A3A)),

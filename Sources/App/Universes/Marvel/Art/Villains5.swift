@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: cosmic powers and more of Spider-Man's rogues.
 
-let villains5: [Leader: Persona] = [
+let villains5: [MarvelVillain: Persona] = [
     .galactus: Persona(name: "Galactus", weapon: .lightning, magic: Magic(core: C(0xF0E0FF), glow: C(0xA060FF), jagged: false), armoured: true, canSit: false,
                   pivot: galactusPalm, bulk: 6, headTop: 0, signature: 3.2, callout: "I hunger.",
                   draw: drawGalactus),

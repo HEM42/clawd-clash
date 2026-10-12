@@ -1,13 +1,15 @@
 import Foundation
 
 /// What the screen saver shows, published by the running app about once a second (`~/Library/Application Support/
-/// Avengers: Clawd Wars/screensaver.json`). The saver runs sandboxed in macOS's screen saver host, so it reads this one file
-/// rather than working anything out itself; when the file goes stale, Avengers: Clawd Wars isn't running and the saver says so.
+/// Clawd Clash/screensaver.json`). The saver runs sandboxed in macOS's screen saver host, so it reads this one file
+/// rather than working anything out itself; when the file goes stale, Clawd Clash isn't running and the saver says so.
 struct SaverFeed: Codable {
     var at: Double                 // when it was written: older than `staleAfter` means the app isn't running
     var location: String           // `Location.rawValue`
     var sessions: [Session]
     var events: [Event]
+    var universe: Int?             // `Universe.rawValue` the app shows (nil: from before universes, Star Wars)
+    var saverUniverse: String?     // `SaverUniverse.rawValue`: the app's, or random
 
     struct Session: Codable {
         var id: String
@@ -48,12 +50,12 @@ struct SaverFeed: Codable {
     }
 
     static var url: URL {
-        URL(fileURLWithPath: home + "/Library/Application Support/Avengers Clawd Wars/screensaver.json")
+        URL(fileURLWithPath: home + "/Library/Application Support/Clawd Clash/screensaver.json")
     }
 
     /// The saver as installed for this user, or for everyone.
     static var installedSaver: URL? {
-        [home + "/Library/Screen Savers/Avengers Clawd Wars.saver", "/Library/Screen Savers/Avengers Clawd Wars.saver"]
+        [home + "/Library/Screen Savers/Clawd Clash.saver", "/Library/Screen Savers/Clawd Clash.saver"]
             .map { URL(fileURLWithPath: $0) }
             .first { FileManager.default.fileExists(atPath: $0.path) }
     }

@@ -2,16 +2,16 @@ import ScreenSaver
 import AppKit
 import QuartzCore
 
-/// The Avengers: Clawd Wars screen saver: the window's location at full screen, the crew fighting on its floor, and each
+/// The Clawd Clash screen saver: the window's location at full screen, the crew fighting on its floor, and each
 /// session's state as a hologram over its head. It shows what the running app publishes (`SaverFeed`); with
-/// Avengers: Clawd Wars not running, what the hooks last wrote (`SaverFeed.fromHooks`). With no session running at all it puts
+/// Clawd Clash not running, what the hooks last wrote (`SaverFeed.fromHooks`). With no session running at all it puts
 /// on a show instead (a made-up crew duelling, somewhere new every few minutes).
 ///
 /// Runs inside macOS's sandboxed screen saver host, one instance per display (and one for the System Settings
 /// preview). Everything is Core Animation layers: the location's picture and pixel art scaled on the GPU with
 /// nearest-neighbour filtering, text rendered once per look and cached.
-@objc(AvengersClawdWarsSaverView)
-final class AvengersClawdWarsSaverView: ScreenSaverView {
+@objc(ClawdClashSaverView)
+final class ClawdClashSaverView: ScreenSaverView {
     private let host = NSView()
     private let roomLayer = CALayer(), liveLayer = CALayer()
     private var pool: [CALayer] = []
@@ -20,7 +20,9 @@ final class AvengersClawdWarsSaverView: ScreenSaverView {
     private var textCache: [String: CGImage] = [:]
     private var feed: SaverFeed?
     private var lastRead = 0.0
-    private var lastLocation = Location.avengersTower
+    private var lastLocation = Location.all(in: .starWars)[0]
+    /// The universe on show on this trip: the app's, or (Random, as the screen saver) one picked on each trip.
+    private var tripUniverse: Universe?
     /// Inside the app (the window's screen-saver view) it's handed the feed directly instead of reading the file.
     var feedSource: (() -> SaverFeed?)?
     /// Shown in the app's window rather than as the screen saver: no clock (the menu bar has one), a bigger place
@@ -39,7 +41,7 @@ final class AvengersClawdWarsSaverView: ScreenSaverView {
     private let wipeLayer = CALayer(), wipeMask = CAShapeLayer()
     private var wipe: (start: Double, clock: Bool)?
     private var trips = 0                       // the wipes take turns: a hard edge, then a clock
-    /// With Avengers: Clawd Wars not running: a made-up crew, cast for `demoPlace` (a local or two among them), off somewhere
+    /// With Clawd Clash not running: a made-up crew, cast for `demoPlace` (a local or two among them), off somewhere
     /// new every `demoEvery`.
     private var demo: [SaverFeed.Session] = []
     private var demoPlace: Location?
@@ -113,9 +115,16 @@ final class AvengersClawdWarsSaverView: ScreenSaverView {
         if now - lastRead >= 1 {
             lastRead = now
             if let feedSource { feed = feedSource() } else {
-                // Avengers: Clawd Wars closed (its feed gone stale): the hooks still say who's running.
+                // Clawd Clash closed (its feed gone stale): the hooks still say who's running.
                 let app = SaverFeed.load()
                 feed = app.flatMap { now - $0.at < SaverFeed.staleAfter ? $0 : nil } ?? SaverFeed.fromHooks(now: now, last: app) ?? app
+            }
+            // The app's window shows the app's universe (already `Universe.shown` there). As the screen saver: the
+            // feed's, unless it says Random, which picks afresh on each trip somewhere new (see `travel`).
+            if feedSource == nil {
+                let appUniverse = feed?.universe.flatMap(Universe.init(rawValue:)) ?? .starWars
+                if feed?.saverUniverse != SaverUniverse.random.rawValue || tripUniverse == nil { tripUniverse = appUniverse }
+                Universe.shown = tripUniverse ?? appUniverse
             }
         }
         let p = isPreview ? 0 : Int((now - started) / Self.shiftEvery)
@@ -131,11 +140,15 @@ final class AvengersClawdWarsSaverView: ScreenSaverView {
     /// across the screen and a clock wipe, taking turns).
     private func travel(_ now: Double) {
         lastTrip = now
+        if feedSource == nil, feed?.saverUniverse == SaverUniverse.random.rawValue {
+            tripUniverse = Universe.allCases.randomElement()
+            Universe.shown = tripUniverse ?? .starWars
+        }
         let here = visit ?? lastLocation
         let crew = (running(now) ? feed?.sessions ?? [] : []).flatMap { [$0.cast] + $0.agents.map(\.cast) }.map { Cast(id: $0) }
         let homes = Set(crew.map(\.home)).subtracting([here])
         guard let next = crew.count > 1 && !homes.isEmpty ? homes.randomElement()
-                : Location.allCases.filter({ $0 != here }).randomElement() else { return }
+                : Location.all(in: .shown).filter({ $0 != here }).randomElement() else { return }
         if let room {
             let liveNow = liveLayer.contents.flatMap { CFGetTypeID($0 as CFTypeRef) == CGImage.typeID ? ($0 as! CGImage) : nil }
             if let frozen = Wipe.flatten([room.image] + (liveNow.map { [$0] } ?? [])) {
@@ -188,8 +201,10 @@ final class AvengersClawdWarsSaverView: ScreenSaverView {
     private func render(_ now: Double) {
         guard let root = host.layer else { return }
         let running = running(now)
-        // Stale or not, the feed says where the crew was last: the place stays when Avengers: Clawd Wars quits.
-        if let f = feed, let l = Location(rawValue: f.location) { lastLocation = l }
+        // Stale or not, the feed says where the crew was last: the place stays when Clawd Clash quits.
+        if let f = feed, let l = Location(rawValue: f.location), l.universe == .shown { lastLocation = l }
+        if lastLocation.universe != .shown { lastLocation = Location.all(in: .shown)[0] }
+        if let v = visit, v.universe != .shown { visit = nil }
         let location = visit ?? lastLocation
         let P = self.P
         let cw = Int((bounds.width / P).rounded(.up)), ch = Int((bounds.height / P).rounded(.up))
@@ -771,8 +786,8 @@ final class AvengersClawdWarsSaverView: ScreenSaverView {
     /// The show's crew for `place`: four to six characters in all, light against dark where it can, a local or two
     /// among them (whoever calls the place home), up to two of them agents at someone's side.
     private func cast(for place: Location, now: Double) -> [SaverFeed.Session] {
-        let armed = (Array(0..<Leader.allCases.count) + Companion.allCases.map { StatusStore.heroBase + $0.rawValue })
-            .filter { Cast(id: $0).weapon != .none && !StatusStore.agentOnly.contains($0) }
+        let u = Universe.shown
+        let armed = (u.darkCast + u.lightCast).filter { Cast(id: $0).weapon != .none && !u.agentOnly.contains($0) }
         let locals = armed.filter { Cast(id: $0).home == place }.shuffled().prefix(2)
         var dark = armed.filter { StatusStore.isDark($0) && !locals.contains($0) }.shuffled()
         var light = armed.filter { !StatusStore.isDark($0) && !locals.contains($0) }.shuffled()

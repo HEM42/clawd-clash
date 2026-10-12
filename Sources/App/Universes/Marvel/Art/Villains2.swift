@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: Spider-Man's rogues.
 
-let villains2: [Leader: Persona] = [
+let villains2: [MarvelVillain: Persona] = [
     .greenGoblin: Persona(name: "Green Goblin", weapon: .blaster, motion: .fly, shot: .thrown(C(0xFF8A1E)), canSit: false,
                   muzzle: (42, 28), headTop: 16, signature: 3, callout: "Ha ha ha ha!",
                   draw: drawGreenGoblin),

@@ -1,7 +1,7 @@
 import Foundation
 
 extension SaverFeed {
-    /// With Avengers: Clawd Wars closed: the crew straight from what the hooks keep writing (`~/.claude/avengers-status/state.json`),
+    /// With Clawd Clash closed: the crew straight from what the hooks keep writing (`~/.claude/clawd-clash/state.json`),
     /// so the saver still shows the sessions that are running. Rougher than the app's feed: the saver's sandbox can't
     /// scan processes, so sessions without hooks don't show, and one that died without saying goodbye stays until its
     /// state times out. No events either (the app makes those). Nil when no session is running.
@@ -23,6 +23,8 @@ extension SaverFeed {
                 agents: s.agents.map { Agent(id: $0.id, cast: Cast.of($0).id, task: $0.label.isEmpty ? "Agent" : $0.label) })
         }
         guard !sessions.isEmpty else { return nil }
-        return SaverFeed(at: now, location: last?.location ?? Location.avengersTower.rawValue, sessions: sessions, events: [])
+        let universe = file.shownUniverse
+        return SaverFeed(at: now, location: last?.location ?? Location.all(in: universe)[0].rawValue, sessions: sessions, events: [],
+                         universe: universe.rawValue, saverUniverse: file.saverUniverse)
     }
 }

@@ -195,12 +195,6 @@ func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walk
     seatedPose = false
 }
 
-extension Cast {
-    var persona: Persona {
-        switch self { case .villain(let l): return l.persona; case .hero(let h): return h.persona }
-    }
-    var motion: Motion { persona.motion }
-}
 
 // MARK: - Flight
 

@@ -3,7 +3,7 @@ import Foundation
 // Heroes: War Machine, the Maximoff kids, Wakanda and Sakaar. Every one is Clawd in costume: hair, goggles, helmets,
 // armour and props drawn over and around the blocky body; where a face shows, it's Clawd's own orange.
 
-let heroes5: [Companion: Persona] = [
+let heroes5: [MarvelHero: Persona] = [
     .warMachine: Persona(name: "War Machine", weapon: .blaster, motion: .fly, shot: .bullet, armoured: true,
                   muzzle: (47, 20), handGun: false, headTop: 17, signature: 3.0,
                   draw: drawWarMachine),
