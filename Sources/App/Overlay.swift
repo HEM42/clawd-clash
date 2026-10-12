@@ -201,7 +201,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = false
-        panel.level = .statusBar
+        panel.level = Self.charactersOnTop ? .statusBar : Self.desktopLevel
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         panel.hidesOnDeactivate = false
         panel.ignoresMouseEvents = true
@@ -2200,8 +2200,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                    #selector(toggleLabels), target: self, on: showLabels)
         sm.addItem(.separator())
         sm.addItem(disabled: "Window mode")
-        sm.addItem(action: "Keep Window on Top", #selector(togglePin), target: self,
-                   on: UserDefaults.standard.bool(forKey: "windowPinned"))
+        // The window stays above other windows or not; on the desktop, the characters do.
+        sm.addItem(action: windowMode ? "Keep Window on Top" : "Keep Characters on Top", #selector(togglePin), target: self,
+                   on: windowMode ? UserDefaults.standard.bool(forKey: "windowPinned") : Self.charactersOnTop)
         sm.addItem(action: "Compact Window", #selector(toggleSmallWindow), target: self,
                    on: ClawdWindow.small)
         sm.addItem(action: "Show Session List in Window", #selector(toggleWindowList), target: self,
@@ -2255,10 +2256,23 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     }
 
     @objc private func togglePin() {
-        let on = !UserDefaults.standard.bool(forKey: "windowPinned")
-        UserDefaults.standard.set(on, forKey: "windowPinned")
-        clawdWindow?.applyPin()
+        if windowMode {
+            let on = !UserDefaults.standard.bool(forKey: "windowPinned")
+            UserDefaults.standard.set(on, forKey: "windowPinned")
+            clawdWindow?.applyPin()
+        } else {
+            Self.charactersOnTop.toggle()
+            panel.level = Self.charactersOnTop ? .statusBar : Self.desktopLevel
+        }
     }
+
+    /// Settings → Keep Characters on Top (desktop mode): on, the crew stands above every window; off, it lives on the
+    /// desktop itself, just above the icons, behind your windows. On by default.
+    static var charactersOnTop: Bool {
+        get { UserDefaults.standard.object(forKey: "charactersOnTop") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "charactersOnTop") }
+    }
+    private static let desktopLevel = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopIconWindow)) + 1)
 
     @objc private func toggleSmallWindow() {
         ClawdWindow.small.toggle()
