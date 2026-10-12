@@ -1087,7 +1087,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             if actor.cast.motion == .swing, walking {
                 let swing = actor.x / (70 * z)
                 lift = abs(sin(swing * .pi)) * 16 * scale
-                if let web = webLine(from: NSPoint(x: actor.x + facing * 13 * scale, y: y + lift + 18 * scale),
+                if let web = webLine(from: NSPoint(x: actor.x + facing * 13 * scale, y: y + lift + 30 * scale),   // the raised hand, (41, 22)
                                      anchor: NSPoint(x: (floor(swing) + 0.5) * 70 * z + facing * 20 * z, y: y + 90 * scale),
                                      scale: scale) {
                     out.append(web)
