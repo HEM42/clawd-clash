@@ -115,6 +115,8 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         board.inWindow = true
         content.addSubview(board)
         content.addSubview(header)
+        switchView.isHidden = true
+        content.addSubview(switchView)   // on top of everything, only while the universe changes
         header.controller = controller
         layout()
         applyPin()
@@ -265,6 +267,8 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         scroll.autoresizingMask = [.width, .height]
         board.frame = NSRect(x: 0, y: 0, width: b.width, height: max(0, b.height - hh))
         board.autoresizingMask = [.width, .height]
+        switchView.frame = b
+        switchView.autoresizingMask = [.width, .height]
         applyScale()
     }
 
@@ -364,6 +368,59 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         let pinned = UserDefaults.standard.bool(forKey: "windowPinned")
         window.level = pinned ? .floating : .normal
         window.collectionBehavior = pinned ? [.canJoinAllSpaces, .fullScreenAuxiliary, .fullScreenNone] : [.fullScreenNone]
+    }
+
+    // MARK: Changing universe
+
+    /// Over the whole window while the universe changes: the window as it was giving way to the window as it is now.
+    private let switchView = SwitchView()
+    private var switching: (old: CGImage, start: Double, comic: ComicTransition?, clock: Bool)?
+    private var switchTimer: Timer?
+
+    /// The whole window as it looks now (header, scene, crew and cards), at the screen's resolution. Drawn through the
+    /// views' `draw(_:)`, which for the scene also draws the crew; the screen-saver view is layers only and isn't in it.
+    func snapshot() -> CGImage? {
+        guard let content = window.contentView, let rep = content.bitmapImageRepForCachingDisplay(in: content.bounds) else { return nil }
+        let showing = !switchView.isHidden
+        switchView.isHidden = true   // not the transition itself, or each frame would hold the last one
+        content.cacheDisplay(in: content.bounds, to: rep)
+        switchView.isHidden = !showing
+        return rep.cgImage
+    }
+
+    /// Plays a change of universe over the whole window: `old`, the window before, gives way to the window as it is
+    /// from now on (kept live, so the crew walking in shows), with the new universe's comic-book transition, or
+    /// otherwise Star Wars' wipe (a hard edge, or a clock with `clock`).
+    func playSwitch(from old: CGImage, comic: ComicTransition?, clock: Bool) {
+        switching = (old, Date().timeIntervalSince1970, comic, clock)
+        switchView.isHidden = false
+        switchFrame()
+        switchTimer?.invalidate()
+        switchTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 20, repeats: true) { [weak self] _ in self?.switchFrame() }
+    }
+
+    private func switchFrame() {
+        guard let s = switching else { return }
+        let k = (Date().timeIntervalSince1970 - s.start) / (s.comic?.duration ?? Wipe.duration)
+        guard k < 1, let new = snapshot(),
+              let ctx = CGContext(data: nil, width: new.width, height: new.height, bitsPerComponent: 8, bytesPerRow: 0,
+                                  space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else {
+            switching = nil
+            switchTimer?.invalidate(); switchTimer = nil
+            switchView.isHidden = true
+            switchView.layer?.contents = nil
+            return
+        }
+        let r = CGRect(x: 0, y: 0, width: new.width, height: new.height)
+        if let comic = s.comic {
+            comic.draw(ctx, old: s.old, new: new, k: k, in: r)
+        } else {
+            ctx.draw(new, in: r)
+            ctx.addPath(Wipe.remaining(k, clock: s.clock, in: r)); ctx.clip()
+            ctx.draw(s.old, in: r)
+        }
+        switchView.layer?.contents = ctx.makeImage()
     }
 
     private var fadeGeneration = 0
@@ -560,6 +617,18 @@ final class HeaderView: NSView, NSViewToolTipOwner {
 /// The scene strip: the Mos Eisley cantina, with the crew standing on its floor.
 /// The location's static picture, behind `SceneView`. Its own view so its pixels are kept between frames:
 /// redrawing it 10–30 times a second was most of the window's CPU time.
+/// A frame of the change of universe, over the whole window (`ClawdWindow.playSwitch`). Clicks go through.
+final class SwitchView: NSView {
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        wantsLayer = true
+        layer?.contentsGravity = .resize
+        layer?.actions = ["contents": NSNull()]
+    }
+    required init?(coder: NSCoder) { fatalError() }
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+}
+
 final class RoomView: NSView {
     var image: CGImage? { didSet { needsDisplay = true } }
     var drawRect = CGRect.zero
@@ -582,10 +651,12 @@ final class SceneView: NSView {
     private var live: PixelCanvas?
     private var lastLive: CGImage?
     /// Changing place: the old picture, frozen, wiped away over the new one (a hard edge and a clock wipe, taking
-    /// turns), as the screen saver does; in Marvel, one of the comic-book transitions (`ComicWipe`) instead.
-    private var wipe: (old: CGImage, start: Double, clock: Bool, comic: ComicTrip?)?
+    /// turns), as the screen saver does; in Marvel and DC, one of the comic-book transitions (`ComicTransition`) instead.
+    private var wipe: (old: CGImage, start: Double, clock: Bool, comic: ComicTransition?)?
     private var clockWipeNext = false
-    private var lastComic: ComicWipe?
+    private var lastComic: ComicTransition?
+    /// Set while the universe changes: the whole window has its own transition then (`ClawdWindow.playSwitch`).
+    var skipWipe = false
     private let sprites = SpriteLayers()
     /// CLAWD_SHOT captures the window by drawing its views, which can't see layers: draw the old way then.
     static let drawsItself = ProcessInfo.processInfo.environment["CLAWD_SHOT"] != nil
@@ -607,11 +678,10 @@ final class SceneView: NSView {
         guard let controller else { return }
         let g = geometry, location = controller.location
         guard room?.size != bounds.size || room?.location != location else { return }
-        if let old = room, old.size == bounds.size, old.location != location,
+        if !skipWipe, let old = room, old.size == bounds.size, old.location != location,
            let frozen = Wipe.flatten([old.image] + (old.location.hasAnimatedLayer ? lastLive.map { [$0] } ?? [] : [])) {
-            if location.universe == .marvel {
-                let comic = ComicTrip.pick(after: lastComic, cast: controller.onStage, to: location)
-                lastComic = comic.kind
+            if let comic = ComicTransition.pick(after: lastComic, cast: controller.onStage, to: location) {
+                lastComic = comic
                 wipe = (frozen, Date().timeIntervalSince1970, false, comic)
             } else {
                 wipe = (frozen, Date().timeIntervalSince1970, clockWipeNext, nil)

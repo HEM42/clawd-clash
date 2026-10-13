@@ -80,7 +80,7 @@ struct Extra { let who: Cast; let leader: Bool; let label: String; let x: Double
                var up = 0.0 }
 let S: CGFloat = 6, gy: CGFloat = 46, momentT = 0.25
 let ak = 2.0 / 3
-let lineup: [[Extra]] = [
+let marvelLineup: [[Extra]] = [
     [Extra(who: .villain(.thanos), leader: true, label: "Thanos", x: 30, facing: 1, role: .zap),
      Extra(who: .hero(.ironMan), leader: true, label: "Iron Man", x: 98, facing: -1, role: .hit, up: 10)],
     [Extra(who: .hero(.spiderMan), leader: false, label: "Check git history", x: 132, facing: 1, role: .shoot(offset: 0)),
@@ -91,6 +91,18 @@ let lineup: [[Extra]] = [
      Extra(who: .villain(.redSkull), leader: true, label: "Red Skull", x: 352, facing: -1, role: .shoot(offset: 0))],
     [Extra(who: .hero(.groot), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
 ]
+let dcLineup: [[Extra]] = [
+    [Extra(who: .villain(DCVillain.darkseid), leader: true, label: "Darkseid", x: 30, facing: 1, role: .zap),
+     Extra(who: .hero(DCHero.superman), leader: true, label: "Superman", x: 98, facing: -1, role: .hit, up: 10)],
+    [Extra(who: .hero(DCHero.greenArrow), leader: false, label: "Check git history", x: 132, facing: 1, role: .shoot(offset: 0)),
+     Extra(who: .villain(DCVillain.deadshot), leader: false, label: "Write changelog", x: 182, facing: -1, role: .shoot(offset: blasterPeriod / 2))],
+    [Extra(who: .hero(DCHero.batman), leader: false, label: "Plan the refactor", x: 214, facing: 1, role: .duel),
+     Extra(who: .villain(DCVillain.bane), leader: false, label: "Review Overlay.swift", x: 244, facing: -1, role: .duel)],
+    [Extra(who: .hero(DCHero.wonderWoman), leader: true, label: "Wonder Woman", x: 282, facing: 1, role: .deflect),
+     Extra(who: .villain(DCVillain.joker), leader: true, label: "The Joker", x: 352, facing: -1, role: .shoot(offset: 0))],
+    [Extra(who: .hero(DCHero.flash), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
+]
+func desktop(_ lineup: [[Extra]], file: String) {
 let desktop = canvas(2600, 400) { ctx in
     var tags: [CGRect] = []   // labels already placed: one that would overlap moves up a row, as in the app
     func sprite(_ e: Extra) {
@@ -138,8 +150,11 @@ let desktop = canvas(2600, 400) { ctx in
                                             height: CGFloat(Sprite.height + headroom) * S))
     }
 }
-save(desktop, "desktop-marvel.png")
-print("wrote \(out)/desktop-marvel.png")
+save(desktop, file)
+print("wrote \(out)/\(file)")
+}
+desktop(marvelLineup, file: "desktop-marvel.png")
+desktop(dcLineup, file: "desktop-dc.png")
 
 // MARK: Locations (one sheet per universe)
 
@@ -226,8 +241,9 @@ let social = canvas(1280, 640) { ctx in
 }
 save(social, file)
 }
-socialPreview(title: "CLAWD CLASH", subtitle: "Your Claude Code sessions as a pixel-art Star Wars or Marvel battle",
-              groups: [[.hero(SWHero.luke), .villain(SWVillain.vader)], [.hero(MarvelHero.captainAmerica), .villain(MarvelVillain.thanos)]],
+socialPreview(title: "CLAWD CLASH", subtitle: "Your Claude Code sessions as a pixel-art Star Wars, Marvel or DC battle",
+              groups: [[.hero(SWHero.luke), .villain(SWVillain.vader)], [.hero(MarvelHero.captainAmerica), .villain(MarvelVillain.thanos)],
+                       [.hero(DCHero.batman), .villain(DCVillain.joker)]],
               file: "social-preview.png")
 socialPreview(title: "CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Star Wars battle on your desktop",
               groups: [[.hero(SWHero.luke), .hero(SWHero.han), .hero(SWHero.leia), .hero(SWHero.yoda),
@@ -237,4 +253,8 @@ socialPreview(title: "AVENGERS: CLAWD WARS", subtitle: "Your Claude Code session
               groups: [[.hero(MarvelHero.thor), .hero(MarvelHero.spiderMan), .hero(MarvelHero.captainAmerica), .hero(MarvelHero.ironMan),
                         .villain(MarvelVillain.thanos), .villain(MarvelVillain.loki), .villain(MarvelVillain.greenGoblin), .villain(MarvelVillain.venom)]],
               file: "social-preview-marvel.png")
+socialPreview(title: "JUSTICE LEAGUE: CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art DC battle on your desktop",
+              groups: [[.hero(DCHero.superman), .hero(DCHero.batman), .hero(DCHero.wonderWoman), .hero(DCHero.flash),
+                        .villain(DCVillain.joker), .villain(DCVillain.lexLuthor), .villain(DCVillain.darkseid), .villain(DCVillain.harleyQuinn)]],
+              file: "social-preview-dc.png")
 print("wrote the social previews to \(out)")

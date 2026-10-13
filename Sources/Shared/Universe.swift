@@ -7,27 +7,38 @@ import Foundation
 enum Universe: Int, CaseIterable, Codable {
     case starWars = 0
     case marvel = 1
+    case dc = 2
 
-    var key: String { self == .starWars ? "starWars" : "marvel" }
+    var key: String {
+        switch self { case .starWars: return "starWars"; case .marvel: return "marvel"; case .dc: return "dc" }
+    }
     init?(key: String) { self.init(rawValue: Universe.allCases.first { $0.key == key }?.rawValue ?? -1) }
 
-    var title: String { self == .starWars ? "Star Wars" : "Marvel" }
+    var title: String {
+        switch self { case .starWars: return "Star Wars"; case .marvel: return "Marvel"; case .dc: return "DC" }
+    }
     var base: Int { rawValue * 1000 }
 
-    var villainCount: Int { self == .starWars ? 46 : 88 }
-    var heroCount: Int { self == .starWars ? 35 : 105 }
+    var villainCount: Int {
+        switch self { case .starWars: return 46; case .marvel: return 88; case .dc: return 97 }
+    }
+    var heroCount: Int {
+        switch self { case .starWars: return 35; case .marvel: return 105; case .dc: return 110 }
+    }
 
     /// Small fry that only ever turn up as agents, never leading a session (global ids).
     var agentOnly: Set<Int> {
         switch self {
         case .starWars: return [23, 26]                                           // MSE-6, ID9 seeker droid
         case .marvel: return Set([11, 33, 190, 202, 203, 204].map { base + $0 })  // Ultron Sentry, Doombot, Jeff, Zabu, Morris, Dum-E
+        // Joker Goon, Dex-Starr, Mister Mind, Krypto, Ch'p, Ace the Bat-Hound, Streaky, Gleek, Beppo
+        case .dc: return Set([22, 49, 77, 131, 139, 206, 207, 208, 209].map { base + $0 })
         }
     }
 
     /// With another AI running, Claude Code's side: false = heroes, true = villains, nil = whoever came first keeps
     /// the side it mostly has (Star Wars, as Clawd Wars always did).
-    var claudeSide: Bool? { self == .marvel ? false : nil }
+    var claudeSide: Bool? { self == .starWars ? nil : false }
 
     /// Characters that never lead two sessions back to back (Vader and Kylo), as global ids.
     var rivals: Set<Int> { self == .starWars ? [0, 1] : [] }

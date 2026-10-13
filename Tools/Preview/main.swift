@@ -51,26 +51,33 @@ func put(_ c: PixelCanvas, _ ctx: CGContext, x: CGFloat, y: CGFloat, outline: Bo
     ctx.draw(img, in: CGRect(x: x, y: y, width: CGFloat(c.w) * scale, height: CGFloat(c.h) * scale))
 }
 
-/// Characters by batch name (heroes1…, villains1…, starWarsHeroes1…, starWarsVillains1…, all, starWars, marvel) or by
-/// case name (ironMan, vader…). Star Wars and Marvel can't be mixed in one call.
+/// Characters by batch name (heroes1…, villains1…, starWarsHeroes1…, starWarsVillains1…, dcHeroes1…, dcVillains1…, all,
+/// starWars, marvel, dc) or by case name (ironMan, vader, superman…; Marvel's first where both have one). Universes can't
+/// be mixed in one call.
 func cast(named n: String) -> [Cast] {
     let marvelHeroes = [heroes1, heroes2, heroes3, heroes4, heroes5, heroes6, heroes7, heroes8, heroes9, heroes10]
     let marvelVillains = [villains1, villains2, villains3, villains4, villains5, villains6, villains7, villains8, villains9]
     let swHeroes = [starWarsHeroes1, starWarsHeroes2, starWarsHeroes3]
     let swVillains = [starWarsVillains1, starWarsVillains2, starWarsVillains3]
+    let dcHeroes = [dcHeroes1, dcHeroes2, dcHeroes3, dcHeroes4, dcHeroes5, dcHeroes6, dcHeroes7, dcHeroes8, dcHeroes9, dcHeroes10]
+    let dcVillains = [dcVillains1, dcVillains2, dcVillains3, dcVillains4, dcVillains5, dcVillains6, dcVillains7, dcVillains8, dcVillains9]
     var batches: [String: [Cast]] = [
-        "marvel": Theme.of(.marvel).cast, "starWars": Theme.of(.starWars).cast,
+        "marvel": Theme.of(.marvel).cast, "starWars": Theme.of(.starWars).cast, "dc": Theme.of(.dc).cast,
         "all": Theme.of(.marvel).cast,
     ]
     for (i, b) in marvelHeroes.enumerated() { batches["heroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
     for (i, b) in marvelVillains.enumerated() { batches["villains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
     for (i, b) in swHeroes.enumerated() { batches["starWarsHeroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
     for (i, b) in swVillains.enumerated() { batches["starWarsVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
+    for (i, b) in dcHeroes.enumerated() { batches["dcHeroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
+    for (i, b) in dcVillains.enumerated() { batches["dcVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
     if let b = batches[n] { return b }
     if let h = MarvelHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
     if let v = MarvelVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
     if let h = SWHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
     if let v = SWVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
+    if let h = DCHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
+    if let v = DCVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
     print("unknown character: \(n)")
     exit(2)
 }
@@ -110,7 +117,7 @@ case "cast":
         ("weapon habit", { who, c in
             switch who.weapon {
             case .saber: habit(.flourish, 0.45)(who, c)
-            case .blaster: habit(.checkWeapon, 0.7)(who, c)
+            case .blaster: who.persona.handGun ? habit(.checkWeapon, 0.7)(who, c) : habit(.bounce, 0.2)(who, c)
             case .lightning: habit(.crackle, 0.5)(who, c)
             case .none: habit(.bounce, 0.2)(who, c)
             }
@@ -175,9 +182,9 @@ case "fight":
     })
 
 case "place":
-    let everywhere = Location.all(in: .starWars) + Location.all(in: .marvel)
+    let everywhere = Universe.allCases.flatMap { Location.all(in: $0) }
     let places = names.isEmpty || names == ["all"] ? everywhere
-        : names == ["starWars"] ? Location.all(in: .starWars) : names == ["marvel"] ? Location.all(in: .marvel)
+        : names.count == 1 && Universe(key: names[0]) != nil ? Location.all(in: Universe(key: names[0])!)
         : names.map { n in Location(rawValue: n) ?? { print("unknown place: \(n)"); exit(2) }() }
     // The window's strip (about 480×75 pixels) and a screen-saver frame (16:10, tall enough for the extras).
     let strip = (w: 480, h: 75), tall = (w: 480, h: 300)
@@ -202,13 +209,14 @@ case "place":
 case "rides":
     let cellW = CGFloat(Ride.width) * scale + 12, cellH = CGFloat(Ride.height) * scale + 30
     let states: [(String, Double, Bool, Bool)] = [("landed", 0, false, true), ("ramp down", 1, false, true), ("flying", 0, true, false)]
-    save(sheet(Int(cellW * 3), Int(cellH * 3)) { ctx in
-        for (i, ride) in [Ride.falcon, .quinjet, .milano].enumerated() {
+    let rides: [Ride] = [.falcon, .quinjet, .milano, .javelin, .batwing]
+    save(sheet(Int(cellW * 3), Int(cellH * CGFloat(rides.count))) { ctx in
+        for (i, ride) in rides.enumerated() {
             for (j, st) in states.enumerated() {
                 let c = PixelCanvas(Ride.width, Ride.height)
                 drawRide(c, ride, ramp: st.1, engines: st.2, gear: st.3)
                 c.addOutline(C(0xFFFFFF, 0.92))
-                let x = CGFloat(j) * cellW, y = cellH * CGFloat(2 - i)
+                let x = CGFloat(j) * cellW, y = cellH * CGFloat(rides.count - 1 - i)
                 ctx.draw(c.makeImage()!, in: CGRect(x: x + 6, y: y + 6, width: CGFloat(Ride.width) * scale, height: CGFloat(Ride.height) * scale))
                 label("\(ride) · \(st.0)", x + 6, y + cellH - 20)
             }

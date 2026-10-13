@@ -44,11 +44,11 @@ final class ClawdClashSaverView: ScreenSaverView {
     private let wipeLayer = CALayer(), wipeMask = CAShapeLayer()
     private var wipe: (start: Double, clock: Bool)?
     private var trips = 0                       // the wipes take turns: a hard edge, then a clock
-    /// In Marvel, a comic-book transition instead (`ComicWipe`): each frame drawn whole, old place and new, into
-    /// `comicLayer`.
+    /// In Marvel and DC, a comic-book transition instead (`ComicTransition`): each frame drawn whole, old place and
+    /// new, into `comicLayer`.
     private let comicLayer = CALayer()
-    private var comic: (trip: ComicTrip, start: Double, old: CGImage)?
-    private var lastComic: ComicWipe?
+    private var comic: (trip: ComicTransition, start: Double, old: CGImage)?
+    private var lastComic: ComicTransition?
     /// With Clawd Clash not running: a made-up crew, cast for `demoPlace` (a local or two among them), off somewhere
     /// new every `demoEvery`.
     private var demo: [SaverFeed.Session] = []
@@ -66,7 +66,7 @@ final class ClawdClashSaverView: ScreenSaverView {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Clawd Clash Saver/options.json")
     }
-    /// "same" (the app's), "starWars", "marvel" or "random" (a new pick on each trip).
+    /// "same" (the app's), "starWars", "marvel", "dc" or "random" (a new pick on each trip).
     static var choice: String {
         guard let data = try? Data(contentsOf: optionsFile),
               let options = try? JSONDecoder().decode([String: String].self, from: data) else { return "same" }
@@ -74,7 +74,7 @@ final class ClawdClashSaverView: ScreenSaverView {
     }
     private var sheet: NSWindow?
     private let picker = NSPopUpButton(frame: NSRect(x: 20, y: 60, width: 280, height: 26), pullsDown: false)
-    private static let choices = [("same", "The same as Clawd Clash"), ("starWars", "Star Wars"), ("marvel", "Marvel"),
+    private static let choices = [("same", "The same as Clawd Clash"), ("starWars", "Star Wars"), ("marvel", "Marvel"), ("dc", "DC"),
                                   ("random", "Random (a new one on each trip)")]
 
     override var hasConfigureSheet: Bool { true }
@@ -191,6 +191,7 @@ final class ClawdClashSaverView: ScreenSaverView {
                 switch Self.choice {
                 case "starWars": tripUniverse = .starWars
                 case "marvel": tripUniverse = .marvel
+                case "dc": tripUniverse = .dc
                 case "random": if tripUniverse == nil { tripUniverse = Universe.allCases.randomElement() }
                 default: tripUniverse = appUniverse
                 }
@@ -223,9 +224,9 @@ final class ClawdClashSaverView: ScreenSaverView {
                 : Location.all(in: .shown).filter({ $0 != here }).randomElement() else { return }
         if let room {
             let liveNow = liveLayer.contents.flatMap { CFGetTypeID($0 as CFTypeRef) == CGImage.typeID ? ($0 as! CGImage) : nil }
-            if let frozen = Wipe.flatten([room.image] + (liveNow.map { [$0] } ?? [])), next.universe == .marvel {
-                let trip = ComicTrip.pick(after: lastComic, cast: onStage, to: next)
-                lastComic = trip.kind
+            if let frozen = Wipe.flatten([room.image] + (liveNow.map { [$0] } ?? [])),
+               let trip = ComicTransition.pick(after: lastComic, cast: onStage, to: next) {
+                lastComic = trip
                 wipe = nil
                 wipeLayer.isHidden = true
                 comic = (trip, now, frozen)

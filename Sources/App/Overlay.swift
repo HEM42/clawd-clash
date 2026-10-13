@@ -408,7 +408,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             }
             hookIssues = missingHooks.filter { !Self.ignoredHooks.contains($0) }.map {
                 HookIssue(text: HookInstaller.reportsToReplacedApp($0)
-                            ? "\(HookInstaller.displayName($0)) still reports to Clawd Wars or Avengers: Clawd Wars. Connect it to Clawd Clash from the menu."
+                            ? "\(HookInstaller.displayName($0)) still reports to the app Clawd Clash replaces. Connect it to Clawd Clash from the menu."
                             : "\(HookInstaller.displayName($0)) isn't connected: live status is off. Connect it from the menu.",
                           install: $0, pid: nil)
             } + sessions.filter(\.hookSilent).map {
@@ -444,6 +444,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             clawdWindow?.redrawScroller()
         }
         updateIdleWindow(now)
+        randomUniverseTick(now)
         if windowMode && onScreen { updateCards(now) }
         publishSaverFeed(now)
     }
@@ -1111,7 +1112,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let scale: CGFloat
             let y: CGFloat
             // Flyers ride up to `flightHeight` while they travel, and now and then take to the air where they stand
-            // (fighting from up there, if they shoot or cast); Spider-Man swings along in arcs on a web line.
+            // (fighting from up there, if they shoot or cast); Spider-Man swings along in arcs on a web line, the Bat-family
+            // on grapnel lines.
             let air = self.air(actor, role: roles[actor.key], walking: walking, t: t)
             switch actor.kind {
             case .leader(let who):
@@ -1401,7 +1403,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         return max(a.air, CGFloat(sortie))
     }
 
-    /// A web line from a swinging hand up to where it's stuck, as a thin white line `scale` points per pixel.
+    /// A web line from a swinging hand up to where it's stuck, as a thin white line `scale` points per pixel; in DC, a
+    /// grapnel line, a thin steel-grey cable.
     private func webLine(from a: NSPoint, anchor b: NSPoint, scale: CGFloat) -> DrawItem? {
         let minX = min(a.x, b.x), minY = min(a.y, b.y)
         let w = Int(abs(b.x - a.x) / scale) + 3, h = Int(abs(b.y - a.y) / scale) + 3
@@ -1410,7 +1413,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         // Canvas rows run top down, screen y bottom up.
         let ax = Double((a.x - minX) / scale) + 1, ay = Double(h) - 1 - Double((a.y - minY) / scale)
         let bx = Double((b.x - minX) / scale) + 1, by = Double(h) - 1 - Double((b.y - minY) / scale)
-        c.glowLine(ax, ay, bx, by, core: C(0xF4F4F8, 0.9), glow: C(0xFFFFFF, 0), coreR: 0.35, glowR: 0.4)
+        let line = Universe.shown == .dc ? C(0xB8BCC8, 0.95) : C(0xF4F4F8, 0.9)
+        c.glowLine(ax, ay, bx, by, core: line, glow: C(0xFFFFFF, 0), coreR: 0.35, glowR: 0.4)
         return DrawItem(image: c.makeImage(), rect: NSRect(x: (minX - scale).rounded(), y: (minY - scale).rounded(),
                                                            width: CGFloat(w) * scale, height: CGFloat(h) * scale))
     }
@@ -2355,37 +2359,91 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     // MARK: Universe
 
-    /// The universe on show: Star Wars or Marvel. Never both in one scene. A fresh install takes after whichever
-    /// app it replaces (Clawd Wars: Star Wars; Avengers: Clawd Wars: Marvel); the Homebrew casks preset it.
+    /// The universe on show: Star Wars, Marvel or DC. Never two in one scene. A fresh install takes after whichever
+    /// app it replaces (Clawd Wars: Star Wars; Avengers: Clawd Wars: Marvel; Justice League: Clawd Wars: DC); the
+    /// Homebrew casks preset it.
     static var universe: Universe {
         get {
             let d = UserDefaults.standard
             if let key = d.string(forKey: "universe"), let u = Universe(key: key) { return u }
-            if UserDefaults(suiteName: "com.rodclemen.avengersclawdwars")?.object(forKey: "windowMode") != nil,
-               UserDefaults(suiteName: "com.rodclemen.vaderclaude")?.object(forKey: "windowMode") == nil { return .marvel }
+            let used = { (id: String) in UserDefaults(suiteName: id)?.object(forKey: "windowMode") != nil }
+            if !used("com.rodclemen.vaderclaude") {
+                if used("com.rodclemen.justiceleagueclawdwars") { return .dc }
+                if used("com.rodclemen.avengersclawdwars") { return .marvel }
+            }
             return .starWars
         }
         set { UserDefaults.standard.set(newValue.key, forKey: "universe") }
     }
 
+    /// Random: a different universe every this many minutes (Universe → Random); nil: it stays on the one picked.
+    static var universeEvery: Int? {
+        get { let m = UserDefaults.standard.integer(forKey: "universeEvery"); return m > 0 ? m : nil }
+        set { UserDefaults.standard.set(newValue ?? 0, forKey: "universeEvery") }
+    }
+    static let universeIntervals = [1, 5, 10, 15, 30, 60]
+    /// When the universe last changed, for Random.
+    private var universeSince = Date().timeIntervalSince1970
+    /// The last change's comic-book transition, so the next one is another.
+    private var lastSwitchComic: ComicTransition?
+
     private func universeMenu() -> NSMenuItem {
-        let root = NSMenuItem(title: "Universe: \(Universe.shown.title)", action: nil, keyEquivalent: "")
+        let every = Self.universeEvery
+        let root = NSMenuItem(title: "Universe: \(Universe.shown.title)\(every == nil ? "" : " (Random)")", action: nil, keyEquivalent: "")
         let um = NSMenu()
         for u in Universe.allCases {
             let item = NSMenuItem(title: u.title, action: #selector(setUniverse(_:)), keyEquivalent: "")
             item.target = self
             item.tag = u.rawValue
-            item.state = u == Universe.shown ? .on : .off
+            item.state = every == nil && u == Universe.shown ? .on : .off
             um.addItem(item)
         }
+        um.addItem(.separator())
+        let random = NSMenuItem(title: "Random", action: nil, keyEquivalent: "")
+        random.state = every == nil ? .off : .on
+        let rm = NSMenu()
+        for m in Self.universeIntervals {
+            let item = NSMenuItem(title: m == 1 ? "Every Minute" : "Every \(m) Minutes", action: #selector(setUniverseEvery(_:)),
+                                  keyEquivalent: "")
+            item.target = self
+            item.tag = m
+            item.state = every == m ? .on : .off
+            rm.addItem(item)
+        }
+        random.submenu = rm
+        um.addItem(random)
         root.submenu = um
         return root
     }
 
-    /// Everyone is recast in the new universe (same places in its cast, so they keep their sides), the scene moves to
-    /// one of its places, the menu bar icon changes, and the hook casts new arrivals from it.
+    /// Picking one universe stops Random.
     @objc private func setUniverse(_ sender: NSMenuItem) {
-        guard let u = Universe(rawValue: sender.tag), u != Universe.shown else { return }
+        guard let u = Universe(rawValue: sender.tag) else { return }
+        Self.universeEvery = nil
+        if u != Universe.shown { switchUniverse(to: u) }
+    }
+
+    /// Random, every `tag` minutes: the first change comes that long from now.
+    @objc private func setUniverseEvery(_ sender: NSMenuItem) {
+        Self.universeEvery = sender.tag
+        universeSince = Date().timeIntervalSince1970
+    }
+
+    /// Random's turn: another universe, every `universeEvery` minutes. Not in the Playground, the demo or test runs.
+    private func randomUniverseTick(_ now: Double) {
+        guard let every = Self.universeEvery, now - universeSince >= Double(every * 60),
+              playground == nil, !demo, chaosSeconds == nil, shotPath == nil,
+              let next = Universe.allCases.filter({ $0 != Universe.shown }).randomElement() else { return }
+        switchUniverse(to: next)
+    }
+
+    /// Everyone is recast in the new universe (same places in its cast, so they keep their sides), the scene moves to
+    /// one of its places, the menu bar icon changes, and the hook casts new arrivals from it. In the window, the whole
+    /// window changes over with the new universe's transition.
+    private func switchUniverse(to u: Universe) {
+        universeSince = Date().timeIntervalSince1970
+        let window = windowMode && onScreen && ClawdWindow.view != .board ? clawdWindow : nil
+        let before = window?.snapshot()
         Self.universe = u
         Universe.shown = u
         StatusStore.setUniverse(u, saver: nil)
@@ -2396,13 +2454,19 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         random = nil
         statusItem?.button?.image = statusIcon(mono: monoMenuBarIcon)
         actors.removeAll()                                           // walk back in, recast
+        clawdWindow?.sceneView.skipWipe = before != nil              // the whole window has its own transition
         refreshStatus()
         clawdWindow?.sceneView.showFrame()
+        clawdWindow?.sceneView.skipWipe = false
         clawdWindow?.cardsView.needsDisplay = true
         clawdWindow?.header.needsDisplay = true
         clawdWindow?.redrawScroller()
+        if let window, let before {
+            let comic = ComicTransition.pick(after: lastSwitchComic, cast: onStage, to: location)
+            lastSwitchComic = comic
+            window.playSwitch(from: before, comic: comic, clock: Bool.random())
+        }
     }
-
 
     private func locationMenu() -> NSMenuItem {
         let root = NSMenuItem(title: "Location: \(location.name)", action: nil, keyEquivalent: "")

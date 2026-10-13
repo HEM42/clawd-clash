@@ -59,14 +59,14 @@ if !args.dropFirst().contains(where: { $0.hasPrefix("--") }), ProcessInfo.proces
     let restored = HookInstaller.restoreRemoved()
     if !restored.installed.isEmpty { NSLog("Clawd Clash: reconnected \(restored.installed.joined(separator: ", ")) after an upgrade") }
     for e in restored.errors { NSLog("Clawd Clash: couldn't reconnect hooks: \(e)") }
-    // Coming from Clawd Wars or Avengers: Clawd Wars: take over the AIs they had connected. Not from a build/ copy
+    // Coming from Clawd Wars, Avengers: Clawd Wars or Justice League: Clawd Wars: take over the AIs they had connected. Not from a build/ copy
     // (a dev build never takes over hooks that point at a working app; it shows the banner instead).
     if !Bundle.main.bundlePath.contains("/build/") {
         let taken = HookInstaller.takeOverReplacedApps()
         if !taken.installed.isEmpty {
             NSLog("Clawd Clash: took over \(taken.installed.joined(separator: ", ")) from the app it replaces")
             // The old app, if it's running, would only complain that its hooks are gone: it's replaced, so it goes.
-            for id in ["com.rodclemen.vaderclaude", "com.rodclemen.avengersclawdwars"] {
+            for id in ["com.rodclemen.vaderclaude", "com.rodclemen.avengersclawdwars", "com.rodclemen.justiceleagueclawdwars"] {
                 NSRunningApplication.runningApplications(withBundleIdentifier: id).forEach { $0.terminate() }
             }
         }

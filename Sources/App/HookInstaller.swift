@@ -8,16 +8,17 @@ enum HookInstaller {
     ]
     static let toolEvents: Set<String> = ["PreToolUse", "PostToolUse", "PostToolUseFailure", "PermissionRequest"]
     /// The hook binary's name. Hooks of the apps Clawd Clash replaces (Clawd Wars' `clawd-wars-hook` and its older
-    /// `vader-hook`, Avengers: Clawd Wars' `avengers-hook`) count as ours too, so connecting an AI swaps them for ours.
+    /// `vader-hook`, Avengers: Clawd Wars' `avengers-hook`, Justice League: Clawd Wars' `justice-hook`) count as ours
+    /// too, so connecting an AI swaps them for ours.
     static let binaryName = "clawd-clash-hook"
-    static let replacedBinaries = ["clawd-wars-hook", "vader-hook", "avengers-hook"]
+    static let replacedBinaries = ["clawd-wars-hook", "vader-hook", "avengers-hook", "justice-hook"]
     static func isOurs(command: String) -> Bool {
         command.contains(binaryName) || replacedBinaries.contains { command.contains($0) }
     }
     /// Runs Clawd Clash's own hook (not one of the apps it replaces): what "connected" means.
     static func isCurrent(command: String) -> Bool { command.contains(binaryName) }
 
-    /// The AI (by name) still runs Clawd Wars' or Avengers: Clawd Wars' hook, so it reports to that app instead.
+    /// The AI (by name) still runs the hook of an app Clawd Clash replaces, so it reports to that app instead.
     static func reportsToReplacedApp(_ name: String) -> Bool {
         let file = name == "claude" ? settingsURL : others.first { $0.name == name }?.file
         guard let file, let text = try? String(contentsOf: file, encoding: .utf8) else { return false }
@@ -429,14 +430,15 @@ enum HookInstaller {
 
     // MARK: Taking over from the apps Clawd Clash replaces
     //
-    // Someone coming from Clawd Wars or Avengers: Clawd Wars already chose which AIs to connect. On launch, Clawd
-    // Clash takes those over without asking again:
+    // Someone coming from Clawd Wars, Avengers: Clawd Wars or Justice League: Clawd Wars already chose which AIs to
+    // connect. On launch, Clawd Clash takes those over without asking again:
     //  - an AI whose hooks still run the old app's hook (the old app is still installed, or was dragged to the Bin)
     //    gets Clawd Clash's hook instead (connecting replaces the old app's entries, `isOurs`);
     //  - a Homebrew upgrade of the old cask ran the old app's `--uninstall-hooks`, which left a note of what it
     //    removed in the old app's status folder: those AIs get connected again.
 
-    private static let replacedNotes = [".claude/vader-status/hooks-removed", ".claude/avengers-status/hooks-removed"]
+    private static let replacedNotes = [".claude/vader-status/hooks-removed", ".claude/avengers-status/hooks-removed",
+                                        ".claude/justice-status/hooks-removed"]
 
     @discardableResult
     static func takeOverReplacedApps() -> (installed: [String], errors: [String]) {

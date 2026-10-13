@@ -1,8 +1,10 @@
 import AppKit
 import AVFoundation
 
-// Marvel's comic-book transitions (`ComicWipe`), rendered as short clips and a sheet of key frames.
+// The comic-book transitions between places, rendered as short clips and a sheet of key frames: Marvel's (`ComicWipe`)
+// or, between two DC places, DC's (`DCComicWipe`).
 //   Tools/Transitions/build.sh && build/transitions <out folder> [from place] [to place]
+//   build/transitions build/transitions-dc watchtower gotham     DC's fifteen
 
 let args = Array(CommandLine.arguments.dropFirst())
 let outDir = args.first ?? "build/transitions"
@@ -41,7 +43,15 @@ func shown(_ kind: ComicWipe, _ key: String, _ title: String, sound: ComicSound 
     }
 }
 
-let transitions: [Transition] = [
+/// DC's transitions (`DCComicTrip`), every one of them.
+func shownDC(_ kind: DCComicWipe) -> Transition {
+    let trip = DCComicTrip(kind: kind, caption: "MEANWHILE, IN \(to.name.uppercased())…")
+    return Transition(key: "\(kind.rawValue + 1)-\(kind)", title: "\(kind)", duration: kind.duration) { ctx, old, new, k in
+        trip.draw(ctx, old: old, new: new, k: k, in: full)
+    }
+}
+
+let marvel: [Transition] = [
     shown(.halftone, "1-halftone", "Halftone dots"),
     shown(.burst, "2-burst-kapow", "KAPOW! (nobody in particular)"),
     shown(.burst, "2-burst-snikt", "SNIKT! (Wolverine, X-23)", sound: .snikt),
@@ -55,6 +65,12 @@ let transitions: [Transition] = [
     shown(.fourthWall, "6-deadpool-fourth-wall", "Deadpool peels the page"),
     shown(.chimichanga, "7-deadpool-chimichanga", "Deadpool's chimichanga"),
 ]
+
+/// ONLY="1,4,12" renders just those (by number or name).
+let only = ProcessInfo.processInfo.environment["ONLY"]?.split(separator: ",").map(String.init)
+let transitions: [Transition] = (to.universe == .dc ? DCComicWipe.allCases.map(shownDC) : marvel).filter { tr in
+    only.map { $0.contains { tr.key.hasPrefix("\($0)-") || tr.key.hasSuffix("-\($0)") } } ?? true
+}
 
 // MARK: Rendering
 
@@ -146,4 +162,4 @@ if let spec = ProcessInfo.processInfo.environment["FRAMES"], let colon = spec.fi
     exit(0)
 }
 sheet()
-for tr in transitions { clip(tr) }
+if ProcessInfo.processInfo.environment["SHEET_ONLY"] == nil { for tr in transitions { clip(tr) } }
