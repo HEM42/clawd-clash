@@ -849,7 +849,7 @@ final class ClawdClashSaverView: ScreenSaverView {
         if agents > 0 { counts.append("\(agents) AGENT\(agents == 1 ? "" : "S")") }
         if waiting > 0 { counts.append("\(waiting) NEED\(waiting == 1 ? "S" : "") YOU") }
         let place = text([(location.name.uppercased(), inWindow ? 27 : 18, .heavy, NSColor(white: 0.88, alpha: 1), inWindow ? 6 : 4),
-                          (idle ? "CLAWD CLASH ISN'T RUNNING  ·  OPEN IT TO BRING YOUR CREW"
+                          (idle ? "NO AI SESSIONS RUNNING  ·  THE LOCALS ARE HOLDING THE FORT"
                                 : feed == nil ? "" : counts.joined(separator: "  ·  "), 14, .semibold, NSColor(white: 0.65, alpha: 1), 2)],
                          right: shifted)
         let ps = sized(place)
