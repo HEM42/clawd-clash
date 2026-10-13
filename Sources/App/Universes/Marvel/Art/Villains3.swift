@@ -28,7 +28,7 @@ let villains3: [MarvelVillain: Persona] = [
     .modok: Persona(name: "MODOK", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFF6C0), glow: C(0xFFB01E), jagged: false), canSit: false,
                   pivot: (modokEmitter.x, modokEmitter.y + 2), headTop: 3, signature: 2.8,
                   draw: drawModok),
-    .dormammu: Persona(name: "Dormammu", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFE8B0), glow: C(0xFF6A1E)), canSit: false,
+    .dormammu: Persona(name: "Dormammu", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFE8B0), glow: C(0xFF6A1E), jagged: false), canSit: false,
                   headTop: 12, signature: 3.0,
                   draw: drawDormammu),
     .doombot: Persona(name: "Doombot", weapon: .blaster, shot: .energy(core: C(0xE0FFE0), glow: C(0x3AE05A)), armoured: true,

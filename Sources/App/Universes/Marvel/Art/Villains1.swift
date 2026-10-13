@@ -3,7 +3,7 @@ import Foundation
 // Villains: cosmic and Avengers foes.
 
 let villains1: [MarvelVillain: Persona] = [
-    .thanos: Persona(name: "Thanos", weapon: .lightning, magic: Magic(core: C(0xF4E0FF), glow: C(0xA040FF)),
+    .thanos: Persona(name: "Thanos", weapon: .lightning, magic: Magic(core: C(0xF4E0FF), glow: C(0xA040FF), jagged: false),
                   pivot: (42.5, 31.5), bulk: 2, headTop: 12, signature: 3.2, callout: "I am inevitable.",
                   draw: drawThanos),
     .loki: Persona(name: "Loki", weapon: .lightning, magic: Magic(core: C(0xE0FFE8), glow: C(0x3AD06A), jagged: false),
@@ -15,7 +15,7 @@ let villains1: [MarvelVillain: Persona] = [
     .redSkull: Persona(name: "Red Skull", weapon: .blaster, shot: .energy(core: C(0xE0F4FF), glow: C(0x3A9AFF)),
                   muzzle: (47, 32), headTop: 22, signature: 3.0,
                   draw: drawRedSkull),
-    .doctorDoom: Persona(name: "Doctor Doom", weapon: .lightning, magic: Magic(core: C(0xE0FFE0), glow: C(0x3AE05A)), armoured: true,
+    .doctorDoom: Persona(name: "Doctor Doom", weapon: .lightning, magic: Magic(core: C(0xE0FFE0), glow: C(0x3AE05A), jagged: false), armoured: true,
                   headTop: 19, signature: 2.8, callout: "Kneel before Doom!",
                   draw: drawDoctorDoom),
     .hela: Persona(name: "Hela", weapon: .saber, headTop: 10, signature: 3.2,

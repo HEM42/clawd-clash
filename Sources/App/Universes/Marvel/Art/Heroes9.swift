@@ -10,7 +10,7 @@ let heroes9: [MarvelHero: Persona] = [
     .clea: Persona(name: "Clea", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xF0E0FF), glow: C(0xC04AFF), jagged: false),
                   headTop: 20, signature: 3.0,
                   draw: drawClea),
-    .doctorVoodoo: Persona(name: "Doctor Voodoo", weapon: .lightning, magic: Magic(core: C(0xF0FFE0), glow: C(0x6AE04A)),
+    .doctorVoodoo: Persona(name: "Doctor Voodoo", weapon: .lightning, magic: Magic(core: C(0xF0FFE0), glow: C(0x6AE04A), jagged: false),
                   headTop: 22, signature: 3.2,
                   draw: drawDoctorVoodoo),
     .howardTheDuck: Persona(name: "Howard the Duck", weapon: .blaster, shot: .bullet, muzzle: (47, 33), headTop: 19, signature: 3.0,

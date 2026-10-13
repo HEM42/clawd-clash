@@ -15,7 +15,7 @@ let villains6: [MarvelVillain: Persona] = [
     .tombstone: Persona(name: "Tombstone", weapon: .saber,
                   headTop: 22, signature: 2.6,
                   draw: drawTombstone),
-    .misterSinister: Persona(name: "Mister Sinister", weapon: .lightning, magic: Magic(core: C(0xFFE0E0), glow: C(0xFF2A3A)),
+    .misterSinister: Persona(name: "Mister Sinister", weapon: .lightning, magic: Magic(core: C(0xFFE0E0), glow: C(0xFF2A3A), jagged: false),
                   headTop: 19, signature: 2.8,
                   draw: drawMisterSinister),
     .omegaRed: Persona(name: "Omega Red", weapon: .saber, armoured: true,

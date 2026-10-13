@@ -19,7 +19,7 @@ let villains7: [MarvelVillain: Persona] = [
                   draw: drawCrimsonDynamo),
     .wrecker: Persona(name: "Wrecker", weapon: .saber, headTop: 22, signature: 2.8,
                   draw: drawWrecker),
-    .baronMordo: Persona(name: "Baron Mordo", weapon: .lightning, magic: Magic(core: C(0xE0FFE0), glow: C(0x3AE05A)),
+    .baronMordo: Persona(name: "Baron Mordo", weapon: .lightning, magic: Magic(core: C(0xE0FFE0), glow: C(0x3AE05A), jagged: false),
                   headTop: 18, signature: 3.2,
                   draw: drawBaronMordo),
     .enchantress: Persona(name: "Enchantress", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xE0FFE8), glow: C(0x3AD06A), jagged: false),

@@ -13,7 +13,7 @@ let heroes7: [MarvelHero: Persona] = [
     .havok: Persona(name: "Havok", weapon: .lightning, magic: Magic(core: C(0xFFFBD0), glow: C(0xFFE01E), jagged: false),
                   headTop: 21, signature: 2.8,
                   draw: drawHavok),
-    .emmaFrost: Persona(name: "Emma Frost", weapon: .lightning, magic: Magic(core: C(0xFFFFFF), glow: C(0xC8E8FF), jagged: false), armoured: true,
+    .emmaFrost: Persona(name: "Emma Frost", weapon: .saber, armoured: true,
                   headTop: 18, signature: 3.2,
                   draw: drawEmmaFrost),
     .banshee: Persona(name: "Banshee", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xF0FFF0), glow: C(0x8AE08A), jagged: false),
@@ -406,9 +406,11 @@ private func drawHavok(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Emma Frost
 
 /// Emma Frost: the White Queen, a big blonde bouffant swept to one side, a white corset with the X-belt, white
-/// gloves and a white cape. Her telepathy is a cold white beam. Signature: she turns to diamond, the change sweeping
-/// down her from head to toe (hair, skin and costume all faceted crystal, glinting), holds it, and sweeps back.
+/// gloves and a white cape. A telepath with no blasts to throw: she fights hand to hand in her diamond form, which
+/// she's in whenever she's at work. Signature: she turns to diamond, the change sweeping down her from head to toe
+/// (hair, skin and costume all faceted crystal, glinting), holds it, and sweeps back.
 private func drawEmmaFrost(_ c: PixelCanvas, _ p: Pose) {
+    if p.mode == .working && !p.walking && !p.flying { drawEmma(c, p, diamond: true); return }
     let d = p.signature.map { habitArc($0, hold: 0.45) } ?? 0
     guard d > 0.01 else { drawEmma(c, p, diamond: false); return }
     let cut = 14 + Int((d * 32).rounded())
@@ -484,9 +486,21 @@ private func drawEmma(_ c: PixelCanvas, _ p: Pose, diamond: Bool) {
         let spots: [(Int, Int)] = [(21, 23), (34, 21), (20, 34), (35, 35), (27, 28), (17, 30)]
         for (i, s) in spots.enumerated() where (i + k) % 3 == 0 { twinkle(c, s.0, s.1, C(0xFFFFFF)) }
     }
-    if p.zap != nil {
-        let hand = (x: Sprite.hand.x, y: Sprite.hand.y - Double(p.armRaise))
-        c.pattern(Int(hand.x) - 1, Int(hand.y) - 5, [".D.", "DWD", ".D."], ["D": C(0x8AC8FF), "W": white])
+    // A punch: the arm thrown out along the melee angle, a fist on the end, faint fists where a fast swing just was.
+    if let a = p.melee {
+        let h = Sprite.hand, fist = diamond ? C(0xE8F8FF) : suit
+        func reach(_ angle: Double) -> (x: Double, y: Double) {
+            let r = angle * .pi / 180
+            return (h.x + cos(r) * 6, h.y + sin(r) * 6)
+        }
+        for (i, ta) in p.trail.enumerated() {
+            let e = reach(ta)
+            c.rect(Int(e.x.rounded()) - 1, Int(e.y.rounded()) - 1, 3, 3, fist.alpha(0.35 / Double(i + 1)))
+        }
+        let e = reach(a)
+        c.glowLine(h.x - 2, h.y - 0.5, e.x, e.y, core: suit, glow: clear, coreR: 1.2, glowR: 1.3)
+        c.rect(Int(e.x.rounded()) - 1, Int(e.y.rounded()) - 1, 3, 3, fist)
+        if diamond { c.px(Int(e.x.rounded()), Int(e.y.rounded()) - 1, white) }
     }
 }
 

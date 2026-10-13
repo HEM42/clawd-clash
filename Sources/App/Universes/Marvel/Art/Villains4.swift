@@ -24,7 +24,7 @@ let villains4: [MarvelVillain: Persona] = [
                   draw: drawZemo),
     .whiplash: Persona(name: "Whiplash", weapon: .saber, headTop: 24, signature: 2.4,
                   draw: drawWhiplash),
-    .mandarin: Persona(name: "Mandarin", weapon: .lightning, magic: Magic(core: C(0xFFF0E0), glow: C(0xFF5A3A)),
+    .mandarin: Persona(name: "Mandarin", weapon: .lightning, magic: Magic(core: C(0xFFF0E0), glow: C(0xFF5A3A), jagged: false),
                   pivot: (42, 34.5), headTop: 23, signature: 3.0,
                   draw: drawMandarin),
     .killmonger: Persona(name: "Killmonger", weapon: .saber, armoured: true, headTop: 22, signature: 3.2,
