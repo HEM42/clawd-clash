@@ -56,7 +56,7 @@ final class ClawdClashSaverView: ScreenSaverView {
     private var lastTrip = Date().timeIntervalSince1970
     private static let demoEvery = 180.0        // three minutes
 
-    // MARK: Options (System Settings' Options… button): which universe the screen saver shows
+    // MARK: Options (System Settings' Options… button): which universe the screen saver shows, and the clock or not
 
     /// Kept in a file of the screen saver's own, read afresh each time, rather than in ScreenSaverDefaults: on recent
     /// macOS the screen-saver host keeps running between uses and never sees a newer value saved by another of its
@@ -66,44 +66,52 @@ final class ClawdClashSaverView: ScreenSaverView {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Clawd Clash Saver/options.json")
     }
-    /// "same" (the app's), "starWars", "marvel", "dc" or "random" (a new pick on each trip).
-    static var choice: String {
+    private static var options: [String: String] {
         guard let data = try? Data(contentsOf: optionsFile),
-              let options = try? JSONDecoder().decode([String: String].self, from: data) else { return "same" }
-        return options["universe"] ?? "same"
+              let options = try? JSONDecoder().decode([String: String].self, from: data) else { return [:] }
+        return options
     }
+    /// "same" (the app's), "starWars", "marvel", "dc" or "random" (a new pick on each trip).
+    static var choice: String { options["universe"] ?? "same" }
+    /// The clock top right, on unless turned off.
+    static var clockShown: Bool { options["clock"] != "off" }
+    private var showClock = true                // `clockShown`, read with the feed once a second
     private var sheet: NSWindow?
-    private let picker = NSPopUpButton(frame: NSRect(x: 20, y: 60, width: 280, height: 26), pullsDown: false)
+    private let picker = NSPopUpButton(frame: NSRect(x: 20, y: 90, width: 280, height: 26), pullsDown: false)
+    private let clockBox = NSButton(checkboxWithTitle: "Show the clock", target: nil, action: nil)
     private static let choices = [("same", "The same as Clawd Clash"), ("starWars", Universe.starWars.title), ("marvel", Universe.marvel.title), ("dc", Universe.dc.title),
                                   ("random", "Random (a new one on each trip)")]
 
     override var hasConfigureSheet: Bool { true }
     override var configureSheet: NSWindow? {
-        let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 320, height: 130), styleMask: [.titled], backing: .buffered, defer: false)
+        let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 320, height: 160), styleMask: [.titled], backing: .buffered, defer: false)
         let label = NSTextField(labelWithString: "Universe to show:")
-        label.frame = NSRect(x: 20, y: 92, width: 280, height: 20)
+        label.frame = NSRect(x: 20, y: 122, width: 280, height: 20)
         picker.removeAllItems()
         for (_, title) in Self.choices { picker.addItem(withTitle: title) }
         picker.selectItem(at: Self.choices.firstIndex { $0.0 == Self.choice } ?? 0)
+        clockBox.frame = NSRect(x: 20, y: 56, width: 280, height: 22)
+        clockBox.state = Self.clockShown ? .on : .off
         let ok = NSButton(title: "OK", target: self, action: #selector(closeOptions))
         ok.frame = NSRect(x: 220, y: 14, width: 80, height: 32)
         ok.keyEquivalent = "\r"
-        for v in [label, picker, ok] { w.contentView?.addSubview(v) }
+        for v in [label, picker, clockBox, ok] { w.contentView?.addSubview(v) }
         sheet = w
         return w
     }
 
     @objc private func closeOptions() {
-        options(set: Self.choices[max(0, picker.indexOfSelectedItem)].0)
+        save(["universe": Self.choices[max(0, picker.indexOfSelectedItem)].0, "clock": clockBox.state == .on ? "on" : "off"])
         if let sheet { sheet.sheetParent?.endSheet(sheet) }
         tripUniverse = nil
+        showClock = Self.clockShown
     }
 
-    private func options(set value: String) {
+    private func save(_ options: [String: String]) {
         let url = Self.optionsFile
         do {
             try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-            try JSONEncoder().encode(["universe": value]).write(to: url, options: .atomic)
+            try JSONEncoder().encode(options).write(to: url, options: .atomic)
         } catch {
             NSLog("Clawd Clash: couldn't save the screen saver's options: \(error.localizedDescription)")
         }
@@ -187,6 +195,7 @@ final class ClawdClashSaverView: ScreenSaverView {
             // The app's window shows the app's universe (already `Universe.shown` there). As the screen saver: what
             // its Options say (the app's by default); Random picks afresh on each trip somewhere new (see `travel`).
             if feedSource == nil {
+                showClock = Self.clockShown
                 let appUniverse = feed?.universe.flatMap(Universe.init(rawValue:)) ?? .starWars
                 switch Self.choice {
                 case "starWars": tripUniverse = .starWars
@@ -849,8 +858,8 @@ final class ClawdClashSaverView: ScreenSaverView {
                               alpha: 0.95, smooth: true))
         }
 
-        // The clock (not in the window: the menu bar has one).
-        if !inWindow {
+        // The clock (not in the window: the menu bar has one), unless turned off in Options.
+        if !inWindow, showClock {
             let date = Date(timeIntervalSince1970: now)
             let f = DateFormatter()
             f.dateFormat = DateFormatter.dateFormat(fromTemplate: "jmm", options: 0, locale: .current)
