@@ -26,7 +26,7 @@ let starWarsHeroes1: [SWHero: Persona] = [
                   draw: { drawJedi($0, $1, .mace) }),
     .yoda: Persona(name: "Yoda", weapon: .saber, headTop: 24, signature: 3.4,
                   draw: { drawJedi($0, $1, .yoda) }),
-    .jawa: Persona(name: "Jawa", weapon: .blaster, canSit: false, muzzle: (46, 32), headTop: 19,
+    .jawa: Persona(name: "Jawa", weapon: .blaster, shot: .energy(core: C(0xE6F4FF), glow: C(0x3D9BFF)), canSit: false, muzzle: (46, 32), headTop: 19,
                   soloFire: (0.75, 0.55),
                   draw: { drawGunner($0, $1, .jawa) }),
     .chewie: Persona(name: "Chewbacca", weapon: .blaster, muzzle: (54, 31), headTop: 21, signature: 2,

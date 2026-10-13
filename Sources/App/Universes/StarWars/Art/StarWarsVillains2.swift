@@ -4,7 +4,7 @@ import Foundation
 // the weapon and quirk code that lived in its `drawLeader`.
 
 let starWarsVillains2: [SWVillain: Persona] = [
-    .sebulba: Persona(name: "Sebulba", weapon: .blaster, armoured: true, canSit: false, muzzle: (70, 31), handGun: false,
+    .sebulba: Persona(name: "Sebulba", weapon: .blaster, shot: .fire, armoured: true, canSit: false, muzzle: (70, 31), handGun: false,
                   headTop: 19, draw: drawSebulba),
     .salacious: Persona(name: "Salacious Crumb", canSit: false, headTop: 16,
                   draw: drawSalacious),
