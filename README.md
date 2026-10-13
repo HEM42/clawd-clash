@@ -21,7 +21,7 @@
   <img src="docs/social-preview.png" alt="A comic cover in three panels: Luke Skyclawer and Darth Vapor duelling, Thorr against Lokee, Batclaw against the Jester, under CLAWD CLASH" width="760">
 </p>
 
-Clawd Clash is one app with three universes: **Star Claws** (formerly [Clawd Wars](https://github.com/rodclemen/clawd-wars)), **Clawvel** (formerly [Clawvengers: Clawd Wars](https://github.com/rodclemen/avengers-clawd-wars)) and **Detective Claws** (formerly [Clawstice League: Clawd Wars](https://github.com/rodclemen/justice-league-clawd-wars)). Pick one in Settings; a scene never mixes them. Those three pages show each universe on its own; this one is the app.
+Clawd Clash is one app with three universes: **Star Claws** (formerly [Clawd Wars](https://github.com/rodclemen/clawd-wars)), **Clawvel** (formerly [Clawvengers: Clawd Wars](https://github.com/rodclemen/clawvengers-clawd-wars)) and **Detective Claws** (formerly [Clawstice League: Clawd Wars](https://github.com/rodclemen/clawstice-league-clawd-wars)). Pick one in Settings; a scene never mixes them. Those three pages show each universe on its own; this one is the app.
 
 | Star Claws | Clawvel | Detective Claws |
 |---|---|---|
