@@ -211,9 +211,13 @@ let social = canvas(1280, 640) { ctx in
     ctx.setFillColor(CGColor(red: 0.85, green: 0.47, blue: 0.34, alpha: 1)); ctx.fill(CGRect(x: 0, y: 147, width: 1280, height: 4))
     // title
     let yellow = NSColor(srgbRed: 1, green: 0.91, blue: 0.12, alpha: 1)
-    let titleFont = NSFont(name: "Futura-CondensedExtraBold", size: 80) ?? .systemFont(ofSize: 84, weight: .black)
-    let title = NSAttributedString(string: title, attributes: [.font: titleFont, .foregroundColor: yellow, .kern: 8])
-    title.draw(at: NSPoint(x: (1280 - title.size().width) / 2, y: 470))
+    func titleText(_ size: CGFloat) -> NSAttributedString {
+        let font = NSFont(name: "Futura-CondensedExtraBold", size: size) ?? .systemFont(ofSize: size * 1.05, weight: .black)
+        return NSAttributedString(string: title, attributes: [.font: font, .foregroundColor: yellow, .kern: size / 10])
+    }
+    let fit = min(80, 80 * 1180 / titleText(80).size().width)   // a long name shrinks to fit the width
+    let title = titleText(fit)
+    title.draw(at: NSPoint(x: (1280 - title.size().width) / 2, y: 470 + (80 - fit) / 2))
     let sub = NSAttributedString(string: subtitle,
                                  attributes: [.font: NSFont.systemFont(ofSize: 26, weight: .semibold), .foregroundColor: NSColor(white: 0.9, alpha: 1)])
     sub.draw(at: NSPoint(x: (1280 - sub.size().width) / 2, y: 418))

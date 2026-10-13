@@ -828,7 +828,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             return [SessionSnapshot(id: "home", leader: 0, project: "", mood: .idle, agents: crew)]
         }
         // Sample details so the Playground's cards look like live ones.
-        let prompts = ["add a tauntaun", "make the window resize to fit the Claudes", "why does the duel not start?",
+        let prompts = ["add a snowtaunt", "make the window resize to fit the Claudes", "why does the duel not start?",
                        "write a nice README with screenshots", "fix the portrait crop for wide characters"]
         let nowActs = ["Edit WindowMode.swift", "Bash: swift build", "Read Locations.swift", "Grep opaqueBounds", "Agent: Review the diff"]
         // Agents join the first villain. Empty project → the label shows the villain's name.
