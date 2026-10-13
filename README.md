@@ -70,7 +70,7 @@ Choose in **Settings… → Universe**: **Star Claws**, **Clawvel**, **Detective
 | Cast | 46 villains, 35 heroes | 88 villains, 105 heroes | 97 villains, 110 heroes |
 | Places | 22, from the Mos Easy Cantina to the Battle of Froth | 43, from Clawvengers Tower to Ta Loh | 43, from the Lookout to the Hall of Gloom |
 | Weapons | laser swords, blasters, dark lightning | shields, hammers, claws, repulsors, webs, arrows, magic | fists, swords, heat vision, power rings, clawarangs, arrows, magic |
-| Set pieces | Han Yolo and Greedy-O face off, and Han shoots first; the Millennial Falcon picks Han up | arch-enemies face off first; the Clawjet and the Milano pick people up; flyers take to the air and fight from there | arch-enemies face off first; the Lance and the Night-Glider pick people up; the Batclaw family swings on grapnel lines |
+| Set pieces | Han Yolo and Greedy-O face off, and Han shoots first; the Millennial Falcon picks Han up | arch-enemies face off first; the Clawjet and the Milano pick people up; flyers take to the air and fight from there | arch-enemies face off first; the Lance and the Clawwing pick people up; the Batclaw family swings on grapnel lines |
 | Sides | whoever came first keeps their side; Darth Vapor and Kylo Rant never lead back to back | Claude Code plays the heroes when another AI runs | Claude Code plays the heroes when another AI runs |
 
 <details>
