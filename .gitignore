@@ -10,5 +10,6 @@ build/
 # Agent worktrees
 .claude/
 
-# 720p trailer copies, uploaded to GitHub by hand for the README (see promo-video-idea.md)
-promo/720p/
+# Rendered promo videos and storyboards (large, regenerable). The 720p copies
+# in promo/720p/ are uploaded to GitHub by hand for the README (see promo-video-idea.md)
+promo/
