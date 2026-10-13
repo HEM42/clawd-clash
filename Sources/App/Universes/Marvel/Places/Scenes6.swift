@@ -383,7 +383,7 @@ extension Scenes {
         c.rect(f.x - 40 * s, base, f.w + 40 * s, 3 * s, C(0xB8B8B0)); c.rect(f.x - 40 * s, base, f.w + 40 * s, s, C(0xD8D8D0))
     }
 
-    /// The Clawdvengers emblem: a ring with three claw slashes raking down through it.
+    /// The Clawdvengers emblem: a ring with a C (for Clawd) inside it, open to the right.
     static func compoundEmblem(_ c: PixelCanvas, _ x: Int, _ y: Int, _ r: Int, s: Int) {
         let u = Double(r) / 7, lx = Double(x), ly = Double(y), col = C(0xF4F6F8)
         for k in 0..<Int(Double(r) * 7) {
@@ -395,7 +395,9 @@ extension Scenes {
             c.glowLine(lx + x0 * u, ly + y0 * u, lx + x1 * u, ly + y1 * u, core: col, glow: C(0xBFE4FF, 0.3),
                        coreR: 0.8 * u, glowR: 1.1 * u)
         }
-        stroke(-0.5, -5.5, -4.5, 4.5); stroke(2.5, -6, -1.5, 5.5); stroke(5, -4.5, 1.5, 4)
+        let arc = stride(from: 45.0, through: 315.0, by: 30.0).map { (3.6 * cos($0 * .pi / 180), 3.6 * sin($0 * .pi / 180)) }
+        for (a, b) in zip(arc, arc.dropFirst()) { stroke(a.0, a.1, b.0, b.1) }
+        stroke(-1, 0, 9, 0); stroke(9, 0, 7, -2); stroke(9, 0, 7, 2)   // the bar out through the ring, an arrow
     }
 
     /// The helipad and the parked Quinjet; the windsock's pole.

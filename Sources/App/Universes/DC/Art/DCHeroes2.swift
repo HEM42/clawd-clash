@@ -11,7 +11,7 @@ let dcHeroes2: [DCHero: Persona] = [
     .nightwing: Persona(name: "Nightglider", weapon: .saber, motion: .swing, headTop: 21, signature: 2.4,
                         callout: "Easy.",
                     draw: drawNightwing),
-    .batgirl: Persona(name: "Batclaw Girl", weapon: .saber, motion: .swing, headTop: 17, signature: 3.0,
+    .batgirl: Persona(name: "Batclawd Girl", weapon: .saber, motion: .swing, headTop: 17, signature: 3.0,
                       callout: "Watcher's online.",
                     draw: drawBatgirl),
     .redHood: Persona(name: "Red Cowl", weapon: .blaster, shot: .bullet, muzzle: (47, 32), headTop: 20, signature: 2.8,
@@ -24,7 +24,7 @@ let dcHeroes2: [DCHero: Persona] = [
     .huntress: Persona(name: "The Huntswoman", weapon: .blaster, shot: .arrow, muzzle: (47, 32), handGun: false, headTop: 21,
                        signature: 3.0,
                     draw: drawHuntress),
-    .batwoman: Persona(name: "Batclaw Woman", weapon: .saber, headTop: 17, signature: 2.8,
+    .batwoman: Persona(name: "Batclawd Woman", weapon: .saber, headTop: 17, signature: 2.8,
                     draw: drawBatwoman),
     .orphan: Persona(name: "The Foundling", weapon: .saber, headTop: 23, signature: 2.6,
                     draw: drawOrphan),
@@ -810,7 +810,7 @@ private func drawCrossbow(_ c: PixelCanvas, cocked: Bool) {
 
 /// Batwoman (Kate Kane): Clawd in the black suit with the big red cowl mask across her chest, a pointed-eared cowl over
 /// white lenses and red lips, a mane of crimson hair, red gloves and tall red boots, and a black cape lined in red. She
-/// fights with her fists. Signature: she throws a red clawarang that arcs out, spinning, and comes back to her hand.
+/// fights with her fists. Signature: she throws a red clawdarang that arcs out, spinning, and comes back to her hand.
 private func drawBatwoman(_ c: PixelCanvas, _ p: Pose) {
     let black = C(0x16161C), blackD = C(0x0C0C10), red = C(0xD8141E)
     let hair = C(0xE01E24), hairD = C(0x9A0E14)
@@ -845,7 +845,7 @@ private func drawBatwoman(_ c: PixelCanvas, _ p: Pose) {
     drawCowlMask(c, x: 20, y: 34, width: 16, color: red)
     c.rect(15, 33, 3, 3, red)
     if let s = p.signature, s > 0.06, s < 0.96 {
-        // Wind up, throw, and the clawarang loops out and back.
+        // Wind up, throw, and the clawdarang loops out and back.
         if s < 0.18 || s > 0.84 {
             c.rect(38, 29, 3, 3, red)
             drawBatarang(c, x: 41, y: 28, spin: 0)
@@ -869,7 +869,7 @@ private func drawBatwoman(_ c: PixelCanvas, _ p: Pose) {
     }
 }
 
-/// A red clawarang centred on (x, y): three claw points fanning from a short bar, turned a quarter at a time as it
+/// A red clawdarang centred on (x, y): three claw points fanning from a short bar, turned a quarter at a time as it
 /// spins.
 private func drawBatarang(_ c: PixelCanvas, x: Int, y: Int, spin: Int) {
     let red = C(0xE02028), dark = C(0x8A0E14)

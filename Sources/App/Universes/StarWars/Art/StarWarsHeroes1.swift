@@ -6,7 +6,7 @@ import Foundation
 // the `Pose` rather than taking the engine's generic one: `heroRole` rebuilds the role Clawd Wars used.
 
 let starWarsHeroes1: [SWHero: Persona] = [
-    .luke: Persona(name: "Luke Skyclawer", weapon: .saber, headTop: 21, signature: 2.6,
+    .luke: Persona(name: "Luke Skyclawder", weapon: .saber, headTop: 21, signature: 2.6,
                   draw: drawLuke),
     .han: Persona(name: "Han Yolo", weapon: .blaster, muzzle: (53, 32), headTop: 22, signature: 3,
                   soloFire: (0.95, 0),
@@ -26,7 +26,7 @@ let starWarsHeroes1: [SWHero: Persona] = [
                   draw: { drawJedi($0, $1, .mace) }),
     .yoda: Persona(name: "Yodle", weapon: .saber, headTop: 24, signature: 3.4,
                   draw: { drawJedi($0, $1, .yoda) }),
-    .jawa: Persona(name: "Clawa", weapon: .blaster, shot: .energy(core: C(0xE6F4FF), glow: C(0x3D9BFF)), canSit: false, muzzle: (46, 32), headTop: 19,
+    .jawa: Persona(name: "Clawda", weapon: .blaster, shot: .energy(core: C(0xE6F4FF), glow: C(0x3D9BFF)), canSit: false, muzzle: (46, 32), headTop: 19,
                   soloFire: (0.75, 0.55),
                   draw: { drawGunner($0, $1, .jawa) }),
     .chewie: Persona(name: "Chewbarka", weapon: .blaster, muzzle: (54, 31), headTop: 21, signature: 2,

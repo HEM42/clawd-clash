@@ -4,7 +4,7 @@ import Foundation
 // orange where the hero shows skin), with cowls, hair and suits drawn over it.
 
 let heroes3: [MarvelHero: Persona] = [
-    .wolverine: Persona(name: "Clawverine", weapon: .saber, headTop: 16, signature: 2.6,
+    .wolverine: Persona(name: "Clawdverine", weapon: .saber, headTop: 16, signature: 2.6,
                   draw: drawWolverine),
     .cyclops: Persona(name: "Cyclopz", weapon: .blaster, shot: .beam(core: C(0xFFE0E0), glow: C(0xFF2A3A)),
                   muzzle: (37, 28.5), handGun: false, headTop: 22, signature: 2.4,
@@ -19,7 +19,7 @@ let heroes3: [MarvelHero: Persona] = [
                   draw: drawProfessorX),
     .beast: Persona(name: "The Beest", weapon: .saber, pivot: (41.5, 33.5), bulk: 2, headTop: 18, signature: 3.5,
                   draw: drawBeast),
-    .nightcrawler: Persona(name: "Nightclawler", weapon: .saber, headTop: 21, signature: 2.8,
+    .nightcrawler: Persona(name: "Nightclawdler", weapon: .saber, headTop: 21, signature: 2.8,
                   draw: drawNightcrawler),
     .gambit: Persona(name: "Gamblit", weapon: .blaster, shot: .card, muzzle: (41, 31.5), headTop: 21, signature: 2.8,
                   draw: drawGambit),

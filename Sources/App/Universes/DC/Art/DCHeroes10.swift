@@ -31,7 +31,7 @@ let dcHeroes10: [DCHero: Persona] = [
                   draw: drawZan),
     .jayna: Persona(name: "Jaina", weapon: .saber, headTop: 19, signature: 3.6, callout: "Form of... an eagle!",
                   draw: drawJayna),
-    .aceTheBatHound: Persona(name: "Ace the Batclaw Hound", weapon: .saber, canSit: false, bulk: 6, headTop: 19, signature: 3.0,
+    .aceTheBatHound: Persona(name: "Ace the Batclawd Hound", weapon: .saber, canSit: false, bulk: 6, headTop: 19, signature: 3.0,
                   draw: drawAce),
     .streaky: Persona(name: "Streaker", weapon: .saber, motion: .fly, canSit: false, bulk: 2, headTop: 23, signature: 3.0,
                   draw: drawStreaky),

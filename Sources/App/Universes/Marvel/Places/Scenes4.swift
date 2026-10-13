@@ -94,7 +94,7 @@ extension Scenes {
     }
 
     /// The Baxter Building's top-floor lab at dusk: a window wall over Manhattan (the Chrysler Building glinting in
-    /// the sunset) with the Fanclawstic Four's blue "4" emblem on the glass, Reed's giant computer banks of blinking
+    /// the sunset) with the Fanclawdstic Four's blue "4" emblem on the glass, Reed's giant computer banks of blinking
     /// lights, tape reels and scopes down the left, and the ringed Negative Zone portal on its platform at the right,
     /// cabled to the computers.
     static func baxterBuilding(_ c: PixelCanvas, _ g: Int) {
@@ -205,7 +205,7 @@ extension Scenes {
         c.rect(x, top - 6 * s, s, 7 * s, C(0xF0D8C0))
     }
 
-    /// The Fanclawstic Four's emblem on the glass: a blue disc in a white ring, the "4" breaking out of it, a claw
+    /// The Fanclawdstic Four's emblem on the glass: a blue disc in a white ring, the "4" breaking out of it, a claw
     /// notch raked across the top of its stem.
     static func baxterEmblemDraw(_ c: PixelCanvas, _ g: Int) {
         let e = baxterEmblem(c, g), r = e.r, rd = Double(r)

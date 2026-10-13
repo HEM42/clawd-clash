@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Resources/AppIcon.png" width="180" alt="Clawd Clash icon: a comic cover in three panels, one per universe, with CLAWD CLASH across them, Spider-Clawd hanging on his web, Darth Vapor raising his saber and Batclaw under the Night Beacon">
+  <img src="Resources/AppIcon.png" width="180" alt="Clawd Clash icon: a comic cover in three panels, one per universe, with CLAWD CLASH across them, Spider-Clawd hanging on his web, Darth Vapor raising his saber and Batclawd under the Night Beacon">
 </p>
 
 <h1 align="center">Clawd Clash</h1>
@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/social-preview.png" alt="A comic cover in three panels: Luke Skyclawer and Darth Vapor duelling, Thorr against Lokee, Batclaw against the Jester, under CLAWD CLASH" width="760">
+  <img src="docs/social-preview.png" alt="A comic cover in three panels: Luke Skyclawder and Darth Vapor duelling, Thorr against Lokee, Batclawd against the Jester, under CLAWD CLASH" width="760">
 </p>
 
 Clawd Clash is one app with three universes: **Star Clawds** (formerly [Clawd Wars](https://github.com/rodclemen/clawd-wars)), **Marvelous Clawds** (formerly [Clawdvengers: Clawd Wars](https://github.com/rodclemen/clawdvengers-clawd-wars)) and **Detective Clawds** (formerly [Justice Clawds: Clawd Wars](https://github.com/rodclemen/justice-clawds-clawd-wars)). Pick one in Settings; a scene never mixes them. Those three pages show each universe on its own; this one is the app.
@@ -51,7 +51,7 @@ You run Claude Code in three terminals. One is thinking, one is waiting for your
 - **Working?** Your Claude fights: a laser sword, a shield, repulsors, heat vision, a spell.
 - **Thinking?** A thought bubble.
 - **Needs you?** A red `!`, and if you ignore it for a minute, it starts jumping up and down. It keeps asking until you answer; press Esc instead and it stands down.
-- **Done and idle?** It stops fighting and passes the time with habits of its own, and most characters have a signature move (Ahh2-De2 plays Princess Laya's message, Han Yolo spins his blaster, Iron Clawd flips his faceplate up, Thanoz snaps, Batclaw's clawarang loops back to his hand). After a couple of minutes it sits down; after five it's asleep (zZz).
+- **Done and idle?** It stops fighting and passes the time with habits of its own, and most characters have a signature move (Ahh2-De2 plays Princess Laya's message, Han Yolo spins his blaster, Iron Clawd flips his faceplate up, Thanoz snaps, Batclawd's clawdarang loops back to his hand). After a couple of minutes it sits down; after five it's asleep (zZz).
 - **Spawned subagents?** They walk (or fly, or swing) in one by one, each labelled with what it's doing, and leave when they finish.
 - **Hover** any character for the details; **click** it to jump straight to that session's terminal or editor tab.
 
@@ -63,14 +63,14 @@ You run Claude Code in three terminals. One is thinking, one is waiting for your
 
 ## Three universes
 
-Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, **Detective Clawds** or **Random**. Switching recasts everyone on screen (each character becomes the one in the same place in the other cast, on the same side), moves the scene to one of the new universe's places, and changes the menu bar icon (Darth Vapor's helmet, Captain Ameriklaw's shield or Superb-Man's C-shield). In the window, the whole window changes over with the new universe's transition. **Random** switches on its own every 1, 5, 10, 15, 30 or 60 minutes.
+Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, **Detective Clawds** or **Random**. Switching recasts everyone on screen (each character becomes the one in the same place in the other cast, on the same side), moves the scene to one of the new universe's places, and changes the menu bar icon (Darth Vapor's helmet, Captain Americlawd's shield or Superb-Man's C-shield). In the window, the whole window changes over with the new universe's transition. **Random** switches on its own every 1, 5, 10, 15, 30 or 60 minutes.
 
 | | Star Clawds | Marvelous Clawds | Detective Clawds |
 |---|---|---|---|
 | Cast | 46 villains, 35 heroes | 88 villains, 105 heroes | 97 villains, 110 heroes |
 | Places | 22, from the Mos Easy Cantina to the Battle of Froth | 43, from Clawdvengers Tower to Ta Loh | 43, from the Lookout to the Hall of Gloom |
-| Weapons | laser swords, blasters, dark lightning | shields, hammers, claws, repulsors, webs, arrows, magic | fists, swords, heat vision, power rings, clawarangs, arrows, magic |
-| Set pieces | Han Yolo and Greedy-O face off, and Han shoots first; the Millennial Falcon picks Han up | arch-enemies face off first; the Clawjet and the Milano pick people up; flyers take to the air and fight from there | arch-enemies face off first; the Lance and the Clawwing pick people up; the Batclaw family swings on grapnel lines |
+| Weapons | laser swords, blasters, dark lightning | shields, hammers, claws, repulsors, webs, arrows, magic | fists, swords, heat vision, power rings, clawdarangs, arrows, magic |
+| Set pieces | Han Yolo and Greedy-O face off, and Han shoots first; the Millennial Falcon picks Han up | arch-enemies face off first; the Clawdjet and the Milano pick people up; flyers take to the air and fight from there | arch-enemies face off first; the Lance and the Clawdwing pick people up; the Batclawd family swings on grapnel lines |
 | Sides | whoever came first keeps their side; Darth Vapor and Kylo Rant never lead back to back | Claude Code plays the heroes when another AI runs | Claude Code plays the heroes when another AI runs |
 
 <details>
@@ -96,7 +96,7 @@ Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, *
 It opens in a window by default (switch to the desktop from the menu): the whole crew in a scene set where the first session's character belongs, with a card for every session: its project, what it's doing right now, your last prompt, its last reply, and its agents in a little tree.
 
 <p align="center">
-  <img src="docs/window-cantina.png" alt="Window mode in the Mos Easy Cantina: Han Yolo with Luke Skyclawer and Obi-Juan Kanoobie, Greedy-O on Codex" width="760">
+  <img src="docs/window-cantina.png" alt="Window mode in the Mos Easy Cantina: Han Yolo with Luke Skyclawder and Obi-Juan Kanoobie, Greedy-O on Codex" width="760">
 </p>
 
 **The screen saver** (Settings… → Screen Saver → Install…) shows the place full screen with the crew fighting across its floor, a card per session, name tags, a clock and a crawl of what happened lately, and moves somewhere new every 10 minutes: with a Star Clawds wipe, or in Marvelous Clawds with a comic-book transition (halftone dots, a SNIKT!, PHOOMF!, FWIP! or KAPOW! for whoever's on screen, panels, speed lines, "MEANWHILE…", and with Deadpond about, Deadpond peeling the page off the screen or surfing past on a chimichanga), or in Detective Clawds with one of fifteen of its own (the Flare racing through the Speed Source, the Night Beacon, Superb-Man bursting through the page, the Lariat of Truth, a Jester card, Darksyde's Omicron Beams and more). Its **Options…** button in System Settings picks the universe: the same as the app, Star Clawds, Marvelous Clawds, Detective Clawds, or Random (a new pick on each trip).

@@ -7,7 +7,7 @@ let dcHeroes1: [DCHero: Persona] = [
     .superman: Persona(name: "Superb-Man", weapon: .blaster, motion: .fly, shot: .beam(core: C(0xFFF4D0), glow: C(0xFF3A1E)),
                   armoured: true, muzzle: (34, 30), handGun: false, headTop: 21, signature: 3.0, callout: "Up, up and onward!",
                   draw: drawSuperman),
-    .batman: Persona(name: "Batclaw", weapon: .saber, motion: .swing, headTop: 19, signature: 2.8, callout: "I'm the night.",
+    .batman: Persona(name: "Batclawd", weapon: .saber, motion: .swing, headTop: 19, signature: 2.8, callout: "I'm the night.",
                   draw: drawBatman),
     .wonderWoman: Persona(name: "Wondrous Woman", weapon: .saber, motion: .fly, headTop: 21, signature: 3.2,
                   callout: "For the Isle of Women!",
@@ -105,7 +105,7 @@ private func drawSuperman(_ c: PixelCanvas, _ p: Pose) {
 /// Batman: Clawd under the black cowl with the pointed ears and narrow white eyes, his own orange jaw showing, the grey
 /// suit with the black cowl mask on a yellow oval, a yellow utility belt, black gloves and boots, and the long black cape with a
 /// scalloped hem. He travels on a grapnel line, one hand up on it, cape streaming. He fights with his fists, the
-/// gauntlet fins catching the light. Signature: he throws a clawarang that whirls out and boomerangs back into his hand.
+/// gauntlet fins catching the light. Signature: he throws a clawdarang that whirls out and boomerangs back into his hand.
 private func drawBatman(_ c: PixelCanvas, _ p: Pose) {
     let grey = C(0x7A7E8A), greyDark = C(0x555963), black = C(0x1E1E28), blackLight = C(0x3A3A4A)
     let cape = C(0x2E3248), capeEdge = C(0x15172A), yellow = C(0xF0C838), yellowDark = C(0xB8922A)
@@ -157,7 +157,7 @@ private func drawBatman(_ c: PixelCanvas, _ p: Pose) {
         drawFinnedPunch(c, angle: a, trail: p.trail)
         return
     }
-    // Signature: the clawarang whirls out along an ellipse and comes back.
+    // Signature: the clawdarang whirls out along an ellipse and comes back.
     if let s = p.signature, s > 0.06, s < 0.94 {
         if s < 0.16 {
             c.rect(37, 29, 3, 3, black)                               // wound up behind the head
@@ -195,7 +195,7 @@ private func drawFinnedPunch(_ c: PixelCanvas, angle: Double, trail: [Double], a
     }
 }
 
-/// A clawarang centred near (`x`, `y`): three claw points fanning from a short bar; `frame` 0 flat, 1 a quarter
+/// A clawdarang centred near (`x`, `y`): three claw points fanning from a short bar; `frame` 0 flat, 1 a quarter
 /// turn, 2 edge-on, as it spins.
 private func drawBatarang(_ c: PixelCanvas, x: Int, y: Int, frame: Int) {
     let k = C(0x1E1E28), hi = C(0x8A8E9A)

@@ -9,7 +9,7 @@ let heroes4: [MarvelHero: Persona] = [
     .thing: Persona(name: "The Thingamajig", weapon: .saber, armoured: true, pivot: (41.5, 33.5), bulk: 2, headTop: 22, signature: 2.6,
                   callout: "It's thumpin' time!",
                   draw: drawThing),
-    .mrFantastic: Persona(name: "Mr. Fanclawstic", weapon: .saber, headTop: 21, signature: 2.8,
+    .mrFantastic: Persona(name: "Mr. Fanclawdstic", weapon: .saber, headTop: 21, signature: 2.8,
                   draw: drawMrFantastic),
     .invisibleWoman: Persona(name: "Invisibelle", weapon: .lightning, magic: Magic(core: C(0xE8F8FF), glow: C(0x6AC8FF), jagged: false),
                   pivot: (41.5, 34.5), headTop: 20, signature: 3.0,

@@ -602,11 +602,13 @@ extension Scenes {
         c.rect(x - w / 2 - 9 * s, top + 13 * s, 10 * s, s, C(0xA8B2C2))           // the landing pad, cantilevered
         c.rect(x - w / 2 - 3 * s, top + 14 * s, 3 * s, s, seam)
         c.rect(x - w / 2 - 2 * s, top - 3 * s, w + 4 * s, 3 * s, seam)           // the roof
-        for k in 0..<3 {                                                           // the arc-lit claw emblem: three slashes
-            let sx = Double(x + w / 2 - 7 * s) + Double(k) * 2 * ss
-            c.glowLine(sx + 2 * ss, Double(top + 3 * s), sx, Double(top + 8 * s), core: C(0x8ADCFF), glow: C(0x8ADCFF, 0),
-                       coreR: 0.4 * ss, glowR: 0.45 * ss)
+        // the arc-lit Clawdvengers emblem: a C, open to the right
+        let ex = Double(x + w / 2 - 5 * s), ey = Double(top) + 5.5 * ss
+        let arc = stride(from: 45.0, through: 315.0, by: 45.0).map { (ex + 2.3 * ss * cos($0 * .pi / 180), ey + 2.3 * ss * sin($0 * .pi / 180)) }
+        for (p, q) in zip(arc, arc.dropFirst()) {
+            c.glowLine(p.0, p.1, q.0, q.1, core: C(0x8ADCFF), glow: C(0x8ADCFF, 0), coreR: 0.4 * ss, glowR: 0.45 * ss)
         }
+        c.glowLine(ex - 0.5 * ss, ey, ex + 4 * ss, ey, core: C(0x8ADCFF), glow: C(0x8ADCFF, 0), coreR: 0.4 * ss, glowR: 0.45 * ss)   // the bar
     }
 
     /// A row of buildings standing on `base`.

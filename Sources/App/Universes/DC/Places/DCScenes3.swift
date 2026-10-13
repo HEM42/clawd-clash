@@ -1,9 +1,9 @@
 import Foundation
 
 let dcScenes3: [Location: Place] = [
-    .apokolips: Place(name: "Apocaclaws", panel: 0x200C0A, still: Scenes.apokolips, moving: Scenes.apokolipsLife),
+    .apokolips: Place(name: "Apocaclawds", panel: 0x200C0A, still: Scenes.apokolips, moving: Scenes.apokolipsLife),
     .krypton: Place(name: "Kryptron", panel: 0x221210, still: Scenes.krypton, moving: Scenes.kryptonLife),
-    .titansTower: Place(name: "Clawtans Tower", panel: 0x101828, still: Scenes.titansTower, moving: Scenes.titansTowerLife),
+    .titansTower: Place(name: "Clawdtans Tower", panel: 0x101828, still: Scenes.titansTower, moving: Scenes.titansTowerLife),
     .smallville: Place(name: "Smallburg", panel: 0x1E1C16, still: Scenes.smallville, moving: Scenes.smallvilleLife),
     .strykersIsland: Place(name: "Striker's Rock", panel: 0x14181E, still: Scenes.strykersIsland, moving: Scenes.strykersIslandLife),
     .belleReve: Place(name: "Bayou Penitentiary", panel: 0x141A12, still: Scenes.belleReve, moving: Scenes.belleReveLife),

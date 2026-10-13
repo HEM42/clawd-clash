@@ -166,7 +166,7 @@ extension Scenes {
         c.rect(tx + tw, py, 16 * s, s, C(0x8AA8D0))
         for k in 0..<6 { c.rect(tx + tw + k * 2 * s, py + 2 * s + k * s, 2 * s, s, C(0x2A3654)) }
         for x in stride(from: tx + tw + 2 * s, to: tx + tw + 16 * s, by: 4 * s) { c.rect(x, py - s, s, s, C(0x9AE0FF)) }
-        // the Clawdvengers emblem: three claw slashes in the ring
+        // the Clawdvengers emblem: a C (for Clawd) in the ring
         let ax = tx + tw / 2 - 7 * s, ay = top + crown + 3 * s
         c.circle(ax + 7 * s, ay + 7 * s, 11 * s, C(0x9ACBFF, 0.10))
         c.circle(ax + 7 * s, ay + 7 * s, 9 * s, C(0x9ACBFF, 0.12))
@@ -175,9 +175,9 @@ extension Scenes {
         let stroke = { (x0: Double, y0: Double, x1: Double, y1: Double) in
             c.glowLine(lx0 + x0 * u, ly0 + y0 * u, lx0 + x1 * u, ly0 + y1 * u, core: white, glow: C(0xBFE4FF), coreR: 0.8 * u, glowR: 1.2 * u, strength: 1)
         }
-        stroke(-0.5, -5.5, -4.5, 4.5)      // three slashes raking down to the left, the outer two shorter
-        stroke(2.5, -6, -1.5, 5.5)
-        stroke(5, -4.5, 1.5, 4)
+        let arc = stride(from: 45.0, through: 315.0, by: 30.0).map { (3.6 * cos($0 * .pi / 180), 3.6 * sin($0 * .pi / 180)) }
+        for (a, b) in zip(arc, arc.dropFirst()) { stroke(a.0, a.1, b.0, b.1) }
+        stroke(-1, 0, 9, 0); stroke(9, 0, 7, -2); stroke(9, 0, 7, 2)   // the bar out through the ring, an arrow   // the C, open to the right
         // the glass lounge at the tower's foot
         let lx = tx - 14 * s, lw = tw + 26 * s, lh = 18 * s, ly = g - lh
         c.rect(lx, ly, lw, lh, C(0x1A2034))

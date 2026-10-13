@@ -7,7 +7,7 @@ let starWarsHeroes3: [SWHero: Persona] = [
                   draw: drawGrogu),
     .babuFrik: Persona(name: "Babu Flick", canSit: false, headTop: 16,
                   draw: drawBabuFrik),
-    .mando: Persona(name: "The Mandoclawrian", weapon: .blaster, muzzle: (58, 32), headTop: 19,
+    .mando: Persona(name: "The Mandoclawdrian", weapon: .blaster, muzzle: (58, 32), headTop: 19,
                   soloFire: (1.25, 0.7),
                   draw: drawMando),
     .k2so: Persona(name: "Kay-2-Snark", weapon: .blaster, muzzle: (52, 32), headTop: 14,

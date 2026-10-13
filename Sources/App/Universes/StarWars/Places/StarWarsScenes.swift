@@ -37,7 +37,7 @@ let starWarsPlaces: [Location: Place] = [
     .larsFarm: Place(name: "Larz Homestead", panel: 0x2E2418, still: StarWarsScenes.larsFarm),
     .obiWanHut: Place(name: "Obi-Juan's Hut", panel: 0x2B2119, still: StarWarsScenes.obiWanHut,
                       moving: StarWarsScenes.obiWanHologram),
-    .sandcrawler: Place(name: "Clawa Sandcrawler", panel: 0x261A12, still: StarWarsScenes.sandcrawler,
+    .sandcrawler: Place(name: "Clawda Sandcrawler", panel: 0x261A12, still: StarWarsScenes.sandcrawler,
                         moving: StarWarsScenes.crawlerLights),
     .dagobah: Place(name: "Dagobog", panel: 0x111C15, still: StarWarsScenes.dagobah, moving: StarWarsScenes.swampFog),
     .falcon: Place(name: "Millennial Falcon", panel: 0x1E1F21, still: StarWarsScenes.falcon, moving: StarWarsScenes.dejarik),
