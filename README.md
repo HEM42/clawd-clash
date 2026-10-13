@@ -17,9 +17,7 @@
   <img src="https://img.shields.io/badge/free-to%20use-brightgreen" alt="Free to use">
 </p>
 
-<p align="center">
-  <img src="docs/social-preview.png" alt="A comic cover in three panels: Luke Skyclawder and Darth Vapor duelling, Thorr against Lokee, Batclawd against the Jester, under CLAWD CLASH" width="760">
-</p>
+https://github.com/user-attachments/assets/b30045b4-2742-479e-bffc-4abbd20ba15d
 
 Clawd Clash is one app with three universes: **Star Clawds** (formerly [Clawd Wars](https://github.com/rodclemen/clawd-wars)), **Marvelous Clawds** (formerly [Clawdvengers: Clawd Wars](https://github.com/rodclemen/clawdvengers-clawd-wars)) and **Detective Clawds** (formerly [Justice Clawds: Clawd Wars](https://github.com/rodclemen/justice-clawds-clawd-wars)). Pick one in Settings; a scene never mixes them. Those three pages show each universe on its own; this one is the app.
 
