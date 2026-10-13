@@ -1,12 +1,12 @@
 import Foundation
 
 let scenes1: [Location: Place] = [
-    .avengersTower: Place(name: "Avengers Tower", panel: 0x141A2C, still: Scenes.avengersTower, moving: Scenes.towerLife),
+    .avengersTower: Place(name: "Clawvengers Tower", panel: 0x141A2C, still: Scenes.avengersTower, moving: Scenes.towerLife),
     .sanctum: Place(name: "Sanctum Sanctorum", panel: 0x221510, still: Scenes.sanctum, moving: Scenes.sanctumLife),
-    .wakanda: Place(name: "Wakanda", panel: 0x2A1620, still: Scenes.wakanda, moving: Scenes.wakandaLife),
-    .asgard: Place(name: "Asgard", panel: 0x16142E, still: Scenes.asgard, moving: Scenes.asgardLife),
-    .sakaar: Place(name: "Sakaar", panel: 0x2A1A1E, still: Scenes.sakaar, moving: Scenes.sakaarLife),
-    .knowhere: Place(name: "Knowhere", panel: 0x170F1E, still: Scenes.knowhere, moving: Scenes.knowhereLife),
+    .wakanda: Place(name: "Wakandu", panel: 0x2A1620, still: Scenes.wakanda, moving: Scenes.wakandaLife),
+    .asgard: Place(name: "Asgaard", panel: 0x16142E, still: Scenes.asgard, moving: Scenes.asgardLife),
+    .sakaar: Place(name: "Sakkar", panel: 0x2A1A1E, still: Scenes.sakaar, moving: Scenes.sakaarLife),
+    .knowhere: Place(name: "Nowhere", panel: 0x170F1E, still: Scenes.knowhere, moving: Scenes.knowhereLife),
     .titan: Place(name: "Titan", panel: 0x2E1610, still: Scenes.titan, moving: Scenes.titanLife),
 ]
 
@@ -27,7 +27,7 @@ extension Scenes {
     }
 }
 
-// MARK: - Avengers Tower
+// MARK: - Clawvengers Tower
 
 extension Scenes {
     /// One building of the Manhattan skyline behind the tower.
@@ -39,9 +39,9 @@ extension Scenes {
         return (Int(Double(c.w) * 0.72), 30 * s, isTall(c) ? g / 6 : 3)
     }
 
-    /// Avengers Tower at night: the crew is out on the tower's top-floor terrace behind its glass rail. Behind them the
+    /// Clawvengers Tower at night: the crew is out on the tower's top-floor terrace behind its glass rail. Behind them the
     /// Manhattan skyline glitters (the Empire State and the Chrysler stand out), a moon hangs over the East River, and
-    /// the tower itself rises at the right, slanted glass crown, landing pad jutting out and the glowing "A" up top,
+    /// the tower itself rises at the right, slanted glass crown, landing pad jutting out and the glowing claw emblem up top,
     /// with the warm glass lounge at its foot.
     static func avengersTower(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c)
@@ -137,7 +137,7 @@ extension Scenes {
         c.rect(cx, ct - 8 * s, s, 9 * s, C(0xB8C4DC))
     }
 
-    /// The tower: glass shaft, the slanted crown, the landing pad, the "A" and the lounge at its foot.
+    /// The tower: glass shaft, the slanted crown, the landing pad, the claw emblem and the lounge at its foot.
     static func towerTower(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), f = towerFrame(c, g), tx = f.x, tw = f.w, top = f.top
         let glass = C(0x22304E), mull = C(0x16203A), sheen = C(0x3A5078)
@@ -166,7 +166,7 @@ extension Scenes {
         c.rect(tx + tw, py, 16 * s, s, C(0x8AA8D0))
         for k in 0..<6 { c.rect(tx + tw + k * 2 * s, py + 2 * s + k * s, 2 * s, s, C(0x2A3654)) }
         for x in stride(from: tx + tw + 2 * s, to: tx + tw + 16 * s, by: 4 * s) { c.rect(x, py - s, s, s, C(0x9AE0FF)) }
-        // the A
+        // the Clawvengers emblem: three claw slashes in the ring
         let ax = tx + tw / 2 - 7 * s, ay = top + crown + 3 * s
         c.circle(ax + 7 * s, ay + 7 * s, 11 * s, C(0x9ACBFF, 0.10))
         c.circle(ax + 7 * s, ay + 7 * s, 9 * s, C(0x9ACBFF, 0.12))
@@ -175,9 +175,9 @@ extension Scenes {
         let stroke = { (x0: Double, y0: Double, x1: Double, y1: Double) in
             c.glowLine(lx0 + x0 * u, ly0 + y0 * u, lx0 + x1 * u, ly0 + y1 * u, core: white, glow: C(0xBFE4FF), coreR: 0.8 * u, glowR: 1.2 * u, strength: 1)
         }
-        stroke(-4.5, 6, 1.5, -8)          // the A's left leg, its point breaking out of the ring
-        stroke(1.5, -8, 2.5, 6)            // right leg
-        stroke(-2.5, 1.5, 9, 1.5)          // the bar, shooting out to the right
+        stroke(-0.5, -5.5, -4.5, 4.5)      // three slashes raking down to the left, the outer two shorter
+        stroke(2.5, -6, -1.5, 5.5)
+        stroke(5, -4.5, 1.5, 4)
         // the glass lounge at the tower's foot
         let lx = tx - 14 * s, lw = tw + 26 * s, lh = 18 * s, ly = g - lh
         c.rect(lx, ly, lw, lh, C(0x1A2034))

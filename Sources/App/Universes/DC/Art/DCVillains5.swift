@@ -5,34 +5,34 @@ import Foundation
 // ring-slingers fire steady beams in their Corps colour and build constructs in it.
 
 let dcVillains5: [DCVillain: Persona] = [
-    .sinestro: Persona(name: "Sinestro", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFFFD0), glow: C(0xFFD81E), jagged: false),
-                  headTop: 23, signature: 3.2, callout: "Beware your fears made into light!",
+    .sinestro: Persona(name: "Sinistro", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFFFD0), glow: C(0xFFD81E), jagged: false),
+                  headTop: 23, signature: 3.2, callout: "Beware your fears made light!",
                   draw: drawSinestro),
-    .atrocitus: Persona(name: "Atrocitus", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFE0D0), glow: C(0xE81E1E), jagged: false),
-                  pivot: atrocitusHand, bulk: 4, headTop: 17, signature: 3.0, callout: "With blood and rage!",
+    .atrocitus: Persona(name: "Atrocious", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFE0D0), glow: C(0xE81E1E), jagged: false),
+                  pivot: atrocitusHand, bulk: 4, headTop: 17, signature: 3.0, callout: "Blood and fury!",
                   draw: drawAtrocitus),
-    .larfleeze: Persona(name: "Larfleeze", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFF0D0), glow: C(0xFF8A1E), jagged: false),
-                  headTop: 16, signature: 3.0, callout: "Mine! It's all mine!",
+    .larfleeze: Persona(name: "Larfreeze", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFF0D0), glow: C(0xFF8A1E), jagged: false),
+                  headTop: 16, signature: 3.0, callout: "Mine! All of it, mine!",
                   draw: drawLarfleeze),
-    .parallax: Persona(name: "Parallax", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFFFD0), glow: C(0xFFD81E)),
+    .parallax: Persona(name: "Parallaxis", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFFFD0), glow: C(0xFFD81E)),
                   canSit: false, pivot: parallaxMouth, bulk: 8, headTop: 8, signature: 3.0,
                   draw: drawParallax),
-    .manhunter: Persona(name: "Manhunter", weapon: .blaster, shot: .energy(core: C(0xFFF0F0), glow: C(0xFF3A3A)), armoured: true,
+    .manhunter: Persona(name: "Man-Seeker Robot", weapon: .blaster, shot: .energy(core: C(0xFFF0F0), glow: C(0xFF3A3A)), armoured: true,
                   muzzle: (52, 32), headTop: 20, signature: 2.6, callout: "You will be judged.",
                   draw: drawManhunter),
-    .dexStarr: Persona(name: "Dex-Starr", weapon: .saber, motion: .fly, bulk: 9, headTop: 19, signature: 2.6,
+    .dexStarr: Persona(name: "Dex-Starz", weapon: .saber, motion: .fly, bulk: 9, headTop: 19, signature: 2.6,
                   draw: drawDexStarr),
-    .amazo: Persona(name: "Amazo", weapon: .saber, motion: .fly, armoured: true, pivot: amazoShoulder, headTop: 23, signature: 4.4,
-                  callout: "I have all of your powers.",
+    .amazo: Persona(name: "Amazomatic", weapon: .saber, motion: .fly, armoured: true, pivot: amazoShoulder, headTop: 23, signature: 4.4,
+                  callout: "I have every one of your powers.",
                   draw: drawAmazo),
-    .starro: Persona(name: "Starro", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xF0E0FF), glow: C(0xB84AE8), jagged: false),
+    .starro: Persona(name: "Starrfish", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xF0E0FF), glow: C(0xB84AE8), jagged: false),
                   canSit: false, pivot: starroTip, bulk: 6, headTop: 10, signature: 3.2, callout: "Join us.",
                   draw: drawStarro),
-    .despero: Persona(name: "Despero", weapon: .lightning, magic: Magic(core: C(0xFFE0F0), glow: C(0xFF4AA8), jagged: false),
-                  pivot: desperoHand, bulk: 4, headTop: 6, signature: 3.0, callout: "Your minds are mine.",
+    .despero: Persona(name: "Desperado", weapon: .lightning, magic: Magic(core: C(0xFFE0F0), glow: C(0xFF4AA8), jagged: false),
+                  pivot: desperoHand, bulk: 4, headTop: 6, signature: 3.0, callout: "Your minds belong to me.",
                   draw: drawDespero),
-    .eclipso: Persona(name: "Eclipso", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xF0E0FF), glow: C(0x6A2AD8)),
-                  pivot: eclipsoDiamond, headTop: 20, signature: 3.4, callout: "Darkness falls.",
+    .eclipso: Persona(name: "Eclipsor", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xF0E0FF), glow: C(0x6A2AD8)),
+                  pivot: eclipsoDiamond, headTop: 20, signature: 3.4, callout: "The dark falls.",
                   draw: drawEclipso),
 ]
 
@@ -276,7 +276,7 @@ private func drawSinestroBody(_ c: PixelCanvas, _ p: Pose) {
 private let atrocitusHand = (x: 43.5, y: 32.5)
 
 /// Atrocitus: a huge, bald, blood-red Clawd with a heavy scarred brow, glowing eyes and a snarl dripping blood, in
-/// black armour with spiked shoulders and the Red Lantern emblem on his chest; the red ring on his fist. In flight he
+/// black armour with spiked shoulders and the red lamp emblem on his chest; the red ring on his fist. In flight he
 /// leans in, blood drops streaming off behind. Signature: he rears back and spews burning napalm blood in an arc
 /// onto the floor, where it burns.
 private func drawAtrocitus(_ c: PixelCanvas, _ p: Pose) {
@@ -338,14 +338,13 @@ private func drawAtrocitusBody(_ c: PixelCanvas, _ p: Pose) {
     let drip = Int(p.lt * 3) % 4
     c.rect(23, 30 + open, 1, 1 + drip / 2, blood); c.rect(31, 30 + open, 1, 1 + (drip + 2) % 4 / 2, blood)
     c.oy -= rear
-    // Black armour with spiked shoulders and the Red Lantern emblem.
+    // Black armour with spiked shoulders and the red lamp emblem.
     c.rect(16, 31, 24, 7, armour)
     c.rect(16, 31, 24, 1, armourLight)
     c.rect(39, 31, 1, 7, armourDark)
     c.pattern(12, 26, ["A.......................", "AA......................", "AAAA....................", ".AAAAA.................."],
               ["A": armourLight])
-    c.pattern(24, 31, ["..RRRRR..", ".R.....R.", "R..RRR..R", "R.......R", ".R.....R.", "..RRRRR..", "....R...."],
-              ["R": red])
+    drawLampEmblem(c, x: 25, y: 31, size: .large, lamp: red, field: nil)
     c.rect(16, 37, 24, 1, armourDark)
 
     // The ring fist.
@@ -384,7 +383,7 @@ private func drawAtrocitusBody(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Larfleeze
 
 /// Larfleeze: a grubby, hunched orange-brown creature with long droopy ears swept back, beady eyes and a wide grin
-/// of crooked teeth, the Orange Lantern emblem on his chest, and his Orange Lantern (the power battery) never out of
+/// of crooked teeth, the orange lamp emblem on his chest, and his Orange Lantern (the power battery) never out of
 /// his other hand. Signature: he snatches the lantern to his chest and hugs it, eyes darting, and "MINE!" pops up.
 private func drawLarfleeze(_ c: PixelCanvas, _ p: Pose) {
     layer(c, lean: p.flying ? 4 : 0) { drawLarfleezeBody($0, p) }
@@ -432,10 +431,10 @@ private func drawLarfleezeBody(_ c: PixelCanvas, _ p: Pose) {
     // The grin: wide, crooked teeth.
     c.pattern(21, 31, ["KKKKKKKKKKKKKK", "KTKTTKTKKTTKTK", ".KKKKKKKKKKKK."], ["K": C(0x2A120A), "T": teeth])
     c.px(36, 30, furDark); c.px(20, 30, furDark)
-    // A dirty rag round his waist and the Orange Lantern emblem.
+    // A dirty rag round his waist and the orange lamp emblem.
     c.rect(18, 35, 20, 3, rag)
     for x in stride(from: 19, to: 37, by: 3) { c.px(x, 37, fur) }
-    c.pattern(26, 34, [".OOO.", "OoOoO", ".OOO."], ["O": orange, "o": orangeLight])
+    drawLampEmblem(c, x: 26, y: 34, size: .small, lamp: orangeLight, field: orange, rim: orange)
 
     // The Orange Lantern: at his side, or hugged to his chest.
     let lx = 9 + Int((hug * 16).rounded()), ly = 29 - Int((hug * 2).rounded())
@@ -645,7 +644,7 @@ private func drawManhunter(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Dex-Starr
 
 /// Dex-Starr: the Red Lantern cat, a blue house cat on Clawd's legs with pointed ears, glowing red eyes, a bloody
-/// snarl, the Red Lantern emblem on his side and the red ring round his tail. He fights with red construct claws
+/// snarl, the red lamp emblem on his side and the red ring round his tail. He fights with red construct claws
 /// raked off his forepaw, and flies stretched out like a cape-less superhero. Signature: he arches his back, every
 /// hair on end and his tail bottle-brushed, hisses, and spits a gob of napalm blood that sizzles on the floor.
 private func drawDexStarr(_ c: PixelCanvas, _ p: Pose) {
@@ -687,7 +686,7 @@ private func drawDexStarr(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 35, 20, 2, belly)
     for x in [21, 25, 29] { c.rect(x, 29 - arch, 1, 3, furDark) }           // tabby stripes
     if hiss > 0.3 { for x in stride(from: 21, to: 35, by: 2) { c.px(x, 28 - arch, furDark); c.px(x + 1, 27 - arch, fur) } }
-    c.pattern(24, 30 - arch / 2, [".RRR.", "R.R.R", "RRRRR", "R.R.R", ".RRR."], ["R": red])
+    drawLampEmblem(c, x: 24, y: 30 - arch / 2, size: .small, lamp: red, field: nil, rim: red)
     // The head, out front, with pointed ears.
     let hy = 19 - arch / 2 + (p.flying ? 3 : 0)
     c.pattern(33, hy, [

@@ -4,40 +4,40 @@ import Foundation
 // Shark, Ace, Streaky, Gleek and Beppo, who are a shark, a dog, a cat and two monkeys (blocky ones, at least).
 
 let dcHeroes10: [DCHero: Persona] = [
-    .peacemaker: Persona(name: "Peacemaker", weapon: .blaster, shot: .bullet, muzzle: (47, 32), headTop: 15, signature: 3.4,
-                  callout: "I cherish peace with all my heart.",
+    .peacemaker: Persona(name: "Peacekeeper", weapon: .blaster, shot: .bullet, muzzle: (47, 32), headTop: 15, signature: 3.4,
+                  callout: "I love peace so much I'd fight for it.",
                   draw: drawPeacemaker),
-    .bloodsport: Persona(name: "Bloodsport", weapon: .blaster, shot: .bullet, armoured: true, muzzle: (55, 32), headTop: 19,
+    .bloodsport: Persona(name: "Bloodsprint", weapon: .blaster, shot: .bullet, armoured: true, muzzle: (55, 32), headTop: 19,
                   signature: 3.0,
                   draw: drawBloodsport),
-    .ratcatcher2: Persona(name: "Ratcatcher 2", headTop: 18, signature: 3.2, callout: "Sebastian, go!",
+    .ratcatcher2: Persona(name: "Rat Charmer", headTop: 18, signature: 3.2, callout: "Sebastien, go!",
                   draw: drawRatcatcher),
-    .kingShark: Persona(name: "King Shark", weapon: .saber, pivot: sharkShoulder, bulk: 5, headTop: 13, signature: 3.0,
-                  callout: "Nom nom",
+    .kingShark: Persona(name: "Shark King", weapon: .saber, pivot: sharkShoulder, bulk: 5, headTop: 13, signature: 3.0,
+                  callout: "Munch munch",
                   draw: drawKingShark),
-    .polkaDotMan: Persona(name: "Polka-Dot Man", weapon: .blaster, shot: .energy(core: C(0xFFE0F0), glow: C(0xFF4AA8)),
+    .polkaDotMan: Persona(name: "Spotty Man", weapon: .blaster, shot: .energy(core: C(0xFFE0F0), glow: C(0xFF4AA8)),
                   muzzle: (42, 33), handGun: false, headTop: 19, signature: 3.2,
                   draw: drawPolkaDotMan),
-    .saturnGirl: Persona(name: "Saturn Girl", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFE0F0), glow: C(0xFF6AB8), jagged: false),
+    .saturnGirl: Persona(name: "Saturn Lass", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFE0F0), glow: C(0xFF6AB8), jagged: false),
                   headTop: 17, signature: 3.0, callout: "Long live the Legion!",
                   draw: drawSaturnGirl),
-    .cosmicBoy: Persona(name: "Cosmic Boy", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xF0E0FF), glow: C(0xB86AFF), jagged: false),
+    .cosmicBoy: Persona(name: "Cosmos Boy", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xF0E0FF), glow: C(0xB86AFF), jagged: false),
                   headTop: 18, signature: 3.2,
                   draw: drawCosmicBoy),
-    .lightningLad: Persona(name: "Lightning Lad", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xF4F8FF), glow: C(0x7FB2FF)),
+    .lightningLad: Persona(name: "Thunderbolt Lad", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xF4F8FF), glow: C(0x7FB2FF)),
                   headTop: 17, signature: 2.8,
                   draw: drawLightningLad),
-    .zan: Persona(name: "Zan", weapon: .saber, headTop: 19, signature: 3.6, callout: "Wonder Twin powers, activate!",
+    .zan: Persona(name: "Zann", weapon: .saber, headTop: 19, signature: 3.6, callout: "Wondrous Twin powers, switch on!",
                   draw: drawZan),
-    .jayna: Persona(name: "Jayna", weapon: .saber, headTop: 19, signature: 3.6, callout: "Shape of... an eagle!",
+    .jayna: Persona(name: "Jaina", weapon: .saber, headTop: 19, signature: 3.6, callout: "Form of... an eagle!",
                   draw: drawJayna),
-    .aceTheBatHound: Persona(name: "Ace the Bat-Hound", weapon: .saber, canSit: false, bulk: 6, headTop: 19, signature: 3.0,
+    .aceTheBatHound: Persona(name: "Ace the Batclaw Hound", weapon: .saber, canSit: false, bulk: 6, headTop: 19, signature: 3.0,
                   draw: drawAce),
-    .streaky: Persona(name: "Streaky", weapon: .saber, motion: .fly, canSit: false, bulk: 2, headTop: 23, signature: 3.0,
+    .streaky: Persona(name: "Streaker", weapon: .saber, motion: .fly, canSit: false, bulk: 2, headTop: 23, signature: 3.0,
                   draw: drawStreaky),
-    .gleek: Persona(name: "Gleek", headTop: 19, signature: 3.0,
+    .gleek: Persona(name: "Gleeb", headTop: 19, signature: 3.0,
                   draw: drawGleek),
-    .beppo: Persona(name: "Beppo", weapon: .saber, motion: .fly, pivot: monkeyShoulder, headTop: 18, signature: 3.0,
+    .beppo: Persona(name: "Bippo", weapon: .saber, motion: .fly, pivot: monkeyShoulder, headTop: 18, signature: 3.0,
                   draw: drawBeppo),
 ]
 
@@ -844,8 +844,7 @@ private func drawAce(_ c: PixelCanvas, _ p: Pose) {
         let a = howl
         c.glowLine(2, 40, 13, 8, core: C(0xFFF4C0, 0.08 * a), glow: C(0xFFF4C0, 0.06 * a), coreR: 2, glowR: 5)
         c.ellipse(13, 7, 7, 4, C(0xFFE27A, 0.85 * a))
-        c.pattern(8, 5, ["K.........K", "KK.K.K.KK..", ".KKKKKKKK..", "..KK..KK..."].map { String($0) },
-                  ["K": C(0x1A1A22, a)])
+        drawClawMark(c, x: 8, y: 5, width: 11, height: 4, color: C(0x1A1A22, a))
     }
     for (i, lx) in [13, 18, 28, 33].enumerated() {
         let lifted = p.step >= 0 && i % 2 == p.step
@@ -1109,7 +1108,7 @@ private func drawGleek(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Beppo
 
 /// Beppo the Super-Monkey: a brown monkey in Superman's kit: blue suit, red cape, red trunks over a yellow belt, red
-/// boots and the "S" shield on his chest. He flies the Superman way, fist forward, and punches. Signature: out comes
+/// boots and the C-shield on his chest. He flies the Superman way, fist forward, and punches. Signature: out comes
 /// a banana; he peels it and eats it in three happy bites.
 private func drawBeppo(_ c: PixelCanvas, _ p: Pose) {
     let fur = C(0x7A4A28), dark = C(0x5A341C), face = C(0xE0B888), blue = C(0x2A4FB0), blueDark = C(0x1C3880)
@@ -1143,7 +1142,7 @@ private func drawBeppo(_ c: PixelCanvas, _ p: Pose) {
         c.oy += p.breathe
         c.rect(22, 27, 13, 11, blue); c.rect(34, 27, 1, 11, blueDark)
         c.rect(22, 34, 13, 1, yel); c.rect(22, 35, 13, 3, red)
-        c.pattern(25, 28, ["RRRRRRR", "RYYYYYR", ".RRRRR.", ".YYYYR.", "..RRR..", "...R..."], ["R": red, "Y": yel])
+        drawCShield(c, x: 25, y: 28, size: .medium, letter: red, field: yel)
         let eating: Double? = sig.flatMap { $0 > 0.06 && $0 < 0.94 ? ($0 - 0.06) / 0.88 : nil }
         let chew = eating.map { $0 > 0.4 && Int($0 * 20) % 2 == 0 } ?? false
         drawMonkeyHead(c, x: 20, y: 16, fur: fur, dark: dark, face: face, happy: (eating ?? 0) > 0.75, mouth: chew ? 2 : 0)

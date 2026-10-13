@@ -5,27 +5,27 @@ import Foundation
 // with a blur of punches, lightning crackling off them, and leave speed lines behind when they run.
 
 let dcHeroes5: [DCHero: Persona] = [
-    .wallyWest: Persona(name: "Wally West", weapon: .saber, headTop: 21, signature: 2.6, callout: "I'm the fastest man alive.",
+    .wallyWest: Persona(name: "Wally Wes", weapon: .saber, headTop: 21, signature: 2.6, callout: "Quickest guy around.",
                   draw: drawWallyWest),
-    .jayGarrick: Persona(name: "Jay Garrick", weapon: .saber, headTop: 17, signature: 2.8,
+    .jayGarrick: Persona(name: "Jay Carrick", weapon: .saber, headTop: 17, signature: 2.8,
                   draw: drawJayGarrick),
-    .impulse: Persona(name: "Impulse", weapon: .saber, headTop: 9, signature: 3.2,
+    .impulse: Persona(name: "Impulsive", weapon: .saber, headTop: 9, signature: 3.2,
                   draw: drawImpulse),
-    .jesseQuick: Persona(name: "Jesse Quick", weapon: .saber, headTop: 20, signature: 3.2, callout: "3X2(9YZ)4A!",
+    .jesseQuick: Persona(name: "Jessie Quik", weapon: .saber, headTop: 20, signature: 3.2, callout: "4Y1(8XZ)3B!",
                   draw: drawJesseQuick),
-    .raven: Persona(name: "Raven", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xF0D8FF), glow: C(0x7A2AD8), jagged: false),
-                  headTop: 19, signature: 3.4, callout: "Azarath Metrion Zinthos!",
+    .raven: Persona(name: "Corvina", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xF0D8FF), glow: C(0x7A2AD8), jagged: false),
+                  headTop: 19, signature: 3.4, callout: "Azor Metra Zinth!",
                   draw: drawRaven),
-    .beastBoy: Persona(name: "Beast Boy", weapon: .saber, headTop: 20, signature: 3.4, callout: "Dude!",
+    .beastBoy: Persona(name: "Feral Boy", weapon: .saber, headTop: 20, signature: 3.4, callout: "Dude.",
                   draw: drawBeastBoy),
-    .starfire: Persona(name: "Starfire", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xEFFFD0), glow: C(0x6AE83A)),
-                  muzzle: (43, 34), handGun: false, headTop: 18, signature: 3.0, callout: "Glorious!",
+    .starfire: Persona(name: "Starblaze", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xEFFFD0), glow: C(0x6AE83A)),
+                  muzzle: (43, 34), handGun: false, headTop: 18, signature: 3.0, callout: "Wondrous!",
                   draw: drawStarfire),
-    .wonderGirl: Persona(name: "Wonder Girl", weapon: .saber, motion: .fly, headTop: 19, signature: 3.0, callout: "Titans, together!",
+    .wonderGirl: Persona(name: "Wondrous Girl", weapon: .saber, motion: .fly, headTop: 19, signature: 3.0, callout: "Titans, as one!",
                   draw: drawWonderGirl),
-    .aqualad: Persona(name: "Aqualad", weapon: .saber, headTop: 22, signature: 3.2,
+    .aqualad: Persona(name: "Aquamarine Lad", weapon: .saber, headTop: 22, signature: 3.2,
                   draw: drawAqualad),
-    .arsenal: Persona(name: "Arsenal", weapon: .blaster, shot: .arrow, muzzle: (46, 34), handGun: false, headTop: 15, signature: 3.0,
+    .arsenal: Persona(name: "Armoury", weapon: .blaster, shot: .arrow, muzzle: (46, 34), handGun: false, headTop: 15, signature: 3.0,
                   draw: drawArsenal),
 ]
 
@@ -92,7 +92,7 @@ private func drawFlurry(_ c: PixelCanvas, angle: Double, trail: [Double], t: Dou
 // MARK: - Wally West
 
 /// Wally West: the Flash in red, the cowl with yellow lightning-bolt wings over the ears, the jaw and eyes showing,
-/// the white circle with the yellow bolt on his chest, a yellow belt and yellow boots. Fights with a blur of punches.
+/// the white circle with the yellow flame on his chest, a yellow belt and yellow boots. Fights with a blur of punches.
 /// Signature: he vibrates his molecules, shaking into a red smear of afterimages that crackle with lightning, nearly
 /// see-through at the peak, then settles.
 private func drawWallyWest(_ c: PixelCanvas, _ p: Pose) {
@@ -130,7 +130,7 @@ private func wallyArt(_ c: PixelCanvas, _ p: Pose) {
     c.rect(21, 32, 14, 2, clawdOrange); c.rect(21, 33, 14, 1, clawdShade)
     c.rect(26, 32, 4, 1, clawdShade)
     // The emblem and the belt.
-    c.pattern(25, 34, [".WWWW.", "WWYYWW", "WYYWWW", ".WWWW."], ["W": white, "Y": yellow])
+    drawFlameEmblem(c, x: 25, y: 34, size: .medium, flame: yellow, field: white)
     c.rect(18, 37, 20, 1, yellow); c.rect(37, 37, 1, 1, yellowDark)
     c.rect(15, 35, 3, 1, yellow)
     if let a = p.melee {
@@ -174,9 +174,9 @@ private func jayArt(_ c: PixelCanvas, _ p: Pose) {
     ]), ["S": silver, "L": light, "W": light, "w": dark, "d": dark])
     if tip > 0.85 { twinkle(c, 22, 18 - up) }
     c.rect(26, 33, 4, 1, clawdShade)
-    // Red shirt with the bolt.
+    // Red shirt with the flame.
     c.rect(18, 34, 20, 4, red)
-    c.pattern(18, 34, ["YYYYYY..............", "...YYYYYYYY.........", "........YYY.........", ".........YYYYYYYYYY."], ["Y": yellow])
+    drawFlameEmblem(c, x: 25, y: 34, size: .medium, flame: yellow, field: nil)
     c.rect(18, 37, 20, 1, redDark)
     c.rect(37, 34, 1, 3, redDark)
     if tip > 0.05 {
@@ -326,9 +326,9 @@ private func jesseArt(_ c: PixelCanvas, _ p: Pose) {
     } else {
         c.rect(26, 33, 4, 1, clawdShade)
     }
-    // Gold suit, red shoulders, the bolt.
+    // Gold suit, red shoulders, the flame.
     c.rect(18, 34, 20, 4, gold)
-    c.pattern(26, 34, ["..RR", ".RR.", "RRRR", ".R.."], ["R": red])
+    drawFlameEmblem(c, x: 26, y: 34, size: .small, flame: red, field: nil)
     c.rect(37, 34, 1, 4, goldDark)
     c.rect(18, 37, 20, 1, redDark)
     c.rect(15, 35, 3, 1, red)

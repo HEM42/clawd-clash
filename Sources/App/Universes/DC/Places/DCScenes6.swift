@@ -1,12 +1,12 @@
 import Foundation
 
 let dcScenes6: [Location: Place] = [
-    .aceChemicals: Place(name: "Ace Chemicals", panel: 0x0E1810, still: Scenes.aceChemicals, moving: Scenes.aceChemicalsLife),
-    .lexCorp: Place(name: "LexCorp Tower", panel: 0x18162A, still: Scenes.lexCorp, moving: Scenes.lexCorpLife),
+    .aceChemicals: Place(name: "Acme Chemicals", panel: 0x0E1810, still: Scenes.aceChemicals, moving: Scenes.aceChemicalsLife),
+    .lexCorp: Place(name: "LugarCorp Tower", panel: 0x18162A, still: Scenes.lexCorp, moving: Scenes.lexCorpLife),
     .bayou: Place(name: "Louisiana Bayou", panel: 0x0E1A16, still: Scenes.bayou, moving: Scenes.bayouLife),
-    .theDreaming: Place(name: "The Dreaming", panel: 0x16122C, still: Scenes.theDreaming, moving: Scenes.theDreamingLife),
-    .coastCity: Place(name: "Coast City", panel: 0x1A2A3A, still: Scenes.coastCity, moving: Scenes.coastCityLife),
-    .gorillaCity: Place(name: "Gorilla City", panel: 0x14200E, still: Scenes.gorillaCity, moving: Scenes.gorillaCityLife),
+    .theDreaming: Place(name: "The Dreamlands", panel: 0x16122C, still: Scenes.theDreaming, moving: Scenes.theDreamingLife),
+    .coastCity: Place(name: "Shore City", panel: 0x1A2A3A, still: Scenes.coastCity, moving: Scenes.coastCityLife),
+    .gorillaCity: Place(name: "Ape City", panel: 0x14200E, still: Scenes.gorillaCity, moving: Scenes.gorillaCityLife),
 ]
 
 // MARK: - Shared bits for these scenes
@@ -42,6 +42,7 @@ fileprivate let s6Glyphs: [Character: [String]] = [
     "C": [".##", "#..", "#..", "#..", ".##"],
     "E": ["###", "#..", "##.", "#..", "###"],
     "F": ["###", "#..", "##.", "#..", "#.."],
+    "G": [".##", "#..", "#.#", "#.#", ".##"],
     "H": ["#.#", "#.#", "###", "#.#", "#.#"],
     "I": ["###", ".#.", ".#.", ".#.", "###"],
     "L": ["#..", "#..", "#..", "#..", "###"],
@@ -50,6 +51,7 @@ fileprivate let s6Glyphs: [Character: [String]] = [
     "P": ["##.", "#.#", "##.", "#..", "#.."],
     "R": ["##.", "#.#", "##.", "#.#", "#.#"],
     "S": [".##", "#..", ".#.", "..#", "##."],
+    "U": ["#.#", "#.#", "#.#", "#.#", "###"],
     "X": ["#.#", "#.#", ".#.", "#.#", "#.#"],
 ]
 
@@ -111,11 +113,11 @@ extension Scenes {
         return spots.map { (f: Double) -> (x: Int, w: Int, top: Int) in (Int(Double(c.w) * f) - vw / 2, vw, top) }
     }
 
-    /// The big "ACE" letters on the roof sign: left edge, top row and pixel size.
+    /// The big "ACME" letters on the roof sign: left edge, top row and pixel size.
     static func aceSign(_ c: PixelCanvas, _ g: Int) -> (x: Int, y: Int, k: Int) {
         let s = unit(g), tall = isTall(c)
         let k = tall ? max(6, g / 40) : 4 * s
-        return (c.w / 2 - s6TextWidth("ACE", k: k) / 2, tall ? g / 4 : 3 * s, k)
+        return (c.w / 2 - s6TextWidth("ACME", k: k) / 2, tall ? g / 4 : 3 * s, k)
     }
 
     /// The row the main pipe runs along.
@@ -130,7 +132,7 @@ extension Scenes {
 
     /// Ace Chemicals at night, where the Joker was born: the crew is up on a hazard-striped catwalk over the glow of
     /// the acid. Open vats of bubbling green acid stand either side, pipes with steam vents run along behind, and the
-    /// plant's dark block rises in the middle under the big "ACE" sign (the red letters are lit in `aceChemicalsLife`,
+    /// plant's dark block rises in the middle under the big "ACME" sign (the red letters are lit in `aceChemicalsLife`,
     /// green "CHEMICALS" beneath). Gotham's smokestacks and tanks line the horizon under a sickly moon.
     static func aceChemicals(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c)
@@ -192,7 +194,7 @@ extension Scenes {
     /// The plant's main block with the sign on its roof.
     static func acePlant(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), sg = aceSign(c, g)
-        let sw = s6TextWidth("ACE", k: sg.k), sh = 5 * sg.k
+        let sw = s6TextWidth("ACME", k: sg.k), sh = 5 * sg.k
         let sub = max(1, sg.k / 4), subW = s6TextWidth("CHEMICALS", k: sub)
         let boardW = max(sw, subW) + 8 * s, bx = c.w / 2 - boardW / 2
         let by = sg.y - 2 * s, boardH = sh + 5 * sub + 7 * s
@@ -220,7 +222,7 @@ extension Scenes {
         for x in stride(from: bx + 2 * s, to: bx + boardW - s, by: 3 * s) {
             c.rect(x, by, s, s, C(0xF0E0A0, 0.7)); c.rect(x, by + boardH - s, s, s, C(0xF0E0A0, 0.7))
         }
-        s6Text(c, sg.x, sg.y, "ACE", C(0x4A1612), k: sg.k)                       // unlit tubes; lit in the moving layer
+        s6Text(c, sg.x, sg.y, "ACME", C(0x4A1612), k: sg.k)                       // unlit tubes; lit in the moving layer
         let cy = sg.y + sh + 2 * s
         c.rect(c.w / 2 - subW / 2 - s, cy - s, subW + 2 * s, 7 * sub, C(0x5AE02A, 0.08))
         s6Text(c, c.w / 2 - subW / 2, cy, "CHEMICALS", C(0x7AE05A), k: sub)
@@ -273,7 +275,7 @@ extension Scenes {
         }
     }
 
-    /// The upper sky on a tall canvas: smog, and the Bat-Signal thrown on the clouds from across the city.
+    /// The upper sky on a tall canvas: smog, and the Night Beacon's claw mark thrown on the clouds from across the city.
     static func aceHigh(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g)
         for i in 0..<7 {
@@ -290,13 +292,13 @@ extension Scenes {
         c.ellipse(bx, by, br * 3 / 2 + 2 * s, br + 2 * s, C(0xF0E8A8, 0.12))
         c.ellipse(bx, by, br * 3 / 2, br, C(0xF0E8A8, 0.42))
         let k = max(1, br / 6)
-        s6Stamp(c, bx - 11 * k / 2, by - 3 * k, [
-            "#.........#",
-            "##..#.#..##",
-            "###.###.###",
-            "###########",
-            ".#########.",
-            "...##.##...",
+        s6Stamp(c, bx - 13 * k / 2, by - 3 * k, [   // the claw mark
+            ".....#..#..#.",
+            "....##.##.##.",
+            "...##.##.##..",
+            "..##.##.##...",
+            ".##.##.##....",
+            "#..#..#......",
         ], ["#": C(0x0A0C10, 0.85)], s: k)
     }
 
@@ -320,7 +322,7 @@ extension Scenes {
         }
     }
 
-    /// The acid bubbling and popping in the vats, steam puffing from the vents, and the "ACE" sign buzzing on, its E
+    /// The acid bubbling and popping in the vats, steam puffing from the vents, and the "ACME" sign buzzing on, its E
     /// sputtering and now and then the whole sign dropping out.
     static func aceChemicalsLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
         let s = unit(g), tall = isTall(c)
@@ -354,12 +356,14 @@ extension Scenes {
         }
         let sg = aceSign(c, g)
         let blackout = noise(Int(t * 6) + 900) > 0.95
-        for (i, ch) in "ACE".enumerated() {
-            let off = blackout || (i == 2 && noise(Int(t * 9) + 300) > 0.68)
+        var lx = sg.x
+        for (i, ch) in "ACME".enumerated() {
+            let w = s6Glyphs[ch]?.first?.count ?? 3, x = lx
+            lx += (w + 1) * sg.k
+            let off = blackout || (i == 3 && noise(Int(t * 9) + 300) > 0.68)   // the E sputters
             guard !off else { continue }
-            let lx = sg.x + i * 4 * sg.k
-            c.rect(lx - sg.k, sg.y - sg.k, 5 * sg.k, 7 * sg.k, C(0xFF4A3A, 0.10))
-            s6Text(c, lx, sg.y, String(ch), C(0xFF5038), k: sg.k)
+            c.rect(x - sg.k, sg.y - sg.k, (w + 2) * sg.k, 7 * sg.k, C(0xFF4A3A, 0.10))
+            s6Text(c, x, sg.y, String(ch), C(0xFF5038), k: sg.k)
         }
     }
 }
@@ -393,8 +397,8 @@ extension Scenes {
         return out
     }
 
-    /// LexCorp Tower's executive top floor at dusk: a wall of glass looks out over Metropolis under a violet-to-amber
-    /// sky, the Daily Planet's golden globe among the towers. On the left wall the green LexCorp badge and name, with
+    /// LugarCorp Tower's executive top floor at dusk: a wall of glass looks out over Metropolis under a violet-to-amber
+    /// sky, the Daily Globe's golden globe among the towers. On the left wall the green LugarCorp badge and name, with
     /// Lex's sleek desk and tall chair; on the right wall a gilt-framed portrait of Lex himself, and before the glass a
     /// kryptonite sample glowing in a lit display case. Polished black marble underfoot.
     static func lexCorp(_ c: PixelCanvas, _ g: Int) {
@@ -409,7 +413,7 @@ extension Scenes {
             let y = tall ? g / 6 + Int(noise(i * 3 + 650) * Double(g / 2)) : 6 * s + Int(noise(i * 3 + 650) * Double(hz / 2))
             wisp(c, f.l + Int(noise(i * 3 + 651) * Double(f.r - f.l)), y, (30 + Int(noise(i * 3 + 652) * 40)) * s, C(0xF0A890, 0.45), s: s)
         }
-        // the city: far row, the Daily Planet, near row
+        // the city: far row, the Daily Globe, near row
         for b in lexBlocks(c, g, near: false) { lexBuilding(c, b, C(0x6A4272), lit: 0.4, seed: 1) }
         let dx = Int(Double(c.w) * 0.6), dw = 16 * s, dt = hz - Int(Double(g) * (tall ? 0.34 : 0.5))
         c.rect(dx - dw / 2, dt, dw, g - dt, C(0x523462))
@@ -468,7 +472,7 @@ extension Scenes {
         }
     }
 
-    /// The two solid walls: the LexCorp badge and name on the left, Lex's portrait on the right.
+    /// The two solid walls: the LugarCorp badge and name on the left, Lex's portrait on the right.
     static func lexWalls(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), f = lexFrame(c, g)
         for (x0, x1) in [(0, f.l), (f.r, c.w)] {
@@ -479,7 +483,7 @@ extension Scenes {
         c.rect(f.l - s, 0, s, g, C(0x4A4E66)); c.rect(f.r, 0, s, g, C(0x4A4E66))
         // the badge: a green square with the bold L, the name beneath
         let kb = tall ? 4 * s : 2 * s, kt = tall ? 2 * s : s
-        let lw = s6TextWidth("LEXCORP", k: kt), bx = f.l / 2 - 9 * kb / 2
+        let lw = s6TextWidth("LUGARCORP", k: kt), bx = f.l / 2 - 9 * kb / 2
         let by = tall ? Int(Double(g) * 0.3) : 6 * s
         c.rect(bx - 2 * kb, by - 2 * kb, 13 * kb, 9 * kb + 11 * kt, C(0x5AE07A, 0.05))
         s6Stamp(c, bx, by, [
@@ -494,7 +498,7 @@ extension Scenes {
             "ggggggggg",
         ], ["g": C(0x2AA85A), "w": C(0xF0F4F8)], s: kb)
         c.rect(bx, by, 9 * kb, max(1, s), C(0x7AE89A))
-        s6Text(c, f.l / 2 - lw / 2, by + 9 * kb + 3 * kt, "LEXCORP", C(0xC8D0DC), k: kt)
+        s6Text(c, f.l / 2 - lw / 2, by + 9 * kb + 3 * kt, "LUGARCORP", C(0xC8D0DC), k: kt)
         // the portrait
         let pk = tall ? 4 * s : 2 * s, pw = 16 * pk, ph = 20 * pk
         let px0 = (f.r + c.w) / 2 - pw / 2, py0 = tall ? Int(Double(g) * 0.26) : 5 * s
@@ -563,7 +567,7 @@ extension Scenes {
         c.rect(p.x + 5 * k, p.y - 6 * k, k, 12 * k, C(0xD8F0FF, 0.3))
     }
 
-    /// The kryptonite's glow breathing, windows coming and going across Metropolis, and a LexCorp helicopter crossing
+    /// The kryptonite's glow breathing, windows coming and going across Metropolis, and a LugarCorp helicopter crossing
     /// behind the glass, rotor flickering and beacon blinking.
     static func lexCorpLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
         let s = unit(g), f = lexFrame(c, g), hz = lexHorizon(c, g)
@@ -989,7 +993,7 @@ extension Scenes {
 
     /// Coast City on a bright day: a blue Pacific sky and sun, the sea on the left running to a strip of beach, a
     /// white-and-glass skyline with palms along the promenade, the giant Green Lantern memorial statue (Hal Jordan, arm
-    /// raised high with his lantern) on its plinth, and on the right the curved hangar of Ferris Aircraft, red letters
+    /// raised high with his lantern) on its plinth, and on the right the curved hangar of Rossi Air, red letters
     /// over its open doors, a jet nosing out. The crew stands on the seafront promenade.
     static func coastCity(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), hz = coastHorizon(c, g)
@@ -1053,7 +1057,7 @@ extension Scenes {
         }
     }
 
-    /// Ferris Aircraft's hangar at the right: arched roof, the name in red, open doors and a jet inside.
+    /// Rossi Air's hangar at the right: arched roof, the name in red, open doors and a jet inside.
     static func coastHangar(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c)
         let x0 = Int(Double(c.w) * 0.78), x1 = c.w + 6 * s, hw = x1 - x0
@@ -1066,8 +1070,10 @@ extension Scenes {
             if k % (6 * s) == 0 { c.rect(x0 + k, y + s, max(1, s / 2), g - y, C(0xB8BEC8)) }
         }
         let k = tall ? 3 * s : 2 * s
-        let tw = s6TextWidth("FERRIS", k: k), tx = x0 + hw / 2 - tw / 2, ty = top + arch / 2 + 2 * s
-        s6Text(c, tx, ty, "FERRIS", C(0xC83A2A), k: k)
+        // The name, in smaller letters if it wouldn't fit the hangar's face.
+        let nk = max(1, min(k, (hw - 12 * s) * 9 / 10 / max(1, s6TextWidth("ROSSI AIR", k: 1))))   // the hangar runs 6s off the edge
+        let tw = s6TextWidth("ROSSI AIR", k: nk), tx = x0 + hw / 2 - tw / 2, ty = top + arch / 2 + 2 * s + (k - nk) * 5 / 2
+        s6Text(c, tx, ty, "ROSSI AIR", C(0xC83A2A), k: nk)
         let dy = ty + 5 * k + 4 * s, dw = hw * 2 / 3, dx = x0 + hw / 2 - dw / 2
         c.rect(dx, dy, dw, g - dy, C(0x2A3038))
         c.rect(dx, dy, dw, s, C(0x8A929C))

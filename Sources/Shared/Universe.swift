@@ -15,7 +15,7 @@ enum Universe: Int, CaseIterable, Codable {
     init?(key: String) { self.init(rawValue: Universe.allCases.first { $0.key == key }?.rawValue ?? -1) }
 
     var title: String {
-        switch self { case .starWars: return "Star Wars"; case .marvel: return "Marvel"; case .dc: return "DC" }
+        switch self { case .starWars: return "Star Claws"; case .marvel: return "Clawvel"; case .dc: return "Detective Claws" }
     }
     var base: Int { rawValue * 1000 }
 

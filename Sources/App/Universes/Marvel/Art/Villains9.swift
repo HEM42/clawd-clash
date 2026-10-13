@@ -3,17 +3,17 @@ import Foundation
 // Villains: the TVA, the Morlock Tunnels, Asteroid M, Ta Lo and the Red Room.
 
 let villains9: [MarvelVillain: Persona] = [
-    .missMinutes: Persona(name: "Miss Minutes", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFF0D0), glow: C(0xFF9A1E), jagged: false), canSit: false,
+    .missMinutes: Persona(name: "Miss Seconds", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFF0D0), glow: C(0xFF9A1E), jagged: false), canSit: false,
                   headTop: 17, signature: 3.0, callout: "Hey y'all!",
                   draw: drawMissMinutes),
-    .callisto: Persona(name: "Callisto", weapon: .saber, headTop: 17, signature: 3.0,
+    .callisto: Persona(name: "Kallisto", weapon: .saber, headTop: 17, signature: 3.0,
                   draw: drawCallisto),
-    .exodus: Persona(name: "Exodus", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFE0F0), glow: C(0xE84A9A), jagged: false),
+    .exodus: Persona(name: "Exodos", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFE0F0), glow: C(0xE84A9A), jagged: false),
                   headTop: 16, signature: 3.0,
                   draw: drawExodus),
-    .soulEater: Persona(name: "Soul Eater", weapon: .saber, motion: .fly, canSit: false, headTop: 15, signature: 3.2,
+    .soulEater: Persona(name: "Soul Muncher", weapon: .saber, motion: .fly, canSit: false, headTop: 15, signature: 3.2,
                   draw: drawSoulEater),
-    .redRoomWidow: Persona(name: "Red Room Widow", weapon: .blaster, shot: .bullet, muzzle: (47, 32), headTop: 20, signature: 2.8,
+    .redRoomWidow: Persona(name: "Red Room Window", weapon: .blaster, shot: .bullet, muzzle: (47, 32), headTop: 20, signature: 2.8,
                   draw: drawRedRoomWidow),
 ]
 

@@ -4,36 +4,36 @@ import Foundation
 // costume shows a face it's Clawd's own orange (Killer Frost and Black Hand have gone pale for their own reasons).
 
 let dcVillains9: [DCVillain: Persona] = [
-    .deadshot: Persona(name: "Deadshot", weapon: .blaster, shot: .bullet, muzzle: (47, 33), headTop: 22, signature: 2.8,
-                  callout: "I don't miss.",
+    .deadshot: Persona(name: "Deadeye", weapon: .blaster, shot: .bullet, muzzle: (47, 33), headTop: 22, signature: 2.8,
+                  callout: "I never miss.",
                   draw: drawDeadshot),
-    .killerFrost: Persona(name: "Killer Frost", weapon: .blaster, shot: .ice, muzzle: (43, 34), handGun: false, headTop: 15,
+    .killerFrost: Persona(name: "Killer Rime", weapon: .blaster, shot: .ice, muzzle: (43, 34), handGun: false, headTop: 15,
                   signature: 3.0, callout: "Chill.",
                   draw: drawKillerFrost),
-    .amandaWaller: Persona(name: "Amanda Waller", weapon: .none, headTop: 21, signature: 3.2,
-                  callout: "Don't make me push the button.",
+    .amandaWaller: Persona(name: "Amanda Wall", weapon: .none, headTop: 21, signature: 3.2,
+                  callout: "Don't make me press the button.",
                   draw: drawAmandaWaller),
-    .enchantress: Persona(name: "Enchantress", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xF0FFE0), glow: C(0x6AE83A)),
+    .enchantress: Persona(name: "Sorceress", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xF0FFE0), glow: C(0x6AE83A)),
                   headTop: 19, signature: 3.0,
                   draw: drawEnchantress),
-    .copperhead: Persona(name: "Copperhead", weapon: .saber, headTop: 18, signature: 2.8,
+    .copperhead: Persona(name: "Cottonmouth", weapon: .saber, headTop: 18, signature: 2.8,
                   draw: drawCopperhead),
-    .cheshire: Persona(name: "Cheshire", weapon: .saber, headTop: 18, signature: 2.6,
+    .cheshire: Persona(name: "Cheshyre", weapon: .saber, headTop: 18, signature: 2.6,
                   draw: drawCheshire),
-    .blackHand: Persona(name: "Black Hand", weapon: .lightning, magic: Magic(core: C(0xF0F0F0), glow: C(0x3A2A4A), jagged: false),
+    .blackHand: Persona(name: "Black Glove", weapon: .lightning, magic: Magic(core: C(0xF0F0F0), glow: C(0x3A2A4A), jagged: false),
                   headTop: 21, signature: 3.2, callout: "Rise.",
                   draw: drawBlackHand),
-    .cyborgSuperman: Persona(name: "Cyborg Superman", weapon: .blaster, motion: .fly, shot: .beam(core: C(0xFFF4D0), glow: C(0xFF3A1E)),
+    .cyborgSuperman: Persona(name: "Cyb-Org Superb-Man", weapon: .blaster, motion: .fly, shot: .beam(core: C(0xFFF4D0), glow: C(0xFF3A1E)),
                   armoured: true, muzzle: (34, 30), handGun: false, headTop: 21, signature: 3.0,
-                  callout: "I am the real Superman.",
+                  callout: "I'm the real Superb-Man.",
                   draw: drawCyborgSuperman),
-    .leagueAssassin: Persona(name: "League Assassin", weapon: .saber, headTop: 22, signature: 2.4,
+    .leagueAssassin: Persona(name: "Assassin of the Shadow League", weapon: .saber, headTop: 22, signature: 2.4,
                   draw: drawLeagueAssassin),
-    .kobraAgent: Persona(name: "Kobra Agent", weapon: .blaster, shot: .energy(core: C(0xF0FFD0), glow: C(0x8AE82A)),
-                  muzzle: (51, 31), headTop: 20, signature: 2.8, callout: "Hail Kobra!",
+    .kobraAgent: Persona(name: "Cobra-Cult Agent", weapon: .blaster, shot: .energy(core: C(0xF0FFD0), glow: C(0x8AE82A)),
+                  muzzle: (51, 31), headTop: 20, signature: 2.8, callout: "Hail the Cobra!",
                   draw: drawKobraAgent),
-    .starSapphire: Persona(name: "Star Sapphire", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFE0F8), glow: C(0xFF4AC8), jagged: false),
-                  headTop: 17, signature: 3.0, callout: "Love conquers all.",
+    .starSapphire: Persona(name: "Star Sapphyre", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFE0F8), glow: C(0xFF4AC8), jagged: false),
+                  headTop: 17, signature: 3.0, callout: "Love wins.",
                   draw: drawStarSapphire),
 ]
 
@@ -637,7 +637,7 @@ private func drawCheshire(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Black Hand
 
 /// Black Hand: William Hand risen as a Black Lantern, a corpse-pale Clawd with sunken, dark-ringed eyes and black
-/// lips, slicked black hair, the black uniform with grey piping and the Black Lantern emblem on the chest, and the
+/// lips, slicked black hair, the black uniform with grey piping and the black lamp emblem on the chest, and the
 /// black ring glowing on his hand. Signature: he raises a skull in his ringed hand and regards it, its eyes lighting
 /// up as little black rings drift off it.
 private func drawBlackHand(_ c: PixelCanvas, _ p: Pose) {
@@ -660,7 +660,7 @@ private func drawBlackHand(_ c: PixelCanvas, _ p: Pose) {
     c.px(19, 30, skinShade); c.px(35, 31, skinShade)
     c.rect(18, 32, 20, 6, black)
     c.rect(18, 32, 20, 1, gray)
-    c.pattern(24, 33, ["WWWWWWWW", "..WKKW..", "..WKKW..", "WWWWWWWW"], ["W": C(0xC8C8D4), "K": C(0x0A0A0E)])
+    drawLampEmblem(c, x: 25, y: 33, size: .small, lamp: C(0xC8C8D4), field: C(0x0A0A0E), rim: C(0xC8C8D4))
     c.rect(18, 37, 20, 1, blackLight)
     c.rect(15, 33, 3, 3, black)
     // Black Lantern ooze dripping off him now and then.
@@ -695,7 +695,7 @@ private func drawBlackHand(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Cyborg Superman
 
-/// Cyborg Superman: Hank Henshaw in Superman's blue suit, red cape and boots and the S-shield, but half of him is
+/// Cyborg Superman: Hank Henshaw in the blue suit, red cape and boots and the C-shield, but half of him is
 /// machine, the front of his face and skull steel with a glowing red eye, his chest plated and his arm a robot's.
 /// Heat vision comes from the eyes. In flight he leads with the steel fist, cape streaming. Signature: his robot eye
 /// whirs, a scan line runs down the steel and a red targeting reticle closes in and locks on.
@@ -754,7 +754,7 @@ private func drawCyborgSuperman(_ c: PixelCanvas, _ p: Pose) {
         // The suit, the shield and the plated half.
         c.rect(18, 33, 20, 5, blue)
         c.rect(32, 33, 6, 5, metal); c.rect(32, 33, 1, 5, metalDark); c.px(35, 35, metalDark)
-        c.pattern(24, 32, ["YYYYYYY", "YRRRRYY", ".YRYRY.", "..YRY..", "...Y..."], ["Y": yellow, "R": red])
+        drawCShield(c, x: 24, y: 32, size: .small, letter: red, field: yellow)
         c.rect(18, 37, 20, 1, red); c.rect(27, 37, 2, 1, yellow)
         c.rect(18, 33, 1, 4, blueDark)
         if p.flying {

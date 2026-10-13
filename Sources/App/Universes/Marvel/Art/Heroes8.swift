@@ -4,24 +4,24 @@ import Foundation
 // leather and armour over the blocky body; where a face shows, it's Clawd's own orange.
 
 let heroes8: [MarvelHero: Persona] = [
-    .spiderWoman: Persona(name: "Spider-Woman", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xF0FFE0), glow: C(0x9AE04A)),
+    .spiderWoman: Persona(name: "Spider-Lady", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xF0FFE0), glow: C(0x9AE04A)),
                   muzzle: (43, 34), handGun: false, headTop: 20, signature: 2.8,
                   draw: drawSpiderWoman),
-    .blackCat: Persona(name: "Black Cat", weapon: .saber, headTop: 19, signature: 2.8,
+    .blackCat: Persona(name: "Black Kat", weapon: .saber, headTop: 19, signature: 2.8,
                   draw: drawBlackCat),
-    .lukeCage: Persona(name: "Luke Cage", weapon: .saber, armoured: true, headTop: 23, signature: 2.6, callout: "Sweet Christmas!",
+    .lukeCage: Persona(name: "Luke Kage", weapon: .saber, armoured: true, headTop: 23, signature: 2.6, callout: "Sweet holidays!",
                   draw: drawLukeCage),
-    .ironFist: Persona(name: "Iron Fist", weapon: .saber, headTop: 23, signature: 2.8,
+    .ironFist: Persona(name: "Iron Fyst", weapon: .saber, headTop: 23, signature: 2.8,
                   draw: drawIronFist),
-    .jessicaJones: Persona(name: "Jessica Jones", weapon: .saber, headTop: 20, signature: 3.0,
+    .jessicaJones: Persona(name: "Jessie Jonez", weapon: .saber, headTop: 20, signature: 3.0,
                   draw: drawJessicaJones),
-    .punisher: Persona(name: "The Punisher", weapon: .blaster, shot: .bullet, muzzle: (56, 32), headTop: 23, signature: 2.8,
+    .punisher: Persona(name: "The Punnisher", weapon: .blaster, shot: .bullet, muzzle: (56, 32), headTop: 23, signature: 2.8,
                   draw: drawPunisher),
-    .elektra: Persona(name: "Elektra", weapon: .saber, headTop: 20, signature: 2.6,
+    .elektra: Persona(name: "Elecktra", weapon: .saber, headTop: 20, signature: 2.6,
                   draw: drawElektra),
-    .blade: Persona(name: "Blade", weapon: .saber, headTop: 22, signature: 3.0,
+    .blade: Persona(name: "Blayde", weapon: .saber, headTop: 22, signature: 3.0,
                   draw: drawBlade),
-    .blackKnight: Persona(name: "Black Knight", weapon: .saber, armoured: true, headTop: 16, signature: 3.0,
+    .blackKnight: Persona(name: "Black Nite", weapon: .saber, armoured: true, headTop: 16, signature: 3.0,
                   draw: drawBlackKnight),
 ]
 

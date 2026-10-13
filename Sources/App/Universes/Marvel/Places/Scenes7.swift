@@ -2,11 +2,11 @@ import Foundation
 
 let scenes7: [Location: Place] = [
     .newYorkStreets: Place(name: "New York City", panel: 0x1A1E2A, still: Scenes.newYorkStreets, moving: Scenes.newYorkStreetsLife),
-    .savageLandCitadel: Place(name: "Savage Land Citadel", panel: 0x1A1E1A, still: Scenes.savageLandCitadel,
+    .savageLandCitadel: Place(name: "Savage Lands Citadel", panel: 0x1A1E1A, still: Scenes.savageLandCitadel,
                               moving: Scenes.savageLandCitadelLife),
-    .starkWorkshop: Place(name: "Tony Stark's Workshop", panel: 0x14181E, still: Scenes.starkWorkshop, moving: Scenes.starkWorkshopLife),
+    .starkWorkshop: Place(name: "Tony Stork's Workshop", panel: 0x14181E, still: Scenes.starkWorkshop, moving: Scenes.starkWorkshopLife),
     .redRoom: Place(name: "The Red Room", panel: 0x1E1414, still: Scenes.redRoom, moving: Scenes.redRoomLife),
-    .taLo: Place(name: "Ta Lo", panel: 0x14201A, still: Scenes.taLo, moving: Scenes.taLoLife),
+    .taLo: Place(name: "Ta Loh", panel: 0x14201A, still: Scenes.taLo, moving: Scenes.taLoLife),
 ]
 
 // MARK: - Shared shapes for this file
@@ -54,6 +54,8 @@ fileprivate let s7Glyphs: [Character: [String]] = [
     "A": ["###", "#.#", "###", "#.#", "#.#"], "B": ["##.", "#.#", "##.", "#.#", "##."],
     "D": ["##.", "#.#", "#.#", "#.#", "##."], "E": ["###", "#..", "##.", "#..", "###"],
     "I": ["###", ".#.", ".#.", ".#.", "###"], "L": ["#..", "#..", "#..", "#..", "###"],
+    "N": ["##.", "#.#", "#.#", "#.#", "#.#"], "O": [".#.", "#.#", "#.#", "#.#", ".#."],
+    "T": ["###", ".#.", ".#.", ".#.", ".#."],
     "M": ["#.#", "###", "###", "#.#", "#.#"], "R": ["##.", "#.#", "##.", "#.#", "#.#"],
     "S": [".##", "#..", ".#.", "..#", "##."], "U": ["#.#", "#.#", "#.#", "#.#", "###"],
     "W": ["#.#", "#.#", "###", "###", "#.#"], "Y": ["#.#", "#.#", ".#.", ".#.", ".#."],
@@ -84,7 +86,7 @@ extension Scenes {
     // MARK: - New York City
 
     /// New York City at street level (Spider-Man's neighbourhood): a sunny Queens block of brownstones, red-brick
-    /// walk-ups with fire escapes and corner stores, Delmar's Deli-Grocery among them, wooden water towers on the roofs;
+    /// walk-ups with fire escapes and corner stores, Delmont's Deli-Grocery among them, wooden water towers on the roofs;
     /// a subway entrance with its green globe lamps, a traffic light over a crosswalk, and the Midtown skyline beyond,
     /// the Empire State and Chrysler buildings standing out of the haze. Cabs drive by, people walk, pigeons peck and
     /// the light changes in `newYorkStreetsLife`.
@@ -157,7 +159,7 @@ extension Scenes {
     }
 
     /// The block's buildings left to right: where each stands, its width, its kind (brownstone, red brick, tan brick,
-    /// grey stone), how many storeys sit over the ground floor, and its shop (0 none, 1 Delmar's, else an awning colour).
+    /// grey stone), how many storeys sit over the ground floor, and its shop (0 none, 1 Delmont's, else an awning colour).
     static func newYorkBuildings(_ c: PixelCanvas, _ g: Int) -> [(x: Int, w: Int, kind: Int, floors: Int, store: Int)] {
         let s = unit(g), tall = isTall(c)
         var out: [(x: Int, w: Int, kind: Int, floors: Int, store: Int)] = []
@@ -251,11 +253,11 @@ extension Scenes {
                 if ((x - b.x) / (2 * s)) % 2 == 0 { c.px(x, gy + 5 * s, a1) }
             }
             if b.store == 1 {
-                // Delmar's: a red sign board over the awning, and DELI in the window.
-                let sw = 35 * s, sx = b.x + (b.w - sw) / 2
+                // Delmont's: a red sign board over the awning, and DELI in the window.
+                let sw = 39 * s, sx = b.x + (b.w - sw) / 2
                 c.rect(sx, gy - 4 * s, sw, 7 * s, C(0xB82424)); c.rect(sx, gy - 4 * s, sw, s, C(0xD84A3A))
                 c.rect(sx, gy + 2 * s, sw, s, C(0x7A1414))
-                s7Text(c, sx + 2 * s, gy - 3 * s, "DELMAR'S", C(0xFFF4D8), k: s)
+                s7Text(c, sx + 2 * s, gy - 3 * s, "DELMONT'S", C(0xFFF4D8), k: s)
                 s7Text(c, b.x + 5 * s, glassY, "DELI", C(0xFFD040), k: s)
             } else {
                 c.rect(b.x + s, gy, b.w - s, 3 * s, C(0x1E1E24))

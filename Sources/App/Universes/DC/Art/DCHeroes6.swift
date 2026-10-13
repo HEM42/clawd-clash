@@ -4,38 +4,38 @@ import Foundation
 // over (and around) the blocky body. Where the hero shows a face, it's Clawd's own orange.
 
 let dcHeroes6: [DCHero: Persona] = [
-    .alanScott: Persona(name: "Alan Scott", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xD8FFD0), glow: C(0x2ADB4A), jagged: false),
-                  headTop: 22, signature: 3.0, callout: "The dark things cannot stand the light!",
+    .alanScott: Persona(name: "Alan Scotch", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xD8FFD0), glow: C(0x2ADB4A), jagged: false),
+                  headTop: 22, signature: 3.0, callout: "Dark things can't stand the light!",
                   draw: drawAlanScott),
-    .doctorFate: Persona(name: "Doctor Fate", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFF4C0), glow: C(0xFFC21E), jagged: false),
-                  headTop: 17, signature: 3.2, callout: "Order shall prevail.",
+    .doctorFate: Persona(name: "Doctor Fortune", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFF4C0), glow: C(0xFFC21E), jagged: false),
+                  headTop: 17, signature: 3.2, callout: "Order must win.",
                   draw: drawDoctorFate),
-    .hourman: Persona(name: "Hourman", weapon: .saber, headTop: 20, signature: 3.0, callout: "One hour. That's all I need.",
+    .hourman: Persona(name: "Minuteman", weapon: .saber, headTop: 20, signature: 3.0, callout: "One minute. That's all I need.",
                   draw: drawHourman),
-    .stargirl: Persona(name: "Stargirl", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xFFFFFF), glow: C(0x6AB8FF)),
-                  muzzle: (56, 34), headTop: 20, signature: 3.0, callout: "Stars and stripes forever!",
+    .stargirl: Persona(name: "Star Lass", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xFFFFFF), glow: C(0x6AB8FF)),
+                  muzzle: (56, 34), headTop: 20, signature: 3.0, callout: "Stars forever!",
                   draw: drawStargirl),
-    .wildcat: Persona(name: "Wildcat", weapon: .saber, headTop: 22, signature: 2.6, callout: "Come on, put 'em up!",
+    .wildcat: Persona(name: "Alley Cat", weapon: .saber, headTop: 22, signature: 2.6, callout: "Come on, square up!",
                   draw: drawWildcat),
-    .atomSmasher: Persona(name: "Atom Smasher", weapon: .saber, armoured: true, pivot: smasherShoulder, bulk: 4, headTop: 15,
-                  signature: 3.2, callout: "Time to go big!",
+    .atomSmasher: Persona(name: "Atom Crusher", weapon: .saber, armoured: true, pivot: smasherShoulder, bulk: 4, headTop: 15,
+                  signature: 3.2, callout: "Going big!",
                   draw: drawAtomSmasher),
-    .cyclone: Persona(name: "Cyclone", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xF4FFFF), glow: C(0xBFE8F0), jagged: false),
-                  headTop: 20, signature: 3.0, callout: "Let's whip up a storm!",
+    .cyclone: Persona(name: "Twister", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xF4FFFF), glow: C(0xBFE8F0), jagged: false),
+                  headTop: 20, signature: 3.0, callout: "Let's stir up a gale!",
                   draw: drawCyclone),
-    .doctorMidnite: Persona(name: "Doctor Mid-Nite", weapon: .saber, headTop: 20, signature: 3.2, callout: "Lights out.",
+    .doctorMidnite: Persona(name: "Doctor Midnight", weapon: .saber, headTop: 20, signature: 3.2, callout: "Lights off.",
                   draw: drawDoctorMidnite),
-    .sandman: Persona(name: "Sandman", weapon: .blaster, shot: .energy(core: C(0xE8FFE0), glow: C(0x8AD86A)),
-                  muzzle: (48, 31), headTop: 17, signature: 3.0, callout: "There is no escape from the Sandman!",
+    .sandman: Persona(name: "The Sleepmaker", weapon: .blaster, shot: .energy(core: C(0xE8FFE0), glow: C(0x8AD86A)),
+                  muzzle: (48, 31), headTop: 17, signature: 3.0, callout: "Nobody escapes the Sleepmaker!",
                   draw: drawSandman),
-    .mrTerrific: Persona(name: "Mister Terrific", weapon: .saber, headTop: 22, signature: 3.2, callout: "Fair play.",
+    .mrTerrific: Persona(name: "Mister Tremendous", weapon: .saber, headTop: 22, signature: 3.2, callout: "Play fair.",
                   draw: drawMrTerrific),
 ]
 
 // MARK: - Alan Scott
 
 /// Alan Scott: the golden-age Green Lantern. Clawd under slicked black hair and a green domino mask, the red shirt
-/// with the lantern emblem and the tall purple collar, a purple cape, green trousers and red boots. His power battery
+/// with the lamp emblem and the tall purple collar, a purple cape, green trousers and red boots. His power battery
 /// (an old railway lantern) hangs from his left hand, and the ring on his right burns green when he casts. In flight he
 /// leans in, ring fist first. Signature: he holds the lantern up and charges the ring at it, green light pouring out.
 private func drawAlanScott(_ c: PixelCanvas, _ p: Pose) {
@@ -78,7 +78,7 @@ private func drawAlanScott(_ c: PixelCanvas, _ p: Pose) {
         // Shirt, emblem, trousers' waist.
         c.rect(18, 33, 20, 5, red)
         c.rect(37, 33, 1, 5, redDark)
-        c.pattern(25, 33, [".YYY.", "YGGGY", "YGgGY", ".YYY."], ["Y": C(0xE8C030), "G": C(0x2A8A3A), "g": C(0x8AFF9A)])
+        drawLampEmblem(c, x: 25, y: 33, size: .small, lamp: C(0x8AFF9A), field: C(0x2A8A3A), rim: C(0xE8C030))
         c.rect(18, 37, 20, 1, green)
         // The tall purple collar.
         c.pattern(16, 28, [

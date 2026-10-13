@@ -2,36 +2,36 @@ import Foundation
 
 // Heroes: the Bat-family and Gotham. Every one of them is Clawd in costume: cowls, masks, hoods and hair drawn over
 // (and around) the blocky body. Where the hero shows a face, it's Clawd's own orange. They have to be told apart at a
-// glance, so each keeps one loud tell: Robin's R, Nightwing's blue bird, Batgirl's red hair and yellow bat, Red Hood's
+// glance, so each keeps one loud tell: Robin's R, Nightwing's blue bird, Batgirl's red hair and yellow claw mark, Red Hood's
 // helmet, Red Robin's wings, Batwoman's red bat, Orphan's stitches, Spoiler's purple hood, Gordon's coat and glasses.
 
 let dcHeroes2: [DCHero: Persona] = [
-    .robin: Persona(name: "Robin", weapon: .saber, headTop: 21, signature: 2.6, callout: "Tt.",
+    .robin: Persona(name: "Wren", weapon: .saber, headTop: 21, signature: 2.6, callout: "Tch.",
                     draw: drawRobin),
-    .nightwing: Persona(name: "Nightwing", weapon: .saber, motion: .swing, headTop: 21, signature: 2.4,
-                        callout: "Too easy.",
+    .nightwing: Persona(name: "Nightglider", weapon: .saber, motion: .swing, headTop: 21, signature: 2.4,
+                        callout: "Easy.",
                     draw: drawNightwing),
-    .batgirl: Persona(name: "Batgirl", weapon: .saber, motion: .swing, headTop: 17, signature: 3.0,
-                      callout: "Oracle's online.",
+    .batgirl: Persona(name: "Batclaw Girl", weapon: .saber, motion: .swing, headTop: 17, signature: 3.0,
+                      callout: "Watcher's online.",
                     draw: drawBatgirl),
-    .redHood: Persona(name: "Red Hood", weapon: .blaster, shot: .bullet, muzzle: (47, 32), headTop: 20, signature: 2.8,
-                      callout: "Bang.",
+    .redHood: Persona(name: "Red Cowl", weapon: .blaster, shot: .bullet, muzzle: (47, 32), headTop: 20, signature: 2.8,
+                      callout: "Pow.",
                     draw: drawRedHood),
-    .redRobin: Persona(name: "Red Robin", weapon: .saber, headTop: 19, signature: 2.8,
+    .redRobin: Persona(name: "Red Wren", weapon: .saber, headTop: 19, signature: 2.8,
                     draw: drawRedRobin),
-    .catwoman: Persona(name: "Catwoman", weapon: .saber, headTop: 19, signature: 3.0, callout: "Meow.",
+    .catwoman: Persona(name: "Cat Burglar", weapon: .saber, headTop: 19, signature: 3.0, callout: "Purr.",
                     draw: drawCatwoman),
-    .huntress: Persona(name: "Huntress", weapon: .blaster, shot: .arrow, muzzle: (47, 32), handGun: false, headTop: 21,
+    .huntress: Persona(name: "The Huntswoman", weapon: .blaster, shot: .arrow, muzzle: (47, 32), handGun: false, headTop: 21,
                        signature: 3.0,
                     draw: drawHuntress),
-    .batwoman: Persona(name: "Batwoman", weapon: .saber, headTop: 17, signature: 2.8,
+    .batwoman: Persona(name: "Batclaw Woman", weapon: .saber, headTop: 17, signature: 2.8,
                     draw: drawBatwoman),
-    .orphan: Persona(name: "Orphan", weapon: .saber, headTop: 23, signature: 2.6,
+    .orphan: Persona(name: "The Foundling", weapon: .saber, headTop: 23, signature: 2.6,
                     draw: drawOrphan),
-    .spoiler: Persona(name: "Spoiler", weapon: .saber, headTop: 19, signature: 3.0, callout: "Spoiler alert!",
+    .spoiler: Persona(name: "Spoilsport", weapon: .saber, headTop: 19, signature: 3.0, callout: "No spoilers!",
                     draw: drawSpoiler),
-    .commissionerGordon: Persona(name: "Commissioner Gordon", weapon: .blaster, shot: .bullet, muzzle: (48, 32),
-                                 headTop: 21, signature: 3.4, callout: "Light it up.",
+    .commissionerGordon: Persona(name: "Commissioner Gordo", weapon: .blaster, shot: .bullet, muzzle: (48, 32),
+                                 headTop: 21, signature: 3.4, callout: "Light the signal.",
                     draw: drawGordon),
 ]
 
@@ -417,7 +417,7 @@ private func nightwing(_ c: PixelCanvas, _ p: Pose, tuck: Bool) {
 // MARK: - Batgirl
 
 /// Batgirl (Barbara Gordon): Clawd in the dark purple-grey suit under a pointed-eared cowl, long red hair spilling out
-/// of the back of it, the yellow bat on her chest, yellow belt, gloves and boots, and a cape lined in gold. She fights
+/// of the back of it, the yellow claw mark on her chest, yellow belt, gloves and boots, and a cape lined in gold. She fights
 /// with her fists and swings on a grapnel line, hair and cape streaming. Signature: Oracle at work, a holo-screen
 /// opens over her wrist and she types away at it.
 private func drawBatgirl(_ c: PixelCanvas, _ p: Pose) {
@@ -466,7 +466,7 @@ private func drawBatgirl(_ c: PixelCanvas, _ p: Pose) {
     let oracle = p.signature.map { habitArc($0, hold: 0.7) } ?? 0
     drawBody(c, look)
     drawCowl(c, suit, suitD)
-    c.pattern(20, 34, ["YY....Y..Y....YY", "YYYYYYYYYYYYYYYY", ".YYY.YYYYYY.YYY."], ["Y": yellow])
+    drawClawMark(c, x: 20, y: 34, width: 16, height: 3, color: yellow, thickness: 2)
     c.rect(18, 37, 20, 1, yellow); c.rect(27, 37, 2, 1, yellowD)
     c.rect(15, 33, 3, 3, yellow)
     if swinging {
@@ -503,7 +503,7 @@ private func drawBatgirl(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Red Hood
 
 /// Red Hood (Jason Todd): Clawd under the smooth red helmet with its white eye slits, a brown leather jacket open
-/// over a grey shirt with a red bat, dark trousers and boots, a pistol in each hand. Signature: he twirls both
+/// over a grey shirt with a red claw mark, dark trousers and boots, a pistol in each hand. Signature: he twirls both
 /// pistols round his trigger fingers, three turns, and snaps them level.
 private func drawRedHood(_ c: PixelCanvas, _ p: Pose) {
     let helmet = C(0xC41E26), helmetD = C(0x86121A), shine = C(0xF07078)
@@ -528,12 +528,12 @@ private func drawRedHood(_ c: PixelCanvas, _ p: Pose) {
         ".rRRRRRRRRRRRRRRRRRrr.",
         "..rrrrrrrrrrrrrrrrrr..",
     ], ["R": helmet, "r": helmetD, "L": shine, "W": white])
-    // The jacket: open down the front, collar up, the red bat on the shirt between.
+    // The jacket: open down the front, collar up, the red claw mark on the shirt between.
     c.rect(18, 33, 3, 5, jacket); c.rect(35, 33, 3, 5, jacket)
     c.rect(20, 33, 1, 5, jacketD); c.rect(35, 33, 1, 5, jacketD); c.rect(37, 33, 1, 5, jacketD)
     c.pattern(16, 31, ["KK", "KK", ".K"], ["K": jacket])
     c.pattern(38, 31, ["KK", "KK", "K."], ["K": jacket])
-    c.pattern(21, 34, [".R....RR....R.", "RRRR.RRRR.RRRR", ".RRRRRRRRRRRR.", "...RR.RR.RR..."], ["R": C(0xD0202A)])
+    drawClawMark(c, x: 21, y: 34, width: 14, height: 4, color: C(0xD0202A), thickness: 2)
     c.rect(18, 37, 20, 1, C(0x22222A))
     c.rect(15, 33, 3, 3, jacket)
 
@@ -889,7 +889,7 @@ private func drawBatarang(_ c: PixelCanvas, x: Int, y: Int, spin: Int) {
 // MARK: - Orphan
 
 /// Orphan (Cassandra Cain): a sleek all-black Clawd, no cape, the full black mask with grey stitching across the mouth
-/// and down the brow, narrow white eye slits and a small grey bat on the chest. She fights hand and foot: punches high,
+/// and down the brow, narrow white eye slits and a small grey claw mark on the chest. She fights hand and foot: punches high,
 /// kicks low. Signature: a slow, perfectly balanced high kick, held, and set back down.
 private func drawOrphan(_ c: PixelCanvas, _ p: Pose) {
     let black = C(0x141418), blackL = C(0x2C2C36), stitch = C(0x8A8A98)
@@ -917,7 +917,7 @@ private func drawOrphan(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(21, 29, ["WWWW......WWWW", ".WW........WW."], ["W": white])
     c.rect(22, 33, 12, 1, stitch)
     for x in stride(from: 22, through: 33, by: 2) { c.px(x, 32, stitch); c.px(x, 34, stitch) }
-    c.pattern(25, 35, ["G.G.G.G", ".GGGGG."], ["G": C(0x5A5A66)])
+    drawClawMark(c, x: 25, y: 35, width: 7, height: 2, color: C(0x5A5A66))
     c.rect(18, 37, 20, 1, C(0x0A0A0E))
     if let k = kick {
         let hip = (x: 35.0, y: 37.0)
@@ -1013,7 +1013,7 @@ private func spoiler(_ c: PixelCanvas, _ p: Pose) {
 
 /// Commissioner Gordon: Clawd with neat grey hair, glasses and a grey moustache, a tan trench coat with the collar up
 /// and the belt tied, a white shirt and a dark red tie, grey trousers; a police revolver in his hand. Signature: he
-/// switches on the Bat-Signal, the searchlight behind him throws its beam up and the bat lights the sky.
+/// switches on the Bat-Signal, the searchlight behind him throws its beam up and the claw mark lights the sky.
 private func drawGordon(_ c: PixelCanvas, _ p: Pose) {
     let coat = C(0xB89A66), coatD = C(0x8A7048), coatL = C(0xD4B886), shirt = C(0xEDEDE8), tie = C(0x7A1E22)
     let trousers = C(0x4A4A54), hair = C(0xC4C6CE), hairD = C(0x8E909C), frame = C(0x2A2A30)
@@ -1066,7 +1066,7 @@ private func drawGordon(_ c: PixelCanvas, _ p: Pose) {
 }
 
 /// The Bat-Signal on the rooftop behind Gordon: a searchlight on its stand, its beam thrown up into the sky with the
-/// bat in a pale oval at the top. `s` 0…1 through the signature: it flickers on, burns, and goes out.
+/// claw mark in a pale oval at the top. `s` 0…1 through the signature: it flickers on, burns, and goes out.
 private func drawBatSignal(_ c: PixelCanvas, s: Double, t: Double) {
     let present = min(1, s / 0.08, (1 - s) / 0.06)
     let metal = C(0x6A707C).alpha(present), metalD = C(0x3A3E48).alpha(present)
@@ -1082,12 +1082,5 @@ private func drawBatSignal(_ c: PixelCanvas, s: Double, t: Double) {
         line(c, 11, 31, 22 + Double(k) * 2, 10, C(0xFFF4C0, 0.07 * on), 1.6)
     }
     c.ellipse(22, 6, 10, 5, C(0xFFF0A0, 0.85 * on))
-    c.pattern(15, 3, [
-        "K.....K.K.....K",
-        "KK....KKK....KK",
-        "KKKK.KKKKK.KKKK",
-        "KKKKKKKKKKKKKKK",
-        ".KKKKKKKKKKKKK.",
-        "...KK.KKK.KK...",
-    ], ["K": C(0x16161B).alpha(on)])
+    drawClawMark(c, x: 15, y: 3, width: 15, height: 6, color: C(0x16161B).alpha(on), thickness: 2)
 }

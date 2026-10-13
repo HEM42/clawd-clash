@@ -1,11 +1,11 @@
 import Foundation
 
 let scenes4: [Location: Place] = [
-    .baxterBuilding: Place(name: "Baxter Building", panel: 0x1A1E2A, still: Scenes.baxterBuilding, moving: Scenes.baxterLife),
+    .baxterBuilding: Place(name: "Bexter Building", panel: 0x1A1E2A, still: Scenes.baxterBuilding, moving: Scenes.baxterLife),
     .jotunheim: Place(name: "Jotunheim", panel: 0x161C24, still: Scenes.jotunheim, moving: Scenes.jotunheimLife),
     .muspelheim: Place(name: "Muspelheim", panel: 0x2A1410, still: Scenes.muspelheim, moving: Scenes.muspelheimLife),
-    .hala: Place(name: "Hala", panel: 0x12222A, still: Scenes.hala, moving: Scenes.halaLife),
-    .genosha: Place(name: "Genosha", panel: 0x261C26, still: Scenes.genosha, moving: Scenes.genoshaLife),
+    .hala: Place(name: "Halla", panel: 0x12222A, still: Scenes.hala, moving: Scenes.halaLife),
+    .genosha: Place(name: "Genoshia", panel: 0x261C26, still: Scenes.genosha, moving: Scenes.genoshaLife),
 ]
 
 // MARK: - Shared bits for these scenes
@@ -94,7 +94,7 @@ extension Scenes {
     }
 
     /// The Baxter Building's top-floor lab at dusk: a window wall over Manhattan (the Chrysler Building glinting in
-    /// the sunset) with the Fantastic Four's blue "4" emblem on the glass, Reed's giant computer banks of blinking
+    /// the sunset) with the Fanclawstic Four's blue "4" emblem on the glass, Reed's giant computer banks of blinking
     /// lights, tape reels and scopes down the left, and the ringed Negative Zone portal on its platform at the right,
     /// cabled to the computers.
     static func baxterBuilding(_ c: PixelCanvas, _ g: Int) {
@@ -205,7 +205,8 @@ extension Scenes {
         c.rect(x, top - 6 * s, s, 7 * s, C(0xF0D8C0))
     }
 
-    /// The Fantastic Four's emblem on the glass: a blue disc in a white ring, the "4" breaking out of it.
+    /// The Fanclawstic Four's emblem on the glass: a blue disc in a white ring, the "4" breaking out of it, a claw
+    /// notch raked across the top of its stem.
     static func baxterEmblemDraw(_ c: PixelCanvas, _ g: Int) {
         let e = baxterEmblem(c, g), r = e.r, rd = Double(r)
         c.circle(e.x, e.y, r + max(2, r / 4), C(0x9AC8F0, 0.12))
@@ -218,6 +219,13 @@ extension Scenes {
         c.rect(e.x - r * 6 / 10, e.y + r / 6, r * 11 / 10 + w, w, ink)                  // the bar
         c.glowLine(cx + rd * 0.12 + Double(w) / 2, cy - rd * 0.85, cx - rd * 0.58, cy + rd * 0.22,
                    core: ink, glow: ink, coreR: Double(w) / 2, glowR: Double(w) / 2 + 0.6)
+        // the claw notch: three short slashes in the disc's blue, cutting across the top of the stem
+        let notch = C(0x2A5AC8), sx = cx + rd * 0.12 + Double(w) / 2
+        for k in 0..<3 {
+            let y0 = cy - rd * 0.72 + Double(k) * rd * 0.17
+            c.glowLine(sx - Double(w) * 1.2, y0 + Double(w) * 0.8, sx + Double(w) * 1.2, y0 - Double(w) * 0.4,
+                       core: notch, glow: notch, coreR: max(0.5, Double(w) * 0.22), glowR: max(0.6, Double(w) * 0.25))
+        }
     }
 
     /// One computer bank: lights, tape reels and a scope screen, stacked to its height.
@@ -806,9 +814,9 @@ extension Scenes {
         (c.w / 2, isTall(c) ? g * 45 / 100 : g * 36 / 100)
     }
 
-    /// Hala, the Kree homeworld: a clean blue-green city of needle spires with ringed platforms and sky bridges under
+    /// Hala, the Kreek homeworld: a clean blue-green city of needle spires with ringed platforms and sky bridges under
     /// a teal sky and a great ringed planet, the stepped tower of the Supreme Intelligence's chamber at the centre with
-    /// its green core glowing (the Intelligence's face hangs over it as a hologram), and a white plaza with Kree banners.
+    /// its green core glowing (the Intelligence's face hangs over it as a hologram), and a white plaza with Kreek banners.
     static func hala(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), m = scenes4Scale(c, g)
         c.gradient(0, g, C(0x0A1A38), C(0x6ACCC4), bands: 8)
@@ -894,7 +902,7 @@ extension Scenes {
         c.rect(x - 2 * m, ch.top - 5 * m, 4 * m + 1, m, C(0x7AF8C8))
     }
 
-    /// A pylon flying a Kree banner: green and white with the starburst insignia.
+    /// A pylon flying a Kreek banner: green and white with a diamond star.
     static func halaBanner(_ c: PixelCanvas, _ g: Int, x: Int, top: Int) {
         let s = unit(g) * scenes4Scale(c, g), bw = 8 * s, bh = min(26 * s, (g - top) * 2 / 3)
         c.rect(x, top - 3 * s, 2 * s, g - top + 3 * s, C(0xE0F0F0)); c.rect(x + s, top - 3 * s, s, g - top + 3 * s, C(0x9AB4BC))
@@ -906,8 +914,8 @@ extension Scenes {
             "..w..",
             ".www.",
             "wwwww",
-            ".w.w.",
-            "w...w",
+            ".www.",
+            "..w..",
         ], ["w": C(0xE8F8F0)], s: s)
     }
 

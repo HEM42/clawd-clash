@@ -215,7 +215,7 @@ let dcTheme = Theme(
         guard c.universe == .dc, !c.isDark, let h = DCHero(rawValue: c.index) else { return nil }
         return javelinCrew.contains(h) ? .javelin : batwingCrew.contains(h) ? .batwing : nil
     },
-    menuIcon: drawSShield,
+    menuIcon: drawCShieldIcon,
     legend: .hero(.superman))
 
 // MARK: - Places

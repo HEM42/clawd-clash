@@ -1,12 +1,12 @@
 import Foundation
 
 let dcScenes5: [Location: Place] = [
-    .phantomZone: Place(name: "The Phantom Zone", panel: 0x14102A, still: Scenes.phantomZone, moving: Scenes.phantomZoneDrift),
-    .kahndaq: Place(name: "Kahndaq", panel: 0x2A1C10, still: Scenes.kahndaq, moving: Scenes.kahndaqLife),
-    .ironHeights: Place(name: "Iron Heights", panel: 0x16181A, still: Scenes.ironHeights, moving: Scenes.ironHeightsLights),
-    .speedForce: Place(name: "The Speed Force", panel: 0x10142E, still: Scenes.speedForce, moving: Scenes.speedForceRush),
-    .wayneManor: Place(name: "Wayne Manor", panel: 0x1E140E, still: Scenes.wayneManor, moving: Scenes.wayneManorLife),
-    .legionHQ: Place(name: "Legion of Super-Heroes HQ", panel: 0x14182E, still: Scenes.legionHQ, moving: Scenes.legionTraffic),
+    .phantomZone: Place(name: "The Phantasm Zone", panel: 0x14102A, still: Scenes.phantomZone, moving: Scenes.phantomZoneDrift),
+    .kahndaq: Place(name: "Khandaq", panel: 0x2A1C10, still: Scenes.kahndaq, moving: Scenes.kahndaqLife),
+    .ironHeights: Place(name: "Iron Hills Prison", panel: 0x16181A, still: Scenes.ironHeights, moving: Scenes.ironHeightsLights),
+    .speedForce: Place(name: "The Speed Source", panel: 0x10142E, still: Scenes.speedForce, moving: Scenes.speedForceRush),
+    .wayneManor: Place(name: "Payne Manor", panel: 0x1E140E, still: Scenes.wayneManor, moving: Scenes.wayneManorLife),
+    .legionHQ: Place(name: "Legion of Super-Clawds HQ", panel: 0x14182E, still: Scenes.legionHQ, moving: Scenes.legionTraffic),
 ]
 
 // MARK: - Shared bits for these scenes
@@ -657,7 +657,7 @@ extension Scenes {
 
     /// The Speed Force: a tunnel of light streaming toward a white-gold heart, ringed with blue and gold, its walls
     /// fading to deep blue around the crew, who stand on a plane of light streaked toward the vanishing point.
-    /// Frozen moments of time hang in it like shards of glass: a clock, a city at dusk, the Flash's emblem, a man
+    /// Frozen moments of time hang in it like shards of glass: a clock, a city at dusk, the Flare's flame emblem, a man
     /// running, the house on a night long ago.
     static func speedForce(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), o = speedCore(c, g)
@@ -743,12 +743,12 @@ extension Scenes {
         ], [
             "rrrrrrrrrrrrrr",
             "rrrrwwwwwwrrrr",
-            "rrrwwwwwyywrrr",
-            "rrwwwwwyywwwrr",
-            "rrwwwyyyyywwrr",
+            "rrrwwwwywwwrrr",
             "rrwwwwyywwwwrr",
-            "rrwwwyywwwwwrr",
-            "rrrwyywwwwwrrr",
+            "rrwwwyyyywwwrr",
+            "rrwwwyyyyywwrr",
+            "rrwwwyyyyywwrr",
+            "rrrwwyyyywwrrr",
             "rrrrwwwwwwrrrr",
             "rrrrrrrrrrrrrr",
         ], [
@@ -1108,7 +1108,7 @@ extension Scenes {
     }
 
     /// The Legion of Super-Heroes' clubhouse in the 31st century: an old rocket ship stood on its fins in a plaza,
-    /// silver and red with lit portholes and the Legion's emblem, in front of a gleaming future city at dusk: slim
+    /// silver and red with lit portholes and the Legion's flight-ring emblem, in front of a gleaming future city at dusk: slim
     /// towers with saucer decks and glowing bands, skybridges, a ringed planet over the horizon.
     static func legionHQ(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c)
@@ -1214,12 +1214,12 @@ extension Scenes {
         for y in stride(from: bodyTop + Int(Double(g - bodyTop) * 0.22), to: bodyTop + Int(Double(g - bodyTop) * 0.58), by: pr * 4) {
             c.circle(r.x - r.w / 6, y, pr + s, C(0x6A7488)); c.circle(r.x - r.w / 6, y, pr, C(0xFFE08A))
         }
-        // the Legion emblem
-        let ey = bodyTop + Int(Double(g - bodyTop) * 0.4), er = max(3 * s, r.w / 5)
-        c.circle(r.x + r.w / 6, ey, er + s, C(0x2A3A7A)); c.circle(r.x + r.w / 6, ey, er, C(0xF4F4F8))
+        // the Legion's emblem: a flight ring, open on the right like a C
+        let ey = bodyTop + Int(Double(g - bodyTop) * 0.4), er = max(3 * s, r.w / 5), ex = r.x + r.w / 6
+        c.circle(ex, ey, er + s, C(0x2A3A7A)); c.circle(ex, ey, er, C(0xF4F4F8))
         let lu = max(1, er / 3)
-        c.rect(r.x + r.w / 6 - lu, ey - er + lu, lu, er * 2 - 2 * lu, C(0x2A3A7A))
-        c.rect(r.x + r.w / 6 - lu, ey + er - 2 * lu, lu * 3, lu, C(0x2A3A7A))
+        c.circle(ex, ey, er - lu, C(0x2A3A7A)); c.circle(ex, ey, max(1, er - 2 * lu), C(0xF4F4F8))
+        c.rect(ex + lu / 2, ey - lu / 2, er, max(1, lu), C(0xF4F4F8))
         // the front fin, and the door between the fins
         c.rect(r.x - r.w / 10, g - finH, r.w / 5, finH, C(0xC8282E)); c.rect(r.x - r.w / 10, g - finH, s, finH, C(0xF06068))
         let dw = r.w / 4, dh = r.w / 3

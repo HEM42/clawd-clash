@@ -4,41 +4,41 @@ import Foundation
 // around) the blocky body, the way the whole cast is done. Where the hero shows a face, it's Clawd's own orange.
 
 let dcHeroes1: [DCHero: Persona] = [
-    .superman: Persona(name: "Superman", weapon: .blaster, motion: .fly, shot: .beam(core: C(0xFFF4D0), glow: C(0xFF3A1E)),
-                  armoured: true, muzzle: (34, 30), handGun: false, headTop: 21, signature: 3.0, callout: "Up, up and away!",
+    .superman: Persona(name: "Superb-Man", weapon: .blaster, motion: .fly, shot: .beam(core: C(0xFFF4D0), glow: C(0xFF3A1E)),
+                  armoured: true, muzzle: (34, 30), handGun: false, headTop: 21, signature: 3.0, callout: "Up, up and onward!",
                   draw: drawSuperman),
-    .batman: Persona(name: "Batman", weapon: .saber, motion: .swing, headTop: 19, signature: 2.8, callout: "I'm Batman.",
+    .batman: Persona(name: "Batclaw", weapon: .saber, motion: .swing, headTop: 19, signature: 2.8, callout: "I'm the night.",
                   draw: drawBatman),
-    .wonderWoman: Persona(name: "Wonder Woman", weapon: .saber, motion: .fly, headTop: 21, signature: 3.2,
-                  callout: "For Themyscira!",
+    .wonderWoman: Persona(name: "Wondrous Woman", weapon: .saber, motion: .fly, headTop: 21, signature: 3.2,
+                  callout: "For the Isle of Women!",
                   draw: drawWonderWoman),
-    .flash: Persona(name: "The Flash", weapon: .saber, headTop: 22, signature: 2.8, callout: "Fastest man alive!",
+    .flash: Persona(name: "The Flare", weapon: .saber, headTop: 22, signature: 2.8, callout: "Quickest guy around!",
                   draw: drawFlash),
-    .greenLantern: Persona(name: "Green Lantern", weapon: .lightning, motion: .fly,
+    .greenLantern: Persona(name: "Green Lamplighter", weapon: .lightning, motion: .fly,
                   magic: Magic(core: C(0xD8FFD0), glow: C(0x2ADB4A), jagged: false),
-                  headTop: 21, signature: 3.2, callout: "In brightest day!",
+                  headTop: 21, signature: 3.2, callout: "By brightest light!",
                   draw: drawGreenLantern),
-    .aquaman: Persona(name: "Aquaman", weapon: .saber, headTop: 21, signature: 3.0, callout: "For Atlantis!",
+    .aquaman: Persona(name: "Aquamarine", weapon: .saber, headTop: 21, signature: 3.0, callout: "For the sunken city!",
                   draw: drawAquaman),
-    .cyborg: Persona(name: "Cyborg", weapon: .blaster, shot: .energy(core: C(0xE8F4FF), glow: C(0x4AA8FF)), armoured: true,
-                  muzzle: (46, 34), handGun: false, headTop: 23, signature: 2.8, callout: "Booyah!",
+    .cyborg: Persona(name: "Cyb-Org", weapon: .blaster, shot: .energy(core: C(0xE8F4FF), glow: C(0x4AA8FF)), armoured: true,
+                  muzzle: (46, 34), handGun: false, headTop: 23, signature: 2.8, callout: "Boo-YAAH!",
                   draw: drawCyborg),
-    .martianManhunter: Persona(name: "Martian Manhunter", weapon: .saber, motion: .fly, headTop: 23, signature: 3.2,
+    .martianManhunter: Persona(name: "Martian Man-Seeker", weapon: .saber, motion: .fly, headTop: 23, signature: 3.2,
                   draw: drawMartianManhunter),
-    .greenArrow: Persona(name: "Green Arrow", weapon: .blaster, shot: .arrow, muzzle: (46, 34), handGun: false, headTop: 19,
-                  signature: 3.0, callout: "You have failed this city!",
+    .greenArrow: Persona(name: "Emerald Archer", weapon: .blaster, shot: .arrow, muzzle: (46, 34), handGun: false, headTop: 19,
+                  signature: 3.0, callout: "You've let this city down!",
                   draw: drawGreenArrow),
-    .blackCanary: Persona(name: "Black Canary", weapon: .lightning, magic: Magic(core: C(0xF4F8FF), glow: C(0x9AD8FF), jagged: false),
+    .blackCanary: Persona(name: "Black Finch", weapon: .lightning, magic: Magic(core: C(0xF4F8FF), glow: C(0x9AD8FF), jagged: false),
                   pivot: canaryMouth, headTop: 21, signature: 2.8,
                   draw: drawBlackCanary),
-    .shazam: Persona(name: "Shazam", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFF8D0), glow: C(0xFFD21E)),
-                  headTop: 22, signature: 3.0, callout: "SHAZAM!",
+    .shazam: Persona(name: "Captain Thunderbolt", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFF8D0), glow: C(0xFFD21E)),
+                  headTop: 22, signature: 3.0, callout: "KA-ZAM!",
                   draw: drawShazam),
 ]
 
 // MARK: - Superman
 
-/// Superman: Clawd with the black hair and the curl over his brow, the blue suit with the red-and-yellow S-shield, a
+/// Superman: Clawd with the black hair and the curl over his brow, the blue suit with the red-and-yellow C-shield, a
 /// yellow belt over red trunks, red boots and the red cape. Heat vision comes from his eyes (they burn red as he fires);
 /// bullets bounce off him. In flight he leans into it, one fist forward, cape streaming. Signature: up, up and away: he
 /// crouches, springs into the air with a fist raised, hangs there with the cape fluttering and comes back down.
@@ -84,17 +84,10 @@ private func drawSuperman(_ c: PixelCanvas, _ p: Pose) {
         } else {
             c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink)
         }
-        // The suit, the S-shield, the belt and trunks.
+        // The suit, the C-shield, the belt and trunks.
         c.rect(18, 32, 20, 6, blue)
         c.rect(37, 32, 1, 6, blueDark)
-        c.pattern(24, 32, [
-            "RRRRRRRRR",
-            "RYRRRRRYR",
-            ".RRYYYYR.",
-            "..RRRRR..",
-            "...YYR...",
-            "....R....",
-        ], ["R": red, "Y": yellow])
+        drawCShield(c, x: 24, y: 32, size: .large, letter: red, field: yellow)
         c.rect(18, 37, 20, 1, yellow)
         if !p.flying && !aloft && !seatedPose { c.rect(18, 38, 20, 1, red) }
         c.rect(15, 33, 3, 3, blue)
@@ -110,7 +103,7 @@ private func drawSuperman(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Batman
 
 /// Batman: Clawd under the black cowl with the pointed ears and narrow white eyes, his own orange jaw showing, the grey
-/// suit with the black bat on a yellow oval, a yellow utility belt, black gloves and boots, and the long black cape with a
+/// suit with the black claw mark on a yellow oval, a yellow utility belt, black gloves and boots, and the long black cape with a
 /// scalloped hem. He travels on a grapnel line, one hand up on it, cape streaming. He fights with his fists, the
 /// gauntlet fins catching the light. Signature: he throws a batarang that whirls out and boomerangs back into his hand.
 private func drawBatman(_ c: PixelCanvas, _ p: Pose) {
@@ -147,13 +140,9 @@ private func drawBatman(_ c: PixelCanvas, _ p: Pose) {
         "KKSSSSSSSSSSSSSSSSKK",
         "KSSSSSSSkkkkSSSSSSSK",
     ], ["K": black, "L": blackLight, "b": C(0x0E0E14), "W": white, "S": clawdOrange, "k": clawdShade])
-    // The bat on its yellow oval, and the utility belt.
-    c.pattern(24, 33, [
-        ".YYYYYYY.",
-        "YKYKKKYKY",
-        "YKKKKKKKY",
-        ".YYYKYYY.",
-    ], ["Y": yellow, "K": black])
+    // The claw mark on its yellow oval, and the utility belt.
+    c.pattern(24, 33, [".YYYYYYY.", "YYYYYYYYY", "YYYYYYYYY", ".YYYYYYY."], ["Y": yellow])
+    drawClawMark(c, x: 25, y: 34, width: 7, height: 2, color: black)
     c.rect(18, 37, 20, 1, yellow)
     for x in [19, 22, 32, 35] { c.rect(x, 37, 2, 1, yellowDark) }
     c.rect(15, 33, 3, 3, black)
@@ -359,7 +348,7 @@ private func drawAmazonShield(_ c: PixelCanvas, cx: Int, cy: Int) {
 // MARK: - The Flash
 
 /// The Flash: Clawd in the red suit and cowl with the gold lightning-bolt wings at his ears, his jaw showing, the white
-/// circle with the gold bolt on his chest, a gold belt and gold boots. He runs leaning into it with lightning crackling
+/// circle with the gold flame on his chest, a gold belt and gold boots. He runs leaning into it with lightning crackling
 /// off behind him, and fights as a blur of fists. Signature: he's gone in a red streak, the lightning hangs in the air
 /// where he was, and he zips back in holding a coffee.
 private func drawFlash(_ c: PixelCanvas, _ p: Pose) {
@@ -432,9 +421,9 @@ private func drawFlashBody(_ c: PixelCanvas, _ p: Pose, coffee: Bool = false) {
         "RRSSSSSSSSSSSSSSSSRR",
         "RSSSSSSSSkkkSSSSSSSR",
     ], ["R": red, "r": redDark, "W": C(0xF2EEE0), "K": ink, "S": clawdOrange, "k": clawdShade])
-    // The emblem: a white disc with the bolt across it.
+    // The emblem: a white disc with the flame in it.
     c.ellipse(28, 35, 3, 3, C(0xF4F2EC))
-    c.pattern(26, 32, ["...Y.", "..YY.", ".YYYY", "..YY.", ".YY..", ".Y..."], ["Y": gold])
+    drawFlameEmblem(c, x: 26, y: 32, size: .large, flame: gold, field: nil)
     c.rect(18, 37, 20, 1, gold)
     c.rect(26, 37, 4, 1, goldDark)
     c.rect(15, 33, 3, 3, red)
@@ -465,7 +454,7 @@ private func drawFlashBody(_ c: PixelCanvas, _ p: Pose, coffee: Bool = false) {
 // MARK: - Green Lantern
 
 /// Green Lantern (Hal Jordan): Clawd with short brown hair and the green domino mask, the green suit with black
-/// shoulders, the white circle with the lantern symbol on his chest, white gloves and the ring glowing on his right
+/// shoulders, the lamp emblem on his chest, white gloves and the ring glowing on his right
 /// hand; the steady green beam comes from the ring. In flight he leans in, ring fist forward, a green wake behind him.
 /// Signature: the power battery appears beside him; he holds the ring to it and swears the oath, glowing green.
 private func drawGreenLantern(_ c: PixelCanvas, _ p: Pose) {
@@ -512,18 +501,11 @@ private func drawGreenLantern(_ c: PixelCanvas, _ p: Pose) {
             "GGWWGGGGGGGGWWGG",
             ".GWKG......GWKG.",
         ], ["G": green, "W": charge > 0.3 ? C(0xC8FFC8) : white, "K": charge > 0.3 ? C(0x2ADB4A) : ink])
-        // Suit: green, black shoulders, the lantern symbol in its white circle.
+        // Suit: green, black shoulders, the lamp emblem.
         c.rect(18, 32, 20, 6, green)
         c.rect(18, 32, 3, 6, black); c.rect(35, 32, 3, 6, black)
         c.rect(18, 37, 20, 1, greenDark)
-        c.pattern(25, 32, [
-            ".WWWWW.",
-            "..WWW..",
-            ".W...W.",
-            ".W...W.",
-            "..WWW..",
-            ".WWWWW.",
-        ], ["W": white])
+        drawLampEmblem(c, x: 25, y: 32, size: .large, lamp: white, field: nil)
         c.rect(15, 33, 3, 3, glove)
         let ringLit = p.zap != nil || p.flying || charge > 0.2 || p.ready
         if p.flying {

@@ -5,50 +5,50 @@ import AppKit
 
 /// Every Star Wars place.
 let starWarsPlaces: [Location: Place] = [
-    .cantina: Place(name: "Mos Eisley Cantina", panel: 0x2B2119, still: { c, g in StarWarsCantina.drawRoom(c, floorRows: c.h - g) },
+    .cantina: Place(name: "Mos Easy Cantina", panel: 0x2B2119, still: { c, g in StarWarsCantina.drawRoom(c, floorRows: c.h - g) },
                     moving: { c, g, t in
                         // Tonight's band: the Modal Nodes or, on some nights, the Max Rebo Band.
                         if StarWarsCantina.maxReboTonight { StarWarsScenes.maxReboBand(c, g - 4, t: t, at: 2) }
                         else { StarWarsCantina.drawBand(c, floorRows: c.h - g, t: t) }
                         StarWarsCantina.drawBarCrowd(c, floorRows: c.h - g, t: t)
                     }),
-    .deathStar: Place(name: "Death Star", panel: 0x16181D, still: StarWarsScenes.deathStar,
+    .deathStar: Place(name: "Doom Moon", panel: 0x16181D, still: StarWarsScenes.deathStar,
                       moving: { c, g, t in
                           StarWarsScenes.blinkLights(c, g, t: t, seed: 1)
                           StarWarsScenes.starDestroyer(c, g, t: t)
                           if Scenes.isTall(c) { StarWarsScenes.tieFlyby(c, g, t: t, viewport: true) }
                       }),
-    .sarlaccPit: Place(name: "Great Pit of Carkoon", panel: 0x2E2418, still: StarWarsScenes.sarlaccPit,
+    .sarlaccPit: Place(name: "Great Pit of Snarkoon", panel: 0x2E2418, still: StarWarsScenes.sarlaccPit,
                        moving: StarWarsScenes.sarlaccTentacles),
-    .jabbasPalace: Place(name: "Jabba's Palace", panel: 0x241A12, still: StarWarsScenes.jabbasPalace,
+    .jabbasPalace: Place(name: "Jabbo's Palace", panel: 0x241A12, still: StarWarsScenes.jabbasPalace,
                          moving: { c, g, t in StarWarsScenes.jabbaLamps(c, g, t: t); StarWarsScenes.maxReboBand(c, g, t: t) }),
     .supremacy: Place(name: "Supremacy Throne Room", panel: 0x2A0A0D, still: StarWarsScenes.supremacy),
-    .theed: Place(name: "Theed Generator Complex", panel: 0x141A22, still: StarWarsScenes.theed,
+    .theed: Place(name: "Tweed Generator Complex", panel: 0x141A22, still: StarWarsScenes.theed,
                   moving: StarWarsScenes.laserGates),
-    .emperorThrone: Place(name: "Death Star II Throne Room", panel: 0x16181D, still: StarWarsScenes.emperorThrone,
+    .emperorThrone: Place(name: "Doom Moon II Throne Room", panel: 0x16181D, still: StarWarsScenes.emperorThrone,
                           moving: StarWarsScenes.spaceBattle),
-    .geonosis: Place(name: "Geonosis", panel: 0x2E1712, still: StarWarsScenes.geonosis),
-    .naboo: Place(name: "Plains of Naboo", panel: 0x14231A, still: StarWarsScenes.naboo),
+    .geonosis: Place(name: "Geonoses", panel: 0x2E1712, still: StarWarsScenes.geonosis),
+    .naboo: Place(name: "Plains of Naboom", panel: 0x14231A, still: StarWarsScenes.naboo),
     .executor: Place(name: "Executor Bridge", panel: 0x16181D, still: StarWarsScenes.executor,
                      moving: { c, g, t in
                          StarWarsScenes.blinkLights(c, g, t: t, seed: 2)
                          if Scenes.isTall(c) { StarWarsScenes.tieFlyby(c, g, t: t, viewport: false) }
                      }),
-    .larsFarm: Place(name: "Lars Homestead", panel: 0x2E2418, still: StarWarsScenes.larsFarm),
-    .obiWanHut: Place(name: "Obi-Wan's Hut", panel: 0x2B2119, still: StarWarsScenes.obiWanHut,
+    .larsFarm: Place(name: "Larz Homestead", panel: 0x2E2418, still: StarWarsScenes.larsFarm),
+    .obiWanHut: Place(name: "Obi-Juan's Hut", panel: 0x2B2119, still: StarWarsScenes.obiWanHut,
                       moving: StarWarsScenes.obiWanHologram),
-    .sandcrawler: Place(name: "Jawa Sandcrawler", panel: 0x261A12, still: StarWarsScenes.sandcrawler,
+    .sandcrawler: Place(name: "Clawa Sandcrawler", panel: 0x261A12, still: StarWarsScenes.sandcrawler,
                         moving: StarWarsScenes.crawlerLights),
-    .dagobah: Place(name: "Dagobah", panel: 0x111C15, still: StarWarsScenes.dagobah, moving: StarWarsScenes.swampFog),
-    .falcon: Place(name: "Millennium Falcon", panel: 0x1E1F21, still: StarWarsScenes.falcon, moving: StarWarsScenes.dejarik),
-    .tantive: Place(name: "Tantive IV", panel: 0x1C2229, still: StarWarsScenes.tantive),
-    .tuskenDesert: Place(name: "Jundland Wastes", panel: 0x2E2418, still: StarWarsScenes.tuskenDesert),
-    .jakku: Place(name: "Jakku", panel: 0x2E2418, still: StarWarsScenes.jakku, moving: StarWarsScenes.jakkuWind),
+    .dagobah: Place(name: "Dagobog", panel: 0x111C15, still: StarWarsScenes.dagobah, moving: StarWarsScenes.swampFog),
+    .falcon: Place(name: "Millennial Falcon", panel: 0x1E1F21, still: StarWarsScenes.falcon, moving: StarWarsScenes.dejarik),
+    .tantive: Place(name: "Tentative IV", panel: 0x1C2229, still: StarWarsScenes.tantive),
+    .tuskenDesert: Place(name: "Junkland Wastes", panel: 0x2E2418, still: StarWarsScenes.tuskenDesert),
+    .jakku: Place(name: "Jakkuzzi", panel: 0x2E2418, still: StarWarsScenes.jakku, moving: StarWarsScenes.jakkuWind),
     // Still in the window; full screen, ships stream past the windows behind the Council.
-    .jediCouncil: Place(name: "Jedi Council Chamber", panel: 0x22180F, still: StarWarsScenes.jediCouncil,
+    .jediCouncil: Place(name: "Jedo Council Chamber", panel: 0x22180F, still: StarWarsScenes.jediCouncil,
                         moving: { c, g, t in if Scenes.isTall(c) { StarWarsScenes.councilTraffic(c, g, t: t) } }),
-    .endor: Place(name: "Forest Moon of Endor", panel: 0x15200F, still: StarWarsScenes.endor, moving: StarWarsScenes.endorForest),
-    .hoth: Place(name: "Battle of Hoth", panel: 0x1C2430, still: StarWarsScenes.hoth,
+    .endor: Place(name: "Forest Moon of Ender", panel: 0x15200F, still: StarWarsScenes.endor, moving: StarWarsScenes.endorForest),
+    .hoth: Place(name: "Battle of Froth", panel: 0x1C2430, still: StarWarsScenes.hoth,
                  moving: { c, g, t in
                      if Scenes.isTall(c) { StarWarsScenes.hothSpeeders(c, g, t: t) }
                      StarWarsScenes.snowfall(c, g, t: t)

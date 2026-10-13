@@ -74,7 +74,7 @@ final class ClawdClashSaverView: ScreenSaverView {
     }
     private var sheet: NSWindow?
     private let picker = NSPopUpButton(frame: NSRect(x: 20, y: 60, width: 280, height: 26), pullsDown: false)
-    private static let choices = [("same", "The same as Clawd Clash"), ("starWars", "Star Wars"), ("marvel", "Marvel"), ("dc", "DC"),
+    private static let choices = [("same", "The same as Clawd Clash"), ("starWars", Universe.starWars.title), ("marvel", Universe.marvel.title), ("dc", Universe.dc.title),
                                   ("random", "Random (a new one on each trip)")]
 
     override var hasConfigureSheet: Bool { true }

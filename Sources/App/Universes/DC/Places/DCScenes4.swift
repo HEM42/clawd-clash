@@ -1,12 +1,12 @@
 import Foundation
 
 let dcScenes4: [Location: Place] = [
-    .nandaParbat: Place(name: "Nanda Parbat", panel: 0x141A28, still: Scenes.nandaParbat, moving: Scenes.nandaLife),
-    .houseOfMystery: Place(name: "House of Mystery", panel: 0x150E20, still: Scenes.houseOfMystery, moving: Scenes.mysteryLife),
-    .rockOfEternity: Place(name: "Rock of Eternity", panel: 0x1A1510, still: Scenes.rockOfEternity, moving: Scenes.eternityLife),
-    .newGenesis: Place(name: "New Genesis", panel: 0x1C2836, still: Scenes.newGenesis, moving: Scenes.genesisLife),
-    .thanagar: Place(name: "Thanagar", panel: 0x22140F, still: Scenes.thanagar, moving: Scenes.thanagarLife),
-    .kandor: Place(name: "Kandor", panel: 0x0C1C1A, still: Scenes.kandor, moving: Scenes.kandorLife),
+    .nandaParbat: Place(name: "Nanga Parbat", panel: 0x141A28, still: Scenes.nandaParbat, moving: Scenes.nandaLife),
+    .houseOfMystery: Place(name: "House of Riddles", panel: 0x150E20, still: Scenes.houseOfMystery, moving: Scenes.mysteryLife),
+    .rockOfEternity: Place(name: "Rock of Forever", panel: 0x1A1510, still: Scenes.rockOfEternity, moving: Scenes.eternityLife),
+    .newGenesis: Place(name: "New Genesys", panel: 0x1C2836, still: Scenes.newGenesis, moving: Scenes.genesisLife),
+    .thanagar: Place(name: "Thanagor", panel: 0x22140F, still: Scenes.thanagar, moving: Scenes.thanagarLife),
+    .kandor: Place(name: "Kandoor", panel: 0x0C1C1A, still: Scenes.kandor, moving: Scenes.kandorLife),
 ]
 
 // MARK: - Shared bits for these scenes

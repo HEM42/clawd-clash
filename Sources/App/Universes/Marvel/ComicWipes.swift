@@ -37,10 +37,10 @@ enum ComicSound: CaseIterable {
         switch self {
         case .kapow: return "KAPOW!"
         case .snikt: return "SNIKT!"
-        case .bamf: return "BAMF!"
-        case .krakatoom: return "KRAKATOOM!"
+        case .bamf: return "PHOOMF!"
+        case .krakatoom: return "KRA-KA-BOOM!"
         case .thoom: return "THOOM!"
-        case .thwip: return "THWIP!"
+        case .thwip: return "FWIP!"
         case .baroom: return "BAROOM!"
         }
     }

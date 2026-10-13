@@ -5,37 +5,37 @@ import Foundation
 // with lightning in their own colour and smear when they strike.
 
 let dcVillains6: [DCVillain: Persona] = [
-    .reverseFlash: Persona(name: "Reverse-Flash", weapon: .saber, headTop: 21, signature: 2.6,
-                  callout: "Always one step ahead, Flash.",
+    .reverseFlash: Persona(name: "Reverse-Flare", weapon: .saber, headTop: 21, signature: 2.6,
+                  callout: "Always one step ahead, Flare.",
                   draw: drawReverseFlash),
-    .zoom: Persona(name: "Zoom", weapon: .saber, headTop: 21, signature: 2.8, callout: "I am Zoom.",
+    .zoom: Persona(name: "Zoomer", weapon: .saber, headTop: 21, signature: 2.8, callout: "I am Zoomer.",
                   draw: drawZoom),
-    .captainCold: Persona(name: "Captain Cold", weapon: .blaster, shot: .ice, muzzle: (53, 33), headTop: 19,
-                  signature: 3.2, callout: "Chill out, Flash.",
+    .captainCold: Persona(name: "Captain Chill", weapon: .blaster, shot: .ice, muzzle: (53, 33), headTop: 19,
+                  signature: 3.2, callout: "Cool it, Flare.",
                   draw: drawCaptainCold),
-    .heatWave: Persona(name: "Heat Wave", weapon: .blaster, shot: .fire, muzzle: (53, 33), headTop: 19,
+    .heatWave: Persona(name: "Heat Spell", weapon: .blaster, shot: .fire, muzzle: (53, 33), headTop: 19,
                   signature: 3.0, callout: "Burn, baby, burn!",
                   draw: drawHeatWave),
-    .mirrorMaster: Persona(name: "Mirror Master", weapon: .blaster, shot: .energy(core: C(0xF0FFFF), glow: C(0x6AE8E8)),
-                  muzzle: (51, 33), headTop: 20, signature: 3.4, callout: "Look into the mirror, Flash.",
+    .mirrorMaster: Persona(name: "Looking-Glass Master", weapon: .blaster, shot: .energy(core: C(0xF0FFFF), glow: C(0x6AE8E8)),
+                  muzzle: (51, 33), headTop: 20, signature: 3.4, callout: "Look in the glass, Flare.",
                   draw: drawMirrorMaster),
-    .gorillaGrodd: Persona(name: "Gorilla Grodd", weapon: .lightning, magic: Magic(core: C(0xFFF0FF), glow: C(0xD86AE8), jagged: false),
-                  pivot: (40.5, 26.5), bulk: 5, headTop: 15, signature: 3.0, callout: "Bow before Grodd!",
+    .gorillaGrodd: Persona(name: "Gorilla Grudd", weapon: .lightning, magic: Magic(core: C(0xFFF0FF), glow: C(0xD86AE8), jagged: false),
+                  pivot: (40.5, 26.5), bulk: 5, headTop: 15, signature: 3.0, callout: "Bow before Grudd!",
                   draw: drawGorillaGrodd),
-    .weatherWizard: Persona(name: "Weather Wizard", weapon: .lightning, magic: Magic(core: C(0xF4F8FF), glow: C(0x7FB2FF)),
+    .weatherWizard: Persona(name: "Weather Warlock", weapon: .lightning, magic: Magic(core: C(0xF4F8FF), glow: C(0x7FB2FF)),
                   pivot: (44.5, 24.5), headTop: 19, signature: 3.4, callout: "Forecast: pain.",
                   draw: drawWeatherWizard),
-    .captainBoomerang: Persona(name: "Captain Boomerang", weapon: .blaster, shot: .thrown(C(0xC8A86A)), muzzle: (45, 31),
-                  handGun: false, headTop: 19, signature: 3.0, callout: "Oi! Heads up, mate!",
+    .captainBoomerang: Persona(name: "Captain Kylie", weapon: .blaster, shot: .thrown(C(0xC8A86A)), muzzle: (45, 31),
+                  handGun: false, headTop: 19, signature: 3.0, callout: "Oi! Duck, mate!",
                   draw: drawCaptainBoomerang),
-    .trickster: Persona(name: "The Trickster", weapon: .blaster, motion: .fly, shot: .thrown(C(0xFF6AA8)), muzzle: (45, 32),
-                  handGun: false, headTop: 19, signature: 3.0, callout: "Ha! Gotcha!",
+    .trickster: Persona(name: "The Prankster", weapon: .blaster, motion: .fly, shot: .thrown(C(0xFF6AA8)), muzzle: (45, 32),
+                  handGun: false, headTop: 19, signature: 3.0, callout: "Ha! Got ya!",
                   draw: drawTrickster),
-    .savitar: Persona(name: "Savitar", weapon: .saber, armoured: true, pivot: (40.5, 30.5), bulk: 4, headTop: 12,
+    .savitar: Persona(name: "Savitr", weapon: .saber, armoured: true, pivot: (40.5, 30.5), bulk: 4, headTop: 12,
                   signature: 3.0, callout: "I am the god of speed!",
                   draw: drawSavitar),
-    .goldenGlider: Persona(name: "Golden Glider", weapon: .saber, motion: .fly, pivot: (36.5, 37.5), headTop: 18,
-                  signature: 2.8, callout: "Shall we dance, Flash?",
+    .goldenGlider: Persona(name: "Golden Skater", weapon: .saber, motion: .fly, pivot: (36.5, 37.5), headTop: 18,
+                  signature: 2.8, callout: "Care to dance, Flare?",
                   draw: drawGoldenGlider),
 ]
 
@@ -210,7 +210,7 @@ private func tinyText(_ c: PixelCanvas, x: Int, y: Int, _ text: String, _ col: P
 // MARK: - Reverse-Flash
 
 /// Reverse-Flash (Eobard Thawne): the Flash's suit in negative, yellow with red boots, red lightning-bolt ear wings,
-/// a red belt and the red bolt in a black circle on his chest, glowing red eyes in the cowl. Red lightning crackles
+/// a red belt and the red flame in a black circle on his chest, glowing red eyes in the cowl. Red lightning crackles
 /// round him and his punches are a blur. Signature: he's everywhere at once, a dash forward, a dash back past where
 /// he started and home again, red lightning and fading yellow afterimages strung out behind.
 private func drawReverseFlash(_ c: PixelCanvas, _ p: Pose) {
@@ -267,9 +267,10 @@ private func reverseFlashArt(_ c: PixelCanvas, _ p: Pose, ghost: Bool = false) {
         if !ghost { c.glowLine(Double(x) + 1, 29.5, Double(x) + 1, 29.5, core: C(0xFFD0C8), glow: glow, coreR: 0.8, glowR: 2) }
         c.rect(x, 29, 2, 1, C(0xFF6A5A))
     }
-    // Chest: the red bolt in a black circle, a red belt.
+    // Chest: the red flame in a black circle, a red belt.
     c.rect(18, 36, 20, 1, red)
-    c.pattern(25, 33, [".KKKK.", "KKKRRK", "KKRRKK", "KRRKKK", ".KKKK."], ["K": black, "R": red])
+    c.pattern(25, 33, [".KKKK.", "KKKKKK", "KKKKKK", "KKKKKK", ".KKKK."], ["K": black])
+    drawFlameEmblem(c, x: 26, y: 33, size: .small, flame: red, field: nil)
     c.rect(15, 33, 3, 3, yellow)
     if let a = p.melee, !ghost {
         speedPunch(c, angle: a, trail: p.trail, t: p.t, arm: yellow, fist: yellow, core: core, glow: glow)
@@ -282,7 +283,7 @@ private func reverseFlashArt(_ c: PixelCanvas, _ p: Pose, ghost: Bool = false) {
 // MARK: - Zoom
 
 /// Zoom (Hunter Zolomon, by way of the series): the speedster in black, a full black cowl with a stitched grille
-/// over the mouth, cold blue eyes, grey ear wings and the blue bolt on a dark emblem; blue lightning crackles round
+/// over the mouth, cold blue eyes, grey ear wings and the blue flame on a dark emblem; blue lightning crackles round
 /// him. Signature: his face vibrates, the head blurring into a ghostly smear round those blue eyes.
 private func drawZoom(_ c: PixelCanvas, _ p: Pose) {
     guard let s = p.signature else { zoomArt(c, p, buzz: 0); return }
@@ -327,9 +328,10 @@ private func zoomArt(_ c: PixelCanvas, _ p: Pose, buzz: Double, ghost: Bool = fa
     c.rect(21, 28, 5, 1, sheen); c.rect(31, 28, 5, 1, sheen)
     // The stitched grille over his mouth.
     c.pattern(22, 31, ["G.G.G.G.G.G.", "GGGGGGGGGGGG", "G.G.G.G.G.G."], ["G": grey])
-    // Chest: the blue bolt on a dark grey disc, grey belt.
+    // Chest: the blue flame on a dark grey disc, grey belt.
     c.rect(18, 36, 20, 1, grey)
-    c.pattern(25, 33, [".GGGG.", "GGGBBG", "GGBBGG", "GBBGGG", ".GGGG."], ["G": C(0x34343E), "B": C(0x5AA0FF)])
+    c.pattern(25, 33, [".GGGG.", "GGGGGG", "GGGGGG", "GGGGGG", ".GGGG."], ["G": C(0x34343E)])
+    drawFlameEmblem(c, x: 26, y: 33, size: .small, flame: C(0x5AA0FF), field: nil)
     c.px(26, 33, greyLight)
     c.rect(15, 33, 3, 3, black)
     if let a = p.melee {

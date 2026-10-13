@@ -1,14 +1,14 @@
 import Foundation
 
 let scenes2: [Location: Place] = [
-    .helicarrier: Place(name: "S.H.I.E.L.D. Helicarrier", panel: 0x16181D, still: Scenes.helicarrier, moving: Scenes.helicarrierMoving),
-    .xMansion: Place(name: "Xavier's School", panel: 0x14231A, still: Scenes.xMansion, moving: Scenes.xMansionMoving),
+    .helicarrier: Place(name: "S.H.E.L.L. Skycarrier", panel: 0x16181D, still: Scenes.helicarrier, moving: Scenes.helicarrierMoving),
+    .xMansion: Place(name: "Professor Why's School", panel: 0x14231A, still: Scenes.xMansion, moving: Scenes.xMansionMoving),
     .hellsKitchen: Place(name: "Hell's Kitchen", panel: 0x1A1418, still: Scenes.hellsKitchen, moving: Scenes.hellsKitchenMoving),
-    .vormir: Place(name: "Vormir", panel: 0x161A22, still: Scenes.vormir, moving: Scenes.vormirMoving),
-    .quantumRealm: Place(name: "Quantum Realm", panel: 0x1E1028, still: Scenes.quantumRealm, moving: Scenes.quantumRealmMoving),
-    .latveria: Place(name: "Latveria", panel: 0x1A1E1A, still: Scenes.latveria, moving: Scenes.latveriaMoving),
-    .hydraBase: Place(name: "Hydra Base", panel: 0x1A1414, still: Scenes.hydraBase, moving: Scenes.hydraBaseMoving),
-    .dailyBugle: Place(name: "Daily Bugle", panel: 0x1A1E2A, still: Scenes.dailyBugle, moving: Scenes.dailyBugleMoving),
+    .vormir: Place(name: "Vormyr", panel: 0x161A22, still: Scenes.vormir, moving: Scenes.vormirMoving),
+    .quantumRealm: Place(name: "Quantum Rim", panel: 0x1E1028, still: Scenes.quantumRealm, moving: Scenes.quantumRealmMoving),
+    .latveria: Place(name: "Gloomveria", panel: 0x1A1E1A, still: Scenes.latveria, moving: Scenes.latveriaMoving),
+    .hydraBase: Place(name: "Hydrax Base", panel: 0x1A1414, still: Scenes.hydraBase, moving: Scenes.hydraBaseMoving),
+    .dailyBugle: Place(name: "Daily Bungle", panel: 0x1A1E2A, still: Scenes.dailyBugle, moving: Scenes.dailyBugleMoving),
 ]
 
 /// 5×7 capitals for the signs in these places (I and the apostrophe are narrower), drawn as pixel letters.
@@ -20,6 +20,7 @@ private let scenes2Glyphs: [Character: [String]] = [
     "G": [".###.", "#...#", "#....", "#.###", "#...#", "#...#", ".###."],
     "H": ["#...#", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
     "I": ["###", ".#.", ".#.", ".#.", ".#.", ".#.", "###"],
+    "N": ["#...#", "##..#", "#.#.#", "#..##", "#...#", "#...#", "#...#"],
     "J": ["..###", "...#.", "...#.", "...#.", "#..#.", "#..#.", ".##.."],
     "L": ["#....", "#....", "#....", "#....", "#....", "#....", "#####"],
     "O": [".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
@@ -78,11 +79,11 @@ extension Scenes {
         return leftward ? w - Int(x) : Int(x)
     }
 
-    // MARK: - S.H.I.E.L.D. Helicarrier
+    // MARK: - S.H.E.L.L. Helicarrier
 
-    /// S.H.I.E.L.D. Helicarrier, out on the flight deck high above the clouds: a bright sky over a sea of cloud tops,
+    /// S.H.E.L.L. Helicarrier, out on the flight deck high above the clouds: a bright sky over a sea of cloud tops,
     /// a lift rotor turning in its housing at the deck's edge, a Quinjet parked on its gear and the grey bridge
-    /// tower with its slanted windows, radar mast and the S.H.I.E.L.D. eagle; the deck is painted with runway lines.
+    /// tower with its slanted windows, radar mast and the S.H.E.L.L. crab; the deck is painted with runway lines.
     static func helicarrier(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g)
         c.gradient(0, g, C(0x2A60B2), C(0xC6E3F6), bands: 7)
@@ -157,9 +158,9 @@ extension Scenes {
         r(0, -20, 48, 20, hull); r(0, -20, 48, 1, lit); r(0, -20, 2, 20, lit); r(46, -20, 2, 20, dark)
         r(28, -12, 14, 12, dark); for k in 0..<4 { r(29, -11 + k * 3, 12, 1, C(0x4A5059)) }
         for k in 0..<5 { r(5 + k * 4, -16, 2, 1, C(0xE8EEF4, 0.8)) }
-        // the S.H.I.E.L.D. eagle in its white ring
+        // the S.H.E.L.L. crab in its white ring
         c.circle(x + 13 * s, b - 8 * s, 4 * s, C(0xE6EAEE)); c.circle(x + 13 * s, b - 8 * s, 3 * s, C(0x22262E))
-        for (v, row) in [".....", "#.#.#", "#####", ".###.", "..#.."].enumerated() {
+        for (v, row) in ["#...#", ".#.#.", ".###.", "#####", "#.#.#"].enumerated() {
             for (u, ch) in row.enumerated() where ch == "#" { r(11 + u, -10 + v, 1, 1, C(0xE6EAEE)) }
         }
         // the upper decks, stepping back
@@ -415,7 +416,7 @@ extension Scenes {
         for u in stride(from: -26, to: 26, by: 8) { for v in [-16, -8] { c.rect(bx + u * s, g + v * s, 3 * s, 4 * s, noise(u + v * 3) > 0.4 ? C(0xF0B060, 0.7) : C(0x120810)) } }
         c.rect(bx - 16 * s, g - 33 * s, 32 * s, 11 * s, C(0x120A10)); c.rect(bx - 16 * s, g - 33 * s, 32 * s, s, C(0x2A1A22))
         for u in [-12, 12] { c.rect(bx + u * s, g - 22 * s, s, 2 * s, C(0x120A10)) }
-        scenes2Text(c, bx - scenes2TextWidth("JOSIE'S", s: s) / 2, g - 31 * s, "JOSIE'S", C(0x5A2A30), s: s)
+        scenes2Text(c, bx - scenes2TextWidth("JOSY'S", s: s) / 2, g - 31 * s, "JOSY'S", C(0x5A2A30), s: s)
         // the brick wall on the left, with its fire escapes
         hellsKitchenWall(c, g, s)
         // the water tower on our roof
@@ -529,7 +530,7 @@ extension Scenes {
         // the bar's sign, steady
         let bx = c.w * 7 / 10
         c.rect(bx - 18 * s, g - 35 * s, 36 * s, 15 * s, C(0x40E8FF, 0.08))
-        scenes2Text(c, bx - scenes2TextWidth("JOSIE'S", s: s) / 2, g - 31 * s, "JOSIE'S", C(0x7AF0FF), s: s)
+        scenes2Text(c, bx - scenes2TextWidth("JOSY'S", s: s) / 2, g - 31 * s, "JOSY'S", C(0x7AF0FF), s: s)
         // their reflections on the wet roof
         c.rect(hx, g + 2 * s, 9 * s, max(1, (c.h - g) / 2), C(0xFF3A5A, 0.18 * flick))
         c.rect(bx - 14 * s, g + 2 * s, 28 * s, max(1, (c.h - g) / 3), C(0x40E8FF, 0.12))
@@ -968,11 +969,11 @@ extension Scenes {
         }
     }
 
-    // MARK: - Hydra Base
+    // MARK: - Hydrax Base
 
-    /// A Hydra base at night, a grim concrete bunker dug into a pine-dark mountainside: the steel blast door under red
-    /// lamps and the painted Hydra skull, the red skull banners hanging either side, searchlight towers at the
-    /// corners, a Hydra tank, crates and fuel drums on the oil-stained apron.
+    /// A Hydrax base at night, a grim concrete bunker dug into a pine-dark mountainside: the steel blast door under red
+    /// lamps and the painted Hydrax skull, the red skull banners hanging either side, searchlight towers at the
+    /// corners, a Hydrax tank, crates and fuel drums on the oil-stained apron.
     static func hydraBase(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g)
         c.gradient(0, g, C(0x07080C), C(0x2A2C34), bands: 7)
@@ -1021,7 +1022,7 @@ extension Scenes {
         c.rect(x - dw, g - 23 * s, dw * 2, 23 * s, C(0x4C5258)); c.rect(x - s / 2, g - 23 * s, max(1, s), 23 * s, C(0x22262A))
         for v in stride(from: g - 20 * s, to: g, by: 5 * s) { c.rect(x - dw, v, dw * 2, max(1, s / 2), C(0x3A3E44)) }
         c.rect(x - dw, g - 23 * s, dw * 2, s, C(0x6A7076))
-        // the Hydra emblem painted above the door, and the lamps either side
+        // the Hydrax emblem painted above the door, and the lamps either side
         hydraEmblem(c, x, top + 6 * s, s, C(0x9A1A1A))
         for u in [-dw - 8 * s, dw + 6 * s] { c.rect(x + u, g - 30 * s, 3 * s, 2 * s, C(0x3A0A0A)) }
         // the banners
@@ -1030,22 +1031,22 @@ extension Scenes {
         for u in [-84, -30, 22, 76] { c.rect(x + u * s, top + 6 * s, 8 * s, 2 * s, C(0x8A2A1A, 0.7)) }
     }
 
-    /// The Hydra skull with its six tentacles, centred on `x` with its top at `y`.
+    /// The Hydrax skull with three serpent necks rising from it, centred on `x` with its top at `y`.
     static func hydraEmblem(_ c: PixelCanvas, _ x: Int, _ y: Int, _ s: Int, _ col: Px) {
-        let art = ["#...#####...#",
-                   ".#.#######.#.",
+        let art = ["###..###..###",
+                   ".#....#....#.",
+                   "..#...#...#..",
+                   "...#######...",
                    "..##.###.##..",
-                   "#.#########.#",
-                   ".#..#.#.#..#.",
-                   "#..#######..#",
-                   ".##..###..##.",
-                   "#...#...#...#"]
+                   "..#########..",
+                   "...#.#.#.#...",
+                   "....#####...."]
         for (v, row) in art.enumerated() {
             for (u, ch) in row.enumerated() where ch == "#" { c.rect(x + (u - 6) * s, y + v * s, s, s, col) }
         }
     }
 
-    /// A red Hydra banner hanging from a rod, its tail cut in a swallowtail.
+    /// A red Hydrax banner hanging from a rod, its tail cut in a swallowtail.
     static func hydraBanner(_ c: PixelCanvas, _ x: Int, _ y: Int, _ s: Int) {
         let red = C(0xA8161A), dark = C(0x7A0E12)
         c.rect(x - s, y, 16 * s, s, C(0x1A1A1C))
@@ -1067,7 +1068,7 @@ extension Scenes {
         c.rect(x + 3 * s, top - 5 * s, 4 * s, 3 * s, C(0xF4ECC8))
     }
 
-    /// A Hydra tank: a squat hull on long tracks under a wide turret, its gun pointing left.
+    /// A Hydrax tank: a squat hull on long tracks under a wide turret, its gun pointing left.
     static func hydraTank(_ c: PixelCanvas, _ x: Int, _ g: Int, _ s: Int) {
         let hull = C(0x3A3E38), lit = C(0x585E54), dark = C(0x1E201C)
         func r(_ u: Int, _ v: Int, _ w: Int, _ h: Int, _ col: Px) { c.rect(x + u * s, g + v * s, w * s, h * s, col) }
@@ -1129,9 +1130,9 @@ extension Scenes {
         }
     }
 
-    // MARK: - Daily Bugle
+    // MARK: - Daily Bungle
 
-    /// The Daily Bugle, up on the Bugle's roof on a bright day: the paper's big DAILY BUGLE letters on their steel
+    /// The Daily Bungle, up on the Bungle's roof on a bright day: the paper's big DAILY BUNGLE letters on their steel
     /// frame, a wooden water tower and the stair hut, pigeons along the parapet, and Midtown behind, the Empire State
     /// and the Chrysler Building over rows of towers with water tanks on their roofs.
     static func dailyBugle(_ c: PixelCanvas, _ g: Int) {
@@ -1213,9 +1214,9 @@ extension Scenes {
         scenes2Peak(c, x, b - 38 * s, half: 12 * s, h: 7 * s, C(0x5A4A44)); r(0, -40, 1, 2, leg)
     }
 
-    /// The DAILY BUGLE letters on their steel frame, centred on `x`, the frame's feet on row `b`.
+    /// The DAILY BUNGLE letters on their steel frame, centred on `x`, the frame's feet on row `b`.
     static func bugleSign(_ c: PixelCanvas, _ x: Int, _ b: Int, _ s: Int) {
-        let k = 2 * s, text = "DAILY BUGLE", w = scenes2TextWidth(text, s: k)
+        let k = 2 * s, text = "DAILY BUNGLE", w = scenes2TextWidth(text, s: k)
         let left = x - w / 2, top = b - 34 * s, steel = C(0x3A3E48)
         // the frame: posts, braces and a catwalk under the letters
         for u in stride(from: left, through: left + w, by: 16 * s) {

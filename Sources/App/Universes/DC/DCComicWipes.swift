@@ -5,7 +5,7 @@ import AppKit
 /// them can turn up on any trip.
 enum DCComicWipe: Int, CaseIterable {
     case speedForce     // the Flash races through the frozen panel in red and yellow lightning: WHOOSH!
-    case batSignal      // Gotham goes dark, the Bat-Signal lights the sky, and its circle grows into the new place
+    case batSignal      // Gotham goes dark, the Night Beacon lights the sky, and its circle grows into the new place
     case pageBreaker    // Superman punches through the page from behind (KRAASH!), the new place underneath
     case lasso          // the Lasso of Truth loops the panel, crumples it up, and whips open on the new one
     case emerald        // the old place dissolves into green dots; a ring's constructs pencil, ink and colour the new one
@@ -208,7 +208,7 @@ struct DCComicTrip {
 
     // MARK: Batman
 
-    /// The old place sinks into a Gotham night; the Bat-Signal lights the sky, and its circle grows, the new place
+    /// The old place sinks into a Gotham night; the Night Beacon lights the sky, and its circle grows, the new place
     /// showing through it more and more until the light covers everything and fades off it.
     private func drawBatSignal(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
         let s = r.height / 800, far = hypot(r.width, r.height)
@@ -231,7 +231,7 @@ struct DCComicTrip {
                                   CGPoint(x: foot.x + n.x * 14 * s, y: foot.y + n.y * 14 * s)]))
         ctx.setFillColor(rgb(0xFFF1B0, 0.3 * lit * (1 - fade))); ctx.fillPath()
 
-        // The circle of light: yellow, the new place coming through, the bat over it until it fades away.
+        // The circle of light: yellow, the new place coming through, the claw mark over it until it fades away.
         let circle = CGRect(x: sky.x - rad, y: sky.y - rad, width: rad * 2, height: rad * 2)
         ctx.saveGState()
         ctx.addEllipse(in: circle); ctx.clip()
@@ -240,7 +240,7 @@ struct DCComicTrip {
         ctx.setAlpha(1)
         ctx.setFillColor(rgb(0xFFE36B, 0.42 * (1 - fade))); ctx.fill(r)
         let batA = lit * CGFloat(1 - Self.ease(Self.span(k, 0.46, 0.72)))
-        if batA > 0.01 { ctx.addPath(Self.bat(sky, width: rad * 1.6)); ctx.setFillColor(rgb(0x0A0A0A, batA)); ctx.fillPath() }
+        if batA > 0.01 { ctx.addPath(Self.clawMark(sky, width: rad * 1.6)); ctx.setFillColor(rgb(0x0A0A0A, batA)); ctx.fillPath() }
         ctx.restoreGState()
         ctx.saveGState()
         ctx.setShadow(offset: .zero, blur: 24 * s, color: rgb(0xFFE36B))
@@ -294,7 +294,7 @@ struct DCComicTrip {
         }
         let say = Self.pop(k, 0.1, 0.16, 0.36, 0.44)
         if say > 0.01 {
-            Self.letters(ctx, "THWIP!", at: CGPoint(x: r.minX + r.width * 0.27, y: r.minY + r.height * 0.42), size: (50 + 80 * CGFloat(say)) * s,
+            Self.letters(ctx, "FWIP!", at: CGPoint(x: r.minX + r.width * 0.27, y: r.minY + r.height * 0.42), size: (50 + 80 * CGFloat(say)) * s,
                          maxWidth: r.width * 0.6, angle: 0.14, fill: rgb(0xFFD21F), outline: Self.ink)
         }
     }
@@ -707,7 +707,7 @@ struct DCComicTrip {
         }
         let say = Self.pop(k, 0.1, 0.17, 0.7, 0.8)
         if say > 0.01 {
-            Self.letters(ctx, "SHAZAM!", at: CGPoint(x: r.midX, y: r.maxY - r.height * 0.24), size: (60 + 120 * CGFloat(say)) * s,
+            Self.letters(ctx, "KA-ZAM!", at: CGPoint(x: r.midX, y: r.maxY - r.height * 0.24), size: (60 + 120 * CGFloat(say)) * s,
                          maxWidth: r.width * 0.88, angle: -0.08, fill: rgb(0xFFD21F), outline: rgb(0xC8102E))
         }
     }
@@ -943,7 +943,7 @@ struct DCComicTrip {
         // Scraps of speech balloons.
         let talk = CGFloat(Self.pop(k, 0.1, 0.24, 0.58, 0.74))
         if talk > 0.01 {
-            let words = ["!?", "#@$%!", "...", "BZZT", "ERR0R", "01101", "BOO-YAH!"]
+            let words = ["!?", "#@$%!", "...", "BZZT", "ERR0R", "01101", "BOOYAKA!"]
             for i in 0..<8 {
                 let w = (110 + 80 * CGFloat(noise(i * 19 + 2))) * s, h = w * 0.58
                 let at = CGPoint(x: r.minX + r.width * (0.1 + 0.8 * CGFloat(noise(i * 19))) + (CGFloat(noise(i + tick)) - 0.5) * 20 * s,
@@ -1244,15 +1244,15 @@ struct DCComicTrip {
 
     // MARK: Props
 
-    /// The bat emblem, `w` wide, centred on `c`.
-    private static func bat(_ c: CGPoint, width w: CGFloat) -> CGPath {
-        // The right half, from between the ears round the wing to the tail; the left half mirrors it.
-        let half: [(CGFloat, CGFloat)] = [(0, 0.10), (0.05, 0.13), (0.075, 0.27), (0.11, 0.12), (0.19, 0.12), (0.30, 0.21), (0.55, 0.29),
-                                          (0.84, 0.25), (1.0, 0.08), (0.88, 0.06), (0.80, -0.06), (0.70, -0.03), (0.60, -0.16), (0.48, -0.11),
-                                          (0.37, -0.26), (0.25, -0.17), (0.11, -0.32), (0, -0.22)]
-        let right = half.map { CGPoint(x: c.x + $0.0 * w / 2, y: c.y + $0.1 * w / 2) }
-        let left = half.reversed().dropFirst().dropLast().map { CGPoint(x: c.x - $0.0 * w / 2, y: c.y + $0.1 * w / 2) }
-        return polygon(right + left)
+    /// The Night Beacon's claw mark, `w` wide, centred on `c`: three slashes rising to the right, pointed at both ends.
+    private static func clawMark(_ c: CGPoint, width w: CGFloat) -> CGPath {
+        let p = CGMutablePath(), h = w * 0.5, slant = h * 0.55, thick = w * 0.09
+        for i in -1...1 {
+            let x = c.x + CGFloat(i) * w * 0.27
+            let top = CGPoint(x: x + slant / 2, y: c.y + h / 2), bottom = CGPoint(x: x - slant / 2, y: c.y - h / 2)
+            p.addPath(polygon([bottom, CGPoint(x: x - thick / 2, y: c.y), top, CGPoint(x: x + thick / 2, y: c.y)]))
+        }
+        return p
     }
 
     /// A grapnel at `at`, pointing along `angle`: a shaft and three claws.
@@ -1354,16 +1354,15 @@ struct DCComicTrip {
         ctx.restoreGState()
         ctx.addPath(grin); ctx.setStrokeColor(ink); ctx.setLineWidth(w * 0.012); ctx.strokePath()
         ctx.restoreGState()
-        // The corners: a J, upright and upside down.
-        let font = NSFont(name: "Futura-CondensedExtraBold", size: h * 0.11) ?? .boldSystemFont(ofSize: h * 0.11)
-        let j = NSAttributedString(string: "J", attributes: [.font: font, .foregroundColor: NSColor(srgbRed: 0.78, green: 0.06, blue: 0.18, alpha: 1)])
-        NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current = NSGraphicsContext(cgContext: ctx, flipped: false)
-        j.draw(at: NSPoint(x: card.minX + w * 0.015, y: card.maxY - h * 0.13))
+        // The corners: a red diamond, upright and upside down.
+        let pip = CGPoint(x: card.minX + w * 0.045, y: card.maxY - h * 0.075), pd = h * 0.045
+        let diamond = polygon([CGPoint(x: pip.x, y: pip.y + pd), CGPoint(x: pip.x + pd * 0.7, y: pip.y),
+                               CGPoint(x: pip.x, y: pip.y - pd), CGPoint(x: pip.x - pd * 0.7, y: pip.y)])
+        ctx.setFillColor(rgb(0xC70F2E))
+        ctx.addPath(diamond); ctx.fillPath()
         ctx.saveGState(); ctx.rotate(by: .pi)
-        j.draw(at: NSPoint(x: card.minX + w * 0.015, y: card.maxY - h * 0.13))
+        ctx.addPath(diamond); ctx.fillPath()
         ctx.restoreGState()
-        NSGraphicsContext.restoreGraphicsState()
         ctx.addPath(CGPath(roundedRect: card, cornerWidth: round, cornerHeight: round, transform: nil))
         ctx.setStrokeColor(ink); ctx.setLineWidth(max(w * 0.008, 2 * s)); ctx.strokePath()
     }

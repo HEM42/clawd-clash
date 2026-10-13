@@ -8,35 +8,35 @@ import Foundation
 private let lanternMagic = Magic(core: C(0xD8FFD0), glow: C(0x2ADB4A), jagged: false)
 
 let dcHeroes4: [DCHero: Persona] = [
-    .johnStewart: Persona(name: "John Stewart", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xE8FFE0), glow: C(0x2ADB4A)),
+    .johnStewart: Persona(name: "John Steward", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xE8FFE0), glow: C(0x2ADB4A)),
                   muzzle: (50, 32), handGun: false, headTop: 23, signature: 3.2,
-                  callout: "In brightest day, in blackest night…",
+                  callout: "In brightest light, in darkest dark…",
                   draw: drawJohnStewart),
-    .guyGardner: Persona(name: "Guy Gardner", weapon: .saber, motion: .fly, headTop: 21, signature: 2.6,
-                  callout: "Name's Guy Gardner. Remember it.",
+    .guyGardner: Persona(name: "Guy Garden", weapon: .saber, motion: .fly, headTop: 21, signature: 2.6,
+                  callout: "The name's Guy. Don't forget it.",
                   draw: drawGuyGardner),
-    .kyleRayner: Persona(name: "Kyle Rayner", weapon: .lightning, motion: .fly, magic: lanternMagic, headTop: 20, signature: 3.4,
-                  callout: "Let me sketch something.",
+    .kyleRayner: Persona(name: "Kyle Rayder", weapon: .lightning, motion: .fly, magic: lanternMagic, headTop: 20, signature: 3.4,
+                  callout: "Let me draw you something.",
                   draw: drawKyleRayner),
-    .jessicaCruz: Persona(name: "Jessica Cruz", weapon: .lightning, motion: .fly, magic: lanternMagic, headTop: 21, signature: 2.8,
-                  callout: "I can do this.",
+    .jessicaCruz: Persona(name: "Jessica Cruise", weapon: .lightning, motion: .fly, magic: lanternMagic, headTop: 21, signature: 2.8,
+                  callout: "I've got this.",
                   draw: drawJessicaCruz),
-    .simonBaz: Persona(name: "Simon Baz", weapon: .blaster, motion: .fly, shot: .bullet, muzzle: (47, 32), headTop: 22,
+    .simonBaz: Persona(name: "Simon Bas", weapon: .blaster, motion: .fly, shot: .bullet, muzzle: (47, 32), headTop: 22,
                   signature: 2.4,
                   draw: drawSimonBaz),
-    .kilowog: Persona(name: "Kilowog", weapon: .saber, motion: .fly, pivot: kilowogShoulder, bulk: 5, headTop: 20, signature: 2.8,
-                  callout: "Poozer!",
+    .kilowog: Persona(name: "Kilowag", weapon: .saber, motion: .fly, pivot: kilowogShoulder, bulk: 5, headTop: 20, signature: 2.8,
+                  callout: "Rookie!",
                   draw: drawKilowog),
-    .tomarRe: Persona(name: "Tomar-Re", weapon: .lightning, motion: .fly, magic: lanternMagic, headTop: 17, signature: 3.2,
+    .tomarRe: Persona(name: "Tomar-Ru", weapon: .lightning, motion: .fly, magic: lanternMagic, headTop: 17, signature: 3.2,
                   draw: drawTomarRe),
-    .chP: Persona(name: "Ch'p", weapon: .saber, motion: .fly, pivot: chpHand, headTop: 23, signature: 2.6,
+    .chP: Persona(name: "Ch'pp", weapon: .saber, motion: .fly, pivot: chpHand, headTop: 23, signature: 2.6,
                   draw: drawChP),
-    .adamStrange: Persona(name: "Adam Strange", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xFFF0E0), glow: C(0xFF6A2A)),
-                  muzzle: (51, 32), headTop: 18, signature: 3.0, callout: "Next stop, Rann.",
+    .adamStrange: Persona(name: "Adam Stranger", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xFFF0E0), glow: C(0xFF6A2A)),
+                  muzzle: (51, 32), headTop: 18, signature: 3.0, callout: "Next stop, Rhann.",
                   draw: drawAdamStrange),
-    .hawkman: Persona(name: "Hawkman", weapon: .saber, motion: .fly, headTop: 17, signature: 2.8,
+    .hawkman: Persona(name: "Hawk-Warrior", weapon: .saber, motion: .fly, headTop: 17, signature: 2.8,
                   draw: drawHawkman),
-    .hawkgirl: Persona(name: "Hawkgirl", weapon: .saber, motion: .fly, headTop: 17, signature: 2.8,
+    .hawkgirl: Persona(name: "Hawk-Maiden", weapon: .saber, motion: .fly, headTop: 17, signature: 2.8,
                   draw: drawHawkgirl),
 ]
 
@@ -74,9 +74,9 @@ private func construct(_ c: PixelCanvas, alpha: Double = 1, upTo: Int = 999, _ s
 /// Construct silhouettes are drawn in `shapeCol`; `lineCol` marks a rim line inside one.
 private let shapeCol = C(0x00FF00), lineCol = C(0xFF0000)
 
-/// The lantern emblem: a white disc with the green ring in it.
+/// The lamp emblem: a white disc with the green lamp in it.
 private func lanternEmblem(_ c: PixelCanvas, x: Int, y: Int, mark: Px = glGreenD) {
-    c.pattern(x, y, [".WWWW.", "WWGGWW", "WGWWGW", "WWGGWW", ".WWWW."], ["W": C(0xF2F4F2), "G": mark])
+    drawLampEmblem(c, x: x, y: y, size: .medium, lamp: mark, field: C(0xF2F4F2))
 }
 
 /// The uniform across the chest (rows 33…37): `side` panels at the edges, `mid` down the middle, the emblem on it.
@@ -331,7 +331,7 @@ private func guyGlove(_ s: PixelCanvas, x: Int, y: Int) {
 // MARK: - Kyle Rayner
 
 /// Kyle Rayner: the artist Lantern. Shaggy dark hair, his own mask with fins sweeping up and back from the eyes,
-/// a black suit with the green chest and his clawed emblem. He casts a steady green beam. Signature: he raises the
+/// a black suit with the green chest and the lamp emblem. He casts a steady green beam. Signature: he raises the
 /// ring like a pen and draws a dragon in the air, line by line, then lets it fade.
 private func drawKyleRayner(_ c: PixelCanvas, _ p: Pose) {
     if lanternFlight(c, p, kyleRayner) { return }
@@ -369,7 +369,7 @@ private func kyleRayner(_ c: PixelCanvas, _ p: Pose) {
     ], ["F": fin, "f": glGreenD, "M": mask, "W": C(0xF2F4F2), "K": ink])
     c.rect(26, 32, 4, 1, clawdShade)
     lanternChest(c, mid: glGreen, side: glBlack, emblem: false)
-    c.pattern(25, 33, ["W....W", "WW..WW", ".WWWW.", ".WKKW.", "..WW.."], ["W": C(0xF2F4F2), "K": glBlack])
+    drawLampEmblem(c, x: 25, y: 33, size: .medium, lamp: C(0xF2F4F2), field: nil)
     c.rect(15, 33, 3, 3, glBlack)
     if p.flying { flightFist(c, glove: glBlack, t: p.t); return }
     if let s = p.signature {

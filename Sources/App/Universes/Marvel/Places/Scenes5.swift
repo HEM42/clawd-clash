@@ -1,11 +1,11 @@
 import Foundation
 
 let scenes5: [Location: Place] = [
-    .madripoor: Place(name: "Madripoor", panel: 0x1E1418, still: Scenes.madripoor, moving: Scenes.madripoorMoving),
-    .sokovia: Place(name: "Sokovia", panel: 0x1A1A1E, still: Scenes.sokovia, moving: Scenes.sokoviaMoving),
-    .worldship: Place(name: "Galactus' Worldship", panel: 0x1A1028, still: Scenes.worldship, moving: Scenes.worldshipMoving),
+    .madripoor: Place(name: "Madripur", panel: 0x1E1418, still: Scenes.madripoor, moving: Scenes.madripoorMoving),
+    .sokovia: Place(name: "Sokovina", panel: 0x1A1A1E, still: Scenes.sokovia, moving: Scenes.sokoviaMoving),
+    .worldship: Place(name: "Galacticus' Worldship", panel: 0x1A1028, still: Scenes.worldship, moving: Scenes.worldshipMoving),
     .harlem: Place(name: "Harlem", panel: 0x1E1814, still: Scenes.harlem, moving: Scenes.harlemMoving),
-    .kunLun: Place(name: "K'un-Lun", panel: 0x1A2018, still: Scenes.kunLun, moving: Scenes.kunLunMoving),
+    .kunLun: Place(name: "K'un-Lune", panel: 0x1A2018, still: Scenes.kunLun, moving: Scenes.kunLunMoving),
 ]
 
 /// 3×5 capitals for the signs in these places (M, N and W are wider), drawn as pixel letters.
@@ -13,6 +13,7 @@ private let scenes5Glyphs: [Character: [String]] = [
     "A": [".#.", "#.#", "###", "#.#", "#.#"],
     "B": ["##.", "#.#", "##.", "#.#", "##."],
     "C": [".##", "#..", "#..", "#..", ".##"],
+    "D": ["##.", "#.#", "#.#", "#.#", "##."],
     "E": ["###", "#..", "##.", "#..", "###"],
     "G": [".##", "#..", "#.#", "#.#", ".##"],
     "H": ["#.#", "#.#", "###", "#.#", "#.#"],
@@ -82,10 +83,10 @@ extension Scenes {
 // MARK: - Madripoor
 
 extension Scenes {
-    /// One Lowtown shophouse: left edge, width, height and its index (the last one is the Princess Bar).
+    /// One Lowtown shophouse: left edge, width, height and its index (the last one is the Duchess Bar).
     struct MadripoorShop { let x, w, h, i: Int; let bar: Bool }
 
-    /// Lowtown's row of shophouses along the left of the quay, ending with the Princess Bar.
+    /// Lowtown's row of shophouses along the left of the quay, ending with the Duchess Bar.
     static func madripoorShops(_ c: PixelCanvas, _ g: Int) -> [MadripoorShop] {
         let s = unit(g), end = min(c.w * 34 / 100, 170 * s)
         let extra = isTall(c) ? g * 3 / 10 : 0
@@ -106,7 +107,7 @@ extension Scenes {
     }
 
     /// Madripoor, Lowtown at night: a row of crowded shophouses with vertical neon signs and red lanterns under
-    /// their arcades, the Princess Bar's sign on the last of them, junks with battened red sails riding in the harbour,
+    /// their arcades, the Duchess Bar's sign on the last of them, junks with battened red sails riding in the harbour,
     /// and Hightown's glittering towers on the hill across the bay under a moon.
     static func madripoor(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c)
@@ -211,7 +212,7 @@ extension Scenes {
         c.rect(b.x - s, top, b.w + 2 * s, 2 * s, C(0x1A1220))
         c.rect(b.x + b.w - s, top, s, b.h, C(0x140E1A))
         if b.bar {
-            // the Princess Bar: its sign's dark board (the neon is in the moving layer), shuttered windows above
+            // the Duchess Bar: its sign's dark board (the neon is in the moving layer), shuttered windows above
             let (sx, sy, sw, sh) = madripoorBarSign(b, g)
             for v in stride(from: top + 5 * s, to: sy - 8 * s, by: 10 * s) {
                 for u in stride(from: b.x + 6 * s, to: b.x + b.w - 8 * s, by: 12 * s) {
@@ -220,7 +221,7 @@ extension Scenes {
             }
             c.rect(sx - s, sy - s, sw + 2 * s, sh + 2 * s, C(0x3A2440))
             c.rect(sx, sy, sw, sh, C(0x120812))
-            scenes5TextCentred(c, sx + sw / 2, sy + 2 * s, "PRINCESS", C(0x5A2048), s: s)
+            scenes5TextCentred(c, sx + sw / 2, sy + 2 * s, "DUCHESS", C(0x5A2048), s: s)
             scenes5TextCentred(c, sx + sw / 2, sy + 8 * s, "BAR", C(0x204A58), s: s)
         } else {
             for v in stride(from: top + 5 * s, to: g - 24 * s, by: 10 * s) {
@@ -256,7 +257,7 @@ extension Scenes {
         c.rect(b.x, g - 14 * s, 2 * s, 14 * s, C(0x2A1A26)); c.rect(b.x + b.w - 2 * s, g - 14 * s, 2 * s, 14 * s, C(0x2A1A26))
     }
 
-    /// The Princess Bar's sign board on its building: x, y, width, height.
+    /// The Duchess Bar's sign board on its building: x, y, width, height.
     static func madripoorBarSign(_ b: MadripoorShop, _ g: Int) -> (Int, Int, Int, Int) {
         let s = unit(g)
         return (b.x + b.w / 2 - 18 * s, g - 32 * s, 36 * s, 14 * s)
@@ -277,7 +278,7 @@ extension Scenes {
         }
     }
 
-    /// The neon signs buzzing (one flickering now and then), the Princess Bar's sign, lanterns swaying under the
+    /// The neon signs buzzing (one flickering now and then), the Duchess Bar's sign, lanterns swaying under the
     /// arcades and the neon's colours smeared across the wet street.
     static func madripoorMoving(_ c: PixelCanvas, _ g: Int, _ t: Double) {
         let s = unit(g)
@@ -288,7 +289,7 @@ extension Scenes {
                 let barOn = noise(Int(t * 9) + 97) < 0.1 ? 0.45 : 1.0
                 c.rect(sx - 3 * s, sy - 3 * s, sw + 6 * s, sh + 6 * s, C(0xFF4AB0, 0.08))
                 c.rect(sx, sy, sw, s, C(0x4AF0FF, 0.8)); c.rect(sx, sy + sh - s, sw, s, C(0x4AF0FF, 0.8))
-                scenes5TextCentred(c, sx + sw / 2, sy + 2 * s, "PRINCESS", C(0xFF6AC0), s: s)
+                scenes5TextCentred(c, sx + sw / 2, sy + 2 * s, "DUCHESS", C(0xFF6AC0), s: s)
                 scenes5TextCentred(c, sx + sw / 2, sy + 8 * s, "BAR", C(0x7AF8FF, barOn), s: s)
                 c.rect(sx, g + 2 * s, sw, max(1, (c.h - g) / 2), C(0xFF4AB0, 0.14))
             } else {
@@ -792,25 +793,25 @@ extension Scenes {
 // MARK: - Harlem
 
 extension Scenes {
-    /// Where Pop's Barber Shop and the Apollo stand along the block: their left edges.
+    /// Where Pop's Barber Shop and the Apolla stand along the block: their left edges.
     static func harlemSpots(_ c: PixelCanvas, _ g: Int) -> (pops: Int, apollo: Int) {
         (c.w * 15 / 100, c.w * 60 / 100)
     }
 
-    /// The Apollo's vertical sign: left, top, width, height.
+    /// The Apolla's vertical sign: left, top, width, height.
     static func harlemApolloSign(_ c: PixelCanvas, _ g: Int) -> (x: Int, y: Int, w: Int, h: Int) {
         let s = unit(g), a = harlemSpots(c, g).apollo
         return (a + 28 * s, g - 61 * s, 9 * s, 40 * s)
     }
 
-    /// The Apollo's marquee: left, top, width, height.
+    /// The Apolla's marquee: left, top, width, height.
     static func harlemMarquee(_ c: PixelCanvas, _ g: Int) -> (x: Int, y: Int, w: Int, h: Int) {
         let s = unit(g), a = harlemSpots(c, g).apollo
         return (a - 4 * s, g - 21 * s, 72 * s, 10 * s)
     }
 
     /// Harlem, a block at sunset: a row of brownstones and brick tenements with stoops, cornices and fire
-    /// escapes, Pop's Barber Shop with its striped awning and pole, and the Apollo Theater's tall red sign and
+    /// escapes, Pop's Barber Shop with its striped awning and pole, and the Apolla Theater's tall red sign and
     /// marquee, under an orange and pink sky with pigeons on the cornices.
     static func harlem(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g)
@@ -956,7 +957,7 @@ extension Scenes {
         return (x + 56 * s - 4 * s, g - 14 * s, 10 * s)
     }
 
-    /// The Apollo Theater: its brick front, the tall red APOLLO sign and the marquee over the doors.
+    /// The Apolla Theater: its brick front, the tall red APOLLA sign and the marquee over the doors.
     static func harlemApollo(_ c: PixelCanvas, _ g: Int, _ x: Int) {
         let s = unit(g), w = 64 * s, top = g - 50 * s
         let wall = C(0x9A6248), dark = C(0x4A2A1E)
@@ -971,7 +972,7 @@ extension Scenes {
         let sg = harlemApolloSign(c, g)
         c.rect(sg.x - s, sg.y - s, sg.w + 2 * s, sg.h + 2 * s, C(0x5A0E0E))
         c.rect(sg.x, sg.y, sg.w, sg.h, C(0xB81E1E))
-        for (k, ch) in "APOLLO".enumerated() {
+        for (k, ch) in "APOLLA".enumerated() {
             scenes5Text(c, sg.x + 3 * s, sg.y + 3 * s + k * 6 * s, String(ch), C(0xE8C890), s: s)
         }
         c.rect(sg.x + 3 * s, sg.y + sg.h + s, 3 * s, g - 21 * s - (sg.y + sg.h + s), C(0x3A1A14))
@@ -1006,7 +1007,7 @@ extension Scenes {
         }
     }
 
-    /// The Apollo's bulbs chasing round its sign and marquee, Pop's pole turning, and pigeons: a few pecking on the
+    /// The Apolla's bulbs chasing round its sign and marquee, Pop's pole turning, and pigeons: a few pecking on the
     /// sidewalk, a small flock wheeling over the rooftops.
     static func harlemMoving(_ c: PixelCanvas, _ g: Int, _ t: Double) {
         let s = unit(g), step = Int(t * 8)
@@ -1021,7 +1022,7 @@ extension Scenes {
         for v in stride(from: sg.y + s, to: sg.y + sg.h - s, by: 3 * s) { ring.append((sg.x + s, v)) }
         for v in stride(from: sg.y + sg.h - 2 * s, to: sg.y, by: -3 * s) { ring.append((sg.x + sg.w - 2 * s, v)) }
         for (i, p) in ring.enumerated() { c.rect(p.0, p.1, s, s, (i + step) % 4 == 0 ? C(0xFFF0B0) : C(0xE89A5A, 0.6)) }
-        for (k, ch) in "APOLLO".enumerated() {
+        for (k, ch) in "APOLLA".enumerated() {
             scenes5Text(c, sg.x + 3 * s, sg.y + 3 * s + k * 6 * s, String(ch), C(0xFFF4C8), s: s)
         }
         // the barber's pole

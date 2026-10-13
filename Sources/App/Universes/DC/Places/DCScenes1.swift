@@ -1,11 +1,11 @@
 import Foundation
 
 let dcScenes1: [Location: Place] = [
-    .metropolis: Place(name: "Metropolis", panel: 0x142438, still: Scenes.metropolis, moving: Scenes.metropolisLife),
-    .gotham: Place(name: "Gotham City", panel: 0x12121C, still: Scenes.gotham, moving: Scenes.gothamLife),
-    .batcave: Place(name: "The Batcave", panel: 0x0E1216, still: Scenes.batcave, moving: Scenes.batcaveLife),
-    .fortressOfSolitude: Place(name: "Fortress of Solitude", panel: 0x10202E, still: Scenes.fortress, moving: Scenes.fortressLife),
-    .themyscira: Place(name: "Themyscira", panel: 0x16283A, still: Scenes.themyscira, moving: Scenes.themysciraLife),
+    .metropolis: Place(name: "Megalopolis", panel: 0x142438, still: Scenes.metropolis, moving: Scenes.metropolisLife),
+    .gotham: Place(name: "Gothamburg", panel: 0x12121C, still: Scenes.gotham, moving: Scenes.gothamLife),
+    .batcave: Place(name: "The Night Grotto", panel: 0x0E1216, still: Scenes.batcave, moving: Scenes.batcaveLife),
+    .fortressOfSolitude: Place(name: "Fortress of Loneliness", panel: 0x10202E, still: Scenes.fortress, moving: Scenes.fortressLife),
+    .themyscira: Place(name: "Themyskira", panel: 0x16283A, still: Scenes.themyscira, moving: Scenes.themysciraLife),
     .atlantis: Place(name: "Atlantis", panel: 0x0A2230, still: Scenes.atlantis, moving: Scenes.atlantisLife),
 ]
 
@@ -14,17 +14,33 @@ let dcScenes1: [Location: Place] = [
 /// A 3 by 5 pixel alphabet, only the letters these scenes need.
 private let scenes1Font: [Character: [String]] = [
     "A": ["010", "101", "111", "101", "101"],
+    "B": ["110", "101", "110", "101", "110"],
     "D": ["110", "101", "101", "101", "110"],
     "E": ["111", "100", "110", "100", "111"],
+    "G": ["011", "100", "101", "101", "011"],
     "I": ["111", "010", "010", "010", "111"],
     "L": ["100", "100", "100", "100", "111"],
     "N": ["101", "111", "111", "101", "101"],
+    "O": ["010", "101", "101", "101", "010"],
     "P": ["110", "101", "110", "100", "100"],
     "T": ["111", "010", "010", "010", "010"],
     "Y": ["101", "101", "010", "010", "010"],
 ]
 
-/// The bat emblem, 21 by 9.
+/// The claw mark the Night Beacon throws on the clouds, 21 by 9: three slashes rising to the right.
+private let scenes1Claw: [String] = [
+    "........##...##...##.",
+    ".......###..###..###.",
+    "......###..###..###..",
+    ".....###..###..###...",
+    "....###..###..###....",
+    "...###..###..###.....",
+    "..###..###..###......",
+    ".###..###..###.......",
+    "##...##...##.........",
+]
+
+/// The bat emblem, 21 by 9 (only on the Batcave's computer screen now).
 private let scenes1Bat: [String] = [
     "#........#.#........#",
     "##.......###.......##",
@@ -96,14 +112,14 @@ extension Scenes {
     /// One art-deco building of the skyline.
     struct Scenes1Block { let x, y, w, h, kind: Int }
 
-    /// The Daily Planet's place on the canvas: left edge, width and top row (the globe sits above it).
+    /// The Daily Globe's place on the canvas: left edge, width and top row (the globe sits above it).
     static func metropolisPlanetFrame(_ c: PixelCanvas, _ g: Int) -> (x: Int, w: Int, top: Int) {
         let s = unit(g)
         return (Int(Double(c.w) * 0.64), 30 * s, isTall(c) ? g / 4 : 27 * s)
     }
 
     /// Metropolis on a bright afternoon: the crew is up on a stone roof terrace with a balustrade. Behind them the
-    /// art-deco skyline stands in pale stone and hazy blue under fair-weather clouds, and the Daily Planet rises at the
+    /// art-deco skyline stands in pale stone and hazy blue under fair-weather clouds, and the Daily Globe rises at the
     /// right, stepped crown, its name on the plaque and the golden globe with its ring on top.
     static func metropolis(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c)
@@ -177,7 +193,7 @@ extension Scenes {
         for y in stride(from: y0 + 6 * s, to: b.y + b.h, by: 5 * s) { c.rect(b.x + s, y, b.w - 4 * s, s, body.alpha(0.8)) }
     }
 
-    /// The Daily Planet: stepped stone shaft, the name plaque and the golden globe with its ring.
+    /// The Daily Globe: stepped stone shaft, the name plaque and the golden globe with its ring.
     static func metropolisPlanet(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), f = metropolisPlanetFrame(c, g), x = f.x, w = f.w, top = f.top
         let stone = C(0xEAE2D0), shade = C(0xC0B6A0), slot = C(0x6A7E9A)
@@ -211,7 +227,7 @@ extension Scenes {
         c.rect(x + 2 * s, top + 11 * s, w - 4 * s, s, C(0xC89A3A)); c.rect(x + 2 * s, top + 23 * s, w - 4 * s, s, C(0xC89A3A))
         let gold = C(0xF6E2A8)
         dcScenes1Text(c, x + (w - scenes1TextWidth("DAILY", s: s)) / 2, top + 13 * s, "DAILY", gold, s: s)
-        dcScenes1Text(c, x + (w - scenes1TextWidth("PLANET", s: s)) / 2, top + 19 * s, "PLANET", gold, s: s)
+        dcScenes1Text(c, x + (w - scenes1TextWidth("GLOBE", s: s)) / 2, top + 19 * s, "GLOBE", gold, s: s)
         // the globe on its plinth, with the ring round it
         let gx = x + w / 2, r = 10 * s, gy = top - 3 * s - r
         c.rect(gx - 5 * s, top - 3 * s, 10 * s, 3 * s, shade); c.rect(gx - 5 * s, top - 3 * s, 10 * s, s, stone)
@@ -282,7 +298,7 @@ extension Scenes {
 // MARK: - Gotham City
 
 extension Scenes {
-    /// Where the Bat-Signal shines in the clouds.
+    /// Where the Night Beacon shines in the clouds.
     static func gothamSignal(_ c: PixelCanvas, _ g: Int) -> (x: Int, y: Int) {
         let s = unit(g)
         return (Int(Double(c.w) * 0.3), isTall(c) ? g / 5 : 12 * s)
@@ -290,7 +306,7 @@ extension Scenes {
 
     /// Gotham City on a rainy night: the crew is on a wet slate rooftop, a stone gargoyle crouched on each corner pillar
     /// of its parapet. Beyond, gothic towers with pointed roofs and spires crowd under low clouds, a few windows lit
-    /// amber, and a searchlight on a nearby roof throws the Bat-Signal up onto the clouds.
+    /// amber, and a searchlight on a nearby roof throws the Night Beacon's claw mark up onto the clouds.
     static func gotham(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), sig = gothamSignal(c, g)
         c.gradient(0, g, C(0x0A0C16), C(0x2C2A3C), bands: 7)
@@ -319,7 +335,7 @@ extension Scenes {
         c.ellipse(sig.x, sig.y, 26 * s, 16 * s, C(0xF0E6B0, 0.07))
         c.ellipse(sig.x, sig.y, 19 * s, 12 * s, C(0xF0E6B0, 0.12))
         c.ellipse(sig.x, sig.y, 14 * s, 9 * s, C(0xF4ECB8, 0.9))
-        dcScenes1Stamp(c, sig.x - 10 * s, sig.y - 4 * s, scenes1Bat, ["#": C(0x14141C)], s: s)
+        dcScenes1Stamp(c, sig.x - 10 * s, sig.y - 4 * s, scenes1Claw, ["#": C(0x14141C)], s: s)
         // far towers then near ones
         gothamRow(c, g, lo: tall ? 0.30 : 0.34, hi: tall ? 0.62 : 0.62, col: C(0x1C1C2C), lamp: 0.35, seed: 2)
         gothamTower(c, g)

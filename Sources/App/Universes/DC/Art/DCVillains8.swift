@@ -4,37 +4,37 @@ import Foundation
 // costume again, except Mister Mind (a worm) and Monsieur Mallah (a gorilla), who are at least blocky ones.
 
 let dcVillains8: [DCVillain: Persona] = [
-    .blackAdam: Persona(name: "Black Adam", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFF8D0), glow: C(0xFFD21E)),
-                  headTop: 21, signature: 3.2, callout: "Shazam!",
+    .blackAdam: Persona(name: "Black Abel", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFF8D0), glow: C(0xFFD21E)),
+                  headTop: 21, signature: 3.2, callout: "KA-ZAM!",
                   draw: drawBlackAdam),
-    .doctorSivana: Persona(name: "Doctor Sivana", weapon: .blaster, shot: .energy(core: C(0xF0FFF0), glow: C(0x6AE86A)),
-                  muzzle: (51, 32), headTop: 22, signature: 3.0, callout: "Curse that Big Red Cheese!",
+    .doctorSivana: Persona(name: "Doctor Savana", weapon: .blaster, shot: .energy(core: C(0xF0FFF0), glow: C(0x6AE86A)),
+                  muzzle: (51, 32), headTop: 22, signature: 3.0, callout: "Curse that Big Red Thunderbolt!",
                   draw: drawDoctorSivana),
-    .mrMind: Persona(name: "Mister Mind", weapon: .lightning, magic: Magic(core: C(0xF0FFE0), glow: C(0xA8E83A), jagged: false),
+    .mrMind: Persona(name: "Mister Brain-Worm", weapon: .lightning, magic: Magic(core: C(0xF0FFE0), glow: C(0xA8E83A), jagged: false),
                   canSit: false, pivot: (44.5, 33.5), headTop: 20, signature: 2.8,
                   draw: drawMrMind),
-    .brotherBlood: Persona(name: "Brother Blood", weapon: .lightning, magic: Magic(core: C(0xFFE0D0), glow: C(0xE81E1E), jagged: false),
-                  headTop: 11, signature: 3.2, callout: "Hail Brother Blood!",
+    .brotherBlood: Persona(name: "Brother Gore", weapon: .lightning, magic: Magic(core: C(0xFFE0D0), glow: C(0xE81E1E), jagged: false),
+                  headTop: 11, signature: 3.2, callout: "Hail Brother Gore!",
                   draw: drawBrotherBlood),
     .solomonGrundy: Persona(name: "Solomon Grundy", weapon: .saber, pivot: grundyShoulder, bulk: 5, headTop: 16, signature: 3.6,
                   callout: "Solomon Grundy, born on a Monday!",
                   draw: drawSolomonGrundy),
-    .vandalSavage: Persona(name: "Vandal Savage", weapon: .saber, headTop: 20, signature: 3.0,
-                  callout: "I have walked this earth for fifty thousand years.",
+    .vandalSavage: Persona(name: "Vandal Ravage", weapon: .saber, headTop: 20, signature: 3.0,
+                  callout: "I've walked this world for fifty thousand years.",
                   draw: drawVandalSavage),
-    .felixFaust: Persona(name: "Felix Faust", weapon: .lightning, magic: Magic(core: C(0xF0E0FF), glow: C(0x8A4AD8)),
-                  headTop: 13, signature: 3.2, callout: "By the dark gods of old!",
+    .felixFaust: Persona(name: "Felix Fausto", weapon: .lightning, magic: Magic(core: C(0xF0E0FF), glow: C(0x8A4AD8)),
+                  headTop: 13, signature: 3.2, callout: "By the old dark gods!",
                   draw: drawFelixFaust),
-    .klarion: Persona(name: "Klarion", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFE0F0), glow: C(0xE84A8A), jagged: false),
-                  headTop: 15, signature: 3.2, callout: "I'm bored!",
+    .klarion: Persona(name: "Clarion", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFE0F0), glow: C(0xE84A8A), jagged: false),
+                  headTop: 15, signature: 3.2, callout: "I'm so bored!",
                   draw: drawKlarion),
-    .monsieurMallah: Persona(name: "Monsieur Mallah", weapon: .blaster, shot: .bullet, muzzle: (56, 32), bulk: 2, headTop: 18,
-                  signature: 3.0, callout: "Pour la Confrérie du Mal!",
+    .monsieurMallah: Persona(name: "Monsieur Mahala", weapon: .blaster, shot: .bullet, muzzle: (56, 32), bulk: 2, headTop: 18,
+                  signature: 3.0, callout: "Pour la Fraternité du Mal!",
                   draw: drawMonsieurMallah),
-    .gentlemanGhost: Persona(name: "Gentleman Ghost", weapon: .blaster, motion: .hover, shot: .bullet, canSit: false,
+    .gentlemanGhost: Persona(name: "Gentleman Spectre", weapon: .blaster, motion: .hover, shot: .bullet, canSit: false,
                   muzzle: (52, 31), headTop: 13, signature: 3.4, callout: "Charmed, I'm sure.",
                   draw: drawGentlemanGhost),
-    .blackMask: Persona(name: "Black Mask", weapon: .blaster, shot: .bullet, muzzle: (47, 32), headTop: 22, signature: 2.8,
+    .blackMask: Persona(name: "Black Visor", weapon: .blaster, shot: .bullet, muzzle: (47, 32), headTop: 22, signature: 2.8,
                   callout: "Everybody wears a mask.",
                   draw: drawBlackMask),
 ]
@@ -138,6 +138,8 @@ private func drawSaber(_ c: PixelCanvas, angle: Double, trail: [Double], length:
 private func drawWord(_ c: PixelCanvas, _ word: String, x: Int, y: Int, _ col: Px) {
     let glyphs: [Character: [String]] = [
         "S": ["###", "#..", "###", "..#", "###"],
+        "K": ["#.#", "#.#", "##.", "#.#", "#.#"],
+        "-": ["...", "...", "###", "...", "..."],
         "H": ["#.#", "#.#", "###", "#.#", "#.#"],
         "A": ["###", "#.#", "###", "#.#", "#.#"],
         "Z": ["###", "..#", ".#.", "#..", "###"],
@@ -162,7 +164,7 @@ private func drawHeart(_ c: PixelCanvas, x: Int, y: Int, _ col: Px) {
 
 /// Black Adam: Clawd in the black suit with the gold lightning bolt on the chest, a gold sash, gold bracers and
 /// boots, and black hair swept back to a widow's peak over a hard scowl. He flies fist first and throws gold
-/// lightning. Signature: he raises a fist and shouts the word, SHAZAM goes up in gold and the magic lightning
+/// lightning. Signature: he raises a fist and shouts the word, KA-ZAM goes up in gold and the magic lightning
 /// strikes him, leaving him crackling.
 private func drawBlackAdam(_ c: PixelCanvas, _ p: Pose) {
     let suit = C(0x1C1C24), suitDark = C(0x0E0E14), gold = C(0xF0C030), goldDark = C(0xB88A1E), goldLight = C(0xFFE68A)
@@ -231,7 +233,7 @@ private func drawBlackAdam(_ c: PixelCanvas, _ p: Pose) {
     if s > 0.14 && s < 0.78 {
         // The word, in gold.
         let a = min(1, (s - 0.14) / 0.08) * min(1, (0.78 - s) / 0.1)
-        drawWord(c, "SHAZAM", x: 15, y: 6, (s > 0.26 && s < 0.4 ? C(0xFFF8D8) : gold).alpha(a))
+        drawWord(c, "KA-ZAM", x: 15, y: 6, (s > 0.26 && s < 0.4 ? C(0xFFF8D8) : gold).alpha(a))
     }
     if let f = strike {
         // The bolt from the sky onto his fist.

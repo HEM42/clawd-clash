@@ -1,32 +1,32 @@
 import Foundation
 
 // Heroes: the Super-family and Metropolis. Clawd in costume as ever: the top of the block is the face (Clawd orange
-// where they show skin), the S-shields, capes, hair and suits drawn over it. Krypto is a dog, a small white one.
+// where they show skin), the C-shields, capes, hair and suits drawn over it. Krypto is a dog, a small white one.
 
 let dcHeroes3: [DCHero: Persona] = [
-    .supergirl: Persona(name: "Supergirl", weapon: .blaster, motion: .fly, shot: .beam(core: C(0xFFF4D0), glow: C(0xFF3A1E)),
-                  muzzle: (34, 30), handGun: false, headTop: 20, signature: 3.2, callout: "Hope, help and compassion.",
+    .supergirl: Persona(name: "Superb-Girl", weapon: .blaster, motion: .fly, shot: .beam(core: C(0xFFF4D0), glow: C(0xFF3A1E)),
+                  muzzle: (34, 30), handGun: false, headTop: 20, signature: 3.2, callout: "Hope and help, every time.",
                   draw: drawSupergirl),
-    .superboy: Persona(name: "Superboy", weapon: .saber, motion: .fly, headTop: 21, signature: 2.8,
-                  callout: "Clone. Yeah. I know.",
+    .superboy: Persona(name: "Superb-Boy", weapon: .saber, motion: .fly, headTop: 21, signature: 2.8,
+                  callout: "Yeah, yeah. Clone.",
                   draw: drawSuperboy),
-    .powerGirl: Persona(name: "Power Girl", weapon: .saber, motion: .fly, headTop: 20, signature: 3.2,
+    .powerGirl: Persona(name: "Powerful Gal", weapon: .saber, motion: .fly, headTop: 20, signature: 3.2,
                   draw: drawPowerGirl),
-    .steel: Persona(name: "Steel", weapon: .saber, motion: .fly, armoured: true, bulk: 1, headTop: 20, signature: 3.0,
-                  callout: "Man of Steel? Man OF steel.",
+    .steel: Persona(name: "Steelworks", weapon: .saber, motion: .fly, armoured: true, bulk: 1, headTop: 20, signature: 3.0,
+                  callout: "Made of steel? Made WITH steel.",
                   draw: drawSteel),
-    .jonKent: Persona(name: "Jon Kent", weapon: .blaster, motion: .fly, shot: .beam(core: C(0xFFF4D0), glow: C(0xFF3A1E)),
-                  muzzle: (34, 30), handGun: false, headTop: 20, signature: 3.0, callout: "Up, up and away!",
+    .jonKent: Persona(name: "Jon Kant", weapon: .blaster, motion: .fly, shot: .beam(core: C(0xFFF4D0), glow: C(0xFF3A1E)),
+                  muzzle: (34, 30), handGun: false, headTop: 20, signature: 3.0, callout: "Up, up and onward!",
                   draw: drawJonKent),
-    .loisLane: Persona(name: "Lois Lane", headTop: 20, signature: 3.2, callout: "Lois Lane, Daily Planet.",
+    .loisLane: Persona(name: "Lois Lain", headTop: 20, signature: 3.2, callout: "Lois Lain, Daily Globe.",
                   draw: drawLoisLane),
-    .jimmyOlsen: Persona(name: "Jimmy Olsen", headTop: 20, signature: 2.6, callout: "Jeepers!",
+    .jimmyOlsen: Persona(name: "Jimmy Olson", headTop: 20, signature: 2.6, callout: "Golly!",
                   draw: drawJimmyOlsen),
-    .alfred: Persona(name: "Alfred", headTop: 24, signature: 3.4, callout: "Tea, sir?",
+    .alfred: Persona(name: "Alfrid the Butler", headTop: 24, signature: 3.4, callout: "Tea, master?",
                   draw: drawAlfred),
-    .luciusFox: Persona(name: "Lucius Fox", headTop: 22, signature: 3.4, callout: "Does it come in black?",
+    .luciusFox: Persona(name: "Lucius Fax", headTop: 22, signature: 3.4, callout: "Got it in black?",
                   draw: drawLuciusFox),
-    .krypto: Persona(name: "Krypto", weapon: .saber, motion: .fly, bulk: 3, headTop: 23, signature: 2.8,
+    .krypto: Persona(name: "Kryptro", weapon: .saber, motion: .fly, bulk: 3, headTop: 23, signature: 2.8,
                   draw: drawKrypto),
 ]
 
@@ -81,16 +81,9 @@ private func drawSuitLegs(_ c: PixelCanvas, _ p: Pose, _ leg: Px, boot: Px, rows
     }
 }
 
-/// The S-shield, its top-left at (`x`, `y`): a 7×5 pentagon, the S in `s` on a `field` ground (clear: just the S).
-private func drawSShield(_ c: PixelCanvas, x: Int, y: Int, field: Px, s: Px = capeRed) {
-    c.pattern(x, y, [
-        "FSSSSSF",
-        "SFFFFFS",
-        ".SSSSS.",
-        "..FFS..",
-        "...S...",
-    ], ["F": field, "S": s])
-    c.px(x + 1, y + 1, s)
+/// The C-shield, its top-left at (`x`, `y`): a 7×5 pentagon, the C in `letter` on a `field` ground (clear: just the C).
+private func drawFamilyShield(_ c: PixelCanvas, x: Int, y: Int, field: Px, letter: Px = capeRed) {
+    drawCShield(c, x: x, y: y, size: .small, letter: letter, field: field)
 }
 
 /// Eyes burning with heat vision, `k` 0…1 how hot.
@@ -217,7 +210,7 @@ private func drawLongHair(_ c: PixelCanvas, up: Int, hair: Px, dark: Px) {
 
 // MARK: - Supergirl
 
-/// Supergirl: Clawd with long blonde hair, the blue top with the S-shield, a red skirt, red cape and red boots. Her
+/// Supergirl: Clawd with long blonde hair, the blue top with the C-shield, a red skirt, red cape and red boots. Her
 /// heat vision comes from her eyes, and in flight she leans into it, one fist forward, cape and hair streaming.
 /// Signature: she floats up off the ground, cape billowing, takes a breath and blows a frosty gust of super-breath,
 /// snowflakes and all, then settles back down.
@@ -243,7 +236,7 @@ private func drawSupergirl(_ c: PixelCanvas, _ p: Pose) {
         c.rect(18, 33, 20, 4, blue)
         c.rect(37, 33, 1, 4, blueDark)
         c.rect(18, 37, 20, 1, C(0xE8B830))
-        drawSShield(c, x: 25, y: 33, field: shieldYellow)
+        drawFamilyShield(c, x: 25, y: 33, field: shieldYellow)
         c.rect(17, 38, 22, 1, red)
         if !seatedPose { c.rect(16, 39, 24, 1, red); for x in [20, 25, 30, 35] { c.px(x, 39, redDark) } }
         heatEyes(c, firing ? 1 : (p.ready ? 0.4 : 0), t: p.t)
@@ -317,7 +310,7 @@ private func drawSuperboy(_ c: PixelCanvas, _ p: Pose) {
             "K..................K",
         ], ["K": hair])
         c.rect(18, 33, 20, 5, tee)
-        drawSShield(c, x: 25, y: 33, field: clear, s: red)
+        drawFamilyShield(c, x: 25, y: 33, field: clear, letter: red)
         c.rect(18, 33, 4, 5, leather); c.rect(34, 33, 4, 5, leather)
         c.rect(21, 34, 1, 4, leatherDark); c.rect(34, 34, 1, 4, leatherDark)
         c.rect(37, 33, 1, 5, leatherDark)
@@ -432,7 +425,7 @@ private func drawGirder(_ c: PixelCanvas, cx: Double, cy: Double, bend: Double) 
 // MARK: - Steel
 
 /// Steel (John Henry Irons): Clawd in grey steel armour with rivets down the plates, a full helmet with a narrow
-/// visor, the red S-shield on the chest and a red cape; rocket boots for flying. The big sledgehammer is the weapon,
+/// visor, the red C-shield on the chest and a red cape; rocket boots for flying. The big sledgehammer is the weapon,
 /// head-down by his hand when he's not swinging it. Signature: he tosses a rivet up, winds back and smacks it off
 /// across the screen, red hot.
 private func drawSteel(_ c: PixelCanvas, _ p: Pose) {
@@ -469,7 +462,7 @@ private func drawSteel(_ c: PixelCanvas, _ p: Pose) {
         for x in stride(from: 26, through: 32, by: 2) { c.px(x, 32, dark) }
         // Chest plate with the shield, rivets down the edges.
         c.rect(18, 33, 20, 1, dark)
-        drawSShield(c, x: 25, y: 34, field: light)
+        drawFamilyShield(c, x: 25, y: 34, field: light)
         for y in [34, 36] { c.px(19, y, light); c.px(36, y, light) }
         c.rect(15, 33, 3, 3, dark)
         if p.flying {
@@ -519,7 +512,7 @@ private func drawHammer(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Dou
 
 // MARK: - Jon Kent
 
-/// Jon Kent: Clawd as the young Superboy, messy black hair, a blue tee with the S-shield under an open maroon hoodie
+/// Jon Kent: Clawd as the young Superboy, messy black hair, a blue tee with the C-shield under an open maroon hoodie
 /// (the red cape fastened to it), rolled jeans and red sneakers. Heat vision from the eyes.
 /// Signature: he squints, his eyes sputter and fizz, a stray blast scorches the ground in front of him, and he
 /// scratches his head over the little smoking spot.
@@ -565,7 +558,7 @@ private func drawJonKent(_ c: PixelCanvas, _ p: Pose) {
         ], ["K": hair])
         c.px(29, 26, hair); c.px(30, 27, hair)                           // the curl over his brow
         c.rect(18, 33, 20, 5, tee)
-        drawSShield(c, x: 25, y: 33, field: shieldYellow)
+        drawFamilyShield(c, x: 25, y: 33, field: shieldYellow)
         c.rect(18, 33, 4, 5, hoodie); c.rect(35, 33, 3, 5, hoodie)
         c.rect(21, 34, 1, 4, hoodieDark); c.rect(35, 34, 1, 4, hoodieDark)
         c.rect(18, 37, 20, 1, C(0x2A3A6A))                                   // jeans' waistband

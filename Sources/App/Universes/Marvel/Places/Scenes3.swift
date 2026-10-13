@@ -1,14 +1,14 @@
 import Foundation
 
 let scenes3: [Location: Place] = [
-    .egosPlanet: Place(name: "Ego's Planet", panel: 0x1E2416, still: Scenes.egosPlanet, moving: Scenes.egosMotes),
-    .kamarTaj: Place(name: "Kamar-Taj", panel: 0x241C14, still: Scenes.kamarTaj, moving: Scenes.kamarTajLife),
+    .egosPlanet: Place(name: "Egon's Planet", panel: 0x1E2416, still: Scenes.egosPlanet, moving: Scenes.egosMotes),
+    .kamarTaj: Place(name: "Kamar-Tajj", panel: 0x241C14, still: Scenes.kamarTaj, moving: Scenes.kamarTajLife),
     .raft: Place(name: "The Raft", panel: 0x16181D, still: Scenes.raft, moving: Scenes.raftLights),
     .battleOfNewYork: Place(name: "Battle of New York", panel: 0x1E1814, still: Scenes.battleOfNewYork,
                             moving: Scenes.battleOfNewYorkInvasion),
-    .darkDimension: Place(name: "Dark Dimension", panel: 0x1E0A24, still: Scenes.darkDimension, moving: Scenes.darkDimensionShift),
-    .attilan: Place(name: "Attilan", panel: 0x1A1E2A, still: Scenes.attilan, moving: Scenes.attilanMist),
-    .savageLand: Place(name: "Savage Land", panel: 0x14231A, still: Scenes.savageLand, moving: Scenes.savageLandLife),
+    .darkDimension: Place(name: "Darker Dimension", panel: 0x1E0A24, still: Scenes.darkDimension, moving: Scenes.darkDimensionShift),
+    .attilan: Place(name: "Atillan", panel: 0x1A1E2A, still: Scenes.attilan, moving: Scenes.attilanMist),
+    .savageLand: Place(name: "Savage Lands", panel: 0x14231A, still: Scenes.savageLand, moving: Scenes.savageLandLife),
 ]
 
 // MARK: - Shared shapes for this file
@@ -581,7 +581,7 @@ extension Scenes {
         return (c.w * 56 / 100, isTall(c) ? g * 16 / 100 : r + 1, r)
     }
 
-    /// Stark Tower: the tall slab with its curved crown and landing pad, the "A" lit near the top, and the Tesseract's
+    /// Stark Tower: the tall slab with its curved crown and landing pad, the claw emblem lit near the top, and the Tesseract's
     /// beam shooting from its roof into the portal.
     static func battleOfNewYorkStarkTower(_ c: PixelCanvas, _ g: Int, _ p: (x: Int, y: Int, r: Int)) {
         let s = unit(g), x = p.x, top = g * (isTall(c) ? 36 : 30) / 100, w = (isTall(c) ? 22 : 16) * s
@@ -602,9 +602,11 @@ extension Scenes {
         c.rect(x - w / 2 - 9 * s, top + 13 * s, 10 * s, s, C(0xA8B2C2))           // the landing pad, cantilevered
         c.rect(x - w / 2 - 3 * s, top + 14 * s, 3 * s, s, seam)
         c.rect(x - w / 2 - 2 * s, top - 3 * s, w + 4 * s, 3 * s, seam)           // the roof
-        c.rect(x + w / 2 - 6 * s, top + 3 * s, 4 * s, 5 * s, C(0x8ADCFF))         // the arc-lit "A"
-        c.rect(x + w / 2 - 5 * s, top + 4 * s, 2 * s, s, seam)
-        c.rect(x + w / 2 - 5 * s, top + 6 * s, 2 * s, 2 * s, seam)
+        for k in 0..<3 {                                                           // the arc-lit claw emblem: three slashes
+            let sx = Double(x + w / 2 - 7 * s) + Double(k) * 2 * ss
+            c.glowLine(sx + 2 * ss, Double(top + 3 * s), sx, Double(top + 8 * s), core: C(0x8ADCFF), glow: C(0x8ADCFF, 0),
+                       coreR: 0.4 * ss, glowR: 0.45 * ss)
+        }
     }
 
     /// A row of buildings standing on `base`.

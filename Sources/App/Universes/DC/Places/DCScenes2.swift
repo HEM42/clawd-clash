@@ -1,12 +1,12 @@
 import Foundation
 
 let dcScenes2: [Location: Place] = [
-    .watchtower: Place(name: "The Watchtower", panel: 0x10141E, still: Scenes.watchtower, moving: Scenes.watchtowerLife),
-    .hallOfJustice: Place(name: "Hall of Justice", panel: 0x1C2230, still: Scenes.hallOfJustice, moving: Scenes.hallLife),
-    .arkham: Place(name: "Arkham Asylum", panel: 0x121119, still: Scenes.arkham, moving: Scenes.arkhamLife),
-    .centralCity: Place(name: "Central City", panel: 0x241618, still: Scenes.centralCity, moving: Scenes.centralLife),
-    .starCity: Place(name: "Star City", panel: 0x16182A, still: Scenes.starCity, moving: Scenes.starCityLife),
-    .oa: Place(name: "Oa", panel: 0x08140F, still: Scenes.oa, moving: Scenes.oaLife),
+    .watchtower: Place(name: "The Lookout", panel: 0x10141E, still: Scenes.watchtower, moving: Scenes.watchtowerLife),
+    .hallOfJustice: Place(name: "Hall of Clawstice", panel: 0x1C2230, still: Scenes.hallOfJustice, moving: Scenes.hallLife),
+    .arkham: Place(name: "Ashcombe Asylum", panel: 0x121119, still: Scenes.arkham, moving: Scenes.arkhamLife),
+    .centralCity: Place(name: "Centre City", panel: 0x241618, still: Scenes.centralCity, moving: Scenes.centralLife),
+    .starCity: Place(name: "Star Harbour", panel: 0x16182A, still: Scenes.starCity, moving: Scenes.starCityLife),
+    .oa: Place(name: "Ohh", panel: 0x08140F, still: Scenes.oa, moving: Scenes.oaLife),
 ]
 
 // MARK: - Shared bits for these scenes
@@ -45,6 +45,7 @@ fileprivate let scenes2Font: [Character: [String]] = [
     "M": ["#.#", "###", "###", "#.#", "#.#"], "O": [".#.", "#.#", "#.#", "#.#", ".#."],
     "R": ["##.", "#.#", "##.", "#.#", "#.#"], "S": [".##", "#..", ".#.", "..#", "##."],
     "T": ["###", ".#.", ".#.", ".#.", ".#."], "U": ["#.#", "#.#", "#.#", "#.#", "###"],
+    "W": ["#.#", "#.#", "###", "###", "#.#"],
     ".": ["...", "...", "...", "...", ".#."],
 ]
 
@@ -253,7 +254,7 @@ extension Scenes {
         p.rect(-2, -8, 4, 1, C(0xDAF0FF))
     }
 
-    /// Up high on the screen saver: ceiling ribs, light strips, and the gold JL plaque over the window.
+    /// Up high on the screen saver: ceiling ribs, light strips, and the gold CL plaque over the window.
     static func watchtowerCeiling(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), b = scenes2Big(c, g), w = watchtowerWindow(c, g)
         for x in stride(from: 0, to: c.w, by: 30 * s) {
@@ -267,12 +268,12 @@ extension Scenes {
         p.trap(-9, 6, 18, 3, inset: 0, C(0xA8822A))
         p.roof(0, 6, half: 9, h: 5, C(0xA8822A)); p.roof(0, 5, half: 8, h: 4, C(0x1A2A5A))
         dcScenes2Stamp(c, px - 7 * b, py - 3 * b, [
-            ".JJJ..L.....",
-            "..J...L.....",
-            "..J...L.....",
-            "J.J...L.....",
-            "JJ....LLLL..",
-        ], ["J": C(0xF0D070), "L": C(0xF0D070)], s: b)
+            ".CCC..L.....",
+            "C.....L.....",
+            "C.....L.....",
+            "C.....L.....",
+            ".CCC..LLLL..",
+        ], ["C": C(0xF0D070), "L": C(0xF0D070)], s: b)   // the CL badge
         c.circle(px, py, 16 * b, C(0xF0D070, 0.05))
     }
 
@@ -381,7 +382,7 @@ extension Scenes {
         return (xs, f.base + 2 * f.b - 34 * f.b)
     }
 
-    /// The Hall of Justice on a bright day: the Super Friends' white hall, its colonnade under the carved name band,
+    /// The Hall of Clawstice on a bright day: the Super Friends' white hall, its colonnade under the carved name band,
     /// the great ribbed dome on its drum with a flag on the cupola, long low wings either side, a row of flags along
     /// the sunny plaza, clipped hedges and round trees, and the pale towers of the city far behind.
     static func hallOfJustice(_ c: PixelCanvas, _ g: Int) {
@@ -446,7 +447,7 @@ extension Scenes {
         // the central block
         p.rect(-44, -30, 88, 30, marble); p.rect(-46, -32, 92, 2, C(0xFFFFFF)); p.rect(-46, -30, 92, 1, shade)
         p.rect(-44, -23, 88, 1, C(0xB8C2D0))
-        dcScenes2Text(c, cx: f.cx, y: f.base - 28 * b, "HALL OF JUSTICE", C(0x3A4A66), s: b)
+        dcScenes2Text(c, cx: f.cx, y: f.base - 28 * b, "HALL OF CLAWSTICE", C(0x3A4A66), s: b)
         p.rect(-40, -22, 80, 22, C(0xA6B2C4))                       // the shaded colonnade behind the columns
         p.rect(-40, -22, 80, 2, C(0x8A98AE))
         p.rect(-8, -15, 16, 15, C(0x283A58)); p.rect(-7, -14, 6, 6, C(0x5A86B8)); p.rect(1, -14, 6, 6, C(0x5A86B8))
@@ -574,7 +575,7 @@ extension Scenes {
 
     /// Arkham Asylum on a stormy night: the gothic pile black against a bruised purple sky, its clock tower and
     /// steep spires, turrets at either end, rows of barred windows burning a sickly yellow. It sits on its bare hill
-    /// among dead trees, a full moon caught in torn cloud behind it, with the iron gate and its ARKHAM arch and the
+    /// among dead trees, a full moon caught in torn cloud behind it, with the iron gate and its ARKHUM arch and the
     /// spiked fence down in front.
     static func arkham(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), f = arkhamFrame(c, g), b = f.b
@@ -671,7 +672,7 @@ extension Scenes {
         }
     }
 
-    /// The iron gate with ARKHAM lettered over it, off to the left of the crew.
+    /// The iron gate with ARKHUM lettered over it, off to the left of the crew.
     static func arkhamGate(_ c: PixelCanvas, _ g: Int) {
         let b = scenes2Big(c, g), gx = Int(Double(c.w) * 0.16)
         let p = S2Pen(c: c, x: gx, y: g, s: b)
@@ -687,7 +688,7 @@ extension Scenes {
             p.rect(k - 12, -21 - rise, 1, 1, C(0x0C0B12))
             p.rect(k - 12, -14 - rise / 2, 1, 1, C(0x0C0B12))
         }
-        dcScenes2Text(c, cx: gx, y: g - 23 * b, "ARKHAM", C(0x7A7488), s: b)
+        dcScenes2Text(c, cx: gx, y: g - 23 * b, "ARKHUM", C(0x7A7488), s: b)
     }
 
     /// Searchlights sweeping the sky, a few windows flickering, and now and then a fork of lightning with the sky
@@ -730,7 +731,7 @@ extension Scenes {
 // MARK: - Central City
 
 extension Scenes {
-    /// Where S.T.A.R. Labs stands and the size of one unit of it.
+    /// Where S.C.A.R. Labs stands and the size of one unit of it.
     static func centralLabs(_ c: PixelCanvas, _ g: Int) -> (x: Int, b: Int) {
         (Int(Double(c.w) * 0.74), isTall(c) ? scenes2Big(c, g) + 1 : 1)
     }
@@ -744,7 +745,7 @@ extension Scenes {
     }
 
     /// Central City at sunset: a sky going from violet to rose to gold, the sun low and huge behind the towers,
-    /// streaks of lit cloud, a hazy far skyline and a darker near one with warm windows, and S.T.A.R. Labs standing
+    /// streaks of lit cloud, a hazy far skyline and a darker near one with warm windows, and S.C.A.R. Labs standing
     /// out on the right with its great observatory dome catching the light. On the screen saver the evening's first
     /// stars come out up high.
     static func centralCity(_ c: PixelCanvas, _ g: Int) {
@@ -775,7 +776,7 @@ extension Scenes {
         for x in stride(from: 0, to: c.w, by: 14 * s) { c.rect(x, g + (c.h - g) / 2, 6 * s, s, C(0xC8A050, 0.6)) }
     }
 
-    /// S.T.A.R. Labs: the low wide block, its lettered band and the big panelled dome with its ring.
+    /// S.C.A.R. Labs: the low wide block, its lettered band and the big panelled dome with its ring.
     static func centralLabsDraw(_ c: PixelCanvas, _ g: Int) {
         let l = centralLabs(c, g), b = l.b
         let p = S2Pen(c: c, x: l.x, y: g, s: b)
@@ -783,7 +784,7 @@ extension Scenes {
         p.rect(-30, -24, 60, 24, wall); p.rect(-31, -25, 62, 1, C(0xB89AA8))
         for v in stride(from: -20, to: -2, by: 4) { p.rect(-28, v, 56, 2, glass); p.rect(-28, v, 56, 1, C(0xFFC890, 0.25)) }
         p.rect(-22, -24, 44, 6, C(0x5A4A60)); p.rect(-22, -24, 44, 1, C(0xC8A8B8))
-        dcScenes2Text(c, cx: l.x, y: g - 23 * b, "S.T.A.R. LABS", C(0xF4ECF0), s: b)
+        dcScenes2Text(c, cx: l.x, y: g - 23 * b, "S.C.A.R. LABS", C(0xF4ECF0), s: b)
         // the dome
         let dcx = l.x, dcy = g - 25 * b, rx = 19 * b, ry = 15 * b
         for dy in 0...ry {

@@ -1,13 +1,13 @@
 import Foundation
 
 let dcScenes7: [Location: Place] = [
-    .korugar: Place(name: "Korugar", panel: 0x1E1A0C, still: Scenes.korugar, moving: Scenes.korugarLife),
-    .warworld: Place(name: "Warworld", panel: 0x1E0E0C, still: Scenes.warworld, moving: Scenes.warworldLife),
-    .bludhaven: Place(name: "Blüdhaven", panel: 0x12141C, still: Scenes.bludhaven, moving: Scenes.bludhavenLife),
-    .jsaHQ: Place(name: "JSA Headquarters", panel: 0x1E140E, still: Scenes.jsaHQ, moving: Scenes.jsaLife),
-    .fawcettCity: Place(name: "Fawcett City", panel: 0x16202E, still: Scenes.fawcettCity, moving: Scenes.fawcettLife),
-    .starLabs: Place(name: "S.T.A.R. Labs", panel: 0x111820, still: Scenes.starLabs, moving: Scenes.starLabsLife),
-    .hallOfDoom: Place(name: "Hall of Doom", panel: 0x0E1410, still: Scenes.hallOfDoom, moving: Scenes.hallOfDoomLife),
+    .korugar: Place(name: "Korugor", panel: 0x1E1A0C, still: Scenes.korugar, moving: Scenes.korugarLife),
+    .warworld: Place(name: "Battleworld", panel: 0x1E0E0C, still: Scenes.warworld, moving: Scenes.warworldLife),
+    .bludhaven: Place(name: "Bloodhaven", panel: 0x12141C, still: Scenes.bludhaven, moving: Scenes.bludhavenLife),
+    .jsaHQ: Place(name: "CSA Headquarters", panel: 0x1E140E, still: Scenes.jsaHQ, moving: Scenes.jsaLife),
+    .fawcettCity: Place(name: "Faucet City", panel: 0x16202E, still: Scenes.fawcettCity, moving: Scenes.fawcettLife),
+    .starLabs: Place(name: "S.C.A.R. Labs", panel: 0x111820, still: Scenes.starLabs, moving: Scenes.starLabsLife),
+    .hallOfDoom: Place(name: "Hall of Gloom", panel: 0x0E1410, still: Scenes.hallOfDoom, moving: Scenes.hallOfDoomLife),
 ]
 
 // MARK: - Shared bits for these scenes
@@ -47,6 +47,7 @@ extension Scenes {
     /// A tiny blocky alphabet for the signs.
     static let scenes7Glyphs: [Character: [String]] = [
         "A": [".#.", "#.#", "###", "#.#", "#.#"], "B": ["##.", "#.#", "##.", "#.#", "##."],
+        "C": [".##", "#..", "#..", "#..", ".##"],
         "D": ["##.", "#.#", "#.#", "#.#", "##."], "E": ["###", "#..", "##.", "#..", "###"],
         "H": ["#.#", "#.#", "###", "#.#", "#.#"], "I": ["###", ".#.", ".#.", ".#.", "###"],
         "J": ["..#", "..#", "..#", "#.#", ".#."], "L": ["#..", "#..", "#..", "#..", "###"],
@@ -85,16 +86,16 @@ extension Scenes {
         return (Int(Double(c.w) * 0.66), (isTall(c) ? 16 : 10) * s, top, top + (g - top) * 2 / 7)
     }
 
-    /// The Sinestro Corps' sigil in a ring.
+    /// The Corps' lamp in a ring: a flame over the lamp's bowl.
     static let korugarSigil: [String] = [
         "...yyyyy...",
         ".yy.....yy.",
-        ".y.y...y.y.",
-        "y..yy.yy..y",
-        "y..yyyyy..y",
-        "y...yyy...y",
+        ".y...y...y.",
+        "y....yy...y",
         "y...yyy...y",
         "y....y....y",
+        "y..yyyyy..y",
+        "y...yyy...y",
         ".y...y...y.",
         ".yy.....yy.",
         "...yyyyy...",
@@ -672,7 +673,7 @@ extension Scenes {
     }
 
     /// The Justice Society's brownstone: a wood-panelled trophy room at night. A stone fireplace in the middle under a
-    /// gilt JSA crest, glass cases on pedestals holding Jay Garrick's winged helmet, Alan Scott's lantern, Doctor
+    /// gilt CSA crest, glass cases on pedestals holding Jay Garrick's winged helmet, Alan Scott's lantern, Doctor
     /// Fate's helm and Hourman's hourglass, tall curtained windows and bookshelves further out, and a rug on the
     /// boards. Tall screens get the high ceiling: a row of portraits of the founding members and a chandelier.
     static func jsaHQ(_ c: PixelCanvas, _ g: Int) {
@@ -750,7 +751,7 @@ extension Scenes {
         }
     }
 
-    /// The stone fireplace, its mantel and the JSA crest above it.
+    /// The stone fireplace, its mantel and the CSA crest above it.
     static func jsaFireplace(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), h = jsaHearth(c, g), cx = c.w / 2, tall = isTall(c)
         let sw = h.w + 16 * s, mantel = h.y - 6 * s
@@ -771,12 +772,12 @@ extension Scenes {
         }
         c.rect(cx - 3 * s, mantel - 8 * s, 6 * s, 5 * s, C(0x3A2014)); c.circle(cx, mantel - 6 * s, 2 * s, C(0xE8DCC0)); c.px(cx, mantel - 7 * s, C(0x1A0E08))
         // the crest
-        let m = tall ? 3 * s : 2 * s, tw = scenes7TextWidth("JSA", s: m), ph = 5 * m + 6 * s
+        let m = tall ? 3 * s : 2 * s, tw = scenes7TextWidth("CSA", s: m), ph = 5 * m + 6 * s
         let py = mantel - 14 * s - ph - (tall ? 10 * s : 0), pw = tw + 8 * s
         c.rect(cx - pw / 2 - s, py - s, pw + 2 * s, ph + 2 * s, C(0xC8963A))
         c.rect(cx - pw / 2, py, pw, ph, C(0x14204A))
         c.rect(cx - pw / 2 + s, py + s, pw - 2 * s, s, C(0x2A3A6A))
-        dcScenes7Text(c, cx - tw / 2, py + 3 * s, "JSA", C(0xF0C850), s: m)
+        dcScenes7Text(c, cx - tw / 2, py + 3 * s, "CSA", C(0xF0C850), s: m)
         c.rect(cx - pw / 2 - s, py + ph + s, pw + 2 * s, s, C(0x7A5A22))
         if tall {                                         // the team's portrait over the crest
             let gw = sw - 4 * s, gh = 40 * s, gx = cx - gw / 2, gy = py - gh - 14 * s
@@ -959,7 +960,7 @@ extension Scenes {
     static func fawcettSubway(_ c: PixelCanvas) -> Int { Int(Double(c.w) * 0.3) }
 
     /// Fawcett City on a bright Golden Age afternoon: a clear blue sky, cream, terracotta and brick art-deco blocks
-    /// with stepped crowns, the Fawcett Broadcasting building with the WHIZ tower climbing over it in red and white,
+    /// with stepped crowns, the Fawcett Broadcasting building with the ZOWIE tower climbing over it in red and white,
     /// and on the sidewalk the green railings and globe lamps of the subway entrance where Billy Batson met the wizard.
     static func fawcettCity(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c)
@@ -1042,7 +1043,7 @@ extension Scenes {
         for k in 0..<((w - 2 * s) / (2 * s)) { c.rect(x + s + k * 2 * s, g - 9 * s, 2 * s, 3 * s, k % 2 == 0 ? aw : C(0xD8D0C0)) }
     }
 
-    /// The Fawcett Broadcasting building and the WHIZ tower over it.
+    /// The Fawcett Broadcasting building and the ZOWIE tower over it.
     static func fawcettStation(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tw = fawcettTower(c, g), bw = 44 * s
         let col = C(0xE0D2B0), lite = C(0xF4ECD8)
@@ -1053,9 +1054,9 @@ extension Scenes {
             c.rect(px, tw.base + 9 * s, 2 * s, g - tw.base - 18 * s, C(0x2E3E5E))
             c.rect(px - s, tw.base + 8 * s, s, g - tw.base - 16 * s, lite)
         }
-        let lw = scenes7TextWidth("WHIZ", s: s)
+        let lw = scenes7TextWidth("ZOWIE", s: s)
         c.rect(tw.x - lw / 2 - 3 * s, tw.base + 2 * s, lw + 6 * s, 7 * s, C(0xB82A22))
-        dcScenes7Text(c, tw.x - lw / 2, tw.base + 3 * s, "WHIZ", C(0xFFF4D0), s: s)
+        dcScenes7Text(c, tw.x - lw / 2, tw.base + 3 * s, "ZOWIE", C(0xFFF4D0), s: s)
         c.rect(tw.x - bw / 2, g - 9 * s, bw, 9 * s, lerp(col, C(0x3A2A20), 0.35))
         c.rect(tw.x - 5 * s, g - 7 * s, 10 * s, 7 * s, C(0x2A3446)); c.rect(tw.x - 7 * s, g - 9 * s, 14 * s, 2 * s, C(0xB82A22))
         // the lattice tower, red and white bands
@@ -1093,8 +1094,8 @@ extension Scenes {
             c.ellipse(x, y, 24 * s, 7 * s, C(0xC8CCD4)); c.ellipse(x - 2 * s, y - 2 * s, 20 * s, 4 * s, C(0xE0E4EA))
             c.rect(x - 4 * s, y + 7 * s, 8 * s, 3 * s, C(0x5A5E66))
             c.rect(x - 26 * s, y - 6 * s, 4 * s, 12 * s, C(0xB82A22))
-            let lw = scenes7TextWidth("WHIZ", s: s)
-            dcScenes7Text(c, x - lw / 2, y - 2 * s, "WHIZ", C(0xB82A22), s: s)
+            let lw = scenes7TextWidth("ZOWIE", s: s)
+            dcScenes7Text(c, x - lw / 2, y - 2 * s, "ZOWIE", C(0xB82A22), s: s)
         }
         if dcScenes7Phase(t, 1.4) < 0.35 { c.circle(tw.x, tw.tip, 2 * s, C(0xFF3A2A)); c.circle(tw.x, tw.tip, 4 * s, C(0xFF3A2A, 0.3)) }
         for k in 0..<2 {
@@ -1122,7 +1123,7 @@ extension Scenes {
     }
 }
 
-// MARK: - S.T.A.R. Labs
+// MARK: - S.C.A.R. Labs
 
 extension Scenes {
     /// The accelerator ring: centre, radii and pipe thickness.
@@ -1146,8 +1147,8 @@ extension Scenes {
         return out
     }
 
-    /// S.T.A.R. Labs, Central City: a steel-blue lab with the particle accelerator's ring sweeping round the room on
-    /// its struts, the S.T.A.R. LABS sign under it, consoles of monitors, server racks and glass test chambers along
+    /// S.C.A.R. Labs, Central City: a steel-blue lab with the particle accelerator's ring sweeping round the room on
+    /// its struts, the S.C.A.R. LABS sign under it, consoles of monitors, server racks and glass test chambers along
     /// the walls, and a polished floor. Tall screens get the ceiling's light strips and a catwalk.
     static func starLabs(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), r = starLabsRing(c, g)
@@ -1203,7 +1204,7 @@ extension Scenes {
             c.rect(x - bw / 2, y + th / 2 - s, bw, max(1, s), C(0x1A1E24))
         }
         // the sign
-        let m = tall ? 2 * s : s, text = "S.T.A.R. LABS", tw = scenes7TextWidth(text, s: m)
+        let m = tall ? 2 * s : s, text = "S.C.A.R. LABS", tw = scenes7TextWidth(text, s: m)
         let sy = r.y - r.ry / 3 - 3 * m
         c.rect(r.x - tw / 2 - 5 * m, sy - 3 * m, tw + 10 * m, 11 * m, C(0x0C1218))
         c.rect(r.x - tw / 2 - 5 * m, sy - 3 * m, tw + 10 * m, s, C(0x4A5A6A))

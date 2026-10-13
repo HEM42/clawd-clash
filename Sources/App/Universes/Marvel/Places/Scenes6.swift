@@ -1,14 +1,14 @@
 import Foundation
 
 let scenes6: [Location: Place] = [
-    .xandar: Place(name: "Xandar", panel: 0x161E2A, still: Scenes.xandar, moving: Scenes.xandarLife),
-    .avengersCompound: Place(name: "Avengers Compound", panel: 0x16201A, still: Scenes.avengersCompound,
+    .xandar: Place(name: "Xandarr", panel: 0x161E2A, still: Scenes.xandar, moving: Scenes.xandarLife),
+    .avengersCompound: Place(name: "Clawvengers Compound", panel: 0x16201A, still: Scenes.avengersCompound,
                              moving: Scenes.compoundLife),
-    .tva: Place(name: "Time Variance Authority", panel: 0x221A12, still: Scenes.tva, moving: Scenes.tvaLife),
-    .krakoa: Place(name: "Krakoa", panel: 0x142016, still: Scenes.krakoa, moving: Scenes.krakoaLife),
+    .tva: Place(name: "Time Variation Agency", panel: 0x221A12, still: Scenes.tva, moving: Scenes.tvaLife),
+    .krakoa: Place(name: "Krakova", panel: 0x142016, still: Scenes.krakoa, moving: Scenes.krakoaLife),
     .morlockTunnels: Place(name: "Morlock Tunnels", panel: 0x141410, still: Scenes.morlockTunnels,
                            moving: Scenes.morlockLife),
-    .asteroidM: Place(name: "Asteroid M", panel: 0x161420, still: Scenes.asteroidM, moving: Scenes.asteroidMLife),
+    .asteroidM: Place(name: "Asteroid M2", panel: 0x161420, still: Scenes.asteroidM, moving: Scenes.asteroidMLife),
 ]
 
 // MARK: - Shared bits for these scenes
@@ -278,7 +278,7 @@ extension Scenes {
     }
 }
 
-// MARK: - Avengers Compound
+// MARK: - Clawvengers Compound
 
 extension Scenes {
     /// The compound's frame: left edge, width, roof row of the long block and of the tall centre block.
@@ -295,8 +295,8 @@ extension Scenes {
         return (min(c.w - 30 * s, f.x + f.w + 44 * s), g - 3 * s)
     }
 
-    /// The Avengers Compound upstate on a summer afternoon: wooded hills and the lake on the left, the long white
-    /// building with its ribbon glazing and the dark glass centre block bearing the big "A", the helipad with a
+    /// The Clawvengers Compound upstate on a summer afternoon: wooded hills and the lake on the left, the long white
+    /// building with its ribbon glazing and the dark glass centre block bearing the claw emblem, the helipad with a
     /// Quinjet parked on it and the windsock, and a striped mown lawn underfoot.
     static func avengersCompound(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c)
@@ -342,7 +342,7 @@ extension Scenes {
         c.rect(Int(Double(c.w) * 0.52), g + s, 10 * s, c.h - g - s, C(0xC8C4B4))   // the path to the door
     }
 
-    /// The long white building, its wings and the dark glass centre block with the "A".
+    /// The long white building, its wings and the dark glass centre block with the claw emblem.
     static func compoundBuilding(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), f = compoundFrame(c, g), base = g - 8 * s, bh = base - f.roof
         let white = C(0xEDEFEF), shade = C(0xC4CACE), glass = C(0x2C3E54), sky = C(0x7FA4C8)
@@ -360,7 +360,7 @@ extension Scenes {
             for x in stride(from: f.x + 3 * s + k * 3 * s, to: f.x + f.w - 3 * s, by: 7 * s) { c.rect(x, y, s, gh, white) }
         }
         c.rect(f.x + f.w - 6 * s, f.roof, 6 * s, bh, shade)
-        // the centre block: dark glass between white fins, the "A" up top
+        // the centre block: dark glass between white fins, the claw emblem up top
         let cw = max(34 * s, bh * 3 / 2), cx = f.x + f.w * 2 / 5 - cw / 2
         c.rect(cx - 3 * s, f.tower - 2 * s, cw + 6 * s, base - f.tower + 2 * s, white)
         c.rect(cx, f.tower, cw, base - f.tower, C(0x22344A))
@@ -368,7 +368,7 @@ extension Scenes {
         c.rect(cx, f.tower, cw / 3, base - f.tower, sky.alpha(0.18))
         c.rect(cx - 6 * s, f.tower - 3 * s, cw + 12 * s, 2 * s, C(0xF6F7F7))
         let r = min(cw / 3, (f.roof - f.tower) / 2 + 2 * s)
-        compoundA(c, cx + cw / 2, f.tower + r + 3 * s, r, s: s)
+        compoundEmblem(c, cx + cw / 2, f.tower + r + 3 * s, r, s: s)
         // the entrance canopy and doors
         let dx = Int(Double(c.w) * 0.52) - 4 * s
         c.rect(dx - 6 * s, base - 9 * s, 30 * s, 2 * s, C(0xD8DCDE))
@@ -383,8 +383,8 @@ extension Scenes {
         c.rect(f.x - 40 * s, base, f.w + 40 * s, 3 * s, C(0xB8B8B0)); c.rect(f.x - 40 * s, base, f.w + 40 * s, s, C(0xD8D8D0))
     }
 
-    /// The Avengers "A": a ring with the A breaking out of it.
-    static func compoundA(_ c: PixelCanvas, _ x: Int, _ y: Int, _ r: Int, s: Int) {
+    /// The Clawvengers emblem: a ring with three claw slashes raking down through it.
+    static func compoundEmblem(_ c: PixelCanvas, _ x: Int, _ y: Int, _ r: Int, s: Int) {
         let u = Double(r) / 7, lx = Double(x), ly = Double(y), col = C(0xF4F6F8)
         for k in 0..<Int(Double(r) * 7) {
             let a = Double(k) / (Double(r) * 7) * 2 * .pi
@@ -395,7 +395,7 @@ extension Scenes {
             c.glowLine(lx + x0 * u, ly + y0 * u, lx + x1 * u, ly + y1 * u, core: col, glow: C(0xBFE4FF, 0.3),
                        coreR: 0.8 * u, glowR: 1.1 * u)
         }
-        stroke(-4.5, 6, 1.5, -8); stroke(1.5, -8, 2.5, 6); stroke(-2.5, 1.5, 9, 1.5)
+        stroke(-0.5, -5.5, -4.5, 4.5); stroke(2.5, -6, -1.5, 5.5); stroke(5, -4.5, 1.5, 4)
     }
 
     /// The helipad and the parked Quinjet; the windsock's pole.
@@ -485,7 +485,7 @@ extension Scenes {
     }
 
     /// The Time Variance Authority: a 1970s bureaucracy at the end of time, brown panelled walls, beige filing
-    /// cabinets, desks with chunky CRT terminals, brass-and-glass pneumatic tubes, the big orange Miss Minutes clock
+    /// cabinets, desks with chunky CRT terminals, brass-and-glass pneumatic tubes, the big orange Miss Seconds clock
     /// over the TVA logo, and tall windows onto the golden city where the Time-Keepers' statues loom.
     static func tva(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), win = tvaWindows(c, g)
@@ -586,7 +586,7 @@ extension Scenes {
         }
     }
 
-    /// The big Miss Minutes clock on its orange roundel, and the TVA sign under it.
+    /// The big Miss Seconds clock on its orange roundel, and the TVA sign under it.
     static func tvaClockDraw(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), k = tvaClock(c, g), r = k.r
         c.rect(k.x - r - 10 * s, 3 * s, (r + 10 * s) * 2, g - 17 * s, C(0x4A2E1C))
@@ -601,7 +601,12 @@ extension Scenes {
                 c.rect(k.x + Int(sin(a) * d), k.y - Int(cos(a) * d), big ? max(1, s) : 1, big ? max(1, s) : 1, C(0x5A3420))
             }
         }
-        // Miss Minutes' face: big cartoon eyes and a grin
+        // Miss Seconds: a thin red second hand sweeping up to two o'clock behind her face, then big cartoon eyes
+        // and a grin
+        let sa = 2.0 / 12 * 2 * .pi
+        c.glowLine(Double(k.x), Double(k.y), Double(k.x) + sin(sa) * Double(r) * 0.8, Double(k.y) - cos(sa) * Double(r) * 0.8,
+                   core: C(0xD8302A), glow: C(0xD8302A, 0), coreR: max(0.5, Double(s) * 0.5), glowR: max(0.6, Double(s) * 0.55))
+        c.circle(k.x, k.y, max(1, r / 12), C(0xD8302A))
         let e = max(2, r / 5)
         for side in [-1, 1] {
             c.ellipse(k.x + side * r * 3 / 10, k.y - r / 4, max(1, e * 2 / 3), e, C(0xFFFFFF))
@@ -1099,7 +1104,7 @@ extension Scenes {
         return (Int(Double(c.w) * 0.66), g - h, max(70 * s, isTall(c) ? h : h * 3 / 2))
     }
 
-    /// Asteroid M: Magneto's fortress adrift in orbit, black space and stars, Earth's blue limb curving below, the
+    /// Asteroid M: Magnetto's fortress adrift in orbit, black space and stars, Earth's blue limb curving below, the
     /// rugged asteroid the crew stands on, and the steel citadel grown out of its crags: spires, ribbed walls glowing
     /// red-violet, a dish, and the helmet emblem.
     static func asteroidM(_ c: PixelCanvas, _ g: Int) {
@@ -1181,15 +1186,15 @@ extension Scenes {
         let dx = cd.x + cd.w / 2 - 6 * s, dy = wall - 6 * s
         c.rect(dx, dy, s, 6 * s, steel)
         c.ellipse(dx + 3 * s, dy - 3 * s, 6 * s, 2 * s, lit); c.ellipse(dx + 3 * s, dy - 2 * s, 5 * s, s, steel)
-        // Magneto's helmet on the gate
+        // Magnetto's helmet on the gate: a fin crest down the middle and one visor band
         let hx = cd.x - 6 * s, hy = g - 15 * s, q = s
         c.rect(cd.x - 9 * s, hy - 2 * s, 18 * s, g - hy + 2 * s, C(0x2A2236))
         scenes6Stamp(c, hx, hy, [
-            "....rrrr....",
-            "..rrrrrrrr..",
+            "....rkkr....",
+            "..rrrkkrrr..",
             ".rrrrrrrrrr.",
-            "rrkkkrrkkkrr",
-            "rr.kk..kk.rr",
+            "rr.kkkkkk.rr",
+            "rr........rr",
             "rr........rr",
             ".rr......rr.",
             "..r......r..",
