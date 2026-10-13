@@ -17,6 +17,8 @@ import CoreText
 //   build/renderpromo audio promo                → the soundtrack alone, as a .wav
 //   build/renderpromo frame promo 9.5            → a single frame at 9.5 s
 //   REEL=full build/renderpromo check            → renders every frame once (prints how far it got)
+//   REEL=full build/renderpromo 720p promo       → promo/720p/Clawd-Clash.mp4: the copy under 10 MB for GitHub
+// See promo-video-idea.md for the whole routine (reels, where each upload goes, building beside another session).
 
 let W = 1920, H = 1080, fps = 30.0
 
@@ -3229,6 +3231,42 @@ func soundtrack() -> [Float] {
 }
 
 
+/// The small copy GitHub plays inline (it takes uploads up to 10 MB): 1280×720 H.264 at a bitrate that brings the whole
+/// video, with its 128 kb/s sound, to about 9.5 MB, capped at 1.6 Mb/s for short ones.
+func write720p(from input: String, to output: String) {
+    let asset = AVURLAsset(url: URL(fileURLWithPath: input))
+    let out = URL(fileURLWithPath: output); try? FileManager.default.removeItem(at: out)
+    try? FileManager.default.createDirectory(at: out.deletingLastPathComponent(), withIntermediateDirectories: true)
+    let seconds = asset.duration.seconds
+    let bitrate = Int(min(1_600_000, 9_500_000 * 8 / seconds - 128_000))
+    let reader = try! AVAssetReader(asset: asset)
+    let vt = asset.tracks(withMediaType: .video)[0], at = asset.tracks(withMediaType: .audio)[0]
+    let vOut = AVAssetReaderTrackOutput(track: vt, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA])
+    let aOut = AVAssetReaderTrackOutput(track: at, outputSettings: [AVFormatIDKey: kAudioFormatLinearPCM])
+    reader.add(vOut); reader.add(aOut)
+    let writer = try! AVAssetWriter(outputURL: out, fileType: .mp4)
+    let vIn = AVAssetWriterInput(mediaType: .video, outputSettings: [AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: 1280, AVVideoHeightKey: 720,
+        AVVideoScalingModeKey: AVVideoScalingModeResizeAspect,
+        AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: bitrate, AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel, AVVideoMaxKeyFrameIntervalKey: 90]])
+    let aIn = AVAssetWriterInput(mediaType: .audio, outputSettings: [AVFormatIDKey: kAudioFormatMPEG4AAC, AVSampleRateKey: 44100, AVNumberOfChannelsKey: 1, AVEncoderBitRateKey: 128000])
+    writer.add(vIn); writer.add(aIn)
+    reader.startReading(); writer.startWriting(); writer.startSession(atSourceTime: .zero)
+    let group = DispatchGroup()
+    for (input, output, q) in [(vIn, vOut, DispatchQueue(label: "video")), (aIn, aOut, DispatchQueue(label: "audio"))] {
+        group.enter()
+        input.requestMediaDataWhenReady(on: q) {
+            while input.isReadyForMoreMediaData {
+                if let sample = output.copyNextSampleBuffer() { input.append(sample) } else { input.markAsFinished(); group.leave(); return }
+            }
+        }
+    }
+    group.wait()
+    let done = DispatchSemaphore(value: 0); writer.finishWriting { done.signal() }; done.wait()
+    if writer.status != .completed { print("720p failed: \(String(describing: writer.error))"); exit(1) }
+    let size = (try? FileManager.default.attributesOfItem(atPath: output)[.size] as? Int) ?? 0
+    print(String(format: "wrote %@ (%.1f MB at %d kb/s)", output, Double(size) / 1_000_000, bitrate / 1000))
+}
+
 /// Puts the soundtrack under the silent video: WAV → AAC with afconvert, then a passthrough export.
 func mux(video: String, audio: String, to out: String) {
     let m4a = audio.replacingOccurrences(of: ".wav", with: ".m4a")
@@ -3318,6 +3356,10 @@ case "check":                                                   // render every 
         autoreleasepool { _ = frame(t) }
     }
     print("all \(Int(duration * fps)) frames render")
+case "720p":                                                    // the GitHub-sized copy of a reel already rendered
+    let small = ["promo": "Trailer", "bloopers": "Bloopers", "full": "Clawd-Clash", "starclawds": "Star-Clawds",
+                 "marvelous": "Marvelous-Clawds", "detective": "Detective-Clawds"][reel] ?? "Trailer"
+    write720p(from: "\(out)/\(base).mp4", to: "\(out)/720p/\(small).mp4")
 case "audio":
     writeWAV(soundtrack(), to: "\(out)/\(base).wav"); print("wrote \(out)/\(base).wav")
 case "frame":
