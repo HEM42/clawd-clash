@@ -2204,7 +2204,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         m.addItem(action: hidden ? "Show Clawd Clash" : "Hide Clawd Clash", #selector(toggleHidden), target: self)
         m.addItem(action: windowMode ? "Desktop Mode" : "Window Mode", #selector(toggleWindowMode), target: self)
         m.addItem(.separator())
-        m.addItem(universeMenu())
         if windowMode { m.addItem(locationMenu()) }
         m.addItem(statusSymbolsMenu())
         // Developer toys: only with ⌘ held while opening the menu (or while one is running, so you can leave it).
@@ -2438,7 +2437,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         set { UserDefaults.standard.set(newValue.key, forKey: "universe") }
     }
 
-    /// Random: a different universe every this many minutes (Universe → Random); nil: it stays on the one picked.
+    /// Random: a different universe every this many minutes (Settings → Universe → Random); nil: it stays on the one picked.
     static var universeEvery: Int? {
         get { let m = UserDefaults.standard.integer(forKey: "universeEvery"); return m > 0 ? m : nil }
         set { UserDefaults.standard.set(newValue ?? 0, forKey: "universeEvery") }
@@ -2448,48 +2447,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private var universeSince = Date().timeIntervalSince1970
     /// The last change's comic-book transition, so the next one is another.
     private var lastSwitchComic: ComicTransition?
-
-    private func universeMenu() -> NSMenuItem {
-        let every = Self.universeEvery
-        let root = NSMenuItem(title: "Universe: \(Universe.shown.title)\(every == nil ? "" : " (Random)")", action: nil, keyEquivalent: "")
-        let um = NSMenu()
-        for u in Universe.allCases {
-            let item = NSMenuItem(title: u.title, action: #selector(setUniverse(_:)), keyEquivalent: "")
-            item.target = self
-            item.tag = u.rawValue
-            item.state = every == nil && u == Universe.shown ? .on : .off
-            um.addItem(item)
-        }
-        um.addItem(.separator())
-        let random = NSMenuItem(title: "Random", action: nil, keyEquivalent: "")
-        random.state = every == nil ? .off : .on
-        let rm = NSMenu()
-        for m in Self.universeIntervals {
-            let item = NSMenuItem(title: m == 1 ? "Every Minute" : "Every \(m) Minutes", action: #selector(setUniverseEvery(_:)),
-                                  keyEquivalent: "")
-            item.target = self
-            item.tag = m
-            item.state = every == m ? .on : .off
-            rm.addItem(item)
-        }
-        random.submenu = rm
-        um.addItem(random)
-        root.submenu = um
-        return root
-    }
-
-    /// Picking one universe stops Random.
-    @objc private func setUniverse(_ sender: NSMenuItem) {
-        guard let u = Universe(rawValue: sender.tag) else { return }
-        Self.universeEvery = nil
-        if u != Universe.shown { switchUniverse(to: u) }
-    }
-
-    /// Random, every `tag` minutes: the first change comes that long from now.
-    @objc private func setUniverseEvery(_ sender: NSMenuItem) {
-        Self.universeEvery = sender.tag
-        universeSince = Date().timeIntervalSince1970
-    }
 
     /// Random's turn: another universe, every `universeEvery` minutes. Not in the Playground, the demo or test runs.
     private func randomUniverseTick(_ now: Double) {

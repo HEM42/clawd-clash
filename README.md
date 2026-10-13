@@ -21,7 +21,7 @@
   <img src="docs/social-preview.png" alt="Luke against Vader, Captain America against Thanos, Batman against the Joker" width="760">
 </p>
 
-Clawd Clash is one app with three universes: **Star Wars** (formerly [Clawd Wars](https://github.com/rodclemen/clawd-wars)), **Marvel** (formerly [Avengers: Clawd Wars](https://github.com/rodclemen/avengers-clawd-wars)) and **DC** (formerly [Justice League: Clawd Wars](https://github.com/rodclemen/justice-league-clawd-wars)). Pick one from the menu; a scene never mixes them. Those three pages show each universe on its own; this one is the app.
+Clawd Clash is one app with three universes: **Star Wars** (formerly [Clawd Wars](https://github.com/rodclemen/clawd-wars)), **Marvel** (formerly [Avengers: Clawd Wars](https://github.com/rodclemen/avengers-clawd-wars)) and **DC** (formerly [Justice League: Clawd Wars](https://github.com/rodclemen/justice-league-clawd-wars)). Pick one in Settings; a scene never mixes them. Those three pages show each universe on its own; this one is the app.
 
 | Star Wars | Marvel | DC |
 |---|---|---|
@@ -63,7 +63,7 @@ You run Claude Code in three terminals. One is thinking, one is waiting for your
 
 ## Three universes
 
-Choose from the menu bar icon: **Universe → Star Wars**, **Marvel** or **DC**. Switching recasts everyone on screen (each character becomes the one in the same place in the other cast, on the same side), moves the scene to one of the new universe's places, and changes the menu bar icon (Vader's helmet, Captain America's shield or Superman's S). In the window, the whole window changes over with the new universe's transition. **Universe → Random** switches on its own every 1, 5, 10, 15, 30 or 60 minutes.
+Choose in **Settings… → Universe**: **Star Wars**, **Marvel**, **DC** or **Random**. Switching recasts everyone on screen (each character becomes the one in the same place in the other cast, on the same side), moves the scene to one of the new universe's places, and changes the menu bar icon (Vader's helmet, Captain America's shield or Superman's S). In the window, the whole window changes over with the new universe's transition. **Random** switches on its own every 1, 5, 10, 15, 30 or 60 minutes.
 
 | | Star Wars | Marvel | DC |
 |---|---|---|---|
