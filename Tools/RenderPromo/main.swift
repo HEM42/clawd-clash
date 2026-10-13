@@ -1360,8 +1360,9 @@ let promoShots: [Shot] = [
         coverPanels(ctx, t: t, dim: 0.15 * slam)
         if local > 1.6 {
             let s = CGFloat(1 + 1.6 * pow(1 - backOut(slam), 1))
-            coverWord(ctx, "CLAWD", at: CGPoint(x: 960, y: 760), width: 1300, height: 230, angle: 0.05, depth: 14, scale: s)
-            coverWord(ctx, "CLASH", at: CGPoint(x: 960, y: 520), width: 1420, height: 250, angle: 0.05, depth: 16, scale: s)
+            // high in the sky, clear of the fighters on the ground
+            coverWord(ctx, "CLAWD", at: CGPoint(x: 960, y: 900), width: 1560, height: 270, angle: 0.05, depth: 14, scale: s)
+            coverWord(ctx, "CLASH", at: CGPoint(x: 960, y: 640), width: 1680, height: 290, angle: 0.05, depth: 16, scale: s)
             coverGutters(ctx)
         }
         ctx.restoreGState()
@@ -1692,6 +1693,12 @@ func frame(_ t: Double) -> NSBitmapImageRep {
     NSGraphicsContext.current = gc
     let ctx = gc.cgContext
     ctx.interpolationQuality = .none
+    if t < 0.5 / fps {                                   // the very first frame is the poster GitHub shows before play
+        let poster = reel == "bloopers" ? (shots[0], 2.0) : (shots.first { $0.name == "worlds" }!, 4.0)
+        renderShot(poster.0, at: poster.0.start + poster.1, into: ctx)
+        NSGraphicsContext.current = nil
+        return rep
+    }
     if let (j, k) = transition(at: t) {
         let cur = shots[j], prev = shots[j - 1]
         switch cur.into {
