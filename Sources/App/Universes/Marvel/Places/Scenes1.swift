@@ -1,7 +1,7 @@
 import Foundation
 
 let scenes1: [Location: Place] = [
-    .avengersTower: Place(name: "Clawvengers Tower", panel: 0x141A2C, still: Scenes.avengersTower, moving: Scenes.towerLife),
+    .avengersTower: Place(name: "Clawdvengers Tower", panel: 0x141A2C, still: Scenes.avengersTower, moving: Scenes.towerLife),
     .sanctum: Place(name: "Sanctum Sanctorum", panel: 0x221510, still: Scenes.sanctum, moving: Scenes.sanctumLife),
     .wakanda: Place(name: "Wakandu", panel: 0x2A1620, still: Scenes.wakanda, moving: Scenes.wakandaLife),
     .asgard: Place(name: "Asgaard", panel: 0x16142E, still: Scenes.asgard, moving: Scenes.asgardLife),
@@ -27,7 +27,7 @@ extension Scenes {
     }
 }
 
-// MARK: - Clawvengers Tower
+// MARK: - Clawdvengers Tower
 
 extension Scenes {
     /// One building of the Manhattan skyline behind the tower.
@@ -39,7 +39,7 @@ extension Scenes {
         return (Int(Double(c.w) * 0.72), 30 * s, isTall(c) ? g / 6 : 3)
     }
 
-    /// Clawvengers Tower at night: the crew is out on the tower's top-floor terrace behind its glass rail. Behind them the
+    /// Clawdvengers Tower at night: the crew is out on the tower's top-floor terrace behind its glass rail. Behind them the
     /// Manhattan skyline glitters (the Empire State and the Chrysler stand out), a moon hangs over the East River, and
     /// the tower itself rises at the right, slanted glass crown, landing pad jutting out and the glowing claw emblem up top,
     /// with the warm glass lounge at its foot.
@@ -166,7 +166,7 @@ extension Scenes {
         c.rect(tx + tw, py, 16 * s, s, C(0x8AA8D0))
         for k in 0..<6 { c.rect(tx + tw + k * 2 * s, py + 2 * s + k * s, 2 * s, s, C(0x2A3654)) }
         for x in stride(from: tx + tw + 2 * s, to: tx + tw + 16 * s, by: 4 * s) { c.rect(x, py - s, s, s, C(0x9AE0FF)) }
-        // the Clawvengers emblem: three claw slashes in the ring
+        // the Clawdvengers emblem: three claw slashes in the ring
         let ax = tx + tw / 2 - 7 * s, ay = top + crown + 3 * s
         c.circle(ax + 7 * s, ay + 7 * s, 11 * s, C(0x9ACBFF, 0.10))
         c.circle(ax + 7 * s, ay + 7 * s, 9 * s, C(0x9ACBFF, 0.12))

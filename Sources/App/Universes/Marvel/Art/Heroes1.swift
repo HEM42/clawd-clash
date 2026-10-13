@@ -7,7 +7,7 @@ let heroes1: [MarvelHero: Persona] = [
     .ironMan: Persona(name: "Iron Clawd", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xF4FCFF), glow: C(0x6FD8FF)), armoured: true,
                   muzzle: (43, 34), handGun: false, headTop: 20, signature: 3.0, callout: "I am Iron Clawd.",
                   draw: drawIronMan),
-    .captainAmerica: Persona(name: "Captain Ameriklaw", weapon: .saber, headTop: 20, signature: 2.8, callout: "Clawvengers, gather round!",
+    .captainAmerica: Persona(name: "Captain Ameriklaw", weapon: .saber, headTop: 20, signature: 2.8, callout: "Clawdvengers, gather round!",
                   draw: drawCaptainAmerica),
     .thor: Persona(name: "Thorr", weapon: .saber, motion: .fly, headTop: 14, signature: 3.2, callout: "For Asgaard!",
                   draw: drawThor),
@@ -31,7 +31,7 @@ let heroes1: [MarvelHero: Persona] = [
     .vision: Persona(name: "Vizion", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFF6C0), glow: C(0xFFC81E), jagged: false),
                   pivot: visionGem, headTop: 24, signature: 3.0,
                   draw: drawVision),
-    .captainMarvel: Persona(name: "Captain Clawvel", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xFFF4D0), glow: C(0xFF9A2A)),
+    .captainMarvel: Persona(name: "Captain Marvelous", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xFFF4D0), glow: C(0xFF9A2A)),
                   muzzle: (43, 34), handGun: false, headTop: 20, signature: 2.8,
                   draw: drawCaptainMarvel),
 ]

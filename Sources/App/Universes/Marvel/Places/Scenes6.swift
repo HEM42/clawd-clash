@@ -2,7 +2,7 @@ import Foundation
 
 let scenes6: [Location: Place] = [
     .xandar: Place(name: "Xandarr", panel: 0x161E2A, still: Scenes.xandar, moving: Scenes.xandarLife),
-    .avengersCompound: Place(name: "Clawvengers Compound", panel: 0x16201A, still: Scenes.avengersCompound,
+    .avengersCompound: Place(name: "Clawdvengers Compound", panel: 0x16201A, still: Scenes.avengersCompound,
                              moving: Scenes.compoundLife),
     .tva: Place(name: "Time Variation Agency", panel: 0x221A12, still: Scenes.tva, moving: Scenes.tvaLife),
     .krakoa: Place(name: "Krakova", panel: 0x142016, still: Scenes.krakoa, moving: Scenes.krakoaLife),
@@ -278,7 +278,7 @@ extension Scenes {
     }
 }
 
-// MARK: - Clawvengers Compound
+// MARK: - Clawdvengers Compound
 
 extension Scenes {
     /// The compound's frame: left edge, width, roof row of the long block and of the tall centre block.
@@ -295,7 +295,7 @@ extension Scenes {
         return (min(c.w - 30 * s, f.x + f.w + 44 * s), g - 3 * s)
     }
 
-    /// The Clawvengers Compound upstate on a summer afternoon: wooded hills and the lake on the left, the long white
+    /// The Clawdvengers Compound upstate on a summer afternoon: wooded hills and the lake on the left, the long white
     /// building with its ribbon glazing and the dark glass centre block bearing the claw emblem, the helipad with a
     /// Quinjet parked on it and the windsock, and a striped mown lawn underfoot.
     static func avengersCompound(_ c: PixelCanvas, _ g: Int) {
@@ -383,7 +383,7 @@ extension Scenes {
         c.rect(f.x - 40 * s, base, f.w + 40 * s, 3 * s, C(0xB8B8B0)); c.rect(f.x - 40 * s, base, f.w + 40 * s, s, C(0xD8D8D0))
     }
 
-    /// The Clawvengers emblem: a ring with three claw slashes raking down through it.
+    /// The Clawdvengers emblem: a ring with three claw slashes raking down through it.
     static func compoundEmblem(_ c: PixelCanvas, _ x: Int, _ y: Int, _ r: Int, s: Int) {
         let u = Double(r) / 7, lx = Double(x), ly = Double(y), col = C(0xF4F6F8)
         for k in 0..<Int(Double(r) * 7) {

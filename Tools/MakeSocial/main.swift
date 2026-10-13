@@ -217,7 +217,7 @@ for i in 1...2 {
 }
 
 // The tagline in a caption box, along the bottom.
-let tagline = "Your AI coding sessions as a pixel-art Star Claws, Clawvel or Detective Claws battle"
+let tagline = "Your AI coding sessions as a pixel-art Star Clawds, Marvelous Clawds or Detective Clawds battle"
 /// The tagline at the largest size (up to 25 pt) that fits the cover with a margin.
 func taglineText(_ size: CGFloat) -> NSAttributedString {
     let font = NSFont(name: "Futura-Bold", size: size) ?? .boldSystemFont(ofSize: size)

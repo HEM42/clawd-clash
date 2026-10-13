@@ -69,7 +69,7 @@ else
 fi
 gh release create "$TAG" "$ZIP" --title "Clawd Clash $VERSION" --notes "$NOTES
 
-**Install:** \`brew install --cask rodclemen/tap/clawd-clash\`, or download the zip, unzip, and move *Clawd Clash.app* to Applications. (\`clawd-wars\`, \`clawvengers-clawd-wars\` and \`clawstice-league-clawd-wars\` install the same app, starting in Star Claws, Clawvel or Detective Claws.)"
+**Install:** \`brew install --cask rodclemen/tap/clawd-clash\`, or download the zip, unzip, and move *Clawd Clash.app* to Applications. (\`clawd-wars\`, \`clawdvengers-clawd-wars\` and \`justice-clawds-clawd-wars\` install the same app, starting in Star Clawds, Marvelous Clawds or Detective Clawds.)"
 
 # Keep the newest $KEEP_RELEASES releases: older zips are never used (the cask names only the latest), and the one
 # before the latest stays as a quick rollback. Tags are kept, so every version's code is still marked in git.
@@ -100,7 +100,7 @@ fi
 # (only if no universe has been chosen yet, so an upgrade never undoes your choice).
 write_cask() {   # write_cask <cask name> <universe key or empty> <description>
     local name=$1 universe=$2 desc=$3 others preset=""
-    others=$(printf '"%s", ' clawd-clash clawd-wars clawvengers-clawd-wars clawstice-league-clawd-wars | sed "s/\"$name\", //; s/, $//")
+    others=$(printf '"%s", ' clawd-clash clawd-wars clawdvengers-clawd-wars justice-clawds-clawd-wars | sed "s/\"$name\", //; s/, $//")
     if [[ -n $universe ]]; then
         preset="
   # Start in $universe, unless a universe was already picked.
@@ -141,13 +141,13 @@ $preset$QUARANTINE
 end
 CASK
 }
-write_cask clawd-clash "" "Claude Code sessions as a pixel-art Star Claws, Clawvel or Detective Claws battle on your desktop"
-write_cask clawd-wars starWars "Claude Code sessions as a pixel-art Star Claws battle on your desktop"
-write_cask clawvengers-clawd-wars marvel "Claude Code sessions as a pixel-art Clawvel battle on your desktop"
-write_cask clawstice-league-clawd-wars dc "Claude Code sessions as a pixel-art Detective Claws battle on your desktop"
+write_cask clawd-clash "" "Claude Code sessions as a pixel-art Star Clawds, Marvelous Clawds or Detective Clawds battle on your desktop"
+write_cask clawd-wars starWars "Claude Code sessions as a pixel-art Star Clawds battle on your desktop"
+write_cask clawdvengers-clawd-wars marvel "Claude Code sessions as a pixel-art Marvelous Clawds battle on your desktop"
+write_cask justice-clawds-clawd-wars dc "Claude Code sessions as a pixel-art Detective Clawds battle on your desktop"
 [[ -f "$TAP/README.md" ]] || printf '# Homebrew tap\n\n```sh\nbrew install --cask rodclemen/tap/clawd-clash\n```\n' > "$TAP/README.md"
 git -C "$TAP" add -A
-git -C "$TAP" commit -q -m "clawd-clash $VERSION (also clawd-wars, clawvengers-clawd-wars, clawstice-league-clawd-wars)"
+git -C "$TAP" commit -q -m "clawd-clash $VERSION (also clawd-wars, clawdvengers-clawd-wars, justice-clawds-clawd-wars)"
 git -C "$TAP" remote get-url origin >/dev/null 2>&1 || git -C "$TAP" remote add origin "https://github.com/$TAP_REPO.git"
 git -C "$TAP" push -q -u origin main
 rm -rf "$TAP"

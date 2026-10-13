@@ -23,7 +23,7 @@ let heroes4: [MarvelHero: Persona] = [
                   draw: drawDeadpool),
     .shangChi: Persona(name: "Shang-Chee", weapon: .saber, headTop: 22, signature: 3.0,
                   draw: drawShangChi),
-    .msMarvel: Persona(name: "Ms. Clawvel", weapon: .saber, headTop: 21, signature: 2.6,
+    .msMarvel: Persona(name: "Ms. Marvelous", weapon: .saber, headTop: 21, signature: 2.6,
                   draw: drawMsMarvel),
     .moonKnight: Persona(name: "Moon Night", weapon: .saber, headTop: 19, signature: 2.6,
                   draw: drawMoonKnight),

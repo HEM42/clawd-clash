@@ -2,7 +2,7 @@ import Foundation
 
 let dcScenes2: [Location: Place] = [
     .watchtower: Place(name: "The Lookout", panel: 0x10141E, still: Scenes.watchtower, moving: Scenes.watchtowerLife),
-    .hallOfJustice: Place(name: "Hall of Clawstice", panel: 0x1C2230, still: Scenes.hallOfJustice, moving: Scenes.hallLife),
+    .hallOfJustice: Place(name: "Hall of Clawds", panel: 0x1C2230, still: Scenes.hallOfJustice, moving: Scenes.hallLife),
     .arkham: Place(name: "Ashcombe Asylum", panel: 0x121119, still: Scenes.arkham, moving: Scenes.arkhamLife),
     .centralCity: Place(name: "Centre City", panel: 0x241618, still: Scenes.centralCity, moving: Scenes.centralLife),
     .starCity: Place(name: "Star Harbour", panel: 0x16182A, still: Scenes.starCity, moving: Scenes.starCityLife),
@@ -382,7 +382,7 @@ extension Scenes {
         return (xs, f.base + 2 * f.b - 34 * f.b)
     }
 
-    /// The Hall of Clawstice on a bright day: the Super Friends' white hall, its colonnade under the carved name band,
+    /// The Hall of Clawds on a bright day: the Super Friends' white hall, its colonnade under the carved name band,
     /// the great ribbed dome on its drum with a flag on the cupola, long low wings either side, a row of flags along
     /// the sunny plaza, clipped hedges and round trees, and the pale towers of the city far behind.
     static func hallOfJustice(_ c: PixelCanvas, _ g: Int) {
@@ -447,7 +447,7 @@ extension Scenes {
         // the central block
         p.rect(-44, -30, 88, 30, marble); p.rect(-46, -32, 92, 2, C(0xFFFFFF)); p.rect(-46, -30, 92, 1, shade)
         p.rect(-44, -23, 88, 1, C(0xB8C2D0))
-        dcScenes2Text(c, cx: f.cx, y: f.base - 28 * b, "HALL OF CLAWSTICE", C(0x3A4A66), s: b)
+        dcScenes2Text(c, cx: f.cx, y: f.base - 28 * b, "HALL OF CLAWDS", C(0x3A4A66), s: b)
         p.rect(-40, -22, 80, 22, C(0xA6B2C4))                       // the shaded colonnade behind the columns
         p.rect(-40, -22, 80, 2, C(0x8A98AE))
         p.rect(-8, -15, 16, 15, C(0x283A58)); p.rect(-7, -14, 6, 6, C(0x5A86B8)); p.rect(1, -14, 6, 6, C(0x5A86B8))

@@ -259,15 +259,15 @@ let social = canvas(1280, 640) { ctx in
 save(social, file)
 }
 // Clawd Clash's own (social-preview.png) is a comic cover of its own: Tools/MakeSocial.
-socialPreview(title: "CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Star Claws battle on your desktop",
+socialPreview(title: "CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Star Clawds battle on your desktop",
               groups: [[.hero(SWHero.luke), .hero(SWHero.han), .hero(SWHero.leia), .hero(SWHero.yoda),
                         .villain(SWVillain.vader), .villain(SWVillain.boba), .villain(SWVillain.kylo), .villain(SWVillain.trooper)]],
               file: "social-preview-starwars.png")
-socialPreview(title: "CLAWVENGERS: CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Clawvel battle on your desktop",
+socialPreview(title: "CLAWDVENGERS: CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Marvelous Clawds battle on your desktop",
               groups: [[.hero(MarvelHero.thor), .hero(MarvelHero.spiderMan), .hero(MarvelHero.captainAmerica), .hero(MarvelHero.ironMan),
                         .villain(MarvelVillain.thanos), .villain(MarvelVillain.loki), .villain(MarvelVillain.greenGoblin), .villain(MarvelVillain.venom)]],
               file: "social-preview-marvel.png")
-socialPreview(title: "CLAWSTICE LEAGUE: CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Detective Claws battle on your desktop",
+socialPreview(title: "JUSTICE CLAWDS: CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Detective Clawds battle on your desktop",
               groups: [[.hero(DCHero.superman), .hero(DCHero.batman), .hero(DCHero.wonderWoman), .hero(DCHero.flash),
                         .villain(DCVillain.joker), .villain(DCVillain.lexLuthor), .villain(DCVillain.darkseid), .villain(DCVillain.harleyQuinn)]],
               file: "social-preview-dc.png")

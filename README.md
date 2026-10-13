@@ -5,7 +5,7 @@
 <h1 align="center">Clawd Clash</h1>
 
 <p align="center">
-  <b>Your Claude Code, Codex, Qwen Code, Gemini CLI and GitHub Copilot CLI sessions, as a pixel-art Star Claws, Clawvel or Detective Claws battle on your desktop.</b><br>
+  <b>Your Claude Code, Codex, Qwen Code, Gemini CLI and GitHub Copilot CLI sessions, as a pixel-art Star Clawds, Marvelous Clawds or Detective Clawds battle on your desktop.</b><br>
   Every session is a hero or a villain, every subagent joins in, and they fight while they work.
 </p>
 
@@ -21,9 +21,9 @@
   <img src="docs/social-preview.png" alt="A comic cover in three panels: Luke Skyclawer and Darth Vapor duelling, Thorr against Lokee, Batclaw against the Jester, under CLAWD CLASH" width="760">
 </p>
 
-Clawd Clash is one app with three universes: **Star Claws** (formerly [Clawd Wars](https://github.com/rodclemen/clawd-wars)), **Clawvel** (formerly [Clawvengers: Clawd Wars](https://github.com/rodclemen/clawvengers-clawd-wars)) and **Detective Claws** (formerly [Clawstice League: Clawd Wars](https://github.com/rodclemen/clawstice-league-clawd-wars)). Pick one in Settings; a scene never mixes them. Those three pages show each universe on its own; this one is the app.
+Clawd Clash is one app with three universes: **Star Clawds** (formerly [Clawd Wars](https://github.com/rodclemen/clawd-wars)), **Marvelous Clawds** (formerly [Clawdvengers: Clawd Wars](https://github.com/rodclemen/clawdvengers-clawd-wars)) and **Detective Clawds** (formerly [Justice Clawds: Clawd Wars](https://github.com/rodclemen/justice-clawds-clawd-wars)). Pick one in Settings; a scene never mixes them. Those three pages show each universe on its own; this one is the app.
 
-| Star Claws | Clawvel | Detective Claws |
+| Star Clawds | Marvelous Clawds | Detective Clawds |
 |---|---|---|
 | https://github.com/user-attachments/assets/c0b65192-c2ae-4b2e-9c23-d50a2c157aef | https://github.com/user-attachments/assets/1f70859b-9230-4afb-9c8d-1121822be8e7 | https://github.com/user-attachments/assets/0396abbc-5ddd-4345-8e27-f33c2e79d616 |
 
@@ -38,7 +38,7 @@ Clawd Clash is one app with three universes: **Star Claws** (formerly [Clawd War
 - [Window mode and the screen saver](#window-mode-and-the-screen-saver)
 - [The little things](#the-little-things)
 - [Install](#install)
-- [Coming from Clawd Wars, Clawvengers or Clawstice League](#coming-from-clawd-wars-clawvengers-or-clawstice-league)
+- [Coming from Clawd Wars, Clawdvengers or Justice Clawds](#coming-from-clawd-wars-clawdvengers-or-justice-clawds)
 - [How it works](#how-it-works)
 - [Uninstall](#uninstall)
 - [Contributing](#contributing)
@@ -56,39 +56,39 @@ You run Claude Code in three terminals. One is thinking, one is waiting for your
 - **Hover** any character for the details; **click** it to jump straight to that session's terminal or editor tab.
 
 <p align="center">
-  <img src="docs/desktop-starwars.png" alt="Star Claws sessions and agents fighting along the bottom of the screen"><br>
-  <img src="docs/desktop-marvel.png" alt="Clawvel sessions and agents fighting along the bottom of the screen"><br>
-  <img src="docs/desktop-dc.png" alt="Detective Claws sessions and agents fighting along the bottom of the screen">
+  <img src="docs/desktop-starwars.png" alt="Star Clawds sessions and agents fighting along the bottom of the screen"><br>
+  <img src="docs/desktop-marvel.png" alt="Marvelous Clawds sessions and agents fighting along the bottom of the screen"><br>
+  <img src="docs/desktop-dc.png" alt="Detective Clawds sessions and agents fighting along the bottom of the screen">
 </p>
 
 ## Three universes
 
-Choose in **Settings… → Universe**: **Star Claws**, **Clawvel**, **Detective Claws** or **Random**. Switching recasts everyone on screen (each character becomes the one in the same place in the other cast, on the same side), moves the scene to one of the new universe's places, and changes the menu bar icon (Darth Vapor's helmet, Captain Ameriklaw's shield or Superb-Man's C-shield). In the window, the whole window changes over with the new universe's transition. **Random** switches on its own every 1, 5, 10, 15, 30 or 60 minutes.
+Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, **Detective Clawds** or **Random**. Switching recasts everyone on screen (each character becomes the one in the same place in the other cast, on the same side), moves the scene to one of the new universe's places, and changes the menu bar icon (Darth Vapor's helmet, Captain Ameriklaw's shield or Superb-Man's C-shield). In the window, the whole window changes over with the new universe's transition. **Random** switches on its own every 1, 5, 10, 15, 30 or 60 minutes.
 
-| | Star Claws | Clawvel | Detective Claws |
+| | Star Clawds | Marvelous Clawds | Detective Clawds |
 |---|---|---|---|
 | Cast | 46 villains, 35 heroes | 88 villains, 105 heroes | 97 villains, 110 heroes |
-| Places | 22, from the Mos Easy Cantina to the Battle of Froth | 43, from Clawvengers Tower to Ta Loh | 43, from the Lookout to the Hall of Gloom |
+| Places | 22, from the Mos Easy Cantina to the Battle of Froth | 43, from Clawdvengers Tower to Ta Loh | 43, from the Lookout to the Hall of Gloom |
 | Weapons | laser swords, blasters, dark lightning | shields, hammers, claws, repulsors, webs, arrows, magic | fists, swords, heat vision, power rings, clawarangs, arrows, magic |
 | Set pieces | Han Yolo and Greedy-O face off, and Han shoots first; the Millennial Falcon picks Han up | arch-enemies face off first; the Clawjet and the Milano pick people up; flyers take to the air and fight from there | arch-enemies face off first; the Lance and the Clawwing pick people up; the Batclaw family swings on grapnel lines |
 | Sides | whoever came first keeps their side; Darth Vapor and Kylo Rant never lead back to back | Claude Code plays the heroes when another AI runs | Claude Code plays the heroes when another AI runs |
 
 <details>
-<summary><b>The Star Claws cast and places</b></summary>
-<p align="center"><img src="docs/roster-starwars.png" alt="All Star Claws characters" width="760"></p>
-<p align="center"><img src="docs/locations-starwars.png" alt="All Star Claws places" width="760"></p>
+<summary><b>The Star Clawds cast and places</b></summary>
+<p align="center"><img src="docs/roster-starwars.png" alt="All Star Clawds characters" width="760"></p>
+<p align="center"><img src="docs/locations-starwars.png" alt="All Star Clawds places" width="760"></p>
 </details>
 
 <details>
-<summary><b>The Clawvel cast and places</b></summary>
-<p align="center"><img src="docs/roster-marvel.png" alt="All Clawvel characters" width="760"></p>
-<p align="center"><img src="docs/locations-marvel.png" alt="All Clawvel places" width="760"></p>
+<summary><b>The Marvelous Clawds cast and places</b></summary>
+<p align="center"><img src="docs/roster-marvel.png" alt="All Marvelous Clawds characters" width="760"></p>
+<p align="center"><img src="docs/locations-marvel.png" alt="All Marvelous Clawds places" width="760"></p>
 </details>
 
 <details>
-<summary><b>The Detective Claws cast and places</b></summary>
-<p align="center"><img src="docs/roster-dc.png" alt="All Detective Claws characters" width="760"></p>
-<p align="center"><img src="docs/locations-dc.png" alt="All Detective Claws places" width="760"></p>
+<summary><b>The Detective Clawds cast and places</b></summary>
+<p align="center"><img src="docs/roster-dc.png" alt="All Detective Clawds characters" width="760"></p>
+<p align="center"><img src="docs/locations-dc.png" alt="All Detective Clawds places" width="760"></p>
 </details>
 
 ## Window mode and the screen saver
@@ -99,7 +99,7 @@ It opens in a window by default (switch to the desktop from the menu): the whole
   <img src="docs/window-cantina.png" alt="Window mode in the Mos Easy Cantina: Han Yolo with Luke Skyclawer and Obi-Juan Kanoobie, Greedy-O on Codex" width="760">
 </p>
 
-**The screen saver** (Settings… → Screen Saver → Install…) shows the place full screen with the crew fighting across its floor, a card per session, name tags, a clock and a crawl of what happened lately, and moves somewhere new every 10 minutes: with a Star Claws wipe, or in Clawvel with a comic-book transition (halftone dots, a SNIKT!, PHOOMF!, FWIP! or KAPOW! for whoever's on screen, panels, speed lines, "MEANWHILE…", and with Deadpond about, Deadpond peeling the page off the screen or surfing past on a chimichanga), or in Detective Claws with one of fifteen of its own (the Flare racing through the Speed Source, the Night Beacon, Superb-Man bursting through the page, the Lariat of Truth, a Jester card, Darksyde's Omicron Beams and more). Its **Options…** button in System Settings picks the universe: the same as the app, Star Claws, Clawvel, Detective Claws, or Random (a new pick on each trip).
+**The screen saver** (Settings… → Screen Saver → Install…) shows the place full screen with the crew fighting across its floor, a card per session, name tags, a clock and a crawl of what happened lately, and moves somewhere new every 10 minutes: with a Star Clawds wipe, or in Marvelous Clawds with a comic-book transition (halftone dots, a SNIKT!, PHOOMF!, FWIP! or KAPOW! for whoever's on screen, panels, speed lines, "MEANWHILE…", and with Deadpond about, Deadpond peeling the page off the screen or surfing past on a chimichanga), or in Detective Clawds with one of fifteen of its own (the Flare racing through the Speed Source, the Night Beacon, Superb-Man bursting through the page, the Lariat of Truth, a Jester card, Darksyde's Omicron Beams and more). Its **Options…** button in System Settings picks the universe: the same as the app, Star Clawds, Marvelous Clawds, Detective Clawds, or Random (a new pick on each trip).
 
 <p align="center">
   <img src="docs/screensaver.png" alt="The screen saver" width="760">
@@ -139,7 +139,7 @@ Needs macOS 13+ (Apple Silicon or Intel) and at least one of [Claude Code](https
 brew install --cask rodclemen/tap/clawd-clash
 ```
 
-`rodclemen/tap/clawd-wars`, `rodclemen/tap/clawvengers-clawd-wars` and `rodclemen/tap/clawstice-league-clawd-wars` install the same app, starting in Star Claws, Clawvel or Detective Claws. Or download the zip from [Releases](https://github.com/rodclemen/clawd-clash/releases), unzip it and drag **Clawd Clash** to Applications.
+`rodclemen/tap/clawd-wars`, `rodclemen/tap/clawdvengers-clawd-wars` and `rodclemen/tap/justice-clawds-clawd-wars` install the same app, starting in Star Clawds, Marvelous Clawds or Detective Clawds. Or download the zip from [Releases](https://github.com/rodclemen/clawd-clash/releases), unzip it and drag **Clawd Clash** to Applications.
 
 **From source** (no Xcode project, no packages, only Apple's free Command Line Tools):
 
@@ -156,9 +156,9 @@ Claude Code sessions that were already running pick up the hooks after a restart
 
 Clicking to jump to a session in Terminal or iTerm2 asks once for **Automation** permission; jumping to VS Code or Cursor asks once for **Accessibility** permission.
 
-## Coming from Clawd Wars, Clawvengers or Clawstice League
+## Coming from Clawd Wars, Clawdvengers or Justice Clawds
 
-Clawd Clash replaces Clawd Wars, Clawvengers: Clawd Wars and Clawstice League: Clawd Wars. Through Homebrew, upgrading the `clawd-wars` cask installs Clawd Clash in Star Claws. Installed by hand, it starts in the universe of the app it finds, and when it connects an AI it swaps the old app's hook for its own, so the old app can go. Star Wars keeps Clawd Wars' characters for sessions that are already running.
+Clawd Clash replaces Clawd Wars, Clawdvengers: Clawd Wars and Justice Clawds: Clawd Wars. Through Homebrew, upgrading the `clawd-wars` cask installs Clawd Clash in Star Clawds. Installed by hand, it starts in the universe of the app it finds, and when it connects an AI it swaps the old app's hook for its own, so the old app can go. Star Wars keeps Clawd Wars' characters for sessions that are already running.
 
 ## How it works
 

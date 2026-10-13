@@ -1,7 +1,7 @@
 import CoreGraphics
 import Foundation
 
-// The Detective Claws chest marks, shared by the heroes, the villains and the places: the C-shield (for Clawd) in
+// The Detective Clawds chest marks, shared by the heroes, the villains and the places: the C-shield (for Clawd) in
 // place of the S-shield, the cowl mask (pointed ears over a domino mask) in place of the bat, a lamp in place of the lantern symbol and a flame in place
 // of the Flash's bolt. Each keeps the size, place and colours of the mark it replaces.
 
