@@ -443,6 +443,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             clawdWindow?.header.needsDisplay = true
             clawdWindow?.redrawScroller()
         }
+        updateIdleWindow(now)
         if windowMode && onScreen { updateCards(now) }
         publishSaverFeed(now)
     }
@@ -1815,8 +1816,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         if hidden {
             panel.orderOut(nil)
             clawdWindow?.window.orderOut(nil)
-        } else if windowMode, let window = clawdWindow?.window {
-            window.orderFrontRegardless()   // back on screen without taking focus from the app you're in
+        } else if windowMode, clawdWindow != nil {
+            holdWindow()   // back on screen without taking focus from the app you're in
         } else if windowMode {
             openWindow()
         } else {
@@ -1838,6 +1839,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     @objc func toggleWindowMode() {
         hidden = false   // switching where it shows means you want to see it
         windowMode.toggle()
+        idleHidden = false
+        idleHold = windowMode
         if windowMode {
             openWindow()
             panel.orderOut(nil)
@@ -1873,6 +1876,40 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         NSApp.activate(ignoringOtherApps: true)
     }
 
+    // MARK: Nothing running
+
+    /// Window mode with no AI running: rather than an empty scene, the window fades away a moment after the last one
+    /// leaves, and fades back when one starts. Asking for it (the Dock icon, the menu bar shield, Window Mode) brings it
+    /// back, and it stays until something has run and finished again.
+    private var idleHidden = false
+    private var idleHold = false
+    private var idleSince: Double?
+    private static let idleGrace = 3.0
+
+    private func updateIdleWindow(_ now: Double) {
+        let real = playground == nil && !demo && chaosSeconds == nil && shotPath == nil
+        // A warning to fix (an AI not connected, the status file unreadable) keeps the window up so it can be read.
+        let empty = real && sessions.isEmpty && actors.isEmpty && hookIssues.isEmpty && offlineReason == nil
+        if empty { idleSince = idleSince ?? now } else { idleSince = nil; idleHold = false }
+        guard windowMode, !hidden, let w = clawdWindow else { return }
+        if empty, !idleHold, !idleHidden, let since = idleSince, now - since >= Self.idleGrace {
+            idleHidden = true
+            w.fade(in: false)
+        } else if !empty, idleHidden {
+            idleHidden = false
+            updateCards(now)          // so it fades in showing who just arrived
+            w.sceneView.showFrame()
+            w.fade(in: true)
+        }
+    }
+
+    /// You asked to see the window: it fades back if it had gone, and stays even with nothing running.
+    private func holdWindow() {
+        idleHold = true
+        idleHidden = false
+        clawdWindow?.fade(in: true)
+    }
+
     private var showInDock: Bool {
         get { UserDefaults.standard.object(forKey: "showInDock") as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: "showInDock") }
@@ -1895,7 +1932,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             NSApp.mainMenu = makeMainMenu()
         } else {
             // Dropping the Dock icon can take our windows down with it; keep them up, without stealing focus.
-            if hidden { return }
+            if hidden || idleHidden { return }
             if windowMode { clawdWindow?.window.orderFrontRegardless() } else { panel.orderFrontRegardless() }
         }
     }
@@ -1905,7 +1942,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         applyDockPolicy()
         // Changing the activation policy can hide our windows; bring them back.
         DispatchQueue.main.async {
-            guard !self.hidden else { return }
+            guard !self.hidden, !self.idleHidden else { return }
             if self.windowMode {
                 self.clawdWindow?.window.makeKeyAndOrderFront(nil)
                 NSApp.activate(ignoringOtherApps: true)
@@ -1918,7 +1955,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// Clicking the Dock icon brings the window forward in window mode.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if hidden { toggleHidden() }
-        else if windowMode { clawdWindow?.window.makeKeyAndOrderFront(nil) }
+        else if windowMode { holdWindow(); clawdWindow?.window.makeKeyAndOrderFront(nil) }
         return true
     }
 

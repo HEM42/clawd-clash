@@ -366,6 +366,30 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         window.collectionBehavior = pinned ? [.canJoinAllSpaces, .fullScreenAuxiliary, .fullScreenNone] : [.fullScreenNone]
     }
 
+    private var fadeGeneration = 0
+    /// Fades the window out and takes it off screen, or puts it back (without taking focus) and fades it in. A fade
+    /// started later wins: an earlier fade-out finishing doesn't take the window away again.
+    func fade(in show: Bool) {
+        fadeGeneration += 1
+        let generation = fadeGeneration
+        if show {
+            if !window.isVisible { window.alphaValue = 0; window.orderFrontRegardless() }
+            NSAnimationContext.runAnimationGroup { ctx in
+                ctx.duration = 0.4
+                window.animator().alphaValue = 1
+            }
+        } else {
+            NSAnimationContext.runAnimationGroup({ ctx in
+                ctx.duration = 0.6
+                window.animator().alphaValue = 0
+            }, completionHandler: { [weak self] in
+                guard let self, self.fadeGeneration == generation else { return }
+                self.window.orderOut(nil)
+                self.window.alphaValue = 1
+            })
+        }
+    }
+
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         onClose?()          // closing the window goes back to the desktop overlay
         return false
