@@ -139,7 +139,7 @@ Needs macOS 13+ (Apple Silicon or Intel) and at least one of [Claude Code](https
 brew install --cask rodclemen/tap/clawd-clash
 ```
 
-`rodclemen/tap/clawd-wars`, `rodclemen/tap/avengers-clawd-wars` and `rodclemen/tap/justice-league-clawd-wars` install the same app, starting in Star Claws, Clawvel or Detective Claws. Or download the zip from [Releases](https://github.com/rodclemen/clawd-clash/releases), unzip it and drag **Clawd Clash** to Applications.
+`rodclemen/tap/clawd-wars`, `rodclemen/tap/clawvengers-clawd-wars` and `rodclemen/tap/clawstice-league-clawd-wars` install the same app, starting in Star Claws, Clawvel or Detective Claws. Or download the zip from [Releases](https://github.com/rodclemen/clawd-clash/releases), unzip it and drag **Clawd Clash** to Applications.
 
 **From source** (no Xcode project, no packages, only Apple's free Command Line Tools):
 
@@ -158,7 +158,7 @@ Clicking to jump to a session in Terminal or iTerm2 asks once for **Automation**
 
 ## Coming from Clawd Wars, Clawvengers or Clawstice League
 
-Clawd Clash replaces Clawd Wars, Clawvengers: Clawd Wars and Clawstice League: Clawd Wars. Through Homebrew, upgrading the `clawd-wars`, `avengers-clawd-wars` or `justice-league-clawd-wars` cask installs Clawd Clash in that universe. Installed by hand, it starts in the universe of the app it finds, and when it connects an AI it swaps the old app's hook for its own, so the old app can go. Star Wars keeps Clawd Wars' characters for sessions that are already running.
+Clawd Clash replaces Clawd Wars, Clawvengers: Clawd Wars and Clawstice League: Clawd Wars. Through Homebrew, upgrading the `clawd-wars` cask installs Clawd Clash in Star Claws. Installed by hand, it starts in the universe of the app it finds, and when it connects an AI it swaps the old app's hook for its own, so the old app can go. Star Wars keeps Clawd Wars' characters for sessions that are already running.
 
 ## How it works
 
