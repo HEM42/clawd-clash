@@ -241,10 +241,7 @@ let social = canvas(1280, 640) { ctx in
 }
 save(social, file)
 }
-socialPreview(title: "CLAWD CLASH", subtitle: "Your Claude Code sessions as a pixel-art Star Wars, Marvel or DC battle",
-              groups: [[.hero(SWHero.luke), .villain(SWVillain.vader)], [.hero(MarvelHero.captainAmerica), .villain(MarvelVillain.thanos)],
-                       [.hero(DCHero.batman), .villain(DCVillain.joker)]],
-              file: "social-preview.png")
+// Clawd Clash's own (social-preview.png) is a comic cover of its own: Tools/MakeSocial.
 socialPreview(title: "CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Star Wars battle on your desktop",
               groups: [[.hero(SWHero.luke), .hero(SWHero.han), .hero(SWHero.leia), .hero(SWHero.yoda),
                         .villain(SWVillain.vader), .villain(SWVillain.boba), .villain(SWVillain.kylo), .villain(SWVillain.trooper)]],

@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/social-preview.png" alt="Luke against Vader, Captain America against Thanos, Batman against the Joker" width="760">
+  <img src="docs/social-preview.png" alt="A comic cover in three panels: Luke and Vader duelling, Thor against Loki, Batman against the Joker, under CLAWD CLASH" width="760">
 </p>
 
 Clawd Clash is one app with three universes: **Star Wars** (formerly [Clawd Wars](https://github.com/rodclemen/clawd-wars)), **Marvel** (formerly [Avengers: Clawd Wars](https://github.com/rodclemen/avengers-clawd-wars)) and **DC** (formerly [Justice League: Clawd Wars](https://github.com/rodclemen/justice-league-clawd-wars)). Pick one in Settings; a scene never mixes them. Those three pages show each universe on its own; this one is the app.
