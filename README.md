@@ -23,7 +23,7 @@ Clawd Clash is one app with three universes: **Star Clawds** (formerly [Clawd Wa
 
 | Star Clawds | Marvelous Clawds | Detective Clawds |
 |---|---|---|
-| https://github.com/user-attachments/assets/c0b65192-c2ae-4b2e-9c23-d50a2c157aef | https://github.com/user-attachments/assets/1f70859b-9230-4afb-9c8d-1121822be8e7 | https://github.com/user-attachments/assets/0396abbc-5ddd-4345-8e27-f33c2e79d616 |
+| https://github.com/user-attachments/assets/aff1b2f9-9b96-4dea-8eef-c3f469c93a6b | https://github.com/user-attachments/assets/1f70859b-9230-4afb-9c8d-1121822be8e7 | https://github.com/user-attachments/assets/0396abbc-5ddd-4345-8e27-f33c2e79d616 |
 
 <p align="center"><sub>🔊 Click the speaker in a player for sound: GitHub starts videos muted.</sub></p>
 

@@ -11,6 +11,7 @@ import CoreText
 //   build/renderpromo video promo                → promo/clawd-clash-promo.mp4 (H.264 + AAC)
 //   REEL=bloopers build/renderpromo video promo  → promo/clawd-clash-bloopers.mp4
 //   REEL=full build/renderpromo video promo      → promo/clawd-clash-full.mp4: the promo, then the bloopers
+//   REEL=starclawds build/renderpromo video promo → promo/star-clawds-promo.mp4: the Star Clawds trailer
 //   build/renderpromo audio promo                → the soundtrack alone, as a .wav
 //   build/renderpromo frame promo 9.5            → a single frame at 9.5 s
 //   REEL=full build/renderpromo check            → renders every frame once (prints how far it got)
@@ -224,7 +225,7 @@ func desktop(_ ctx: CGContext, dim: Double, floor: Bool = true) {
     ctx.setFillColor(CGColor(gray: 0, alpha: 0.35)); ctx.fill(CGRect(x: 0, y: H - 34, width: W, height: 34))
     let lines = [["claude ▸ refactor the hook installer", "● Reading HookInstaller.swift", "● Editing 3 files…", "✻ Thinking…"],
                  ["codex ▸ write the changelog", "● Bash(git log --oneline)", "", "Allow this command?  ❯ Yes   No"],
-                 ["gemini ▸ fix the clawdarang", "✓ Done in 4m 12s", "", "> _"]]
+                 [reel == "starclawds" ? "gemini ▸ add a \(Cast.hero(SWHero.tauntaun).name.lowercased())" : "gemini ▸ fix the clawdarang", "✓ Done in 4m 12s", "", "> _"]]
     for i in 0..<3 {
         let r = CGRect(x: 110 + Double(i) * 580, y: 330 + Double(i % 2) * 70, width: 540, height: 360)
         ctx.saveGState(); ctx.setAlpha(CGFloat(1 - dim * 0.75))
@@ -701,7 +702,7 @@ enum Into {
     var duration: Double {
         switch self {
         case .cut: return 0
-        case .wipe: return 2.0
+        case .wipe: return softWipe
         case .starWars: return Wipe.duration * 1.6
         case .marvel(let t): return t.duration * 1.25
         case .dc(let t): return t.duration * 1.25
@@ -1640,6 +1641,398 @@ func halftone(_ ctx: CGContext, _ r: CGRect, base: CGColor, dot: CGColor, step: 
 }
 
 
+// MARK: The Star Clawds trailer (the old Clawd Wars trailer, rebuilt on Clawd Clash)
+
+/// Every AI it supports in one line-up, Claude's character a head taller, duelling Codex's; the names above, Claude
+/// Code biggest. `cast` is one character per AI, in `AI.allCases` order.
+func everyAI(_ ctx: CGContext, local: Double, t: Double, cast: [Cast], line: String) {
+    desktop(ctx, dim: 1)
+    let xs: [Double] = [36, 104, 165, 216, 258, 298], facing: [Double] = [-1, 1, -1, -1, -1, -1]
+    var actors: [Actor] = []
+    let (ra, rb) = fightRoles(cast[0].weapon, cast[2].weapon)
+    for (i, ai) in AI.allCases.enumerated() {
+        let d = 0.15 + Double(i) * 0.1
+        guard local > d else { continue }
+        let f = backOut((local - d) / 0.3)
+        let order = [1, 0, 2, 3, 4, 5][i]                               // Claude Desktop stands on the far left
+        var a = Actor(cast: cast[i], x: xs[order], facing: facing[order], role: i == 0 ? ra : (i == 2 ? rb : .cheer), label: ai.tag, ai: ai)
+        if ai == .claude { a.grow = 1.25; a.labelSize = 36 } else { a.labelSize = 22 }
+        a.lift = (1 - f) * -10; a.alpha = clamp(f)
+        actors.append(a)
+        draw(a, ctx, t: t)
+    }
+    if let c = actors.first(where: { $0.ai == .claude }), let x = actors.first(where: { $0.ai == .codex }) { drawFX([(c, x)], ctx, t: t) }
+    let fc = easeOut((local - 0.05) / 0.35)
+    if fc > 0 {
+        let tf = NSFont(name: "Futura-CondensedExtraBold", size: 140) ?? .systemFont(ofSize: 130, weight: .black)
+        text("CLAUDE CODE", ctx, y: 790 - 30 * (1 - fc), size: 140, alpha: fc, font: tf, kern: 8)
+    }
+    let fr = easeOut((local - 0.35) / 0.35)
+    if fr > 0 {
+        let row = NSMutableAttributedString(attributedString: attributed("+  ", size: 40, weight: .heavy, color: dimText, alpha: fr))
+        for (i, ai) in AI.allCases.dropFirst().enumerated() {
+            if i > 0 { row.append(attributed("  ·  ", size: 40, weight: .heavy, color: dimText, alpha: fr)) }
+            row.append(attributed(ai.name, size: 40, weight: .heavy, color: ai.ns, alpha: fr))
+        }
+        row.draw(at: NSPoint(x: (Double(W) - row.size().width) / 2, y: 720 - 20 * (1 - fr)))
+    }
+    caption(line, ctx, local: local, start: 0.7, y: 640, size: 40, color: yellow, weight: .bold)
+}
+
+/// A line-up of four sessions, one per state, with the state named under each.
+func statusOf(_ ctx: CGContext, local: Double, t: Double, cast: [Cast], badgeText: String, aside: String) {
+    desktop(ctx, dim: 1)
+    let states: [(AI, VaderMode, BubbleKind?, String, NSColor, Bool)] = [
+        (.claude, .working, nil, "WORKING", green, false), (.qwen, .thinking, .thinking, "THINKING…", NSColor(white: 0.9, alpha: 1), false),
+        (.gemini, .waiting, .waiting, "NEEDS YOU!", red, false), (.copilot, .idle, .sleeping, "NAPPING", NSColor(srgbRed: 0.6, green: 0.55, blue: 1, alpha: 1), true),
+    ]
+    for (i, (ai, mode, bubble, word, col, sits)) in states.enumerated() {
+        let d = 0.1 + Double(i) * 0.22
+        guard local > d else { continue }
+        let f = backOut((local - d) / 0.35)
+        var a = Actor(cast: cast[i], x: 48 + Double(i) * 75, mode: mode, bubble: bubble, ai: ai)
+        a.sitting = sits && cast[i].persona.canSit
+        a.urgent = mode == .waiting
+        if a.urgent { a.lift = abs(sin(t * 2 * .pi * 1.6)) * 6 }
+        a.lift += (1 - f) * -8
+        a.alpha = clamp(f)
+        draw(a, ctx, t: t)
+        let w = NSAttributedString(string: word, attributes: [.font: NSFont.systemFont(ofSize: 40, weight: .black), .kern: 2]).size().width
+        text(word, ctx, x: a.x * S - w / 2, y: 70, size: 40, weight: .black, color: col, alpha: clamp(f), kern: 2)
+    }
+    badge(badgeText, ctx, alpha: 1)
+    caption("All fun and games, and you still see everything.", ctx, local: local, start: 0.05, y: 900, size: 58)
+    caption(aside, ctx, local: local, start: 0.9, y: 835, size: 36, color: yellow, weight: .bold)
+}
+
+/// Subagents walking in with their jobs on their labels, while their session stands guard.
+func agentsOf(_ ctx: CGContext, local: Double, t: Double, guardCast: Cast, crew: [Cast], line: String, badgeText: String) {
+    desktop(ctx, dim: 1)
+    draw(Actor(cast: guardCast, x: 262, facing: -1, mode: .standGuard, label: "idle-claude"), ctx, t: t)
+    let jobs = ["Find hook events", "Write changelog", "Check git history", "Plan the refactor"], stops: [Double] = [190, 140, 90, 40]
+    for (i, who) in crew.enumerated() {
+        let f = easeOut((local - Double(i) * 0.18) / 0.75)
+        draw(Actor(cast: who, x: lerp(-30, stops[i], f), session: false, walking: f < 0.98, label: jobs[i]), ctx, t: t)
+    }
+    badge(badgeText, ctx, alpha: 1)
+    caption(line, ctx, local: local, start: 0.1, y: 900)
+    caption("Its job is right there on its label. No more guessing.", ctx, local: local, start: 0.45, y: 835, size: 40, color: yellow, weight: .bold)
+}
+
+// MARK: The boarding (Star Clawds): the door blows, Stormtroupers pour in, Darth Vapor steps through the smoke
+
+let doorX = 268.0, doorW = 46.0, doorTop = 62.0       // the blast door at the end of the corridor (fx units)
+let blowAt = 1.6
+
+func boarding(_ ctx: CGContext, local l: Double, t: Double) {
+    let since = l - blowAt
+    if since > 0 && since < 0.5 { let sh = (0.5 - since) * 40; ctx.translateBy(x: sin(t * 90) * sh, y: cos(t * 80) * sh) }   // the blast shakes the frame
+    set(ctx, .tantive, t: t)
+    let fx = PixelCanvas(fxW, fxH)
+    let floorRow = Int(groundRow) - 4
+    // the door and its frame; before it blows, its seams glow hotter and hotter
+    fx.rect(Int(doorX) - 4, Int(doorTop) - 4, Int(doorW) + 8, floorRow - Int(doorTop) + 4, C(0x7A808C))
+    if l < blowAt {
+        fx.rect(Int(doorX), Int(doorTop), Int(doorW), floorRow - Int(doorTop), C(0x9AA0AA))
+        for y in stride(from: Int(doorTop) + 8, to: floorRow, by: 14) { fx.rect(Int(doorX) + 3, y, Int(doorW) - 6, 2, C(0x80868F)) }
+        let heat = clamp((l - 0.5) / (blowAt - 0.5))
+        if heat > 0 {
+            let glow = C(0xFF8A2A, 0.35 + 0.6 * heat * (0.75 + 0.25 * sin(t * 30)))
+            fx.rect(Int(doorX), Int(doorTop), Int(doorW), 2, glow); fx.rect(Int(doorX), floorRow - 2, Int(doorW), 2, glow)
+            fx.rect(Int(doorX), Int(doorTop), 2, floorRow - Int(doorTop), glow); fx.rect(Int(doorX + doorW) - 2, Int(doorTop), 2, floorRow - Int(doorTop), glow)
+            fx.rect(Int(doorX + doorW / 2) - 1, Int(doorTop), 2, floorRow - Int(doorTop), glow)
+        }
+    } else {
+        fx.rect(Int(doorX), Int(doorTop), Int(doorW), floorRow - Int(doorTop), C(0x23262C))   // the hole, dark beyond
+        for i in 0..<5 { fx.rect(Int(doorX) + 2 + i * 9, floorRow - 4 - Int(noise(i) * 6), 6, 4 + Int(noise(i) * 6), C(0x6A707A)) }   // wreckage
+    }
+    blit(fx, ctx)
+    // the crew: the rebels hold the corridor, the droids and the princess behind them
+    let fire = l > blowAt + 0.6, retreat = clamp((l - 4.6) / 1.4)
+    var wedge = Actor(cast: .hero(SWHero.wedge), x: lerp(118, -40, retreat), mode: .idle, role: fire && retreat == 0 ? .shoot(offset: 0) : .none)
+    var cassius = Actor(cast: .hero(SWHero.cassian), x: lerp(150, -20, retreat), mode: .idle, role: fire && retreat == 0 ? .shoot(offset: blasterPeriod / 2) : .none)
+    wedge.walking = retreat > 0 && retreat < 1; cassius.walking = wedge.walking
+    let away = clamp((l - 3.6) / 1.6)
+    var laya = Actor(cast: .hero(SWHero.leia), x: lerp(70, -30, away), facing: away > 0 ? -1 : 1, mode: .idle); laya.walking = away > 0 && away < 1
+    var r2 = Actor(cast: .hero(SWHero.r2d2), x: lerp(36, -50, away), facing: away > 0 ? -1 : 1, session: false, mode: .idle); r2.walking = laya.walking
+    var c3 = Actor(cast: .hero(SWHero.c3po), x: lerp(16, -60, clamp((l - 6.6) / 0.9)), facing: l > 6.6 ? -1 : 1, mode: .idle); c3.walking = l > 6.6 && l < 7.5
+    // the Stormtroupers, through the smoke one after another, firing as they come
+    var troopers: [Actor] = []
+    for i in 0..<5 {
+        let at = blowAt + 0.35 + Double(i) * 0.32
+        guard l > at else { continue }
+        let f = easeOut((l - at) / 0.8), stop = [250.0, 218, 282, 190, 236][i]
+        var tr = Actor(cast: .villain(SWVillain.trooper), x: lerp(doorX + 22, stop, f), facing: -1, mode: .idle,
+                       role: f > 0.95 && retreat < 1 ? .shoot(offset: Double(i) * 0.17) : .none)
+        tr.walking = f < 0.95
+        troopers.append(tr)
+    }
+    // Darth Vapor, last through, slow
+    let vf = clamp((l - 4.2) / 1.8)
+    var vapor = Actor(cast: .villain(SWVillain.vader), x: lerp(doorX + 22, 148, easeOut(vf)), facing: -1, mode: .idle)
+    vapor.walking = vf > 0 && vf < 1
+    for a in [c3, r2, laya] { draw(a, ctx, t: t) }
+    for a in troopers.reversed() { draw(a, ctx, t: t) }
+    if l > 4.2 { draw(vapor, ctx, t: t) }
+    for a in [cassius, wedge] { draw(a, ctx, t: t) }
+    // the firefight: each rebel against a trouper
+    var pairs: [(Actor, Actor)] = []
+    if troopers.count > 1 && retreat == 0 { pairs = [(wedge, troopers[0]), (cassius, troopers[1])] }
+    if troopers.count > 3 && retreat == 0 { pairs += [(wedge, troopers[3])] }
+    drawFX(pairs, ctx, t: t)
+    // the blast: a white flash, flying debris, then smoke rolling out of the doorway and thinning
+    if since > 0 {
+        let smoke = PixelCanvas(fxW, fxH)
+        for i in 0..<18 {
+            let a = noise(i * 3) * .pi - .pi / 2, sp = 16 + noise(i * 3 + 1) * 40
+            let r = 6 + since * (6 + noise(i) * 8), fade = max(0, 0.75 - since * 0.18)
+            let x = doorX + doorW / 2 - cos(a) * since * sp * 0.6, y = (doorTop + Double(floorRow)) / 2 + sin(a) * since * sp * 0.3
+            smoke.circle(Int(x), Int(y), Int(r), C(noise(i + 7) > 0.5 ? 0xC8CCD2 : 0x9AA0AA, fade))
+        }
+        if since < 0.7 {
+            for i in 0..<30 {
+                let a = noise(i * 5) * 2 * .pi, d = since * (60 + noise(i * 5 + 1) * 90)
+                smoke.rect(Int(doorX + doorW / 2 - abs(cos(a)) * d), Int(doorTop + 40 + sin(a) * d * 0.6 + since * since * 40), 2, 2, C(0x5A606A))
+            }
+        }
+        blit(smoke, ctx)
+        if since < 0.3 { ctx.setFillColor(CGColor(gray: 1, alpha: 0.8 * (1 - since / 0.3))); ctx.fill(fullRect) }
+    }
+    if l > 5.0 && l < 6.9 { balloon("I'd like to formally object to all of this.", ctx, center: CGPoint(x: 520, y: 760), tail: headPoint(c3), size: 38, width: 640) }
+}
+
+let starClawdsShots: [Shot] = [
+    // The film's opening line, reworded for terminals, in that blue, on black.
+    Shot(name: "longago", start: 0, end: 3.5, into: .cut) { ctx, local, t in
+        ctx.setFillColor(CGColor(gray: 0, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
+        let a = clamp(local / 0.6) * (1 - clamp((local - 2.7) / 0.6))
+        let blue = NSColor(srgbRed: 0.29, green: 0.84, blue: 0.93, alpha: a)
+        for (i, line) in ["A long time ago, in a terminal", "far, far away...."].enumerated() {
+            NSAttributedString(string: line, attributes: [.font: NSFont.systemFont(ofSize: 60, weight: .regular), .foregroundColor: blue])
+                .draw(at: NSPoint(x: 520, y: 580 - Double(i) * 84))
+        }
+    },
+    // STAR CLAWDS, outlined in yellow, falling away into the stars.
+    Shot(name: "logo", start: 3.5, end: 7.0, into: .cut) { ctx, local, t in
+        let sky = PixelCanvas(fxW, fxH)
+        sky.rect(0, 0, fxW, fxH, C(0x000000)); starfield(sky, t: t); blit(sky, ctx)
+        let p = clamp(local / 3.5), s = 2.4 * exp(-3.4 * p), a = 1 - clamp((p - 0.8) / 0.2)
+        let tf = NSFont(name: "Futura-CondensedExtraBold", size: 260) ?? .systemFont(ofSize: 240, weight: .black)
+        ctx.saveGState()
+        ctx.translateBy(x: Double(W) / 2, y: Double(H) / 2); ctx.scaleBy(x: s, y: s)
+        for (i, word) in ["STAR", "CLAWDS"].enumerated() {
+            let w = NSAttributedString(string: word, attributes: [.font: tf, .kern: 20, .strokeWidth: 3, .strokeColor: yellow.withAlphaComponent(a)])
+            let sz = w.size()
+            w.draw(at: NSPoint(x: -sz.width / 2, y: i == 0 ? 0 : -sz.height * 0.82))
+        }
+        ctx.restoreGState()
+    },
+    // Tilt down to the desert planet: the blockade runner flees, the giant ship slides in overhead.
+    Shot(name: "destroyer", start: 7.0, end: 15.5, into: .cut) { ctx, local, t in starClawsShowcase(ctx, local: local, t: t) },
+    // Aboard the blockade runner: the door blows, the Stormtroupers pour in, Darth Vapor steps through.
+    Shot(name: "boarding", start: 15.5, end: 23.0, into: .starWars(clock: false)) { ctx, local, t in boarding(ctx, local: local, t: t) },
+    Shot(name: "hook", start: 23.0, end: 27.0) { ctx, local, t in
+        let zoom = 1 + 0.03 * local
+        ctx.saveGState()
+        ctx.translateBy(x: Double(W) / 2, y: Double(H) / 2); ctx.scaleBy(x: zoom, y: zoom); ctx.translateBy(x: -Double(W) / 2, y: -Double(H) / 2)
+        desktop(ctx, dim: 0)
+        ctx.restoreGState()
+        caption("Three AIs. Nine agents. One very confused human.", ctx, local: local, start: 0.05, y: 860, size: 60)
+        caption("Sound familiar?", ctx, local: local, start: 0.7, y: 120, size: 76, color: yellow)
+    },
+    Shot(name: "desktop", start: 27.0, end: 31.6) { ctx, local, t in
+        brawl(ctx, .starWars, local: local, t: t, drop: true, chrome: false)
+        badge("DESKTOP MODE", ctx, alpha: clamp((local - 0.2) / 0.3))
+        caption("Now they're a pixel-art Star Clawds brawl", ctx, local: local, start: 0.35, y: 900)
+        caption("along the bottom of your screen. They fight while they work.", ctx, local: local, start: 0.6, y: 830, size: 40, color: yellow, weight: .bold)
+    },
+    Shot(name: "status", start: 31.6, end: 35.8) { ctx, local, t in
+        let cast: [Cast] = [.villain(SWVillain.vader), .villain(SWVillain.emperor), .villain(SWVillain.boba), .villain(SWVillain.jabba)]
+        statusOf(ctx, local: local, t: t, cast: cast, badgeText: "STAR CLAWDS", aside: "(Leave \(cast[2].name) waiting and he starts jumping.)")
+    },
+    Shot(name: "agents", start: 35.8, end: 39.8) { ctx, local, t in
+        agentsOf(ctx, local: local, t: t, guardCast: .villain(SWVillain.vader),
+                 crew: [.hero(SWHero.luke), .hero(SWHero.leia), .hero(SWHero.chewie), .hero(SWHero.r2d2)],
+                 line: "Every subagent reports for duty.", badgeText: "STAR CLAWDS")
+    },
+    Shot(name: "window", start: 39.8, end: 44.6) { ctx, local, t in
+        windowShot(ctx, .starWars, local: local, t: t, rise: true, needsAt: 2.5)
+        badge("WINDOW MODE", ctx, alpha: clamp((local - 0.2) / 0.3))
+        caption("Prefer a window? Grab the popcorn.", ctx, local: local, start: 0.1, y: 955, size: 56)
+        caption("A live card per session: what it's doing, your last prompt, every agent.", ctx, local: local, start: 0.4, y: 890, size: 32, color: yellow, weight: .bold)
+    },
+    Shot(name: "ais", start: 44.6, end: 49.0) { ctx, local, t in
+        everyAI(ctx, local: local, t: t, cast: [.villain(SWVillain.vader), .villain(SWVillain.kylo), .hero(SWHero.luke), .hero(SWHero.yoda),
+                                                .hero(SWHero.leia), .hero(SWHero.r2d2)],
+                line: "Everyone picks a side. Nobody plays nice.")
+    },
+    // The end card: the Millennial Falcon flies through, the crew on the horizon, the title lands.
+    Shot(name: "endcard", start: 49.0, end: 53.2) { ctx, local, t in
+        space(ctx, t: local)
+        let fp = local / 1.1
+        if fp > 0 && fp < 1 {
+            let fc = PixelCanvas(Ride.width, Ride.height)
+            drawRide(fc, .falcon, ramp: 0, engines: true, gear: false); fc.addOutline(C(0xFFFFFF, 0.92))
+            if let img = fc.makeImage() {
+                let x = lerp(-500, Double(W) + 100, easeIn(fp) * 0.6 + fp * 0.4)
+                ctx.saveGState(); ctx.interpolationQuality = .none
+                ctx.draw(img, in: CGRect(x: x, y: 560 + 200 * fp, width: Double(Ride.width) * 6, height: Double(Ride.height) * 6))
+                ctx.restoreGState()
+            }
+        }
+        let crew: [(Cast, FightRole, AI)] = [(.villain(SWVillain.kylo), .cheer, .desktop), (.villain(SWVillain.vader), .duel, .claude),
+                                             (.hero(SWHero.luke), .duel, .codex), (.hero(SWHero.r2d2), .none, .copilot),
+                                             (.hero(SWHero.yoda), .cheer, .qwen), (.hero(SWHero.leia), .none, .gemini)]
+        var placed: [Actor] = []
+        for (i, (who, role, ai)) in crew.enumerated() {
+            var a = Actor(cast: who, x: [28.0, 80, 137, 190, 240, 290][i], facing: i < 2 ? 1 : -1, role: role, ai: ai)
+            a.lift = groundY - (Double(H) - 242) / S
+            a.alpha = clamp((local - 0.15 - Double(i) * 0.05) / 0.2)
+            draw(a, ctx, t: t)
+            placed.append(a)
+        }
+        if local > 0.5 { drawFX([(placed[1], placed[2])], ctx, t: t) }
+        if local > 0.35 {
+            let f = backOut((local - 0.35) / 0.4)
+            let tf = NSFont(name: "Futura-CondensedExtraBold", size: 190) ?? .systemFont(ofSize: 170, weight: .black)
+            ctx.saveGState()
+            ctx.translateBy(x: Double(W) / 2, y: 700); ctx.scaleBy(x: f, y: f); ctx.translateBy(x: -Double(W) / 2, y: -700)
+            text("STAR CLAWDS", ctx, y: 620, size: 190, color: yellow, font: tf, kern: 14)
+            ctx.restoreGState()
+        }
+        caption("Have fun. Keep track.", ctx, local: local, start: 0.6, y: 540, size: 56)
+        caption("One of three universes in Clawd Clash · free for macOS", ctx, local: local, start: 0.8, y: 480, size: 34,
+                color: NSColor(white: 0.8, alpha: 1), weight: .bold)
+        let ff = easeOut((local - 0.9) / 0.3)
+        if ff > 0, let icon = appIcon {
+            ctx.saveGState(); ctx.setAlpha(CGFloat(ff)); ctx.interpolationQuality = .high
+            ctx.draw(icon, in: CGRect(x: 600, y: 50, width: 140, height: 140))
+            ctx.restoreGState()
+            text("github.com/rodclemen/clawd-clash", ctx, x: 770, y: 92, size: 44, weight: .bold, alpha: ff)
+        }
+    },
+]
+
+let starClawdsBeats: [(key: Double, beat: Beat)] = [
+    (1.8, ("A LONG TIME AGO", "Black screen. The film's blue opening line, reworded for terminals, fades in and out.", "“A long time ago, in a terminal far, far away....”", "silence")),
+    (4.4, ("THE LOGO", "Hard cut to stars. STAR CLAWDS, outlined in yellow, starts bigger than the screen and falls away into the starfield.", "STAR CLAWDS", "big hit, then an original fanfare")),
+    (11.2, ("THE BIG SHIP", "The camera tilts down to the desert planet; a blockade runner flees under laser fire; the giant wedge ship slides in overhead until its engines fill the top of the frame.", "no text", "a dark pulse, a turbolaser per bolt, the rumble")),
+    (19.8, ("THE BOARDING", "An edge wipe into the blockade runner's white corridor. Wedge Antlers and Cassius Andoor hold it, Princess Laya, Ahh2-De2 and C-3P-Uh-Oh behind them. The blast door's seams glow, it blows in a white flash and a cloud of smoke, Stormtroupers pour through firing, the rebels fall back, and Darth Vapor steps slowly through the smoke.", "C-3P-Uh-Oh: “I'd like to formally object to all of this.”", "sizzling seams, the blast, a firefight, heavy breathing and footsteps")),
+    (25.0, ("THE HOOK", "Three busy terminals, slow push-in.", "“Three AIs. Nine agents. One very confused human.”  →  “Sound familiar?”", "keyboard clicks")),
+    (29.5, ("DESKTOP MODE", "Darth Vapor and Luke Skyclawder drop onto the bottom edge and duel; Han Yolo and a Stormtrouper trade shots.", "DESKTOP MODE  ·  “Now they're a pixel-art Star Clawds brawl along the bottom of your screen. They fight while they work.”", "laser swords, blasters")),
+    (33.9, ("AT A GLANCE", "Four sessions pop in, each in its AI's outline: Darth Vapor working, the Emperor thinking, Boba Feta's jumping NEEDS YOU, Jabbo the Glutt napping.", "“All fun and games, and you still see everything.”  ·  “(Leave Boba Feta waiting and he starts jumping.)”", "blips, alert beeps")),
+    (38.0, ("SUBAGENTS", "Darth Vapor stands guard; Luke, Princess Laya, Chewbarka and Ahh2-De2 march in with their jobs on their labels.", "“Every subagent reports for duty.”", "footsteps, a droid chirp")),
+    (42.6, ("WINDOW MODE", "The window in the Mos Easy Cantina; live cards tick, then Luke's Codex card flips to NEEDS YOU.", "WINDOW MODE  ·  “Prefer a window? Grab the popcorn.”", "a ping")),
+    (47.0, ("EVERY AI", "Six sessions, one per AI outline; Claude's Darth Vapor a head taller, duelling Codex's Luke.", "CLAUDE CODE  ·  + the other five  ·  “Everyone picks a side. Nobody plays nice.”", "laser-sword clashes")),
+    (52.0, ("END CARD", "Space: the Millennial Falcon flies through, the crew lines up on the horizon, STAR CLAWDS lands.", "STAR CLAWDS  ·  “Have fun. Keep track.”  ·  “One of three universes in Clawd Clash · free for macOS”  ·  github.com/rodclemen/clawd-clash", "a flyby, the final sting")),
+]
+
+/// The Star Clawds trailer's score and effects.
+func starClawdsSound(_ m: Mix) {
+    // the logo: a big hit and a fanfare
+    let lg = start("logo")
+    m.boom(lg, vol: 0.55); m.noise(lg, 1.6, vol: 0.12, cutoff: 0.9, decay: 0.5, highpass: true, seed: 3)
+    for n in [48, 55, 60, 64, 67] { m.tone(lg, 1.1, midi(n), wave: .saw, vol: 0.05, release: 0.6, decay: 0.7) }
+    for (s, d, n) in [(0.3, 0.28, 64), (0.6, 0.28, 67), (0.9, 0.85, 72), (1.8, 0.28, 71), (2.1, 0.28, 69), (2.4, 1.05, 74)] as [(Double, Double, Int)] {
+        m.tone(lg + s, d, midi(n + 12), wave: .square(0.5), vol: 0.07, release: 0.08, vibrato: 0.006)
+        m.tone(lg + s, d, midi(n), wave: .saw, vol: 0.05, release: 0.08)
+    }
+    // the big ship: a dark pulse, turbolasers, the rumble
+    let sd = start("destroyer"), sde = end("destroyer") + 1.3
+    for i in 0..<Int((sde - sd) / 0.25) { m.tone(sd + Double(i) * 0.25, 0.22, midi(i % 8 == 7 ? 37 : 36), wave: .square(0.25), vol: 0.05 + 0.06 * min(1, Double(i) / 30), release: 0.04) }
+    for (s, chord) in [(0.0, [48, 51, 55]), (2.0, [44, 48, 51]), (4.0, [46, 50, 53]), (6.0, [48, 51, 55]), (7.0, [43, 47, 50])] {
+        for n in chord { m.tone(sd + s, 1.8, midi(n), wave: .saw, vol: 0.04, attack: 0.05, release: 0.6) }
+    }
+    m.boom(sd + 3.0, vol: 0.4)
+    m.noise(sd + 2.6, 6.5, vol: 0.32, cutoff: 0.004, cutoffTo: 0.03, attack: 3.0, release: 2.0, seed: 5)
+    m.tone(sd + 2.6, 6.5, 41, wave: .sine, vol: 0.18, attack: 3.0, release: 2.0)
+    for i in 0..<40 { let b = sd + 1.3 + Double(i) * 0.17; if b < sde { m.turbolaser(b, pitch: noise(i * 7) > 0.5 ? 1 : 0.8, vol: 0.07) } }
+    // the boarding: the seams sizzle, the door blows, a firefight, then the breathing and the footsteps
+    let bd = start("boarding")
+    m.noise(bd + 0.5, blowAt - 0.5, vol: 0.06, cutoff: 0.7, attack: 0.8, release: 0.05, highpass: true, seed: 61)
+    m.tone(bd + 0.5, blowAt - 0.5, 180, to: 420, wave: .saw, vol: 0.03, attack: 0.8, release: 0.05)
+    m.boom(bd + blowAt, vol: 0.6); m.noise(bd + blowAt, 1.2, vol: 0.2, cutoff: 0.5, cutoffTo: 0.05, decay: 0.4, seed: 62)
+    for t in shotTimes(bd + blowAt + 0.6, bd + 4.6, offset: 0) { m.pew(t, vol: 0.09) }
+    for t in shotTimes(bd + blowAt + 0.6, bd + 4.6, offset: blasterPeriod / 2) { m.pew(t, vol: 0.08) }
+    for i in 0..<5 { for t in shotTimes(bd + blowAt + 1.2 + Double(i) * 0.32, bd + 6.0, offset: Double(i) * 0.17) { m.pew(t, vol: 0.05) } }
+    for (s, chord) in [(blowAt, [43, 46, 50]), (4.2, [41, 44, 48]), (6.0, [43, 46, 50])] {
+        for n in chord { m.tone(bd + s, 1.4, midi(n), wave: .saw, vol: 0.05, attack: 0.02, release: 0.6) }
+    }
+    var b = 4.4
+    while b < 7.6 {                                            // in and out, in and out, under a mask
+        m.noise(bd + b, 0.9, vol: 0.07, cutoff: 0.08, attack: 0.3, release: 0.4, seed: Int(b * 10))
+        m.noise(bd + b + 1.0, 0.9, vol: 0.05, cutoff: 0.04, attack: 0.3, release: 0.4, seed: Int(b * 10) + 1)
+        b += 2.0
+    }
+    for k in 0..<4 { m.step(bd + 4.4 + Double(k) * 0.45, vol: 0.16) }
+    for k in 0..<4 { m.step(bd + 6.6 + Double(k) * 0.12, vol: 0.05) }
+    // the groove, from the hook to the end card, faded in under the wipe from the big ship
+    groove(m, from: start("hook"), to: start("endcard"), fadeIn: 1.2)
+    let hook = start("hook")
+    for i in 0..<26 { m.click(hook + 0.2 + Double(i) * 0.13 + noise(i) * 0.06) }
+    let desk = start("desktop"), deskEnd = end("desktop") + 1.3
+    for (i, d) in [0.0, 0.12, 0.24, 0.32].enumerated() { m.step(desk + d + 0.3, vol: 0.1 + Double(i % 2) * 0.03) }
+    m.ignite(desk + 0.45); m.hum(desk + 0.45, deskEnd - desk - 0.45)
+    for t in clashTimes(desk + 0.45, deskEnd) { m.clash(t) }
+    for t in shotTimes(desk + 0.45, deskEnd, offset: 0) { m.pew(t) }
+    for t in shotTimes(desk + 0.45, deskEnd, offset: blasterPeriod / 2) { m.pew(t, vol: 0.12) }
+    let st = start("status")
+    for i in 0..<4 { m.pop(st + 0.1 + Double(i) * 0.22, step: i) }
+    for k in 0..<5 { m.tone(st + 1.2 + Double(k) * 0.62, 0.08, 1568, wave: .square(0.5), vol: 0.035, release: 0.03) }
+    let ag = start("agents")
+    for k in 0..<14 { m.step(ag + Double(k) * 0.125, vol: 0.06) }
+    m.r2(ag + 1.4)
+    let wi = start("window")
+    m.hum(wi, 2.5, vol: 0.02)
+    for t in clashTimes(wi, wi + 2.5) { m.clash(t, vol: 0.09) }
+    for k in [0.9, 1.8] { m.click(wi + k, vol: 0.06) }
+    m.ping(wi + 2.5)
+    let ais = start("ais")
+    for i in 0..<6 { m.pop(ais + 0.15 + Double(i) * 0.1, step: i % 4) }
+    m.ignite(ais + 0.3, vol: 0.12); m.hum(ais + 0.35, end("ais") - ais)
+    for t in clashTimes(ais + 0.35, end("ais") + 1.3) { m.clash(t) }
+    for s in shots { transitionSound(m, s) }
+    let ec = start("endcard")
+    for (s, d, chord, lead) in [(0.0, 0.7, [53, 57, 60, 65], 81), (0.7, 0.7, [55, 59, 62, 67], 83), (1.4, 2.8, [57, 61, 64, 69], 85)] {
+        for n in chord { m.tone(ec + s, d, midi(n), wave: .saw, vol: 0.045, attack: 0.02, release: d > 1 ? 1.6 : 0.1) }
+        m.tone(ec + s, d, midi(lead), wave: .square(0.5), vol: 0.06, release: d > 1 ? 1.6 : 0.1, vibrato: 0.006)
+        m.tone(ec + s, d, midi(chord[0] - 24), wave: .sine, vol: 0.2, release: d > 1 ? 1.6 : 0.1)
+    }
+    m.boom(ec + 0.35, vol: 0.45)
+    m.whoosh(ec + 0.55, 1.1, vol: 0.22); m.tone(ec, 1.1, 300, to: 900, wave: .saw, vol: 0.025, attack: 0.4, release: 0.5)
+    for t in clashTimes(ec + 0.5, duration) { m.clash(t, vol: 0.12) }
+}
+
+/// The chiptune groove (Am F C G), on its own track and faded in from `from` over `fadeIn` seconds.
+func groove(_ m: Mix, from g0: Double, to g1: Double, fadeIn: Double) {
+    let gm = Mix(seconds: duration), beat = 0.5, bar = 2.0
+    let roots = [45, 41, 48, 43], triads = [[69, 72, 76], [65, 69, 72], [67, 72, 76], [67, 71, 74]]
+    let melodyA: [[(Int, Double)]] = [[(76, 1), (81, 1), (84, 0.5), (83, 0.5), (81, 1)], [(84, 1), (81, 1), (77, 0.5), (79, 0.5), (81, 1)],
+                                      [(79, 1), (76, 0.5), (79, 0.5), (84, 1), (83, 1)], [(86, 1), (83, 1), (79, 2)]]
+    let melodyB: [[(Int, Double)]] = [[(81, 0.5), (84, 0.5), (88, 1), (86, 0.5), (84, 0.5), (83, 1)], [(81, 1.5), (84, 0.5), (81, 1), (77, 1)],
+                                      [(79, 0.5), (81, 0.5), (79, 0.5), (76, 0.5), (79, 1), (84, 1)], [(83, 1), (86, 1), (91, 2)]]
+    let bars = Int(((g1 - g0) / bar).rounded())
+    for b in 0..<bars {
+        let t0 = g0 + Double(b) * bar, c = b % 4, full = b >= 2
+        for e in 0..<8 {
+            gm.tone(t0 + Double(e) * beat / 2, beat / 2 * 0.9, midi(roots[c] - 12 + (e % 2) * 12), wave: .square(0.25), vol: full ? 0.075 : 0.05, release: 0.02)
+            gm.hat(t0 + Double(e) * beat / 2, vol: e % 2 == 1 ? 0.04 : 0.025)
+        }
+        gm.kick(t0)
+        if full {
+            gm.kick(t0 + 2 * beat); gm.kick(t0 + 2.5 * beat, vol: 0.18); gm.snare(t0 + beat); gm.snare(t0 + 3 * beat)
+            for s in 0..<16 { gm.tone(t0 + Double(s) * beat / 4, beat / 4 * 0.8, midi(triads[c][s % 3] - 12 + (s / 3 % 2) * 12), wave: .triangle, vol: 0.03, release: 0.02) }
+            var tt = t0
+            for (n, d) in ((b - 2) / 4 % 2 == 0 ? melodyA : melodyB)[c] { gm.tone(tt, d * beat * 0.92, midi(n), wave: .square(0.5), vol: 0.055, release: 0.04, vibrato: 0.004); tt += d * beat }
+        }
+        if b == bars - 1 { for k in 0..<8 { gm.snare(t0 + 2 * beat + Double(k) * beat / 4, vol: 0.06 + Double(k) * 0.01) } }
+    }
+    for i in gm.buf.indices where gm.buf[i] != 0 {
+        let t = Double(i) / sampleRate
+        m.buf[i] += gm.buf[i] * Float(clamp((t - g0 + fadeIn * 0.5) / fadeIn))
+    }
+}
+
 // MARK: Which video
 
 /// promo, bloopers, or full (the promo, then the bloopers, as one).
@@ -1649,11 +2042,14 @@ let shots: [Shot] = {
     switch reel {
     case "bloopers": return blooperShots
     case "full": return promoShots + blooperShots.map { $0.shifted(promoLength) }
+    case "starclawds": return starClawdsShots
     default: return promoShots
     }
 }()
-let overlays: [Overlay] = reel == "bloopers" ? [] : promoOverlays
+let overlays: [Overlay] = reel == "promo" || reel == "full" ? promoOverlays : []
 var duration: Double { shots.last!.end }
+/// The soft promo wipe's length: the single-universe trailers keep their slower one.
+var softWipe: Double { reel == "starclawds" ? 2.7 : 2.0 }
 
 // MARK: Frame
 
@@ -1694,7 +2090,9 @@ func frame(_ t: Double) -> NSBitmapImageRep {
     let ctx = gc.cgContext
     ctx.interpolationQuality = .none
     if t < 0.5 / fps {                                   // the very first frame is the poster GitHub shows before play
-        let poster = reel == "bloopers" ? (shots[0], 2.0) : (shots.first { $0.name == "worlds" }!, 4.0)
+        let poster = reel == "bloopers" ? (shots[0], 2.0)
+            : reel == "starclawds" ? (shots.first { $0.name == "endcard" }!, 2.5)
+            : (shots.first { $0.name == "worlds" }!, 4.0)
         renderShot(poster.0, at: poster.0.start + poster.1, into: ctx)
         NSGraphicsContext.current = nil
         return rep
@@ -2285,8 +2683,12 @@ func bloopersSound(_ m: Mix) {
 
 func soundtrack() -> [Float] {
     let m = Mix(seconds: duration)
-    if reel != "bloopers" { promoSound(m) }
-    if reel != "promo" { bloopersSound(m) }
+    switch reel {
+    case "starclawds": starClawdsSound(m)
+    default:
+        if reel != "bloopers" { promoSound(m) }
+        if reel != "promo" { bloopersSound(m) }
+    }
     var peak: Float = 0
     for i in m.buf.indices { m.buf[i] = Float(tanh(Double(m.buf[i]) * 1.2)); peak = max(peak, abs(m.buf[i])) }
     let gain = peak > 0 ? 0.89 / peak : 1
@@ -2373,7 +2775,7 @@ let args = CommandLine.arguments
 let cmd = args.count > 1 ? args[1] : "storyboard"
 let out = args.count > 2 ? args[2] : "promo"
 try? FileManager.default.createDirectory(atPath: out, withIntermediateDirectories: true)
-let base = ["promo": "clawd-clash-promo", "bloopers": "clawd-clash-bloopers", "full": "clawd-clash-full"][reel] ?? "clawd-clash-promo"
+let base = ["promo": "clawd-clash-promo", "bloopers": "clawd-clash-bloopers", "full": "clawd-clash-full", "starclawds": "star-clawds-promo"][reel] ?? "clawd-clash-promo"
 
 switch cmd {
 case "video":
@@ -2395,6 +2797,7 @@ case "frame":
     save(frame(t), "\(out)/t\(args[3]).png"); print("wrote \(out)/t\(args[3]).png")
 default:
     if reel == "bloopers" { save(storyboard("CLAWD CLASH: BLOOPERS", blooperBeats), "\(out)/storyboard-bloopers.png") }
+    else if reel == "starclawds" { save(storyboard("STAR CLAWDS", starClawdsBeats), "\(out)/storyboard-star-clawds.png") }
     else { save(storyboard("CLAWD CLASH", promoBeats), "\(out)/storyboard-promo.png") }
     print("wrote the \(reel) storyboard to \(out)")
 }
