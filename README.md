@@ -25,7 +25,7 @@ Clawd Clash is one app with three universes: **Star Wars** (formerly [Clawd Wars
 
 | Star Wars | Marvel | DC |
 |---|---|---|
-| https://github.com/user-attachments/assets/84cbea65-6fb8-452a-b4d6-811c69c301cc | https://github.com/user-attachments/assets/ed78aa3c-79ec-4827-a56b-b6590f905686 | https://github.com/user-attachments/assets/4e242255-e81c-4404-b4f0-06c967dc8a56 |
+| https://github.com/user-attachments/assets/c0b65192-c2ae-4b2e-9c23-d50a2c157aef | https://github.com/user-attachments/assets/1f70859b-9230-4afb-9c8d-1121822be8e7 | https://github.com/user-attachments/assets/0396abbc-5ddd-4345-8e27-f33c2e79d616 |
 
 <p align="center"><sub>🔊 Click the speaker in a player for sound: GitHub starts videos muted.</sub></p>
 
