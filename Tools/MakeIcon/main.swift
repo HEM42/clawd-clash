@@ -1,8 +1,8 @@
 import AppKit
 
-// Renders Resources/AppIcon.png (1024²): Darth Vader and Captain America mid-duel, saber against shield, on a
-// starfield: one from each of Clawd Clash's universes, drawn with the app's own sprite code. build.sh turns it into
-// AppIcon.icns.
+// Renders Resources/AppIcon.png (1024²): Darth Vader and Captain America mid-duel, saber against shield, with
+// Superman flying in overhead, on a starfield: one from each of Clawd Clash's universes, drawn with the app's own
+// sprite code. build.sh turns it into AppIcon.icns.
 //   swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Icon,Rides}.swift \
 //          Sources/App/Universes/**/*.swift Sources/Shared/*.swift Tools/MakeIcon/main.swift -o build/makeicon \
 //          && build/makeicon Resources/AppIcon.png
@@ -80,6 +80,13 @@ func fighter(_ who: Cast, x: Double, side: Double) -> Fighter {
 drawFightFX(fx, t: t, left: fighter(left, x: margin, side: 1), right: fighter(right, x: margin + dist, side: -1))
 ctx.draw(fx.makeImage()!, in: CGRect(x: centerL - CGFloat(margin) * p, y: canvasBottom,
                                      width: CGFloat(fx.w) * p, height: CGFloat(fx.h) * p))
+// Superman, flying in overhead from the left, cape streaming.
+let sup = Cast.hero(DCHero.superman)
+let sc = PixelCanvas(72, 52)
+sup.draw(sc, t: 0.3, mode: .idle, walking: true, role: .none, asSession: true, aloft: true)
+sc.addOutline(C(0xFFFFFF, 0.92))
+let sp = p * 0.8
+ctx.draw(sc.makeImage()!, in: CGRect(x: 512 - 34 * sp, y: 640, width: CGFloat(sc.w) * sp, height: CGFloat(sc.h) * sp))
 ctx.restoreGState()
 
 // Subtle rim
