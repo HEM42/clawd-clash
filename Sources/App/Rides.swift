@@ -254,7 +254,7 @@ private func drawJavelin(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bo
 }
 
 /// The Batwing: a black jet with a bat-wing silhouette raised over the hull, scalloped along its trailing edge between
-/// the bones, a black claw mark in a yellow oval on the wing, a slit canopy, and amber jets with a blue core.
+/// the bones, a black cowl mask in a yellow oval on the wing, a slit canopy, and amber jets with a blue core.
 private func drawBatwing(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
     let body = C(0x26282F), light = C(0x4A4F5C), dark = C(0x121317), wing = C(0x2C2F38), bone = C(0x464B58)
     let yellow = C(0xF2C230), steel = C(0x7A808C)
@@ -287,12 +287,12 @@ private func drawBatwing(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bo
     }
     hull(c, x0: 4, x1: 65, top: top, bottom: [(4, 21), (9, 23), (50, 23), (58, 22), (65, 20)],
          body: body, light: light, dark: dark)
-    // The emblem on the wing: a black claw mark in a yellow oval
+    // The emblem on the wing: a black cowl mask in a yellow oval
     c.pattern(19, 5, [
         "..YYYYYYY..",
-        ".YKYYKYYKY.",
-        "YYKYYKYYKYY",
-        ".KYYKYYKYY.",
+        ".YYKYYYKYY.",
+        "YYKKKKKKKYY",
+        ".YKKYKYKKY.",
         "..YYYYYYY..",
     ], ["Y": yellow, "K": dark])
     // Slit canopy with a blue glint, and a yellow pinstripe along the flank

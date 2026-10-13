@@ -53,22 +53,6 @@ func halftone(_ r: CGRect, color: CGColor, cell: CGFloat, dot: (CGPoint) -> CGFl
     ctx.setFillColor(color); ctx.fillPath()
 }
 
-/// A claw mark, `w` wide, centred on `c`: three slashes leaning right, tapered at both ends.
-func clawMark(_ c: CGPoint, width w: CGFloat) -> CGPath {
-    let p = CGMutablePath(), h = w * 0.62, gap = w * 0.3, thick = w * 0.1
-    for i in -1...1 {
-        let x = c.x + CGFloat(i) * gap
-        let top = CGPoint(x: x + h * 0.28, y: c.y + h / 2), bottom = CGPoint(x: x - h * 0.28, y: c.y - h / 2)
-        let mid = CGPoint(x: (top.x + bottom.x) / 2, y: (top.y + bottom.y) / 2)
-        p.move(to: top)
-        p.addLine(to: CGPoint(x: mid.x + thick / 2, y: mid.y))
-        p.addLine(to: bottom)
-        p.addLine(to: CGPoint(x: mid.x - thick / 2, y: mid.y))
-        p.closeSubpath()
-    }
-    return p
-}
-
 let ground: CGFloat = 108          // where the fighters stand
 let skies: [(UInt32, UInt32)] = [(0x7A0E1E, 0x14050C), (0xC21E2E, 0x0E2A6E), (0x2E4482, 0x0A1028)]
 let floors: [UInt32] = [0x22141C, 0x16203E, 0x121A30]
@@ -102,7 +86,7 @@ for i in 0..<3 {
         ctx.move(to: CGPoint(x: 1240, y: 0)); ctx.addLine(to: CGPoint(x: signal.x - 58, y: signal.y)); ctx.addLine(to: CGPoint(x: signal.x + 58, y: signal.y))
         ctx.closePath(); ctx.fillPath()
         ctx.setFillColor(hex(0xFFE36B, 0.92)); ctx.fillEllipse(in: CGRect(x: signal.x - 58, y: signal.y - 40, width: 116, height: 80))
-        ctx.addPath(clawMark(signal, width: 92)); ctx.setFillColor(inkColor); ctx.fillPath()
+        ctx.addPath(cowlMaskPath(signal, width: 92)); ctx.setFillColor(inkColor); ctx.fillPath(using: .evenOdd)
     }
     // The ground each fight stands on.
     ctx.setFillColor(hex(floors[i])); ctx.fill(CGRect(x: 0, y: 0, width: W, height: ground))

@@ -275,7 +275,7 @@ extension Scenes {
         }
     }
 
-    /// The upper sky on a tall canvas: smog, and the Night Beacon's claw mark thrown on the clouds from across the city.
+    /// The upper sky on a tall canvas: smog, and the Night Beacon's cowl mask thrown on the clouds from across the city.
     static func aceHigh(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g)
         for i in 0..<7 {
@@ -292,14 +292,7 @@ extension Scenes {
         c.ellipse(bx, by, br * 3 / 2 + 2 * s, br + 2 * s, C(0xF0E8A8, 0.12))
         c.ellipse(bx, by, br * 3 / 2, br, C(0xF0E8A8, 0.42))
         let k = max(1, br / 6)
-        s6Stamp(c, bx - 13 * k / 2, by - 3 * k, [   // the claw mark
-            ".....#..#..#.",
-            "....##.##.##.",
-            "...##.##.##..",
-            "..##.##.##...",
-            ".##.##.##....",
-            "#..#..#......",
-        ], ["#": C(0x0A0C10, 0.85)], s: k)
+        s6Stamp(c, bx - 13 * k / 2, by - 3 * k, cowlMaskRows(13), ["#": C(0x0A0C10, 0.85)], s: k)   // the cowl mask
     }
 
     /// A gantry catwalk high across the plant on a tall canvas, with caged lamps hanging under it.

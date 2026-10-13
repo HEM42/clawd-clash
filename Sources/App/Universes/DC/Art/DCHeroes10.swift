@@ -844,7 +844,7 @@ private func drawAce(_ c: PixelCanvas, _ p: Pose) {
         let a = howl
         c.glowLine(2, 40, 13, 8, core: C(0xFFF4C0, 0.08 * a), glow: C(0xFFF4C0, 0.06 * a), coreR: 2, glowR: 5)
         c.ellipse(13, 7, 7, 4, C(0xFFE27A, 0.85 * a))
-        drawClawMark(c, x: 8, y: 5, width: 11, height: 4, color: C(0x1A1A22, a))
+        drawCowlMask(c, x: 8, y: 3, width: 11, color: C(0x1A1A22, a))
     }
     for (i, lx) in [13, 18, 28, 33].enumerated() {
         let lifted = p.step >= 0 && i % 2 == p.step

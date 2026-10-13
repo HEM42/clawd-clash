@@ -231,7 +231,7 @@ struct DCComicTrip {
                                   CGPoint(x: foot.x + n.x * 14 * s, y: foot.y + n.y * 14 * s)]))
         ctx.setFillColor(rgb(0xFFF1B0, 0.3 * lit * (1 - fade))); ctx.fillPath()
 
-        // The circle of light: yellow, the new place coming through, the claw mark over it until it fades away.
+        // The circle of light: yellow, the new place coming through, the cowl mask over it until it fades away.
         let circle = CGRect(x: sky.x - rad, y: sky.y - rad, width: rad * 2, height: rad * 2)
         ctx.saveGState()
         ctx.addEllipse(in: circle); ctx.clip()
@@ -240,7 +240,7 @@ struct DCComicTrip {
         ctx.setAlpha(1)
         ctx.setFillColor(rgb(0xFFE36B, 0.42 * (1 - fade))); ctx.fill(r)
         let batA = lit * CGFloat(1 - Self.ease(Self.span(k, 0.46, 0.72)))
-        if batA > 0.01 { ctx.addPath(Self.clawMark(sky, width: rad * 1.6)); ctx.setFillColor(rgb(0x0A0A0A, batA)); ctx.fillPath() }
+        if batA > 0.01 { ctx.addPath(cowlMaskPath(sky, width: rad * 1.6)); ctx.setFillColor(rgb(0x0A0A0A, batA)); ctx.fillPath(using: .evenOdd) }
         ctx.restoreGState()
         ctx.saveGState()
         ctx.setShadow(offset: .zero, blur: 24 * s, color: rgb(0xFFE36B))
@@ -1243,17 +1243,6 @@ struct DCComicTrip {
     }
 
     // MARK: Props
-
-    /// The Night Beacon's claw mark, `w` wide, centred on `c`: three slashes rising to the right, pointed at both ends.
-    private static func clawMark(_ c: CGPoint, width w: CGFloat) -> CGPath {
-        let p = CGMutablePath(), h = w * 0.5, slant = h * 0.55, thick = w * 0.09
-        for i in -1...1 {
-            let x = c.x + CGFloat(i) * w * 0.27
-            let top = CGPoint(x: x + slant / 2, y: c.y + h / 2), bottom = CGPoint(x: x - slant / 2, y: c.y - h / 2)
-            p.addPath(polygon([bottom, CGPoint(x: x - thick / 2, y: c.y), top, CGPoint(x: x + thick / 2, y: c.y)]))
-        }
-        return p
-    }
 
     /// A grapnel at `at`, pointing along `angle`: a shaft and three claws.
     private static func grapnel(_ ctx: CGContext, at: CGPoint, angle: CGFloat, size: CGFloat) {

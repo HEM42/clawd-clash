@@ -103,9 +103,9 @@ private func drawSuperman(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Batman
 
 /// Batman: Clawd under the black cowl with the pointed ears and narrow white eyes, his own orange jaw showing, the grey
-/// suit with the black claw mark on a yellow oval, a yellow utility belt, black gloves and boots, and the long black cape with a
+/// suit with the black cowl mask on a yellow oval, a yellow utility belt, black gloves and boots, and the long black cape with a
 /// scalloped hem. He travels on a grapnel line, one hand up on it, cape streaming. He fights with his fists, the
-/// gauntlet fins catching the light. Signature: he throws a batarang that whirls out and boomerangs back into his hand.
+/// gauntlet fins catching the light. Signature: he throws a clawarang that whirls out and boomerangs back into his hand.
 private func drawBatman(_ c: PixelCanvas, _ p: Pose) {
     let grey = C(0x7A7E8A), greyDark = C(0x555963), black = C(0x1E1E28), blackLight = C(0x3A3A4A)
     let cape = C(0x2E3248), capeEdge = C(0x15172A), yellow = C(0xF0C838), yellowDark = C(0xB8922A)
@@ -140,9 +140,9 @@ private func drawBatman(_ c: PixelCanvas, _ p: Pose) {
         "KKSSSSSSSSSSSSSSSSKK",
         "KSSSSSSSkkkkSSSSSSSK",
     ], ["K": black, "L": blackLight, "b": C(0x0E0E14), "W": white, "S": clawdOrange, "k": clawdShade])
-    // The claw mark on its yellow oval, and the utility belt.
+    // The cowl mask on its yellow oval, and the utility belt.
     c.pattern(24, 33, [".YYYYYYY.", "YYYYYYYYY", "YYYYYYYYY", ".YYYYYYY."], ["Y": yellow])
-    drawClawMark(c, x: 25, y: 34, width: 7, height: 2, color: black)
+    drawCowlMask(c, x: 25, y: 34, width: 7, color: black)
     c.rect(18, 37, 20, 1, yellow)
     for x in [19, 22, 32, 35] { c.rect(x, 37, 2, 1, yellowDark) }
     c.rect(15, 33, 3, 3, black)
@@ -157,7 +157,7 @@ private func drawBatman(_ c: PixelCanvas, _ p: Pose) {
         drawFinnedPunch(c, angle: a, trail: p.trail)
         return
     }
-    // Signature: the batarang whirls out along an ellipse and comes back.
+    // Signature: the clawarang whirls out along an ellipse and comes back.
     if let s = p.signature, s > 0.06, s < 0.94 {
         if s < 0.16 {
             c.rect(37, 29, 3, 3, black)                               // wound up behind the head
@@ -195,12 +195,13 @@ private func drawFinnedPunch(_ c: PixelCanvas, angle: Double, trail: [Double], a
     }
 }
 
-/// A batarang centred near (`x`, `y`): `frame` 0 flat, 1 tilted, 2 edge-on, as it spins.
+/// A clawarang centred near (`x`, `y`): three claw points fanning from a short bar; `frame` 0 flat, 1 a quarter
+/// turn, 2 edge-on, as it spins.
 private func drawBatarang(_ c: PixelCanvas, x: Int, y: Int, frame: Int) {
     let k = C(0x1E1E28), hi = C(0x8A8E9A)
     switch frame {
-    case 0: c.pattern(x - 3, y - 1, ["K.....K", "KKK.KKK", ".KKHKK."], ["K": k, "H": hi])
-    case 1: c.pattern(x - 2, y - 2, ["K....", "KK..K", ".KHKK", ".KKK.", "..K.."], ["K": k, "H": hi])
+    case 0: c.pattern(x - 3, y - 1, ["K..K..K", ".K.K.K.", "..KHK.."], ["K": k, "H": hi])
+    case 1: c.pattern(x - 1, y - 3, ["..K", ".K.", "K..", "KHK", "K..", ".K.", "..K"], ["K": k, "H": hi])
     default: c.rect(x - 3, y, 7, 1, k); c.px(x, y, hi)
     }
 }

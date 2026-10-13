@@ -55,22 +55,6 @@ func halftone(_ r: CGRect, color: CGColor, cell: CGFloat, dot: (CGPoint) -> CGFl
     ctx.setFillColor(color); ctx.fillPath()
 }
 
-/// A claw mark, `w` wide, centred on `c`: three slashes leaning right, tapered at both ends.
-func clawMark(_ c: CGPoint, width w: CGFloat) -> CGPath {
-    let p = CGMutablePath(), h = w * 0.62, gap = w * 0.3, thick = w * 0.1
-    for i in -1...1 {
-        let x = c.x + CGFloat(i) * gap
-        let top = CGPoint(x: x + h * 0.28, y: c.y + h / 2), bottom = CGPoint(x: x - h * 0.28, y: c.y - h / 2)
-        let mid = CGPoint(x: (top.x + bottom.x) / 2, y: (top.y + bottom.y) / 2)
-        p.move(to: top)
-        p.addLine(to: CGPoint(x: mid.x + thick / 2, y: mid.y))
-        p.addLine(to: bottom)
-        p.addLine(to: CGPoint(x: mid.x - thick / 2, y: mid.y))
-        p.closeSubpath()
-    }
-    return p
-}
-
 // Each panel's sky: Sith red with stars, Marvel red into blue, Gotham's night blue under the Night Beacon; rays from the
 // middle and halftone dots, heavier towards the bottom.
 let skies: [(UInt32, UInt32)] = [(0x6E0C1A, 0x1A0610), (0xB81A2A, 0x0E2A6E), (0x2B3F7A, 0x0A1028)]
@@ -100,7 +84,7 @@ for i in 0..<3 {
     if i == 2 {
         let signal = CGPoint(x: 800, y: 800)
         ctx.setFillColor(hex(0xFFE36B, 0.9)); ctx.fillEllipse(in: CGRect(x: signal.x - 85, y: signal.y - 60, width: 170, height: 120))
-        ctx.addPath(clawMark(signal, width: 140)); ctx.setFillColor(inkColor); ctx.fillPath()
+        ctx.addPath(cowlMaskPath(signal, width: 140)); ctx.setFillColor(inkColor); ctx.fillPath(using: .evenOdd)
     }
     ctx.restoreGState()
 }

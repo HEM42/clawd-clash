@@ -1,7 +1,8 @@
+import CoreGraphics
 import Foundation
 
 // The Detective Claws chest marks, shared by the heroes, the villains and the places: the C-shield (for Clawd) in
-// place of the S-shield, a claw mark in place of the bat, a lamp in place of the lantern symbol and a flame in place
+// place of the S-shield, the cowl mask (pointed ears over a domino mask) in place of the bat, a lamp in place of the lantern symbol and a flame in place
 // of the Flash's bolt. Each keeps the size, place and colours of the mark it replaces.
 
 /// How big an emblem is, in canvas pixels.
@@ -25,17 +26,42 @@ func drawCShield(_ c: PixelCanvas, x: Int, y: Int, size: DCEmblemSize, letter: P
     c.pattern(x, y, rows, palette)
 }
 
-/// A claw mark: three parallel slashes rising to the right, `thickness` pixels wide each, centred in the
-/// `width`×`height` box at (`x`, `y`).
-func drawClawMark(_ c: PixelCanvas, x: Int, y: Int, width: Int, height: Int, color: Px, thickness: Int = 1) {
-    let gap = thickness + 2
-    let span = 2 * gap + thickness + height - 1
-    let x0 = x + max(0, (width - span) / 2)
-    for i in 0..<3 {
-        for r in 0..<height {
-            c.rect(x0 + i * gap + (height - 1 - r), y + r, thickness, 1, color)
-        }
+/// The cowl mask, `width` pixels wide (7, 11, 13, 14, 15, 16 or 21; others take the nearest): two pointed ears over
+/// a domino mask with its eyes cut out, as rows of `#`.
+func cowlMaskRows(_ width: Int) -> [String] {
+    let all: [Int: [String]] = [
+        7: [".#...#.", "##.#.##", ".#####."],
+        11: [".#.......#.", ".##.....##.", "###########", "##..###..##", ".#########."],
+        13: ["..#.......#..", "..##.....##..", ".###########.", "###..###..###", ".###########."],
+        14: ["..#........#..", ".############.", "###..####..###", ".############."],
+        15: ["..#.........#..", "..##.......##..", ".#############.", "###..#####..###", "###..#####..###", ".#############."],
+        16: ["..##........##..", ".##############.", "###...####...###"],
+        21: ["...#.............#...", "...##...........##...", "...###.........###...", "..#################..",
+             ".###################.", ".####....###....####.", ".####....###....####.", "..#################..",
+             "....####.....####...."],
+    ]
+    let w = all.keys.min { abs($0 - width) < abs($1 - width) }!
+    return all[w]!
+}
+
+/// The cowl mask in `color`, its top-left at (`x`, `y`), `width` pixels wide (see `cowlMaskRows`).
+func drawCowlMask(_ c: PixelCanvas, x: Int, y: Int, width: Int, color: Px) {
+    c.pattern(x, y, cowlMaskRows(width), ["#": color])
+}
+
+/// The cowl mask as a smooth shape, `w` wide, centred on `c`, ears up (y grows upwards). Fill it even-odd, so the
+/// eyes stay open.
+func cowlMaskPath(_ c: CGPoint, width w: CGFloat) -> CGPath {
+    let outer: [(CGFloat, CGFloat)] = [(-0.5, 0.02), (-0.44, 0.16), (-0.40, 0.42), (-0.26, 0.20), (0.26, 0.20), (0.40, 0.42),
+                                       (0.44, 0.16), (0.5, 0.02), (0.42, -0.14), (0.14, -0.18), (0, -0.10), (-0.14, -0.18),
+                                       (-0.42, -0.14)]
+    let eye: [(CGFloat, CGFloat)] = [(-0.34, 0.03), (-0.22, 0.09), (-0.08, 0.04), (-0.20, -0.04)]
+    let p = CGMutablePath()
+    for shape in [outer, eye, eye.reversed().map { (-$0.0, $0.1) }] {
+        p.addLines(between: shape.map { CGPoint(x: c.x + $0.0 * w, y: c.y + $0.1 * w) })
+        p.closeSubpath()
     }
+    return p
 }
 
 /// The lamp emblem, its top-left at (`x`, `y`): an oil lamp's flame over its bowl in `lamp`, on a `field` disc

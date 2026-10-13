@@ -27,19 +27,6 @@ private let scenes1Font: [Character: [String]] = [
     "Y": ["101", "101", "010", "010", "010"],
 ]
 
-/// The claw mark the Night Beacon throws on the clouds, 21 by 9: three slashes rising to the right.
-private let scenes1Claw: [String] = [
-    "........##...##...##.",
-    ".......###..###..###.",
-    "......###..###..###..",
-    ".....###..###..###...",
-    "....###..###..###....",
-    "...###..###..###.....",
-    "..###..###..###......",
-    ".###..###..###.......",
-    "##...##...##.........",
-]
-
 /// The bat emblem, 21 by 9 (only on the Batcave's computer screen now).
 private let scenes1Bat: [String] = [
     "#........#.#........#",
@@ -306,7 +293,7 @@ extension Scenes {
 
     /// Gotham City on a rainy night: the crew is on a wet slate rooftop, a stone gargoyle crouched on each corner pillar
     /// of its parapet. Beyond, gothic towers with pointed roofs and spires crowd under low clouds, a few windows lit
-    /// amber, and a searchlight on a nearby roof throws the Night Beacon's claw mark up onto the clouds.
+    /// amber, and a searchlight on a nearby roof throws the Night Beacon's cowl mask up onto the clouds.
     static func gotham(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), sig = gothamSignal(c, g)
         c.gradient(0, g, C(0x0A0C16), C(0x2C2A3C), bands: 7)
@@ -335,7 +322,7 @@ extension Scenes {
         c.ellipse(sig.x, sig.y, 26 * s, 16 * s, C(0xF0E6B0, 0.07))
         c.ellipse(sig.x, sig.y, 19 * s, 12 * s, C(0xF0E6B0, 0.12))
         c.ellipse(sig.x, sig.y, 14 * s, 9 * s, C(0xF4ECB8, 0.9))
-        dcScenes1Stamp(c, sig.x - 10 * s, sig.y - 4 * s, scenes1Claw, ["#": C(0x14141C)], s: s)
+        dcScenes1Stamp(c, sig.x - 10 * s, sig.y - 4 * s, cowlMaskRows(21), ["#": C(0x14141C)], s: s)
         // far towers then near ones
         gothamRow(c, g, lo: tall ? 0.30 : 0.34, hi: tall ? 0.62 : 0.62, col: C(0x1C1C2C), lamp: 0.35, seed: 2)
         gothamTower(c, g)
