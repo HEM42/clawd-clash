@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Resources/AppIcon.png" width="180" alt="Clawd Clash icon: Darth Vader and Captain America mid-duel, Superman flying in overhead">
+  <img src="Resources/AppIcon.png" width="180" alt="Clawd Clash icon: a comic cover in three panels, Star Wars, Marvel and DC, with CLAWD CLASH across them, Spider-Man hanging on his web, Darth Vader raising his saber and Batman under the Bat-Signal">
 </p>
 
 <h1 align="center">Clawd Clash</h1>
@@ -99,7 +99,7 @@ It opens in a window by default (switch to the desktop from the menu): the whole
   <img src="docs/window-cantina.png" alt="Window mode in the Mos Eisley cantina" width="760">
 </p>
 
-**The screen saver** (Settings → Install Screen Saver…) shows the place full screen with the crew fighting across its floor, a card per session, name tags, a clock and a crawl of what happened lately, and moves somewhere new every 10 minutes: with a Star Wars wipe, or in Marvel with a comic-book transition (halftone dots, a SNIKT!, BAMF!, THWIP! or KAPOW! for whoever's on screen, panels, speed lines, "MEANWHILE…", and with Deadpool about, Deadpool peeling the page off the screen or surfing past on a chimichanga), or in DC with one of fifteen of its own (the Flash racing through the Speed Force, the Bat-Signal, Superman bursting through the page, the Lasso of Truth, a Joker card, Darkseid's Omega Beams and more). Its **Options…** button in System Settings picks the universe: the same as the app, Star Wars, Marvel, DC, or Random (a new pick on each trip).
+**The screen saver** (Settings… → Screen Saver → Install…) shows the place full screen with the crew fighting across its floor, a card per session, name tags, a clock and a crawl of what happened lately, and moves somewhere new every 10 minutes: with a Star Wars wipe, or in Marvel with a comic-book transition (halftone dots, a SNIKT!, BAMF!, THWIP! or KAPOW! for whoever's on screen, panels, speed lines, "MEANWHILE…", and with Deadpool about, Deadpool peeling the page off the screen or surfing past on a chimichanga), or in DC with one of fifteen of its own (the Flash racing through the Speed Force, the Bat-Signal, Superman bursting through the page, the Lasso of Truth, a Joker card, Darkseid's Omega Beams and more). Its **Options…** button in System Settings picks the universe: the same as the app, Star Wars, Marvel, DC, or Random (a new pick on each trip).
 
 <p align="center">
   <img src="docs/screensaver.png" alt="The screen saver" width="760">
@@ -126,6 +126,7 @@ It opens in a window by default (switch to the desktop from the menu): the whole
 - **Keep Window on Top** (window mode) or **Keep Characters on Top** (desktop mode): off, the window behaves like any other, and the desktop crew lives on the desktop behind your windows.
 - **Drag** the crew anywhere on either monitor.
 - **Status Symbols** in the menu is this key, drawn with the app's own sprites.
+- **Settings…** (⌘,) opens one window with every option: the universe, the window and the desktop, which AIs are connected, the screen saver, and Forget Idle Sessions.
 - Hold **⌘** in the menu for the **Playground** (put anyone on stage and watch them fight) and Demo Mode.
 
 ## Install
@@ -167,7 +168,7 @@ Clawd Clash replaces Clawd Wars, Avengers: Clawd Wars and Justice League: Clawd 
 
 ## Uninstall
 
-With Homebrew: `brew uninstall --cask clawd-clash` (add `--zap` to also remove its settings and status file). Otherwise: menu bar icon → **Settings → Remove … Hooks** for each connected AI, then **Quit**, or from the terminal:
+With Homebrew: `brew uninstall --cask clawd-clash` (add `--zap` to also remove its settings and status file). Otherwise: menu bar icon → **Settings…** → **Remove** beside each connected AI, then **Quit**, or from the terminal:
 
 ```sh
 "/Applications/Clawd Clash.app/Contents/MacOS/ClawdClash" --uninstall-hooks

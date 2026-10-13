@@ -1971,6 +1971,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let app = NSMenu()
         app.addItem(withTitle: "About Clawd Clash", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         app.addItem(.separator())
+        let settings = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+        settings.target = self
+        app.addItem(settings)
+        app.addItem(.separator())
         app.addItem(action: windowMode ? "Desktop Mode" : "Window Mode", #selector(toggleWindowMode), target: self)
         app.addItem(.separator())
         app.addItem(withTitle: "Quit Clawd Clash", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -2197,93 +2201,151 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         if playground != nil { m.addItem(disabled: "(playground)") }
         if demo || playground != nil { m.addItem(.separator()) }
 
-        let size = NSMenuItem(title: "Size", action: nil, keyEquivalent: "")
-        let sub = NSMenu()
-        for (title, z) in [("Small", 0.67), ("Medium", 1.0), ("Large", 1.33), ("Huge", 1.75)] {
-            let item = NSMenuItem(title: title, action: #selector(setZoom(_:)), keyEquivalent: "")
-            item.target = self
-            item.representedObject = z
-            item.state = abs(baseZoom - z) < 0.01 ? .on : .off
-            sub.addItem(item)
-        }
-        size.submenu = sub
         m.addItem(action: hidden ? "Show Clawd Clash" : "Hide Clawd Clash", #selector(toggleHidden), target: self)
         m.addItem(action: windowMode ? "Desktop Mode" : "Window Mode", #selector(toggleWindowMode), target: self)
-        if windowMode { m.addItem(locationMenu()) }
-        m.addItem(settingsMenu(size: size))
-        m.addItem(statusSymbolsMenu())
-        m.addItem(universeMenu())
         m.addItem(.separator())
+        m.addItem(universeMenu())
+        if windowMode { m.addItem(locationMenu()) }
+        m.addItem(statusSymbolsMenu())
         // Developer toys: only with ⌘ held while opening the menu (or while one is running, so you can leave it).
         if NSEvent.modifierFlags.contains(.command) || playground != nil || demo {
+            m.addItem(.separator())
             m.addItem(playgroundMenu())
             m.addItem(action: "Demo Mode", #selector(toggleDemo), target: self, on: demo)
         }
-        m.addItem(action: "Forget Idle Sessions", #selector(forgetIdle), target: self)
-        if !windowMode { m.addItem(action: "Reset Position", #selector(resetPosition), target: self) }
         m.addItem(.separator())
+        m.addItem(action: "Settings…", #selector(openSettings), target: self)
         m.addItem(action: "Quit", #selector(quit), target: self)
         return m
     }
 
-    @objc private func setZoom(_ sender: NSMenuItem) {
-        zoom = sender.representedObject as? Double ?? 1
+    // MARK: Settings
+
+    private var settingsWindow: SettingsWindow?
+
+    @objc func openSettings() {
+        if settingsWindow == nil { settingsWindow = SettingsWindow { [weak self] in self?.settingsSections() ?? [] } }
+        settingsWindow?.show()
+    }
+
+    /// Desktop sizes, by name.
+    private static let sizes: [(String, CGFloat)] = [("Small", 0.67), ("Medium", 1.0), ("Large", 1.33), ("Huge", 1.75)]
+
+    /// Everything the Settings window shows, read afresh each time it's built.
+    private func settingsSections() -> [SettingsSection] {
+        let d = UserDefaults.standard
+        let universes = Universe.allCases
+        var general: [SettingsRow] = [
+            .choice("Universe", options: universes.map(\.title) + ["Random"],
+                    get: { Self.universeEvery == nil ? universes.firstIndex(of: .shown) ?? 0 : universes.count },
+                    set: { [weak self] i in
+                        guard let self else { return }
+                        if i < universes.count {
+                            Self.universeEvery = nil
+                            if universes[i] != .shown { self.switchUniverse(to: universes[i]) }
+                        } else if Self.universeEvery == nil {
+                            Self.universeEvery = 10
+                            self.universeSince = Date().timeIntervalSince1970
+                        }
+                    }),
+            .choice("Random switches", options: Self.universeIntervals.map { $0 == 1 ? "Every minute" : "Every \($0) minutes" },
+                    enabled: { Self.universeEvery != nil },
+                    get: { Self.universeIntervals.firstIndex(of: Self.universeEvery ?? 10) ?? 2 },
+                    set: { [weak self] i in
+                        Self.universeEvery = Self.universeIntervals[i]
+                        self?.universeSince = Date().timeIntervalSince1970
+                    }),
+            .toggle("Show Dock icon", get: { [weak self] in self?.showInDock ?? true },
+                    set: { [weak self] _ in self?.toggleDock() }),
+            .toggle("Monochrome menu bar icon", get: { [weak self] in self?.monoMenuBarIcon ?? false },
+                    set: { [weak self] _ in self?.toggleMonoMenuBarIcon() }),
+            .toggle("Launch at login", get: { SMAppService.mainApp.status == .enabled },
+                    set: { [weak self] _ in self?.toggleLogin() }),
+        ]
+        general.append(.button("Forget Idle Sessions", note: "Clears sessions that ended without saying so.",
+                               action: { [weak self] in self?.forgetIdle() }))
+
+        let window: [SettingsRow] = [
+            .toggle("Keep window on top", get: { d.bool(forKey: "windowPinned") },
+                    set: { [weak self] on in d.set(on, forKey: "windowPinned"); self?.clawdWindow?.applyPin() }),
+            .toggle("Compact window", note: "The whole window at 75%.", get: { ClawdWindow.small },
+                    set: { [weak self] _ in self?.toggleSmallWindow() }),
+            .toggle("Show the session list", get: { ClawdWindow.listShown && ClawdWindow.view != .board },
+                    set: { [weak self] _ in self?.toggleWindowList() }),
+            .toggle("Show the screen saver view instead", get: { ClawdWindow.view == .board },
+                    set: { [weak self] _ in self?.toggleBoard() }),
+            .toggle("Fit the window's height to the sessions", get: { d.object(forKey: "autoHeight") as? Bool ?? true },
+                    set: { [weak self] _ in self?.toggleAutoHeight() }),
+            .toggle("Show project names over the characters", get: { d.object(forKey: "labelsWindow") as? Bool ?? false },
+                    set: { on in d.set(on, forKey: "labelsWindow") }),
+        ]
+
+        let desktop: [SettingsRow] = [
+            .choice("Size", options: Self.sizes.map(\.0),
+                    get: { [weak self] in Self.sizes.firstIndex { abs($0.1 - (self?.baseZoom ?? 0.67)) < 0.01 } ?? 0 },
+                    set: { [weak self] i in self?.setDesktopZoom(Self.sizes[i].1) }),
+            .toggle("Keep characters on top", note: "Off, they live on the desktop, behind your windows.",
+                    get: { Self.charactersOnTop },
+                    set: { [weak self] on in
+                        Self.charactersOnTop = on
+                        self?.panel.level = on ? .statusBar : Self.desktopLevel
+                    }),
+            .toggle("Show project names over the characters", get: { d.object(forKey: "labels") as? Bool ?? true },
+                    set: { on in d.set(on, forKey: "labels") }),
+            .button("Reset Position", note: "Puts the crew back in the bottom-right corner.",
+                    action: { [weak self] in self?.resetPosition() }),
+        ]
+
+        var ais: [SettingsRow] = []
+        if HookInstaller.claudeAvailable || HookInstaller.isInstalled {
+            ais.append(.status("Claude Code", detail: { HookInstaller.isInstalled ? "Connected" : "Not connected" },
+                               button: { HookInstaller.isInstalled ? "Remove" : "Connect" },
+                               action: { [weak self] in
+                                   if HookInstaller.isInstalled { self?.removeHooks() } else { self?.installHooks() }
+                               }))
+        }
+        for ai in HookInstaller.others where HookInstaller.available(ai) {
+            ais.append(.status(HookInstaller.displayName(ai.name),
+                               detail: { HookInstaller.installed(ai) ? "Connected" : "Not connected" },
+                               button: { HookInstaller.installed(ai) ? "Remove" : "Connect" },
+                               action: { [weak self] in
+                                   guard let self else { return }
+                                   if HookInstaller.installed(ai) {
+                                       Self.ignoredHooks.insert(ai.name)   // removed on purpose: no reminders
+                                       do { try HookInstaller.uninstall(ai) } catch {
+                                           self.alert("Couldn't remove \(HookInstaller.displayName(ai.name)) hooks", error.localizedDescription)
+                                       }
+                                   } else {
+                                       self.installOther(ai.name)
+                                   }
+                               }))
+        }
+
+        var sections = [
+            SettingsSection(title: "General", rows: general),
+            SettingsSection(title: "Window Mode", rows: window),
+            SettingsSection(title: "Desktop Mode", rows: desktop),
+            SettingsSection(title: "AIs", note: "Connected AIs report what they're doing through Clawd Clash's hook.", rows: ais),
+        ]
+        if SaverInstaller.bundled != nil {
+            sections.append(SettingsSection(title: "Screen Saver", rows: [
+                .status("Clawd Clash", detail: { SaverInstaller.isInstalled ? "Installed" : "Not installed" },
+                        button: { SaverInstaller.isInstalled ? "Remove" : "Install…" },
+                        action: { [weak self] in
+                            if SaverInstaller.isInstalled { self?.removeSaver() } else { self?.installSaver() }
+                        }),
+            ]))
+        }
+        return sections
+    }
+
+    /// Settings → Size: the crew's size on the desktop (the window always fits its crew to the window).
+    private func setDesktopZoom(_ z: CGFloat) {
+        UserDefaults.standard.set(z, forKey: "zoom")
+        guard !windowMode else { return }
         home = clampHome(home)
         relayout()
         snapActors()
-    }
-
-    @objc private func toggleLabels() { showLabels.toggle() }
-
-    /// Preferences, gathered in one place.
-    private func settingsMenu(size: NSMenuItem) -> NSMenuItem {
-        let root = NSMenuItem(title: "Settings", action: nil, keyEquivalent: "")
-        let sm = NSMenu()
-        // In the window the crew always fits the window, so Size only applies on the desktop.
-        if windowMode { sm.addItem(disabled: "Size (desktop only)") } else { sm.addItem(size) }
-        sm.addItem(action: windowMode ? "Show Project Names in Window" : "Show Project Names on Desktop",
-                   #selector(toggleLabels), target: self, on: showLabels)
-        sm.addItem(.separator())
-        sm.addItem(disabled: "Window mode")
-        // The window stays above other windows or not; on the desktop, the characters do.
-        sm.addItem(action: windowMode ? "Keep Window on Top" : "Keep Characters on Top", #selector(togglePin), target: self,
-                   on: windowMode ? UserDefaults.standard.bool(forKey: "windowPinned") : Self.charactersOnTop)
-        sm.addItem(action: "Compact Window", #selector(toggleSmallWindow), target: self,
-                   on: ClawdWindow.small)
-        sm.addItem(action: "Show Session List in Window", #selector(toggleWindowList), target: self,
-                   on: ClawdWindow.listShown && ClawdWindow.view != .board)
-        sm.addItem(action: "Screen Saver View in Window", #selector(toggleBoard), target: self, on: ClawdWindow.view == .board)
-        sm.addItem(action: "Fit Window Height to Sessions", #selector(toggleAutoHeight), target: self,
-                   on: UserDefaults.standard.object(forKey: "autoHeight") as? Bool ?? true)
-        sm.addItem(.separator())
-        sm.addItem(action: "Show Dock Icon", #selector(toggleDock), target: self, on: showInDock)
-        sm.addItem(action: "Monochrome Menu Bar Icon", #selector(toggleMonoMenuBarIcon), target: self, on: monoMenuBarIcon)
-        sm.addItem(action: "Launch at Login", #selector(toggleLogin), target: self,
-                   on: SMAppService.mainApp.status == .enabled)
-        sm.addItem(.separator())
-        if HookInstaller.isInstalled {
-            sm.addItem(action: "Remove Claude Code Hooks", #selector(removeHooks), target: self)
-        } else {
-            sm.addItem(action: "Install Claude Code Hooks", #selector(installHooks), target: self)
-        }
-        for ai in HookInstaller.others where HookInstaller.available(ai) {
-            let on = HookInstaller.installed(ai)
-            let item = NSMenuItem(title: "\(on ? "Remove" : "Install") \(HookInstaller.displayName(ai.name)) Hooks",
-                                  action: on ? #selector(removeOtherHooks(_:)) : #selector(installOtherHooks(_:)), keyEquivalent: "")
-            item.target = self
-            item.representedObject = ai.name
-            sm.addItem(item)
-        }
-        if SaverInstaller.bundled != nil {
-            sm.addItem(.separator())
-            if SaverInstaller.isInstalled {
-                sm.addItem(action: "Remove Screen Saver", #selector(removeSaver), target: self)
-            } else {
-                sm.addItem(action: "Install Screen Saver…", #selector(installSaver), target: self)
-            }
-        }
-        root.submenu = sm
-        return root
     }
 
     /// Status Symbols: a key to the bubbles, poses and colours (`Legend`). Nothing to pick, so its rows are
