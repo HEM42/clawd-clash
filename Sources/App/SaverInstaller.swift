@@ -38,9 +38,10 @@ enum SaverInstaller {
     }
 
     /// After an app update, the installed copy is replaced with the new one (only a per-user copy: one installed for
-    /// everyone needs an admin). The screen saver host keeps old bundles loaded, so it's restarted.
+    /// everyone needs an admin). The screen saver host keeps old bundles loaded, so it's restarted. A copy run from
+    /// build/ leaves it alone, as it does the hooks: a dev build shouldn't replace what the installed app put there.
     static func refreshIfOutdated() {
-        guard let bundled, FileManager.default.fileExists(atPath: userCopy.path),
+        guard let bundled, !Bundle.main.bundlePath.contains("/build/"), FileManager.default.fileExists(atPath: userCopy.path),
               code(of: bundled) != code(of: userCopy) else { return }
         do {
             try FileManager.default.removeItem(at: userCopy)
