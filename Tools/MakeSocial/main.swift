@@ -4,7 +4,7 @@ import CoreText
 // Renders docs/social-preview.png (1280×640, GitHub → Settings → Social preview): a comic cover in three slanted
 // panels, one per universe, each with a fight in full swing, drawn with the app's own sprite and fight-effect code:
 // Luke and Vader's sabers locked under the stars, Thor and Loki trading lightning and magic, Batman against the
-// Joker under the Bat-Signal. CLAWD CLASH runs across all three, coloured by the panel each part is in, with a sound
+// Joker under the Night Beacon. CLAWD CLASH runs across all three, coloured by the panel each part is in, with a sound
 // effect in each panel and the tagline in a caption box.
 //   swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Icon,Rides}.swift \
 //          Sources/App/Universes/**/*.swift Sources/Shared/*.swift Tools/MakeSocial/main.swift -o build/makesocial \
@@ -53,15 +53,19 @@ func halftone(_ r: CGRect, color: CGColor, cell: CGFloat, dot: (CGPoint) -> CGFl
     ctx.setFillColor(color); ctx.fillPath()
 }
 
-/// The bat emblem, `w` wide, centred on `c`.
-func bat(_ c: CGPoint, width w: CGFloat) -> CGPath {
-    let half: [(CGFloat, CGFloat)] = [(0, 0.10), (0.05, 0.13), (0.075, 0.27), (0.11, 0.12), (0.19, 0.12), (0.30, 0.21), (0.55, 0.29),
-                                      (0.84, 0.25), (1.0, 0.08), (0.88, 0.06), (0.80, -0.06), (0.70, -0.03), (0.60, -0.16), (0.48, -0.11),
-                                      (0.37, -0.26), (0.25, -0.17), (0.11, -0.32), (0, -0.22)]
-    let p = CGMutablePath()
-    p.addLines(between: half.map { CGPoint(x: c.x + $0.0 * w / 2, y: c.y + $0.1 * w / 2) }
-                        + half.reversed().dropFirst().dropLast().map { CGPoint(x: c.x - $0.0 * w / 2, y: c.y + $0.1 * w / 2) })
-    p.closeSubpath()
+/// A claw mark, `w` wide, centred on `c`: three slashes leaning right, tapered at both ends.
+func clawMark(_ c: CGPoint, width w: CGFloat) -> CGPath {
+    let p = CGMutablePath(), h = w * 0.62, gap = w * 0.3, thick = w * 0.1
+    for i in -1...1 {
+        let x = c.x + CGFloat(i) * gap
+        let top = CGPoint(x: x + h * 0.28, y: c.y + h / 2), bottom = CGPoint(x: x - h * 0.28, y: c.y - h / 2)
+        let mid = CGPoint(x: (top.x + bottom.x) / 2, y: (top.y + bottom.y) / 2)
+        p.move(to: top)
+        p.addLine(to: CGPoint(x: mid.x + thick / 2, y: mid.y))
+        p.addLine(to: bottom)
+        p.addLine(to: CGPoint(x: mid.x - thick / 2, y: mid.y))
+        p.closeSubpath()
+    }
     return p
 }
 
@@ -93,12 +97,12 @@ for i in 0..<3 {
         }
     }
     if i == 2 {
-        let signal = CGPoint(x: 1150, y: 560)
+        let signal = CGPoint(x: 1192, y: 392)   // under the name, over the fight
         ctx.setFillColor(hex(0xFFE36B, 0.18))
-        ctx.move(to: CGPoint(x: 1240, y: 0)); ctx.addLine(to: CGPoint(x: signal.x - 70, y: signal.y)); ctx.addLine(to: CGPoint(x: signal.x + 70, y: signal.y))
+        ctx.move(to: CGPoint(x: 1240, y: 0)); ctx.addLine(to: CGPoint(x: signal.x - 58, y: signal.y)); ctx.addLine(to: CGPoint(x: signal.x + 58, y: signal.y))
         ctx.closePath(); ctx.fillPath()
-        ctx.setFillColor(hex(0xFFE36B, 0.92)); ctx.fillEllipse(in: CGRect(x: signal.x - 70, y: signal.y - 48, width: 140, height: 96))
-        ctx.addPath(bat(signal, width: 116)); ctx.setFillColor(inkColor); ctx.fillPath()
+        ctx.setFillColor(hex(0xFFE36B, 0.92)); ctx.fillEllipse(in: CGRect(x: signal.x - 58, y: signal.y - 40, width: 116, height: 80))
+        ctx.addPath(clawMark(signal, width: 92)); ctx.setFillColor(inkColor); ctx.fillPath()
     }
     // The ground each fight stands on.
     ctx.setFillColor(hex(floors[i])); ctx.fill(CGRect(x: 0, y: 0, width: W, height: ground))
@@ -213,8 +217,8 @@ burst(CGPoint(x: 205, y: 352), r: 50, color: 0xFFE14D, seed: 11)
 word("VWOOM!", at: CGPoint(x: 205, y: 352), width: 100, height: 42, angle: 0.12, depth: 4, faces: [(0xFFFFFF, 0xFF6A5A)])
 burst(CGPoint(x: 640, y: 358), r: 54, color: 0x7FD0FF, seed: 31)
 word("KRAKOOM!", at: CGPoint(x: 640, y: 358), width: 120, height: 42, angle: -0.1, depth: 4, faces: [(0xFFF6B0, 0xFFC21A)])
-burst(CGPoint(x: 1070, y: 352), r: 48, color: 0xFF5A8A, seed: 51)
-word("BLAM!", at: CGPoint(x: 1070, y: 352), width: 92, height: 42, angle: 0.1, depth: 4, faces: [(0xFFFFFF, 0xC8F06A)])
+burst(CGPoint(x: 1040, y: 352), r: 48, color: 0xFF5A8A, seed: 51)
+word("BLAM!", at: CGPoint(x: 1040, y: 352), width: 92, height: 42, angle: 0.1, depth: 4, faces: [(0xFFFFFF, 0xC8F06A)])
 
 // The name, across all three panels.
 word("CLAWD CLASH", at: CGPoint(x: 640, y: 522), width: 1060, height: 138, angle: 0.035, depth: 12,
@@ -229,9 +233,15 @@ for i in 1...2 {
 }
 
 // The tagline in a caption box, along the bottom.
-let tagline = "Your AI coding sessions as a pixel-art Star Wars, Marvel or DC battle"
-let font = NSFont(name: "Futura-Bold", size: 25) ?? .boldSystemFont(ofSize: 25)
-let text = NSAttributedString(string: tagline.uppercased(), attributes: [.font: font, .foregroundColor: NSColor(cgColor: inkColor)!, .kern: 1])
+let tagline = "Your AI coding sessions as a pixel-art Star Claws, Clawvel or Detective Claws battle"
+/// The tagline at the largest size (up to 25 pt) that fits the cover with a margin.
+func taglineText(_ size: CGFloat) -> NSAttributedString {
+    let font = NSFont(name: "Futura-Bold", size: size) ?? .boldSystemFont(ofSize: size)
+    return NSAttributedString(string: tagline.uppercased(), attributes: [.font: font, .foregroundColor: NSColor(cgColor: inkColor)!, .kern: 1])
+}
+var tagSize: CGFloat = 25
+while tagSize > 12 && taglineText(tagSize).size().width > W - 140 { tagSize -= 1 }
+let text = taglineText(tagSize)
 let ts = text.size()
 let box = CGRect(x: (W - ts.width) / 2 - 22, y: 26, width: ts.width + 44, height: ts.height + 18)
 ctx.saveGState()

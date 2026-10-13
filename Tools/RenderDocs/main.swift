@@ -1,6 +1,7 @@
 import AppKit
 
 // Renders the README's roster and locations images with the app's own sprite code.
+// Sessions are labelled with their character's name (as the app does with no project), agents with their task.
 //   swiftc -swift-version 5 Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Icon,Rides}.swift \
 //          Sources/App/Universes/**/*.swift Sources/Shared/*.swift \
 //          Tools/RenderDocs/main.swift -o build/renderdocs && build/renderdocs docs
@@ -91,6 +92,17 @@ let marvelLineup: [[Extra]] = [
      Extra(who: .villain(.redSkull), leader: true, label: "Red Skull", x: 352, facing: -1, role: .shoot(offset: 0))],
     [Extra(who: .hero(.groot), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
 ]
+let starWarsLineup: [[Extra]] = [
+    [Extra(who: .villain(SWVillain.boba), leader: true, label: "", x: 30, facing: 1, role: .shoot(offset: 0)),
+     Extra(who: .hero(SWHero.han), leader: false, label: "Review Overlay.swift", x: 92, facing: -1, role: .shoot(offset: blasterPeriod / 2))],
+    [Extra(who: .hero(SWHero.leia), leader: false, label: "Run the test suite", x: 132, facing: 1, role: .shoot(offset: 0)),
+     Extra(who: .villain(SWVillain.trooper), leader: false, label: "Write changelog", x: 182, facing: -1, role: .shoot(offset: blasterPeriod / 2))],
+    [Extra(who: .hero(SWHero.luke), leader: false, label: "Find hook events", x: 214, facing: 1, role: .duel),
+     Extra(who: .villain(SWVillain.maul), leader: false, label: "Audit permissions", x: 244, facing: -1, role: .duel)],
+    [Extra(who: .hero(SWHero.obiwan), leader: true, label: "", x: 290, facing: 1, role: .duel),
+     Extra(who: .villain(SWVillain.vader), leader: true, label: "", x: 347, facing: -1, role: .duel)],
+    [Extra(who: .hero(SWHero.r2d2), leader: false, label: "Plan the refactor", x: 388, facing: 1, role: .cheer)],
+]
 let dcLineup: [[Extra]] = [
     [Extra(who: .villain(DCVillain.darkseid), leader: true, label: "Darkseid", x: 30, facing: 1, role: .zap),
      Extra(who: .hero(DCHero.superman), leader: true, label: "Superman", x: 98, facing: -1, role: .hit, up: 10)],
@@ -117,7 +129,7 @@ let desktop = canvas(2600, 400) { ctx in
                                            height: CGFloat(Sprite.height) * S * k))
         // Its label above the head, as the app boxes it: sessions dark grey, agents dark blue.
         let font = e.leader ? NSFont.monospacedSystemFont(ofSize: 20, weight: .bold) : NSFont.monospacedSystemFont(ofSize: 17, weight: .semibold)
-        let text = NSAttributedString(string: e.label, attributes: [.font: font, .foregroundColor: NSColor.white])
+        let text = NSAttributedString(string: e.leader ? e.who.name : e.label, attributes: [.font: font, .foregroundColor: NSColor.white])
         let ts = text.size()
         let top = y + CGFloat(Sprite.height - e.who.drawnTop()) * S * k + (e.leader ? 16 : 10)
         var box = CGRect(x: CGFloat(e.x) * S - ts.width / 2 - 10, y: top, width: ts.width + 20, height: ts.height + 8)
@@ -153,6 +165,7 @@ let desktop = canvas(2600, 400) { ctx in
 save(desktop, file)
 print("wrote \(out)/\(file)")
 }
+desktop(starWarsLineup, file: "desktop-starwars.png")
 desktop(marvelLineup, file: "desktop-marvel.png")
 desktop(dcLineup, file: "desktop-dc.png")
 
@@ -242,15 +255,15 @@ let social = canvas(1280, 640) { ctx in
 save(social, file)
 }
 // Clawd Clash's own (social-preview.png) is a comic cover of its own: Tools/MakeSocial.
-socialPreview(title: "CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Star Wars battle on your desktop",
+socialPreview(title: "CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Star Claws battle on your desktop",
               groups: [[.hero(SWHero.luke), .hero(SWHero.han), .hero(SWHero.leia), .hero(SWHero.yoda),
                         .villain(SWVillain.vader), .villain(SWVillain.boba), .villain(SWVillain.kylo), .villain(SWVillain.trooper)]],
               file: "social-preview-starwars.png")
-socialPreview(title: "AVENGERS: CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Marvel battle on your desktop",
+socialPreview(title: "CLAWVENGERS: CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Clawvel battle on your desktop",
               groups: [[.hero(MarvelHero.thor), .hero(MarvelHero.spiderMan), .hero(MarvelHero.captainAmerica), .hero(MarvelHero.ironMan),
                         .villain(MarvelVillain.thanos), .villain(MarvelVillain.loki), .villain(MarvelVillain.greenGoblin), .villain(MarvelVillain.venom)]],
               file: "social-preview-marvel.png")
-socialPreview(title: "JUSTICE LEAGUE: CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art DC battle on your desktop",
+socialPreview(title: "CLAWSTICE LEAGUE: CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Detective Claws battle on your desktop",
               groups: [[.hero(DCHero.superman), .hero(DCHero.batman), .hero(DCHero.wonderWoman), .hero(DCHero.flash),
                         .villain(DCVillain.joker), .villain(DCVillain.lexLuthor), .villain(DCVillain.darkseid), .villain(DCVillain.harleyQuinn)]],
               file: "social-preview-dc.png")
