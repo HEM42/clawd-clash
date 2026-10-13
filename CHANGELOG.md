@@ -26,3 +26,5 @@ Clawd Clash brings Clawd Wars (Star Wars) and Avengers: Clawd Wars (Marvel) toge
 - **Upgrading from Clawd Wars or Avengers: Clawd Wars takes care of itself.** On launch, Clawd Clash takes over every AI the old app had connected: hooks that still run the old app's hook, and the AIs a Homebrew upgrade of the old cask disconnected. The old app, if it's still running, is quit. Clawd Clash starts in the universe of the app it replaces, and Star Wars keeps Clawd Wars' cast ids. (A copy run from `build/` doesn't take over; its banner says the AI still reports to the old app and to connect it from the menu.)
 - **Menu**: "Show on Desktop" and "Show in Window" are now **Desktop Mode** and **Window Mode**, and **Universe** sits under Status Symbols.
 - **New identity**: `Clawd Clash.app`, `com.rodclemen.clawdclash`, the `clawd-clash-hook` binary and `~/.claude/clawd-clash`.
+
+_Spent the evening explaining to Thanos that the Power Stone is not Force lightning, and to Deadpool that the fourth wall is load-bearing. Neither listened._
