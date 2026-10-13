@@ -193,8 +193,8 @@ private func drawFalcon(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Boo
 }
 
 /// The Justice League's Javelin (the animated series): a sleek silver-grey and white wedge with a big canopy over the
-/// nose, angular swept wings with red leading edges, a blue stripe down the flank, a tall swept tail fin with the JL
-/// emblem, and blue thrusters.
+/// nose, angular swept wings with red leading edges, a blue stripe down the flank, a tall swept tail fin with the CL
+/// badge, and blue thrusters.
 private func drawJavelin(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
     let body = C(0xB8BEC8), light = C(0xF2F4F8), dark = C(0x6A727E), panel = C(0x8E96A2), white = C(0xFFFFFF)
     let red = C(0xC8202A), blue = C(0x2A5CC8), glass = C(0x16243C)
@@ -208,7 +208,7 @@ private func drawJavelin(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bo
     }
     hull(c, x0: 3, x1: 65, top: top, bottom: [(3, 20), (8, 23), (52, 23), (60, 21), (65, 19)],
          body: body, light: light, dark: dark)
-    // The tail fin, swept back, white on its leading edge, with the JL emblem
+    // The tail fin, swept back, white on its leading edge, with the CL badge
     for y in 1...13 {
         let f = Double(y - 1) / 12
         let l = Int(3 + f * 2), r = Int(8 + f * 12)
@@ -217,8 +217,8 @@ private func drawJavelin(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bo
     }
     c.pattern(5, 6, [
         "RRRRRRR",
-        "RBWBWBR",
-        "RBWBWBR",
+        "RWWBWBR",
+        "RWBBWBR",
         "RWWBWWR",
         "RRRRRRR",
     ], ["R": red, "B": blue, "W": white])
@@ -254,7 +254,7 @@ private func drawJavelin(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bo
 }
 
 /// The Batwing: a black jet with a bat-wing silhouette raised over the hull, scalloped along its trailing edge between
-/// the bones, a yellow-on-black bat emblem on the wing, a slit canopy, and amber jets with a blue core.
+/// the bones, a black claw mark in a yellow oval on the wing, a slit canopy, and amber jets with a blue core.
 private func drawBatwing(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
     let body = C(0x26282F), light = C(0x4A4F5C), dark = C(0x121317), wing = C(0x2C2F38), bone = C(0x464B58)
     let yellow = C(0xF2C230), steel = C(0x7A808C)
@@ -287,12 +287,12 @@ private func drawBatwing(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bo
     }
     hull(c, x0: 4, x1: 65, top: top, bottom: [(4, 21), (9, 23), (50, 23), (58, 22), (65, 20)],
          body: body, light: light, dark: dark)
-    // The bat emblem on the wing: a black bat in a yellow oval
+    // The emblem on the wing: a black claw mark in a yellow oval
     c.pattern(19, 5, [
         "..YYYYYYY..",
-        ".YKYYKYKYY.",
-        "YKKKKKKKKKY",
-        ".YYKKYKKYY.",
+        ".YKYYKYYKY.",
+        "YYKYYKYYKYY",
+        ".KYYKYYKYY.",
         "..YYYYYYY..",
     ], ["Y": yellow, "K": dark])
     // Slit canopy with a blue glint, and a yellow pinstripe along the flank

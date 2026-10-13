@@ -1098,8 +1098,9 @@ extension Scenes {
         c.rect(p.x - 9 * ps, g - 3 * ps, 18 * ps, 3 * ps, C(0xB8B4A8)); c.rect(p.x - 9 * ps, g - 3 * ps, 18 * ps, max(1, s), C(0xE8E4D8))
         c.rect(p.x - 7 * ps, p.y + ps, 14 * ps, g - p.y - 4 * ps, C(0xCCC8BC)); c.rect(p.x + 5 * ps, p.y + ps, 2 * ps, g - p.y - 4 * ps, C(0xA8A49A))
         c.rect(p.x - 8 * ps, p.y, 16 * ps, ps, C(0xE8E4D8))
-        c.circle(p.x, p.y + (g - p.y) / 2, max(1, ps * 3 / 2), C(0x3ABF5A))           // the lantern emblem on the plinth
-        c.circle(p.x, p.y + (g - p.y) / 2, max(1, ps / 2), C(0xCCC8BC))
+        let ls = max(1, ps * 3 / 5), ly = p.y + (g - p.y) / 2                            // the lamp emblem on the plinth
+        s6Stamp(c, p.x - 5 * ls / 2, ly - 2 * ls, [".RRR.", "RFLFR", "RLLLR", ".RRR."],
+                ["R": C(0x3ABF5A), "L": C(0x3ABF5A), "F": C(0xCCC8BC)], s: ls)
         s6Stamp(c, p.x - 7 * k, p.y - 25 * k, [
             "..........gg..",
             ".........gggg.",

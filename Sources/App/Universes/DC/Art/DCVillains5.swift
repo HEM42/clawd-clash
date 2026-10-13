@@ -185,7 +185,7 @@ private func drawMine(_ c: PixelCanvas, x: Int, y: Int, _ col: Px) {
 // MARK: - Sinestro
 
 /// Sinestro: a lean magenta Clawd with the black widow's peak slicked back off a high forehead, mean slanted brows and
-/// the pencil moustache, in the black Sinestro Corps uniform with yellow shoulders, boots and chest emblem, the
+/// the pencil moustache, in the black Sinestro Corps uniform with yellow shoulders, boots and the yellow lamp emblem, the
 /// yellow ring on his casting hand. In flight he leans in, ring fist first, trailing yellow light. Signature: he
 /// raises the ring and a yellow construct broadsword grows out of his fist, swings down to point at you, and fades.
 private func drawSinestro(_ c: PixelCanvas, _ p: Pose) {
@@ -238,8 +238,8 @@ private func drawSinestroBody(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 34, 20, 4, suit)
     c.rect(37, 34, 1, 4, suitDark)
     c.pattern(18, 34, ["YYY..............YYY", "yY................Yy"], ["Y": yellow, "y": yellowDark])
-    c.pattern(26, 34, [".YYY.", "Y.Y.Y", ".YYY."], ["Y": yellow])      // the emblem
     c.rect(18, 37, 20, 1, yellowDark)
+    drawLampEmblem(c, x: 26, y: 34, size: .small, lamp: yellow, field: suit, rim: yellow)
     c.rect(15, 33, 3, 1, yellow)
 
     if p.flying {
