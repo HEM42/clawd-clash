@@ -134,7 +134,9 @@ Needs macOS 13+ (Apple Silicon or Intel) and at least one of [Claude Code](https
 **With Homebrew:**
 
 ```sh
-brew install --cask rodclemen/tap/clawd-clash
+brew tap rodclemen/tap
+brew trust rodclemen/tap      # newer Homebrew asks you to trust a third-party tap once
+brew install --cask clawd-clash
 ```
 
 `rodclemen/tap/star-clawds`, `rodclemen/tap/marvelous-clawds` and `rodclemen/tap/detective-clawds` install the same app, starting in Star Clawds, Marvelous Clawds or Detective Clawds. Or download the zip from [Releases](https://github.com/rodclemen/clawd-clash/releases), unzip it and drag **Clawd Clash** to Applications.

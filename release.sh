@@ -69,7 +69,7 @@ else
 fi
 gh release create "$TAG" "$ZIP" --title "Clawd Clash $VERSION" --notes "$NOTES
 
-**Install:** \`brew install --cask rodclemen/tap/clawd-clash\`, or download the zip, unzip, and move *Clawd Clash.app* to Applications. (\`star-clawds\`, \`marvelous-clawds\` and \`detective-clawds\` install the same app, starting in Star Clawds, Marvelous Clawds or Detective Clawds.)"
+**Install:** \`brew tap rodclemen/tap && brew trust rodclemen/tap && brew install --cask clawd-clash\` (\`brew trust\` only on newer Homebrew), or download the zip, unzip, and move *Clawd Clash.app* to Applications. (\`star-clawds\`, \`marvelous-clawds\` and \`detective-clawds\` install the same app, starting in Star Clawds, Marvelous Clawds or Detective Clawds.)"
 
 # Keep the newest $KEEP_RELEASES releases: older zips are never used (the cask names only the latest), and the one
 # before the latest stays as a quick rollback. Tags are kept, so every version's code is still marked in git.
@@ -154,11 +154,11 @@ cat > "$TAP/cask_renames.json" <<'RENAMES'
   "justice-clawds-clawd-wars": "detective-clawds"
 }
 RENAMES
-[[ -f "$TAP/README.md" ]] || printf '# Homebrew tap\n\n```sh\nbrew install --cask rodclemen/tap/clawd-clash\n```\n' > "$TAP/README.md"
+[[ -f "$TAP/README.md" ]] || printf '# Homebrew tap\n\n```sh\nbrew tap rodclemen/tap\nbrew trust rodclemen/tap      # newer Homebrew asks you to trust a third-party tap once\nbrew install --cask clawd-clash\n```\n' > "$TAP/README.md"
 git -C "$TAP" add -A
 git -C "$TAP" commit -q -m "clawd-clash $VERSION (also star-clawds, marvelous-clawds, detective-clawds)"
 git -C "$TAP" remote get-url origin >/dev/null 2>&1 || git -C "$TAP" remote add origin "https://github.com/$TAP_REPO.git"
 git -C "$TAP" push -q -u origin main
 rm -rf "$TAP"
 
-echo "✓ released $TAG: brew install --cask rodclemen/tap/clawd-clash"
+echo "✓ released $TAG: brew tap rodclemen/tap && brew trust rodclemen/tap && brew install --cask clawd-clash"

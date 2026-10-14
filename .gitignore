@@ -11,5 +11,5 @@ build/
 .claude/
 
 # Rendered promo videos and storyboards (large, regenerable). The 720p copies
-# in promo/720p/ are uploaded to GitHub by hand for the README (see promo-video-idea.md)
+# in promo/720p/ are uploaded to GitHub by hand for the README
 promo/
