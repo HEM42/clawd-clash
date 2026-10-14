@@ -4889,13 +4889,13 @@ func ringsMoves(_ ctx: CGContext, local l: Double, t: Double) {
     }
 }
 
-/// Subagents walking in; then the Great Eagle swoops down and carries the leftmost one home.
+/// Subagents walking in; then the Great Eagle swoops down and carries the leftmost one, Samwise, home.
 func ringsAgents(_ ctx: CGContext, local l: Double, t: Double) {
-    let crew: [Cast] = [.hero(LOTRHero.sam), .hero(LOTRHero.pippin), .hero(LOTRHero.gimli), .hero(LOTRHero.legolas)]
+    let crew: [Cast] = [.hero(LOTRHero.pippin), .hero(LOTRHero.gimli), .hero(LOTRHero.legolas), .hero(LOTRHero.sam)]
     let pickupAt: Double = 1.4, grabAt: Double = 2.2, goneAt: Double = 3.6
     let picking = l > pickupAt && l < goneAt
     agentsOf(ctx, local: l, t: t, guardCast: .hero(LOTRHero.gandalf), crew: l > pickupAt ? Array(crew.prefix(3)) : crew,
-             line: "Every subagent joins the Fellowship. The Eagles fly them home.", badgeText: Universe.middleEarth.title.uppercased())
+             line: "Every subagent joins the Fellowship. Some fly home.", badgeText: Universe.middleEarth.title.uppercased())
     guard picking else { return }
     // the talons' path, screen pixels: down from the top right to the agent's shoulders, then away up to the left
     let stand = Actor(cast: crew[3], x: 40, session: false)
@@ -5038,8 +5038,8 @@ let ringsBeats: [(key: Double, beat: Beat)] = [
             "DESKTOP MODE  ·  “Now they're a pixel-art \(Universe.middleEarth.title) battle along the bottom of your screen. They fight while they work.”", "clangs, arrows")),
     (38.4, ("AT A GLANCE", "\(ringsName(LOTRHero.frodo)) working, \(ringsName(LOTRVillain.gollum)) thinking, \(ringsName(LOTRVillain.saruman))'s jumping NEEDS YOU, \(ringsName(LOTRHero.pippin)) sat down napping.",
             "“All fun and games, and you still see everything.”  ·  “(\(ringsName(LOTRHero.pippin)): second breakfast, then a nap.)”", "blips, alert beeps")),
-    (42.6, ("SUBAGENTS", "\(ringsName(LOTRHero.gandalf)) stands guard; \(ringsName(LOTRHero.sam)), \(ringsName(LOTRHero.pippin)), \(ringsName(LOTRHero.gimli)) and \(ringsName(LOTRHero.legolas)) arrive with their jobs on their labels; the Great Eagle swoops down and carries one home.",
-            "“Every subagent joins the Fellowship. The Eagles fly them home.”", "footsteps, an eagle's cry")),
+    (42.6, ("SUBAGENTS", "\(ringsName(LOTRHero.gandalf)) stands guard; \(ringsName(LOTRHero.pippin)), \(ringsName(LOTRHero.gimli)), \(ringsName(LOTRHero.legolas)) and \(ringsName(LOTRHero.sam)) arrive with their jobs on their labels; the Great Eagle swoops down and carries \(ringsName(LOTRHero.sam)) home.",
+            "“Every subagent joins the Fellowship. Some fly home.”", "footsteps, an eagle's cry")),
     (47.2, ("WINDOW MODE", "The window in \(Location.prancingPony.name): \(ringsName(LOTRHero.aragorn)) against \(ringsName(LOTRVillain.witchKing)), live cards tick, then the Codex card flips to NEEDS YOU.",
             "WINDOW MODE  ·  “Prefer a window? Step into \(Location.prancingPony.name).”", "clashes, a ping")),
     (51.5, ("EVERY AI", "Seven sessions, one per AI outline: \(ringsName(LOTRHero.gandalf)) (Claude Code, a head taller) and \(ringsName(LOTRHero.aragorn)) against \(ringsName(LOTRVillain.sauron)), \(ringsName(LOTRVillain.saruman)), \(ringsName(LOTRVillain.witchKing)) and \(ringsName(LOTRVillain.shelob)); \(ringsName(LOTRVillain.orc)) in pi's pink.",

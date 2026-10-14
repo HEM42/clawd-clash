@@ -56,6 +56,10 @@ private let middleEarthNemeses: [(LOTRHero, LOTRVillain)] = [
     (.galadriel, .nazgul), (.hem, .witchKing),
 ]
 
+/// When these agents are done, the Great Eagle comes for them: Gandclawd from Orthanc's roof, Frodough and Samwise
+/// from the slopes of Mount Doom.
+private let eagleCrew: [LOTRHero] = [.gandalf, .frodo, .sam]
+
 let middleEarthTheme = Theme(
     universe: .middleEarth,
     villains: LOTRVillain.allCases.map(\.persona),
@@ -65,8 +69,10 @@ let middleEarthTheme = Theme(
         c.isDark ? .middleEarthHome(of: LOTRVillain(rawValue: c.index) ?? .sauron) : .middleEarthHome(of: LOTRHero(rawValue: c.index) ?? .frodo)
     },
     nemeses: middleEarthNemeses.map { (.hero($0.0), .villain($0.1)) },
-    // The Eagles are coming: every hero's agent is flown home.
-    ride: { c in c.universe == .middleEarth && !c.isDark ? .eagle : nil },
+    ride: { c in
+        guard c.universe == .middleEarth, !c.isDark, let h = LOTRHero(rawValue: c.index) else { return nil }
+        return eagleCrew.contains(h) ? .eagle : nil
+    },
     menuIcon: { c, mono in drawOneRingIcon(c, mono: mono) },
     legend: .hero(.frodo))
 
