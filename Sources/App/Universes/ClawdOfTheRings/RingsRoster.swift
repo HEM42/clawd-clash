@@ -44,16 +44,6 @@ let ringsHeroes2: [LOTRHero: Persona] = [
                         headTop: 19, signature: 3.0, callout: "Even the smallest Clawd can change the course of the future.",
                         draw: standIn(0xE8ECF2, 0xB8C2CE)),
 ]
-let ringsVillains1: [LOTRVillain: Persona] = [
-    .sauron: Persona(name: "Sourun", weapon: .saber, armoured: true, bulk: 2, headTop: 14, callout: "One Ring to rule them all.",
-                     draw: standIn(0x2A2A30, 0x18181C)),
-    .saruman: Persona(name: "Sarumanual", weapon: .lightning, magic: Magic(core: C(0xFFFFFF), glow: C(0xC8B8FF)), headTop: 18,
-                      callout: "Read the manual, Gandclawd.", draw: standIn(0xE4E4E0, 0xB4B4AE)),
-    .witchKing: Persona(name: "The Twitch-king", weapon: .saber, canSit: false, headTop: 16, callout: "No Clawd can kill me!",
-                        draw: standIn(0x1E1E24, 0x101014)),
-    .nazgul: Persona(name: "Nazgulp", weapon: .saber, canSit: false, headTop: 18, callout: "Baggins… Shire…",
-                     draw: standIn(0x24242A, 0x141418)),
-]
 let ringsVillains2: [LOTRVillain: Persona] = [
     .balrog: Persona(name: "The Ballrog", weapon: .saber, armoured: true, canSit: false, bulk: 6, headTop: 8,
                      draw: standIn(0x3A1A10, 0xE8501E)),
