@@ -4914,7 +4914,7 @@ func ringsAgents(_ ctx: CGContext, local l: Double, t: Double) {
     if l >= grabAt { a.x = tx / S; a.lift = shoulders - (stageH - ty) / S }
     draw(a, ctx, t: t)
     let ec = PixelCanvas(Ride.width, Ride.height)
-    drawRide(ec, .eagle, ramp: 0, engines: true, gear: true)
+    drawRide(ec, .eagle, ramp: 0, engines: true, gear: true, t: t)
     ec.flipHorizontally()
     ec.addOutline(C(0xFFFFFF, 0.92))
     if let img = ec.makeImage() {
@@ -4933,7 +4933,7 @@ func ringsEndcard(_ ctx: CGContext, local: Double, t: Double) {
     let fp: Double = local / 1.2
     if fp > 0 && fp < 1 {
         let bc = PixelCanvas(Ride.width, Ride.height)
-        drawRide(bc, .eagle, ramp: 0, engines: true, gear: false); bc.addOutline(C(0xFFFFFF, 0.92))
+        drawRide(bc, .eagle, ramp: 0, engines: true, gear: false, t: t); bc.addOutline(C(0xFFFFFF, 0.92))
         if let img = bc.makeImage() {
             let x: Double = lerp(-600, Double(W) + 100, easeIn(fp) * 0.6 + fp * 0.4)
             ctx.saveGState(); ctx.interpolationQuality = .none

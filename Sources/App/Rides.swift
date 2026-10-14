@@ -13,8 +13,9 @@ extension Ride {
     static let width = 66, height = 29
 }
 
-/// `ramp` 0…1 lowers the boarding ramp, `engines` lights the thrusters, `gear`: landing gear down.
-func drawRide(_ c: PixelCanvas, _ ride: Ride, ramp: Double, engines: Bool, gear: Bool) {
+/// `ramp` 0…1 lowers the boarding ramp, `engines` lights the thrusters, `gear`: landing gear down. `t`: the clock in
+/// seconds, for what beats in time (the Eagle's wings); nil: the system clock (the app), a value: a render's own clock.
+func drawRide(_ c: PixelCanvas, _ ride: Ride, ramp: Double, engines: Bool, gear: Bool, t: Double? = nil) {
     switch ride {
     case .falcon: drawFalcon(c, ramp: ramp, engines: engines, gear: gear)
     case .quinjet: drawQuinjet(c, ramp: ramp, engines: engines, gear: gear)
@@ -29,7 +30,7 @@ func drawRide(_ c: PixelCanvas, _ ride: Ride, ramp: Double, engines: Bool, gear:
     case .moonBike: drawMoonBike(c, ramp: ramp, lit: engines)
     case .mothership: drawMothership(c, ramp: ramp, lit: engines)
     case .jeep: drawParkJeep(c, ramp: ramp, lit: engines)
-    case .eagle: drawEagle(c, ramp: ramp, engines: engines, gear: gear)
+    case .eagle: drawEagle(c, ramp: ramp, engines: engines, gear: gear, t: t ?? ProcessInfo.processInfo.systemUptime)
     }
 }
 
@@ -396,19 +397,19 @@ private func eagleWing(_ c: PixelCanvas, hx: Double, hy: Double, angle: Double, 
     } }
 }
 
-/// Wing beats: flips on every call while the Eagle flies, so each frame drawn has the wings the other way (time-free,
-/// like a flicker).
-private var eagleFlap = false
+/// Wing beats a second while the Eagle flies: slow and heavy, as a great eagle's are.
+private let eagleBeats = 1.8
 
 /// The Great Eagle, facing right: a brown body with a golden head and a hooked beak, its tail fanned behind. Landed,
 /// the wings fold along its back and `ramp` lowers the near one to the ground to climb on; flying (`engines`), the
-/// wings spread wide and beat, tips up on one frame (the body dipping) and down the next. `gear`: talons down.
-private func drawEagle(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
+/// wings spread wide and beat `eagleBeats` times a second on the clock `t`, tips up (the body dipping) then down.
+/// `gear`: talons down.
+private func drawEagle(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool, t: Double) {
     let body = C(0x6A4A2A), bodyLight = C(0x8A6440), bodyDark = C(0x4A321C), head = C(0xC8A060)
     let headLight = C(0xE2C488), headDark = C(0x9A7A44), feather = C(0x543A20), flight = C(0x3E2A16)
     let tipCol = C(0x2E1E10), beak = C(0xE8C860), beakDark = C(0x8A6A2A), talon = C(0xE0B040), claw = C(0x22180E)
     var up = false
-    if engines { eagleFlap.toggle(); up = eagleFlap }
+    if engines { let beat: Double = (t * eagleBeats).truncatingRemainder(dividingBy: 1); up = beat < 0.5 }
     let by: Double = engines ? (up ? 19 : 13) : 17                       // the body's centre line
     let iy = Int(by), ry = engines ? 5 : 6
     // The far wing, behind the body (folded, it's hidden behind the near one)
