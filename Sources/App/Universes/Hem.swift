@@ -6,7 +6,8 @@ import Foundation
 // buns, `Overlay`). Marvelous Clawds: a purple-and-gold captain with an H and its shield. Detective Clawds: Harlee's
 // jacket, dyed buns and a toy wand. Doctor Clawd: a tweed jacket, a red bow tie, a fez (fezzes are cool) and a sonic
 // screwdriver. The Clawd Files: a tan trench coat, an FBI lanyard and a flashlight. Stevie Clawdberg: a fedora, a
-// leather jacket and a bullwhip. Signature, everywhere: he shakes his fist at you.
+// leather jacket and a bullwhip. Clawd of the Rings: Éowyn's Rohan helmet with its white crest (hiding the buns),
+// mail, a green-and-gold cloak, a sword and the sun-horse shield. Signature, everywhere: he shakes his fist at you.
 
 func hemPersona(_ u: Universe) -> Persona {
     switch u {
@@ -62,10 +63,19 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
         }
         let lifted = p.step >= 0 ? (p.step == 0 ? 0 : 1) : -1
         c.rect(19, lifted == 0 ? 43 : 44, 4, 1, ink); c.rect(33, lifted == 1 ? 43 : 44, 4, 1, ink)
-    case .marvel, .middleEarth:
+    case .marvel:
         drawLegs(c, Look(leg: capPurple), step: p.step)
         if !seatedPose {
             for (i, lx) in [19, 23, 31, 35].enumerated() { c.rect(lx, p.step >= 0 && i % 2 == p.step ? 41 : 42, 2, 2, capGold) }
+        }
+    case .middleEarth:
+        drawRohanCloak(c, t: p.t, speed: p.capeSpeed)
+        drawLegs(c, Look(leg: rohanTrousers), step: p.step)
+        if !seatedPose {
+            for (i, lx) in [19, 23, 31, 35].enumerated() {
+                let bottom = p.step >= 0 && i % 2 == p.step ? 42 : 43
+                c.rect(lx, bottom - 2, 2, 3, rohanBoot)
+            }
         }
     case .dc:
         let net = C(0x3A3A44)
@@ -96,7 +106,8 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
     let top: Px, topShade: Px, arm: Px, armRight: Px
     switch u {
     case .starWars: top = robe; topShade = robeShade; arm = robe; armRight = robe
-    case .marvel, .middleEarth: top = capPurple; topShade = capPurpleDark; arm = capPurple; armRight = capPurple
+    case .marvel: top = capPurple; topShade = capPurpleDark; arm = capPurple; armRight = capPurple
+    case .middleEarth: top = rohanMail; topShade = rohanMailDark; arm = rohanMail; armRight = rohanMail
     case .dc: top = white; topShade = C(0xD8D8DC); arm = harleeRed; armRight = harleeBlue
     case .doctor: top = tweed; topShade = tweedDark; arm = tweed; armRight = tweed
     case .clawdFiles: top = trench; topShade = trenchDark; arm = trench; armRight = trench
@@ -108,9 +119,16 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
     case .starWars:
         c.rect(17, 37, 22, 1, C(0xB8BEC9)); for x in [20, 23, 32, 35] { c.px(x, 37, C(0xEEF0F4)) }
         c.rect(27, 36, 2, 2, C(0xEEF0F4))
-    case .marvel, .middleEarth:
+    case .marvel:
         for x in 17...38 { c.px(x, 37, x % 2 == 0 ? capGold : white) }
         c.pattern(18, 34, ["H.H", "HHH", "H.H"], ["H": capGold])
+    case .middleEarth:
+        for y in 35...36 { for x in 17...37 where (x + y) % 2 == 0 { c.px(x, y, rohanMailLight) } }
+        c.rect(17, 37, 22, 1, rohanTunic)
+        for y in 38...39 where y + c.oy <= 43 { c.rect(17, y, 22, 1, rohanTunic); c.px(27, y, rohanTunicDark); c.px(38, y, rohanTunicDark) }
+        c.rect(17, 34, 2, 4, rohanCloak); c.rect(19, 34, 1, 4, rohanGold)          // the cloak over the shoulder
+        c.rect(37, 34, 2, 4, rohanCloak); c.rect(36, 34, 1, 4, rohanGold)
+        c.px(19, 34, C(0xFFE08A)); c.px(36, 34, C(0xFFE08A))                     // its clasps
     case .dc:
         c.rect(17, 34, 3, 4, harleeRed); c.rect(36, 34, 3, 4, harleeBlue); c.rect(17, 37, 22, 1, C(0x2A2A32))
     case .doctor:   // the jacket open over a shirt, red braces and the bow tie
@@ -125,13 +143,13 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
         for i in 0..<4 { c.px(25 + i * 2, 34 + i, C(0x8A7A52)); c.px(26 + i * 2, 34 + i, C(0x8A7A52)) }
     }
     // Arms: hands on hips at rest, the right one forward to fight.
-    let forward = !shaking && (!p.resting || p.melee != nil)
+    let forward = !shaking && u != .middleEarth && (!p.resting || p.melee != nil)   // Éowyn holds her sword low
     c.rect(14, 33, 3, 3, arm)
     let lift = u == .doctor || u == .clawdFiles ? p.armRaise : 0
     if !shaking { c.rect(39, (forward ? 31 : 33) - lift, 3, 3, armRight) }
     if !forward { c.px(16, 35, clawdOrange); if !shaking { c.px(39, 35, clawdOrange) } }
 
-    drawHemHead(c, u)
+    if u != .middleEarth { drawHemHead(c, u) }
     if u == .marvel {   // the helmet: purple, the H, little white wings
         c.pattern(17, 21, ["....HHHHHHHHHHHHHH....", "..HHHHHHHHHHHHHHHHHH..", ".HHHHHHHHHHHHHHHHHHHH.", "HHHHHHHHHHHHHHHHHHHHHH",
                            "HHHHHHHHHHHHHHHHHHHHHH", "HH..................HH"], ["H": capPurple])
@@ -144,6 +162,7 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
     }
     if u == .clawdberg { cbFedora(c, felt: felt, dark: feltDark, band: C(0x3A2416)) }
     drawHemFace(c, yelling: shaking && frame == 1)
+    if u == .middleEarth { drawRohanHelmet(c, t: p.t) }   // over the face: the nose guard
     if u == .dc { c.pattern(36, 32, [".R.R", "RRRR", ".RR."], ["R": C(0xE8323A)]) }   // the little heart on his cheek
 
     if shaking {
@@ -156,13 +175,17 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
         }
         c.pattern(33, 21, [".R.R.", "RR.RR", ".....", "RR.RR", ".R.R."], ["R": C(0xE8323A)])
         if u == .marvel { drawHemShield(c, cx: 15, cy: seatedPose ? 33 : 35) }
+        if u == .middleEarth { drawRohanShield(c, cx: 14, cy: seatedPose ? 33 : 35) }
         return
     }
 
     switch u {
     case .starWars:   // a little blaster, kicking with each shot
         c.pattern(41, 31 + p.gunY, ["KKKKKK", "KKTKK.", "KK...."], ["K": C(0x2A2A30), "T": C(0x8A8F9C)])
-    case .marvel, .middleEarth:
+    case .middleEarth:   // the sword held low, the shield on the off arm
+        drawRohanSword(c, angle: seatedPose ? 8 : 35)
+        drawRohanShield(c, cx: 14, cy: seatedPose ? 33 : 35)
+    case .marvel:
         if let a = p.melee {
             for (i, ta) in p.trail.enumerated() {
                 let (x, y) = hemShieldAt(ta)
@@ -273,4 +296,75 @@ private func drawWand(_ c: PixelCanvas, raised: Bool, gunY: Int, t: Double) {
         let a = Double(i) * 1.3 + t * 5.4
         c.px(sx + 2 + Int(cos(a) * 5), sy + 2 + Int(sin(a) * 4), glitter[(i + k) % glitter.count])
     }
+}
+
+// MARK: - Clawd of the Rings: Éowyn
+
+private let rohanMail = C(0x8A8E98), rohanMailDark = C(0x6A6E78), rohanMailLight = C(0xAEB2BA)
+private let rohanTunic = C(0x3A6A3A), rohanTunicDark = C(0x2A522A), rohanCloak = C(0x2E5A2E), rohanGold = C(0xE8B33A)
+private let rohanSteel = C(0xC8CCD4), rohanSteelDark = C(0x9A9EA8), rohanCrest = C(0xF0EEE8)
+private let rohanTrousers = C(0x5A5E66), rohanBoot = C(0x4A3420)
+
+/// The green-and-gold cloak hanging down the back: it shows past the shoulder and between the back legs, its hem
+/// swaying at `speed`, a gold trim down its edge and along the hem.
+private func drawRohanCloak(_ c: PixelCanvas, t: Double, speed: Double) {
+    let hem = 42, last = min(hem, 43 - c.oy)
+    guard last >= 27 else { return }
+    for y in 27...last {
+        let k = Double(y - 27) / Double(hem - 27)
+        let sway = sin(t * speed + k * 2.2) * k * 1.6
+        let l = Int((14.5 - k * 3.5 + sway).rounded()), r = 23 + Int((k * 2).rounded())
+        c.rect(l, y, r - l + 1, 1, y == hem ? rohanGold : rohanCloak)
+        c.px(l, y, rohanGold)
+    }
+}
+
+/// The Rohan helmet over the face: a steel dome with a gold-riveted band, cheek pieces and a nose guard, and the white
+/// horsehair crest streaming back off the top. It hides the buns; one strand of hair escapes at the back.
+private func drawRohanHelmet(_ c: PixelCanvas, t: Double) {
+    let sway = sin(t * 2.2) > 0 ? 1 : 0
+    let crest: [(y: Int, l: Int, r: Int)] = [(18, 25, 30), (19, 21, 31), (20, 15, 23), (21, 12, 20), (22, 10, 17), (23, 9, 15),
+                                             (24, 9, 13), (25, 9, 11), (26, 10, 10)]
+    for (i, row) in crest.enumerated() {
+        let dy = i >= 4 ? sway : 0
+        c.rect(row.l, row.y + dy, row.r - row.l + 1, 1, rohanCrest)
+        if i >= 2 { c.px(row.l, row.y + dy + 1, C(0xC8C6C0)) }
+    }
+    c.pattern(17, 20, [
+        ".......HHHHHHHH.......",
+        ".....HHHHHHHHHHHH.....",
+        "...HHHlHHHHHHHHHHHH...",
+        "..HHlHHHHHHHHHHHHHHD..",
+        ".HHHHHHHHHHHHHHHHHHHD.",
+        "BBBBBBBBBBBBBBBBBBBBBB",
+        "HH........NN........HH",
+        "H.........NN.........H",
+        "..........NN..........",
+    ], ["H": rohanSteel, "l": white, "D": rohanSteelDark, "B": rohanSteelDark, "N": rohanSteel])
+    for x in [19, 23, 32, 36] { c.px(x, 25, rohanGold) }
+    for (x, y) in [(16, 26), (16, 27), (16, 28), (17, 29)] { c.px(x, y, hairMain) }   // the one strand of hair
+}
+
+/// Éowyn's round shield: green, a gold rim, and the gold sun-horse of Rohan in the middle.
+private func drawRohanShield(_ c: PixelCanvas, cx: Int, cy: Int) {
+    c.ellipse(cx, cy, 5, 5, rohanGold)
+    c.ellipse(cx, cy, 4, 4, rohanCloak)
+    c.rect(cx - 1, cy - 1, 3, 3, rohanGold)                                   // the horse's body
+    c.px(cx + 2, cy - 2, rohanGold); c.px(cx + 1, cy - 2, rohanGold)          // its head and mane
+    c.px(cx, cy - 3, rohanGold); c.px(cx + 2, cy - 3, rohanGold)
+    c.px(cx - 1, cy + 2, rohanGold); c.px(cx + 1, cy + 2, rohanGold)          // its legs
+}
+
+/// Éowyn's sword, gripped at the hand: a leather grip, a gold crossguard and pommel, a straight steel blade.
+private func drawRohanSword(_ c: PixelCanvas, angle: Double) {
+    let h = Sprite.hand, r: Double = angle * .pi / 180
+    let u = (x: cos(r), y: sin(r)), n = (x: -sin(r), y: cos(r))
+    let clear = C(0x000000, 0)
+    c.glowLine(h.x - u.x * 2, h.y - u.y * 2, h.x + u.x * 1.5, h.y + u.y * 1.5, core: C(0x4A3420), glow: clear, coreR: 0.6, glowR: 0.7)
+    c.px(Int(h.x - u.x * 2.5), Int(h.y - u.y * 2.5), rohanGold)
+    let g = (x: h.x + u.x * 2.2, y: h.y + u.y * 2.2)
+    c.glowLine(g.x - n.x * 2.2, g.y - n.y * 2.2, g.x + n.x * 2.2, g.y + n.y * 2.2, core: rohanGold, glow: clear, coreR: 0.55, glowR: 0.6)
+    c.glowLine(h.x + u.x * 3, h.y + u.y * 3, h.x + u.x * 15, h.y + u.y * 15, core: rohanSteel, glow: clear, coreR: 0.75, glowR: 0.8)
+    c.glowLine(h.x + u.x * 3 + n.x * 0.6, h.y + u.y * 3 + n.y * 0.6, h.x + u.x * 14 + n.x * 0.6, h.y + u.y * 14 + n.y * 0.6,
+               core: C(0x8A8F9C), glow: clear, coreR: 0.3, glowR: 0.35)
 }

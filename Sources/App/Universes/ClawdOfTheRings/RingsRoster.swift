@@ -24,37 +24,6 @@ let middleEarthVillainPersonas: [LOTRVillain: Persona] = ringsVillains1.merging(
 let middleEarthHeroPersonas: [LOTRHero: Persona] = ringsHeroes1.merging(ringsHeroes2) { a, _ in a }
     .merging([.hem: hemPersona(.middleEarth)]) { a, _ in a }
 
-// MARK: - Stand-ins (each Art file takes its dictionary over; delete the matching block when it does)
-
-private func standIn(_ body: UInt32, _ trim: UInt32) -> (PixelCanvas, Pose) -> Void {
-    { c, p in drawStandIn(c, p, body: C(body), trim: C(trim)) }
-}
-
-let ringsHeroes2: [LOTRHero: Persona] = [
-    .gandalf: Persona(name: "Gandclawd the Grey", weapon: .lightning, magic: Magic(core: C(0xFFFFFF), glow: C(0xBFD8FF), jagged: false),
-                      headTop: 12, signature: 3.0, callout: "A wizard is never late.", draw: standIn(0x8A8C92, 0x5E6066)),
-    .aragorn: Persona(name: "Arrogorn", weapon: .saber, headTop: 20, callout: "For Frodough!", draw: standIn(0x3A3A32, 0x24241E)),
-    .legolas: Persona(name: "Leggolas", weapon: .blaster, shot: .arrow, muzzle: (46, 34), handGun: false, headTop: 20,
-                      signature: 3.0, callout: "A red sun rises.", draw: standIn(0x5E7A3A, 0x3E5226)),
-    .gimli: Persona(name: "Gimmie, son of Groan", weapon: .saber, headTop: 21, signature: 2.6, callout: "And my axe!",
-                    draw: standIn(0x8A4A2A, 0x5A2E1A)),
-    .boromir: Persona(name: "Boromeme", weapon: .saber, headTop: 20, signature: 3.4, callout: "One does not simply push to main.",
-                      draw: standIn(0x7A2A2A, 0x4E1A1A)),
-    .galadriel: Persona(name: "Gladriel", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFFFFF), glow: C(0x9FE8FF), jagged: false),
-                        headTop: 19, signature: 3.0, callout: "Even the smallest Clawd can change the course of the future.",
-                        draw: standIn(0xE8ECF2, 0xB8C2CE)),
-]
-let ringsVillains2: [LOTRVillain: Persona] = [
-    .balrog: Persona(name: "The Ballrog", weapon: .saber, armoured: true, canSit: false, bulk: 6, headTop: 8,
-                     draw: standIn(0x3A1A10, 0xE8501E)),
-    .gollum: Persona(name: "Smeagull", weapon: .saber, headTop: 26, signature: 3.6, callout: "My precious!",
-                     draw: standIn(0xB8B49A, 0x8A866E)),
-    .uruk: Persona(name: "Uruk-Hi", weapon: .saber, headTop: 19, callout: "Meat's back on the menu!",
-                   draw: standIn(0x4A3A2E, 0x2E241C)),
-    .orc: Persona(name: "Gorbage", weapon: .saber, headTop: 22, callout: "Collecting garbage!", draw: standIn(0x5A6A4A, 0x3A4630)),
-    .shelob: Persona(name: "Shellob", weapon: .saber, canSit: false, bulk: 6, headTop: 24, draw: standIn(0x2A221E, 0x14100E)),
-]
-
 // MARK: - Homes
 
 extension Location {
