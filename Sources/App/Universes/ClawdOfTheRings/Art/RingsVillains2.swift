@@ -6,24 +6,25 @@ import Foundation
 // its `bulk` say so), Shellob half again as wide, low on eight legs.
 
 let ringsVillains2: [LOTRVillain: Persona] = [
-    .balrog: Persona(name: "The Ballrog", weapon: .saber, armoured: true, canSit: false, pivot: balrogHand, bulk: 8, headTop: 10,
+    .balrog: Persona(name: "The Ballrog", weapon: .saber, armoured: true, canSit: false, pivot: balrogHand, bulk: 8, headTop: 11,
                      draw: drawBalrog),
-    .gollum: Persona(name: "Smeagull", weapon: .saber, headTop: 27, signature: 3.6, callout: "My precious!",
+    .gollum: Persona(name: "Smeagull", weapon: .saber, pivot: gollumShoulder, headTop: 27, signature: 3.6, callout: "My precious!",
                      draw: drawGollum),
     .uruk: Persona(name: "Uruk-Hi", weapon: .saber, headTop: 19, callout: "Meat's back on the menu!",
                    draw: drawUruk),
-    .orc: Persona(name: "Gorbage", weapon: .saber, headTop: 23, callout: "Collecting garbage!", draw: drawOrc),
+    .orc: Persona(name: "Gorbage", weapon: .saber, bulk: 2, headTop: 23, callout: "Collecting garbage!", draw: drawOrc),
     .shelob: Persona(name: "Shellob", weapon: .saber, canSit: false, pivot: shelobFangs, bulk: 8, headTop: 22, draw: drawShelob),
 ]
 
 // MARK: - The Ballrog
 
 /// Where the Ballrog's whip hand is: out in front of its chest, half again as high as a Man's.
-private let balrogHand: (x: Double, y: Double) = (45.5, 29.5)
+private let balrogHand: (x: Double, y: Double) = (45.5, 30.5)
 
 /// The Ballrog, a demon of the ancient world, half again a Man's height: dark rock-hide split by glowing cracks, two
 /// black horns, fire licking up from its head and shoulders, smoky wings folded behind it, eyes and mouth like a
-/// furnace door. In its fist a fire whip, coiled on the floor in front of it at rest. No signature.
+/// furnace door. In its fist a fire whip, coiled on the floor in front of it at rest; swung, it follows the fist round
+/// with a lag, the tip coming last, and sags when it slows; idle, it cracks it out in front of it. No signature.
 private func drawBalrog(_ c: PixelCanvas, _ p: Pose) {
     let rock = C(0x3A1A10), rockDark = C(0x2A120A), rockLight = C(0x52281A), horn = C(0x1E0E0A)
     let crack = C(0xE8501E), hot = C(0xFFB03A)
@@ -32,12 +33,13 @@ private func drawBalrog(_ c: PixelCanvas, _ p: Pose) {
     for (i, lx) in [19, 30].enumerated() {
         let up = p.step >= 0 && i == p.step ? 1 : 0
         let col = i == 0 ? rockDark : rock
-        c.rect(lx, 33, 7, 10 - up, col)
+        c.rect(lx, 34, 7, 9 - up, col)
         c.rect(lx - 1, 42 - up, 9, 2, rockDark)
         for k in 0..<3 { c.px(lx + 1 + k * 3, 43 - up, horn) }
-        c.px(lx + 3, 36, crack.alpha(glow)); c.px(lx + 2, 37, crack.alpha(glow)); c.px(lx + 3, 39, crack.alpha(glow * 0.7))
+        c.px(lx + 3, 37, crack.alpha(glow)); c.px(lx + 2, 38, crack.alpha(glow)); c.px(lx + 3, 40, crack.alpha(glow * 0.7))
     }
-    c.oy += p.breathe
+    // All of it above the legs a pixel low (the head top on row 11), so the wings and flames keep off the canvas top.
+    c.oy += p.breathe + 1
     drawBalrogWings(c, p)
     // The back arm, hanging.
     c.rect(10, 19, 4, 13, rockDark)
@@ -110,7 +112,7 @@ private func drawBalrogFlames(_ c: PixelCanvas, _ p: Pose) {
         (24, 11, 2), (24, 12, 2),
     ]
     for (i, s) in spots.enumerated() {
-        let h = max(1, s.h - 1 + Int(noise(i * 13 + tick) * 3))
+        let h = min(s.y - 3, max(1, s.h - 1 + Int(noise(i * 13 + tick) * 3)))          // the tips stay on row 5 or lower
         for k in 0..<h {
             let band = min(2, k * 3 / h)
             c.px(s.x, s.y - k, colours[band].alpha(k == h - 1 ? 0.7 : 1))
@@ -121,7 +123,7 @@ private func drawBalrogFlames(_ c: PixelCanvas, _ p: Pose) {
 /// Smoky wings folded behind the Ballrog: two dark triangles rising over its back, their edges fraying into smoke.
 private func drawBalrogWings(_ c: PixelCanvas, _ p: Pose) {
     let tick = Int(p.t * 6)
-    triangle(c, (22, 17), (11, 0), (14, 24), C(0x2E1A12), fray: tick)
+    triangle(c, (22, 17), (11, 3), (14, 24), C(0x2E1A12), fray: tick)
     triangle(c, (18, 19), (2, 4), (7, 34), C(0x1E0E0A), fray: tick + 3)
     line(c, 17, 20, 4, 6, C(0x34201A), 0.4)
     line(c, 17, 22, 6, 24, C(0x34201A), 0.4)
@@ -151,28 +153,107 @@ private func triangle(_ c: PixelCanvas, _ a: (Double, Double), _ b: (Double, Dou
     }
 }
 
-/// The fire whip at rest: from the fist down to the floor and along it, a line of flame with a red glow, flickering.
+/// The fire whip, a line of flame with a red glow, flickering. At rest it runs from the fist down to the floor and along
+/// it. Swung (`p.melee`), it leaves the fist at the swing's angle and lags behind along its length: each bit of it
+/// points the way the fist pointed a moment earlier (`p.trail`, carried on past its last angle), so the tip comes last,
+/// and whatever isn't moving fast sags toward the floor. A fast swing leaves the whip's last shapes smeared behind it
+/// in fire, and the tip cracks.
 private func drawFireWhip(_ c: PixelCanvas, _ p: Pose) {
+    let core = C(0xFFB03A), glow = C(0xE8501E)
     let floor = Double(43 - c.oy)
-    let pts: [(Double, Double)] = [(46, 31), (47, 34), (48, 37), (49.5, 40), (51.5, 42), (54.5, 43), (58, 43), (61, 42.5),
-                                   (63.5, 41), (65, 41.5)]
     let flick: Double = 0.85 + 0.15 * noise(Int(p.t * 20))
-    for i in 1..<pts.count {
-        let a = pts[i - 1], b = pts[i]
-        c.glowLine(a.0, min(a.1, floor), b.0, min(b.1, floor), core: C(0xFFB03A), glow: C(0xE8501E), coreR: 0.45, glowR: 1.5,
-                   strength: flick * (1 - Double(i) / Double(pts.count) * 0.3))
+    func draw(_ pts: [(x: Double, y: Double)], from: Int = 1, strength: Double) {
+        guard pts.count > from else { return }
+        for i in from..<pts.count {
+            let a = pts[i - 1], b = pts[i], f = Double(i) / Double(pts.count)
+            c.glowLine(a.x, min(a.y, floor), b.x, min(b.y, floor), core: core, glow: glow, coreR: 0.55 - 0.2 * f,
+                       glowR: 1.5, strength: strength * (1 - f * 0.3))
+        }
     }
+    var swing = p.melee, trail = p.trail
+    if swing != nil, let crack = whipCrack(p) { swing = crack.angle; trail = crack.trail }
+    guard let now = swing else {
+        draw([(46, 31), (47, 34), (48, 37), (49.5, 40), (51.5, 42), (54.5, 43), (58, 43), (61, 42.5), (63.5, 41), (65, 41.5)],
+             strength: flick)
+        return
+    }
+    let fast = trail.count >= 2
+    let lag: [Double] = fast ? [now, trail[0], trail[1], 2 * trail[1] - trail[0]] : [now]
+    let pts = whipShape(lag, floor: floor, sag: fast ? 0.2 : 0.7)
+    if fast {
+        // The smear: the whip's last two shapes, one swing-step back each, fading.
+        let back1: [Double] = [lag[1], lag[2], lag[3], 2 * lag[3] - lag[2]]
+        let back2: [Double] = [lag[2], lag[3], 2 * lag[3] - lag[2], 3 * lag[3] - 2 * lag[2]]
+        draw(whipShape(back2, floor: floor, sag: 0.2), from: 10, strength: 0.18)
+        draw(whipShape(back1, floor: floor, sag: 0.2), from: 8, strength: 0.35)
+    }
+    draw(pts, strength: flick)
+    if fast, let tip = pts.last {
+        c.glowLine(tip.x, min(tip.y, floor), tip.x, min(tip.y, floor), core: C(0xFFF0C0), glow: core, coreR: 0.5, glowR: 1.8,
+                   strength: 0.5 + 0.5 * noise(Int(p.t * 30)))
+    }
+}
+
+/// The Ballrog's idle flourish, instead of a spin: the whip drawn back up overhead and cracked out in front of it, held
+/// there until it's let fall. Its angle now and the swing's trail (as `Pose.trail` has it); nil when it isn't playing.
+private func whipCrack(_ p: Pose) -> (angle: Double, trail: [Double])? {
+    guard let h = idlePlay(p), h.kind == .flourish else { return nil }
+    func crack(_ u: Double) -> Double {
+        if u < 0.4 { return -30 - 80 * (0.5 - 0.5 * cos(min(1, max(0, u / 0.4)) * .pi)) }
+        let f: Double = min(1, (u - 0.4) / 0.1)
+        return -110 + 135 * (1 - pow(1 - f, 3))
+    }
+    let dt: Double = 0.035 / h.length, now = crack(h.p), prev = crack(h.p - dt)
+    return (now, abs(now - prev) > 6 ? [prev, crack(h.p - 2 * dt)] : [])
+}
+
+/// The swung whip's points, 24 one-pixel steps out of the fist. `lag`: the angles it points along, from the fist (the
+/// swing's angle now) to the tip (the oldest); `sag` (0…1): how far the tip end droops toward straight down.
+private func whipShape(_ lag: [Double], floor: Double, sag: Double) -> [(x: Double, y: Double)] {
+    let steps = 24
+    var pts: [(x: Double, y: Double)] = [(balrogHand.x, balrogHand.y - 1)]       // drawn a pixel low (see drawBalrog)
+    for i in 1...steps {
+        let f = Double(i) / Double(steps)
+        var a: Double = lag[0]
+        if lag.count > 1 {
+            let x: Double = f * Double(lag.count - 1)
+            let k = min(lag.count - 2, Int(x))
+            a = lag[k] + (lag[k + 1] - lag[k]) * (x - Double(k))
+        }
+        // The turn to straight down, the forward way round unless it already hangs low behind (so a whip held up
+        // overhead droops in front of it, not over its own face).
+        var down: Double = (90 - a).truncatingRemainder(dividingBy: 360)
+        if down <= -100 { down += 360 } else if down > 260 { down -= 360 }
+        a += down * sag * f * f
+        let u = unit(a), q = pts[pts.count - 1]
+        pts.append((q.x + u.x, min(floor - 0.5, q.y + u.y)))
+    }
+    return pts
 }
 
 // MARK: - Smeagull
 
+/// Where Smeagull grabs from: his front shoulder (his arm, not a weapon, swings).
+private let gollumShoulder: (x: Double, y: Double) = (33.5, 33.5)
+
 /// Smeagull: a skinny pale grey-green creature, crouched lower than a hobbit stands, frog-legged with his knees out by
 /// his sides, long thin arms reaching down to the floor, a few lank strands of hair, big pointed ears and huge round
-/// pale-blue eyes with ink pupils, in nothing but a loincloth. He grabs and bites (claws out on the swing, later).
-/// Signature (later): Smeagull and Gollum argue.
+/// pale-blue eyes with ink pupils, in nothing but a loincloth. He grabs and bites: the front arm shoots out along the
+/// swing from the shoulder, claws spread, raking three scratches through the air behind it, and the mouth opens on
+/// the strike. Signature: he hugs himself, rocking, and strokes the precious he holds in his hands (it isn't there),
+/// with big happy eyes (…0.45); then he turns round on himself, eyes narrowed, snarling and clawing, as Gollum
+/// arguing with Smeagull (…0.75); and turns back, all smiles again.
 private func drawGollum(_ c: PixelCanvas, _ p: Pose) {
+    guard let s = p.signature, p.melee == nil else { drawGollumBody(c, p, mood: .plain); return }
+    guard s >= 0.45 && s < 0.75 else { drawGollumBody(c, p, mood: .precious); return }
+    mirrored(c, aboutX: 27.5) { drawGollumBody($0, p, mood: .gollum) }
+}
+
+private enum GollumMood { case plain, precious, gollum }
+
+private func drawGollumBody(_ c: PixelCanvas, _ p: Pose, mood: GollumMood) {
     let skin = C(0xB8B49A), shade = C(0x8A866E), light = C(0xD0CCB4), eye = C(0xA8D8F0)
-    let cloth = C(0x6A5A3A), clothDark = C(0x4E422A), hair = C(0x7A7460), claw = C(0xE8E4D0)
+    let cloth = C(0x6A5A3A), clothDark = C(0x4E422A), hair = C(0x7A7460), claw = C(0xE8E4D0), mouth = C(0x5A5444)
     // Crouched legs: the knees out to the sides, the feet flat and long-toed.
     if seatedPose {
         c.rect(17, 36, 4, 2, skin); c.rect(34, 36, 4, 2, skin)
@@ -192,11 +273,13 @@ private func drawGollum(_ c: PixelCanvas, _ p: Pose) {
         }
     }
     c.oy += p.breathe
-    // The thin arms, down to the floor in front of him and behind.
-    line(c, 21, 33, 18.5, 39, skin, 0.55)
-    c.rect(17, 39, 2, 2, skin); c.px(16, 40, claw)
-    line(c, 33, 33, 37, 38, skin, 0.55)
-    c.rect(37, 38, 2, 2, skin); c.px(39, 39, claw); c.px(39, 38, claw)
+    if mood == .precious { c.ox += Int((2 * sin(p.lt * 3.4)).rounded()) }        // rocking side to side, the precious in his arms
+    // The thin arms, down to the floor in front of him and behind (the front one is drawn below when it's busy).
+    if mood != .precious { line(c, 21, 33, 18.5, 39, skin, 0.55); c.rect(17, 39, 2, 2, skin); c.px(16, 40, claw) }
+    if mood == .plain && p.melee == nil {
+        line(c, 33, 33, 37, 38, skin, 0.55)
+        c.rect(37, 38, 2, 2, skin); c.px(39, 39, claw); c.px(39, 38, claw)
+    }
     // The body, narrow and hunched, the spine knobbly.
     c.rect(22, 29, 11, 1, skin)
     c.rect(21, 30, 13, 9, skin)
@@ -208,23 +291,102 @@ private func drawGollum(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(34, 30, ["..S", "SSS", "SS."], ["S": skin]); c.px(36, 30, shade)
     // A few lank strands of hair.
     for (x, y) in [(24, 28), (23, 27), (27, 28), (27, 27), (30, 28), (31, 27)] { c.px(x, y, hair) }
-    // The huge round eyes, the pupils looking ahead.
-    for ex in [22, 28] {
-        c.pattern(ex, 30, [".EE.", "EEWE", "EEKK", "EEKK", ".EE."], ["E": eye, "W": white, "K": ink])
+    let palette: [Character: Px] = ["E": eye, "W": white, "K": ink, "h": shade]
+    switch mood {
+    case .plain:
+        // The huge round eyes, the pupils looking ahead; a thin mouth and a snaggle tooth, or open to bite.
+        for ex in [22, 28] { c.pattern(ex, 30, [".EE.", "EEWE", "EEKK", "EEKK", ".EE."], palette) }
+        if let a = p.melee, !p.trail.isEmpty || (-50...35).contains(wrapped(a)) {
+            c.rect(25, 35, 5, 2, C(0x2A2620))
+            for x in [25, 27, 29] { c.px(x, 35, claw) }
+            c.px(26, 36, claw); c.px(28, 36, claw)
+        } else {
+            c.rect(26, 35, 3, 1, mouth); c.px(27, 35, claw)
+        }
+    case .precious:
+        // Even bigger eyes, wide and shining, two glints in each, gazing down at what he holds; a blush under them.
+        for ex in [21, 28] {
+            c.pattern(ex, 28, [".EEE.", "EWEEE", "EKKWE", "EKKKE", "EKKKE", ".EEE."], palette)
+        }
+        c.rect(20, 35, 2, 1, C(0xD8A090)); c.rect(33, 35, 2, 1, C(0xD8A090))
+    case .gollum:
+        // Narrowed eyes under a scowl; a snarl, all teeth.
+        for ex in [22, 28] { c.pattern(ex, 31, ["hhhh", "EEKK", ".EE."], palette) }
+        c.rect(22, 30, 2, 1, ink); c.rect(24, 31, 2, 1, ink)
+        c.rect(28, 31, 2, 1, ink); c.rect(30, 30, 2, 1, ink)
+        c.rect(24, 35, 7, 2, C(0x2A2620))
+        for x in [24, 26, 28, 30] { c.px(x, 35, claw) }
+        for x in [25, 27, 29] { c.px(x, 36, claw) }
     }
-    // The mouth: a thin line and a snaggle tooth.
-    c.rect(26, 35, 3, 1, C(0x5A5444)); c.px(27, 35, claw)
     // The loincloth.
     c.rect(23, 38, 9, 1, cloth)
     c.rect(23, 37, 9, 1, clothDark)
     for x in stride(from: 23, through: 31, by: 2) where 39 + c.oy <= 43 { c.px(x, 39, cloth) }
+    switch mood {
+    case .precious:
+        // Both arms wrapped round himself, the elbows sticking out at his sides, the hands cupped together under his
+        // chin, the fingers of one stroking what's in them; and over his head, the twinkle of something precious.
+        let arm = C(0x6E6A56)
+        for (sh, elbow, wrist) in [((22.0, 33.0), (18.0, 36.5), (24.0, 35.0)), ((33.0, 33.0), (37.0, 36.5), (31.0, 35.0))] {
+            for (r, col) in [(1.1, arm), (0.5, light)] {                           // outlined, so they show over him
+                line(c, sh.0, sh.1, elbow.0, elbow.1, col, r)
+                line(c, elbow.0, elbow.1, wrist.0, wrist.1, col, r)
+            }
+        }
+        // The two hands, pale, cupped together (the fingers of the near one curled over), outlined.
+        c.rect(23, 33, 10, 4, arm)
+        c.rect(24, 34, 8, 2, claw)
+        c.rect(24, 35, 8, 1, light)
+        let stroke = Int((sin(p.lt * 7) * 1.5).rounded())
+        c.rect(26 + stroke, 33, 3, 1, claw)                                        // the stroking finger
+        let tw: Double = 0.5 + 0.5 * sin(p.lt * 5)
+        for (x, y, k) in [(26, 24, 0.0), (31, 25, 2.1), (22, 25, 4.2)] {
+            let a: Double = 0.35 + 0.65 * max(0, sin(p.lt * 4 + k)) * tw
+            c.px(x, y, C(0xFFF0B0, a)); c.px(x - 1, y, C(0xFFF0B0, a * 0.45)); c.px(x + 1, y, C(0xFFF0B0, a * 0.45))
+            c.px(x, y - 1, C(0xFFF0B0, a * 0.45)); c.px(x, y + 1, C(0xFFF0B0, a * 0.45))
+        }
+    case .gollum:
+        // The front arm up, claws out, at the one he's arguing with.
+        line(c, 33, 33, 37, 29.5, skin, 0.55)
+        c.rect(37, 28, 2, 2, skin)
+        c.px(39, 27, claw); c.px(40, 28, claw); c.px(39, 30, claw)
+    case .plain:
+        if let a = p.melee { drawGrab(c, p, angle: a, skin: skin, claw: claw) }
+    }
+}
+
+/// Smeagull's grab: the front arm shot out from the shoulder along `angle`, the hand open and the three claws spread;
+/// a fast swing rakes three claw-scratches through the air behind it.
+private func drawGrab(_ c: PixelCanvas, _ p: Pose, angle: Double, skin: Px, claw: Px) {
+    let sh = gollumShoulder, reach: Double = 7
+    // His arm only reaches round so far: up over his head and down to the floor in front, never behind him.
+    func arm(_ a: Double) -> Double { min(70, max(-105, wrapped(a))) }
+    let now = arm(angle)
+    if let last = p.trail.last {
+        // Three scratches through the air, from the claws back along the swing, fading.
+        let end: Double = arm(last + (last - angle) * 1.5)
+        let n = max(2, Int((abs(end - now) / 4).rounded()))
+        for i in 1...n {
+            let u = unit(now + (end - now) * Double(i) / Double(n)), fade: Double = 0.7 * (1 - Double(i) / Double(n + 1))
+            for r in [reach + 1.5, reach + 3.5, reach + 5.5] {
+                c.px(Int((sh.x + u.x * r).rounded(.down)), Int((sh.y + u.y * r).rounded(.down)), C(0xF4F0E0, fade))
+            }
+        }
+    }
+    let u = unit(now), hand = (x: sh.x + u.x * reach, y: sh.y + u.y * reach)
+    line(c, sh.x - 0.5, sh.y - 0.5, hand.x, hand.y, skin, 0.6)
+    c.rect(Int(hand.x.rounded(.down)) - 1, Int(hand.y.rounded(.down)) - 1, 2, 2, skin)
+    for spread in [-50.0, 0, 50] {                                              // the claws, spread
+        let v = unit(now + spread)
+        for d in [2.0, 3.2] { c.px(Int((hand.x + v.x * d).rounded(.down)), Int((hand.y + v.y * d).rounded(.down)), claw) }
+    }
 }
 
 // MARK: - Uruk-Hi
 
 /// Uruk-Hi, the big fighting orc: dark brown skin, a white hand print over the face (the eyes looking out between the
 /// fingers), a black iron helmet with the White Hand painted on its front, black armour plates on chest and shoulders,
-/// and a heavy, notched sword, held low. No signature.
+/// and a heavy, notched sword, held low; it is heavy, so a fast swing smears a long way behind it. No signature.
 private func drawUruk(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0x4A3A2E), skinDark = C(0x3A2C22), hand = C(0xF0EEE8)
     let plate = C(0x1E1E22), plateLight = C(0x3A3A42), plateMid = C(0x2A2A30), helm = C(0x2A2A30), helmLight = C(0x46464E)
@@ -266,7 +428,30 @@ private func drawUruk(_ c: PixelCanvas, _ p: Pose) {
         "KKKKKKKKKKKKKKKKKKKKKKKKKK",
     ], ["K": helm, "h": helmLight])
     c.pattern(25, 20, [".W.W.W.", ".W.W.W.", ".WWWWW.", "WWWWWW.", ".WWWW.."], ["W": hand])
-    drawUrukSword(c, angle: seatedPose ? 6 : 32)
+    // The sword, and a long smear behind a fast swing (never through the floor). Idle, he doesn't twirl it: it's
+    // heaved up overhead and chopped down in front of him.
+    var sword = p.melee ?? (seatedPose ? 6 : 32)
+    var trail = p.melee == nil ? [] : p.trail
+    if p.melee != nil, let h = idlePlay(p), h.kind == .flourish {
+        let chop = { (u: Double) -> Double in
+            if u < 0.45 { return 32 - 112 * smooth((u - 0.08) / 0.37) }
+            if u < 0.55 { return -80 + 105 * (1 - pow(1 - (u - 0.45) / 0.1, 3)) }
+            return 25 + 7 * smooth((u - 0.55) / 0.37)
+        }
+        sword = chop(h.p)
+        let before = chop(max(0, h.p - 0.04))
+        trail = abs(before - sword) > 4 ? [before, before + (before - sword)] : []
+    }
+    let floor = Double(43 - c.oy)
+    for (i, a) in heavySmear(sword, trail).enumerated() {
+        let u = unit(a), h = Sprite.hand, fade: Double = 0.3 * (1 - Double(i) / 12)
+        guard fade > 0.03 else { break }
+        let out: Double = u.y > 0.05 ? min(16, (floor - 1 - h.y) / u.y) : 16
+        guard out > 11 else { continue }
+        c.glowLine(h.x + u.x * 11, h.y + u.y * 11, h.x + u.x * out, h.y + u.y * out, core: C(0xC8CCD4),
+                   glow: C(0x7A7E86, 0.5), coreR: 0.6, glowR: 1.4, strength: fade)
+    }
+    drawUrukSword(c, angle: sword)
     c.rect(38, 33, 3, 3, plate); c.px(38, 33, plateLight)
 }
 
@@ -294,7 +479,7 @@ private func drawUrukSword(_ c: PixelCanvas, angle: Double) {
 
 /// Gorbage, an orc of the rank and file: hunched, his head pushed forward, mottled green-grey skin, big pointed ears,
 /// tusks, a crooked dented iron helmet, a ragged leather jerkin, and for a shield a dented bin lid with its handle
-/// (he collects the garbage). A scimitar, held low. No signature.
+/// (he collects the garbage). A scimitar, held low between fights, a smear behind a fast swing. No signature.
 private func drawOrc(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0x5A6A4A), skinDark = C(0x46543A), skinLight = C(0x6E7E5C)
     let iron = C(0x5A5E66), ironDark = C(0x3E4248), ironLight = C(0x7A7E86)
@@ -335,7 +520,13 @@ private func drawOrc(_ c: PixelCanvas, _ p: Pose) {
     ], ["I": iron, "h": ironLight, "i": ironDark, "d": ironDark])
     // The bin lid on his off arm, the scimitar in his fist.
     drawBinLid(c, cx: 13, cy: seatedPose ? 33 : 34)
-    drawScimitar(c, angle: seatedPose ? 4 : 30)
+    let blade = p.melee ?? (seatedPose ? 4 : 30)
+    for (i, a) in (p.melee == nil ? [] : p.trail).enumerated() {
+        let u = unit(a), h = Sprite.hand
+        c.glowLine(h.x + u.x * 4, h.y + u.y * 4, h.x + u.x * 15, h.y + u.y * 15, core: C(0xD8DCE4), glow: C(0x8A8E98),
+                   coreR: 0.5, glowR: 1.6, strength: 0.3 / Double(i + 1))
+    }
+    drawScimitar(c, angle: blade)
     c.rect(38, 33, 3, 3, skin); c.px(40, 35, skinDark)
 }
 
@@ -378,7 +569,9 @@ private let shelobFangs: (x: Double, y: Double) = (45.5, 38.5)
 
 /// Shellob, the great spider: an ink-black bulbous body with a pale mark on its back, low on eight long jointed legs
 /// (the far four paler), a cluster of glinting yellow eyes at the front and two curved fangs under them. Walking, the
-/// legs step four and four. No signature.
+/// legs step four and four. She bites: in a fight she rears her two front legs up in front of her, their tips stabbing
+/// with the swing, and the fangs flex with it, spread wide on the wind-up and snapping shut on the strike, a faint
+/// ghost of them behind a fast one. No signature.
 private func drawShelob(_ c: PixelCanvas, _ p: Pose) {
     let body = C(0x2A221E), dark = C(0x1A1412), light = C(0x40362F), far = C(0x4A3E36), mark = C(0xC8C0A8)
     let eye = C(0xFFE08A)
@@ -399,7 +592,16 @@ private func drawShelob(_ c: PixelCanvas, _ p: Pose) {
         line(c, knee.0, knee.1, tip.0, tip.1, col, 0.95)
         c.px(Int(knee.0), Int(knee.1), near ? light : C(0x5E5048))
     }
-    for (i, l) in farLegs.enumerated() { leg(l, i, near: false) }
+    // Fighting (not walking), the front pair rear up over her head, their tips following the swing but kept over her
+    // own fangs (x 46 at most), clear of whoever she fights: the 75% hobbits stand only a few pixels further on.
+    let rearing = p.walking ? nil : p.melee
+    func reared(_ a: Double, near: Bool) -> Leg {
+        let dir: Double = min(60, max(-70, 20 + 0.6 * wrapped(a)))
+        let knee: (Double, Double) = near ? (42, 22) : (40, 25)
+        let u = unit(dir), len: Double = near ? 6 : 5
+        return (near ? (38, 34) : (38, 35), knee, (min(46, knee.0 + u.x * len), knee.1 + u.y * len))
+    }
+    for (i, l) in farLegs.enumerated() { leg(i == 0 ? rearing.map { reared($0, near: false) } ?? l : l, i, near: false) }
     c.oy += p.breathe
     // The abdomen: a great bulb, shaded, with the pale mark on its back and a few bristles.
     c.ellipse(16, 31, 13, 9, dark)
@@ -419,11 +621,25 @@ private func drawShelob(_ c: PixelCanvas, _ p: Pose) {
     c.ellipse(34, 34, 7, 5, body)
     c.rect(29, 31, 8, 1, light)
     c.oy -= p.breathe
-    for (i, l) in nearLegs.enumerated() { leg(l, i, near: true) }
+    for (i, l) in nearLegs.enumerated() { leg(i == 0 ? rearing.map { reared($0, near: true) } ?? l : l, i, near: true) }
+    if rearing != nil {
+        for (i, ta) in p.trail.enumerated() {                                   // the forelegs' smear
+            let r = reared(ta, near: true)
+            line(c, r.k.0, r.k.1, r.t.0, r.t.1, C(0x6A5E56, 0.35 / Double(i + 1)), 0.7)
+        }
+    }
     c.oy += p.breathe
     c.ellipse(41, 34, 4, 4, body)
-    // The fangs, curved, pale at the tips.
-    c.pattern(41, 37, [".F..F", "F..F.", "F..F.", "M..M."], ["F": C(0x5A4A40), "M": mark])
+    // The fangs, curved, pale at the tips; flexing with a swing.
+    if let a = p.melee {
+        for (i, ta) in p.trail.enumerated() { drawFangs(c, spread: fangSpread(ta), alpha: 0.35 / Double(i + 1)) }
+        drawFangs(c, spread: fangSpread(a))
+        if let prev = p.trail.first, fangSpread(prev) > fangSpread(a) + 0.2 {     // snapping shut: a flash of the bite
+            line(c, 47, 38, 49, 37.5, C(0xF4F0E0, 0.5), 0.35); line(c, 47, 40, 49, 40.5, C(0xF4F0E0, 0.5), 0.35)
+        }
+    } else {
+        c.pattern(41, 37, [".F..F", "F..F.", "F..F.", "M..M."], ["F": C(0x5A4A40), "M": mark])
+    }
     // The eyes: two big ones and a cluster of small, glinting.
     let glint: Double = 0.7 + 0.3 * sin(p.lt * 2.7)
     c.rect(40, 31, 2, 2, eye); c.rect(43, 31, 2, 2, eye)
@@ -431,7 +647,69 @@ private func drawShelob(_ c: PixelCanvas, _ p: Pose) {
     c.px(40, 31, white.alpha(glint)); c.px(43, 31, white.alpha(glint))
 }
 
+/// How far Shellob's fangs are spread at swing angle `a`: 1 wide open (the weapon raised, winding up), 0 at rest,
+/// -1 snapped shut (the strike, forward and down).
+private func fangSpread(_ a: Double) -> Double {
+    let open: Double = min(1, max(0, (-wrapped(a) - 10) / 90))
+    return open * 2 - 1
+}
+
+/// Shellob's two fangs, curving down from under her eyes to pale tips, `spread` (-1…1) apart: at 0 as they hang at
+/// rest, at 1 curled out wide, at -1 the tips crossed together.
+private func drawFangs(_ c: PixelCanvas, spread s: Double, alpha: Double = 1) {
+    let fang = C(0x5A4A40, alpha), tip = C(0xC8C0A8, alpha)
+    for (root, out) in [(42.0, -1.0), (45.0, 1.0)] {
+        let mid: Double = root - 1 + out * s, end: Double = root - 1 + out * 1.5 * s
+        c.px(Int(root), 37, fang)
+        c.px(Int(mid.rounded()), 38, fang)
+        c.px(Int(((mid + end) / 2).rounded()), 39, fang)
+        c.px(Int(end.rounded()), 40, tip)
+    }
+}
+
+/// An angle in degrees brought into -180…180 (the kata's twirl runs past a full turn).
+private func wrapped(_ a: Double) -> Double {
+    var w: Double = a.truncatingRemainder(dividingBy: 360)
+    if w > 180 { w -= 360 } else if w <= -180 { w += 360 }
+    return w
+}
+
 // MARK: - Shared helpers
+
+/// The angles a heavy swing smears through: from now back past `trail`'s last angle by half as far again, so the smear
+/// is longer than a light blade's (the weapon looks slower, heavier). Empty when it isn't being swung fast.
+private func heavySmear(_ now: Double, _ trail: [Double]) -> [Double] {
+    guard let last = trail.last else { return [] }
+    let end: Double = last + (last - now) * 0.5
+    let n = max(2, Int((abs(end - now) / 5).rounded()))
+    return (1...n).map { (i: Int) -> Double in now + (end - now) * Double(i) / Double(n) }
+}
+
+/// The idle habit playing now, if this pose is the one it's played in (idle, standing, not fighting).
+private func idlePlay(_ p: Pose) -> HabitPlay? {
+    guard !p.walking, p.mode == .idle, let h = idleHabit else { return nil }
+    switch p.role { case .none, .rest: return h; default: return nil }
+}
+
+/// Smoothstep: 0→1 eased at both ends.
+private func smooth(_ x: Double) -> Double {
+    let u = min(1, max(0, x))
+    return u * u * (3 - 2 * u)
+}
+
+/// Draws `art` on a scratch canvas (same offsets as `c`), mirrors it about the column line `aboutX` (canvas units)
+/// with `flipHorizontally` and a shift, and copies it onto `c`: the character turned round to face the other way.
+private func mirrored(_ c: PixelCanvas, aboutX: Double, _ art: (PixelCanvas) -> Void) {
+    let s = PixelCanvas(c.w, c.h)
+    s.ox = c.ox; s.oy = c.oy; s.baseY = c.baseY
+    art(s)
+    s.flipHorizontally()                                                         // column k lands on w - 1 - k
+    s.shift(dx: Int((2 * aboutX).rounded()) - c.w, dy: 0)                        // … and then on 2 aboutX - 1 - k
+    let (ox, oy, by) = (c.ox, c.oy, c.baseY)
+    c.ox = 0; c.oy = 0; c.baseY = 0
+    defer { c.ox = ox; c.oy = oy; c.baseY = by }
+    c.paste(s)
+}
 
 private let clear = C(0x000000, 0)
 
