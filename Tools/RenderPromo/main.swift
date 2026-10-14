@@ -724,6 +724,7 @@ enum Into {
     case starWars(clock: Bool)
     case marvel(ComicTrip)
     case dc(DCComicTrip)
+    case middleEarth(RingsTrip)
 
     var duration: Double {
         switch self {
@@ -732,6 +733,7 @@ enum Into {
         case .starWars: return Wipe.duration * 1.6
         case .marvel(let t): return t.duration * 1.25
         case .dc(let t): return t.duration * 1.25
+        case .middleEarth(let t): return t.duration * 1.25
         }
     }
 }
@@ -4431,7 +4433,7 @@ func frame(_ t: Double) -> NSBitmapImageRep {
             ctx.addPath(Wipe.remaining(k, clock: clock, in: r)); ctx.clip()
             renderShot(prev, at: t, into: ctx)
             ctx.restoreGState()
-        case .marvel, .dc:
+        case .marvel, .dc, .middleEarth:
             let old = shotImage { renderShot(prev, at: t, into: $0) }, new = shotImage { renderShot(cur, at: t, into: $0) }
             let r = cur.inWindow ? windowRect : fullRect
             if cur.inWindow { renderShot(cur, at: t, into: ctx) }
@@ -4444,6 +4446,7 @@ func frame(_ t: Double) -> NSBitmapImageRep {
                 }
                 if case .marvel(let trip) = cur.into { trip.draw(ctx, old: o, new: n, k: k, in: r) }
                 if case .dc(let trip) = cur.into { trip.draw(ctx, old: o, new: n, k: k, in: r) }
+                if case .middleEarth(let trip) = cur.into { trip.draw(ctx, old: o, new: n, k: k, in: r) }
                 if cur.inWindow { ctx.restoreGState() }
             }
         case .cut:
@@ -4824,6 +4827,7 @@ func transitionSound(_ m: Mix, _ s: Shot) {
         case .jokerCard: m.flip(t0 + d * 0.2, vol: 0.1); m.slideWhistle(t0 + d * 0.45, up: true)
         default: m.whoosh(s.start, d, vol: 0.08)
         }
+    case .middleEarth: m.tone(t0 + d * 0.3, d * 0.5, 55, to: 40, wave: .saw, vol: 0.06, attack: 0.1, release: 0.3); m.boom(t0 + d * 0.55, vol: 0.18)
     }
 }
 
