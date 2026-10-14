@@ -2270,17 +2270,29 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private func settingsSections() -> [SettingsSection] {
         let d = UserDefaults.standard
         let universes = Universe.allCases
+        let clawdRoyaleRow = universes.count, randomRow = universes.count + 1
         var general: [SettingsRow] = [
-            .choice("Universe", options: universes.map(\.title) + ["Random"],
-                    get: { Self.universeEvery == nil ? universes.firstIndex(of: .shown) ?? 0 : universes.count },
+            .choice("Universe", options: universes.map(\.title) + ["Clawd Royale", "Random"],
+                    get: {
+                        Universe.mixed ? clawdRoyaleRow
+                            : Self.universeEvery != nil ? randomRow : universes.firstIndex(of: .shown) ?? 0
+                    },
                     set: { [weak self] i in
                         guard let self else { return }
-                        if i < universes.count {
+                        switch i {
+                        case clawdRoyaleRow:
                             Self.universeEvery = nil
-                            if universes[i] != .shown { self.switchUniverse(to: universes[i]) }
-                        } else if Self.universeEvery == nil {
-                            Self.universeEvery = 10
-                            self.universeSince = Date().timeIntervalSince1970
+                            if !Universe.mixed { self.switchScene(to: Self.universe, mixed: true) }
+                        case randomRow:
+                            // Out of Clawd Royale first, back to the last single universe.
+                            if Universe.mixed { self.switchScene(to: Self.universe, mixed: false) }
+                            if Self.universeEvery == nil {
+                                Self.universeEvery = 10
+                                self.universeSince = Date().timeIntervalSince1970
+                            }
+                        default:
+                            Self.universeEvery = nil
+                            if universes[i] != .shown || Universe.mixed { self.switchScene(to: universes[i], mixed: false) }
                         }
                     }),
             // Only with Universe set to Random; otherwise a blank row, so the window keeps its size.
@@ -2510,24 +2522,26 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         guard let every = Self.universeEvery, now - universeSince >= Double(every * 60),
               playground == nil, !demo, chaosSeconds == nil, shotPath == nil,
               let next = Universe.allCases.filter({ $0 != Universe.shown }).randomElement() else { return }
-        switchUniverse(to: next)
+        switchScene(to: next, mixed: false)
     }
 
-    /// Everyone is recast in the new universe (same places in its cast, so they keep their sides), the scene moves to
-    /// one of its places, the menu bar icon changes, and the hook casts new arrivals from it. In the window, the whole
-    /// window changes over with the new universe's transition.
-    private func switchUniverse(to u: Universe) {
+    /// Everyone is recast in the new universe (same places in its cast, so they keep their sides), or, into Battle
+    /// Royale, shown as themselves; the scene moves to one of the new places, the menu bar icon changes, and the hook
+    /// casts new arrivals from it. In the window, the whole window changes over with the new place's transition.
+    private func switchScene(to u: Universe, mixed: Bool) {
         universeSince = Date().timeIntervalSince1970
         let window = windowMode && onScreen && ClawdWindow.view != .board ? clawdWindow : nil
         let before = window?.snapshot()
         Self.universe = u
-        Universe.shown = u
-        publishUniverse()
-        if let raw = UserDefaults.standard.string(forKey: "location"), raw != Self.randomLocation,
+        Self.clawdRoyale = mixed
+        Universe.mixed = mixed
+        random = nil
+        if !mixed, let raw = UserDefaults.standard.string(forKey: "location"), raw != Self.randomLocation,
            Location(rawValue: raw)?.universe != u {
             UserDefaults.standard.removeObject(forKey: "location")     // a place from the other universe: back to automatic
         }
-        random = nil
+        Universe.shown = mixed ? location.universe : u
+        publishUniverse()
         statusItem?.button?.image = statusIcon(mono: monoMenuBarIcon)
         actors.removeAll()                                           // walk back in, recast
         clawdWindow?.sceneView.skipWipe = before != nil              // the whole window has its own transition
