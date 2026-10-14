@@ -537,13 +537,13 @@ enum StatusStore {
         return h
     }
 
-    /// Drop idle sessions with no agents (e.g. terminals closed without a clean exit). They return on their next event.
     /// Tell the hook (and the screen saver, when the app isn't running) what's on show: the universe, and whether it's
     /// Clawd Royale.
     static func setUniverse(_ universe: Universe, mixed: Bool = false, saver: String?) {
         withLock { s in s.universe = universe.rawValue; s.mixed = mixed ? true : nil; s.saverUniverse = saver }
     }
 
+    /// Drop idle sessions with no agents (e.g. terminals closed without a clean exit). They return on their next event.
     static func forgetIdleSessions() {
         withLock { s in
             let busy = Set(s.agents.map(\.session))

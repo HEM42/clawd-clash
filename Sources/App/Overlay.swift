@@ -364,7 +364,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 }
             }
             let file = StatusStore.load()   // read once: it also tells us whether the file is readable
-            sessions = StatusStore.snapshot(file ?? StatusFile(), now: now, processes: processes)
+            // The hook (3.0.0 and older) rewrites the file without `mixed`, so cast from the app's own state, and put the
+            // file right again for the hook.
+            var shownFile = file ?? StatusFile()
+            shownFile.universe = Universe.shown.rawValue
+            shownFile.mixed = Universe.mixed ? true : nil
+            if let file, (file.mixed == true) != Universe.mixed || file.universe != Universe.shown.rawValue { publishUniverse() }
+            sessions = StatusStore.snapshot(shownFile, now: now, processes: processes)
             // A session that quits drops its record at SessionEnd, but the process lingers a moment while it shuts down.
             // Don't let it come back as a new character (a fresh villain walking in only to fade out): it has left.
             for s in sessions where s.live { if let pid = s.pid { lastLive[pid] = now } }
@@ -2471,9 +2477,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     // MARK: Universe
 
-    /// The universe picked: Star Wars, Marvel or DC (in Clawd Royale, the last one picked, for when it ends). A fresh install takes after whichever
-    /// app it replaces (Clawd Wars: Star Wars; Avengers: Clawd Wars: Marvel; Justice League: Clawd Wars: DC); the
-    /// Homebrew casks preset it.
+    /// The universe picked: Star Wars, Marvel or DC (in Clawd Royale, the last one picked, for when it ends). A fresh
+    /// install takes after whichever app it replaces (Clawd Wars: Star Wars; Avengers: Clawd Wars: Marvel; Justice
+    /// League: Clawd Wars: DC); the Homebrew casks preset it.
     static var universe: Universe {
         get {
             let d = UserDefaults.standard
@@ -2487,7 +2493,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
         set { UserDefaults.standard.set(newValue.key, forKey: "universe") }
     }
-    /// `--clawd-royale`: Clawd Royale for this run only (test and screenshot runs), Settings untouched.
+    /// `--clawd-royale`: Clawd Royale for this run only (test and screenshot runs); the flag itself isn't saved.
     private static let clawdRoyaleArg = CommandLine.arguments.contains("--clawd-royale")
     /// Clawd Royale (Settings → Universe): every universe's cast at once, in random places from all of them.
     /// `universe` keeps the last single universe meanwhile.
@@ -2573,10 +2579,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         random.state = picked == Self.randomLocation ? .on : .off
         lm.addItem(random)
         lm.addItem(.separator())
-        let owners: [Location: [String]] = Dictionary(grouping: Theme.of(.shown).cast.filter { !Universe.shown.isHem($0.id) }
+        // Clawd Royale greys the menu out, but the kept choice (the last single universe's) should still show checked.
+        let kept = Universe.mixed ? Self.universe : Universe.shown
+        let owners: [Location: [String]] = Dictionary(grouping: Theme.of(kept).cast.filter { !kept.isHem($0.id) }
             .map { ($0.home, $0.name) }, by: \.0)
             .mapValues { $0.map(\.1) }
-        for l in Location.all(in: .shown) {
+        for l in Location.all(in: kept) {
             let who = owners[l]?.joined(separator: ", ") ?? ""
             let item = NSMenuItem(title: who.isEmpty ? l.name : "\(l.name)  ·  \(who)", action: #selector(setLocation(_:)), keyEquivalent: "")
             item.target = self

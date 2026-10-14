@@ -7,6 +7,11 @@ Clawd Clash brings three apps together as its three universes: Clawd Wars became
 ### Added
 
 - **Clawd Royale** (Settings → Universe): all three casts in one scene, heroes against villains, each character as themselves (Darth Vapor against Batclawd, Spider-Clawd swinging past Han Yolo), in a random place from any universe every ten minutes. The Location menu is greyed out meanwhile, the menu bar icon is the universe of the place, and arch-enemies, ships and Han's first shot still play out within their own universe. HEM turns up at most once. The screen saver follows it with "The same as Clawd Clash", or picks Clawd Royale in its own Options.
+- **Test runs stay out of the way.** Test and screenshot runs (`--chaos`, `--playground`, `CLAWD_SHOT`...) no longer tell the hook which universe to cast from, so they can't change what your real sessions get.
+
+### Fixed
+
+- **One HEM only.** After switching universe with sessions open, a second HEM could turn up; now there's never more than one.
 
 ### Changed
 - **The README goes by the universes' names throughout**, its pictures included (`docs/roster-star-clawds.png` and so on, as `Tools/RenderDocs` now names them).
