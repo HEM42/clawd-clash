@@ -48,7 +48,7 @@ let scale: CGFloat = 3, cellW: CGFloat = 190, rowH: CGFloat = 190, cols = 5
 let titleH: CGFloat = 54
 func roster(_ u: Universe) {
     let theme = Theme.of(u)
-    let villains = theme.cast.filter(\.isDark), heroes = theme.cast.filter { !$0.isDark }
+    let villains = theme.cast.filter(\.isDark), heroes = theme.cast.filter { !$0.isDark && !u.isHem($0.id) }
     let vRows = (villains.count + cols - 1) / cols, hRows = (heroes.count + cols - 1) / cols
     let rosterH = Int(titleH * 2 + CGFloat(vRows + hRows) * rowH + 20)
     let sheet = canvas(Int(cellW) * cols, rosterH) { ctx in

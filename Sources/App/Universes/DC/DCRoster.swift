@@ -35,6 +35,7 @@ enum DCHero: Int, CaseIterable {
     // The Suicide Squad, the Legion, the Wonder Twins and the pets
     case peacemaker, bloodsport, ratcatcher2, kingShark, polkaDotMan, saturnGirl, cosmicBoy, lightningLad, zan, jayna
     case aceTheBatHound, streaky, gleek, beppo
+    case hem   // always last (`Universe.hem`)
 
     var persona: Persona { dcHeroPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
@@ -72,7 +73,7 @@ enum DCVillain: Int, CaseIterable {
 let dcHeroPersonas: [DCHero: Persona] = dcHeroes1.merging(dcHeroes2) { a, _ in a }.merging(dcHeroes3) { a, _ in a }
     .merging(dcHeroes4) { a, _ in a }.merging(dcHeroes5) { a, _ in a }.merging(dcHeroes6) { a, _ in a }
     .merging(dcHeroes7) { a, _ in a }.merging(dcHeroes8) { a, _ in a }.merging(dcHeroes9) { a, _ in a }
-    .merging(dcHeroes10) { a, _ in a }
+    .merging(dcHeroes10) { a, _ in a }.merging([.hem: hemPersona(.dc)]) { a, _ in a }
 let dcVillainPersonas: [DCVillain: Persona] = dcVillains1.merging(dcVillains2) { a, _ in a }.merging(dcVillains3) { a, _ in a }
     .merging(dcVillains4) { a, _ in a }.merging(dcVillains5) { a, _ in a }.merging(dcVillains6) { a, _ in a }
     .merging(dcVillains7) { a, _ in a }.merging(dcVillains8) { a, _ in a }.merging(dcVillains9) { a, _ in a }
@@ -129,7 +130,7 @@ extension Location {
         case .greenArrow, .blackCanary, .arsenal: return .starCity
         case .shazam, .phantomStranger: return .rockOfEternity
         case .nightwing: return .bludhaven
-        case .batgirl, .redHood, .catwoman, .huntress, .batwoman, .spoiler, .commissionerGordon, .ragman: return .gotham
+        case .batgirl, .redHood, .catwoman, .huntress, .batwoman, .spoiler, .commissionerGordon, .ragman, .hem: return .gotham
         case .redRobin, .raven, .beastBoy, .starfire, .wonderGirl: return .titansTower
         case .supergirl: return .kandor
         case .superboy, .jonKent, .streaky: return .smallville

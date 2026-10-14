@@ -1085,6 +1085,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         for var actor in actors.sorted(by: { !$0.isLeader && $1.isLeader }) {
             var walking = actor.walkDir != 0
             var facing = walking ? actor.walkDir : actor.facing
+            let bunTalk = walking || roles[actor.key] != nil ? nil : hemBunTalk(actor, t: t, z: z)
+            if let b = bunTalk { facing = b.facing }
             var aboard = false
             if let exit = actor.exit, let left = actor.leaving {
                 // Picked up by its ship, by phase: fly in (0–0.3), ramp down, it walks up (0.36–0.62),
@@ -1195,6 +1197,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 if actor.key == s.han, s.e >= GreedoShot.hanLine.from, s.e < GreedoShot.hanLine.to { line = GreedoShot.hanSays; overHead = true }
                 if actor.key == s.greedo, s.e >= GreedoShot.standing { line = s.line; overHead = true }
             }
+            if let b = bunTalk { line = b.line; overHead = true }
             if let line {
                 let sc = actor.isLeader ? ls : cs
                 let callout = NSAttributedString(string: line, attributes: [
@@ -1593,6 +1596,17 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     }
 
     // MARK: Chaos test
+
+    /// HEM standing next to Princess Laya, both out of the fight: for five seconds in every twenty he turns to her and
+    /// has a word about buns (a different one each time).
+    private func hemBunTalk(_ a: Actor, t: Double, z: CGFloat) -> (facing: CGFloat, line: String)? {
+        guard a.cast.universe == .starWars, a.cast.universe.isHem(a.cast.id), a.leaving == nil else { return nil }
+        guard let laya = actors.first(where: { $0.cast == .hero(SWHero.leia) && $0.walkDir == 0 && $0.leaving == nil
+                                               && abs($0.x - a.x) < 90 * z }) else { return nil }
+        let cycle = t / 20 + a.phase
+        guard frac(cycle) < 0.25 else { return nil }
+        return (laya.x > a.x ? 1 : -1, hemBunLines[Int(floor(cycle)) % hemBunLines.count])
+    }
 
     /// One random step: Claudes and agents come and go and change mood, much faster than real use.
     private func chaosStep(_ now: Double) -> [SessionSnapshot] {
@@ -2501,7 +2515,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         random.state = picked == Self.randomLocation ? .on : .off
         lm.addItem(random)
         lm.addItem(.separator())
-        let owners: [Location: [String]] = Dictionary(grouping: Theme.of(.shown).cast.map { ($0.home, $0.name) }, by: \.0)
+        let owners: [Location: [String]] = Dictionary(grouping: Theme.of(.shown).cast.filter { !Universe.shown.isHem($0.id) }
+            .map { ($0.home, $0.name) }, by: \.0)
             .mapValues { $0.map(\.1) }
         for l in Location.all(in: .shown) {
             let who = owners[l]?.joined(separator: ", ") ?? ""

@@ -31,6 +31,7 @@ enum MarvelHero: Int, CaseIterable {
     case monicaRambeau, clea, doctorVoodoo, howardTheDuck, squirrelGirl, jeffTheLandShark, throg, lockjaw, forbushMan
     // The TVA, the Red Room, the Savage Land, Stark's workshop and Ta Lo
     case mobius, sylvie, kidLoki, alligatorLoki, hunterB15, redGuardian, kaZar, rescue, zabu, morris, dumE
+    case hem   // always last (`Universe.hem`)
 
     var persona: Persona { heroPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
@@ -65,7 +66,7 @@ let heroPersonas: [MarvelHero: Persona] = heroes1.merging(heroes2) { a, _ in a }
     .merging(heroes4) { a, _ in a }
     .merging(heroes5) { a, _ in a }.merging(heroes6) { a, _ in a }.merging(heroes7) { a, _ in a }
     .merging(heroes8) { a, _ in a }.merging(heroes9) { a, _ in a }
-    .merging(heroes10) { a, _ in a }
+    .merging(heroes10) { a, _ in a }.merging([.hem: hemPersona(.marvel)]) { a, _ in a }
 let villainPersonas: [MarvelVillain: Persona] = villains1.merging(villains2) { a, _ in a }.merging(villains3) { a, _ in a }
     .merging(villains4) { a, _ in a }
     .merging(villains5) { a, _ in a }.merging(villains6) { a, _ in a }.merging(villains7) { a, _ in a }
@@ -128,7 +129,7 @@ extension Location {
 
     static func marvelHome(of hero: MarvelHero) -> Location {
         switch hero {
-        case .vision: return .avengersTower
+        case .vision, .hem: return .avengersTower
         case .ironMan: return .starkWorkshop
         case .captainAmerica, .blackWidow, .falcon, .nickFury: return .helicarrier
         case .thor: return .asgard

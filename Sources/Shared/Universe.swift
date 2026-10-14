@@ -23,8 +23,15 @@ enum Universe: Int, CaseIterable, Codable {
         switch self { case .starWars: return 46; case .marvel: return 88; case .dc: return 97 }
     }
     var heroCount: Int {
-        switch self { case .starWars: return 35; case .marvel: return 105; case .dc: return 110 }
+        switch self { case .starWars: return 36; case .marvel: return 106; case .dc: return 111 }
     }
+
+    /// HEM: the same rare face in every universe, last of the heroes. He's never in the regular pools (`lightCast`);
+    /// a new session or agent turns out to be him now and then (`hemOdds`), and he stays himself across universes.
+    var hem: Int { base + StatusStore.heroBase + heroCount - 1 }
+    func isHem(_ id: Int) -> Bool { id % 1000 == StatusStore.heroBase + heroCount - 1 }
+    /// The chance a new session's character, or a new agent's, is HEM.
+    static let hemOdds = (session: 1.0 / 50, agent: 1.0 / 150)
 
     /// Small fry that only ever turn up as agents, never leading a session (global ids).
     var agentOnly: Set<Int> {
@@ -44,7 +51,7 @@ enum Universe: Int, CaseIterable, Codable {
     var rivals: Set<Int> { self == .starWars ? [0, 1] : [] }
 
     var darkCast: [Int] { (0..<villainCount).map { base + $0 } }
-    var lightCast: [Int] { (0..<heroCount).map { base + StatusStore.heroBase + $0 } }
+    var lightCast: [Int] { (0..<heroCount - 1).map { base + StatusStore.heroBase + $0 } }   // all but HEM
 
     /// Which universe a cast id belongs to.
     static func of(_ id: Int) -> Universe { Universe(rawValue: id / 1000) ?? .starWars }
@@ -54,8 +61,9 @@ enum Universe: Int, CaseIterable, Codable {
     /// the same side here (the screen saver showing another universe, or the universe switched with sessions open).
     func adopt(_ id: Int) -> Int {
         guard Universe.of(id) != self else { return id }
+        if Universe.of(id).isHem(id) { return hem }
         let local = id % 1000
         return Universe.isDark(id) ? base + local % villainCount
-                                   : base + StatusStore.heroBase + (local - StatusStore.heroBase) % heroCount
+                                   : base + StatusStore.heroBase + (local - StatusStore.heroBase) % (heroCount - 1)
     }
 }

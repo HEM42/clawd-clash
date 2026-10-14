@@ -19,6 +19,7 @@ enum SWHero: Int, CaseIterable {
     case luke, han, leia, obiwan, r2d2, c3po, quigon, mace, yoda, jawa, chewie, rey, ahsoka, ewok, tauntaun
     case jarjar, lando, zorii, boKatan, maz, wedge, l337, monMothma, padme, ackbar
     case grogu, babuFrik, mando, k2so, gonk, cassian, bix, cobbVanth, pitDroid, kuiil
+    case hem   // always last (`Universe.hem`)
 
     var persona: Persona { starWarsHeroPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
@@ -26,7 +27,7 @@ enum SWHero: Int, CaseIterable {
 let starWarsVillainPersonas: [SWVillain: Persona] = starWarsVillains1.merging(starWarsVillains2) { a, _ in a }
     .merging(starWarsVillains3) { a, _ in a }
 let starWarsHeroPersonas: [SWHero: Persona] = starWarsHeroes1.merging(starWarsHeroes2) { a, _ in a }
-    .merging(starWarsHeroes3) { a, _ in a }
+    .merging(starWarsHeroes3) { a, _ in a }.merging([.hem: hemPersona(.starWars)]) { a, _ in a }
 
 // MARK: - Homes
 
@@ -60,7 +61,7 @@ extension Location {
         case .jawa, .r2d2, .babuFrik, .gonk, .bix, .pitDroid: return .sandcrawler
         case .yoda, .grogu: return .dagobah
         case .han, .chewie, .lando, .l337: return .falcon
-        case .leia, .c3po, .monMothma: return .tantive
+        case .leia, .c3po, .monMothma, .hem: return .tantive
         case .quigon, .mando, .cobbVanth: return .tuskenDesert
         case .rey, .zorii, .kuiil: return .jakku
         case .mace, .ahsoka: return .jediCouncil

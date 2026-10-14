@@ -442,6 +442,9 @@ enum StatusStore {
         case .some(false): pool = light.filter { !used.contains($0) }.isEmpty ? dark : light
         case nil: pool = dark + light
         }
+        if !used.contains(universe.hem), pool.contains(where: { !isDark($0) }), Double.random(in: 0..<1) < Universe.hemOdds.session {
+            return universe.hem
+        }
         return pickLeader(used: used, previous: latest?.leader, pool: pool)
     }
 
@@ -455,6 +458,9 @@ enum StatusStore {
         var pool = u.darkCast + u.lightCast
         if let rec = s.sessions[session], let leader = rec.leader, side(for: assistantOf(rec), in: s.sessions, universe: u) != nil {
             pool = isDark(leader) ? u.darkCast : u.lightCast
+        }
+        if !onScreen.contains(u.hem), pool.contains(where: { !isDark($0) }), Double.random(in: 0..<1) < Universe.hemOdds.agent {
+            return u.hem
         }
         let free = pool.filter { !onScreen.contains($0) }
         return (free.isEmpty ? pool : free).randomElement()!
