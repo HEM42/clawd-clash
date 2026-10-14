@@ -14,6 +14,8 @@ import CoreText
 //   REEL=starclawds build/renderpromo video promo → promo/star-clawds-promo.mp4: the Star Clawds trailer
 //   REEL=marvelous build/renderpromo video promo  → promo/marvelous-clawds-promo.mp4: the Marvelous Clawds trailer
 //   REEL=detective build/renderpromo video promo  → promo/detective-clawds-promo.mp4: the Detective Clawds trailer
+//   REEL=royale build/renderpromo video promo     → promo/clawd-royale-promo.mp4: the Clawd Royale teaser
+//   REEL=royale build/renderpromo 720p promo      → promo/720p/Clawd-Royale.mp4 (storyboard: storyboard-clawd-royale.png)
 //   build/renderpromo audio promo                → the soundtrack alone, as a .wav
 //   build/renderpromo frame promo 9.5            → a single frame at 9.5 s
 //   REEL=full build/renderpromo check            → renders every frame once (prints how far it got)
@@ -2559,6 +2561,442 @@ func detectiveSound(_ m: Mix) {
     m.crackle(ec + 0.5, duration - ec - 0.5, vol: 0.025)
 }
 
+// MARK: The Clawd Royale teaser (every universe's cast in one scene)
+
+/// `s` in Futura Condensed ExtraBold at `size`, centred on `c`: `color` inside a thick, round ink outline.
+func inkLettered(_ s: String, _ c: CGPoint, size: CGFloat, color: NSColor, alpha: Double = 1, kern: CGFloat = 0) {
+    let f = NSFont(name: "Futura-CondensedExtraBold", size: size) ?? .systemFont(ofSize: size, weight: .black)
+    let base: [NSAttributedString.Key: Any] = [.font: f, .kern: kern]
+    let sz = NSAttributedString(string: s, attributes: base).size()
+    let p = NSPoint(x: c.x - sz.width / 2, y: c.y - sz.height / 2)
+    var ink = base; ink[.foregroundColor] = NSColor(cgColor: inkColor)!.withAlphaComponent(alpha)
+    var fill = base; fill[.foregroundColor] = color.withAlphaComponent(alpha)
+    let stamp = NSAttributedString(string: s, attributes: ink), r = Double(size) * 0.06
+    for k in 0..<16 {
+        let a = Double(k) / 16 * 2 * .pi
+        stamp.draw(at: NSPoint(x: p.x + cos(a) * r, y: p.y + sin(a) * r))
+    }
+    NSAttributedString(string: s, attributes: fill).draw(at: p)
+}
+
+/// CLAWD over ROYALE: yellow comic lettering with a heavy ink outline, set a little askew, like a stamp.
+func royaleTitle(_ ctx: CGContext, center: CGPoint, scale s: Double, alpha: Double = 1) {
+    ctx.saveGState()
+    ctx.translateBy(x: center.x, y: center.y); ctx.scaleBy(x: s, y: s); ctx.rotate(by: 0.035)
+    inkLettered("CLAWD", CGPoint(x: 0, y: 118), size: 130, color: yellow, alpha: alpha, kern: 8)
+    inkLettered("ROYALE", CGPoint(x: 0, y: -38), size: 210, color: yellow, alpha: alpha, kern: 10)
+    ctx.restoreGState()
+}
+
+/// A universe's menu bar emblem (`Theme.menuIcon`: Vader's helmet, the round shield, the C-shield), `px` screen pixels
+/// a pixel, centred on `c` and turned by `angle`; ringed in ink, then white, so it reads on anything.
+func emblem(_ u: Universe, _ ctx: CGContext, center c: CGPoint, px: Double, angle: Double = 0, alpha: Double = 1) {
+    let icon = PixelCanvas(28, 26)
+    Theme.of(u).menuIcon(icon, false)
+    let e = PixelCanvas(32, 30)                     // room for the two rings
+    let b = icon.buf
+    for y in 0..<icon.h {
+        for x in 0..<icon.w {
+            let i = (y * icon.w + x) * 4, a = Double(b[i + 3])
+            guard a > 0 else { continue }
+            let un = { (v: UInt8) -> UInt8 in UInt8(min(255, Double(v) * 255 / a)) }   // the buffer is premultiplied
+            e.px(x + 2, y + 2, Px(r: un(b[i]), g: un(b[i + 1]), b: un(b[i + 2]), a: b[i + 3]))
+        }
+    }
+    e.addOutline(C(0x111018)); e.addOutline(C(0xFFFFFF))
+    guard let img = e.makeImage() else { return }
+    let w = Double(e.w) * px, h = Double(e.h) * px
+    ctx.saveGState(); ctx.interpolationQuality = .none; ctx.setAlpha(CGFloat(alpha))
+    ctx.translateBy(x: c.x, y: c.y); ctx.rotate(by: CGFloat(angle))
+    ctx.draw(img, in: CGRect(x: -w / 2, y: -h / 2, width: w, height: h))
+    ctx.restoreGState()
+}
+
+/// When the emblems slam together, and when the title stamps in (shot seconds into the collision).
+let royaleSlam = 0.6, royaleStamp = 1.05
+
+/// The three menu bar emblems fly in from three sides and slam together (KRA-KOOM!), and CLAWD ROYALE stamps in.
+func royaleCollide(_ ctx: CGContext, local l: Double, t: Double) {
+    let since = l - royaleSlam
+    let shake = since > 0 && since < 0.35 ? (0.35 - since) * 70 : 0
+    let mid = CGPoint(x: Double(W) / 2, y: Double(H) / 2)
+    ctx.saveGState()
+    ctx.translateBy(x: sin(t * 80) * shake, y: cos(t * 70) * shake)
+    halftone(ctx, fullRect.insetBy(dx: -40, dy: -40), base: hexCG(0x1B2257), dot: hexCG(0x2E3C8C), step: 26)
+    // the slam's burst, staying behind the title
+    if since > 0 {
+        let f = backOut(since / 0.3)
+        starburst(ctx, center: mid, inner: 300 * f, outer: 540 * f, spikes: 18, color: hexCG(0xFFE04A), spin: l * 0.12)
+        starburst(ctx, center: mid, inner: 230 * f, outer: 400 * f, spikes: 14, color: hexCG(0xE8332A), spin: -l * 0.16)
+    }
+    // the emblems: in from the left, the top and the right, spinning, then knocked out to a row over the title
+    let from: [(x: Double, y: Double, turn: Double)] = [(-300, 470, -1.2), (960, 1450, 0.9), (2220, 470, 1.4)]
+    let meet: [(x: Double, y: Double)] = [(800, 480), (960, 650), (1120, 480)]
+    let rest: [(x: Double, y: Double)] = [(560, 930), (960, 975), (1360, 930)]
+    for (i, u) in Universe.allCases.enumerated() {
+        if since < 0 {
+            let f = easeIn((l - 0.05) / (royaleSlam - 0.05))
+            emblem(u, ctx, center: CGPoint(x: lerp(from[i].x, meet[i].x, f), y: lerp(from[i].y, meet[i].y, f)), px: 11,
+                   angle: from[i].turn * (1 - f))
+        } else {
+            let f = backOut((since - 0.05) / 0.4)
+            emblem(u, ctx, center: CGPoint(x: lerp(meet[i].x, rest[i].x, f), y: lerp(meet[i].y, rest[i].y, f)),
+                   px: lerp(11, 5, clamp(f)), angle: sin(since * 9) * 0.25 * max(0, 1 - since / 0.6))
+        }
+    }
+    // the sound word, popping on the slam and gone as the title lands
+    if since > 0 && l < royaleStamp + 0.15 {
+        let p = backOut(since / 0.18), fade = 1 - clamp((l - royaleStamp + 0.05) / 0.2)
+        inkLettered("KRA-KOOM!", mid, size: CGFloat(170 * p), color: NSColor(srgbRed: 0.88, green: 0.12, blue: 0.12, alpha: 1),
+                    alpha: fade, kern: 6)
+    }
+    ctx.restoreGState()
+    if since > 0 && since < 0.3 { ctx.setFillColor(CGColor(gray: 1, alpha: 0.9 * (1 - since / 0.3))); ctx.fill(fullRect) }   // the flash, unshaken
+    // CLAWD ROYALE stamps down from big to its size, then the line under it
+    if l > royaleStamp {
+        let s = 1 + 1.4 * (1 - backOut((l - royaleStamp) / 0.3))
+        royaleTitle(ctx, center: CGPoint(x: mid.x, y: mid.y - 20), scale: s * 0.95, alpha: clamp((l - royaleStamp) / 0.08))
+    }
+    let sub = royaleStamp + 0.35
+    if l > sub {
+        let f = backOut((l - sub) / 0.3), c = CGPoint(x: mid.x, y: 130)
+        ctx.saveGState()
+        ctx.translateBy(x: c.x, y: c.y); ctx.scaleBy(x: CGFloat(f), y: CGFloat(f)); ctx.translateBy(x: -c.x, y: -c.y)
+        captionBox("ALL THREE UNIVERSES. ONE SCENE.", ctx, center: c, size: 46)
+        ctx.restoreGState()
+    }
+}
+
+/// A hero at `hx` against a villain at `vx` (fx units), facing each other in the roles their weapons give them, each
+/// with its own name on its label.
+func versus(_ hero: Cast, _ hx: Double, _ villain: Cast, _ vx: Double) -> (Actor, Actor) {
+    let (rh, rv) = fightRoles(hero.weapon, villain.weapon)
+    let side: Double = hx < vx ? 1 : -1
+    let h = Actor(cast: hero, x: hx, facing: side, role: rh, label: hero.name, labelSize: 24)
+    let v = Actor(cast: villain, x: vx, facing: -side, role: rv, label: villain.name, labelSize: 24)
+    return (h, v)
+}
+
+/// Spider-Clawd swinging over everyone's heads on his web, from off the left at `start` (shot seconds), arc after arc,
+/// to off the right: his actor and where his line is stuck (fx units), or nil when he's out of the frame.
+let swingArc = 0.55, swingReach = 80.0, swingAngle = 55.0 * Double.pi / 180
+func webSwing(_ l: Double, start: Double) -> (actor: Actor, anchor: (x: Double, y: Double))? {
+    let u = (l - start) / swingArc
+    guard u > 0, u < 3 else { return nil }
+    let i = floor(u), th: Double = -swingAngle * cos(.pi * (u - i))
+    let step = 2 * swingReach * sin(swingAngle)                 // so each arc ends where the next one starts
+    let anchor = (x: 45 + step * i, y: -10.0)
+    let hand = (x: anchor.x + swingReach * sin(th), y: anchor.y + swingReach * cos(th))
+    let who = Cast.hero(MarvelHero.spiderMan)
+    var a = Actor(cast: who, x: hand.x - 13, walking: true, label: who.name, labelSize: 24)   // the raised hand: (41, 22)
+    a.lift = groundY - 44 - (hand.y - 22)
+    return (a, anchor)
+}
+
+/// The crew in one of the app's places: heroes against villains from every universe, each as itself, `fights` going at
+/// it (`also`: the rest), and the place's name in a caption box along the bottom; the top shaded for the captions.
+func royaleScene(_ ctx: CGContext, _ loc: Location, t: Double, fights: [(Actor, Actor)], also: [Actor] = []) {
+    set(ctx, loc, t: t)
+    let shade = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [CGColor(gray: 0, alpha: 0.55), CGColor(gray: 0, alpha: 0)] as CFArray,
+                           locations: [0, 1])!                  // so the captions read on a bright place
+    ctx.drawLinearGradient(shade, start: CGPoint(x: 0, y: H), end: CGPoint(x: 0, y: Double(H) - 330), options: [])
+    for (a, b) in fights { draw(a, ctx, t: t); draw(b, ctx, t: t) }
+    for a in also { draw(a, ctx, t: t) }
+    drawFX(fights, ctx, t: t)
+    captionBox(loc.name.uppercased(), ctx, center: CGPoint(x: Double(W) / 2, y: 70), size: 30)
+}
+
+/// The Settings window's Universe choices, as the app lists them, and where Clawd Royale is among them.
+let universeChoices: [String] = Universe.allCases.map(\.title) + ["Clawd Royale", "Random"]
+let royaleChoice = Universe.allCases.count
+
+/// The Settings window as the teaser shows it (General: the Universe pop-up and two checkboxes), 2 screen pixels a
+/// point; its Universe pop-up; and item `i` of the pop-up's menu, opened as AppKit opens it, the choice over the button.
+let settingsFrame = CGRect(x: 480, y: 500, width: 960, height: 336)
+let universePopup = CGRect(x: 480 + 364, y: 500 + 336 - 188, width: 360, height: 44)
+func universeItem(_ i: Int, picked: Int) -> CGRect {
+    CGRect(x: universePopup.minX - 30, y: universePopup.minY - Double(i - picked) * 44, width: universePopup.width + 44, height: 44)
+}
+
+/// The mock Settings window: `picked` shown on the pop-up; `hover` the item under the pointer while its menu is open
+/// (nil: shut); `pressed` while the button is held.
+func settingsMock(_ ctx: CGContext, picked: Int, menuOpen: Bool, hover: Int?, pressed: Bool) {
+    let r = settingsFrame, z = 2.0
+    func say(_ s: String, _ x: Double, _ y: Double, _ size: Double, _ weight: NSFont.Weight = .regular, _ col: NSColor = .white) {
+        NSAttributedString(string: s, attributes: [.font: NSFont.systemFont(ofSize: size * z, weight: weight), .foregroundColor: col])
+            .draw(at: NSPoint(x: x, y: y))
+    }
+    // the window: shadow, body, title bar
+    let body = CGPath(roundedRect: r, cornerWidth: 10 * z, cornerHeight: 10 * z, transform: nil)
+    ctx.saveGState()
+    ctx.setShadow(offset: CGSize(width: 0, height: -16), blur: 50, color: CGColor(gray: 0, alpha: 0.65))
+    ctx.addPath(body); ctx.setFillColor(CGColor(red: 0.165, green: 0.165, blue: 0.18, alpha: 1)); ctx.fillPath()
+    ctx.restoreGState()
+    ctx.addPath(body); ctx.setStrokeColor(CGColor(gray: 1, alpha: 0.14)); ctx.setLineWidth(2); ctx.strokePath()
+    trafficLights(ctx, x: r.minX + 20, y: r.maxY - 40, d: 24)
+    let title = NSAttributedString(string: "Clawd Clash Settings", attributes: [.font: NSFont.systemFont(ofSize: 13 * z, weight: .semibold),
+                                                                                .foregroundColor: NSColor(white: 0.85, alpha: 1)])
+    title.draw(at: NSPoint(x: r.midX - title.size().width / 2, y: r.maxY - 28 - title.size().height / 2))
+    // General: the Universe pop-up and two checkboxes
+    let x0 = r.minX + 24 * z
+    say("General", x0, r.maxY - 56 - 40 - 32, 13, .bold)
+    let p = universePopup
+    say("Universe", x0, p.midY - 16, 13)
+    let button = CGPath(roundedRect: p, cornerWidth: 5 * z, cornerHeight: 5 * z, transform: nil)
+    ctx.addPath(button); ctx.setFillColor(CGColor(gray: pressed ? 0.42 : 0.34, alpha: 1)); ctx.fillPath()
+    say(universeChoices[picked], p.minX + 9 * z, p.midY - 16, 13)
+    let knob = CGRect(x: p.maxX - 19 * z, y: p.minY + 3 * z, width: 16 * z, height: p.height - 6 * z)
+    ctx.addPath(CGPath(roundedRect: knob, cornerWidth: 4 * z, cornerHeight: 4 * z, transform: nil))
+    ctx.setFillColor(hexCG(0x0A84FF)); ctx.fillPath()
+    for dir in [1.0, -1.0] {                                        // the up and down chevrons
+        let cy = knob.midY + dir * 4.5 * z
+        ctx.move(to: CGPoint(x: knob.midX - 3.5 * z, y: cy - dir * 2 * z)); ctx.addLine(to: CGPoint(x: knob.midX, y: cy + dir * 1.5 * z))
+        ctx.addLine(to: CGPoint(x: knob.midX + 3.5 * z, y: cy - dir * 2 * z))
+    }
+    ctx.setStrokeColor(CGColor(gray: 1, alpha: 1)); ctx.setLineWidth(1.6 * z); ctx.setLineCap(.round); ctx.setLineJoin(.round); ctx.strokePath()
+    let boxes: [(String, Bool)] = [("Show Dock icon", true), ("Monochrome menu bar icon", false)]
+    for (i, (label, on)) in boxes.enumerated() {
+        let y = p.minY - 16 - 36 - Double(i) * 52
+        let box = CGRect(x: x0, y: y + 4, width: 28, height: 28)
+        ctx.addPath(CGPath(roundedRect: box, cornerWidth: 6, cornerHeight: 6, transform: nil))
+        ctx.setFillColor(on ? hexCG(0x0A84FF) : CGColor(gray: 0.3, alpha: 1)); ctx.fillPath()
+        if on {
+            ctx.move(to: CGPoint(x: box.minX + 7, y: box.midY)); ctx.addLine(to: CGPoint(x: box.minX + 12, y: box.minY + 8))
+            ctx.addLine(to: CGPoint(x: box.maxX - 6, y: box.maxY - 7))
+            ctx.setStrokeColor(CGColor(gray: 1, alpha: 1)); ctx.setLineWidth(3.4); ctx.strokePath()
+        }
+        say(label, box.maxX + 14, y + 1, 13)
+    }
+    guard menuOpen else { return }
+    // the open menu, over the button: every choice, the current one ticked, the one under the pointer lit up
+    let top = universeItem(0, picked: picked), bottom = universeItem(universeChoices.count - 1, picked: picked)
+    let menu = CGRect(x: top.minX, y: bottom.minY - 10, width: top.width, height: top.maxY - bottom.minY + 20)
+    let shape = CGPath(roundedRect: menu, cornerWidth: 6 * z, cornerHeight: 6 * z, transform: nil)
+    ctx.saveGState()
+    ctx.setShadow(offset: CGSize(width: 0, height: -10), blur: 30, color: CGColor(gray: 0, alpha: 0.6))
+    ctx.addPath(shape); ctx.setFillColor(CGColor(red: 0.19, green: 0.19, blue: 0.21, alpha: 0.98)); ctx.fillPath()
+    ctx.restoreGState()
+    ctx.addPath(shape); ctx.setStrokeColor(CGColor(gray: 1, alpha: 0.18)); ctx.setLineWidth(2); ctx.strokePath()
+    for (i, name) in universeChoices.enumerated() {
+        let it = universeItem(i, picked: picked)
+        if i == hover {
+            ctx.addPath(CGPath(roundedRect: it.insetBy(dx: 5 * z, dy: 0), cornerWidth: 4 * z, cornerHeight: 4 * z, transform: nil))
+            ctx.setFillColor(hexCG(0x0A84FF)); ctx.fillPath()
+        }
+        if i == picked { say("✓", it.minX + 11 * z, it.midY - 16, 13, .bold) }
+        say(name, it.minX + 30 * z, it.midY - 16, 13, i == royaleChoice ? .semibold : .regular)
+    }
+}
+
+/// The macOS arrow pointer, its tip at `p`, `z` screen pixels a point.
+func pointer(_ ctx: CGContext, at p: CGPoint, z: Double = 2) {
+    let pts: [(Double, Double)] = [(0, 0), (0, 17), (4.2, 13.2), (7, 19.5), (9.6, 18.4), (6.9, 12.2), (12.2, 12.2)]
+    let path = CGMutablePath()
+    path.addLines(between: pts.map { (q: (Double, Double)) -> CGPoint in CGPoint(x: p.x + q.0 * z, y: p.y - q.1 * z) })
+    path.closeSubpath()
+    ctx.saveGState()
+    ctx.setShadow(offset: CGSize(width: 0, height: -3), blur: 6, color: CGColor(gray: 0, alpha: 0.5))
+    ctx.addPath(path); ctx.setFillColor(CGColor(gray: 0, alpha: 1)); ctx.fillPath()
+    ctx.restoreGState()
+    ctx.addPath(path); ctx.setStrokeColor(CGColor(gray: 1, alpha: 1)); ctx.setLineWidth(1.3 * z); ctx.setLineJoin(.round); ctx.strokePath()
+}
+
+/// When the pointer opens the Universe pop-up, and when it picks Clawd Royale (shot seconds into the Settings shot).
+let royaleClicks = (open: 1.0, pick: 1.8)
+
+/// Settings → Universe → Clawd Royale: the pointer opens the pop-up and picks it, and the Star Clawds crew on the
+/// desktop below gives way to everyone's.
+func royaleSettings(_ ctx: CGContext, local l: Double, t: Double) {
+    desktop(ctx, dim: 1)
+    let swap = l - royaleClicks.pick - 0.1
+    let cast: [Cast] = swap > 0 ? [.hero(DCHero.batman), .villain(SWVillain.vader), .hero(SWHero.han), .villain(DCVillain.joker)]
+                                : [.villain(SWVillain.vader), .hero(SWHero.luke), .hero(SWHero.han), .villain(SWVillain.trooper)]
+    let (ra, rb) = fightRoles(cast[0].weapon, cast[1].weapon), (rc, rd) = fightRoles(cast[2].weapon, cast[3].weapon)
+    var crew: [Actor] = [Actor(cast: cast[0], x: 58, role: ra, label: "idle-claude"),
+                         Actor(cast: cast[1], x: 115, facing: -1, role: rb, label: "website", ai: .codex),
+                         Actor(cast: cast[2], x: 196, session: false, role: rc, label: "Run the test suite"),
+                         Actor(cast: cast[3], x: 258, facing: -1, session: false, role: rd, label: "Review Overlay.swift", ai: .codex)]
+    if swap > 0 {                                                   // everyone's cast pops in, one after another
+        for i in crew.indices {
+            let f = backOut((swap - Double(i) * 0.07) / 0.3)
+            crew[i].lift = (1 - f) * -8; crew[i].alpha = clamp(f * 1.5)
+        }
+    }
+    for a in crew { draw(a, ctx, t: t) }
+    drawFX([(crew[0], crew[1]), (crew[2], crew[3])], ctx, t: t)
+    if swap > 0 && swap < 0.35 {                                    // a puff where each one lands
+        for a in crew {
+            let g = swap / 0.35, c = CGPoint(x: a.x * S, y: stageH - (groundY - 20 * a.k) * S)
+            ctx.setStrokeColor(CGColor(gray: 1, alpha: 0.8 * (1 - g))); ctx.setLineWidth(10 * (1 - g))
+            ctx.strokeEllipse(in: CGRect(x: c.x - 60 - 140 * g, y: c.y - 60 - 140 * g, width: 120 + 280 * g, height: 120 + 280 * g))
+        }
+    }
+    // the pointer: over to the pop-up, click, down the menu to Clawd Royale, click, and away
+    let open = royaleClicks.open, pick = royaleClicks.pick
+    let from = CGPoint(x: 1560, y: 300), atButton = CGPoint(x: universePopup.midX + 40, y: universePopup.midY - 6)
+    let target = universeItem(royaleChoice, picked: 0), atItem = CGPoint(x: target.midX + 20, y: target.midY - 6)
+    let away = CGPoint(x: atItem.x + 260, y: atItem.y - 120)
+    var tip = from
+    if l < open { let f = easeOut((l - 0.2) / 0.7); tip = CGPoint(x: lerp(from.x, atButton.x, f), y: lerp(from.y, atButton.y, f)) }
+    else if l < pick { let f = easeOut((l - open - 0.12) / 0.5); tip = CGPoint(x: lerp(atButton.x, atItem.x, f), y: lerp(atButton.y, atItem.y, f)) }
+    else { let f = easeOut((l - pick - 0.3) / 0.8); tip = CGPoint(x: lerp(atItem.x, away.x, f), y: lerp(atItem.y, away.y, f)) }
+    let menuOpen = l > open + 0.06 && l < pick + 0.04
+    let hover = universeChoices.indices.first { universeItem($0, picked: 0).contains(CGPoint(x: tip.x, y: tip.y - 4)) }
+    settingsMock(ctx, picked: l > pick ? royaleChoice : 0, menuOpen: menuOpen, hover: hover,
+                 pressed: (l > open && l < open + 0.08) || (l > pick && l < pick + 0.06))
+    pointer(ctx, at: tip)
+    caption("Settings → Universe → Clawd Royale", ctx, local: l, start: 0.25, y: 950, size: 56)
+    caption("The screen saver joins in too.", ctx, local: l, start: pick + 0.35, y: 885, size: 40, color: yellow, weight: .bold)
+}
+
+let royaleShots: [Shot] = [
+    Shot(name: "meanwhile", start: 0, end: 3.0, into: .cut) { ctx, local, t in
+        ctx.setFillColor(CGColor(gray: 0, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
+        let line = "MEANWHILE, IN EVERY UNIVERSE AT ONCE…"
+        let n = Int(clamp((local - 0.3) / 1.6) * Double(line.count))
+        let a = 1 - clamp((local - 2.6) / 0.35)
+        if n > 0 { captionBox(String(line.prefix(n)), ctx, center: CGPoint(x: Double(W) / 2, y: Double(H) / 2), size: 54, alpha: a) }
+    },
+    // The three menu bar emblems collide: KRA-KOOM!, and CLAWD ROYALE stamps in.
+    Shot(name: "collide", start: 3.0, end: 6.5, into: .cut) { ctx, local, t in royaleCollide(ctx, local: local, t: t) },
+    // The Mos Easy Cantina: Darth Vapor duels Batclawd, Han Yolo and the Jester shoot it out, Spider-Clawd swings over.
+    Shot(name: "crossover", start: 6.5, end: 11.0, into: .marvel(ComicTrip(kind: .burst, sound: .thwip))) { ctx, local, t in
+        let (han, jester) = versus(.hero(SWHero.han), 34, .villain(DCVillain.joker), 104)
+        let (bat, vapor) = versus(.hero(DCHero.batman), 196, .villain(SWVillain.vader), 253)
+        let swing = webSwing(local, start: 0.9)
+        royaleScene(ctx, .cantina, t: t, fights: [(han, jester), (bat, vapor)], also: swing.map { [$0.actor] } ?? [])
+        if let s = swing {                                          // his web line, from the raised hand up out of the frame
+            let web = PixelCanvas(fxW, fxH), hand = s.actor.fighter.point(41, 22)
+            web.glowLine(hand.x, hand.y, s.anchor.x, s.anchor.y, core: C(0xF4F4F8, 0.9), glow: C(0xFFFFFF, 0), coreR: 0.35, glowR: 0.4)
+            blit(web, ctx)
+        }
+        caption("Nobody asked who'd win. We're answering anyway.", ctx, local: local, start: 1.0, y: 900, size: 58)
+    },
+    // A new place, Clawdvengers Tower: the same crew, and Thanoz drops in on Spider-Clawd.
+    Shot(name: "hopMarvel", start: 11.0, end: 13.5, into: .marvel(ComicTrip(kind: .speedLines))) { ctx, local, t in
+        let land = clamp((local - 0.4) / 0.5), since = local - 0.9
+        if since > 0 && since < 0.3 { let sh = (0.3 - since) * 40; ctx.translateBy(x: sin(t * 90) * sh, y: cos(t * 80) * sh) }   // the landing
+        let (han, jester) = versus(.hero(SWHero.han), 26, .villain(DCVillain.joker), 92)
+        let (bat, vapor) = versus(.hero(DCHero.batman), 150, .villain(SWVillain.vader), 207)
+        var (spidey, thanoz) = versus(.hero(MarvelHero.spiderMan), 246, .villain(MarvelVillain.thanos), 304)
+        thanoz.lift = 150 * (1 - easeIn(land))
+        if land < 1 { spidey.role = .none; thanoz.role = .none }
+        royaleScene(ctx, .avengersTower, t: t, fights: land < 1 ? [(han, jester), (bat, vapor)] : [(han, jester), (bat, vapor), (spidey, thanoz)],
+                    also: land < 1 ? [spidey, thanoz] : [])
+    },
+    // And Gothamburg, by the Night Beacon: new match-ups, Batclawd on Thanoz, Spider-Clawd on Darth Vapor.
+    Shot(name: "hopDC", start: 13.5, end: 16.0,
+         into: .dc(DCComicTrip(kind: .batSignal, caption: "MEANWHILE, IN \(Location.gotham.name.uppercased())…"))) { ctx, local, t in
+        let (han, jester) = versus(.hero(SWHero.han), 26, .villain(DCVillain.joker), 92)
+        let (bat, thanoz) = versus(.hero(DCHero.batman), 150, .villain(MarvelVillain.thanos), 212)
+        let (spidey, vapor) = versus(.hero(MarvelHero.spiderMan), 246, .villain(SWVillain.vader), 302)
+        royaleScene(ctx, .gotham, t: t, fights: [(han, jester), (bat, thanoz), (spidey, vapor)])
+    },
+    Shot(name: "settings", start: 16.0, end: 20.0) { ctx, local, t in royaleSettings(ctx, local: local, t: t) },
+    // The end card: the icon's three panels, the crew lined up, the emblems and CLAWD ROYALE.
+    Shot(name: "endcard", start: 20.0, end: 24.5) { ctx, local, t in
+        coverPanels(ctx, t: t, fighters: false, dim: 0.45)
+        let crew: [(Cast, FightRole, AI)] = [(.hero(SWHero.han), .cheer, .desktop), (.hero(MarvelHero.spiderMan), .cheer, .qwen),
+                                             (.hero(DCHero.batman), .duel, .claude), (.villain(SWVillain.vader), .duel, .codex),
+                                             (.villain(MarvelVillain.thanos), .cheer, .copilot), (.villain(DCVillain.joker), .cheer, .gemini)]
+        var placed: [Actor] = []
+        for (i, (who, role, ai)) in crew.enumerated() {
+            var a = Actor(cast: who, x: [28.0, 84, 140, 197, 252, 300][i], facing: i < 3 ? 1 : -1, role: role, ai: ai)
+            a.lift = 8
+            a.alpha = clamp((local - 0.15 - Double(i) * 0.05) / 0.2)
+            draw(a, ctx, t: t + Double(i) * 0.3)
+            placed.append(a)
+        }
+        if local > 0.5 { drawFX([(placed[2], placed[3])], ctx, t: t) }
+        for (i, u) in Universe.allCases.enumerated() {
+            let f = backOut((local - 0.25 - Double(i) * 0.08) / 0.35)
+            if f > 0 { emblem(u, ctx, center: CGPoint(x: 760 + Double(i) * 200, y: 990), px: 4 * f) }
+        }
+        if local > 0.35 { royaleTitle(ctx, center: CGPoint(x: Double(W) / 2, y: 750), scale: backOut((local - 0.35) / 0.4) * 0.72) }
+        caption("New in Clawd Clash", ctx, local: local, start: 0.6, y: 500, size: 56)
+        let ff = easeOut((local - 0.9) / 0.3)
+        if ff > 0, let icon = appIcon {
+            let line = attributed("Free for macOS · github.com/rodclemen/clawd-clash", size: 44, weight: .bold, alpha: ff)
+            let x = (Double(W) - 160 - line.size().width) / 2                 // the icon and the line, centred together
+            ctx.setFillColor(CGColor(red: 0.04, green: 0.05, blue: 0.09, alpha: 0.8 * ff)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: 170))
+            ctx.saveGState(); ctx.setAlpha(CGFloat(ff)); ctx.interpolationQuality = .high
+            ctx.draw(icon, in: CGRect(x: x, y: 20, width: 130, height: 130))
+            ctx.restoreGState()
+            line.draw(at: NSPoint(x: x + 160, y: 60))
+        }
+    },
+]
+
+let royaleOverlays: [Overlay] = [
+    Overlay(start: 11.0, end: 16.0) { ctx, l in
+        badge("CLAWD ROYALE · EVERY 10 MIN", ctx, alpha: clamp(l / 0.3))
+        caption("A new place every ten minutes…", ctx, local: l, start: 0.2, y: 905, size: 54)
+        caption("…from any universe.", ctx, local: l, start: 2.5, y: 840, size: 44, color: yellow, weight: .bold)
+    },
+]
+
+let royaleBeats: [(key: Double, beat: Beat)] = [
+    (1.8, ("MEANWHILE...", "Black screen. A yellow comic caption types itself out over a building drum roll.", "“MEANWHILE, IN EVERY UNIVERSE AT ONCE…”", "typewriter keys, a snare roll")),
+    (4.9, ("THE COLLISION", "Halftone blue. The three menu bar emblems (Vader's helmet, the round shield, the C-shield) fly in from three sides and slam together: KRA-KOOM!, a white flash, a yellow and red burst; they bounce out to a row and CLAWD ROYALE stamps in.", "KRA-KOOM!  ·  CLAWD ROYALE  ·  “ALL THREE UNIVERSES. ONE SCENE.”", "whooshes, the big hit, a fanfare")),
+    (8.4, ("THE CROSSOVER", "A FWIP! web burst into the Mos Easy Cantina: Darth Vapor duels Batclawd, Han Yolo and the Jester shoot it out, Spider-Clawd swings over everyone on his web. Each has its name on its label.", "“Nobody asked who'd win. We're answering anyway.”", "the groove kicks in, sabers, blasters, web thwips")),
+    (11.9, ("A NEW PLACE", "Speed lines into Clawdvengers Tower: the same crew, and Thanoz drops in on Spider-Clawd.", "CLAWD ROYALE · EVERY 10 MIN  ·  “A new place every ten minutes…”", "a whoosh, a thud, the gauntlet's crackle")),
+    (15.1, ("FROM ANY UNIVERSE", "The Night Beacon transition into Gothamburg: new match-ups, Batclawd against Thanoz, Spider-Clawd against Darth Vapor.", "“…from any universe.”", "the clunk and the boom of the beacon")),
+    (17.6, ("SETTINGS", "Over the desktop, the Settings window: the pointer opens the Universe pop-up (Star Clawds · Marvelous Clawds · Detective Clawds · Clawd Royale · Random) and picks Clawd Royale; the Star Clawds crew below pops into everyone's.", "“Settings → Universe → Clawd Royale”  ·  “The screen saver joins in too.”", "clicks, pops")),
+    (23.0, ("END CARD", "The icon's three panels, dimmed: the mixed crew lines up, Batclawd duelling Darth Vapor, the three emblems pop in and CLAWD ROYALE lands.", "CLAWD ROYALE  ·  “New in Clawd Clash”  ·  “Free for macOS · github.com/rodclemen/clawd-clash”", "the closing chord")),
+]
+
+/// The Clawd Royale teaser's score and effects.
+func royaleSound(_ m: Mix) {
+    // the caption types itself out over a snare roll that builds to the slam
+    let mw = start("meanwhile"), cl = start("collide"), slam = cl + royaleSlam
+    for i in 0..<38 { m.type(mw + 0.3 + Double(i) / 38 * 1.6 + noise(i) * 0.02, vol: 0.16 + noise(i + 50) * 0.08) }
+    m.tone(mw + 0.2, 3.4, midi(33), wave: .sine, vol: 0.05, attack: 1.0, release: 0.4)
+    var r = mw + 0.5
+    while r < slam - 0.03 {
+        let f = (r - mw) / (slam - mw)
+        m.snare(r, vol: 0.015 + 0.1 * f * f)
+        r += f > 0.75 ? 1.0 / 24 : 1.0 / 14
+    }
+    // the emblems fly in, slam (a big hit), and the title stamps down to a fanfare
+    for k in 0..<3 { m.whoosh(cl + 0.35 + Double(k) * 0.04, 0.6, vol: 0.12) }
+    m.boom(slam, vol: 0.65); m.noise(slam, 1.8, vol: 0.14, cutoff: 0.9, decay: 0.55, highpass: true, seed: 3)
+    m.snare(slam, vol: 0.2); m.kick(slam, vol: 0.4)
+    for n in [48, 55, 60, 64, 67] { m.tone(slam, 1.4, midi(n), wave: .saw, vol: 0.05, release: 0.6, decay: 0.8) }
+    let stamp = cl + royaleStamp
+    m.clunk(stamp, vol: 0.3); m.boom(stamp, vol: 0.3)
+    for (s, d, n) in [(0.0, 0.22, 67), (0.25, 0.22, 72), (0.5, 0.5, 76), (1.05, 0.22, 74), (1.3, 0.22, 76), (1.55, 0.9, 79)] as [(Double, Double, Int)] {
+        m.tone(stamp + s, d, midi(n + 12), wave: .square(0.5), vol: 0.07, release: 0.08, vibrato: 0.006)
+        m.tone(stamp + s, d, midi(n), wave: .saw, vol: 0.045, release: 0.08)
+    }
+    // the groove, from the web burst to the end card
+    groove(m, from: start("crossover") - 0.5, to: start("endcard"), fadeIn: 1.0)
+    // the fights: the saber duel and the shoot-out run through all three places, Spider-Clawd's web lines, Thanoz' gauntlet
+    let cr = start("crossover"), hm = start("hopMarvel"), hd = start("hopDC"), se = start("settings")
+    m.hum(cr, hd - cr, vol: 0.022)
+    for t in clashTimes(cr, hd) { m.clash(t, vol: 0.1) }
+    for t in shotTimes(cr, se, offset: 0) { m.pew(t, vol: 0.07) }
+    for t in shotTimes(cr, se, offset: blasterPeriod / 2) { m.pew(t, vol: 0.05) }
+    for k in 0..<3 { m.thwip(cr + 0.9 + Double(k) * swingArc, vol: 0.12) }
+    m.boom(hm + 0.9, vol: 0.3)
+    m.crackle(hm + 0.9, se - hm - 0.9, vol: 0.035)
+    for t in shotTimes(hd, se, offset: 0) { m.thwip(t, vol: 0.06); m.clash(t + boltArrival * blasterPeriod, vol: 0.06) }
+    // Settings: the pop-up's clicks, and a pop as each of the new crew lands
+    m.click(se + royaleClicks.open, vol: 0.16); m.click(se + royaleClicks.pick, vol: 0.16)
+    m.hum(se, royaleClicks.pick, vol: 0.015)
+    for k in 0..<4 { m.pop(se + royaleClicks.pick + 0.1 + Double(k) * 0.07, step: k) }
+    for s in shots { transitionSound(m, s) }
+    // the end card: the closing chord
+    let ec = start("endcard")
+    for (s, d, chord, lead) in [(0.0, 0.7, [53, 57, 60, 65], 81), (0.7, 0.7, [55, 59, 62, 67], 83), (1.4, 2.8, [57, 61, 64, 69], 85)] {
+        for n in chord { m.tone(ec + s, d, midi(n), wave: .saw, vol: 0.045, attack: 0.02, release: d > 1 ? 1.6 : 0.1) }
+        m.tone(ec + s, d, midi(lead), wave: .square(0.5), vol: 0.06, release: d > 1 ? 1.6 : 0.1, vibrato: 0.006)
+        m.tone(ec + s, d, midi(chord[0] - 24), wave: .sine, vol: 0.2, release: d > 1 ? 1.6 : 0.1)
+    }
+    m.boom(ec + 0.35, vol: 0.45)
+    m.noise(ec + 1.4, 2.5, vol: 0.08, cutoff: 0.9, decay: 0.8, highpass: true, seed: 8)
+    for t in clashTimes(ec + 0.5, duration) { m.clash(t, vol: 0.08) }
+}
+
 // MARK: Which video
 
 /// promo, bloopers, or full (the promo, then the bloopers, as one).
@@ -2571,10 +3009,11 @@ let shots: [Shot] = {
     case "starclawds": return starClawdsShots
     case "marvelous": return marvelousShots
     case "detective": return detectiveShots
+    case "royale": return royaleShots
     default: return promoShots
     }
 }()
-let overlays: [Overlay] = reel == "promo" || reel == "full" ? promoOverlays : []
+let overlays: [Overlay] = reel == "promo" || reel == "full" ? promoOverlays : reel == "royale" ? royaleOverlays : []
 var duration: Double { shots.last!.end }
 /// The soft promo wipe's length: the single-universe trailers keep their slower one.
 var softWipe: Double { ["starclawds", "marvelous", "detective"].contains(reel) ? 2.7 : 2.0 }
@@ -2620,6 +3059,7 @@ func frame(_ t: Double) -> NSBitmapImageRep {
     if t < 0.5 / fps {                                   // the very first frame is the poster GitHub shows before play
         let poster = reel == "bloopers" ? (shots[0], 2.0)
             : ["starclawds", "marvelous", "detective"].contains(reel) ? (shots.first { $0.name == "endcard" }!, 2.5)
+            : reel == "royale" ? (shots.first { $0.name == "collide" }!, 2.2)
             : (shots.first { $0.name == "worlds" }!, 4.0)
         renderShot(poster.0, at: poster.0.start + poster.1, into: ctx)
         NSGraphicsContext.current = nil
@@ -3215,6 +3655,7 @@ func soundtrack() -> [Float] {
     case "starclawds": starClawdsSound(m)
     case "marvelous": marvelousSound(m)
     case "detective": detectiveSound(m)
+    case "royale": royaleSound(m)
     default:
         if reel != "bloopers" { promoSound(m) }
         if reel != "promo" { bloopersSound(m) }
@@ -3341,7 +3782,7 @@ let args = CommandLine.arguments
 let cmd = args.count > 1 ? args[1] : "storyboard"
 let out = args.count > 2 ? args[2] : "promo"
 try? FileManager.default.createDirectory(atPath: out, withIntermediateDirectories: true)
-let base = ["promo": "clawd-clash-promo", "bloopers": "clawd-clash-bloopers", "full": "clawd-clash-full", "starclawds": "star-clawds-promo", "marvelous": "marvelous-clawds-promo", "detective": "detective-clawds-promo"][reel] ?? "clawd-clash-promo"
+let base = ["promo": "clawd-clash-promo", "bloopers": "clawd-clash-bloopers", "full": "clawd-clash-full", "starclawds": "star-clawds-promo", "marvelous": "marvelous-clawds-promo", "detective": "detective-clawds-promo", "royale": "clawd-royale-promo"][reel] ?? "clawd-clash-promo"
 
 switch cmd {
 case "video":
@@ -3358,7 +3799,7 @@ case "check":                                                   // render every 
     print("all \(Int(duration * fps)) frames render")
 case "720p":                                                    // the GitHub-sized copy of a reel already rendered
     let small = ["promo": "Trailer", "bloopers": "Bloopers", "full": "Clawd-Clash", "starclawds": "Star-Clawds",
-                 "marvelous": "Marvelous-Clawds", "detective": "Detective-Clawds"][reel] ?? "Trailer"
+                 "marvelous": "Marvelous-Clawds", "detective": "Detective-Clawds", "royale": "Clawd-Royale"][reel] ?? "Trailer"
     write720p(from: "\(out)/\(base).mp4", to: "\(out)/720p/\(small).mp4")
 case "audio":
     writeWAV(soundtrack(), to: "\(out)/\(base).wav"); print("wrote \(out)/\(base).wav")
@@ -3370,6 +3811,7 @@ default:
     else if reel == "starclawds" { save(storyboard("STAR CLAWDS", starClawdsBeats), "\(out)/storyboard-star-clawds.png") }
     else if reel == "marvelous" { save(storyboard("MARVELOUS CLAWDS", marvelousBeats), "\(out)/storyboard-marvelous-clawds.png") }
     else if reel == "detective" { save(storyboard("DETECTIVE CLAWDS", detectiveBeats), "\(out)/storyboard-detective-clawds.png") }
+    else if reel == "royale" { save(storyboard("CLAWD ROYALE", royaleBeats), "\(out)/storyboard-clawd-royale.png") }
     else { save(storyboard("CLAWD CLASH", promoBeats), "\(out)/storyboard-promo.png") }
     print("wrote the \(reel) storyboard to \(out)")
 }
