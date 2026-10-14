@@ -30,14 +30,6 @@ private func standIn(_ body: UInt32, _ trim: UInt32) -> (PixelCanvas, Pose) -> V
     { c, p in drawStandIn(c, p, body: C(body), trim: C(trim)) }
 }
 
-let ringsHeroes1: [LOTRHero: Persona] = [
-    .frodo: Persona(name: "Frodough Bagclawds", weapon: .saber, headTop: 22, signature: 3.0, callout: "I will take the Ring!",
-                    draw: standIn(0x4A6A3A, 0x2E4424)),
-    .sam: Persona(name: "Samwise Gamjee", weapon: .saber, headTop: 22, signature: 3.2, callout: "Po-tay-toes!",
-                  draw: standIn(0x7A5A34, 0x4E3A20)),
-    .pippin: Persona(name: "Pippin Tookmuch", weapon: .saber, headTop: 22, signature: 3.0, callout: "Second breakfast?",
-                     draw: standIn(0x5A6E8A, 0x3A4A5E)),
-]
 let ringsHeroes2: [LOTRHero: Persona] = [
     .gandalf: Persona(name: "Gandclawd the Grey", weapon: .lightning, magic: Magic(core: C(0xFFFFFF), glow: C(0xBFD8FF), jagged: false),
                       headTop: 12, signature: 3.0, callout: "A wizard is never late.", draw: standIn(0x8A8C92, 0x5E6066)),
