@@ -2,6 +2,11 @@
 
 Clawd Clash brings three apps together as its three universes: Clawd Wars became Star Clawds, Avengers: Clawd Wars became Marvelous Clawds and Justice League: Clawd Wars became Detective Clawds. Their history before that is in [history/star-clawds.md](history/star-clawds.md) (up to 2.28.3), [history/marvelous-clawds.md](history/marvelous-clawds.md) (0.1.0) and [history/detective-clawds.md](history/detective-clawds.md) (0.1.0).
 
+## Unreleased
+
+### Changed
+- **The README goes by the universes' names throughout**, its pictures included (`docs/roster-star-clawds.png` and so on, as `Tools/RenderDocs` now names them).
+
 ## 3.0.0 (2026-10-14)
 
 ### Added

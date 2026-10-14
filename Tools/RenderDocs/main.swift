@@ -42,6 +42,11 @@ func put(_ c: PixelCanvas, in ctx: CGContext, cellX: CGFloat, cellW: CGFloat, gr
                              width: b.width * scale, height: b.height * scale))
 }
 
+extension Universe {
+    /// File names go by the universe's name: "star-clawds".
+    var slug: String { title.lowercased().replacingOccurrences(of: " ", with: "-") }
+}
+
 // MARK: Roster (one sheet per universe)
 
 let scale: CGFloat = 3, cellW: CGFloat = 190, rowH: CGFloat = 190, cols = 5
@@ -68,7 +73,7 @@ func roster(_ u: Universe) {
         section("THE HEROES", heroes, rows: hRows, t: 0.4)
         section("THE VILLAINS", villains, rows: vRows, t: 0.62)
     }
-    save(sheet, "roster-\(u.key.lowercased()).png")
+    save(sheet, "roster-\(u.slug).png")
 }
 for u in Universe.allCases { roster(u) }
 
@@ -165,9 +170,9 @@ let desktop = canvas(2600, 400) { ctx in
 save(desktop, file)
 print("wrote \(out)/\(file)")
 }
-desktop(starWarsLineup, file: "desktop-starwars.png")
-desktop(marvelLineup, file: "desktop-marvel.png")
-desktop(dcLineup, file: "desktop-dc.png")
+desktop(starWarsLineup, file: "desktop-star-clawds.png")
+desktop(marvelLineup, file: "desktop-marvelous-clawds.png")
+desktop(dcLineup, file: "desktop-detective-clawds.png")
 
 // MARK: Locations (one sheet per universe)
 
@@ -186,7 +191,7 @@ func locationSheet(_ u: Universe) {
             label(l.name, x, y + 4, size: 12, color: NSColor(white: 0.85, alpha: 1), width: cellLW)
         }
     }
-    save(sheet, "locations-\(u.key.lowercased()).png")
+    save(sheet, "locations-\(u.slug).png")
 }
 for u in Universe.allCases { locationSheet(u) }
 print("wrote the roster and location sheets to \(out)")
@@ -262,13 +267,13 @@ save(social, file)
 socialPreview(title: "CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Star Clawds battle on your desktop",
               groups: [[.hero(SWHero.luke), .hero(SWHero.han), .hero(SWHero.leia), .hero(SWHero.yoda),
                         .villain(SWVillain.vader), .villain(SWVillain.boba), .villain(SWVillain.kylo), .villain(SWVillain.trooper)]],
-              file: "social-preview-starwars.png")
+              file: "social-preview-star-clawds.png")
 socialPreview(title: "CLAWDVENGERS: CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Marvelous Clawds battle on your desktop",
               groups: [[.hero(MarvelHero.thor), .hero(MarvelHero.spiderMan), .hero(MarvelHero.captainAmerica), .hero(MarvelHero.ironMan),
                         .villain(MarvelVillain.thanos), .villain(MarvelVillain.loki), .villain(MarvelVillain.greenGoblin), .villain(MarvelVillain.venom)]],
-              file: "social-preview-marvel.png")
+              file: "social-preview-marvelous-clawds.png")
 socialPreview(title: "JUSTICE CLAWDS: CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Detective Clawds battle on your desktop",
               groups: [[.hero(DCHero.superman), .hero(DCHero.batman), .hero(DCHero.wonderWoman), .hero(DCHero.flash),
                         .villain(DCVillain.joker), .villain(DCVillain.lexLuthor), .villain(DCVillain.darkseid), .villain(DCVillain.harleyQuinn)]],
-              file: "social-preview-dc.png")
+              file: "social-preview-detective-clawds.png")
 print("wrote the social previews to \(out)")

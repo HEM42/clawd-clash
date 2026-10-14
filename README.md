@@ -54,9 +54,9 @@ You run Claude Code in three terminals. One is thinking, one is waiting for your
 - **Hover** any character for the details; **click** it to jump straight to that session's terminal or editor tab.
 
 <p align="center">
-  <img src="docs/desktop-starwars.png" alt="Star Clawds sessions and agents fighting along the bottom of the screen"><br>
-  <img src="docs/desktop-marvel.png" alt="Marvelous Clawds sessions and agents fighting along the bottom of the screen"><br>
-  <img src="docs/desktop-dc.png" alt="Detective Clawds sessions and agents fighting along the bottom of the screen">
+  <img src="docs/desktop-star-clawds.png" alt="Star Clawds sessions and agents fighting along the bottom of the screen"><br>
+  <img src="docs/desktop-marvelous-clawds.png" alt="Marvelous Clawds sessions and agents fighting along the bottom of the screen"><br>
+  <img src="docs/desktop-detective-clawds.png" alt="Detective Clawds sessions and agents fighting along the bottom of the screen">
 </p>
 
 ## Three universes
@@ -73,20 +73,20 @@ Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, *
 
 <details>
 <summary><b>The Star Clawds cast and places</b></summary>
-<p align="center"><img src="docs/roster-starwars.png" alt="All Star Clawds characters" width="760"></p>
-<p align="center"><img src="docs/locations-starwars.png" alt="All Star Clawds places" width="760"></p>
+<p align="center"><img src="docs/roster-star-clawds.png" alt="All Star Clawds characters" width="760"></p>
+<p align="center"><img src="docs/locations-star-clawds.png" alt="All Star Clawds places" width="760"></p>
 </details>
 
 <details>
 <summary><b>The Marvelous Clawds cast and places</b></summary>
-<p align="center"><img src="docs/roster-marvel.png" alt="All Marvelous Clawds characters" width="760"></p>
-<p align="center"><img src="docs/locations-marvel.png" alt="All Marvelous Clawds places" width="760"></p>
+<p align="center"><img src="docs/roster-marvelous-clawds.png" alt="All Marvelous Clawds characters" width="760"></p>
+<p align="center"><img src="docs/locations-marvelous-clawds.png" alt="All Marvelous Clawds places" width="760"></p>
 </details>
 
 <details>
 <summary><b>The Detective Clawds cast and places</b></summary>
-<p align="center"><img src="docs/roster-dc.png" alt="All Detective Clawds characters" width="760"></p>
-<p align="center"><img src="docs/locations-dc.png" alt="All Detective Clawds places" width="760"></p>
+<p align="center"><img src="docs/roster-detective-clawds.png" alt="All Detective Clawds characters" width="760"></p>
+<p align="center"><img src="docs/locations-detective-clawds.png" alt="All Detective Clawds places" width="760"></p>
 </details>
 
 ## Window mode and the screen saver
@@ -158,7 +158,7 @@ Clicking to jump to a session in Terminal or iTerm2 asks once for **Automation**
 
 ## Coming from Clawd Wars, Clawdvengers or Justice Clawds
 
-Clawd Clash replaces Clawd Wars, Clawdvengers: Clawd Wars and Justice Clawds: Clawd Wars. Through Homebrew, the old casks were renamed after their universes (`clawd-wars` → `star-clawds`, `clawdvengers-clawd-wars` → `marvelous-clawds`, `justice-clawds-clawd-wars` → `detective-clawds`): `brew upgrade` moves you over and installs Clawd Clash in that universe. Installed by hand, it starts in the universe of the app it finds, and when it connects an AI it swaps the old app's hook for its own, so the old app can go. Star Wars keeps Clawd Wars' characters for sessions that are already running.
+Clawd Clash replaces Clawd Wars, Clawdvengers: Clawd Wars and Justice Clawds: Clawd Wars. Through Homebrew, the old casks were renamed after their universes (`clawd-wars` → `star-clawds`, `clawdvengers-clawd-wars` → `marvelous-clawds`, `justice-clawds-clawd-wars` → `detective-clawds`): `brew upgrade` moves you over and installs Clawd Clash in that universe. Installed by hand, it starts in the universe of the app it finds, and when it connects an AI it swaps the old app's hook for its own, so the old app can go. Star Clawds keeps Clawd Wars' characters for sessions that are already running.
 
 ## How it works
 
