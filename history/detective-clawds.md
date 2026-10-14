@@ -1,6 +1,6 @@
-# Changelog
+# Detective Clawds history: Justice League: Clawd Wars 0.1.0
 
-Every change to Justice League: Clawd Wars, and why.
+Every change to Justice League: Clawd Wars, and why. It became the Detective Clawds universe of Clawd Clash in 3.0.0; what came after is in [CHANGELOG.md](../CHANGELOG.md).
 
 ## 0.1.0 (unreleased)
 

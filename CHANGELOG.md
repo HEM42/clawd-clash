@@ -1,6 +1,6 @@
 # Changelog
 
-Clawd Clash brings Clawd Wars (Star Wars), Avengers: Clawd Wars (Marvel) and Justice League: Clawd Wars (DC) together in one app. Their history before that is in [CHANGELOG-clawd-wars.md](CHANGELOG-clawd-wars.md) (up to 2.28.3), [CHANGELOG-avengers-clawd-wars.md](CHANGELOG-avengers-clawd-wars.md) (0.1.0) and [CHANGELOG-justice-league-clawd-wars.md](CHANGELOG-justice-league-clawd-wars.md) (0.1.0).
+Clawd Clash brings three apps together as its three universes: Clawd Wars became Star Clawds, Avengers: Clawd Wars became Marvelous Clawds and Justice League: Clawd Wars became Detective Clawds. Their history before that is in [history/star-clawds.md](history/star-clawds.md) (up to 2.28.3), [history/marvelous-clawds.md](history/marvelous-clawds.md) (0.1.0) and [history/detective-clawds.md](history/detective-clawds.md) (0.1.0).
 
 ## 3.0.0 (2026-10-14)
 

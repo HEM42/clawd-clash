@@ -1,4 +1,6 @@
-# Changelog
+# Star Clawds history: Clawd Wars 1.0.0 to 2.28.3
+
+Every change to Clawd Wars, the app that became the Star Clawds universe of Clawd Clash in 3.0.0. Most of Clawd Clash (the hooks, the window, the screen saver, Homebrew) started here. What came after is in [CHANGELOG.md](../CHANGELOG.md).
 
 ## 2.28.3 (2026-10-12)
 

@@ -1,6 +1,6 @@
-# Changelog
+# Marvelous Clawds history: Avengers: Clawd Wars 0.1.0
 
-Avengers: Clawd Wars is the sister app of [Clawd Wars](https://github.com/rodclemen/clawd-wars), and grew out of Clawd Wars 2.28.1. Their shared history up to then is in [CHANGELOG-clawd-wars.md](CHANGELOG-clawd-wars.md).
+Avengers: Clawd Wars is the sister app of Clawd Wars, and grew out of Clawd Wars 2.28.1. It became the Marvelous Clawds universe of Clawd Clash in 3.0.0 (see [CHANGELOG.md](../CHANGELOG.md)). Their shared history up to then is in [star-clawds.md](star-clawds.md).
 
 ## 0.1.0 (unreleased)
 
