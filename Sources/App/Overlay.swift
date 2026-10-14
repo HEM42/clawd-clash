@@ -1948,7 +1948,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// so it doesn't change every few minutes; it changes again when a single universe is picked.
     private func statusIcon(mono: Bool) -> NSImage? {
         let u: Universe
-        if Self.universeEvery != nil, let kept = UserDefaults.standard.string(forKey: "menuIconUniverse").flatMap(Universe.init(key:)) {
+        if Self.universeEvery != nil, let kept = UserDefaults.standard.string(forKey: "menuIconUniverse").flatMap(Universe.offered(key:)) {
             u = kept
         } else {
             u = .shown
@@ -2416,7 +2416,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// Everything the Settings window shows, read afresh each time it's built.
     private func settingsSections() -> [SettingsSection] {
         let d = UserDefaults.standard
-        let universes = Universe.allCases
+        let universes = Universe.offered
         let clawdRoyaleRow = universes.count, randomRow = universes.count + 1
         var general: [SettingsRow] = [
             .choice("Universe", options: universes.map(\.title) + ["Clawd Royale", "Random"],
@@ -2626,7 +2626,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     static var universe: Universe {
         get {
             let d = UserDefaults.standard
-            if let key = d.string(forKey: "universe"), let u = Universe(key: key) { return u }
+            if let key = d.string(forKey: "universe"), let u = Universe.offered(key: key) { return u }
             let used = { (id: String) in UserDefaults(suiteName: id)?.object(forKey: "windowMode") != nil }
             if !used("com.rodclemen.vaderclaude") {
                 if used("com.rodclemen.justiceleagueclawdwars") { return .dc }
@@ -2670,7 +2670,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private func randomUniverseTick(_ now: Double) {
         guard let every = Self.universeEvery, now - universeSince >= Double(every * 60),
               playground == nil, !demo, chaosSeconds == nil, shotPath == nil,
-              let next = Universe.allCases.filter({ $0 != Universe.shown }).randomElement() else { return }
+              let next = Universe.offered.filter({ $0 != Universe.shown }).randomElement() else { return }
         switchScene(to: next, mixed: false)
     }
 

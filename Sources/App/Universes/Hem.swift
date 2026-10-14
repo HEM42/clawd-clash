@@ -26,6 +26,8 @@ func hemPersona(_ u: Universe) -> Persona {
                        pivot: hemSonicTip, headTop: 21, signature: 2.6, draw: { drawHem($0, $1, .clawdFiles) })
     case .clawdberg:
         return Persona(name: "HEM", weapon: .saber, headTop: 20, signature: 2.6, draw: { drawHem($0, $1, .clawdberg) })
+    case .middleEarth:
+        return Persona(name: "HEM", weapon: .saber, headTop: 21, signature: 2.6, draw: { drawHem($0, $1, .middleEarth) })
     }
 }
 
@@ -60,7 +62,7 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
         }
         let lifted = p.step >= 0 ? (p.step == 0 ? 0 : 1) : -1
         c.rect(19, lifted == 0 ? 43 : 44, 4, 1, ink); c.rect(33, lifted == 1 ? 43 : 44, 4, 1, ink)
-    case .marvel:
+    case .marvel, .middleEarth:
         drawLegs(c, Look(leg: capPurple), step: p.step)
         if !seatedPose {
             for (i, lx) in [19, 23, 31, 35].enumerated() { c.rect(lx, p.step >= 0 && i % 2 == p.step ? 41 : 42, 2, 2, capGold) }
@@ -94,7 +96,7 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
     let top: Px, topShade: Px, arm: Px, armRight: Px
     switch u {
     case .starWars: top = robe; topShade = robeShade; arm = robe; armRight = robe
-    case .marvel: top = capPurple; topShade = capPurpleDark; arm = capPurple; armRight = capPurple
+    case .marvel, .middleEarth: top = capPurple; topShade = capPurpleDark; arm = capPurple; armRight = capPurple
     case .dc: top = white; topShade = C(0xD8D8DC); arm = harleeRed; armRight = harleeBlue
     case .doctor: top = tweed; topShade = tweedDark; arm = tweed; armRight = tweed
     case .clawdFiles: top = trench; topShade = trenchDark; arm = trench; armRight = trench
@@ -106,7 +108,7 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
     case .starWars:
         c.rect(17, 37, 22, 1, C(0xB8BEC9)); for x in [20, 23, 32, 35] { c.px(x, 37, C(0xEEF0F4)) }
         c.rect(27, 36, 2, 2, C(0xEEF0F4))
-    case .marvel:
+    case .marvel, .middleEarth:
         for x in 17...38 { c.px(x, 37, x % 2 == 0 ? capGold : white) }
         c.pattern(18, 34, ["H.H", "HHH", "H.H"], ["H": capGold])
     case .dc:
@@ -160,7 +162,7 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
     switch u {
     case .starWars:   // a little blaster, kicking with each shot
         c.pattern(41, 31 + p.gunY, ["KKKKKK", "KKTKK.", "KK...."], ["K": C(0x2A2A30), "T": C(0x8A8F9C)])
-    case .marvel:
+    case .marvel, .middleEarth:
         if let a = p.melee {
             for (i, ta) in p.trail.enumerated() {
                 let (x, y) = hemShieldAt(ta)

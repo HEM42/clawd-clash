@@ -215,7 +215,7 @@ final class ClawdClashSaverView: ScreenSaverView {
                 case "clawdRoyale": tripMixed = true
                 case "random":
                     tripMixed = false
-                    if tripUniverse == nil { tripUniverse = Universe.allCases.randomElement() }
+                    if tripUniverse == nil { tripUniverse = Universe.offered.randomElement() }
                 default: tripUniverse = appUniverse; tripMixed = feed?.mixed == true
                 }
                 if tripUniverse == nil { tripUniverse = appUniverse }
@@ -241,7 +241,7 @@ final class ClawdClashSaverView: ScreenSaverView {
         lastTrip = now
         let onStage = (crewed(now) ? feed?.sessions ?? [] : demo).flatMap { [$0.cast] + $0.agents.map(\.cast) }.map { Cast(id: $0) }
         if feedSource == nil, Self.choice == "random" {
-            tripUniverse = Universe.allCases.randomElement()
+            tripUniverse = Universe.offered.randomElement()
             Universe.shown = tripUniverse ?? .starWars
         }
         let here = visit ?? lastLocation

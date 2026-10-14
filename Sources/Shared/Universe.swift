@@ -1,6 +1,7 @@
 import Foundation
 
 /// The universes Clawd Clash can show. One at a time, except in Clawd Royale (`Roster`), where a scene mixes all of them.
+/// Some are not released yet (`isReleased`): only the tools see those.
 ///
 /// Cast ids are stored in the status file and the screen-saver feed: `universe.base + local`, where local ids are
 /// villains `0..<100` and heroes `100…`. Star Wars keeps Clawd Wars' ids (base 0), so its saved state carries over.
@@ -11,26 +12,31 @@ enum Universe: Int, CaseIterable, Codable {
     case doctor = 3
     case clawdFiles = 4
     case clawdberg = 5
+    case middleEarth = 6
 
     var key: String {
-        switch self { case .starWars: return "starWars"; case .marvel: return "marvel"; case .dc: return "dc"; case .doctor: return "doctor"
-        case .clawdFiles: return "clawdFiles"; case .clawdberg: return "clawdberg" }
+        switch self {
+        case .starWars: return "starWars"; case .marvel: return "marvel"; case .dc: return "dc"; case .doctor: return "doctor"
+        case .clawdFiles: return "clawdFiles"; case .clawdberg: return "clawdberg"; case .middleEarth: return "middleEarth"
+        }
     }
     init?(key: String) { self.init(rawValue: Universe.allCases.first { $0.key == key }?.rawValue ?? -1) }
 
     var title: String {
-        switch self { case .starWars: return "Star Clawds"; case .marvel: return "Marvelous Clawds"; case .dc: return "Detective Clawds"; case .doctor: return "Doctor Clawd"
-        case .clawdFiles: return "The Clawd Files"; case .clawdberg: return "Stevie Clawdberg" }
+        switch self {
+        case .starWars: return "Star Clawds"; case .marvel: return "Marvelous Clawds"; case .dc: return "Detective Clawds"; case .doctor: return "Doctor Clawd"
+        case .clawdFiles: return "The Clawd Files"; case .clawdberg: return "Stevie Clawdberg"; case .middleEarth: return "Clawd of the Rings"
+        }
     }
     var base: Int { rawValue * 1000 }
 
     var villainCount: Int {
         switch self { case .starWars: return 46; case .marvel: return 88; case .dc: return 97; case .doctor: return 42; case .clawdFiles: return 46
-        case .clawdberg: return 54 }
+        case .clawdberg: return 54; case .middleEarth: return 9 }
     }
     var heroCount: Int {
         switch self { case .starWars: return 36; case .marvel: return 106; case .dc: return 111; case .doctor: return 56; case .clawdFiles: return 36
-        case .clawdberg: return 64 }
+        case .clawdberg: return 64; case .middleEarth: return 10 }
     }
 
     /// HEM: the same rare face in every universe, last of the heroes. He's never in the regular pools (`lightCast`);
@@ -50,6 +56,7 @@ enum Universe: Int, CaseIterable, Codable {
         case .doctor: return Set([39, 40, 41].map { base + $0 })                // Adipoze, Cybermite, Toclafayne
         case .clawdFiles: return Set([43, 44, 45].map { base + $0 })            // killer bee, robo-roach, flukeworm
         case .clawdberg: return Set((49...53).map { base + $0 })                // Compy, mogwai pup, snake, frog, Croc Clock
+        case .middleEarth: return []
         }
     }
 
@@ -79,6 +86,14 @@ enum Universe: Int, CaseIterable, Codable {
         self == .doctor ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14].map { base + StatusStore.heroBase + $0 } : []
     }
 
+    /// Whether people can pick it: Settings, Random, Clawd Royale and the screen saver only offer released universes.
+    /// An unreleased one exists for the tools (the workbench, the docs and promo renderers) until it's ready.
+    var isReleased: Bool { self != .middleEarth }
+    /// The universes people can pick, in menu order.
+    static var offered: [Universe] { allCases.filter(\.isReleased) }
+    /// A stored key, but only for a universe people can pick: an unreleased one reads as unset.
+    static func offered(key: String) -> Universe? { Universe(key: key).flatMap { $0.isReleased ? $0 : nil } }
+
     var darkCast: [Int] { (0..<villainCount).map { base + $0 } }
     var lightCast: [Int] { (0..<heroCount - 1).map { base + StatusStore.heroBase + $0 } }   // all but HEM
 
@@ -101,7 +116,7 @@ enum Universe: Int, CaseIterable, Codable {
 struct Roster {
     let universes: [Universe]
 
-    init(_ universe: Universe, mixed: Bool) { universes = mixed ? Universe.allCases : [universe] }
+    init(_ universe: Universe, mixed: Bool) { universes = mixed ? Universe.offered : [universe] }
 
     var mixed: Bool { universes.count > 1 }
     var darkCast: [Int] { universes.flatMap(\.darkCast) }

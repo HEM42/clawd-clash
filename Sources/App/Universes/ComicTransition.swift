@@ -48,6 +48,8 @@ enum ComicTransition {
         case .doctor:
             if case .doctor(let l)? = last { return .doctor(DoctorTrip.pick(after: l.kind, cast: cast, to: place)) }
             return .doctor(DoctorTrip.pick(after: nil, cast: cast, to: place))
+        case .middleEarth:
+            return nil
         }
     }
 }

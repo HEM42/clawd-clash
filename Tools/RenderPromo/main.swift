@@ -440,6 +440,9 @@ func windowSpec(_ u: Universe, needsAt: Double = 99, at override: Location? = ni
         case .clawdberg: return (.hillValley1955, .hero(ClawdbergHero.indianaBones), .villain(ClawdbergVillain.reneBellock),
                                  .hero(ClawdbergHero.martyMcFry), .hero(ClawdbergHero.docBrawn), .villain(ClawdbergVillain.strype),
                                  "You: “get the DeLorean up to 88 mph”", "You: “put it back in the museum”")
+        case .middleEarth: return (.prancingPony, .hero(LOTRHero.aragorn), .villain(LOTRVillain.witchKing), .hero(LOTRHero.legolas),
+                                   .hero(LOTRHero.gimli), .villain(LOTRVillain.orc), "You: “make the sword glow when orcs are near”",
+                                   "You: “make the Eye watch every request”")
         }
     }()
     let duel = fightIsCloseQuarters(claude.weapon, other.weapon)
@@ -760,6 +763,7 @@ func brawl(_ ctx: CGContext, _ u: Universe, local: Double, t: Double, drop: Bool
         case .doctor: return (.hero(DoctorHero.doctorTen), .villain(DoctorVillain.dalick), .hero(DoctorHero.river), .villain(DoctorVillain.sontaron))
         case .clawdFiles: return (.hero(FilesHero.foxClawder), .villain(FilesVillain.smokingClawd), .hero(FilesHero.danaScrawly), .villain(FilesVillain.bountyHunter))
         case .clawdberg: return (.hero(ClawdbergHero.indianaBones), .villain(ClawdbergVillain.reneBellock), .hero(ClawdbergHero.martyMcFry), .villain(ClawdbergVillain.biffTannin))
+        case .middleEarth: return (.hero(LOTRHero.legolas), .villain(LOTRVillain.orc), .hero(LOTRHero.gimli), .villain(LOTRVillain.uruk))
         }
     }()
     let (ra, rb) = fightRoles(a.weapon, b.weapon), close = fightIsCloseQuarters(a.weapon, b.weapon)
@@ -783,6 +787,7 @@ func brawl(_ ctx: CGContext, _ u: Universe, local: Double, t: Double, drop: Bool
         case .doctor: return ("Or step into Doctor Clawd.", "Sonic screwdrivers, a blue box and a lot of shouting about extermination.")
         case .clawdFiles: return ("Or open The Clawd Files.", "Flashlights, black helicopters and a conspiracy behind every bug: 82 characters in 20 places.")
         case .clawdberg: return ("Or roll Stevie Clawdberg.", "Whips, sharks, gremlins and a DeLorean: 117 characters in 23 places.")
+        case .middleEarth: return ("Or pick Clawd of the Rings.", "Swords, staffs and one very precious ring.")
         }
     }()
     caption(line, ctx, local: local, start: drop ? 0.3 : 0.15, y: 900)
@@ -1292,6 +1297,7 @@ func pickVerse(_ u: Universe) -> (hero: Cast, villain: Cast, sound: String, pop:
     case .doctor: return (.hero(DoctorHero.doctorTen), .villain(DoctorVillain.dalick), "VWORP!", (0x7CC84A, 0xB8EC88))
     case .clawdFiles: return (.hero(FilesHero.foxClawder), .villain(FilesVillain.grey), "ZZZT!", (0xFF7A1E, 0xFFC27A))
     case .clawdberg: return (.hero(ClawdbergHero.indianaBones), .villain(ClawdbergVillain.reneBellock), "CRACK!", (0xA65AE8, 0xD2A8FF))
+    case .middleEarth: return (.hero(LOTRHero.gandalf), .villain(LOTRVillain.balrog), "KA-THOOM!", (0x1EB8A8, 0x8AE8DC))
     }
 }
 
@@ -1341,7 +1347,7 @@ func pickFill(_ ctx: CGContext, _ r: CGRect, kind: Int, pair: (UInt32, UInt32), 
 /// The page's panels: one per universe, and the centre one. The layout grows with the universes: two flank the
 /// centre panel, the rest split between a row above and a row below, the gutters leaning alternately.
 let pickLayout: (slots: [CGPath], centre: CGPath) = {
-    let n = Universe.allCases.count, edge = 26.0, gut = 18.0, lean = 27.0, w = Double(W)
+    let n = Universe.offered.count, edge = 26.0, gut = 18.0, lean = 27.0, w = Double(W)
     struct Band { let b0, b1, t0, t1: Double
         func bottom(_ x: Double) -> Double { b0 + (b1 - b0) * x / Double(W) }
         func top(_ x: Double) -> Double { t0 + (t1 - t0) * x / Double(W) } }
@@ -1374,7 +1380,7 @@ let pickLayout: (slots: [CGPath], centre: CGPath) = {
 
 func pickYourUniverse(_ ctx: CGContext, local l: Double, t: Double) {
     ctx.setFillColor(hexCG(0xFDFCF6)); ctx.fill(fullRect)
-    let all = Universe.allCases, step = min(0.45, 2.4 / Double(all.count))
+    let all = Universe.offered, step = min(0.45, 2.4 / Double(all.count))
     let lands = all.indices.map { 0.5 + Double($0) * step }
     // The centre panel first: a turning red sunburst, ONE APP. and PICK YOUR UNIVERSE.
     let cp = pickLayout.centre, cb = cp.boundingBox
@@ -3973,7 +3979,7 @@ func royaleCollide(_ ctx: CGContext, local l: Double, t: Double) {
     let from: [(x: Double, y: Double, turn: Double)] = [(-300, 470, -1.2), (960, 1450, 0.9), (2220, 470, 1.4)]
     let meet: [(x: Double, y: Double)] = [(800, 480), (960, 650), (1120, 480)]
     let rest: [(x: Double, y: Double)] = [(560, 930), (960, 975), (1360, 930)]
-    for (i, u) in Universe.allCases.enumerated() {
+    for (i, u) in Universe.offered.prefix(from.count).enumerated() {   // the page has three emblems
         if since < 0 {
             let f = easeIn((l - 0.05) / (royaleSlam - 0.05))
             emblem(u, ctx, center: CGPoint(x: lerp(from[i].x, meet[i].x, f), y: lerp(from[i].y, meet[i].y, f)), px: 11,
@@ -4047,8 +4053,8 @@ func royaleScene(_ ctx: CGContext, _ loc: Location, t: Double, fights: [(Actor, 
 }
 
 /// The Settings window's Universe choices, as the app lists them, and where Clawd Royale is among them.
-let universeChoices: [String] = Universe.allCases.map(\.title) + ["Clawd Royale", "Random"]
-let royaleChoice = Universe.allCases.count
+let universeChoices: [String] = Universe.offered.map(\.title) + ["Clawd Royale", "Random"]
+let royaleChoice = Universe.offered.count
 
 /// The Settings window as the teaser shows it (General: the Universe pop-up and two checkboxes), 2 screen pixels a
 /// point; its Universe pop-up; and item `i` of the pop-up's menu, opened as AppKit opens it, the choice over the button.
@@ -4248,7 +4254,7 @@ let royaleShots: [Shot] = [
             placed.append(a)
         }
         if local > 0.5 { drawFX([(placed[2], placed[3])], ctx, t: t) }
-        for (i, u) in Universe.allCases.enumerated() {
+        for (i, u) in Universe.offered.enumerated() {
             let f = backOut((local - 0.25 - Double(i) * 0.08) / 0.35)
             if f > 0 { emblem(u, ctx, center: CGPoint(x: 760 + Double(i) * 200, y: 990), px: 4 * f) }
         }
@@ -4468,7 +4474,7 @@ let promoBeats: [(key: Double, beat: Beat)] = [
     (2.4, ("COLD OPEN", "Black screen. A yellow comic caption types itself out.", "“MEANWHILE, IN A TERMINAL NEAR YOU...”", "typewriter keys, a bell")),
     (7.0, ("THREE WORLDS", "Hard cut to the icon's three slanted panels, each its universe's place and arch-enemies. CLAWD CLASH slams in across all three, coloured by each panel and cut by the gutters, like the icon.", "CLAWD CLASH", "three fights at once, then the big hit")),
     (11.5, ("THE HOOK", "Three busy terminals (Claude, Codex, Gemini), slow push-in.", "“Three AIs. Nine agents. One very confused human.”  →  “Sound familiar?”", "keyboard clicks")),
-    (17.0, ("PICK YOUR UNIVERSE", "The pop-art page from the social preview: a red sunburst centre panel, and round it a tilted panel per universe slamming in one after another, each a face-off with its name in a caption box and a sound word (VWOOM!, KRAKOOM!, BLAM!, VWORP!, ZZZT!, CRACK!). The layout grows with every universe.", "ONE APP.  ·  PICK YOUR UNIVERSE", "a slam per panel")),
+    (17.0, ("PICK YOUR UNIVERSE", "The pop-art page from the social preview: a red sunburst centre panel, and round it a tilted panel per universe slamming in one after another, each a face-off with its name in a caption box and a sound word (VWOOM!, KRAKOOM!, BLAM!, VWORP!, ZZZT!, CRACK!, KA-THOOM!). The layout grows with every universe.", "ONE APP.  ·  PICK YOUR UNIVERSE", "a slam per panel")),
     (24.0, ("STAR CLAWDS", "An edge wipe into space: the camera tilts down to the desert planet, a blockade runner flees under laser fire, and the giant wedge ship slides in overhead until its engines fill the top of the frame.", "STAR CLAWDS caption  ·  “Laser swords, blasters and one very, very big ship.”", "a dark pulse, turbolasers, the rumble")),
     (31.2, ("MARVELOUS CLAWDS", "A KAPOW! burst into the Battle of New York: a space whale noses out of the portal and dives at us, Iron Clawd rockets up firing repulsors.", "MARVELOUS CLAWDS caption  ·  “Shields, hammers, webs and a giant space whale.”", "the portal hum, roars, repulsors")),
     (38.2, ("DETECTIVE CLAWDS", "The Night Beacon transition into Megalopolis: a horned kaiju stomps in, roars, and Superb-Man hits it with heat vision.", "DETECTIVE CLAWDS caption  ·  “Capes, power rings and a horned kaiju to deal with.”", "stomps, two roars, heat vision")),

@@ -3,9 +3,11 @@ import Foundation
 // The ships that come to pick someone up when their agent is done (`Cast.ride`): the Millennium Falcon for Han, the
 // Quinjet for the Avengers, the Milano for the Guardians, the Javelin for the Justice League, the Batwing for the
 // Bat-family, the TARDIS for the Doctors and their companions, The Clawd Files' sedan, helicopter and saucer
-// (Universes/ClawdFiles/FilesRides.swift), and Stevie Clawdberg's DeLorean, moon bike, mothership and park jeep
-// (Universes/StevieClawdberg/ClawdbergRides.swift). Drawn nose to the right on a `Ride.width`×`Ride.height` canvas, sitting on its bottom row when landed;
-// the boarding ramp comes down to the left of centre, its foot about 14 px left of the middle.
+// (Universes/ClawdFiles/FilesRides.swift), Stevie Clawdberg's DeLorean, moon bike, mothership and park jeep
+// (Universes/StevieClawdberg/ClawdbergRides.swift), and the Great Eagle for Clawd of the Rings's heroes (`ramp` lowers a wing
+// to climb on, `engines` flaps, `gear` puts the talons down). Drawn nose to the right on a `Ride.width`×`Ride.height`
+// canvas, sitting on its bottom row when landed; the boarding ramp comes down to the left of centre, its foot about
+// 14 px left of the middle.
 
 extension Ride {
     static let width = 66, height = 29
@@ -27,6 +29,7 @@ func drawRide(_ c: PixelCanvas, _ ride: Ride, ramp: Double, engines: Bool, gear:
     case .moonBike: drawMoonBike(c, ramp: ramp, lit: engines)
     case .mothership: drawMothership(c, ramp: ramp, lit: engines)
     case .jeep: drawParkJeep(c, ramp: ramp, lit: engines)
+    case .eagle: drawEagle(c, ramp: ramp, engines: engines, gear: gear)
     }
 }
 
