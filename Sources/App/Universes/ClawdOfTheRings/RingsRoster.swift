@@ -79,23 +79,3 @@ extension Location {
 
 /// Every Clawd of the Rings place, from the Places/RingsScenes*.swift files.
 let middleEarthPlaces: [Location: Place] = ringsScenes1.merging(ringsScenes2) { a, _ in a }
-
-// Stand-in places (each Places file takes its dictionary over; delete the matching block when it does).
-let ringsScenes1: [Location: Place] = [
-    .bagEnd: Place(name: "Bag Endpoint", panel: 0x1C2A16, still: { c, g in c.rect(0, 0, c.w, g, C(0x6FA8DC)) }),
-    .prancingPony: Place(name: "The Prancing Ponytail", panel: 0x221810, still: { c, g in c.rect(0, 0, c.w, g, C(0x4A3020)) }),
-]
-let ringsScenes2: [Location: Place] = [
-    .moria: Place(name: "The Mines of Mori-ah", panel: 0x101216, still: { c, g in c.rect(0, 0, c.w, g, C(0x14161C)) }),
-    .mountDoom: Place(name: "Mount Doomscroll", panel: 0x1E0E0A, still: { c, g in c.rect(0, 0, c.w, g, C(0x3A1A12)) }),
-]
-
-// Stand-ins until Task 9.
-func drawOneRingIcon(_ c: PixelCanvas, mono: Bool = false) {
-    let gold = mono ? C(0x000000) : C(0xE8B33A)
-    for y in 0..<26 { for x in 0..<28 {
-        let dx = Double(x) - 13.5, dy = Double(y) - 12.5, r: Double = (dx * dx + dy * dy).squareRoot()
-        if r >= 8 && r <= 12 { c.px(x, y, gold) }
-    } }
-}
-func drawEagle(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) { c.rect(10, 10, 46, 12, C(0x6A4A2A)) }

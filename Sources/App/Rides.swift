@@ -370,3 +370,6 @@ extension Ride {
     /// The height of its canvas: the ships' `Ride.height`, taller for the TARDIS (which stands rather than flies).
     var canvasHeight: Int { self == .tardis ? 36 : Ride.height }
 }
+
+// The Great Eagle (a stand-in until it's drawn).
+func drawEagle(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) { c.rect(10, 10, 46, 12, C(0x6A4A2A)) }
