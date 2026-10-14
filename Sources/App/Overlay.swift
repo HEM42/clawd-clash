@@ -2471,7 +2471,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     // MARK: Universe
 
-    /// The universe on show: Star Wars, Marvel or DC. Never two in one scene. A fresh install takes after whichever
+    /// The universe picked: Star Wars, Marvel or DC (in Clawd Royale, the last one picked, for when it ends). A fresh install takes after whichever
     /// app it replaces (Clawd Wars: Star Wars; Avengers: Clawd Wars: Marvel; Justice League: Clawd Wars: DC); the
     /// Homebrew casks preset it.
     static var universe: Universe {

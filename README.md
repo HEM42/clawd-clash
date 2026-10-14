@@ -19,7 +19,7 @@
 
 https://github.com/user-attachments/assets/40f38c93-73f5-41a9-9d64-f468d5cde2d3
 
-Clawd Clash is one app with three universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars) and **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars). Pick one in Settings; a scene never mixes them. Those three pages show each universe on its own; this one is the app.
+Clawd Clash is one app with three universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars) and **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars). Pick one in Settings, or Clawd Royale for all three at once. Those three pages show each universe on its own; this one is the app.
 
 | Star Clawds | Marvelous Clawds | Detective Clawds |
 |---|---|---|
@@ -61,7 +61,7 @@ You run Claude Code in three terminals. One is thinking, one is waiting for your
 
 ## Three universes
 
-Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, **Detective Clawds** or **Random**. Switching recasts everyone on screen (each character becomes the one in the same place in the other cast, on the same side), moves the scene to one of the new universe's places, and changes the menu bar icon (Darth Vapor's helmet, Captain Americlawd's shield or Superb-Man's C-shield). In the window, the whole window changes over with the new universe's transition. **Random** switches on its own every 1, 5, 10, 15, 30 or 60 minutes.
+Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, **Detective Clawds**, **Clawd Royale** or **Random**. Switching recasts everyone on screen (each character becomes the one in the same place in the other cast, on the same side), moves the scene to one of the new universe's places, and changes the menu bar icon (Darth Vapor's helmet, Captain Americlawd's shield or Superb-Man's C-shield). In the window, the whole window changes over with the new universe's transition. **Random** switches on its own every 1, 5, 10, 15, 30 or 60 minutes. **Clawd Royale** throws all three casts into one scene, heroes against villains, each character as itself, in a random place from any universe every ten minutes (the Location menu is greyed out meanwhile); the menu bar icon is the universe of the place. The screen saver follows it with "The same as Clawd Clash", or picks it in its own Options.
 
 | | Star Clawds | Marvelous Clawds | Detective Clawds |
 |---|---|---|---|
