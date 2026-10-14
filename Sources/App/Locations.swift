@@ -24,6 +24,9 @@ struct Location: Hashable, RawRepresentable {
     /// Every place in `universe`, in order.
     static func all(in universe: Universe) -> [Location] { Theme.of(universe).places }
 
+    /// Every place in every universe, in menu order (Clawd Royale picks from all of them).
+    static let everywhere: [Location] = Universe.allCases.flatMap { all(in: $0) }
+
     var place: Place { places[self] ?? Place(name: rawValue, panel: 0x16181D, still: { _, _ in }) }
 
     var name: String { place.name }

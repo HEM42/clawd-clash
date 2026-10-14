@@ -292,10 +292,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     /// Where the window's scene is set: chosen in the Location menu, Random (somewhere new every ten minutes), or
     /// (Automatic) the home of the first-spawned Claude, Vader on the Death Star, Boba at the sarlacc pit, Jabba in
-    /// his palace…
+    /// his palace… Clawd Royale: always Random, from every universe's places (the menu's choice is kept for after).
     var location: Location {
+        if Universe.mixed { return randomPlace(from: Location.everywhere) }
         let raw = UserDefaults.standard.string(forKey: "location")
-        if raw == Self.randomLocation { return randomPlace() }
+        if raw == Self.randomLocation { return randomPlace(from: Location.all(in: .shown)) }
         if let raw, let l = Location(rawValue: raw), l.universe == .shown { return l }
         return sessions.first.map { Cast(id: $0.leader).home } ?? Location.all(in: .shown)[0]
     }
@@ -303,13 +304,22 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     static let randomLocation = "random"
     private var random: (place: Location, slot: Int)?
 
-    /// The Random location: a new place (never the one before) at each ten minutes of the clock.
-    private func randomPlace() -> Location {
+    /// The Random location: a new place from `list` (never the one before) at each ten minutes of the clock.
+    private func randomPlace(from list: [Location]) -> Location {
         let slot = Int(Date().timeIntervalSince1970 / 600)
-        if let r = random, r.slot == slot { return r.place }
-        let place = Location.all(in: .shown).filter { $0 != random?.place }.randomElement() ?? Location.all(in: .shown)[0]
+        if let r = random, r.slot == slot, list.contains(r.place) { return r.place }
+        let place = list.filter { $0 != random?.place }.randomElement() ?? list[0]
         random = (place, slot)
         return place
+    }
+
+    /// Clawd Royale: the universe on show is the place's, so the menu bar icon, Status Symbols and the hook follow it.
+    private func followPlace() {
+        guard Universe.mixed, let place = shownLocation, place.universe != Universe.shown else { return }
+        Universe.shown = place.universe
+        statusItem?.button?.image = statusIcon(mono: monoMenuBarIcon)
+        publishUniverse()
+        if debug { FileHandle.standardError.write("clawd royale: \(place.name), \(place.universe.title)\n".data(using: .utf8)!) }
     }
 
     /// Height of the cantina floor in the window's scene strip; feet stand a little way into it.
@@ -439,6 +449,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         // scene, the cards' tint, the header's name and tint must follow.
         if location != shownLocation {
             shownLocation = location
+            followPlace()
             clawdWindow?.sceneView.showFrame()
             clawdWindow?.cardsView.needsDisplay = true
             clawdWindow?.header.needsDisplay = true
@@ -2534,7 +2545,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     }
 
     private func locationMenu() -> NSMenuItem {
-        let root = NSMenuItem(title: "Location: \(location.name)", action: nil, keyEquivalent: "")
+        let root = NSMenuItem(title: Universe.mixed ? "Location: \(location.name) (Clawd Royale)" : "Location: \(location.name)",
+                              action: nil, keyEquivalent: "")
         let lm = NSMenu()
         let picked = UserDefaults.standard.string(forKey: "location")
         let auto = NSMenuItem(title: "Automatic (where the first Claude belongs)", action: #selector(setLocation(_:)), keyEquivalent: "")
@@ -2557,6 +2569,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             item.representedObject = l.rawValue
             item.state = picked == l.rawValue ? .on : .off
             lm.addItem(item)
+        }
+        if Universe.mixed {   // Clawd Royale picks the place; the choice here comes back after
+            lm.autoenablesItems = false
+            lm.items.forEach { $0.isEnabled = false }
         }
         root.submenu = lm
         return root
