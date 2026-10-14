@@ -14,12 +14,16 @@ Clawd Clash brings three apps together as its first three universes: Clawd Wars 
 - **Practice of their own**: Dalicks "Elevate!" a step off the ground, Cyberpersons march in step, the Sontaron drills, Four tosses jelly babies, Twelve plays the guitar with notes flying off it, and K-Canine plays fetch. Nobody in Doctor Clawd floats cross-legged in meditation: a sonic screwdriver isn't the Force.
 - **Doctor Clawd's sheets**: `Tools/RenderDocs` draws `roster-doctor-clawd.png`, `locations-doctor-clawd.png`, a desktop line-up and a social preview; the README shows the cast, the places and the desktop alongside the other three.
 - **A Doctor Clawd trailer**: `REEL=doctor build/renderpromo video promo` renders `promo/doctor-clawd-promo.mp4`: its own title sequence down a pixel-art time vortex with the police box tumbling past, then Dalicks raking a winter street in London until the TARDIS wheezes in and Doctor Ten's sonic sends them spinning. The score is written for it, in the manner of the old electronic theme but not its melody. It's on the README beside the other three, and the other trailers' end cards now say "One of four universes" the next time they're rendered.
+- **Clawd Royale** (Settings → Universe): all four casts in one scene, heroes against villains, each character as themselves (Darth Vapor against Batclawd, Spider-Clawd swinging past Han Yolo), in a random place from any universe every ten minutes. The Location menu is greyed out meanwhile, the menu bar icon is the universe of the place, and arch-enemies, ships (the TARDIS too) and Han's first shot still play out within their own universe; a Doctor still regenerates when their session compacts, wherever the scene is. HEM turns up at most once. The screen saver follows it with "The same as Clawd Clash", or picks Clawd Royale in its own Options.
 
 ### Changed
 - **The app icon has a Dalick in it**, from Doctor Clawd, in the middle panel under CLAWD CLASH with its gun on Batclawd, so all four universes are on the icon. `Tools/MakeIcon` now draws its cast as agents, because a session working alone does its solo practice instead of posing: without that, Darth Vapor swung a second saber and Spider-Clawd fired a web across the panel.
-- **Test runs leave the hook's universe alone.** A Playground, demo, chaos or `CLAWD_SHOT` run no longer writes its universe to the status file at launch, so taking screenshots in another universe doesn't change who the installed app casts new sessions as. The Playground's sample prompts are Doctor Clawd's own in Doctor Clawd.
+- **Test runs leave the hook's universe alone.** A Playground, demo, chaos or `CLAWD_SHOT` run (any run with a `--` option) no longer writes its universe, or Clawd Royale, to the status file, so taking screenshots in another universe doesn't change who the installed app casts new sessions as. The Playground's sample prompts are Doctor Clawd's own in Doctor Clawd.
 - **The README goes by the universes' names throughout**, its pictures included (`docs/roster-star-clawds.png` and so on, as `Tools/RenderDocs` now names them).
 - **The source folders go by the universes' names too**: `Sources/App/Universes/StarClawds`, `MarvelousClawds` and `DetectiveClawds`, with file names to match. `Tools/Preview` takes characters and places by the names shown on screen (`build/preview cast out.png "Darth Vapor"`) and universes by theirs.
+
+### Fixed
+- **One HEM only.** After switching universe with sessions open, a second HEM could turn up; now there's never more than one.
 
 ## 3.0.0 (2026-10-14)
 
