@@ -226,8 +226,8 @@ enum HookInstaller {
     static func silentFix(_ assistant: String) -> String {
         switch assistant {
         case "codex": return "type /hooks in Codex and approve Clawd Clash"
-        case "qwen": return "type /hooks in Qwen Code and make sure clawd-wars is enabled"
-        case "gemini": return "type /hooks panel in Gemini CLI and make sure clawd-wars is enabled"
+        case "qwen": return "type /hooks in Qwen Code and make sure clawd-clash is enabled"
+        case "gemini": return "type /hooks panel in Gemini CLI and make sure clawd-clash is enabled"
         case "copilot": return "check hooks aren't turned off (disableAllHooks) and restart Copilot CLI"
         default: return "type /hooks in Claude Code and check the Clawd Clash hooks are listed"
         }

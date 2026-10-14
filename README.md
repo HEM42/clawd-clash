@@ -19,7 +19,7 @@
 
 https://github.com/user-attachments/assets/40f38c93-73f5-41a9-9d64-f468d5cde2d3
 
-Clawd Clash is one app with three universes: **Star Clawds** (formerly [Clawd Wars](https://github.com/rodclemen/clawd-wars)), **Marvelous Clawds** (formerly [Clawdvengers: Clawd Wars](https://github.com/rodclemen/clawdvengers-clawd-wars)) and **Detective Clawds** (formerly [Justice Clawds: Clawd Wars](https://github.com/rodclemen/justice-clawds-clawd-wars)). Pick one in Settings; a scene never mixes them. Those three pages show each universe on its own; this one is the app.
+Clawd Clash is one app with three universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars) and **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars). Pick one in Settings; a scene never mixes them. Those three pages show each universe on its own; this one is the app.
 
 | Star Clawds | Marvelous Clawds | Detective Clawds |
 |---|---|---|
@@ -137,7 +137,7 @@ Needs macOS 13+ (Apple Silicon or Intel) and at least one of [Claude Code](https
 brew install --cask rodclemen/tap/clawd-clash
 ```
 
-`rodclemen/tap/clawd-wars`, `rodclemen/tap/clawdvengers-clawd-wars` and `rodclemen/tap/justice-clawds-clawd-wars` install the same app, starting in Star Clawds, Marvelous Clawds or Detective Clawds. Or download the zip from [Releases](https://github.com/rodclemen/clawd-clash/releases), unzip it and drag **Clawd Clash** to Applications.
+`rodclemen/tap/star-clawds`, `rodclemen/tap/marvelous-clawds` and `rodclemen/tap/detective-clawds` install the same app, starting in Star Clawds, Marvelous Clawds or Detective Clawds. Or download the zip from [Releases](https://github.com/rodclemen/clawd-clash/releases), unzip it and drag **Clawd Clash** to Applications.
 
 **From source** (no Xcode project, no packages, only Apple's free Command Line Tools):
 
@@ -156,7 +156,7 @@ Clicking to jump to a session in Terminal or iTerm2 asks once for **Automation**
 
 ## Coming from Clawd Wars, Clawdvengers or Justice Clawds
 
-Clawd Clash replaces Clawd Wars, Clawdvengers: Clawd Wars and Justice Clawds: Clawd Wars. Through Homebrew, upgrading the `clawd-wars` cask installs Clawd Clash in Star Clawds. Installed by hand, it starts in the universe of the app it finds, and when it connects an AI it swaps the old app's hook for its own, so the old app can go. Star Wars keeps Clawd Wars' characters for sessions that are already running.
+Clawd Clash replaces Clawd Wars, Clawdvengers: Clawd Wars and Justice Clawds: Clawd Wars. Through Homebrew, the old casks were renamed after their universes (`clawd-wars` → `star-clawds`, `clawdvengers-clawd-wars` → `marvelous-clawds`, `justice-clawds-clawd-wars` → `detective-clawds`): `brew upgrade` moves you over and installs Clawd Clash in that universe. Installed by hand, it starts in the universe of the app it finds, and when it connects an AI it swaps the old app's hook for its own, so the old app can go. Star Wars keeps Clawd Wars' characters for sessions that are already running.
 
 ## How it works
 
