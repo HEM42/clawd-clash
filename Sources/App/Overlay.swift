@@ -210,7 +210,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         panel.contentView = view
 
         Universe.shown = Self.universe
-        StatusStore.setUniverse(Self.universe, saver: nil)   // the hook casts from it
+        Universe.mixed = Self.clawdRoyale
+        publishUniverse()   // the hook casts from it
         home = clampHome(savedHome())     // re-applies the edge snap, so positions saved under older rules are corrected
         if windowMode { openWindow() }
         refreshStatus()
@@ -820,12 +821,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         // Heroes by `MarvelHero` index; the agent-only villains as `playgroundVillainAgent` + their cast id.
         let crew = playgroundAgents.enumerated().map { i, c in
             AgentRecord(id: "pg-a\(c)", session: "pg", type: "playground", character: c >= Self.playgroundVillainAgent ? 0 : c,
-                        cast: c >= Self.playgroundVillainAgent ? c - Self.playgroundVillainAgent : nil, started: start - Double(30 + i * 47),
+                        cast: Universe.shown.adopt(c >= Self.playgroundVillainAgent ? c - Self.playgroundVillainAgent
+                                                                                    : StatusStore.heroBase + c),
+                        started: start - Double(30 + i * 47),
                         lastSeen: 0, task: Self.sampleTasks[c % Self.sampleTasks.count],
                         activity: activities[(c + i) % activities.count], tools: 3 + (c * 7) % 23)
         }
         guard !villains.isEmpty else {
-            return [SessionSnapshot(id: "home", leader: 0, project: "", mood: .idle, agents: crew)]
+            return [SessionSnapshot(id: "home", leader: Universe.shown.base, project: "", mood: .idle, agents: crew)]
         }
         // Sample details so the Playground's cards look like live ones.
         let prompts = ["add a snowtaunt", "make the window resize to fit the Claudes", "why does the duel not start?",
@@ -833,7 +836,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let nowActs = ["Edit WindowMode.swift", "Bash: swift build", "Read Locations.swift", "Grep opaqueBounds", "Agent: Review the diff"]
         // Agents join the first villain. Empty project → the label shows the villain's name.
         return villains.enumerated().map { i, l in
-            var rec = SessionRecord(state: playgroundMood.rawValue, updated: start, leader: l, project: "")
+            let leader = Universe.shown.adopt(l)
+            var rec = SessionRecord(state: playgroundMood.rawValue, updated: start, leader: leader, project: "")
             rec.created = start - Double(600 + i * 1700)
             // On "Idle", spread them over the idle stages: standing, sitting (2 min+), asleep (5 min+).
             rec.since = playgroundMood == .idle ? start - Double(60 + i * 160) : start - Double(20 + i * 35)
@@ -844,7 +848,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             rec.prompts = 4 + i * 3
             rec.tools = 38 + i * 21
             let project = playgroundProjects.isEmpty ? "" : playgroundProjects[i % playgroundProjects.count]
-            var snap = SessionSnapshot(id: "pg-\(l)", leader: l, project: project, mood: playgroundMood, agents: i == 0 ? crew : [],
+            var snap = SessionSnapshot(id: "pg-\(l)", leader: leader, project: project, mood: playgroundMood, agents: i == 0 ? crew : [],
                                        record: rec)
             if !playgroundAIs.isEmpty {
                 snap.assistant = playgroundAIs[i % playgroundAIs.count]
@@ -859,10 +863,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private func demoSessions(_ t: Double) -> [SessionSnapshot] {
         func agents(_ chars: [Int], session: String) -> [AgentRecord] {
             chars.map { AgentRecord(id: "demo-\($0)", session: session, type: "demo", character: $0,
+                                    cast: Universe.shown.adopt(StatusStore.heroBase + $0),
                                     started: demoStart, lastSeen: 0, task: Self.sampleTasks[$0 % Self.sampleTasks.count]) }
         }
         func s(_ leader: Int, _ mood: Mood, _ crew: [Int] = []) -> SessionSnapshot {
-            SessionSnapshot(id: "demo-\(leader)", leader: leader, project: "project-\(leader + 1)",
+            SessionSnapshot(id: "demo-\(leader)", leader: Universe.shown.adopt(leader), project: "project-\(leader + 1)",
                             mood: mood, agents: agents(crew, session: "demo-\(leader)"))
         }
         switch Int(t / 6) % 10 {
@@ -1148,7 +1153,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 lift = abs(sin(swing * .pi)) * 16 * scale
                 if let web = webLine(from: NSPoint(x: actor.x + facing * 13 * scale, y: y + lift + 30 * scale),   // the raised hand, (41, 22)
                                      anchor: NSPoint(x: (floor(swing) + 0.5) * 70 * z + facing * 20 * z, y: y + 90 * scale),
-                                     scale: scale) {
+                                     scale: scale, universe: actor.cast.universe) {
                     out.append(web)
                 }
             }
@@ -1410,7 +1415,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     /// A web line from a swinging hand up to where it's stuck, as a thin white line `scale` points per pixel; in DC, a
     /// grapnel line, a thin steel-grey cable.
-    private func webLine(from a: NSPoint, anchor b: NSPoint, scale: CGFloat) -> DrawItem? {
+    private func webLine(from a: NSPoint, anchor b: NSPoint, scale: CGFloat, universe: Universe) -> DrawItem? {
         let minX = min(a.x, b.x), minY = min(a.y, b.y)
         let w = Int(abs(b.x - a.x) / scale) + 3, h = Int(abs(b.y - a.y) / scale) + 3
         guard w > 0, h > 0, w < 2000, h < 2000 else { return nil }
@@ -1418,7 +1423,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         // Canvas rows run top down, screen y bottom up.
         let ax = Double((a.x - minX) / scale) + 1, ay = Double(h) - 1 - Double((a.y - minY) / scale)
         let bx = Double((b.x - minX) / scale) + 1, by = Double(h) - 1 - Double((b.y - minY) / scale)
-        let line = Universe.shown == .dc ? C(0xB8BCC8, 0.95) : C(0xF4F4F8, 0.9)
+        let line = universe == .dc ? C(0xB8BCC8, 0.95) : C(0xF4F4F8, 0.9)
         c.glowLine(ax, ay, bx, by, core: line, glow: C(0xFFFFFF, 0), coreR: 0.35, glowR: 0.4)
         return DrawItem(image: c.makeImage(), rect: NSRect(x: (minX - scale).rounded(), y: (minY - scale).rounded(),
                                                            width: CGFloat(w) * scale, height: CGFloat(h) * scale))
@@ -1614,11 +1619,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private func chaosStep(_ now: Double) -> [SessionSnapshot] {
         if let limit = chaosSeconds, now - start > limit { finishChaos() }
         func roll(_ p: Double) -> Bool { Double.random(in: 0..<1) < p }
+        let r = Roster.shown
         let moods: [Mood] = [.working, .working, .thinking, .waiting, .idle]
         if chaos.isEmpty || (chaos.count < 7 && roll(0.15)) {
             let used = Set(chaos.map(\.leader))
-            let u = Universe.shown
-            if let l = (u.darkCast + u.lightCast).filter({ !used.contains($0) && !u.agentOnly.contains($0) }).randomElement() {
+            if let l = (r.darkCast + r.lightCast).filter({ !used.contains($0) && !r.agentOnly.contains($0) }).randomElement() {
                 chaos.append(SessionSnapshot(id: "chaos-\(l)-\(Int(now * 1000))", leader: l, project: "project-\(l)",
                                              mood: moods.randomElement()!, agents: []))
             }
@@ -1631,7 +1636,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let i = Int.random(in: 0..<chaos.count)
             chaos[i].agents.append(AgentRecord(id: "chaos-a\(chaosAgentSerial)", session: chaos[i].id, type: "chaos",
                                                character: 0,
-                                               cast: (Universe.shown.darkCast + Universe.shown.lightCast).randomElement(),
+                                               cast: (r.darkCast + r.lightCast).randomElement(),
                                                started: now, lastSeen: now,
                                                task: Self.sampleTasks.randomElement()))
         }
@@ -2459,6 +2464,24 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
         set { UserDefaults.standard.set(newValue.key, forKey: "universe") }
     }
+    /// `--clawd-royale`: Clawd Royale for this run only (test and screenshot runs), Settings untouched.
+    private static let clawdRoyaleArg = CommandLine.arguments.contains("--clawd-royale")
+    /// Clawd Royale (Settings → Universe): every universe's cast at once, in random places from all of them.
+    /// `universe` keeps the last single universe meanwhile.
+    static var clawdRoyale: Bool {
+        get { clawdRoyaleArg || UserDefaults.standard.bool(forKey: "clawdRoyale") }
+        set { UserDefaults.standard.set(newValue, forKey: "clawdRoyale") }
+    }
+    /// A test or screenshot run (as `main.swift` judges it): it never tells the hook what to cast, which would change
+    /// what the real app's sessions get.
+    private static let testRun = CommandLine.arguments.dropFirst().contains { $0.hasPrefix("--") }
+        || ProcessInfo.processInfo.environment["CLAWD_SHOT"] != nil
+
+    /// Tell the hook (and the screen saver, with the app closed) what's on show.
+    private func publishUniverse() {
+        guard !Self.testRun else { return }
+        StatusStore.setUniverse(Universe.shown, mixed: Universe.mixed, saver: nil)
+    }
 
     /// Random: a different universe every this many minutes (Settings → Universe → Random); nil: it stays on the one picked.
     static var universeEvery: Int? {
@@ -2488,7 +2511,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let before = window?.snapshot()
         Self.universe = u
         Universe.shown = u
-        StatusStore.setUniverse(u, saver: nil)
+        publishUniverse()
         if let raw = UserDefaults.standard.string(forKey: "location"), raw != Self.randomLocation,
            Location(rawValue: raw)?.universe != u {
             UserDefaults.standard.removeObject(forKey: "location")     // a place from the other universe: back to automatic

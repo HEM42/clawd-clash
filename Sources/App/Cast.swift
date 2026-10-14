@@ -12,11 +12,12 @@ struct Cast: Hashable {
         self.index = index % max(1, isDark ? universe.villainCount : universe.heroCount)
     }
 
-    /// The character with this id, as one of the universe on show (`Universe.shown`): an id from another universe
-    /// becomes the character in the same place here.
-    init(id: Int, in universe: Universe = .shown) {
-        let id = universe.adopt(id), local = id % 1000
-        self.init(universe: universe, isDark: Universe.isDark(id),
+    /// The character with this id. In Clawd Royale, itself; otherwise as one of the universe on show
+    /// (`Universe.shown`): an id from another universe becomes the character in the same place here. `in`: as one of
+    /// that universe instead.
+    init(id: Int, in universe: Universe? = nil) {
+        let id = universe.map { $0.adopt(id) } ?? Roster.shown.adopt(id), local = id % 1000
+        self.init(universe: Universe.of(id), isDark: Universe.isDark(id),
                   index: Universe.isDark(id) ? local : local - StatusStore.heroBase)
     }
 
