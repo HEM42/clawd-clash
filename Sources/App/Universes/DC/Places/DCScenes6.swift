@@ -762,7 +762,8 @@ extension Scenes {
         let s = unit(g)
         for x in 0..<c.w {
             let fx = Double(x)
-            let d = Int((abs(sin(fx * 0.03)) * 0.6 + abs(sin(fx * 0.011 + 2)) * 0.4) * Double(g) * 0.1) + Int(noise(x + 760) * 3)
+            let wave: Double = abs(sin(fx * 0.03)) * 0.6 + abs(sin(fx * 0.011 + 2)) * 0.4
+            let d = Int(wave * Double(g) * 0.1) + Int(noise(x + 760) * 3)
             c.rect(x, 0, 1, d, C(0x0E1A12))
             c.px(x, d, C(0x1E3020))
             if noise(x * 3 + 761) > 0.8 {

@@ -420,7 +420,8 @@ extension Scenes {
                 c.px(x0, st.wall + 2 * s + k, C(0xE8B840)); c.px(x0 + w0 - 1, st.wall + 2 * s + k, C(0xE8B840))
             }
             let my = st.wall + 2 * s + len / 3
-            let sway = Int(sin(t * 1.7 + Double(len / 3) * 0.22 + seed) * 0.5 * Double(s))
+            let swing: Double = t * 1.7 + Double(len / 3) * 0.22 + seed
+            let sway = Int(sin(swing) * 0.5 * Double(s))
             c.circle(b + sway, my, 2 * s, C(0xE8B840)); c.rect(b + sway, my - 3 * s, max(1, s), 7 * s, C(0xE8B840))
             c.rect(b - 6 * s, st.wall + s, 12 * s, s, C(0x3A2A24))
         }

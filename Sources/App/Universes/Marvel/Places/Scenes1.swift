@@ -175,7 +175,10 @@ extension Scenes {
         let stroke = { (x0: Double, y0: Double, x1: Double, y1: Double) in
             c.glowLine(lx0 + x0 * u, ly0 + y0 * u, lx0 + x1 * u, ly0 + y1 * u, core: white, glow: C(0xBFE4FF), coreR: 0.8 * u, glowR: 1.2 * u, strength: 1)
         }
-        let arc = stride(from: 45.0, through: 315.0, by: 30.0).map { (3.6 * cos($0 * .pi / 180), 3.6 * sin($0 * .pi / 180)) }
+        let arc: [(Double, Double)] = stride(from: 45.0, through: 315.0, by: 30.0).map { (deg: Double) -> (Double, Double) in
+            let r: Double = deg * .pi / 180
+            return (3.6 * cos(r), 3.6 * sin(r))
+        }
         for (a, b) in zip(arc, arc.dropFirst()) { stroke(a.0, a.1, b.0, b.1) }
         stroke(-1, 0, 9, 0); stroke(9, 0, 7, -2); stroke(9, 0, 7, 2)   // the bar out through the ring, an arrow   // the C, open to the right
         // the glass lounge at the tower's foot

@@ -106,8 +106,8 @@ enum Wipe {
 
 func lerp(_ a: Px, _ b: Px, _ t: Double) -> Px {
     let k = max(0, min(1, t))
-    return Px(r: UInt8(Double(a.r) + (Double(b.r) - Double(a.r)) * k), g: UInt8(Double(a.g) + (Double(b.g) - Double(a.g)) * k),
-              b: UInt8(Double(a.b) + (Double(b.b) - Double(a.b)) * k), a: UInt8(Double(a.a) + (Double(b.a) - Double(a.a)) * k))
+    func mix(_ x: UInt8, _ y: UInt8) -> UInt8 { UInt8(Double(x) + (Double(y) - Double(x)) * k) }
+    return Px(r: mix(a.r, b.r), g: mix(a.g, b.g), b: mix(a.b, b.b), a: mix(a.a, b.a))
 }
 
 extension PixelCanvas {
