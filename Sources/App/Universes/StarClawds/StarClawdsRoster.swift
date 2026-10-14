@@ -82,7 +82,7 @@ extension Cast {
     static func hero(_ h: SWHero) -> Cast { Cast(universe: .starWars, isDark: false, index: h.rawValue) }
     static func villain(_ v: SWVillain) -> Cast { Cast(universe: .starWars, isDark: true, index: v.rawValue) }
 
-    /// Han Solo and Greedo: they face off first, and now and then Han shoots first (`GreedoShot`).
+    /// Han Solo and Greedo: they face off first, and now and then Han shoots first (`ShootsFirst`).
     var isHan: Bool { self == .hero(SWHero.han) }
     var isGreedo: Bool { self == .villain(SWVillain.greedo) }
 }

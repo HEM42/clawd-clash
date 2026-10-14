@@ -6,7 +6,7 @@ import Foundation
 /// seconds (dizzy stars, a wisp of smoke) while Han apologises for the mess. Then he rolls back onto his feet, says his
 /// piece and walks back to his spot. (A Clawd is wider than it is tall, so lying on its side would look like standing.)
 /// The overlay runs the clock (`OverlayController.greedoShot`); this draws it. Times are seconds from Han's shot.
-enum GreedoShot {
+enum ShootsFirst {
     static let hit = blasterPeriod * boltArrival   // the bolt lands
     static let landed = hit + 0.75                 // on his back, legs in the air
     static let getUp = landed + 3                  // lies there for three seconds

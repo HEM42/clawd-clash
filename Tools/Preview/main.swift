@@ -53,9 +53,12 @@ func put(_ c: PixelCanvas, _ ctx: CGContext, x: CGFloat, y: CGFloat, outline: Bo
     ctx.draw(img, in: CGRect(x: x, y: y, width: CGFloat(c.w) * scale, height: CGFloat(c.h) * scale))
 }
 
+/// Names as typed, without case, spaces or punctuation: "Darth Vapor" and darthvapor are the same.
+func squashed(_ s: String) -> String { s.lowercased().filter { $0.isLetter || $0.isNumber } }
+
 /// Characters by batch name (heroes1…, villains1…, starWarsHeroes1…, starWarsVillains1…, dcHeroes1…, dcVillains1…, all,
-/// starWars, marvel, dc) or by case name (ironMan, vader, superman…; Marvel's first where both have one). Universes can't
-/// be mixed in one call.
+/// starWars, marvel, dc, or a universe's name), by case name (ironMan, vader, superman…; Marvel's first where both have
+/// one) or by the name shown on screen ("Darth Vapor"). Universes can't be mixed in one call.
 func cast(named n: String) -> [Cast] {
     let marvelHeroes = [heroes1, heroes2, heroes3, heroes4, heroes5, heroes6, heroes7, heroes8, heroes9, heroes10]
     let marvelVillains = [villains1, villains2, villains3, villains4, villains5, villains6, villains7, villains8, villains9]
@@ -73,13 +76,17 @@ func cast(named n: String) -> [Cast] {
     for (i, b) in swVillains.enumerated() { batches["starWarsVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
     for (i, b) in dcHeroes.enumerated() { batches["dcHeroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
     for (i, b) in dcVillains.enumerated() { batches["dcVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
-    if let b = batches[n] { return b }
+    for u in Universe.allCases { batches[squashed(u.title)] = Theme.of(u).cast }
+    if let b = batches[n] ?? batches[squashed(n)] { return b }
     if let h = MarvelHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
     if let v = MarvelVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
     if let h = SWHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
     if let v = SWVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
     if let h = DCHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
     if let v = DCVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
+    for u in Universe.allCases {
+        if let c = Theme.of(u).cast.first(where: { squashed($0.name) == squashed(n) }) { return [c] }
+    }
     print("unknown character: \(n)")
     exit(2)
 }
@@ -208,9 +215,15 @@ case "fight":
 
 case "place":
     let everywhere = Universe.allCases.flatMap { Location.all(in: $0) }
+    let universe = names.count == 1
+        ? Universe(key: names[0]) ?? Universe.allCases.first { squashed($0.title) == squashed(names[0]) } : nil
+    // A place by case name (cantina) or by the name shown on screen ("Mos Icely Cantina").
+    func place(_ n: String) -> Location? {
+        Location(rawValue: n) ?? everywhere.first { squashed($0.name) == squashed(n) }
+    }
     let places = names.isEmpty || names == ["all"] ? everywhere
-        : names.count == 1 && Universe(key: names[0]) != nil ? Location.all(in: Universe(key: names[0])!)
-        : names.map { n in Location(rawValue: n) ?? { print("unknown place: \(n)"); exit(2) }() }
+        : universe.map { Location.all(in: $0) }
+        ?? names.map { n in place(n) ?? { print("unknown place: \(n)"); exit(2) }() }
     // The window's strip (about 480×75 pixels) and a screen-saver frame (16:10, tall enough for the extras).
     let strip = (w: 480, h: 75), tall = (w: 480, h: 300)
     let s: CGFloat = 2

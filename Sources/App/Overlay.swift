@@ -1043,28 +1043,28 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         if let pair = fx.first(where: { ($0.0.cast.isHan && $0.1.cast.isGreedo) || ($0.0.cast.isGreedo && $0.1.cast.isHan) }) {
             let han = pair.0.cast.isHan ? pair.0 : pair.1, greedo = pair.0.cast.isHan ? pair.1 : pair.0
             if let s = greedoShot, s.han != han.key || s.greedo != greedo.key { greedoShot = nil }
-            if let s = greedoShot, now - s.start > GreedoShot.done {
+            if let s = greedoShot, now - s.start > ShootsFirst.done {
                 greedoShot = nil
-                nextGreedoShot = now + GreedoShot.delay(first: false)
+                nextShootsFirst = now + ShootsFirst.delay(first: false)
             }
             if greedoShot == nil {
-                if let next = nextGreedoShot, now >= next, case .shoot(let offset)? = roles[han.key] {
+                if let next = nextShootsFirst, now >= next, case .shoot(let offset)? = roles[han.key] {
                     let fire = (floor((t + offset) / blasterPeriod) + 1) * blasterPeriod - offset
-                    greedoShot = (han.key, greedo.key, start + fire, GreedoShot.greedoSays.randomElement() ?? "That hurt!")
-                    nextGreedoShot = nil
-                } else if nextGreedoShot == nil {
-                    nextGreedoShot = now + GreedoShot.delay(first: true)
+                    greedoShot = (han.key, greedo.key, start + fire, ShootsFirst.greedoSays.randomElement() ?? "That hurt!")
+                    nextShootsFirst = nil
+                } else if nextShootsFirst == nil {
+                    nextShootsFirst = now + ShootsFirst.delay(first: true)
                 }
             }
             if let s = greedoShot, now >= s.start {
                 let e = now - s.start
                 shot = (s.han, s.greedo, e, s.line)
                 incoming[s.han] = nil; incoming[s.greedo] = nil   // nobody ducks: Greedo doesn't see it coming
-                if e > GreedoShot.hit + 0.3 { roles[s.han] = .rest }   // blaster down, job done
+                if e > ShootsFirst.hit + 0.3 { roles[s.han] = .rest }   // blaster down, job done
             }
         } else {
             greedoShot = nil
-            nextGreedoShot = nil
+            nextShootsFirst = nil
         }
 
         if debug, Int(now * 2) != lastDebug {
@@ -1133,12 +1133,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             var pivotX = Sprite.bodyCenterX, knockedTop: Int?
             var lift = air * Self.flightHeight * scale
             // Greedo, shot: knocked head over heels, flat on his back, back on his feet (his own, bigger canvas).
-            if let s = shot, actor.key == s.greedo, s.e >= GreedoShot.hit {
-                let pose = GreedoShot.pose(s.e), who = actor.cast
-                let knocked = GreedoShot.sprite(e: s.e, t: t) { c in
+            if let s = shot, actor.key == s.greedo, s.e >= ShootsFirst.hit {
+                let pose = ShootsFirst.pose(s.e), who = actor.cast
+                let knocked = ShootsFirst.sprite(e: s.e, t: t) { c in
                     who.draw(c, t: t, mode: .idle, walking: pose.walking, role: .none, asSession: true)
                 }
-                canvas = knocked.canvas; knockedTop = knocked.top; pivotX = GreedoShot.pivotX
+                canvas = knocked.canvas; knockedTop = knocked.top; pivotX = ShootsFirst.pivotX
                 actor.x -= facing * CGFloat(pose.back) * scale
                 lift = CGFloat(pose.lift) * scale
                 walking = pose.walking
@@ -1194,8 +1194,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             if case .leader(let who) = actor.kind, let said = who.callout, actor.walkDir == 0,
                (t / 5 + actor.phase).truncatingRemainder(dividingBy: 1) < 0.3 { line = said }
             if let s = shot {
-                if actor.key == s.han, s.e >= GreedoShot.hanLine.from, s.e < GreedoShot.hanLine.to { line = GreedoShot.hanSays; overHead = true }
-                if actor.key == s.greedo, s.e >= GreedoShot.standing { line = s.line; overHead = true }
+                if actor.key == s.han, s.e >= ShootsFirst.hanLine.from, s.e < ShootsFirst.hanLine.to { line = ShootsFirst.hanSays; overHead = true }
+                if actor.key == s.greedo, s.e >= ShootsFirst.standing { line = s.line; overHead = true }
             }
             if let b = bunTalk { line = b.line; overHead = true }
             if let line {
@@ -1284,7 +1284,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             guard shotHere != nil || fightFXVisible(t: t, fl.weapon, fr.weapon) else { continue }   // e.g. a duel between clashes
             let c = PixelCanvas(width, Sprite.height + headroom)
             if let s = shotHere {
-                GreedoShot.drawFX(c, e: s.e, t: t, han: l.key == s.han ? fl : fr, greedo: l.key == s.han ? fr : fl)
+                ShootsFirst.drawFX(c, e: s.e, t: t, han: l.key == s.han ? fl : fr, greedo: l.key == s.han ? fr : fl)
             } else {
                 drawFightFX(c, t: t, left: fl, right: fr)
             }
@@ -1391,10 +1391,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     static let flightHeight: CGFloat = 16
     /// How far each character was lifted in the last frame (flying, swinging), for hit testing.
     private var lastLift: [String: CGFloat] = [:]
-    /// Han shoots first (`GreedoShot`, Star Wars): who's who, when Han fired (it plays out from there) and Greedo's
+    /// Han shoots first (`ShootsFirst`, Star Wars): who's who, when Han fired (it plays out from there) and Greedo's
     /// line after.
     private var greedoShot: (han: String, greedo: String, start: Double, line: String)?
-    private var nextGreedoShot: Double?
+    private var nextShootsFirst: Double?
 
     /// How far up (0…1 of `flightHeight`) `a` is right now: taking off or landing on a trip along the line, or out on a
     /// sortie (`sortieAir`), never while sitting, waiting for you, cheering or on its way out.

@@ -177,12 +177,12 @@ rm -rf "/Applications/Clawd Clash.app" ~/.claude/clawd-clash
 
 ## Contributing
 
-Each universe lives in its own folder, `Sources/App/Universes/StarWars`, `.../Marvel` and `.../DC`:
+Each universe lives in its own folder, `Sources/App/Universes/StarClawds`, `.../MarvelousClawds` and `.../DetectiveClawds`:
 
 - **A character** is a `Persona` (name, weapon, how it moves, what its shots or magic look like, its signature move) registered next to its drawing function in the universe's `Art/*.swift` files. Add its case at the **end** of the universe's hero or villain enum (ids are saved, so never reorder), give it a home in the roster file, and bump the count in `Sources/Shared/Universe.swift`. `Sources/App/Pose.swift` explains what a drawing function gets and must do.
 - **A place** is a `Place` in the universe's `Places/` files: a still picture and an optional moving layer.
 - **A whole universe** is a `Theme` (`Sources/App/Theme.swift`): its cast, places, homes, arch-enemies, ships, menu bar icon. Add a case to `Universe` and a theme folder.
-- **Check it** with `Tools/Preview/build.sh`, then `build/preview cast out.png vader thor` (every pose), `build/preview fight out.png luke vader`, `build/preview place out.png cantina asgard`. `Tools/RenderDocs` renders this page's sheets, `Tools/MakeIcon` the icon.
+- **Check it** with `Tools/Preview/build.sh`, then `build/preview cast out.png "Darth Vapor"` (every pose), `build/preview fight out.png "Luke Skyclawder" "Darth Vapor"`, `build/preview place out.png "Mos Easy Cantina"`. Characters and places go by the names you see on screen. `Tools/RenderDocs` renders this page's sheets, `Tools/MakeIcon` the icon.
 
 ## License
 

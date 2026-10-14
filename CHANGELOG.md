@@ -6,6 +6,7 @@ Clawd Clash brings three apps together as its three universes: Clawd Wars became
 
 ### Changed
 - **The README goes by the universes' names throughout**, its pictures included (`docs/roster-star-clawds.png` and so on, as `Tools/RenderDocs` now names them).
+- **The source folders go by the universes' names too**: `Sources/App/Universes/StarClawds`, `MarvelousClawds` and `DetectiveClawds`, with file names to match. `Tools/Preview` takes characters and places by the names shown on screen (`build/preview cast out.png "Darth Vapor"`) and universes by theirs.
 
 ## 3.0.0 (2026-10-14)
 
