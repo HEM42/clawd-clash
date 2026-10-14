@@ -45,7 +45,7 @@ struct Theme {
 }
 
 extension Universe {
-    /// The universe on show in this process: the app's choice, or the screen saver's for the trip it's on. In Battle
+    /// The universe on show in this process: the app's choice, or the screen saver's for the trip it's on. In Clawd
     /// Royale, the universe of the place on show (for the menu bar icon, Status Symbols and the transitions).
     static var shown: Universe = .starWars
     /// Clawd Royale: everyone from every universe, each as themselves (`Roster`).
