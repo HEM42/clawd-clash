@@ -524,7 +524,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         feedAgents = agentsNow
         feedEvents = Array(feedEvents.suffix(12))
         let feed = SaverFeed(at: now, location: location.rawValue, sessions: out, events: feedEvents,
-                             universe: Universe.shown.rawValue, saverUniverse: nil)
+                             universe: Universe.shown.rawValue, saverUniverse: nil, mixed: Universe.mixed ? true : nil)
         saverFeed = feed
         if real && saverInstalled { feed.save() }
     }
