@@ -2,7 +2,7 @@
 
 Clawd Clash brings Clawd Wars (Star Wars), Avengers: Clawd Wars (Marvel) and Justice League: Clawd Wars (DC) together in one app. Their history before that is in [CHANGELOG-clawd-wars.md](CHANGELOG-clawd-wars.md) (up to 2.28.3), [CHANGELOG-avengers-clawd-wars.md](CHANGELOG-avengers-clawd-wars.md) (0.1.0) and [CHANGELOG-justice-league-clawd-wars.md](CHANGELOG-justice-league-clawd-wars.md) (0.1.0).
 
-## 3.0.0 (unreleased)
+## 3.0.0 (2026-10-14)
 
 ### Added
 - **The universes' own pages are named after them.** The three old repos are now [star-clawds](https://github.com/rodclemen/star-clawds), [marvelous-clawds](https://github.com/rodclemen/marvelous-clawds) and [detective-clawds](https://github.com/rodclemen/detective-clawds) (the old links still lead there), and so are the Homebrew casks that start Clawd Clash in each: `brew upgrade` moves `clawd-wars`, `clawdvengers-clawd-wars` and `justice-clawds-clawd-wars` over by itself.
