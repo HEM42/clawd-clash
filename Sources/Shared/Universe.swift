@@ -1,6 +1,6 @@
 import Foundation
 
-/// The universes Clawd Clash can show. One at a time: a scene never mixes characters from two of them.
+/// The universes Clawd Clash can show. One at a time, except in Clawd Royale (`Roster`), where a scene mixes all of them.
 ///
 /// Cast ids are stored in the status file and the screen-saver feed: `universe.base + local`, where local ids are
 /// villains `0..<100` and heroes `100…`. Star Wars keeps Clawd Wars' ids (base 0), so its saved state carries over.
@@ -66,4 +66,25 @@ enum Universe: Int, CaseIterable, Codable {
         return Universe.isDark(id) ? base + local % villainCount
                                    : base + StatusStore.heroBase + (local - StatusStore.heroBase) % (heroCount - 1)
     }
+}
+
+/// Who can be cast and shown: one universe, or every one of them at once (Clawd Royale), each character as itself.
+struct Roster {
+    let universes: [Universe]
+
+    init(_ universe: Universe, mixed: Bool) { universes = mixed ? Universe.allCases : [universe] }
+
+    var mixed: Bool { universes.count > 1 }
+    var darkCast: [Int] { universes.flatMap(\.darkCast) }
+    var lightCast: [Int] { universes.flatMap(\.lightCast) }
+    var agentOnly: Set<Int> { universes.reduce(into: Set<Int>()) { $0.formUnion($1.agentOnly) } }
+    var rivals: Set<Int> { universes.reduce(into: Set<Int>()) { $0.formUnion($1.rivals) } }
+    /// With another AI running, Claude Code's side (`Universe.claudeSide`); in Clawd Royale, the heroes.
+    var claudeSide: Bool? { mixed ? false : universes[0].claudeSide }
+    /// HEM, once for each universe here.
+    var hems: Set<Int> { Set(universes.map(\.hem)) }
+    /// Whether `id` is HEM, in whichever universe it's from.
+    static func isHem(_ id: Int) -> Bool { Universe.of(id).isHem(id) }
+    /// `id` as one of this roster: itself in Clawd Royale, otherwise the universe's `adopt`.
+    func adopt(_ id: Int) -> Int { mixed ? id : universes[0].adopt(id) }
 }
