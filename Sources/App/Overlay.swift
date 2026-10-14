@@ -1402,7 +1402,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         var fighting = false, cheering = false
         if let role { if case .cheer = role { cheering = true } else { fighting = true } }
         let grounded = walking || a.sitting || a.mode == .waiting || a.leaving != nil || cheering
-        let sortie = grounded ? 0 : sortieAir(a.cast, seed: frac(a.phase / 7), fighting: fighting, t: t)
+        // Not in the middle of push-ups, squats or meditating on its own (`Drills.swift`).
+        let drilling = role == nil && a.isLeader && a.mode == .working && a.cast.drill(at: t)?.kind.grounded == true
+        let sortie = grounded || drilling ? 0 : sortieAir(a.cast, seed: frac(a.phase / 7), fighting: fighting, t: t)
         return max(a.air, CGFloat(sortie))
     }
 
@@ -1877,7 +1879,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         if clawdWindow == nil {
             let w = ClawdWindow(controller: self, sceneHeight: sceneHeight)
             w.onClose = { [weak self] in self?.toggleWindowMode() }
-            w.header.onClose = { NSApp.terminate(nil) }   // × quits; window mode is remembered for next launch
+            // × quits (window mode is remembered for next launch), or with Settings → "Closing the window hides
+            // Clawd Clash" just hides it, back from the menu bar shield or the Dock icon.
+            w.header.onClose = { [weak self] in
+                if ClawdWindow.closeHides { self?.toggleHidden() } else { NSApp.terminate(nil) }
+            }
             w.header.onToggleList = { [weak self] in self?.cycleWindowView() }
             w.board.feedSource = { [weak self] in self?.saverFeed }
             w.board.contextMenu = { [weak self] in self?.menu() }
@@ -2261,8 +2267,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                             self.universeSince = Date().timeIntervalSince1970
                         }
                     }),
-            .choice("Random switches", options: Self.universeIntervals.map { $0 == 1 ? "Every minute" : "Every \($0) minutes" },
-                    enabled: { Self.universeEvery != nil },
+            // Only with Universe set to Random; otherwise a blank row, so the window keeps its size.
+            .choice("Switch every", options: Self.universeIntervals.map { $0 == 1 ? "Minute" : "\($0) minutes" },
+                    shown: { Self.universeEvery != nil },
                     get: { Self.universeIntervals.firstIndex(of: Self.universeEvery ?? 10) ?? 2 },
                     set: { [weak self] i in
                         Self.universeEvery = Self.universeIntervals[i]
@@ -2279,6 +2286,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                                action: { [weak self] in self?.forgetIdle() }))
 
         let window: [SettingsRow] = [
+            .toggle("Closing the window hides Clawd Clash", note: "Off, the × quits. On, it hides; double-click the menu bar icon or click the Dock icon to bring it back.",
+                    get: { ClawdWindow.closeHides }, set: { ClawdWindow.closeHides = $0 }),
             .toggle("Keep window on top", get: { d.bool(forKey: "windowPinned") },
                     set: { [weak self] on in d.set(on, forKey: "windowPinned"); self?.clawdWindow?.applyPin() }),
             .toggle("Compact window", note: "The whole window at 75%.", get: { ClawdWindow.small },

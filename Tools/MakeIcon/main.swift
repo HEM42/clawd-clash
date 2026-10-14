@@ -5,7 +5,7 @@ import CoreText
 // DC), with CLAWD CLASH across all three, each panel colouring its part of the name and the gutters cutting through
 // the letters. Spider-Man hangs on his web over the name, Darth Vader raises his saber and Batman squares up under the
 // Bat-Signal, all drawn with the app's own sprite code. build.sh turns it into AppIcon.icns.
-//   swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Icon,Rides}.swift \
+//   swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
 //          Sources/App/Universes/**/*.swift Sources/Shared/*.swift Tools/MakeIcon/main.swift -o build/makeicon \
 //          && build/makeicon Resources/AppIcon.png
 

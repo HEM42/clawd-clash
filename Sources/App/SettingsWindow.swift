@@ -11,8 +11,8 @@ struct SettingsSection {
 enum SettingsRow {
     /// A checkbox.
     case toggle(String, note: String? = nil, get: () -> Bool, set: (Bool) -> Void)
-    /// A label and a pop-up of choices; `enabled` greys it out.
-    case choice(String, options: [String], enabled: () -> Bool = { true }, get: () -> Int, set: (Int) -> Void)
+    /// A label and a pop-up of choices; when not `shown`, the row is blank but keeps its space, so the window doesn't resize.
+    case choice(String, options: [String], shown: () -> Bool = { true }, get: () -> Int, set: (Int) -> Void)
     /// A label, what it says now, and a button.
     case status(String, detail: () -> String, button: () -> String, action: () -> Void)
     /// A button on its own, with a line beside it saying what it does.
@@ -92,13 +92,19 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
             v.alignment = .leading
             v.spacing = 2
             return v
-        case let .choice(title, options, enabled, get, set):
+        case let .choice(title, options, shown, get, set):
             let popup = NSPopUpButton(frame: .zero, pullsDown: false)
             popup.addItems(withTitles: options)
             popup.selectItem(at: get())
-            popup.isEnabled = enabled()
             hook(popup) { set(($0 as? NSPopUpButton)?.indexOfSelectedItem ?? 0) }
-            return Self.row(Self.label(title), popup)
+            let row = Self.row(Self.label(title), popup)
+            if !shown() {
+                row.alphaValue = 0
+                popup.isEnabled = false
+                row.setAccessibilityElement(false)
+                row.subviews.forEach { $0.setAccessibilityElement(false) }
+            }
+            return row
         case let .status(title, detail, button, action):
             let b = NSButton(title: button(), target: nil, action: nil)
             b.bezelStyle = .rounded

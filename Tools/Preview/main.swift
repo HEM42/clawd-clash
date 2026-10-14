@@ -5,6 +5,8 @@ import AppKit
 //   Tools/Preview/build.sh                         compiles it into build/preview
 //   build/preview cast  out.png ironMan thor ...   every pose of each character (or a batch: heroes1 … villains4, all)
 //   build/preview fight out.png ironMan ultron     two characters fighting, a few moments of it, with the effects
+//   build/preview drills out.png luke ironMan ...  each solo practice set it does, at a few moments (blank: not one of its);
+//                                                  DRILL=bespoke shows just that one, at more moments
 //   build/preview place out.png avengersTower ...  locations at window size and at screen-saver size
 //   build/preview rides out.png                    the ships, landed and flying
 //
@@ -122,6 +124,7 @@ case "cast":
             case .none: habit(.bounce, 0.2)(who, c)
             }
         }),
+        ("moonwalk", { who, c in Cast.moonwalkers.contains(who) ? habit(.moonwalk, 0.3)(who, c) : () }),
         ("signature ¼", habit(.signature, 0.25)),
         ("signature ½", habit(.signature, 0.5)),
         ("signature ¾", habit(.signature, 0.75)),
@@ -147,6 +150,28 @@ case "cast":
         }
     })
 
+case "drills":
+    let who = names.flatMap(cast(named:))
+    // DRILL=bespoke (any one drill): just that one, at more moments.
+    let only = ProcessInfo.processInfo.environment["DRILL"].flatMap { n in Drill.allCases.first { "\($0)" == n } }
+    let moments = only == nil ? [1.3, 2.05, 2.6, 4.45] : stride(from: 0.4, to: 7.6, by: 0.6).map { $0 }
+    let cols = (only.map { [$0] } ?? Drill.allCases).flatMap { d in moments.map { (d, $0) } }
+    let cellW = CGFloat(Sprite.width) * scale + 4, cellH = CGFloat(Sprite.height) * scale + 22, nameW: CGFloat = 130
+    let w = Int(nameW + cellW * CGFloat(cols.count)), h = Int(cellH * CGFloat(who.count) + 24)
+    save(sheet(w, h) { ctx in
+        for (j, col) in cols.enumerated() where col.1 == moments[0] { label("\(col.0)", nameW + CGFloat(j) * cellW + 4, CGFloat(h) - 18) }
+        for (i, c) in who.enumerated() {
+            let y = CGFloat(h) - 24 - cellH * CGFloat(i + 1)
+            label(c.name, 6, y + cellH / 2, size: 13)
+            for (j, col) in cols.enumerated() where c.drills.contains(col.0) {
+                let canvas = PixelCanvas(Sprite.width, Sprite.height)
+                forcedDrill = DrillPlay(kind: col.0, e: col.1, length: 8, seed: 3)
+                c.draw(canvas, t: 10 + col.1, mode: .working, walking: false, role: .none, asSession: true)
+                forcedDrill = nil
+                put(canvas, ctx, x: nameW + CGFloat(j) * cellW, y: y)
+            }
+        }
+    })
 case "fight":
     guard names.count == 2 else { print("fight needs two characters"); exit(2) }
     let a = cast(named: names[0])[0], b = cast(named: names[1])[0]

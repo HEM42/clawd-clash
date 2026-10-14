@@ -6,7 +6,7 @@ import CoreText
 // Luke and Vader's sabers locked under the stars, Thor and Loki trading lightning and magic, Batman against the
 // Joker under the Night Beacon. CLAWD CLASH runs across all three, coloured by the panel each part is in, with a sound
 // effect in each panel and the tagline in a caption box.
-//   swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Icon,Rides}.swift \
+//   swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
 //          Sources/App/Universes/**/*.swift Sources/Shared/*.swift Tools/MakeSocial/main.swift -o build/makesocial \
 //          && build/makesocial docs/social-preview.png
 

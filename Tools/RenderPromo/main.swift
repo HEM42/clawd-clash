@@ -5,7 +5,7 @@ import CoreText
 // Renders Clawd Clash's promo videos with the app's own sprites, places and transitions: the promo (one universe at a
 // time, as in the app), the blooper reel (where the universes get mixed up), or both back to back. Each comes with
 // its own synthesized soundtrack. Build it, then run it from the repo root (it reads Resources/AppIcon.png):
-//   swiftc -O -swift-version 5 Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Icon,Rides}.swift \
+//   swiftc -O -swift-version 5 Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
 //          Sources/App/Universes/**/*.swift Sources/Shared/*.swift Tools/RenderPromo/main.swift -o build/renderpromo
 //   build/renderpromo storyboard promo           → promo/storyboard-promo.png (REEL=bloopers: storyboard-bloopers.png)
 //   build/renderpromo video promo                → promo/clawd-clash-promo.mp4 (H.264 + AAC)

@@ -62,6 +62,11 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         get { UserDefaults.standard.object(forKey: "windowSmall") as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: "windowSmall") }
     }
+    /// Settings → Closing the window hides Clawd Clash: the header's × hides instead of quitting. Off until turned on.
+    static var closeHides: Bool {
+        get { UserDefaults.standard.bool(forKey: "closeHides") }
+        set { UserDefaults.standard.set(newValue, forKey: "closeHides") }
+    }
     var onClose: (() -> Void)?
     var onGeometryChange: (() -> Void)?
     private(set) var sceneHeight: CGFloat
@@ -526,7 +531,7 @@ final class HeaderView: NSView, NSViewToolTipOwner {
     }
 
     func view(_ view: NSView, stringForToolTip tag: NSView.ToolTipTag, point: NSPoint, userData data: UnsafeMutableRawPointer?) -> String {
-        guard button(at: point) != .close else { return "Quit Clawd Clash" }
+        guard button(at: point) != .close else { return ClawdWindow.closeHides ? "Hide Clawd Clash" : "Quit Clawd Clash" }
         switch ClawdWindow.view {
         case .list: return "Hide the session list"
         case .scene: return "Show the session list"

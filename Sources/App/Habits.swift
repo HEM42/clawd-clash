@@ -13,6 +13,7 @@ enum IdleHabit {
     case checkWeapon   // gun raised to eye level, then the smoke blown off the barrel
     case crackle       // magic flickering between the fingers, hand raised
     case signature     // its own thing, drawn by its own drawing code (`Cast.hasSignature`)
+    case moonwalk      // glides backwards, legs sliding in turn, a pose up on its toes, and back (`Cast.moonwalkers`)
 
     var length: Double {
         switch self {
@@ -23,6 +24,7 @@ enum IdleHabit {
         case .checkWeapon: return 2.2
         case .crackle: return 1.4
         case .signature: return 2.6
+        case .moonwalk: return 3.6
         }
     }
 }
@@ -58,6 +60,7 @@ extension Cast {
         var list: [IdleHabit] = [.glance, .shuffle]
         list += weaponHabit.map { [$0, $0] } ?? [.bounce]
         if hasSignature { list += [.signature, .signature] }
+        if Self.moonwalkers.contains(self) { list += [.moonwalk] }
         return list
     }
 
@@ -104,9 +107,43 @@ func applyHabitTransform(_ c: PixelCanvas, _ play: HabitPlay) {
         c.shift(dx: Int(play.e / 0.3) % 2 == 0 ? 0 : (Int(play.e / 0.6) % 2 == 0 ? 1 : -1), dy: 0)
     case .bounce:
         c.shift(dx: 0, dy: sin(play.p * .pi * 2) > 0.3 ? -2 : 0)
+    case .moonwalk:
+        moonwalk(c, play)
     default:
         break
     }
+}
+
+extension Cast {
+    /// Who moonwalks when idle: dancers, with legs free to show it (four plain legs, nothing hanging over them).
+    static let moonwalkers: Set<Cast> = [.hero(MarvelHero.starLord), .hero(MarvelHero.deadpool), .hero(MarvelHero.howardTheDuck)]
+}
+
+/// The moonwalk, done to the character as drawn: it glides back while its legs take turns, one pair flat and sliding,
+/// the other up on the toes; then a pose up on its toes, and a few quick steps back to its spot. Works on the legs'
+/// own pixels, found as four separate runs just above the ground.
+private func moonwalk(_ c: PixelCanvas, _ play: HabitPlay) {
+    let p = play.p, glide = 0.72, pose = 0.84, back = 10.0
+    let legs = c.runs(row: 41)
+    let feet = 38..<44
+    if legs.count == 4 {
+        if p < glide || p >= pose {
+            // Pairs 1 & 3, then 2 & 4, up on the toes in turn: the lifted pair rises, leaving its front toe down.
+            let beat = p < glide ? 0.32 : 0.12
+            let up = Int(play.e / beat) % 2
+            for i in [up, up + 2] {
+                let leg = legs[i]
+                c.move(columns: leg, rows: feet, dy: p < glide ? -2 : -1)
+                if p < glide { c.copyPixel(from: (leg.upperBound - 1, 41), to: (leg.upperBound - 1, 43)) }
+            }
+        } else {
+            // Up on the toes: the whole body up a little, a toe under every leg.
+            c.shift(dx: 0, dy: -2)
+            for leg in legs { c.copyPixel(from: (leg.upperBound - 1, 41), to: (leg.upperBound - 1, 43)) }
+        }
+    }
+    let dx = p < glide ? -back * p / glide : (p < pose ? -back : -back * (1 - (p - pose) / (1 - pose)))
+    c.shift(dx: Int(dx.rounded()), dy: 0)
 }
 
 /// Smoke blown off a barrel at (`x`, `y`): three puffs drifting up and fading, `k` 0…1 through it.

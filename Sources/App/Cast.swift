@@ -46,6 +46,11 @@ struct Cast: Hashable {
     /// waiting…); agents are always at work. `airborne`: a flyer on its way somewhere.
     func draw(_ c: PixelCanvas, t: Double, mode: VaderMode, walking: Bool, role: FightRole,
               urgent: Bool = false, sitting: Bool = false, asSession: Bool, airborne: Bool = false, aloft: Bool = false) {
+        // Solo practice (`Drills.swift`): a session working with nobody to fight.
+        if asSession, mode == .working, !walking, !sitting, case .none = role, let d = drill(at: t) {
+            drawDrill(c, d, t: t)
+            return
+        }
         // Idle habits (`Habits.swift`): only an idle session standing about, not fighting, walking or sitting.
         var idle = asSession && mode == .idle && !walking && !sitting
         switch role { case .none, .rest: break; default: idle = false }

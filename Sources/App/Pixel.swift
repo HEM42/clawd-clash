@@ -106,6 +106,15 @@ final class PixelCanvas {
         return out
     }
 
+    /// A copy of just `rows` (the rest left empty).
+    func onlyRows(_ rows: Range<Int>) -> PixelCanvas {
+        let out = PixelCanvas(w, h)
+        let r = max(0, rows.lowerBound)..<min(h, rows.upperBound)
+        guard !r.isEmpty else { return out }
+        out.buf.replaceSubrange(r.lowerBound * w * 4..<r.upperBound * w * 4, with: buf[r.lowerBound * w * 4..<r.upperBound * w * 4])
+        return out
+    }
+
     /// Mirror everything drawn so far, left to right.
     func flipHorizontally() {
         var out = buf
@@ -148,6 +157,48 @@ final class PixelCanvas {
                                       b: UInt8(min(255, Double(other.buf[i + 2]) * m)), a: a))
             }
         }
+    }
+
+    /// Draw `other` on top, faded to `alpha`, its top-left corner at (`x`, `y`).
+    func paste(_ other: PixelCanvas, x: Int = 0, y: Int = 0, alpha: Double) {
+        for yy in 0..<other.h {
+            for xx in 0..<other.w {
+                let i = (yy * other.w + xx) * 4, a = other.buf[i + 3]
+                guard a > 0 else { continue }
+                let m = 255 / Double(a)
+                px(x + xx, y + yy, Px(r: UInt8(min(255, Double(other.buf[i]) * m)), g: UInt8(min(255, Double(other.buf[i + 1]) * m)),
+                                      b: UInt8(min(255, Double(other.buf[i + 2]) * m)), a: UInt8(Double(a) * alpha)))
+            }
+        }
+    }
+
+    /// The runs of drawn pixels along row `y`, left to right, as column ranges.
+    func runs(row y: Int) -> [Range<Int>] {
+        var out: [Range<Int>] = [], start: Int?
+        for x in 0...w {
+            let on = x < w && isDrawn(x, y)
+            if on, start == nil { start = x } else if !on, let s = start { out.append(s..<x); start = nil }
+        }
+        return out
+    }
+
+    /// Move what's drawn in `columns` × `rows` by `dy` rows, clearing where it was (what leaves the canvas is lost).
+    func move(columns: Range<Int>, rows: Range<Int>, dy: Int) {
+        let old = buf
+        for y in rows where y >= 0 && y < h { for x in columns where x >= 0 && x < w { for n in 0..<4 { buf[(y * w + x) * 4 + n] = 0 } } }
+        for y in rows where y >= 0 && y < h && y + dy >= 0 && y + dy < h {
+            for x in columns where x >= 0 && x < w {
+                let src = (y * w + x) * 4, dst = ((y + dy) * w + x) * 4
+                guard old[src + 3] > 0 else { continue }
+                for n in 0..<4 { buf[dst + n] = old[src + n] }
+            }
+        }
+    }
+
+    /// Copy one pixel as it is to another place (ignoring the offsets).
+    func copyPixel(from a: (x: Int, y: Int), to b: (x: Int, y: Int)) {
+        guard isDrawn(a.x, a.y), b.x >= 0, b.y >= 0, b.x < w, b.y < h else { return }
+        for n in 0..<4 { buf[(b.y * w + b.x) * 4 + n] = buf[(a.y * w + a.x) * 4 + n] }
     }
 
     /// Whether anything is drawn at (`x`, `y`) in canvas pixels, ignoring the offsets.

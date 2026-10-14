@@ -61,7 +61,7 @@ SAVER="$APP/Contents/Resources/Clawd Clash.saver"
 mkdir -p "$SAVER/Contents/MacOS"
 compile "$SAVER/Contents/MacOS/ClawdClashSaver" -module-name ClawdClashSaver -emit-library -framework ScreenSaver \
     -Xlinker -install_name -Xlinker @rpath/ClawdClashSaver \
-    Sources/Shared/*.swift Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Accents,Habits,Icon}.swift \
+    Sources/Shared/*.swift Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Accents,Habits,Drills,Icon}.swift \
     Sources/App/Universes/**/*.swift Sources/Saver/*.swift
 # Its picture under "Other" in System Settings (180×116).
 mkdir -p "$SAVER/Contents/Resources"

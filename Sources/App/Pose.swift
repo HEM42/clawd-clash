@@ -160,14 +160,20 @@ func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walk
                     p.melee = k.angle; p.dx = Int(k.dx.rounded()); p.hop = Int(k.dy.rounded()); p.breathe = 0
                     p.trail = saberTrail(lt)
                 case .blaster:
-                    if let solo = persona.soloFire { p.fire = (t + solo.phase, true); p.firePeriod = solo.period }
+                    if soloDrill?.kind == .skyShots {
+                        p.fire = (lt, false)                 // the flash here; the shot goes up (below)
+                        if !classic { p.gunLift = 1 }
+                    } else if let solo = persona.soloFire { p.fire = (t + solo.phase, true); p.firePeriod = solo.period }
                     else { p.fire = (lt, true) }
-                case .lightning: p.zap = true; p.armRaise = 2
+                case .lightning:
+                    if let d = soloDrill, d.kind == .skyCast || d.kind == .portal { p.armRaise = 3 }
+                    else { p.zap = true; p.armRaise = 2 }
                 case .none: break
                 }
             }
         }
     }
+    drillPose?(&p)
     if let fire = p.fire { p.recoil = shotRecoil(t: fire.t, period: p.firePeriod) }
     if p.seated { p.hop += 4 }
     // Hovering: a few pixels off the ground, bobbing gently (not when sitting down, or flying past).
@@ -189,10 +195,19 @@ func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walk
         if let fire = p.fire {
             drawMuzzleShot(c, t: fire.t, period: p.firePeriod, muzzle: persona.muzzle, style: persona.shot, bolt: fire.bolt,
                            gunY: classic ? 0 : p.gunY, classic: classic)
+            if soloDrill?.kind == .skyShots {
+                drawSkyShot(c, t: fire.t, period: p.firePeriod,
+                            muzzle: (persona.muzzle.x, persona.muzzle.y + Double(classic ? 0 : p.gunY)), style: persona.shot)
+            }
         }
         if let smoke = p.smoke { drawBarrelSmoke(c, x: persona.muzzle.x, y: persona.muzzle.y + Double(classic ? 0 : p.gunY), smoke) }
     case .lightning:
         let hand = (persona.pivot.x, persona.pivot.y - Double(p.armRaise))
+        if let d = soloDrill, d.kind == .skyCast || d.kind == .portal, !walking {
+            let on = d.kind == .skyCast ? drawSkyCast(c, persona.magic, hand: hand, t: lt, seed: d.seed)
+                                        : drawPortal(c, persona.magic, t: lt, seed: d.seed)
+            if !on { p.zap = false }                 // between goes: crackling in the hand
+        }
         if p.zap == true {
             drawMagic(c, persona.magic, from: hand, to: (70, hand.1 - (classic ? 2.5 : 2)), t: t)
         } else if p.zap == false {
