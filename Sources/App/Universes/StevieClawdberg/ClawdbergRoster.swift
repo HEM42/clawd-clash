@@ -61,9 +61,14 @@ enum ClawdbergVillain: Int, CaseIterable {
     var persona: Persona { clawdbergVillainPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-let clawdbergHeroPersonas: [ClawdbergHero: Persona] = [clawdbergHeroes1]
+let clawdbergHeroPersonas: [ClawdbergHero: Persona] = [clawdbergHeroes1, clawdbergHeroes2, clawdbergHeroes3,
+                                                         clawdbergHeroes4, clawdbergHeroes5, clawdbergHeroes6,
+                                                         clawdbergHeroes7]
     .reduce([.hem: hemPersona(.clawdberg)]) { $0.merging($1) { a, _ in a } }
-let clawdbergVillainPersonas: [ClawdbergVillain: Persona] = [clawdbergVillains1]
+let clawdbergVillainPersonas: [ClawdbergVillain: Persona] = [clawdbergVillains1, clawdbergVillains2,
+                                                               clawdbergVillains3, clawdbergVillains4,
+                                                               clawdbergVillains5, clawdbergVillains6,
+                                                               clawdbergVillains7]
     .reduce([:]) { $0.merging($1) { a, _ in a } }
 
 // MARK: - Homes
@@ -181,5 +186,7 @@ extension Location {
 }
 
 /// Every Stevie Clawdberg place, from the Places/ClawdbergScenes*.swift files.
-let clawdbergPlaces: [Location: Place] = [clawdbergScenes1]
+let clawdbergPlaces: [Location: Place] = [clawdbergScenes1, clawdbergScenes2, clawdbergScenes3, clawdbergScenes4,
+                                                  clawdbergScenes5, clawdbergScenes6, clawdbergScenes7, clawdbergScenes8,
+                                                  clawdbergScenes9, clawdbergScenes10]
     .reduce([:]) { $0.merging($1) { a, _ in a } }
