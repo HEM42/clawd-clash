@@ -1,20 +1,19 @@
 import AppKit
 import CoreText
 
-// Renders Resources/AppIcon.png (1024²): a comic cover in three slanted panels, one per universe (Star Wars, Marvel,
-// DC), with CLAWD CLASH across all three, each panel colouring its part of the name and the gutters cutting through
-// the letters. Spider-Man hangs on his web over the name, The Clawd Files' saucer hovers in the Star Wars sky, Darth
-// Vader raises his saber, Doctor Clawd's Dalick sits in the middle panel under the name and Batman squares up under the
-// Bat-Signal, all drawn with the app's own sprite code. build.sh turns it into AppIcon.icns.
+// Renders Resources/AppIcon.png (1024²): Captain Americlawd, big, standing on CLAWD CLASH, the name stacked on two
+// lines, in front of a white comic burst over a starburst with a wedge of colour for each universe (speed lines in
+// each, halftone between them). Drawn with the app's own sprite code. Simple on purpose, so it still reads at the
+// 16 and 32 px Finder and the Dock use, and it doesn't need changing when a universe is added. build.sh turns it into
+// AppIcon.icns.
 //   swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
 //          Sources/App/Universes/**/*.swift Sources/Shared/*.swift Tools/MakeIcon/main.swift -o build/makeicon \
 //          && build/makeicon Resources/AppIcon.png
 
-let size: CGFloat = 1024
-let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(size), pixelsHigh: Int(size), bitsPerSample: 8,
-                           samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
-                           bytesPerRow: 0, bitsPerPixel: 0)!
-let ctx = NSGraphicsContext(bitmapImageRep: rep)!.cgContext
+let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 1024, pixelsHigh: 1024, bitsPerSample: 8, samplesPerPixel: 4,
+                           hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+let ctx = NSGraphicsContext.current!.cgContext
 ctx.interpolationQuality = .none
 
 func hex(_ h: UInt32, _ a: CGFloat = 1) -> CGColor {
@@ -23,23 +22,9 @@ func hex(_ h: UInt32, _ a: CGFloat = 1) -> CGColor {
 func rnd(_ i: Int) -> CGFloat { CGFloat(noise(i)) }
 let inkColor = hex(0x111018)
 
-// macOS icon grid: 824² rounded square, centred.
+// macOS icon grid: an 824² rounded square, centred.
 let tile = CGRect(x: 100, y: 100, width: 824, height: 824)
 let shape = CGPath(roundedRect: tile, cornerWidth: 185, cornerHeight: 185, transform: nil)
-ctx.saveGState()
-ctx.addPath(shape); ctx.clip()
-
-// MARK: The panels
-
-/// Panel `i` (0 Star Wars, 1 Marvel, 2 DC): slanted, reaching past the tile.
-func panel(_ i: Int) -> CGPath {
-    let cuts: [CGFloat] = [-200, 380, 650, 1300], tilt: CGFloat = 70
-    let p = CGMutablePath()
-    p.addLines(between: [CGPoint(x: cuts[i] - tilt, y: 0), CGPoint(x: cuts[i + 1] - tilt, y: 0),
-                         CGPoint(x: cuts[i + 1] + tilt, y: size), CGPoint(x: cuts[i] + tilt, y: size)])
-    p.closeSubpath()
-    return p
-}
 
 /// Halftone dots over `r`, `cell` apart, each `dot(at)` of its cell across.
 func halftone(_ r: CGRect, color: CGColor, cell: CGFloat, dot: (CGPoint) -> CGFloat) {
@@ -55,46 +40,6 @@ func halftone(_ r: CGRect, color: CGColor, cell: CGFloat, dot: (CGPoint) -> CGFl
     }
     ctx.setFillColor(color); ctx.fillPath()
 }
-
-// Each panel's sky: Sith red with stars, Marvel red into blue, Gotham's night blue under the Night Beacon; rays from the
-// middle and halftone dots, heavier towards the bottom.
-let skies: [(UInt32, UInt32)] = [(0x6E0C1A, 0x1A0610), (0xB81A2A, 0x0E2A6E), (0x2B3F7A, 0x0A1028)]
-let middle = CGPoint(x: 512, y: 520)
-for i in 0..<3 {
-    ctx.saveGState()
-    ctx.addPath(panel(i)); ctx.clip()
-    let sky = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [hex(skies[i].0), hex(skies[i].1)] as CFArray, locations: [0, 1])!
-    ctx.drawLinearGradient(sky, start: CGPoint(x: 0, y: 924), end: CGPoint(x: 0, y: 100), options: [])
-    for r in 0..<30 {
-        let a = CGFloat(r) / 30 * 2 * .pi, w = 0.045 + 0.03 * rnd(r)
-        ctx.move(to: middle)
-        ctx.addLine(to: CGPoint(x: middle.x + cos(a - w) * 1400, y: middle.y + sin(a - w) * 1400))
-        ctx.addLine(to: CGPoint(x: middle.x + cos(a + w) * 1400, y: middle.y + sin(a + w) * 1400))
-        ctx.closePath()
-    }
-    ctx.setFillColor(hex(0xFFFFFF, 0.05)); ctx.fillPath()
-    halftone(tile, color: hex(0x000000, 0.22), cell: 18) { p in 0.2 + 0.45 * (1 - (p.y - 100) / 824) }
-    if i == 0 {
-        for s in 0..<34 {   // pixel stars
-            let big = rnd(9 + s * 3 + 2) > 0.85, d: CGFloat = big ? 8 : 4
-            let x = 100 + rnd(9 + s * 3) * 824, y = 100 + rnd(9 + s * 3 + 1) * 824
-            ctx.setFillColor(hex(0xFFFFFF, big ? 0.95 : 0.55))
-            ctx.fill(CGRect(x: (x / d).rounded() * d, y: (y / d).rounded() * d, width: d, height: d))
-        }
-    }
-    if i == 2 {
-        let signal = CGPoint(x: 800, y: 800)
-        ctx.setFillColor(hex(0xFFE36B, 0.9)); ctx.fillEllipse(in: CGRect(x: signal.x - 85, y: signal.y - 60, width: 170, height: 120))
-        ctx.addPath(cowlMaskPath(signal, width: 140)); ctx.setFillColor(inkColor); ctx.fillPath(using: .evenOdd)
-    }
-    ctx.restoreGState()
-}
-
-// Spider-Man's web line, from above the frame down to where he hangs.
-ctx.move(to: CGPoint(x: 520, y: 1024)); ctx.addLine(to: CGPoint(x: 520, y: 880))
-ctx.setStrokeColor(hex(0xFFFFFF, 0.95)); ctx.setLineWidth(6); ctx.strokePath()
-
-// MARK: The name
 
 /// The outline of `s` in Futura Condensed ExtraBold, centred on the origin.
 func letters(_ s: String) -> CGPath {
@@ -115,98 +60,83 @@ func letters(_ s: String) -> CGPath {
     return path.copy(using: &t)!
 }
 
-/// Faces of the name, top to bottom, per panel: rose-white for Star Wars, ice blue for Marvel, Bat-Signal yellow for DC.
-let faces: [(UInt32, UInt32)] = [(0xFFFFFF, 0xFF8A8A), (0xFFFFFF, 0x8FB8FF), (0xFFF3B0, 0xFFC21A)]
-
 /// A word of the name centred on `c`, as big as fits `width`×`height`, tilted by `angle`: a deep block extrusion, a
-/// thick inkColor outline, and a face coloured by whichever panel each part of it is in, with a shine.
+/// thick ink outline, a yellow face with a shine.
 func word(_ s: String, at c: CGPoint, width: CGFloat, height: CGFloat, angle: CGFloat, depth: Int) {
     var path = letters(s)
     let k = min(width / path.boundingBox.width, height / path.boundingBox.height)
     var t = CGAffineTransform(scaleX: k, y: k).concatenating(CGAffineTransform(rotationAngle: angle))
         .concatenating(CGAffineTransform(translationX: c.x, y: c.y))
     path = path.copy(using: &t)!
-    let b = path.boundingBox, step = b.height / 80, line = b.height * 0.15
-    ctx.saveGState()
-    ctx.setLineJoin(.round)
+    let b = path.boundingBox, step = b.height / 80, line = b.height * 0.16
+    ctx.saveGState(); ctx.setLineJoin(.round)
     for i in stride(from: depth, through: 1, by: -1) {
-        ctx.saveGState()
-        ctx.translateBy(x: CGFloat(i) * step * 0.6, y: -CGFloat(i) * step)
+        ctx.saveGState(); ctx.translateBy(x: CGFloat(i) * step * 0.6, y: -CGFloat(i) * step)
         ctx.addPath(path); ctx.setStrokeColor(inkColor); ctx.setLineWidth(line); ctx.strokePath()
         ctx.addPath(path); ctx.setFillColor(inkColor); ctx.fillPath()
         ctx.restoreGState()
     }
     ctx.addPath(path); ctx.setStrokeColor(inkColor); ctx.setLineWidth(line); ctx.strokePath()
-    for i in 0..<3 {
-        ctx.saveGState()
-        ctx.addPath(panel(i)); ctx.clip()
-        ctx.addPath(path); ctx.clip()
-        let face = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [hex(faces[i].0), hex(faces[i].1)] as CFArray, locations: [0.2, 1])!
-        ctx.drawLinearGradient(face, start: CGPoint(x: 0, y: b.maxY), end: CGPoint(x: 0, y: b.minY), options: [])
-        ctx.setFillColor(hex(0xFFFFFF, 0.3)); ctx.fill(CGRect(x: b.minX, y: b.midY + b.height * 0.1, width: b.width, height: b.height * 0.09))
-        ctx.restoreGState()
+    ctx.saveGState(); ctx.addPath(path); ctx.clip()
+    let face = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [hex(0xFFF3B0), hex(0xFFC21A)] as CFArray, locations: [0.2, 1])!
+    ctx.drawLinearGradient(face, start: CGPoint(x: 0, y: b.maxY), end: CGPoint(x: 0, y: b.minY), options: [])
+    ctx.setFillColor(hex(0xFFFFFF, 0.3)); ctx.fill(CGRect(x: b.minX, y: b.midY + b.height * 0.1, width: b.width, height: b.height * 0.09))
+    ctx.restoreGState(); ctx.restoreGState()
+}
+
+ctx.saveGState(); ctx.addPath(shape); ctx.clip()
+
+// The starburst: white, halftone, and a wedge of colour for each universe, speed lines running out in each.
+let centre = CGPoint(x: 512, y: 640)
+let wedges: [(UInt32, UInt32)] = [(0xE8322E, 0xFF7A70), (0x2EA8E8, 0x8AD8FF), (0xFFD62E, 0xFFF08A), (0xA65AE8, 0xD2A8FF), (0x7CC84A, 0xB8EC88)]
+ctx.setFillColor(hex(0xFFFFFF)); ctx.fill(tile)
+halftone(tile, color: hex(0xB8B8C0), cell: 15) { _ in 0.42 }
+for (i, w) in wedges.enumerated() {
+    let n = CGFloat(wedges.count), gap: CGFloat = 0.08
+    let a0 = .pi / 2 + CGFloat(i) / n * 2 * .pi + gap / 2, a1 = .pi / 2 + CGFloat(i + 1) / n * 2 * .pi - gap / 2
+    let wedge = CGMutablePath()
+    wedge.move(to: centre)
+    wedge.addLine(to: CGPoint(x: centre.x + cos(a0) * 1400, y: centre.y + sin(a0) * 1400))
+    wedge.addLine(to: CGPoint(x: centre.x + cos(a1) * 1400, y: centre.y + sin(a1) * 1400))
+    wedge.closeSubpath()
+    ctx.saveGState(); ctx.addPath(wedge); ctx.clip()
+    ctx.setFillColor(hex(w.0)); ctx.fill(tile)
+    for k in 0..<40 {
+        let a = a0 + (a1 - a0) * rnd(k * 7 + i * 13), r0 = 120 + rnd(k * 7 + 1) * 160
+        ctx.move(to: CGPoint(x: centre.x + cos(a) * r0, y: centre.y + sin(a) * r0))
+        ctx.addLine(to: CGPoint(x: centre.x + cos(a) * 1400, y: centre.y + sin(a) * 1400))
     }
+    ctx.setStrokeColor(hex(w.1, 0.6)); ctx.setLineWidth(5); ctx.strokePath()
     ctx.restoreGState()
-}
-word("CLAWD", at: CGPoint(x: 512, y: 640), width: 700, height: 175, angle: 0.05, depth: 12)
-word("CLASH", at: CGPoint(x: 512, y: 440), width: 760, height: 190, angle: 0.05, depth: 14)
-
-// The gutters, over the name, so they cut through it too.
-for x in [380.0, 650.0] as [CGFloat] {
-    ctx.move(to: CGPoint(x: x - 70, y: 0)); ctx.addLine(to: CGPoint(x: x + 70, y: size))
-    ctx.setStrokeColor(inkColor); ctx.setLineWidth(22); ctx.strokePath()
-    ctx.move(to: CGPoint(x: x - 70, y: 0)); ctx.addLine(to: CGPoint(x: x + 70, y: size))
-    ctx.setStrokeColor(hex(0xFFFFFF)); ctx.setLineWidth(12); ctx.strokePath()
+    ctx.addPath(wedge); ctx.setStrokeColor(inkColor); ctx.setLineWidth(5); ctx.strokePath()
 }
 
-// MARK: The cast
-
-/// `who` with its body's centre at `x` and feet at `feet`, `p` icon pixels a sprite pixel, white-outlined as in the app.
-func put(_ who: Cast, t: Double, role: FightRole = .none, x: CGFloat, feet: CGFloat, p: CGFloat, mirrored: Bool = false, angle: CGFloat = 0) {
-    let c = PixelCanvas(72, 52)
-    // Drawn as an agent: a session working alone would be doing its solo practice (Drills.swift) instead of posing.
-    who.draw(c, t: t, mode: .working, walking: false, role: role, asSession: false)
-    c.addOutline(C(0xFFFFFF, 0.92))
-    ctx.saveGState()
-    ctx.translateBy(x: x, y: feet); ctx.rotate(by: angle)
-    if mirrored { ctx.scaleBy(x: -1, y: 1) }
-    // The body's centre is 28 columns in, the feet 8 rows up from the bottom.
-    ctx.draw(c.makeImage()!, in: CGRect(x: -28 * p, y: -8 * p, width: 72 * p, height: 52 * p))
-    ctx.restoreGState()
+// The white comic burst behind him.
+let burst = CGMutablePath(), spikes = 14
+for k in 0..<(spikes * 2) {
+    let a = CGFloat(k) / CGFloat(spikes * 2) * 2 * .pi, rr: CGFloat = k % 2 == 0 ? 1 : 0.78
+    let pt = CGPoint(x: centre.x + cos(a) * 330 * rr * (0.92 + 0.16 * rnd(k)), y: centre.y + sin(a) * 300 * rr * (0.92 + 0.16 * rnd(k + 40)))
+    if k == 0 { burst.move(to: pt) } else { burst.addLine(to: pt) }
 }
+burst.closeSubpath()
+ctx.addPath(burst); ctx.setFillColor(hex(0xFFFFFF)); ctx.fillPath()
+ctx.addPath(burst); ctx.setStrokeColor(inkColor); ctx.setLineWidth(10); ctx.setLineJoin(.round); ctx.strokePath()
 
-// Spider-Man hanging upside down on his web, over the name.
-put(.hero(MarvelHero.spiderMan), t: 0.2, x: 505, feet: 885, p: 6.2, angle: .pi)
+// Captain Americlawd, shield up, standing on the name. Drawn as an agent: a session working alone would be doing its
+// solo practice (Drills.swift) instead of posing.
+let cap = PixelCanvas(72, 52)
+Cast.hero(MarvelHero.captainAmerica).draw(cap, t: 0.42, mode: .working, walking: false, role: .none, asSession: false)
+cap.addOutline(C(0xFFFFFF, 0.95))
+let p: CGFloat = 13   // icon pixels a sprite pixel; the body's centre is 28 columns in, the feet 8 rows up
+ctx.draw(cap.makeImage()!, in: CGRect(x: 512 - 28 * p, y: 488 - 8 * p, width: 72 * p, height: 52 * p))
 
-// Vader, his red saber raised along the hilt he holds.
-let vx: CGFloat = 230, vy: CGFloat = 150, vp: CGFloat = 7.5
-put(.villain(SWVillain.vader), t: 0.4, x: vx, feet: vy, p: vp)
-let saber = CGMutablePath()
-saber.move(to: CGPoint(x: vx + 13.5 * vp, y: vy + 9.5 * vp)); saber.addLine(to: CGPoint(x: vx + 0.5 * vp, y: vy + 30 * vp))
-ctx.saveGState()
-ctx.setLineCap(.round)
-ctx.setShadow(offset: .zero, blur: 35, color: hex(0xFF2A2A))
-ctx.addPath(saber); ctx.setStrokeColor(hex(0xFF2A2A)); ctx.setLineWidth(22); ctx.strokePath()
-ctx.setShadow(offset: .zero, blur: 0, color: nil)
-ctx.addPath(saber); ctx.setStrokeColor(hex(0xFFFFFF)); ctx.setLineWidth(9); ctx.strokePath()
+// The name, stacked big.
+word("CLAWD", at: CGPoint(x: 505, y: 405), width: 760, height: 205, angle: 0.05, depth: 12)
+word("CLASH", at: CGPoint(x: 520, y: 210), width: 800, height: 215, angle: 0.05, depth: 12)
 ctx.restoreGState()
 
-// The Clawd Files' saucer in the Star Wars panel's sky, over the name, its pale beam on the C.
-let saucerCanvas = PixelCanvas(66, 29)
-drawSaucer(saucerCanvas, ramp: 0.7, engines: true)
-saucerCanvas.addOutline(C(0xFFFFFF, 0.92))
-let sp: CGFloat = 3.6
-ctx.draw(saucerCanvas.makeImage()!, in: CGRect(x: 268 - 33 * sp, y: 868 - 29 * sp, width: 66 * sp, height: 29 * sp))
+// A subtle rim.
+ctx.addPath(shape); ctx.setStrokeColor(hex(0xFFFFFF, 0.14)); ctx.setLineWidth(4); ctx.strokePath()
 
-// A Dalick from Doctor Clawd in the middle panel, under the name, its gun on Batman.
-put(.villain(DoctorVillain.dalick), t: 0.3, x: 462, feet: 112, p: 6.2)
-
-// Batman squaring up, facing them.
-put(.hero(DCHero.batman), t: 0.6, role: .duel, x: 790, feet: 130, p: 7.5, mirrored: true)
-ctx.restoreGState()
-
-// Subtle rim
-ctx.addPath(shape)
-ctx.setStrokeColor(hex(0xFFFFFF, 0.14)); ctx.setLineWidth(4); ctx.strokePath()
-
+NSGraphicsContext.current = nil
 try! rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: CommandLine.arguments[1]))
