@@ -11,11 +11,13 @@ let filesVillains7: [FilesVillain: Persona] = [
     .bigBlue: Persona(name: "Big Blue", weapon: .saber, motion: .hover, canSit: false, headTop: 12, signature: 4.0,
                       fidgets: false,
                       draw: drawBigBlue),
-    .tithonus: Persona(name: "Tithonus", weapon: .lightning, magic: Magic(core: C(0xFFFFFF), glow: C(0xD8E4FF), jagged: false),
-                       pivot: flashBulb, headTop: 21, signature: 3.2, callout: "Hold still.",
+    // Tithonus's flash and Cecil's fire are shots, not a magic stream: built in (`handGun: false`), so they don't
+    // crackle in the hand when idle either.
+    .tithonus: Persona(name: "Tithonus", weapon: .blaster, shot: .energy(core: C(0xFFFFFF), glow: C(0xD8E4FF)),
+                       muzzle: flashBulb, handGun: false, headTop: 21, signature: 3.2, callout: "Hold still.",
                        draw: drawTithonus),
-    .cecilLively: Persona(name: "Cecil L'ively", weapon: .lightning, magic: Magic(core: C(0xFFF0A0), glow: C(0xFF5A1A)),
-                          pivot: (43.0, 32.0), headTop: 21, signature: 3.4, callout: "It doesn't hurt.",
+    .cecilLively: Persona(name: "Cecil L'ively", weapon: .blaster, shot: .fire, muzzle: (44.0, 29.0), handGun: false,
+                          headTop: 21, signature: 3.4, callout: "It doesn't hurt.",
                           draw: drawCecilLively),
     .lutherLeeBoggs: Persona(name: "Luther Lee Boggs", headTop: 23, signature: 3.6, callout: "They speak through me.",
                              draw: drawLutherLeeBoggs),
@@ -30,7 +32,7 @@ let filesVillains7: [FilesVillain: Persona] = [
 ]
 
 /// Where Tithonus's flashbulb is, the camera raised: the flash leaves from there.
-private let flashBulb = (x: 47.0, y: 28.0)
+private let flashBulb: (x: Double, y: Double) = (47.0, 26.0)
 
 // MARK: - Shared bits
 
@@ -194,8 +196,9 @@ private func drawTithonus(_ c: PixelCanvas, _ p: Pose) {
     let cardigan = C(0x6A5038), cardiganD = C(0x4E3A28), shirt = C(0xE6E2D6), tie = C(0x3A3A44)
     let hair = C(0xA8AAB0), hairD = C(0x7E8088), trousers = C(0x4A4A50)
     let sig = p.signature
-    let shooting = (sig.map { $0 > 0.08 && $0 < 0.5 } ?? false) || p.zap != nil || p.ready || (!p.resting && !p.walking)
-    let pop = sig.map { $0 > 0.28 && $0 < 0.38 } ?? false
+    let shooting = (sig.map { $0 > 0.08 && $0 < 0.5 } ?? false) || p.fire != nil || p.ready || (!p.resting && !p.walking)
+    let fired: Bool = p.fire.map { frac($0.t / p.firePeriod) < 0.15 } ?? false
+    let pop = (sig.map { $0 > 0.28 && $0 < 0.38 } ?? false) || fired
     let print = sig.map { $0 >= 0.45 && $0 < 0.95 } ?? false
     drawLegs(c, Look(leg: trousers), step: p.step)
     drawDressShoes(c, step: p.step, color: C(0x3A2416))
@@ -226,7 +229,7 @@ private func drawTithonus(_ c: PixelCanvas, _ p: Pose) {
         c.rect(38, 30, 3, 4, cardigan)
         c.rect(39, 28, 6, 5, C(0x24242A)); c.rect(40, 29, 2, 2, C(0x6A6E78)); c.rect(45, 29, 2, 3, C(0x3A3A42))
         c.pattern(44, 24, [".RRR.", "RRWRR", "RWBWR", "RRWRR", ".RRR."], ["R": C(0xC8CCD4), "W": C(0xEEF2F6), "B": C(0xFFF6D0)])
-        if pop || p.zap == true {
+        if pop {
             c.circle(46, 26, 4, C(0xFFFFFF, 0.55)); c.circle(46, 26, 2, C(0xFFFFFF, 0.9))
         }
     } else {
@@ -238,21 +241,26 @@ private func drawTithonus(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Cecil L'ively
 
-/// Cecil L'ively: Clawd with slicked-back black hair, a white vest and dark trousers, small flames always dancing at
-/// his fingertips. He throws fire. Signature: he sets himself alight, flames climbing all over him while he stands
-/// there perfectly calm, then they die back to his fingers.
+/// Cecil L'ively: Clawd with slicked-back black hair, a white long-sleeved undershirt with red braces over it, dark
+/// trousers, a smudge of soot on him, and small flames always dancing at his fingertips. He throws fire. Signature: he
+/// sets himself alight, flames climbing all over him while he stands there perfectly calm, then they die back to his
+/// fingers.
 private func drawCecilLively(_ c: PixelCanvas, _ p: Pose) {
     let vest = C(0xEEEEE8), vestD = C(0xC8C8C0), trousers = C(0x2A2A30), hair = C(0x16141A), hairL = C(0x3A3640)
+    let braces = C(0xB8241E), soot = C(0x3A2A24)
     let sig = p.signature
     let ablaze = sig.map { s -> Double in s < 0.15 ? s / 0.15 : s > 0.8 ? (1 - s) / 0.2 : 1 } ?? 0
     drawLegs(c, Look(leg: trousers), step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
-    drawBody(c, Look(arm: clawdOrange))
-    // The vest: a white singlet, straps over the shoulders.
-    c.rect(19, 35, 18, 3, vest); c.rect(36, 35, 1, 3, vestD); c.rect(19, 37, 18, 1, vestD)
-    c.rect(22, 34, 3, 1, vest); c.rect(31, 34, 3, 1, vest)       // the scoop neck, Clawd showing in it
-    c.rect(22, 33, 1, 1, vest); c.rect(33, 33, 1, 1, vest)       // the straps
+    drawBody(c, Look(arm: vest))
+    // The undershirt, up to the collarbone, and the red braces down it.
+    c.rect(18, 33, 20, 5, vest); c.rect(37, 33, 1, 5, vestD); c.rect(18, 37, 20, 1, vestD)
+    c.rect(25, 33, 6, 1, clawdOrange)                             // the open neck
+    c.rect(21, 33, 2, 5, braces); c.rect(33, 33, 2, 5, braces)
+    c.rect(18, 37, 20, 1, trousers)                               // the waistband
+    // Soot on his cheek, from the last time.
+    c.px(34, 31, soot); c.px(35, 32, soot.alpha(0.6))
     // Slicked-back black hair with a shine.
     c.pattern(17, 22, [
         "....HHHHHHHHHHHHHH....",
@@ -263,13 +271,14 @@ private func drawCecilLively(_ c: PixelCanvas, _ p: Pose) {
     ], ["H": hair, "l": hairL])
     // A calm, heavy-lidded look.
     c.rect(22, 29, 2, 1, C(0xB85F40)); c.rect(32, 29, 2, 1, C(0xB85F40))
-    let casting = p.zap != nil || p.ready || (!p.resting && !p.walking)
-    c.rect(15, 33, 3, 3, clawdOrange)
+    let casting = p.fire != nil || p.ready || (!p.resting && !p.walking)
+    c.rect(15, 33, 3, 3, vest); c.rect(15, 35, 3, 1, clawdOrange)
     if casting {
-        c.rect(38, 31 - p.armRaise, 4, 3, clawdOrange)
-        for i in 0..<3 { drawLick(c, x: 41 + i, y: 30 - p.armRaise, h: 3 + i % 2, t: p.t, k: i) }
+        // The hand up and open, the fire it throws leaving from just over it.
+        c.rect(38, 31, 3, 3, vest); c.rect(41, 31, 2, 2, clawdOrange)
+        for i in 0..<3 { drawLick(c, x: 41 + i, y: 30, h: 3 + i % 2, t: p.t, k: i) }
     } else {
-        c.rect(38, 33, 3, 3, clawdOrange)
+        c.rect(38, 33, 3, 3, vest); c.rect(38, 35, 3, 1, clawdOrange)
         for i in 0..<3 { drawLick(c, x: 38 + i, y: 32, h: 2 + i % 2, t: p.t, k: i + 3) }
     }
     for i in 0..<3 { drawLick(c, x: 15 + i, y: 32, h: 2, t: p.t, k: i + 6) }
@@ -289,7 +298,8 @@ private func drawCecilLively(_ c: PixelCanvas, _ p: Pose) {
 /// his wrists in cuffs on a short chain. He doesn't fight. Signature: he channels the dead: his eyes roll back white,
 /// his head tips back, and pale wisps of faces drift up and around him, then fade.
 private func drawLutherLeeBoggs(_ c: PixelCanvas, _ p: Pose) {
-    let suit = C(0xE8701E), suitD = C(0xB8501A), stubble = C(0x3A2E26), steel = C(0xC8CCD4)
+    // Prison orange, yellower and brighter than Clawd's own, so the jumpsuit reads as clothes.
+    let suit = C(0xF59A12), suitD = C(0xC06E08), stubble = C(0x3A2E26), steel = C(0xD8DCE4), steelD = C(0x6A707A)
     let sig = p.signature
     let channel = sig.map { s -> Double in s < 0.15 ? s / 0.15 : s > 0.85 ? (1 - s) / 0.15 : 1 } ?? 0
     drawLegs(c, Look(leg: suit), step: p.step)
@@ -298,10 +308,10 @@ private func drawLutherLeeBoggs(_ c: PixelCanvas, _ p: Pose) {
     }
     c.oy += p.breathe
     drawBody(c, Look(arm: suit, eye: channel > 0.5 ? nil : ink))
-    // The jumpsuit and its stencilled number.
-    c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, suitD); c.rect(18, 37, 20, 1, suitD)
-    c.pattern(25, 33, ["V....V", ".V..V.", "..VV.."], ["V": suitD])
-    c.pattern(30, 35, ["W.W.W", "WWWW."], ["W": C(0xF4E8D8)])
+    // The jumpsuit, up over the chest, its V-neck, and DOC stencilled big across it.
+    c.rect(18, 32, 20, 6, suit); c.rect(37, 32, 1, 6, suitD); c.rect(18, 37, 20, 1, suitD)
+    c.pattern(25, 32, ["VOOOOV", ".VVVV."], ["V": suitD, "O": clawdOrange])
+    c.pattern(21, 34, ["WW..WWW.WWW", "W.W.W.W.W..", "WW..WWW.WWW"], ["W": C(0xFAF2E4)])
     // The shaved head: a speckle of stubble across the top, meeting the body.
     for y in 23...25 {
         for x in stride(from: 19 + (y == 23 ? 3 : 0), through: 36 - (y == 23 ? 3 : 0), by: 1) where (x + y) % 2 == 0 {
@@ -316,8 +326,8 @@ private func drawLutherLeeBoggs(_ c: PixelCanvas, _ p: Pose) {
     }
     // Hands in front, cuffed, the short chain between.
     c.rect(15, 33, 3, 3, suit); c.rect(38, 33, 3, 3, suit)
-    c.rect(17, 36, 2, 1, steel); c.rect(37, 36, 2, 1, steel)
-    for x in stride(from: 19, to: 37, by: 2) { c.px(x, 37, steel) }
+    c.rect(15, 35, 3, 2, steel); c.rect(38, 35, 3, 2, steel); c.rect(15, 36, 3, 1, steelD); c.rect(38, 36, 3, 1, steelD)
+    for x in stride(from: 18, to: 38, by: 2) { c.px(x, 38, steel); c.px(x + 1, 38, steelD) }
     // The dead: pale faces drifting up round him.
     if channel > 0 {
         for i in 0..<4 {
@@ -432,9 +442,11 @@ private func drawRoboRoach(_ c: PixelCanvas, _ p: Pose) {
     c.rect(28, 36, 1, 4, shellL.alpha(0.8))                              // the seam down its back
     for x in [24, 32] { c.px(x, 38, steel) }                             // rivets
     c.rect(38, 37, 3, 3, steelD); c.px(40, 38, Int(p.t * 5) % 2 == 0 ? C(0xFF2A2A) : C(0x8A1A1A))
+    // The feelers: a little see-through, so the outline leaves them as two clean whiskers.
     let tw = Int(p.t * 7) % 2
-    c.px(41, 36, steel); c.px(42, 35 - tw, steel); c.px(43, 34 - tw, steel); c.px(44, 34, steel)
-    c.px(41, 37, steel); c.px(43, 37 + tw, steel); c.px(45, 37, steel)
+    let feeler = C(0xC8D0D8, 0.85)
+    c.px(41, 36, feeler); c.px(42, 35, feeler); c.px(43, 34 - tw, feeler); c.px(44, 33 - tw, feeler)
+    c.px(41, 37, feeler); c.px(42, 37, feeler); c.px(43, 36 + tw, feeler); c.px(44, 36 + tw, feeler)
 }
 
 /// A flukeworm: a pale, ringed little worm with a round toothy sucker, inching along the floor and rearing its head.

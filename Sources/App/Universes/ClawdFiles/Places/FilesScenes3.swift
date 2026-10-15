@@ -217,13 +217,14 @@ extension Scenes {
                                                             lamps: [(x: Int, y: Int)]) {
         let s = unit(g), water = g - 9 * s, r = 7 * s
         let lampY = g - 40 * s
-        return (water, isTall(c) ? g / 3 : 0, (c.w * 42 / 100, water - r + 2 * s, r),
+        return (water, isTall(c) ? g / 3 : 0, (c.w * 42 / 100, water - r - 9 * s, r),
                 lampY > 3 * s ? [(c.w * 20 / 100, lampY), (c.w * 62 / 100, lampY)] : [])
     }
 
     /// The sewers of Newark: a brick tunnel, its walls sweating, pipes running along it with a valve wheel and rusted
-    /// joints, and a channel of black-green water behind the walkway. On the screen saver the vault arches overhead,
-    /// with a grating letting in a shaft of light.
+    /// joints, and a channel of black-green water behind the walkway. On the screen saver the vault arches overhead on
+    /// brick piers, with a grating letting in a shaft of light and a ladder up to it, a side tunnel running off into the
+    /// dark, a downpipe, and grime and moss where the water runs.
     static func newarkSewers(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), f = sewerFrame(c, g)
         c.rect(0, 0, c.w, g, C(0x1E1A14))
@@ -254,6 +255,7 @@ extension Scenes {
             }
             c.rect(cx - 12 * s, 0, 24 * s, 4 * s, C(0x2A2620))
             for x in stride(from: cx - 11 * s, to: cx + 12 * s, by: 3 * s) { c.rect(x, 0, s, 4 * s, C(0x0A0A08)) }
+            s13SewerVault(c, g, s: s, f: f)
         }
         // The pipes: two along the wall, with joints, one with a valve wheel.
         let pipes = [g - 30 * s, g - 22 * s].filter { $0 > 2 * s }
@@ -283,6 +285,65 @@ extension Scenes {
         c.rect(0, g - 2 * s, c.w, 2 * s, C(0x4A4A42))
         // The walkway.
         c.ground(g, C(0x34342E), edge: C(0x5A5A50), speck: C(0x24241F), seed: 61)
+    }
+
+    /// The screen saver's vault, filled in: brick piers with the ribs of the arches springing from them, a side
+    /// tunnel's dark mouth, the iron ladder up to the grating, a downpipe, and grime, moss and stains.
+    private static func s13SewerVault(_ c: PixelCanvas, _ g: Int, s: Int, f: (water: Int, wall: Int, outlet: (x: Int, y: Int, r: Int),
+                                                                               lamps: [(x: Int, y: Int)])) {
+        let cx = c.w / 2, wallBottom = f.water
+        // The piers: lighter brick standing proud of the wall, with the arch ribs curving away from their tops.
+        for px in [c.w * 12 / 100, c.w * 88 / 100] {
+            let top = f.wall / 2 + 6 * s, pw = 12 * s
+            c.rect(px - pw / 2 - s, top, pw + 2 * s, wallBottom - top, C(0x14110C))
+            for (row, y) in stride(from: top, to: wallBottom, by: 3 * s).enumerated() {
+                let off = row % 2 == 0 ? 0 : 3 * s
+                for x in stride(from: px - pw / 2 + off - 3 * s, to: px + pw / 2, by: 6 * s) {
+                    let x0 = max(px - pw / 2, x), x1 = min(px + pw / 2, x + 6 * s - s)
+                    if x1 > x0 { c.rect(x0, y, x1 - x0, 3 * s - s, C(0x4A3A2A)) }
+                }
+            }
+            c.rect(px - pw / 2 - 2 * s, top - 3 * s, pw + 4 * s, 3 * s, C(0x5A4A36))   // the capital
+            // The rib: a band of brick curving up toward the crown.
+            let dir = px < cx ? 1 : -1
+            for i in 0..<40 {
+                let k = Double(i) / 40
+                let x = px + dir * Int(k * Double(c.w / 2 - c.w * 12 / 100))
+                let y = top - 3 * s - Int(sin(k * .pi / 2) * Double(top - 3 * s - 6 * s))
+                c.rect(x - 2 * s, y - 2 * s, 5 * s, 3 * s, C(0x3E3022))
+                c.rect(x - 2 * s, y - 2 * s, 5 * s, max(1, s / 2), C(0x5A4632))
+            }
+        }
+        // The side tunnel's mouth: a black arch to the left of the outlet, a little water running out of it.
+        let tx = c.w * 25 / 100, tw = 22 * s, th = 30 * s
+        for y in 0..<th {
+            let r = Double(tw / 2), dy = Double(tw / 2 - y)
+            let half: Int = y < tw / 2 ? Int((r * r - dy * dy).squareRoot()) : tw / 2
+            c.rect(tx - half - 2 * s, wallBottom - th + y, half * 2 + 4 * s, 1, C(0x5A4A36))
+            c.rect(tx - half, wallBottom - th + y, half * 2, 1, C(0x060504))
+        }
+        c.rect(tx - tw / 2, wallBottom - 3 * s, tw, 3 * s, C(0x0C1A14))
+        // The ladder up to the grating, rusted.
+        let ladderBottom = f.water - 40 * s
+        for rail in [cx - 6 * s, cx + 5 * s] { c.rect(rail, 4 * s, s, ladderBottom - 4 * s, C(0x5A3A26)) }
+        for y in stride(from: 8 * s, to: ladderBottom, by: 5 * s) { c.rect(cx - 6 * s, y, 12 * s, s, C(0x6A4A30)) }
+        // A downpipe from the vault into the channel, with its brackets.
+        let dpx = c.w * 70 / 100
+        c.rect(dpx, f.wall / 3, 4 * s, f.water - f.wall / 3, C(0x3E463E)); c.rect(dpx, f.wall / 3, s, f.water - f.wall / 3, C(0x5A665A))
+        for y in stride(from: f.wall / 3 + 10 * s, to: f.water - 4 * s, by: 26 * s) { c.rect(dpx - s, y, 6 * s, 2 * s, C(0x2A2620)) }
+        // Grime: dark stains running down from the vault, moss low on the wall by the water, and rust under the joints.
+        for i in 0..<14 {
+            let x = Int(noise(i + 640) * Double(c.w)), top = f.wall / 2 + Int(noise(i + 650) * Double(f.wall))
+            let len = (20 + Int(noise(i + 660) * 50)) * s
+            c.rect(x, top, 2 * s, min(len, f.water - top), C(0x0A0806, 0.35))
+            c.rect(x + 2 * s, top, s, min(len / 2, f.water - top), C(0x2E4A32, 0.25))
+        }
+        for i in 0..<18 {
+            let x = Int(noise(i + 670) * Double(c.w)), w = (6 + Int(noise(i + 680) * 14)) * s
+            let h = (3 + Int(noise(i + 690) * 5)) * s
+            c.ellipse(x, f.water - h / 2, w / 2, h, C(0x2A4A2A, 0.45))
+            c.ellipse(x + s, f.water - h / 2 - s, w / 3, h / 2, C(0x3E6A3A, 0.35))
+        }
     }
 
     /// What moves in the sewer: water dripping from the pipe joints into the channel, rings spreading where it lands,
@@ -331,6 +392,14 @@ extension Scenes {
         if tall {
             // The shaft of light from the grating.
             filesBeam(c, ox: c.w / 2, oy: 4 * s, angle: .pi / 2 + 0.06, spread: 0.09, len: g - 4 * s, C(0xD8F0D8, 0.06), step: s)
+            // Drops falling from the grating, catching the light.
+            for i in 0..<3 {
+                let period = 1.7 + noise(i + 760) * 1.3
+                let k = ((t + noise(i + 770) * period) / period).truncatingRemainder(dividingBy: 1)
+                let x = c.w / 2 - 8 * s + Int(noise(i + 780) * Double(16 * s)) + i * s
+                let y = 4 * s + Int(k * k * Double(f.water - 4 * s))
+                c.rect(x, y, s, 2 * s, C(0xD8F0E0, 0.7))
+            }
         }
     }
 }

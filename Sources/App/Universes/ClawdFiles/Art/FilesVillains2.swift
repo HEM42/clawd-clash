@@ -7,14 +7,15 @@ import Foundation
 let filesVillains2: [FilesVillain: Persona] = [
     .clawcek: Persona(name: "Alex Clawcek", weapon: .saber, headTop: 21, signature: 3.0,
                       callout: "We want the same thing.", draw: drawClawcek),
-    .wellManicured: Persona(name: "The Well-Manicured Clawd", headTop: 20, signature: 3.4,
+    .wellManicured: Persona(name: "The Well-Manicured Clawd", weapon: .blaster, shot: .bullet, muzzle: (46, 31),
+                            handGun: false, headTop: 20, signature: 3.4,
                             callout: "Quite.", draw: drawWellManicured),
     .firstElder: Persona(name: "The First Elder", weapon: .saber, headTop: 26, signature: 3.0,
                          callout: "We've come too far.", draw: drawFirstElder),
     .dianaFowlclaw: Persona(name: "Diana Fowlclaw", weapon: .blaster, shot: .bullet, muzzle: (47, 32),
                             headTop: 19, signature: 3.2, callout: "I've always been on your side.",
                             draw: drawDianaFowlclaw),
-    .kersh: Persona(name: "Deputy Director Kersh", headTop: 21, signature: 2.6,
+    .kersh: Persona(name: "Deputy Director Kersh", weapon: .saber, headTop: 21, signature: 2.6,
                     callout: "My office. Now.", draw: drawKersh),
     .toothpickMan: Persona(name: "The Toothpick Man", weapon: .saber, armoured: true, headTop: 21, signature: 3.0,
                            callout: "Nothing personal.", draw: drawToothpickMan),
@@ -64,6 +65,7 @@ private func drawClawcek(_ c: PixelCanvas, _ p: Pose) {
     let oil = sig.map { $0 > 0.08 && $0 < 0.92 } ?? habit
 
     drawLegs(c, Look(leg: jeans), step: p.step)
+    v23LegGaps(c)
     drawDressShoes(c, step: p.step, color: C(0x2A1E16))
     c.oy += p.breathe
     drawBody(c, Look(arm: leather, eye: nil))
@@ -111,8 +113,9 @@ private func drawClawcek(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - The Well-Manicured Clawd
 
 /// The Well-Manicured Clawd: Clawd with silver hair neatly parted, little round spectacles, a navy pinstriped
-/// three-piece suit with a waistcoat, a silk tie and a white pocket square: the Syndicate's English gentleman. He doesn't
-/// fight: he holds a brandy glass. Signature: he raises the glass, swirls it, and sips.
+/// three-piece suit with a waistcoat, a silk tie and a white pocket square: the Syndicate's English gentleman. He holds
+/// a brandy glass; in a fight he moves it to his other hand and fires a little nickel-plated pistol. Signature: he
+/// raises the glass, swirls it, and sips.
 private func drawWellManicured(_ c: PixelCanvas, _ p: Pose) {
     let navy = C(0x22304E), navyD = C(0x161F36), stripe = C(0x3A4C70), waistcoat = C(0x2E3A5A)
     let shirt = C(0xF0EEE6), tie = C(0x6A1E3A), hair = C(0xD8DAE0), hairD = C(0xA8AAB4), wire = C(0xC4CAD2)
@@ -122,6 +125,7 @@ private func drawWellManicured(_ c: PixelCanvas, _ p: Pose) {
     let sipping = sig.map { $0 > 0.55 && $0 < 0.85 } ?? false
 
     drawLegs(c, Look(leg: navy), step: p.step)
+    v23LegGaps(c)
     drawDressShoes(c, step: p.step, color: C(0x3A1E10))
     c.oy += p.breathe
     drawBody(c, Look(arm: navy))
@@ -146,6 +150,16 @@ private func drawWellManicured(_ c: PixelCanvas, _ p: Pose) {
     for x0 in [21, 31] { c.pattern(x0, 28, [".WW.", "W..W", "W..W", ".WW."], ["W": wire]) }
     c.rect(25, 29, 6, 1, wire.alpha(0.8))
 
+    if p.fire != nil || p.hit {
+        // The glass in his other hand, kept level; the pistol out in this one.
+        c.rect(15, 33, 3, 3, navy)
+        c.pattern(12, 30, ["GGG", "GbG", ".G.", "GGG"], ["G": glass, "b": brandy])
+        c.oy += p.gunY
+        c.rect(38, 33, 3, 3, navy)
+        c.pattern(40, 31, ["NNNNNN", "NNdN..", "Nw....", "N....."], ["N": C(0xB8BEC8), "d": C(0x6E747E), "w": C(0xE8D8B8)])
+        c.px(41, 31, C(0xEEF2F6))
+        return
+    }
     c.rect(15, 33, 3, 3, navy)
     // The brandy glass: at his chest, or raised to his mouth, swirling.
     let gx = raised ? (sipping ? 33 : 39) : 39, gy = raised ? (sipping ? 30 : 27) : 31
@@ -169,6 +183,7 @@ private func drawFirstElder(_ c: PixelCanvas, _ p: Pose) {
     let tap = sig.map { s -> Int in (s > 0.08 && s < 0.18) || (s > 0.25 && s < 0.35) ? 1 : 0 } ?? 0
 
     drawLegs(c, Look(leg: suit), step: p.step)
+    v23LegGaps(c)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
@@ -217,6 +232,7 @@ private func drawDianaFowlclaw(_ c: PixelCanvas, _ p: Pose) {
     let phoning = sig.map { $0 >= 0.4 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: suit), step: p.step)
+    v23LegGaps(c)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit, eye: nil))
@@ -258,8 +274,8 @@ private func drawDianaFowlclaw(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Deputy Director Kersh
 
 /// Deputy Director Kersh: Clawd with close-cropped dark hair and a hard frown, a mid-grey suit, a white shirt and a
-/// maroon tie with an FBI pin. He doesn't fight: he holds a case file. Signature: he lifts the file and slams it down,
-/// papers jumping out of it.
+/// maroon tie with an FBI pin. He holds a case file, and in a fight he swats with it, rolled up tight, pages flying.
+/// Signature: he lifts the file and slams it down, papers jumping out of it.
 private func drawKersh(_ c: PixelCanvas, _ p: Pose) {
     let suit = C(0x5A5E68), suitD = C(0x42454E), shirt = C(0xF2F2EE), tie = C(0x6A1A22), hair = C(0x241A14)
     let manila = C(0xD8B870), manilaD = C(0xA88A48)
@@ -268,6 +284,7 @@ private func drawKersh(_ c: PixelCanvas, _ p: Pose) {
     let slam = sig.map { $0 >= 0.45 && $0 < 0.8 } ?? false
 
     drawLegs(c, Look(leg: suit), step: p.step)
+    v23LegGaps(c)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit, eye: nil))
@@ -285,6 +302,22 @@ private func drawKersh(_ c: PixelCanvas, _ p: Pose) {
     c.rect(22, 30, 2, 2, ink); c.rect(32, 30, 2, 2, ink)
 
     c.rect(15, 33, 3, 3, suit)
+    if let a = p.melee {
+        // The file rolled into a baton and swung, a loose page or two fluttering off the end.
+        for (i, ta) in p.trail.enumerated() {
+            let e = along(ta, 9)
+            bar(c, Sprite.hand.x, Sprite.hand.y, e.x, e.y, manila.alpha(0.3 / Double(i + 1)), 1.0)
+        }
+        c.rect(38, 33, 3, 3, suit)
+        let e = along(a, 9), m = along(a, 5)
+        bar(c, Sprite.hand.x, Sprite.hand.y, e.x, e.y, manila, 1.1)
+        c.rect(Int(m.x.rounded()), Int(m.y.rounded()), 1, 1, manilaD)
+        if !p.trail.isEmpty {
+            let f = along(a, 11)
+            c.rect(Int(f.x.rounded()) + 1, Int(f.y.rounded()) - 2, 2, 1, C(0xF4F2EA))
+        }
+        return
+    }
     if lifting {
         c.rect(38, 26, 3, 7, suit)
         c.pattern(37, 21, ["FFFFFF", "FFFFFF", "FFFFFF", "ffffff"], ["F": manila, "f": manilaD])
@@ -315,12 +348,13 @@ private func drawKersh(_ c: PixelCanvas, _ p: Pose) {
 /// his neck.
 private func drawToothpickMan(_ c: PixelCanvas, _ p: Pose) {
     let suit = C(0x16181E), suitL = C(0x2C3038), shirt = C(0xE8E8E4), tie = C(0x16181E), hair = C(0xD8C890)   // a pale blond crew cut
-    let pick = C(0xE0C890), steel = C(0xB8C4D0)
+    let pick = C(0xF4E4B4), pickD = C(0x8A6A3A), steel = C(0xB8C4D0)
     let sig = p.signature
     let flick = sig.map { $0 > 0.08 && $0 < 0.4 } ?? false
     let roll = sig.map { $0 >= 0.5 && $0 < 0.9 } ?? false
 
     drawLegs(c, Look(leg: suit), step: p.step)
+    v23LegGaps(c)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     if roll { c.ox += Int(sin((sig! - 0.5) / 0.4 * 2 * .pi).rounded()) }
@@ -334,13 +368,18 @@ private func drawToothpickMan(_ c: PixelCanvas, _ p: Pose) {
     c.rect(22, 30, 2, 2, ink); c.rect(32, 30, 2, 2, ink)
     // The toothpick: in the corner of his mouth, wagging; flicked up and caught in the signature.
     if flick {
+        // Up in the air, turning over, and caught.
         let k = (sig! - 0.08) / 0.32
-        let y = 32 - Int(sin(k * .pi) * 7)
-        c.rect(36 + Int(k * 2), y, 4, 1, pick)
+        let y = 31 - Int(sin(k * .pi) * 8), x = 37 + Int(k * 2)
+        let turn = Int(k * 6) % 2 == 0
+        if turn { c.rect(x, y, 6, 1, pick); c.rect(x, y + 1, 6, 1, pickD) }
+        else { c.rect(x + 2, y - 2, 1, 5, pick); c.rect(x + 3, y - 2, 1, 5, pickD) }
     } else {
-        // Out of the corner of his mouth, past his cheek, its tip wagging.
+        // Out of the corner of his mouth, tilted up past his cheek, its tip wagging.
         let wag = Int(sin(p.lt * 2.2).rounded())
-        c.px(34, 32, ink); c.rect(35, 32, 4, 1, pick); c.px(39, 32 + wag, pick)
+        c.px(33, 32, ink)
+        c.rect(34, 32, 3, 1, pick); c.rect(37, 31, 3, 1, pick); c.rect(40, 30 + wag, 2, 1, pick)
+        c.rect(37, 32, 3, 1, pickD); c.rect(40, 31 + wag, 2, 1, pickD)
     }
     // Hit: the steel of his spine shows down his back.
     if p.hit {

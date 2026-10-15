@@ -56,9 +56,11 @@ extension Scenes {
         let s = unit(g)
         let ceiling = g > 60 ? 5 * s : 0
         let wainscot = g - 12 * s
-        let wh = min(42 * s, wainscot - ceiling - 6 * s), ww = min(78 * s, c.w * 30 / 100)
+        // On the screen saver the window goes most of the way up the wall, as office windows at headquarters do.
+        let most = isTall(c) ? (wainscot - ceiling) * 78 / 100 : 42 * s
+        let wh = min(most, wainscot - ceiling - 6 * s), ww = min(78 * s, c.w * 30 / 100)
         let wy = max(ceiling + 3 * s, wainscot - wh - 5 * s)
-        return ((c.w * 12 / 100, wy, ww, wh), ceiling, wainscot, (c.w * 64 / 100, 58 * s))
+        return ((c.w * 12 / 100, wy, ww, wh), ceiling, wainscot, (c.w * 62 / 100, 74 * s))
     }
 
     /// Skinnard's office at FBI headquarters, after dark: warm grey walls over oak panelling, a tall window with its
@@ -76,18 +78,49 @@ extension Scenes {
             // Crown moulding; the official portrait and the clock high up; commendations clustered above the window
             // and the desk.
             c.rect(0, f.ceiling, c.w, 3 * s, C(0x4A443A)); c.rect(0, f.ceiling + 3 * s, c.w, s, C(0x5E5648))
-            let px = c.w * 46 / 100, py = f.ceiling + (g - f.ceiling) / 4
-            c.rect(px - 2 * s, py - 2 * s, 28 * s, 34 * s, C(0xB89A4A)); c.rect(px, py, 24 * s, 30 * s, C(0x1E2028))
-            c.ellipse(px + 12 * s, py + 11 * s, 6 * s, 7 * s, C(0xC8A080)); c.rect(px + 4 * s, py + 19 * s, 16 * s, 11 * s, C(0x22283A))
-            c.rect(px + 11 * s, py + 19 * s, 2 * s, 5 * s, C(0xE8E4DA)); c.rect(px + 7 * s, py + 4 * s, 10 * s, 3 * s, C(0x8A8A8A))
-            let kx = c.w * 72 / 100, ky = py + 4 * s
+            // A picture rail, and the ceiling's two light fittings.
+            let rail = f.window.y - 6 * s
+            c.rect(0, rail, c.w, s, C(0x4E463A)); c.rect(0, rail + s, c.w, s, C(0x1E1C18, 0.6))
+            for lx in [c.w * 30 / 100, c.w * 74 / 100] {
+                c.rect(lx - s / 2, f.ceiling + 4 * s, max(1, s), 6 * s, C(0x3A342A))
+                c.ellipse(lx, f.ceiling + 12 * s, 9 * s, 3 * s, C(0xD8CCA8)); c.rect(lx - 9 * s, f.ceiling + 12 * s, 18 * s, s, C(0x8A8070))
+            }
+            // The Director's official portrait, between the window and the desk, and the clock over the bookcase.
+            let pw = 30 * s, ph = 38 * s
+            let px = (f.window.x + f.window.w + f.desk.x) / 2 + 4 * s, py = max(rail + 10 * s, f.window.y + 6 * s)
+            c.rect(px - 2 * s, py - 2 * s, pw + 4 * s, ph + 4 * s, C(0xB89A4A)); c.rect(px, py, pw, ph, C(0x1E2028))
+            c.ellipse(px + 15 * s, py + 14 * s, 7 * s, 8 * s, C(0xC8A080)); c.rect(px + 5 * s, py + 24 * s, 20 * s, 14 * s, C(0x22283A))
+            c.rect(px + 14 * s, py + 24 * s, 2 * s, 6 * s, C(0xE8E4DA)); c.rect(px + 9 * s, py + 5 * s, 12 * s, 3 * s, C(0x8A8A8A))
+            c.rect(px + 9 * s, py + ph + 4 * s, 12 * s, 2 * s, C(0xB89A4A))   // its little brass plate
+            let kx = c.w * 92 / 100, ky = rail + 16 * s
             c.circle(kx, ky, 8 * s, C(0x3A2A1C)); c.circle(kx, ky, 7 * s, C(0xE8E4D4))
             c.rect(kx, ky - 5 * s, max(1, s / 2), 5 * s, ink); c.rect(kx, ky, 4 * s, max(1, s / 2), ink)
+            // The map of the field offices, pins in it, over the desk.
+            let mx = f.desk.x + 6 * s, my = rail + 22 * s, mw = 60 * s, mh = 34 * s
+            if my + mh < f.wainscot - 80 * s {
+                c.rect(mx - s, my - s, mw + 2 * s, mh + 2 * s, C(0x2A2016)); c.rect(mx, my, mw, mh, C(0xC8C4AE))
+                c.ellipse(mx + mw / 2, my + mh / 2, mw * 2 / 5, mh * 2 / 5, C(0xA8B08A))
+                c.rect(mx + mw / 2, my + mh / 2 - mh * 2 / 5, mw * 2 / 5, mh / 5, C(0xC8C4AE))
+                for i in 0..<14 {
+                    c.rect(mx + 6 * s + Int(noise(i + 900) * Double(mw - 12 * s)), my + 5 * s + Int(noise(i + 920) * Double(mh - 10 * s)),
+                           s, s, i % 4 == 0 ? C(0x2A4A9A) : C(0xC8202A))
+                }
+            }
+            // The Ten Most Wanted, pinned up in a row under the map.
+            let wy = my + mh + 12 * s
+            if wy + 16 * s < f.wainscot - 44 * s {
+                for k in 0..<4 {
+                    let x = mx + 2 * s + k * 15 * s
+                    c.rect(x, wy, 12 * s, 16 * s, C(0xE2DECE)); c.rect(x, wy, 12 * s, 3 * s, C(0x8A2A22))
+                    c.ellipse(x + 6 * s, wy + 8 * s, 3 * s, 3 * s, C(0x4A4A44)); c.rect(x + 3 * s, wy + 11 * s, 6 * s, 3 * s, C(0x4A4A44))
+                    c.rect(x + 2 * s, wy + 15 * s, 8 * s, max(1, s / 2), C(0x6A665A))
+                }
+            }
             for (cx0, n) in [(f.window.x, 4), (f.desk.x, 3)] {
                 for k in 0..<n {
                     let big = (k + n) % 2 == 0
                     let fw = (big ? 18 : 13) * s, fh = (big ? 14 : 10) * s
-                    let x = cx0 + k * 21 * s, y = f.window.y - 22 * s - (k % 2) * 6 * s
+                    let x = cx0 + k * 21 * s, y = (cx0 == f.window.x ? rail - 4 * s - fh : f.wainscot - 40 * s) - (k % 2) * 6 * s
                     c.rect(x, y, fw, fh, C(0x2A2016)); c.rect(x + s, y + s, fw - 2 * s, fh - 2 * s, C(0xC8BE9E))
                     if k % 3 == 1 { c.rect(x + 3 * s, y + 3 * s, fw - 6 * s, fh - 6 * s, C(0x5A5E5A)) }
                     else { for ly in stride(from: y + 3 * s, to: y + fh - 3 * s, by: 2 * s) { c.rect(x + 3 * s, ly, fw - 6 * s, s, C(0x8A8470)) } }
@@ -145,32 +178,41 @@ extension Scenes {
             }
         }
         // A bookcase at the end of the room.
-        let bx = c.w * 89 / 100, bh = min(40 * s, g - f.ceiling - 3 * s), btop = g - bh
-        c.rect(bx, btop, 20 * s, bh, C(0x3A2A1A))
-        for shelf in stride(from: btop + 2 * s, to: g - 6 * s, by: 9 * s) {
+        let bx = c.w * 88 / 100, bh = min((tall ? 70 : 52) * s, g - f.ceiling - 3 * s), btop = g - bh
+        c.rect(bx, btop, 26 * s, bh, C(0x3A2A1A)); c.rect(bx - s, btop, 28 * s, 2 * s, C(0x4E3822))
+        for shelf in stride(from: btop + 3 * s, to: g - 6 * s, by: 9 * s) {
             var x = bx + 2 * s, i = 0
-            while x < bx + 18 * s {
+            while x < bx + 24 * s {
                 let bw = (1 + Int(noise(shelf + i * 3) * 2)) * s
                 let hgt = 6 * s - Int(noise(shelf + i * 5) * 2) * s
                 c.rect(x, shelf + 7 * s - hgt, bw, hgt, [C(0x6A2A22), C(0x2A3A5A), C(0x3A4A2E), C(0x8A7448)][i % 4])
                 x += bw; i += 1
             }
-            c.rect(bx + s, shelf + 7 * s, 18 * s, s, C(0x5A4128))
+            c.rect(bx + s, shelf + 7 * s, 24 * s, s, C(0x5A4128))
         }
-        // The desk: a nameplate, the banker's lamp, a phone and a pile of files.
-        let d = f.desk, dtop = g - 16 * s
-        c.rect(d.x, dtop, d.w, 16 * s, C(0x34200F)); c.rect(d.x - 2 * s, dtop, d.w + 4 * s, 2 * s, C(0x5A3A1E))
-        c.rect(d.x + 4 * s, dtop + 4 * s, 14 * s, 10 * s, C(0x2A1808)); c.rect(d.x + d.w - 18 * s, dtop + 4 * s, 14 * s, 10 * s, C(0x2A1808))
-        c.rect(d.x + 10 * s, dtop + 8 * s, 2 * s, s, C(0xC8A04A)); c.rect(d.x + d.w - 12 * s, dtop + 8 * s, 2 * s, s, C(0xC8A04A))
-        c.rect(d.x + 22 * s, dtop - 2 * s, 12 * s, 2 * s, C(0x2A2A2A)); c.rect(d.x + 23 * s, dtop - 2 * s, 10 * s, s, C(0xC8A04A))
-        c.rect(d.x + 6 * s, dtop - 8 * s, s, 6 * s, C(0xB89A4A))
-        c.rect(d.x + 3 * s, dtop - 10 * s, 8 * s, 3 * s, C(0x2E6A3A)); c.rect(d.x + 3 * s, dtop - 10 * s, 8 * s, s, C(0x4E8A5A))
-        c.rect(d.x + 4 * s, dtop - 2 * s, 6 * s, 2 * s, C(0xB89A4A))
-        c.rect(d.x + 40 * s, dtop - 3 * s, 6 * s, 3 * s, C(0x1E1E22)); c.rect(d.x + 41 * s, dtop - 4 * s, 4 * s, s, C(0x1E1E22))
-        c.rect(d.x + 48 * s, dtop - 3 * s, 8 * s, 3 * s, C(0xD8C89A)); c.rect(d.x + 49 * s, dtop - 4 * s, 7 * s, s, C(0xC8B888))
+        // The desk: his high-backed chair behind it, a nameplate, the banker's lamp, a phone and a pile of files.
+        let d = f.desk, dtop = g - Self.skinnardDeskH * s
+        let chx = d.x + d.w / 2 - 8 * s
+        c.rect(chx, g - 36 * s, 16 * s, 16 * s, C(0x1E1410)); c.rect(chx, g - 36 * s, 16 * s, s, C(0x3A281E))
+        for k in 0..<3 { c.rect(chx + 3 * s + k * 5 * s, g - 33 * s, max(1, s / 2), 11 * s, C(0x140C08)) }   // the tufting
+        c.rect(d.x, dtop, d.w, g - dtop, C(0x34200F)); c.rect(d.x - 2 * s, dtop, d.w + 4 * s, 2 * s, C(0x5A3A1E))
+        c.rect(d.x + 4 * s, dtop + 4 * s, 18 * s, 14 * s, C(0x2A1808)); c.rect(d.x + d.w - 22 * s, dtop + 4 * s, 18 * s, 14 * s, C(0x2A1808))
+        c.rect(d.x + 12 * s, dtop + 10 * s, 2 * s, s, C(0xC8A04A)); c.rect(d.x + d.w - 14 * s, dtop + 10 * s, 2 * s, s, C(0xC8A04A))
+        c.rect(d.x + 26 * s, dtop + 4 * s, 22 * s, 14 * s, C(0x3A2412))   // the modesty panel
+        c.rect(d.x + 28 * s, dtop - 3 * s, 16 * s, 3 * s, C(0x2A2A2A)); c.rect(d.x + 29 * s, dtop - 3 * s, 14 * s, s, C(0xC8A04A))
+        c.rect(d.x + 7 * s, dtop - 9 * s, s, 7 * s, C(0xB89A4A))
+        c.rect(d.x + 2 * s, dtop - 12 * s, 11 * s, 4 * s, C(0x2E6A3A)); c.rect(d.x + 2 * s, dtop - 12 * s, 11 * s, s, C(0x4E8A5A))
+        c.rect(d.x + 4 * s, dtop - 2 * s, 7 * s, 2 * s, C(0xB89A4A))
+        c.rect(d.x + 50 * s, dtop - 3 * s, 8 * s, 3 * s, C(0x1E1E22)); c.rect(d.x + 51 * s, dtop - 5 * s, 6 * s, 2 * s, C(0x1E1E22))
+        for k in 0..<3 {
+            c.rect(d.x + 61 * s + k * s / 2, dtop - (k + 1) * 2 * s, 10 * s, 2 * s, [C(0xD8C89A), C(0xC8B888), C(0xE0D4AC)][k])
+        }
         // The carpet.
         c.ground(g, C(0x262C38), edge: C(0x3E4656), speck: C(0x1E2430), seed: 52)
     }
+
+    /// The height of Skinnard's desk.
+    static let skinnardDeskH = 21
 
     /// What moves in Skinnard's office: rain running down the open half of the window, the odd flash of lightning,
     /// headlights from the street sweeping striped light across the wall, and the lamp's glow.
@@ -198,9 +240,9 @@ extension Scenes {
             for j in 0..<6 { c.rect(x0, w.y + j * 3 * s, 22 * s, 2 * s, C(0xFFF0C8, a)) }
         }
         // The lamp's pool of light on the desk.
-        let d = f.desk, dtop = g - 16 * s
-        c.rect(d.x, dtop - 7 * s, 14 * s, 7 * s, C(0xFFE8A8, 0.07 + 0.01 * sin(t * 0.7)))
-        c.rect(d.x + 3 * s, dtop - 7 * s, 8 * s, s, C(0xFFF0B8, 0.6))
+        let d = f.desk, dtop = g - skinnardDeskH * s
+        c.rect(d.x - 2 * s, dtop - 8 * s, 19 * s, 8 * s, C(0xFFE8A8, 0.07 + 0.01 * sin(t * 0.7)))
+        c.rect(d.x + 3 * s, dtop - 8 * s, 9 * s, s, C(0xFFF0B8, 0.6))
     }
 }
 
@@ -213,9 +255,9 @@ extension Scenes {
         let s = unit(g)
         let ceiling = g > 60 ? 5 * s : 0
         let cw = 16 * s, ch = 12 * s
-        let rows = max(1, min(isTall(c) ? 5 : 3, (g - 14 * s - ceiling - 4 * s) / (ch + 2 * s)))
-        let bankY = g - 14 * s - rows * (ch + 2 * s)
-        return ((c.w * 10 / 100, bankY, 4, rows, cw, ch), (c.w * 66 / 100, g - 30 * s), c.w * 88 / 100, ceiling)
+        let rows = max(1, min(isTall(c) ? 5 : 3, (g - 17 * s - ceiling - 4 * s) / (ch + 2 * s)))
+        let bankY = g - 17 * s - rows * (ch + 2 * s)
+        return ((c.w * 10 / 100, bankY, 4, rows, cw, ch), (c.w * 66 / 100, g - 40 * s), c.w * 87 / 100, ceiling)
     }
 
     /// The Lone Gunclawds' den: a windowless cinderblock room crammed with surveillance gear. A wall of mismatched
@@ -286,32 +328,43 @@ extension Scenes {
             }
             c.rect(b.x - 2 * s, b.y + r * (b.ch + 2 * s) + b.ch, bw + 4 * s, 2 * s, C(0x5A5C56))
         }
-        // The workbench: keyboards, a tangle of wire, mugs, papers.
-        let wbTop = g - 10 * s
-        c.rect(b.x - 4 * s, wbTop, bw + 30 * s, 2 * s, C(0x6A5A44)); c.rect(b.x - 2 * s, wbTop + 2 * s, 2 * s, 8 * s, C(0x4A3E2E))
-        c.rect(b.x + bw + 22 * s, wbTop + 2 * s, 2 * s, 8 * s, C(0x4A3E2E))
-        c.rect(b.x + 4 * s, wbTop - s, 14 * s, s, C(0xB8B4A4)); c.rect(b.x + 30 * s, wbTop - s, 14 * s, s, C(0x6A6A6E))
-        c.rect(b.x + 50 * s, wbTop - 3 * s, 2 * s, 3 * s, C(0xE8E4D8)); c.rect(b.x + 54 * s, wbTop - 3 * s, 2 * s, 3 * s, C(0x8A3A2A))
-        c.rect(b.x + bw + 6 * s, wbTop - 2 * s, 10 * s, 2 * s, C(0xE8DCB8))
+        // The workbench, chest high to a Clawd: keyboards, a tangle of wire, mugs, papers, and a stool.
+        let wbTop = g - 15 * s
+        c.rect(b.x - 4 * s, wbTop, bw + 32 * s, 3 * s, C(0x6A5A44)); c.rect(b.x - 4 * s, wbTop, bw + 32 * s, s, C(0x8A7658))
+        for lx in [b.x - 2 * s, b.x + bw / 2, b.x + bw + 24 * s] { c.rect(lx, wbTop + 3 * s, 2 * s, g - wbTop - 3 * s, C(0x4A3E2E)) }
+        c.rect(b.x - 2 * s, g - 5 * s, bw + 28 * s, s, C(0x3A3026))   // the shelf underneath, boxes of tapes on it
+        for k in 0..<4 { c.rect(b.x + 4 * s + k * 9 * s, g - 9 * s, 7 * s, 4 * s, [C(0x8A7A5A), C(0x6A6A6E)][k % 2]) }
+        c.rect(b.x + 4 * s, wbTop - 2 * s, 18 * s, 2 * s, C(0xB8B4A4)); c.rect(b.x + 5 * s, wbTop - 2 * s, 16 * s, max(1, s / 2), C(0x8A8676))
+        c.rect(b.x + 30 * s, wbTop - 2 * s, 18 * s, 2 * s, C(0x6A6A6E)); c.rect(b.x + 31 * s, wbTop - 2 * s, 16 * s, max(1, s / 2), C(0x4A4A4E))
+        c.rect(b.x + 52 * s, wbTop - 4 * s, 3 * s, 4 * s, C(0xE8E4D8)); c.rect(b.x + 57 * s, wbTop - 4 * s, 3 * s, 4 * s, C(0x8A3A2A))
+        c.rect(b.x + bw + 6 * s, wbTop - 2 * s, 12 * s, 2 * s, C(0xE8DCB8)); c.rect(b.x + bw + 7 * s, wbTop - 3 * s, 10 * s, s, C(0xD8CCA8))
+        let st = b.x + bw + 30 * s   // the stool
+        c.rect(st, g - 10 * s, 9 * s, 2 * s, C(0x8A2A22)); c.rect(st + s, g - 8 * s, s, 8 * s, C(0x5A5C56)); c.rect(st + 7 * s, g - 8 * s, s, 8 * s, C(0x5A5C56))
         for i in 0..<5 {
             let x0 = b.x + Int(noise(i + 400) * Double(bw)), x1 = x0 + (Int(noise(i + 410) * 16) - 8) * s
             filesLine(c, x0, b.y + b.rows * (b.ch + 2 * s) - s, x1, wbTop, max(1, s / 2), [C(0x1A1A1A), C(0x8A2222), C(0x2A3A7A)][i % 3])
         }
         // The reel-to-reel: two reels (turned by the moving layer), the meters, the tape between them.
         let dk = f.deck
-        c.rect(dk.x, dk.y, 26 * s, 20 * s, C(0x3A3A3E)); c.rect(dk.x, dk.y, 26 * s, s, C(0x5A5A60))
-        for rx in [dk.x + 6 * s, dk.x + 19 * s] { c.circle(rx, dk.y + 6 * s, 5 * s, C(0xA8ACB4)); c.circle(rx, dk.y + 6 * s, 2 * s, C(0x2A2A2E)) }
-        c.rect(dk.x + 6 * s, dk.y + 11 * s, 13 * s, max(1, s / 2), C(0x5A3A20))
-        c.rect(dk.x + 4 * s, dk.y + 14 * s, 6 * s, 3 * s, C(0xD8C890)); c.rect(dk.x + 15 * s, dk.y + 14 * s, 6 * s, 3 * s, C(0xD8C890))
-        c.rect(dk.x - 2 * s, dk.y + 20 * s, 30 * s, g - dk.y - 20 * s, C(0x3E342A)); c.rect(dk.x - 2 * s, dk.y + 20 * s, 30 * s, s, C(0x5A4C3C))
+        c.rect(dk.x, dk.y, 34 * s, 26 * s, C(0x3A3A3E)); c.rect(dk.x, dk.y, 34 * s, s, C(0x5A5A60)); c.rect(dk.x + 33 * s, dk.y, s, 26 * s, C(0x26262A))
+        for rx in Self.denReels(dk, s) { c.circle(rx, dk.y + 8 * s, 7 * s, C(0xA8ACB4)); c.circle(rx, dk.y + 8 * s, 2 * s, C(0x2A2A2E)) }
+        c.rect(dk.x + 8 * s, dk.y + 15 * s, 18 * s, max(1, s / 2), C(0x5A3A20))
+        c.rect(dk.x + 5 * s, dk.y + 18 * s, 8 * s, 4 * s, C(0xD8C890)); c.rect(dk.x + 20 * s, dk.y + 18 * s, 8 * s, 4 * s, C(0xD8C890))
+        for k in 0..<4 { c.rect(dk.x + 6 * s + k * 6 * s, dk.y + 24 * s, 3 * s, s, C(0x1E1E22)) }   // the buttons
+        c.rect(dk.x - 2 * s, dk.y + 26 * s, 38 * s, g - dk.y - 26 * s, C(0x3E342A)); c.rect(dk.x - 2 * s, dk.y + 26 * s, 38 * s, s, C(0x5A4C3C))
+        c.rect(dk.x + 2 * s, dk.y + 30 * s, 30 * s, max(1, s / 2), C(0x2A2218))
         // The door, bolted five times over, and its peephole.
-        let dx = f.door, dh = min(36 * s, g - f.ceiling - 3 * s)
-        c.rect(dx, g - dh, 18 * s, dh, C(0x4E524C)); c.rect(dx, g - dh, 18 * s, s, C(0x6A6E66)); c.rect(dx + 17 * s, g - dh, s, dh, C(0x34382F))
-        for i in 0..<5 { c.rect(dx + 13 * s, g - dh + 5 * s + i * min(5 * s, dh / 7), 3 * s, 2 * s, C(0xC8A04A)) }
-        c.rect(dx + 8 * s, g - dh + 6 * s, s, s, C(0x0A0A0A))
+        let dx = f.door, dh = min(42 * s, g - f.ceiling - 3 * s)
+        c.rect(dx - s, g - dh - s, 22 * s, dh + s, C(0x2E302A))
+        c.rect(dx, g - dh, 20 * s, dh, C(0x4E524C)); c.rect(dx, g - dh, 20 * s, s, C(0x6A6E66)); c.rect(dx + 19 * s, g - dh, s, dh, C(0x34382F))
+        for i in 0..<5 { c.rect(dx + 14 * s, g - dh + 5 * s + i * min(6 * s, dh / 7), 4 * s, 2 * s, C(0xC8A04A)) }
+        c.rect(dx + 9 * s, g - dh + 7 * s, s, s, C(0x0A0A0A))
         // The concrete floor.
         c.ground(g, C(0x2E2E28), edge: C(0x48483E), speck: C(0x24241F), seed: 61)
     }
+
+    /// Where the reel-to-reel's two reels turn.
+    static func denReels(_ dk: (x: Int, y: Int), _ s: Int) -> [Int] { [dk.x + 9 * s, dk.x + 25 * s] }
 
     /// What moves in the den: every monitor showing something (scrolling green text, static, a waveform, a radar sweep,
     /// a grainy surveillance shot), flickering; the reels turning; the deck's red record light blinking.
@@ -358,19 +411,19 @@ extension Scenes {
         }
         // The reels.
         let dk = f.deck
-        for (n, rx) in [dk.x + 6 * s, dk.x + 19 * s].enumerated() {
+        for (n, rx) in denReels(dk, s).enumerated() {
             let a0 = t * (n == 0 ? 2.2 : 1.6)
             for k in 0..<3 {
                 let a = a0 + Double(k) * 2 * .pi / 3
-                filesLine(c, rx + Int(cos(a) * Double(2 * s)), dk.y + 6 * s + Int(sin(a) * Double(2 * s)),
-                          rx + Int(cos(a) * Double(4 * s)), dk.y + 6 * s + Int(sin(a) * Double(4 * s)), max(1, s / 2), C(0x3A3A40))
+                filesLine(c, rx + Int(cos(a) * Double(2 * s)), dk.y + 8 * s + Int(sin(a) * Double(2 * s)),
+                          rx + Int(cos(a) * Double(6 * s)), dk.y + 8 * s + Int(sin(a) * Double(6 * s)), max(1, s / 2), C(0x3A3A40))
             }
         }
-        if Int(t * 1.5) % 2 == 0 { c.rect(dk.x + 23 * s, dk.y + 15 * s, s, s, C(0xFF2A2A)) }
+        if Int(t * 1.5) % 2 == 0 { c.rect(dk.x + 30 * s, dk.y + 19 * s, s, s, C(0xFF2A2A)) }
         // The needles in the meters.
-        for (n, mx) in [dk.x + 7 * s, dk.x + 18 * s].enumerated() {
+        for (n, mx) in [dk.x + 9 * s, dk.x + 24 * s].enumerated() {
             let v = 0.5 + 0.5 * sin(t * (3 + Double(n)) + noise(Int(t * 4) + n) * 2)
-            filesLine(c, mx, dk.y + 17 * s, mx - 2 * s + Int(v * Double(4 * s)), dk.y + 14 * s, max(1, s / 2), C(0x2A2020))
+            filesLine(c, mx, dk.y + 22 * s, mx - 3 * s + Int(v * Double(6 * s)), dk.y + 18 * s, max(1, s / 2), C(0x2A2020))
         }
     }
 }
@@ -386,8 +439,8 @@ extension Scenes {
         let ceiling = g > 60 ? 4 * s : 0
         let wh = min(isTall(c) ? 70 * s : 34 * s, g - ceiling - 20 * s), ww = min(isTall(c) ? 40 * s : 32 * s, c.w * 14 / 100)
         let window = (x: c.w * 7 / 100, y: max(ceiling + 3 * s, g - 22 * s - wh), w: ww, h: wh)
-        let tank = (x: c.w * 70 / 100, y: g - 26 * s, w: 30 * s, h: 16 * s)
-        return (window, (c.w * 30 / 100, 54 * s), (c.w * 30 / 100 + 60 * s, g - 22 * s), tank, ceiling)
+        let tank = (x: c.w * 68 / 100, y: g - 36 * s, w: 40 * s, h: 20 * s)
+        return (window, (c.w * 27 / 100, 72 * s), (c.w * 27 / 100 + 84 * s, g - 31 * s), tank, ceiling)
     }
 
     /// Apartment 42, Clawder's place, late at night: a dim room with only the TV and the fish tank for light. The
@@ -427,20 +480,26 @@ extension Scenes {
         filesLine(c, w.x + w.w - 4 * s, w.y + 2 * s, w.x + 2 * s, w.y + w.h - 4 * s, 2 * s, C(0xE8DCB0))
         c.rect(w.x - 3 * s, w.y + w.h + 2 * s, w.w + 6 * s, s, C(0x6A6C68))
         // The couch: worn black-brown leather.
-        let cx = f.couch.x, cw = f.couch.w, back = g - 15 * s
-        c.rect(cx, back, cw, 9 * s, C(0x2E1C14)); c.rect(cx, back, cw, s, C(0x4E3022))
-        c.rect(cx - 4 * s, back + 3 * s, 5 * s, g - back - 3 * s, C(0x3A2418)); c.rect(cx + cw - s, back + 3 * s, 5 * s, g - back - 3 * s, C(0x3A2418))
-        c.rect(cx, g - 7 * s, cw, 5 * s, C(0x3A2418)); c.rect(cx, g - 7 * s, cw, s, C(0x5A3A26))
-        c.rect(cx + cw / 2, g - 7 * s, max(1, s / 2), 5 * s, C(0x22140E)); c.rect(cx + cw / 2, back + s, max(1, s / 2), 8 * s, C(0x22140E))
-        c.rect(cx + 4 * s, back + 2 * s, 6 * s, 2 * s, C(0x5A3A26, 0.6))   // a shine on the leather
-        c.rect(cx + 8 * s, g - 9 * s, 10 * s, 3 * s, C(0x7A6A5A))           // a blanket left on it
+        let cx = f.couch.x, cw = f.couch.w, back = g - 21 * s
+        c.rect(cx, back, cw, 12 * s, C(0x2E1C14)); c.rect(cx, back, cw, s, C(0x4E3022))
+        c.rect(cx - 6 * s, back + 5 * s, 7 * s, g - back - 6 * s, C(0x3A2418)); c.rect(cx + cw - s, back + 5 * s, 7 * s, g - back - 6 * s, C(0x3A2418))
+        c.rect(cx - 6 * s, back + 5 * s, 7 * s, s, C(0x5A3A26)); c.rect(cx + cw - s, back + 5 * s, 7 * s, s, C(0x5A3A26))
+        c.rect(cx, g - 10 * s, cw, 7 * s, C(0x3A2418)); c.rect(cx, g - 10 * s, cw, s, C(0x5A3A26))
+        for k in 1..<3 {   // the seams between the cushions
+            c.rect(cx + k * cw / 3, g - 10 * s, max(1, s / 2), 7 * s, C(0x22140E)); c.rect(cx + k * cw / 3, back + s, max(1, s / 2), 11 * s, C(0x22140E))
+        }
+        c.rect(cx - 5 * s, g - s, 2 * s, s, C(0x1A100A)); c.rect(cx + cw + 3 * s, g - s, 2 * s, s, C(0x1A100A))   // the feet
+        c.rect(cx + 4 * s, back + 2 * s, 8 * s, 2 * s, C(0x5A3A26, 0.6))   // a shine on the leather
+        c.rect(cx + 8 * s, g - 13 * s, 14 * s, 4 * s, C(0x7A6A5A)); c.rect(cx + 8 * s, g - 13 * s, 14 * s, s, C(0x8A7A6A))   // a blanket left on it
         // The TV on its stand (its picture comes with the moving layer).
         let tv = f.tv
-        c.rect(tv.x, tv.y + 10 * s, 18 * s, g - tv.y - 10 * s, C(0x2A2420)); c.rect(tv.x, tv.y + 10 * s, 18 * s, s, C(0x3E3630))
-        c.rect(tv.x + 2 * s, tv.y, 14 * s, 10 * s, C(0x2A2A2E)); c.rect(tv.x + 3 * s, tv.y + s, 10 * s, 8 * s, C(0x0C1018))
-        c.rect(tv.x + 14 * s, tv.y + 2 * s, s, s, C(0x6A6A6E)); c.rect(tv.x + 14 * s, tv.y + 5 * s, s, s, C(0x6A6A6E))
-        filesLine(c, tv.x + 9 * s, tv.y, tv.x + 5 * s, tv.y - 6 * s, max(1, s / 2), C(0x8A8A8E))
-        filesLine(c, tv.x + 9 * s, tv.y, tv.x + 13 * s, tv.y - 6 * s, max(1, s / 2), C(0x8A8A8E))
+        c.rect(tv.x, tv.y + 15 * s, 24 * s, g - tv.y - 15 * s, C(0x2A2420)); c.rect(tv.x, tv.y + 15 * s, 24 * s, s, C(0x3E3630))
+        c.rect(tv.x + 3 * s, tv.y + 19 * s, 18 * s, 5 * s, C(0x221C18)); c.rect(tv.x + 5 * s, tv.y + 21 * s, 6 * s, 2 * s, C(0x1A1A1E))   // the VCR
+        c.rect(tv.x + 2 * s, tv.y, 20 * s, 15 * s, C(0x2A2A2E)); c.rect(tv.x + 2 * s, tv.y, 20 * s, s, C(0x3E3E44))
+        c.rect(tv.x + 3 * s, tv.y + 2 * s, 15 * s, 11 * s, C(0x0C1018))
+        c.rect(tv.x + 19 * s, tv.y + 3 * s, 2 * s, 2 * s, C(0x6A6A6E)); c.rect(tv.x + 19 * s, tv.y + 7 * s, 2 * s, 2 * s, C(0x6A6A6E))
+        filesLine(c, tv.x + 12 * s, tv.y, tv.x + 7 * s, tv.y - 8 * s, max(1, s / 2), C(0x8A8A8E))
+        filesLine(c, tv.x + 12 * s, tv.y, tv.x + 17 * s, tv.y - 8 * s, max(1, s / 2), C(0x8A8A8E))
         // The fish tank on its cabinet: water, gravel, a plant, the hood's light.
         let tk = f.tank
         c.rect(tk.x - 2 * s, tk.y + tk.h, tk.w + 4 * s, g - tk.y - tk.h, C(0x2A2018)); c.rect(tk.x - 2 * s, tk.y + tk.h, tk.w + 4 * s, s, C(0x3E3024))
@@ -449,7 +508,7 @@ extension Scenes {
         c.rect(tk.x, tk.y + tk.h - 3 * s, tk.w, 3 * s, C(0x8A7A5A))
         for i in 0..<tk.w / s { if noise(i + 600) > 0.6 { c.rect(tk.x + i * s, tk.y + tk.h - 3 * s, s, s, C(0xB8A880)) } }
         for k in 0..<3 {
-            let px = tk.x + 5 * s + k * 9 * s
+            let px = tk.x + 6 * s + k * 12 * s
             for y in stride(from: tk.y + tk.h - 3 * s, to: tk.y + 4 * s + k * 2 * s, by: -s) {
                 c.rect(px + Int(sin(Double(y) * 0.4 + Double(k)) * Double(s)), y, s, s, C(0x3A8A4A))
             }
@@ -473,9 +532,9 @@ extension Scenes {
         // The TV: its picture changing, and its light thrown on the couch and the floor.
         let tv = f.tv
         let lum = 0.55 + 0.45 * noise(Int(t * 5))
-        c.rect(tv.x + 3 * s, tv.y + s, 10 * s, 8 * s, C(0x6A8AC8, 0.5 * lum))
-        c.rect(tv.x + 4 * s, tv.y + 2 * s + Int(noise(Int(t * 5) + 9) * 4) * s, 8 * s, s, C(0xE8F0FF, 0.6 * lum))
-        c.rect(f.couch.x - 4 * s, g - 16 * s, tv.x - f.couch.x + 4 * s, 16 * s, C(0x8AB0FF, 0.07 * lum))
+        c.rect(tv.x + 3 * s, tv.y + 2 * s, 15 * s, 11 * s, C(0x6A8AC8, 0.5 * lum))
+        c.rect(tv.x + 4 * s, tv.y + 3 * s + Int(noise(Int(t * 5) + 9) * 7) * s, 13 * s, s, C(0xE8F0FF, 0.6 * lum))
+        c.rect(f.couch.x - 6 * s, g - 22 * s, tv.x - f.couch.x + 6 * s, 22 * s, C(0x8AB0FF, 0.07 * lum))
         c.rect(f.couch.x - 10 * s, g, tv.x - f.couch.x + 30 * s, 4 * s, C(0x8AB0FF, 0.05 * lum))
         // The tank: its glow, the fish and the bubbles.
         let tk = f.tank
@@ -511,7 +570,7 @@ extension Scenes {
         let s = unit(g)
         let ceiling = g > 60 ? 5 * s : 0
         let cx = c.w * 52 / 100
-        return ((cx, 22 * s, 14 * s), [cx - 50 * s, cx + 34 * s], (cx + 58 * s, g - 12 * s), ceiling)
+        return ((cx, 30 * s, 20 * s), [cx - 60 * s, cx + 36 * s], (cx + 70 * s, g - 17 * s), ceiling)
     }
 
     /// The Syndicate's club on 46th Street: a room of dark panelled wood and old money. A stone fireplace with a portrait
@@ -587,18 +646,22 @@ extension Scenes {
         }
         // The wingback chairs, oxblood leather with brass studs.
         for cx in f.chairs {
-            let top = g - 18 * s
-            c.rect(cx + 2 * s, top, 12 * s, 12 * s, C(0x5A1A16)); c.rect(cx + 2 * s, top, 12 * s, s, C(0x7A2A22))
-            c.rect(cx, top + 2 * s, 3 * s, 14 * s, C(0x4A1410)); c.rect(cx + 13 * s, top + 2 * s, 3 * s, 14 * s, C(0x4A1410))
-            c.rect(cx + 2 * s, g - 6 * s, 12 * s, 4 * s, C(0x6A2018)); c.rect(cx + 2 * s, g - 6 * s, 12 * s, s, C(0x8A3428))
-            for k in 0..<5 { c.rect(cx + 3 * s + k * 2 * s, g - 3 * s, max(1, s / 2), max(1, s / 2), C(0xC8A04A)) }
-            c.rect(cx + s, g - 2 * s, s, 2 * s, C(0x2A1408)); c.rect(cx + 14 * s, g - 2 * s, s, 2 * s, C(0x2A1408))
+            let top = g - 27 * s
+            c.rect(cx + 3 * s, top, 16 * s, 17 * s, C(0x5A1A16)); c.rect(cx + 3 * s, top, 16 * s, s, C(0x7A2A22))
+            for k in 0..<3 { c.rect(cx + 6 * s + k * 5 * s, top + 3 * s, max(1, s / 2), 11 * s, C(0x461410)) }   // the buttoning
+            c.rect(cx, top + 4 * s, 4 * s, 21 * s, C(0x4A1410)); c.rect(cx + 18 * s, top + 4 * s, 4 * s, 21 * s, C(0x4A1410))
+            c.rect(cx, top + 4 * s, 4 * s, s, C(0x6A2018)); c.rect(cx + 18 * s, top + 4 * s, 4 * s, s, C(0x6A2018))
+            c.rect(cx + 3 * s, g - 10 * s, 16 * s, 6 * s, C(0x6A2018)); c.rect(cx + 3 * s, g - 10 * s, 16 * s, s, C(0x8A3428))
+            for k in 0..<7 { c.rect(cx + 4 * s + k * 2 * s, g - 4 * s, max(1, s / 2), max(1, s / 2), C(0xC8A04A)) }
+            c.rect(cx + s, g - 3 * s, 2 * s, 3 * s, C(0x2A1408)); c.rect(cx + 19 * s, g - 3 * s, 2 * s, 3 * s, C(0x2A1408))
         }
         // The side table: a crystal decanter and the ashtray (its cigar smokes in the moving layer).
         let a = f.ashtray
-        c.rect(a.x - 6 * s, a.y, 14 * s, 2 * s, C(0x3A2010)); c.rect(a.x - 4 * s, a.y + 2 * s, 2 * s, g - a.y - 2 * s, C(0x2A1408))
-        c.rect(a.x + 4 * s, a.y + 2 * s, 2 * s, g - a.y - 2 * s, C(0x2A1408))
-        c.rect(a.x - 5 * s, a.y - 6 * s, 4 * s, 6 * s, C(0xC89A5A, 0.6)); c.rect(a.x - 4 * s, a.y - 8 * s, 2 * s, 2 * s, C(0xD8DCE0, 0.7))
+        c.rect(a.x - 8 * s, a.y, 18 * s, 2 * s, C(0x3A2010)); c.rect(a.x - 8 * s, a.y, 18 * s, s, C(0x5A3420))
+        c.rect(a.x - 6 * s, a.y + 2 * s, 2 * s, g - a.y - 2 * s, C(0x2A1408)); c.rect(a.x + 6 * s, a.y + 2 * s, 2 * s, g - a.y - 2 * s, C(0x2A1408))
+        c.rect(a.x - 6 * s, g - 5 * s, 14 * s, s, C(0x2A1408))
+        c.rect(a.x - 6 * s, a.y - 8 * s, 5 * s, 8 * s, C(0xC89A5A, 0.6)); c.rect(a.x - 5 * s, a.y - 10 * s, 3 * s, 2 * s, C(0xD8DCE0, 0.7))
+        c.rect(a.x - 6 * s, a.y - 8 * s, s, 6 * s, C(0xF0E8D8, 0.4))   // a glint on the crystal
         c.rect(a.x + s, a.y - s, 5 * s, s, C(0x8A8E96)); c.rect(a.x + 2 * s, a.y - 2 * s, 3 * s, s, C(0x5A3A20))
         // A brass floor lamp by the window.
         let lx = c.w * 28 / 100
@@ -635,13 +698,19 @@ extension Scenes {
             c.rect(x, y, max(1, s / 2) + (i > 6 ? s / 2 : 0), 2 * s, C(0xC8C4BC, 0.55 - Double(i) * 0.04))
         }
         c.rect(a.x + 5 * s, a.y - 2 * s, s, s, C(0xFF5A1A, 0.7 + 0.3 * sin(t * 1.5)))
-        // A layer of old smoke drifting under the ceiling.
-        for k in 0..<3 {
-            let y = f.ceiling + 6 * s + k * 5 * s
-            let shift = Int((t * (4 + Double(k)) * Double(s)).truncatingRemainder(dividingBy: Double(c.w)))
-            for j in 0..<4 {
-                let x = (j * c.w / 4 + shift) % c.w
-                c.ellipse(x, y, c.w / 14, 2 * s, C(0xB8B4AC, 0.035))
+        // A layer of old smoke hanging under the ceiling: long soft banks drifting each their own way, thickest at the top.
+        for k in 0..<4 {
+            let y = f.ceiling + 4 * s + k * 4 * s
+            let speed = (3 + Double(k)) * (k % 2 == 0 ? 1 : -1)
+            let shift = Int((t * speed * Double(s)).truncatingRemainder(dividingBy: Double(c.w)))
+            let alpha = 0.16 - Double(k) * 0.03
+            for j in 0..<5 {
+                let x = ((j * c.w / 5 + shift + k * 37 * s) % c.w + c.w) % c.w
+                let rx = c.w / 10 + Int(noise(j * 7 + k) * Double(c.w / 16)), ry = 2 * s + k % 2 * s
+                for dx in [-c.w, 0, c.w] {   // wrapping round the edges
+                    c.ellipse(x + dx, y, rx, ry, C(0xB8B4AC, alpha))
+                    c.ellipse(x + dx + rx / 3, y - s, rx / 2, max(1, ry - s), C(0xD0CCC4, alpha * 0.6))
+                }
             }
         }
     }

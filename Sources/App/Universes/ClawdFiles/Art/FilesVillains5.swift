@@ -102,7 +102,9 @@ private func drawStrughold(_ c: PixelCanvas, _ p: Pose) {
     for x in stride(from: 18, to: 38, by: 3) { c.px(x, 33, astraD) }
     for y in [35, 37] { c.px(25, y, lodenL); c.px(30, y, lodenL) }   // the buttons
     // Grey hair at the temples, under the homburg: a dented crown, a curled brim, the band.
-    c.rect(18, 26, 2, 2, hair); c.rect(36, 26, 2, 2, hair)
+    let hairL = C(0xC4C6CC)
+    c.rect(18, 26, 3, 3, hair); c.rect(35, 26, 3, 3, hair)
+    c.px(18, 26, hairL); c.px(19, 27, hairL); c.px(37, 26, hairL); c.px(36, 27, hairL)
     c.pattern(15, 17, [
         "........HHHHHHHHHH......",
         "......HHHHHH..HHHHHH....",
@@ -241,8 +243,12 @@ private func drawCrewCutMan(_ c: PixelCanvas, _ p: Pose) {
         c.px(21, 29, C(0x6A7A8A)); c.px(31, 29, C(0x6A7A8A))
     }
     // The raincoat: collar up, belted.
+    // The turtleneck rolled right round the neck, the coat open over it in a V, its collar standing up at the sides.
+    let turtle = C(0x2A2A30)
     c.rect(18, 33, 20, 5, coat); c.rect(37, 33, 1, 5, coatD); c.rect(18, 36, 20, 1, coatD); c.rect(27, 36, 2, 1, coatL)
-    c.rect(18, 32, 3, 2, coatL); c.rect(35, 32, 3, 2, coatL); c.rect(25, 33, 6, 2, C(0x2A2A30))   // a dark turtleneck
+    c.rect(18, 32, 20, 2, turtle); c.rect(18, 32, 20, 1, C(0x3A3A42))
+    c.rect(26, 34, 4, 1, turtle); c.rect(25, 34, 1, 1, coatL); c.rect(30, 34, 1, 1, coatL)
+    c.rect(18, 31, 2, 3, coatL); c.rect(36, 31, 2, 3, coatL); c.rect(19, 32, 1, 2, coatD); c.rect(36, 32, 1, 2, coatD)
     // The flat-top: a square block, the sides cut to nothing.
     c.pattern(17, 19, [
         "..HHHHHHHHHHHHHHHHHH..",
@@ -276,25 +282,30 @@ private func drawCrewCutMan(_ c: PixelCanvas, _ p: Pose) {
 /// nothing where its feet should be. It doesn't fight; it watches. Signature: it leans in towards you, head on one side,
 /// the white eyes brightening.
 private func drawColonist(_ c: PixelCanvas, _ p: Pose) {
-    let skin = C(0xB4C0AE), skinD = C(0x8C9888), coat = C(0x1E2420), coatL = C(0x343C36)
+    let skin = C(0xB4C0AE), skinD = C(0x8C9888), coat = C(0x2A322C), coatL = C(0x46504A), coatD = C(0x181C19)
     let sig = p.signature
     let lean: Int = sig.map { s in s < 0.12 || s > 0.9 ? 0 : s < 0.3 ? Int((s - 0.12) / 0.18 * 3) : 3 } ?? 0
     let bright = lean >= 2
     let drift = Int((sin(p.lt * 1.6) * 1).rounded())
 
     c.oy += drift
-    // The coat's hem, hanging in the air and fading away below.
-    for y in 36...42 {
-        let fade = 0.95 - Double(y - 36) * 0.13
-        c.rect(18, y, 20, 1, coat.alpha(fade))
-        c.px(37, y, coatL.alpha(fade * 0.7))
+    // Legs in dark trousers under the long coat, fading out only at the feet, where it should touch the ground.
+    let fades: [Double] = [1, 1, 1, 1, 0.55, 0.25]
+    for (i, a) in fades.enumerated() {
+        for lx in [19, 23, 31, 35] { c.rect(lx, 38 + i, 2, 1, C(0x5A625C).alpha(a)); c.px(lx + 1, 38 + i, C(0x3E4640).alpha(a)) }
     }
+    c.rect(18, 32, 20, 7, coat); c.rect(37, 32, 1, 7, coatL); c.rect(27, 36, 1, 3, coatD)
+    c.rect(18, 38, 20, 1, coatD)
     c.ox += lean
-    // The body: waxy skin, the coat buttoned to the neck.
-    c.rect(18, 26, 20, 12, skin); c.rect(37, 26, 1, 12, skinD)
-    c.rect(18, 32, 20, 6, coat); c.rect(26, 32, 4, 1, C(0xD8DCD4)); c.rect(37, 32, 1, 6, coatL)
-    c.rect(15, 32, 3, 5, coat); c.rect(38, 32, 3, 5, coat)
-    c.rect(15, 37, 3, 1, skin); c.rect(38, 37, 3, 1, skin)
+    // The body: waxy skin, the coat buttoned to the neck, lapels and a white collar.
+    c.rect(18, 26, 20, 6, skin); c.rect(37, 26, 1, 6, skinD)
+    c.rect(18, 32, 20, 4, coat); c.rect(37, 32, 1, 4, coatL)
+    c.rect(26, 32, 4, 1, C(0xD8DCD4))
+    c.px(25, 33, coatL); c.px(24, 34, coatL); c.px(30, 33, coatL); c.px(31, 34, coatL)
+    c.px(27, 35, coatL); c.px(28, 38, coatL)   // the buttons
+    // Long sleeves, the hands pale at their ends.
+    c.rect(15, 32, 3, 6, coat); c.rect(38, 32, 3, 6, coat); c.px(17, 32, coatL); c.px(38, 32, coatL)
+    c.rect(15, 38, 3, 1, skin); c.rect(38, 38, 3, 1, skin)
     // The blank eyes, brighter as it leans in; a faint glow round them.
     let eye = bright ? C(0xFFFFFF) : C(0xE8ECE4)
     c.rect(22, 28, 3, 3, eye); c.rect(31, 28, 3, 3, eye)

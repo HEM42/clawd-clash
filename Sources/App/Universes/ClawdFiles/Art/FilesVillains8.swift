@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: the comic side of the monsters. Ronnie Strickland, Guy Mann, the Trashman, the Tulpa, the Mothmen, the Rain
 // King and the Teliko. Clawd in costume like everyone else, or Clawd underneath it (the Trashman's rubbish, the Tulpa's
-// mud, the Mothmen's leaves); the episodes they come from are the funny ones, and so are they.
+// mud, the Mothmen's mossy wings); the episodes they come from are the funny ones, and so are they.
 
 let filesVillains8: [FilesVillain: Persona] = [
     .ronnieStrickland: Persona(name: "Ronnie Strickland", weapon: .saber, headTop: 19, signature: 3.4,
@@ -13,7 +13,7 @@ let filesVillains8: [FilesVillain: Persona] = [
                        draw: drawTrashman),
     .tulpa: Persona(name: "The Tulpa", weapon: .saber, canSit: false, bulk: 2, headTop: 19, signature: 3.6,
                     callout: "Mmmrrrgh.", draw: drawTulpa),
-    .mothmen: Persona(name: "The Mothmen", weapon: .saber, headTop: 12, signature: 3.6, draw: drawMothmen),
+    .mothmen: Persona(name: "The Mothmen", weapon: .saber, headTop: 15, signature: 3.6, draw: drawMothmen),
     .rainKing: Persona(name: "The Rain King", weapon: .lightning, magic: Magic(core: C(0xE8F4FF), glow: C(0x3A7CFF)),
                        pivot: (44.0, 31.0), headTop: 16, signature: 3.8, callout: "Looks like rain.",
                        draw: drawRainKing),
@@ -107,7 +107,9 @@ private func drawRonnie(_ c: PixelCanvas, _ p: Pose) {
         c.rect(24, 32, 8, 2, ink); for x in [24, 26, 28, 30] { c.px(x, 32, C(0xF8F8F2)) }
         c.px(25, 33, C(0xF8F8F2)); c.px(30, 33, C(0xF8F8F2))
     } else {
-        c.px(25, 32, C(0xF8F8F2)); c.px(30, 32, C(0xF8F8F2))
+        // A closed mouth with a fang hanging down at each end.
+        c.rect(25, 32, 6, 1, C(0x5A2418))
+        c.rect(25, 32, 1, 2, C(0xF8F8F2)); c.rect(30, 32, 1, 2, C(0xF8F8F2))
     }
     c.rect(15, 33, 3, 3, red)
 
@@ -211,7 +213,7 @@ private func drawGuyMann(_ c: PixelCanvas, _ p: Pose) {
 /// pulls himself back up out of it.
 private func drawTrashman(_ c: PixelCanvas, _ p: Pose) {
     // Flies, always.
-    for i in 0..<3 {
+    for i in 0..<2 {
         let a = p.t * (3 + Double(i)) + Double(i) * 2
         c.px(28 + Int(cos(a) * Double(11 + i * 2)), 20 + Int(sin(a * 1.3) * 4), C(0x1A1A1A))
     }
@@ -235,20 +237,18 @@ private func trashFigure(_ c: PixelCanvas, _ p: Pose) {
     drawLegs(c, Look(leg: bag), step: p.step)
     if !seatedPose { for (i, lx) in [19, 23, 31, 35].enumerated() where i % 2 == 0 { c.rect(lx, 38, 2, 2, paper) } }
     c.oy += p.breathe
-    // A lumpy body, wider than Clawd's, with bits sticking out of the outline.
+    // A lumpy body, a little wider than Clawd's: a bin bag with two knots of it on top.
     c.rect(16, 22, 24, 16, bag)
-    c.pattern(15, 18, [
-        "....BBB....bBB..BB.......",
-        "..BBBBBBBbBBBBBBBBBB.....",
-        ".BBBBBBBBBBBBBBBBBBBBB...",
-        "BBBBBBBBBBBBBBBBBBBBBBB..",
-    ], ["B": bag, "b": bagL])
-    // Patches: newspaper, a takeaway box, a can, bag folds.
-    c.rect(18, 24, 6, 4, paper); for y in [25, 27] { c.rect(19, y, 4, 1, C(0x8A8676)) }
+    c.pattern(16, 19, [
+        "...BBB..........BBB.....",
+        "..BBBBBBBBBBBBBBBBBB....",
+        ".BBBBBBBBBBBBBBBBBBBBBB.",
+    ], ["B": bag])
+    // A few big patches that read at a glance: newspaper, a takeaway box, a can, and two folds of the bag.
+    c.rect(18, 23, 6, 4, paper); for y in [24, 26] { c.rect(19, y, 4, 1, C(0x8A8676)) }
     c.rect(31, 33, 6, 4, brown); c.rect(31, 33, 6, 1, C(0xA8865A))
     c.rect(19, 33, 3, 4, can); c.rect(19, 34, 3, 1, C(0xC8302A))
-    for i in 0..<8 { c.px(17 + Int(noise(i + 400) * 22), 21 + Int(noise(i + 420) * 16), bagL) }
-    c.px(15, 26, paper); c.px(40, 30, can); c.px(39, 20, paper); c.px(14, 31, bagL)
+    c.rect(27, 21, 8, 1, bagL); c.rect(36, 25, 1, 6, bagL)
     // The face: two holes for eyes, the plaster across where a nose would be.
     c.rect(22, 28, 3, 2, C(0x0A0A0C)); c.rect(31, 28, 3, 2, C(0x0A0A0C))
     c.rect(25, 30, 6, 2, C(0xE0B890)); c.px(27, 30, C(0xC8986E)); c.px(28, 31, C(0xC8986E))
@@ -349,9 +349,10 @@ private func tulpaFigure(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - The Mothmen
 
-/// The Mothmen of "Detour": something in the woods, covered so completely in bark, moss and leaves that you'd walk past
-/// it, until its two red eyes open. Clawd under all of it, a ragged leafy fringe all round him. He rakes with twiggy
-/// claws. Signature: he fades into the undergrowth until only his eyes are left, glowing, then steps back out.
+/// The Mothmen of "Detour": something in the woods you'd walk past, until its two red eyes open. Clawd as a moth the
+/// colours of the forest floor: big dusty wings spread behind him, mottled bark and moss with a dark eyespot on each,
+/// a furry mossy head with feathery antennae, and those eyes. He rakes with twiggy claws, wings beating. Signature: he
+/// fades into the undergrowth until only his eyes are left, glowing, then steps back out.
 private func drawMothmen(_ c: PixelCanvas, _ p: Pose) {
     let hide = p.signature.map { ramp($0, 0.08, 0.35) - ramp($0, 0.68, 0.92) } ?? 0
     if hide > 0.02 {
@@ -360,51 +361,70 @@ private func drawMothmen(_ c: PixelCanvas, _ p: Pose) {
         remap(fig, into: c, alpha: 1 - hide * 0.92) { x, y in (x, y) }
         // The eyes stay, glowing brighter.
         c.oy += p.breathe
-        for x in [22, 32] { c.rect(x, 28, 2, 2, C(0xFF2A1A)); c.rect(x - 1, 27, 4, 4, C(0xFF2A1A, 0.25 * hide)) }
+        for x in [21, 32] { c.rect(x, 28, 3, 2, C(0xFF2A1A)); c.rect(x - 1, 27, 5, 4, C(0xFF2A1A, 0.25 * hide)) }
         return
     }
     mothFigure(c, p)
 }
 
+/// One of the Mothmen's wings, the left one as drawn (the right is its mirror): a big upper wing with an eyespot and a
+/// smaller lower one. W wing, M moss, L leaf, V the vein between them, E/e the eyespot.
+private let v78MothWing = [
+    "..........WWW..",
+    ".......WWWWMWW.",
+    ".....WWWMMWWWWW",
+    "...WWWMWWWWWLWW",
+    "..WWWLWWEEEWWWW",
+    ".WWWWWWEeeEWWWW",
+    ".WWMWWWEeeEWMWW",
+    "WWWWWWWWEEEWWWW",
+    "WWWLWWWWWWWWWWW",
+    "WWWWWMWWWWLWWWW",
+    ".WWWWWWWWWWWWWW",
+    "..WWWWWWWWWWWWW",
+    "....VVVVVVVVVVV",
+    "......WWWWWWWWW",
+    ".....WWWWMWWWWW",
+    "....WWWLWWEEWWW",
+    "....WWWWWWEeWWW",
+    ".....WWWWWWWWWW",
+    "......WWWWWWWW.",
+    "........WWWWW..",
+]
+
 private func mothFigure(_ c: PixelCanvas, _ p: Pose) {
     let moss = C(0x3E5A2A), mossD = C(0x283E1A), bark = C(0x5A4430), leaf = C(0x6A8A32), leafD = C(0x8A6A2A)
+    let wing = C(0x6A5A42), wingD = C(0x3A2A1A), spot = C(0x1A140E), spotL = C(0xC8A048)
+    // The wings, behind everything, beating slowly (and harder in a fight): folded in a pixel on the down beat.
+    let fast = p.melee != nil || p.walking
+    let beat = Int(p.t * (fast ? 6 : 1.5)) % 2
+    let palette: [Character: Px] = ["W": wing, "M": moss, "L": leaf, "V": wingD, "E": spot, "e": spotL]
+    c.pattern(3 + beat, 15 + p.breathe, v78MothWing, palette)
+    c.pattern(38 - beat, 15 + p.breathe, v78MothWing.map { String($0.reversed()) }, palette)
     drawLegs(c, Look(leg: bark), step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(body: moss, shade: mossD, arm: bark, eye: nil))
-    // Bark and leaves all over, and a ragged fringe of leaves round the edge, head included.
-    for i in 0..<30 {
-        let x = 18 + Int(noise(i + 600) * 20), y = 26 + Int(noise(i + 640) * 12)
+    // Fur and bark over him.
+    for i in 0..<16 {
+        let x = 18 + Int(noise(i + 600) * 20), y = 27 + Int(noise(i + 640) * 10)
         c.px(x, y, [bark, leaf, mossD, leafD][i % 4])
     }
-    // A pointed hood of leaves, like a ghillie suit, its ragged edge hanging down past the eyes at the sides.
-    c.pattern(15, 12, [
-        "...........L............",
-        "..........LlL...........",
-        ".........LLLLL..........",
-        "........LLLlLLL.l.......",
-        ".......LLLLLLLLLL.......",
-        "......LLLLLLLLLLLL......",
-        "....L.LLLLLlLLLLLLL.....",
-        "....LLLLLLLLLLLLLLLL.L..",
-        "...LLLLLLLLLLLLLLlLLLL..",
-        "..LLLlLLLLLLLLLLLLLLLLL.",
-        ".LLLLLLLLLLLLLLLLLLLLLLL",
-        "LLLLLLLLLLLLLLLLLLLlLLLL",
-        ".LLLLLLLLLLLLLLLLLLLLLL.",
-        "..LLLLLLLLLLLLLLLLLLLLL.",
-        "..LLL..............LLLL.",
-        "..LL................LL..",
-        "..Ll................lL..",
-    ], ["L": leaf, "l": leafD])
-    // Leaf strips hanging down his sides and over his legs, stirring a little.
-    let stir = Int(p.t * 1.5) % 2
-    for (k, y) in stride(from: 31, through: 41, by: 2).enumerated() {
-        c.px(15 - (k + stir) % 2, y, leaf); c.px(15, y + 1, leafD)
-        c.px(40 + (k + stir) % 2, y, leaf); c.px(40, y + 1, leafD)
+    // A furry head, rounded over the top down to the body, and two feathery antennae.
+    c.pattern(17, 22, [
+        "......FFFFFFFFFF......",
+        "...FFFFfFFFFFFfFFFF...",
+        ".FFFFFFFFFFFFFFFFFFFF.",
+        "FFFFFFFFfFFFFFFFFFfFFF",
+    ], ["F": moss, "f": leaf])
+    for (side, base) in [(-1, 24), (1, 31)] {
+        for k in 0..<6 {
+            let x = base + side * (k / 2), y = 21 - k
+            c.px(x, y, bark)
+            if k > 0 && k < 5 { c.px(x + side, y + 1, leafD) }   // the feathery barbs
+        }
     }
-    for x in [21, 27, 33] { c.rect(x, 38, 1, 3, leafD); c.px(x, 41, leaf) }
-    // Two red eyes in the leaves.
-    for x in [22, 32] { c.rect(x, 28, 2, 2, C(0xD82A1A)) }
+    // Two red eyes in the fur.
+    for x in [21, 32] { c.rect(x, 28, 3, 2, C(0xD82A1A)); c.px(x + 1, 28, C(0xFF8A6A)) }
     c.rect(15, 33, 3, 3, bark)
     if let a = p.melee {
         for (i, ta) in p.trail.enumerated() {

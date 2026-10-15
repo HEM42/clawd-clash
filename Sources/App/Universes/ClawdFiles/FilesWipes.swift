@@ -349,7 +349,7 @@ struct FilesTrip {
         if stamp > 0 {
             // TOP SECRET, slammed on: big and faint, then down hard.
             let s = 1 + (1 - stamp) * 0.8
-            let size = max(6, (size.height / 9).rounded())
+            let size = max(9, (size.height / 9).rounded())
             ctx.saveGState()
             ctx.translateBy(x: c.x, y: c.y); ctx.rotate(by: turn - 0.2); ctx.scaleBy(x: s, y: s)
             let tw = lo.textWidth("TOP SECRET", size: size)
@@ -432,7 +432,7 @@ struct FilesTrip {
             screen.image(seed == 2 ? old : new)
             screen.ctx.restoreGState()
             screen.green(amount: 1)
-            let u = max(4, (h / 18).rounded())
+            let u = max(7, (h / 18).rounded())
             screen.fill(0xC8302A, 1, CGRect(x: u, y: h - u * 1.8, width: u * 0.8, height: u * 0.8))
             screen.text("REC", size: u, at: CGPoint(x: u * 2.1, y: h - u * 1.9), colour: 0xD8E8DC)
             screen.text(String(format: "CAM %02d  02:%02d:%02d", seed + 1, 13 + seed, frame % 60), size: u,
@@ -850,12 +850,24 @@ struct FilesTrip {
                                      width: CGFloat(Sprite.width) * sc, height: CGFloat(Sprite.height) * sc), alpha: alpha * 1.4)
             }
         default:
-            let s = h * 0.7
-            ctx.fill(CGRect(x: x - s * 0.18, y: h * 0.1, width: s * 0.36, height: s))
-            ctx.setFillColor(rgb(0x6A706C, alpha))
-            for r in 0..<10 { for c in 0..<4 where noise(r * 4 + c) < 0.5 {
-                ctx.fill(CGRect(x: x - s * 0.14 + CGFloat(c) * s * 0.075, y: h * 0.14 + CGFloat(r) * s * 0.09, width: max(1, s * 0.03), height: max(1, s * 0.04)))
-            } }
+            // A tower of offices, stepped at the top, a few windows still lit late.
+            let s = h * 0.7, bw = s * 0.36, base = h * 0.1
+            ctx.fill(CGRect(x: x - bw / 2, y: base, width: bw, height: s * 0.86))
+            ctx.fill(CGRect(x: x - bw * 0.35, y: base + s * 0.86, width: bw * 0.7, height: s * 0.08))
+            ctx.fill(CGRect(x: x - bw * 0.15, y: base + s * 0.94, width: bw * 0.3, height: s * 0.06))
+            ctx.fill(CGRect(x: x - 0.5, y: base + s, width: 1, height: s * 0.1))
+            let cell = max(2, (s / 16).rounded())
+            var row = 0
+            for wy in stride(from: base + cell, to: base + s * 0.82, by: cell * 1.5) {
+                var col = 0
+                for wx in stride(from: x - bw / 2 + cell * 0.6, to: x + bw / 2 - cell * 0.6, by: cell * 1.2) {
+                    let lit = noise(row * 7 + col) < 0.3
+                    ctx.setFillColor(lit ? rgb(0xD8D0A0, alpha * 1.3) : rgb(0x484C4A, alpha))
+                    ctx.fill(CGRect(x: wx, y: wy, width: max(1, cell * 0.6), height: max(1, cell * 0.8)))
+                    col += 1
+                }
+                row += 1
+            }
         }
     }
 
@@ -914,10 +926,15 @@ struct FilesTrip {
         }
         // The readout.
         if showReticle > 0 {
-            let size = max(5, (h / 22).rounded())
-            lo.text(FilesMap.reading(target), size: size, at: CGPoint(x: size, y: size), colour: 0x9AF0B0, alpha: CGFloat(showReticle))
-            if locked { lo.text("TARGET ACQUIRED", size: size, at: CGPoint(x: size, y: size * 2.3), colour: 0xE8FFE8, alpha: CGFloat(showReticle)) }
-            lo.text("KH-11  PASS \(4 + Int(noise(7) * 5))", size: size, at: CGPoint(x: w - size * 9, y: h - size * 1.6), colour: 0x9AF0B0, alpha: CGFloat(showReticle))
+            // Small frames (the window's strip) keep only what still reads: the coordinates and the lock.
+            let small = h < 100
+            let size = max(8, (h / 22).rounded())
+            lo.text(FilesMap.reading(target), size: size, at: CGPoint(x: size * 0.6, y: size * 0.6), colour: 0x9AF0B0, alpha: CGFloat(showReticle))
+            if locked {
+                lo.text(small ? "LOCK" : "TARGET ACQUIRED", size: size, at: small ? CGPoint(x: w - size * 3, y: size * 0.6) : CGPoint(x: size * 0.6, y: size * 1.9),
+                        colour: 0xE8FFE8, alpha: CGFloat(showReticle))
+            }
+            if !small { lo.text("KH-11  PASS \(4 + Int(noise(7) * 5))", size: size, at: CGPoint(x: w - size * 9, y: h - size * 1.6), colour: 0x9AF0B0, alpha: CGFloat(showReticle)) }
         }
         // Through the clouds on the way down.
         let dive = Self.bump(k, 0.62, 0.68, 0.8, 0.88)
@@ -981,6 +998,67 @@ enum FilesMap {
         hypot(a.lat - b.lat, a.lon - b.lon)
     }
     static func distance(_ a: Location, _ b: Location) -> Double { distance(point(a), point(b)) }
+
+    /// Rough coastlines (longitude, latitude), enough to know the Americas from orbit: North America with Central
+    /// America, Greenland, South America, Europe, Africa, Britain and the Antarctic Peninsula.
+    static let coasts: [[(Double, Double)]] = [
+        [(-168, 66), (-162, 70), (-156, 71.3), (-141, 69.6), (-128, 70), (-115, 68.5), (-95, 72), (-82, 73), (-80, 63),
+         (-94, 59), (-92, 57), (-82, 55), (-79, 51), (-77, 60), (-64, 60), (-56, 52), (-60, 47), (-66, 44), (-70, 41.5),
+         (-74, 40.5), (-76, 37), (-76, 35), (-81, 31.5), (-80, 27), (-80.5, 25.2), (-82.5, 27.5), (-84, 30), (-89, 30.2),
+         (-94, 29.6), (-97.5, 26), (-97.5, 22), (-95, 19), (-91, 18.5), (-90, 21.3), (-87, 21.5), (-88, 16), (-83.5, 15),
+         (-83, 10), (-79.5, 9), (-77.5, 8), (-80, 7.5), (-85.5, 10), (-87, 13), (-92, 14.5), (-96, 15.7), (-105, 19.5),
+         (-105.7, 22.5), (-109.5, 25.5), (-112.5, 29.5), (-114.5, 31), (-112, 28), (-109.9, 23), (-112, 25), (-115, 28),
+         (-117, 32.5), (-120.5, 34.5), (-122.5, 37.5), (-124.3, 40.5), (-124, 46), (-124.7, 48.4), (-123, 49),
+         (-127.5, 51), (-130.5, 54.5), (-134, 58), (-140, 59.8), (-146, 60.5), (-152, 59), (-158, 56.5), (-164, 54.8),
+         (-158, 58.5), (-162, 60), (-165, 62.5), (-164, 64.5)],
+        [(-73, 78), (-60, 82), (-30, 83.5), (-20, 80), (-18, 75), (-22, 70), (-40, 65), (-43, 60), (-48, 61), (-53, 66),
+         (-55, 70), (-58, 75.5), (-66, 76.5)],
+        [(-77.5, 8), (-72, 12), (-62, 10.7), (-52, 5), (-50, 0), (-44, -2.5), (-35, -5.5), (-35, -9), (-39, -15),
+         (-41, -22), (-48, -26), (-53, -34), (-58, -38.5), (-62, -39), (-65, -45), (-67.5, -47), (-69, -52), (-68.5, -55),
+         (-71.5, -54), (-74, -49), (-73.5, -42), (-73.5, -37), (-71.5, -30), (-70.3, -18.5), (-75.5, -15), (-81, -6),
+         (-80.5, -1), (-80, 1), (-77.5, 4)],
+        [(-17, 21), (-17, 14.7), (-12, 7), (-7.5, 4.5), (5, 4.5), (9.5, 4), (9, -1), (13, -9), (12, -17), (15, -27),
+         (18.5, -34.5), (26, -34), (33, -28), (40.5, -15), (40, -10), (51, 12), (43, 12), (37, 21), (32, 31), (20, 32),
+         (10, 37), (-6, 36), (-10, 30)],
+        [(-9.5, 43), (-9, 39), (-6, 36.5), (3, 43), (13, 45.5), (16, 38), (19, 40), (23, 36.5), (28, 41), (40, 41),
+         (40, 60), (30, 70), (15, 69), (5, 62), (8, 58), (8, 54), (-1.5, 46), (-4.5, 48)],
+        [(-5.5, 50), (1.5, 51), (-1.5, 55), (-3, 58.5), (-6, 56.5), (-3.5, 53.5)],
+        [(-57, -63), (-62, -64.5), (-66, -67), (-68, -70), (-62, -71)],
+    ]
+
+    /// Whether (`x`, `y`) is inside polygon `p`.
+    private static func inside(_ x: Double, _ y: Double, _ p: [(Double, Double)]) -> Bool {
+        var hit = false
+        var j = p.count - 1
+        for i in 0..<p.count {
+            let (xi, yi) = p[i], (xj, yj) = p[j]
+            if (yi > y) != (yj > y) {
+                let cross = xi + (y - yi) / (yj - yi) * (xj - xi)
+                if x < cross { hit.toggle() }
+            }
+            j = i
+        }
+        return hit
+    }
+
+    private static let boxes: [(minX: Double, maxX: Double, minY: Double, maxY: Double)] = coasts.map { p in
+        (p.map(\.0).min()! - 2, p.map(\.0).max()! + 2, p.map(\.1).min()! - 2, p.map(\.1).max()! + 2)
+    }
+
+    /// How much land there is at a point, 0 (open sea) … 1, its coast roughened with noise so it holds up close.
+    static func land(lon: Double, lat: Double, detail: Double) -> Double {
+        let jx = (valueNoise(lon * 0.6 * detail, lat * 0.6 * detail) - 0.5) * 1.6 / detail
+        let jy = (valueNoise(lon * 0.6 * detail + 17, lat * 0.6 * detail) - 0.5) * 1.6 / detail
+        let x = lon + jx, y = lat + jy
+        let texture = valueNoise(lon * 0.25, lat * 0.25)
+        if y < -70 + 3 * sin(x / 9) { return 0.55 + 0.45 * texture }   // Antarctica
+        for (i, p) in coasts.enumerated() {
+            let b = boxes[i]
+            guard x > b.minX, x < b.maxX, y > b.minY, y < b.maxY else { continue }
+            if inside(x, y, p) { return 0.55 + 0.45 * texture }
+        }
+        return 0.45 * texture
+    }
 
     /// 38°53'N 077°01'W.
     static func reading(_ p: (lat: Double, lon: Double)) -> String {
@@ -1240,12 +1318,13 @@ private final class Lo {
     func map(centre: (lat: Double, lon: Double), degreesPerPixel d: Double) {
         let p = bytes
         let detail = d < 0.01 ? 3.0 : 1.0
+        let cloudScale = 0.22 / max(1, d * 4)   // bigger clouds the further out it is, so they don't break into speckle
         for y in 0..<h {
             let lat = centre.lat + (Double(h) / 2 - Double(y)) * d
             for x in 0..<w {
                 let lon = centre.lon + (Double(x) - Double(w) / 2) * d
-                let land = valueNoise(lon * 0.07, lat * 0.07) * 0.8 + valueNoise(lon * 0.3 * detail, lat * 0.3 * detail) * 0.2
-                let cloud = valueNoise(lon * 0.22 + 40, lat * 0.3 - 9)
+                let land = FilesMap.land(lon: lon, lat: lat, detail: detail)
+                let cloud = valueNoise(lon * cloudScale + 40, lat * cloudScale * 1.4 - 9)
                 var r: Double, g: Double, b: Double
                 if land > 0.5 {
                     let t = min(1, (land - 0.5) * 4)
@@ -1262,7 +1341,7 @@ private final class Lo {
 }
 
 /// Smooth noise in 0…1 over the plane.
-private func valueNoise(_ x: Double, _ y: Double) -> Double {
+fileprivate func valueNoise(_ x: Double, _ y: Double) -> Double {
     let xi = Int(floor(x)), yi = Int(floor(y))
     let fx = x - floor(x), fy = y - floor(y)
     let ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy)
@@ -1273,7 +1352,7 @@ private func valueNoise(_ x: Double, _ y: Double) -> Double {
 }
 
 /// A quick integer hash, never negative.
-private func hash(_ x: Int, _ y: Int, _ s: Int) -> Int {
+fileprivate func hash(_ x: Int, _ y: Int, _ s: Int) -> Int {
     var v = UInt32(truncatingIfNeeded: x &* 374_761_393 &+ y &* 668_265_263 &+ s &* 1_274_126_177)
     v = (v ^ (v >> 13)) &* 1_274_126_177
     return Int(v ^ (v >> 16))

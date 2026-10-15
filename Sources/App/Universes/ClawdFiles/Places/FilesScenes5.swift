@@ -67,9 +67,43 @@ extension Scenes {
                     c.circle(x, py + 2 * s, 4 * s, C(0x8A3A2A)); c.circle(x, py + 2 * s, 2 * s, C(0x4E5A44))
                 }
             }
-            let hx = c.w / 2 - 12 * s, hy = f.ceiling / 2
-            c.rect(hx, hy, 24 * s, 16 * s, C(0x3A4432)); c.rect(hx + 2 * s, hy + 2 * s, 20 * s, 12 * s, C(0x2A3224))
-            c.rect(hx + 10 * s, hy + 6 * s, 4 * s, 4 * s, C(0x8A3A2A))   // the seal
+            // Riveted plates bolted over the ribs here and there, so the vault isn't all ribs.
+            for i in 0..<5 {
+                let px: Int = Int(noise(i + 950) * Double(c.w - 40 * s)), py: Int = f.ceiling / 10 + Int(noise(i + 960) * Double(f.ceiling * 6 / 10))
+                let pw: Int = (26 + Int(noise(i + 970) * 20)) * s, ph: Int = (14 + Int(noise(i + 980) * 10)) * s
+                c.rect(px, py, pw, ph, C(0x2E3628)); c.rect(px, py, pw, s, C(0x4A5640)); c.rect(px, py + ph - s, pw, s, C(0x1E2418))
+                for rx in stride(from: px + 2 * s, to: px + pw - s, by: 5 * s) { c.px(rx, py + 2 * s, C(0x5E6A50)); c.px(rx, py + ph - 3 * s, C(0x5E6A50)) }
+            }
+            // The sealed hatch in the crown: a heavy wheel, hazard stripes round it.
+            let hx = c.w / 2 - 18 * s, hy = f.ceiling / 2 - 4 * s
+            c.rect(hx - 2 * s, hy - 2 * s, 40 * s, 28 * s, C(0x1A2016))
+            for k in 0..<10 { c.rect(hx + k * 4 * s, hy - 2 * s, 2 * s, 2 * s, C(0xC8A83A)); c.rect(hx + k * 4 * s, hy + 24 * s, 2 * s, 2 * s, C(0xC8A83A)) }
+            c.rect(hx, hy, 36 * s, 24 * s, C(0x3A4432)); c.rect(hx + 2 * s, hy + 2 * s, 32 * s, 20 * s, C(0x2A3224))
+            c.circle(hx + 18 * s, hy + 12 * s, 8 * s, C(0x8A3A2A)); c.circle(hx + 18 * s, hy + 12 * s, 6 * s, C(0x2A3224))
+            c.rect(hx + 10 * s, hy + 12 * s, 17 * s, s, C(0x8A3A2A)); c.rect(hx + 18 * s, hy + 4 * s, s, 17 * s, C(0x8A3A2A))
+            c.circle(hx + 18 * s, hy + 12 * s, 2 * s, C(0xB84A3A))
+            // The big vent fans either side (their blades turn with the moving layer).
+            for vx in [c.w * 16 / 100, c.w * 84 / 100] {
+                c.circle(vx, f.ceiling * 3 / 8, 16 * s, C(0x4A5640)); c.circle(vx, f.ceiling * 3 / 8, 14 * s, C(0x1A2016))
+                c.circle(vx, f.ceiling * 3 / 8, 12 * s, C(0x0C100A))
+            }
+            // Cables hanging in loops between the pipes.
+            for i in 0..<6 {
+                let x0: Int = c.w * (5 + i * 17) / 100, x1: Int = x0 + c.w / 9, sag: Int = (6 + i % 3 * 5) * s
+                let y0: Int = f.ceiling / 4 + 4 * s
+                for x in stride(from: x0, to: x1, by: s) {
+                    let k: Double = Double(x - x0) / Double(max(1, x1 - x0))
+                    let y: Int = y0 + Int(sin(k * .pi) * Double(sag))
+                    c.rect(x, y, s, s, i % 2 == 0 ? C(0x14180F) : C(0x3A2A1A))
+                }
+            }
+            // Caged work lamps hanging off the lower pipe.
+            for (i, lx) in [c.w * 30 / 100, c.w * 70 / 100].enumerated() {
+                let ly: Int = f.ceiling * 3 / 5 + 4 * s
+                c.rect(lx, ly, s, 10 * s, C(0x1A2016))
+                c.rect(lx - 3 * s, ly + 10 * s, 7 * s, 5 * s, C(0x2A3224)); c.rect(lx - 2 * s, ly + 11 * s, 5 * s, 3 * s, i == 0 ? C(0xF0E8B0) : C(0xB8F0A8))
+                for k in 0..<5 { c.ellipse(lx, ly + 22 * s + k * 4 * s, (10 + k * 5) * s, (5 + k) * s, C(i == 0 ? 0xF0E8B0 : 0xB8F0A8, 0.03)) }
+            }
             for i in 0..<4 { c.rect(c.w / 5 + i * c.w / 5, f.ceiling - 10 * s, 10 * s, 4 * s, C(0x1A2016)) }
         } else {
             c.rect(0, 0, c.w, max(0, f.ceiling), C(0x161A12))
@@ -125,8 +159,23 @@ extension Scenes {
             if noise(Int(t * 0.7 + Double(x)) % 97) > 0.4 { c.rect(lx, f.winTop + 3 * s + sway, 2 * s, 2 * s, C(0xFFE8A0, 0.8)) }
             c.rect(x + 2 * s, f.winTop + 2 * s + sway, 3 * s, s, C(0x8AA0B0, 0.25))
         }
-        // The counter: minutes and seconds running down, the colon blinking.
+        // The vault's fans turning (the screen saver).
+        if isTall(c) {
+            for (k, vx) in [c.w * 16 / 100, c.w * 84 / 100].enumerated() {
+                let vy: Int = f.ceiling * 3 / 8
+                for blade in 0..<4 {
+                    let a: Double = t * (2.5 + Double(k)) + Double(blade) * .pi / 2
+                    for r in stride(from: 2 * s, to: 11 * s, by: s) {
+                        c.rect(vx + Int(cos(a) * Double(r)), vy + Int(sin(a) * Double(r)), 2 * s, 2 * s, C(0x3A4632))
+                    }
+                }
+                c.circle(vx, vy, 2 * s, C(0x5E6A50))
+            }
+        }
+        // The counter: minutes and seconds running down, the colon blinking, its red cast on the wall behind.
         let b = f.bomb
+        let beat: Double = Int(t * 2) % 2 == 0 ? 1 : 0.6
+        c.ellipse(b.x + b.w / 2, b.y + b.h / 3, b.w, b.h, C(0xFF3A2A, 0.07 * beat))
         let left = max(0, 59 * 60 - Int(t)) % 3600
         let text = String(format: "%02d", left / 60) + (Int(t * 2) % 2 == 0 ? ":" : " ") + String(format: "%02d", left % 60)
         drawDigits(c, text, x: b.x + 3 * s, y: b.y + 4 * s, s: s, col: C(0xFF3A2A))
@@ -208,8 +257,14 @@ extension Scenes {
         // The street lamp at the corner, and the trash cans.
         let lx = c.w * 86 / 100
         c.rect(lx, g - 46 * s, 2 * s, 46 * s, C(0x26282E)); c.rect(lx - 4 * s, g - 48 * s, 10 * s, 3 * s, C(0x26282E))
-        c.rect(lx - 2 * s, g - 45 * s, 6 * s, 2 * s, C(0xFFE0A0))
-        c.ellipse(lx + s, g - 42 * s, 7 * s, 4 * s, C(0xFFD890, 0.12))
+        c.rect(lx - 2 * s, g - 45 * s, 6 * s, 2 * s, C(0xFFD070))
+        // Sodium light: a warm halo round the head, a cone down the post and a pool on the pavement.
+        for k in 0..<4 { c.ellipse(lx + s, g - 43 * s, (14 - k * 3) * s, (9 - k * 2) * s, C(0xFFA840, 0.07)) }
+        for y in stride(from: g - 43 * s, to: g, by: 1) {
+            let hw: Int = 3 * s + (y - (g - 43 * s)) * 12 / 43
+            c.rect(lx + s - hw, y, hw * 2, 1, C(0xFFB050, 0.06))
+        }
+        c.ellipse(lx + s, g + 2 * s, 16 * s, 3 * s, C(0xFFB050, 0.18))
         for k in 0..<2 {
             let tx = f.right + 8 * s + k * 14 * s
             c.rect(tx, g - 15 * s, 12 * s, 15 * s, C(0x4A4E54)); c.rect(tx - s, g - 17 * s, 14 * s, 3 * s, C(0x5E6268))
@@ -319,13 +374,18 @@ extension Scenes {
         let s = unit(g), f = s5BayFrame(c, g)
         let lit = noise(Int(t * 13)) > 0.06 ? 1.0 : 0.4
         let lx = f.light.x, ly = f.light.y
-        c.ellipse(lx, ly, 10 * s, 4 * s, C(0x8A9894)); c.ellipse(lx, ly + s, 8 * s, 3 * s, C(0xFFFFF4).alpha(lit))
+        c.ellipse(lx, ly - s, 13 * s, 5 * s, C(0x6A7874)); c.ellipse(lx, ly, 12 * s, 4 * s, C(0x8A9894))
+        c.ellipse(lx, ly + s, 10 * s, 3 * s, C(0xFFFFF4).alpha(lit))
+        c.ellipse(lx, ly + 2 * s, 18 * s, 6 * s, C(0xFFFFE8, 0.18 * lit))
         let tx = f.tables[0]
         for y in (ly + 4 * s)..<(g - 18 * s) {
             let k = Double(y - ly) / Double(max(1, g - 18 * s - ly))
-            let hw = Int(Double(8 * s) + k * Double(14 * s))
-            c.rect(lx + (tx - lx) * Int(k * 100) / 100 - hw, y, hw * 2, 1, C(0xFFFFF0, 0.09 * lit))
+            let hw = Int(Double(9 * s) + k * Double(14 * s))
+            let cx: Int = lx + (tx - lx) * Int(k * 100) / 100
+            c.rect(cx - hw, y, hw * 2, 1, C(0xFFFFE8, 0.2 * lit))
+            c.rect(cx - hw / 2, y, hw, 1, C(0xFFFFF4, 0.12 * lit))   // the brighter core
         }
+        c.ellipse(tx, g - 17 * s, 22 * s, 3 * s, C(0xFFFFF4, 0.35 * lit))   // the pool of light on the sheet
         // The mic.
         let mx = f.tables[1] + Int(sin(t * 0.9) * Double(2 * s)), my = g - 34 * s
         let topY = f.ceiling
@@ -352,7 +412,7 @@ extension Scenes {
     static func s5PoolFrame(_ c: PixelCanvas, _ g: Int) -> (water: Int, edge: Int, mx: Int, mh: Int) {
         let s = unit(g), tall = isTall(c)
         let edge = g - 8 * s, water = g - 20 * s
-        return (water, edge, c.w * 58 / 100, tall ? min(water - 30 * s, 150 * s) : max(20 * s, water - 6 * s))
+        return (water, edge, c.w * 58 / 100, tall ? min(water - 30 * s, 150 * s) : max(16 * s, water * 55 / 100))
     }
 
     /// The Reflecting Pool at night: the Washington Monument lit white from below at the far end, its reflection
@@ -409,8 +469,8 @@ extension Scenes {
             let w = (50 + i * 20) * s
             let x = Int((t * Double(3 + i) * Double(s) + Double(i * c.w / 3)).truncatingRemainder(dividingBy: Double(c.w + w))) - w
             let tip = f.water - 3 * s - f.mh - 6 * s
-            let y = f.water / 6 + i * f.water / 8
-            guard y > 4 * s, y < tip - 8 * s else { continue }   // only in the sky above the Monument's tip
+            let y = max(3 * s, tip / 4 + i * tip / 4)
+            guard y < tip - 2 * s else { continue }   // only in the sky above the Monument's tip
             c.ellipse(x + w / 2, y, w / 2, 3 * s, C(0x2A3450, 0.5))
         }
         // Ripples across the reflection.

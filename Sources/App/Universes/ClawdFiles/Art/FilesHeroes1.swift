@@ -23,6 +23,18 @@ func drawDressShoes(_ c: PixelCanvas, step: Int, color: Px = C(0x18181C)) {
     }
 }
 
+/// Trousers: Clawd's four legs in `leg`, each pair joined at the inner gap down to the ankles, so a pair reads as one
+/// trouser leg. Four thin dark legs on their own each got a white outline, and read as white stripes.
+func h14Trousers(_ c: PixelCanvas, leg: Px, step: Int) {
+    drawLegs(c, Look(leg: leg), step: step)
+    guard !seatedPose else { return }
+    let seam: Px = C(0x000000, 0.25)
+    for gap in [21, 33] {
+        c.rect(gap, 38, 2, 5, leg)
+        c.rect(gap, 38, 1, 5, seam)   // a faint crease between the two legs of the pair
+    }
+}
+
 /// The FBI sidearm in the right hand (its muzzle at (47, 32)) and, when `searching`, the flashlight held under it with
 /// its pale beam spreading ahead into the dark.
 func drawSidearm(_ c: PixelCanvas, sleeve: Px, searching: Bool) {
@@ -58,7 +70,7 @@ private func drawFoxClawder(_ c: PixelCanvas, _ p: Pose) {
     let pointing = sig.map { $0 > 0.5 && $0 < 0.95 } ?? false
 
     drawCoatTails(c, coat: coat, dark: coatD, length: 3)
-    drawLegs(c, Look(leg: C(0x3A3C44)), step: p.step)
+    h14Trousers(c, leg: C(0x3A3C44), step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: coat))
@@ -120,7 +132,7 @@ private func drawDanaScrawly(_ c: PixelCanvas, _ p: Pose) {
     let badge = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
     drawCoatTails(c, coat: coat, dark: coatD, length: 4)
-    drawLegs(c, Look(leg: suit), step: p.step)
+    h14Trousers(c, leg: suit, step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: coat))

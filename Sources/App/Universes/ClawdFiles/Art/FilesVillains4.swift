@@ -6,13 +6,13 @@ import Foundation
 let filesVillains4: [FilesVillain: Persona] = [
     .tooms: Persona(name: "Eugene Clawms", weapon: .saber, headTop: 21, signature: 3.8, callout: "Back in thirty years.",
                     draw: drawTooms),
-    .flukeman: Persona(name: "The Flukeman", weapon: .saber, canSit: false, headTop: 17, signature: 3.6, callout: "Glrrbl.",
+    .flukeman: Persona(name: "The Flukeman", weapon: .saber, canSit: false, headTop: 12, signature: 3.6, callout: "Glrrbl.",
                        draw: drawFlukeman),
     .pusher: Persona(name: "The Pusher", weapon: .lightning,
                      magic: Magic(core: C(0xF4E8FF), glow: C(0x9A5AE8), jagged: false),
                      pivot: (45.0, 31.0), headTop: 21, signature: 3.2, callout: "You will step aside.",
                      draw: drawPusher),
-    .jerseyDevil: Persona(name: "The Jersey Devil", weapon: .saber, headTop: 15, signature: 2.6, callout: "Grrraah!",
+    .jerseyDevil: Persona(name: "The Jersey Devil", weapon: .saber, canSit: false, headTop: 17, signature: 2.6, callout: "Grrraah!",
                           draw: drawJerseyDevil),
 ]
 
@@ -78,17 +78,42 @@ private func drawTooms(_ c: PixelCanvas, _ p: Pose) {
     for y in stride(from: 37, to: 42, by: 2) { c.rect(44, y, 11, 1, C(0x8A8E96, vent)) }
     guard slide < 0.98 else { return }
     let fig = PixelCanvas(c.w, c.h)
-    toomsFigure(fig, p)
+    toomsFigure(fig, p, legs: false)
     let wf = 1 - 0.68 * narrow, hf = 1 + 0.18 * narrow, dx = slide * 21
-    blit(fig, into: c, alpha: 1 - slide * 0.85) { x, y in
+    let alpha: Double = 1 - slide * 0.85
+    blit(fig, into: c, alpha: alpha) { x, y in
         (Int(((Double(x) - 28 - dx) / wf + 28).rounded(.down)), Int(((Double(y) - 44) / hf + 44).rounded(.down)))
+    }
+    v4ToomsSqueezedLegs(c, wf: wf, hf: hf, dx: dx, alpha: alpha)
+}
+
+/// His legs while he squeezes: drawn, not resampled (resampled, four thin legs merged into one line). Each keeps its
+/// place across the narrowed body, at least a pixel wide; when they'd touch, only the outer two are left, a gap
+/// between them, so he still stands on two legs.
+private func v4ToomsSqueezedLegs(_ c: PixelCanvas, wf: Double, hf: Double, dx: Double, alpha: Double) {
+    let trousers = C(0x4E4636).alpha(alpha), shoe = C(0x2A2018).alpha(alpha)
+    let legW: Int = max(1, Int((2 * wf).rounded()))
+    let top: Int = Int((44 - 8 * hf).rounded())
+    let xs: [Int] = [19, 23, 31, 35].map { lx in
+        let mid: Double = 28 + dx + (Double(lx) + 1 - 28) * wf
+        return Int((mid - Double(legW) / 2).rounded())
+    }
+    // The outer two always; an inner one only with a clear pixel either side of it.
+    var kept: [Int] = [xs[0]]
+    for x in xs[1..<3] where x >= kept[kept.count - 1] + legW + 1 && x + legW + 1 <= xs[3] { kept.append(x) }
+    kept.append(max(xs[3], kept[kept.count - 1] + legW + 1))
+    for x in kept {
+        c.rect(x, top, legW, 42 - top, trousers)
+        c.rect(x, 42, legW, 2, shoe)
     }
 }
 
-private func toomsFigure(_ c: PixelCanvas, _ p: Pose) {
+private func toomsFigure(_ c: PixelCanvas, _ p: Pose, legs: Bool = true) {
     let shirt = C(0x8A7E52), shirtD = C(0x6A6040), trousers = C(0x4E4636), hair = C(0x241C14), nail = C(0xE6DCA8)
-    drawLegs(c, Look(leg: trousers), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x2A2018))
+    if legs {
+        drawLegs(c, Look(leg: trousers), step: p.step)
+        drawDressShoes(c, step: p.step, color: C(0x2A2018))
+    }
     c.oy += p.breathe
     drawBody(c, Look(arm: shirt, eye: nil))
     // The work shirt, its collar and the badge.
@@ -145,42 +170,64 @@ private func drawFlukeman(_ c: PixelCanvas, _ p: Pose) {
     }
 }
 
+/// Half the Flukeman's width at row `y`: a domed head, then ringed segments, each bulging at its middle, tapering to
+/// the stubby legs. Centred on x 27.5.
+private func v4FlukeHalf(_ y: Int) -> Int {
+    let dome: [Int] = [3, 5, 6, 7, 7]                 // rows 12…16
+    if y < 12 { return 0 }
+    if y < 17 { return dome[y - 12] }
+    let inSeg: Int = (y - 17) % 4                     // 0 the crease, 1–2 the bulge, 3 back in
+    let base: Int = y < 33 ? 7 : 6
+    return inSeg == 0 || inSeg == 3 ? base : base + 1
+}
+
 private func flukeFigure(_ c: PixelCanvas, _ p: Pose) {
-    let pale = C(0xD6D2C0), paleD = C(0xA8A490), paleL = C(0xEEECE2)
-    drawLegs(c, Look(leg: pale), step: p.step)
-    if !seatedPose { for lx in [19, 23, 31, 35] { c.px(lx, p.step >= 0 && [19, 31].contains(lx) == (p.step == 0) ? 42 : 43, paleD) } }
+    let pale = C(0xD6D2C0), paleD = C(0xA8A490), paleL = C(0xEEECE2), paleS = C(0x8E8A78)
+    let gum = C(0x9A4A52), throat = C(0x3A1418), tooth = C(0xF2EEDC)
+    // Two stubby legs, ringed like the rest of him, one lifted as he shambles.
+    for (i, lx) in [21, 31].enumerated() {
+        let lift: Int = p.step >= 0 && i == p.step ? 1 : 0
+        c.rect(lx, 37, 5, 6 - lift, pale)
+        c.rect(lx + 4, 37, 1, 6 - lift, paleD)
+        c.rect(lx, 40 - lift, 5, 1, paleD)
+        c.rect(lx - 1, 42 - lift, 7, 1, pale)            // the splayed, flattened foot
+    }
     c.oy += p.breathe
-    drawBody(c, Look(body: pale, shade: paleD, arm: pale, eye: nil))
-    // The domed head and the ridges round him.
-    c.pattern(17, 17, [
-        "......PPPPPPPPPP......",
-        "....PPPPPPLLPPPPPP....",
-        "...PPPPPPLLPPPPPPPP...",
-        "..RRRRRRRRRRRRRRRRRR..",
-        ".PPPPPPPPPPPPPPPPPPPP.",
-        "PPPPPPPPPPPPPPPPPPPPPP",
-        "RRRRRRRRRRRRRRRRRRRRRR",
-        "PPPPPPPPPPPPPPPPPPPPPP",
-        "PPPPPPPPPPPPPPPPPPPPPP",
-    ], ["P": pale, "L": paleL, "R": paleD])
-    for y in [34, 37] { c.rect(18, y, 20, 1, paleD) }
-    // Slits for eyes, and the sucker mouth, opening and closing.
-    c.rect(22, 28, 3, 1, ink); c.rect(31, 28, 3, 1, ink)
+    // The body: a long pale worm standing up, ringed every four rows, lit from the left, shaded on the right.
+    for y in 12...38 {
+        let hw: Int = v4FlukeHalf(y)
+        guard hw > 0 else { continue }
+        let x0: Int = 28 - hw, w: Int = hw * 2
+        let crease: Bool = y >= 17 && (y - 17) % 4 == 0
+        c.rect(x0, y, w, 1, crease ? paleD : pale)
+        if !crease {
+            c.px(x0, y, paleL)
+            c.rect(x0 + w - 2, y, 2, 1, paleD)
+        } else {
+            c.px(x0 + w - 1, y, paleS)
+        }
+    }
+    c.rect(24, 13, 3, 1, paleL); c.rect(23, 14, 2, 1, paleL)   // the shine on the dome
+    // Pinhole eyes, high on the head.
+    c.px(24, 15, ink); c.px(31, 15, ink)
+    // The sucker: a round mouth on the front of the head, ringed with little teeth, opening and closing.
     let open = sin(p.t * 3.1) > 0
-    c.pattern(26, 29, open ? [".MMMMM.", "MTiiiTM", "MiiiiiM", "MTiiiTM", ".MMMMM."]
-                           : ["..MMM..", ".MTiTM.", ".MiiiM.", ".MTiTM.", "..MMM.."],
-              ["M": C(0x9A4A52), "i": C(0x3A1418), "T": C(0xF2EEDC)])
-    c.rect(15, 33, 3, 3, pale)
+    c.pattern(24, 17, open ? [".MMMMM.", "MTTTTTM", "MTiiiTM", "MTiiiTM", "MTTTTTM", ".MMMMM."]
+                           : ["..MMM..", ".MTTTM.", ".MTiTM.", ".MTiTM.", ".MTTTM.", "..MMM.."],
+              ["M": gum, "i": throat, "T": tooth])
+    // Soft, heavy arms: the far one hanging limp at his side, the near one lashing out.
+    c.rect(18, 25, 2, 9, pale); c.px(18, 25, paleL); c.rect(17, 33, 3, 2, pale)
     if let a = p.melee {
         let r = a * .pi / 180
         for (i, ta) in p.trail.enumerated() {
             let tr = ta * .pi / 180
-            seg(c, 39, 34, 39 + cos(tr) * 9, 34 + sin(tr) * 9, pale.alpha(0.35 / Double(i + 1)), w: 3)
+            seg(c, 36, 27, 36 + cos(tr) * 10, 27 + sin(tr) * 10, pale.alpha(0.35 / Double(i + 1)), w: 3)
         }
-        seg(c, 39, 34, 39 + cos(r) * 9, 34 + sin(r) * 9, pale, w: 3)
-        c.px(Int(40 + cos(r) * 9), Int(35 + sin(r) * 9), C(0x9A4A52))
+        seg(c, 36, 27, 36 + cos(r) * 10, 27 + sin(r) * 10, pale, w: 3)
+        c.px(Int(37 + cos(r) * 10), Int(28 + sin(r) * 10), gum)
     } else {
-        c.rect(38, 33, 3, 4, pale); c.px(39, 36, paleD)
+        // Hanging down his side and curling forward at the end.
+        c.rect(36, 25, 2, 8, pale); c.px(37, 25, paleD); c.rect(37, 32, 3, 2, pale); c.px(39, 33, paleD)
     }
 }
 
@@ -246,8 +293,9 @@ private func drawPusher(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - The Jersey Devil
 
-/// The Jersey Devil: a wild woman of the Pine Barrens, a great mane of matted brown hair hanging to her knees, mud on
-/// her, Clawd's face peering out of it with yellow eyes and bared teeth. She crouches low and rakes with clawed hands.
+/// The Jersey Devil: a wild woman of the Pine Barrens on all fours, hunched under a great mane of matted brown hair, mud
+/// on her, long thin limbs, Clawd's face pushed forward out of it with yellow eyes and bared teeth. She rakes with
+/// clawed hands.
 /// Signature: a crouch, then a huge leap straight up, and a landing in a puff of dust.
 private func drawJerseyDevil(_ c: PixelCanvas, _ p: Pose) {
     let fur = C(0x4A3220), furD = C(0x2E1E12), furL = C(0x6A4A30), nail = C(0x2A2018)
@@ -266,53 +314,64 @@ private func drawJerseyDevil(_ c: PixelCanvas, _ p: Pose) {
         }
     }
     c.oy += crouch - Int(lift.rounded())
-    drawLegs(c, Look(leg: fur), step: lift > 0 ? -1 : p.step)
-    if !seatedPose { for lx in [19, 23, 31, 35] { c.px(lx, 43, nail); c.px(lx + 1, 43, nail) } }
+    // Long bent legs and arms, on all fours: the far ones darker, behind; the near ones swap forward as she walks.
+    let walk: Int = lift > 0 ? -1 : p.step
+    let farStep: Int = walk == 1 ? 2 : 0, nearStep: Int = walk == 0 ? 2 : 0
+    v4DevilLimb(c, hip: (20, 34), knee: (16 + farStep, 39), foot: (18 + farStep, 43), col: furD, nail: nail)
+    v4DevilLimb(c, hip: (24, 34), knee: (20 + nearStep, 39), foot: (22 + nearStep, 43), col: fur, nail: nail)
+    v4DevilLimb(c, hip: (29, 33), knee: (31 + farStep, 38), foot: (30 + farStep, 43), col: furD, nail: nail)
     c.oy += p.breathe
-    drawBody(c, Look(body: clawdOrange, arm: fur, eye: nil))
-    // The mane: wild over her head, hanging down both sides of her face and over her body to the knees.
-    c.pattern(15, 15, [
-        "....F.FFF..FF.F.F.......",
-        "..FFFFFFFFFFFFFFFFFF.F..",
-        ".FFFFLFFFFFFFLFFFFFFFF..",
-        "FFFFFFFFFFLFFFFFFFFFFFF.",
-        "FFFFFFFFFFFFFFFFFFLFFFFF",
-        "FFFLFFFFFFFFFFFFFFFFFFFF",
-        "FFFFFFFFFFFFFFFFFFFFFFFF",
-        "FFFFFFFFFFFFFFFFFFFFFFFF",
-        "FFFFFFFFFFFFFFFFFFFFFFFF",
-        "FFFFFFFFFFFFFFFFFFFFFFFF",
-        "FFFFLFFFFFFFFFFFFFFLFFFF",
-        "FFFFFFF..........FFFFFFF",
-        "FFFFFF............FFFFFF",
-        "FFFFFF............FFFFFF",
-        "FFFFFFF..........FFFFFFF",
-        "FFFFFFFFFFFFFFFFFFFFFFFF",
-        "FFFFFFFFFFFFFFFFFFFFFFFF",
-        "FFFFFFFFFFLFFFFFFFFFFFFF",
-        "FFFFFFFFFFFFFFFFFFFFFFFF",
-        "FFFFFFFFFFFFFFFFFFFFFFFF",
-        "FFLFFFFFFFFFFFFFFLFFFFFF",
-        ".FFFF.FFFFF.FFFFF.FFFF..",
-        "..F...F.F....F.F...F....",
-    ], ["F": fur, "L": furL])
-    for i in 0..<10 { c.px(16 + Int(noise(i + 40) * 22), 31 + Int(noise(i + 60) * 6), furD) }   // matted, muddy
-    // Ragged edges: strands sticking out of the mane, swaying a little.
-    let sway = Int(p.t * 2) % 2
-    for (y, side) in [(19, -1), (22, 1), (24, -1), (27, 1), (30, -1), (33, 1), (35, -1)] {
-        let x = side < 0 ? 14 - (y % 2) * sway : 39 + (y % 2) * sway
-        c.px(x, y, fur); c.px(x + side, y + 1, furL)
+    // The hump: her back arched high under the mane, falling away behind and down to her head in front.
+    for x in 14...36 {
+        let top: Int = x <= 21 ? 19 + (21 - x) : 19 + (x - 21) / 2
+        let bottom: Int = x < 16 || x > 34 ? 35 : 36
+        c.rect(x, top, 1, bottom - top + 1, fur)
+        if x % 3 == 0 { c.rect(x, top + 1, 1, 3, furL) }          // the lie of the hair, streaked
+        if x % 4 == 1 { c.rect(x, bottom - 3, 1, 3, furD) }      // matted underneath
     }
-    // Yellow eyes and bared teeth.
-    for x in [22, 32] { c.rect(x, 27, 2, 2, C(0xE8D040)); c.px(x + 1, 28, ink) }
-    c.rect(25, 29, 6, 1, ink); for x in [25, 27, 29] { c.px(x, 29, C(0xF2EEDC)) }
-    // Claws: forward when she rakes, otherwise held up at her chest ready.
+    for i in 0..<10 { c.px(16 + Int(noise(i + 40) * 18), 24 + Int(noise(i + 60) * 10), furD) }   // mud
+    // Wild hair standing up off the hump and trailing behind, swaying.
+    let sway: Int = Int(p.t * 2) % 2
+    for (x, up) in [(15, 2), (17, 3), (19, 2), (21, 3), (23, 2), (26, 2), (29, 1)] {
+        let top: Int = x <= 21 ? 19 + (21 - x) : 19 + (x - 21) / 2
+        c.rect(x + (x % 2) * sway, top - up, 1, up, fur)
+    }
+    // Tufts, two rows thick: single strands only drew a comb of white outline.
+    for (y, len) in [(27, 3), (31, 4), (34, 2)] {
+        c.rect(14 - len - (y % 2) * sway, y, len, 2, fur); c.px(14 - len - (y % 2) * sway, y + 1, furL)
+    }
+    // Her head, low and pushed forward: Clawd's face under a matted fringe, yellow eyes, bared teeth.
+    c.rect(30, 25, 10, 9, clawdOrange)
+    c.rect(30, 33, 10, 1, C(0xB8582E)); c.rect(39, 25, 1, 9, C(0xB8582E))
+    c.pattern(28, 22, [
+        "..F.FF.F.F.F.",
+        ".FFFFFFFFFFFF",
+        "FFFFLFFFFFFFF",
+        "FFFF.F.FF.F.F",
+        "FF...........",
+        "FF...........",
+        "F............",
+    ], ["F": fur, "L": furL])
+    for x in [33, 37] { c.rect(x, 27, 2, 2, C(0xE8D040)); c.px(x + 1, 28, ink) }
+    c.rect(33, 31, 6, 1, ink); for x in [33, 35, 37] { c.px(x, 31, C(0xF2EEDC)) }
+    // The near arm: long, down to the ground in front of her; raking when she fights.
     if let a = p.melee {
         for (i, ta) in p.trail.enumerated() {
             drawClawArm(c, angle: ta, sleeve: fur, hand: clawdOrange, nail: nail, alpha: 0.35 / Double(i + 1))
         }
         drawClawArm(c, angle: a, sleeve: fur, hand: clawdOrange, nail: nail)
     } else {
-        c.rect(38, 31, 3, 3, fur); c.rect(40, 30, 2, 2, clawdOrange); c.px(42, 30, nail); c.px(42, 31, nail)
+        v4DevilLimb(c, hip: (35, 33), knee: (38 + nearStep, 38), foot: (39 + nearStep, 43), col: fur, nail: nail,
+                    hand: clawdOrange)
     }
+}
+
+/// One of the Jersey Devil's long limbs, two pixels thick: hip (or shoulder) to knee (or elbow) to a clawed foot (or a
+/// hand, `hand` coloured) flat on the ground.
+private func v4DevilLimb(_ c: PixelCanvas, hip: (Int, Int), knee: (Int, Int), foot: (Int, Int), col: Px, nail: Px,
+                         hand: Px? = nil) {
+    seg(c, Double(hip.0), Double(hip.1), Double(knee.0), Double(knee.1), col, w: 2)
+    seg(c, Double(knee.0), Double(knee.1), Double(foot.0), Double(foot.1) - 1, col, w: 2)
+    c.rect(foot.0 - 1, foot.1, 3, 1, hand ?? col)
+    c.px(foot.0 + 2, foot.1, nail)
 }

@@ -60,7 +60,7 @@ private func drawMisterX(_ c: PixelCanvas, _ p: Pose) {
     }
     // The coat's long tails over black trousers.
     let tails = seatedPose ? 1 : 4
-    drawLegs(c, Look(leg: C(0x18181C)), step: p.step)
+    h14Trousers(c, leg: C(0x18181C), step: p.step)
     drawDressShoes(c, step: p.step)
     c.rect(17, 38, 22, tails, coat); c.rect(17, 37 + tails, 22, 1, coatD); c.rect(28, 38, 1, tails, coatD)
     c.oy += p.breathe
@@ -187,12 +187,14 @@ private func drawSamantha(_ c: PixelCanvas, _ p: Pose) {
     var glow = 0.0
     if let s = sig, s > 0.05, s < 0.95 {
         glow = min(1, (s - 0.05) / 0.15, (0.95 - s) / 0.15)
-        // The beam, from the top of the canvas down to the ground, wider at the bottom.
+        // The beam, from the top of the canvas down to the ground, wider at the bottom: a clear pale light, brighter
+        // down its middle and at its edges, so it reads as light on a dark place as well as a light one.
         for y in 0..<44 {
-            let hw = 4 + y / 6
-            c.rect(28 - hw, y, hw * 2, 1, C(0xF0FFF4, 0.3 * glow))
+            let hw: Int = 4 + y / 6
+            c.rect(28 - hw, y, hw * 2, 1, C(0xE8FFF0, 0.42 * glow))
+            c.px(28 - hw, y, C(0xF4FFF8, 0.7 * glow)); c.px(27 + hw, y, C(0xF4FFF8, 0.7 * glow))
         }
-        c.rect(26, 0, 4, 44, C(0xFFFFFF, 0.3 * glow))
+        c.rect(26, 0, 4, 44, C(0xFFFFFF, 0.35 * glow))
         c.oy -= Int((glow * 3).rounded())
     }
     drawChildBody(c, p, leg: pj, shoe: C(0xF4E8C8))
@@ -214,8 +216,11 @@ private func drawSamantha(_ c: PixelCanvas, _ p: Pose) {
     ], ["H": hair, "d": hairD])
     c.rect(24, 32, 2, 2, ink); c.rect(30, 32, 2, 2, ink)
     if glow > 0 {
-        // She glows: a pale light over her and a ring of it round her feet.
-        c.rect(21, 27, 14, 12, C(0xF0FFF4, 0.15 * glow))
-        c.ellipse(28, 43, 7, 1, C(0xE8FFF0, 0.5 * glow))
+        // She glows: light catching the top of her hair and her shoulders, and a ring of it round her feet (not a
+        // wash over her, which hid her face).
+        let rim: Px = C(0xF4FFF8, 0.85 * glow)
+        c.rect(23, 27, 10, 1, rim); c.px(22, 28, rim); c.px(33, 28, rim)
+        c.rect(19, 35, 2, 1, rim); c.rect(35, 35, 2, 1, rim)
+        c.ellipse(28, 43, 7, 1, C(0xE8FFF0, 0.6 * glow))
     }
 }

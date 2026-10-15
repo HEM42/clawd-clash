@@ -120,7 +120,8 @@ private func drawJimmyBondd(_ c: PixelCanvas, _ p: Pose) {
 /// red lips, a long black coat buttoned to the throat and black gloves; a pistol. Signature: she's gone: the picture
 /// breaks up into a few scattered pixels, empty air for a beat, and she's back.
 private func drawYvesHarlowe(_ c: PixelCanvas, _ p: Pose) {
-    let coat = C(0x1E1E26), coatL = C(0x34343E), hair = C(0x0E0E12), hairL = C(0x2A2A34)
+    let coat = C(0x24242E), coatL = C(0x4A4A5A), coatD = C(0x121218), hair = C(0x0E0E12), hairL = C(0x3A3A4C)
+    let shine = C(0x6A6A82), silver = C(0xB8BCC8)
     if let s = p.signature, s > 0.25, s < 0.75 {
         // Breaking up: fewer pixels as she goes, none at the middle, more as she comes back.
         let k = abs(s - 0.5) / 0.25   // 1 at the edges, 0 in the middle
@@ -134,14 +135,19 @@ private func drawYvesHarlowe(_ c: PixelCanvas, _ p: Pose) {
 
     // The coat to below the knees, black boots.
     drawLegs(c, Look(leg: C(0x16161C)), step: p.step)
-    if !seatedPose { c.rect(17, 38, 22, 4, coat); c.rect(17, 41, 22, 1, coatL); c.rect(28, 38, 1, 4, coatL) }
+    if !seatedPose {
+        c.rect(17, 38, 22, 4, coat); c.rect(17, 41, 22, 1, coatL); c.rect(28, 38, 1, 4, coatL)
+        c.rect(17, 38, 1, 4, coatL); c.rect(38, 38, 1, 4, coatD)   // the coat's edges, lit on one side
+    }
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: coat))
-    // The coat buttoned up to a high collar.
-    c.rect(18, 33, 20, 5, coat); c.rect(18, 37, 20, 1, coatL)
-    c.rect(24, 33, 8, 1, coatL); for y in [34, 36] { c.px(27, y, C(0x6A6A74)) }
-    c.px(27, 33, C(0x8A1A26)); c.px(28, 33, C(0x8A1A26))   // red lips just above the collar
+    // The coat buttoned up to a high collar, wide lapels picked out, a belt with a silver buckle.
+    c.rect(18, 33, 20, 5, coat); c.rect(37, 33, 1, 5, coatD)
+    c.pattern(22, 33, ["LLL....LLL", ".LL....LL.", "..L....L.."], ["L": coatL])
+    c.rect(18, 36, 20, 1, coatD); c.rect(26, 36, 3, 1, silver)
+    for y in [34, 35] { c.px(27, y, silver) }
+    c.rect(26, 32, 3, 1, C(0xA8202E)); c.px(27, 33, C(0x8A1A26))   // dark red lips just above the collar
     // The bob: a blunt fringe straight across, the sides cut straight at the jaw.
     c.pattern(16, 20, [
         "......HHHHHHHHHHH.......",
@@ -157,6 +163,14 @@ private func drawYvesHarlowe(_ c: PixelCanvas, _ p: Pose) {
         "..HHH..............HHH..",
         "..HHH..............HHH..",
     ], ["H": hair, "h": hairL])
+    // The bob's sheen: a lit band across the crown and down the near side.
+    c.pattern(18, 21, [
+        "......ssssss........",
+        "...sSSSSSSSSss......",
+        "..s..........ss.....",
+        "s...................",
+        "s..................s",
+    ], ["s": hairL, "S": shine])
     c.rect(15, 33, 3, 3, coat)
     c.oy += p.gunY
     drawSidearm(c, sleeve: coat, searching: false)
@@ -245,6 +259,15 @@ private func drawMargaretScrawly(_ c: PixelCanvas, _ p: Pose) {
         ".gHH..............HHg.",
         "..g................g..",
     ], ["H": hair, "l": hairL, "g": grey])
+    // The grey at the temples, a streak swept back into the auburn above each.
+    c.pattern(17, 22, [
+        "..W................W..",
+        ".gW................Wg.",
+        "gWg................gWg",
+        "gWg................gWg",
+        "gW..................Wg",
+        "gW..................Wg",
+    ], ["g": grey, "W": C(0xE4E0DA)])
     if hugging {
         // Both arms open wide, a heart rising over her head.
         let k = sig.map { ($0 - 0.12) / 0.76 } ?? 0
@@ -336,14 +359,26 @@ private func drawJeffreySpendr(_ c: PixelCanvas, _ p: Pose) {
     ], ["H": hair, "l": hairL, "d": hairD])
     if shredding {
         // The shredder on its basket beside him, the file going in at the top and strips falling out below.
-        let k = (sig! - 0.08) / 0.72
-        c.rect(44, 33, 10, 3, C(0x3A3A42)); c.rect(44, 33, 10, 1, C(0x6A6A74)); c.rect(45, 36, 8, 7, C(0x5A5A62, 0.85))
+        let k: Double = (sig! - 0.08) / 0.72
+        let paper = C(0xF0E4BC), paperD = C(0xC8B888)
+        // The basket, brimming with strips already, its wire mesh.
+        c.rect(43, 36, 13, 7, C(0x4A4E58)); c.rect(43, 36, 13, 1, C(0x8A8E98)); c.rect(55, 36, 1, 7, C(0x34363E))
+        for x in stride(from: 45, through: 53, by: 2) { c.rect(x, 37, 1, 6, C(0x34363E)) }
+        c.pattern(44, 34, [".p.pp.p.pp.", "pPpPPpPpPPp"], ["p": paperD, "P": paper])
+        // The shredder head on top: dark, the slot, its green light.
+        c.rect(42, 30, 15, 4, C(0x2A2A30)); c.rect(42, 30, 15, 1, C(0x5A5A66)); c.rect(44, 31, 11, 1, C(0x0A0A0C))
+        c.px(55, 32, Int(p.t * 4) % 2 == 0 ? C(0x5AE85A) : C(0x2A7A2A))
         c.rect(38, 31, 5, 3, suit)
-        let fileH = max(0, 6 - Int(k * 6))
-        if fileH > 0 { c.rect(46, 33 - fileH, 6, fileH, C(0xE8D8A8)) }
-        for i in 0..<5 {
-            let y = 37 + Int((k * 8 + Double(i) * 1.3).truncatingRemainder(dividingBy: 5))
-            c.rect(46 + i, y, 1, 2, C(0xE8D8A8))
+        // The file going in at the top, lined with type.
+        let fileH: Int = max(0, 7 - Int(k * 7))
+        if fileH > 0 {
+            c.rect(45, 31 - fileH, 9, fileH, C(0xE8D8A8))
+            for y in stride(from: 31 - fileH + 1, to: 31, by: 2) { c.rect(46, y, 6, 1, C(0x8A8070)) }
+        }
+        // Strips spilling out under the head into the basket, long enough to read even standing still.
+        for i in 0..<6 {
+            let drop: Int = Int((k * 9 + Double(i) * 1.7).truncatingRemainder(dividingBy: 3))
+            c.rect(44 + i * 2, 34 + drop, 1, 2, i % 2 == 0 ? paper : paperD)
         }
         c.rect(15, 33, 3, 3, suit)
         return

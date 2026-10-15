@@ -4,41 +4,53 @@ import Foundation
 // unmarked sedan for the agents and their friends (it drives in along the ground rather than flying, `Ride.drives`),
 // the Syndicate's black helicopter, and the saucer that takes the aliens, whose "ramp" is its beam of light.
 
-/// The FBI's unmarked sedan: a boxy dark blue-grey four-door, its rear door the boarding ramp (`ramp` 0…1 swings it open
-/// on the lit inside, its foot about 14 px left of centre), `lights` on: headlights and a red light flashing on the dash.
+/// The FBI's unmarked sedan: a boxy dark blue-grey four-door saloon (bonnet, cabin, a boot of its own), its rear door the
+/// boarding ramp (`ramp` 0…1 swings it open on the lit inside, its foot about 14 px left of centre), `lights` on:
+/// headlights and a red light flashing on the dash.
 func drawSedan(_ c: PixelCanvas, ramp: Double, lights: Bool) {
     let body = C(0x2E3A4E), light = C(0x4A5A72), dark = C(0x1C2432), glass = C(0x16202C), shine = C(0x8AA0B8)
-    let chrome = C(0xB8C0C8), tyre = C(0x101114), hub = C(0x8A9098)
-    // The lower body, the hood and the boot.
-    c.rect(4, 19, 58, 6, body); c.rect(4, 19, 58, 1, light); c.rect(4, 24, 58, 1, dark)
-    c.rect(3, 21, 1, 3, body); c.rect(62, 20, 1, 4, body)
-    c.rect(4, 22, 58, 1, chrome.alpha(0.7))   // the trim line along the side
-    // The cabin: rear window, the doors' windows, the windscreen sloping down to the hood.
-    for y in 12..<19 {
-        let back = 12 + (18 - y) / 2, front = 46 + (y - 12) / 2 + 1
+    let chrome = C(0xB8C0C8), tyre = C(0x101114), hub = C(0x8A9098), arch = C(0x0C1018)
+    // The lower body, the boot lid behind and the bonnet in front, a step down from the cabin each side.
+    c.rect(4, 17, 58, 8, body)
+    c.rect(4, 16, 13, 1, body); c.rect(4, 16, 13, 1, light)       // the boot lid
+    c.rect(46, 16, 15, 1, body); c.rect(46, 16, 15, 1, light)     // the bonnet
+    c.rect(3, 18, 1, 6, body); c.rect(62, 18, 1, 6, body)          // the bumpers' ends
+    c.rect(4, 24, 58, 1, dark)
+    c.rect(4, 20, 58, 1, chrome.alpha(0.7))                       // the trim line along the side
+    // The cabin: the rear window sloping up from the boot, the roof, the windscreen sloping down to the bonnet.
+    for y in 9..<16 {
+        let up = 16 - y                                   // rows above the waist, 1…7
+        let back = 16 + up * 2 / 3, front = 47 - up * 3 / 4
         c.rect(back, y, front - back, 1, body)
     }
-    c.rect(15, 12, 30, 1, light)
-    c.rect(16, 14, 11, 4, glass); c.rect(29, 14, 11, 4, glass)
-    for y in 14..<18 { c.px(13 + (18 - y) / 2 + 1, y, glass); c.px(41 + (y - 12) / 2, y, glass); c.px(42 + (y - 12) / 2, y, glass) }
-    c.px(17, 14, shine); c.px(30, 14, shine); c.px(31, 14, shine)
-    c.rect(27, 13, 2, 6, body)                 // the pillar between the doors
-    c.rect(28, 19, 1, 5, dark)                 // the doors' seam
-    c.rect(24, 20, 2, 1, chrome); c.rect(37, 20, 2, 1, chrome)
+    c.rect(21, 9, 20, 1, light)
+    // The side windows, slanted at the ends, and the pillar between them.
+    for y in 11..<16 {
+        let up = 16 - y
+        let rearEdge = 18 + up * 2 / 3, frontEdge = 45 - up * 3 / 4
+        c.rect(rearEdge, y, 31 - rearEdge, 1, glass)
+        c.rect(33, y, frontEdge - 33, 1, glass)
+    }
+    c.px(22, 11, shine); c.px(34, 11, shine); c.px(35, 11, shine)
+    c.rect(31, 10, 2, 7, body)                 // the pillar between the doors
+    c.rect(32, 17, 1, 7, dark)                 // the doors' seam
+    c.rect(19, 17, 1, 7, dark)                 // the rear door's back edge
+    c.rect(28, 18, 2, 1, chrome); c.rect(41, 18, 2, 1, chrome)
     // Lights: headlight and tail light, and the dash light the agents put up.
-    c.rect(61, 20, 1, 2, lights ? C(0xFFF6C8) : C(0xC8C8B8))
-    if lights { c.rect(62, 20, 1, 2, C(0xFFF6C8, 0.6)) }
-    c.rect(4, 20, 1, 2, C(0xC82A2A))
-    if lights { c.rect(38, 17, 2, 1, C(0xFF3A3A)) }
-    // The wheels.
-    for wx in [14, 51] {
-        c.circle(wx, 25, 3, tyre); c.rect(wx - 1, 24, 3, 3, hub); c.px(wx, 25, tyre)
+    c.rect(61, 18, 1, 2, lights ? C(0xFFF6C8) : C(0xC8C8B8))
+    if lights { c.rect(62, 18, 1, 2, C(0xFFF6C8, 0.6)) }
+    c.rect(4, 18, 1, 2, C(0xC82A2A))
+    if lights { c.rect(41, 14, 2, 1, C(0xFF3A3A)) }
+    // The wheels, in their arches.
+    for wx in [13, 52] {
+        c.circle(wx, 24, 5, arch)
+        c.circle(wx, 24, 4, tyre); c.circle(wx, 24, 2, hub); c.px(wx, 24, tyre)
     }
     // The rear door swinging open on the warm light inside.
     if ramp > 0 {
         let w = 12, open = Int((Double(w) * ramp).rounded())
-        c.rect(16, 14, w, 10, C(0xFFE8B0, 0.85)); c.rect(16, 14, w, 1, C(0xFFF6D8))
-        c.rect(16, 13, max(1, w - open), 11, body); c.rect(16, 13, max(1, w - open), 1, light)
+        c.rect(20, 11, w, 13, C(0xFFE8B0, 0.85)); c.rect(20, 11, w, 1, C(0xFFF6D8))
+        c.rect(20, 10, max(1, w - open), 14, body); c.rect(20, 10, max(1, w - open), 1, light)
     }
 }
 
@@ -73,7 +85,8 @@ func drawHelicopter(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
     if engines {
         c.rect(3, 6, 62, 1, C(0x9AA0A8, 0.45)); c.rect(14, 5, 40, 1, C(0x9AA0A8, 0.3))
     } else {
-        c.rect(14, 7, 20, 1, hull); c.rect(37, 7, 20, 1, hull); c.px(13, 8, hull); c.px(57, 8, hull)
+        // Two pixels thick, so the outline doesn't double them.
+        c.rect(14, 7, 20, 2, hull); c.rect(37, 7, 20, 2, hull); c.rect(12, 8, 2, 2, hull); c.rect(57, 8, 2, 2, hull)
     }
     // The skids.
     if gear {
@@ -109,7 +122,8 @@ func drawSaucer(_ c: PixelCanvas, ramp: Double, engines: Bool) {
     c.ellipse(cx, 12, 20, 3, metal)
     c.ellipse(cx, 14, 29, 3, metal)
     c.rect(cx - 28, 13, 57, 1, light)
-    c.ellipse(cx, 16, 22, 2, dark)
+    // The underside in plain rows: an ellipse this flat ends in one lone pixel, whose outline showed as a stray dot.
+    c.rect(cx - 22, 16, 45, 1, dark); c.rect(cx - 15, 17, 31, 1, dark)
     c.rect(cx - 7, 17, 15, 1, C(0x8AFFC8, engines ? 0.8 : 0.4))
     // The rim lights: every one lit while it flies, every other one when it's settled.
     for (i, x) in stride(from: cx - 25, through: cx + 25, by: 5).enumerated() {

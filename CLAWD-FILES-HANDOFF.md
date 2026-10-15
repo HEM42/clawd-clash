@@ -20,7 +20,8 @@ Written 2026-10-15 at the end of phase 4, updated at the end of phase 5. **Delet
   - `bd39438` phase 2
   - `53a6945` phase 2 groundwork
   - `820025f` phase 1 skeleton
-- **Next:** the polish pass (in progress), then phase 6 (docs, icon, trailer, release prep).
+- **Next:** phase 6 (docs, icon, trailer, release prep). The polish pass is done (see `## Polish pass`); what's left of it is
+  listed there under "Still open".
 - **Installed app:** the user's Mac runs Clawd Clash **3.2.0** from `/Applications`. That's the `main` build, without
   The Clawd Files.
 - **CHANGELOG.md** has an `## Unreleased` section describing The Clawd Files as it stands. Keep it up to date in each
@@ -244,7 +245,21 @@ read at pixel scale).
 - **Clawd Royale with this universe** wasn't specifically checked. It picks up the cast and places through
   `Universe.allCases`.
 
-## Polish pass: every weak spot noticed (fix after phases 5–6)
+## Polish pass: every weak spot noticed (done, before phase 6)
+
+**Done** on 2026-10-15, by file, in parallel helpers; before-and-after renders were shown to the user. Everything below
+was fixed except:
+
+**Still open:**
+- **Engine-wide, so not fixed inside this universe:** steady rays waver as they travel (Frohack's flash, Gibson's ray,
+  every universe's); callouts of neighbours can overlap; the white outline fills the gaps between dark legs (the shared
+  `drawLegs` in `Characters.swift`; this universe works round it with `h14Trousers` in Heroes1 and `v23LegGaps` in
+  Villains3, and other files' dark-legged characters could use them too).
+- **Eve 6's hair** is still a little rounded on top at this size. **The Mothmen's antennae** get an outline that reads a
+  little like horns. Some railcar plates overlap the lower pipe; Lake Okobogee's reeds are subtle.
+- **Lord Kinbote** stays unarmoured (armoured means shots ricochet; he's hide, not metal).
+
+**The list as it was:**
 
 **Phase 2 characters**
 - **The Jersey Devil:** a boxy hairy blob; needs a creature silhouette (hunched, long limbs).

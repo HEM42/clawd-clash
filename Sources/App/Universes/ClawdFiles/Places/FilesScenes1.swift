@@ -19,7 +19,7 @@ extension Scenes {
         let poster = (x: c.w * 60 / 100, y: panelTop - ph - 2 * s, w: pw, h: ph)
         let sh = min(24 * s, panelTop - ceiling - 6 * s), sw = sh * 4 / 3
         let screen = (x: c.w * 30 / 100, y: max(ceiling + 3 * s, panelTop - sh - 10 * s), w: sw, h: sh)
-        return (screen, poster, (x: c.w * 82 / 100, y: g - 17 * s), ceiling, (x: c.w / 2 - 15 * s, w: 30 * s))
+        return (screen, poster, (x: c.w * 82 / 100, y: g - 20 * s), ceiling, (x: c.w / 2 - 15 * s, w: 30 * s))
     }
 
     /// The X-Files office in the basement of FBI headquarters: dingy green-grey walls over brown panelling, a ceiling of
@@ -69,13 +69,30 @@ extension Scenes {
         // The poster, and the corkboard of clippings joined up with red string.
         drawBelievePoster(c, f.poster, s: s)
         drawCorkboard(c, x: c.w * 44 / 100, bottom: panelTop - 6 * s, s: s, room: panelTop - f.ceiling - 10 * s)
-        // The desk, with files, a mug and the slide projector.
-        let dx = c.w * 74 / 100, dw = 46 * s, dtop = g - 11 * s
-        c.rect(dx, dtop, dw, 11 * s, C(0x5A4430)); c.rect(dx, dtop, dw, 2 * s, C(0x7A5E40)); c.rect(dx + 2 * s, dtop + 4 * s, 12 * s, 5 * s, C(0x4A3826))
-        c.rect(dx + 20 * s, dtop - 2 * s, 10 * s, 2 * s, C(0xE8DCB8)); c.rect(dx + 21 * s, dtop - 3 * s, 8 * s, s, C(0xC8A870))
-        c.rect(dx + 34 * s, dtop - 4 * s, 3 * s, 4 * s, C(0xF2F0EA)); c.rect(dx + 37 * s, dtop - 3 * s, s, 2 * s, C(0xF2F0EA))
-        c.rect(f.lens.x - 6 * s, f.lens.y - s, 8 * s, 5 * s, C(0x4A4C52)); c.rect(f.lens.x - 6 * s, f.lens.y - s, 8 * s, s, C(0x6A6E76))
-        c.rect(f.lens.x - 9 * s, f.lens.y, 3 * s, 2 * s, C(0x2A2A2E))   // the lens, facing the screen
+        // The desk, at a Clawd's chest: drawers, a stack of files, papers, a mug and the slide projector; his chair beside it.
+        let dw = 64 * s, dh = 16 * s, dx = f.lens.x - 48 * s, dtop = g - dh
+        let chx = dx + dw + 4 * s
+        if chx + 12 * s < c.w {
+            c.rect(chx, g - 24 * s, 3 * s, 15 * s, C(0x2A2A2E)); c.rect(chx, g - 24 * s, 3 * s, s, C(0x44444A))
+            c.rect(chx, g - 10 * s, 12 * s, 3 * s, C(0x34343A)); c.rect(chx + 5 * s, g - 7 * s, 2 * s, 5 * s, C(0x1E1E22))
+            c.rect(chx + s, g - 2 * s, 10 * s, s, C(0x1E1E22))
+        }
+        c.rect(dx, dtop, dw, dh, C(0x5A4430)); c.rect(dx - s, dtop, dw + 2 * s, 2 * s, C(0x7A5E40))
+        c.rect(dx + dw - 3 * s, dtop + 2 * s, s, dh - 2 * s, C(0x4A3826))
+        for d in 0..<2 {   // the drawers
+            let y = dtop + 3 * s + d * 6 * s
+            c.rect(dx + 3 * s, y, 16 * s, 5 * s, C(0x4A3826)); c.rect(dx + 9 * s, y + 2 * s, 4 * s, s, C(0xB89A6A))
+        }
+        c.rect(dx + 3 * s, dtop - 2 * s, 12 * s, 2 * s, C(0xE8DCB8)); c.rect(dx + 4 * s, dtop - 3 * s, 10 * s, s, C(0xD8CCA8))
+        for k in 0..<3 {   // case files, piled
+            c.rect(dx + 17 * s + k * s / 2, dtop - (k + 1) * 2 * s, 11 * s, 2 * s, [C(0xC8A870), C(0xB89858), C(0xD8B880)][k])
+        }
+        c.rect(dx + 31 * s, dtop - 5 * s, 4 * s, 5 * s, C(0xF2F0EA)); c.rect(dx + 35 * s, dtop - 4 * s, s, 3 * s, C(0xF2F0EA))
+        c.rect(dx + 31 * s, dtop - 5 * s, 4 * s, s, C(0x3A2A1A))   // coffee
+        // The slide projector, sitting on the desk, a carousel of slides on top, its lens facing the screen.
+        c.rect(f.lens.x - 8 * s, f.lens.y - 2 * s, 11 * s, 6 * s, C(0x4A4C52)); c.rect(f.lens.x - 8 * s, f.lens.y - 2 * s, 11 * s, s, C(0x6A6E76))
+        c.ellipse(f.lens.x - 3 * s, f.lens.y - 3 * s, 4 * s, s, C(0x2E3036))
+        c.rect(f.lens.x - 11 * s, f.lens.y, 3 * s, 2 * s, C(0x2A2A2E))
         // The floor: old lino.
         c.ground(g, C(0x3A3A32), edge: C(0x5E5E52), speck: C(0x2C2C26), seed: 41)
     }
@@ -163,7 +180,7 @@ extension Scenes {
             c.rect(f.light.x - 6 * s, f.ceiling + 2 * s, f.light.w + 12 * s, 6 * s, C(0xEEF4E2, 0.05 * flicker))
         }
         // The beam: from the lens across to the screen, faint and dusty.
-        let sc = f.screen, lx = f.lens.x - 9 * s, ly = f.lens.y + s
+        let sc = f.screen, lx = f.lens.x - 11 * s, ly = f.lens.y + s
         let span = max(1, lx - (sc.x + sc.w))
         for x in (sc.x + sc.w)..<lx {
             let k = Double(lx - x) / Double(span)

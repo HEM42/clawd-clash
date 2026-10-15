@@ -66,7 +66,7 @@ private func drawSkinnard(_ c: PixelCanvas, _ p: Pose) {
     let off = sig.map { $0 > 0.12 && $0 < 0.88 } ?? false
     let rubbing = sig.map { $0 > 0.25 && $0 < 0.75 } ?? false
 
-    drawLegs(c, Look(leg: trousers), step: p.step)
+    h14Trousers(c, leg: trousers, step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: shirt))
@@ -82,10 +82,19 @@ private func drawSkinnard(_ c: PixelCanvas, _ p: Pose) {
     c.rect(15, 33, 3, 3, shirt); c.px(15, 35, clawdOrange)
 
     if off {
-        // The glasses dangling from his left hand, the right hand up at the bridge of his nose.
+        // The glasses dangling from his left hand; the right arm up across his face, the white sleeve reaching to the
+        // hand at the bridge of his nose, finger and thumb pressed into his eyes (the hand outlined in shade, so it
+        // shows on his face).
         c.pattern(11, 34, ["FFF.FFF", "F.FFF.F", "FFF.FFF"], ["F": frame])
-        c.rect(38, 30, 3, 3, shirt)
-        c.rect(30, rubbing && Int(p.t * 6) % 2 == 0 ? 29 : 30, 3, 2, clawdOrange); c.px(29, 31, clawdShade)
+        let dy: Int = rubbing && Int(p.t * 6) % 2 == 0 ? -1 : 0
+        c.rect(38, 30, 3, 4, shirt); c.rect(34, 30 + dy, 4, 2, shirt); c.rect(34, 31 + dy, 4, 1, shirtD)
+        c.pattern(26, 27 + dy, [
+            "s.....s.",
+            "o.sssso.",
+            "osooooos",
+            "soooooos",
+            ".ssssss.",
+        ], ["o": C(0xF2A888), "s": clawdShade])   // the hand lit paler than the face behind it
         return
     }
     if let a = p.cheering ? -95 : p.melee {
@@ -107,7 +116,7 @@ private func drawDoggedd(_ c: PixelCanvas, _ p: Pose) {
     let guarding = sig.map { $0 > 0.08 && $0 < 0.92 } ?? false
     if guarding && Int(p.t * 5) % 2 == 0 { c.oy -= 1 }
 
-    drawLegs(c, Look(leg: suit), step: p.step)
+    h14Trousers(c, leg: suit, step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
@@ -149,7 +158,7 @@ private func drawReyez(_ c: PixelCanvas, _ p: Pose) {
     let hair = C(0x241812), hairL = C(0x3E2A1E)
     let sig = p.signature
 
-    drawLegs(c, Look(leg: C(0x2A2A32)), step: p.step)
+    h14Trousers(c, leg: C(0x2A2A32), step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: jacket))
@@ -215,7 +224,7 @@ private func drawEinstine(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
     let folded = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
-    drawLegs(c, Look(leg: suit), step: p.step)
+    h14Trousers(c, leg: suit, step: p.step)
     if folded && !seatedPose {
         // One foot tapping.
         let up = Int(p.t * 6) % 2 == 0
@@ -246,9 +255,14 @@ private func drawEinstine(_ c: PixelCanvas, _ p: Pose) {
     ], ["H": hair, "l": hairL, "d": hairD])
 
     if folded {
-        // Arms folded across her front.
-        c.rect(17, 33, 22, 3, suit); c.rect(17, 35, 22, 1, suitD)
-        c.rect(20, 33, 2, 2, clawdOrange); c.rect(34, 34, 2, 2, clawdOrange)
+        // Arms folded across her front: one forearm over the other, lighter on top, each hand tucked at the far elbow,
+        // the elbows standing out at her sides.
+        c.rect(16, 33, 3, 4, suit); c.rect(37, 33, 3, 4, suit)          // the elbows
+        c.rect(19, 35, 18, 2, suit); c.rect(19, 37, 18, 1, suitD)       // the lower forearm
+        c.rect(33, 35, 3, 2, clawdOrange)                                 // its hand, under the far elbow
+        c.rect(19, 33, 18, 2, suitL); c.rect(19, 34, 18, 1, suitD)      // the upper forearm, over it
+        c.rect(20, 33, 3, 2, clawdOrange)                                 // its hand
+        c.px(23, 33, suitD); c.px(32, 35, suitD)                          // the cuffs
         return
     }
     c.rect(15, 33, 3, 3, suit)
@@ -267,7 +281,7 @@ private func drawMillar(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
     let laptop = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
-    drawLegs(c, Look(leg: suit), step: p.step)
+    h14Trousers(c, leg: suit, step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))

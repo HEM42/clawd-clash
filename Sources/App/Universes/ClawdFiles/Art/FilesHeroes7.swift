@@ -25,6 +25,21 @@ private func h7Stick(_ c: PixelCanvas, _ x0: Double, _ y0: Double, _ x1: Double,
     c.glowLine(x0, y0, x1, y1, core: col, glow: C(0x000000, 0), coreR: r, glowR: r + 0.1)
 }
 
+/// A jigsaw edge from (x, y), `length` long, with a round tab at `tab` (a row on a vertical edge, a
+/// column on a horizontal one) bulging `out` (1 right or down, -1 left or up).
+private func h7Edge(_ c: PixelCanvas, x: Int, y: Int, length: Int, vertical: Bool, tab: Int, out: Int, _ col: Px) {
+    for i in 0..<length {
+        let at: Int = vertical ? y + i : x + i
+        guard abs(at - tab) > 1 else { continue }   // the neck of the tab
+        if vertical { c.px(x, at, col) } else { c.px(at, y, col) }
+    }
+    // The tab's round end: across the neck's ends, out two, and round.
+    let ring: [(Int, Int)] = [(0, -2), (1, -2), (2, -1), (2, 0), (2, 1), (1, 2), (0, 2)]
+    for (a, b) in ring {
+        if vertical { c.px(x + a * out, tab + b, col) } else { c.px(tab + b, y + a * out, col) }
+    }
+}
+
 // MARK: - Tad O'Clawley
 
 /// Tad O'Clawley: Clawd with dark hair swept up in a glossy wave, a navy blazer over an open-collared white shirt, an
@@ -63,16 +78,26 @@ private func drawTadOClawley(_ c: PixelCanvas, _ p: Pose) {
         // The mic up at his mouth, his voice rolling out, the LIVE light blinking.
         c.rect(36, 30, 3, 3, blazer); c.rect(35, 32, 2, 1, clawdOrange)
         c.rect(36, 31, 1, 3, mic); c.rect(35, 29, 3, 2, micHead)
-        let k = frac(p.t * 1.6)
-        for i in 0..<3 {
-            let f = frac(k + Double(i) / 3), x = 40 + Int(f * 12), r = 1 + Int(f * 4)
-            let col = C(0xF4F0E0, 0.8 * (1 - f))
-            for dy in -r...r where abs(dy) > r / 2 { c.px(x + (r - abs(dy)) / 2, 31 + dy, col) }
+        // Three arcs of his voice from the mic, lighting up one after another (never quite out, so a still shows them).
+        let beat: Int = Int(p.t * 5) % 3
+        for (i, r) in [4.0, 7.0, 10.0].enumerated() {
+            let col = C(0xF4F0E0, i == beat ? 1 : 0.45)
+            for step in -4...4 {
+                let a: Double = Double(step) * 0.17
+                c.px(37 + Int((cos(a) * r).rounded()), 30 + Int((sin(a) * r).rounded()), col)
+            }
         }
-        if Int(p.t * 3) % 2 == 0 {
-            c.rect(46, 18, 9, 5, C(0x1A1A1E)); c.rect(47, 19, 2, 3, C(0xFF3A3A))
-            c.rect(50, 19, 1, 3, white); c.rect(52, 19, 1, 3, white); c.rect(51, 21, 2, 1, white)   // L·I…, enough to read as LIVE
-        }
+        // The LIVE sign over his shoulder, its lamp blinking.
+        let lit = Int(p.t * 3) % 2 == 0
+        let red = lit ? C(0xFF4A4A) : C(0x7A2A2A)
+        c.rect(44, 14, 21, 7, C(0x1A1A1E)); c.rect(44, 14, 21, 1, C(0x3A3A42))
+        c.pattern(45, 15, [
+            ".r..L...I.V.V.EEE",
+            "rRr.L...I.V.V.E..",
+            ".r..L...I.V.V.EE.",
+            "....L...I.V.V.E..",
+            "....LLL.I..V..EEE",
+        ], ["r": red, "R": lit ? C(0xFFD0C8) : red, "L": red, "I": red, "V": red, "E": red])
         return
     }
     // At rest, the mic held down by his side.
@@ -158,10 +183,19 @@ private func drawConundrum(_ c: PixelCanvas, _ p: Pose) {
     }
     c.oy += p.breathe
     drawBody(c, Look(eye: nil))
-    // The jigsaw: a grid of blue-green lines with a nub on each edge, over every bit of him.
-    for y in stride(from: 26, through: 37, by: 4) { c.rect(18, y, 20, 1, ink.alpha(0.85)) }
-    for x in stride(from: 21, through: 37, by: 5) { c.rect(x, 26, 1, 12, ink.alpha(0.85)) }
-    for (x, y) in [(23, 27), (33, 31), (26, 35), (29, 25 + 4), (36, 35), (19, 31)] { c.px(x, y, inkD); c.px(x + 1, y, inkD) }
+    // The jigsaw: pieces outlined in blue-green, each edge with a round tab pushing into the next piece, over every
+    // bit of him. The pieces take turns a shade lighter, so they read as pieces, not a grid.
+    // Five big pieces, kept clear of the eyes and mouth: a line down between the eyes, one across under them, two
+    // short ones below; the pieces on the diagonal a shade lighter.
+    for (x, y, w, h) in [(18, 26, 10, 6), (26, 33, 5, 3)] as [(Int, Int, Int, Int)] {
+        for yy in y..<(y + h) {
+            for xx in x..<(x + w) where c.isDrawn(xx + c.ox, yy + c.oy + c.baseY) { c.px(xx, yy, C(0xEC8A62)) }
+        }
+    }
+    h7Edge(c, x: 28, y: 26, length: 6, vertical: true, tab: 28, out: 1, ink)
+    h7Edge(c, x: 18, y: 32, length: 10, vertical: false, tab: 21, out: 1, ink)
+    h7Edge(c, x: 28, y: 32, length: 10, vertical: false, tab: 34, out: 1, ink)
+    c.rect(25, 33, 1, 3, ink); c.rect(31, 33, 1, 3, ink)
     // Eyes over the ink, and a straight mouth (he never speaks).
     c.rect(22, 29, 2, 3, C(0x16161B)); c.rect(32, 29, 2, 3, C(0x16161B))
     c.rect(26, 33, 4, 1, C(0x8A3A2A))
@@ -324,15 +358,25 @@ private func drawDaggoo(_ c: PixelCanvas, _ p: Pose) {
     // The fish: back and forth, or up at the surface in his signature.
     let surfacing = sig.map { $0 > 0.05 && $0 < 0.9 } ?? false
     let swim = sin(p.lt * 0.9)
-    let fx = surfacing ? cx + 1 : cx + Int((swim * 4).rounded())
-    let fy = surfacing ? cy - r + 6 : cy + Int(sin(p.lt * 1.7))
+    let fx = surfacing ? cx + 1 : cx + Int((swim * 3).rounded())
+    let fy = surfacing ? cy - r + 7 : cy + Int(sin(p.lt * 1.7))
     let facing = surfacing || cos(p.lt * 0.9) >= 0
-    let body = facing ? ["..FFF..", "TFFFFFk", "TTFFFF.", "T.FF..."] : ["..FFF..", "kFFFFFT", ".FFFFTT", "...FF.T"]
-    c.pattern(fx - 3, fy - 2, body, ["F": clawdOrange, "T": C(0xF0A07A), "k": C(0x16161B)])
+    // A proper goldfish, big enough to read through the glass: fan tail, fins, a pale belly, an eye.
+    let right = [
+        "....dFd....",
+        "TT.FFFFFw..",
+        "TTTFFFFFFk.",
+        "TTTFFFFLFFF",
+        "TT.FFLLLF..",
+        ".....dd....",
+    ]
+    let body = facing ? right : right.map { String($0.reversed()) }
+    c.pattern(fx - 5, fy - 3, body, ["F": clawdOrange, "T": C(0xF0A07A), "d": clawdShade, "L": C(0xF8C8A0),
+                                     "w": C(0xFFFFFF, 0.9), "k": C(0x16161B)])
     // Bubbles: a few always, and the big one in the signature, rising out of the bowl and popping.
     for i in 0..<2 {
         let f = frac(p.lt * 0.35 + Double(i) * 0.5)
-        c.px(fx + 3 - i, fy - 2 - Int(f * 10), C(0xE8FAFF, 0.7 * (1 - f)))
+        c.px(fx + (facing ? 5 : -5) - i, fy - 2 - Int(f * 10), C(0xE8FAFF, 0.7 * (1 - f)))
     }
     if let s = sig, s > 0.3, s < 0.92 {
         let k = (s - 0.3) / 0.62, by = cy - r + 4 - Int(k * 16)

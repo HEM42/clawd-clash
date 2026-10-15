@@ -136,7 +136,9 @@ private func drawPendrill(_ c: PixelCanvas, _ p: Pose) {
         ".HHHHHHHHHHHHHHHHHHHH.",
         ".HH................HH.",
     ], ["H": hair, "l": hairL])
-    if blush { c.rect(20, 32, 2, 1, C(0xF07A8A)); c.rect(34, 32, 2, 1, C(0xF07A8A)) }
+    if blush {   // a proper blush, both cheeks
+        for x in [19, 34] { c.rect(x, 31, 3, 2, C(0xF0607A)); c.px(x + 1, 31, C(0xFF8A9A)) }
+    }
 
     if holding {
         // The test tube held up in his right hand, green and glowing faintly.
@@ -252,8 +254,17 @@ private func drawClydeBruckclaw(_ c: PixelCanvas, _ p: Pose) {
     if doll {
         // The kewpie doll in his right hand: pink, a tuft on top, its arms out.
         c.rect(38, 30, 3, 4, suit)
-        c.pattern(39, 22, ["..T..", ".PPP.", "PPkPP", ".PPP.", ".P.P."],
-                  ["T": C(0xC8A04A), "P": C(0xF4B8B0), "k": ink])
+        c.pattern(37, 20, [
+            "....T...",
+            "...TT...",
+            "..PPPPP.",
+            ".PkPPkPP",
+            ".PPPrPPd",
+            "..PPPPd.",
+            "pPPPPPPp",
+            "..PPPPd.",
+            "..PP.Pd.",
+        ], ["T": C(0xB8862A), "P": C(0xFFA8A0), "d": C(0xE07C7A), "p": C(0xFFA8A0), "k": ink, "r": C(0xD8404A)])
         c.rect(15, 33, 3, 3, suit); c.rect(15, 35, 3, 1, clawdOrange)
         return
     }
@@ -379,7 +390,9 @@ private func drawFrankBlackclaw(_ c: PixelCanvas, _ p: Pose) {
     // The heavy coat, collar up, over a dark shirt.
     c.rect(18, 33, 20, 5, coat); c.rect(37, 33, 1, 5, coatD); c.rect(18, 37, 20, 1, coatD)
     c.rect(25, 33, 6, 5, shirt)
-    c.rect(18, 32, 3, 2, coatL); c.rect(35, 32, 3, 2, coatL)   // the collar turned up
+    // The collar turned up: points standing at his shoulders, lit on the outside, shadowed on the inside.
+    c.pattern(16, 27, ["L...", "L...", "LL..", "LcL.", "LcL.", "LccL", "LccL"], ["L": coatL, "c": coatD])
+    c.pattern(36, 27, ["...L", "...L", "..LL", ".LcL", ".LcL", "LccL", "LccL"], ["L": coatL, "c": coatD])
     // Close-cropped grey hair; lines under the eyes.
     c.pattern(17, 21, [
         ".......HHHHHHHH.......",
@@ -388,7 +401,7 @@ private func drawFrankBlackclaw(_ c: PixelCanvas, _ p: Pose) {
         "..HHHHHHhHHHHHhHHHHH..",
         ".HHHHHHHHHHHHHHHHHHHH.",
     ], ["H": hair, "h": hairD])
-    c.rect(22, 32, 2, 1, clawdShade); c.rect(32, 32, 2, 1, clawdShade)
+    c.px(22, 32, clawdShade); c.px(33, 32, clawdShade)
 
     if seeing {
         // His hand at his temple, his eyes squeezed shut.

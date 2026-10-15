@@ -199,31 +199,35 @@ private func drawWendigo(_ c: PixelCanvas, _ p: Pose) {
     c.oy += p.breathe
     // The body tips up as it rears: everything forward of the hips rises.
     let lift = Int((rear * 7).rounded())
-    // The torso: long and lean, sagging between hips and shoulders, the ribs showing.
+    // The torso: long and lean, sagging between hips and shoulders, the ribs showing. Rearing, the back stays level
+    // over the hips and the chest comes up steeply, the way a deer rears.
+    func rise(_ x: Int) -> Int {
+        let k: Double = max(0, Double(x - 26) / 14)
+        return Int((k * Double(lift)).rounded())
+    }
     for x in 16...40 {
-        let k = Double(x - 16) / 24
-        let top = 29 - Int((k * Double(lift)).rounded()) + (x > 20 && x < 36 ? 1 : 0)
-        c.rect(x, top, 1, 6, hide)
-        c.px(x, top + 5, hideD)
+        let top: Int = 29 - rise(x) + (x > 20 && x < 36 && lift == 0 ? 1 : 0)
+        c.rect(x, top, 1, 6 + rise(x) / 2, hide)
+        c.px(x, top + 5 + rise(x) / 2, hideD)
     }
     for x in stride(from: 24, through: 36, by: 3) {
-        let k = Double(x - 16) / 24, top = 29 - Int((k * Double(lift)).rounded())
-        c.rect(x, top + 2, 1, 3, rib)
+        c.rect(x, 29 - rise(x) + 2, 1, 3, rib)
     }
     // Forelegs (lifted and clawing the air when it rears or fights).
     let shoulderY = 31.0 - Double(lift)
-    if let a = p.melee {
-        for (i, ta) in p.trail.enumerated() {
-            let r = ta * .pi / 180
-            seg(c, 39, shoulderY, 39 + cos(r) * 9, shoulderY + sin(r) * 9, hide.alpha(0.35 / Double(i + 1)), w: 2)
-        }
-        let r = a * .pi / 180, hx = 39 + cos(r) * 9, hy = shoulderY + sin(r) * 9
-        seg(c, 39, shoulderY, hx, hy, hide, w: 2)
-        for sp in [-0.5, 0.0, 0.5] { seg(c, hx + 0.5, hy + 0.5, hx + 0.5 + cos(r + sp) * 3, hy + 0.5 + sin(r + sp) * 3, boneD) }
-        seg(c, 35, shoulderY + 2, 34, 43, hide, w: 2); c.rect(34, 43, 2, 1, hideD)
+    if p.melee != nil {
+        seg(c, 35, shoulderY + 2, 34, 43, hide, w: 2); c.rect(34, 43, 2, 1, hideD)   // the striking one comes last
     } else if lift > 3 {
-        seg(c, 38, shoulderY + 2, 43, shoulderY - 2, hide, w: 2); seg(c, 35, shoulderY + 2, 40, shoulderY, hide, w: 2)
-        for x in [43, 40] { c.px(x + 1, Int(shoulderY) - 3, boneD); c.px(x + 2, Int(shoulderY) - 2, boneD) }
+        // Both forelegs bent at the knee and tucked up in front of the chest, the claws hooked.
+        for (i, dx) in [0.0, -4.0].enumerated() {
+            let sx: Double = 38 + dx, sy: Double = shoulderY + 3 + Double(i)
+            let kx: Double = sx + 4, ky: Double = sy + 4
+            let px: Double = kx + 3, py: Double = ky - 3
+            seg(c, sx, sy, kx, ky, i == 0 ? hide : hideD, w: 2)
+            seg(c, kx, ky, px, py, i == 0 ? hide : hideD, w: 2)
+            let cx = Int(px.rounded()), cy = Int(py.rounded())
+            c.px(cx + 2, cy - 1, bone); c.px(cx + 2, cy + 1, bone); c.px(cx + 3, cy, boneD)
+        }
     } else {
         for (i, lx) in [34, 39].enumerated() {
             let up = step >= 0 && i % 2 != step ? 1 : 0
@@ -257,6 +261,20 @@ private func drawWendigo(_ c: PixelCanvas, _ p: Pose) {
         seg(c, Double(bx + lean), Double(hy - 4), Double(bx + lean * 4), Double(hy - 7), antler)
         seg(c, Double(bx + lean * 2), Double(hy - 8), Double(bx + lean * 4), Double(hy - 11), antler)
         seg(c, Double(bx + lean * 2), Double(hy - 8), Double(bx), Double(hy - 11), antler)
+    }
+    // The striking foreleg, over the neck so the swing shows: long, pale at the joints, bone claws raking.
+    if let a = p.melee {
+        for (i, ta) in p.trail.enumerated() {
+            let r = ta * .pi / 180
+            seg(c, 39, shoulderY, 39 + cos(r) * 11, shoulderY + sin(r) * 11, boneD.alpha(0.4 / Double(i + 1)), w: 2)
+        }
+        let r = a * .pi / 180
+        let fx: Double = 39 + cos(r) * 11, fy: Double = shoulderY + sin(r) * 11
+        seg(c, 39, shoulderY, fx, fy, rib, w: 2)
+        c.px(Int((39 + cos(r) * 6).rounded()), Int((shoulderY + sin(r) * 6).rounded()), boneD)
+        for sp in [-0.6, 0.0, 0.6] {
+            seg(c, fx + 0.5, fy + 0.5, fx + 0.5 + cos(r + sp) * 4, fy + 0.5 + sin(r + sp) * 4, bone)
+        }
     }
     if howl {
         // Breath steaming up out of the open jaw.
@@ -292,6 +310,8 @@ private func drawChuckleteeth(_ c: PixelCanvas, _ p: Pose) {
     // The mask's head, tilted over in the signature (the whole thing shifts a step at a time and leans).
     let lean = Int((tilt * 3).rounded())
     let mx = 18 + lean, my = 21 + lean / 2
+    // Where the tilt uncovers the side of his head, the coveralls' hood shows, not Clawd.
+    if lean > 0 { c.rect(18, 26, lean, 8, overallD); c.rect(18, 26, 1, 8, C(0x343A2E)) }
     // Hair tufts out from either side.
     c.pattern(mx - 4, my + 2, ["TTt.", "TTTt", ".TTt", "TTt."], ["T": tuft, "t": tuftD])
     c.pattern(mx + 20, my + 2 - lean, [".tTT", "tTTT", "tTT.", ".tTT"], ["T": tuft, "t": tuftD])
@@ -347,22 +367,28 @@ private func eveFigure(_ c: PixelCanvas, _ p: Pose, talking: Bool, holdingOut: B
     c.rect(18, 33, 20, 6, dress); c.rect(37, 33, 1, 6, dressD); c.rect(18, 38, 20, 1, dressD)
     c.rect(21, 34, 4, 2, C(0xFFFFFF)); c.rect(22, 35, 2, 1, C(0x5A6A5A))
     // Long straight hair, parted in the middle, down past her shoulders.
+    // Long straight hair, parted in the middle: curtains swept off the forehead, falling behind her shoulders, the
+    // ends uneven, a strand over each cheek.
     c.pattern(16, 20, [
-        "......HHHHhHHHHHH.......",
-        "....HHHHHHhHHHHHHHH.....",
-        "..HHHHHHHHhHHHHHHHHHH...",
-        ".HHHHHHHH.d.HHHHHHHHHH..",
-        ".HHHHHH.........HHHHHH..",
-        "HHHH...............HHHH.",
-        "HHH.................HHH.",
-        "HHH.................HHH.",
-        "HHd.................dHH.",
-        "HHH.................HHH.",
-        "HHH.................HHH.",
-        "HHd.................dHH.",
-        "HHH.................HHH.",
-        ".HH.................HH..",
-    ], ["H": hair, "h": hairD, "d": hairD])
+        "......HHHHHdHHHHHH......",
+        "....HHHlHHHdHHHlHHHH....",
+        "...HHlHHHHHdHHHHHlHHH...",
+        "..HHHHHHHHHdHHHHHHHHHH..",
+        ".HHHHHHHHHdHHdHHHHHHHHH.",
+        ".HHHHHHHHdHHHHdHHHHHHHH.",
+        "HHHHdH............HdHHHH",
+        "HHHd................dHHH",
+        "HHd..................dHH",
+        "HHH..................HHH",
+        "HHd..................dHH",
+        "HH....................HH",
+        "HHd..................dHH",
+        "HH....................HH",
+        "dH....................Hd",
+        "HH....................HH",
+        "Hd....................dH",
+        ".d.....................d",
+    ], ["H": hair, "l": C(0xE0C888), "d": hairD])
     if talking { c.rect(26, 33, 3, 1, C(0x5A2A20)) }
     c.rect(15, 33, 3, 3, dress)
     if holdingOut {

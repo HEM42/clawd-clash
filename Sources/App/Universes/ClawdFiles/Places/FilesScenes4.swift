@@ -23,6 +23,78 @@ extension Scenes {
         c.rect(cx - r, cy, r * 2 + 1, max(1, r / 24), rim)
         c.ellipse(cx, cy - h, r / 3, max(2, r / 6), dome)
     }
+
+    /// A pressure ridge: two to four jagged peaks of shoved-up ice `width` across and up to `height` tall, standing on
+    /// row `base`. Faces rising to the right are lit, faces falling away are in blue shadow, the crest picked out white.
+    static func s46Ridge(_ c: PixelCanvas, x: Int, width: Int, height: Int, base: Int, seed: Int, s: Int) {
+        let peaks = 2 + Int(noise(seed * 7 + 900) * 3)
+        var tops: [(x: Int, h: Int)] = []
+        for p in 0..<peaks {
+            let px: Int = x - width / 2 + width * (2 * p + 1) / (2 * peaks) + Int((noise(seed * 7 + p + 901) - 0.5) * Double(width / peaks / 2))
+            let ph: Int = height * (55 + Int(noise(seed * 7 + p + 911) * 45)) / 100
+            tops.append((px, ph))
+        }
+        let half: Int = max(1, width / 2)
+        for col in stride(from: x - half, to: x + half, by: s) {
+            // The height here: the highest of the peaks' slopes, with a step or two of jag.
+            var best = 0, falling = false
+            for p in tops {
+                let d: Int = abs(col - p.x)
+                let run: Int = max(1, width / peaks * 13 / 10)
+                let slope: Int = p.h - d * p.h / run
+                if slope > best { best = slope; falling = col > p.x }
+            }
+            let jag: Int = Int(noise(col / (3 * s) + seed * 131) * 3) * s   // in blocks of three columns: slabs, not grass
+            let top: Int = best / (2 * s) * (2 * s) - jag
+            guard top > 0 else { continue }
+            let lit: Px = falling ? C(0x86A6BE) : C(0xD4E8F2)
+            c.rect(col, base - top, s, top, lit)
+            c.rect(col, base - top, s, s, falling ? C(0xB8D0E0) : C(0xF4FBFF))
+            // A crack of deeper shadow low on the shaded faces.
+            if falling && top > 4 * s { c.rect(col, base - top / 3, s, s, C(0x6A88A0)) }
+        }
+    }
+
+    /// A crescent moon: a pale disc with a bite of `sky` taken out of its upper right, and a faint halo.
+    static func s46Moon(_ c: PixelCanvas, x: Int, y: Int, r: Int, sky: Px) {
+        c.circle(x, y, r + max(2, r / 2), C(0xE8F0E8, 0.06))
+        c.circle(x, y, r, C(0xE8ECDC))
+        c.circle(x + r * 2 / 5, y - r / 4, r * 9 / 10, sky)
+    }
+
+    /// A long bank of night cloud, `len` across, dark with a rim of moonlight along its top.
+    static func s46NightCloud(_ c: PixelCanvas, x: Int, y: Int, len: Int, s: Int, body: Px, rim: Px, seed: Int) {
+        let puffs = max(3, len / (14 * s))
+        for k in 0..<puffs {
+            let px: Int = x - len / 2 + k * len / puffs + Int(noise(seed * 11 + k) * Double(6 * s))
+            let pr: Int = (4 + Int(noise(seed * 11 + k + 50) * 5)) * s
+            c.ellipse(px, y - pr / 3, pr * 2, pr, rim)
+            c.ellipse(px, y, pr * 2, pr, body)
+        }
+        c.ellipse(x, y + 2 * s, len / 2, 3 * s, body)
+    }
+
+    /// A black helicopter from the side, `s` to a pixel, nose to the right at (`x`, `y`), its rotor a blur, and its
+    /// searchlight swung `aim` radians from straight down, a pale cone `reach` long.
+    static func s46Helicopter(_ c: PixelCanvas, x: Int, y: Int, s: Int, aim: Double, reach: Int, blade: Int) {
+        let tipX: Int = x + Int(sin(aim) * Double(reach)), tipY: Int = y + Int(cos(aim) * Double(reach))
+        let steps: Int = max(1, reach / max(1, s))
+        for k in 0..<steps {   // the beam: widening as it goes, faint
+            let f: Double = Double(k) / Double(steps)
+            let bx: Int = x + Int(Double(tipX - x) * f), by: Int = y + Int(Double(tipY - y) * f)
+            let w: Int = max(s, Int(f * Double(reach) * 0.35))
+            c.rect(bx - w / 2, by, w, s, C(0xE8F4FF, 0.07 * (1 - f * 0.6)))
+        }
+        c.ellipse(tipX, tipY, reach / 5, max(s, reach / 18), C(0xE8F4FF, 0.12))
+        let body = C(0x0A0C10)
+        c.ellipse(x, y - 2 * s, 6 * s, 3 * s, body)
+        c.rect(x - 16 * s, y - 3 * s, 12 * s, 2 * s, body)
+        c.rect(x - 17 * s, y - 6 * s, 2 * s, 5 * s, body)
+        c.rect(x - 2 * s, y - 6 * s, s, 2 * s, body)
+        c.rect(x - 12 * s + blade * s, y - 7 * s, 22 * s, s, C(0x2A2E36, 0.8))
+        c.rect(x + 3 * s, y - 3 * s, 2 * s, s, C(0x3A5060))
+        c.rect(x, y, s, s, C(0xFFFFFF))
+    }
 }
 
 // MARK: - The Antarctic ice field
@@ -52,14 +124,12 @@ extension Scenes {
                 c.rect(x, y0 + k, s, s, C(0x6AF0A0, a))
             }
         }
-        // Ice cliffs and pressure ridges along the horizon.
+        // Pressure ridges along the horizon: jagged blocks of ice shoved up, lit on the faces toward the aurora and in
+        // blue shadow on the others.
         let horizon = g - (tall ? g / 5 : 22 * s)
         for i in 0..<9 {
             let x = Int(noise(i + 300) * Double(c.w)), w = (24 + Int(noise(i + 310) * 40)) * s, h = (6 + Int(noise(i + 320) * 12)) * s
-            for dy in 0..<h {
-                let half = w / 2 - dy * w / 2 / max(1, h) / 2
-                c.rect(x - half, horizon - h + dy + h / 3, half * 2, 1, dy < 2 * s ? C(0xD8ECF4) : C(0x9AB8CC))
-            }
+            s46Ridge(c, x: x, width: w, height: h * 5 / 4, base: horizon + h / 4, seed: i, s: s)
         }
         c.rect(0, horizon, c.w, g - horizon, C(0xB8D0DC))
         for i in 0..<(c.w / (18 * s)) {   // drifts and long blue shadows across the field
@@ -195,8 +265,19 @@ extension Scenes {
         let s = unit(g), tall = isTall(c)
         c.gradient(0, g, C(0x05060C), C(0x1C1E2C), bands: 8)
         c.stars(0, g / 2, density: tall ? 240 : 130, seed: 81)
-        // The far ridge and its pines, and the reservoir below them.
         let ridge = g - (tall ? g / 3 : 26 * s)
+        if tall {
+            // Banks of cloud drifting low over the valley, lit from below by the fire, and the orange glow of
+            // something else burning beyond the ridge, away to the left.
+            s46NightCloud(c, x: c.w * 22 / 100, y: g * 45 / 100, len: c.w * 30 / 100, s: s, body: C(0x10121C), rim: C(0x2A2C3E), seed: 3)
+            s46NightCloud(c, x: c.w * 70 / 100, y: g * 52 / 100, len: c.w * 40 / 100, s: s, body: C(0x12121A), rim: C(0x3A2A2A), seed: 4)
+            s46NightCloud(c, x: c.w * 45 / 100, y: g * 36 / 100, len: c.w * 18 / 100, s: s, body: C(0x0E1018), rim: C(0x24283A), seed: 5)
+            for k in 0..<6 {
+                let r: Int = (60 - k * 9) * s
+                c.ellipse(c.w * 12 / 100, ridge, r * 2, r / 2, C(0xFF7A2A, 0.035))
+            }
+        }
+        // The far ridge and its pines, and the reservoir below them.
         for x in stride(from: 0, to: c.w, by: s) {
             let h = Int((sin(Double(x) / Double(70 * s)) * 0.5 + 0.5) * Double(10 * s))
             c.rect(x, ridge - h, s, h + 6 * s, C(0x0C1014))
@@ -235,21 +316,40 @@ extension Scenes {
         let swell = 0.5 + 0.5 * sin(t * 2 * .pi / 6)
         for r in stride(from: 12 * s, to: 0, by: -2 * s) { c.circle(lx, ly, r, C(0xF4FAFF, 0.05 + 0.05 * swell)) }
         c.circle(lx, ly, 2 * s, C(0xFFFFFF, 0.8 + 0.2 * swell))
-        // The fire: tongues licking up from a heap on the dam's top, behind the parapet line.
-        c.ellipse(fx, parY, 28 * s, 10 * s, C(0xFF7A2A, 0.08 + 0.04 * sin(t * 9)))
-        for i in 0..<7 {
-            let x = fx - 9 * s + i * 3 * s
-            let h = (8 + Int(noise(i + Int(t * 10) * 13) * 10)) * s
-            for y in 0..<h {   // a tongue: wide at the base, narrowing to a point, yellow at its heart
-                let w = max(s, (h - y) * 4 * s / max(1, h))
-                let lean = Int(sin(t * 7 + Double(i)) * Double(y) / Double(max(1, h)) * Double(2 * s))
-                c.rect(x - w / 2 + lean, parY - y, w, 1, y < h / 2 ? C(0xFFD24A, 0.9) : C(0xFF7A2A, 0.85))
+        if isTall(c) {   // a black helicopter hanging over the valley, its searchlight sweeping the water
+            let hx: Int = c.w * 58 / 100 + Int(sin(t * 0.21) * Double(c.w / 12)), hy: Int = g * 30 / 100
+            s46Helicopter(c, x: hx, y: hy, s: s, aim: sin(t * 0.5) * 0.5, reach: g / 2, blade: Int(t * 12) % 3 - 1)
+        }
+        // The fire: the burning bodies heaped on the dam's top, behind the parapet line, flames licking well above.
+        let glow: Double = 0.1 + 0.04 * sin(t * 9)
+        c.ellipse(fx, parY, 46 * s, 22 * s, C(0xFF7A2A, glow * 0.6))
+        c.ellipse(fx, parY, 30 * s, 13 * s, C(0xFF9A3A, glow))
+        c.rect(fx - 30 * s, parY, 60 * s, s, C(0xFFB050, 0.5))   // the parapet's edge, lit
+        // The heap: dark shapes, an arm here, a head there, silhouetted against the flames.
+        let heap = C(0x140A06)
+        c.ellipse(fx, parY - s, 13 * s, 3 * s, heap)
+        c.ellipse(fx - 7 * s, parY - 3 * s, 4 * s, 2 * s, heap); c.circle(fx + 8 * s, parY - 4 * s, 2 * s, heap)
+        c.rect(fx + 2 * s, parY - 7 * s, s, 4 * s, heap); c.rect(fx + 2 * s, parY - 7 * s, 3 * s, s, heap)
+        for i in 0..<11 {
+            let x: Int = fx - 15 * s + i * 3 * s
+            let mid: Int = 5 - abs(i - 5)   // taller toward the middle
+            let h: Int = (10 + mid * 3 + Int(noise(i + Int(t * 10) * 13) * 9)) * s
+            for y in stride(from: 0, to: h, by: 1) {   // a tongue: wide at the base, narrowing to a point, yellow at its heart
+                let w: Int = max(s, (h - y) * 5 * s / max(1, h))
+                let lean: Int = Int(sin(t * 7 + Double(i)) * Double(y) / Double(max(1, h)) * Double(3 * s))
+                let col: Px = y < h / 3 ? C(0xFFF0A0, 0.95) : y < h * 2 / 3 ? C(0xFFC23A, 0.9) : C(0xFF6A1A, 0.85)
+                c.rect(x - w / 2 + lean, parY - 2 * s - y, w, 1, col)
             }
         }
-        for i in 0..<6 {   // sparks
+        for i in 0..<5 {   // smoke rising off it, drifting right
+            let k: Double = (t * 0.25 + Double(i) / 5).truncatingRemainder(dividingBy: 1)
+            let r: Int = (3 + Int(k * 8)) * s
+            c.circle(fx + Int(k * Double(14 * s)), parY - 30 * s - Int(k * Double(40 * s)), r, C(0x2A2420, 0.35 * (1 - k)))
+        }
+        for i in 0..<10 {   // sparks
             let k = (t * 0.8 + noise(i + 600)).truncatingRemainder(dividingBy: 1)
-            c.rect(fx - 8 * s + Int(noise(i + 610) * Double(16 * s)) + Int(sin(t * 3 + Double(i)) * Double(2 * s)),
-                   parY - 18 * s - Int(k * Double(20 * s)), s, s, C(0xFFC85A, 1 - k))
+            c.rect(fx - 12 * s + Int(noise(i + 610) * Double(24 * s)) + Int(sin(t * 3 + Double(i)) * Double(2 * s)),
+                   parY - 26 * s - Int(k * Double(24 * s)), s, s, C(0xFFC85A, 1 - k))
         }
     }
 }
@@ -273,6 +373,16 @@ extension Scenes {
         c.stars(0, g * 2 / 3, density: tall ? 220 : 120, seed: 91)
         let field = g - (tall ? g / 4 : 22 * s)
         if tall {
+            // A crescent moon over the left of the field (the clock has the right), thin cloud across it, and the
+            // glow of a town low on the horizon.
+            s46Moon(c, x: c.w * 14 / 100, y: g * 16 / 100, r: 12 * s, sky: C(0x05080A))
+            s46NightCloud(c, x: c.w * 20 / 100, y: g * 24 / 100, len: c.w * 22 / 100, s: s, body: C(0x0C1210), rim: C(0x5A6A5E), seed: 11)
+            s46NightCloud(c, x: c.w * 52 / 100, y: g * 40 / 100, len: c.w * 34 / 100, s: s, body: C(0x0E1612), rim: C(0x2E3A32), seed: 12)
+            s46NightCloud(c, x: c.w * 84 / 100, y: g * 50 / 100, len: c.w * 24 / 100, s: s, body: C(0x101814), rim: C(0x2A342E), seed: 13)
+            for k in 0..<5 {
+                let r: Int = (70 - k * 12) * s
+                c.ellipse(c.w * 48 / 100, field, r * 3, r / 2, C(0xE8C87A, 0.03))
+            }
             for i in 0..<(c.w / (10 * s)) {
                 filesPine(c, cx: i * 10 * s + Int(noise(i + 700) * Double(5 * s)), base: field, h: (14 + Int(noise(i + 710) * 10)) * s, s: s, C(0x0A0E0C))
             }
@@ -308,6 +418,11 @@ extension Scenes {
         let s = unit(g), tall = isTall(c)
         let field = g - (tall ? g / 4 : 22 * s)
         let glow = 0.5 + 0.5 * sin(t * 2 * .pi / 4)
+        if tall {   // a black helicopter crossing slowly, its searchlight raking the corn
+            let span: Double = Double(c.w + 80 * s)
+            let hx: Int = Int((t * 9 * Double(s)).truncatingRemainder(dividingBy: span)) - 40 * s
+            s46Helicopter(c, x: hx, y: g * 32 / 100, s: s, aim: 0.35 * sin(t * 0.7), reach: field - g * 32 / 100, blade: Int(t * 12) % 3 - 1)
+        }
         for (i, d) in s4Domes(c, g).enumerated() {
             c.ellipse(d.x, field + 4 * s - d.r / 2, d.r + 6 * s, d.r * 3 / 4, C(0xE8FFE0, 0.05 + 0.06 * glow))
             // The swarm: each bee on its own loop round the dome.

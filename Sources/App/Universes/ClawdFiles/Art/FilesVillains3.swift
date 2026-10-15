@@ -70,6 +70,14 @@ private func drawFists(_ c: PixelCanvas, _ p: Pose, sleeve: Px) {
     c.rect(15, 33, 3, 3, sleeve)
 }
 
+/// A faint shadow between each pair of legs: not solid enough to be outlined itself, and covering the gap the outline
+/// would otherwise fill, so thin dark legs read as legs, not as the white stripes between them.
+func v23LegGaps(_ c: PixelCanvas) {
+    guard !seatedPose else { return }
+    let shade = C(0x0A0A0E, 0.32)
+    c.rect(21, 36, 2, 8, shade); c.rect(33, 36, 2, 8, shade)
+}
+
 /// Work boots: the bottom two rows of each leg.
 private func drawBoots(_ c: PixelCanvas, step: Int, _ col: Px) {
     guard !seatedPose else { return }
@@ -86,15 +94,86 @@ private func drawBoots(_ c: PixelCanvas, step: Int, _ col: Px) {
 /// long thin silver spike. Signature: he shape-shifts. Shimmering bands sweep down him and for a moment he's someone
 /// else (an auburn bob and a camel coat), then the bands sweep back and he's himself, a fleck of green on the spike.
 private func drawBountyHunter(_ c: PixelCanvas, _ p: Pose) {
-    let leather = C(0x1E1E24), leatherL = C(0x3A3A44), leatherD = C(0x101014), roll = C(0x2E2E36)
-    let hair = C(0x1A1612)
+    let leather = C(0x1E1E24)
     let sig = p.signature
     // How far through the change he is: 0 himself, 1 entirely someone else.
     let shift: Double = sig.map { s in
         s < 0.1 || s > 0.9 ? 0 : s < 0.35 ? (s - 0.1) / 0.25 : s < 0.65 ? 1 : (0.9 - s) / 0.25
     } ?? 0
 
+    if shift > 0 {
+        // The change sweeps down him: above the line he's already Scrawly (red bob, camel coat), below it himself.
+        let me = PixelCanvas(c.w, c.h), her = PixelCanvas(c.w, c.h)
+        for t in [me, her] { t.ox = c.ox; t.oy = c.oy; t.baseY = c.baseY }
+        drawBountyHunterSelf(me, p)
+        v23DrawScrawlyLook(her, p)
+        let line: Int = 18 + Int((shift * 28).rounded())
+        v23Compose(c, top: her, bottom: me, split: line)
+        if shift < 1 {
+            for x in 15...41 {
+                let glint = (x + Int(p.t * 30)) % 4 == 0
+                c.px(x, line, C(glint ? 0xE8FFF0 : 0x8AF0C0, 0.75))
+            }
+        }
+        c.oy += p.breathe   // as the pieces drawn on their own canvases were
+    } else {
+        drawBountyHunterSelf(c, p)
+    }
+    drawStiletto(c, p, sleeve: shift >= 0.5 ? C(0xB08A5A) : leather)
+}
+
+/// Copies `top` above row `split` and `bottom` from it down onto `c` (both drawn on blank canvases the size of `c`).
+func v23Compose(_ c: PixelCanvas, top: PixelCanvas, bottom: PixelCanvas, split: Int) {
+    for y in 0..<c.h {
+        let src = y < split ? top : bottom
+        for x in 0..<c.w {
+            let i = (y * c.w + x) * 4
+            let a = src.buf[i + 3]
+            guard a > 0 else { continue }
+            let m = 255.0 / Double(a)
+            let r = UInt8(min(255, Double(src.buf[i]) * m)), g = UInt8(min(255, Double(src.buf[i + 1]) * m))
+            let b = UInt8(min(255, Double(src.buf[i + 2]) * m))
+            c.px(x - c.ox, y - c.oy - c.baseY, Px(r: r, g: g, b: b, a: a))
+        }
+    }
+}
+
+/// Dana Scrawly's look, as the Bounty Hunter takes it: the auburn bob, the camel coat over a dark suit.
+func v23DrawScrawlyLook(_ c: PixelCanvas, _ p: Pose) {
+    let coat = C(0xB08A5A), coatD = C(0x86683F), coatL = C(0xCCA672), suit = C(0x2E3442), shirt = C(0xE6E2DA)
+    let hair = C(0xB4492E), hairL = C(0xD4643E), hairD = C(0x86321E)
+    if !seatedPose { c.rect(17, 38, 22, 4, coat); c.rect(17, 41, 22, 1, coatD); c.rect(28, 38, 1, 4, coatD) }
+    drawLegs(c, Look(leg: suit), step: p.step)
+    v23LegGaps(c)
+    drawBoots(c, step: p.step, C(0x1A1A1E))
+    c.oy += p.breathe
+    drawBody(c, Look(arm: coat))
+    c.rect(18, 34, 20, 4, suit); c.rect(25, 34, 6, 2, shirt)
+    c.rect(18, 33, 4, 5, coat); c.rect(34, 33, 4, 5, coat); c.rect(37, 33, 1, 5, coatD)
+    c.rect(22, 33, 1, 3, coatL); c.rect(33, 33, 1, 3, coatL); c.rect(18, 37, 20, 1, coatD)
+    c.pattern(16, 20, [
+        ".......HHHHHHHHH........",
+        ".....HHHHHHHHlHHHHH.....",
+        "...HHHHHHHHHHHlHHHHHHH..",
+        "..HHHHHlHHHHHHHHHHHHHHH.",
+        "..HHHHHHHHHHHHHHHHHlHHH.",
+        ".HHHHHHHHHHHHHHHHHHHHHHH",
+        ".HHHHH...HHHHH......HHHH",
+        ".HHHd...............dHHH",
+        ".HHH.................HHH",
+        ".HHd.................dHH",
+        ".HHH.................HHH",
+        "..Hd.................dH.",
+    ], ["H": hair, "l": hairL, "d": hairD])
+    c.rect(15, 33, 3, 3, coat)
+}
+
+/// The Bounty Hunter as himself, without the stiletto.
+private func drawBountyHunterSelf(_ c: PixelCanvas, _ p: Pose) {
+    let leather = C(0x1E1E24), leatherL = C(0x3A3A44), leatherD = C(0x101014), roll = C(0x2E2E36)
+    let hair = C(0x1A1612)
     drawLegs(c, Look(leg: leather), step: p.step)
+    v23LegGaps(c)
     drawBoots(c, step: p.step, C(0x0A0A0C))
     c.oy += p.breathe
     drawBody(c, Look(arm: leather, eye: nil))
@@ -114,27 +193,12 @@ private func drawBountyHunter(_ c: PixelCanvas, _ p: Pose) {
         ".HHHHHHHHHHHHHHHHHHHH.",
         ".HH................HH.",
     ], ["H": hair])
+    c.rect(15, 33, 3, 3, leather)
+}
 
-    if shift > 0 {
-        // The shimmer: bands of someone else's colours, wider the further the change has gone.
-        let other: [(y: Int, col: Px)] = [(21, C(0xB4492E)), (22, C(0xB4492E)), (23, C(0xB4492E)), (24, C(0xD4643E)),
-                                          (33, C(0xB08A5A)), (34, C(0xB08A5A)), (35, C(0x2E3442)), (36, C(0xB08A5A)),
-                                          (37, C(0x86683F))]
-        for (y, col) in other {
-            for x in 17...38 {
-                let band = (Double((x + y) % 6) + p.t * 18).truncatingRemainder(dividingBy: 6) / 6
-                if band < shift { c.px(x, y, col) }
-            }
-        }
-        if shift >= 1 {   // her bob's sides, down past the eyes
-            c.rect(16, 25, 2, 6, C(0xB4492E)); c.rect(38, 25, 2, 6, C(0xB4492E))
-        }
-        for i in 0..<5 {   // the shimmer's edge
-            let y = 20 + Int(noise(i * 3 + Int(p.t * 12)) * 18)
-            c.rect(17, y, 22, 1, C(0xC8FFE8, 0.35))
-        }
-    }
-
+/// His stiletto: out of the fist in a fight, a short point by it at rest.
+private func drawStiletto(_ c: PixelCanvas, _ p: Pose, sleeve leather: Px) {
+    let sig = p.signature
     if let a = p.melee {
         // The stiletto: out of the fist, long and thin, a glint running along it.
         for (i, ta) in p.trail.enumerated() { bar(c, hand, ta, from: 2, to: 11, steelLight.alpha(0.35 / Double(i + 1)), r: 0.5) }
@@ -239,9 +303,11 @@ private func drawGrey(_ c: PixelCanvas, _ p: Pose) {
     if let s = sig, s > 0.15, s < 0.9 {   // the light at its chest
         c.px(27, 33, C(0xC8FFE0, 0.5 + 0.5 * sin(p.t * 9))); c.px(28, 33, C(0xC8FFE0, 0.5 + 0.5 * sin(p.t * 9)))
     }
-    // The head: a great dome, wider at the top, narrowing to the chin.
-    let hx = 17 + tilt
-    c.pattern(hx, 12, [
+    // The head: a great dome, wider at the top, narrowing to the chin; tilted, the top leans furthest.
+    let hx = 17
+    /// How far row `r` of the head (0 the top) shifts when tilted.
+    func lean(_ r: Int) -> Int { Int((Double(tilt * (17 - r)) / 5.5).rounded()) }
+    let head = [
         "......LLLLLLLLL.......",
         "....LLLLLLLLLLLLL.....",
         "...LLSSSSSSSSSSSSL....",
@@ -260,7 +326,8 @@ private func drawGrey(_ c: PixelCanvas, _ p: Pose) {
         "....SSSSSSSSSSSSSD....",
         ".....SSSSSSSSSSSD.....",
         "......SSSSSSSSSD......",
-    ], ["L": skinL, "S": skin, "D": skinD])
+    ]
+    for (r, row) in head.enumerated() { c.pattern(hx + lean(r), 12 + r, [row], ["L": skinL, "S": skin, "D": skinD]) }
     // The eyes: big black almonds slanting down toward the middle, a shine on each.
     let eyes = tilt == 0 ? [
         "EEEE......EEEE",
@@ -281,9 +348,9 @@ private func drawGrey(_ c: PixelCanvas, _ p: Pose) {
         "..EEEE..EEEE..",
         "...EE....EE...",
     ]
-    c.pattern(hx + 4, 20, eyes, ["E": eye])
-    c.px(hx + 5, 20, shine); c.px(hx + 15, 20, shine)
-    c.px(hx + 10, 27, skinD); c.px(hx + 11, 27, skinD)   // the tiny mouth
+    for (r, row) in eyes.enumerated() { c.pattern(hx + 4 + lean(8 + r), 20 + r, [row], ["E": eye]) }
+    c.px(hx + 5 + lean(8), 20, shine); c.px(hx + 15 + lean(8), 20, shine)
+    c.px(hx + 10 + lean(15), 27, skinD); c.px(hx + 11 + lean(15), 27, skinD)   // the tiny mouth
 
     // The arms: long and thin; the right raised to cast, the palm glowing.
     c.rect(18, 31, 3, 1, skin); c.rect(17, 32, 1, 5, skin); c.px(16, 37, skinD); c.px(18, 37, skinD)
@@ -310,6 +377,7 @@ private func drawFacelessRebel(_ c: PixelCanvas, _ p: Pose) {
 
     // The coat, long to the ankles.
     drawLegs(c, Look(leg: C(0x2A221C)), step: p.step)
+    v23LegGaps(c)
     drawBoots(c, step: p.step, C(0x14100C))
     c.rect(17, 38, 22, seatedPose ? 1 : 4, coat); c.rect(28, 38, 1, seatedPose ? 1 : 4, coatD)
     c.oy += p.breathe
@@ -382,6 +450,7 @@ private func drawKnowleRohrer(_ c: PixelCanvas, _ p: Pose) {
     let roll: Int = sig.map { s in s > 0.05 && s < 0.3 ? (Int(s * 30) % 2 == 0 ? 1 : -1) : 0 } ?? 0
 
     drawLegs(c, Look(leg: suit), step: p.step)
+    v23LegGaps(c)
     drawBoots(c, step: p.step, C(0x0E0E10))
     c.oy += p.breathe
     drawBody(c, Look(arm: suit, eye: nil))
@@ -423,6 +492,7 @@ private func drawBillyMiles(_ c: PixelCanvas, _ p: Pose) {
     } ?? 0
 
     drawLegs(c, Look(leg: jeans), step: p.step)
+    v23LegGaps(c)
     drawBoots(c, step: p.step, C(0x5A3A22))
     c.oy += p.breathe
     // The lower half: shirt tails and belt.
@@ -446,7 +516,9 @@ private func drawBillyMiles(_ c: PixelCanvas, _ p: Pose) {
     ], ["H": hair, "h": hairL])
     c.oy += gap
     if gap > 0 {
-        // The seam between the halves: metal showing, glinting.
+        // The seam between the halves: a shadow across it (too faint to be outlined, so no white lines), the metal
+        // struts showing through, glinting.
+        c.rect(18, 34 - gap, 20, gap, C(0x14161A, 0.5))
         for x in stride(from: 19, to: 37, by: 3) { c.rect(x, 34 - gap, 1, gap, steelDark) }
         c.px(20 + Int(p.t * 20) % 16, 34 - (gap + 1) / 2, steelLight)
         // The arms drift off to the sides.

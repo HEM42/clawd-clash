@@ -31,7 +31,7 @@ private func drawBytes(_ c: PixelCanvas, _ p: Pose) {
     let tie_ = sig.map { $0 > 0.05 && $0 < 0.3 } ?? false
     let reading = sig.map { $0 >= 0.35 && $0 < 0.95 } ?? false
 
-    drawLegs(c, Look(leg: suit), step: p.step)
+    h14Trousers(c, leg: suit, step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
@@ -81,12 +81,12 @@ private func drawBytes(_ c: PixelCanvas, _ p: Pose) {
 /// burst. Signature: he raises the camera, frames you, and snaps: the flash goes off in a starburst.
 private func drawFrohack(_ c: PixelCanvas, _ p: Pose) {
     let leather = C(0x26221F), leatherL = C(0x3E3832), tee = C(0x3A3A40)
-    let hair = C(0x8A8A86), hairD = C(0x5E5E5A), stubble = C(0xB86448)
+    let hair = C(0x8A8A86), hairD = C(0x5E5E5A), stubble = C(0x6E4030)
     let sig = p.signature
     let framing = sig.map { $0 > 0.05 && $0 < 0.95 } ?? false
     let snap = sig.map { $0 > 0.55 && $0 < 0.72 } ?? false
 
-    drawLegs(c, Look(leg: C(0x2E3440)), step: p.step)
+    h14Trousers(c, leg: C(0x2E3440), step: p.step)
     drawDressShoes(c, step: p.step, color: C(0x3A2A1E))
     c.oy += p.breathe
     let using = framing || p.zap != nil || p.ready || p.cheering || (!p.resting && !p.walking)
@@ -108,8 +108,9 @@ private func drawFrohack(_ c: PixelCanvas, _ p: Pose) {
         "HHH.................HH..",
         "HH.......................",
     ], ["H": hair, "h": hairD])
-    // Stubble along the jaw.
-    for x in stride(from: 19, to: 37, by: 2) { c.px(x, 32 + (x / 2) % 2, stubble) }
+    // Stubble along the jaw and round the mouth: two rows, dotted, dark enough to show on the orange.
+    for x in 19..<37 where (x + 31) % 2 == 0 { c.px(x, 31, stubble.alpha(0.75)) }
+    for x in 19..<37 where (x + 32) % 2 == 0 { c.px(x, 32, stubble) }
 
     c.rect(15, 33, 3, 3, leather)
     guard using else {
@@ -145,13 +146,13 @@ private func drawLanky(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
     let typing = sig.map { $0 > 0.08 && $0 < 0.95 } ?? false
 
-    drawLegs(c, Look(leg: jeans), step: p.step)
+    h14Trousers(c, leg: jeans, step: p.step)
     drawDressShoes(c, step: p.step, color: C(0xEDEDE8))
     c.oy += p.breathe
     drawBody(c, Look(arm: tee))
-    // The band T-shirt and its logo: a white lightning flash.
+    // The band T-shirt and its logo: a grey alien's head, big black eyes, in white.
     c.rect(18, 33, 20, 5, tee); c.rect(18, 37, 20, 1, C(0x0E0E10))
-    c.pattern(26, 33, ["..W", ".W.", "WWW", ".W.", "W.."], ["W": logo])
+    c.pattern(24, 33, [".WWWWW.", "WKKWKKW", "WWKWKWW", ".WWWWW.", "..WWW.."], ["W": logo, "K": C(0x060608)])
     // Long blond hair, a centre parting, falling straight down both sides past the shoulders.
     c.pattern(16, 21, [
         ".......HHHHHHHHHH.......",
@@ -206,7 +207,7 @@ private func drawDeepClawt(_ c: PixelCanvas, _ p: Pose) {
     if !seatedPose {
         c.rect(17, 38, 22, 4, coat); c.rect(17, 41, 22, 1, coatD); c.rect(28, 38, 1, 4, coatD)
     }
-    drawLegs(c, Look(leg: suit), step: p.step)
+    h14Trousers(c, leg: suit, step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: coat))

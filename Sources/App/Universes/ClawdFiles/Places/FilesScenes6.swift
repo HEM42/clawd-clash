@@ -79,19 +79,29 @@ extension Scenes {
         c.stars(0, g / 3, density: tall ? 70 : 120, seed: 61)
         if tall { c.circle(c.w * 80 / 100, g / 6, 16 * s, C(0xF2E2B0)); c.circle(c.w * 80 / 100, g / 6, 22 * s, C(0xF2E2B0, 0.08)) }
         // The Ferris wheel, standing idle against the sky.
-        let wl = f.wheel, frame = C(0x3A2440)
+        let wl = f.wheel, frame = C(0x4A2C52), frameL = C(0x7A5A82)
+        for side in [-1, 1] {   // the A-frame legs, behind the wheel
+            for k in 0...(g - wl.y) {
+                c.rect(wl.x + side * k * wl.r * 3 / max(1, (g - wl.y) * 4), wl.y + k, 2 * s, 1, frame)
+            }
+        }
+        // The rim doubled and lit along its top, an inner ring, spokes, and a hub.
         drawRing(c, wl.x, wl.y, wl.r, s, frame)
+        drawRing(c, wl.x, wl.y, wl.r - s, s, frame)
+        drawRing(c, wl.x, wl.y - s, wl.r, s, frameL.alpha(0.5))
         drawRing(c, wl.x, wl.y, wl.r * 2 / 3, s, frame)
         for i in 0..<12 {
             let a = Double(i) * .pi / 6
             for k in 0...wl.r { c.rect(wl.x + Int(cos(a) * Double(k)), wl.y + Int(sin(a) * Double(k)), s, s, frame) }
-            let gx = wl.x + Int(cos(a) * Double(wl.r)), gy = wl.y + Int(sin(a) * Double(wl.r))
-            c.rect(gx - 2 * s, gy + s, 4 * s, 3 * s, C(0x4A2C50))   // a gondola
         }
-        for side in [-1, 1] {   // the A-frame legs
-            for k in 0...(g - wl.y) {
-                c.rect(wl.x + side * k * wl.r / max(1, (g - wl.y) * 2), wl.y + k, 2 * s, 1, frame)
-            }
+        c.circle(wl.x, wl.y, max(2 * s, wl.r / 8), frame); c.circle(wl.x, wl.y, max(s, wl.r / 16), frameL)
+        let cars = [C(0xB83A3A), C(0xE8B84A), C(0x3A7AB8), C(0x5AA85A)]
+        for i in 0..<12 {   // the gondolas, hanging below the rim, painted
+            let a = Double(i) * .pi / 6
+            let gx = wl.x + Int(cos(a) * Double(wl.r)), gy = wl.y + Int(sin(a) * Double(wl.r))
+            let gw: Int = max(4 * s, wl.r / 5), gh: Int = max(3 * s, wl.r / 7)
+            c.rect(gx, gy, s, 2 * s, frame)
+            c.rect(gx - gw / 2, gy + 2 * s, gw, gh, cars[i % 4].alpha(0.85)); c.rect(gx - gw / 2, gy + 2 * s, gw, s, C(0x2A1A30))
         }
         // The trailers: rounded silver, warm windows, one with a striped awning.
         for (i, x) in [c.w * 10 / 100, c.w * 72 / 100].enumerated() {
@@ -180,10 +190,31 @@ extension Scenes {
         banner.rect(0, 0, b.w, b.h, C(0xE8D2A0)); banner.rect(0, 0, b.w, 2 * s, C(0xA8302A)); banner.rect(0, b.h - 2 * s, b.w, 2 * s, C(0xA8302A))
         let word = "HUMBUG!", ws = s6TextWidth(word, s: s)
         s6Text(banner, word, x: (b.w - ws) / 2 + 6 * s, y: 4 * s, s: s, C(0xA8302A))
-        // A painted strongman on the left, arms up.
-        banner.rect(4 * s, 5 * s, 4 * s, 4 * s, C(0xD08A5A)); banner.rect(3 * s, 9 * s, 6 * s, 6 * s, C(0x2A2A30))
-        banner.rect(s, 4 * s, 2 * s, 5 * s, C(0xD08A5A)); banner.rect(9 * s, 4 * s, 2 * s, 5 * s, C(0xD08A5A))
-        banner.rect(0, 3 * s, 2 * s, 2 * s, C(0x2A2A30)); banner.rect(10 * s, 3 * s, 2 * s, 2 * s, C(0x2A2A30))
+        // A painted strongman on the left: a barbell over his head, handlebar moustache, leopard-skin leotard.
+        let man = [
+            "PP........PP",
+            "PPBBBBBBBBPP",
+            "PP.k....k.PP",
+            "...k.hh.k...",
+            "...k.ff.k...",
+            "...kkmmkk...",
+            "...kkkkkk...",
+            "....kkkk....",
+            "....LLlL....",
+            "....lLLL....",
+            "....LLLl....",
+            "....k..k....",
+            "....k..k....",
+            "...dd..dd...",
+        ]
+        let paint: [Character: Px] = ["P": C(0x2A2A30), "B": C(0x4A4A52), "k": C(0xD08A5A), "h": C(0x2A2A30), "f": C(0xE0A070),
+                                       "m": C(0x2A2A30), "L": C(0xE8A040), "l": C(0x6A3A1A), "d": C(0x2A2A30)]
+        for (row, line) in man.enumerated() {
+            for (col, ch) in line.enumerated() {
+                guard let p = paint[ch] else { continue }
+                banner.rect(s + col * s, 3 * s + row * s, s, s, p)
+            }
+        }
         s6Text(banner, "SIDESHOW", x: (b.w - s6TextWidth("SIDESHOW", s: s)) / 2 + 6 * s, y: 11 * s, s: s, C(0x2A2A30))
         for x in 0..<b.w {
             let wave = Int((sin(Double(x) / Double(8 * s) - t * 2.4) * 1.5 * Double(s)).rounded())
@@ -227,6 +258,33 @@ extension Scenes {
         for (i, y) in stride(from: f.horizon + s, to: g - 2 * s, by: 2 * s).enumerated() {
             let half = (1 + (y - f.horizon) / (14 * s)) * s, jog = (Int(noise(i + 860) * 3) - 1) * s
             c.rect(f.moonX - half + jog, y, half * 2, s, C(0xF2ECD8, 0.14 - 0.08 * Double(y - f.horizon) / Double(max(1, g - f.horizon))))
+        }
+        if tall {
+            // The far shore's pines reflected in the water, a band of mist lying over it, a lit cabin and its jetty
+            // across the lake, lily pads, and reeds standing in the shallows either side.
+            for i in 0..<(c.w / (9 * s) + 1) {
+                let x = i * 9 * s + Int(noise(i + 700) * Double(5 * s))
+                let h = 26 * s + Int(noise(i + 720) * Double(18 * s))
+                for k in stride(from: 0, to: h / 2, by: s) { c.rect(x - (h / 2 - k) / 8, f.horizon + s + k, (h / 2 - k) / 4 + s, s, C(0x0A1014, 0.5)) }
+            }
+            c.rect(0, f.horizon + 2 * s, c.w, 5 * s, C(0xB8B0C0, 0.08)); c.rect(0, f.horizon + 4 * s, c.w, 2 * s, C(0xC8C0D0, 0.07))
+            let cx = c.w * 22 / 100
+            c.rect(cx, f.horizon - 10 * s, 14 * s, 9 * s, C(0x1A1418)); c.rect(cx + 3 * s, f.horizon - 7 * s, 3 * s, 3 * s, C(0xFFC870))
+            for k in 0..<3 { c.ellipse(cx + 4 * s, f.horizon - 5 * s, (6 + k * 4) * s, (3 + k * 2) * s, C(0xFFC870, 0.05)) }
+            c.rect(cx + 14 * s, f.horizon - s, 20 * s, s, C(0x2A1E14))
+            for k in 0..<6 { c.rect(cx + 4 * s, f.horizon + 2 * s + k * 4 * s, 2 * s, s, C(0xFFC870, 0.3 - Double(k) * 0.04)) }   // its light on the water
+            for i in 0..<12 {
+                let px = Int(noise(i + 880) * Double(c.w)), py = f.horizon + (g - f.horizon) / 2 + Int(noise(i + 890) * Double((g - f.horizon) / 2 - 8 * s))
+                c.ellipse(px, py, 3 * s, s, C(0x2A4A2E)); c.px(px + s, py, C(0x0E141E))
+            }
+            for i in 0..<38 {
+                let side = i % 2 == 0
+                let rx = side ? Int(noise(i + 900) * Double(c.w / 8)) : c.w - Int(noise(i + 900) * Double(c.w / 10))
+                let rh = (10 + Int(noise(i + 910) * 16)) * s
+                c.rect(rx, g - rh, s, rh, C(0x1A2416))
+                if i % 3 == 0 { c.rect(rx, g - rh - 4 * s, s, 4 * s, C(0x3A2A18)) }   // a cattail
+                if i % 4 == 1 { c.rect(rx + s, g - rh / 2, 2 * s, s, C(0x1A2416)) }
+            }
         }
         // The rowboat, tied up on the left.
         let bx = c.w * 12 / 100, by = g - 6 * s
@@ -272,11 +330,14 @@ extension Scenes {
             c.rect(hx - d, wy + spread, s, s, C(0xC8D4E8, 0.4 * (1 - Double(d) / Double(40 * s))))
         }
         guard rise > 0.25 else { return }
-        let up = Int(rise * Double(12 * s)), body = C(0x1E3438), bodyL = C(0x2E4A4E)
-        c.ellipse(hx - 10 * s, wy, 7 * s, max(1, up / 4), body)                       // the hump
+        let big = isTall(c) ? 2 : 1
+        let up = Int(rise * Double(12 * s * big)), body = C(0x1E3438), bodyL = C(0x2E4A4E)
+        c.ellipse(hx - 11 * s * big, wy, 9 * s * big, max(1, up / 3), body)                // the hump
+        c.ellipse(hx - 11 * s * big, wy - up / 3 + s, 6 * s * big, s, bodyL)              // the light on its back
+        c.ellipse(hx - 24 * s * big, wy, 4 * s * big, max(1, up / 6), body)                 // a second, smaller hump
         for k in 0..<up { c.rect(hx + k / 4, wy - k, 2 * s, s, k % 3 == 0 ? bodyL : body) }   // the neck
-        c.rect(hx + up / 4, wy - up - s, 4 * s, 2 * s, body); c.px(hx + up / 4 + 3 * s, wy - up - s, C(0xC8E0D0))   // head, eye
-        c.rect(hx - 18 * s, wy, 36 * s, s, C(0xC8D4E8, 0.35))                         // the water line round him
+        c.rect(hx + up / 4, wy - up - s, 4 * s * big, 2 * s * big, body); c.px(hx + up / 4 + 3 * s * big, wy - up - s, C(0xC8E0D0))   // head, eye
+        c.rect(hx - 30 * s * big, wy, 40 * s * big, s, C(0xC8D4E8, 0.35))              // the water line round him
     }
 }
 
@@ -312,7 +373,14 @@ extension Scenes {
         let hx = c.w * 10 / 100, hw = 50 * s, hh = tall ? 34 * s : min(30 * s, g - 14 * s), hy = g - hh
         c.rect(hx, hy + 8 * s, hw, hh - 8 * s, C(0xD8D8D4))
         for y in stride(from: hy + 10 * s, to: g, by: 3 * s) { c.rect(hx, y, hw, s, C(0xB0B0AC)) }
-        for k in 0..<(12 * s) { c.rect(hx + k * 2 + 2 * s, hy + 8 * s - k * 2 / 3, hw - k * 4 - 4 * s, 1, C(0x2A2A2A)) }   // the roof
+        // The roof: a steep gable, shingle lines across it, a chimney and an attic window in the end.
+        let rise: Int = hw / 2 + 2 * s
+        c.rect(hx + hw - 14 * s, hy + 8 * s - rise * 3 / 4, 5 * s, rise * 3 / 4, C(0x3A3A3A)); c.rect(hx + hw - 15 * s, hy + 8 * s - rise * 3 / 4, 7 * s, s, C(0x1A1A1A))
+        for k in 0..<rise {
+            let inset: Int = k
+            c.rect(hx - 2 * s + inset, hy + 8 * s - k, hw + 4 * s - inset * 2, 1, k % (3 * s) == 0 ? C(0x1A1A1A) : C(0x2E2E2E))
+        }
+        c.rect(hx + hw / 2 - 3 * s, hy + 8 * s - rise / 2, 6 * s, 6 * s, C(0xD8D8D4)); c.rect(hx + hw / 2 - 2 * s, hy + 9 * s - rise / 2, 4 * s, 4 * s, C(0xF6F6EE))
         c.rect(hx - 2 * s, hy + 8 * s, hw + 4 * s, s, C(0x0A0A0A))
         for wx in [hx + 6 * s, hx + 34 * s] { c.rect(wx, hy + 12 * s, 9 * s, 7 * s, C(0xF6F6EE)); c.rect(wx + 4 * s, hy + 12 * s, s, 7 * s, C(0x3A3A3A)) }
         c.rect(hx + 21 * s, g - 12 * s, 8 * s, 12 * s, C(0x3A3A3A))                   // the door

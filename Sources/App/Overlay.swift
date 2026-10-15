@@ -1077,13 +1077,15 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         func weapon(_ a: Actor) -> Weapon {
             a.cast.weapon
         }
+        /// Missing time: an agent being taken stops fighting, and the other side holds fire until they're set down.
+        func taken(_ a: Actor) -> Bool { a.isLeader && a.abducted.map { now - $0 < missingTimeLength } == true }
         var roles: [String: FightRole] = [:]
         var fx: [(Actor, Actor)] = []
         var incoming: [String: Double] = [:]   // blaster-vs-blaster: each defender → its shooter's clock offset
         for fight in fights {
             guard let a = actors.first(where: { $0.key == fight.a && $0.leaving == nil }),
                   let b = actors.first(where: { $0.key == fight.b && $0.leaving == nil }),
-                  a.walkDir == 0, b.walkDir == 0 else { continue }
+                  a.walkDir == 0, b.walkDir == 0, !taken(a), !taken(b) else { continue }
             let (l, r) = a.x <= b.x ? (a, b) : (b, a)
             let (lRole, rRole) = fightRoles(weapon(l), weapon(r))
             roles[l.key] = lRole; roles[r.key] = rRole
