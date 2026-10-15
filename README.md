@@ -33,6 +33,14 @@ Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/r
 
 <p align="center"><sub>🔊 Click the speaker in a player for sound: GitHub starts videos muted.</sub></p>
 
+<h3 align="center">Bloopers</h3>
+
+<p align="center">What happens when the universes get mixed up: the Bulk wanders into the cantina, Darth Vapor makes his big reveal to the wrong kid, Yodle lifts Thorr's hammer, Superb-Man tries to keep up with the jump to hyperspace… and every take ends on CUT!</p>
+
+https://github.com/user-attachments/assets/5c28bcc8-101e-475d-b545-e9c94791e6a0
+
+<p align="center"><sub>Full 1080p version: <a href="promo/clawd-clash-bloopers.mp4">promo/clawd-clash-bloopers.mp4</a></sub></p>
+
 ---
 
 ## Contents

@@ -9,6 +9,11 @@ Its first three universes started as separate apps. Their changelogs from before
 
 Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://github.com/rodclemen/doctor-clawd)), so its whole history is below, from 3.1.0.
 
+## Unreleased
+
+### Changed
+- **The blooper reel has its own section in the README**, under the universe trailers: the takes where the universes get mixed up, with a line about what it is and a link to the full 1080p version (`promo/clawd-clash-bloopers.mp4`, now committed like the main trailer). It used to be reachable only inside the full promo-plus-bloopers cut.
+
 ## 3.3.0 (2026-10-15)
 
 ### Changed
