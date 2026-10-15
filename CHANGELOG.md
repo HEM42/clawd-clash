@@ -1,6 +1,13 @@
 # Changelog
 
-Clawd Clash brings three apps together as its first three universes: Clawd Wars became Star Clawds, Avengers: Clawd Wars became Marvelous Clawds and Justice League: Clawd Wars became Detective Clawds. Doctor Clawd, the fourth, was built for Clawd Clash in its own repo, [doctor-clawd](https://github.com/rodclemen/doctor-clawd). Their history before that is in [history/star-clawds.md](history/star-clawds.md) (up to 2.28.3), [history/marvelous-clawds.md](history/marvelous-clawds.md) (0.1.0) and [history/detective-clawds.md](history/detective-clawds.md) (0.1.0).
+Clawd Clash's own history, newest first.
+
+Its first three universes started as separate apps. Their changelogs from before they joined Clawd Clash are kept in `history/`:
+- Star Clawds was **Clawd Wars**: [history/star-clawds.md](history/star-clawds.md) (up to 2.28.3)
+- Marvelous Clawds was **Avengers: Clawd Wars**: [history/marvelous-clawds.md](history/marvelous-clawds.md) (0.1.0)
+- Detective Clawds was **Justice League: Clawd Wars**: [history/detective-clawds.md](history/detective-clawds.md) (0.1.0)
+
+Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://github.com/rodclemen/doctor-clawd)), so its whole history is below, from 3.1.0.
 
 ## Unreleased
 
