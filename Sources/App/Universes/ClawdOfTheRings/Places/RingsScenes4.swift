@@ -2,9 +2,10 @@ import Foundation
 
 // The Golden Hall of Edit-oras, Helm Chart's Deep and Fangorn Fork.
 let ringsScenes4: [Location: Place] = [
-    .edoras: Place(name: "The Golden Hall of Edit-oras", panel: 0x241E12, still: Scenes.edoras),
-    .helmsDeep: Place(name: "Helm Chart's Deep", panel: 0x1A1C20, still: Scenes.helmsDeep),
-    .fangorn: Place(name: "Fangorn Fork", panel: 0x16200E, still: Scenes.fangorn),
+    .edoras: Place(name: "The Golden Hall of Edit-oras", panel: 0x241E12, still: Scenes.edoras,
+                   moving: Scenes.edorasLife),
+    .helmsDeep: Place(name: "Helm Chart's Deep", panel: 0x1A1C20, still: Scenes.helmsDeep, moving: Scenes.helmsDeepLife),
+    .fangorn: Place(name: "Fangorn Fork", panel: 0x16200E, still: Scenes.fangorn, moving: Scenes.fangornLife),
 ]
 
 // MARK: - Shared bits for these scenes
@@ -28,6 +29,17 @@ private func r4Line(_ c: PixelCanvas, _ x0: Int, _ y0: Int, _ x1: Int, _ y1: Int
         let k = Double(i) / Double(n)
         c.rect(x0 + Int((Double(x1 - x0) * k).rounded()), y0 + Int((Double(y1 - y0) * k).rounded()), s, s, col)
     }
+}
+
+/// How far through its `period` the clock `t` is, 0 to 1, `offset` seconds along.
+private func r4Phase(_ t: Double, _ period: Double, offset: Double = 0) -> Double {
+    let v = (t + offset).truncatingRemainder(dividingBy: max(0.001, period)) / max(0.001, period)
+    return v < 0 ? v + 1 : v
+}
+
+/// Which pass through its `period` the clock `t` is on, `offset` seconds along: picks a new place for each pass.
+private func r4Pass(_ t: Double, _ period: Double, offset: Double = 0) -> Int {
+    Int(((t + offset) / max(0.001, period)).rounded(.down))
 }
 
 /// A range of snowy peaks standing on row `base`, up to `height` rows tall: each column is as high as the tallest
@@ -140,13 +152,8 @@ extension Scenes {
         // the terrace's low wall
         c.rect(0, g - 3 * s, c.w, 3 * s, C(0xA89C80)); c.rect(0, g - 3 * s, c.w, s, C(0xCEC2A4))
         for x in stride(from: 5 * s, to: c.w, by: 14 * s) { c.rect(x, g - 2 * s, s, 2 * s, C(0x8E8268)) }
-        let hall = edorasHall(c, g)
         // the banners, either side of the hall and one more along the terrace on tall screens
-        let up = (tall ? 20 : 6) * s, len = (tall ? 40 : 30) * s
-        edorasBanner(c, g, x: hall.x - hall.half - 24 * s, top: hall.peak - up, len: len, seed: 1)
-        edorasBanner(c, g, x: hall.x + hall.half + hall.dx + 18 * s, top: hall.peak - hall.dy - up + 2 * s, len: len,
-                     seed: 2)
-        if tall { edorasBanner(c, g, x: Int(Double(c.w) * 0.86), top: hall.peak + 6 * s, len: len, seed: 3) }
+        for b in edorasBanners(c, g) { edorasBanner(c, g, x: b.x, top: b.top, len: b.len, seed: b.seed) }
         edorasHallDraw(c, g)
         // the flagstones of the terrace
         c.ground(g, C(0xA89A7C), edge: C(0xD6CAAA), speck: C(0x948870), seed: 31)
@@ -355,19 +362,14 @@ extension Scenes {
     /// A banner of Rohan on its tall pole, streaming out to the right in the wind: green, edged in gold, forked at
     /// its tail, with the white horse on it.
     static func edorasBanner(_ c: PixelCanvas, _ g: Int, x: Int, top: Int, len: Int, seed: Int) {
-        let s = unit(g), tall = isTall(c), ht = (tall ? 13 : 11) * s
+        let s = unit(g)
         c.rect(x, top, s, g - top, C(0x5A3E24)); c.rect(x, top, max(1, s / 2), g - top, C(0x7A5A38))
         c.rect(x - s, top - 2 * s, 3 * s, 2 * s, C(0xE0B040))
         guard len > 0 else { return }
-        // the cloth's top row and height at column u along it
-        func cloth(_ u: Int) -> (y: Int, h: Int) {
-            let k = Double(u) / Double(len)
-            let wave = sin(Double(u) / Double(5 * s) + Double(seed) * 1.7) * Double(2 * s) * k
-            return (top + s + Int(wave - k * Double(2 * s)), ht - Int(k * Double(ht) * 0.2))
-        }
         let fork = 5 * s
         for u in 0..<len {
-            let cl = cloth(u), slope = cos(Double(u) / Double(5 * s) + Double(seed) * 1.7)
+            let cl = edorasCloth(c, g, top: top, len: len, seed: seed, u)
+            let slope = cos(Double(u) / Double(5 * s) + Double(seed) * 1.7)
             let col = slope < -0.3 ? C(0x235028) : C(0x2E6A34)
             let notch = u > len - fork ? (u - (len - fork)) * cl.h / (2 * fork) : 0
             let mid = cl.y + cl.h / 2
@@ -375,16 +377,98 @@ extension Scenes {
             c.rect(x + s + u, mid + notch, 1, cl.y + cl.h - mid - notch, col)
             c.px(x + s + u, cl.y, C(0xD8B040)); c.px(x + s + u, cl.y + cl.h - 1, C(0xD8B040))
         }
-        // the horse, following the cloth's wave
-        let u0 = len / 5
+        edorasBannerHorse(c, g, x: x, top: top, len: len, seed: seed)
+    }
+
+    /// The banners: each one's pole, the top of the pole, the cloth's length and the seed of its wave. Either side of
+    /// the hall, and one more along the terrace on tall screens.
+    static func edorasBanners(_ c: PixelCanvas, _ g: Int) -> [(x: Int, top: Int, len: Int, seed: Int)] {
+        let s = unit(g), tall = isTall(c), hall = edorasHall(c, g)
+        let up = (tall ? 20 : 6) * s, len = (tall ? 40 : 30) * s
+        var out = [(x: hall.x - hall.half - 24 * s, top: hall.peak - up, len: len, seed: 1),
+                   (x: hall.x + hall.half + hall.dx + 18 * s, top: hall.peak - hall.dy - up + 2 * s, len: len, seed: 2)]
+        if tall { out.append((x: Int(Double(c.w) * 0.86), top: hall.peak + 6 * s, len: len, seed: 3)) }
+        return out
+    }
+
+    /// A banner's cloth at column `u` along it: its top row and its height, following the wave it streams out in.
+    static func edorasCloth(_ c: PixelCanvas, _ g: Int, top: Int, len: Int, seed: Int, _ u: Int) -> (y: Int, h: Int) {
+        let s = unit(g), ht = (isTall(c) ? 13 : 11) * s
+        let k = Double(u) / Double(max(1, len))
+        let wave = sin(Double(u) / Double(5 * s) + Double(seed) * 1.7) * Double(2 * s) * k
+        return (top + s + Int(wave - k * Double(2 * s)), ht - Int(k * Double(ht) * 0.2))
+    }
+
+    /// The white horse on a banner, following the cloth's wave.
+    static func edorasBannerHorse(_ c: PixelCanvas, _ g: Int, x: Int, top: Int, len: Int, seed: Int) {
+        let s = unit(g), u0 = len / 5
         for (r, row) in r4Horse.enumerated() {
             for (k, ch) in row.enumerated() where ch == "#" {
                 let u = u0 + k * s
                 guard u < len else { continue }
-                let cl = cloth(u)
+                let cl = edorasCloth(c, g, top: top, len: len, seed: seed, u)
                 c.rect(x + s + u, cl.y + (cl.h - 7 * s) / 2 + r * s, s, s, C(0xF4F2EA))
             }
         }
+    }
+
+    /// One banner's cloth again, its folds rippling out along it from the pole, and the two prongs of its forked tail
+    /// flicking out past the still's and back, each in its own time. The cloth only ever reaches further than the
+    /// still's, so none of the still shows round it.
+    static func edorasBannerLife(_ c: PixelCanvas, _ g: Int, x: Int, top: Int, len: Int, seed: Int, t: Double) {
+        let s = unit(g), fork = 5 * s
+        guard len > fork else { return }
+        let a: Double = t * 5 + Double(seed) * 2.3
+        let reach = [Int((0.5 + 0.5 * sin(a)) * Double(3 * s)), Int((0.5 + 0.5 * sin(a * 1.3 + 2.2)) * Double(3 * s))]
+        for u in 0..<(len + max(reach[0], reach[1])) {
+            let cl = edorasCloth(c, g, top: top, len: len, seed: seed, u), mid = cl.y + cl.h / 2
+            let fold = cos(Double(u) / Double(5 * s) + Double(seed) * 1.7 - t * 4)
+            let col = fold < -0.3 ? C(0x235028) : C(0x2E6A34)
+            for (p, r) in reach.enumerated() {
+                let end = len + r
+                guard u < end else { continue }
+                let notch = u > end - fork ? (u - (end - fork)) * cl.h / (2 * fork) : 0
+                let y0 = p == 0 ? cl.y : mid + notch, y1 = p == 0 ? mid - notch : cl.y + cl.h
+                guard y1 > y0 else { continue }
+                c.rect(x + s + u, y0, 1, y1 - y0, col)
+                c.px(x + s + u, p == 0 ? y0 : y1 - 1, C(0xD8B040))
+            }
+        }
+        edorasBannerHorse(c, g, x: x, top: top, len: len, seed: seed)
+    }
+
+    /// The banners streaming in the wind, a cloud or two drifting across the sky, and gusts running through the grass
+    /// of the plains.
+    static func edorasLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c), hz = edorasHorizon(c, g), hall = edorasHall(c, g)
+        // the clouds, drifting right and coming round again from off the left edge; in the strip only where they
+        // stay clear of the hall's horse heads and the banners' poles
+        for i in 0..<(tall ? 2 : 1) {
+            let r = (tall ? 4 + 2 * i : 2) * s, span = c.w + 10 * r
+            let speed = Double((tall ? 3 : 2) * s) * (1 + Double(i) * 0.4)
+            let x = Int((noise(i * 5 + 1080) * Double(span) + t * speed).truncatingRemainder(dividingBy: Double(span)))
+                - 5 * r
+            let y = tall ? g / 24 + Int(noise(i * 5 + 1081) * Double(hz / 4))
+                : (2 + Int(noise(i * 5 + 1081) * 3.0)) * s
+            guard tall || y + r < hall.peak - 14 * s else { continue }
+            cloud(c, x, y, r, seed: i + 140, top: C(0xFFFBF0), base: C(0xD8DCE2))
+        }
+        // gusts: a pale sheen sweeping across the grass, a new row of the plains each time, kept above the town's
+        // palisade
+        let y0 = hz + 2 * s, y1 = tall ? Int(Double(g) * 0.6) - 8 * s : g - 15 * s
+        if y1 > y0 {
+            for i in 0..<(tall ? 5 : 2) {
+                let period = 5 + noise(i * 4 + 1090) * 4, off = noise(i * 4 + 1091) * period
+                let ph = r4Phase(t, period, offset: off), n = r4Pass(t, period, offset: off)
+                let len = (tall ? 60 : 34) * s, x = -len + Int(ph * Double(c.w + 2 * len))
+                let y = y0 + Int(noise(n * 7 + i * 3 + 1092) * Double(y1 - y0))
+                let a = 0.32 * sin(ph * Double.pi), sheen = C(0xF4E8A8)
+                c.rect(x, y, len, s, sheen.alpha(a))
+                c.rect(x + len / 4, y - s, len / 2, s, sheen.alpha(a * 0.6))
+                c.rect(x + len / 2, y + s, len / 3, s, sheen.alpha(a * 0.5))
+            }
+        }
+        for b in edorasBanners(c, g) { edorasBannerLife(c, g, x: b.x, top: b.top, len: b.len, seed: b.seed, t: t) }
     }
 }
 
@@ -429,7 +513,7 @@ extension Scenes {
         helmsDeepBurgDraw(c, g)
         helmsDeepWallDraw(c, g)
         // torches on posts at the back of the walkway, out at the ends
-        for x in [Int(Double(c.w) * 0.05), Int(Double(c.w) * 0.95)] {
+        for x in helmsDeepPosts(c) {
             c.rect(x - s, g - 12 * s, 3 * s, 12 * s, C(0x2A2420))
             r4Torch(c, x, g - 14 * s, 3, s: s)
         }
@@ -437,7 +521,7 @@ extension Scenes {
         // the wet walkway: torchlight caught in the puddles
         c.ground(g, C(0x2E3034), edge: C(0x5C6068), speck: C(0x3A3C42), seed: 41)
         let fr = c.h - g
-        for x in [Int(Double(c.w) * 0.05), Int(Double(c.w) * 0.95)] {
+        for x in helmsDeepPosts(c) {
             for y in stride(from: g + 2 * s, to: c.h, by: 2 * s) { c.rect(x - s, y, 3 * s, s, C(0xE8902E, 0.25)) }
         }
         for i in 0..<(c.w / max(1, 60 * s)) where fr > 4 * s {
@@ -459,23 +543,123 @@ extension Scenes {
     /// around where it leaves.
     static func helmsDeepLightning(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c)
+        guard let b = helmsDeepBolt(c, g) else { return }
+        c.ellipse(b.x, b.y, (tall ? 50 : 24) * s, (tall ? 14 : 5) * s, C(0x8A9AC8, 0.12))
+        c.ellipse(b.x, b.y, (tall ? 24 : 12) * s, (tall ? 6 : 3) * s, C(0xB8C8F0, 0.14))
+        for fork in b.forks {
+            for (p, q) in zip(fork, fork.dropFirst()) {
+                r4Line(c, p.x - s, p.y, q.x - s, q.y, C(0x9AB0E8, 0.35), s: 3 * s)
+                r4Line(c, p.x, p.y, q.x, q.y, C(0xF0F4FF), s: s)
+            }
+        }
+    }
+
+    /// The lightning's fork: where it leaves the cloud base, and the jagged path of the bolt and of its branch, as
+    /// the points where each one turns. Nil when there's no sky for it.
+    static func helmsDeepBolt(_ c: PixelCanvas, _ g: Int) -> (x: Int, y: Int, forks: [[(x: Int, y: Int)]])? {
+        let s = unit(g), tall = isTall(c)
         let x0 = Int(Double(c.w) * 0.47), y0 = tall ? Int(Double(g) * 0.08) : 3 * s
         let y1 = tall ? Int(Double(g) * 0.36) : g - 48 * s
-        guard y1 > y0 else { return }
-        c.ellipse(x0, y0, (tall ? 50 : 24) * s, (tall ? 14 : 5) * s, C(0x8A9AC8, 0.12))
-        c.ellipse(x0, y0, (tall ? 24 : 12) * s, (tall ? 6 : 3) * s, C(0xB8C8F0, 0.14))
-        func bolt(_ xs: Int, _ ys: Int, _ ye: Int, drift: Double, seed: Int) {
-            var x = Double(xs), y = ys, i = 0
+        guard y1 > y0 else { return nil }
+        func bolt(_ xs: Int, _ ys: Int, _ ye: Int, drift: Double, seed: Int) -> [(x: Int, y: Int)] {
+            var x = Double(xs), y = ys, i = 0, out = [(x: xs, y: ys)]
             while y < ye {
                 let step = (2 + Int(noise(seed + i * 2) * 4.0)) * s
                 let nx = x + (noise(seed + i * 2 + 1) - 0.5) * Double(5 * s) + drift * Double(step)
-                r4Line(c, Int(x) - s, y, Int(nx) - s, y + step, C(0x9AB0E8, 0.35), s: 3 * s)
-                r4Line(c, Int(x), y, Int(nx), y + step, C(0xF0F4FF), s: s)
+                out.append((x: Int(nx), y: y + step))
                 x = nx; y += step; i += 1
             }
+            return out
         }
-        bolt(x0, y0, y1, drift: 0.35, seed: 1020)
-        bolt(x0 + Int(Double(y1 - y0) * 0.14), y0 + (y1 - y0) * 2 / 5, y0 + (y1 - y0) * 3 / 4, drift: -0.3, seed: 1060)
+        return (x0, y0, [bolt(x0, y0, y1, drift: 0.35, seed: 1020),
+                         bolt(x0 + Int(Double(y1 - y0) * 0.14), y0 + (y1 - y0) * 2 / 5, y0 + (y1 - y0) * 3 / 4,
+                              drift: -0.3, seed: 1060)])
+    }
+
+    /// The top of the far peaks of the Thrihyrne at the end of the Deep (their highest summit can poke a little
+    /// above it).
+    static func helmsDeepFarTop(_ c: PixelCanvas, _ g: Int) -> Int { isTall(c) ? Int(Double(g) * 0.2) : g - 52 * unit(g) }
+
+    /// The middles of the two torch posts at the back of the walkway, out at the ends.
+    static func helmsDeepPosts(_ c: PixelCanvas) -> [Int] { [Int(Double(c.w) * 0.05), Int(Double(c.w) * 0.95)] }
+
+    /// The keep's wall round the Hornburg's summit: its half-width, its height and its top row.
+    static func helmsDeepKeep(_ c: PixelCanvas, _ g: Int) -> (half: Int, h: Int, top: Int) {
+        let s = unit(g), b = helmsDeepBurg(c, g), kh = (isTall(c) ? 18 : 7) * s
+        return (b.rockHalf * 3 / 5, kh, b.rockTop - kh)
+    }
+
+    /// The Hornburg's torches: two at the tower's top and one on the keep's wall, each flame's middle and its size.
+    static func helmsDeepBurgTorches(_ c: PixelCanvas, _ g: Int) -> [(x: Int, y: Int, u: Int)] {
+        let s = unit(g), b = helmsDeepBurg(c, g), k = helmsDeepKeep(c, g), u = isTall(c) ? 2 : 1
+        return [(b.x - b.half, b.top - 5 * s, u), (b.x + b.half, b.top - 5 * s, u), (b.x - k.half + 3 * s, k.top - 4 * s, 1)]
+    }
+
+    /// The torches along the Deeping Wall's top, bigger the nearer they are, spaced closer as it goes away.
+    static func helmsDeepWallTorches(_ c: PixelCanvas, _ g: Int) -> [(x: Int, y: Int, u: Int)] {
+        let s = unit(g), tall = isTall(c)
+        var out: [(x: Int, y: Int, u: Int)] = []
+        var tx = (tall ? 40 : 30) * s, i = 0
+        while let w = helmsDeepWall(c, g, tx) {
+            let u = w.k < 0.25 ? 3 : w.k < 0.6 ? 2 : 1
+            if w.k > 0.08 { out.append((tx, w.top - (2 + u) * s, u)) }
+            tx += Int(Double((tall ? 70 : 46) * s) * (1.1 - w.k * 0.7)) + Int(noise(i + 1250) * Double(8 * s)) + s
+            i += 1
+        }
+        return out
+    }
+
+    /// The rain falling, the torches flickering, and now and then the lightning flaring up and lighting the sky.
+    static func helmsDeepLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c)
+        // the lightning: a double flash every few seconds, the bolt blazing and the cloud and sky lit around it; only
+        // the bolt's stretch clear of the far peaks flares, so it never shows through them
+        let ph = r4Phase(t, 7.3, offset: 6.9) * 7.3
+        let flash: Double = ph < 0.14 ? 1 : ph > 0.24 && ph < 0.34 ? 0.6 : 0
+        if flash > 0, let b = helmsDeepBolt(c, g) {
+            // the sky lit in steps, faint far out and brighter round the cloud base the bolt leaves from
+            for (k, a) in [(1.0, 0.035), (0.6, 0.045), (0.3, 0.07)] {
+                c.ellipse(b.x, b.y, Int(Double(c.w) * 0.36 * k), Int(Double(tall ? g / 6 : 9 * s) * k),
+                          C(0xB0C0F0, a * flash))
+            }
+            let clear = helmsDeepFarTop(c, g) - 5 * s
+            for fork in b.forks {
+                for (p, q) in zip(fork, fork.dropFirst()) where max(p.y, q.y) < clear {
+                    r4Line(c, p.x - 2 * s, p.y, q.x - 2 * s, q.y, C(0xC8D8FF, 0.4 * flash), s: 5 * s)
+                    r4Line(c, p.x, p.y, q.x, q.y, C(0xFFFFFF, flash), s: s)
+                }
+            }
+        }
+        // the torches: the flames leaping and shrinking, their glow breathing with them
+        let torches = helmsDeepPosts(c).map { (x: $0, y: g - 14 * s, u: 3) } + helmsDeepWallTorches(c, g)
+            + helmsDeepBurgTorches(c, g)
+        let f = Int(t * 12)
+        for (i, tc) in torches.enumerated() {
+            let n = noise(f * 7 + i * 13 + 1260), lean = noise(f * 7 + i * 13 + 1261) > 0.5 ? 0 : -s
+            let u = tc.u
+            c.circle(tc.x, tc.y, 3 * u * s + Int(n * Double(u * s)), C(0xF0A040, 0.03 + 0.07 * n))
+            if u <= 1 {
+                if n > 0.4 { c.rect(tc.x + lean, tc.y - 2 * s, s, s, C(0xE8702A)) }
+                if n > 0.8 { c.px(tc.x, tc.y - s, C(0xFFD070)) }
+            } else {
+                let lift = Int(n * Double(u * s) * 0.7)
+                c.ellipse(tc.x + lean / 2, tc.y - u * s / 2 - lift / 2, max(1, u * s / 2), u * s + lift / 2,
+                          C(0xE8702A, 0.9))
+                c.ellipse(tc.x, tc.y - u * s / 4 - lift / 3, max(1, u * s / 4), max(1, u * s / 2 + lift / 3), C(0xFFD070))
+            }
+        }
+        // the rain: streaks falling fast and slanting left as the still's do, stopping short of the walkway
+        let bottom = g - 2 * s
+        guard bottom > 0 else { return }
+        for i in 0..<(c.w * g / max(1, (tall ? 220 : 140) * s * s)) {
+            let len = (4 + Int(noise(i * 4 + 1320) * 5.0)) * s
+            let v = Double((tall ? 300 : 150) * s) * (0.8 + 0.4 * noise(i * 4 + 1321))
+            let x0 = Int(noise(i * 4 + 1322) * Double(c.w + g / 3))
+            let y = Int((noise(i * 4 + 1323) * Double(bottom + len) + t * v).truncatingRemainder(
+                dividingBy: Double(bottom + len))) - len
+            let col = C(0xC4D2E8, noise(i * 4 + 1320) > 0.6 ? 0.42 : 0.26)
+            for k in max(0, -y)..<max(max(0, -y), min(len, bottom - y)) { c.rect(x0 - (y + k) / 3, y + k, s, 1, col) }
+        }
     }
 
     /// The gorge: the far end of the Deep hazed in the rain, the cliff on the left, and the one on the right that the
@@ -483,7 +667,7 @@ extension Scenes {
     static func helmsDeepCliffs(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c)
         // beyond the far end, the three peaks of the Thrihyrne, hazed by the rain
-        let farTop = tall ? Int(Double(g) * 0.2) : g - 52 * s
+        let farTop = helmsDeepFarTop(c, g)
         r4Peaks(c, base: g, height: g - farTop, count: 3, seed: 1100, s: s, lit: C(0x282E3A), shade: C(0x20242E),
                 snow: C(0x3C4456), snowShade: C(0x30374A))
         let rock = C(0x1C1E25), streak = C(0x16181E), ledge = C(0x2C303A), rim = C(0x3A404C)
@@ -536,7 +720,7 @@ extension Scenes {
         }
         let warm = C(0xF0B050), stone = C(0x3E4048), lit = C(0x52555E), shade = C(0x2E3036)
         // the keep's wall round the summit
-        let kw = b.rockHalf * 3 / 5, kh = (tall ? 18 : 7) * s, ky = b.rockTop - kh
+        let keep = helmsDeepKeep(c, g), kw = keep.half, kh = keep.h, ky = keep.top
         c.rect(b.x - kw, ky, kw * 2, kh + 2 * s, stone)
         c.rect(b.x - kw, ky, s, kh + 2 * s, lit); c.rect(b.x + kw - 2 * s, ky, 2 * s, kh + 2 * s, shade)
         for x in stride(from: b.x - kw, to: b.x + kw - s, by: 4 * s) { c.rect(x, ky - 2 * s, 2 * s, 2 * s, stone) }
@@ -558,9 +742,7 @@ extension Scenes {
         for (i, y) in stride(from: b.top + 5 * s, to: tb - 3 * s, by: (tall ? 16 : 9) * s).enumerated() {
             c.rect(b.x - s + (i % 2 == 0 ? -2 * s : 2 * s), y, s, 2 * s, warm)
         }
-        r4Torch(c, b.x - b.half, b.top - 5 * s, tall ? 2 : 1, s: s)
-        r4Torch(c, b.x + b.half, b.top - 5 * s, tall ? 2 : 1, s: s)
-        r4Torch(c, b.x - kw + 3 * s, ky - 4 * s, 1, s: s)
+        for tc in helmsDeepBurgTorches(c, g) { r4Torch(c, tc.x, tc.y, tc.u, s: s) }
     }
 
     /// The Deeping Wall curving away from the walkway to the Hornburg: its face with courses of stone, battlements
@@ -592,13 +774,7 @@ extension Scenes {
             c.rect(cx - r, by - s, r * 2, s, C(0x5A6A80, 0.5))
         }
         // torches along the top
-        var tx = (tall ? 40 : 30) * s, i = 0
-        while let w = helmsDeepWall(c, g, tx) {
-            let u = w.k < 0.25 ? 3 : w.k < 0.6 ? 2 : 1
-            if w.k > 0.08 { r4Torch(c, tx, w.top - (2 + u) * s, u, s: s) }
-            tx += Int(Double((tall ? 70 : 46) * s) * (1.1 - w.k * 0.7)) + Int(noise(i + 1250) * Double(8 * s)) + s
-            i += 1
-        }
+        for tc in helmsDeepWallTorches(c, g) { r4Torch(c, tc.x, tc.y, tc.u, s: s) }
     }
 
     /// Rain slanting down across the whole picture.
@@ -665,10 +841,8 @@ extension Scenes {
         for (i, m) in mids.enumerated() {
             fangornTrunk(c, g, x: m.x, w: m.w, base: midBase + 2 * s, flare: m.w + (tall ? 12 : 4) * s,
                          bark: C(0x4A3E2C), dark: C(0x382E20), light: C(0x66583E), moss: C(0x5E7A2C), seed: i + 20)
-            if tall {
-                let y = Int(Double(g) * (0.2 + noise(i + 1510) * 0.3)), right = noise(i + 1511) > 0.5
-                let x0 = right ? m.x + m.w : m.x, x1 = x0 + (right ? 1 : -1) * (30 + Int(noise(i + 1512) * 30.0)) * s
-                fangornBough(c, g, x0, y, x1, y - 8 * s, seed: i + 30, bark: C(0x3E3424), maxLen: 26 * s)
+            if let b = fangornMidBough(c, g, i, m.x, m.w) {
+                fangornBough(c, g, b.x0, b.y0, b.x1, b.y1, seed: b.seed, bark: C(0x3E3424), maxLen: b.maxLen)
             }
             if m.face { fangornFace(c, g, m.x, m.w) }
         }
@@ -700,14 +874,131 @@ extension Scenes {
             c.px(x, g - hgt, C(0x8AB050))
         }
         // the two great trunks at the edges, their roots spreading over the floor
-        let gw = (tall ? 70 : 34) * s, foot = g + min(max(0, c.h - g), 4 * s)
-        for (i, x) in [-(tall ? 34 : 16) * s, c.w - gw + (tall ? 34 : 16) * s].enumerated() {
+        let gw = fangornGreatWidth(c, g), foot = g + min(max(0, c.h - g), 4 * s)
+        for (i, x) in fangornGreatTrunks(c, g).enumerated() {
             fangornTrunk(c, g, x: x, w: gw, base: foot, flare: (tall ? 64 : 22) * s, bark: C(0x2E2618),
                          dark: C(0x211B11), light: C(0x4A3E28), moss: C(0x4E6A26), seed: i + 60)
-            let y = tall ? Int(Double(g) * 0.16) : 8 * s
-            let x0 = i == 0 ? x + gw : x, x1 = x0 + (i == 0 ? 1 : -1) * (tall ? 140 : 72) * s
-            fangornBough(c, g, x0, y, x1, y + (tall ? 12 : 4) * s, seed: i + 70, bark: C(0x2E2618),
-                         maxLen: (tall ? 40 : 12) * s)
+            let b = fangornGreatBough(c, g, i, x)
+            fangornBough(c, g, b.x0, b.y0, b.x1, b.y1, seed: b.seed, bark: C(0x2E2618), maxLen: b.maxLen)
+        }
+    }
+
+    /// The two great trunks' width.
+    static func fangornGreatWidth(_ c: PixelCanvas, _ g: Int) -> Int { (isTall(c) ? 70 : 34) * unit(g) }
+
+    /// The two great trunks at the edges: each one's left edge, half off the canvas.
+    static func fangornGreatTrunks(_ c: PixelCanvas, _ g: Int) -> [Int] {
+        let s = unit(g), tall = isTall(c), gw = fangornGreatWidth(c, g)
+        return [-(tall ? 34 : 16) * s, c.w - gw + (tall ? 34 : 16) * s]
+    }
+
+    /// The bough reaching in from great trunk `i` (whose left edge is `x`): its two ends, its seed and the longest
+    /// moss hanging from it.
+    static func fangornGreatBough(_ c: PixelCanvas, _ g: Int, _ i: Int, _ x: Int)
+        -> (x0: Int, y0: Int, x1: Int, y1: Int, seed: Int, maxLen: Int) {
+        let s = unit(g), tall = isTall(c), gw = fangornGreatWidth(c, g)
+        let y = tall ? Int(Double(g) * 0.16) : 8 * s
+        let x0 = i == 0 ? x + gw : x, x1 = x0 + (i == 0 ? 1 : -1) * (tall ? 140 : 72) * s
+        return (x0, y, x1, y + (tall ? 12 : 4) * s, i + 70, (tall ? 40 : 12) * s)
+    }
+
+    /// On tall screens, the bough reaching out from middle trunk `i` (its left edge `x`, `w` wide), to one side or the
+    /// other. Nil in the strip, where they're out of sight.
+    static func fangornMidBough(_ c: PixelCanvas, _ g: Int, _ i: Int, _ x: Int, _ w: Int)
+        -> (x0: Int, y0: Int, x1: Int, y1: Int, seed: Int, maxLen: Int)? {
+        guard isTall(c) else { return nil }
+        let s = unit(g)
+        let y = Int(Double(g) * (0.2 + noise(i + 1510) * 0.3)), right = noise(i + 1511) > 0.5
+        let x0 = right ? x + w : x, x1 = x0 + (right ? 1 : -1) * (30 + Int(noise(i + 1512) * 30.0)) * s
+        return (x0, y, x1, y - 8 * s, i + 30, 26 * s)
+    }
+
+    /// Every bough with moss hanging from it: the middle trunks' and the great trunks'.
+    static func fangornBoughs(_ c: PixelCanvas, _ g: Int) -> [(x0: Int, y0: Int, x1: Int, y1: Int, seed: Int, maxLen: Int)] {
+        var out = fangornMids(c, g).enumerated().compactMap { fangornMidBough(c, g, $0.offset, $0.element.x, $0.element.w) }
+        for (i, x) in fangornGreatTrunks(c, g).enumerated() { out.append(fangornGreatBough(c, g, i, x)) }
+        return out
+    }
+
+    /// The moss strands hanging from a bough: where each one hangs from, how long it is, and its number along the
+    /// bough.
+    static func fangornStrands(_ g: Int, _ x0: Int, _ y0: Int, _ x1: Int, _ y1: Int, seed: Int, maxLen: Int)
+        -> [(x: Int, y: Int, len: Int, i: Int)] {
+        let s = unit(g), n = max(1, abs(x1 - x0) / (2 * s))
+        return (0..<n).map { i in
+            let k = Double(i) / Double(n)
+            let x = x0 + Int(Double(x1 - x0) * k), y = y0 + Int(Double(y1 - y0) * k) + 2 * s
+            return (x, y, Int(noise(seed * 31 + i + 1800) * Double(maxLen) * (0.4 + 0.6 * k)), i)
+        }
+    }
+
+    /// Where the face sits on its trunk (`x`, `w` wide): the middle between its eyes.
+    static func fangornFaceSpot(_ c: PixelCanvas, _ g: Int, _ x: Int, _ w: Int) -> (x: Int, y: Int) {
+        (x + w * 2 / 5, g - (isTall(c) ? 72 : 40) * unit(g))
+    }
+
+    /// The light shafts breathing as the canopy stirs overhead, motes drifting down through them, the moss's loose
+    /// ends swaying from the boughs, now and then a leaf spinning down, and once in a long while the face blinking.
+    static func fangornLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c), slope = 0.45, low = g - 8 * s
+        guard low > 0 else { return }
+        // the shafts, brightening and dimming each in its own time, and the motes in them
+        for (i, e) in fangornShaftEnds(c, g).enumerated() {
+            let x0 = e.x - e.w / 2 - Int(Double(g) * slope)
+            let glow = max(0, sin(t * 0.6 + Double(i) * 2.1))
+            if glow > 0.05 {
+                for y in stride(from: 0, to: g, by: 1) {
+                    c.rect(x0 + Int(Double(y) * slope), y, e.w, 1, C(0xF4E4A0, 0.045 * glow))
+                }
+            }
+            for k in 0..<(tall ? 8 : 4) {
+                let seed = i * 40 + k * 4 + 1960
+                let v = Double((tall ? 5 : 3) * s) * (0.6 + 0.8 * noise(seed))
+                let y = Int((noise(seed + 1) * Double(low) + t * v).truncatingRemainder(dividingBy: Double(low)))
+                let x = x0 + Int(Double(y) * slope) + Int(noise(seed + 2) * Double(e.w))
+                    + Int(sin(t * 0.8 + Double(seed)) * Double(2 * s))
+                let a = 0.35 + 0.45 * (0.5 + 0.5 * sin(t * 2.2 + Double(k) * 1.9))
+                c.rect(x, y, s, s, C(0xFFF4C0, a * min(1, Double(low - y) / Double(12 * s))))
+            }
+        }
+        // the moss: the loose ends of the longer strands swinging, a gust running along the boughs
+        for b in fangornBoughs(c, g) {
+            for st in fangornStrands(g, b.x0, b.y0, b.x1, b.y1, seed: b.seed, maxLen: b.maxLen)
+            where st.len >= 4 * s && st.i % 2 == 0 {
+                let gust = 0.6 + 0.4 * sin(t * 0.9 - Double(st.x) * 0.02 / Double(s))
+                let tip = max(2 * s, st.len / 4), y0 = st.y + st.len
+                let base = Int(sin(Double(st.len) / Double(3 * s) + Double(st.i)) * Double(s) * 0.8)
+                let col = st.i % 3 == 0 ? C(0xA8B470) : C(0x7A9040)
+                for yy in 0..<tip {
+                    let k = Double(yy + 1) / Double(tip)
+                    let swing = Int((sin(t * 1.7 + Double(st.i) * 0.8 + Double(b.seed)) * gust * k * Double(2 * s)).rounded())
+                    c.rect(st.x + base + swing, y0 + yy, s, 1, col.alpha(0.45 - 0.3 * k))
+                }
+            }
+        }
+        // a leaf, spinning down from the canopy every few seconds, gone before it reaches the crew
+        let period = 9.0, ph = r4Phase(t, period, offset: 2), n = r4Pass(t, period, offset: 2)
+        let top = tall ? Int(Double(g) * 0.1) : 6 * s, fall = 0.7
+        if ph < fall, low - 4 * s > top {
+            let p = ph / fall
+            let y = top + Int(p * Double(low - 4 * s - top))
+            let x = Int(noise(n * 3 + 1990) * Double(c.w) * 0.6 + Double(c.w) * 0.2)
+                + Int(sin(p * 12) * Double(6 * s) + p * Double(16 * s))
+            let col = C(n % 2 == 0 ? 0xB8A040 : 0x8AA034, p < 0.85 ? 1 : (1 - p) / 0.15)
+            if cos(t * 7) > 0 { c.rect(x, y, 2 * s, s, col) } else { c.rect(x, y, s, 2 * s, col) }
+        }
+        // the face blinks: the lids come down over the eyes, rest a moment shut, and lift
+        let bp = r4Phase(t, 11, offset: 4) * 11
+        if bp < 0.32, let m = fangornMids(c, g).first(where: { $0.face }) {
+            let f = fangornFaceSpot(c, g, m.x, m.w), half = bp < 0.06 || bp > 0.26
+            for ex in [f.x - 4 * s, f.x + 4 * s] {
+                if half {
+                    c.rect(ex - 2 * s, f.y - s, 4 * s + 1, s, C(0x4A3E2C))
+                } else {
+                    c.ellipse(ex, f.y, 2 * s, max(1, s), C(0x4A3E2C))
+                    c.rect(ex - 2 * s, f.y, 4 * s + 1, max(1, s / 2), C(0x2E261A))
+                }
+            }
         }
     }
 
@@ -784,11 +1075,7 @@ extension Scenes {
         let s = unit(g)
         r4Line(c, x0, y0, x1, y1, bark, s: 3 * s)
         r4Line(c, x0, y0, x1, y1, lerp(bark, C(0x6A5A3E), 0.5), s: s)
-        let n = max(1, abs(x1 - x0) / (2 * s))
-        for i in 0..<n {
-            let k = Double(i) / Double(n)
-            let x = x0 + Int(Double(x1 - x0) * k), y = y0 + Int(Double(y1 - y0) * k) + 2 * s
-            let len = Int(noise(seed * 31 + i + 1800) * Double(maxLen) * (0.4 + 0.6 * k))
+        for (x, y, len, i) in fangornStrands(g, x0, y0, x1, y1, seed: seed, maxLen: maxLen) {
             let col = i % 3 == 0 ? C(0xA8B470) : C(0x7A9040)
             for yy in 0..<len {
                 let sway = Int(sin(Double(yy) / Double(3 * s) + Double(i)) * Double(s) * 0.8)
@@ -801,7 +1088,7 @@ extension Scenes {
     /// a long nose ending in a knot, a crack of a mouth and a beard of moss.
     static func fangornFace(_ c: PixelCanvas, _ g: Int, _ x: Int, _ w: Int) {
         let s = unit(g), tall = isTall(c)
-        let cx = x + w * 2 / 5, cy = g - (tall ? 72 : 40) * s
+        let spot = fangornFaceSpot(c, g, x, w), cx = spot.x, cy = spot.y
         let hollow = C(0x1E180E), ridge = C(0x6E5E42), shade = C(0x2E261A)
         r4Line(c, cx - 7 * s, cy - 2 * s, cx - 2 * s, cy - 3 * s, ridge, s: s)
         r4Line(c, cx + 2 * s, cy - 3 * s, cx + 7 * s, cy - 2 * s, ridge, s: s)

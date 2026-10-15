@@ -2,9 +2,10 @@ import Foundation
 
 // The Dead Merges, Dol Build-ur and Go-blin Town.
 let ringsScenes7: [Location: Place] = [
-    .deadMarshes: Place(name: "The Dead Merges", panel: 0x14180E, still: Scenes.deadMarshes),
-    .dolGuldur: Place(name: "Dol Build-ur", panel: 0x120E14, still: Scenes.dolGuldur),
-    .goblinTown: Place(name: "Go-blin Town", panel: 0x18140E, still: Scenes.goblinTown),
+    .deadMarshes: Place(name: "The Dead Merges", panel: 0x14180E, still: Scenes.deadMarshes,
+                        moving: Scenes.deadMarshesLife),
+    .dolGuldur: Place(name: "Dol Build-ur", panel: 0x120E14, still: Scenes.dolGuldur, moving: Scenes.dolGuldurLife),
+    .goblinTown: Place(name: "Go-blin Town", panel: 0x18140E, still: Scenes.goblinTown, moving: Scenes.goblinTownLife),
 ]
 
 // MARK: - Shared bits for these scenes
@@ -118,6 +119,38 @@ private func r7Web(_ c: PixelCanvas, hub: (x: Int, y: Int), _ a: (x: Int, y: Int
         prev = pts
     }
     for p in prev { r7Line(c, hub.x, hub.y, p.x, p.y, col, s: 1) }
+}
+
+/// How far through its current round of `period` seconds the clock `t` is, 0..<1.
+private func r7Phase(_ t: Double, _ period: Double, offset: Double = 0) -> Double {
+    let v = (t + offset).truncatingRemainder(dividingBy: period) / period
+    return v < 0 ? v + 1 : v
+}
+
+/// Which round of `period` seconds the clock `t` is in: picks a fresh spot for something that comes now and then.
+private func r7Round(_ t: Double, _ period: Double, offset: Double = 0) -> Int { Int(((t + offset) / period).rounded(.down)) }
+
+/// Noise that wanders smoothly with the clock, `rate` times a second, in 0..<1.
+private func r7Wander(_ t: Double, rate: Double, seed: Int) -> Double {
+    let v = t * rate, i = Int(v.rounded(.down)), f = v - v.rounded(.down)
+    return noise(i * 5 + seed) * (1 - f) + noise(i * 5 + 5 + seed) * f
+}
+
+/// The outline of a flat ellipse: a ripple on still water.
+private func r7Ring(_ c: PixelCanvas, _ x: Int, _ y: Int, _ rx: Int, _ ry: Int, _ col: Px) {
+    guard rx > 0, ry > 0 else { return }
+    for dx in -rx...rx {
+        let k = Double(dx) / Double(rx), dy = Int((Double(ry) * max(0, 1 - k * k).squareRoot()).rounded())
+        c.px(x + dx, y - dy, col)
+        if dy > 0 { c.px(x + dx, y + dy, col) }
+    }
+}
+
+/// A rectangle cut to the box `b` (left, top, right, bottom, exclusive): for repainting part of the still exactly.
+private func r7Clipped(_ c: PixelCanvas, _ x: Int, _ y: Int, _ w: Int, _ h: Int, _ col: Px,
+                       _ b: (x0: Int, y0: Int, x1: Int, y1: Int)) {
+    let x0 = max(x, b.x0), y0 = max(y, b.y0), x1 = min(x + w, b.x1), y1 = min(y + h, b.y1)
+    c.rect(x0, y0, x1 - x0, y1 - y0, col)
 }
 
 // MARK: - The Dead Merges
@@ -268,6 +301,66 @@ extension Scenes {
             c.rect(x - core / 2, ly - core, core, core * 2, C(0xE8F4D0))
             c.rect(x - core / 2, ly - core * 2, max(1, core / 2), core, C(0xC8E0B0, 0.6))
             c.rect(x - core / 2, wy, core, max(1, lift / 3), C(0xC8E0B0, 0.25))
+        }
+    }
+
+    /// Mist drifting slowly over the bog, the corpse-lights breathing, more of them wandering up out of the pools,
+    /// bobbing and fading away, and now and then a ripple spreading on a pool.
+    static func deadMarshesLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c), hz = deadMarshesHorizon(c, g), depth = max(1, g - hz - 2 * s)
+        let twoPi: Double = 2 * Double.pi
+        // mist: long faint banks sliding right, the near ones faster, kept off the path
+        for i in 0..<(tall ? 8 : 4) {
+            let k: Double = 0.08 + noise(i * 5 + 1300) * 0.62
+            let len = (70 + Int(noise(i * 5 + 1301) * 120.0)) * s, span = Double(c.w + len)
+            let run: Double = noise(i * 5 + 1302) * span + t * (1.2 + k * 3.5) * Double(s)
+            let x = Int(run.truncatingRemainder(dividingBy: span)) - len / 2
+            let y = hz + s + Int(k * Double(depth)) + Int((sin(t * 0.4 + Double(i) * 2.1) * Double(s)).rounded())
+            wisp(c, x, y, len, C(0xB4BCAC, 0.09 + 0.05 * (0.5 + 0.5 * sin(t * 0.5 + Double(i)))), s: (tall ? 2 : 1) * s)
+        }
+        // the still's corpse-lights breathing: a glow swelling round each, the flame and its reflection brightening
+        for i in 0..<(tall ? 10 : 5) {
+            let k: Double = 0.15 + noise(i * 3 + 390) * 0.75
+            let x = Int(noise(i * 3 + 391) * Double(c.w)), wy = hz + s + Int(k * Double(depth))
+            let lift = max(3 * s, Int(k * Double(depth) * 0.2)), ly = wy - lift
+            let core = max(1, Int(k * 2.5) * s)
+            let p: Double = 0.5 + 0.5 * sin(t * twoPi / (2.6 + noise(i + 1310) * 2) + Double(i) * 1.9)
+            c.circle(x, ly, max(2 * s, lift / 2), C(0xC8E0B0, 0.02 + 0.06 * p))
+            c.rect(x - core / 2, ly - core, core, core * 2, C(0xFFFFF0, 0.45 * p))
+            c.rect(x - core / 2, wy + s, core, max(1, lift / 4), C(0xE8F4D0, 0.2 * p))
+        }
+        // wanderers: each rises out of a pool, bobs and drifts a while, and fades, then comes again somewhere else
+        for i in 0..<(tall ? 4 : 2) {
+            let period: Double = 7 + noise(i * 4 + 1320) * 5, off = noise(i * 4 + 1321) * period
+            let n = r7Round(t, period, offset: off), p = r7Phase(t, period, offset: off)
+            let fade: Double = pow(sin(p * Double.pi), 0.7)
+            let k: Double = 0.2 + noise(n * 7 + i * 3 + 1330) * 0.6
+            let wy = hz + s + Int(k * Double(depth)), lift = max(3 * s, Int(k * Double(depth) * 0.2))
+            let x = Int(noise(n * 7 + i * 3 + 1331) * Double(c.w)) + Int((p * 14 + sin(t * 0.9 + Double(i)) * 3) * Double(s))
+            let ly = wy - lift - Int(p * Double(lift) * 0.4) + Int((sin(t * 1.7 + Double(i) * 2) * Double(s) * 1.5).rounded())
+            let core = max(1, Int(k * 2.5) * s)
+            c.circle(x, ly, max(2 * s, lift / 2), C(0xC8E0B0, 0.07 * fade))
+            c.rect(x - core / 2, ly - core, core, core * 2, C(0xE8F4D0, 0.85 * fade))
+            c.rect(x - core / 2, ly - core * 2, max(1, core / 2), core, C(0xC8E0B0, 0.5 * fade))
+            c.rect(x - core / 2, wy, core, max(1, lift / 3), C(0xC8E0B0, 0.18 * fade))
+        }
+        // ripples: now and then a ring spreads on one of the middle-distance pools and fades
+        var pools: [(x: Int, y: Int, rx: Int, ry: Int)] = []
+        for i in 0..<max(0, c.w / ((tall ? 4 : 5) * s)) {
+            let k: Double = pow(noise(i * 4 + 340), 1.4)
+            guard k > 0.3, k < 0.85 else { continue }
+            let ry = max(1, Int(k * Double(depth) * 0.06))
+            pools.append((Int(noise(i * 4 + 342) * Double(c.w)), hz + s + Int(k * Double(depth)),
+                          ry * (4 + Int(noise(i * 4 + 341) * 6.0)) + 2 * s, ry))
+        }
+        guard !pools.isEmpty else { return }
+        for i in 0..<(tall ? 3 : 2) {
+            let period: Double = 4 + noise(i * 4 + 1340) * 3, off = noise(i * 4 + 1341) * period
+            let p = r7Phase(t, period, offset: off)
+            guard p < 0.45 else { continue }
+            let pl = pools[Int(noise(r7Round(t, period, offset: off) * 7 + i * 3 + 1342) * Double(pools.count)) % pools.count]
+            let r: Double = p / 0.45, grow: Double = 0.15 + r * 0.75
+            r7Ring(c, pl.x, pl.y, Int(Double(pl.rx) * grow), max(1, Int(Double(pl.ry) * grow)), C(0xB8C0B0, 0.4 * (1 - r)))
         }
     }
 }
@@ -447,6 +540,76 @@ extension Scenes {
         c.ellipse(x, y, 14 * s, 4 * s, C(0xFFB03A, 0.08))
         c.rect(x - s, y - 6 * s, 2 * s, 12 * s, C(0x0A0608, 0.3))
         wisp(c, x + 6 * s, y + 3 * s, 60 * s, C(0x5A6650, 0.2), s: 2 * s)
+    }
+
+    /// The green windows flickering, haze drifting round the towers' feet, now and then a bat flapping across the
+    /// moon, and on tall screens the eye in the haze swelling and fading.
+    static func dolGuldurLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c), wt = dolGuldurWallTop(c, g)
+        let twoPi: Double = 2 * Double.pi
+        if tall {
+            let x = Int(Double(c.w) * 0.395), y = Int(Double(g) * 0.22)
+            let p: Double = 0.5 + 0.5 * sin(t * twoPi / 4.5)
+            c.ellipse(x, y, 24 * s, 7 * s, C(0xE8501E, 0.07 * p))
+            c.ellipse(x, y, 13 * s, 4 * s, C(0xFFB03A, 0.12 * p))
+            c.ellipse(x, y, 5 * s, 2 * s, C(0xFFD878, 0.14 * p))
+            c.rect(x - s, y - 5 * s, 2 * s, 10 * s, C(0x0A0608, 0.25 * p))
+        }
+        // the windows: each glowing one breathes on its own, and now and then gutters out for a moment
+        let towers = dolGuldurTowers(c, g)
+        let trees: [(x: Int, reach: Int)] = [(0.045, tall ? 0.6 : 0.75), (0.95, tall ? 0.48 : 0.62)].map {
+            (Int(Double(c.w) * $0.0), Int(Double(g) * $0.1 * 0.35))
+        }
+        for (j, tw) in towers.enumerated() {
+            let base = wt + 2 * s, span = max(1, base - tw.top)
+            for i in 0..<max(0, span / (14 * s)) where noise(tw.x + i * 3 + 512) > 0.65 {
+                let y = tw.top + tw.w / 2 + 4 * s + Int(noise(tw.x + i * 3 + 510) * Double(max(1, span - tw.w / 2 - 12 * s)))
+                let x = tw.x + Int((noise(tw.x + i * 3 + 511) - 0.5) * Double(tw.w) * 0.5)
+                // skip one hidden behind a nearer tower or a dead tree
+                let hidden = towers[(j + 1)...].contains { o in
+                    let ospan = max(1, base - o.top)
+                    return y >= o.top - o.w && abs(x - o.x) <= o.w / 2 + (y - o.top) * o.w / (6 * ospan) + s
+                } || trees.contains { abs(x - $0.x) < $0.reach }
+                guard !hidden else { continue }
+                let id = tw.x + i * 31
+                let p: Double = 0.5 + 0.5 * sin(t * (1.3 + noise(id + 1400)) + noise(id + 1401) * 6)
+                let out = noise(Int((t * 8).rounded(.down)) * 13 + id + 1402) < 0.06
+                let a: Double = (0.75 - tw.haze * 0.5) * (out ? 0 : 0.2 + 0.6 * p * r7Wander(t, rate: 7, seed: id + 1403))
+                if out { c.rect(x, y, s, 3 * s, C(0x06050A, 0.6)) }
+                c.rect(x, y, s, 3 * s, C(0xC4E09A, a))
+                c.circle(x, y + s, 3 * s, C(0x8AAA6A, a * 0.12))
+            }
+        }
+        // haze sliding slowly left round the towers' feet, and on tall screens higher up between them
+        for i in 0..<(tall ? 7 : 4) {
+            let len = (60 + Int(noise(i * 5 + 1410) * 90.0)) * s, span = Double(c.w + len)
+            let run: Double = noise(i * 5 + 1411) * span - t * (2 + noise(i * 5 + 1412) * 3) * Double(s)
+            var x = Int(run.truncatingRemainder(dividingBy: span))
+            if x < 0 { x += Int(span) }
+            let high = tall && i >= 4
+            let y = high ? Int((0.3 + noise(i * 5 + 1413) * 0.3) * Double(g))
+                : wt - 2 * s - Int(noise(i * 5 + 1413) * Double(tall ? g / 5 : 8 * s))
+            wisp(c, x - len / 2, y, len, C(0x6A7858, 0.1), s: (tall ? 2 : 1) * s)
+        }
+        // the bat: every so often it flaps in from one side, across the face of the moon and up out of sight
+        let period = 10.0, p = r7Phase(t, period, offset: 2)
+        if p < 0.35 {
+            let n = r7Round(t, period, offset: 2), q = p / 0.35, u = (tall ? 2 : 1) * s
+            let mx = Int(Double(c.w) * 0.17), my = tall ? Int(Double(g) * 0.12) : 10 * s, mr = (tall ? 15 : 6) * s
+            let from = n % 2 == 0 ? -4 * u : c.w + 4 * u
+            let bx = from + Int(Double(mx - from) * q / 0.6)
+            let climb = q > 0.6 ? Int(pow((q - 0.6) / 0.4, 1.5) * Double(my + mr + 8 * u)) : 0
+            let by = my + Int((noise(n * 3 + 1420) - 0.5) * Double(mr)) + Int(sin(q * twoPi * 3) * Double(2 * u)) - climb
+            let up = Int((t * 9).rounded(.down)) % 2 == 0, bat = C(0x08060A)
+            c.rect(bx, by, u, 2 * u, bat)
+            if up {
+                c.rect(bx - 2 * u, by - u, 2 * u, u, bat); c.rect(bx + u, by - u, 2 * u, u, bat)
+                c.rect(bx - 3 * u, by - 2 * u, u, u, bat); c.rect(bx + 3 * u, by - 2 * u, u, u, bat)
+            } else {
+                c.rect(bx - 2 * u, by, 2 * u, u, bat); c.rect(bx + u, by, 2 * u, u, bat)
+                c.rect(bx - 3 * u, by + u, u, u, bat); c.rect(bx + 3 * u, by + u, u, u, bat)
+            }
+        }
     }
 }
 
@@ -689,5 +852,122 @@ extension Scenes {
             c.rect(tx - s / 2, y - 14 * u, s, 14 * u, dark)
             goblinTownTorch(c, g, tx, y - 14 * u, dim: 0.1)
         }
+    }
+
+    /// Every torch: where `goblinTownTorch` puts it and how deep in the dark, on the walkways and by the throne.
+    static func goblinTownTorches(_ c: PixelCanvas, _ g: Int) -> [(x: Int, y: Int, dim: Double)] {
+        let s = unit(g)
+        var out: [(x: Int, y: Int, dim: Double)] = []
+        for (i, wk) in goblinTownWalks(c, g).enumerated() where wk.x1 > wk.x0 {
+            let posts = Array(stride(from: wk.x0 + 3 * s, to: wk.x1 - 2 * s, by: 15 * s))
+            if let tx = posts.dropFirst(i % 2).first { out.append((tx + s, wk.y - 2 * s, wk.dim * 0.6)) }
+        }
+        if isTall(c) {
+            let u = 2 * s, y = Int(Double(g) * 0.25) - 14 * u
+            for side in [-1, 1] { out.append((c.w / 2 + side * 21 * u, y, 0.1)) }
+        }
+        return out
+    }
+
+    /// The torches flickering, water dripping now and then from a stalactite, and the cage swinging on its chain.
+    static func goblinTownLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c), band = (tall ? 8 : 3) * s
+        goblinTownCageSwing(c, g, t)
+        // the torches: the glow breathing, the flame's tongue leaping and leaning, its heart flaring
+        for (i, tc) in goblinTownTorches(c, g).enumerated() {
+            let d = { (p: Px) in goblinTownDim(p, tc.dim) }
+            let fl = r7Wander(t, rate: 11, seed: i * 37 + 1500)
+            let lean = Int(((r7Wander(t, rate: 4, seed: i * 37 + 1510) - 0.5) * 2.6).rounded()) * max(1, s / 2)
+            c.circle(tc.x, tc.y - 7 * s, (9 + Int(fl * 5)) * s, C(0xE8801E, (0.025 + 0.05 * fl) * (1 - tc.dim)))
+            c.rect(tc.x - s, tc.y - 9 * s, 2 * s, 3 * s, d(C(0xFFA040)).alpha(0.5 * fl))
+            c.rect(tc.x - s / 2, tc.y - 8 * s, s, 2 * s, d(C(0xFFF0B0)).alpha(0.3 + 0.5 * fl))
+            let tongue = Int(fl * 3.2) * s
+            if tongue > 0 { c.rect(tc.x - s / 2 + lean, tc.y - 11 * s - tongue, s, tongue + s, d(C(0xE8701E))) }
+        }
+        // drips: a bead swells on a stalactite's tip, lets go and falls, fading into the dark well above the floor
+        var tips: [(x: Int, y: Int)] = []
+        for i in 0..<(c.w / (7 * s)) {
+            let len = Int((tall ? 10.0 + noise(i * 3 + 601) * 60 : 4.0 + noise(i * 3 + 601) * 16) * Double(s))
+            tips.append((Int(noise(i * 3 + 600) * Double(c.w)), band + len))
+        }
+        guard !tips.isEmpty else { return }
+        for i in 0..<(tall ? 3 : 2) {
+            let period: Double = 3.5 + noise(i * 4 + 1520) * 2.5, off = noise(i * 4 + 1521) * period
+            let p = r7Phase(t, period, offset: off)
+            let tip = tips[Int(noise(r7Round(t, period, offset: off) * 7 + i * 3 + 1522) * Double(tips.count)) % tips.count]
+            let drop = C(0xA8B4B8)
+            if p < 0.45 {
+                c.rect(tip.x, tip.y, s, s, drop.alpha(0.8 * p / 0.45))
+            } else if p < 0.75 {
+                let q: Double = (p - 0.45) / 0.3, fall = max(0, min(g - 14 * s - tip.y, tall ? g / 2 : g))
+                let y = tip.y + Int(q * q * Double(fall)), a: Double = 0.8 * (q > 0.7 ? (1 - q) / 0.3 : 1)
+                c.rect(tip.x, y, s, 2 * s, drop.alpha(a))
+                c.rect(tip.x, y - 2 * s, s, s, drop.alpha(a * 0.35))
+            }
+        }
+    }
+
+    /// The cage swinging gently on its chain. The still's cage is painted out with exactly what lies behind it (the
+    /// cavern's dark, the far wall's streaks, stalactites and other chains), then drawn again, swung. Where a walkway,
+    /// a bridge or the throne stands behind it, it hangs still instead.
+    static func goblinTownCageSwing(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c), band = (tall ? 8 : 3) * s
+        let cx = Int(Double(c.w) * (tall ? 0.76 : 0.58)), cw = (tall ? 12 : 8) * s, ch = (tall ? 16 : 10) * s
+        let cy = band + (tall ? Int(Double(g) * 0.12) : 9 * s), amp = (tall ? 2 : 1) * s
+        let box = (x0: max(0, cx - cw / 2 - amp - s), y0: band + 3 * s, x1: min(c.w, cx + cw / 2 + amp + 2 * s), y1: cy + ch + 3 * s)
+        guard box.x1 > box.x0, box.y1 > box.y0, box.y1 <= g - min(g, (tall ? 26 : 8) * s) else { return }
+        func clear(_ x0: Int, _ x1: Int, _ top: Int) -> Bool { box.x1 <= x0 || box.x0 >= x1 || box.y1 <= top }
+        let walks = goblinTownWalks(c, g)
+        guard walks.allSatisfy({ clear($0.x0 - 2 * s, $0.x1 + 2 * s, $0.y - 17 * s) }),
+              goblinTownTorches(c, g).allSatisfy({ clear($0.x - 17 * s, $0.x + 17 * s, $0.y - 23 * s) }),
+              zip(walks, walks.dropFirst()).allSatisfy({ a, b in
+                  a.dim != b.dim || b.x0 <= a.x1 || clear(a.x1, b.x0, min(a.y, b.y) - 8 * s) }),
+              !tall || clear(c.w / 2 - 60 * s, c.w / 2 + 60 * s, Int(Double(g) * 0.25) - 80 * s) else { return }
+        // what lies behind: the cavern's dark and the far wall's streaks
+        let bands = tall ? 10 : 6
+        for y in max(0, box.y0)..<max(max(0, box.y0), box.y1) {
+            let k = (Double(y) / Double(max(1, g)) * Double(bands)).rounded(.down) / Double(bands)
+            c.rect(box.x0, y, box.x1 - box.x0, 1, lerp(C(0x0C0907), C(0x1E1610), k))
+        }
+        for i in 0..<max(0, c.w * g / (220 * s)) {
+            let y = Int(noise(i * 4 + 541) * Double(g))
+            guard y + s > box.y0, y < box.y1 else { continue }
+            let x = Int(noise(i * 4 + 540) * Double(c.w)), len = (3 + Int(noise(i * 4 + 542) * 9.0)) * s
+            r7Clipped(c, x, y, len, s, C(0x2A2016, 0.25 + 0.4 * Double(y) / Double(max(1, g))), box)
+        }
+        // the stalactites and the other chains that hang across it
+        let rock = C(0x1A140E), lit = C(0x3A2C1E)
+        for i in 0..<(c.w / (7 * s)) {
+            let x = Int(noise(i * 3 + 600) * Double(c.w))
+            let len = Int((tall ? 10.0 + noise(i * 3 + 601) * 60 : 4.0 + noise(i * 3 + 601) * 16) * Double(s))
+            let wd = max(s, len / 4)
+            guard x - wd < box.x1, x + wd + 1 > box.x0, band + len > box.y0 else { continue }
+            for k in max(0, box.y0 - band)..<max(max(0, box.y0 - band), min(len, box.y1 - band)) {
+                let hw = wd * (len - k) / max(1, len)
+                r7Clipped(c, x - hw, band + k, hw * 2 + 1, 1, rock, box)
+                r7Clipped(c, x - hw, band + k, 1, 1, lit, box)
+            }
+        }
+        for i in 0..<(tall ? 8 : 4) {
+            let x = Int(noise(i * 3 + 610) * Double(c.w))
+            guard x - 2 * s < box.x1, x + 4 * s > box.x0 else { continue }
+            let len = Int((tall ? 0.1 + noise(i * 3 + 611) * 0.25 : 0.2 + noise(i * 3 + 611) * 0.3) * Double(g))
+            for y in stride(from: band, to: band + len, by: 2 * s) {
+                r7Clipped(c, x, y, s, s, C(0x4A4A4E), box)
+                r7Clipped(c, x + ((y / (2 * s)) % 2 == 0 ? -s : s), y + s, s, s, C(0x34343A), box)
+            }
+            if i % 2 == 0 { for j in 0...(2 * s) { r7Clipped(c, x + j, band + len + j, s, s, C(0x5A5A5E), box) } }
+        }
+        // the cage again, swung: its chain leaning from the roof, the cage itself shifted
+        let swing = Int((Double(amp) * sin(t * 2 * Double.pi / 3.4)).rounded())
+        for y in stride(from: band, to: cy, by: 2 * s) {
+            r7Clipped(c, cx + swing * (y - band) / max(1, cy - band), y, s, s, C(0x4A4A4E), box)
+        }
+        let x = cx + swing
+        c.ellipse(x, cy + s, cw / 2, 2 * s, C(0x3A3A3E))
+        c.rect(x - cw / 2, cy + s, cw + 1, ch, C(0x0A0806, 0.5))
+        for bx in stride(from: x - cw / 2, through: x + cw / 2, by: 2 * s) { c.rect(bx, cy + s, s, ch, C(0x3A3A3E)) }
+        c.rect(x - cw / 2, cy + ch, cw + s, 2 * s, C(0x2E2E32))
+        c.rect(x - cw / 2, cy + ch / 2, cw + s, s, C(0x2E2E32))
     }
 }

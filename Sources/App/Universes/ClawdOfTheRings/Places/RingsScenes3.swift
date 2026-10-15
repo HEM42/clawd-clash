@@ -2,12 +2,30 @@ import Foundation
 
 // Rivendev, Lothlorem and Thrandual's Halls: the elves' places.
 let ringsScenes3: [Location: Place] = [
-    .rivendell: Place(name: "Rivendev", panel: 0x1C2026, still: Scenes.rivendell),
-    .lothlorien: Place(name: "Lothlorem", panel: 0x241E10, still: Scenes.lothlorien),
-    .mirkwood: Place(name: "Thrandual's Halls", panel: 0x0E140E, still: Scenes.mirkwood),
+    .rivendell: Place(name: "Rivendev", panel: 0x1C2026, still: Scenes.rivendell, moving: Scenes.rivendellLife),
+    .lothlorien: Place(name: "Lothlorem", panel: 0x241E10, still: Scenes.lothlorien, moving: Scenes.lothlorienLife),
+    .mirkwood: Place(name: "Thrandual's Halls", panel: 0x0E140E, still: Scenes.mirkwood, moving: Scenes.mirkwoodLife),
 ]
 
 // MARK: - Shared bits for these scenes
+
+/// Where a repeating motion of `period` seconds is, from 0 up to 1.
+private func r3Phase(_ t: Double, _ period: Double, offset: Double = 0) -> Double {
+    let v = (t + offset).truncatingRemainder(dividingBy: period) / period
+    return v < 0 ? v + 1 : v
+}
+
+/// `v` wrapped into 0..<`m` (an offset that keeps moving, coming round again).
+private func r3Wrap(_ v: Double, _ m: Int) -> Int {
+    let mm = Double(max(1, m))
+    let r = v.truncatingRemainder(dividingBy: mm)
+    return Int(r < 0 ? r + mm : r)
+}
+
+/// A falling leaf as it tumbles: lying flat (two pixels wide) or turned on its edge (two tall).
+private func r3Leaf(_ c: PixelCanvas, _ x: Int, _ y: Int, flat: Bool, _ col: Px, s: Int) {
+    if flat { c.rect(x, y, 2 * s, s, col) } else { c.rect(x, y, s, 2 * s, col) }
+}
 
 /// A straight line of `s`-pixel dots.
 private func r3Line(_ c: PixelCanvas, _ x0: Int, _ y0: Int, _ x1: Int, _ y1: Int, _ col: Px, s: Int) {
@@ -77,6 +95,30 @@ extension Scenes {
                 R3Wall(floor: g + 2 * s, rise: g + 24 * s, steep: 2.2, half: c.w * 42 / 100, seed: 37)]
     }
 
+    /// The evening star.
+    static func rivendellStar(_ c: PixelCanvas, _ g: Int) -> (x: Int, y: Int) {
+        (c.w * 70 / 100, isTall(c) ? g / 9 : 5 * unit(g))
+    }
+
+    /// The waterfalls: the wall each pours down (its index, far to near), its left edge, lip, foot, width and seed.
+    static func rivendellFallSpots(_ c: PixelCanvas, _ g: Int)
+        -> [(wall: Int, x: Int, top: Int, bottom: Int, width: Int, seed: Int)] {
+        let s = unit(g), cx = rivendellMid(c), walls = rivendellWalls(c, g)
+        // where each wall's falls are (share of the V's half-width)
+        let shares: [[Double]] = isTall(c) ? [[-0.22, 0.28], [-0.62, 0.52, 0.8], [-0.88, -0.72, 0.76, 0.92]]
+                                           : [[-0.2, 0.3], [-0.86, -0.66, 0.74, 0.9]]
+        var out: [(wall: Int, x: Int, top: Int, bottom: Int, width: Int, seed: Int)] = []
+        for (i, wl) in walls.enumerated() {
+            let near = i == walls.count - 1
+            for (k, d) in shares[i].enumerated() {
+                let x = cx + Int(d * Double(wl.half))
+                out.append((i, x, wl.top(x, cx: cx, s: s) + s, near ? g - 4 * s : min(g, wl.floor + (g - wl.floor) / 2),
+                            (near ? 4 : 3 - i) * s + (k % 2) * s, i * 10 + k))
+            }
+        }
+        return out
+    }
+
     /// Rivendev at evening: a clear sky going from deep blue to peach, the evening star out, and the valley's rock walls
     /// closing in from both sides, the east wall catching the last of the sun. Waterfalls pour down the walls. In the
     /// middle, the Last Homely House: pale halls with slender arcades lit warm inside and roofs whose eaves sweep up,
@@ -84,30 +126,26 @@ extension Scenes {
     /// with a slender balustrade. On tall screens: the Misty Mountains' snowy peaks beyond the valley's end, a third
     /// wall, more falls, and the halls stacked up the valley in tiers joined by stairs.
     static func rivendell(_ c: PixelCanvas, _ g: Int) {
-        let s = unit(g), tall = isTall(c), cx = rivendellMid(c)
+        let s = unit(g), tall = isTall(c)
         c.gradient(0, g, tall ? C(0x34457A) : C(0x6A84B4), C(0xF6D2A2), bands: tall ? 12 : 8)
         if tall { c.stars(0, g / 4, density: 90, seed: 31) }
         // Eärendil, the evening star
-        let ex = c.w * 70 / 100, ey = tall ? g / 9 : 5 * s
+        let (ex, ey) = rivendellStar(c, g)
         c.rect(ex - 2 * s, ey, 5 * s, s, C(0xFFFFFF, 0.45)); c.rect(ex, ey - 2 * s, s, 5 * s, C(0xFFFFFF, 0.45))
         c.rect(ex, ey, s, s, white)
         if tall { rivendellPeaks(c, g) }
         let walls = rivendellWalls(c, g)
-        // far to near: the wall's rock (body, sunlit, seams), and where its falls are (share of the V's half-width)
+        // far to near: the wall's rock (body, sunlit, seams), then its falls
         let tones: [(Px, Px, Px)] = tall
             ? [(C(0x9294B0), C(0xE2BEAA), C(0x7E809C)), (C(0x707C88), C(0xC8A088), C(0x5A646E)),
                (C(0x4C5A52), C(0xA88A68), C(0x38443E))]
             : [(C(0x9294B0), C(0xE2BEAA), C(0x7E809C)), (C(0x4C5A52), C(0xA88A68), C(0x38443E))]
-        let falls: [[Double]] = tall ? [[-0.22, 0.28], [-0.62, 0.52, 0.8], [-0.88, -0.72, 0.76, 0.92]]
-                                     : [[-0.2, 0.3], [-0.86, -0.66, 0.74, 0.9]]
+        let falls = rivendellFallSpots(c, g)
         for (i, wl) in walls.enumerated() {
             let near = i == walls.count - 1
             rivendellWall(c, g, wl, body: tones[i].0, lit: tones[i].1, shade: tones[i].2)
-            for (k, d) in falls[i].enumerated() {
-                let x = cx + Int(d * Double(wl.half))
-                let top = wl.top(x, cx: cx, s: s) + s
-                let bottom = near ? g - 4 * s : min(g, wl.floor + (g - wl.floor) / 2)
-                rivendellFalls(c, g, x: x, top: top, bottom: bottom, width: (near ? 4 : 3 - i) * s + (k % 2) * s, seed: i * 10 + k)
+            for f in falls where f.wall == i {
+                rivendellFalls(c, g, x: f.x, top: f.top, bottom: f.bottom, width: f.width, seed: f.seed)
             }
             if !near { rivendellWoods(c, g, wl, seed: i * 50 + 900, far: i == 0) }
             if tall && i == 1 { rivendellUpperTiers(c, g) }
@@ -367,6 +405,87 @@ extension Scenes {
             c.rect(x, y, s, s, noise(i + 945) > 0.5 ? C(0xD89A3A) : C(0xB0542A))
         }
     }
+
+    /// Roughly the highest row the house, its terraces and their trees reach at column `x` (erring high), or `g` where
+    /// they don't stand: below it, a fall behind them is hidden.
+    static func rivendellHouseTop(_ c: PixelCanvas, _ g: Int, _ x: Int) -> Int {
+        let s = unit(g), d = x - rivendellMid(c)
+        var top = g
+        if isTall(c) {
+            let b1 = g * 56 / 100, b2 = g * 70 / 100
+            if d >= -68 * s && d <= 48 * s { top = min(top, b1 - 28 * s) }
+            if d >= 44 * s && d <= 84 * s { top = min(top, b1 - 4 * s) }
+            if abs(d) <= 114 * s { top = min(top, b2 - 22 * s) }
+            if d >= -130 * s && d <= 128 * s { top = min(top, g - 48 * s) }
+        } else if d >= -130 * s && d <= 126 * s {
+            top = g - 42 * s
+        }
+        return top
+    }
+
+    /// The waterfalls pouring down, the evening star twinkling (and on tall screens a few stars with it), and autumn
+    /// leaves drifting off the valley's walls.
+    static func rivendellLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c), cx = rivendellMid(c), walls = rivendellWalls(c, g)
+        let twoPi: Double = 2 * Double.pi
+        // the falls: pale streaks running down each ribbon, only down to where a nearer wall, the house or the
+        // balustrade hides it
+        for f in rivendellFallSpots(c, g) {
+            let top = max(0, f.top), last = f.wall == walls.count - 1
+            var foot = true
+            for (k, xx) in stride(from: f.x, to: f.x + f.width, by: s).enumerated() {
+                var bot = min(last ? min(f.bottom, g - 8 * s) : f.bottom, rivendellHouseTop(c, g, xx))
+                for wl in walls[(f.wall + 1)...] { bot = min(bot, wl.top(xx, cx: cx, s: s)) }
+                if bot < f.bottom { foot = false }
+                let h = bot - top
+                guard h > 3 * s else { continue }
+                let n = max(1, h / (9 * s)), speed = Double(36 * s) * (0.85 + 0.3 * noise(k + f.seed * 13 + 71))
+                for j in 0..<n {
+                    let y = top + r3Wrap(Double(j * h) / Double(n) + noise(k + f.seed * 13 + 70) * Double(h) + t * speed, h)
+                    c.rect(xx, y, s, min(3 * s, bot - y), j % 2 == 0 ? C(0xFFFFFF, 0.75) : C(0x8EAEC4, 0.45))
+                }
+            }
+            // spray breathing where a fall lands in sight
+            if foot && !last {
+                let p: Double = 0.5 + 0.5 * sin(t * twoPi / 1.7 + Double(f.seed))
+                c.ellipse(f.x + f.width / 2, f.bottom - s, f.width / 2 + 2 * s + Int(p * Double(s)), 2 * s, C(0xFFFFFF, 0.1 + 0.2 * p))
+            }
+        }
+        // Eärendil twinkling: its rays lengthening and brightening, and fading back
+        let st = rivendellStar(c, g)
+        let tw: Double = 0.5 + 0.5 * sin(t * twoPi / 2.8)
+        let ray = 2 * s + Int(tw * Double(2 * s))
+        c.rect(st.x - ray, st.y, ray * 2 + s, s, C(0xFFFFFF, 0.1 + 0.3 * tw))
+        c.rect(st.x, st.y - ray, s, ray * 2 + s, C(0xFFFFFF, 0.1 + 0.3 * tw))
+        c.circle(st.x, st.y, 2 * s + Int(tw * Double(2 * s)), C(0xFFF4E0, 0.12 * tw))
+        // on tall screens, a few more stars coming and going, only in the open sky above the walls
+        if tall {
+            for i in 0..<8 {
+                let x = Int(noise(i * 3 + 1400) * Double(c.w)), y = Int(noise(i * 3 + 1401) * Double(max(1, g / 4)))
+                let sky = walls.map { $0.top(x, cx: cx, s: s) }.min() ?? g
+                guard y < sky - 3 * s else { continue }
+                let period = 3 + noise(i * 3 + 1402) * 3
+                let a = pow(max(0, sin(r3Phase(t, period, offset: noise(i * 3 + 1403) * period) * twoPi)), 3)
+                guard a > 0.02 else { continue }
+                c.rect(x, y, s, s, C(0xFFFFFF, a))
+                c.rect(x - s, y, 3 * s, s, C(0xFFFFFF, 0.3 * a)); c.rect(x, y - s, s, 3 * s, C(0xFFFFFF, 0.3 * a))
+            }
+        }
+        // leaves blowing off the trees on the walls and drifting down across the valley, never down among the crew
+        let golds: [UInt32] = [0xE0A83A, 0xC8702A, 0xA8442A, 0xE8C04E]
+        for i in 0..<(tall ? 7 : 3) {
+            let period = 9 + noise(i * 3 + 960) * 6
+            let p = r3Phase(t, period, offset: noise(i * 3 + 961) * period)
+            let left = i % 2 == 0
+            let y0 = tall ? g * (20 + Int(noise(i * 3 + 962) * 30.0)) / 100 : 2 * s + Int(noise(i * 3 + 962) * Double(max(1, g / 3)))
+            let x0 = c.w * (left ? 6 + Int(noise(i * 3 + 963) * 24.0) : 70 + Int(noise(i * 3 + 963) * 24.0)) / 100
+            let x = x0 + (left ? 1 : -1) * Int(p * Double(c.w / 4)) + Int(sin(p * twoPi * 3 + Double(i)) * Double(4 * s))
+            let y = y0 + Int(p * Double(g / 2))
+            guard y < g - 14 * s else { continue }
+            let a: Double = min(1, p / 0.1, (1 - p) / 0.15)
+            r3Leaf(c, x, y, flat: sin(p * twoPi * 7 + Double(i)) > 0, C(golds[i % 4], a), s: s)
+        }
+    }
 }
 
 // MARK: - Lothlorem
@@ -406,6 +525,45 @@ extension Scenes {
         return half + Int(pow(k, 2.2) * Double(half) * 1.1)
     }
 
+    /// The shafts of light: each one's left edge at the top, and its width (it slants two rows right in five down).
+    static func lothlorienShafts(_ c: PixelCanvas, _ g: Int) -> [(x: Int, w: Int)] {
+        let s = unit(g)
+        return (0..<max(1, c.w / (90 * s))).map { i in
+            (Int(noise(i * 2 + 420) * Double(c.w + g / 2)) - g / 3, (6 + Int(noise(i * 2 + 421) * 14.0)) * s)
+        }
+    }
+
+    /// The flets on the middle rank of trunks: the trunk's middle and half-width, the platform's row, and a seed.
+    static func lothlorienMidFlets(_ c: PixelCanvas, _ g: Int, _ trunks: [(x: Int, half: Int, depth: Int)])
+        -> [(x: Int, y: Int, half: Int, seed: Int)] {
+        let s = unit(g), tall = isTall(c)
+        var out: [(x: Int, y: Int, half: Int, seed: Int)] = []
+        for (k, t) in trunks.enumerated() where t.depth == 1 {
+            let y = tall ? g * (36 + Int(noise(k + 430) * 24.0)) / 100 : g - (34 + Int(noise(k + 430) * 8.0)) * s
+            if y > 6 * s { out.append((t.x, y, t.half, k)) }
+        }
+        return out
+    }
+
+    /// Tall screens: the flets on the `i`th near trunk, in the order they're drawn: their rows, reach, and so on.
+    static func lothlorienCityFlets(_ g: Int, _ i: Int) -> [(y: Int, reach: Int, pavilion: Bool, seed: Int)] {
+        let s = unit(g)
+        let levels = [g * 30 / 100, g * 52 / 100]
+        var out: [(y: Int, reach: Int, pavilion: Bool, seed: Int)] = []
+        for (k, y) in levels.enumerated() {
+            out.append((y + (k == 0 ? (i % 2) * 8 * s : -(i % 2) * 8 * s), 18 * s, true, i + k))
+        }
+        // a smaller flet near the top, in the canopy
+        out.append((g * 16 / 100 + (i % 2) * 6 * s, 10 * s, false, i + 7))
+        return out
+    }
+
+    /// The two lanterns under a flet: where each thread hangs from, and how long it is.
+    static func lothlorienFletLanterns(_ x: Int, _ y: Int, _ half: Int, reach: Int, s: Int) -> [(x: Int, y: Int, drop: Int)] {
+        let hw = half + reach
+        return [(x + hw - 4 * s, y + 3 * s, 4 * s), (x - hw + 3 * s, y + 3 * s, 2 * s)]
+    }
+
     /// Lothlorem: the Golden Wood. Golden haze between ranks of mallorn trunks, silver-grey, smooth, the nearer ones
     /// huge and flaring into roots; golden leaves in great clusters overhead, shafts of light slanting down, and white
     /// lanterns hanging under the flets up in the trees. The crew stands on a carpet of fallen golden leaves. On tall
@@ -415,9 +573,8 @@ extension Scenes {
         let s = unit(g), tall = isTall(c)
         c.gradient(0, g, C(0xD8C070), C(0xF4ECC6), bands: tall ? 10 : 6)
         // shafts of light slanting down through the canopy
-        for i in 0..<max(1, c.w / (90 * s)) {
-            let x0 = Int(noise(i * 2 + 420) * Double(c.w + g / 2)) - g / 3, wd = (6 + Int(noise(i * 2 + 421) * 14.0)) * s
-            for y in stride(from: 0, to: g, by: 1) { c.rect(x0 + y * 2 / 5, y, wd, 1, C(0xFFF8DC, 0.16)) }
+        for sh in lothlorienShafts(c, g) {
+            for y in stride(from: 0, to: g, by: 1) { c.rect(sh.x + y * 2 / 5, y, sh.w, 1, C(0xFFF8DC, 0.16)) }
         }
         let trunks = lothlorienTrunks(c, g)
         // the far canopy, hazy, then each rank of trunks, nearer and nearer
@@ -426,9 +583,8 @@ extension Scenes {
             if d == 2 { lothlorienCanopy(c, g, depth: 1) }
             for t in trunks where t.depth == d { lothlorienTrunk(c, g, t.x, t.half, depth: d) }
             if d == 1 {
-                for (k, t) in trunks.enumerated() where t.depth == 1 {
-                    let y = tall ? g * (36 + Int(noise(k + 430) * 24.0)) / 100 : g - (34 + Int(noise(k + 430) * 8.0)) * s
-                    if y > 6 * s { lothlorienFlet(c, g, t.x, y, t.half, reach: 12 * s, pavilion: tall, seed: k) }
+                for f in lothlorienMidFlets(c, g, trunks) {
+                    lothlorienFlet(c, g, f.x, f.y, f.half, reach: 12 * s, pavilion: tall, seed: f.seed)
                 }
             }
         }
@@ -509,8 +665,7 @@ extension Scenes {
         c.rect(x - hw, y, hw * 2, 2 * s, wood); c.rect(x - hw, y, hw * 2, s, lit); c.rect(x - hw, y + 2 * s, hw * 2, s, dark)
         for px in stride(from: x - hw, to: x + hw, by: 3 * s) { c.rect(px, y - 4 * s, s, 4 * s, wood.alpha(0.9)) }
         c.rect(x - hw, y - 4 * s, hw * 2, s, lit)
-        lothlorienLantern(c, x + hw - 4 * s, y + 3 * s, drop: 4 * s, s: s)
-        lothlorienLantern(c, x - hw + 3 * s, y + 3 * s, drop: 2 * s, s: s)
+        for l in lothlorienFletLanterns(x, y, half, reach: reach, s: s) { lothlorienLantern(c, l.x, l.y, drop: l.drop, s: s) }
     }
 
     /// A white lantern hanging on a thread, glowing softly.
@@ -545,12 +700,9 @@ extension Scenes {
         }
         for (i, t) in near.enumerated() {
             lothlorienStair(c, g, t.x, t.half, from: g - 4 * s, to: levels[1] + 4 * s, seed: i)
-            for (k, y) in levels.enumerated() {
-                let yy = y + (k == 0 ? (i % 2) * 8 * s : -(i % 2) * 8 * s)
-                lothlorienFlet(c, g, t.x, yy, t.half, reach: 18 * s, pavilion: true, seed: i + k)
+            for f in lothlorienCityFlets(g, i) {
+                lothlorienFlet(c, g, t.x, f.y, t.half, reach: f.reach, pavilion: f.pavilion, seed: f.seed)
             }
-            // a smaller flet near the top, in the canopy
-            lothlorienFlet(c, g, t.x, g * 16 / 100 + (i % 2) * 6 * s, t.half, reach: 10 * s, pavilion: false, seed: i + 7)
         }
     }
 
@@ -588,6 +740,67 @@ extension Scenes {
         for i in 0..<max(0, c.w * g / (2200 * s * s)) {
             let x = Int(noise(i * 2 + 500) * Double(c.w)), y = Int(noise(i * 2 + 501) * Double(g))
             c.rect(x, y, s, s, noise(i + 505) > 0.5 ? C(0xF0C440) : C(0xD89A2A))
+        }
+    }
+
+    /// Where the lanterns glow (the middle of each glow), leaving out those hidden behind a near trunk.
+    static func lothlorienLanternGlows(_ c: PixelCanvas, _ g: Int) -> [(x: Int, y: Int)] {
+        let s = unit(g), trunks = lothlorienTrunks(c, g), near = trunks.filter { $0.depth == 2 }
+        var out: [(x: Int, y: Int)] = []
+        for f in lothlorienMidFlets(c, g, trunks) {
+            for l in lothlorienFletLanterns(f.x, f.y, f.half, reach: 12 * s, s: s) {
+                let y = l.y + l.drop + 2 * s
+                guard !near.contains(where: { abs(l.x - $0.x) < lothlorienHalf($0.half, g, y) + 2 * s }) else { continue }
+                out.append((l.x, y))
+            }
+        }
+        guard isTall(c) else { return out }
+        for (i, t) in near.enumerated() {
+            for f in lothlorienCityFlets(g, i) {
+                for l in lothlorienFletLanterns(t.x, f.y, t.half, reach: f.reach, s: s) { out.append((l.x, l.y + l.drop + 2 * s)) }
+            }
+        }
+        return out
+    }
+
+    /// Golden leaves drifting down, motes turning in the shafts of light as the light swells and fades, and the
+    /// lanterns' glow pulsing softly.
+    static func lothlorienLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c)
+        let twoPi: Double = 2 * Double.pi
+        let canopy = tall ? g * 16 / 100 : 9 * s
+        // the shafts: each brightening and dimming slowly, with motes drifting down it
+        for (i, sh) in lothlorienShafts(c, g).enumerated() {
+            let a: Double = 0.06 * (0.5 + 0.5 * sin(t * twoPi / 7 + Double(i) * 2.1))
+            if a > 0.006 {
+                for y in canopy..<max(canopy, g - 10 * s) { c.rect(sh.x + y * 2 / 5, y, sh.w, 1, C(0xFFF8DC, a)) }
+            }
+            for j in 0..<(tall ? 6 : 3) {
+                let n = i * 11 + j, period = 14 + noise(n * 3 + 1000) * 10
+                let p = r3Phase(t, period, offset: noise(n * 3 + 1001) * period)
+                let y = canopy + Int(p * Double(max(0, g - 14 * s - canopy)))
+                let x = sh.x + y * 2 / 5 + Int(noise(n * 3 + 1002) * Double(sh.w)) + Int(sin(t * 0.7 + Double(n)) * Double(2 * s))
+                let glint: Double = sin(p * Double.pi) * (0.55 + 0.45 * sin(t * 3 + Double(n)))
+                c.rect(x, y, s, s, C(0xFFFBE8, 0.85 * glint))
+            }
+        }
+        // leaves drifting down from the canopy, fading as they come down by the crew
+        let golds: [UInt32] = [0xF0C440, 0xD89A2A, 0xF6D866, 0xC88A24]
+        let bottom = g - 10 * s
+        if bottom > canopy {
+            for i in 0..<(tall ? 22 : 8) {
+                let period = 8 + noise(i * 4 + 1100) * 7
+                let p = r3Phase(t, period, offset: noise(i * 4 + 1101) * period)
+                let y = canopy + Int(p * Double(bottom - canopy))
+                let x = Int(noise(i * 4 + 1102) * Double(c.w)) + Int(p * Double(30 * s)) + Int(sin(p * twoPi * 2.5 + Double(i)) * Double(5 * s))
+                let a: Double = min(1, p / 0.08, (1 - p) / 0.15)
+                r3Leaf(c, x, y, flat: sin(t * 5 + Double(i) * 1.7) > -0.2, C(golds[i % 4], a), s: s)
+            }
+        }
+        // the lanterns' glow
+        for (i, l) in lothlorienLanternGlows(c, g).enumerated() {
+            let p: Double = 0.5 + 0.5 * sin(t * twoPi / 3.2 + Double(i) * 1.3)
+            c.circle(l.x, l.y, 5 * s + Int(p * Double(3 * s)), C(0xFFF8DC, 0.04 + 0.12 * p))
         }
     }
 }
@@ -753,13 +966,42 @@ extension Scenes {
         c.rect(cx + f.half, f.top, 2 * s, g - f.top, joint)
         guard tall else { return }
         // the arches into the halls, with a ledge under them
+        let arches = mirkwoodArches(c, g), bottom = arches.first?.bottom ?? g
+        c.rect(cx - f.half, bottom, f.half * 2, 3 * s, rim); c.rect(cx - f.half, bottom + 3 * s, f.half * 2, s, joint)
+        for a in arches { mirkwoodHallView(c, g, x0: a.x0, x1: a.x1, top: a.top, bottom: a.bottom, seed: a.seed) }
+    }
+
+    /// Tall screens: the great arches into the halls (two side ones, then the main one): their sides, top and bottom.
+    static func mirkwoodArches(_ c: PixelCanvas, _ g: Int) -> [(x0: Int, x1: Int, top: Int, bottom: Int, seed: Int)] {
+        guard isTall(c) else { return [] }
+        let s = unit(g), f = mirkwoodFace(c, g), cx = mirkwoodHill(c, g).x
         let gate = mirkwoodGate(c, g), bottom = gate.sill - gate.side - gate.half - 18 * s
         let mainHalf = f.half * 26 / 100, sideHalf = f.half * 17 / 100
-        c.rect(cx - f.half, bottom, f.half * 2, 3 * s, rim); c.rect(cx - f.half, bottom + 3 * s, f.half * 2, s, joint)
-        for (k, a) in [(cx - f.half * 62 / 100, sideHalf), (cx + f.half * 62 / 100, sideHalf), (cx, mainHalf)].enumerated() {
-            let atop = k == 2 ? f.top + 6 * s : f.top + 22 * s
-            mirkwoodHallView(c, g, x0: a.0 - a.1, x1: a.0 + a.1, top: atop, bottom: bottom, seed: k)
+        return [(cx - f.half * 62 / 100, sideHalf), (cx + f.half * 62 / 100, sideHalf), (cx, mainHalf)].enumerated().map { k, a in
+            (a.0 - a.1, a.0 + a.1, k == 2 ? f.top + 6 * s : f.top + 22 * s, bottom, k)
         }
+    }
+
+    /// The lanterns in a view into the halls: those along the walkway (behind the near pillars), and the one hanging
+    /// in the middle, in front.
+    static func mirkwoodHallLanterns(x0: Int, x1: Int, top: Int, bottom: Int, s: Int)
+        -> (walk: [(x: Int, y: Int)], front: (x: Int, y: Int)) {
+        let walk = top + (bottom - top) * 58 / 100
+        return (stride(from: x0 + 9 * s, to: x1 - 4 * s, by: 22 * s).map { ($0, walk - 5 * s) },
+                (x0 + (x1 - x0) / 2, top + (bottom - top) / 3))
+    }
+
+    /// The lanterns by the gate: on the posts either side of the steps, and the one hanging in the arch.
+    static func mirkwoodGateLanterns(_ c: PixelCanvas, _ g: Int) -> [(x: Int, y: Int)] {
+        let s = unit(g), cx = mirkwoodHill(c, g).x, gate = mirkwoodGate(c, g)
+        let spring = gate.sill - gate.side, rise = gate.half * 3 / 4
+        return [(cx - gate.half - 16 * s, g - 14 * s), (cx + gate.half + 16 * s, g - 14 * s), (cx, spring - rise / 3)]
+    }
+
+    /// The lantern at the bridge's far end.
+    static func mirkwoodBridgeLantern(_ c: PixelCanvas, _ g: Int) -> (x: Int, y: Int) {
+        let s = unit(g), b = mirkwoodBridge(c, g)
+        return (b.x1 - 2 * s, b.deck - 9 * s)
     }
 
     /// Tall screens: a view through one of the great arches into the halls: trunk-pillars rank behind rank,
@@ -770,14 +1012,14 @@ extension Scenes {
         c.rect(x0, top, w, h, C(0x0A100A))
         c.ellipse(x0 + w / 2, bottom - h / 4, w / 2, h / 3, C(0x5A6A28, 0.2))
         c.ellipse(x0 + w / 2, bottom - h / 4, w / 3, h / 5, C(0xA8B848, 0.12))
-        let walk = top + h * 58 / 100
+        let walk = top + h * 58 / 100, lamps = mirkwoodHallLanterns(x0: x0, x1: x1, top: top, bottom: bottom, s: s)
         for rank in [1, 0] {
             let step = (rank == 1 ? 14 : 26) * s, pw = (rank == 1 ? 3 : 5) * s
             let col = rank == 1 ? C(0x1C2618) : C(0x303A28), lit = rank == 1 ? C(0x2A3820) : C(0x5A6A3A)
             if rank == 0 {
                 // the walkway, between the far rank and the near
                 c.rect(x0, walk, w, 2 * s, C(0x2C3424)); c.rect(x0, walk, w, s, C(0x6A7A44))
-                for lx in stride(from: x0 + 9 * s, to: x1 - 4 * s, by: 22 * s) { mirkwoodLantern(c, lx, walk - 5 * s, s: s) }
+                for l in lamps.walk { mirkwoodLantern(c, l.x, l.y, s: s) }
             }
             for (i, px) in stride(from: x0 + step / 2 + (rank == 1 ? 0 : step / 4), to: x1, by: step).enumerated() {
                 let f = Double(9 * s)
@@ -798,7 +1040,7 @@ extension Scenes {
                 c.rect(x + Int(sin(Double(y) / Double(5 * s) + Double(i)) * Double(s)), y, s, s, C(0x2A2218))
             }
         }
-        mirkwoodLantern(c, x0 + w / 2, top + h / 3, s: s)
+        mirkwoodLantern(c, lamps.front.x, lamps.front.y, s: s)
         // the arch: stone over the top corners, and a carved rim round it
         let arch = min(h / 2, w / 2), mid = x0 + w / 2
         for y in top..<(top + arch) {
@@ -885,12 +1127,10 @@ extension Scenes {
         }
         c.ellipse(cx, spring - rise - 4 * s, 3 * s, 2 * s, pLit)
         // lanterns on posts by the steps, and one hanging in the arch
-        for side in [-1, 1] {
-            let lx = cx + side * (gate.half + 16 * s)
-            c.rect(lx, g - 12 * s, s, 12 * s, C(0x1E1A12))
-            mirkwoodLantern(c, lx, g - 14 * s, s: s)
+        for (k, l) in mirkwoodGateLanterns(c, g).enumerated() {
+            if k < 2 { c.rect(l.x, g - 12 * s, s, 12 * s, C(0x1E1A12)) }
+            mirkwoodLantern(c, l.x, l.y, s: s)
         }
-        mirkwoodLantern(c, cx, spring - rise / 3, s: s)
     }
 
     /// The dark river on the left, flowing out between rocky banks, and the wooden bridge arching over it.
@@ -931,7 +1171,8 @@ extension Scenes {
         }
         r3Sag(c, b.x0 + s, b.deck - 6 * s, b.x1 - s, b.deck - 6 * s, sag: -arch, woodLit, s: s)
         r3Sag(c, b.x0 + s, b.deck - 5 * s, b.x1 - s, b.deck - 5 * s, sag: -arch + s, wood, s: s)
-        mirkwoodLantern(c, b.x1 - 2 * s, b.deck - 9 * s, s: s)
+        let bl = mirkwoodBridgeLantern(c, g)
+        mirkwoodLantern(c, bl.x, bl.y, s: s)
     }
 
     /// The flagstones before the gate, mossy between the stones, the gate's light falling on them.
@@ -947,5 +1188,57 @@ extension Scenes {
             c.rect(x, y, s, s, C(0x4A5A2A))
         }
         c.ellipse(cx, g + 2 * s, 40 * s, 4 * s, C(0xC8D870, 0.08))
+    }
+
+    /// Mist curling slowly through the trees, the dark river's slow shimmer, and the green-gold lanterns flickering.
+    static func mirkwoodLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c)
+        // mist: long pale wisps drifting along, each with a curl rising off it, coming round again past the edges
+        let bands: [Int] = tall ? [g * 55 / 100, g * 78 / 100] : [g - 28 * s]
+        let margin = 70 * s, span = c.w + 2 * margin
+        for (bi, by) in bands.enumerated() {
+            for i in 0..<(tall ? 5 : 3) {
+                let n = bi * 10 + i
+                let speed = Double(2 * s) + noise(n * 3 + 1300) * Double(3 * s)
+                let x = r3Wrap(noise(n * 3 + 1301) * Double(span) + t * speed, span) - margin
+                let y = by + Int(sin(t * 0.4 + Double(n) * 1.3) * Double(3 * s))
+                let rx = (30 + Int(noise(n * 3 + 1302) * 30.0)) * s, ry = (3 + Int(noise(n * 3 + 1303) * 3.0)) * s
+                c.ellipse(x, y, rx, ry, C(0x8A9A88, 0.07))
+                let curl = Int(sin(t * 0.6 + Double(n)) * Double(6 * s))
+                c.ellipse(x + rx / 3 + curl, y - ry, rx / 2, max(1, ry * 2 / 3), C(0xA0B0A0, 0.06))
+            }
+        }
+        // the river: glints sliding slowly along its dark water, swelling and fading
+        let b = mirkwoodBridge(c, g), w0 = b.x0 + 12 * s, w1 = b.x1 - 12 * s, surface = g - 6 * s
+        if w1 > w0 + 8 * s {
+            for i in 0..<max(0, (w1 - w0) / (6 * s)) {
+                let period = 4 + noise(i * 3 + 1200) * 4
+                let p = r3Phase(t, period, offset: noise(i * 3 + 1201) * period)
+                let len = (2 + Int(noise(i * 3 + 1202) * 4.0)) * s
+                let x = w0 + r3Wrap(noise(i * 3 + 1203) * Double(w1 - w0) + t * Double(3 * s), w1 - w0 - len)
+                let y = surface + s + Int(noise(i * 3 + 1204) * 4.0) * s
+                let a: Double = sin(p * Double.pi)
+                c.rect(x, y, len, s, noise(i + 1205) > 0.7 ? C(0x9AB060, 0.45 * a) : C(0x3A6A5A, 0.6 * a))
+            }
+        }
+        // the lanterns flickering: the glow everywhere, and the flame itself where nothing stands in front of it
+        var lamps: [(x: Int, y: Int, front: Bool)] = mirkwoodGateLanterns(c, g).map { ($0.x, $0.y, true) }
+        let bl = mirkwoodBridgeLantern(c, g)
+        lamps.append((bl.x, bl.y, true))
+        // the great trees at the front stand before the halls' lanterns
+        var trees = [(c.w - 14 * s, (tall ? 14 : 9) * s)]
+        if c.w > 300 * s { trees.append((c.w * 34 / 100, (tall ? 10 : 7) * s)) }
+        for a in mirkwoodArches(c, g) {
+            let l = mirkwoodHallLanterns(x0: a.x0, x1: a.x1, top: a.top, bottom: a.bottom, s: s)
+            for w in l.walk { lamps.append((w.x, w.y, false)) }
+            lamps.append((l.front.x, l.front.y, true))
+        }
+        for (i, l) in lamps.enumerated() {
+            guard !trees.contains(where: { abs(l.x - $0.0) < $0.1 + 8 * s }) else { continue }
+            let f: Double = 0.6 + 0.25 * sin(t * 5.1 + Double(i) * 1.9) + 0.15 * sin(t * 11.7 + Double(i) * 3.3)
+            c.circle(l.x, l.y, 6 * s + Int(f * Double(3 * s)), C(0xC8E070, 0.03 + 0.08 * f))
+            guard l.front else { continue }
+            c.rect(l.x - s, l.y - 2 * s, 3 * s, 4 * s, f > 0.6 ? C(0xF8FFD8, (f - 0.6) * 1.4) : C(0x6A7A30, (0.6 - f) * 0.9))
+        }
     }
 }

@@ -2,9 +2,10 @@ import Foundation
 
 // The Lonely Mount-point, Data Lake-town and the Green Dragon-and-Drop.
 let ringsScenes8: [Location: Place] = [
-    .erebor: Place(name: "The Lonely Mount-point", panel: 0x1E180E, still: Scenes.erebor),
-    .laketown: Place(name: "Data Lake-town", panel: 0x141A20, still: Scenes.laketown),
-    .greenDragon: Place(name: "The Green Dragon-and-Drop", panel: 0x1C2410, still: Scenes.greenDragon),
+    .erebor: Place(name: "The Lonely Mount-point", panel: 0x1E180E, still: Scenes.erebor, moving: Scenes.ereborLife),
+    .laketown: Place(name: "Data Lake-town", panel: 0x141A20, still: Scenes.laketown, moving: Scenes.laketownLife),
+    .greenDragon: Place(name: "The Green Dragon-and-Drop", panel: 0x1C2410, still: Scenes.greenDragon,
+                         moving: Scenes.greenDragonLife),
 ]
 
 // MARK: - Shared bits for these scenes
@@ -16,17 +17,54 @@ private func r8Stamp(_ c: PixelCanvas, _ x: Int, _ y: Int, _ rows: [String], _ p
     }
 }
 
-/// A straight line of `s`-pixel dots.
-private func r8Line(_ c: PixelCanvas, _ x0: Int, _ y0: Int, _ x1: Int, _ y1: Int, _ col: Px, s: Int) {
+/// A straight line of `s`-pixel dots, leaving out any dot that starts on or below row `above`.
+private func r8Line(_ c: PixelCanvas, _ x0: Int, _ y0: Int, _ x1: Int, _ y1: Int, _ col: Px, s: Int, above: Int = .max) {
     let n = max(abs(x1 - x0), abs(y1 - y0), 1)
     for i in 0...n {
         let k = Double(i) / Double(n)
-        c.rect(x0 + Int((Double(x1 - x0) * k).rounded()), y0 + Int((Double(y1 - y0) * k).rounded()), s, s, col)
+        let y = y0 + Int((Double(y1 - y0) * k).rounded())
+        if y < above { c.rect(x0 + Int((Double(x1 - x0) * k).rounded()), y, s, s, col) }
     }
 }
 
 /// `v` clamped into 0...1.
 private func r8Clamp(_ v: Double) -> Double { max(0, min(1, v)) }
+
+/// Where `t` is in a cycle `period` seconds long, from 0 to 1, shifted by `offset` seconds.
+private func r8Phase(_ t: Double, _ period: Double, offset: Double = 0) -> Double {
+    let v = (t + offset).truncatingRemainder(dividingBy: period) / period
+    return v < 0 ? v + 1 : v
+}
+
+/// A filled disc cut off at row `above`, for something whose lower part stands in water.
+private func r8Disc(_ c: PixelCanvas, _ x: Int, _ y: Int, _ r: Int, _ col: Px, above: Int) {
+    guard r > 0 else { return }
+    for dy in -r..<max(-r, min(r + 1, above - y)) {
+        let half = Int((Double(r * r - dy * dy)).squareRoot().rounded())
+        c.rect(x - half, y + dy, half * 2 + 1, 1, col)
+    }
+}
+
+/// Light glancing off water in the box `x0..<x1`, `y0..<y1`: `count` short pale dashes, longer nearer the front,
+/// each drifting a little and fading in and out on its own beat. `open` says whether a dash at x, y, this long may be
+/// drawn (to keep it off boats and banks).
+private func r8Shimmer(_ c: PixelCanvas, _ t: Double, x0: Int, x1: Int, y0: Int, y1: Int, s: Int, count: Int, col: Px,
+                       seed: Int, open: (Int, Int, Int) -> Bool) {
+    guard x1 > x0, y1 > y0 else { return }
+    let twoPi: Double = 2 * Double.pi
+    for i in 0..<count {
+        let n = seed + i * 5
+        let period: Double = 2.5 + noise(n) * 3
+        let a: Double = sin(t * twoPi / period + noise(n + 1) * twoPi)
+        guard a > 0.2 else { continue }
+        let rows = (y1 - y0) / s, y = y0 + Int(noise(n + 2) * Double(rows)) * s
+        let k = Double(y - y0) / Double(max(1, y1 - y0))
+        let len = (2 + Int(k * 3 + noise(n + 3) * 2)) * s
+        let x = x0 + Int(noise(n + 4) * Double(x1 - x0)) + Int(sin(t * 0.7 + noise(n + 5) * 6) * Double(2 * s))
+        guard open(x, y, len) else { continue }
+        c.rect(x, y, len, s, col.alpha((a - 0.2) / 0.8))
+    }
+}
 
 /// A four-pointed glint: a bright middle and short arms `arm` pixels long.
 private func r8Glint(_ c: PixelCanvas, _ x: Int, _ y: Int, arm: Int, s: Int, core: Px, ray: Px) {
@@ -346,6 +384,56 @@ extension Scenes {
                     ["w": C(0xFFFFFF), "b": C(0xBCD8F0)], s: s)
         }
     }
+
+    /// The gold sparkling, now and then a coin coming loose and slithering down the heap, flashing as it turns, and on
+    /// tall screens the Arkenstone's light swelling and fading.
+    static func ereborLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c)
+        guard c.w > 0 else { return }
+        // sparkles winking on and off all over the gold, each on its own beat
+        for i in 0..<max(1, c.w / (18 * s)) {
+            let period: Double = 2.4 + noise(i * 4 + 1000) * 2.6
+            let ph = r8Phase(t, period, offset: noise(i * 4 + 1001) * period)
+            guard ph < 0.3 else { continue }
+            let x = Int(noise(i * 4 + 1002) * Double(c.w)), top = ereborHoardTop(c, g, x)
+            guard top < g - 6 * s else { continue }
+            let y = top + s + Int(noise(i * 4 + 1003) * Double(min(g - top - 5 * s, 22 * s)))
+            let k: Double = sin(ph / 0.3 * Double.pi)
+            r8Glint(c, x, y, arm: Int((k * 3.4).rounded()) * s, s: s, core: C(0xFFFFFF, 0.4 + 0.6 * k), ray: C(0xFFF4C0, 0.8 * k))
+        }
+        // a coin sliding down one side of the great mound or the other, quicker as it goes, hopping over the lumps
+        let slides: [(from: Double, dir: Double, period: Double)] = [(0.47, -1, 9), (0.54, 1, 13)]
+        for (k, sl) in slides.enumerated() {
+            let u = r8Phase(t, sl.period, offset: Double(k) * 4.1) * sl.period / 2.4
+            guard u < 1 else { continue }
+            let x = Int(Double(c.w) * (sl.from + sl.dir * u * u * 0.22))
+            guard x >= 0, x < c.w else { continue }
+            let y = ereborHoardTop(c, g, x) - s
+            guard y < g - 6 * s else { continue }
+            let a: Double = u < 0.8 ? 1 : (1 - u) / 0.2
+            if Int(t * 12) % 2 == 0 {
+                c.rect(x, y, 2 * s, s, C(0xFFE48A, a)); c.rect(x, y + s, 2 * s, s, C(0x9A6A20, 0.5 * a))
+            } else {
+                c.rect(x, y - s, s, 2 * s, C(0xFFF4C0, a))
+            }
+            c.rect(x - Int(sl.dir) * 3 * s, y + s, s, s, C(0xFFF4C0, 0.35 * a))
+        }
+        // the Arkenstone, its white light breathing, rays reaching out and a cross of sparks at the brightest
+        if tall {
+            let x = c.w / 2, y = ereborHoardTop(c, g, x) - 5 * s
+            let p: Double = 0.5 + 0.5 * sin(t * 2 * Double.pi / 4.5)
+            c.circle(x, y, 20 * s, C(0xDDEEFF, 0.05 * p))
+            c.circle(x, y, 10 * s, C(0xE8F4FF, 0.08 * p))
+            let arm = (8 + Int(p * 9)) * s
+            c.rect(x - arm, y, arm * 2 + s, s, C(0xF4FAFF, 0.15 + 0.35 * p))
+            c.rect(x, y - arm, s, arm * 2 + s, C(0xF4FAFF, 0.15 + 0.35 * p))
+            for d in 1..<max(1, Int(p * 6)) {
+                let fade: Double = (1 - Double(d) / 6) * p * 0.7
+                for (dx, dy) in [(-1, -1), (1, -1), (-1, 1), (1, 1)] { c.rect(x + dx * d * s, y + dy * d * s, s, s, C(0xFFFFFF, fade)) }
+            }
+            c.rect(x - s, y - s, 3 * s, 3 * s, C(0xFFFFFF, 0.3 * p))
+        }
+    }
 }
 
 // MARK: - Data Lake-town
@@ -372,6 +460,81 @@ extension Scenes {
         let h = max(Double(m.h) * pow(max(0, 1 - k), 1.35), Double(m.h) * 0.45 * pow(max(0, 1 - k2), 1.1))
         guard h > 0 else { return hz }
         return min(hz, hz - Int(h) + Int(noise(x / (2 * s) + 320) * 1.6) * s)
+    }
+
+    /// The rows of houses, back to front: the row their stilts stand in, their size in percent, how far they've faded
+    /// into the mist, the open water left between them (shares of the width), and a seed.
+    static func laketownRows(_ c: PixelCanvas, _ g: Int) -> [(water: Int, sc: Int, haze: Double, gap: (Double, Double), seed: Int)] {
+        let s = unit(g), hz = laketownHorizon(c, g)
+        guard isTall(c) else { return [(g - 13 * s, 60, 0.45, (0.48, 0.7), 4), (g - 5 * s, 100, 0, (0.42, 0.76), 5)] }
+        let d = Double(g - hz)
+        return [(hz + Int(d * 0.28), 55, 0.55, (0.5, 0.7), 1), (hz + Int(d * 0.58), 80, 0.3, (0.46, 0.73), 2),
+                (g - 6 * s, 125, 0, (0.4, 0.78), 3)]
+    }
+
+    /// The houses in a row: each one's left edge, width and number, and the right edge of the one before it when no
+    /// open water lies between them.
+    static func laketownRowHouses(_ c: PixelCanvas, _ g: Int, sc: Int, gap: (Double, Double), seed: Int)
+        -> [(x: Int, w: Int, i: Int, after: Int?)] {
+        let s = unit(g)
+        let gx0 = Int(Double(c.w) * gap.0), gx1 = Int(Double(c.w) * gap.1)
+        var x = -Int(noise(seed * 50 + 360) * Double(16 * s)), i = 0
+        var prev: Int? = nil
+        var out: [(x: Int, w: Int, i: Int, after: Int?)] = []
+        while x < c.w {
+            let w = max(4 * s, (24 + Int(noise(seed * 50 + i * 3 + 361) * 12.0)) * sc / 100 * s)
+            let spacing = (5 + Int(noise(seed * 50 + i * 3 + 362) * 10.0)) * sc / 100 * s
+            if x + w > gx0 && x < gx1 {
+                prev = nil
+                x = max(x + s, gx1 + spacing)
+                i += 1
+                continue
+            }
+            out.append((x, w, i, prev))
+            prev = x + w
+            x += w + spacing
+            i += 1
+        }
+        return out
+    }
+
+    /// How high a house's floor stands on its stilts above the water, at size `sc` percent.
+    static func laketownStilt(_ sc: Int, _ s: Int) -> Int { max(s, 6 * sc / 100 * s) }
+
+    /// A walkway's handrail row and its lantern's row, for houses whose floor is at row `base`.
+    static func laketownWalkway(base: Int, sc: Int, s: Int) -> (rail: Int, lamp: Int) {
+        let rail = base - max(2 * s, 5 * sc / 100 * s)
+        return (rail, rail - 5 * sc / 100 * s)
+    }
+
+    /// The boats out on the open water: each one's middle, waterline and length, and whether it has a lantern.
+    static func laketownBoats(_ c: PixelCanvas, _ g: Int) -> [(x: Int, y: Int, len: Int, lantern: Bool)] {
+        let s = unit(g), tall = isTall(c), hz = laketownHorizon(c, g), mid = hz + (g - hz) / 2
+        return [(Int(Double(c.w) * 0.64), tall ? mid + 6 * s : g - 10 * s, 16 * s, false),
+                (Int(Double(c.w) * 0.55), g - 3 * s, (tall ? 32 : 26) * s, true)]
+    }
+
+    /// Bilbo's barrels afloat: each one's middle.
+    static func laketownBarrels(_ c: PixelCanvas, _ g: Int) -> [(x: Int, y: Int)] {
+        let s = unit(g)
+        let barrels: [(Double, Int)] = isTall(c) ? [(0.47, 14), (0.5, 18), (0.69, 12)] : [(0.47, 7), (0.5, 9)]
+        return barrels.map { (Int(Double(c.w) * $0.0), g - $0.1 * s) }
+    }
+
+    /// Every lantern's middle and how far it's faded into the mist: on the walkways between the houses, and on the big
+    /// boat's stern.
+    static func laketownLamps(_ c: PixelCanvas, _ g: Int) -> [(x: Int, y: Int, haze: Double)] {
+        let s = unit(g)
+        var out: [(x: Int, y: Int, haze: Double)] = []
+        for r in laketownRows(c, g) where r.sc >= 60 {
+            let walk = laketownWalkway(base: r.water - laketownStilt(r.sc, s), sc: r.sc, s: s)
+            for h in laketownRowHouses(c, g, sc: r.sc, gap: r.gap, seed: r.seed) {
+                guard let right = h.after, h.x - right > 2 * s, noise(r.seed * 50 + h.i * 3 + 363) > 0.4 else { continue }
+                out.append(((right + h.x) / 2, walk.lamp - s, r.haze))
+            }
+        }
+        for b in laketownBoats(c, g) where b.lantern { out.append((b.x - b.len / 2 + b.len - 3 * s, b.y - 15 * s, 0)) }
+        return out
     }
 
     /// Data Lake-town: Esgaroth on its stilts in the Long Lake, on a grey evening. Wooden houses with steep gables and
@@ -402,17 +565,11 @@ extension Scenes {
             let x = Int(noise(i * 3 + 341) * Double(c.w))
             c.rect(x, y, len, s, noise(i * 3 + 342) > 0.45 ? C(0xB8C4CE, 0.45) : C(0x3A4C5E, 0.4))
         }
-        // the houses, row behind row
-        if tall {
-            let d = Double(g - hz)
-            laketownRow(c, g, water: hz + Int(d * 0.28), sc: 55, haze: 0.55, gap: (0.5, 0.7), seed: 1)
-            laketownRow(c, g, water: hz + Int(d * 0.58), sc: 80, haze: 0.3, gap: (0.46, 0.73), seed: 2)
-            laketownWater(c, g)
-            laketownRow(c, g, water: g - 6 * s, sc: 125, haze: 0, gap: (0.4, 0.78), seed: 3)
-        } else {
-            laketownRow(c, g, water: g - 13 * s, sc: 60, haze: 0.45, gap: (0.48, 0.7), seed: 4)
-            laketownWater(c, g)
-            laketownRow(c, g, water: g - 5 * s, sc: 100, haze: 0, gap: (0.42, 0.76), seed: 5)
+        // the houses, row behind row, with the boats out on the water in front of all but the nearest
+        let houses = laketownRows(c, g)
+        for (k, r) in houses.enumerated() {
+            if k == houses.count - 1 { laketownWater(c, g) }
+            laketownRow(c, g, water: r.water, sc: r.sc, haze: r.haze, gap: r.gap, seed: r.seed)
         }
         // the wooden quay: planks, their butt joints, and a mooring post at either end
         let rows = c.h - g
@@ -433,14 +590,10 @@ extension Scenes {
 
     /// The boats and barrels out in the open water between the houses.
     static func laketownWater(_ c: PixelCanvas, _ g: Int) {
-        let s = unit(g), tall = isTall(c), hz = laketownHorizon(c, g)
-        let mid = hz + (g - hz) / 2
-        laketownBoat(c, Int(Double(c.w) * 0.64), tall ? mid + 6 * s : g - 10 * s, len: 16 * s, s: s, lantern: false)
-        laketownBoat(c, Int(Double(c.w) * 0.55), g - 3 * s, len: (tall ? 32 : 26) * s, s: s, lantern: true)
+        let s = unit(g)
+        for b in laketownBoats(c, g) { laketownBoat(c, b.x, b.y, len: b.len, s: s, lantern: b.lantern) }
         // Bilbo's barrels, bobbing
-        let barrels: [(Double, Int)] = tall ? [(0.47, 14), (0.5, 18), (0.69, 12)] : [(0.47, 7), (0.5, 9)]
-        for b in barrels {
-            let x = Int(Double(c.w) * b.0), y = g - b.1 * s
+        for (x, y) in laketownBarrels(c, g) {
             c.ellipse(x, y, 3 * s, 2 * s, C(0x7A5030)); c.rect(x - 3 * s, y - s, 7 * s, s, C(0x9A6A3A))
             c.rect(x - s, y - 2 * s, s, 4 * s, C(0x3A3A3A)); c.rect(x + 2 * s, y - 2 * s, s, 4 * s, C(0x3A3A3A))
             c.rect(x - 3 * s, y + 2 * s, 7 * s, s, C(0x2A3A48, 0.5))
@@ -502,39 +655,26 @@ extension Scenes {
     /// railings join neighbours, a lantern on some of them.
     static func laketownRow(_ c: PixelCanvas, _ g: Int, water: Int, sc: Int, haze: Double, gap: (Double, Double), seed: Int) {
         let s = unit(g), mist = C(0xA8B2BA)
-        let gx0 = Int(Double(c.w) * gap.0), gx1 = Int(Double(c.w) * gap.1)
-        var x = -Int(noise(seed * 50 + 360) * Double(16 * s)), i = 0
-        var prev: (right: Int, base: Int)? = nil
-        while x < c.w {
-            let w = max(4 * s, (24 + Int(noise(seed * 50 + i * 3 + 361) * 12.0)) * sc / 100 * s)
-            let spacing = (5 + Int(noise(seed * 50 + i * 3 + 362) * 10.0)) * sc / 100 * s
-            if x + w > gx0 && x < gx1 {
-                prev = nil
-                x = max(x + s, gx1 + spacing)
-                i += 1
-                continue
-            }
-            let base = laketownHouse(c, g, x: x, w: w, water: water, sc: sc, haze: haze, seed: seed * 50 + i)
-            if let p = prev, x - p.right > 2 * s {
+        for h in laketownRowHouses(c, g, sc: sc, gap: gap, seed: seed) {
+            let x = h.x
+            let base = laketownHouse(c, g, x: x, w: h.w, water: water, sc: sc, haze: haze, seed: seed * 50 + h.i)
+            if let right = h.after, x - right > 2 * s {
                 // the walkway from the last house
                 let deck = lerp(C(0x4A3A2C), mist, haze), post = lerp(C(0x2A221C), mist, haze)
-                c.rect(p.right, base - s, x - p.right, 2 * s, deck)
-                c.rect(p.right, base - s, x - p.right, max(1, s / 2), lerp(C(0x7A644E), mist, haze))
-                let rail = base - max(2 * s, 5 * sc / 100 * s)
-                c.rect(p.right, rail, x - p.right, max(1, s * sc / 100), post)
-                for px in stride(from: p.right + s, to: x, by: max(2 * s, 6 * sc / 100 * s)) {
+                c.rect(right, base - s, x - right, 2 * s, deck)
+                c.rect(right, base - s, x - right, max(1, s / 2), lerp(C(0x7A644E), mist, haze))
+                let walk = laketownWalkway(base: base, sc: sc, s: s), rail = walk.rail
+                c.rect(right, rail, x - right, max(1, s * sc / 100), post)
+                for px in stride(from: right + s, to: x, by: max(2 * s, 6 * sc / 100 * s)) {
                     c.rect(px, rail, s, base - rail, post)
                     c.rect(px, base + s, s, water - base - s, post)
                 }
-                if noise(seed * 50 + i * 3 + 363) > 0.4, sc >= 60 {
-                    let lx = (p.right + x) / 2, ly = rail - 5 * sc / 100 * s
+                if noise(seed * 50 + h.i * 3 + 363) > 0.4, sc >= 60 {
+                    let lx = (right + x) / 2, ly = walk.lamp
                     c.rect(lx, ly, s, base - ly, post)
                     r8Lantern(c, lx, ly - s, s: s, glow: 0.12 * (1 - haze))
                 }
             }
-            prev = (x + w, base)
-            x += w + spacing
-            i += 1
         }
     }
 
@@ -548,7 +688,7 @@ extension Scenes {
         let walls: [UInt32] = [0x6A5442, 0x5E4A3A, 0x76604A, 0x5A5048]
         let roofs: [UInt32] = [0x3E3430, 0x4A3A2E, 0x3A4038]
         let wallCol = t(walls[seed % walls.count]), roofCol = t(roofs[seed % roofs.count])
-        let stilt = max(s, 6 * sc / 100 * s), wall = max(2 * s, (12 + Int(noise(seed * 7 + 380) * 7.0)) * sc / 100 * s)
+        let stilt = laketownStilt(sc, s), wall = max(2 * s, (12 + Int(noise(seed * 7 + 380) * 7.0)) * sc / 100 * s)
         let base = water - stilt, roofH = w * 3 / 5 + 2 * s, over = max(s, 3 * sc / 100 * s), e = max(s, s * sc / 100)
         let lit = C(0xF2B04A)
         // the reflection
@@ -614,6 +754,41 @@ extension Scenes {
         }
         return base
     }
+
+    /// The light glancing off the open water between the houses, the lanterns flickering, and the dragon's red glow
+    /// on the mountain slowly breathing.
+    static func laketownLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c), hz = laketownHorizon(c, g), m = laketownPeak(c, g)
+        let twoPi: Double = 2 * Double.pi
+        // the glow at the peak
+        if m.h > 0 {
+            let p: Double = 0.5 + 0.5 * sin(t * twoPi / 6), r = (tall ? 14 : 5) * s, top = hz - m.h
+            c.circle(m.x, top + s, r + Int(p * Double(r) * 0.4), C(0xE0502A, 0.09 * p))
+            c.circle(m.x, top + s, r / 2, C(0xF06A3A, 0.14 * p))
+            c.rect(m.x - s, top, 3 * s, s, C(0xFF8A4A, 0.45 * p))
+        }
+        // the water: only where it's open right down to the quay, and never over a boat or a barrel
+        let rows = laketownRows(c, g)
+        let lo = rows.map { $0.gap.0 }.max() ?? 0.5, hi = rows.map { $0.gap.1 }.min() ?? 0.7
+        let x0 = Int(Double(c.w) * lo) + 2 * s, x1 = Int(Double(c.w) * hi) - 2 * s, y0 = hz + 2 * s, y1 = g - 6 * s
+        var floats: [(x0: Int, y0: Int, x1: Int, y1: Int)] = laketownBarrels(c, g).map {
+            ($0.x - 4 * s, $0.y - 3 * s, $0.x + 5 * s, $0.y + 4 * s)
+        }
+        for b in laketownBoats(c, g) {
+            floats.append((b.x - b.len / 2 - 3 * s, b.y - (b.lantern ? 19 : 9) * s, b.x + b.len / 2 + s, b.y + 2 * s))
+        }
+        let count = max(0, (x1 - x0) * (y1 - y0) / (50 * s * s))
+        r8Shimmer(c, t, x0: x0, x1: x1, y0: y0, y1: y1, s: s, count: count, col: C(0xDCE6EE, 0.7), seed: 1100) { x, y, len in
+            !floats.contains { f in x < f.x1 && x + len > f.x0 && y >= f.y0 && y < f.y1 }
+        }
+        // the lanterns: a slow swell with a quick flicker in it
+        for (i, l) in laketownLamps(c, g).enumerated() {
+            let slow: Double = 0.5 + 0.5 * sin(t * twoPi / 2.6 + Double(i) * 1.9)
+            let k = (0.55 * slow + 0.45 * noise(Int(t * 9) * 7 + i * 13 + 1200)) * (1 - l.haze)
+            c.circle(l.x, l.y, 6 * s, C(0xFFC060, 0.10 * k))
+            c.rect(l.x - s, l.y - s, 3 * s, 3 * s, C(0xFFF0B0, 0.65 * k))
+        }
+    }
 }
 
 // MARK: - The Green Dragon-and-Drop
@@ -645,6 +820,31 @@ extension Scenes {
     static func greenDragonPond(_ c: PixelCanvas, _ g: Int) -> (x1: Int, top: Int) {
         let s = unit(g), tall = isTall(c)
         return (Int(Double(c.w) * (tall ? 0.34 : 0.27)), g - (tall ? 30 : 9) * s)
+    }
+
+    /// The millpond's right edge at row `y`: the far shore curves away.
+    static func greenDragonPondEdge(_ c: PixelCanvas, _ g: Int, _ y: Int) -> Int {
+        let pond = greenDragonPond(c, g), bottom = g - 2 * unit(g)
+        let k = max(0, Double(y - pond.top) / Double(max(1, bottom - pond.top)))
+        return Int(Double(pond.x1) * (0.6 + 0.4 * k.squareRoot()))
+    }
+
+    /// Tall screens: the mill's waterwheel, its hub and radius.
+    static func greenDragonWheel(_ c: PixelCanvas, _ g: Int) -> (x: Int, y: Int, r: Int) {
+        let s = unit(g), pond = greenDragonPond(c, g)
+        return (Int(Double(pond.x1) * 0.2) + 43 * s, pond.top - 3 * s, 11 * s)
+    }
+
+    /// The inn's chimneys: each one's middle and the top of its pot.
+    static func greenDragonChimneys(_ c: PixelCanvas, _ g: Int) -> [(x: Int, y: Int)] {
+        let s = unit(g), inn = greenDragonInn(c, g), cx = inn.x + inn.w / 2, top = inn.base - inn.wall - inn.roof
+        return [(cx - inn.w / 3, top - 11 * s), (cx + inn.w / 4, top - 11 * s)]
+    }
+
+    /// The inn sign: the top of its post, and the board's left edge, top row, width and height.
+    static func greenDragonSignBoard(_ c: PixelCanvas, _ g: Int) -> (post: Int, top: Int, x: Int, y: Int, w: Int, h: Int) {
+        let s = unit(g), post = greenDragonInn(c, g).x - 10 * s, top = g - 40 * s
+        return (post, top, post - 25 * s, top + 7 * s, 24 * s, 16 * s)
     }
 
     /// The Green Dragon-and-Drop: the inn at Bywater from outside on a warm summer evening. A peach and blue sky over
@@ -750,10 +950,7 @@ extension Scenes {
         guard bottom > pond.top else { return }
         let skyTop = tall ? C(0x5A84C4) : C(0x7AA4D6), skyLow = C(0xF8D49A)
         // the right edge at row `y`: the far shore curves away
-        func edge(_ y: Int) -> Int {
-            let k = Double(y - pond.top) / Double(max(1, bottom - pond.top))
-            return Int(Double(pond.x1) * (0.6 + 0.4 * k.squareRoot()))
-        }
+        func edge(_ y: Int) -> Int { greenDragonPondEdge(c, g, y) }
         if tall { greenDragonMill(c, g) }
         for y in pond.top..<bottom {
             let k = (Double(y - pond.top) / Double(max(1, bottom - pond.top)) * 5).rounded(.down) / 5
@@ -800,7 +997,7 @@ extension Scenes {
         }
         c.rect(x + w / 2 + 6 * s, base - wall - roof, 4 * s, 9 * s, C(0x9A8A72))
         // the waterwheel
-        let wx = x + w + 9 * s, wy = base - 5 * s, r = 11 * s
+        let (wx, wy, r) = greenDragonWheel(c, g)
         c.circle(wx, wy, r, C(0x5A4030));
         c.circle(wx, wy, r - 2 * s, lerp(C(0xB8AA90), C(0xF8D49A), 0.5))
         for i in 0..<8 {
@@ -883,7 +1080,7 @@ extension Scenes {
         c.ellipse(dmx, dmy - s, 6 * s, 4 * s, C(0xC8A066))
         c.circle(dmx, dmy, 3 * s, timber); c.circle(dmx, dmy, 2 * s, C(0xF8C860))
         // the chimneys
-        for chx in [cx - inn.w / 3, cx + inn.w / 4] {
+        for (chx, _) in greenDragonChimneys(c, g) {
             c.rect(chx - 3 * s, top - 8 * s, 6 * s, 10 * s, C(0x9A8A72))
             c.rect(chx + s, top - 8 * s, 2 * s, 10 * s, C(0x7A6C58))
             c.rect(chx - 4 * s, top - 9 * s, 8 * s, 2 * s, C(0x7A6C58)); c.rect(chx - 4 * s, top - 9 * s, 8 * s, s, C(0xB8A890))
@@ -922,15 +1119,98 @@ extension Scenes {
 
     /// The inn sign on its post by the garden: a painted board hanging from an arm, the green dragon on it.
     static func greenDragonSign(_ c: PixelCanvas, _ g: Int) {
-        let s = unit(g), inn = greenDragonInn(c, g), post = inn.x - 10 * s, top = g - 40 * s
+        let s = unit(g), b = greenDragonSignBoard(c, g), post = b.post, top = b.top
         c.rect(post, top, 3 * s, g - top - s, C(0x4A3020)); c.rect(post, top, s, g - top - s, C(0x6A4A2E))
         c.rect(post - 26 * s, top + 2 * s, 29 * s, 2 * s, C(0x4A3020))
         r8Line(c, post - 8 * s, top + 4 * s, post, top + 12 * s, C(0x4A3020), s: s)
-        let bw = 24 * s, bh = 16 * s, bx = post - 25 * s, by = top + 7 * s
+        let bw = b.w, bh = b.h, bx = b.x, by = b.y
         for chx in [bx + 3 * s, bx + bw - 4 * s] { c.rect(chx, top + 4 * s, s, 3 * s, C(0x5A5048)) }
         c.rect(bx + s, by + s, bw, bh, C(0x1A100A, 0.4))
+        greenDragonBoardFace(c, bx, by, bw, bh, s: s)
+    }
+
+    /// The sign board's painted face: a green frame round a cream ground, the green dragon on it.
+    static func greenDragonBoardFace(_ c: PixelCanvas, _ bx: Int, _ by: Int, _ bw: Int, _ bh: Int, s: Int) {
         c.rect(bx, by, bw, bh, C(0x2E5A2A))
         c.rect(bx + s, by + s, bw - 2 * s, bh - 2 * s, C(0xE8D8A8))
         r8Stamp(c, bx + 2 * s, by + 2 * s, r8Dragon, ["g": C(0x2E8A3A), "d": C(0x1E5A28), "e": C(0xF2D04A), "r": C(0xE0502A)], s: s)
+    }
+
+    /// Smoke curling up from the inn's chimneys, the sign swaying in the evening breeze, the millpond glinting and now
+    /// and then ringed where a fish rose, and on tall screens the mill's waterwheel turning.
+    static func greenDragonLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c), twoPi: Double = 2 * Double.pi
+        if tall { greenDragonWheelLife(c, g, t) }
+        // the millpond: glints drifting on it, and every so often a ring spreading where a fish rose
+        let pond = greenDragonPond(c, g), bottom = g - 2 * s
+        if bottom - pond.top > 3 * s {
+            let count = max(0, pond.x1 * (bottom - pond.top) / (70 * s * s))
+            r8Shimmer(c, t, x0: s, x1: pond.x1, y0: pond.top + s, y1: bottom - s, s: s, count: count, col: C(0xFFF6E0, 0.55),
+                      seed: 1300) { x, y, len in x + len < greenDragonPondEdge(c, g, y) - 2 * s }
+            let ph = r8Phase(t, 7)
+            let u = ph * 7 / 2.2, n = Int((t / 7).rounded(.down)) * 3 + 1320
+            if u < 1 {
+                let y = pond.top + 2 * s + Int(noise(n) * Double(max(1, bottom - pond.top - 4 * s)))
+                let x = 4 * s + Int(noise(n + 1) * Double(max(1, greenDragonPondEdge(c, g, y) - 14 * s)))
+                let rx = Double(s) * (1 + u * 6), ry = max(Double(s), rx / 3)
+                let dots = max(12, Int(rx) / max(1, s) * 4)
+                for k in 0..<dots {
+                    let a: Double = Double(k) / Double(dots) * twoPi
+                    let px = x + Int((cos(a) * rx).rounded()), py = y + Int((sin(a) * ry).rounded())
+                    guard py > pond.top, py < bottom, px < greenDragonPondEdge(c, g, py) - s else { continue }
+                    c.px(px, py, C(0xFFF6E0, 0.7 * (1 - u)))
+                }
+            }
+        }
+        // the sign, nudged a pixel to and fro: its edge shows on the side it swings from, and the chains lean
+        let b = greenDragonSignBoard(c, g), v = sin(t * twoPi / 3.4)
+        let off = v > 0.45 ? s : (v < -0.45 ? -s : 0)
+        if off != 0 {
+            for chx in [b.x + 3 * s, b.x + b.w - 4 * s] { c.rect(chx + off, b.top + 6 * s, s, s, C(0x5A5048)) }
+            c.rect(off > 0 ? b.x : b.x + b.w - s, b.y, s, b.h, C(0x1A3218))
+            if off > 0 { c.rect(b.x + off + b.w, b.y + s, s, b.h, C(0x1A100A, 0.4)) }
+            greenDragonBoardFace(c, b.x + off, b.y, b.w, b.h, s: s)
+        }
+        // smoke from the chimneys, thin on a still evening, leaning a little with the breeze
+        let rise = (tall ? 50 : 30) * s
+        for (j, ch) in greenDragonChimneys(c, g).enumerated() {
+            for i in 0..<5 {
+                let p = r8Phase(t, 5, offset: Double(i) + Double(j) * 0.5)
+                let x = ch.x + Int(p * Double(10 * s) + sin(p * 5 + Double(i + j)) * Double(2 * s))
+                let y = ch.y - s - Int(p * Double(rise)), r = s + Int(p * Double(3 * s))
+                c.circle(x + s, y + s, r, C(0xB8B0A8, 0.35 * (1 - p)))
+                c.circle(x, y, r, C(0xF0ECE4, 0.55 * (1 - p)))
+            }
+        }
+    }
+
+    /// Tall screens: the waterwheel turning, drawn afresh above the waterline: a ring of buckets round its rim with
+    /// boards between them, spokes going round, and white water where it churns into the pond.
+    static func greenDragonWheelLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), wl = greenDragonWheel(c, g), water = greenDragonPond(c, g).top
+        let (x, y, r) = wl
+        let wood = C(0x5A4030), dark = C(0x4A3426), board = C(0x8A6A4A)
+        r8Disc(c, x, y, r + 3 * s, dark, above: water)
+        r8Disc(c, x, y, r, wood, above: water)
+        r8Disc(c, x, y, r - 2 * s, lerp(C(0xB8AA90), C(0xF8D49A), 0.5), above: water)
+        let turn: Double = -t * 2 * Double.pi / 8
+        for i in 0..<16 {
+            let a: Double = turn + Double(i) * Double.pi / 8
+            let ca = cos(a), sa = sin(a)
+            r8Line(c, x + Int(ca * Double(r)), y + Int(sa * Double(r)), x + Int(ca * Double(r + 2 * s)),
+                   y + Int(sa * Double(r + 2 * s)), board, s: s, above: water)
+            if i % 2 == 0 { r8Line(c, x, y, x + Int(ca * Double(r - s)), y + Int(sa * Double(r - s)), wood, s: s, above: water) }
+        }
+        c.circle(x, y, 2 * s, C(0x3A2A1E))
+        // foam where the buckets dip in, and drops falling from the rising side
+        for k in 0..<5 {
+            let fx = x - r + Int(noise(Int(t * 6) * 5 + k + 1340) * Double(2 * r))
+            c.rect(fx, water, 2 * s, s, C(0xFFFFFF, 0.55))
+        }
+        for i in 0..<3 {
+            let p = r8Phase(t, 0.9, offset: Double(i) * 0.3)
+            let dy = Int(p * Double(water - y))
+            c.rect(x + r + s + (i - 1) * 2 * s, y + dy, s, s, C(0xE8F4FF, 0.7 * (1 - p)))
+        }
     }
 }

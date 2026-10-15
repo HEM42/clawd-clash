@@ -2,9 +2,10 @@ import Foundation
 
 // The wild places between the Shire and Rivendell: the Old Forest, the Barrow-downs and Weathertop.
 let ringsScenes6: [Location: Place] = [
-    .oldForest: Place(name: "The Withy-windows", panel: 0x16200E, still: Scenes.oldForest),
-    .barrowDowns: Place(name: "The Barrow-downtimes", panel: 0x181C1E, still: Scenes.barrowDowns),
-    .weathertop: Place(name: "Weather-htop", panel: 0x14161E, still: Scenes.weathertop),
+    .oldForest: Place(name: "The Withy-windows", panel: 0x16200E, still: Scenes.oldForest, moving: Scenes.oldForestLife),
+    .barrowDowns: Place(name: "The Barrow-downtimes", panel: 0x181C1E, still: Scenes.barrowDowns,
+                        moving: Scenes.barrowDownsLife),
+    .weathertop: Place(name: "Weather-htop", panel: 0x14161E, still: Scenes.weathertop, moving: Scenes.weathertopLife),
 ]
 
 // MARK: - Shared bits for these scenes
@@ -31,8 +32,7 @@ private func r6Willow(_ c: PixelCanvas, x: Int, base: Int, h: Int, lean: Int, ha
     guard h > 4 * s else { return }
     func tone(_ hex: UInt32, _ a: Double = 1) -> Px { lerp(C(hex), C(0xE2D49A), haze).alpha(a) }
     let trunkH = h * 11 / 20, top = base - trunkH
-    let rx = max(2 * s, h * 2 / 5), ry = max(s, h / 5)
-    let cx = x + lean, cy = top - ry / 3
+    let (cx, cy, rx, ry) = r6Crown(x: x, base: base, h: h, lean: lean, s: s)
     // the trunk, thick at the foot and bending over the river
     for y in top..<max(top, base) {
         let k = Double(base - y) / Double(max(1, trunkH))
@@ -60,17 +60,48 @@ private func r6Willow(_ c: PixelCanvas, x: Int, base: Int, h: Int, lean: Int, ha
     for b in blobs { blob(b, dy: 0, shrink: 1, tone(0x76845C)) }
     for b in blobs { blob(b, dy: -2 * s, shrink: 0.6, tone(0x98A47A)) }
     // the long curtains of leaves trailing down to the water
-    var i = 0
+    for st in r6Strands(x: x, base: base, h: h, lean: lean, hang: hang, s: s, seed: seed) {
+        let leaf = st.light ? tone(0xA6B282, 0.9) : tone(0x6E7C54, 0.9)
+        c.rect(st.col, st.start, s, st.end - st.start, leaf)
+        c.rect(st.col, st.end + s, s, s, leaf.alpha(0.5))
+    }
+}
+
+/// A willow's crown: its middle, and how far it reaches each side and up and down.
+private func r6Crown(x: Int, base: Int, h: Int, lean: Int, s: Int) -> (cx: Int, cy: Int, rx: Int, ry: Int) {
+    let top = base - h * 11 / 20, ry = max(s, h / 5)
+    return (x + lean, top - ry / 3, max(2 * s, h * 2 / 5), ry)
+}
+
+/// A willow's curtains of leaves: for each `s`-wide column under its crown, where the strand starts and ends, and
+/// whether it's one of the silvery ones.
+private func r6Strands(x: Int, base: Int, h: Int, lean: Int, hang: Int, s: Int,
+                       seed: Int) -> [(col: Int, start: Int, end: Int, light: Bool)] {
+    let (cx, cy, rx, ry) = r6Crown(x: x, base: base, h: h, lean: lean, s: s)
+    var out: [(col: Int, start: Int, end: Int, light: Bool)] = [], i = 0
     for col in stride(from: cx - rx, to: cx + rx, by: s) {
         i += 1
         let dx = Double(col - cx) / Double(rx)
         let start = cy + Int(Double(ry) * (1 - dx * dx).squareRoot() * 0.5)
         let reach = Double(max(0, hang - start)) * (0.45 + 0.55 * noise(i + seed * 97 + 7100)) * (1 - 0.35 * abs(dx))
-        let end = start + Int(reach)
-        let leaf = noise(i + seed * 97 + 7200) > 0.6 ? tone(0xA6B282, 0.9) : tone(0x6E7C54, 0.9)
-        c.rect(col, start, s, end - start, leaf)
-        c.rect(col, end + s, s, s, leaf.alpha(0.5))
+        out.append((col, start, start + Int(reach), noise(i + seed * 97 + 7200) > 0.6))
     }
+    return out
+}
+
+/// Where a repeating motion of `period` seconds is, from 0 up to 1.
+private func r6Phase(_ t: Double, _ period: Double, offset: Double = 0) -> Double {
+    let v = (t + offset).truncatingRemainder(dividingBy: period) / period
+    return v < 0 ? v + 1 : v
+}
+
+/// How strongly a now-and-then event is showing: 0 most of the time, rising and falling as sin² over the first `on`
+/// of each cycle of `period` seconds.
+private func r6Now(_ t: Double, _ period: Double, on: Double, offset: Double = 0) -> Double {
+    let p = r6Phase(t, period, offset: offset)
+    guard p < on else { return 0 }
+    let v = sin(Double.pi * p / on)
+    return v * v
 }
 
 /// A standing stone `h` rows tall and `w` wide on row `base`, its top leaning `lean` pixels, lit from the right.
@@ -145,10 +176,9 @@ extension Scenes {
         oldForestWater(c, g)
         if tall { oldForestBankWillows(c, g) }
         // the two great willows leaning out over the river
-        r6Willow(c, x: Int(Double(c.w) * 0.07), base: g, h: tall ? g * 21 / 20 : g * 4 / 3, lean: 14 * s,
-                 hang: g - 4 * s, s: s, seed: 1)
-        r6Willow(c, x: Int(Double(c.w) * 0.93), base: g, h: tall ? g * 9 / 10 : g * 6 / 5, lean: -12 * s,
-                 hang: g - 5 * s, s: s, seed: 2)
+        for w in oldForestGreatWillows(c, g) {
+            r6Willow(c, x: w.x, base: g, h: w.h, lean: w.lean, hang: w.hang, s: s, seed: w.seed)
+        }
         for (k, f) in [0.2, 0.71, 0.82].enumerated() { oldForestReeds(c, Int(Double(c.w) * f), g, s, seed: k + 20) }
         oldForestSunlight(c, g)
         c.ground(g, C(0x76863C), edge: C(0xA6B058), speck: C(0x5E6E2E), seed: 61)
@@ -156,6 +186,14 @@ extension Scenes {
         for x in stride(from: 0, to: c.w, by: 3 * s) where noise(x / s + 7300) > 0.55 {
             c.rect(x, g - s, s, s, C(0x8E9E48))
         }
+    }
+
+    /// The two great willows leaning out over the river from either side: their foot, height, lean, how low their
+    /// curtains hang, and their seed.
+    static func oldForestGreatWillows(_ c: PixelCanvas, _ g: Int) -> [(x: Int, h: Int, lean: Int, hang: Int, seed: Int)] {
+        let s = unit(g), tall = isTall(c)
+        return [(Int(Double(c.w) * 0.07), tall ? g * 21 / 20 : g * 4 / 3, 14 * s, g - 4 * s, 1),
+                (Int(Double(c.w) * 0.93), tall ? g * 9 / 10 : g * 6 / 5, -12 * s, g - 5 * s, 2)]
     }
 
     /// Tall screens: blue-gold hills far off, Tom's green hill with his white house on top, and the trees.
@@ -259,16 +297,72 @@ extension Scenes {
         }
     }
 
+    /// The shafts of sun: where each one's left edge meets the top row (it slants right half a column a row), and
+    /// its width.
+    static func oldForestShafts(_ c: PixelCanvas, _ g: Int) -> [(x0: Int, wd: Int)] {
+        let s = unit(g)
+        return (0..<max(1, c.w / (120 * s))).map {
+            (Int(noise($0 * 5 + 7800) * Double(c.w)) - g / 3, (8 + Int(noise($0 * 5 + 7801) * 14.0)) * s)
+        }
+    }
+
     /// Shafts of afternoon sun slanting down through the leaves, full of drifting dust.
     static func oldForestSunlight(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g)
-        for i in 0..<max(1, c.w / (120 * s)) {
-            let x0 = Int(noise(i * 5 + 7800) * Double(c.w)) - g / 3, wd = (8 + Int(noise(i * 5 + 7801) * 14.0)) * s
+        for (i, (x0, wd)) in oldForestShafts(c, g).enumerated() {
             for y in 0..<g { c.rect(x0 + y / 2, y, wd, 1, C(0xFFEFB0, 0.09 - 0.04 * Double(y) / Double(g))) }
             for m in 0..<(g * wd / (70 * s * s)) {
                 let y = Int(noise(i * 997 + m * 3 + 7900) * Double(max(0, g - 2 * s)))
                 c.rect(x0 + y / 2 + Int(noise(i * 997 + m * 3 + 7901) * Double(wd)), y, s, s,
                        C(0xFFF6CC, 0.45 + 0.45 * noise(i * 997 + m * 3 + 7902)))
+            }
+        }
+    }
+
+    /// Glints of sun on the river sliding slowly downstream and winking out, the great willows' curtains swaying as
+    /// a breath of air passes through them, and dust motes drifting down the shafts of sun.
+    static func oldForestLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c), rt = oldForestRiverTop(c, g), twoPi: Double = 2 * Double.pi
+        // the glints: each one shows for a few seconds, drifting right, then turns up somewhere else
+        let span = max(0, g - rt - 2 * s)
+        for i in 0..<min(tall ? 60 : 24, c.w * span / (300 * s * s)) {
+            let period = 3 + noise(i * 5 + 7950) * 3, off = noise(i * 5 + 7951) * period
+            let p = r6Phase(t, period, offset: off), n = Int(floor((t + off) / period)) * 131 + i * 5 + 7960
+            let y = rt + s + Int(noise(n) * Double(span))
+            let (x0, x1) = oldForestRiver(c, g, y)
+            let near = tall ? 0.4 + 0.6 * Double(y - rt) / Double(max(1, g - rt)) : 1
+            let len = max(s, Int(Double((3 + Int(noise(n + 1) * 7.0)) * s) * near))
+            guard x1 - x0 > len + 8 * s else { continue }
+            let x = x0 + Int(noise(n + 2) * Double(x1 - x0 - len - 8 * s)) + Int(p * Double(6 * s))
+            let a = sin(Double.pi * p)
+            c.rect(x, y, len, s, C(0xFAE8AE, 0.45 * a * a))
+        }
+        // the curtains: every other strand's lower half swings out a little, most at its tip
+        for w in oldForestGreatWillows(c, g) {
+            let strands = r6Strands(x: w.x, base: g, h: w.h, lean: w.lean, hang: w.hang, s: s, seed: w.seed)
+            for (j, st) in strands.enumerated() where j % 2 == 0 && st.end - st.start > 6 * s {
+                let a: Double = t * twoPi / 6 - Double(st.col) / Double(28 * s)
+                let sway = sin(a) * Double((tall ? 3 : 2) * s)
+                let leaf = st.light ? C(0xA6B282, 0.9) : C(0x6E7C54, 0.9), from = (st.start + st.end) / 2
+                for k in 0..<3 {
+                    let dx = Int((sway * Double(k + 1) / 3).rounded())
+                    let y0 = from + (st.end - from) * k / 3, y1 = from + (st.end - from) * (k + 1) / 3
+                    if dx != 0 { c.rect(st.col + dx, y0, s, y1 - y0, leaf) }
+                }
+                c.rect(st.col + Int(sway.rounded()), st.end + s, s, s, leaf.alpha(0.5))
+            }
+        }
+        // the motes, drifting slowly down each shaft and twinkling, fading out before the ground
+        let range = Double(max(1, g - 10 * s)), fade = Double(8 * s)
+        for (i, sh) in oldForestShafts(c, g).enumerated() {
+            for m in 0..<(tall ? 10 : 4) {
+                let n = i * 97 + m * 5 + 8900
+                let fall = Double(s) * (1.5 + 2.5 * noise(n))
+                let yy = (noise(n + 1) * range + t * fall).truncatingRemainder(dividingBy: range), y = Int(yy)
+                let x = sh.x0 + y / 2 + Int(noise(n + 2) * Double(sh.wd)) + Int(sin(t * 0.6 + Double(m) * 2.1) * Double(2 * s))
+                let tw = 0.5 + 0.5 * sin(t * (1 + noise(n + 3)) + Double(m))
+                let edge = max(0, min(1, yy / fade, (range - yy) / fade))
+                c.rect(x, y, s, s, C(0xFFF6CC, (0.25 + 0.6 * tw) * edge))
             }
         }
     }
@@ -286,7 +380,7 @@ extension Scenes {
         let s = unit(g), tall = isTall(c), fog = C(0xC4CCC2)
         c.gradient(0, g, C(0x7C8886), fog, bands: tall ? 10 : 6)
         // the pale sun, low in the fog
-        let sx = Int(Double(c.w) * 0.7), sy = tall ? Int(Double(g) * 0.28) : 11 * s, sr = (tall ? 10 : 5) * s
+        let (sx, sy, sr) = barrowDownsSun(c, g)
         c.circle(sx, sy, sr * 4, C(0xE6EAE0, 0.07))
         c.circle(sx, sy, sr * 2, C(0xE6EAE0, 0.12))
         c.circle(sx, sy, sr, C(0xF0F2E8, 0.75))
@@ -297,7 +391,7 @@ extension Scenes {
                  C(0xD2D8D0, 0.35), s: s)
         }
         // the downs, far to near
-        let horizon = tall ? Int(Double(g) * 0.42) : g - 28 * s, n = tall ? 6 : 3
+        let horizon = barrowDownsHorizon(c, g), n = tall ? 6 : 3
         for i in 0..<n {
             let k = Double(i) / Double(max(1, n - 1))
             let base = horizon + (g - 6 * s - horizon) * i / n
@@ -323,6 +417,17 @@ extension Scenes {
         barrowDownsTomb(c, g)
         c.ground(g, C(0x4E5A42), edge: C(0x6E7C5A), speck: C(0x3E4834), seed: 71)
         c.rect(0, g - 2 * s, c.w, 2 * s, fog.alpha(0.16))
+    }
+
+    /// The pale sun low in the fog: its middle and radius.
+    static func barrowDownsSun(_ c: PixelCanvas, _ g: Int) -> (x: Int, y: Int, r: Int) {
+        let s = unit(g), tall = isTall(c)
+        return (Int(Double(c.w) * 0.7), tall ? Int(Double(g) * 0.28) : 11 * s, (tall ? 10 : 5) * s)
+    }
+
+    /// The row of the furthest downs.
+    static func barrowDownsHorizon(_ c: PixelCanvas, _ g: Int) -> Int {
+        isTall(c) ? Int(Double(g) * 0.42) : g - 28 * unit(g)
     }
 
     /// Round barrows and lone standing stones along the crest of one band of downs; `k` is how near it is.
@@ -367,10 +472,22 @@ extension Scenes {
         }
     }
 
+    /// The great barrow nearest the crew: its middle, and how far it reaches each side and up.
+    static func barrowDownsMound(_ c: PixelCanvas, _ g: Int) -> (x: Int, rx: Int, ry: Int) {
+        let s = unit(g), tall = isTall(c)
+        return (Int(Double(c.w) * (tall ? 0.2 : 0.14)), (tall ? 72 : 38) * s, (tall ? 38 : 20) * s)
+    }
+
+    /// The great barrow's doorway, standing on the ground row: its middle, height and width.
+    static func barrowDownsDoor(_ c: PixelCanvas, _ g: Int) -> (x: Int, h: Int, w: Int) {
+        let (x, rx, ry) = barrowDownsMound(c, g)
+        return (x + rx / 5, ry * 11 / 20, max(2 * unit(g), ry * 2 / 5))
+    }
+
     /// The great barrow nearest the crew with its dark doorway, and a lone leaning stone across the turf.
     static func barrowDownsTomb(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), d = tall ? 2 : 1
-        let x = Int(Double(c.w) * (tall ? 0.2 : 0.14)), rx = (tall ? 72 : 38) * s, ry = (tall ? 38 : 20) * s
+        let (x, rx, ry) = barrowDownsMound(c, g)
         r6Barrow(c, x: x, base: g, rx: rx, ry: ry, s: s, body: C(0x56644A), top: C(0x76865E))
         // the shadowed side and a scatter of tussocks
         for dx in stride(from: -rx, to: -rx / 4, by: 1) {
@@ -384,7 +501,7 @@ extension Scenes {
             c.rect(x + Int(k * Double(rx)), y, s, s, noise(i * 3 + 8402) > 0.5 ? C(0x6A7A56) : C(0x46523C))
         }
         // the doorway, a little right of the middle: a dark passage between two jamb stones under a lintel
-        let dx0 = x + rx / 5, dh = ry * 11 / 20, dw = max(2 * s, ry * 2 / 5), j = 3 * s * d
+        let (dx0, dh, dw) = barrowDownsDoor(c, g), j = 3 * s * d
         c.rect(dx0 - dw / 2, g - dh, dw, dh, C(0x0C0E10))
         c.rect(dx0 - dw / 2, g - dh, dw, 2 * s * d, C(0x1C201E))
         c.rect(dx0 - dw / 2 - j, g - dh, j, dh, C(0x7A7E78))
@@ -404,6 +521,40 @@ extension Scenes {
         for i in 0..<5 {
             c.rect(Int(Double(c.w) * 0.87) + (i * 2 - 4) * s * d, g - s - (i % 2) * s, s, 2 * s, C(0x8A9A6A))
         }
+    }
+
+    /// Banks of fog drifting slowly across the downs (one of them over the sun), and now and then a faint cold
+    /// light welling up deep in the barrow's doorway and dying away.
+    static func barrowDownsLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c), horizon = barrowDownsHorizon(c, g), sun = barrowDownsSun(c, g)
+        let th = tall ? 2 * s : s
+        for i in 0..<(tall ? 7 : 3) {
+            let n = i * 5 + 8500
+            let len = (tall ? 120 + Int(noise(n) * 140.0) : 70 + Int(noise(n) * 80.0)) * s
+            let y = i == 0 ? sun.y + sun.r / 2
+                : horizon - 4 * s + Int(noise(n + 1) * Double(max(0, g - horizon - 8 * s)))
+            let v = Double(s) * (2 + 4 * noise(n + 2)) * (i % 2 == 0 ? 1 : -1)
+            let range = Double(c.w + 2 * len)
+            var at = (noise(n + 3) * range + t * v).truncatingRemainder(dividingBy: range)
+            if at < 0 { at += range }
+            r6Fog(c, Int(at) - len, y, len, th, C(0xD6DCD4), i == 0 ? 0.3 : 0.22)
+        }
+        // the cold light in the doorway
+        let e = r6Now(t, 11, on: 0.4, offset: 3) * (0.85 + 0.15 * sin(t * 7))
+        guard e > 0.01 else { return }
+        let d = barrowDownsDoor(c, g), lintel = 2 * s * (tall ? 2 : 1), top = g - d.h + lintel
+        c.ellipse(d.x, g - d.h / 2, d.w + 6 * s, d.h / 2, C(0x9EE8D0, 0.06 * e))
+        c.rect(d.x - d.w / 2, top, d.w, g - top, C(0x7ED8C0, 0.16 * e))
+        c.ellipse(d.x, g - d.h / 3, max(1, d.w / 4), max(1, d.h / 5), C(0xB8F4E4, 0.35 * e))
+    }
+}
+
+/// A long bank of fog `len` wide centred on x and row y, `th` rows to a layer: thickest in the middle, thinning and
+/// fading toward its ends and its top and bottom, a little slanted.
+private func r6Fog(_ c: PixelCanvas, _ x: Int, _ y: Int, _ len: Int, _ th: Int, _ col: Px, _ a: Double) {
+    for (k, f) in [0.45, 0.75, 1, 0.8, 0.5].enumerated() {
+        let w = Int(Double(len) * f), dk = abs(k - 2)
+        c.rect(x - w / 2 + (k - 2) * len / 14, y + (k - 2) * th, w, th, col.alpha(a * (1 - 0.3 * Double(dk))))
     }
 }
 
@@ -612,18 +763,29 @@ private func r6Fire(_ c: PixelCanvas, x: Int, y: Int, s: Int, glow: Int) {
     for (k, dx) in [-4, -2, 2, 4].enumerated() { c.rect(x + dx * s, y - s - (k % 2) * s, 2 * s, s, C(0x5A5048)) }
     r6Line(c, x - 5 * s, y - s, x + 4 * s, y - 2 * s, C(0x4A3424), s: s)
     r6Line(c, x - 4 * s, y - 2 * s, x + 5 * s, y - s, C(0x5E4430), s: s)
-    let flame: [(Int, Int, UInt32)] = [(-2, 4, 0xD0461E), (-1, 6, 0xE8661E), (0, 7, 0xF08A2A), (1, 5, 0xE8661E),
-                                       (2, 3, 0xD0461E), (-1, 4, 0xF6C24A), (0, 5, 0xF6C24A), (0, 2, 0xFFF0B0)]
-    for f in flame { c.rect(x + f.0 * s, y - 2 * s - f.1 * s, s, f.1 * s, C(f.2)) }
+    for f in r6Flames { c.rect(x + f.0 * s, y - 2 * s - f.1 * s, s, f.1 * s, C(f.2)) }
 }
 
+/// The campfire's flames, back to front: each one's column off the middle, its height in units, and its colour.
+private let r6Flames: [(Int, Int, UInt32)] = [(-2, 4, 0xD0461E), (-1, 6, 0xE8661E), (0, 7, 0xF08A2A), (1, 5, 0xE8661E),
+                                               (2, 3, 0xD0461E), (-1, 4, 0xF6C24A), (0, 5, 0xF6C24A), (0, 2, 0xFFF0B0)]
+
 /// A long bank of cloud from x0 to x1 around row y: a lumpy top up to `thick` high, a flatter underside, its top edge
-/// catching the light toward column `lightX` (fading out `reach` away) by up to `rimK`.
+/// catching the light toward column `lightX` (fading out `reach` away) by up to `rimK`. With `only`, it draws just
+/// the columns from `only.x0` to `only.x1`, each faded by the alpha `only.a` gives it (a flash lighting part of it).
 private func r6Bank(_ c: PixelCanvas, x0: Int, x1: Int, y: Int, thick: Int, s: Int, seed: Int, body: Px, rim: Px,
-                    lightX: Int, reach: Int, rimK: Double) {
+                    lightX: Int, reach: Int, rimK: Double,
+                    only: (x0: Int, x1: Int, a: (Int) -> Double)? = nil) {
     guard x1 > x0, thick > 0 else { return }
     let span = Double(x1 - x0), under = lerp(body, C(0x0A0C12), 0.3)
     for col in stride(from: x0, to: x1, by: s) {
+        var body = body, rim = rim, under = under
+        if let only {
+            guard col >= only.x0, col < only.x1 else { continue }
+            let a = only.a(col)
+            guard a > 0 else { continue }
+            body = body.alpha(a); rim = rim.alpha(a); under = under.alpha(a)
+        }
         let u = Double(col - x0) / span
         let env = pow(max(0, sin(Double.pi * u)), 0.6)
         let lump = r6Smooth(Double(col) / Double(9 * s), seed: seed) * 0.65
@@ -830,10 +992,10 @@ private func r6Ruin(_ c: PixelCanvas, _ t: R6Tor) {
     r6Tower(c, x: x - 40 * s, base: b - 2 * s, w: 32 * s, h: 10 * s, fall: 0.1, s: s, seed: 12000, far, windows: [])
     r6Tower(c, x: x + 2 * s, base: b - 2 * s, w: 36 * s, h: 13 * s, fall: -0.2, s: s, seed: 12001, far,
             windows: [(0.3, 0.45, hole)])
-    let fx = x - 6 * s
-    c.circle(fx, b - 4 * s, 46 * s, C(0xFF8A3A, 0.1))
-    c.circle(fx, b - 4 * s, 26 * s, C(0xFF8A3A, 0.14))
-    r6Fire(c, x: fx, y: b - s, s: s, glow: 12 * s)
+    let f = Scenes.weathertopFire(c, t.ground)
+    c.circle(f.x, b - 4 * s, 46 * s, C(0xFF8A3A, 0.1))
+    c.circle(f.x, b - 4 * s, 26 * s, C(0xFF8A3A, 0.14))
+    r6Fire(c, x: f.x, y: f.y, s: s, glow: f.glow)
     r6DeadTree(c, x: x + 25 * s, base: b, h: 36 * s, lean: 0.3, s: s, seed: 12010)
     r6Tower(c, x: x - 46 * s, base: b + 2 * s, w: 12 * s, h: 34 * s, fall: 0.35, s: s, seed: 12020, stone,
             windows: [(0.5, 0.6, hole), (0.5, 0.3, hole)])
@@ -862,12 +1024,8 @@ extension Scenes {
     /// a steep tor of stacked grey-brown slabs, a path wandering up the slope to a ramp cut up the tor, and the ruin
     /// crowning it against the break in the cloud, with the fire glowing through one of its windows.
     static func weathertop(_ c: PixelCanvas, _ g: Int) {
-        let s = unit(g), tall = isTall(c), gg = Double(g)
-        let top = Int(gg * 0.3)
-        let t = R6Tor(x: Int(Double(c.w) * 0.46), top: top, crown: 46 * s, waist: 66 * s,
-                      base: top + Int(Double(g - top) * 0.42), foot: max(60 * s, Int(Double(c.w) * 0.48)), ground: g,
-                      s: s)
-        weathertopSky(c, g, bx: tall ? t.x + Int(Double(c.w) * 0.1) : Int(Double(c.w) * 0.6))
+        let s = unit(g), tall = isTall(c), gg = Double(g), t = weathertopTor(c, g)
+        weathertopSky(c, g)
         if tall {
             weathertopLands(c, g, horizon: Int(gg * 0.64))
             r6Slope(c, t, seed: 11900)
@@ -885,21 +1043,44 @@ extension Scenes {
             weathertopLands(c, g, horizon: g - 18 * s)
             weathertopRing(c, g)
             weathertopFloor(c, g)
-            let fx = Int(Double(c.w) * 0.1)
-            r6Crag(c, x: fx - 13 * s, base: g + s, rx: 6 * s, h: 5 * s, s: s, seed: 9970, r6Rock)
-            r6Crag(c, x: fx + 12 * s, base: g + s, rx: 5 * s, h: 4 * s, s: s, seed: 9971, r6Rock)
-            r6Fire(c, x: fx, y: g, s: s, glow: Int(Double(34 * s) * 1.5))
+            let f = weathertopFire(c, g)
+            r6Crag(c, x: f.x - 13 * s, base: g + s, rx: 6 * s, h: 5 * s, s: s, seed: 9970, r6Rock)
+            r6Crag(c, x: f.x + 12 * s, base: g + s, rx: 5 * s, h: 4 * s, s: s, seed: 9971, r6Rock)
+            r6Fire(c, x: f.x, y: f.y, s: s, glow: f.glow)
         }
     }
 
-    /// The stormy dusk: heavy dark cloud banks, and a pale glowing break in them at column `bx`, lighting their
-    /// edges. A few stars in a rift high on the left.
-    static func weathertopSky(_ c: PixelCanvas, _ g: Int, bx: Int) {
+    /// The tor on tall screens (the strip doesn't draw it, but the break in the cloud is placed from it).
+    fileprivate static func weathertopTor(_ c: PixelCanvas, _ g: Int) -> R6Tor {
+        let s = unit(g), top = Int(Double(g) * 0.3)
+        return R6Tor(x: Int(Double(c.w) * 0.46), top: top, crown: 46 * s, waist: 66 * s,
+                     base: top + Int(Double(g - top) * 0.42), foot: max(60 * s, Int(Double(c.w) * 0.48)), ground: g, s: s)
+    }
+
+    /// The campfire: its middle, the row its stones sit on, and how far its glow reaches. On the strip it burns among
+    /// the rocks at the left; on tall screens inside the ruin on the summit, under the crumbled arch.
+    static func weathertopFire(_ c: PixelCanvas, _ g: Int) -> (x: Int, y: Int, glow: Int) {
+        let s = unit(g)
+        guard isTall(c) else { return (Int(Double(c.w) * 0.1), g, Int(Double(34 * s) * 1.5)) }
+        let t = weathertopTor(c, g)
+        return (t.x - 6 * s, t.top, 12 * s)
+    }
+
+    /// The pale break in the cloud: its middle and how far it reaches each side and up and down.
+    static func weathertopBreak(_ c: PixelCanvas, _ g: Int) -> (x: Int, y: Int, rx: Int, ry: Int) {
+        let s = unit(g), tall = isTall(c), w = Double(c.w), gg = Double(g)
+        let bx = tall ? weathertopTor(c, g).x + Int(w * 0.1) : Int(w * 0.6)
+        return (bx, Int(gg * (tall ? 0.2 : 0.4)), max(2 * s, Int(w * 0.24)), max(2 * s, Int(gg * (tall ? 0.13 : 0.3))))
+    }
+
+    /// The stormy dusk: heavy dark cloud banks, and a pale glowing break in them, lighting their edges. A few stars
+    /// in a rift high on the left.
+    static func weathertopSky(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), w = Double(c.w), gg = Double(g)
         c.gradient(0, g, C(0x1C1E26), C(0x3E3E44), bands: tall ? 10 : 7)
         c.stars(0, Int(gg * 0.18), density: 700, seed: 67, x1: c.w / 4)
         // the break: a ragged pool of pale light, brightest low in it, made of lumps off one another
-        let by = Int(gg * (tall ? 0.2 : 0.4)), rx = max(2 * s, Int(w * 0.24)), ry = max(2 * s, Int(gg * (tall ? 0.13 : 0.3)))
+        let (bx, by, rx, ry) = weathertopBreak(c, g)
         for k in 0..<8 {
             let f = 1 - Double(k) / 9, col = lerp(C(0x6A6458), C(0xFAF2D8), Double(k) / 7)
             for j in 0..<3 {
@@ -909,8 +1090,16 @@ extension Scenes {
                           max(1, Int(Double(ry) * f * 0.7)), col.alpha(0.16))
             }
         }
-        // the banks: x from, x to, row and height (of g), their tone and how strongly their top edge catches the light
-        let banks: [(Double, Double, Double, Double, UInt32, Double)] = tall ? [
+        for (i, b) in weathertopBanks(c).enumerated() {
+            r6Bank(c, x0: Int(w * b.0), x1: Int(w * b.1), y: Int(gg * b.2), thick: max(s, Int(gg * b.3)), s: s,
+                   seed: 11500 + i * 37, body: C(b.4), rim: C(0xE0D2AC), lightX: bx, reach: rx, rimK: b.5)
+        }
+    }
+
+    /// The cloud banks: x from, x to, row and height (of g), their tone and how strongly their top edge catches the
+    /// light.
+    static func weathertopBanks(_ c: PixelCanvas) -> [(Double, Double, Double, Double, UInt32, Double)] {
+        isTall(c) ? [
             (-0.2, 0.52, 0.1, 0.16, 0x111318, 0.4), (0.7, 1.2, 0.08, 0.18, 0x111318, 0.5),
             (0.28, 0.86, 0.02, 0.08, 0x16181E, 0.75), (-0.1, 0.5, 0.31, 0.08, 0x46464C, 0.95),
             (0.7, 1.15, 0.34, 0.12, 0x1A1C22, 0.8), (0.42, 0.9, 0.36, 0.03, 0x54524A, 1),
@@ -920,10 +1109,6 @@ extension Scenes {
             (0.3, 0.88, 0.04, 0.14, 0x16181E, 0.75), (0.02, 0.42, 0.5, 0.12, 0x46464C, 0.95),
             (0.74, 1.12, 0.58, 0.16, 0x1A1C22, 0.8), (0.44, 0.84, 0.68, 0.05, 0x54524A, 1),
         ]
-        for (i, b) in banks.enumerated() {
-            r6Bank(c, x0: Int(w * b.0), x1: Int(w * b.1), y: Int(gg * b.2), thick: max(s, Int(gg * b.3)), s: s,
-                   seed: 11500 + i * 37, body: C(b.4), rim: C(0xE0D2AC), lightX: bx, reach: rx, rimK: b.5)
-        }
     }
 
     /// The dark lands far below: two ranges of low hills, a pale band of dusk light along the horizon.
@@ -1023,5 +1208,94 @@ extension Scenes {
             }
             x += w + Int(big * (0.1 + 0.35 * noise(n + 10))); i += 1
         }
+    }
+
+    /// The pale break in the cloud breathing, ragged scud drifting slowly across high up, now and then lightning
+    /// flickering in the cloud far off (and on tall screens a bolt down to the dark lands), and the campfire
+    /// flickering with sparks going up.
+    static func weathertopLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c), gg = Double(g), w = Double(c.w), twoPi: Double = 2 * Double.pi
+        let br = weathertopBreak(c, g)
+        let breath: Double = 0.5 + 0.5 * sin(t * twoPi / 7)
+        c.ellipse(br.x, br.y + br.ry / 6, br.rx * 2 / 5, br.ry * 2 / 5, C(0xFAF2D8, 0.02 + 0.05 * breath))
+        c.ellipse(br.x, br.y + br.ry / 5, br.rx / 5, br.ry / 4, C(0xFFF8E4, 0.03 + 0.07 * breath))
+        // the scud: row and thickness (of g), length (of the width), and speed in units a second
+        let scud: [(Double, Double, Double, Double)] = tall ? [(0.07, 0.055, 0.3, 6), (0.14, 0.045, 0.22, 9)]
+            : [(0.08, 0.1, 0.28, 5), (0.15, 0.06, 0.2, 8)]
+        for (i, sc) in scud.enumerated() {
+            let len = max(4 * s, Int(w * sc.2)), range = Double(c.w + len)
+            let x0 = Int((noise(i + 9600) * range + t * sc.3 * Double(s)).truncatingRemainder(dividingBy: range)) - len
+            r6Scud(c, x0: x0, len: len, y: Int(gg * sc.0), thick: max(s, Int(gg * sc.1)), s: s, seed: 9610 + i * 37,
+                   lightX: br.x, reach: br.rx)
+        }
+        weathertopLightning(c, g, t)
+        // the fire: its glow swelling and shrinking, its flames leaping, sparks rising
+        let f = weathertopFire(c, g), fr = Int(t * 12), flick = noise(fr * 3 + 9500)
+        c.circle(f.x, f.y - 4 * s, f.glow * 3 / 5 + Int(flick * Double(2 * s)), C(0xFF8A3A, 0.03 + 0.07 * flick))
+        for (k, fl) in r6Flames.enumerated() {
+            let h = max(s, Int(Double(fl.1 * s) * (0.7 + 0.65 * noise(fr * 11 + k * 3 + 9510))))
+            let lean = noise(fr * 11 + k * 3 + 9511) > 0.75 ? (k % 2 == 0 ? s : -s) : 0
+            c.rect(f.x + fl.0 * s, f.y - 2 * s - h / 2, s, h / 2, C(fl.2))
+            c.rect(f.x + fl.0 * s + lean, f.y - 2 * s - h, s, h - h / 2, C(fl.2))
+        }
+        let rise = (tall ? 12 : 22) * s
+        for i in 0..<(tall ? 3 : 5) {
+            let p = r6Phase(t, 1.7 + noise(i + 9520) * 0.8, offset: noise(i + 9521) * 3)
+            let x = f.x + Int((noise(i + 9522) - 0.5) * Double(5 * s)) + Int(sin(p * 5 + Double(i)) * Double(2 * s))
+            c.rect(x, f.y - 9 * s - Int(p * Double(rise)), s, s, C(0xFFC860, 1 - p))
+        }
+    }
+
+    /// Now and then lightning far off: a double flicker lighting up part of a cloud bank low on the left or the
+    /// right from inside, and on tall screens a jagged bolt from it down to the dark lands, beside the hill.
+    static func weathertopLightning(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c), gg = Double(g), w = Double(c.w), period = 9.0
+        let lt = r6Phase(t, period, offset: 2) * period
+        let flash: Double = lt < 0.08 ? 1 : lt < 0.16 ? 0.15 : lt < 0.3 ? 0.75 : lt < 0.6 ? 2.5 * (0.6 - lt) : 0
+        guard flash > 0 else { return }
+        let n = abs(Int(floor((t + 2) / period))) * 7 + 9700, left = noise(n) > 0.5
+        let fx = Int(w * (left ? 0.06 + 0.18 * noise(n + 1) : 0.76 + 0.18 * noise(n + 1)))
+        // the bank it flickers in, lit most around the flash and fading out either side
+        let bi = (tall ? 6 : 0) + (left ? 0 : 1), b = weathertopBanks(c)[bi], reach = max(1, Int(w * 0.14))
+        let fy = Int(gg * b.2)
+        r6Bank(c, x0: Int(w * b.0), x1: Int(w * b.1), y: fy, thick: max(s, Int(gg * b.3)), s: s, seed: 11500 + bi * 37,
+               body: C(0x9AA2BC), rim: C(0xF0F2FF), lightX: fx, reach: reach, rimK: 1,
+               only: (fx - reach, fx + reach, { col in
+                   let k = 1 - Double(abs(col - fx)) / Double(reach)
+                   return k > 0 ? 0.55 * flash * k * k : 0
+               }))
+        guard tall, flash > 0.5 else { return }
+        let bottom = Int(gg * 0.64) - s, steps = 6
+        var x = fx, y = fy + Int(gg * b.3 * 0.2)
+        let dy = max(s, (bottom - y) / steps)
+        for k in 0..<steps {
+            let nx = x + Int((noise(n + 10 + k) - 0.5) * 8) * s
+            r6Line(c, x, y, nx, y + dy, C(0xF0F2FF, flash), s: s)
+            if k == 2 {
+                r6Line(c, nx, y + dy, nx + (left ? 5 : -5) * s, y + dy + dy * 2 / 3, C(0xD8DEF4, 0.6 * flash), s: s)
+            }
+            x = nx; y += dy
+        }
+    }
+}
+
+/// A ragged scrap of dark scud `len` wide from x0 around row y: a lumpy top up to `thick` high and a flatter
+/// underside, its lumps riding along with it, its top edge catching the light near column `lightX`.
+private func r6Scud(_ c: PixelCanvas, x0: Int, len: Int, y: Int, thick: Int, s: Int, seed: Int, lightX: Int,
+                    reach: Int) {
+    guard len > 0, thick > 0 else { return }
+    let body = C(0x0E1016, 0.8)
+    for col in stride(from: 0, to: len, by: s) {
+        let x = x0 + col
+        guard x > -s, x < c.w else { continue }
+        let u = Double(col) / Double(len)
+        let env = pow(max(0, sin(Double.pi * u)), 0.6)
+        let lump = r6Smooth(Double(col) / Double(6 * s), seed: seed) * 0.7 + r6Smooth(Double(col) / Double(2 * s), seed: seed + 50) * 0.3
+        let up = Int(Double(thick) * env * (0.25 + 0.75 * lump)) / s * s
+        let down = Int(Double(thick) * env * 0.25) / s * s
+        guard up + down > 0 else { continue }
+        let near = max(0, 1 - Double(abs(x - lightX)) / Double(max(1, reach)))
+        c.rect(x, y - up, s, up + down, body)
+        c.rect(x, y - up, s, s, lerp(body, C(0xE0D2AC, 0.9), 0.15 + 0.5 * near))
     }
 }

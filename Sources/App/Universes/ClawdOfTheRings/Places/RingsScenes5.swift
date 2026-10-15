@@ -2,15 +2,30 @@ import Foundation
 
 // Isengit, Minas Tiered and the Black Gate-way.
 let ringsScenes5: [Location: Place] = [
-    .isengard: Place(name: "Isengit", panel: 0x1A1A1E, still: Scenes.isengard),
-    .minasTirith: Place(name: "Minas Tiered", panel: 0x20222A, still: Scenes.minasTirith),
-    .blackGate: Place(name: "The Black Gate-way", panel: 0x180E0C, still: Scenes.blackGate),
+    .isengard: Place(name: "Isengit", panel: 0x1A1A1E, still: Scenes.isengard, moving: Scenes.isengardLife),
+    .minasTirith: Place(name: "Minas Tiered", panel: 0x20222A, still: Scenes.minasTirith, moving: Scenes.minasTirithLife),
+    .blackGate: Place(name: "The Black Gate-way", panel: 0x180E0C, still: Scenes.blackGate, moving: Scenes.blackGateLife),
 ]
 
 // MARK: - Shared bits for these scenes
 
 /// `v` clamped into 0...1.
 private func r5Clamp(_ v: Double) -> Double { max(0, min(1, v)) }
+
+/// How far through a repeating `period` (in seconds) the clock `t` is, in 0..<1.
+private func r5Phase(_ t: Double, _ period: Double, offset: Double = 0) -> Double {
+    let v = (t + offset).truncatingRemainder(dividingBy: period) / period
+    return v < 0 ? v + 1 : v
+}
+
+/// A one-row streak of cloud `len` long from (x, y), `h` rows thick, leaving out the columns in `skip` (something
+/// it passes behind).
+private func r5Streak(_ c: PixelCanvas, _ x: Int, _ y: Int, _ len: Int, _ h: Int, _ col: Px, skip: Range<Int>) {
+    let x1 = x + len
+    c.rect(x, y, min(x1, skip.lowerBound) - x, h, col)
+    let x0 = max(x, skip.upperBound)
+    c.rect(x0, y, x1 - x0, h, col)
+}
 
 /// String art drawn with every character `s` pixels square.
 private func r5Stamp(_ c: PixelCanvas, _ x: Int, _ y: Int, _ rows: [String], _ pal: [Character: Px], s: Int) {
@@ -199,12 +214,11 @@ extension Scenes {
         }
     }
 
-    /// The forges among the pits: dark sheds with a lit door and a smoking chimney. `front` picks those in front of
-    /// the tower's foot (all of them on the window's strip).
-    static func isengardForges(_ c: PixelCanvas, _ g: Int, front: Bool) {
-        let s = unit(g), tall = isTall(c), o = isengardTower(c, g)
+    /// The forge sheds: middle of the foot, width and height. Scattered over the ring on tall screens, two on the strip.
+    static func isengardSheds(_ c: PixelCanvas, _ g: Int) -> [(x: Int, y: Int, w: Int, h: Int)] {
+        let s = unit(g), o = isengardTower(c, g)
         var sheds: [(x: Int, y: Int, w: Int, h: Int)] = []
-        if tall {
+        if isTall(c) {
             for i in 0..<max(1, c.w / (90 * s)) {
                 let x = Int(noise(i * 4 + 1590) * Double(c.w)), rim = isengardRim(c, g, x)
                 let room = g - 14 * s - rim
@@ -213,9 +227,17 @@ extension Scenes {
                 let near: Double = Double(y - rim) / Double(max(1, g - rim))
                 sheds.append((x, y, Int((10 + 10 * near) * Double(s)), Int((6 + 6 * near) * Double(s))))
             }
-        } else if front {
+        } else {
             for k in [0.3, 0.86] { sheds.append((Int(Double(c.w) * k), g - 4 * s, 9 * s, 4 * s)) }
         }
+        return sheds
+    }
+
+    /// The forges among the pits: dark sheds with a lit door and a smoking chimney. `front` picks those in front of
+    /// the tower's foot (all of them on the window's strip).
+    static func isengardForges(_ c: PixelCanvas, _ g: Int, front: Bool) {
+        let s = unit(g), tall = isTall(c), o = isengardTower(c, g)
+        let sheds = tall || front ? isengardSheds(c, g) : []
         for f in sheds where (f.y >= o.base) == front || !tall {
             let x0 = f.x - f.w / 2
             r5Smoke(c, x0 + f.w - 3 * s, f.y - f.h - 6 * s, puffs: tall ? 5 : 3, s: s, C(0x262426), seed: f.x + 1600)
@@ -288,13 +310,26 @@ extension Scenes {
         }
     }
 
+    /// The felled trees' stumps: left edge, width and height of each.
+    static func isengardStumpSpots(_ c: PixelCanvas, _ g: Int) -> [(x: Int, w: Int, h: Int)] {
+        let s = unit(g), tall = isTall(c)
+        return (tall ? [0.05, 0.2, 0.42, 0.78, 0.95] : [0.08, 0.47, 0.95]).enumerated().map { (i: Int, k: Double) in
+            (Int(Double(c.w) * k) + Int(noise(i + 1610) * Double(6 * s)), (tall ? 5 : 3) * s,
+             (tall ? 4 : 2) * s + Int(noise(i + 1611) * Double(2 * s)))
+        }
+    }
+
+    /// The White Hand's banner: its pole's column, the pole's top and the pixel size of the hand.
+    static func isengardBanner(_ c: PixelCanvas, _ g: Int) -> (x: Int, top: Int, hs: Int) {
+        let s = unit(g), tall = isTall(c)
+        return (Int(Double(c.w) * 0.16), g - (tall ? 42 : 21) * s, tall ? 2 * s : s)
+    }
+
     /// The stumps of the trees Saruman felled for his fires, and the White Hand on a black banner.
     static func isengardStumps(_ c: PixelCanvas, _ g: Int) {
-        let s = unit(g), tall = isTall(c)
+        let s = unit(g)
         let wood = C(0x2E2219), ring = C(0x7A6448), shade = C(0x1E1610)
-        for (i, k) in (tall ? [0.05, 0.2, 0.42, 0.78, 0.95] : [0.08, 0.47, 0.95]).enumerated() {
-            let x = Int(Double(c.w) * k) + Int(noise(i + 1610) * Double(6 * s)), w = (tall ? 5 : 3) * s
-            let h = (tall ? 4 : 2) * s + Int(noise(i + 1611) * Double(2 * s))
+        for (x, w, h) in isengardStumpSpots(c, g) {
             c.rect(x - s, g - s, w + 2 * s, s, shade)
             c.rect(x, g - h, w, h, wood)
             c.rect(x + w - s, g - h, s, h, shade)
@@ -302,13 +337,69 @@ extension Scenes {
             c.px(x + w / 2, g - h - s, C(0x4E3E2C))
         }
         // the banner
-        let px = Int(Double(c.w) * 0.16), top = g - (tall ? 42 : 21) * s, hs = tall ? 2 * s : s
+        let (px, top, hs) = isengardBanner(c, g)
         c.rect(px, top, s, g - top, C(0x3A2E24))
         c.rect(px - s, top - s, 3 * s, s, C(0x6A6A70))
         let bw = 10 * hs, bh = 13 * hs
         c.rect(px + s, top + s, bw, bh, C(0x101012))
         for k in 0..<(bw / max(1, hs)) where k % 2 == 0 { c.rect(px + s + k * hs, top + s + bh, hs, hs, C(0x101012)) }
         r5Stamp(c, px + s + hs, top + s + 2 * hs, r5Hand, ["#": C(0xF2F0EA)], s: hs)
+    }
+
+    /// The pits' fires flickering and licking up over their rims, sparks rising from them, the forges' doors
+    /// flaring and their chimneys puffing smoke.
+    static func isengardLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c), o = isengardTower(c, g), b = isengardBanner(c, g)
+        let stumps = isengardStumpSpots(c, g)
+        let fire = C(0xE8701E), red = C(0xC8401A)
+        for (n, p) in isengardPits(c, g).enumerated() {
+            // leave the pits alone where the tower, the banner or a stump stands in front of them
+            if p.y < o.base, abs(p.x - o.x) < o.half * 2 + p.rx * 2 { continue }
+            if abs(p.x - b.x - 5 * b.hs) < 5 * b.hs + p.rx + 5 * s { continue }
+            if stumps.contains(where: { p.x + p.rx > $0.x - 2 * s && p.x - p.rx < $0.x + $0.w + 2 * s }),
+               p.y + p.ry > g - 6 * s { continue }
+            let ph = Double(n) * 1.7, fy = p.y + p.ry / 3, fw = max(s, p.rx * 2 / 3)
+            let flick: Double = 0.5 + 0.25 * sin(t * 9 + ph) + 0.25 * sin(t * 13.7 + ph * 2)
+            c.ellipse(p.x, p.y, p.rx * 2, p.ry * 3, C(0xE8501E, (tall ? 0.05 : 0.025) * flick))
+            // tongues of flame, yellow at the root and red at the tip
+            for x in stride(from: p.x - fw + s, to: p.x + fw, by: s) {
+                let j = Double((x - p.x) / s)
+                let n1: Double = 0.5 + 0.5 * sin(t * 8 + j * 1.3 + ph), n2: Double = 0.5 + 0.5 * sin(t * 5.3 - j * 0.9 + ph)
+                let edge: Double = 1 - Double(abs(x - p.x)) / Double(fw)
+                let lick = Int(n1 * n2 * edge * Double(p.ry + (tall ? 3 : 1) * s))
+                guard lick > 0 else { continue }
+                c.rect(x, fy - lick, s, lick, fire.alpha(0.75))
+                c.rect(x, fy - lick, s, min(lick, s), red.alpha(0.8))
+            }
+            c.ellipse(p.x + Int(sin(t * 6 + ph) * Double(s)), fy, max(1, p.rx / 3), max(1, p.ry / 4),
+                      C(0xFFE08A, 0.25 + 0.4 * flick))
+            // sparks, cooling from yellow to red as they climb
+            let rise = Double(tall ? p.ry * 6 + 14 * s : 13 * s)
+            for k in 0..<(tall ? 2 + p.rx / (3 * s) : 2) {
+                let period: Double = 1.4 + noise(n * 13 + k + 1900) * 1.6
+                let q = r5Phase(t, period, offset: noise(n * 13 + k + 1910) * period)
+                let x = p.x + Int((noise(n * 13 + k + 1920) - 0.5) * Double(p.rx)) + Int(q * Double(3 * s))
+                    + Int(sin(q * 9 + Double(k)) * Double(s))
+                let y = p.y - p.ry / 2 - Int(q * rise)
+                c.rect(x, y, s, s, C(q < 0.4 ? 0xFFD070 : 0xE8701E, 1 - q * q))
+            }
+        }
+        // the forges: the fire in each door flaring, smoke puffing from each chimney
+        for f in isengardSheds(c, g) {
+            let x0 = f.x - f.w / 2, dw = max(s, f.w / 4), dh = max(s, f.h / 2), seed = Double(f.x)
+            let glow: Double = 0.5 + 0.3 * sin(t * 7 + seed) + 0.2 * sin(t * 11.3 + seed * 0.7)
+            let gh = max(1, Int(Double(dh) * (0.3 + 0.5 * glow)))
+            c.ellipse(x0 + f.w / 3, f.y - dh / 2, dw * 2, dh, C(0xE8701E, 0.06 * glow))
+            c.rect(x0 + f.w / 3 - dw / 2, f.y - gh, dw, gh, C(0xFFD070, 0.2 + 0.4 * glow))
+            let cx = x0 + f.w - 3 * s, cy = f.y - f.h - 6 * s, rise = (tall ? 34 : 12) * s
+            for i in 0..<4 {
+                let q = r5Phase(t, 5, offset: Double(i) * 1.25 + noise(f.x + 1930) * 5)
+                let x = cx + Int(q * Double((tall ? 10 : 6) * s) + sin(q * 4 + Double(i)) * Double(s))
+                let y = cy - s - Int(q * Double(rise)), r = s + Int(q * Double((tall ? 5 : 2) * s))
+                c.circle(x + s, y + s, r, C(0x1E1C1E, 0.3 * (1 - q)))
+                c.circle(x, y, r, C(0x3A3638, 0.5 * (1 - q)))
+            }
+        }
     }
 }
 
@@ -417,6 +508,33 @@ extension Scenes {
         }
     }
 
+    /// The middles of tier `i`'s bastions: one at each end, and two more along it on tall screens.
+    static func minasTirithBastions(_ c: PixelCanvas, _ g: Int, _ i: Int) -> [Int] {
+        let s = unit(g), m = minasTirithCity(c, g), t = minasTirithTier(c, g, i)
+        var towers = [m.x - t.half, m.x + t.half - 3 * s]
+        if isTall(c), i < 6 { towers += [m.x - t.half * 11 / 20, m.x + t.half * 11 / 20] }
+        return towers
+    }
+
+    /// Every pennant: its pole's foot, its length and its colour. The bastions' on tall screens, and always the
+    /// White Tower's banner.
+    static func minasTirithPennants(_ c: PixelCanvas, _ g: Int) -> [(x: Int, y: Int, len: Int, col: Px)] {
+        let s = unit(g), tall = isTall(c), m = minasTirithCity(c, g)
+        var out: [(x: Int, y: Int, len: Int, col: Px)] = []
+        if tall {
+            for i in 0...6 {
+                for x in minasTirithBastions(c, g, i) {
+                    let top = minasTirithWallTop(c, g, i, x) - 6 * s
+                    let bottom = i == 0 ? m.foot : minasTirithWallTop(c, g, i - 1, x)
+                    guard bottom > top else { continue }
+                    out.append((x, top - s, 6 * s, i % 2 == 0 ? C(0x1C1C26) : C(0xF6F4EE)))
+                }
+            }
+        }
+        out.append((m.x - s / 2, m.tip + (tall ? 8 : 3) * s, (tall ? 12 : 5) * s, C(0x1C1C26)))
+        return out
+    }
+
     /// One tier's wall: white stone, shading off round its curve at either end, crenellated along its top, with a
     /// bastion at each end (and more along it on tall screens) flying a pennant.
     static func minasTirithWall(_ c: PixelCanvas, _ g: Int, _ i: Int) {
@@ -434,10 +552,8 @@ extension Scenes {
             if ((x - m.x) % (3 * s) + 3 * s) % (3 * s) < s { c.rect(x, top - s, 1, s, lerp(face, shade, band * 0.5)) }
         }
         // bastions
-        var towers = [m.x - t.half, m.x + t.half - 3 * s]
-        if tall, i < 6 { towers += [m.x - t.half * 11 / 20, m.x + t.half * 11 / 20] }
         let tw = (tall ? 6 : 3) * s, rise = (tall ? 6 : 2) * s
-        for x in towers {
+        for x in minasTirithBastions(c, g, i) {
             let top = minasTirithWallTop(c, g, i, x) - rise
             let bottom = i == 0 ? m.foot : minasTirithWallTop(c, g, i - 1, x)
             guard bottom > top else { continue }
@@ -580,6 +696,59 @@ extension Scenes {
         }
         minasTirithPennant(c, g, m.x - s / 2, m.tip + pole, len: (tall ? 12 : 5) * s, C(0x1C1C26))
     }
+
+    /// A pennant as `minasTirithPennant` draws it, rippling in the wind: each column of the cloth lifted or dropped
+    /// by a wave running out along it, the fold it leaves behind showing in `fold`, the tip flicking out further.
+    static func minasTirithFlutter(_ c: PixelCanvas, _ g: Int, _ x: Int, _ y: Int, len: Int, _ col: Px, fold: Px,
+                                   t: Double, seed: Double) {
+        let s = unit(g), pole = max(2 * s, len * 2 / 3), h = max(s, len / 3)
+        let flick = Int((0.5 + 0.5 * sin(t * 3.1 + seed)) * Double(2 * s))
+        for j in 0..<max(0, len + flick) {
+            let hh = max(1, h * max(0, len - j) / max(1, len))
+            let at: Double = Double(j) / Double(max(1, 2 * s))
+            let y0 = y - pole + Int(sin(at) * Double(s) * 0.6) + (h - hh) / 2
+            let reach: Double = Double(j + s) / Double(max(1, len))
+            let d = Int((sin(at * 1.4 - t * 7 + seed) * Double(s) * (0.5 + reach)).rounded())
+            if j < len { for yy in y0..<(y0 + hh) where yy < y0 + d || yy >= y0 + d + hh { c.px(x + s + j, yy, fold) } }
+            c.rect(x + s + j, y0 + d, 1, hh, col)
+        }
+    }
+
+    /// The pennants and the White Tower's banner rippling, thin clouds drifting by behind the tower, and now and then
+    /// a bird flying in to circle the tower's top before flying on.
+    static func minasTirithLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c), m = minasTirithCity(c, g)
+        let twoPi: Double = 2 * Double.pi
+        // clouds, high up, passing behind the tower and its banner
+        let skip = (m.x - (tall ? 8 : 4) * s)..<(m.x + (tall ? 18 : 9) * s)
+        let yMax = max(3 * s, m.citadel - (tall ? 16 : 10) * s)
+        for i in 0..<(tall ? 5 : 3) {
+            let len = (tall ? 40 + Int(noise(i * 5 + 1950) * 40.0) : 24 + Int(noise(i * 5 + 1950) * 20.0)) * s
+            let speed: Double = (1.5 + noise(i * 5 + 1951) * 2.5) * Double(s), span = Double(c.w + len * 2)
+            let x = Int((noise(i * 5 + 1952) * span + t * speed).truncatingRemainder(dividingBy: span)) - len
+            let y = 2 * s + Int(noise(i * 5 + 1953) * Double(max(1, yMax - 2 * s)))
+            r5Streak(c, x, y, len, s, C(0xFFF2EA, 0.4), skip: skip)
+            r5Streak(c, x + len / 5, y - s, len / 2, s, C(0xFFF2EA, 0.3), skip: skip)
+            r5Streak(c, x + len / 8, y + s, len * 3 / 4, s, C(0xE8B0A8, 0.3), skip: skip)
+        }
+        for (k, p) in minasTirithPennants(c, g).enumerated() {
+            let dark = p.col.r < 0x80
+            minasTirithFlutter(c, g, p.x, p.y, len: p.len, p.col, fold: dark ? C(0x4A5068) : C(0xBCB8B0), t: t,
+                               seed: Double(k) * 2.3)
+        }
+        // the bird: in from the left, once round the tower's top, and away to the right
+        let fly: Double = 12, u = r5Phase(t, 22, offset: 3) * 22 / fly
+        guard u < 1 else { return }
+        let rx = Double((tall ? 22 : 9) * s), ry = Double((tall ? 8 : 3) * s)
+        let cy = Double(m.tip + (tall ? 6 : 3) * s)
+        let along: Double = u < 0.4 ? u / 0.4 * 0.5 : u < 0.6 ? 0.5 : 0.5 + (u - 0.6) / 0.4 * 0.5
+        let a: Double = u < 0.4 || u >= 0.6 ? 0 : (u - 0.4) / 0.2 * twoPi
+        let bx = Int(Double(-8 * s) + along * Double(c.w + 16 * s) + rx * sin(a))
+        let by = Int(cy + ry * cos(a) + sin(t * 2) * Double(s))
+        let bs = tall ? 2 * s : s
+        let wings = Int(t * 5) % 2 == 0 ? ["#...#", ".#.#.", "..#.."] : [".....", "##.##", "..#.."]
+        r5Stamp(c, bx - 2 * bs, by - bs, wings, ["#": C(0x3A3E4E)], s: bs)
+    }
 }
 
 // MARK: - The Black Gate-way
@@ -669,19 +838,38 @@ extension Scenes {
         }
     }
 
+    /// Tooth `side` (-1 left, 1 right) `k` of the way down from its tip to its foot: its middle, leaning in over the
+    /// gate towards the tip, and its half-width, spreading at the foot.
+    static func blackGateToothAt(_ c: PixelCanvas, _ g: Int, side: Int, _ k: Double) -> (cx: Int, hw: Int) {
+        let gt = blackGateGate(c, g), th = blackGateTeeth(c, g)
+        var hw = Int(Double(th.half) * pow(k, 0.55))
+        if k > 0.85 { hw += Int((k - 0.85) * 3 * Double(th.half)) }
+        return (gt.x + side * th.dx - side * Int(pow(1 - k, 2) * (Double(th.half) * 0.9)), hw)
+    }
+
+    /// Tooth `side`'s red windows: the big one under its crown first, then the slits further down.
+    static func blackGateWindows(_ c: PixelCanvas, _ g: Int, side: Int) -> [(x: Int, y: Int, w: Int, h: Int)] {
+        let s = unit(g), tall = isTall(c), th = blackGateTeeth(c, g)
+        let span = max(1, th.base - th.tip), cy = th.tip + span / 3
+        let wy = cy + (tall ? 6 : 3) * s
+        let crown = blackGateToothAt(c, g, side: side, Double(cy - th.tip) / Double(span))
+        var out: [(x: Int, y: Int, w: Int, h: Int)] = [(crown.cx - s, wy, 2 * s, (tall ? 3 : 2) * s)]
+        for i in 0..<(tall ? 5 : 2) {
+            let y = wy + (tall ? 18 : 9) * s * (i + 1)
+            guard y < th.base - 4 * s else { continue }
+            let a = blackGateToothAt(c, g, side: side, Double(y - th.tip) / Double(span))
+            out.append((a.cx + Int((noise(i + side * 7 + 1840) - 0.5) * Double(a.hw)), y, s, 2 * s))
+        }
+        return out
+    }
+
     /// One of the Teeth: a fang-like tower tapering to a point and leaning in over the gate, a spiked crown a third
     /// of the way down, spurs along its flanks, red slit windows, and its foot spreading into the rock.
     static func blackGateTooth(_ c: PixelCanvas, _ g: Int, side: Int) {
-        let s = unit(g), tall = isTall(c), gt = blackGateGate(c, g), th = blackGateTeeth(c, g)
-        let x = gt.x + side * th.dx
+        let s = unit(g), tall = isTall(c), th = blackGateTeeth(c, g)
         let black = C(0x0B0808), lit = C(0x6A2C1A), rim = C(0x241210)
-        let lean = Double(th.half) * 0.9
-        func centre(_ k: Double) -> Int { x - side * Int(pow(1 - k, 2) * lean) }
-        func halfAt(_ k: Double) -> Int {
-            var hw = Int(Double(th.half) * pow(k, 0.55))
-            if k > 0.85 { hw += Int((k - 0.85) * 3 * Double(th.half)) }
-            return hw
-        }
+        func centre(_ k: Double) -> Int { blackGateToothAt(c, g, side: side, k).cx }
+        func halfAt(_ k: Double) -> Int { blackGateToothAt(c, g, side: side, k).hw }
         let span = max(1, th.base - th.tip)
         for y in th.tip..<max(th.tip, th.base) {
             let k = Double(y - th.tip) / Double(span), cx = centre(k), hw = halfAt(k)
@@ -710,14 +898,9 @@ extension Scenes {
             for j in 0..<max(1, spike / s) { c.rect(sx, cy - (j + 1) * s, max(s, (spike / s - j) * s / 2), s, black) }
         }
         // the red window under the crown, and slits further down
-        let wy = cy + (tall ? 6 : 3) * s
-        c.ellipse(ccx, wy + s, 4 * s, 3 * s, C(0xC8401A, 0.18))
-        c.rect(ccx - s, wy, 2 * s, (tall ? 3 : 2) * s, C(0xE8501E))
-        for i in 0..<(tall ? 5 : 2) {
-            let y = wy + (tall ? 18 : 9) * s * (i + 1)
-            guard y < th.base - 4 * s else { continue }
-            let k = Double(y - th.tip) / Double(span)
-            c.rect(centre(k) + Int((noise(i + side * 7 + 1840) - 0.5) * Double(halfAt(k))), y, s, 2 * s, C(0xC8401A, 0.85))
+        for (i, w) in blackGateWindows(c, g, side: side).enumerated() {
+            if i == 0 { c.ellipse(ccx, w.y + s, 4 * s, 3 * s, C(0xC8401A, 0.18)) }
+            c.rect(w.x, w.y, w.w, w.h, i == 0 ? C(0xE8501E) : C(0xC8401A, 0.85))
         }
     }
 
@@ -797,6 +980,43 @@ extension Scenes {
             let x = Int(noise(i * 3 + 1860) * Double(c.w)), y = y0 + Int(noise(i * 3 + 1861) * Double(room + 6 * s))
             let len = (6 + Int(noise(i * 3 + 1862) * 8.0)) * s, lean = noise(i * 3 + 1863) > 0.5 ? 1 : -1
             for k in 0..<max(0, len / s) { c.rect(x + lean * (k / 3) * s, y - k * s, s, s, C(0x2A1E18)) }
+        }
+    }
+
+    /// The red glow over the pass breathing, the Teeth's windows pulsing, and ash drifting down.
+    static func blackGateLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
+        let s = unit(g), tall = isTall(c), gt = blackGateGate(c, g)
+        let twoPi: Double = 2 * Double.pi
+        // the glow: only in the sky over the gate, between the mountains and above the rampart's spikes
+        let breath: Double = 0.5 + 0.5 * sin(t * twoPi / 6)
+        let clip = gt.top - (tall ? 16 : 9) * s
+        for (k, a) in [(1.0, 0.025), (0.75, 0.025), (0.5, 0.03)] {
+            let rx = Double(gt.half - 2 * s) * k, ry = max(1, Int(Double(gt.top) * 0.9 * k))
+            let y0 = max(0, gt.top - ry)
+            for y in y0..<max(y0, clip) {
+                let dy = Double(gt.top - y) / Double(ry), w = Int(rx * max(0, 1 - dy * dy).squareRoot())
+                c.rect(gt.x - w, y, w * 2, 1, C(0xE0581E, a * breath))
+            }
+        }
+        // the windows, each pulsing in its own time
+        for side in [-1, 1] {
+            for (i, w) in blackGateWindows(c, g, side: side).enumerated() {
+                let p: Double = 0.5 + 0.5 * sin(t * twoPi / 3.5 + Double(i) * 1.9 + Double(side) * 0.8)
+                if i == 0 {
+                    c.ellipse(w.x + w.w / 2, w.y + s, 5 * s, 4 * s, C(0xE8501E, 0.06 + 0.14 * p))
+                    c.rect(w.x, w.y, w.w, w.h, C(0xFFB03A, 0.15 + 0.6 * p))
+                } else {
+                    c.rect(w.x, w.y, w.w, w.h, C(0xFF7A30, 0.1 + 0.5 * p))
+                }
+            }
+        }
+        // ash, settling out of the air well above the crew's heads
+        let low = max(1, tall ? g - 14 * s : gt.base - s)
+        for i in 0..<(tall ? 60 : 22) {
+            let fall: Double = (4 + noise(i * 4 + 1960) * 6) * Double(s), drift: Double = (2 + noise(i * 4 + 1961) * 4) * Double(s)
+            let x = Int((noise(i * 4 + 1962) * Double(c.w) + t * drift).truncatingRemainder(dividingBy: Double(max(1, c.w))))
+            let y = Int((noise(i * 4 + 1963) * Double(low) + t * fall).truncatingRemainder(dividingBy: Double(low)))
+            c.rect(x + Int(sin(t * 1.5 + Double(i)) * Double(s)), y, s, s, C(noise(i * 4 + 1964) > 0.7 ? 0xB8A090 : 0x5A4A44, 0.55))
         }
     }
 }
