@@ -247,6 +247,42 @@ for (i, s) in sounds.enumerated() where style == 1 {
 
 // MARK: The other styles
 
+/// Pop-art panel colours: a base and a lighter one for its pattern.
+let pops: [(UInt32, UInt32)] = [(0xFFD62E, 0xFFF08A), (0xE8322E, 0xFF7A70), (0x2EA8E8, 0x8AD8FF), (0x7CC84A, 0xB8EC88),
+                                 (0xFF7A1E, 0xFFC27A), (0xA65AE8, 0xD2A8FF), (0x2ED8D0, 0xA0F6F0), (0xF2408A, 0xFF9AC4)]
+
+/// A pop-art fill over `r`: 0 diagonal stripes, 1 halftone dots, 2 a sunburst, 3 swirling rays, 4 dots fading up.
+func popFill(_ r: CGRect, kind: Int, pair: (UInt32, UInt32)) {
+    ctx.setFillColor(hex(pair.0)); ctx.fill(r)
+    let light = hex(pair.1)
+    switch kind {
+    case 0:
+        var x = r.minX - r.height
+        while x < r.maxX { ctx.move(to: CGPoint(x: x, y: r.minY)); ctx.addLine(to: CGPoint(x: x + r.height, y: r.maxY)); x += 30 }
+        ctx.setStrokeColor(light); ctx.setLineWidth(12); ctx.strokePath()
+    case 1:
+        halftone(r, color: light, cell: 12) { _ in 0.55 }
+    case 2, 3:
+        let f = CGPoint(x: r.midX, y: r.midY), far = hypot(r.width, r.height)
+        for k in 0..<40 where k % 2 == 0 {
+            let a0 = CGFloat(k) / 40 * 2 * .pi, a1 = CGFloat(k + 1) / 40 * 2 * .pi
+            if kind == 2 {
+                ctx.move(to: f); ctx.addLine(to: CGPoint(x: f.x + cos(a0) * far, y: f.y + sin(a0) * far))
+                ctx.addLine(to: CGPoint(x: f.x + cos(a1) * far, y: f.y + sin(a1) * far)); ctx.closePath()
+            } else {   // curving as they go out
+                ctx.move(to: f)
+                ctx.addQuadCurve(to: CGPoint(x: f.x + cos(a0 + 0.6) * far, y: f.y + sin(a0 + 0.6) * far),
+                                 control: CGPoint(x: f.x + cos(a0) * far * 0.5, y: f.y + sin(a0) * far * 0.5))
+                ctx.addLine(to: CGPoint(x: f.x + cos(a1 + 0.6) * far, y: f.y + sin(a1 + 0.6) * far))
+                ctx.addQuadCurve(to: f, control: CGPoint(x: f.x + cos(a1) * far * 0.5, y: f.y + sin(a1) * far * 0.5))
+            }
+        }
+        ctx.setFillColor(light); ctx.fillPath()
+    default:
+        halftone(r, color: light, cell: 10) { q in 0.15 + 0.6 * (q.y - r.minY) / r.height }
+    }
+}
+
 /// A comic panel's sky: a gradient, rays from `focus`, halftone shading.
 func panelSky(_ r: CGRect, _ sky: (UInt32, UInt32), focus: CGPoint, seed: Int) {
     let g = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [hex(sky.0), hex(sky.1)] as CFArray, locations: [0, 1])!
@@ -274,6 +310,7 @@ func grid(_ n: Int, in area: CGRect, perRow: Int, gap: CGFloat) -> [CGRect] {
 }
 
 let full = CGRect(x: 0, y: 0, width: W, height: H)
+var titleW: CGFloat? = nil
 var titleY: CGFloat = 522, titleH: CGFloat = 138, titleFaces: [(UInt32, UInt32)] =
     [(0xFFFFFF, 0xFF8A8A), (0xFFFFFF, 0x8FB8FF), (0xFFF3B0, 0xFFC21A), (0xFFFFFF, 0x8AB0FF), (0xE8FFF0, 0x6AE88A)]
 
@@ -427,12 +464,128 @@ case 6:   // a comic page: a masthead, then panels of uneven widths with slanted
         }
     }
     titleY = 556; titleH = 96; titleFaces = [(0xFFF3B0, 0xFFC21A)]
+case 7, 8:   // pop-art panels: 7 rows with the title band across the middle; 8 tilted rows, the title in a big centre panel
+    ctx.setFillColor(hex(0xFDFCF6)); ctx.fill(full)
+    let n = verses.count, edge: CGFloat = 16, gut: CGFloat = 12
+    /// A band across the page whose bottom and top edges are straight lines (y at the left and right edges).
+    struct Band { let b0: CGFloat, b1: CGFloat, t0: CGFloat, t1: CGFloat
+        func bottom(_ x: CGFloat) -> CGFloat { b0 + (b1 - b0) * x / W }
+        func top(_ x: CGFloat) -> CGFloat { t0 + (t1 - t0) * x / W } }
+    /// A band split into panels by `weights`, the inner gutters leaning alternately.
+    func split(_ band: Band, _ weights: [CGFloat], lean: CGFloat) -> [CGPath] {
+        let total = weights.reduce(0, +), free = W - edge * 2 - gut * CGFloat(weights.count - 1)
+        var x = edge, out: [CGPath] = []
+        for (k, w) in weights.enumerated() {
+            let wpx = free * w / total
+            let l = k == 0 ? 0 : (k % 2 == 0 ? lean : -lean), r = k == weights.count - 1 ? 0 : ((k + 1) % 2 == 0 ? lean : -lean)
+            let x0b = x - l, x0t = x + l, x1b = x + wpx - r, x1t = x + wpx + r
+            let path = CGMutablePath()
+            path.addLines(between: [CGPoint(x: x0b, y: band.bottom(x0b)), CGPoint(x: x1b, y: band.bottom(x1b)),
+                                    CGPoint(x: x1t, y: band.top(x1t)), CGPoint(x: x0t, y: band.top(x0t))])
+            path.closeSubpath(); out.append(path)
+            x += wpx + gut
+        }
+        return out
+    }
+    var slots: [CGPath] = [], titlePanel: CGPath
+    if style == 7 {
+        let topN = (n + 1) / 2, botN = n - topN
+        let top = Band(b0: 446, b1: 460, t0: H - edge, t1: H - edge)
+        let mid = Band(b0: 300, b1: 286, t0: 434, t1: 448)
+        let bot = Band(b0: 88, b1: 88, t0: 288, t1: 274)
+        slots = split(top, (0..<topN).map { [1.1, 0.9, 1.0, 1.05][$0 % 4] }, lean: 14)
+        titlePanel = split(mid, [1], lean: 0)[0]
+        if botN > 0 { slots += split(bot, (0..<botN).map { [0.95, 1.1, 1.0, 0.9][$0 % 4] }, lean: 14) }
+    } else {
+        let flanks = n >= 3 ? 2 : 0, rest = n - flanks, topN = (rest + 1) / 2, botN = rest - topN
+        let top = Band(b0: 462, b1: 494, t0: H - edge, t1: H - edge)
+        let mid = Band(b0: 250, b1: 282, t0: 450, t1: 482)
+        let bot = Band(b0: 88, b1: 88, t0: 238, t1: 270)
+        if topN > 0 { slots = split(top, (0..<topN).map { [0.8, 1.3, 1.0][$0 % 3] }, lean: 18) }
+        let middle = split(mid, flanks == 2 ? [0.8, 2.2, 0.8] : [1], lean: 18)
+        titlePanel = flanks == 2 ? middle[1] : middle[0]
+        if flanks == 2 { slots += [middle[0], middle[2]] }
+        if botN > 0 { slots += split(bot, (0..<botN).map { [1.2, 0.9, 1.0][$0 % 3] }, lean: 18) }
+    }
+    for (i, (v, path)) in zip(verses, slots).enumerated() {
+        let r = path.boundingBox
+        ctx.saveGState(); ctx.addPath(path); ctx.clip()
+        popFill(r, kind: i % 5, pair: pops[i % pops.count])
+        let pp = min(3.8, r.height * 0.8 / 44)
+        fight(v.hero, v.villain, centre: r.midX, dist: 42, p: pp, t: 0.42, floor: r.minY + 22)
+        ctx.restoreGState()
+        ctx.addPath(path); ctx.setStrokeColor(inkColor); ctx.setLineWidth(5); ctx.strokePath()
+    }
+    ctx.saveGState(); ctx.addPath(titlePanel); ctx.clip()
+    popFill(titlePanel.boundingBox, kind: 2, pair: (0xE8322E, 0xFF6A5A))
+    ctx.restoreGState()
+    ctx.addPath(titlePanel); ctx.setStrokeColor(inkColor); ctx.setLineWidth(5); ctx.strokePath()
+    let tb = titlePanel.boundingBox
+    titleY = tb.midY; titleH = min(120, tb.height * 0.72); titleW = tb.width * 0.84; titleFaces = [(0xFFF3B0, 0xFFC21A)]
+case 9:   // a starburst: a wedge of colour per universe round the title, halftone between, clouds in the corners
+    ctx.setFillColor(hex(0xFFFFFF)); ctx.fill(full)
+    halftone(full, color: hex(0xB8B8C0), cell: 11) { _ in 0.42 }
+    let n = verses.count, c = CGPoint(x: W / 2, y: H / 2 + 20), far: CGFloat = 1600
+    let gapA: CGFloat = 0.07, start: CGFloat = .pi / 2
+    for (i, v) in verses.enumerated() {
+        let a0 = start + CGFloat(i) / CGFloat(n) * 2 * .pi + gapA / 2, a1 = start + CGFloat(i + 1) / CGFloat(n) * 2 * .pi - gapA / 2
+        let wedge = CGMutablePath()
+        wedge.move(to: c); wedge.addLine(to: CGPoint(x: c.x + cos(a0) * far, y: c.y + sin(a0) * far))
+        wedge.addLine(to: CGPoint(x: c.x + cos(a1) * far, y: c.y + sin(a1) * far)); wedge.closeSubpath()
+        ctx.saveGState(); ctx.addPath(wedge); ctx.clip()
+        let pair = pops[i % pops.count]
+        ctx.setFillColor(hex(pair.0)); ctx.fill(full)
+        for k in 0..<60 {   // speed lines out from the middle
+            let a = a0 + (a1 - a0) * rnd(k * 7 + i * 13), r0 = 140 + rnd(k * 7 + 1) * 200
+            ctx.move(to: CGPoint(x: c.x + cos(a) * r0, y: c.y + sin(a) * r0)); ctx.addLine(to: CGPoint(x: c.x + cos(a) * far, y: c.y + sin(a) * far))
+        }
+        ctx.setStrokeColor(hex(pair.1, 0.55)); ctx.setLineWidth(3); ctx.strokePath()
+        halftone(full, color: hex(0xFFFFFF, 0.35), cell: 10) { q in max(0, 0.7 - hypot(q.x - c.x, q.y - c.y) / 420) }
+        for k in 0..<4 {   // sparkles
+            let a = a0 + (a1 - a0) * (0.2 + 0.6 * rnd(k * 5 + i * 31)), r = 260 + rnd(k * 5 + i * 31 + 1) * 380
+            let sp = CGPoint(x: c.x + cos(a) * r, y: c.y + sin(a) * r * 0.62), sz: CGFloat = 7 + rnd(k + i * 3) * 6
+            let star = CGMutablePath()
+            star.addLines(between: [CGPoint(x: sp.x, y: sp.y + sz), CGPoint(x: sp.x + sz * 0.25, y: sp.y + sz * 0.25), CGPoint(x: sp.x + sz, y: sp.y),
+                                    CGPoint(x: sp.x + sz * 0.25, y: sp.y - sz * 0.25), CGPoint(x: sp.x, y: sp.y - sz), CGPoint(x: sp.x - sz * 0.25, y: sp.y - sz * 0.25),
+                                    CGPoint(x: sp.x - sz, y: sp.y), CGPoint(x: sp.x - sz * 0.25, y: sp.y + sz * 0.25)])
+            star.closeSubpath(); ctx.addPath(star); ctx.setFillColor(hex(0xFFFFFF)); ctx.fillPath()
+        }
+        ctx.restoreGState()
+        ctx.addPath(wedge); ctx.setStrokeColor(inkColor); ctx.setLineWidth(3); ctx.strokePath()
+    }
+    // The fighters, out along their wedges, drawn over the edges.
+    for (i, v) in verses.enumerated() {
+        let mid = start + (CGFloat(i) + 0.5) / CGFloat(n) * 2 * .pi
+        let pp: CGFloat = n <= 6 ? 2.7 : 2.2
+        let fx = c.x + cos(mid) * 470, floorY = min(476, max(100, c.y + sin(mid) * 230 - 18 * pp))
+        fight(v.hero, v.villain, centre: fx, dist: 38, p: pp, t: 0.42, floor: floorY)
+    }
+    // Clouds puffing in at the corners.
+    for (cx, cy, fl) in [(0.0, H, 1.0), (W, H, -1.0), (0.0, 0.0, 1.0), (W, 0.0, -1.0)] as [(CGFloat, CGFloat, CGFloat)] {
+        for k in 0..<5 {
+            let r = 34 + rnd(k * 3 + Int(cx)) * 26
+            let px = cx + fl * CGFloat(k) * 40 - fl * 20, py = cy + (cy > 0 ? -1 : 1) * (10 + rnd(k * 3 + 1) * 34)
+            ctx.addEllipse(in: CGRect(x: px - r, y: py - r, width: r * 2, height: r * 2))
+        }
+        ctx.setFillColor(hex(0xFFFFFF)); ctx.drawPath(using: .fill)
+    }
+    // The title in a jagged white burst in the middle.
+    let bp = CGMutablePath(), spikes = 18
+    for k in 0..<(spikes * 2) {
+        let a = CGFloat(k) / CGFloat(spikes * 2) * 2 * .pi, rr: CGFloat = k % 2 == 0 ? 1 : 0.78
+        let pt = CGPoint(x: c.x + cos(a) * 270 * rr * (0.9 + 0.2 * rnd(k)), y: c.y + sin(a) * 128 * rr * (0.9 + 0.2 * rnd(k + 40)))
+        if k == 0 { bp.move(to: pt) } else { bp.addLine(to: pt) }
+    }
+    bp.closeSubpath()
+    ctx.addPath(bp); ctx.setFillColor(hex(0xFFFFFF)); ctx.fillPath()
+    ctx.addPath(bp); ctx.setStrokeColor(inkColor); ctx.setLineWidth(6); ctx.setLineJoin(.round); ctx.strokePath()
+    titleY = c.y; titleH = 92; titleW = 470; titleFaces = [(0xFFE36B, 0xFF6A2E)]
 default:
     break
 }
 
 // The name, across all the panels.
-word("CLAWD CLASH", at: CGPoint(x: 640, y: titleY), width: 1060 * titleH / 138, height: titleH, angle: style == 1 ? 0.035 : 0.02, depth: 12,
+word("CLAWD CLASH", at: CGPoint(x: 640, y: titleY), width: titleW ?? 1060 * titleH / 138, height: titleH, angle: style == 1 ? 0.035 : 0.02, depth: 12,
      faces: titleFaces)
 
 // The gutters, over everything, cutting through the name too.
