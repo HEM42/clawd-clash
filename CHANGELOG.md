@@ -26,7 +26,7 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 - **A Clawd Files trailer**: `REEL=files build/renderpromo video promo` renders `promo/the-clawd-files-promo.mp4` (49 s). It opens on the universe's own opening-titles transition and THE CLAWD FILES flickering into place in green, then Bellefleur Woods at night: flashlights in the trees, a saucer taking Fox Clawder for a little missing time, and the Cigarette-Smoking Clawd lighting up in the dark. The score is written for it, in the manner of the show's theme but with our own notes.
 - **Clawd Clash's social preview** (`docs/social-preview.png`, `Tools/MakeSocial`) says "Your AI coding sessions as a pixel-art battle across many universes" instead of naming three of them.
 - **The app icon has a flying saucer in it**, from The Clawd Files, hovering in the top-left sky with its beam on, so every universe is on the icon.
-- **Typed captions.** In The Clawd Files the place's name types itself in a letter at a time once a transition is over, with where it is after it ("THE X-FILES OFFICE · FBI HEADQUARTERS, WASHINGTON, D.C."), the way every scene opens in the show: in the window's title bar and on two lines in the screen saver's corner.
+- **Typed captions.** In The Clawd Files the place's name types itself in a letter at a time once a transition is over, with where it is after it ("THE X-FILES OFFICE · FBI HEADQUARTERS, WASHINGTON, D.C."), the way every scene opens in the show: in the window's title bar and on two lines in the screen saver's corner, on a dark see-through box like subtitles so it reads over any ceiling.
 
 ## 3.2.0 (2026-10-15)
 
