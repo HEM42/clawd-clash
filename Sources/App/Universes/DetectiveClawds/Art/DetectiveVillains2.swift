@@ -7,7 +7,7 @@ let dcVillains2: [DCVillain: Persona] = [
                   draw: drawTalia),
     .deathstroke: Persona(name: "Deathstrike", weapon: .saber, headTop: 21, signature: 3.2, callout: "A deal's a deal.",
                   draw: drawDeathstroke),
-    .madHatter: Persona(name: "The Mad Milliner", weapon: .lightning, magic: Magic(core: C(0xFFF0E0), glow: C(0xE88A2A), jagged: false),
+    .madHatter: Persona(name: "The Mad Milliner", weapon: .lightning, magic: Magic(core: C(0xFFE0FA), glow: C(0xB04AE8), jagged: false, rings: true),
                   headTop: 5, signature: 3.0, callout: "We're all mad in here.",
                   draw: drawMadHatter),
     .clayface: Persona(name: "Mudface", weapon: .saber, pivot: clayShoulder, bulk: 2, headTop: 15, signature: 3.6,

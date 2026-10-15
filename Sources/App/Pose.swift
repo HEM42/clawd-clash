@@ -322,6 +322,21 @@ func drawMagic(_ c: PixelCanvas, _ m: Magic, from a: (Double, Double), to b: (Do
     let dx = b.0 - a.0, dy = b.1 - a.1
     let len = max(sqrt(dx * dx + dy * dy), 0.01)
     let nx = -dy / len, ny = dx / len
+    if m.rings {
+        // Mind control: a faint thread of light, with rings rippling out along it and growing as they go.
+        c.glowLine(a.0, a.1, b.0, b.1, core: m.core.alpha(0.35), glow: m.glow.alpha(0.3), coreR: 0.4, glowR: 1.4)
+        for k in 0..<4 {
+            let f: Double = frac(t * 0.9 + Double(k) / 4)
+            let cx: Double = a.0 + dx * f, cy: Double = a.1 + dy * f, r: Double = 1.2 + f * 3.4
+            let fade: Double = 1 - f * 0.4
+            for s in 0..<24 {
+                let ang: Double = Double(s) / 24 * 2 * .pi
+                let x = Int((cx + cos(ang) * r).rounded()), y = Int((cy + sin(ang) * r * 0.85).rounded())
+                c.px(x, y, (s % 2 == 0 ? m.core : m.glow).alpha(fade))
+            }
+        }
+        return
+    }
     if !m.jagged {
         let n = 8
         var prev = a
