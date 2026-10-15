@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: the comic side of the monsters. Ronnie Strickland, Guy Mann, the Trashman, the Tulpa, the Mothmen, the Rain
 // King and the Teliko. Clawd in costume like everyone else, or Clawd underneath it (the Trashman's rubbish, the Tulpa's
-// mud, the Mothmen's mossy wings); the episodes they come from are the funny ones, and so are they.
+// mud, the Mothmen's leaves); the episodes they come from are the funny ones, and so are they.
 
 let filesVillains8: [FilesVillain: Persona] = [
     .ronnieStrickland: Persona(name: "Ronnie Strickland", weapon: .saber, headTop: 19, signature: 3.4,
@@ -13,7 +13,7 @@ let filesVillains8: [FilesVillain: Persona] = [
                        draw: drawTrashman),
     .tulpa: Persona(name: "The Tulpa", weapon: .saber, canSit: false, bulk: 2, headTop: 19, signature: 3.6,
                     callout: "Mmmrrrgh.", draw: drawTulpa),
-    .mothmen: Persona(name: "The Mothmen", weapon: .saber, headTop: 15, signature: 3.6, draw: drawMothmen),
+    .mothmen: Persona(name: "The Mothmen", weapon: .saber, headTop: 12, signature: 3.6, draw: drawMothmen),
     .rainKing: Persona(name: "The Rain King", weapon: .lightning, magic: Magic(core: C(0xE8F4FF), glow: C(0x3A7CFF)),
                        pivot: (44.0, 31.0), headTop: 16, signature: 3.8, callout: "Looks like rain.",
                        draw: drawRainKing),
@@ -349,10 +349,9 @@ private func tulpaFigure(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - The Mothmen
 
-/// The Mothmen of "Detour": something in the woods you'd walk past, until its two red eyes open. Clawd as a moth the
-/// colours of the forest floor: big dusty wings spread behind him, mottled bark and moss with a dark eyespot on each,
-/// a furry mossy head with feathery antennae, and those eyes. He rakes with twiggy claws, wings beating. Signature: he
-/// fades into the undergrowth until only his eyes are left, glowing, then steps back out.
+/// The Mothmen of "Detour": something in the woods, covered so completely in bark, moss and leaves that you'd walk past
+/// it, until its two red eyes open. Clawd under all of it, a ragged leafy fringe all round him. He rakes with twiggy
+/// claws. Signature: he fades into the undergrowth until only his eyes are left, glowing, then steps back out.
 private func drawMothmen(_ c: PixelCanvas, _ p: Pose) {
     let hide = p.signature.map { ramp($0, 0.08, 0.35) - ramp($0, 0.68, 0.92) } ?? 0
     if hide > 0.02 {
@@ -361,70 +360,51 @@ private func drawMothmen(_ c: PixelCanvas, _ p: Pose) {
         remap(fig, into: c, alpha: 1 - hide * 0.92) { x, y in (x, y) }
         // The eyes stay, glowing brighter.
         c.oy += p.breathe
-        for x in [21, 32] { c.rect(x, 28, 3, 2, C(0xFF2A1A)); c.rect(x - 1, 27, 5, 4, C(0xFF2A1A, 0.25 * hide)) }
+        for x in [22, 32] { c.rect(x, 28, 2, 2, C(0xFF2A1A)); c.rect(x - 1, 27, 4, 4, C(0xFF2A1A, 0.25 * hide)) }
         return
     }
     mothFigure(c, p)
 }
 
-/// One of the Mothmen's wings, the left one as drawn (the right is its mirror): a big upper wing with an eyespot and a
-/// smaller lower one. W wing, M moss, L leaf, V the vein between them, E/e the eyespot.
-private let v78MothWing = [
-    "..........WWW..",
-    ".......WWWWMWW.",
-    ".....WWWMMWWWWW",
-    "...WWWMWWWWWLWW",
-    "..WWWLWWEEEWWWW",
-    ".WWWWWWEeeEWWWW",
-    ".WWMWWWEeeEWMWW",
-    "WWWWWWWWEEEWWWW",
-    "WWWLWWWWWWWWWWW",
-    "WWWWWMWWWWLWWWW",
-    ".WWWWWWWWWWWWWW",
-    "..WWWWWWWWWWWWW",
-    "....VVVVVVVVVVV",
-    "......WWWWWWWWW",
-    ".....WWWWMWWWWW",
-    "....WWWLWWEEWWW",
-    "....WWWWWWEeWWW",
-    ".....WWWWWWWWWW",
-    "......WWWWWWWW.",
-    "........WWWWW..",
-]
-
 private func mothFigure(_ c: PixelCanvas, _ p: Pose) {
     let moss = C(0x3E5A2A), mossD = C(0x283E1A), bark = C(0x5A4430), leaf = C(0x6A8A32), leafD = C(0x8A6A2A)
-    let wing = C(0x6A5A42), wingD = C(0x3A2A1A), spot = C(0x1A140E), spotL = C(0xC8A048)
-    // The wings, behind everything, beating slowly (and harder in a fight): folded in a pixel on the down beat.
-    let fast = p.melee != nil || p.walking
-    let beat = Int(p.t * (fast ? 6 : 1.5)) % 2
-    let palette: [Character: Px] = ["W": wing, "M": moss, "L": leaf, "V": wingD, "E": spot, "e": spotL]
-    c.pattern(3 + beat, 15 + p.breathe, v78MothWing, palette)
-    c.pattern(38 - beat, 15 + p.breathe, v78MothWing.map { String($0.reversed()) }, palette)
     drawLegs(c, Look(leg: bark), step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(body: moss, shade: mossD, arm: bark, eye: nil))
-    // Fur and bark over him.
-    for i in 0..<16 {
-        let x = 18 + Int(noise(i + 600) * 20), y = 27 + Int(noise(i + 640) * 10)
+    // Bark and leaves all over, and a ragged fringe of leaves round the edge, head included.
+    for i in 0..<30 {
+        let x = 18 + Int(noise(i + 600) * 20), y = 26 + Int(noise(i + 640) * 12)
         c.px(x, y, [bark, leaf, mossD, leafD][i % 4])
     }
-    // A furry head, rounded over the top down to the body, and two feathery antennae.
-    c.pattern(17, 22, [
-        "......FFFFFFFFFF......",
-        "...FFFFfFFFFFFfFFFF...",
-        ".FFFFFFFFFFFFFFFFFFFF.",
-        "FFFFFFFFfFFFFFFFFFfFFF",
-    ], ["F": moss, "f": leaf])
-    for (side, base) in [(-1, 24), (1, 31)] {
-        for k in 0..<6 {
-            let x = base + side * (k / 2), y = 21 - k
-            c.px(x, y, bark)
-            if k > 0 && k < 5 { c.px(x + side, y + 1, leafD) }   // the feathery barbs
+    // A rounded hood of moss and leaves over his head and shoulders, like a ghillie suit: tufts sticking up from it,
+    // its ragged edge hanging down past the eyes at the sides.
+    for y in 12...25 {
+        let d: Double = Double(25 - y) / 13.5
+        let hw: Int = Int((12.5 * (1 - d * d).squareRoot()).rounded())
+        guard hw > 0 else { continue }
+        for x in (28 - hw)..<(28 + hw) {
+            let n: Double = noise(x * 31 + y * 7 + 900)
+            c.px(x, y, n < 0.14 ? leafD : n < 0.32 ? moss : leaf)
         }
     }
-    // Two red eyes in the fur.
-    for x in [21, 32] { c.rect(x, 28, 3, 2, C(0xD82A1A)); c.px(x + 1, 28, C(0xFF8A6A)) }
+    for i in 0..<8 {
+        let x: Int = 17 + Int(noise(i + 950) * 22)
+        let u: Double = (Double(x) + 0.5 - 28) / 12.5
+        let edge: Int = 25 - Int((13.5 * (1 - u * u).squareRoot()).rounded())
+        c.px(x, edge - 1, i % 3 == 0 ? leafD : leaf)
+        if i % 2 == 0 { c.px(x, edge - 2, leaf) }
+    }
+    c.rect(16, 26, 3, 1, leaf); c.rect(16, 27, 2, 2, leaf); c.px(16, 28, leafD)
+    c.rect(37, 26, 3, 1, leaf); c.rect(38, 27, 2, 2, leaf); c.px(39, 28, leafD)
+    // Leaf strips hanging down his sides and over his legs, stirring a little.
+    let stir = Int(p.t * 1.5) % 2
+    for (k, y) in stride(from: 31, through: 41, by: 2).enumerated() {
+        c.px(15 - (k + stir) % 2, y, leaf); c.px(15, y + 1, leafD)
+        c.px(40 + (k + stir) % 2, y, leaf); c.px(40, y + 1, leafD)
+    }
+    for x in [21, 27, 33] { c.rect(x, 38, 1, 3, leafD); c.px(x, 41, leaf) }
+    // Two red eyes in the leaves.
+    for x in [22, 32] { c.rect(x, 28, 2, 2, C(0xD82A1A)) }
     c.rect(15, 33, 3, 3, bark)
     if let a = p.melee {
         for (i, ta) in p.trail.enumerated() {
