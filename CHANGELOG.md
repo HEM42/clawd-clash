@@ -2,7 +2,7 @@
 
 Clawd Clash brings three apps together as its first three universes: Clawd Wars became Star Clawds, Avengers: Clawd Wars became Marvelous Clawds and Justice League: Clawd Wars became Detective Clawds. Doctor Clawd, the fourth, was built for Clawd Clash in its own repo, [doctor-clawd](https://github.com/rodclemen/doctor-clawd). Their history before that is in [history/star-clawds.md](history/star-clawds.md) (up to 2.28.3), [history/marvelous-clawds.md](history/marvelous-clawds.md) (0.1.0) and [history/detective-clawds.md](history/detective-clawds.md) (0.1.0).
 
-## Unreleased
+## 3.1.0 (2026-10-15)
 
 ### Added
 - **A fourth universe, Doctor Clawd.** Settings → Universe → Doctor Clawd, and in the screen saver's Options. 98 characters: all fifteen numbered Doctors plus the War and Fugitive Doctors, each with their own sonic screwdriver colour (or cricket ball, umbrella or Venusian aikido), 38 companions and allies from Susan Foreclaw to Belinda Chandler, K-Canine gliding on his base, and HEM in a fez; and 42 villains, from the Master in five faces, Missy, Davross and the Dalick Emperor to the Cyberpersons, Sontarons, Silents, Zygones, Slitheem and the Candyman, with Adipoze, Cybermites and Toclafayne turning up as agents. 20 places, from the TARDIS console room, Gallifray and Skarro to Totter's Yard, the Library, Starship UK, Pompeii, the café in Arles under its swirling sky and Sanctuary Base 6 under its black hole, each with what moves there. Arch-enemies face off first (Ten and Mister Sexton, Twelve and Missy, Amy and the Weeping Angle…). Signature moves where the show has one: Four's jelly babies, Eleven's fez, Jack dropping dead and gasping back, Rose's Bad Wolf glow, Wilf's salute, Osgoode's inhaler.
@@ -78,3 +78,5 @@ Clawd Clash brings three apps together as its first three universes: Clawd Wars 
 _Spent the evening explaining to Thanos that the Power Stone is not Force lightning, and to Deadpool that the fourth wall is load-bearing. Neither listened._
 
 _Rendered the same trailer a dozen times because the cast kept changing their names. Thanoz napped through every take._
+
+_Built a time machine, then spent the evening merging branches, deleting branches and explaining which folder was which. The TARDIS would have been quicker._
