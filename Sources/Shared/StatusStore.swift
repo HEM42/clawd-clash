@@ -23,6 +23,7 @@ struct SessionRecord: Codable {
     var assistant: String? // "claude", "codex", "qwen", "gemini", "copilot", "pi" (nil = claude, from before Codex support)
     var client: String?    // where Claude Code runs: CLAUDE_CODE_ENTRYPOINT ("cli", "claude-desktop", "claude-vscode"…)
     var regenerated: Double? // a Doctor's last regeneration (its context compacted), for the golden flare
+    var abducted: Double?    // an FBI agent's last missing time (its context compacted), for the abduction
 }
 
 struct AgentRecord: Codable {
@@ -330,6 +331,8 @@ enum StatusStore {
                 // A Doctor whose context is compacted regenerates: same session, the next Doctor's face (one nobody
                 // else is leading with), in a golden flare the overlay plays.
                 guard agentId == nil, let leader = s.sessions[session]?.leader else { break }
+                // An FBI agent in The Clawd Files loses some time instead: abducted, and set back down.
+                if Universe.of(leader).abductees.contains(leader) { s.sessions[session]?.abducted = now; break }
                 let order = Universe.of(leader).regenerations
                 guard let i = order.firstIndex(of: leader) else { break }
                 let used = Set(s.sessions.filter { $0.key != session }.values.compactMap(\.leader))

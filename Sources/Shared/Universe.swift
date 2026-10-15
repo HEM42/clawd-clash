@@ -58,6 +58,11 @@ enum Universe: Int, CaseIterable, Codable {
 
     /// Doctor Clawd: the Doctors in order (One … Fifteen), as global ids. When a session's context is compacted, its
     /// Doctor regenerates into the next one (`StatusStore`'s PreCompact); nobody else changes.
+    /// The Clawd Files: the seven FBI agents (Clawder, Scrawly, Skinnard, Doggedd, Reyez, Einstine, Millar), as global
+    /// ids. When one's session is compacted they lose some time: abducted and set back down, the same face
+    /// (`StatusStore`'s PreCompact, `MissingTime`).
+    var abductees: Set<Int> { self == .clawdFiles ? Set((0...6).map { base + StatusStore.heroBase + $0 }) : [] }
+
     var regenerations: [Int] {
         self == .doctor ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14].map { base + StatusStore.heroBase + $0 } : []
     }

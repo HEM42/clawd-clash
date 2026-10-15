@@ -131,7 +131,22 @@ let filesTheme = Theme(
                  : .filesHome(of: FilesHero(rawValue: c.index) ?? .foxClawder)
     },
     nemeses: filesNemeses.map { (.hero($0.0), .villain($0.1)) },
-    ride: { _ in nil },   // the FBI sedan, the black helicopter and the saucer come with the mechanics
+    ride: { c in
+        // The FBI's sedan picks up the heroes (all but HEM); the black helicopter, the Syndicate and its super
+        // soldiers; the saucer, the aliens. The monsters of the week leave on foot.
+        guard c.universe == .clawdFiles else { return nil }
+        if !c.isDark { return FilesHero(rawValue: c.index).map { $0 == .hem ? nil : .sedan } ?? nil }
+        guard let v = FilesVillain(rawValue: c.index) else { return nil }
+        switch v {
+        case .smokingClawd, .clawcek, .wellManicured, .firstElder, .dianaFowlclaw, .kersh, .toothpickMan, .knowleRohrer,
+             .billyMiles, .strughold, .follmer, .billClawder, .crewCutMan, .duffyHaskell:
+            return .helicopter
+        case .bountyHunter, .blackOil, .grey, .facelessRebel, .colonist, .lordKinbote:
+            return .saucer
+        default:
+            return nil
+        }
+    },
     menuIcon: drawSaucerIcon,
     legend: .hero(.foxClawder))
 

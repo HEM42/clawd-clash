@@ -236,20 +236,21 @@ func drawPortal(_ c: PixelCanvas, _ m: Magic, t: Double, seed: Int) -> Bool {
 typealias BespokeDrill = (PixelCanvas, Cast, DrillPlay, Double) -> Void
 
 /// Drawn standing about as it would idle, with `pose` changes on top.
-private func standing(_ c: PixelCanvas, _ who: Cast, t: Double, pose: ((inout Pose) -> Void)? = nil) {
+func standing(_ c: PixelCanvas, _ who: Cast, t: Double, pose: ((inout Pose) -> Void)? = nil) {
     drillPose = pose
     drawPersona(c, who, t: t, mode: .idle, walking: false, role: .none)
     drillPose = nil
 }
 
 /// A smooth 0→1 over the first `rise` seconds of a set and back to 0 over its last ones.
-private func setRamp(_ d: DrillPlay, rise: Double = 0.8) -> Double {
+func setRamp(_ d: DrillPlay, rise: Double = 0.8) -> Double {
     let k = max(0, min(1, d.e / rise, (d.length - d.e) / rise))
     return 0.5 - 0.5 * cos(k * .pi)
 }
 
 extension Cast {
-    /// A few characters' own drills, where one says something about them better than the general ones.
+    /// A few characters' own drills, where one says something about them better than the general ones. The Clawd
+    /// Files' are in their own file (`filesBespokeDrills`).
     static let bespokeDrills: [Cast: BespokeDrill] = [
         // Yodle: a little cairn of stones lifted off the ground with the Force, turning slowly.
         .hero(SWHero.yoda): { c, who, d, t in
@@ -484,7 +485,7 @@ extension Cast {
             let bx = k < 0.5 ? 44 + Int((20 * out * r).rounded()) : 44 + dx
             c.rect(bx, 41, 2, 2, C(0xE83A3A)); c.px(bx, 41, C(0xFF8A8A))
         },
-    ]
+    ].merging(filesBespokeDrills) { a, _ in a }
 }
 
 /// A Dalick's "Elevate!": up 8 px over a second, held with a little bob, and down again; a glow under its skirt.
