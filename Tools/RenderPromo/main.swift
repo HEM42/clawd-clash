@@ -1922,7 +1922,7 @@ let starClawdsShots: [Shot] = [
             ctx.restoreGState()
         }
         caption("Have fun. Keep track.", ctx, local: local, start: 0.6, y: 540, size: 56)
-        caption("One of four universes in Clawd Clash · free for macOS", ctx, local: local, start: 0.8, y: 480, size: 34,
+        caption("One of five universes in Clawd Clash · free for macOS", ctx, local: local, start: 0.8, y: 480, size: 34,
                 color: NSColor(white: 0.8, alpha: 1), weight: .bold)
         let ff = easeOut((local - 0.9) / 0.3)
         if ff > 0, let icon = appIcon {
@@ -1945,7 +1945,7 @@ let starClawdsBeats: [(key: Double, beat: Beat)] = [
     (38.0, ("SUBAGENTS", "Darth Vapor stands guard; Luke, Princess Laya, Chewbarka and Ahh2-De2 march in with their jobs on their labels.", "“Every subagent reports for duty.”", "footsteps, a droid chirp")),
     (42.6, ("WINDOW MODE", "The window in the Mos Easy Cantina; live cards tick, then Luke's Codex card flips to NEEDS YOU.", "WINDOW MODE  ·  “Prefer a window? Grab the popcorn.”", "a ping")),
     (47.0, ("EVERY AI", "Six sessions, one per AI outline; Claude's Darth Vapor a head taller, duelling Codex's Luke.", "BRING YOUR OWN AI*  ·  “One AI plays everyone. Run two and they pick sides.”  ·  *README for the full list", "laser-sword clashes")),
-    (52.0, ("END CARD", "Space: the Millennial Falcon flies through, the crew lines up on the horizon, STAR CLAWDS lands.", "STAR CLAWDS  ·  “Have fun. Keep track.”  ·  “One of four universes in Clawd Clash · free for macOS”  ·  github.com/rodclemen/clawd-clash", "a flyby, the final sting")),
+    (52.0, ("END CARD", "Space: the Millennial Falcon flies through, the crew lines up on the horizon, STAR CLAWDS lands.", "STAR CLAWDS  ·  “Have fun. Keep track.”  ·  “One of five universes in Clawd Clash · free for macOS”  ·  github.com/rodclemen/clawd-clash", "a flyby, the final sting")),
 ]
 
 /// The Star Clawds trailer's score and effects.
@@ -2202,7 +2202,7 @@ let marvelousShots: [Shot] = [
         if local > 0.5 { drawFX([(placed[1], placed[2])], ctx, t: t) }
         if local > 0.35 { marvelousTitle(ctx, center: CGPoint(x: Double(W) / 2, y: 760), scale: backOut((local - 0.35) / 0.4) * 0.8) }
         caption("Have fun. Keep track.", ctx, local: local, start: 0.6, y: 520, size: 56)
-        caption("One of four universes in Clawd Clash · free for macOS", ctx, local: local, start: 0.8, y: 462, size: 34,
+        caption("One of five universes in Clawd Clash · free for macOS", ctx, local: local, start: 0.8, y: 462, size: 34,
                 color: NSColor(white: 0.85, alpha: 1), weight: .bold)
         let ff = easeOut((local - 0.9) / 0.3)
         if ff > 0, let icon = appIcon {
@@ -2226,7 +2226,7 @@ let marvelousBeats: [(key: Double, beat: Beat)] = [
     (35.0, ("SUBAGENTS", "Iron Clawd stands guard; Spider-Clawd, Black Window, Grout and Racket march in with their jobs on their labels.", "“Every subagent suits up.”", "footsteps, a Grout rumble")),
     (39.6, ("WINDOW MODE", "The window at Clawdvengers Tower: the shield blocks Red Skulk, live cards tick, then his Codex card flips to NEEDS YOU.", "WINDOW MODE  ·  “Prefer a window? Grab some shawarma.”", "a ping")),
     (44.0, ("EVERY AI", "Six sessions, one per AI outline; Claude's Captain Americlawd a head taller, holding his shield into Thanoz' gauntlet.", "BRING YOUR OWN AI*  ·  “One AI plays everyone. Run two and they pick sides.”  ·  *README for the full list", "the beam on the shield")),
-    (49.0, ("END CARD", "Clawdvengers Tower at night: the Clawdjet streaks across, the crew lines up, MARVELOUS CLAWDS lands.", "MARVELOUS CLAWDS  ·  “Have fun. Keep track.”  ·  “One of four universes in Clawd Clash · free for macOS”  ·  github.com/rodclemen/clawd-clash", "a flyby, the final sting")),
+    (49.0, ("END CARD", "Clawdvengers Tower at night: the Clawdjet streaks across, the crew lines up, MARVELOUS CLAWDS lands.", "MARVELOUS CLAWDS  ·  “Have fun. Keep track.”  ·  “One of five universes in Clawd Clash · free for macOS”  ·  github.com/rodclemen/clawd-clash", "a flyby, the final sting")),
 ]
 
 /// The Marvelous Clawds trailer's score and effects.
@@ -2478,7 +2478,7 @@ let detectiveShots: [Shot] = [
         if local > 0.5 { drawFX([(placed[1], placed[2])], ctx, t: t) }
         if local > 0.35 { detectiveTitle(ctx, center: CGPoint(x: Double(W) / 2, y: 760), scale: backOut((local - 0.35) / 0.4) * 0.8) }
         caption("Have fun. Keep track.", ctx, local: local, start: 0.6, y: 520, size: 56)
-        caption("One of four universes in Clawd Clash · free for macOS", ctx, local: local, start: 0.8, y: 462, size: 34,
+        caption("One of five universes in Clawd Clash · free for macOS", ctx, local: local, start: 0.8, y: 462, size: 34,
                 color: NSColor(white: 0.85, alpha: 1), weight: .bold)
         let ff = easeOut((local - 0.9) / 0.3)
         if ff > 0, let icon = appIcon {
@@ -2502,7 +2502,7 @@ let detectiveBeats: [(key: Double, beat: Beat)] = [
     (36.0, ("SUBAGENTS", "Wondrous Woman stands guard; Wren, Nightglider, Cyb-Org and Kryptro arrive with their jobs on their labels.", "“Every subagent answers the beacon.”", "footsteps, a bark")),
     (40.6, ("WINDOW MODE", "The window in the Night Grotto: Batclawd against the Jester, live cards tick, then the Jester's Codex card flips to NEEDS YOU.", "WINDOW MODE  ·  “Prefer a window? Step into The Night Grotto.”", "a ping")),
     (45.0, ("EVERY AI", "Six sessions, one per AI outline; Claude's Superb-Man a head taller, trading heat vision with Codex's Lex Lugar.", "BRING YOUR OWN AI*  ·  “One AI plays everyone. Run two and they pick sides.”  ·  *README for the full list", "heat vision crackle")),
-    (50.0, ("END CARD", "Gothamburg's rooftop under the beacon: the Clawdwing streaks across, the crew lines up, DETECTIVE CLAWDS lands.", "DETECTIVE CLAWDS  ·  “Have fun. Keep track.”  ·  “One of four universes in Clawd Clash · free for macOS”  ·  github.com/rodclemen/clawd-clash", "a flyby, the final sting")),
+    (50.0, ("END CARD", "Gothamburg's rooftop under the beacon: the Clawdwing streaks across, the crew lines up, DETECTIVE CLAWDS lands.", "DETECTIVE CLAWDS  ·  “Have fun. Keep track.”  ·  “One of five universes in Clawd Clash · free for macOS”  ·  github.com/rodclemen/clawd-clash", "a flyby, the final sting")),
 ]
 
 /// The Detective Clawds trailer's score and effects.
@@ -2890,7 +2890,7 @@ let doctorShots: [Shot] = [
         if local > 0.5 { drawFX([(placed[1], placed[2])], ctx, t: t) }
         if local > 0.35 { doctorTitle(ctx, center: CGPoint(x: Double(W) / 2, y: 760), scale: backOut((local - 0.35) / 0.4) * 0.62) }
         caption("Have fun. Keep track.", ctx, local: local, start: 0.6, y: 520, size: 56)
-        caption("One of four universes in Clawd Clash · free for macOS", ctx, local: local, start: 0.8, y: 462, size: 34,
+        caption("One of five universes in Clawd Clash · free for macOS", ctx, local: local, start: 0.8, y: 462, size: 34,
                 color: NSColor(white: 0.85, alpha: 1), weight: .bold)
         let ff = easeOut((local - 0.9) / 0.3)
         if ff > 0, let icon = appIcon {
@@ -2915,7 +2915,7 @@ let doctorBeats: [(key: Double, beat: Beat)] = [
     (33.5, ("SUBAGENTS", "The Brigadier stands guard; Rose, Captain Jack, K-Canine and Martha arrive with their jobs on their labels.", "“Every subagent gets to be a companion.”", "footsteps")),
     (38.1, ("WINDOW MODE", "The window in the Console Room: Doctor Ten against a Dalick, live cards tick, then the Dalick's Codex card flips to NEEDS YOU.", "WINDOW MODE  ·  “Prefer a window? It's bigger on the inside.”", "a ping")),
     (42.5, ("EVERY AI", "Six sessions, one per AI outline; Claude's Doctor Ten a head taller, his sonic on Codex's Dalick.", "BRING YOUR OWN AI*  ·  “One AI plays everyone. Run two and they pick sides.”  ·  *README for the full list", "the sonic")),
-    (47.5, ("END CARD", "The console room: the crew lines up, DOCTOR CLAWD lands.", "DOCTOR CLAWD  ·  “Have fun. Keep track.”  ·  “One of four universes in Clawd Clash · free for macOS”  ·  github.com/rodclemen/clawd-clash", "the wheeze, the final sting")),
+    (47.5, ("END CARD", "The console room: the crew lines up, DOCTOR CLAWD lands.", "DOCTOR CLAWD  ·  “Have fun. Keep track.”  ·  “One of five universes in Clawd Clash · free for macOS”  ·  github.com/rodclemen/clawd-clash", "the wheeze, the final sting")),
 ]
 
 extension Mix {
