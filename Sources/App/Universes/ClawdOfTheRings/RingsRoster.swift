@@ -94,6 +94,22 @@ extension Cast {
 private let middleEarthNemeses: [(LOTRHero, LOTRVillain)] = [
     (.gandalf, .balrog), (.frodo, .gollum), (.sam, .shelob), (.aragorn, .sauron), (.boromir, .uruk), (.gimli, .orc),
     (.galadriel, .nazgul), (.hem, .witchKing),
+    // The Fellowship, again: who each of them faced on the way.
+    (.gandalf, .goblinKing), (.frodo, .watcher), (.frodo, .sharkey), (.sam, .shagrat), (.aragorn, .mouthOfSauron),
+    (.aragorn, .kingOfTheDead), (.boromir, .lurtz), (.legolas, .oliphaunt), (.legolas, .warg), (.gimli, .corsair),
+    (.merry, .barrowWight), (.pippin, .grishnakh), (.pippin, .oldManWillow), (.pippin, .ologHai),
+    (.strider, .witchKing), (.strider, .billFerny), (.gandalfWhite, .saruman), (.gandalfWhite, .gothmog),
+    // Rohan and Gondor.
+    (.eowyn, .witchKing), (.theoden, .haradrim), (.theoden, .wormtongue), (.eomer, .ugluk), (.eomer, .easterling),
+    (.faramir, .denethor), (.haldir, .ugluk),
+    // The elves, the wizards and the trees.
+    (.elrond, .necromancer), (.arwen, .nazgul), (.glorfindel, .balrog), (.celeborn, .necromancer),
+    (.thranduil, .mirkwoodSpider), (.radagast, .mirkwoodSpider), (.treebeard, .saruman), (.quickbeam, .uruk),
+    // The Shire at home.
+    (.rosie, .sharkey), (.farmerMaggot, .lotho),
+    // The Hobbit: the company, the dragon and the orcs of the north.
+    (.thorin, .azog), (.fili, .azog), (.kili, .bolg), (.beorn, .bolg), (.balin, .caveTroll), (.gloin, .goblinKing),
+    (.bard, .smaug), (.bilbo, .smaug),
 ]
 
 /// When these agents are done, the Great Eagle comes for them: Gandclawd from Orthanc's roof, Frodough and Samwise
