@@ -1,6 +1,6 @@
 import Foundation
 
-// The Clawd of the Rings universe (inspired by The Lord of the Rings): 38 villains, 38 heroes and 4 places. Each
+// The Clawd of the Rings universe (inspired by The Lord of the Rings): 38 villains, 38 heroes and 22 places. Each
 // character is a `Persona` registered in one of the Art/*.swift files next to its drawing code. Who lives where, the
 // arch-enemies and the Eagle are decided here, in `middleEarthTheme`.
 //
@@ -41,22 +41,44 @@ let middleEarthHeroPersonas: [LOTRHero: Persona] = ringsHeroes1.merging(ringsHer
 extension Location {
     static func middleEarthHome(of villain: LOTRVillain) -> Location {
         switch villain {
-        case .sauron, .saruman, .witchKing, .nazgul, .uruk, .shelob, .wormtongue, .lurtz, .gothmog, .mouthOfSauron, .oliphaunt,
-             .warg, .denethor, .ugluk, .grishnakh, .shagrat, .ologHai, .kingOfTheDead, .corsair, .haradrim, .easterling,
-             .necromancer, .smaug: return .mountDoom
-        case .balrog, .gollum, .orc, .watcher, .barrowWight, .caveTroll, .azog, .bolg, .goblinKing, .mirkwoodSpider: return .moria
-        case .oldManWillow, .lotho, .sharkey: return .bagEnd
-        case .billFerny, .masterOfLaketown: return .prancingPony
+        case .sauron, .shelob, .grishnakh, .shagrat: return .mountDoom
+        case .balrog, .orc, .watcher, .caveTroll: return .moria
+        case .saruman, .uruk: return .isengard
+        case .witchKing, .nazgul: return .weathertop
+        case .gollum: return .deadMarshes
+        case .wormtongue, .kingOfTheDead: return .edoras
+        case .lurtz, .warg, .ugluk: return .helmsDeep
+        case .gothmog, .mouthOfSauron, .oliphaunt, .ologHai, .haradrim, .easterling: return .blackGate
+        case .barrowWight: return .barrowDowns
+        case .denethor, .corsair: return .minasTirith
+        case .oldManWillow: return .oldForest
+        case .lotho: return .greenDragon
+        case .billFerny: return .prancingPony
+        case .sharkey: return .bagEnd
+        case .necromancer, .mirkwoodSpider: return .dolGuldur
+        case .smaug: return .erebor
+        case .azog, .bolg, .goblinKing: return .goblinTown
+        case .masterOfLaketown: return .laketown
         }
     }
 
     static func middleEarthHome(of hero: LOTRHero) -> Location {
         switch hero {
-        case .frodo, .sam, .pippin, .galadriel, .merry, .bilbo, .treebeard, .bombadil, .radagast, .rosie, .farmerMaggot,
-             .quickbeam, .beorn: return .bagEnd
-        case .aragorn, .legolas, .boromir, .hem, .elrond, .arwen, .theoden, .faramir, .eowyn, .glorfindel, .haldir,
-             .celeborn, .eomer, .butterbur, .strider, .bard, .thranduil: return .prancingPony
-        case .gandalf, .gimli, .gandalfWhite, .thorin, .balin, .kili, .fili, .gloin: return .moria
+        case .frodo, .sam, .bilbo, .farmerMaggot: return .bagEnd
+        case .merry, .pippin, .rosie: return .greenDragon
+        case .butterbur: return .prancingPony
+        case .gandalf: return .moria
+        case .aragorn, .gimli: return .helmsDeep
+        case .legolas, .thranduil, .radagast, .beorn: return .mirkwood
+        case .boromir, .faramir, .gandalfWhite: return .minasTirith
+        case .galadriel, .haldir, .celeborn: return .lothlorien
+        case .elrond, .arwen, .glorfindel: return .rivendell
+        case .theoden, .eowyn, .eomer, .hem: return .edoras
+        case .treebeard, .quickbeam: return .fangorn
+        case .bombadil: return .oldForest
+        case .strider: return .weathertop
+        case .thorin, .balin, .kili, .fili, .gloin: return .erebor
+        case .bard: return .laketown
         }
     }
 }
@@ -82,7 +104,9 @@ let middleEarthTheme = Theme(
     universe: .middleEarth,
     villains: LOTRVillain.allCases.map(\.persona),
     heroes: LOTRHero.allCases.map(\.persona),
-    places: [.bagEnd, .prancingPony, .moria, .mountDoom],
+    places: [.bagEnd, .prancingPony, .moria, .mountDoom, .greenDragon, .oldForest, .barrowDowns, .weathertop, .rivendell,
+             .lothlorien, .mirkwood, .edoras, .helmsDeep, .fangorn, .isengard, .minasTirith, .blackGate, .deadMarshes,
+             .dolGuldur, .goblinTown, .erebor, .laketown],
     home: { c in
         c.isDark ? .middleEarthHome(of: LOTRVillain(rawValue: c.index) ?? .sauron) : .middleEarthHome(of: LOTRHero(rawValue: c.index) ?? .frodo)
     },
@@ -99,7 +123,15 @@ let middleEarthTheme = Theme(
 extension Location {
     static let bagEnd = Location("bagEnd"), prancingPony = Location("prancingPony")
     static let moria = Location("moria"), mountDoom = Location("mountDoom")
+    static let greenDragon = Location("greenDragon"), oldForest = Location("oldForest"), barrowDowns = Location("barrowDowns")
+    static let weathertop = Location("weathertop"), rivendell = Location("rivendell"), lothlorien = Location("lothlorien")
+    static let mirkwood = Location("mirkwood"), edoras = Location("edoras"), helmsDeep = Location("helmsDeep")
+    static let fangorn = Location("fangorn"), isengard = Location("isengard"), minasTirith = Location("minasTirith")
+    static let blackGate = Location("blackGate"), deadMarshes = Location("deadMarshes"), dolGuldur = Location("dolGuldur")
+    static let goblinTown = Location("goblinTown"), erebor = Location("erebor"), laketown = Location("laketown")
 }
 
 /// Every Clawd of the Rings place, from the Places/RingsScenes*.swift files.
 let middleEarthPlaces: [Location: Place] = ringsScenes1.merging(ringsScenes2) { a, _ in a }
+    .merging(ringsScenes3) { a, _ in a }.merging(ringsScenes4) { a, _ in a }.merging(ringsScenes5) { a, _ in a }
+    .merging(ringsScenes6) { a, _ in a }.merging(ringsScenes7) { a, _ in a }.merging(ringsScenes8) { a, _ in a }
