@@ -19,6 +19,8 @@
 
 https://github.com/user-attachments/assets/40f38c93-73f5-41a9-9d64-f468d5cde2d3
 
+<p align="center"><sub>Full 1080p version: <a href="promo/clawd-clash-promo.mp4">promo/clawd-clash-promo.mp4</a></sub></p>
+
 Clawd Clash is one app with four universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars), **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars) and **[Doctor Clawd](https://github.com/rodclemen/doctor-clawd)**. Pick one in Settings; a scene never mixes them. Those four pages show each universe on its own; this one is the app.
 
 | Star Clawds | Marvelous Clawds |
