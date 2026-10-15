@@ -550,10 +550,10 @@ extension Scenes {
             wisp(c, x, y, (30 + Int(noise(i * 5 + 302) * 50.0)) * s, C(0xB8BEC6, 0.7), s: s)
         }
         laketownMountain(c, g)
-        // the far shore, low and blue
+        // the lake right up to the horizon (where the far shore dips below it, the water shows), then the far shore,
+        // low and blue, and the mountain's reflection in the lake
+        c.gradient(hz, g, C(0x8E9EAC), C(0x4C6072), bands: tall ? 8 : 4)
         c.dunes(base: hz, amp: Double(2 * s), freq: 0.03 / Double(s), phase: 0.7, bottom: hz + s, C(0x66768A))
-        // the lake, and the mountain's reflection in it
-        c.gradient(hz + s, g, C(0x8E9EAC), C(0x4C6072), bands: tall ? 8 : 4)
         let m = laketownPeak(c, g)
         for x in max(0, m.x - m.half * 2)..<max(0, min(c.w, m.x + m.half * 2)) {
             let len = (hz - laketownMountainTop(c, g, x)) / 2

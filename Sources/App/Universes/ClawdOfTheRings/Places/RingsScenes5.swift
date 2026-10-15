@@ -74,6 +74,62 @@ private func r5Smoke(_ c: PixelCanvas, _ x: Int, _ y: Int, puffs: Int, s: Int, _
     }
 }
 
+/// One billow of smoke `r` across at (x, y): a shadow under it to the lower right, a lit rim at its upper left, and
+/// its body between; `q` runs from 0 at the fire (warm-lit from below) to 1 high up (paler).
+private func r5Billow(_ c: PixelCanvas, _ x: Int, _ y: Int, _ r: Int, q: Double, _ a: Double) {
+    let body = lerp(C(0x302E32), C(0x4C4A50), q), rim = lerp(C(0x5A5458), C(0x7E7C80), q)
+    c.circle(x + r / 3, y + r / 3, max(1, r * 9 / 10), C(0x1E1C20, a * 0.8))
+    c.circle(x - r / 6, y - r / 5, r, rim.alpha(a))
+    c.circle(x + r / 8, y + r / 8, max(1, r * 5 / 6), body.alpha(a))
+    if q < 0.3 { c.circle(x, y + r / 2, max(1, r / 2), C(0x7A4026, a * (0.3 - q))) }
+}
+
+/// A column of smoke climbing from (x, y) up to row `top`: thin at the fire, swelling into ever bigger billows as it
+/// climbs, snaking from side to side and bending over with the wind toward the east, each column its own way.
+private func r5Column(_ c: PixelCanvas, _ x: Int, _ y: Int, top: Int, s: Int, tall: Bool, seed: Int) {
+    let rise = y - top
+    guard rise > 2 * s else { return }
+    let step = (tall ? 3 : 2) * s, n = max(2, rise / step)
+    let lean = Double(rise) * (0.05 + noise(seed + 1700) * 0.45), grow = Double((tall ? 13 : 5) * s)
+    let sway = Double((tall ? 6 : 2) * s) * (0.5 + noise(seed + 1703)), wave = 2 + noise(seed + 1704) * 3
+    // top down, so each lower, smaller billow sits in front of the one above it
+    for k in stride(from: n, through: 0, by: -1) {
+        let q = Double(k) / Double(n)
+        let swell = 0.65 + 0.7 * noise(seed + k * 3 + 1701)
+        let r = max(s, Int((Double(s) * 1.2 + pow(q, 1.3) * grow) * swell))
+        let snake = Int(sin(q * wave * Double.pi + Double(seed % 7)) * sway * q)
+        // some billows bulge out sideways, the column ragged rather than a tube
+        let bulge = noise(seed + k * 3 + 1702) > 0.7 ? Int((noise(seed + k * 3 + 1705) - 0.5) * Double(r)) : 0
+        r5Billow(c, x + Int(q * q * lean) + snake + bulge, y - Int(q * Double(rise)), r, q: q, 0.5 + 0.35 * q)
+    }
+}
+
+/// The low smog the columns spread into: a lumpy, uneven layer of billows across the whole sky, heaped up thick in
+/// places and worn thin in others, a darker layer of it underneath and ragged wisps hanging off its underside.
+private func r5Smog(_ c: PixelCanvas, _ y: Int, _ th: Int, s: Int, seed: Int) {
+    guard th > 0 else { return }
+    func depth(_ x: Int) -> Double { r5Wave(x, 37 * s, seed: seed) * 0.6 + r5Wave(x, 11 * s, seed: seed + 9) * 0.4 }
+    // the haze the billows sit in, thicker where the smog is heaped
+    for x in 0..<c.w {
+        let d = depth(x), hgt = Int(Double(th) * (0.2 + 1.1 * d)), off = Int((d - 0.5) * Double(th) * 0.5)
+        c.rect(x, y - hgt / 2 + off, 1, hgt, C(0x3A383E, 0.4 + 0.3 * d))
+        c.rect(x, y + hgt / 2 + off, 1, max(1, hgt / 3), C(0x2C2A30, 0.25))
+    }
+    // two rows of billows: a darker lower row, then a paler upper one heaped on it
+    for (row, q, dy) in [(0, 0.55, th / 4), (1, 0.9, -th / 5)] {
+        var x = -th, i = 0
+        while x < c.w + th {
+            let d = depth(x), nn = seed + row * 1000 + i * 3
+            let r = max(s, Int(Double(th) * (0.25 + 0.55 * d) * (0.6 + 0.8 * noise(nn + 20))))
+            if d > 0.3 || noise(nn + 23) > 0.6 {
+                let off = Int((d - 0.5) * Double(th) * 0.5) - Int(d * Double(th) * 0.3 * Double(row))
+                r5Billow(c, x, y + dy + off + Int((noise(nn + 21) - 0.5) * Double(th) * 0.5), r, q: q, 0.75)
+            }
+            x += max(s, r * 2 / 3 + Int(noise(nn + 22) * Double(r))); i += 1
+        }
+    }
+}
+
 /// The White Hand of Saruman, for his banner (8 by 8).
 private let r5Hand: [String] = [
     ".#.#.#.#",
@@ -93,7 +149,25 @@ extension Scenes {
     static func isengardTower(_ c: PixelCanvas, _ g: Int) -> (x: Int, top: Int, base: Int, half: Int) {
         let s = unit(g)
         if isTall(c) { return (Int(Double(c.w) * 0.56), Int(Double(g) * 0.07), Int(Double(g) * 0.66), 12 * s) }
-        return (Int(Double(c.w) * 0.62), 2 * s, g - 8 * s, 6 * s)
+        return (Int(Double(c.w) * 0.53), 2 * s, g - 8 * s, 9 * s)
+    }
+
+    /// The smoke columns: where each rises from, back to front. From the forges' chimneys and the bigger pits, away
+    /// from the tower's middle so it stands clear.
+    static func isengardPlumes(_ c: PixelCanvas, _ g: Int) -> [(x: Int, y: Int, seed: Int)] {
+        let s = unit(g), tall = isTall(c), o = isengardTower(c, g)
+        var out: [(x: Int, y: Int, seed: Int)] = []
+        for f in isengardSheds(c, g) { out.append((f.x - f.w / 2 + f.w - 3 * s, f.y - f.h - 6 * s, f.x)) }
+        for (i, p) in isengardPits(c, g).enumerated() where tall ? p.rx >= 10 * s && i % 2 == 0 : i % 4 == 1 {
+            out.append((p.x, p.y - p.ry, p.x + 7))
+        }
+        return out.filter { abs($0.x - o.x) > o.half * 2 }.sorted { $0.y < $1.y }
+    }
+
+    /// The low smog the columns feed: the row of its middle and its thickness.
+    static func isengardSmog(_ c: PixelCanvas, _ g: Int) -> (y: Int, th: Int) {
+        let s = unit(g)
+        return isTall(c) ? (Int(Double(g) * 0.27), 24 * s) : (Int(Double(g) * 0.2), 7 * s)
     }
 
     /// The far side of the ring wall at column `x`: the row where the ring's floor begins. On tall screens the ring
@@ -134,19 +208,18 @@ extension Scenes {
 
     /// Isengit: a grey sky choked with smoke over the last peaks of the Misty Mountains, the black rock ring of
     /// Isengard, and in its middle Orthanc: four black pillars fused into one tower, splitting into four horns at the
-    /// top, one window lit. The ring's floor is torn up into pits with fires burning at their bottoms, smoke and
-    /// sparks rising from them, a forge chimney or two smoking among them, and the crew stands on the blackened
-    /// ground in front, among the stumps of the felled trees, under the White Hand's banner. Tall screens show
-    /// Orthanc in full with its stair, the ring wall curving round towards the viewer, and many more pits and forges.
+    /// top, one window lit. The ring's floor is torn up into pits with fires burning at their bottoms, billowing
+    /// columns of smoke and sparks rising from them and from the forge chimneys into a low smog over the valley, and
+    /// the crew stands on the blackened ground in front, among the stumps of the felled trees, under the White
+    /// Hand's banner. Tall screens show Orthanc in full with its stair, the ring wall curving round towards the
+    /// viewer, and many more pits and forges.
     static func isengard(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), o = isengardTower(c, g)
         c.gradient(0, g, C(0x46474D), C(0x8C8278), bands: tall ? 10 : 6)
-        // the smoke hanging over everything
-        for i in 0..<(tall ? 12 : 5) {
-            let x = Int(noise(i * 5 + 1500) * Double(c.w)), y = Int(noise(i * 5 + 1501) * Double(g) * (tall ? 0.45 : 0.4))
-            let r = (tall ? 8 + Int(noise(i * 5 + 1502) * 10.0) : 3 + Int(noise(i * 5 + 1502) * 4.0)) * s
-            c.ellipse(x, y, r * 4, r, C(0x34343A, 0.35))
-            c.ellipse(x + r, y - r / 2, r * 2, max(1, r / 2), C(0x5A5A60, 0.25))
+        // high thin streaks of smoke that have drifted off east
+        for i in 0..<(tall ? 7 : 3) {
+            let x = Int(noise(i * 5 + 1500) * Double(c.w)), y = Int(noise(i * 5 + 1501) * Double(isengardSmog(c, g).y) * 0.8)
+            wisp(c, x, y, (50 + Int(noise(i * 5 + 1502) * 90.0)) * s, C(0x3A3A40, 0.3), s: (tall ? 2 : 1) * s)
         }
         // the southern end of the Misty Mountains
         let farBase = tall ? Int(Double(g) * 0.56) : g - 14 * s
@@ -163,6 +236,10 @@ extension Scenes {
             let y = rim + Int(noise(i * 3 + 1551) * Double(max(1, g - rim)))
             c.rect(x, y, (2 + Int(noise(i * 3 + 1552) * 6.0)) * s, s, C(noise(i * 3 + 1553) > 0.5 ? 0x1A1716 : 0x2E2824))
         }
+        // the smoke: billowing columns climbing from the pits and forges into a low smog over the whole valley
+        let smog = isengardSmog(c, g)
+        for p in isengardPlumes(c, g) { r5Column(c, p.x, p.y, top: smog.y, s: s, tall: tall, seed: p.seed) }
+        r5Smog(c, smog.y, smog.th, s: s, seed: 1505)
         let pits = isengardPits(c, g)
         for p in pits where p.y < o.base { isengardPit(c, g, p) }
         if tall { isengardForges(c, g, front: false) }
@@ -260,12 +337,14 @@ extension Scenes {
     static func isengardOrthanc(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), o = isengardTower(c, g)
         let black = C(0x121216), facet = C(0x1E1E24), lit = C(0x3C3C46), groove = C(0x08080A), back = C(0x26262D)
-        let hornH = max(s, (o.base - o.top) * 2 / 9)
+        let hornH = max(s, (o.base - o.top) * (tall ? 2 : 1) / (tall ? 9 : 4))
         let deck = o.top + hornH
-        // the two horns behind, a little shorter, then the two in front, bowing out
-        for (dx, h, w, lean, col) in [(-o.half / 3, hornH * 3 / 4, (tall ? 5 : 3) * s, -s, back), (o.half / 3, hornH * 3 / 4, (tall ? 5 : 3) * s, s, back),
-                                      (-o.half + 2 * s, hornH, (tall ? 9 : 4) * s, -(tall ? 7 : 3) * s, black),
-                                      (o.half - 2 * s, hornH, (tall ? 9 : 4) * s, (tall ? 7 : 3) * s, black)] {
+        // the two horns behind, a little shorter, then the two in front, bowing out; on the strip they spread wider
+        // so all four tips show
+        let bx = tall ? o.half / 3 : o.half / 2, fx = tall ? o.half - 2 * s : o.half - s
+        for (dx, h, w, lean, col) in [(-bx, hornH * 3 / 4, (tall ? 5 : 3) * s, -s, back), (bx, hornH * 3 / 4, (tall ? 5 : 3) * s, s, back),
+                                      (-fx, hornH, (tall ? 9 : 5) * s, -(tall ? 7 : 4) * s, black),
+                                      (fx, hornH, (tall ? 9 : 5) * s, (tall ? 7 : 4) * s, black)] {
             for y in (deck - h)..<max(deck - h, deck) {
                 let k = Double(deck - y) / Double(max(1, h))
                 let hw = max(s, Int(Double(w) * (1 - k)))

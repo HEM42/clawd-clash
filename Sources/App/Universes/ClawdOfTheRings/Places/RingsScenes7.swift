@@ -371,31 +371,47 @@ extension Scenes {
     /// The top of the courtyard's back wall.
     static func dolGuldurWallTop(_ c: PixelCanvas, _ g: Int) -> Int { g - (isTall(c) ? 30 : 15) * unit(g) }
 
-    /// The towers: middle (share of the width), width in units, top row, and how far off in the haze (0 near).
+    /// The towers: middle (share of the width), width in units, top row, and how far off in the haze (0 near). Each
+    /// stands low enough for its broken crown and shards to show under the top of the picture.
     static func dolGuldurTowers(_ c: PixelCanvas, _ g: Int) -> [(x: Int, w: Int, top: Int, haze: Double)] {
-        let s = unit(g)
-        if isTall(c) {
-            let list: [(Double, Int, Double, Double)] = [
-                (0.10, 18, 0.40, 0.6), (0.96, 14, 0.46, 0.6), (0.27, 22, 0.24, 0.3), (0.70, 20, 0.30, 0.3),
-                (0.86, 26, 0.17, 0.15), (0.52, 34, 0.08, 0),
-            ]
-            return list.map { (Int(Double(c.w) * $0.0), $0.1 * s, Int(Double(g) * $0.2), $0.3) }
+        let s = unit(g), wt = dolGuldurWallTop(c, g)
+        let list: [(Double, Int, Double, Double)] = isTall(c)
+            ? [(0.10, 18, 0.40, 0.6), (0.96, 14, 0.46, 0.6), (0.27, 22, 0.24, 0.3), (0.70, 20, 0.30, 0.3),
+               (0.86, 26, 0.17, 0.15), (0.52, 34, 0.08, 0)]
+            : [(0.08, 10, 0.45, 0.6), (0.70, 12, 0.3, 0.4), (0.27, 14, 0.1, 0.25), (0.88, 16, 0.18, 0.15), (0.50, 20, 0, 0)]
+        return list.map {
+            let w = $0.1 * s, crown = dolGuldurCrownRoom(c, w) + 2 * s
+            return (Int(Double(c.w) * $0.0), w, crown + Int($0.2 * Double(max(0, (isTall(c) ? g : wt) - crown))), $0.3)
         }
-        let list: [(Double, Int, Int, Double)] = [
-            (0.08, 12, 22, 0.6), (0.70, 14, 14, 0.4), (0.27, 16, -10, 0.25), (0.88, 20, 5, 0.15), (0.50, 26, 2, 0),
-        ]
-        return list.map { (Int(Double(c.w) * $0.0), $0.1 * s, $0.2 * s, $0.3) }
+    }
+
+    /// How far a tower `w` wide's tallest shard can stand above its top row.
+    static func dolGuldurCrownRoom(_ c: PixelCanvas, _ w: Int) -> Int { Int(Double(w) * (isTall(c) ? 0.95 : 0.55)) }
+
+    /// A tower's slit windows: where each is, whether it glows, and a number of its own for the flicker.
+    static func dolGuldurWindows(_ c: PixelCanvas, _ g: Int,
+                                 _ t: (x: Int, w: Int, top: Int, haze: Double)) -> [(x: Int, y: Int, glow: Bool, id: Int)] {
+        let s = unit(g), base = dolGuldurWallTop(c, g) + 2 * s, span = max(1, base - t.top)
+        return (0..<max(0, span / (10 * s))).map { i in
+            let y = t.top + t.w / 2 + 4 * s + Int(noise(t.x + i * 3 + 510) * Double(max(1, span - t.w / 2 - 12 * s)))
+            let x = t.x + Int((noise(t.x + i * 3 + 511) - 0.5) * Double(t.w) * 0.5)
+            return (x, y, noise(t.x + i * 3 + 512) > 0.45, t.x + i * 31)
+        }
     }
 
     /// Dol Build-ur: a bruised night sky with a pale moon, and a sickly green-grey haze rising off the dead forest
     /// below the hill. The Necromancer's fortress stands round the crew: jagged black towers, broken off and bristling
-    /// with thorn-like spikes, a few slit windows glowing a faint green, and the courtyard's broken back wall. Dead
-    /// trees stand in the courtyard with webs strung in their forks, and the crew stands on its cracked flagstones.
-    /// On tall screens the towers stand in full, and in the haze between them a faint fiery eye.
+    /// with thorn-like spikes, rimmed pale where the moon catches them, slit windows glowing a sickly green, and the
+    /// courtyard's broken back wall. The haze glows behind them so they stand out black against it. Dead trees stand
+    /// in the courtyard with webs strung in their forks, and the crew stands on its cracked flagstones. On tall
+    /// screens the towers stand in full, and in the haze between them a faint fiery eye.
     static func dolGuldur(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), wt = dolGuldurWallTop(c, g)
-        c.gradient(0, g, C(0x120E18), C(0x3E4638), bands: tall ? 10 : 7)
+        c.gradient(0, g, C(0x16121C), C(0x5A6850), bands: tall ? 10 : 7)
         c.stars(0, g / 3, density: tall ? 260 : 160, seed: 41)
+        // the haze glowing low behind the fortress, so the towers stand out black against it
+        let glowTop = tall ? Int(Double(g) * 0.35) : wt / 3
+        c.gradient(glowTop, wt, C(0x6A7A5E, 0), C(0x8A9C78, 0.35), bands: tall ? 8 : 5)
         // the moon, veiled
         let mx = Int(Double(c.w) * 0.17), my = tall ? Int(Double(g) * 0.12) : 10 * s, mr = (tall ? 15 : 6) * s
         c.circle(mx, my, mr * 3, C(0xC8D0B8, 0.04)); c.circle(mx, my, mr * 2, C(0xC8D0B8, 0.06))
@@ -454,34 +470,40 @@ extension Scenes {
     /// One tower: tapering black masonry lit along its left side by the moon, thorn-like spikes jutting up its
     /// flanks, a jagged broken top with a shard or two still standing, and slit windows. Far ones fade into the haze.
     static func dolGuldurTower(_ c: PixelCanvas, _ g: Int, _ t: (x: Int, w: Int, top: Int, haze: Double)) {
-        let s = unit(g), wt = dolGuldurWallTop(c, g), hz = C(0x4A5444)
-        let body = lerp(C(0x16141A), hz, t.haze * 0.6), lit = lerp(C(0x3A3844), hz, t.haze * 0.6)
-        let shade = lerp(C(0x0C0A0E), hz, t.haze * 0.6), mortar = lerp(C(0x100E14), hz, t.haze * 0.6)
+        let s = unit(g), tall = isTall(c), wt = dolGuldurWallTop(c, g), hz = C(0x56624E)
+        let body = lerp(C(0x0E0C12), hz, t.haze * 0.6), lit = lerp(C(0x3A3844), hz, t.haze * 0.6)
+        let shade = lerp(C(0x08070A), hz, t.haze * 0.6), mortar = lerp(C(0x0A090E), hz, t.haze * 0.6)
+        let rim = lerp(C(0xB4BCC0), hz, t.haze * 0.7)
         let base = wt + 2 * s, span = max(1, base - t.top)
         func half(_ y: Int) -> Int { t.w / 2 + (y - t.top) * t.w / (6 * span) }
-        // the broken top: each column of the crown stops at its own ragged height
+        // the broken top: each column of the crown stops at its own ragged height, its broken edge catching the moon
+        let ragged = tall ? 0.9 : 0.5
         for dx in -t.w / 2..<max(-t.w / 2, t.w / 2 + 1) {
             let n = noise(dx / max(1, 2 * s) + t.x + 480)
-            let top = t.top + Int(n * Double(t.w) * 0.9)
+            let top = t.top + Int(n * Double(t.w) * ragged)
             for y in top..<max(top, base) {
                 let h = half(y), x = t.x + dx * h / max(1, t.w / 2)
                 c.rect(x, y, max(1, h / max(1, t.w / 2)), 1, dx > t.w / 4 ? shade : body)
             }
+            if dx < t.w / 4, top < base { c.rect(t.x + dx * half(top) / max(1, t.w / 2), top, 1, s, rim.alpha(0.7)) }
         }
-        // shards still standing on the crown
+        // shards still standing on the crown, lit down their left side
         for k in 0..<3 {
             let sx = t.x + Int((noise(t.x + k * 3 + 490) - 0.5) * Double(t.w) * 0.7)
-            let sh = Int((0.6 + noise(t.x + k * 3 + 491) * 1.0) * Double(t.w)), sw = max(s, t.w / 6)
+            let tallest = Double(dolGuldurCrownRoom(c, t.w) + t.w / 6)
+            let sh = Int((0.45 + noise(t.x + k * 3 + 491) * 0.55) * tallest), sw = max(s, t.w / 6)
             for j in 0..<max(0, sh) {
                 let w = max(1, sw * (sh - j) / max(1, sh))
                 c.rect(sx - w / 2, t.top + t.w / 6 - j, w, 1, body)
+                if w > s { c.px(sx - w / 2, t.top + t.w / 6 - j, rim.alpha(0.55)) }
             }
         }
-        // the moonlit edge and the masonry
+        // the moonlit edge, pale on the near towers, and the masonry
         for y in t.top..<max(t.top, base) {
             let h = half(y)
-            c.rect(t.x - h, y, s, 1, lit)
-            if (y - t.top) % (4 * s) == 0, y > t.top + t.w / 2 { c.rect(t.x - h + s, y, 2 * h - s, max(1, s / 2), mortar) }
+            c.rect(t.x - h, y, s, 1, rim.alpha(0.85))
+            c.rect(t.x - h + s, y, s, 1, lit)
+            if (y - t.top) % (4 * s) == 0, y > t.top + t.w / 2 { c.rect(t.x - h + 2 * s, y, 2 * h - 2 * s, max(1, s / 2), mortar) }
         }
         // thorns jutting up and out of the flanks
         for (k, y) in stride(from: t.top + t.w / 2 + 3 * s, to: wt, by: max(4 * s, t.w)).enumerated() {
@@ -491,14 +513,11 @@ extension Scenes {
                 r7Line(c, t.x + side * h, y, t.x + side * (h + len), y - len * 3 / 2, body, s: s)
             }
         }
-        // slit windows, a few glowing a sickly green
-        for i in 0..<max(0, span / (14 * s)) {
-            let y = t.top + t.w / 2 + 4 * s + Int(noise(t.x + i * 3 + 510) * Double(max(1, span - t.w / 2 - 12 * s)))
-            let x = t.x + Int((noise(t.x + i * 3 + 511) - 0.5) * Double(t.w) * 0.5)
-            let glow = noise(t.x + i * 3 + 512) > 0.65
-            c.rect(x, y, s, 3 * s, glow ? C(0x8AAA6A, 0.75 - t.haze * 0.5) : C(0x06050A))
-            c.px(x, y - 1, glow ? C(0x8AAA6A, 0.4) : C(0x06050A))
-            if glow { c.circle(x, y + s, 3 * s, C(0x8AAA6A, 0.08)) }
+        // slit windows, many glowing a sickly green
+        for (x, y, glow, _) in dolGuldurWindows(c, g, t) {
+            if glow { c.circle(x, y + s, 4 * s, C(0x9ACC6A, 0.1)); c.circle(x, y + s, 2 * s, C(0x9ACC6A, 0.12)) }
+            c.rect(x, y, s, 3 * s, glow ? C(0xB4DC84, 0.9 - t.haze * 0.5) : C(0x06050A))
+            c.px(x, y - 1, glow ? C(0x9ACC6A, 0.5) : C(0x06050A))
         }
     }
 
@@ -506,7 +525,7 @@ extension Scenes {
     /// masonry and a row of spikes along what's left of the parapet.
     static func dolGuldurWall(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), wt = dolGuldurWallTop(c, g), wh = g - wt
-        let body = C(0x221F26), lit = C(0x403C48), mortar = C(0x18161C)
+        let body = C(0x1C1A20), lit = C(0x8A9096), mortar = C(0x141218)
         let breaches: [(x: Int, half: Int)] = [(Int(Double(c.w) * 0.39), 14 * s), (Int(Double(c.w) * 0.79), 10 * s)]
         var tops: [Int] = []
         for x in 0..<c.w {
@@ -561,17 +580,14 @@ extension Scenes {
             (Int(Double(c.w) * $0.0), Int(Double(g) * $0.1 * 0.35))
         }
         for (j, tw) in towers.enumerated() {
-            let base = wt + 2 * s, span = max(1, base - tw.top)
-            for i in 0..<max(0, span / (14 * s)) where noise(tw.x + i * 3 + 512) > 0.65 {
-                let y = tw.top + tw.w / 2 + 4 * s + Int(noise(tw.x + i * 3 + 510) * Double(max(1, span - tw.w / 2 - 12 * s)))
-                let x = tw.x + Int((noise(tw.x + i * 3 + 511) - 0.5) * Double(tw.w) * 0.5)
+            let base = wt + 2 * s
+            for (x, y, glow, id) in dolGuldurWindows(c, g, tw) where glow {
                 // skip one hidden behind a nearer tower or a dead tree
                 let hidden = towers[(j + 1)...].contains { o in
                     let ospan = max(1, base - o.top)
                     return y >= o.top - o.w && abs(x - o.x) <= o.w / 2 + (y - o.top) * o.w / (6 * ospan) + s
                 } || trees.contains { abs(x - $0.x) < $0.reach }
                 guard !hidden else { continue }
-                let id = tw.x + i * 31
                 let p: Double = 0.5 + 0.5 * sin(t * (1.3 + noise(id + 1400)) + noise(id + 1401) * 6)
                 let out = noise(Int((t * 8).rounded(.down)) * 13 + id + 1402) < 0.06
                 let a: Double = (0.75 - tw.haze * 0.5) * (out ? 0 : 0.2 + 0.6 * p * r7Wander(t, rate: 7, seed: id + 1403))

@@ -58,10 +58,11 @@ extension Scenes {
     /// side of it. Beyond and below is the chasm, lit a faint orange from the depths, and past it the huge carved
     /// pillars of the hall rise from the far rim and fade into the dark. On tall screens the hall opens up: a second
     /// rank of pillars, their capitals and vaults, and the chasm gaping under the far rim with rock spires and a far
-    /// bridge down in its glow.
+    /// bridge down in its glow. In the window's strip the glow is stronger, so the hall still reads: it climbs up
+    /// between the pillars from the rim, warms their feet, and catches the underside of the bridge.
     static func moria(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), rim = moriaRim(c, g), b = moriaBridge(c, g)
-        let dark = C(0x0C0D10), glow = C(0x3A1A0A)
+        let dark = C(0x0C0D10), glow = tall ? C(0x3A1A0A) : C(0x5C2810)
         c.rect(0, 0, c.w, g, dark)
         // the far wall, barely there
         for i in 0..<max(0, c.w * rim / 260) {
@@ -69,13 +70,13 @@ extension Scenes {
             let len = (3 + Int(noise(i * 4 + 642) * 10.0)) * s
             c.rect(x, y, len, s, C(0x15161B, 0.4 + 0.5 * Double(y) / Double(max(1, rim))))
         }
-        if tall { moriaVaults(c, g) }
+        if tall { moriaVaults(c, g) } else { moriaUpglow(c, g) }
         for p in moriaPillars(c, g) where p.far { moriaPillar(c, g, p.x, p.w, far: true) }
         for p in moriaPillars(c, g) where !p.far { moriaPillar(c, g, p.x, p.w, far: false) }
         // the far rim and the chasm below it, brightening towards the depths
         c.rect(0, rim, c.w, 2 * s, C(0x1A1B20)); c.rect(0, rim, c.w, s, C(0x2C2A2C))
         let chasmTop = rim + 2 * s
-        c.gradient(chasmTop, g, C(0x0E0C0D), glow, bands: tall ? 10 : 5)
+        c.gradient(chasmTop, g, tall ? C(0x0E0C0D) : C(0x1C100C), glow, bands: tall ? 10 : 5)
         if tall { moriaDeep(c, g) }
         // the far rim's ragged lip, hanging over the chasm, and a few cracks running down from it into the glow
         for x in 0..<c.w {
@@ -93,21 +94,23 @@ extension Scenes {
     }
 
     /// One great pillar standing on the far rim: fluted, banded with carved diamonds, lit orange low down where the
-    /// glow reaches and fading into the dark above. The far rank is slimmer and dimmer.
+    /// glow reaches and fading into the dark above. The far rank is slimmer and dimmer. In the strip the pillars fade
+    /// less and the glow climbs higher up them, banded, so their feet stand out warm against the dark.
     static func moriaPillar(_ c: PixelCanvas, _ g: Int, _ x: Int, _ w: Int, far: Bool) {
         let s = unit(g), tall = isTall(c), rim = moriaRim(c, g)
-        let dark = C(0x0C0D10), lit = C(0x6A3418)
+        let dark = C(0x0C0D10), lit = tall ? C(0x6A3418) : C(0x7E3C16)
         let body = far ? C(0x1C1D22) : C(0x2A2C32), shade = far ? C(0x141519) : C(0x1E2025)
         let edge = far ? C(0x24252B) : C(0x3A3C44), groove = far ? C(0x17181C) : C(0x222429)
         let capital = tall ? Int(Double(g) * (far ? 0.2 : 0.1)) : -1
-        let y0: Double = tall ? Double(g) * 0.04 : -Double(g) / 3
+        let y0: Double = tall ? Double(g) * 0.04 : -Double(g) * 0.6
         let y1: Double = tall ? Double(g) * 0.5 : Double(g) * 0.85
-        let glowLen = Double((tall ? 70 : 24) * s)
+        let glowLen = Double((tall ? 70 : 30) * s), glowMax = tall ? (far ? 0.25 : 0.4) : 0.6
         // the colour of `p` at row `y`: faded into the dark above, warmed by the glow below
         func tone(_ p: Px, _ y: Int) -> Px {
             let k = (rings2Clamp((Double(y) - y0) / (y1 - y0)) * 8).rounded(.down) / 8
-            let gk = rings2Clamp(1 - Double(rim - y) / glowLen) * (far ? 0.25 : 0.4)
-            return lerp(lerp(dark, p, k), lit, gk)
+            var gk = rings2Clamp(1 - Double(rim - y) / glowLen)
+            if !tall { gk = (gk * gk * 6).rounded(.up) / 6 }
+            return lerp(lerp(dark, p, k), lit, gk * glowMax)
         }
         let top = max(0, capital)
         for y in top..<max(top, rim) {
@@ -185,6 +188,25 @@ extension Scenes {
         for sp in spires where sp.haze <= 0.5 { spire(sp) }
     }
 
+    /// In the strip: the fire's glow climbing up out of the chasm behind the pillars, strongest at the rim and fading in
+    /// bands into the dark, with a few tongues of it reaching higher. The pillars stand dark against it.
+    static func moriaUpglow(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), rim = moriaRim(c, g), reach = max(1, min(rim, 26 * s))
+        let fire = C(0xB04A18)
+        for y in max(0, rim - reach)..<max(0, rim) {
+            let k = (Double(y - (rim - reach)) / Double(reach) * 6).rounded(.down) / 6
+            c.rect(0, y, c.w, 1, fire.alpha(0.2 * k * k))
+        }
+        for i in 0..<(c.w / (40 * s)) {
+            let x = Int(noise(i * 3 + 670) * Double(c.w)), half = (4 + Int(noise(i * 3 + 671) * 6.0)) * s
+            let up = min(rim, reach + Int(noise(i * 3 + 672) * Double(12 * s)))
+            for y in max(0, rim - up)..<max(0, rim - reach / 2) {
+                let k = Double(y - (rim - up)) / Double(max(1, up)), hw = Int(Double(half) * k)
+                c.rect(x - hw, y, hw * 2 + 1, 1, fire.alpha(0.08 * k))
+            }
+        }
+    }
+
     /// High up on tall screens: the vaults springing from capital to capital, lost in the dark.
     static func moriaVaults(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), dark = C(0x0C0D10)
@@ -212,16 +234,18 @@ extension Scenes {
 
     /// The bridge: a slender span of pale stone from abutment to abutment, its top row on the ground row, no rails.
     /// Its top edge catches the light, its side face and the thin arch under it are darker, and the arch has a dark
-    /// underside. Below it the chasm drops away, black under the span and glowing orange in the depths.
+    /// underside. Below it the chasm drops away, black under the span and glowing orange in the depths. In the strip,
+    /// with only a few rows under the deck, the glow climbs higher and lights the side face and the arch's lip.
     static func moriaBridgeDraw(_ c: PixelCanvas, _ g: Int, _ b: (left: Int, right: Int, deck: Int)) {
-        let s = unit(g)
-        let top = C(0xD8CBB4), stone = C(0x9A8E80), face = C(0x655B52), arch = C(0x6A6056)
-        let lip = C(0x2E2620), joint = C(0x51483F), glow = C(0x8A3A12)
+        let s = unit(g), tall = isTall(c)
+        let top = C(0xD8CBB4), stone = C(0x9A8E80), arch = C(0x6A6056)
+        let joint = C(0x51483F), glow = C(0x8A3A12)
+        let face = tall ? C(0x655B52) : C(0x7A5844), lip = tall ? C(0x2E2620) : C(0x9A4A1C)
         let rock = C(0x5A5148), rockLit = C(0x7E7266), rockFace = C(0x3A332D)
         // the chasm under the bridge: black just under the span, glowing in the depths
         for y in g..<c.h {
             let k = Double(y - g + 1) / Double(max(1, c.h - g))
-            c.rect(0, y, c.w, 1, lerp(C(0x060506), glow, pow(k, 2.5)))
+            c.rect(0, y, c.w, 1, lerp(C(0x060506), glow, pow(k, tall ? 2.5 : 1.6)))
         }
         // the abutments: dressed stone from the bridge down out of sight, their chasm-side faces shelving away
         for side in [-1, 1] {

@@ -370,12 +370,53 @@ extension Scenes {
 
 // MARK: - The Barrow-downtimes
 
+/// A lone thorn tree `h` tall from (x, base), bent over by the west wind: a gnarled trunk leaning east, a crown of
+/// crooked thorny limbs all streaming the same way and forking into twigs, a pale rim along their tops.
+private func r6Thorn(_ c: PixelCanvas, x: Int, base: Int, h: Int, s: Int, seed: Int, body: Px, rim: Px) {
+    guard h > 4 * s else { return }
+    let trunkH = h / 2, thick = max(2 * s, h / 7)
+    func trunk(_ y: Int) -> Int {
+        let k = Double(y) / Double(max(1, trunkH))
+        return x + Int(sin(k * 4.5 + Double(seed)) * Double(thick) * 0.6 + k * k * Double(h) * 0.28)
+    }
+    // roots gripping the turf
+    for side in [-1, 1] { r6Line(c, x, base - thick / 2, x + side * thick, base, body, s: max(s, thick / 3)) }
+    for y in 0..<trunkH {
+        let k = Double(y) / Double(max(1, trunkH)), w = max(s, Int(Double(thick) * (1 - 0.5 * k)))
+        c.rect(trunk(y) - w / 2, base - y, w, 1, body)
+        c.rect(trunk(y) - w / 2, base - y, s, 1, rim)
+    }
+    // the limbs, crooked, streaming east off the upper trunk; one or two short stubs point back into the wind
+    for i in 0..<9 {
+        let k = 0.5 + noise(seed + i * 7) * 0.5, y0 = min(trunkH - 1, Int(k * Double(trunkH)))
+        var px = trunk(y0), py = base - y0
+        let back = i % 5 == 4
+        let len = Double(h) * (back ? 0.14 : 0.3 + noise(seed + i * 7 + 1) * 0.28)
+        var a: Double = back ? 2.4 + noise(seed + i * 7 + 2) * 0.4 : 0.15 + noise(seed + i * 7 + 2) * 0.8
+        var th = max(s, thick * 2 / 5)
+        for seg in 0..<3 {
+            let l = len / 3, nx = px + Int(cos(a) * l), ny = py - Int(sin(a) * l)
+            r6Line(c, px, py - s, nx, ny - s, rim, s: th)
+            r6Line(c, px, py, nx, ny, body, s: th)
+            // a twig forking off, and a thorn
+            if seg > 0 {
+                let ta = a + (seg % 2 == 0 ? 0.8 : -0.6), tl = l * 0.7
+                r6Line(c, nx, ny, nx + Int(cos(ta) * tl), ny - Int(sin(ta) * tl), body, s: s)
+                c.rect(nx - s, ny + (seg % 2 == 0 ? th : -s), s, s, body)
+            }
+            px = nx; py = ny; th = max(s, th - s)
+            a += (noise(seed + i * 7 + seg + 3) - 0.55) * 0.7
+        }
+    }
+}
+
 extension Scenes {
-    /// The Barrow-downs in a cold fog: grey-green downs rolling away in bands, each fainter than the one before, with
-    /// mist lying in the hollows, round barrows and standing stones on their crests, and a pale sun hanging low in
-    /// the murk. Nearest, a great barrow with a dark doorway under a stone lintel, and a lone leaning stone across
-    /// the turf where the crew stands. On tall screens the downs fade away much further into the fog, with a ring of
-    /// stones on a far crest.
+    /// The Barrow-downs in a cold fog: grey-green downs rolling away in bands, each fainter than the one before and
+    /// lit pale along its crest, with mist lying in the hollows, round barrows with dark doorways and standing stones
+    /// on their crests, and a pale sun hanging low in the murk. On the nearest crest a ring of standing stones, one
+    /// fallen, and a lone thorn tree bent by the wind. Nearest, a great barrow with a dark doorway under a stone
+    /// lintel, gold glinting on its threshold, and a lone leaning stone across the turf where the crew stands. On
+    /// tall screens the downs fade away much further into the fog, with a second ring of stones on a far crest.
     static func barrowDowns(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), fog = C(0xC4CCC2)
         c.gradient(0, g, C(0x7C8886), fog, bands: tall ? 10 : 6)
@@ -390,22 +431,34 @@ extension Scenes {
             wisp(c, Int(noise(i * 3 + 8001) * Double(c.w)), y, (40 + Int(noise(i * 3 + 8002) * 80.0)) * s,
                  C(0xD2D8D0, 0.35), s: s)
         }
-        // the downs, far to near
-        let horizon = barrowDownsHorizon(c, g), n = tall ? 6 : 3
-        for i in 0..<n {
-            let k = Double(i) / Double(max(1, n - 1))
-            let base = horizon + (g - 6 * s - horizon) * i / n
-            let amp = Double((tall ? 3 + Int(6 * k) : 2 + Int(3 * k)) * s)
-            let freq = (0.03 - 0.016 * k) / Double(s), phase = Double(i) * 1.9 + 0.5
-            let col = lerp(C(0xA6B0A4), C(0x52603F), k), edge = lerp(C(0xB6C0B4), C(0x76845E), k)
-            c.dunes(base: base, amp: amp, freq: freq, phase: phase, bottom: g, col, shade: edge)
-            if tall && i == 1 { barrowDownsRing(c, g, base: base, amp: amp, freq: freq, phase: phase) }
-            barrowDownsMounds(c, g, layer: i, k: k, base: base, amp: amp, freq: freq, phase: phase, col: col, edge: edge)
+        // the downs, far to near: each swell lit pale along its crest and shadowed below it
+        let horizon = barrowDownsHorizon(c, g), bands = barrowDownsBands(c, g), n = bands.count
+        for (i, b) in bands.enumerated() {
+            let col = barrowDownsTone(b.k), edge = lerp(C(0xB6C0B4), C(0x7A8862), b.k)
+            c.dunes(base: b.base, amp: b.amp, freq: b.freq, phase: b.phase, bottom: g, col, shade: edge)
+            let lip = (tall ? 3 + Int(5 * b.k) : 2) * s
+            c.dunes(base: b.base + lip, amp: b.amp, freq: b.freq, phase: b.phase, bottom: g,
+                    lerp(col, C(0x2E3A2C), tall ? 0.14 + 0.14 * b.k : 0.12))
+            if tall && i == 1 {
+                let x = Int(Double(c.w) * 0.32)
+                barrowDownsRing(c, g, x: x, y: r6Swell(x, base: b.base, amp: b.amp, freq: b.freq, phase: b.phase) + 2 * s,
+                                r: 16 * s, w: 2 * s, h: 3 * s, k: 0, fallen: -1)
+            }
+            barrowDownsMounds(c, g, layer: i, k: b.k, col: col, edge: edge)
+            if i == barrowDownsNear(c, g) {
+                let x = Int(Double(c.w) * (tall ? 0.56 : 0.55)), u = tall ? 2 : 1
+                barrowDownsRing(c, g, x: x, y: r6Swell(x, base: b.base, amp: b.amp, freq: b.freq, phase: b.phase) + 3 * s * u,
+                                r: (tall ? 36 : 18) * s, w: 3 * s * u, h: (tall ? 9 : 5) * s, k: b.k, fallen: 7)
+                let tx = Int(Double(c.w) * (tall ? 0.8 : 0.7))
+                r6Thorn(c, x: tx, base: r6Swell(tx, base: b.base, amp: b.amp, freq: b.freq, phase: b.phase) + 2 * s,
+                        h: (tall ? 52 : 22) * s, s: s, seed: 8600, body: lerp(C(0x262A26), fog, 0.25 * (1 - b.k)),
+                        rim: lerp(C(0x6A7266), fog, 0.25 * (1 - b.k)))
+            }
             // mist lying in the hollow at the foot of this swell
             let mh = (tall ? 12 : 5) * s
             for y in 0..<mh {
                 let a: Double = Double(y) / Double(mh) * Double.pi
-                c.rect(0, base - mh / 3 + y, c.w, 1, fog.alpha(0.3 * sin(a)))
+                c.rect(0, b.base - mh / 3 + y, c.w, 1, fog.alpha((i == n - 1 ? 0.22 : 0.3) * sin(a)))
             }
         }
         // drifting streaks of fog across the downs
@@ -430,44 +483,106 @@ extension Scenes {
         isTall(c) ? Int(Double(g) * 0.42) : g - 28 * unit(g)
     }
 
-    /// Round barrows and lone standing stones along the crest of one band of downs; `k` is how near it is.
-    static func barrowDownsMounds(_ c: PixelCanvas, _ g: Int, layer: Int, k: Double, base: Int, amp: Double,
-                                  freq: Double, phase: Double, col: Px, edge: Px) {
-        let s = unit(g), stone = lerp(C(0x8A8E88), C(0xA8B0A8), 0.7 - k * 0.7)
-        let light = lerp(C(0xB4B8B0), C(0xC0C8C0), 0.7 - k * 0.7), dark = lerp(C(0x5A5E5A), C(0x98A098), 0.7 - k * 0.7)
-        let size = 0.55 + 1.1 * k
+    /// The bands of downs, far to near: the foot and height of each swell, its waves, and how near it is (0 to 1).
+    static func barrowDownsBands(_ c: PixelCanvas, _ g: Int) -> [(base: Int, amp: Double, freq: Double, phase: Double, k: Double)] {
+        let s = unit(g), tall = isTall(c), horizon = barrowDownsHorizon(c, g), n = tall ? 6 : 3
+        return (0..<n).map { i in
+            let k = Double(i) / Double(max(1, n - 1))
+            let amp = Double((tall ? 3 + Int(6 * k) : 2 + Int(3 * k)) * s)
+            return (horizon + (g - 6 * s - horizon) * i / n, amp, (0.03 - 0.016 * k) / Double(s), Double(i) * 1.9 + 0.5, k)
+        }
+    }
+
+    /// Which band carries the near ring of stones and the thorn tree.
+    static func barrowDownsNear(_ c: PixelCanvas, _ g: Int) -> Int { barrowDownsBands(c, g).count - 1 }
+
+    /// The turf of a band `k` near (0 far): pale and fogged far off, a deeper green near. Tall screens step the bands
+    /// apart more, so each swell reads in front of the one behind.
+    static func barrowDownsTone(_ k: Double) -> Px {
+        lerp(C(0xA6B0A4), C(0x4C5A3A), k)
+    }
+
+    /// What stands on the crest of one band: for each, its middle and the row of the crest there, and either a
+    /// round barrow (its size, whether it has a doorway, whether gold glints in it, and the stone on its top) or a
+    /// lone standing stone (its height and lean).
+    static func barrowDownsSpots(_ c: PixelCanvas, _ g: Int, layer: Int)
+        -> [(x: Int, top: Int, barrow: Bool, rx: Int, ry: Int, door: Bool, gold: Bool, stone: Int, lean: Int)] {
+        let s = unit(g), bands = barrowDownsBands(c, g)
+        guard layer < bands.count else { return [] }
+        let b = bands[layer], size = 0.55 + 1.1 * b.k
+        var out: [(x: Int, top: Int, barrow: Bool, rx: Int, ry: Int, door: Bool, gold: Bool, stone: Int, lean: Int)] = []
         for j in 0..<max(1, c.w / (70 * s)) {
             let nn = layer * 211 + j * 5 + 8200
             guard noise(nn) > 0.35 else { continue }
-            let x = Int(noise(nn + 1) * Double(c.w)), top = r6Swell(x, base: base, amp: amp, freq: freq, phase: phase)
+            let x = Int(noise(nn + 1) * Double(c.w)), top = r6Swell(x, base: b.base, amp: b.amp, freq: b.freq, phase: b.phase)
             if noise(nn + 2) > 0.3 {
                 let rx = Int(Double((8 + Int(noise(nn + 3) * 10.0)) * s) * size), ry = max(s, rx * 2 / 5)
-                r6Barrow(c, x: x, base: top + ry / 3, rx: rx, ry: ry, s: s, body: lerp(col, C(0x9AA88A), 0.2), top: edge)
-                if noise(nn + 4) > 0.5 {
-                    let h = max(2 * s, Int(Double((3 + Int(noise(nn + 5) * 4.0)) * s) * size))
-                    r6Stone(c, x: x + rx / 4, base: top - ry * 2 / 3 + s, w: max(2 * s, h * 2 / 5), h: h, lean: 0, s: s,
-                            body: stone, light: light, dark: dark)
-                }
+                let door = b.k > 0.1 && ry >= 3 * s && noise(nn + 7) > 0.25
+                let st = noise(nn + 4) > 0.5 ? max(2 * s, Int(Double((3 + Int(noise(nn + 5) * 4.0)) * s) * size)) : 0
+                out.append((x, top, true, rx, ry, door, door && noise(nn + 8) > 0.45, st, 0))
             } else {
                 let h = max(2 * s, Int(Double((5 + Int(noise(nn + 5) * 5.0)) * s) * size))
-                r6Stone(c, x: x, base: top + s, w: max(2 * s, h * 2 / 5), h: h, lean: Int((noise(nn + 6) - 0.5) * 4) * s,
+                out.append((x, top, false, 0, 0, false, false, h, Int((noise(nn + 6) - 0.5) * 4) * s))
+            }
+        }
+        return out
+    }
+
+    /// A barrow's doorway on the crest: its middle, the row of its sill, width and height.
+    static func barrowDownsSpotDoor(_ g: Int, _ p: (x: Int, top: Int, rx: Int, ry: Int)) -> (x: Int, y: Int, w: Int, h: Int) {
+        let s = unit(g), w = max(s, (p.ry * 2 / 5) / s * s)
+        return (p.x + p.rx / 5, p.top + p.ry / 3, w, max(2 * s, p.ry * 3 / 5))
+    }
+
+    /// Round barrows and lone standing stones along the crest of one band of downs; `k` is how near it is. The
+    /// nearer barrows have a dark doorway under a lintel, and in one or two of them a glint of gold.
+    static func barrowDownsMounds(_ c: PixelCanvas, _ g: Int, layer: Int, k: Double, col: Px, edge: Px) {
+        let s = unit(g), stone = lerp(C(0x8A8E88), C(0xA8B0A8), 0.7 - k * 0.7)
+        let light = lerp(C(0xB4B8B0), C(0xC0C8C0), 0.7 - k * 0.7), dark = lerp(C(0x5A5E5A), C(0x98A098), 0.7 - k * 0.7)
+        for p in barrowDownsSpots(c, g, layer: layer) {
+            guard p.barrow else {
+                r6Stone(c, x: p.x, base: p.top + s, w: max(2 * s, p.stone * 2 / 5), h: p.stone, lean: p.lean,
                         s: s, body: stone, light: light, dark: dark)
+                continue
+            }
+            r6Barrow(c, x: p.x, base: p.top + p.ry / 3, rx: p.rx, ry: p.ry, s: s, body: lerp(col, C(0x9AA88A), 0.2), top: edge)
+            if p.stone > 0 {
+                r6Stone(c, x: p.x + p.rx / 4, base: p.top - p.ry * 2 / 3 + s, w: max(2 * s, p.stone * 2 / 5), h: p.stone,
+                        lean: 0, s: s, body: stone, light: light, dark: dark)
+            }
+            guard p.door else { continue }
+            // the doorway: a dark hole between two jambs under a lintel, fainter the further off
+            let d = barrowDownsSpotDoor(g, (p.x, p.top, p.rx, p.ry)), fade = 0.3 * (1 - k)
+            c.rect(d.x - d.w / 2, d.y - d.h, d.w, d.h, lerp(C(0x0E1012), col, fade))
+            c.rect(d.x - d.w / 2 - s, d.y - d.h, s, d.h, dark)
+            c.rect(d.x + d.w / 2, d.y - d.h, s, d.h, light)
+            c.rect(d.x - d.w / 2 - 2 * s, d.y - d.h - s, d.w + 4 * s, s, stone)
+            if p.gold {
+                c.rect(d.x - d.w / 4, d.y - s, s, s, lerp(C(0xE8C050), col, fade))
+                c.rect(d.x + d.w / 4, d.y - s, s, s, lerp(C(0xA88028), col, fade))
             }
         }
     }
 
-    /// Tall screens: a ring of standing stones on a far crest.
-    static func barrowDownsRing(_ c: PixelCanvas, _ g: Int, base: Int, amp: Double, freq: Double, phase: Double) {
-        let s = unit(g), x = Int(Double(c.w) * 0.32), y = r6Swell(x, base: base, amp: amp, freq: freq, phase: phase) + 2 * s
-        let r = 16 * s
+    /// A ring of standing stones round (x, y), `r` across and seen from the side, its stones about `h` tall and `w`
+    /// wide, faded into the fog the further off it stands (`k` 0 far). The stone at `fallen` lies in the grass.
+    static func barrowDownsRing(_ c: PixelCanvas, _ g: Int, x: Int, y: Int, r: Int, w: Int, h: Int, k: Double, fallen: Int) {
+        let s = unit(g), fog = C(0xB8C0B8)
+        let body = lerp(C(0x7A807A), fog, 0.55 * (1 - k)), light = lerp(C(0xACB2AA), fog, 0.5 * (1 - k))
+        let dark = lerp(C(0x50564F), fog, 0.55 * (1 - k))
         // the far side of the ring first, then the near side
         for near in [false, true] {
             for j in 0..<10 {
                 let a: Double = Double(j) / 10 * 2 * Double.pi
                 guard (sin(a) > 0) == near else { continue }
-                let h = (3 + Int(noise(j + 8300) * 3.0)) * s
-                r6Stone(c, x: x + Int(cos(a) * Double(r)), base: y + Int(sin(a) * Double(r) / 4), w: 2 * s, h: h, lean: 0,
-                        s: s, body: C(0x9EA6A0), light: C(0xBCC4BC), dark: C(0x8A928C))
+                let sx = x + Int(cos(a) * Double(r)), sy = y + Int(sin(a) * Double(r) / 4)
+                if j == fallen {
+                    c.rect(sx - w, sy - w / 2, h, max(s, w / 2), body)
+                    c.rect(sx - w, sy - w / 2, h, s, light)
+                    continue
+                }
+                let hh = h + Int(noise(j + 8300) * Double(h)), lean = k > 0 ? Int((noise(j + 8310) - 0.5) * 3) * s : 0
+                r6Stone(c, x: sx, base: sy, w: w, h: hh, lean: lean, s: s, body: body, light: light, dark: dark)
             }
         }
     }
@@ -482,6 +597,19 @@ extension Scenes {
     static func barrowDownsDoor(_ c: PixelCanvas, _ g: Int) -> (x: Int, h: Int, w: Int) {
         let (x, rx, ry) = barrowDownsMound(c, g)
         return (x + rx / 5, ry * 11 / 20, max(2 * unit(g), ry * 2 / 5))
+    }
+
+    /// Where gold glints in the doorways, near to far: the great barrow's threshold and the crest barrows'.
+    static func barrowDownsGlints(_ c: PixelCanvas, _ g: Int) -> [(x: Int, y: Int)] {
+        let s = unit(g), d = barrowDownsDoor(c, g)
+        var out: [(x: Int, y: Int)] = [(d.x - d.w / 4, g - s), (d.x + d.w / 5, g - s)]
+        for layer in 0..<barrowDownsBands(c, g).count {
+            for p in barrowDownsSpots(c, g, layer: layer) where p.gold {
+                let dd = barrowDownsSpotDoor(g, (p.x, p.top, p.rx, p.ry))
+                out.append((dd.x - dd.w / 4, dd.y - s))
+            }
+        }
+        return out
     }
 
     /// The great barrow nearest the crew with its dark doorway, and a lone leaning stone across the turf.
@@ -511,6 +639,12 @@ extension Scenes {
         let lt = 2 * s * d
         c.rect(dx0 - dw / 2 - j - 2 * s, g - dh - lt, dw + 2 * j + 4 * s, lt, C(0x868A82))
         c.rect(dx0 - dw / 2 - j - 2 * s, g - dh - lt, dw + 2 * j + 4 * s, s, C(0xA8ACA4))
+        // grave-gold spilled on the threshold
+        let glints = barrowDownsGlints(c, g)
+        for (i, p) in glints.prefix(2).enumerated() {
+            c.rect(p.x, p.y, s * d, s, C(i == 0 ? 0xE8C050 : 0xC09A38))
+            c.rect(p.x + s * d, p.y, s, s, C(0x8A6A20))
+        }
         // a stone on the barrow's crown
         let sx = x - rx / 3, st = g - Int(Double(ry) * (1 - 1.0 / 9).squareRoot())
         r6Stone(c, x: sx, base: st + 2 * s, w: 5 * s * d, h: 12 * s * d, lean: -s, s: s,
@@ -523,8 +657,8 @@ extension Scenes {
         }
     }
 
-    /// Banks of fog drifting slowly across the downs (one of them over the sun), and now and then a faint cold
-    /// light welling up deep in the barrow's doorway and dying away.
+    /// Banks of fog drifting slowly across the downs (one of them over the sun), the gold in the doorways glinting
+    /// now and then, and now and then a faint cold light welling up deep in the barrow's doorway and dying away.
     static func barrowDownsLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
         let s = unit(g), tall = isTall(c), horizon = barrowDownsHorizon(c, g), sun = barrowDownsSun(c, g)
         let th = tall ? 2 * s : s
@@ -538,6 +672,15 @@ extension Scenes {
             var at = (noise(n + 3) * range + t * v).truncatingRemainder(dividingBy: range)
             if at < 0 { at += range }
             r6Fog(c, Int(at) - len, y, len, th, C(0xD6DCD4), i == 0 ? 0.3 : 0.22)
+        }
+        // now and then the gold in a doorway catches the light: a tiny four-pointed gleam
+        for (i, p) in barrowDownsGlints(c, g).enumerated() {
+            let e = r6Now(t, 4 + noise(i + 8700) * 5, on: 0.12, offset: noise(i + 8710) * 9)
+            guard e > 0.05 else { continue }
+            let u = i < 2 && tall ? 2 * s : s
+            c.rect(p.x, p.y, s, s, C(0xFFF4C8, e))
+            c.rect(p.x - u, p.y, s, s, C(0xFFE8A0, 0.6 * e)); c.rect(p.x + u, p.y, s, s, C(0xFFE8A0, 0.6 * e))
+            c.rect(p.x, p.y - u, s, s, C(0xFFE8A0, 0.6 * e))
         }
         // the cold light in the doorway
         let e = r6Now(t, 11, on: 0.4, offset: 3) * (0.85 + 0.15 * sin(t * 7))
