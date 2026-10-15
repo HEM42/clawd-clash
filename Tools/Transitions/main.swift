@@ -3,11 +3,13 @@ import AVFoundation
 
 // The comic-book transitions between places, rendered as short clips and a sheet of key frames: Marvel's (`ComicWipe`)
 // or, between two DC places, DC's (`DCComicWipe`), or between two Doctor Clawd places, its trips (`DoctorWipe`), or
-// between two Clawd Files places, its own (`FilesWipe`), each clip ending on the typed caption.
+// between two Clawd Files places, its own (`FilesWipe`), each clip ending on the typed caption, or between two Stevie
+// Clawdberg places, its film moments (`ClawdbergWipe`).
 //   Tools/Transitions/build.sh && build/transitions <out folder> [from place] [to place]
 //   build/transitions build/transitions-dc watchtower gotham     DC's fifteen
 //   build/transitions build/transitions-doctor consoleRoom skarro   Doctor Clawd's ten
 //   build/transitions build/transitions-files xFilesOffice area51    The Clawd Files' ten
+//   build/transitions build/transitions-clawdberg hillValley1955 moonHill   Stevie Clawdberg's ten
 
 let args = Array(CommandLine.arguments.dropFirst())
 let outDir = args.first ?? "build/transitions"
@@ -72,6 +74,14 @@ func shownFiles(_ kind: FilesWipe) -> Transition {
     }
 }
 
+/// Stevie Clawdberg's trips (`ClawdbergTrip`), every one of them.
+func shownClawdberg(_ kind: ClawdbergWipe) -> Transition {
+    let trip = ClawdbergTrip(kind: kind, from: from, to: to)
+    return Transition(key: "\(kind.rawValue + 1)-\(kind)", title: "\(kind)", duration: kind.duration) { ctx, old, new, k in
+        trip.draw(ctx, old: old, new: new, k: k, in: full)
+    }
+}
+
 /// The Clawd Files' caption, typed in top left `t` seconds after the trip.
 func caption(_ ctx: CGContext, t: Double) {
     let lines = FilesCaption.typed(to, after: t)
@@ -107,7 +117,8 @@ let marvel: [Transition] = [
 let only = ProcessInfo.processInfo.environment["ONLY"]?.split(separator: ",").map(String.init)
 let transitions: [Transition] = (to.universe == .dc ? DCComicWipe.allCases.map(shownDC)
                                   : to.universe == .doctor ? DoctorWipe.allCases.map(shownDoctor)
-                                  : to.universe == .clawdFiles ? FilesWipe.allCases.map(shownFiles) : marvel).filter { tr in
+                                  : to.universe == .clawdFiles ? FilesWipe.allCases.map(shownFiles)
+                                  : to.universe == .clawdberg ? ClawdbergWipe.allCases.map(shownClawdberg) : marvel).filter { tr in
     only.map { $0.contains { tr.key.hasPrefix("\($0)-") || tr.key.hasSuffix("-\($0)") } } ?? true
 }
 
