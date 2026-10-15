@@ -17,7 +17,7 @@ let ringsVillains6: [LOTRVillain: Persona] = [
                       callout: "Nobody leaves the Tower till the Gradle build goes green!", draw: drawShagrat),
     .ologHai: Persona(name: "Olog-HA", weapon: .saber, armoured: true, pivot: ologHand, bulk: 5, headTop: 13,
                       signature: 2.8, callout: "Olog-HA: highly available. Five nines of smash.", draw: drawOlogHai),
-    .caveTroll: Persona(name: "The Cave Troll-ing", weapon: .saber, canSit: false, pivot: caveTrollHand, bulk: 8, headTop: 9,
+    .caveTroll: Persona(name: "The Cave Troll-ing", weapon: .saber, canSit: false, pivot: caveTrollHand, bulk: 16, headTop: 9,
                         signature: 3.4, callout: "Hrrr… u mad, Halfling?", draw: drawCaveTroll),
     .bolg: Persona(name: "Blog, son of Azog", weapon: .saber, pivot: bolgHand, bulk: 3, headTop: 18, signature: 3.2,
                    callout: "New on the Blog: thirteen Dwarves, ranked by taste.", draw: drawBolg),

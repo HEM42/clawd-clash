@@ -13,7 +13,7 @@ let ringsHeroes8: [LOTRHero: Persona] = [
                     callout: "I am Éomore, son of Éomund, Third Marshal of the Riddermark… --More--", draw: drawEomer),
     .bard: Persona(name: "Bard the Bowmanpage", weapon: .blaster, shot: .arrow, muzzle: (46, 34), handGun: false, headTop: 20, signature: 3.4,
                    callout: "Black Arrow, I saved you for the last man page.", draw: drawBard),
-    .beorn: Persona(name: "Beorn the Bearer-token", weapon: .saber, pivot: beornFist, bulk: 4, headTop: 13, signature: 3.6,
+    .beorn: Persona(name: "Beorn the Bearer-token", weapon: .saber, pivot: beornFist, bulk: 8, headTop: 13, signature: 3.6,
                     callout: "Authorization: Bear. Now state your business.", draw: drawBeorn),
     .quickbeam: Persona(name: "Quicksort", weapon: .saber, canSit: false, pivot: quickbeamShoulder, bulk: 4, headTop: 7, signature: 3.2,
                         callout: "Hasty? I'm O(n log n). On average.", draw: drawQuickbeam),

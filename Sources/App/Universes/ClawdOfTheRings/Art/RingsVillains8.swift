@@ -11,7 +11,7 @@ let ringsVillains8: [LOTRVillain: Persona] = [
                     callout: "Thief! Who dared git stash pop my hoard?", draw: drawSmaug),
     .azog: Persona(name: "Azog the Profiler", weapon: .saber, pivot: azogHand, bulk: 2, headTop: 19, signature: 2.8,
                    callout: "Profiled you, dwarf: the call stack of Durin ends here.", draw: drawAzog),
-    .goblinKing: Persona(name: "The Go-blin King", weapon: .saber, canSit: false, pivot: kingHand, bulk: 6, headTop: 17, signature: 3.0,
+    .goblinKing: Persona(name: "The Go-blin King", weapon: .saber, canSit: false, pivot: kingHand, bulk: 13, headTop: 17, signature: 3.0,
                          callout: "if err != nil { eat the dwarves }", draw: drawGoblinKing),
     .mirkwoodSpider: Persona(name: "The Mirkwood Web Crawler", weapon: .blaster, shot: .web, canSit: false,
                              muzzle: spiderJaws, handGun: false, bulk: 6, headTop: 22, signature: 3.2,

@@ -10,7 +10,7 @@ let ringsVillains5: [LOTRVillain: Persona] = [
                     callout: "I'm the Chief now. Every commit in the Shire needs my sign-off.", draw: drawLotho),
     .billFerny: Persona(name: "Bill Firmware", weapon: .saber, headTop: 21, signature: 2.6,
                         callout: "Want your pony back? That's a paid firmware upgrade.", draw: drawBillFerny),
-    .oldManWillow: Persona(name: "Old Man Pillow", weapon: .saber, canSit: false, pivot: willowRoot, bulk: 6, headTop: 7,
+    .oldManWillow: Persona(name: "Old Man Pillow", weapon: .saber, canSit: false, pivot: willowRoot, bulk: 14, headTop: 7,
                            signature: 3.6,
                            callout: "Rest your head on me… this Pillow never wakes a sleeping thread.", draw: drawWillow),
 ]
