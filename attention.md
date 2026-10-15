@@ -27,6 +27,8 @@ The helpers flagged these; some I fixed in the polish pass (marked there), the r
 - **Walter Donnervan's** greying draws him on a scratch canvas while his signature plays (as `remap` does in The Clawd Files).
 - **Mola Ramm's** horns put his name tag high (headTop 11).
 - **Tinkerbelle** is drawn half size and uses the sparkle-ribbon magic for fairy dust.
+- **Billy's baseball bat against Strype** (in the roster) isn't drawn: a pose doesn't know who the opponent is, so he always uses the sword. It would need an opponent field on `Pose`.
+- **Gizmoe's flaming arrow** burns while nocked, but flies as a plain arrow (a flaming one needs a new shared shot style). The Electric Gremlin's signature empties his sprite for a moment while he zips along the phone line.
 - **Places:** Amity's flags are a simplified US flag; Grandpa Dread's coffin has a small cross; Mr. Wing's shop has no lettering; the Temple of Doom's lava is a thin seam (a broad orange band clashed with Clawd's orange).
 
 ## Public steps I did not take
