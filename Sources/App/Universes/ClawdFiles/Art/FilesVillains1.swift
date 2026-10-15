@@ -4,7 +4,7 @@ import Foundation
 
 let filesVillains1: [FilesVillain: Persona] = [
     .smokingClawd: Persona(name: "The Cigarette-Smoking Clawd", weapon: .blaster, shot: .bullet, muzzle: (47, 32),
-                           headTop: 21, signature: 4.0, callout: "I've watched presidents die.",
+                           headTop: 22, signature: 4.0, callout: "I've watched presidents die.",
                            draw: drawSmokingClawd),
 ]
 
@@ -28,8 +28,8 @@ private func drawSmokingClawd(_ c: PixelCanvas, _ p: Pose) {
     // The suit, the white shirt and the narrow dark tie.
     c.rect(18, 34, 20, 4, suit); c.rect(37, 34, 1, 4, suitD); c.rect(18, 37, 20, 1, suitD)
     c.pattern(25, 34, ["lSTTSl", ".lTTl.", "..TT..", "..TT.."], ["l": suitD, "S": shirt, "T": tie])
-    // The hair, combed straight back off a high forehead.
-    c.pattern(17, 21, [
+    // The hair, combed straight back off a high forehead, down to the top of the body (a gap would show the outline).
+    c.pattern(17, 22, [
         ".....HHHHHHHHHHHH.....",
         "...HHHhHHHHhHHHHhHH...",
         "..HHHHHHhHHHHhHHHHHH..",
