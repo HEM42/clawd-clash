@@ -284,7 +284,7 @@ private func drawRoofio(_ c: PixelCanvas, _ p: Pose) {
 
 /// Thud Butt: a big, round Clawd, the body wider and softer at the corners, in a patched brown shirt (a red patch, a
 /// blue patch, a rope belt) and a shaggy fur cap, on his four short legs. He fights by rolling up into a cannonball
-/// and bowling into them, four little feet tucked underneath. Signature: he rolls up into a ball, trundles forward and
+/// and bowling into them, his four legs still scrambling along under the ball. Signature: he rolls up into a ball, trundles forward and
 /// back, and unrolls.
 private func drawThudButt(_ c: PixelCanvas, _ p: Pose) {
     var ball = false
@@ -335,15 +335,20 @@ private func drawThudButt(_ c: PixelCanvas, _ p: Pose) {
     }
 }
 
-/// Thud Butt rolled up into a cannonball, `roll` degrees round, `dx` along: patches turning, four feet tucked under.
+/// Thud Butt curled up into a cannonball, `roll` degrees round, `dx` along: patches turning, and under the ball his
+/// four legs scrambling along beneath it, two up and two down, so he is always on his four feet.
 private func thudBall(_ c: PixelCanvas, _ p: Pose, roll: Double, dx: Double) {
     let shirt = C(0x8A5A32), shirtD = C(0x6A4224), fur = C(0x5A4232)
     let x0 = Int(dx.rounded())
     c.ox += x0
-    // Four little feet, tucked under the ball (they still touch the ground).
-    for lx in [21, 25, 30, 34] { c.rect(lx, 41, 2, 3, C(0x5A4A3A)); c.rect(lx, 43, 2, 1, C(0x3A2A1E)) }
-    let cx = 28.0, cy = 33.0
-    c.glowLine(cx, cy, cx, cy, core: shirt, glow: C(0, 0), coreR: 9.6, glowR: 9.7)
+    // Four legs scurrying under the ball (a quick step while he's rolling).
+    let rolling = abs(dx) > 1 || roll != 0
+    let step = rolling ? Int(p.t * 10) % 2 : -1
+    drawLegs(c, Look(leg: C(0x5A4A3A)), step: step)
+    cbBoots(c, step: step, C(0x3A2A1E), height: 2)
+    c.oy += p.breathe
+    let cx = 28.0, cy = 29.5
+    c.glowLine(cx, cy, cx, cy, core: shirt, glow: C(0, 0), coreR: 9.2, glowR: 9.3)
     c.glowLine(cx + 3, cy + 3, cx + 3, cy + 3, core: shirtD, glow: C(0, 0), coreR: 5, glowR: 5.1)
     c.glowLine(cx - 1, cy - 1, cx - 1, cy - 1, core: shirt, glow: C(0, 0), coreR: 5.5, glowR: 5.6)
     // Patches and his face going round as he rolls.
@@ -354,8 +359,8 @@ private func thudBall(_ c: PixelCanvas, _ p: Pose, roll: Double, dx: Double) {
         c.rect(Int(px.rounded()) - 1, Int(py.rounded()) - 1, 3, 3, col)
     }
     // Speed lines behind him.
-    if abs(dx) > 1 || roll != 0 {
-        for (i, y) in [28, 33, 38].enumerated() {
+    if rolling {
+        for (i, y) in [24, 29, 34].enumerated() {
             c.rect(12 - i, y, 4, 1, white.alpha(0.45))
         }
     }

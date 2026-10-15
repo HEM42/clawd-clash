@@ -24,7 +24,7 @@ let clawdbergHeroes5: [ClawdbergHero: Persona] = [
     .claireDaring: Persona(name: "Claire Daring", weapon: .blaster, shot: .thrown(C(0xFF2A2A)), muzzle: (44, 28),
                            headTop: 20, signature: 3.2, draw: drawClaireDaring),
     .blue: Persona(name: "Blue", weapon: .saber, headTop: 18, signature: 2.8, draw: drawBlue),
-    .trike: Persona(name: "Trike", weapon: .saber, pivot: (44, 30), bulk: 4, headTop: 13, signature: 4.0,
+    .trike: Persona(name: "Trike", weapon: .saber, pivot: (36, 26), bulk: 4, headTop: 13, signature: 3.4,
                     draw: drawTrike),
 ]
 
@@ -725,91 +725,99 @@ private func drawBlue(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Trike
 
-/// Trike: Clawd in a big triceratops suit, the broad grey-brown body under a great bony frill rimmed with knobs, two long
-/// brow horns sweeping forward and a short one on the hooked beak, on four thick legs. She charges horns first. Signature:
-/// she lies down for a pat, eyes closing happily as a hand comes down and pats her head.
+/// Trike: Clawd in a triceratops suit, olive-green and big: a great scalloped bony frill fanned up behind the head,
+/// two long ivory brow horns sweeping forward over the face and a short one on the beaked snout, Clawd's face
+/// showing through the opening. She fights by lowering her horns and charging. Signature: she lies down for a pat,
+/// eyes shut, while a hand reaches down to stroke her nose.
 private func drawTrike(_ c: PixelCanvas, _ p: Pose) {
-    let hide = C(0x8A7E5E), hideD = C(0x645A40), hideL = C(0xA89C78), frill = C(0xA8845A), frillD = C(0x6A5034)
-    let frillL = C(0xC8A070), horn = C(0xEEE2C4), hornD = C(0xB8AA88), beak = C(0x4A4038), nail = C(0xD8CCAE)
+    let suit = C(0x7E8A58), suitD = C(0x5A6640), frill = C(0x9CA86C), frillD = C(0x76824C), edge = C(0xEDE0BC)
+    let horn = C(0xF0E6C8), hornD = C(0xC4B48E), beak = C(0x4A4A36)
     let sig = p.signature
     let lying = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
+    var hornA = -22.0
+    if let m = p.melee { hornA = max(-40, min(12, -20 + (m + 60) * 0.4)) }
+    let charging = (p.melee ?? -90) > -25
 
-    // The four thick legs (folded under her when she sits or lies down).
-    if lying || seatedPose {
-        for lx in [19, 23, 31, 35] { c.rect(lx - 1, lying ? 42 : 38, 4, 2, hideD) }
-    } else {
-        for (i, lx) in [19, 23, 31, 35].enumerated() {
-            let lifted = p.step >= 0 && i % 2 == p.step
-            c.rect(lx, 36, 3, lifted ? 7 : 8, hide)
-            c.rect(lx + 2, 36, 1, lifted ? 7 : 8, hideD)
-            c.rect(lx, lifted ? 42 : 43, 3, 1, nail)
-        }
-    }
-    if lying { c.oy += 4 }
-    c.oy += p.breathe
-    // Lunging horns first when she charges.
-    var lunge = 0, dip = 0
-    if let a = p.melee {
-        let r = a * .pi / 180
-        lunge = Int((max(0, cos(r)) * 3).rounded())
-        dip = Int((sin(r) * 1.5).rounded())
-    }
-    c.ox += lunge
-    // The frill, a great half-disc behind the head, knobs round its rim.
-    for y in 13...26 {
-        for x in 14...38 {
-            let dx = Double(x) - 26, dy = Double(y) - 26.5
-            let d = sqrt(dx * dx + dy * dy)
-            guard d <= 12.5 else { continue }
-            c.px(x, y + dip, d > 11 ? frillD : (d > 8.5 ? frill : frillL))
-        }
-    }
-    for k in 0..<7 {
-        let ang = Double(180 + k * 30) * .pi / 180
-        let kx = 26 + cos(ang) * 13, ky = 26.5 + sin(ang) * 13
-        c.px(Int(kx.rounded()), Int(ky.rounded()) + dip, frillD)
-    }
-    // The broad body.
-    c.rect(15, 25, 25, 13, hide); c.rect(39, 25, 1, 13, hideD); c.rect(15, 37, 25, 1, hideD)
-    for (x, y) in [(18, 28), (22, 31), (27, 28), (31, 33), (20, 35), (35, 30)] { c.px(x, y, hideL) }
-    // The beak with its nose horn.
-    c.pattern(38, 26 + dip, [
-        "....h....",
-        "...hh....",
-        "SSSSSSs..",
-        "SSSSSSSb.",
-        "SSSSSSbbb",
-        "SSSSSbbb.",
-        "SSSSbb...",
-    ], ["S": hide, "s": hideL, "b": beak, "h": horn])
-    // The eye (shut contentedly while she's being patted).
     if lying {
-        c.rect(32, 30 + dip, 3, 1, ink)
+        // Legs folded under her, four stubby knees showing.
+        for lx in [19, 23, 31, 35] { c.rect(lx - 1, 42, 3, 2, suit); c.px(lx - 1, 43, suitD) }
+        c.oy += 4
     } else {
-        c.rect(33, 29 + dip, 2, 2, ink); c.rect(32, 28 + dip, 4, 1, hideD)
-    }
-    // The two long brow horns.
-    let tip = 6.0
-    for (i, base) in [(31.0, 27.5), (34.0, 27.5)].enumerated() {
-        let b = (x: base.0, y: base.1 + Double(dip))
-        let lx = b.x + 11, ly = b.y - tip - 2
-        if !p.trail.isEmpty {
-            c.glowLine(lx - 3, ly + 1, lx, ly, core: horn.alpha(0.3), glow: horn.alpha(0.2), coreR: 0.4, glowR: 1.2)
+        drawLegs(c, Look(leg: suit), step: p.step)
+        if !seatedPose {
+            for (i, lx) in [19, 23, 31, 35].enumerated() {
+                let lifted = p.step >= 0 && i % 2 == p.step
+                c.rect(lx, lifted ? 42 : 43, 2, 1, suitD)
+            }
         }
-        cbLine(c, b.x, b.y, lx - 4, ly + 3, i == 0 ? hornD : horn, 1.1)
-        cbLine(c, lx - 4, ly + 3, lx, ly, i == 0 ? hornD : horn, 0.6)
+        c.oy += p.breathe
+        if charging { c.ox += 2 }
     }
-    c.ox -= lunge
+    // The frill, fanned up and back behind the head: a tall bony shield, a russet band inside its rim, mottled, with
+    // knobs round the edge.
+    c.pattern(7, 6, [
+        ".........e.e.e........",
+        ".......eRRRRRRRe......",
+        "......eRFFFFFFFRRe....",
+        ".....eRFFFFFFFFFFRe...",
+        "....eRFFFFdFFFFFFFRe..",
+        "....RFFFFFFFFFdFFFFR..",
+        "...eRFFFFdFFFFFFFFFRe.",
+        "...RFFFFFFFFFFFFFFFFR.",
+        "..eRFFFFFFFFdFFFFFFFR.",
+        "..RFFFFdFFFFFFFFFFFFR.",
+        ".eRFFFFFFFFFFFFdFFFFR.",
+        ".RFFFFFFFFFFFFFFFFFR..",
+        "eRFFFFFFdFFFFFFFFFR...",
+        "RFFFFFFFFFFFFFFFFFR...",
+        "eRFFFFFFFFFFFFFFFR....",
+        ".RRFFFFFFFFFFFFFR.....",
+        "..eRRFFFFFFFFFFR......",
+        "....RRFFFFFFFFR.......",
+    ], ["F": frill, "d": frillD, "R": C(0xA0583A), "e": edge])
+    // A big body: the suit a size up all round.
+    c.rect(16, 24, 23, 14, suit); c.rect(16, 37, 23, 1, suitD); c.rect(38, 24, 1, 14, suitD)
+    c.rect(16, 24, 23, 1, C(0x96A26A))
+    // The face through the opening, and the beaked snout with its little horn.
+    c.rect(20, 27, 17, 7, clawdOrange)
+    if lying {
+        c.pattern(22, 30, [".KK.", "K..K"], ["K": ink]); c.pattern(32, 30, [".KK.", "K..K"], ["K": ink])
+    } else {
+        c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink)
+    }
+    c.pattern(37, 29, ["SSS..", "SSSSb", "SSSbb", "SSbb.", "Sbb.."], ["S": suit, "b": beak])
+    c.pattern(39, 26, ["..h", ".hH", "hHH"], ["h": hornD, "H": horn])
+    // Front arms.
+    c.rect(13, 33, 3, 4, suit)
+    c.rect(39, 34, 3, 3, suit)
+    // The brow horns, sweeping forward (lowered for a charge).
+    let base1 = (x: 34.0, y: 26.0), base2 = (x: 28.0, y: 25.0)
+    if !p.trail.isEmpty && !lying {
+        for tr in p.trail {
+            let ta = max(-40, min(12, -20 + (tr + 60) * 0.4))
+            cbSmear(c, base1, [ta], from: 2, to: 15, C(0xF0E6C8))
+        }
+    }
+    let a = lying ? -15 : hornA
+    let t1 = cbReach(base1, a, 15), t2 = cbReach(base2, a - 6, 14)
+    let m1 = cbReach(base1, a, 6), m2 = cbReach(base2, a - 6, 6)
+    cbLine(c, base2.x, base2.y, m2.x, m2.y, hornD, 1.0)
+    cbLine(c, m2.x, m2.y, t2.x, t2.y, hornD, 0.6)
+    cbLine(c, base1.x, base1.y, m1.x, m1.y, horn, 1.1)
+    cbLine(c, m1.x, m1.y, t1.x, t1.y, horn, 0.6)
 
-    guard lying, let s = sig else { return }
-    // A hand reaching down from above to pat her head, and a little heart.
-    let pat = Int(p.t * 4) % 2 == 0 ? 0 : 2
-    let hy = 18 + pat
-    cbLine(c, 48, 6, 40, Double(hy) - 1, C(0xC4AE7E), 1.2)
-    c.rect(37, hy, 4, 2, clawdOrange); c.px(36, hy + 1, clawdOrange)
-    if s > 0.3 {
-        let f = frac(p.t * 0.5)
-        let x = 44, y = 14 - Int(f * 6)
-        c.pattern(x, y, ["P.P", "PPP", ".P."], ["P": C(0xFF6A9A, 1 - f)])
+    if lying {
+        // A hand comes down and strokes her nose; a little heart pops up.
+        let k = sig!
+        let stroke = Int((sin(k * 6 * .pi) * 1.5).rounded())
+        let y = 20 + stroke
+        c.rect(40, y - 9, 4, 11, C(0xC8B48A)); c.rect(40, y - 9, 1, 11, C(0xA8946A)); c.rect(40, y, 4, 2, C(0xA8946A))
+        c.rect(39, y + 2, 5, 3, clawdOrange); c.px(39, y + 5, clawdOrange)
+        if k > 0.35 {
+            let f = frac(p.t * 0.7)
+            let hy = 16 - Int(f * 8)
+            let h = C(0xFF6A8A, 1 - f * 0.7)
+            c.pattern(30, hy, ["H.H", "HHH", ".H."], ["H": h])
+        }
     }
 }

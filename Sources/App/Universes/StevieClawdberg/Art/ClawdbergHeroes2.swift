@@ -12,7 +12,7 @@ let clawdbergHeroes2: [ClawdbergHero: Persona] = [
     .georgeMcFry: Persona(name: "George McFry", weapon: .saber, headTop: 21, signature: 3.0,
                           callout: "I’m your density", draw: drawGeorgeMcFry),
     .lorraineBaynes: Persona(name: "Lorraine Baynes", headTop: 19, draw: drawLorraineBaynes),
-    .einsteinDog: Persona(name: "Einstein the Dog", headTop: 22, signature: 3.2, draw: drawEinsteinDog),
+    .einsteinDog: Persona(name: "Einstein the Dog", headTop: 14, signature: 3.2, draw: drawEinsteinDog),
     .claraClawton: Persona(name: "Clara Clawton", headTop: 18, signature: 3.4, draw: drawClaraClawton),
     .goldieWilsun: Persona(name: "Goldie Wilsun", headTop: 20, signature: 3.0, callout: "I’m gonna be mayor!",
                            draw: drawGoldieWilsun),
@@ -306,13 +306,15 @@ private func drawLorraineBaynes(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Einstein the Dog
 
-/// Einstein the Dog: Clawd in a big shaggy sheepdog suit, grey and white fur all over, a ragged fringe over his
-/// brow, floppy ears, a black nose sticking out over his orange face and a wagging tuft of a tail, on four furry legs
-/// with dark paws. A red collar with a gold pocket watch hanging from it. Signature: he lifts the watch up in a paw
-/// and checks it, the hand ticking round (the first time traveller, one minute ahead).
+/// Einstein the Dog: Clawd as a big shaggy Old English sheepdog, still blocky on his four legs. White fur at the front
+/// and a grey saddle over his back and haunch, ragged fur hanging over the tops of his legs, and a big round shaggy
+/// white head out in front: a fringe hanging down over his eyes (just peeking through), a long snout with a black nose
+/// on the end, and a floppy grey ear. A shaggy tail wagging behind, and a red collar with a gold pocket watch hanging
+/// from it. Signature: he lifts the watch up in a paw and checks it, the hand ticking round (the first time
+/// traveller, one minute ahead).
 private func drawEinsteinDog(_ c: PixelCanvas, _ p: Pose) {
-    let fur = C(0xE6E2DA), furD = C(0xB8B2A8), grey = C(0x7E7A76), greyD = C(0x5A5652)
-    let collar = C(0xC82A2A), gold = C(0xE8B830), goldD = C(0x9A7418), nose = C(0x1A1618)
+    let fur = C(0xF0ECE4), furD = C(0xC4BEB4), strand = C(0xB0AAA0), grey = C(0x8A8682), greyD = C(0x5E5A56)
+    let collar = C(0xD02A2A), gold = C(0xE8B830), goldD = C(0x9A7418), nose = C(0x141214), face = C(0xFFFBEA)
     let sig = p.signature
     let checking = sig.map { $0 > 0.08 && $0 < 0.92 } ?? false
 
@@ -320,51 +322,69 @@ private func drawEinsteinDog(_ c: PixelCanvas, _ p: Pose) {
     if !seatedPose {
         for (i, lx) in [19, 23, 31, 35].enumerated() {
             let lifted = p.step >= 0 && i % 2 == p.step
-            c.rect(lx, lifted ? 41 : 42, 2, 2, greyD)              // the paws
-            c.px(lx - 1, lifted ? 37 : 38, fur)                   // shaggy fur over the tops of the legs
+            let foot = lifted ? 42 : 43
+            c.rect(lx, foot, 2, 1, furD)                      // the paws
+            c.px(lx - 1, foot, fur)                           // shaggy fur round the feet
         }
     }
     c.oy += p.breathe
-    // The tail: a shaggy tuft at the back, wagging.
-    let wag = (checking || p.cheering) ? Int(p.t * 10) % 2 : 0
-    c.pattern(13, 27 - wag * 2, [".FF", "FFF", "FFg", ".g."], ["F": fur, "g": grey])
+    // The tail: a shaggy tuft at the back, always wagging (faster when he's happy).
+    let speed = (checking || p.cheering || p.ready) ? 12.0 : 5.0
+    let wag = Int(p.t * speed) % 2
+    if wag == 0 {
+        c.pattern(12, 24, ["g..", "gg.", "Ggg", ".GG"], ["g": grey, "G": greyD])
+    } else {
+        c.pattern(11, 27, ["...", "Ggg", "gGgg", ".gg"], ["g": grey, "G": greyD])
+    }
+    // The body: white fur, the grey saddle over the back and haunch, ragged at the edges.
     drawBody(c, Look(body: fur, shade: furD, arm: fur, eye: nil))
-    // Grey patches over his back and haunch.
-    c.rect(18, 26, 6, 9, grey); c.rect(18, 35, 4, 2, grey); c.rect(24, 26, 3, 2, grey)
-    c.rect(37, 26, 1, 12, furD)
-    // The shaggy top: tufts standing up above the head.
-    c.pattern(17, 23, [".F..F...F..g...F..F.", "FFgFFFFFFFFgFFFFFFFFF", "FFFFFFgFFFFFFFFFgFFFF"],
-              ["F": fur, "g": grey])
-    // His face: Clawd's own, the shaggy fringe falling over the brow, and a furry snout sticking out in front
-    // with a big black nose.
-    c.rect(20, 28, 14, 4, clawdOrange)
-    c.pattern(19, 27, ["FFFgFFFFFFFFFFFF", "F.FF.F.FFF.F.F.F"], ["F": fur, "g": grey])
-    c.rect(22, 29, 2, 2, ink); c.rect(30, 29, 2, 2, ink)
-    c.pattern(33, 29, ["FFFFFFNNN", "FFFFFFFNN", "FFFFFFFFN.", "fFFFggggF", ".fffffff."],
-              ["F": fur, "f": furD, "N": nose, "g": grey])
-    c.px(40, 29, C(0x5A5458))
-    // A floppy ear.
-    c.pattern(17, 27, ["ggg", "gggg", "gGgg", "gGg", "gG", ".g"], ["g": grey, "G": greyD])
-    // The collar, half lost in the fur.
-    c.rect(19, 35, 15, 1, collar); c.px(22, 35, fur); c.px(29, 35, fur)
+    c.rect(17, 26, 13, 8, grey); c.rect(17, 34, 6, 2, grey); c.rect(30, 26, 2, 3, grey)
+    c.rect(17, 27, 1, 8, greyD)
+    c.pattern(17, 25, ["g.g.g.g.g.g.g", ".............."], ["g": grey])
+    // Ragged fur hanging over the tops of the legs.
+    if !seatedPose {
+        for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx - 1, 38, i < 2 ? grey : furD) }
+    }
+    // The big shaggy head out in front: a fringe over the eyes, the snout and its black nose, a floppy ear.
+    c.pattern(27, 14, [
+        "....W..W..W...........",
+        "...WWW.WWW.WW.........",
+        "..WWWWWWWWWWWWW.......",
+        ".GWWWWWWWWWWWWWW......",
+        "GgWWWWWWWWWWWWWWW.....",
+        "GgWWWWWWWWWWWWWWWW....",
+        "GgWWWsWWsWWWsWWsWW....",
+        "GgWWsWsWWsWsWsWWsWW...",
+        "GgWsWWKKsWWsKKsWWWW...",
+        "GgWWsWKKWWWWKKWWWWWWNN",
+        "GggWWWWWWWWWWWWWWWWNNN",
+        "GGgWWWWWWWWWWWWWWWWWNN",
+        ".GgWWWWWWWWWWWWWssssss",
+        ".GgWWWWWWWWWWWWWWWWWW.",
+        ".GG.WWWWWWWWWWWWWWW...",
+        "..G.W.WWWWWWWWW.W.W...",
+    ], ["W": fur, "s": strand, "g": grey, "G": greyD, "K": ink, "N": nose])
+    c.px(47, 23, C(0x6A6468))                                 // the shine on his nose
+    // The red collar round his neck, under his chin.
+    c.rect(30, 30, 11, 1, collar); c.px(33, 30, fur); c.px(38, 30, fur)
 
     if checking {
-        // The watch lifted up in a paw before his nose, its hand ticking round.
+        // The watch lifted up in a paw in front of him, its hand ticking round; he peers down at it.
         let k = sig!
-        let up = Int((min(1, (k - 0.08) / 0.15) * 3).rounded())
-        let wx = 43, wy = 25 - up
-        c.rect(42, wy + 3, 3, 7 + up, fur); c.rect(42, wy + 3, 3, 1, furD)
-        c.pattern(wx, wy - 1, [".GG.", "GwwG", "GwwG", ".GG."], ["G": gold, "w": C(0xFFFBEA)])
+        let up = Int((min(1, (k - 0.08) / 0.15) * 2).rounded())
+        let wx = 44, wy = 29 - up
+        c.rect(38, 31, 3, 4, fur); c.rect(41, wy + 2, 3, 3, fur); c.rect(40, 31, 2, 2, fur)
+        c.pattern(wx, wy - 1, [".GG.", "GwwG", "GwwG", ".GG."], ["G": gold, "w": face])
         c.px(wx + 1, wy - 2, goldD)
         let tick = Int(p.t * 2) % 4
         let hand = [(1, 0), (2, 1), (2, 2), (1, 1)][tick]
         c.px(wx + hand.0, wy + hand.1, ink)
-        cbLine(c, 28, 36, Double(wx), Double(wy + 2), gold.alpha(0.8), 0.35)   // the chain
+        cbLine(c, 35, 31, Double(wx), Double(wy + 2), gold.alpha(0.8), 0.35)   // the chain
         return
     }
     // The watch hanging from the collar on a short chain.
-    c.px(28, 36, goldD)
-    c.pattern(27, 37, [".G.", "GwG", ".G."], ["G": gold, "w": C(0xFFFBEA)])
+    c.px(35, 31, goldD)
+    c.pattern(34, 32, [".G.", "GwG", ".G."], ["G": gold, "w": face])
 }
 
 // MARK: - Clara Clawton

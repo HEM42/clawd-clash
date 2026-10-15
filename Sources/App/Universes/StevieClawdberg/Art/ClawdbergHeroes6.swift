@@ -22,7 +22,7 @@ let clawdbergHeroes6: [ClawdbergHero: Persona] = [
     .clawdLacombe: Persona(name: "Clawd Lacombe", headTop: 21, signature: 4.0, draw: drawClawdLacombe),
     .tallVisitor: Persona(name: "The Tall Visitor", weapon: .lightning,
                           magic: Magic(core: C(0xFFFFFF), glow: C(0xC8DCFF), jagged: false),
-                          pivot: (48.5, 31.5), headTop: 10, signature: 4.0, draw: drawTallVisitor),
+                          pivot: (48.5, 31.5), headTop: 3, signature: 4.0, draw: drawTallVisitor),
 ]
 
 // MARK: - Shared bits
@@ -786,55 +786,82 @@ private func drawClawdLacombe(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - The Tall Visitor
 
-/// The Tall Visitor: Clawd glowing white as the long, thin alien from the mothership, its head stretched up into a
-/// tall rounded dome, big dark round eyes, long thin arms with longer fingers, a soft halo round all of it. It
+/// Half-widths of the Tall Visitor's head, row by row from its crown (row 3) down to its narrow chin.
+private let visitorHead = [4, 6, 7, 8, 8, 9, 9, 9, 9, 9, 9, 9, 8, 7, 6, 5, 4, 3, 2]
+
+/// The Tall Visitor: Clawd glowing white as the tall, thin alien from the mothership. A huge bald head, wide at the
+/// crown and narrowing to a small pointed chin, two great dark almond eyes slanting up and out, a thin neck, a narrow
+/// ribbed chest, long thin arms with long fingers, and four long thin pale legs, a soft halo round all of it. It
 /// fights with a steady white glow from its outstretched fingers. Signature: it answers Lacombe's hand signs, its
 /// own long hand signing the five notes back, then smiles.
 private func drawTallVisitor(_ c: PixelCanvas, _ p: Pose) {
-    let skin = C(0xF4F6FF), shade = C(0xC8D4F0), eye = C(0x2A2E44)
+    let skin = C(0xF4F6FF), shade = C(0xC8D4F0), leg = C(0xDCE4F6), eye = C(0x14182A), glint = C(0x5A6A9A)
+    let clear = C(0, 0)
     let sig = p.signature
     let casting = p.zap != nil || p.armRaise > 0
     let pulse: Double = 0.85 + 0.15 * sin(p.lt * 3)
 
-    // The halo.
-    c.glowLine(28, 16, 28, 36, core: C(0xFFFFFF, 0), glow: C(0xD8E6FF, 0.4 * pulse), coreR: 0, glowR: 13)
-    drawLegs(c, Look(leg: skin), step: p.step)
-    c.oy += p.breathe
-    c.rect(18, 26, 20, 12, skin); c.rect(18, 37, 20, 1, shade); c.rect(37, 26, 1, 12, shade)
-    // The long rounded dome of the head rising out of the body.
-    for r in 0..<16 {
-        let dy: Double = Double(15 - r) / 16
-        let half = max(2, Int((8.5 * sqrt(1 - dy * dy)).rounded()))
-        c.rect(28 - half, 10 + r, half * 2, 1, skin); c.px(27 + half, 10 + r, shade)
+    // The halo, round the head and down the body.
+    c.glowLine(28, 11, 28, 27, core: clear, glow: C(0xD8E6FF, 0.4 * pulse), coreR: 0, glowR: 13)
+    // Four long thin legs, well apart, a pale toe forward on each (folded under it when it sits).
+    if seatedPose {
+        for lx in [20, 25, 30, 35] { c.rect(lx - 1, 38, 3, 2, leg) }
+    } else {
+        for (i, lx) in [20, 25, 30, 35].enumerated() {
+            let lifted = p.step >= 0 && i % 2 == p.step
+            let foot = lifted ? 42 : 43
+            c.rect(lx, 32, 1, foot - 31, leg)
+            c.px(lx + 1, foot, leg)
+            c.px(lx, 38, shade)                        // the knee
+        }
     }
-    c.rect(24, 12, 3, 1, white); c.rect(23, 13, 2, 1, white)
-    // Big dark round eyes, gentle.
-    c.pattern(21, 27, [".EE.", "EEEE", "EEEE", ".EE."], ["E": eye])
-    c.pattern(31, 27, [".EE.", "EEEE", "EEEE", ".EE."], ["E": eye])
-    c.px(22, 28, C(0x8A9AC8)); c.px(32, 28, C(0x8A9AC8))
-    // Long thin arms, the left hanging to its knee with long fingers.
-    c.rect(16, 33, 2, 2, skin); c.rect(15, 35, 1, 6, skin); c.px(14, 41, shade); c.px(16, 41, shade)
+    c.oy += p.breathe
+    // The narrow chest, faintly ribbed, tapering to a thin waist over a narrow pelvis the legs hang from.
+    c.rect(23, 23, 10, 6, skin); c.rect(24, 29, 8, 2, skin); c.rect(20, 31, 16, 2, skin)
+    c.rect(32, 23, 1, 6, shade); c.rect(31, 29, 1, 2, shade); c.rect(20, 32, 16, 1, shade)
+    for y in [25, 27] { c.rect(24, y, 3, 1, leg); c.rect(29, y, 3, 1, leg) }
+    // The thin neck.
+    c.rect(27, 21, 2, 2, skin); c.px(28, 22, shade)
+    // The great bald head: a wide crown narrowing to the chin.
+    for (r, half) in visitorHead.enumerated() {
+        c.rect(28 - half, 3 + r, half * 2, 1, skin)
+        c.px(27 + half, 3 + r, shade)
+    }
+    c.rect(23, 5, 3, 1, white); c.rect(22, 6, 2, 1, white)
+    // Huge dark almond eyes slanting up and out.
+    c.pattern(20, 11, ["EE....", "EEEEE.", ".EEEEE", "...EEE"], ["E": eye])
+    c.pattern(30, 11, ["....EE", ".EEEEE", "EEEEE.", "EEE..."], ["E": eye])
+    c.px(21, 12, glint); c.px(34, 12, glint)
+    // A tiny mouth over the chin.
+    c.rect(27, 18, 2, 1, shade)
+    // The left arm, long and thin, hanging past its hip with long fingers.
+    cbLine(c, 23, 24, 18, 30, skin, 0.5); cbLine(c, 18, 30, 17, 37, skin, 0.5)
+    c.px(16, 38, shade); c.px(17, 39, shade); c.px(18, 38, shade)
 
     if let s = sig, s > 0.04, s < 0.96 {
         let k = (s - 0.04) / 0.92
         if k < 0.7 {
             let note = min(4, Int(k / 0.7 * 5))
-            handSign(c, note: note, x: 41, sleeve: skin, hand: white, long: true)
+            let hy = Double(noteY[note]) + 1
+            cbLine(c, 32, 24, 37, 28, skin, 0.5); cbLine(c, 37, 28, 41, hy, skin, 0.5)
+            handSign(c, note: note, x: 41, sleeve: clear, hand: white, long: true)
             let f: Double = k / 0.7 * 5 - Double(note)
             quaver(c, 47, noteY[note] - 6 - Int(f * 5), noteColours[note].alpha(1 - f * 0.6))
         } else {
-            c.rect(38, 33, 2, 2, skin); c.rect(39, 35, 1, 5, skin)
+            cbLine(c, 32, 24, 37, 30, skin, 0.5); cbLine(c, 37, 30, 38, 37, skin, 0.5)
             // The smile.
-            c.pattern(24, 32, ["S......S", ".SSSSSS."], ["S": C(0x8A96B8)])
+            c.pattern(25, 17, ["S....S", ".SSSS."], ["S": C(0x8A96B8)])
         }
         return
     }
     if casting {
-        // The arm out, long fingers spread towards its target.
-        let y = 33 - p.armRaise
-        c.rect(38, y, 6, 1, skin); c.rect(38, y + 1, 3, 1, skin)
-        c.rect(44, y - 1, 4, 1, skin); c.rect(44, y + 1, 4, 1, skin); c.rect(44, y, 5, 1, white)
+        // The arm reaching out, long fingers spread towards its target.
+        let y = Double(31 - p.armRaise)
+        cbLine(c, 32, 24, 38, y + 0.5, skin, 0.5); cbLine(c, 38, y + 0.5, 44, y + 0.5, skin, 0.5)
+        let iy = Int(y)
+        c.rect(44, iy - 1, 4, 1, skin); c.rect(44, iy + 1, 4, 1, skin); c.rect(44, iy, 5, 1, white)
         return
     }
-    c.rect(38, 33, 2, 2, skin); c.rect(39, 35, 1, 6, skin); c.px(38, 41, shade); c.px(40, 41, shade)
+    cbLine(c, 32, 24, 37, 30, skin, 0.5); cbLine(c, 37, 30, 38, 37, skin, 0.5)
+    c.px(37, 38, shade); c.px(38, 39, shade); c.px(39, 38, shade)
 }
