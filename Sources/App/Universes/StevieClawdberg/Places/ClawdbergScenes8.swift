@@ -98,13 +98,16 @@ private func jpJungle(_ c: PixelCanvas, top: Int, bottom: Int, col: Px, seed: In
 
 extension Scenes {
     /// Where the gates stand: the middle, the opening's half-width, a pylon's width, the pylons' top row, the beam's
-    /// top row and depth, and the sign lettering's pixel size.
+    /// top row and depth, the sign lettering's pixel size, how high the torch baskets sit over the pylons' tops and
+    /// how tall their flames burn. In the window's strip the whole gate sits low enough for the flames to fit under
+    /// the top edge and the board stays above the crew's heads.
     private static func jpGatesFrame(_ c: PixelCanvas, _ g: Int) -> (cx: Int, gap: Int, pw: Int, top: Int, beam: Int,
-                                                                      beamH: Int, k: Int) {
+                                                                      beamH: Int, k: Int, lift: Int, flame: Int) {
         let s = unit(g), tall = isTall(c)
         let cx = c.w / 2
-        if tall { return (cx, 74 * s, 34 * s, g - 236 * s, g - 214 * s, 26 * s, 2 * s) }
-        return (cx, 46 * s, 20 * s, max(10 * s, g - 53 * s), max(11 * s, g - 52 * s), 10 * s, s)
+        if tall { return (cx, 74 * s, 34 * s, g - 236 * s, g - 214 * s, 26 * s, 2 * s, 8 * s, 5 * s) }
+        let top = max(12 * s, g - 53 * s)
+        return (cx, 46 * s, 20 * s, top, top, 8 * s, s, 5 * s, 3 * s)
     }
 
     /// The gates of the park: a grey-green misty sky over layered jungle and tree ferns, a log palisade running off
@@ -199,10 +202,11 @@ extension Scenes {
             c.rect(px - 2 * s, f.top - 2 * s, f.pw + 4 * s, 3 * s, C(0x4A3624))
             c.rect(px - 2 * s, f.top - 2 * s, f.pw + 4 * s, s, C(0x7A5E40))
             // The torch basket on its bracket.
-            let tx = px + f.pw / 2
-            c.rect(tx - s / 2, f.top - 5 * s, s, 4 * s, C(0x2A2420))
-            c.rect(tx - 3 * s, f.top - 7 * s, 6 * s, 2 * s, C(0x3A322A)); c.rect(tx - 2 * s, f.top - 5 * s, 4 * s, s, C(0x2A2420))
-            c.rect(tx - 2 * s, f.top - 8 * s, 4 * s, s, C(0xE89A3A))
+            let tx = px + f.pw / 2, bt = f.top - f.lift
+            c.circle(tx, bt - s, 2 * f.flame, C(0xF0A040, 0.08)); c.circle(tx, bt - s, f.flame + s, C(0xF0A040, 0.1))
+            c.rect(tx - s / 2, bt + 3 * s, s, f.lift - 4 * s, C(0x2A2420))
+            c.rect(tx - 3 * s, bt + s, 6 * s, 2 * s, C(0x3A322A)); c.rect(tx - 2 * s, bt + 3 * s, 4 * s, s, C(0x2A2420))
+            c.rect(tx - 2 * s, bt, 4 * s, s, C(0xE89A3A))
         }
         // The beam and its board.
         let bl = f.cx - f.gap - f.pw - 4 * s, bw = (f.gap + f.pw + 4 * s) * 2
@@ -261,18 +265,18 @@ extension Scenes {
         // The torches.
         for side in [-1, 1] {
             let px = side < 0 ? f.cx - f.gap - f.pw : f.cx + f.gap
-            let tx = Double(px + f.pw / 2), base = Double(f.top - 8 * s)
+            let tx = Double(px + f.pw / 2), base = Double(f.top - f.lift)
             let flick = sin(t * 13 + Double(side) * 2) * 0.5 + sin(t * 7.3 + Double(side)) * 0.5
-            let height = Double(5 * s) + flick * Double(s) * 1.5
+            let height = Double(f.flame) + flick * Double(s) * (tall ? 1.5 : 0.8)
             let lean = sin(t * 3 + Double(side)) * Double(s)
             c.glowLine(tx, base, tx + lean, base - height, core: C(0xFFE08A), glow: C(0xF0782A),
-                       coreR: Double(s) * 1.1, glowR: Double(s) * 3.2)
+                       coreR: Double(s) * 1.1, glowR: Double(s) * (tall ? 3.2 : 2.4))
             c.glowLine(tx - Double(s), base, tx + lean * 1.5, base - height * 0.6, core: C(0xFFF4C8), glow: C(0, 0),
                        coreR: Double(s) * 0.6, glowR: Double(s) * 0.61)
             for k in 0..<3 {
                 let life = (t * 0.9 + Double(k) / 3 + Double(side) * 0.17).truncatingRemainder(dividingBy: 1)
                 let sx = Int(tx + sin(t * 2 + Double(k * 3)) * Double(3 * s))
-                let sy = Int(base - height - life * Double(16 * s))
+                let sy = Int(base - height - life * Double((tall ? 16 : 4) * s))
                 c.rect(sx, sy, s, s, C(0xFFB050, 1 - life))
             }
         }

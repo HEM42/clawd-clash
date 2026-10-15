@@ -231,112 +231,178 @@ extension Scenes {
 // MARK: - The Inferno
 
 extension Scenes {
-    /// Where things stand in the cove: the water line, the ship (bow, stern, deck line, gun-deck row), the torches,
-    /// and the masts.
-    private static func gnCoveFrame(_ c: PixelCanvas, _ g: Int) -> (water: Int, bow: Int, stern: Int, deck: Int, guns: Int,
-                                                                     torches: [(x: Int, y: Int)], masts: [Int]) {
+    private typealias GnCove = (water: Int, bow: Int, stern: Int, deck: Int, guns: Int, castle: Int,
+                                torches: [(x: Int, y: Int)], masts: [Int])
+
+    /// Where things stand in the cove: the water line, the ship (bow, stern, main deck, gun-deck row, the top of the
+    /// stern castle), the torches, and the masts.
+    private static func gnCoveFrame(_ c: PixelCanvas, _ g: Int) -> GnCove {
         let s = unit(g), tall = isTall(c)
         let water = g - 12 * s
-        let bow = c.w * 24 / 100, stern = c.w * 90 / 100
-        let deck = g - (tall ? 46 : 38) * s
-        let guns = water - (tall ? 14 : 11) * s
-        let torches = [(x: c.w * 7 / 100, y: g - 36 * s), (x: c.w * 97 / 100, y: g - 40 * s), (x: c.w * 18 / 100, y: g - 30 * s)]
-        let masts = [bow + (stern - bow) * 28 / 100, bow + (stern - bow) * 56 / 100, bow + (stern - bow) * 82 / 100]
-        return (water, bow, stern, deck, guns, torches, masts)
+        let bow = c.w * 31 / 100, stern = c.w * 81 / 100
+        let deck = g - (tall ? 46 : 34) * s
+        let guns = water - (tall ? 14 : 10) * s
+        let castle = deck - (tall ? 24 : 17) * s
+        let torches = [(x: c.w * 6 / 100, y: g - 36 * s), (x: c.w * 95 / 100, y: g - 38 * s),
+                       (x: c.w * 17 / 100, y: g - 30 * s), (x: c.w * 88 / 100, y: g - 28 * s)]
+        let len = stern - bow
+        let masts = [bow + len * 18 / 100, bow + len * 48 / 100, bow + len * 80 / 100]
+        return (water, bow, stern, deck, guns, castle, torches, masts)
     }
 
-    /// A wall torch: an iron bracket, a wrapped head, and its warm light on the rock (the flame is in the moving
-    /// layer).
+    /// A wall torch: an iron bracket, a wrapped head, and its warm light pooling on the rock (the flame is in the
+    /// moving layer).
     private static func gnTorch(_ c: PixelCanvas, _ x: Int, _ y: Int, _ s: Int) {
-        c.circle(x, y - 3 * s, 16 * s, C(0xF0A040, 0.06)); c.circle(x, y - 3 * s, 9 * s, C(0xF0A040, 0.08))
+        for (r, a) in [(30, 0.04), (20, 0.06), (12, 0.08), (6, 0.12)] { c.circle(x, y - 3 * s, r * s, C(0xF8A048, a)) }
         c.rect(x - s, y, 2 * s, 7 * s, C(0x3A2A1A)); c.rect(x - 2 * s, y + 6 * s, 4 * s, s, C(0x2A2420))
         c.rect(x - 2 * s, y - s, 4 * s, 2 * s, C(0x5A3A1A))
     }
 
-    /// The Inferno in its cove: a cavern of brown rock lit by torches, dark green water lapping in the middle, and
-    /// One-Eyed Willy's galleon moored across it, its black hull trimmed in faded gold, a row of gunports with the
-    /// cannons run out, the high stern with its lit windows, the bowsprit and the masts going up into the dark. The
-    /// rock ledge in front is scattered with gold. On the screen saver the masts climb with their rigging and
-    /// tattered black sails, the skull flag at the top, and the cave roof hangs over all of it in stalactites, a
-    /// shaft of daylight falling through a crack.
+    /// A ragged sail hanging from its yard: weathered canvas, shaded towards the foot, its seams and a patch, a hole
+    /// torn in it and the foot shredded into tatters.
+    private static func gnSail(_ c: PixelCanvas, x: Int, y: Int, half: Int, h: Int, s: Int, seed: Int) {
+        for dx in -half...half {
+            let u = Double(dx + half) / Double(2 * half)
+            let billow = Int(sin(u * .pi) * Double(3 * s))
+            let tear = Int(noise(dx / max(1, s) + seed) * Double(h) * 0.4)
+            let len = h + billow - tear
+            guard len > 0 else { continue }
+            let edge = dx == -half || dx == half
+            c.rect(x + dx, y, 1, len, edge ? C(0x6A5A44) : C(0xA8987A))
+            c.rect(x + dx, y + len / 2, 1, len - len / 2, C(0x7A6A52, 0.5))
+            c.rect(x + dx, y + len - s, 1, s, C(0x5A4A38))
+            if (dx + half) % (7 * s) == 0 { c.rect(x + dx, y, 1, len, C(0x7A6A52)) }
+        }
+        c.rect(x - half / 2, y + s, 5 * s, 4 * s, C(0x8A7050))
+        let hx = x + half / 3 + Int(noise(seed + 7) * Double(half / 3))
+        c.ellipse(hx, y + h / 3, 2 * s, s, C(0x2A1A10))
+        c.rect(x - half - 2 * s, y - 2 * s, 2 * half + 5 * s, 2 * s, C(0x2A1A10))
+    }
+
+    /// The Inferno in its cove: a cavern of warm brown rock lit by torches, green water lapping in front, and
+    /// One-Eyed Willy's galleon moored across it: a dark hull trimmed in gold with a row of gunports and the cannons
+    /// run out, the high stern castle with its lit windows and lantern, the forecastle and the bowsprit reaching out
+    /// over the water, and three masts with furled and tattered sails. The rock ledge in front is scattered with
+    /// gold. On the screen saver the masts climb with their rigging and more tattered sails, the skull flag at the
+    /// top, and the cave roof hangs over all of it in stalactites, a shaft of daylight falling through a crack.
     static func inferno(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), f = gnCoveFrame(c, g)
-        c.gradient(0, g, C(0x120C08), C(0x3A2818), bands: tall ? 10 : 6)
+        c.gradient(0, g, C(0x1E140C), C(0x4E3420), bands: tall ? 10 : 6)
         // Rock texture: dark lumps and lit edges.
         for i in 0..<(c.w * g / (tall ? 700 : 260)) {
             let x = Int(noise(i * 4 + 2001) * Double(c.w)), y = Int(noise(i * 4 + 2002) * Double(g))
             let r = (2 + Int(noise(i * 4 + 2003) * 6)) * s
-            c.ellipse(x, y, r * 2, r, C(0x1A120A, 0.35)); c.rect(x - r, y - r, r * 2, s, C(0x6A4A2A, 0.2))
+            c.ellipse(x, y, r * 2, r, C(0x1A120A, 0.35)); c.rect(x - r, y - r, r * 2, s, C(0x8A5A2E, 0.25))
         }
-        if tall { gnCaveRoof(c, g, s, f.masts) }
-        // The masts (lower parts; the screen saver draws the rest).
-        for (i, mx) in f.masts.enumerated() {
-            let top = 0
-            c.rect(mx - s, top, 3 * s, f.deck - top, C(0x2A1A10)); c.rect(mx - s, top, s, f.deck - top, C(0x4A3220))
-            if !tall {
-                let yy = f.deck - (14 + i * 4) * s
-                c.rect(mx - 16 * s, yy, 33 * s, 2 * s, C(0x2A1A10))
-                c.rect(mx - 14 * s, yy + 2 * s, 29 * s, 3 * s, C(0x1A1614))
-                for fx in stride(from: mx - 14 * s, to: mx + 15 * s, by: 4 * s) { c.rect(fx, yy + 5 * s, 2 * s, s, C(0x1A1614)) }
-            }
-        }
-        // Rigging down to the rails.
-        for mx in f.masts {
-            for d in [-1, 1] {
-                c.glowLine(Double(mx), Double(f.deck - 26 * s), Double(mx + d * 18 * s), Double(f.deck), core: C(0x5A4A3A, 0.7),
-                           glow: C(0, 0), coreR: 0.5)
-            }
-        }
-        // The hull: tumblehome sides, gold-trimmed wales, the gunports with cannons run out.
-        for x in f.bow..<f.stern {
-            let k = Double(x - f.bow) / Double(f.stern - f.bow)
-            let rise = (1 - k) * (1 - k) * (1 - k) * Double(10 * s)
-            let top = f.deck - Int(rise) + 2 * s
-            c.rect(x, top, 1, f.water - top, C(0x24180F))
-            for py in stride(from: top + 3 * s, to: f.water, by: 3 * s) { c.rect(x, py, 1, 1, C(0x1A1009)) }
-            c.rect(x, top, 1, s, C(0xA88A3A)); c.rect(x, top + s, 1, s, C(0x3A2818))
-            c.rect(x, f.guns - 4 * s, 1, s, C(0x8A6A2A))
-            c.rect(x, f.guns + 5 * s, 1, s, C(0x6A5020))
-        }
-        // The stern castle: higher, with windows glowing.
-        let sx = f.stern - 30 * s
-        c.rect(sx, f.deck - 12 * s, 30 * s, 12 * s, C(0x2A1C12)); c.rect(sx, f.deck - 12 * s, 30 * s, s, C(0xA88A3A))
-        for wx in stride(from: sx + 3 * s, to: f.stern - 3 * s, by: 6 * s) {
-            c.rect(wx, f.deck - 9 * s, 4 * s, 5 * s, C(0xF0B048, 0.85)); c.rect(wx + s, f.deck - 9 * s, s, 5 * s, C(0x5A3A18))
-        }
-        c.rect(f.stern - 2 * s, f.deck - 14 * s, 4 * s, f.water - f.deck + 14 * s, C(0x1E140C))
-        c.rect(f.stern, f.deck - 16 * s, 2 * s, 3 * s, C(0xF0B048))
-        // The bow and bowsprit with its figurehead.
-        for i in 0..<(12 * s) {
-            let top = f.deck - 8 * s + i
-            c.rect(f.bow - i, top + i, 1, max(0, f.water - top - i * 2), C(0x24180F))
-            c.rect(f.bow - i, top + i, 1, s, C(0xA88A3A))
-        }
-        c.glowLine(Double(f.bow), Double(f.deck - 6 * s), Double(f.bow - 36 * s), Double(f.deck - 20 * s),
-                   core: C(0x3A2818), glow: C(0, 0), coreR: Double(s) * 1.3)
-        c.circle(f.bow - 10 * s, f.deck + 2 * s, 2 * s, C(0xC8A04A))
-        // Gunports and cannons.
-        for gx in stride(from: f.bow + 10 * s, to: f.stern - 8 * s, by: 14 * s) {
-            c.rect(gx, f.guns - 2 * s, 6 * s, 5 * s, C(0x0E0806)); c.rect(gx, f.guns - 3 * s, 6 * s, s, C(0x8A2A1A))
-            c.rect(gx + s, f.guns, 4 * s, 2 * s, C(0x2A2A2E)); c.rect(gx + s, f.guns, 4 * s, s, C(0x5A5A60))
-            c.rect(gx + 4 * s, f.guns - s, s, 4 * s, C(0x1A1A1E))
-        }
-        // The water: dark green, lighter bands, torchlight on it in the moving layer.
-        c.gradient(f.water, g, C(0x1E4A42), C(0x10302C), bands: 3)
-        c.rect(0, f.water, c.w, s, C(0x4A8A7A, 0.6))
-        // The torches on the walls.
+        // The torches' warmth on the rock, behind the ship.
         for tch in f.torches { gnTorch(c, tch.x, tch.y, s) }
-        // The ledge: wet rock, with gold coins and a chest's corner.
-        c.ground(g, C(0x2E2218), edge: C(0x5A4430), speck: C(0x3A2C20), seed: 71)
-        for i in 0..<(c.w / (18 * s)) {
+        if tall { gnCaveRoof(c, g, s, f.masts) }
+        gnRigging(c, g, f, tall)
+        gnHull(c, g, f)
+        // The water: cove green, a bright skin, and the hull's shadow on it.
+        c.gradient(f.water, g, C(0x2E7A64), C(0x14463C), bands: 3)
+        c.rect(f.bow - 12 * s, f.water + s, f.stern - f.bow + 18 * s, 2 * s, C(0x0A1A16, 0.5))
+        c.rect(0, f.water, c.w, s, C(0x7ACAA8, 0.7))
+        // The ledge: wet rock, with gold coins and a chest spilling over.
+        c.ground(g, C(0x3A2A1C), edge: C(0x6A5034), speck: C(0x4A3828), seed: 71)
+        for i in 0..<(c.w / (14 * s)) {
             let x = Int(noise(i + 2100) * Double(c.w))
             let y = g + s + Int(noise(i + 2110) * Double(max(1, c.h - g - 2 * s)))
-            c.rect(x, y, s, s, C(0xF0C850)); c.rect(x + s, y, s, s, C(0xB89030))
+            c.rect(x, y, s, s, C(0xF8D860)); c.rect(x + s, y, s, s, C(0xB89030))
         }
-        let cx = c.w * 82 / 100
-        c.rect(cx, g - 6 * s, 14 * s, 6 * s, C(0x5A3A1E)); c.rect(cx, g - 6 * s, 14 * s, s, C(0x7A5228))
-        c.rect(cx + 6 * s, g - 5 * s, 2 * s, 3 * s, C(0xC8A04A))
-        for i in 0..<6 { c.rect(cx + 2 * s + i * 2 * s, g - 7 * s - (i % 2) * s, 2 * s, s, C(0xF0C850)) }
+        let cx = c.w * 90 / 100
+        c.ellipse(cx + 7 * s, g - 6 * s, 8 * s, 2 * s, C(0xE8B840))
+        c.rect(cx, g - 6 * s, 14 * s, 6 * s, C(0x5A3A1E)); c.rect(cx, g - 6 * s, 14 * s, s, C(0x8A5A28))
+        c.rect(cx + 6 * s, g - 5 * s, 2 * s, 3 * s, C(0xE8C050))
+        for i in 0..<6 { c.rect(cx + 2 * s + i * 2 * s, g - 8 * s + (i % 2) * s, s, s, C(0xFFF0A0)) }
+    }
+
+    /// The masts and the rigging: the stays out to the bowsprit, the shrouds down to the rails, and in the window's
+    /// strip the masts from the top edge down with the topsails furled on their yards and the courses and the mizzen
+    /// hanging in tatters (the screen saver draws its own masts and sails).
+    private static func gnRigging(_ c: PixelCanvas, _ g: Int, _ f: GnCove, _ tall: Bool) {
+        let s = unit(g), rope = C(0x9A7A58, 0.8)
+        let tip = (x: Double(f.bow - 46 * s), y: Double(f.deck - 22 * s))
+        let high = Double(tall ? g / 4 : 2 * s)
+        c.glowLine(tip.x, tip.y, Double(f.masts[0]), high, core: rope, glow: C(0, 0), coreR: 0.5)
+        c.glowLine(tip.x + Double(8 * s), tip.y + Double(3 * s), Double(f.masts[0]), Double(f.deck - 22 * s),
+                   core: rope, glow: C(0, 0), coreR: 0.5)
+        for (i, mx) in f.masts.enumerated() {
+            let foot = i == 2 ? f.castle : f.deck
+            for d in [-1, 1] {
+                for r in 0..<3 {
+                    let ex = Double(mx + d * (6 + r * 5) * s), from = Double(foot - (tall ? 60 : 26) * s)
+                    c.glowLine(Double(mx), max(Double(4 * s), from), ex, Double(foot - s), core: C(0x5A4636, 0.7),
+                               glow: C(0, 0), coreR: 0.5)
+                }
+            }
+            if tall { continue }
+            c.rect(mx - s, 0, 3 * s, foot, C(0x4A2E18)); c.rect(mx - s, 0, s, foot, C(0x9A6A3A))
+            let half = [19, 22, 15][i] * s
+            guard i < 2 else {
+                gnSail(c, x: mx, y: 3 * s, half: half, h: f.castle - 9 * s, s: s, seed: 2690); continue
+            }
+            // The topsail furled along its yard, the course hanging below it.
+            c.rect(mx - half - 2 * s, 2 * s, 2 * half + 5 * s, 2 * s, C(0x2A1A10))
+            for x in stride(from: mx - half, to: mx + half, by: 3 * s) {
+                c.rect(x, 4 * s, 3 * s, 2 * s, C(0x9A8A6C)); c.rect(x, 5 * s, s, s, C(0x6A5A44))
+            }
+            gnSail(c, x: mx, y: 11 * s, half: half, h: f.deck - 17 * s, s: s, seed: 2600 + i * 41)
+        }
+    }
+
+    /// The galleon's hull: the sheer rising to the bow, a dark hull of planks in torchlight, gold wales, a rail along
+    /// the bulwark, the bowsprit with its gilded figurehead, the gunports with cannons run out, and the high stern
+    /// castle with two tiers of lit windows, the quarter gallery and the great lantern.
+    private static func gnHull(_ c: PixelCanvas, _ g: Int, _ f: GnCove) {
+        let s = unit(g)
+        let hull = C(0x2A1A10), plank = C(0x1A0F08), gold = C(0xD8A840), lit = C(0xFFC860), bar = C(0x8A5A20)
+        let qd = f.stern - 62 * s, poop = f.stern - 36 * s
+        c.glowLine(Double(f.bow), Double(f.deck - 9 * s), Double(f.bow - 48 * s), Double(f.deck - 23 * s),
+                   core: C(0x5A3A20), glow: C(0, 0), coreR: Double(s) * 1.5)
+        for x in (f.bow - 12 * s)..<(f.stern + 2 * s) {
+            let i = f.bow - x, k = Double(x - f.bow) / Double(f.stern - f.bow)
+            var top = f.deck - Int(pow(max(0, 1 - k), 3) * Double(10 * s))
+            if x >= qd { top = f.deck - 8 * s }
+            if x >= poop { top = f.castle }
+            // The stem curves back under the bow.
+            if i > 0 { top = f.deck - 10 * s - i / (3 * s) }
+            let bottom = i > 0 ? f.water - i * i / (5 * s) : f.water
+            guard bottom > top else { continue }
+            c.rect(x, top, 1, bottom - top, hull)
+            for py in stride(from: top + 3 * s, to: bottom, by: 3 * s) { c.rect(x, py, 1, 1, plank) }
+            c.rect(x, top, 1, s, gold); c.rect(x, top + s, 1, s, C(0x5A3A20))
+            if f.guns - 5 * s < bottom { c.rect(x, f.guns - 5 * s, 1, s, gold.alpha(0.8)) }
+            if f.guns + 5 * s < bottom { c.rect(x, f.guns + 5 * s, 1, s, C(0x8A6A2A)) }
+            // The rail along the bulwark, posts every few pixels.
+            c.rect(x, top - 3 * s, 1, s, C(0x5A3A24))
+            if (x - f.bow) % (4 * s) == 0 { c.rect(x, top - 3 * s, 1, 3 * s, C(0x5A3A24)) }
+        }
+        c.rect(f.bow - 13 * s, f.deck - 7 * s, 3 * s, 5 * s, gold); c.rect(f.bow - 14 * s, f.deck - 9 * s, 2 * s, 2 * s, gold)
+        // The castle: the quarterdeck's windows, and the poop's two tiers above, all lit from inside.
+        for wx in stride(from: qd + 4 * s, to: poop - 3 * s, by: 6 * s) {
+            c.rect(wx, f.deck - 5 * s, 4 * s, 3 * s, lit); c.rect(wx + 2 * s, f.deck - 5 * s, s, 3 * s, bar)
+        }
+        for row in 0..<2 {
+            let wy = f.castle + (3 + row * 6) * s
+            for wx in stride(from: poop + 3 * s, to: f.stern - 4 * s, by: 6 * s) {
+                c.rect(wx, wy, 4 * s, 4 * s, lit); c.rect(wx + 2 * s, wy, s, 4 * s, bar)
+                c.rect(wx, wy + 4 * s, 4 * s, s, gold.alpha(0.7))
+            }
+        }
+        c.rect(qd, f.deck - 8 * s, s, 8 * s, gold.alpha(0.6)); c.rect(poop, f.castle, s, f.deck - f.castle, gold.alpha(0.6))
+        // The quarter gallery bulging at the stern, and the stern lantern on its post.
+        c.rect(f.stern - 2 * s, f.castle - s, 7 * s, f.guns - f.castle - 2 * s, C(0x24160C))
+        c.rect(f.stern - 2 * s, f.castle - s, 7 * s, s, gold)
+        for wy in stride(from: f.castle + 3 * s, to: f.guns - 6 * s, by: 5 * s) { c.rect(f.stern, wy, 3 * s, 3 * s, lit) }
+        c.rect(f.stern + 2 * s, f.castle - 9 * s, s, 8 * s, C(0x3A2416))
+        c.circle(f.stern + 2 * s, f.castle - 11 * s, 7 * s, C(0xFFC860, 0.15))
+        c.rect(f.stern + s, f.castle - 12 * s, 3 * s, 3 * s, C(0xFFE080)); c.rect(f.stern + s, f.castle - 13 * s, 3 * s, s, gold)
+        // Gunports and cannons.
+        for gx in stride(from: f.bow + 10 * s, to: qd - 4 * s, by: 14 * s) {
+            c.rect(gx, f.guns - 2 * s, 6 * s, 5 * s, C(0x0E0806)); c.rect(gx, f.guns - 3 * s, 6 * s, s, C(0xA83A1E))
+            c.rect(gx - 3 * s, f.guns, 5 * s, 2 * s, C(0x2A2A2E)); c.rect(gx - 3 * s, f.guns, 5 * s, s, C(0x6A6A70))
+        }
     }
 
     /// The cave roof on the screen saver: the masts going all the way up with their crow's nests, yards and tattered
@@ -360,9 +426,10 @@ extension Scenes {
                 for x in (mx - half)..<(mx + half + s) {
                     let tear = Int(noise(x + j * 31 + i * 97 + 2200) * Double(sh) * 0.45)
                     let billow = Int(sin(Double(x - mx + half) / Double(2 * half) * .pi) * Double(3 * s))
-                    c.rect(x, yy + 2 * s, 1, sh - tear + billow, C(0x3A302A))
+                    c.rect(x, yy + 2 * s, 1, sh - tear + billow, C(0x8A7A60))
+                    c.rect(x, yy + 2 * s + (sh - tear + billow) / 2, 1, (sh - tear + billow) / 2, C(0x5A4A38, 0.4))
                     c.rect(x, yy + 2 * s + sh - tear + billow - s, 1, s, C(0x4E4238))
-                    if (x - mx) % (9 * s) == 0 { c.rect(x, yy + 2 * s, 1, sh - tear + billow, C(0x2A221E)) }
+                    if (x - mx) % (9 * s) == 0 { c.rect(x, yy + 2 * s, 1, sh - tear + billow, C(0x6A5A46)) }
                 }
             }
             // The crow's nest.
@@ -431,6 +498,17 @@ extension Scenes {
             let x = Int((noise(i + 2500) * Double(c.w) + t * 6).truncatingRemainder(dividingBy: Double(c.w)))
             let y = f.water + s + Int(noise(i + 2510) * Double(max(1, g - f.water - 2 * s)))
             c.rect(x, y, (5 + Int(noise(i + 2520) * 6)) * s, s, C(0x6AAA9A, 0.3 + 0.2 * sin(t * 2 + Double(i))))
+        }
+        // Gold glinting: on the ledge, the chest and the ship's gilt, a star of light winking on and off.
+        for i in 0..<8 {
+            let tw = sin(t * 2.3 + Double(i) * 1.9)
+            guard tw > 0.6 else { continue }
+            let onShip = i % 3 == 0
+            let x = onShip ? f.bow + Int(noise(i + 2560) * Double(f.stern - f.bow)) : Int(noise(i + 2100) * Double(c.w))
+            let y = onShip ? f.guns - 5 * s : g + s + Int(noise(i + 2110) * Double(max(1, c.h - g - 2 * s)))
+            let a = (tw - 0.6) / 0.4
+            c.rect(x, y, s, s, C(0xFFFFF0, a)); c.rect(x - s, y, 3 * s, s, C(0xFFF0A0, a * 0.5))
+            c.rect(x, y - s, s, 3 * s, C(0xFFF0A0, a * 0.5))
         }
         // A drip falling into the cove.
         let dk = (t / 2.7).truncatingRemainder(dividingBy: 1)
