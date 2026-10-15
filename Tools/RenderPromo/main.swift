@@ -1681,7 +1681,7 @@ func everyAI(_ ctx: CGContext, local: Double, t: Double, cast: [Cast]) {
         let d = 0.15 + Double(i) * 0.1
         guard local > d else { continue }
         let f = backOut((local - d) / 0.3)
-        let label = ai == .pi ? "PI · DEVSTRAL" : ai.tag
+        let label = ai == .pi ? "PI · MISTRAL" : ai.tag
         // Claude Code faces Codex; everyone else faces left.
         var a = Actor(cast: cast[i], x: xs[i], facing: i == 0 ? 1 : -1, role: i == 0 ? ra : (i == 2 ? rb : .cheer), label: label, ai: ai)
         if ai == .claude { a.grow = 1.25; a.labelSize = 36 } else { a.labelSize = ai == .pi ? 18 : 22 }
