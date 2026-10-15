@@ -302,24 +302,44 @@ private struct RedBook {
             _ = bookTitle(c, letter, centre: CGPoint(x: box.midX, y: box.midY), size: size * 0.8, maxWidth: size, hex: 0xF0C450)
             capital = size + wordGap
         }
-        c.setFillColor(bookRGB(0x4A3220))
+        let hand = BookHand(line: line, ink: ink)
+        var brown: [CGRect] = [], red: [CGRect] = []
         var row = 0, paragraph = 0
         var y = block.maxY - line * 0.75
         while y > block.minY {
             let indent: CGFloat = row < 3 ? capital : 0
             let endsParagraph = paragraph >= 6 + Int(noise(seed * 97 + row) * 5)
-            let start = block.minX + indent + (paragraph == 0 && row > 0 ? line * 1.5 : 0)
+            let opens = paragraph == 0 && row > 0
+            let start = block.minX + indent + (opens ? line * 1.5 : 0) + hand.snap(ink * CGFloat(noise(seed * 71 + row) * 2))
             let end = endsParagraph ? start + (block.maxX - start) * CGFloat(0.3 + 0.4 * noise(seed * 53 + row)) : block.maxX
             var x = start, word = 0
             while x < end - line {
-                let length = min(end - x, line * CGFloat(0.6 + 2.0 * noise(seed * 389 + row * 31 + word * 7)))
-                c.fill(CGRect(x: x, y: y, width: length, height: ink))
-                x += length + wordGap; word += 1
+                let n = seed * 389 + row * 31 + word * 7
+                let letters = 1 + Int(7 * pow(noise(n), 1.4))
+                // A paragraph opens with a red capital and its first word in red, a rubric.
+                let rubric = opens && word == 0
+                let lift = noise(n + 3) > 0.85 ? ink : 0                     // a word written a little high
+                let width = rubric
+                    ? hand.word(&red, x: x, baseline: y + lift, letters: letters, seed: n, capital: true, limit: end)
+                    : hand.word(&brown, x: x, baseline: y + lift, letters: letters, seed: n, capital: false, limit: end)
+                x += width + wordGap * CGFloat(0.8 + 0.5 * noise(n + 4)); word += 1
+            }
+            if endsParagraph {
+                // A red line-filler after a paragraph's last words: a rule ending in a lozenge.
+                let t = hand.ink, mid = y + hand.snap(hand.xHeight / 2)
+                let tip = min(block.maxX - 2 * t, x + line * CGFloat(1.2 + 1.4 * noise(seed * 29 + row)))
+                if tip > x + 4 * t {
+                    red.append(CGRect(x: x, y: mid, width: tip - x - t, height: t))
+                    red.append(CGRect(x: tip - t, y: mid - t, width: t, height: 3 * t))
+                    red.append(CGRect(x: tip - 2 * t, y: mid, width: 3 * t, height: t))
+                }
             }
             paragraph = endsParagraph ? 0 : paragraph + 1
             row += 1
             y -= line
         }
+        c.setFillColor(bookRGB(0x4A3220)); c.fill(brown)
+        c.setFillColor(bookRGB(0xA8201A)); c.fill(red)
         drawGutter(c, p, spineOnRight: true)
     }
 
@@ -349,6 +369,80 @@ private struct RedBook {
         c.translateBy(x: -p.minX, y: -p.minY)
         draw(c)
         return c.makeImage()
+    }
+}
+
+/// Bilbo's hand, too small to read: words of little letters joined along the baseline, arches and hooks a stroke
+/// (`ink`) thick, an x-height of two strokes or so, here and there an ascender looped at its top, a descender hooked at
+/// its foot or a dotted i; and, opening a paragraph, a capital with a swash. Each word is a handful of rectangles, so a
+/// page of them is filled in one go.
+private struct BookHand {
+    let ink: CGFloat, letter: CGFloat, xHeight: CGFloat, ascender: CGFloat, descender: CGFloat
+
+    init(line: CGFloat, ink: CGFloat) {
+        self.ink = ink
+        func strokes(_ f: CGFloat, atLeast n: CGFloat) -> CGFloat { ink * max(n, (line * f / ink).rounded()) }
+        letter = strokes(0.3, atLeast: 3)
+        xHeight = strokes(0.22, atLeast: 2)
+        ascender = xHeight + strokes(0.3, atLeast: 2)
+        descender = strokes(0.22, atLeast: 1)
+    }
+
+    func snap(_ v: CGFloat) -> CGFloat { (v / ink).rounded() * ink }
+
+    /// A word of `letters` letters from `x` on `baseline` (no further than `limit`), its shapes picked by `seed`, a
+    /// capital first if `capital`; its rectangles go into `out`. Returns how wide it came out.
+    func word(_ out: inout [CGRect], x x0: CGFloat, baseline y: CGFloat, letters: Int, seed: Int, capital: Bool,
+              limit: CGFloat) -> CGFloat {
+        let t = ink
+        var x = x0
+        if capital {
+            // A tall stem with a swash across its top and a bowl on its right.
+            out.append(CGRect(x: x + t, y: y - descender, width: t, height: ascender + descender + t))
+            out.append(CGRect(x: x - t, y: y + ascender, width: letter + 2 * t, height: t))
+            out.append(CGRect(x: x + 2 * t, y: y + xHeight, width: letter - t, height: t))
+            out.append(CGRect(x: x + letter + t, y: y + t, width: t, height: xHeight - t))
+            out.append(CGRect(x: x + t, y: y, width: letter, height: t))
+            x += letter + 3 * t
+        }
+        for i in 0..<letters {
+            let w = letter - (noise(seed * 13 + i) > 0.7 ? t : 0)              // a few written tighter
+            guard x + w <= limit else { break }
+            let shape = noise(seed * 17 + i * 5)
+            // Each letter is a downstroke and a join to the next, over the top (n, m) or along the foot (u), with a gap
+            // a stroke wide before the next downstroke, so a run of them wavers like a line of script.
+            let top = y + xHeight - t
+            if shape < 0.12 {
+                // An ascender (l, h, b, d), looped over at its top.
+                out.append(CGRect(x: x, y: y, width: t, height: ascender))
+                out.append(CGRect(x: x + t, y: y + ascender - t, width: t, height: t))
+                out.append(CGRect(x: x, y: y, width: w, height: t))
+            } else if shape < 0.22 {
+                // A descender (g, y, p), hooked back at its foot.
+                out.append(CGRect(x: x, y: top, width: w - t, height: t))
+                out.append(CGRect(x: x + w - 2 * t, y: y - descender, width: t, height: xHeight + descender))
+                out.append(CGRect(x: x, y: y - descender, width: w - 2 * t, height: t))
+            } else if shape < 0.36 {
+                // A round letter (o, a, e), leaning.
+                out.append(CGRect(x: x, y: y, width: t, height: xHeight))
+                out.append(CGRect(x: x + t, y: top, width: w - t, height: t))
+                out.append(CGRect(x: x, y: y, width: w - t, height: t))
+            } else if shape < 0.44 {
+                // An i, dotted above.
+                out.append(CGRect(x: x, y: y, width: t, height: xHeight))
+                out.append(CGRect(x: x, y: y + xHeight + t, width: t, height: t))
+                out.append(CGRect(x: x, y: y, width: w, height: t))
+            } else if shape < 0.72 {
+                out.append(CGRect(x: x, y: y, width: t, height: xHeight))           // n
+                out.append(CGRect(x: x, y: top, width: w - t, height: t))
+            } else {
+                out.append(CGRect(x: x, y: y, width: t, height: xHeight))           // u
+                out.append(CGRect(x: x, y: y, width: w, height: t))
+            }
+            x += w
+        }
+        out.append(CGRect(x: x, y: y, width: t, height: xHeight))                 // the last letter's downstroke
+        return x + t - x0
     }
 }
 

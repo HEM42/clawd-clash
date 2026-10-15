@@ -389,21 +389,23 @@ private enum RingsMap {
         }
 
         // The mountains: the Misty Mountains, the Blue Mountains, the White Mountains and the ring round Mordor, and the
-        // Lonely Mountain and Mount Doom on their own, drawn north to south so the nearer ones overlap.
+        // Lonely Mountain and Mount Doom on their own, drawn north to south so the nearer ones overlap. A chain is a
+        // crowd of peaks of every height, close enough to overlap, scattered either side of its line; the tallest of
+        // the snowy ranges' peaks are capped with snow.
         let peak = max(5 * px, unit * 0.055)
-        var peaks: [(CGPoint, CGFloat, UInt32?)] = []
-        let chains: [([CGPoint], CGFloat)] = [
-            ([m(0.555, 0.09), m(0.572, 0.18), m(0.566, 0.30), m(0.552, 0.42), m(0.546, 0.52), m(0.536, 0.62)], 1),
-            ([m(0.14, 0.10), m(0.15, 0.20), m(0.14, 0.27)], 0.75),
-            ([m(0.115, 0.40), m(0.125, 0.48)], 0.75),
-            ([m(0.48, 0.80), m(0.56, 0.775), m(0.64, 0.785), m(0.70, 0.81)], 0.95),
-            ([m(0.80, 0.615), m(0.97, 0.605)], 0.85),
-            ([m(0.785, 0.65), m(0.788, 0.90)], 0.85),
-            ([m(0.81, 0.915), m(0.96, 0.91)], 0.8),
+        var peaks: [MapPeak] = []
+        let chains: [([CGPoint], CGFloat, Bool)] = [
+            ([m(0.555, 0.09), m(0.572, 0.18), m(0.566, 0.30), m(0.552, 0.42), m(0.546, 0.52), m(0.536, 0.62)], 1, true),
+            ([m(0.14, 0.10), m(0.15, 0.20), m(0.14, 0.27)], 0.75, true),
+            ([m(0.115, 0.40), m(0.125, 0.48)], 0.75, true),
+            ([m(0.48, 0.80), m(0.56, 0.775), m(0.64, 0.785), m(0.70, 0.81)], 0.95, true),
+            ([m(0.80, 0.615), m(0.97, 0.605)], 0.85, false),
+            ([m(0.785, 0.65), m(0.788, 0.90)], 0.85, false),
+            ([m(0.81, 0.915), m(0.96, 0.91)], 0.8, false),
         ]
         var seq = 0
-        for (points, scale) in chains {
-            let size = peak * scale, step = size * 0.55
+        for (points, scale, snowy) in chains {
+            let size = peak * scale
             var carry: CGFloat = 0
             for j in 1..<points.count {
                 let a = points[j - 1], b = points[j]
@@ -412,18 +414,20 @@ private enum RingsMap {
                 while d <= len {
                     seq += 1
                     let f = d / len
-                    let side: CGFloat = (seq % 2 == 0 ? 0.3 : -0.3) * size + CGFloat(noise(seq * 7 + 1) - 0.5) * size * 0.15
+                    let side: CGFloat = CGFloat(noise(seq * 7 + 1) - 0.5) * size * 0.7
                     let nx = -(b.y - a.y) / len, ny = (b.x - a.x) / len
-                    let s = size * CGFloat(0.8 + 0.4 * noise(seq * 7 + 2))
-                    peaks.append((CGPoint(x: a.x + (b.x - a.x) * f + nx * side, y: a.y + (b.y - a.y) * f + ny * side * 0.5), s, nil))
-                    d += step
+                    let tall = noise(seq * 7 + 2)
+                    let s = size * CGFloat(0.55 + 0.75 * tall * tall)
+                    let at = CGPoint(x: a.x + (b.x - a.x) * f + nx * side, y: a.y + (b.y - a.y) * f + ny * side * 0.5)
+                    peaks.append(MapPeak(base: at, height: s, seed: seq, snow: snowy && s > size * 0.95, cap: nil))
+                    d += size * CGFloat(0.32 + 0.22 * noise(seq * 7 + 3))
                 }
                 carry = d - len
             }
         }
-        peaks.append((m(0.86, 0.125), peak * 1.45, nil))           // the Lonely Mountain
-        peaks.append((m(0.87, 0.722), peak * 1.25, 0xC0401E))      // Mount Doom, glowing
-        for (p, s, cap) in peaks.sorted(by: { $0.0.y > $1.0.y }) { drawPeak(c, snap(p, px, r), height: s, cap: cap, px: px) }
+        peaks.append(MapPeak(base: m(0.86, 0.125), height: peak * 1.45, seed: 901, snow: true, cap: nil))     // the Lonely Mountain
+        peaks.append(MapPeak(base: m(0.87, 0.722), height: peak * 1.25, seed: 0, snow: false, cap: 0xC0401E)) // Mount Doom, glowing
+        for p in peaks.sorted(by: { $0.base.y > $1.base.y }) { drawPeak(c, p, at: snap(p.base, px, r), px: px) }
 
         // A double border.
         c.setStrokeColor(rgb(ink)); c.setLineWidth(px)
@@ -432,15 +436,55 @@ private enum RingsMap {
         c.stroke(r.insetBy(dx: 4.5 * px, dy: 4.5 * px))
     }
 
-    /// A mountain: a triangle lit on the west and shaded on the east, inked along its slopes, `cap` (if any) on its top.
-    static func drawPeak(_ c: CGContext, _ base: CGPoint, height: CGFloat, cap: UInt32?, px: CGFloat) {
-        let half = (height * 0.75 / px).rounded() * px, top = (height / px).rounded() * px
+    /// One mountain of a chain: where its foot is, how tall, `seed` for its shape, and whether it's snow-capped or
+    /// (Mount Doom) has a coloured `cap`.
+    struct MapPeak {
+        let base: CGPoint, height: CGFloat, seed: Int, snow: Bool, cap: UInt32?
+    }
+
+    /// A mountain as the old maps draw them: a jagged peak, its summit leaning a little one way, a shoulder or a
+    /// lesser summit on its flanks; lit on the west, its east side shaded and hatched in ink; snow on its top if it's
+    /// tall enough (or `cap`, glowing, and a wisp of smoke); inked along its skyline but not its foot, so a chain of
+    /// them overlaps into one range.
+    static func drawPeak(_ c: CGContext, _ p: MapPeak, at base: CGPoint, px: CGFloat) {
+        func g(_ v: CGFloat) -> CGFloat { (v / px).rounded() * px }
+        func n(_ i: Int) -> CGFloat { p.cap == nil ? CGFloat(noise(p.seed * 13 + i)) : 0.5 }
+        let top = g(p.height), half = g(p.height * (0.7 + 0.3 * n(1)))
+        let lean = g((n(2) - 0.5) * half * 0.6)
         let left = CGPoint(x: base.x - half, y: base.y), right = CGPoint(x: base.x + half, y: base.y)
-        let summit = CGPoint(x: base.x, y: base.y + top)
-        c.setFillColor(rgb(0xE6CE98)); c.addLines(between: [left, summit, right]); c.closePath(); c.fillPath()
-        c.setFillColor(rgb(0xB89560))
-        c.addLines(between: [summit, CGPoint(x: base.x + half * 0.15, y: base.y), right]); c.closePath(); c.fillPath()
-        if let cap {
+        let summit = CGPoint(x: base.x + lean, y: base.y + top)
+        // A point `u` of the way down from the summit to `foot`, pushed out (`bulge` > 0) or in.
+        func flank(_ foot: CGPoint, _ u: CGFloat, _ bulge: CGFloat) -> CGPoint {
+            let dir: CGFloat = foot.x < summit.x ? -1 : 1
+            return CGPoint(x: g(summit.x + (foot.x - summit.x) * u + dir * bulge * half),
+                           y: g(summit.y + (foot.y - summit.y) * u + bulge * top * 0.5))
+        }
+        var west = [left, flank(left, 0.55 + 0.15 * n(3), 0.1 * n(4) - 0.03)]
+        var east = [flank(right, 0.3, -0.05 - 0.07 * n(5))]
+        if n(6) > 0.45 { east.append(flank(right, 0.5, 0.06 + 0.06 * n(7))) }    // a lesser summit to the east
+        else { west.insert(flank(left, 0.8, 0.07 * n(7)), at: 1) }                // or a shoulder to the west
+        east.append(right)
+        if p.cap != nil { west = [left]; east = [right] }
+        let skyline = west + [summit] + east
+        let ridgeFoot = CGPoint(x: g(base.x + lean * 0.3 + half * (0.05 + 0.2 * n(8))), y: base.y)
+        let shade = [summit] + east + [ridgeFoot]
+
+        c.setFillColor(rgb(0xE0C48C)); c.addLines(between: skyline); c.closePath(); c.fillPath()
+        c.setFillColor(rgb(0xC4A066)); c.addLines(between: shade); c.closePath(); c.fillPath()
+        // The hatching on the shaded side: strokes down along the eastern slope, three pixels apart.
+        c.saveGState()
+        c.addLines(between: shade); c.closePath(); c.clip()
+        c.setStrokeColor(rgb(0x7E5E36)); c.setLineWidth(px)
+        let slope = CGPoint(x: right.x - summit.x, y: right.y - summit.y)
+        var x = summit.x - half
+        while x < right.x + half {
+            c.move(to: CGPoint(x: x, y: summit.y + px)); c.addLine(to: CGPoint(x: x + slope.x * 1.2, y: summit.y + px + slope.y * 1.2))
+            x += 3 * px
+        }
+        c.strokePath()
+        c.restoreGState()
+
+        if let cap = p.cap {
             let t = top * 0.3
             c.setFillColor(rgb(cap))
             c.addLines(between: [summit, CGPoint(x: base.x - t * 0.65, y: base.y + top - t), CGPoint(x: base.x + t * 0.65, y: base.y + top - t)])
@@ -448,9 +492,35 @@ private enum RingsMap {
             c.setFillColor(rgb(0x6A5A50, 0.6))
             c.fill(CGRect(x: base.x - px, y: base.y + top + px, width: 2 * px, height: 2 * px))
             c.fill(CGRect(x: base.x + px, y: base.y + top + 3 * px, width: 2 * px, height: 2 * px))
+        } else if p.snow {
+            // Snow down from the summit to a ragged edge, greyer on the shaded side.
+            let depth = top * 0.32
+            let a = CGPoint(x: summit.x - half, y: g(summit.y - depth)), b = CGPoint(x: summit.x + half, y: g(summit.y - depth))
+            var snow = [a]
+            let teeth = 3
+            for i in 1..<teeth {
+                let f = CGFloat(i) / CGFloat(teeth)
+                let lift: CGFloat = i % 2 == 1 ? 0.45 : -0.1
+                snow.append(CGPoint(x: g(a.x + (b.x - a.x) * f), y: g(a.y + (b.y - a.y) * f + depth * lift)))
+            }
+            snow += [b, summit]
+            c.saveGState()
+            c.addLines(between: skyline); c.closePath(); c.clip()
+            c.setFillColor(rgb(0xFFFAEC)); c.addLines(between: snow); c.closePath(); c.fillPath()
+            c.addLines(between: shade); c.closePath(); c.clip()
+            c.setFillColor(rgb(0xCFC6B0)); c.addLines(between: snow); c.closePath(); c.fillPath()
+            c.restoreGState()
+            c.saveGState()
+            c.addLines(between: skyline); c.closePath(); c.clip()
+            c.setStrokeColor(rgb(0x9A8C74)); c.setLineWidth(px)
+            c.addLines(between: Array(snow.dropLast())); c.strokePath()            // its ragged edge
+            c.restoreGState()
         }
-        c.setStrokeColor(rgb(ink)); c.setLineWidth(px)
-        c.addLines(between: [left, summit, right]); c.strokePath()
+        c.setStrokeColor(rgb(ink)); c.setLineWidth(px); c.setLineJoin(.miter)
+        c.addLines(between: skyline); c.strokePath()
+        // The ridge running down from the summit.
+        c.move(to: summit); c.addLine(to: CGPoint(x: g(summit.x + (ridgeFoot.x - summit.x) * 0.45), y: g(summit.y - top * 0.45)))
+        c.strokePath()
     }
 
     /// A round tree on a stub of trunk, inked.

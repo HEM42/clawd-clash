@@ -136,17 +136,41 @@ extension RingsTrip {
     }
 
     /// The Eagle's wings at `beat` of their stroke: raised up and back (0), swept down and back (1), and, between,
-    /// pointing back past the body, narrower as they turn edge-on.
+    /// spread wide and driving down towards you, so they foreshorten (shorter, pointing down) but stay broad, the
+    /// primaries fanned out. They never turn edge-on: they pass through pointing back only where they're shortest.
     private static func eaglePose(_ beat: Double) -> (near: EagleWing, far: EagleWing) {
-        let open = abs(2 * beat - 1)                            // 0 edge-on mid-stroke, 1 at either end
-        let side: Double = beat < 0.5 ? -1 : 1                  // which side of the wing its trailing edge is
-        let near = EagleWing(x: 8, y: -2 + 2 * beat, angle: 4.08 - 1.53 * beat, length: 33 * (0.86 + 0.14 * open),
-                             width: 10 * (0.6 + 0.4 * open), side: side,
-                             colours: [0xB89050, 0x8A6440, 0x6A4A2A, 0x543A20, 0x3E2A16, 0x2E1E10])
-        let far = EagleWing(x: 11, y: -2 + 3 * beat, angle: 4.33 - 2.03 * beat, length: 26 * (0.86 + 0.14 * open),
-                            width: 7.5 * (0.6 + 0.4 * open), side: side,
-                            colours: [0x7A5634, 0x6A4A2A, 0x543A20, 0x3E2A16, 0x2E1E10, 0x261808])
+        let spread = sin(.pi * beat)                            // 1 mid-stroke, 0 at either end
+        func wing(x: Double, y: Double, from a0: Double, to a1: Double, length: Double, width: Double,
+                  colours: [UInt32]) -> EagleWing {
+            let (angle, reach) = eagleStroke(beat, from: a0, to: a1)
+            return EagleWing(x: x, y: y, angle: angle, length: length * reach, width: width * (1 + 0.15 * spread),
+                             side: sin(angle) < 0 ? -1 : 1, spread: spread, colours: colours)
+        }
+        let near = wing(x: 8, y: -2 + 2 * beat, from: 4.08, to: 2.55, length: 33, width: 10,
+                        colours: [0xB89050, 0x8A6440, 0x6A4A2A, 0x543A20, 0x3E2A16, 0x2E1E10])
+        let far = wing(x: 11, y: -2 + 3 * beat, from: 4.33, to: 2.30, length: 26, width: 7.5,
+                       colours: [0x7A5634, 0x6A4A2A, 0x543A20, 0x3E2A16, 0x2E1E10, 0x261808])
         return (near, far)
+    }
+
+    /// Where a wing points at `beat` of its downstroke (radians, y down) and how long it looks (1 at either end), from
+    /// `a0` raised to `a1` lowered. Worked out as a wing swinging down through a half turn about the body, swept back
+    /// at the top and bottom of the stroke and straight out mid-stroke, seen from a little below: its tip comes
+    /// towards you and down, so it shortens, rather than swinging back along the body.
+    private static func eagleStroke(_ beat: Double, from a0: Double, to a1: Double) -> (angle: Double, reach: Double) {
+        let below = 0.5                                         // how far below the Eagle the view is, radians
+        func tip(_ t: Double) -> (x: Double, y: Double) {
+            (-(0.5 * abs(cos(t)) + 0.14), -cos(t) * cos(below) + sin(t) * sin(below))
+        }
+        func heading(_ p: (x: Double, y: Double)) -> Double {
+            let a = atan2(p.y, p.x)
+            return a < 0 ? a + 2 * .pi : a
+        }
+        let t = tip(.pi * beat), up = tip(0), down = tip(.pi)
+        let raw = heading(t)
+        let angle = raw + (a0 - heading(up)) * (1 - beat) + (a1 - heading(down)) * beat
+        let reach = hypot(t.x, t.y) / hypot(up.x, up.y)
+        return (angle, 0.3 + 0.7 * reach)
     }
 
     private static let eagleInk = eaglePack(0x24180C)
@@ -356,15 +380,17 @@ extension RingsTrip {
 /// One of the Eagle's wings, in its own units (y down): from the shoulder at (`x`, `y`) out along `angle` (radians)
 /// for `length`, a broad plank of feathers `width` deep, its trailing edge clockwise of the wing's direction (`side`
 /// +1) or anticlockwise (-1). A pale golden leading edge, two rows of coverts, then the flight feathers, each with a
-/// rounded end along the trailing edge; and past two-thirds of the way out, the primaries part into five fingers.
+/// rounded end along the trailing edge; and past two-thirds of the way out, the primaries part into five fingers,
+/// fanning out wider and further apart as the wing is `spread` (0…1) mid-stroke.
 private struct EagleWing {
-    let x, y, dx, dy, nx, ny, length, width: Double
+    let x, y, dx, dy, nx, ny, length, width, spread: Double
     /// Packed colours: the leading edge, the coverts and their edges, the flight feathers, the lines between them and
     /// the dark ends.
     let cover, covert, covertEdge, feather, stripe, tip: UInt32
 
-    init(x: Double, y: Double, angle: Double, length: Double, width: Double, side: Double, colours: [UInt32]) {
-        self.x = x; self.y = y; self.length = length; self.width = width
+    init(x: Double, y: Double, angle: Double, length: Double, width: Double, side: Double, spread: Double = 0,
+         colours: [UInt32]) {
+        self.x = x; self.y = y; self.length = length; self.width = width; self.spread = spread
         dx = cos(angle); dy = sin(angle); nx = -dy * side; ny = dx * side
         let c = colours.map(eaglePack)
         cover = c[0]; covert = c[1]; covertEdge = c[2]; feather = c[3]; stripe = c[4]; tip = c[5]
@@ -376,14 +402,15 @@ private struct EagleWing {
         let a = qx * dx + qy * dy, b = qx * nx + qy * ny      // along the wing, and across it toward the trailing edge
         guard a >= 0, b >= -1.6, a <= length * 1.08 else { return 0 }
         let f = a / length
-        let half = width * (1 - 0.3 * min(1, f))
+        let fan = spread * width * 0.6 * max(0, f - 0.62) / 0.4    // the hand opening out
+        let half = width * (1 - 0.3 * min(1, f)) + fan
         guard b <= half else { return 0 }
         if f > 0.66 {
             // The primaries: five fingers, the middle ones longest, each with a rounded end and slots between.
             let q = (b + 1.6) / (half + 1.6) * 5, n = q.rounded(.down), part = q - n
             let reach = length * (0.9 + 0.16 * sin(.pi * (n + 0.5) / 5)) - 2.8 * abs(part - 0.45)
             guard a <= reach else { return 0 }
-            if part > 0.8 && f > 0.74 { return 0 }
+            if part > 0.8 - 0.12 * spread && f > 0.74 - 0.04 * spread { return 0 }
             if b < 0.4 && f < 0.78 { return cover }
             if part < 0.18 { return stripe }
             return f > 0.84 ? tip : feather
