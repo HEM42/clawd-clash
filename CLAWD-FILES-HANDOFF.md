@@ -20,7 +20,7 @@ Written 2026-10-15 at the end of phase 4, updated at the end of phase 5. **Delet
   - `bd39438` phase 2
   - `53a6945` phase 2 groundwork
   - `820025f` phase 1 skeleton
-- **Next:** phase 6 (docs, icon, trailer, release prep), then the polish pass.
+- **Next:** the polish pass (in progress), then phase 6 (docs, icon, trailer, release prep).
 - **Installed app:** the user's Mac runs Clawd Clash **3.2.0** from `/Applications`. That's the `main` build, without
   The Clawd Files.
 - **CHANGELOG.md** has an `## Unreleased` section describing The Clawd Files as it stands. Keep it up to date in each
@@ -42,7 +42,8 @@ Written 2026-10-15 at the end of phase 4, updated at the end of phase 5. **Delet
 - **Transitions:** the user chose ten (the list is below). They want the **opening montage used as the title sequence
   of the trailer**.
 - **The plan stays local:** no private plan repo for this universe.
-- **Weak spots are fixed last,** in a polish pass after phases 5 and 6 (the user's instruction).
+- **Weak spots are fixed in a polish pass after phase 5 and before phase 6** (the user's instruction): the docs sheets,
+  the icon and the trailer are rendered from the characters and places, so they must be finished first.
 - **Skinnard does jumping jacks instead of push-ups.** Push-ups were tried and don't work: Clawd's body is wider than
   it is tall, so lying down it reads as a box on its end.
 

@@ -231,6 +231,7 @@ Each phase **builds, gets checked with Preview sheets, and is shown to the user*
 | 3. The rest | The full cast and all places, with every home filled in. Ends with **the character audit** (below). |
 | 4. Mechanics | Ride, compaction mechanic, habits, bespoke drills. |
 | 5. Transitions | The 8–15 trips and any finishing touch, wired through `ComicTransition`. |
+| Polish pass | Every weak spot noted in phases 2–5, fixed (see below). **Always before phase 6.** |
 | 6. Docs and release | README, docs images, app icon, `llms.txt`, trailer. Public steps need the user's OK. |
 
 ### The character audit (end of phase 3, approval gate)
@@ -254,6 +255,31 @@ Re-check the facts with a quick search where you're not sure. Then show the user
 ```
 
 Apply the fixes once the user agrees, and re-render the Preview sheets. Changing a `Persona` or a drawing is safe at any time. Only the enum order is permanent.
+
+### Keep a weak-spot list as you go
+
+At the end of every phase, write down everything that doesn't quite read in the Preview sheets: a prop too small to
+see, an outline artefact, a place with a big empty area on the screen saver, a transition whose lettering is too small
+at window size. Name the character or place, say what's wrong, and add it to the plan (or the handoff file). **Don't
+stop to fix these mid-phase.** The phase's job is to get everything in; the polish pass fixes them all together.
+
+### The polish pass (after phase 5, before phase 6)
+
+Go through the whole weak-spot list before starting on docs and the trailer. **The order matters:** the README's
+roster and locations sheets, the desktop line-up, the social preview, the app icon and above all the trailer are all
+rendered from the characters, places, rides and transitions. Anything polished after them means rendering them again,
+and redoing a trailer is the expensive part. So everything that shows on screen gets finished first, and phase 6 only
+renders what's done.
+
+- **Split it by file** and run it in parallel, the way phases 2 and 3 were drawn: one helper per group of art files
+  (`Art/<Prefix>Heroes…`, `Art/<Prefix>Villains…`) and per group of `Places/` files, each in its own worktree,
+  editing only its own files. Rides, mechanics and transitions are in their own files, so they can be done alongside.
+- **Before and after.** Each helper renders every fixed character or place before and after, side by side, enlarged.
+  Show those to the user: that's the polish pass's approval gate.
+- **Engine-wide issues** (a habit every universe shares, like callouts overlapping or steady rays wobbling) are
+  reported, not fixed inside one universe's files. Fix them separately, or leave them noted.
+- Re-check the rest of the cast too while you're there: the polish pass is the last look before the universe is shown
+  off in public.
 
 ### New files: `Sources/App/Universes/<FolderName>/`
 
@@ -400,5 +426,6 @@ Use `doctorShots` as the pattern. The trailer runs about 45–50 seconds:
 5. **Plan file** written, then the branch is created. → the user says start.
 6. **Each build phase** is shown with Preview sheets. → next phase.
 7. **The character audit** (end of phase 3): every character's weapon, shots, magic, motion, signature and callout checked against the source; the mismatches table. → fixes approved.
-8. **The promo storyboard.** → render the video.
-9. **Anything public.** → explicit OK.
+8. **The polish pass** (after phase 5): before-and-after renders of every weak spot fixed. → phase 6 can start.
+9. **The promo storyboard.** → render the video.
+10. **Anything public.** → explicit OK.
