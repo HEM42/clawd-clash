@@ -58,8 +58,8 @@ private func drawSmaug(_ c: PixelCanvas, _ p: Pose) {
     func mix(_ a: (Double, Double), _ b: (Double, Double)) -> (Double, Double) {
         (a.0 + (b.0 - a.0) * spread, a.1 + (b.1 - a.1) * spread)
     }
-    drawDragonWing(c, wrist: mix((31, 4), (34, 0)), tips: [mix((17, 3), (45, 1)), mix((18, 11), (27, 0)), mix((23, 18), (23, 12))],
-                   roots: [(26, 24), (34, 23)], membrane: membraneFar, bone: bone, arm: far)
+    drawDragonWing(c, wrist: mix((31, 4), (42, -1)), tips: [mix((17, 3), (65, 6)), mix((18, 11), (53, -2)), mix((23, 18), (28, 2))],
+                   roots: [(26, 24), (34, 23)], membrane: lerp(membraneFar, C(0xA03018), 0.5 * blaze), bone: bone, arm: far)
     // The body: a crouched barrel, the gold belly plates under it, a spiked ridge along the back.
     c.ellipse(26, 31, 14, 8, scaleDark)
     c.ellipse(26, 30, 14, 8, scale)
@@ -72,12 +72,12 @@ private func drawSmaug(_ c: PixelCanvas, _ p: Pose) {
     }
     // The fire inside him, showing through the seams of his belly plates.
     if blaze > 0 {
-        c.glowLine(22, 31, 33, 31, core: fire.alpha(0.5 * blaze), glow: ember.alpha(0.5 * blaze), coreR: 1.2, glowR: 3.2)
+        c.glowLine(20, 31, 35, 31, core: fire.alpha(0.9 * blaze), glow: ember.alpha(0.8 * blaze), coreR: 1.6, glowR: 4.6)
         for x in stride(from: 19, through: 35, by: 3) { c.rect(x, 32, 1, 3, hot.alpha(blaze)) }
     }
     // The near wing, half open over his back.
-    drawDragonWing(c, wrist: mix((21, 5), (13, 0)), tips: [mix((4, 6), (0, -1)), mix((6, 14), (0, 9)), mix((10, 21), (2, 19))],
-                   roots: [(16, 25), (28, 23)], membrane: membrane, bone: bone, arm: scale)
+    drawDragonWing(c, wrist: mix((21, 5), (14, -2)), tips: [mix((4, 6), (0, -3)), mix((6, 14), (0, 8)), mix((10, 21), (2, 19))],
+                   roots: [(16, 25), (28, 23)], membrane: lerp(membrane, C(0xD84A1E), 0.5 * blaze), bone: bone, arm: scale)
     // The neck, arching up and forward, gold underneath, the fire showing in the throat.
     let neck: [(x: Double, y: Double)] = [(35, 28), (39, 24), (42, 20), (46, 16)]
     taper(c, neck, r0: 4, r1: 2.6, scale)
@@ -85,11 +85,11 @@ private func drawSmaug(_ c: PixelCanvas, _ p: Pose) {
     let throat: Double = breathing ? 1 : glow * 0.8
     c.glowLine(41, 24, 45, 20, core: fire.alpha(throat), glow: ember.alpha(throat * 0.8), coreR: 0.5, glowR: 1.6)
     if blaze > 0 {
-        c.glowLine(37, 28, 46, 18, core: hot.alpha(blaze), glow: ember.alpha(blaze), coreR: 0.9, glowR: 2.8, strength: 0.8)
+        c.glowLine(37, 28, 46, 18, core: hot.alpha(blaze), glow: fire.alpha(blaze), coreR: 1.2, glowR: 3.6)
     }
     for (x, y) in [(37, 23), (40, 19), (43, 15)] { c.px(x, y, scaleDark) }
     // The head, a little higher while he's raised to fire (or rising in his signature).
-    let rise = Int((2 * spread).rounded())
+    let rise = Int((3 * spread).rounded())
     c.oy += p.gunY - rise
     c.pattern(40, 6, [
         "hH.......",
@@ -584,21 +584,52 @@ private func drawWrappedDwarf(_ c: PixelCanvas, _ s: Double) {
     let silk = C(0xE8ECF0), silkShade = C(0xB4BCC6)
     let wrap: Double = min(1, max(0, (s - 0.1) / 0.5))
     let away: Double = s < 0.1 ? pow(1 - s / 0.1, 2) : s < 0.8 ? 0 : pow(min(1, (s - 0.8) / 0.18), 2)
-    let top = 38 - Int((away * 52).rounded())
+    let top = 34 - Int((away * 56).rounded())
     if away > 0 {                                                                  // the thread up into the trees
-        c.glowLine(50.5, -2, 50.5, Double(top), core: C(0xE8ECF0, 0.8), glow: clear, coreR: 0.35, glowR: 0.4)
+        c.glowLine(51.5, -2, 51.5, Double(top), core: C(0xE8ECF0, 0.8), glow: clear, coreR: 0.35, glowR: 0.4)
     }
-    let dwarf: [Character: Px] = ["H": C(0xA82A24), "F": C(0xE8B890), "B": C(0xD07A2A), "T": C(0x5A4A3A), "K": C(0x2A2420)]
-    let rows = [".HHH.", "HFFFH", "BBBBB", ".BBB.", "TTTTT", ".K.K."]
-    let cocoon = [".SSS.", "SSSSS", "SSSSS", "SSBSS", "SSSSS", ".SSS."]
+    // The dwarf: a red hood, a big ginger beard down to his boots; wrapped, the beard still sticks out of the bundle
+    // ("b": always beard, poking out below it).
+    let dwarf: [Character: Px] = ["H": C(0xC02A24), "h": C(0x8A1C18), "F": C(0xF0C098), "E": C(0x2A2420),
+                                  "B": C(0xE8862A), "b": C(0xB8601C), "T": C(0x5A4A3A), "K": C(0x2A2420)]
+    let rows = [
+        "..HHHH..",
+        ".HHHHHH.",
+        ".hFFFFh.",
+        ".FEFFEF.",
+        ".FBBBBF.",
+        "TBBBBBBT",
+        "TTBBBBTT",
+        "TTBbBBTT",
+        ".TBBbB..",
+        "..KBBK..",
+    ]
+    let cocoon = [
+        "..SSSS..",
+        ".SSSSSS.",
+        "SSSSSSSS",
+        "SSSSSSSS",
+        "SSSSSSSS",
+        "SSSBBSSS",
+        "SSSBBSSS",
+        "SSSbBSSS",
+        ".SSBbSS.",
+        "..bBBb..",
+    ]
     let spin = Int(s * 24)
     for (y, (row, wrapped)) in zip(rows, cocoon).enumerated() {
         for (x, (d, w)) in zip(row, wrapped).enumerated() {
             let covered = w == "S" && noise(x * 7 + y * 13 + 3) < wrap * 1.15
             let col: Px?
-            if covered { col = (x + y + spin) % 3 == 0 ? silkShade : silk } else { col = dwarf[d] }
-            if let col { c.px(48 + x, top + y, col) }
+            if covered { col = (x + y + spin) % 3 == 0 ? silkShade : silk }
+            else if wrap > 0.5, w == "B" || w == "b" { col = dwarf[w] } else if wrap > 0.5, w == "." { col = nil }
+            else { col = dwarf[d] }
+            if let col { c.px(47 + x, top + y, col) }
         }
+    }
+    // Wrapped tight: the bundle's silk banded round, the beard bristling out of the gap below.
+    if wrap >= 1 {
+        for y in [top + 2, top + 5, top + 8] { c.px(47 + (y % 2), y, silkShade); c.px(53 - (y % 2), y, silkShade) }
     }
 }
 

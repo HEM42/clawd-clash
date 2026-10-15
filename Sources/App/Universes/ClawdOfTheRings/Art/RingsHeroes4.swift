@@ -365,13 +365,18 @@ private func drawTreebeard(_ c: PixelCanvas, _ p: Pose) {
 }
 
 /// B-Treebeard's lids `s` through his signature: very slowly drooping half shut (0.06), shut (0.16…0.4), half open
-/// again (…0.5), the glow of his eyes going out behind them.
+/// again (…0.5), the glow of his eyes going out behind them: pale bark lids, shut in a dark sleepy curve.
 private func drawTreebeardLids(_ c: PixelCanvas, _ s: Double, bark: Px, furrow: Px) {
     let shut = s < 0.06 ? 0 : s < 0.16 ? 1 : s < 0.4 ? 2 : s < 0.5 ? 1 : 0
     guard shut > 0 else { return }
+    let lid = C(0x9A7A54), lash = C(0x1E140C)
     for ex in [29, 35] {
-        c.rect(ex, 14, 4, shut, bark)
-        c.rect(ex, 13 + shut, 4, 1, furrow)
+        c.rect(ex - 1, 14, 6, shut, lid)
+        if shut == 2 {
+            c.px(ex - 1, 15, lash); c.rect(ex, 16, 4, 1, lash); c.px(ex + 4, 15, lash)
+        } else {
+            c.rect(ex - 1, 15, 6, 1, lash)
+        }
     }
 }
 
@@ -381,12 +386,22 @@ private func drawTreebeardLids(_ c: PixelCanvas, _ s: Double, bark: Px, furrow: 
 private func drawTreebeardSprouts(_ c: PixelCanvas, _ s: Double, furrow: Px, leaf: Px, leafLight: Px) {
     if s > 0.1 && s < 0.46 {
         let wide = s > 0.16 && s < 0.4 ? 1 : 0
-        c.rect(33, 18, 3, 1 + wide, C(0x2A1A10)); c.rect(32, 18, 1, 1 + wide, furrow); c.rect(36, 18, 1, 1 + wide, furrow)
-        for i in 0..<3 {
-            let k = (s - 0.14 - Double(i) * 0.09) / 0.2
+        c.rect(32, 18, 5, 2 + wide, C(0x2A1A10)); c.rect(31, 18, 1, 2 + wide, furrow); c.rect(37, 18, 1, 2 + wide, furrow)
+        // The hrum: bold rings rolling out of his mouth one after another, growing and fading.
+        for i in 0..<4 {
+            let k = (s - 0.12 - Double(i) * 0.07) / 0.22
             guard k > 0 && k < 1 else { continue }
-            let x = 44 + Int(k * 9), a = 0.7 * (1 - k), col = C(0xD8C8A8, a), r = 2 + Int(k * 2)
-            for dy in -r...r { c.px(x + (abs(dy) < r - 1 ? 1 : 0), 17 + dy, col) }
+            let r: Double = 9 + k * 14, a: Double = 0.95 * (1 - k * k)
+            var seen = Set<Int>()
+            for w in [0.0, 1.0] where w == 0 || k < 0.6 {
+                let n = Int((r + w) * 1.6)
+                for j in 0...n {
+                    let u = unit(-48 + 96 * Double(j) / Double(n))
+                    let x = Int((34 + u.x * (r + w)).rounded(.down)), y = Int((19 + u.y * (r + w) * 0.8).rounded(.down))
+                    guard seen.insert(y * 1000 + x).inserted else { continue }
+                    c.px(x, y, C(0xF0E2C0, w == 0 ? a : a * 0.6))
+                }
+            }
         }
     }
     guard s > 0.5 else { return }

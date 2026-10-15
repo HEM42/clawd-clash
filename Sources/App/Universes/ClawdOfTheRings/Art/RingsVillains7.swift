@@ -93,7 +93,8 @@ private func drawDenethor(_ c: PixelCanvas, _ p: Pose) {
 /// The cherry tomato, `s` through the signature: the back hand, its sleeve across his chest, brings it up to the mouth;
 /// the bite and its squirt of juice; the chewing, loud, the juice trickling down his chin; and the wipe.
 private func drawDenethorSupper(_ c: PixelCanvas, _ s: Double, sleeve: Px) {
-    let red = C(0xD8262A), redLight = C(0xFF7A62), stalk = C(0x3A9A3A), juice = C(0xC8141E), noisy = C(0xF4F4F8, 0.85)
+    let red = C(0xF01A20), redLight = C(0xFF8A70), redDark = C(0xA80C14), stalk = C(0x2E8A2E), leafy = C(0x5AC04A)
+    let juice = C(0xD8101A), noisy = C(0xF4F4F8, 0.85)
     // The hand: from the elbow up to the mouth and back, later up to the chin and along it, and back down.
     let rest = (x: 17.0, y: 35.0), mouth = (x: 24.0, y: 33.0)
     var hand: (x: Double, y: Double)? = nil
@@ -127,20 +128,29 @@ private func drawDenethorSupper(_ c: PixelCanvas, _ s: Double, sleeve: Px) {
             for (x, y) in [(13, 25), (12, 24), (12, 29), (11, 29), (13, 33), (12, 34)] { c.px(x, y, noisy) }
         }
     }
-    // The squirt as he bites into it.
-    if s > 0.26 && s < 0.38 {
-        let k = (s - 0.26) / 0.12
-        for (i, d) in [(-1.2, -1.4), (0.4, -2.0), (1.8, -1.0), (-2.2, -0.3)].enumerated() {
-            let x = 27 + d.0 * k * 5, y = 31 + d.1 * k * 5 + 9 * k * k
-            c.px(Int(x.rounded()), Int(y.rounded()), (i % 2 == 0 ? red : juice).alpha(1 - k * 0.7))
+    // The squirt as he bites into it: a splat at the mouth, and drops flying out and falling.
+    if s > 0.26 && s < 0.4 {
+        let k = (s - 0.26) / 0.14
+        if k < 0.3 {
+            c.pattern(24, 28, ["R..R..R", ".R.R.R.", "..RLR..", "RRLLLRR", "..RLR..", ".R.R.R.", "R..R..R"],
+                      ["R": red.alpha(1 - k), "L": redLight.alpha(1 - k)])
+        }
+        let drops: [(Double, Double)] = [(-1.6, -1.6), (-0.6, -2.4), (0.7, -2.6), (1.7, -1.8), (2.5, -0.8), (-2.5, -0.7),
+                                         (1.2, -1.1), (-1.1, -1.0)]
+        for (i, d) in drops.enumerated() {
+            let x = Int((27 + d.0 * k * 9).rounded()), y = Int((31 + d.1 * k * 9 + 16 * k * k).rounded())
+            let col = (i % 2 == 0 ? red : juice).alpha(1 - k * 0.6)
+            c.px(x, y, col)
+            if i < 4 && k < 0.7 { c.px(x + 1, y, col); c.px(x, y + 1, redDark.alpha(1 - k * 0.6)) }
         }
     }
     guard let h = hand else { return }
     let hx = Int(h.x.rounded()), hy = Int(h.y.rounded())
     line(c, 17, 34.5, h.x, h.y + 0.5, sleeve, 0.8)                            // the sleeve, from the elbow
-    // The tomato in his fingers, until it goes in.
+    // The tomato in his fingers, big and ripe, until it goes in.
     if s < 0.26 {
-        c.rect(hx + 1, hy - 2, 2, 2, red); c.px(hx + 1, hy - 2, redLight); c.px(hx + 2, hy - 3, stalk)
+        c.pattern(hx, hy - 5, [".gSg.", ".RRR.", "RLRRR", "RRRRD", ".RDD."],
+                  ["R": red, "L": redLight, "D": redDark, "S": stalk, "g": leafy])
     }
     c.rect(hx, hy, 2, 2, clawdOrange); c.px(hx + 1, hy + 1, clawdShade)
 }

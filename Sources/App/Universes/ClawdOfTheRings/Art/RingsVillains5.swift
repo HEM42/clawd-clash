@@ -70,41 +70,52 @@ private func drawCane(_ c: PixelCanvas, angle: Double, alpha: Double = 1, at: (x
 /// five coins hopping up one after another out of his waistcoat pocket and onto the stack in it (0.12…0.72), a glint
 /// as each lands; a widening smirk and gold in his eyes; then the hand closing over them (0.8…).
 private func drawTakings(_ c: PixelCanvas, s: Double, t: Double) {
-    let gold = C(0xE0B840), goldDark = C(0xA87E22), glint = C(0xFFF6C8)
-    drawCane(c, angle: 96, at: (40.5, 37.5))
+    let gold = C(0xF0C440), goldLight = C(0xFFE88A), goldDark = C(0x9A6E18), glint = C(0xFFFFFF)
+    drawCane(c, angle: 97, at: (15.5, 36.5))                                    // leant against his back, out of the way
     let greedy = s > 0.2 && s < 0.88
     if greedy {
         c.rect(26, 35, 5, 1, C(0x7A3420)); c.px(31, 34, C(0x7A3420)); c.px(28, 35, C(0xF4F0E4))   // the grin
         if Int(t * 4) % 3 != 0 { c.px(24, 34, gold); c.px(32, 34, gold) }                        // the gleam
     }
-    let palm = (x: 36, y: 33)                                                   // the top of his raised fist
+    // His palm held out in front of him, clear of the head and the cane: the forearm reaching out to it.
+    let palm = (x: 40, y: 33)                                                   // the middle of the bottom coin
+    c.rect(36, 34, 4, 2, clawdOrange); c.rect(37, 35, 3, 1, clawdShade)
     let closing = s > 0.8
     var stack = 0
     for i in 0..<5 {
         let start = 0.12 + Double(i) * 0.12, u = (s - start) / 0.1
         guard u > 0 else { continue }
         if u >= 1 { stack += 1; continue }
-        // In the air: up out of the pocket in an arc and down onto the stack, turning over as it goes.
-        let from = (x: 32.0, y: 38.0), to = (x: Double(palm.x) + 0.5, y: Double(palm.y - stack))
+        // In the air: up out of the pocket in an arc and down onto the stack, flipping over as it goes.
+        let from = (x: 32.0, y: 38.0), to = (x: Double(palm.x) + 0.5, y: Double(palm.y - 2 * stack))
         let x = from.x + (to.x - from.x) * u, y = from.y + (to.y - from.y) * u - 9 * 4 * u * (1 - u)
-        if Int(u * 6) % 2 == 0 { c.rect(Int(x.rounded()) - 1, Int(y.rounded()), 3, 1, gold) } else {
-            c.rect(Int(x.rounded()), Int(y.rounded()) - 1, 1, 2, goldDark)
-        }
+        let ix = Int(x.rounded()), iy = Int(y.rounded())
+        if Int(u * 6) % 2 == 0 { c.rect(ix - 2, iy, 5, 2, gold); c.rect(ix - 1, iy, 3, 1, goldLight); c.px(ix + 2, iy + 1, goldDark) }
+        else { c.rect(ix, iy - 1, 2, 3, goldDark); c.px(ix, iy - 1, goldLight) }
     }
     if !closing {
+        // The stack on his palm: fat coins, a bright rim on each and a dark edge under it.
         for j in 0..<stack {
-            c.rect(palm.x - 1, palm.y - j, 4, 1, j % 2 == 0 ? gold : C(0xF0CC5A)); c.px(palm.x + 2, palm.y - j, goldDark)
+            let y = palm.y - 2 * j - 1
+            c.rect(palm.x - 2, y, 5, 2, gold); c.rect(palm.x - 1, y, 3, 1, goldLight)
+            c.rect(palm.x - 2, y + 1, 5, 1, j % 2 == 0 ? goldDark : C(0xB88A28)); c.px(palm.x - 2, y, gold)
         }
-        // A glint on the coin that's just landed.
+        // A sparkle on the coin that's just landed, and a twinkle now and then on the top one.
         for i in 0..<5 {
-            let u = (s - 0.22 - Double(i) * 0.12) / 0.06
+            let u = (s - 0.22 - Double(i) * 0.12) / 0.08
             guard u > 0, u < 1 else { continue }
-            let gx = palm.x + 2, gy = palm.y - i - 1, a: Double = sin(u * .pi)
-            c.px(gx, gy - 1, glint.alpha(a)); c.px(gx + 1, gy, glint.alpha(a * 0.6)); c.px(gx - 1, gy, glint.alpha(a * 0.6))
+            let gx = palm.x + 1, gy = palm.y - 2 * i - 1, a: Double = sin(u * .pi)
+            c.px(gx, gy, glint.alpha(a)); c.px(gx, gy - 1, glint.alpha(a)); c.px(gx, gy - 2, glint.alpha(a * 0.6))
+            c.px(gx - 1, gy - 1, glint.alpha(a * 0.7)); c.px(gx + 1, gy - 1, glint.alpha(a * 0.7))
+            c.px(gx - 2, gy - 1, glint.alpha(a * 0.35)); c.px(gx + 2, gy - 1, glint.alpha(a * 0.35))
         }
+        if stack > 0 && Int(t * 5) % 4 == 0 { c.px(palm.x - 1, palm.y - 2 * stack, glint) }
     }
-    c.rect(36, 34, 2, 2, clawdOrange)
-    if closing { c.rect(36, 33, 2, 1, clawdOrange); c.px(37, 33, clawdShade) }   // closed round the coins
+    c.rect(palm.x - 2, palm.y + 1, 4, 2, clawdOrange); c.px(palm.x + 1, palm.y + 2, clawdShade)   // the palm under them
+    if closing {                                                                // closed round the coins
+        c.rect(palm.x - 2, palm.y - 1, 4, 2, clawdOrange); c.rect(palm.x - 2, palm.y, 4, 1, clawdShade)
+        c.px(palm.x + 2, palm.y, gold)
+    }
 }
 
 // MARK: - Bill Firmware
@@ -232,6 +243,7 @@ private let willowTip: (x: Double, y: Double) = (49.5, 29.5)
 /// by a great dark hollow, on a tangle of roots that shuffle along for feet; a crown of grey-green leaves weeping down
 /// in long fronds on every side, swaying; and a face in the bark, sleepy and sly, one eye closed, the other a pale-green
 /// slit, a crooked smile. His front branch droops out in front of him, fronds trailing. He fights with a gnarled root
+/// (not his grey bark: near-black earthy brown, mossy along its length, paling to a raw fresh tip and rootlet fingers)
 /// that lies coiled at his base at rest and, swung, snakes forward along the floor and up, its tip curling like a
 /// grasping hand and lagging behind the swing, with a smear behind a fast grab. When he's idle a little "z" drifts up
 /// from him now and then. Signature: a huge, slow yawn: he stretches up tall, branch raised, eyes screwed shut, and the
@@ -327,18 +339,21 @@ private func drawWillow(_ c: PixelCanvas, _ p: Pose) {
     // along the floor and up along the swing, its grasping tip curling over and lagging behind.
     if let y = yawn, let s = p.signature { drawYawn(c, y, s: s, t: p.t) }
     c.oy -= p.breathe - stretch
+    // Not his bark: an old root, near-black earthy brown and mossy along its length, paling to a raw fresh tip.
+    let root = C(0x4A3F2E), rootDark = C(0x2A241A), moss = C(0x6E9440), rootTip = C(0xD8CCA4)
     guard let a = p.melee else {
-        drawRoot(c, angle: 6, rise: -30 + 4 * sway, curl: -280, col: bark, dark: barkDark, knot: furrow)
+        drawRoot(c, angle: 6, rise: -30 + 4 * sway, curl: -280, col: root, dark: rootDark, moss: moss, tipCol: rootTip)
         return
     }
     func reach(_ a: Double) -> Double { min(30, max(-120, wrapped(a))) }
     let now = reach(a)
     for (i, ta) in p.trail.enumerated() {
-        drawRoot(c, angle: 4, rise: reach(ta) - 4, curl: 100, col: C(0xA8AC94), dark: nil, knot: nil,
+        drawRoot(c, angle: 4, rise: reach(ta) - 4, curl: 100, col: C(0xA8AC94), dark: nil, moss: nil,
                  alpha: 0.32 / Double(i + 1))
     }
     let lag: Double = p.trail.first.map { reach($0) - now } ?? 0
-    drawRoot(c, angle: 4, rise: now - 4, curl: min(200, max(40, 100 + lag * 2)), col: bark, dark: barkDark, knot: furrow)
+    drawRoot(c, angle: 4, rise: now - 4, curl: min(200, max(40, 100 + lag * 2)), col: root, dark: rootDark, moss: moss,
+             tipCol: rootTip)
 }
 
 /// Old Man Pillow's yawn at a moment of his signature: how far he's stretched up (0…1), and the hollow in his trunk,
@@ -418,28 +433,44 @@ private func drawYawn(_ c: PixelCanvas, _ y: WillowYawn, s: Double, t: Double) {
 
 /// Old Man Pillow's grabbing root, from `willowRoot`: setting off along `angle` over the floor, turning `rise` degrees
 /// more as it lifts, then curling `curl` degrees more at its tapering tip, where three rootlet fingers splay out like a
-/// grasping hand; a darker underside and a few knots along it.
-private func drawRoot(_ c: PixelCanvas, angle: Double, rise: Double, curl: Double, col: Px, dark: Px?, knot: Px?,
-                      alpha: Double = 1) {
+/// grasping hand; a darker underside, tufts of `moss` along its top, and (given `tipCol`) paling toward its tip into
+/// fresh, raw rootlet fingers.
+private func drawRoot(_ c: PixelCanvas, angle: Double, rise: Double, curl: Double, col: Px, dark: Px?, moss: Px?,
+                      tipCol: Px? = nil, alpha: Double = 1) {
     let body = curve(willowRoot, angle: angle, bend: rise, n: 6, step: 2, power: 1)
     let tip = curve(body[body.count - 1], angle: angle + rise, bend: curl, n: 6, step: 1.6, power: 2)
     let pts = body + tip.dropFirst()
     let floor = Double(43 - c.oy) + 0.5
+    /// The root's colour `f` along it: its own colour, paling into `tipCol` over the last part.
+    func shade(_ f: Double) -> Px {
+        guard let tipCol, f > 0.5 else { return col }
+        let k = min(1, (f - 0.5) / 0.4)
+        func mix(_ a: UInt8, _ b: UInt8) -> UInt8 { UInt8((Double(a) + (Double(b) - Double(a)) * k).rounded()) }
+        return Px(r: mix(col.r, tipCol.r), g: mix(col.g, tipCol.g), b: mix(col.b, tipCol.b), a: col.a)
+    }
     for i in 1..<pts.count {
         let a = pts[i - 1], b = pts[i], f = Double(i) / Double(pts.count - 1)
         let r: Double = 1.9 + (0.45 - 1.9) * f
         if let dark { line(c, a.x, min(a.y + 0.6, floor), b.x, min(b.y + 0.6, floor), dark.alpha(alpha), r) }
-        line(c, a.x, min(a.y, floor), b.x, min(b.y, floor), col.alpha(alpha), r * (dark == nil ? 1 : 0.8))
+        line(c, a.x, min(a.y, floor), b.x, min(b.y, floor), shade(f).alpha(alpha), r * (dark == nil ? 1 : 0.8))
     }
-    // The rootlet fingers, splaying from just behind the tip.
+    // The rootlet fingers, splaying from just behind the tip, the palest part of it.
     let hand = pts[pts.count - 3], end = angle + rise + curl
     for spread in [-55.0, -15.0, 25.0] {
         let u = unit(end + spread)
-        line(c, hand.x, min(hand.y, floor), hand.x + u.x * 3.5, min(hand.y + u.y * 3.5, floor), col.alpha(alpha), 0.4)
+        line(c, hand.x, min(hand.y, floor), hand.x + u.x * 3.5, min(hand.y + u.y * 3.5, floor), shade(1).alpha(alpha), 0.4)
     }
-    guard let knot else { return }
-    for i in [3, 6, 9] where i < pts.count && pts[i].y < floor {
-        c.px(Int(pts[i].x.rounded(.down)), Int(pts[i].y.rounded(.down)), knot.alpha(alpha))
+    // Moss in tufts along its old, thick part, on whichever side is up.
+    guard let moss else { return }
+    for i in [1, 2, 4, 5, 7] where i + 1 < pts.count {
+        let a = pts[i], b = pts[i + 1], f = Double(i) / Double(pts.count - 1)
+        let len = max(hypot(b.x - a.x, b.y - a.y), 0.01), r: Double = (1.9 + (0.45 - 1.9) * f) * 0.8
+        var n = (x: (b.y - a.y) / len, y: -(b.x - a.x) / len)
+        if n.y > 0 { n = (-n.x, -n.y) }
+        let x = a.x + n.x * r, y = a.y + n.y * r
+        guard y < floor else { continue }
+        c.px(Int(x.rounded(.down)), Int(y.rounded(.down)), moss.alpha(alpha))
+        if i % 2 == 1 { c.px(Int(x.rounded(.down)) + 1, Int(y.rounded(.down)), moss.alpha(alpha * 0.8)) }
     }
 }
 

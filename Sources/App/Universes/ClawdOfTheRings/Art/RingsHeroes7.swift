@@ -339,7 +339,8 @@ private func drawKili(_ c: PixelCanvas, _ p: Pose) {
 }
 
 /// Kill-i's signature, `s` through it: the bow turned up over his head (…0.18), an arrow drawn (…0.42) and loosed
-/// straight up at 0.5, gone off the top in a blink; a red "9" pops up there (0.58…) and fades as he lowers the bow.
+/// straight up at 0.5, gone off the top in a blink and a bright streak behind it; a big red "9" pops up there
+/// (0.58…) and fades as he lowers the bow.
 private func drawKiliShotUp(_ c: PixelCanvas, _ s: Double, tunic: Px) {
     let release = 0.5
     let raise = arc(s, rise: 0.18, fall: 0.82)
@@ -366,38 +367,46 @@ private func drawKiliShotUp(_ c: PixelCanvas, _ s: Double, tunic: Px) {
             b.rect(tail - 1, 36, 2, 2, clawdOrange)
         }
     }
-    // The arrow, loosed, streaking up off the top of the canvas.
-    if s >= release && s < release + 0.07 {
-        let head = turned(4.5, 0).y - (s - release) / 0.07 * 40
-        let x = Int(turned(4.5, 0).x.rounded(.down))
-        c.glowLine(Double(x) + 0.5, head + 2, Double(x) + 0.5, head + 14, core: C(0xFFFFFF), glow: C(0xC8CCD4),
-                   coreR: 0.2, glowR: 1, strength: 0.35)
-        c.rect(x, Int(head.rounded(.down)), 1, 8, C(0x6A4A2A))
-        c.px(x, Int(head.rounded(.down)) - 1, C(0xE8ECF4))
-        c.px(x - 1, Int(head.rounded(.down)) + 7, C(0x8A8E96)); c.px(x + 1, Int(head.rounded(.down)) + 7, C(0x8A8E96))
+    // The arrow, loosed, streaking up off the top of the canvas, a bright streak left behind it that fades.
+    let nock = turned(4.5, 0), ax = Int(nock.x.rounded(.down))
+    if s >= release && s < release + 0.18 {
+        let k = min(1, (s - release) / 0.08), head = nock.y - k * 46
+        let a = s < release + 0.08 ? 1 : 1 - (s - release - 0.08) / 0.1
+        c.glowLine(Double(ax) + 0.5, max(-2, head + 4), Double(ax) + 0.5, nock.y - 1, core: C(0xFFFFFF).alpha(a),
+                   glow: C(0xFFE8A0).alpha(a), coreR: 0.5, glowR: 1.8, strength: 0.9)
+        if k < 1 {
+            let hy = Int(head.rounded(.down))
+            c.rect(ax, hy, 1, 9, C(0x6A4A2A))
+            c.rect(ax, hy - 2, 1, 2, C(0xE8ECF4)); c.px(ax - 1, hy, C(0xC8CCD4)); c.px(ax + 1, hy, C(0xC8CCD4))
+            c.rect(ax - 1, hy + 7, 1, 2, C(0x8A8E96)); c.rect(ax + 1, hy + 7, 1, 2, C(0x8A8E96))
+        }
     }
-    // Where it went: a little burst, then a red "9", floating and fading.
+    // Where it went: a burst, then a big red "9", floating and fading.
     if s >= 0.58 && s < 0.95 {
         let k = (s - 0.58) / 0.37
-        if k < 0.12 {
+        if k < 0.14 {
+            let r = 3 + k / 0.14 * 4
             for a in stride(from: 0.0, to: 360, by: 45) {
                 let u = unit(a)
-                c.glowLine(43 + u.x * 2, 6 + u.y * 2, 43 + u.x * 5, 6 + u.y * 5, core: C(0xFFF0C0), glow: C(0xFF8A5A),
-                           coreR: 0.3, glowR: 1, strength: 0.8)
+                c.glowLine(43.5 + u.x * r, 6.5 + u.y * r, 43.5 + u.x * (r + 3), 6.5 + u.y * (r + 3), core: C(0xFFF0C0),
+                           glow: C(0xFF8A5A), coreR: 0.4, glowR: 1.2, strength: 0.9)
             }
         }
         let fade = k > 0.75 ? 1 - (k - 0.75) / 0.25 : 1
-        let y = 2 - Int((k * 2).rounded(.down)) + (k < 0.06 ? 1 : 0)
-        c.pattern(40, y, [
-            ".RRRR.",
-            "RRWWRR",
-            "RWRRWR",
-            "RWRRWR",
-            "RRWWWR",
-            "RRRRWR",
-            "RRWWRR",
-            ".RRRR.",
-        ], ["R": C(0xD8322A).alpha(fade), "W": C(0xFFFFFF).alpha(fade)])
+        let y = 1 - Int((k * 2).rounded(.down)) + (k < 0.06 ? 1 : 0)
+        c.pattern(39, y, [
+            ".DDDDDDD.",
+            "DRWWWWWRD",
+            "DWWRRRWWD",
+            "DWWRRRWWD",
+            "DWWRRRWWD",
+            "DRWWWWWWD",
+            "DRRRRRWWD",
+            "DRRRRRWWD",
+            "DWWRRRWWD",
+            "DRWWWWWRD",
+            ".DDDDDDD.",
+        ], ["R": C(0xE0302A).alpha(fade), "D": C(0x9A1A16).alpha(fade), "W": C(0xFFFFFF).alpha(fade)])
     }
 }
 

@@ -106,11 +106,16 @@ private func drawWormtongue(_ c: PixelCanvas, _ p: Pose) {
     drawDagger(c, angle: angle, trail: p.melee == nil ? [] : p.trail)
     c.rect(38, 33, 3, 3, robe); c.rect(40, 33, 2, 3, pale); c.px(40, 35, paleShade)
     if let s = sig, rubbing {
-        // The other hand, round in front, rubbing against the first: up and down and round, its fur cuff behind it.
-        let a: Double = s * 3.2 * 2 * .pi * 2.2
-        let hx = 37 + Int((sin(a) * 1.5).rounded()), hy = 32 + Int((cos(a) * 1.2).rounded())
-        c.rect(hx - 2, hy, 2, 3, fur); c.px(hx - 2, hy, furLight)
-        c.rect(hx, hy, 2, 3, pale); c.px(hx + 1, hy + 2, paleShade)
+        // The other hand, round in front under his chin, rubbing against the first: up and down and round, its fur
+        // cuff behind it. Both hands edged dark so they show against the pale face.
+        let a: Double = s * 3.2 * 2 * .pi * 2.2, edge = C(0x2E1C22)
+        let hx = 37 + Int((sin(a) * 1.5).rounded()), hy = 34 + Int((cos(a) * 1.2).rounded())
+        c.rect(39, 32, 3, 1, edge); c.rect(39, 33, 1, 3, edge); c.rect(40, 36, 2, 1, edge)
+        c.rect(hx - 1, hy - 1, 4, 5, edge)
+        c.rect(hx - 3, hy, 2, 3, fur); c.px(hx - 3, hy, furLight)
+        c.rect(hx, hy, 2, 3, pale); c.px(hx + 1, hy + 2, paleShade); c.px(hx, hy, C(0xE0C4B2))
+        c.rect(40, 33, 2, 3, pale); c.px(40, 35, paleShade)                                 // the dagger hand
+        if hx + 1 >= 40 { c.px(40, hy + 1, paleShade) }                                    // where they press together
     }
     if let s = sig, whispering {
         // The whisper: little wavy marks drifting off from the mouth, rising a little and fading.

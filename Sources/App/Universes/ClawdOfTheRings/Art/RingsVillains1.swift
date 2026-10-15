@@ -569,8 +569,8 @@ private func drawWitchKing(_ c: PixelCanvas, _ p: Pose) {
 
 /// Nazgulp, a ring-wraith: the same tall black hood and ragged robe, no crown, and deep in the hood two faint pale
 /// points where eyes ought to be. He carries a long sword, held low between fights. Signature: "Bagclawds… Shire…":
-/// the hood tips forward and sniffs the air, three quick sniffs drawing wisps of scent into it (…0.5), then leans
-/// further still as the pale points in it flare (he has the scent), and straightens up again.
+/// the hood tips well forward and sniffs the air, three quick sniffs drawing curling wisps of scent into it
+/// (…0.5), then leans further still as the pale points in it flare (he has the scent), and straightens up again.
 private func drawNazgul(_ c: PixelCanvas, _ p: Pose) {
     drawWraith(c, p, crown: false, weapon: .sword, sig: p.signature)
 }
@@ -586,8 +586,8 @@ private func drawWraith(_ c: PixelCanvas, _ p: Pose, crown: Bool, weapon: Wraith
     // The sniffing: how far the hood leans forward (its peak furthest), a jab for each sniff, and the scent found.
     var lean: Double = 0, found: Double = 0
     if !crown, let s = sig {
-        lean = keyed(s, [(0, 0), (0.18, 4), (0.55, 4), (0.62, 7), (0.8, 7), (0.95, 0)])
-        for at in [0.24, 0.34, 0.44] where s > at && s < at + 0.05 { lean += 1.5 }
+        lean = keyed(s, [(0, 0), (0.18, 7), (0.55, 7), (0.62, 12), (0.8, 12), (0.95, 0)])
+        for at in [0.24, 0.34, 0.44] where s > at && s < at + 0.05 { lean += 2.5 }
         found = keyed(s, [(0.58, 0), (0.64, 1), (0.8, 1), (0.88, 0)])
     }
     let tilt = { (i: Int) -> Int in Int((lean * Double(16 - i) / 16).rounded()) }   // how far row i of the hood leans
@@ -681,13 +681,16 @@ private func drawWraith(_ c: PixelCanvas, _ p: Pose, crown: Bool, weapon: Wraith
             }
         }
     } else if s > 0.18 && s < 0.56 {
-        // Wisps of scent drawn in from ahead, into the hood.
+        // Wisps of scent drawn in from ahead, curling, into the hood.
         let mouth = (x: 33.0 + Double(tilt(11)), y: 29.0)
         for j in 0..<3 {
             let f = frac((s - 0.18) * 4 + Double(j) / 3)
-            let x0: Double = mouth.x + 18 * (1 - f), y0: Double = mouth.y - 3 + Double(j) * 3 + sin(f * 6 + Double(j)) * 1.2
-            let fade: Double = min(1, (s - 0.18) / 0.05) * min(1, (0.56 - s) / 0.05) * sin(f * .pi)
-            for d in 0..<3 { c.px(Int(x0) + d * 2, Int(y0.rounded()), C(0xB8C8B0, 0.6 * fade * (1 - Double(d) * 0.3))) }
+            let x0: Double = mouth.x + 1 + 20 * (1 - f), y0: Double = mouth.y + Double(j - 1) * 4 * (1 - f)
+            let fade: Double = min(1, (s - 0.18) / 0.05) * min(1, (0.56 - s) / 0.05) * min(1, sin(f * .pi) * 2)
+            for d in 0..<8 {
+                let x = x0 + Double(d), y = y0 + sin(x * 0.55 + Double(j) * 2) * 1.3
+                c.px(Int(x), Int(y.rounded()), C(0xDCEAD0, 0.95 * fade * (1 - Double(d) / 9)))
+            }
         }
     }
 }

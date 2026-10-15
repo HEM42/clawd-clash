@@ -29,10 +29,11 @@ let ringsVillains6: [LOTRVillain: Persona] = [
 /// under a tall, narrow black helmet rising to a spike, the White Hand painted tall on its front, cheek guards and a
 /// nose bar. Angry brows, yellow-glinting eyes and a lean, mean grin, two fangs over the lip. Black scale armour, one
 /// round pauldron on the sword shoulder, a belt and a skirt of black strips. A jagged falchion, saw-toothed along its
-/// back, held forward on guard; a light smear behind a fast swing. Signature, the lookup: he stabs the falchion into
-/// the floor in front of him (…0.12), pulls out the list of prisoners and lets it unroll, runs a claw down it ticking
-/// the names off in red, one by one (the last one crossed out: somebody ate him), rolls it up (…0.88) and takes his
-/// blade back.
+/// back, held forward on guard; a light smear behind a fast swing. Signature, the O(1) lookup: he snaps the falchion
+/// up before him (…0.12) and a flap pops on the pouch at his belt; the list of prisoners spills out of it and unrolls
+/// forward along the floor in a long strip (…0.32) while his eyes drop to it; the blade comes down over it (…0.46),
+/// jabs ONE entry without reading a line, and rings it in red; "O(1)", he says; then the list zips back into the pouch
+/// (0.74…0.86) and the blade goes back on guard.
 private func drawUgluk(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature.flatMap { $0 > 0.02 && $0 < 0.98 ? $0 : nil }
     let skin = C(0x6E4030), skinDark = C(0x522E22), hair = C(0x141216), hairSheen = C(0x34303A)
@@ -90,42 +91,45 @@ private func drawUgluk(_ c: PixelCanvas, _ p: Pose) {
     c.rect(38, 33, 2, 3, plate); c.rect(40, 33, 2, 3, skin); c.px(41, 35, skinDark)
 }
 
-/// Ug-lookup's signature `s` through: the falchion carried out and stabbed point-down into the floor (and back at the
-/// end), and while it stands there the list in both fists, unrolled, a claw running down it ticking names off.
+/// Ug-lookup's signature `s` through: the falchion never leaves his fist (snapped up, brought down over the list, one
+/// jab, back on guard), the pouch on his belt and the list spilling out of it along the floor and zipping back in, his
+/// eyes on it, the red ring round the one entry he jabs, and "O(1)".
 private func drawUglukLookup(_ c: PixelCanvas, _ s: Double, skin: Px, skinDark: Px, plate: Px) {
-    let out = smooth(span(s, 0.02, 0.12)) * (1 - smooth(span(s, 0.88, 0.98)))
-    let hand = (x: mix(Sprite.hand.x, 54.5, out), y: mix(Sprite.hand.y, 24.5, out))
-    drawFalchion(c, at: hand, angle: mix(20, 90, out))
-    guard out >= 1 else {
-        // Carrying it: the arm out after the fist.
-        let fx = Int(hand.x) - 1, fy = Int(hand.y) - 1
-        line(c, 37, 34, Double(fx), Double(fy) + 1, plate, 1.0)
-        c.rect(fx, fy, 2, 3, skin); c.px(fx + 1, fy + 2, skinDark)
-        return
-    }
     let parchment = C(0xE4D6AC), parchmentDark = C(0xC4B48A), roll = C(0xA8865A), rollLight = C(0xC8A47A)
-    let writing = C(0x4A3426), red = C(0xC0281C)
-    // The list: a roller at the top, the sheet unrolling down from it, a roller at the bottom.
-    let length = Int((14 * smooth(span(s, 0.13, 0.24)) * (1 - smooth(span(s, 0.8, 0.88)))).rounded())
-    c.rect(40, 21, 11, 2, roll); c.rect(40, 21, 11, 1, rollLight)
+    let writing = C(0x4A3426), red = C(0xD0281C), leather = C(0x5A3A24), leatherLight = C(0x7A5234)
+    // The blade: up (…0.12), down over the list (0.34…0.46), the jab (0.48…0.5, held), back on guard (0.88…).
+    let up = smooth(span(s, 0.02, 0.12)), down = smooth(span(s, 0.34, 0.46)), jab = smooth(span(s, 0.47, 0.5))
+    let lift = smooth(span(s, 0.7, 0.76)), back = smooth(span(s, 0.88, 0.98))
+    let angle = mix(mix(mix(mix(20, -70, up), 13, down), 19, jab * (1 - lift)), 20, back)
+    // The list: out of the pouch, down in front of his legs and forward along the floor, a little roll at its end.
+    let length = Int((27 * smooth(span(s, 0.14, 0.32)) * (1 - smooth(span(s, 0.74, 0.86)))).rounded())
     if length > 0 {
-        c.rect(41, 23, 9, length, parchment); c.rect(49, 23, 1, length, parchmentDark)
-        c.rect(40, 23 + length, 11, 2, roll); c.rect(40, 23 + length, 11, 1, rollLight)
+        c.rect(35, 40, 2, 2, parchment)
+        c.rect(35, 41, length + 2, 3, parchment)
+        c.rect(35, 41, length + 2, 1, C(0xF2E8C8)); c.rect(35, 43, length + 2, 1, parchmentDark)
+        for x in stride(from: 38, to: 35 + length, by: 3) where noise(x * 7 + 3) > 0.15 {
+            c.rect(x, 42, noise(x * 5 + 1) > 0.5 ? 2 : 1, 1, writing)
+        }
+        c.rect(36 + length, 40, 2, 4, roll); c.rect(36 + length, 40, 1, 4, rollLight)
     }
-    // The names on it, and the claw running down them, ticking each off as it passes (the last one crossed out).
-    let read = span(s, 0.27, 0.76), clawY = 25 + Int((9 * read).rounded())
-    for (i, y) in [25, 28, 31, 34].enumerated() where y + 1 < 23 + length {
-        for x in 42...45 where (x + i) % 3 != 2 || x == 42 { c.px(x, y, writing) }
-        c.px(42 + i % 2, y - 1, writing)
-        guard s > 0.27, clawY > y || read >= 1 else { continue }
-        let mark = i == 3 ? ["R.R", ".R.", "R.R"] : ["..R", "R.R", ".R."]
-        c.pattern(46, y - 1, mark, ["R": red])
+    // The pouch on his belt, its flap popped open while the list is out.
+    let open = s > 0.1 && s < 0.88
+    c.rect(33, 37, 4, 3, leather); c.rect(33, 37, 4, 1, leatherLight)
+    if open { c.rect(33, 36, 4, 1, leatherLight); c.rect(34, 38, 2, 1, ink) } else { c.px(34, 38, C(0xA8A8B0)) }
+    if s > 0.1, length == 0, s < 0.88 { c.rect(34, 37, 2, 2, parchment) }
+    // His eyes drop to the list while it's out.
+    if length > 6 {
+        c.rect(22, 27, 2, 2, ink); c.rect(32, 27, 2, 2, ink)
+        c.px(23, 28, C(0xC89A3A)); c.px(33, 28, C(0xC89A3A))
     }
-    // The fist holding the top roller, and the other one under it, its claw on the line.
-    c.rect(37, 20, 2, 3, plate); c.rect(39, 20, 2, 3, skin); c.px(40, 22, skinDark)
-    let cy = length >= 12 && s > 0.25 && s < 0.8 ? clawY : 33
-    c.rect(37, cy - 1, 2, 3, plate); c.rect(39, cy - 1, 2, 3, skin); c.px(40, cy + 1, skinDark)
-    if cy != 33 { c.rect(41, cy, 2, 1, ink) }
+    // The one entry it lands on, ringed in red, and his verdict.
+    if jab > 0.5, length >= 22 {
+        c.pattern(57, 40, [".RRR.", "R...R", "R...R", ".RRR."], ["R": red])
+        if s < 0.56 { drawGlint(c, x: 59, y: 38, size: 2) }
+    }
+    if s > 0.52, s < 0.74 { drawSpeech(c, "O(1)", x: 39, y: 4, tail: (x: 40, y: 14)) }
+    drawFalchion(c, at: Sprite.hand, angle: angle)
+    c.rect(38, 33, 2, 3, plate); c.rect(40, 33, 2, 3, skin); c.px(41, 35, skinDark)
 }
 
 /// Ug-lookup's falchion: a leather grip, a plain iron guard and a broad single-edged blade that widens toward its
@@ -895,6 +899,10 @@ private func mix(_ a: Double, _ b: Double, _ t: Double) -> Double { a + (b - a) 
 /// A tiny pixel font, five rows high: just the letters the signatures say.
 private let glyphs: [Character: [String]] = [
     "N": ["X..X", "XX.X", "X.XX", "X..X", "X..X"],
+    "O": [".XX.", "X..X", "X..X", "X..X", ".XX."],
+    "1": [".X", "XX", ".X", ".X", ".X"],
+    "(": [".X", "X.", "X.", "X.", ".X"],
+    ")": ["X.", ".X", ".X", ".X", "X."],
     "a": ["...", "XX.", ".XX", "X.X", "XXX"],
     "d": ["..X", ".XX", "X.X", "X.X", ".XX"],
     "m": [".....", "XXXX.", "X.X.X", "X.X.X", "X.X.X"],

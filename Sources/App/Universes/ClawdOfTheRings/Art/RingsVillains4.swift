@@ -7,7 +7,7 @@ import Foundation
 
 let ringsVillains4: [LOTRVillain: Persona] = [
     .watcher: Persona(name: "The Watcher in the Waterfall", weapon: .saber, canSit: false, pivot: watcherRoot, bulk: 8,
-                      headTop: 13, signature: 3.2, callout: "Requirements… design… nobody gets out of the Waterfall.", draw: drawWatcher),
+                      headTop: 6, signature: 3.2, callout: "Requirements… design… nobody gets out of the Waterfall.", draw: drawWatcher),
     .oliphaunt: Persona(name: "Oli-PHP-aunt", weapon: .saber, armoured: true, canSit: false, pivot: mumakTusks, bulk: 12,
                         headTop: 7, signature: 3.0,
                         callout: "I am the elePHPant in the room.", draw: drawOliphaunt),
@@ -24,10 +24,12 @@ let ringsVillains4: [LOTRVillain: Persona] = [
 /// Where the Watcher lashes from: the root of its front tentacle, at the front of its bulk just above the water.
 private let watcherRoot: (x: Double, y: Double) = (39.5, 36.5)
 
-/// The Watcher in the Water, half again a Man's height: a dark green-black bulk just breaking a pool of black water,
-/// ripples spreading out round it, one cold pale eye glinting above the surface, and its tentacles all about it,
-/// green-black with pale suckers along the inside of their curl: two reared high and curling over at the tips (the far
-/// one darker), two more groping along the water before and behind. It doesn't walk: the tentacles shift one way and
+/// The Watcher in the Water, towering half again a Man's height: a great dark green-black dome risen half out of a
+/// pool of black water on a broad lumpy base, ripples spreading out round it, one cold pale eye glinting high on its
+/// front under a heavy brow, a toothed maw below, and its tentacles all about it, green-black with pale suckers along
+/// the inside of their curl: three reared high (the far one darker, leaning back and curling back; one off its shoulder
+/// and the lasher in front, both hooking over forward), two more groping along the water before and behind. It
+/// doesn't walk: the tentacles shift one way and
 /// the other with `p.step`, and sway slowly when it's still. It lashes with the front one, which rears up and hooks
 /// over forward at rest; swung, it follows the swing, its tip lagging behind, with a pale smear behind a fast lash.
 /// Signature: up from the deep. The lashing tentacle rears up out of the pool, straight up to the top of the canvas
@@ -39,43 +41,58 @@ private func drawWatcher(_ c: PixelCanvas, _ p: Pose) {
     let tent = C(0x2A3E2E), tentFar = C(0x18241C), sucker = C(0xB4C4A0), suckerFar = C(0x6E7E66)
     let water = C(0x101C26), ripple = C(0x3A5A6E), foam = C(0x9AB8C4), eye = C(0xE0F0A0)
     let sway: Double = p.step >= 0 ? (p.step == 0 ? 1 : -1) : sin(p.lt * 1.3)
-    // The pool, and two rings of ripples spreading out over it.
-    c.ellipse(27, 41, 22, 2, water)
-    for k in 0..<2 {
-        let f = frac(p.lt * 0.35 + Double(k) * 0.5)
-        ring(c, cx: 27.5, cy: 41.5, rx: 12 + f * 10, ry: 1 + f, ripple.alpha(1 - f))
+    // The pool, and three rings of ripples spreading out over it, a glint or two of light on the black water.
+    c.ellipse(27, 41, 25, 2, water)
+    for k in 0..<3 {
+        let f = frac(p.lt * 0.35 + Double(k) / 3)
+        ring(c, cx: 27.5, cy: 41.5, rx: 13 + f * 13, ry: 1 + f * 1.2, ripple.alpha(1 - f * 0.85))
     }
-    // The far tentacles: one reared up behind and hooking over forward, one groping off along the water behind.
-    drawTentacle(c, root: (14, 39), angle: -96 + 6 * sway, bend: 250, n: 15, r0: 1.5, col: tentFar, sucker: suckerFar)
-    drawTentacle(c, root: (14, 41), angle: 185, bend: 50 + 15 * sway, n: 5, r0: 1.1, col: tentFar, sucker: nil)
+    for (k, x) in [6, 11, 46, 50].enumerated() where noise(Int(p.t * 3) + k * 7) > 0.45 { c.px(x, 41, foam.alpha(0.5)) }
+    // The far tentacles: one reared high behind, leaning back and curling back at the tip, one groping off along the
+    // water behind.
+    drawTentacle(c, root: (18, 33), angle: -98 + 4 * sway, bend: -210, n: 17, r0: 1.7, col: tentFar, sucker: suckerFar)
+    drawTentacle(c, root: (13, 41), angle: 185, bend: 50 + 15 * sway, n: 5, r0: 1.1, col: tentFar, sucker: nil)
     c.oy += p.breathe
-    // The bulk, just breaking the surface: dark and lumpy, a paler sheen on its back.
-    c.ellipse(28, 37, 12, 7, hideDark)
-    c.ellipse(28, 36, 12, 7, hide)
-    c.ellipse(25, 31, 6, 2, hideLight)
-    for (x, y) in [(21, 35), (30, 32), (26, 37), (36, 34), (18, 38), (33, 30)] { c.px(x, y, hideDark) }
-    // The eye, just above the water under a heavy lid: a cold glint, a slit pupil.
+    // The bulk, risen half out of the water: a broad lumpy base at the surface and a great dark dome above it, a
+    // paler wet sheen down its back, warty knobs.
+    c.ellipse(28, 38, 13, 4, hideDark)
+    c.ellipse(28, 30, 9, 10, hideDark)
+    c.ellipse(28, 37, 12, 4, hide)
+    c.ellipse(27, 29, 9, 10, hide)
+    c.ellipse(24, 24, 4, 3, hideLight)
+    c.rect(20, 28, 2, 6, hideLight)
+    c.px(23, 21, hideLight)
+    for (x, y) in [(21, 35), (30, 34), (25, 31), (34, 36), (18, 38), (31, 22), (22, 26), (27, 36)] { c.px(x, y, hideDark) }
+    // The eye, high on the front of the dome under a heavy brow: a cold pale-green almond, a slit pupil, glinting.
     let glint: Double = 0.6 + 0.4 * sin(p.lt * 2.1)
-    c.glowLine(34.5, 38.5, 35.5, 38.5, core: eye, glow: C(0x9AE070), coreR: 0.4, glowR: 1.8, strength: 0.5 * glint)
-    c.rect(33, 38, 4, 1, eye)
-    c.px(35, 38, ink)
-    c.rect(32, 37, 6, 1, hideDark)
+    c.glowLine(32.5, 26.5, 35.5, 26.5, core: eye, glow: C(0x9AE070), coreR: 0.5, glowR: 2.6, strength: 0.55 * glint)
+    c.rect(32, 26, 4, 2, eye)
+    c.px(31, 27, eye)
+    c.px(36, 26, eye)
+    c.rect(34, 25, 1, 3, ink)
+    c.px(33, 26, white)
+    c.rect(30, 24, 7, 1, hideDark)
+    c.rect(31, 23, 4, 1, hideDark)
+    // The maw under it, a dark slash with a few pale teeth.
+    c.rect(30, 32, 6, 1, ink)
+    c.px(35, 31, ink)
+    for x in [31, 34] { c.px(x, 33, sucker) }
     c.oy -= p.breathe
     // The near side of the pool lapping round it, foam where it breaks.
-    c.ellipse(28, 42, 14, 1, water)
+    c.ellipse(28, 42, 15, 1, water)
     let tick = Int(p.t * 8)
-    for (k, x) in [16, 18, 38, 40].enumerated() where noise(tick + k * 5) > 0.3 { c.px(x, 41, foam.alpha(0.7)) }
+    for (k, x) in [15, 17, 20, 36, 39, 41].enumerated() where noise(tick + k * 5) > 0.3 { c.px(x, 41, foam.alpha(0.8)) }
     c.oy += p.breathe
-    // The near tentacles: one reared up and curling back, one groping forward along the water.
-    drawTentacle(c, root: (22, 34), angle: -86 - 5 * sway, bend: -260, n: 14, r0: 1.7, col: tent, sucker: sucker)
+    // The near tentacles: one reared high off its shoulder and hooking over forward, one groping forward along the water.
+    drawTentacle(c, root: (22, 29), angle: -90 - 4 * sway, bend: 210, n: 16, r0: 1.9, col: tent, sucker: sucker)
     drawTentacle(c, root: (37, 41), angle: -5, bend: 40 + 25 * sway, n: 4, r0: 1.1, col: tent, sucker: sucker)
-    // The lashing tentacle: hooked over at rest; swung, along the swing with the tip lagging.
+    // The lashing tentacle: reared and hooked over forward at rest; swung, along the swing with the tip lagging.
     guard let a = p.melee else {
         if let s = p.signature, s > 0, s < 1 {
             drawWatcherGrab(c, p, s, sway: sway, tent: tent, sucker: sucker, foam: foam, ripple: ripple)
             return
         }
-        drawTentacle(c, root: watcherRoot, angle: -78 + 4 * sway, bend: 230, n: 13, r0: 1.8, col: tent, sucker: sucker)
+        drawTentacle(c, root: watcherRoot, angle: -80 + 4 * sway, bend: 230, n: 15, r0: 1.8, col: tent, sucker: sucker)
         return
     }
     func reach(_ a: Double) -> Double { min(70, max(-120, wrapped(a))) }
@@ -111,7 +128,7 @@ private func drawTentacle(_ c: PixelCanvas, root: (x: Double, y: Double), angle:
 /// and curling back up into the hook (0.8…).
 private func watcherGrab(_ s: Double, sway: Double) -> (angle: Double, bend: Double, n: Double) {
     typealias Shape = (angle: Double, bend: Double, n: Double)
-    let rest: Shape = (-78 + 4 * sway, 230, 13), high: Shape = (-95, -30, 17), down: Shape = (8, 25, 15)
+    let rest: Shape = (-80 + 4 * sway, 230, 15), high: Shape = (-95, -30, 17), down: Shape = (8, 25, 15)
     func mix(_ a: Shape, _ b: Shape, _ k: Double) -> Shape {
         (a.angle + (b.angle - a.angle) * k, a.bend + (b.bend - a.bend) * k, a.n + (b.n - a.n) * k)
     }
@@ -411,29 +428,34 @@ private func drawBarrowWight(_ c: PixelCanvas, _ p: Pose) {
 }
 
 /// Where the Barrow-wight's hand is `s` through its signature, and which way it faces: dropping from the wrist to the
-/// floor, crawling out, drumming its fingers, crawling back and leaping up onto the wrist again. Drawn as a little
-/// bony hand on its fingertips, a gold ring on one finger, its fingers stepping as it goes.
+/// floor, crawling out, drumming its fingers, crawling back and leaping up onto the wrist again. Drawn as a big,
+/// pale bony hand on its fingertips, a glinting gold ring on one finger, its fingers stepping and its knuckles bobbing
+/// as it goes.
 private func drawCrawlingHand(_ c: PixelCanvas, _ s: Double, bone: Px, gold: Px) {
-    let floorY = 41.0
+    let floorY = 38.0
     var x = 40.0, y = floorY, back = false, gait = 0
     if s < 0.1 {
         let u = s / 0.1
         x = 40 + 2 * u; y = 33 + (floorY - 33) * u * u
     } else if s < 0.45 {
         let u = (s - 0.1) / 0.35
-        x = 42 + 16 * u; gait = Int(u * 14) % 2
+        x = 42 + 16 * u; gait = Int(u * 16) % 2
     } else if s < 0.55 {
         x = 58; gait = Int((s - 0.45) * 60) % 2
     } else if s < 0.85 {
         let u = (s - 0.55) / 0.3
-        x = 58 - 16 * u; back = true; gait = Int(u * 12) % 2
+        x = 58 - 16 * u; back = true; gait = Int(u * 14) % 2
     } else {
         let u = min(1, (s - 0.85) / 0.1)
         x = 42 - 2 * u; y = floorY - 10 * u * (1 - u) * 1.2 + (33 - floorY) * u * u; back = true
     }
-    let rows: [String] = gait == 0 ? [".BBBg..", "BBBBBBB", "B..B..B"] : [".BBBg..", "BBBBBBB", ".B..B.."]
+    let rows: [String] = gait == 0
+        ? ["...PPPPP...", "wPPPPPPPPP.", "wDDDPPDPPDP", ".F..F.GG.F.", "F...F..g..F", "F..F...F..F"]
+        : ["....PPPPP..", "wPPPPPPPPP.", "wDDDPPDPPDP", "..F..F.GG.F", "..F..F.g.F.", ".F...F..F.."]
     let ix = Int(x.rounded(.down)), iy = Int(y.rounded(.down))
-    c.pattern(ix, iy, back ? rows.map { String($0.reversed()) } : rows, ["B": bone, "g": gold])
+    let pale = C(0xF6FAFF), shade = C(0x8C9CB8), ring = Int(s * 40) % 5 == 0 ? C(0xFFF4C0) : C(0xF4D47A)
+    c.pattern(ix, iy, back ? rows.map { String($0.reversed()) } : rows,
+              ["P": pale, "D": shade, "F": C(0xC4D2E6), "w": C(0xC8DCF0, 0.6), "g": gold, "G": ring])
 }
 
 // MARK: - Wargh-rider

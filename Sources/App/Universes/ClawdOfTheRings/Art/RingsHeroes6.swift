@@ -192,15 +192,17 @@ private func drawRadagastStaff(_ c: PixelCanvas, up: Int) {
 /// flower on the breastplate, gold-edged pauldrons and white greaves, a cream cape. His long straight sword has a gold
 /// hilt and a faint glow on the blade; at rest he holds it low, point forward; swung, it smears behind a fast stroke.
 /// Signature: his radiant form, as at the Ford: a golden light wells up round him (…0.3), he lifts his sword upright,
-/// shining, and the light washes over him, pulsing, sparks of gold rising through it, then ebbs away (0.75…).
+/// shining, and the light washes over him, pulsing; round him an uneven aura, brightest hard against him, thrown out in
+/// slowly turning rays of uneven, flickering length and fraying into scattered twinkling motes (no edge to it); sparks
+/// of gold rise through it, then it all ebbs away (0.75…).
 private func drawGlorfindel(_ c: PixelCanvas, _ p: Pose) {
     guard let s = p.signature else { drawGlorfindelBody(c, p, shine: 0); return }
     let k: Double = s < 0.3 ? smooth(s / 0.3) : s < 0.75 ? 1 : 1 - smooth((s - 0.75) / 0.25)
     guard k > 0.01 else { drawGlorfindelBody(c, p, shine: 0); return }
     let pulse: Double = 0.85 + 0.15 * sin(s * 3.0 * 2 * .pi * 1.5)
-    c.glowLine(28, 30, 28, 30, core: C(0xFFF4C8, 0.55), glow: C(0xFFD048), coreR: 4 + 7 * k, glowR: 9 + 15 * k,
-               strength: 0.75 * k * pulse)
+    drawRadiance(c, p, k: k * pulse, s: s, shine: k)
     layer(c, tint: C(0xFFF0B8), amount: 0.5 * k * pulse) { drawGlorfindelBody($0, p, shine: k) }
+    drawRadiantMotes(c, k: k, s: s)
     // Sparks of gold rising through the light.
     for i in 0..<10 {
         let f = frac(s * 2.4 + Double(i) * 0.317)
@@ -208,6 +210,76 @@ private func drawGlorfindel(_ c: PixelCanvas, _ p: Pose) {
         let a: Double = k * (1 - f)
         c.px(x, y, C(0xFFF2B0, a))
         if f < 0.4 { c.px(x, y + 1, C(0xE8B830, a * 0.6)) }
+    }
+}
+
+/// Where Glorfind's radiance centres (the rays turn about it), and roughly how far his body reaches from there across
+/// and up and down (where the motes drift).
+private let radiantCentre = (x: 27.5, y: 31.0), radiantBody = (x: 15.0, y: 12.5)
+
+/// Glorfind's aura at strength `k`, `s` through the signature, behind him (drawn as he is at `shine`): measured from
+/// his own outline, sword and all, so it hugs him instead of making a disc: a cream-white light hard against him,
+/// stepping down through gold within a few pixels, and rays of uneven length thrown out round him, turning slowly and
+/// flickering longer and shorter, their tips fading out.
+private func drawRadiance(_ c: PixelCanvas, _ p: Pose, k: Double, s: Double, shine: Double) {
+    let him = PixelCanvas(c.w, c.h)
+    him.ox = c.ox; him.oy = c.oy; him.baseY = c.baseY
+    drawGlorfindelBody(him, p, shine: shine)
+    // How far every pixel is from him: a two-pass chamfer distance over the canvas.
+    let w = c.w, h = c.h
+    var d = (0..<(w * h)).map { him.buf[$0 * 4 + 3] > 60 ? 0.0 : 999.0 }
+    let steps: [(dx: Int, dy: Int, cost: Double)] = [(-1, 0, 1), (0, -1, 1), (-1, -1, 1.41), (1, -1, 1.41)]
+    for y in 0..<h {
+        for x in 0..<w {
+            for st in steps where x + st.dx >= 0 && x + st.dx < w && y + st.dy >= 0 {
+                d[y * w + x] = min(d[y * w + x], d[(y + st.dy) * w + x + st.dx] + st.cost)
+            }
+        }
+    }
+    for y in stride(from: h - 1, through: 0, by: -1) {
+        for x in stride(from: w - 1, through: 0, by: -1) {
+            for st in steps where x - st.dx >= 0 && x - st.dx < w && y - st.dy < h {
+                d[y * w + x] = min(d[y * w + x], d[(y - st.dy) * w + x - st.dx] + st.cost)
+            }
+        }
+    }
+    let (ox, oy, by) = (c.ox, c.oy, c.baseY)
+    c.ox = 0; c.oy = 0; c.baseY = 0
+    defer { c.ox = ox; c.oy = oy; c.baseY = by }
+    let cx = radiantCentre.x + Double(ox), cy = radiantCentre.y + Double(oy + by)
+    let rays = 11, tick = Int(s * 40)
+    let reach: [Double] = (0..<rays).map { i in (7 + 16 * noise(i * 31 + (tick / 3) * 7) * (i % 3 == 0 ? 1 : 0.6)) * k }
+    for y in 0...min(h - 1, 43 + by) {
+        for x in 0..<w {
+            let out = d[y * w + x]
+            guard out > 0, out < 30 else { continue }
+            let turn = atan2(Double(y) + 0.5 - cy, Double(x) + 0.5 - cx) / (2 * .pi) + 0.5
+            let pos = (turn + s * 0.15) * Double(rays)
+            let i = ((Int(pos.rounded(.down)) % rays) + rays) % rays, f = pos - pos.rounded(.down)
+            let ray: Double = max(0, 1 - abs(f - 0.5) * 4)
+            let along: Double = reach[i] > 0 ? max(0, 1 - out / reach[i]) : 0
+            let v: Double = k * (exp(-(out - 1) / 1.3) + 1.1 * ray * pow(along, 0.9))
+            guard v > 0.14 else { continue }
+            let (col, a): (UInt32, Double) = v > 0.7 ? (0xFFF6D6, 0.9) : v > 0.42 ? (0xFFE48A, 0.75) : v > 0.25 ? (0xFFD860, 0.55)
+                : (0xFFD048, 0.35)
+            c.px(x, y, C(col, a))
+        }
+    }
+}
+
+/// Motes of light twinkling all round Glorfind in his radiance, drifting slowly round him, each flaring in its own time
+/// (the brightest into a little cross of light), thickest close in and thinning out.
+private func drawRadiantMotes(_ c: PixelCanvas, k: Double, s: Double) {
+    for i in 0..<18 {
+        let out = 1 + 13 * noise(i * 13 + 5) * noise(i * 7 + 2), turn = noise(i * 29 + 1) * 2 * .pi
+        let a0 = turn + s * (i % 2 == 0 ? 0.9 : -0.7)
+        let x = radiantCentre.x + cos(a0) * (radiantBody.x * 0.9 + out), y = radiantCentre.y + sin(a0) * (radiantBody.y * 0.9 + out)
+        let tw = sin(s * 26 + Double(i) * 1.7)
+        guard tw > 0, y < 44 else { continue }
+        let a: Double = k * (0.65 + 0.35 * tw) * (1 - out / 24), mx = Int(x.rounded(.down)), my = Int(y.rounded(.down))
+        c.px(mx, my, C(0xFFF6D6, a))
+        guard tw > 0.75, out < 9 else { continue }
+        for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] { c.px(mx + dx, my + dy, C(0xFFD860, a * 0.7)) }
     }
 }
 
