@@ -337,6 +337,37 @@ func drawMagic(_ c: PixelCanvas, _ m: Magic, from a: (Double, Double), to b: (Do
         }
         return
     }
+    if m.waves {
+        // Sound and force: arcs pulsing out towards the target, wider as they go.
+        let ang0: Double = atan2(dy, dx)
+        for k in 0..<5 {
+            let f: Double = frac(t * 1.3 + Double(k) / 5)
+            let cx: Double = a.0 + dx * f, cy: Double = a.1 + dy * f, r: Double = 1.5 + f * 4
+            let fade: Double = 1 - f * 0.5
+            for s in -5...5 {
+                let ang: Double = ang0 + Double(s) / 5 * 1.1
+                let x = Int((cx + cos(ang) * r).rounded()), y = Int((cy + sin(ang) * r).rounded())
+                c.px(x, y, (abs(s) < 3 ? m.core : m.glow).alpha(fade))
+            }
+        }
+        return
+    }
+    if m.spell {
+        // Sorcery: a ribbon of sparkles winding along the path, each one twinkling.
+        c.glowLine(a.0, a.1, b.0, b.1, core: m.core.alpha(0.25), glow: m.glow.alpha(0.25), coreR: 0.3, glowR: 1.2)
+        for k in 0..<9 {
+            let f: Double = frac(t * 0.7 + Double(k) / 9)
+            let wob: Double = sin(f * 10 + t * 6 + Double(k)) * 2.2
+            let x: Double = a.0 + dx * f + nx * wob, y: Double = a.1 + dy * f + ny * wob
+            let tw: Double = 0.5 + 0.5 * sin(t * 18 + Double(k) * 2.3)
+            let ix = Int(x.rounded()), iy = Int(y.rounded())
+            c.px(ix, iy, m.core.alpha(0.6 + 0.4 * tw))
+            if tw > 0.45 {   // a little four-point star
+                for (ox, oy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] { c.px(ix + ox, iy + oy, m.glow.alpha(tw)) }
+            }
+        }
+        return
+    }
     if !m.jagged {
         let n = 8
         var prev = a

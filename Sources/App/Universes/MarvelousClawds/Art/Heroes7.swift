@@ -16,7 +16,7 @@ let heroes7: [MarvelHero: Persona] = [
     .emmaFrost: Persona(name: "Emma Frosty", weapon: .saber, armoured: true,
                   headTop: 18, signature: 3.2,
                   draw: drawEmmaFrost),
-    .banshee: Persona(name: "Bansheen", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xF0FFF0), glow: C(0x8AE08A), jagged: false),
+    .banshee: Persona(name: "Bansheen", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xF0FFF0), glow: C(0x8AE08A), jagged: false, waves: true),
                   pivot: (37, 35), headTop: 21, signature: 2.8,
                   draw: drawBanshee),
     .angel: Persona(name: "Angell", weapon: .saber, motion: .fly, pivot: angelShoulder, headTop: 15, signature: 3.0,

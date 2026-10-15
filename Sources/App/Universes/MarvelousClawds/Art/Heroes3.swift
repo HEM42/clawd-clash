@@ -12,7 +12,7 @@ let heroes3: [MarvelHero: Persona] = [
     .storm: Persona(name: "Stormy", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFFFFF), glow: C(0x8AC8FF)),
                   headTop: 18, signature: 3.2,
                   draw: drawStorm),
-    .jeanGrey: Persona(name: "Jeanne Grae", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFE0F4), glow: C(0xFF4AC8), jagged: false),
+    .jeanGrey: Persona(name: "Jeanne Grae", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFE0F4), glow: C(0xFF4AC8), jagged: false, rings: true),
                   headTop: 19, signature: 3.2,
                   draw: drawJeanGrey),
     .professorX: Persona(name: "Professor Why", motion: .hover, canSit: false, headTop: 22, signature: 3.2,

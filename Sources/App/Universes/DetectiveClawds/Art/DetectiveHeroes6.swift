@@ -7,7 +7,7 @@ let dcHeroes6: [DCHero: Persona] = [
     .alanScott: Persona(name: "Alan Scotch", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xD8FFD0), glow: C(0x2ADB4A), jagged: false),
                   headTop: 22, signature: 3.0, callout: "Dark things can't stand the light!",
                   draw: drawAlanScott),
-    .doctorFate: Persona(name: "Doctor Fortune", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFF4C0), glow: C(0xFFC21E), jagged: false),
+    .doctorFate: Persona(name: "Doctor Fortune", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFF4C0), glow: C(0xFFC21E), jagged: false, spell: true),
                   headTop: 17, signature: 3.2, callout: "Order must win.",
                   draw: drawDoctorFate),
     .hourman: Persona(name: "Minuteman", weapon: .saber, headTop: 20, signature: 3.0, callout: "One minute. That's all I need.",

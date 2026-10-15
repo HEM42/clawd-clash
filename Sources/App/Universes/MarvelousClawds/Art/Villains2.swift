@@ -12,7 +12,7 @@ let villains2: [MarvelVillain: Persona] = [
                   draw: drawCarnage),
     .docOck: Persona(name: "Doctor Octoclawd", weapon: .saber, armoured: true, pivot: ockShoulder, headTop: 21, signature: 3,
                   draw: drawDocOck),
-    .mysterio: Persona(name: "Mysterioso", weapon: .lightning, magic: Magic(core: C(0xE0FFE8), glow: C(0x4AE08A), jagged: false),
+    .mysterio: Persona(name: "Mysterioso", weapon: .lightning, magic: Magic(core: C(0xE0FFE8), glow: C(0x4AE08A), jagged: false, rings: true),
                   headTop: 15, signature: 3.2,
                   draw: drawMysterio),
     .electro: Persona(name: "Elektro", weapon: .lightning, magic: Magic(core: C(0xFFFFE0), glow: C(0xFFE01E)),

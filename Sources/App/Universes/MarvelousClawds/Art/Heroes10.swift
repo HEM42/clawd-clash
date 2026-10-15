@@ -8,7 +8,7 @@ let heroes10: [MarvelHero: Persona] = [
                   draw: drawMobius),
     .sylvie: Persona(name: "Sylvi", weapon: .saber, headTop: 15, signature: 3.0,
                   draw: drawSylvie),
-    .kidLoki: Persona(name: "Kid Lokee", weapon: .lightning, magic: Magic(core: C(0xE0FFE8), glow: C(0x3AD06A), jagged: false),
+    .kidLoki: Persona(name: "Kid Lokee", weapon: .lightning, magic: Magic(core: C(0xE0FFE8), glow: C(0x3AD06A), jagged: false, spell: true),
                   pivot: (37.5, 36.5), headTop: 19, signature: 3.0,
                   draw: drawKidLoki),
     .alligatorLoki: Persona(name: "Alligator Lokee", weapon: .saber, canSit: false, bulk: 4, headTop: 22, signature: 2.8,

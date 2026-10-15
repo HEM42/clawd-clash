@@ -4,14 +4,14 @@ import Foundation
 // but she keeps Clawd's block of a body and its four legs).
 
 let heroes6: [MarvelHero: Persona] = [
-    .wong: Persona(name: "Wonk", weapon: .lightning, magic: Magic(core: C(0xFFE8B0), glow: C(0xFF8A1E), jagged: false),
+    .wong: Persona(name: "Wonk", weapon: .lightning, magic: Magic(core: C(0xFFE8B0), glow: C(0xFF8A1E), jagged: false, spell: true),
                   headTop: 22, signature: 3.2,
                   draw: drawWong),
     .hercules: Persona(name: "Herakles", weapon: .saber, bulk: 1, headTop: 18, signature: 2.8,
                   draw: drawHercules),
     .sentry: Persona(name: "Sentree", weapon: .saber, motion: .fly, headTop: 20, signature: 3.2,
                   draw: drawSentry),
-    .cosmo: Persona(name: "Kosmo the Space Dog", weapon: .lightning, magic: Magic(core: C(0xF0E8FF), glow: C(0xA08AFF), jagged: false),
+    .cosmo: Persona(name: "Kosmo the Space Dog", weapon: .lightning, magic: Magic(core: C(0xF0E8FF), glow: C(0xA08AFF), jagged: false, rings: true),
                   pivot: (44.5, 21.5), bulk: 3, headTop: 15, signature: 2.8,
                   draw: drawCosmo),
     .kraglin: Persona(name: "Kraglen", weapon: .blaster, shot: .energy(core: C(0xFFE0E0), glow: C(0xFF4A2A)),

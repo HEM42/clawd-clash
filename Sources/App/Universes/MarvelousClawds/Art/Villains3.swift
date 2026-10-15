@@ -25,7 +25,7 @@ let villains3: [MarvelVillain: Persona] = [
     .finFangFoom: Persona(name: "Fin Fang Fume", weapon: .blaster, shot: .fire, canSit: false, muzzle: (63, 11), handGun: false,
                   headTop: 1, signature: 2.8,
                   draw: drawFinFangFoom),
-    .modok: Persona(name: "MOODOK", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFF6C0), glow: C(0xFFB01E), jagged: false), canSit: false,
+    .modok: Persona(name: "MOODOK", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFF6C0), glow: C(0xFFB01E), jagged: false, rings: true), canSit: false,
                   pivot: (modokEmitter.x, modokEmitter.y + 2), headTop: 3, signature: 2.8,
                   draw: drawModok),
     .dormammu: Persona(name: "Dormamoo", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFE8B0), glow: C(0xFF6A1E), jagged: false), canSit: false,

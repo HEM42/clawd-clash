@@ -36,7 +36,9 @@ struct Magic {
     var core: Px
     var glow: Px
     var jagged = true                 // forked like lightning; false: a steady, wavering ray
-    var rings = false                 // mind control: rings rippling out along a faint ray (with jagged false)
+    var rings = false                 // mind powers: rings rippling out along a faint ray (with jagged false)
+    var waves = false                 // sound and force: arcs pulsing out towards the target (with jagged false)
+    var spell = false                 // sorcery: a twinkling ribbon of sparkles (with jagged false)
     static let lightning = Magic(core: C(0xF4F8FF), glow: C(0x7FB2FF))
 }
 

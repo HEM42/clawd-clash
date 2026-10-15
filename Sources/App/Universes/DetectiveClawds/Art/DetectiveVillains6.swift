@@ -19,7 +19,7 @@ let dcVillains6: [DCVillain: Persona] = [
     .mirrorMaster: Persona(name: "Looking-Glass Master", weapon: .blaster, shot: .energy(core: C(0xF0FFFF), glow: C(0x6AE8E8)),
                   muzzle: (51, 33), headTop: 20, signature: 3.4, callout: "Look in the glass, Flare.",
                   draw: drawMirrorMaster),
-    .gorillaGrodd: Persona(name: "Gorilla Grudd", weapon: .lightning, magic: Magic(core: C(0xFFF0FF), glow: C(0xD86AE8), jagged: false),
+    .gorillaGrodd: Persona(name: "Gorilla Grudd", weapon: .lightning, magic: Magic(core: C(0xFFF0FF), glow: C(0xD86AE8), jagged: false, rings: true),
                   pivot: (40.5, 26.5), bulk: 5, headTop: 15, signature: 3.0, callout: "Bow before Grudd!",
                   draw: drawGorillaGrodd),
     .weatherWizard: Persona(name: "Weather Warlock", weapon: .lightning, magic: Magic(core: C(0xF4F8FF), glow: C(0x7FB2FF)),

@@ -8,7 +8,7 @@ let villains9: [MarvelVillain: Persona] = [
                   draw: drawMissMinutes),
     .callisto: Persona(name: "Kallisto", weapon: .saber, headTop: 17, signature: 3.0,
                   draw: drawCallisto),
-    .exodus: Persona(name: "Exodos", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFE0F0), glow: C(0xE84A9A), jagged: false),
+    .exodus: Persona(name: "Exodos", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFE0F0), glow: C(0xE84A9A), jagged: false, rings: true),
                   headTop: 16, signature: 3.0,
                   draw: drawExodus),
     .soulEater: Persona(name: "Soul Muncher", weapon: .saber, motion: .fly, canSit: false, headTop: 15, signature: 3.2,

@@ -31,7 +31,7 @@ let dcVillains3: [DCVillain: Persona] = [
     .toyman: Persona(name: "Toymaker", weapon: .blaster, shot: .thrown(C(0xE8C83A)), muzzle: (44, 32), handGun: false,
                   headTop: 20, signature: 3.4, callout: "Let's play!",
                   draw: drawToyman),
-    .mrMxyzptlk: Persona(name: "Mr. Mxyzptklz", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFF0F8), glow: C(0xFF6AD8), jagged: false),
+    .mrMxyzptlk: Persona(name: "Mr. Mxyzptklz", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFF0F8), glow: C(0xFF6AD8), jagged: false, spell: true),
                   headTop: 15, signature: 3.6, callout: "Hey there, Superby!",
                   draw: drawMxyzptlk),
     .livewire: Persona(name: "Live Current", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xF4F8FF), glow: C(0x4AB8FF)),

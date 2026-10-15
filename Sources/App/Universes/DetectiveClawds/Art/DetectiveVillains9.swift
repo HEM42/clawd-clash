@@ -13,7 +13,7 @@ let dcVillains9: [DCVillain: Persona] = [
     .amandaWaller: Persona(name: "Amanda Wall", weapon: .none, headTop: 21, signature: 3.2,
                   callout: "Don't make me press the button.",
                   draw: drawAmandaWaller),
-    .enchantress: Persona(name: "Sorceress", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xF0FFE0), glow: C(0x6AE83A)),
+    .enchantress: Persona(name: "Sorceress", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xF0FFE0), glow: C(0x6AE83A), jagged: false, spell: true),
                   headTop: 19, signature: 3.0,
                   draw: drawEnchantress),
     .copperhead: Persona(name: "Cottonmouth", weapon: .saber, headTop: 18, signature: 2.8,

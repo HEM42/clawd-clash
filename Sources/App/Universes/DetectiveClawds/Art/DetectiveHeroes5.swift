@@ -13,7 +13,7 @@ let dcHeroes5: [DCHero: Persona] = [
                   draw: drawImpulse),
     .jesseQuick: Persona(name: "Jessie Quik", weapon: .saber, headTop: 20, signature: 3.2, callout: "4Y1(8XZ)3B!",
                   draw: drawJesseQuick),
-    .raven: Persona(name: "Corvina", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xF0D8FF), glow: C(0x7A2AD8), jagged: false),
+    .raven: Persona(name: "Corvina", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xF0D8FF), glow: C(0x7A2AD8), jagged: false, spell: true),
                   headTop: 19, signature: 3.4, callout: "Azor Metra Zinth!",
                   draw: drawRaven),
     .beastBoy: Persona(name: "Feral Boy", weapon: .saber, headTop: 20, signature: 3.4, callout: "Dude.",

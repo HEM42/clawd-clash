@@ -20,7 +20,7 @@ let villains5: [MarvelVillain: Persona] = [
     .highEvolutionary: Persona(name: "High Evolutionist", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xF0E8FF), glow: C(0xC88AFF), jagged: false),
                   headTop: 16, signature: 2.8,
                   draw: drawHighEvolutionary),
-    .morganLeFay: Persona(name: "Morgana", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xE0FFE8), glow: C(0x3AD06A), jagged: false),
+    .morganLeFay: Persona(name: "Morgana", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xE0FFE8), glow: C(0x3AD06A), jagged: false, spell: true),
                   headTop: 18, signature: 3.2,
                   draw: drawMorganLeFay),
     .scorpion: Persona(name: "The Scorpyon", weapon: .saber, armoured: true, pivot: scorpionTail, headTop: 14, signature: 3.0,

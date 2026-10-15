@@ -18,7 +18,7 @@ let dcHeroes10: [DCHero: Persona] = [
     .polkaDotMan: Persona(name: "Spotty Man", weapon: .blaster, shot: .energy(core: C(0xFFE0F0), glow: C(0xFF4AA8)),
                   muzzle: (42, 33), handGun: false, headTop: 19, signature: 3.2,
                   draw: drawPolkaDotMan),
-    .saturnGirl: Persona(name: "Saturn Lass", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFE0F0), glow: C(0xFF6AB8), jagged: false),
+    .saturnGirl: Persona(name: "Saturn Lass", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFE0F0), glow: C(0xFF6AB8), jagged: false, rings: true),
                   headTop: 17, signature: 3.0, callout: "Long live the Legion!",
                   draw: drawSaturnGirl),
     .cosmicBoy: Persona(name: "Cosmos Boy", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xF0E0FF), glow: C(0xB86AFF), jagged: false),

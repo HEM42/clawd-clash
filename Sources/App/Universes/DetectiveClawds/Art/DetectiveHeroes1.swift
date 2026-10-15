@@ -28,7 +28,7 @@ let dcHeroes1: [DCHero: Persona] = [
     .greenArrow: Persona(name: "Emerald Archer", weapon: .blaster, shot: .arrow, muzzle: (46, 34), handGun: false, headTop: 19,
                   signature: 3.0, callout: "You've let this city down!",
                   draw: drawGreenArrow),
-    .blackCanary: Persona(name: "Black Finch", weapon: .lightning, magic: Magic(core: C(0xF4F8FF), glow: C(0x9AD8FF), jagged: false),
+    .blackCanary: Persona(name: "Black Finch", weapon: .lightning, magic: Magic(core: C(0xF4F8FF), glow: C(0x9AD8FF), jagged: false, waves: true),
                   pivot: canaryMouth, headTop: 21, signature: 2.8,
                   draw: drawBlackCanary),
     .shazam: Persona(name: "Captain Thunderbolt", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFF8D0), glow: C(0xFFD21E)),

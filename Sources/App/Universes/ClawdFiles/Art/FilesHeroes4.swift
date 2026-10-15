@@ -11,7 +11,7 @@ let filesHeroes4: [FilesHero: Persona] = [
                      headTop: 20, signature: 2.8, callout: "I answer to the United Nations.",
                      draw: drawMarita),
     .gibsonPrays: Persona(name: "Gibson Prays", weapon: .lightning,
-                          magic: Magic(core: C(0xF0E8FF), glow: C(0x9A7AFF), jagged: false),
+                          magic: Magic(core: C(0xF0E8FF), glow: C(0x9A7AFF), jagged: false, rings: true),
                           pivot: (35.5, 31.5), headTop: 25, signature: 3.2, callout: "I know what you're thinking.",
                           draw: drawGibsonPrays),
     .samantha: Persona(name: "Samantha Clawder", weapon: .none, headTop: 24, signature: 3.6, callout: "Fox? Is that you?",

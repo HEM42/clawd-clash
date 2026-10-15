@@ -9,7 +9,7 @@ let filesVillains4: [FilesVillain: Persona] = [
     .flukeman: Persona(name: "The Flukeman", weapon: .saber, canSit: false, headTop: 12, signature: 3.6, callout: "Glrrbl.",
                        draw: drawFlukeman),
     .pusher: Persona(name: "The Pusher", weapon: .lightning,
-                     magic: Magic(core: C(0xF4E8FF), glow: C(0x9A5AE8), jagged: false),
+                     magic: Magic(core: C(0xF4E8FF), glow: C(0x9A5AE8), jagged: false, rings: true),
                      pivot: (45.0, 31.0), headTop: 21, signature: 3.2, callout: "You will step aside.",
                      draw: drawPusher),
     .jerseyDevil: Persona(name: "The Jersey Devil", weapon: .saber, canSit: false, headTop: 17, signature: 2.6, callout: "Grrraah!",
