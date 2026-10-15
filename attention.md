@@ -31,6 +31,11 @@ The helpers flagged these; some I fixed in the polish pass (marked there), the r
 - **Gizmoe's flaming arrow** burns while nocked, but flies as a plain arrow (a flaming one needs a new shared shot style). The Electric Gremlin's signature empties his sprite for a moment while he zips along the phone line.
 - **Places:** Amity's flags are a simplified US flag; Grandpa Dread's coffin has a small cross; Mr. Wing's shop has no lettering; the Temple of Doom's lava is a thin seam (a broad orange band clashed with Clawd's orange).
 
+## Docs
+
+- **README totals were stale:** "481 characters, 108 places" dated from when Detective Clawds was added. I recounted every universe: 778 characters plus HEM (779) and 171 places. Worth a glance.
+- **The trailer cell in the README's video table** is not there yet for Stevie Clawdberg: it needs the 720p video uploaded to GitHub by hand first (see below).
+
 ## Public steps I did not take
 
 - Pushing the `stevie_clawdberg` branch.
