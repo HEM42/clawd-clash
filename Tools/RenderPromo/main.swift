@@ -18,7 +18,7 @@ import CoreText
 //   build/renderpromo audio promo                → the soundtrack alone, as a .wav
 //   build/renderpromo frame promo 9.5            → a single frame at 9.5 s
 //   REEL=full build/renderpromo check            → renders every frame once (prints how far it got)
-//   REEL=full build/renderpromo 720p promo       → promo/720p/Clawd-Clash.mp4: the copy under 10 MB for GitHub
+//   REEL=full build/renderpromo 720p promo       → promo/720p/Clawd-Clash-Full.mp4: the copy under 10 MB for GitHub
 // See promo-video-idea.md for the whole routine (reels, where each upload goes, building beside another session).
 
 let W = 1920, H = 1080, fps = 30.0
@@ -3841,7 +3841,7 @@ case "check":                                                   // render every 
     }
     print("all \(Int(duration * fps)) frames render")
 case "720p":                                                    // the GitHub-sized copy of a reel already rendered
-    let small = ["promo": "Trailer", "bloopers": "Bloopers", "full": "Clawd-Clash", "starclawds": "Star-Clawds",
+    let small = ["promo": "Clawd-Clash", "bloopers": "Bloopers", "full": "Clawd-Clash-Full", "starclawds": "Star-Clawds",
                  "marvelous": "Marvelous-Clawds", "detective": "Detective-Clawds", "doctor": "Doctor-Clawd"][reel] ?? "Trailer"
     write720p(from: "\(out)/\(base).mp4", to: "\(out)/720p/\(small).mp4")
 case "audio":
