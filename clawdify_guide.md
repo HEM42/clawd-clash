@@ -71,7 +71,7 @@ Give the user a short overview to decide on. Include:
 **3. Name options.** Give two to four, with your recommendation. The style is a light pun that works "Clawd" in: Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd, The Clawd Files, Stevie Clawdberg. The user picks.
 
 **4. Code naming.** The code never uses the franchise's trademark:
-- `case <key> = <next free raw value>` in `Universe`.
+- `case <key> = <next free raw value>` in `Universe`. Raw values start at 0 (Star Clawds), so the sixth universe is 5; its ids are `rawValue * 1000` and up.
 - The key string, a folder `Sources/App/Universes/<FolderName>/`, and a file prefix that is unique across the repo (Swift needs unique file names).
 - The git branch name.
 
@@ -115,7 +115,7 @@ Heroes and villains each get a table:
 
 - **Look:** what makes them recognisable as pixels: hair, outfit, colour, prop.
 - **Weapon:** mapped onto the engine (below).
-- **Signature:** a recognisable idle move or catchphrase. Use "—" when there isn't a clear one; don't invent one.
+- **Signature:** a recognisable idle move or catchphrase. Write "none" when there isn't a clear one; don't invent one.
 
 ### Signature moves and callouts
 
@@ -126,7 +126,7 @@ A character's signature move is the little routine it plays now and then while i
 - **Keep it short and loopable:** 2–4 seconds (`Persona.signature`, in seconds). The drawing function gets `p.signature` running 0…1 through it, and has to start and end in the character's normal pose.
 - **Keep it fun at desktop scale.** A horror character's move should be eerie rather than gruesome: Tooms stretches into a vent, Leonard Betts sheds his head cartoonishly.
 - **Callouts** (`Persona.callout`) are what the character says now and then while leading a session. Use a catchphrase, short enough for a speech bubble: "Hmm!", "Jelly baby?", "Allons-y!", "I want to believe". Puns on the catchphrase are fine; long quotes aren't.
-- **Not everyone needs one.** "—" is better than a made-up move nobody would recognise. The leads, though, should all have one.
+- **Not everyone needs one.** "none" is better than a made-up move nobody would recognise. The leads, though, should all have one.
 
 ### Get the weapons right
 
@@ -183,7 +183,7 @@ Show the list and the homes, and wait for approval.
 
 Propose whichever of these fit:
 1. **The ride.** Who gets picked up or dropped off, and by what: the Millennial Falcon, the Clawdjet, the TARDIS that materialises, the FBI sedan, a saucer's abduction beam. Drawn in `Sources/App/Rides.swift`, chosen in the theme's `ride:` closure.
-2. **A compaction mechanic** (optional). When a Claude Code or pi session compacts its context, something in-universe happens to its leader. Doctor Clawd regenerates into the next Doctor; The Clawd Files abducts the agent and drops them back with "MISSING TIME". It reuses the `PreCompact` path (`StatusStore`, `Universe.regenerations`, `DoctorRegeneration.swift`). Limit it to a clear group of characters.
+2. **A compaction mechanic** (optional). When a Claude Code or pi session compacts its context, something in-universe happens to its leader. Doctor Clawd regenerates into the next Doctor; The Clawd Files abducts the agent and drops them back with "MISSING TIME". It reuses the `PreCompact` path (`StatusStore`, `Universe.regenerations`, `DoctorRegeneration.swift`). Limit it to a clear group of characters. A new mechanic can reuse an existing clock: Stevie Clawdberg's 88 mph lists its time travellers in `Universe.abductees` and draws its own effect (`OutaTime`) where the overlay draws The Clawd Files' abduction.
 3. **Habits** (`Sources/App/Habits.swift`, Overlay's tick): idle behaviour unique to a character, like the Weeping Angle only moving while nobody looks.
 4. **Bespoke practice drills** (`Sources/App/Drills.swift`): what characters do when working alone (Dalicks "Elevate!", Doctor Four's jelly babies). Also decide whether this universe's casters **float cross-legged in meditation** (`Drills.swift`, the guard near line 54). Doctor Clawd and The Clawd Files don't.
 
@@ -204,7 +204,7 @@ Show a table with #, name, what happens, and who or where makes it come up more 
 
 ## Step 6: Write the plan
 
-Once all four gates are passed, write the whole plan to `~/.claude/plans/<slug>.md`, or to a private repo if the user asks. Use `~/.claude/plans/clawd-files.md` as the template. Its sections are:
+Once all four gates are passed, write the whole plan to `~/.claude/plans/<slug>.md`, or to a private repo if the user asks. Use the latest universe's plan in `~/.claude/plans/` as the template if there is one (for example `stevie-clawdberg.md`); otherwise follow these sections:
 
 1. **Context:** the name, code naming, raw value, size, naming style, tone.
 2. **How a universe plugs in:** the file list and wiring checklist below, re-checked against the code as it is today with line numbers. The code moves, so don't trust this guide's line numbers blindly.
@@ -274,6 +274,9 @@ renders what's done.
 - **Split it by file** and run it in parallel, the way phases 2 and 3 were drawn: one helper per group of art files
   (`Art/<Prefix>Heroes…`, `Art/<Prefix>Villains…`) and per group of `Places/` files, each in its own worktree,
   editing only its own files. Rides, mechanics and transitions are in their own files, so they can be done alongside.
+- **Launching many helpers at once** can fail to create some of their worktrees (a race in git). Check every launch
+  result, and relaunch exactly the ones that failed: it's easy to relaunch the wrong brief and end up with two helpers
+  on one batch and none on another.
 - **Before and after.** Each helper renders every fixed character or place before and after, side by side, enlarged.
   Show those to the user: that's the polish pass's approval gate.
 - **Engine-wide issues** (a habit every universe shares, like callouts overlapping or steady rays wobbling) are
@@ -289,7 +292,7 @@ renders what's done.
   - `Location.<prefix>Home(of:)` for heroes and villains.
   - `Cast.hero(_:)` and `Cast.villain(_:)`, the nemeses, and `let <prefix>Theme = Theme(universe:villains:heroes:places:home:nemeses:ride:menuIcon:legend:)`.
   - The `static let` place keys, and `let <prefix>Places` merged from the Places files.
-- **`Art/<Prefix>Heroes1…N.swift` and `Art/<Prefix>Villains1…N.swift`:** 8–10 personas per file, each a `Persona(...)` entry plus its `private func draw…(_ c: PixelCanvas, _ p: Pose)`. Read the comment at the top of `Sources/App/Pose.swift` before drawing: it covers the 72×52 canvas facing right, `drawLegs`, `p.breathe`, melee angles, `armRaise`, `signature`. Every character is Clawd (the orange body) in costume. Keep a group's shared helpers private to its file.
+- **`Art/<Prefix>Heroes1…N.swift` and `Art/<Prefix>Villains1…N.swift`:** 8–10 personas per file, each a `Persona(...)` entry plus its `private func draw…(_ c: PixelCanvas, _ p: Pose)`. Read the comment at the top of `Sources/App/Pose.swift` before drawing: it covers the 72×52 canvas facing right, `drawLegs`, `p.breathe`, melee angles, `armRaise`, `signature`. Every character is Clawd (the orange body) in costume, always on Clawd's four legs. Draw the legs and shoes first, then `c.oy += p.breathe`, then the body; anything that hangs over the legs (coat tails, skirts, a robe's hem) goes after the breath, over the legs, and still leaves four distinct legs showing below. Keep a group's shared helpers private to its file; anything shared across a universe's art files goes in one `<Prefix>Kit.swift` with prefixed names (Preview compiles every universe together, so top-level names must be unique app-wide).
 - **`Places/<Prefix>Scenes1…N.swift`:** `let <prefix>ScenesN: [Location: Place]` entries, each `Place(name:panel:still:moving:)`, drawn in code. Scale landmarks up when `Scenes.isTall(c)`.
 - **`<Prefix>Icon.swift`:** the menu bar icon, 28×26, in colour and in mono (a template image).
 - **`<Prefix>Wipes.swift`:** the transitions (phase 5). Follow `DoctorClawd/DoctorWipes.swift`: an enum of kinds with `duration`, `needsOwner`, `isOwned(by:)` and `turf`, and a `…Trip` struct with `pick(after:cast:to:)` and `draw(_:old:new:k:in:)`.
@@ -338,14 +341,14 @@ Any exhaustive `switch` on `Universe` turns a missed spot into a compile error. 
 
 Do these freely (on the branch):
 - **README.md:**
-  - the universe count in the tagline and intro ("four" becomes "five");
+  - the tagline and intro say "many" or "several" universes, never a number, so they need no change;
   - the universe table's new column (set pieces, ride, mechanic);
   - the screen-saver paragraph about transitions;
   - a collapsible cast-and-places section;
   - the developer notes on where universes live.
 - **`llms.txt`:** the count, the universe list, the folder and file-prefix list, and any new mechanic.
 - **`Tools/RenderDocs`:** a `<prefix>Lineup` desktop strip, the roster and locations sheets, and a social preview. Output goes to `docs/`, named by the universe's title (`roster-the-clawd-files.png` …).
-- **`Tools/MakeIcon`:** the app icon shows every universe. Add a character from the new one.
+- **`Tools/MakeIcon`:** the app icon is one character standing on the logo, so a new universe needs no change there.
 - **`Tools/MakeSocial`**, and **`Tools/RenderShowcase`** for the universe's own showcase pictures.
 - Trailers never say how many universes there are (the end card reads "One of many universes in Clawd Clash"), so nothing needs updating when one is added. Don't add a count anywhere else either: the README and `llms.txt` say "many" or "several".
 - `CHANGELOG.md`.
@@ -374,7 +377,7 @@ Use `doctorShots` as the pattern. The trailer runs about 45–50 seconds:
 | `status` | ~4.2 s | `statusOf(...)`: four characters, one per state, with a funny aside. |
 | `agents` | 4 s | `agentsOf(...)`: "Every subagent gets to be a <hero word>." |
 | `window` | ~4.8 s | `windowShot(ctx, .<key>, …, at: .<defaultPlace>)`, with an in-universe pun ("It's bigger on the inside."). |
-| `ais` | ~4.4 s | `everyAI(...)`: six sessions. "Claude plays the <heroes>. Everyone else gets to be the <villains>." |
+| `ais` | ~4.4 s | `everyAI(...)`: the BRING YOUR OWN AI* line-up, one character per AI (Claude, Desktop, Codex, Copilot, Qwen, Gemini, pi), with the README footnote. |
 | `endcard` | ~4.2 s | The default place, the crew lined up, the title lands, "Have fun. Keep track.", "One of many universes in Clawd Clash · free for macOS", the app icon and the GitHub URL. |
 
 ### Wiring a new reel `REEL=<reel>`
