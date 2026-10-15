@@ -7,14 +7,14 @@ import Foundation
 
 let ringsVillains8: [LOTRVillain: Persona] = [
     .smaug: Persona(name: "Smaug the Stashed", weapon: .blaster, shot: .fire, armoured: true, canSit: false,
-                    muzzle: smaugJaws, handGun: false, bulk: 12, headTop: 10,
+                    muzzle: smaugJaws, handGun: false, bulk: 12, headTop: 10, signature: 3.4,
                     callout: "Thief! Who dared git stash pop my hoard?", draw: drawSmaug),
-    .azog: Persona(name: "Azog the Profiler", weapon: .saber, pivot: azogHand, bulk: 2, headTop: 19,
+    .azog: Persona(name: "Azog the Profiler", weapon: .saber, pivot: azogHand, bulk: 2, headTop: 19, signature: 2.8,
                    callout: "Profiled you, dwarf: the call stack of Durin ends here.", draw: drawAzog),
-    .goblinKing: Persona(name: "The Go-blin King", weapon: .saber, canSit: false, pivot: kingHand, bulk: 6, headTop: 17,
+    .goblinKing: Persona(name: "The Go-blin King", weapon: .saber, canSit: false, pivot: kingHand, bulk: 6, headTop: 17, signature: 3.0,
                          callout: "if err != nil { eat the dwarves }", draw: drawGoblinKing),
     .mirkwoodSpider: Persona(name: "The Mirkwood Web Crawler", weapon: .blaster, shot: .web, canSit: false,
-                             muzzle: spiderJaws, handGun: false, bulk: 6, headTop: 22,
+                             muzzle: spiderJaws, handGun: false, bulk: 6, headTop: 22, signature: 3.2,
                              callout: "Crawled, indexed, wrapped: one juicy dwarf, cached for later.",
                              draw: drawMirkwoodSpider),
 ]
@@ -28,7 +28,10 @@ private let smaugJaws: (x: Double, y: Double) = (60, 18)
 /// crouched over his heap of gold coins (and a gem or two), a spiked ridge down his back, bat wings half open over it,
 /// a long neck arching up to a horned head with burning eyes, and a fire glowing in his throat. His tail lies curled
 /// round the hoard. He breathes fire: the jaws drop open on each shot and the throat flares. Walking, he leaves the
-/// heap behind. No signature.
+/// heap behind. Signature: "I am fire, I am death!" He rises over the hoard and throws his wings wide (…0.25), the
+/// snap of them flicking coins off the heap to spin away and bounce over the floor, and the fire builds inside him
+/// until his throat and the seams of his belly glow with it and he opens his jaws on the furnace (0.45…0.72); then
+/// it dies down and he folds his wings again.
 private func drawSmaug(_ c: PixelCanvas, _ p: Pose) {
     let scale = C(0xA8301E), scaleDark = C(0x7A1E14), scaleLight = C(0xCC4A2A), far = C(0x5E1810)
     let gold = C(0xE0A848), goldDark = C(0xB07A30)
@@ -36,7 +39,11 @@ private func drawSmaug(_ c: PixelCanvas, _ p: Pose) {
     let horn = C(0xE0D4B4), hornDark = C(0xA89878)
     let fire = C(0xFFB03A), ember = C(0xE8501E), hot = C(0xFFF0B0)
     let glow: Double = 0.7 + 0.3 * sin(p.lt * 2.1)
-    let breathing = p.fire.map { frac($0.t / p.firePeriod) < 0.2 } ?? false      // jaws open while the fire leaves
+    let sig = p.signature.flatMap { $0 > 0 && $0 < 1 ? $0 : nil }
+    let spread: Double = sig.map { $0 < 0.25 ? smooth($0 / 0.25) : $0 < 0.8 ? 1 : 1 - smooth(($0 - 0.8) / 0.18) } ?? 0
+    let blaze: Double = sig.map { $0 < 0.15 ? 0 : $0 < 0.45 ? smooth(($0 - 0.15) / 0.3) : $0 < 0.75 ? 1 : 1 - smooth(($0 - 0.75) / 0.2) } ?? 0
+    let roar = sig.map { $0 > 0.45 && $0 < 0.72 } ?? false
+    let breathing = roar || (p.fire.map { frac($0.t / p.firePeriod) < 0.2 } ?? false)   // jaws open while the fire leaves
     // The tail, round the front of the hoard to a spade tip on the floor.
     taper(c, [(13, 31), (8, 33), (5, 37), (5, 41), (9, 43), (13, 43)], r0: 2.6, r1: 1, scale)
     c.pattern(13, 41, ["S..", "SSS", "SS."], ["S": scaleDark])
@@ -48,8 +55,11 @@ private func drawSmaug(_ c: PixelCanvas, _ p: Pose) {
     }
     c.oy += p.breathe
     // The far wing, peeking over the near one.
-    drawDragonWing(c, wrist: (31, 4), tips: [(17, 3), (18, 11), (23, 18)], roots: [(26, 24), (34, 23)],
-                   membrane: membraneFar, bone: bone, arm: far)
+    func mix(_ a: (Double, Double), _ b: (Double, Double)) -> (Double, Double) {
+        (a.0 + (b.0 - a.0) * spread, a.1 + (b.1 - a.1) * spread)
+    }
+    drawDragonWing(c, wrist: mix((31, 4), (34, 0)), tips: [mix((17, 3), (45, 1)), mix((18, 11), (27, 0)), mix((23, 18), (23, 12))],
+                   roots: [(26, 24), (34, 23)], membrane: membraneFar, bone: bone, arm: far)
     // The body: a crouched barrel, the gold belly plates under it, a spiked ridge along the back.
     c.ellipse(26, 31, 14, 8, scaleDark)
     c.ellipse(26, 30, 14, 8, scale)
@@ -60,18 +70,27 @@ private func drawSmaug(_ c: PixelCanvas, _ p: Pose) {
     for (x, y) in [(15, 23), (19, 22), (23, 21), (27, 21), (31, 21), (35, 23)] {
         c.px(x, y, scaleDark); c.px(x, y - 1, scaleDark); c.px(x + 1, y, scaleDark)
     }
+    // The fire inside him, showing through the seams of his belly plates.
+    if blaze > 0 {
+        c.glowLine(22, 31, 33, 31, core: fire.alpha(0.5 * blaze), glow: ember.alpha(0.5 * blaze), coreR: 1.2, glowR: 3.2)
+        for x in stride(from: 19, through: 35, by: 3) { c.rect(x, 32, 1, 3, hot.alpha(blaze)) }
+    }
     // The near wing, half open over his back.
-    drawDragonWing(c, wrist: (21, 5), tips: [(4, 6), (6, 14), (10, 21)], roots: [(16, 25), (28, 23)],
-                   membrane: membrane, bone: bone, arm: scale)
+    drawDragonWing(c, wrist: mix((21, 5), (13, 0)), tips: [mix((4, 6), (0, -1)), mix((6, 14), (0, 9)), mix((10, 21), (2, 19))],
+                   roots: [(16, 25), (28, 23)], membrane: membrane, bone: bone, arm: scale)
     // The neck, arching up and forward, gold underneath, the fire showing in the throat.
     let neck: [(x: Double, y: Double)] = [(35, 28), (39, 24), (42, 20), (46, 16)]
     taper(c, neck, r0: 4, r1: 2.6, scale)
     taper(c, neck.map { ($0.x + 1.5, $0.y + 2) }, r0: 1.6, r1: 1, gold)
     let throat: Double = breathing ? 1 : glow * 0.8
     c.glowLine(41, 24, 45, 20, core: fire.alpha(throat), glow: ember.alpha(throat * 0.8), coreR: 0.5, glowR: 1.6)
+    if blaze > 0 {
+        c.glowLine(37, 28, 46, 18, core: hot.alpha(blaze), glow: ember.alpha(blaze), coreR: 0.9, glowR: 2.8, strength: 0.8)
+    }
     for (x, y) in [(37, 23), (40, 19), (43, 15)] { c.px(x, y, scaleDark) }
-    // The head, a little higher while he's raised to fire.
-    c.oy += p.gunY
+    // The head, a little higher while he's raised to fire (or rising in his signature).
+    let rise = Int((2 * spread).rounded())
+    c.oy += p.gunY - rise
     c.pattern(40, 6, [
         "hH.......",
         ".hHH.....",
@@ -109,7 +128,7 @@ private func drawSmaug(_ c: PixelCanvas, _ p: Pose) {
         let k = Int(p.lt * 6)
         for i in 0..<3 { c.px(60 + i, 13 - i - k % 2, C(0x9A9090, 0.5 - Double(i) * 0.15)) }
     }
-    c.oy -= p.gunY
+    c.oy -= p.gunY - rise
     c.oy -= p.breathe
     // The near legs: a great haunch behind, a clawed foreleg in front.
     let rearUp = p.step == 0 ? 1 : 0, frontUp = p.step == 1 ? 1 : 0
@@ -127,6 +146,39 @@ private func drawSmaug(_ c: PixelCanvas, _ p: Pose) {
     let footY = p.walking ? 43 : 38
     for x in [43, 45, 47] { c.px(x, footY - frontUp, horn) }
     for x in [14, 16, 18] { c.px(x, (p.walking ? 43 : 37) - rearUp, horn) }
+    if let s = sig, !p.walking { drawFlungCoins(c, s, length: 3.4) }
+}
+
+/// Coins flicked off the hoard by the snap of Smaug's wings `s` through his signature (`length` seconds long): each
+/// flies up spinning, falls, bounces once along the floor and fades.
+private func drawFlungCoins(_ c: PixelCanvas, _ s: Double, length: Double) {
+    let coin = C(0xE8B840), coinLight = C(0xFFE07A), coinDark = C(0xB08424)
+    let flung: [(x: Double, y: Double, vx: Double, vy: Double)] = [
+        (24, 36, -14, 40), (33, 36, 17, 44), (20, 38, -22, 30), (38, 38, 24, 34),
+        (28, 35, 5, 48), (14, 40, -16, 26), (44, 40, 20, 28), (30, 36, -7, 38),
+    ]
+    let g = 110.0
+    for (i, f) in flung.enumerated() {
+        let t0 = 0.2 + Double(i % 4) * 0.02
+        guard s > t0 else { continue }
+        var e = (s - t0) * length, x = f.x + f.vx * e, y = f.y - f.vy * e + 0.5 * g * e * e
+        let land = (f.vy + (f.vy * f.vy + 2 * g * (42.5 - f.y)).squareRoot()) / g     // when it reaches the floor
+        var fade = 1.0
+        if e > land {                                                              // one low bounce, then lie there
+            e -= land
+            let vb = f.vy * 0.35
+            x = f.x + f.vx * land + f.vx * 0.5 * e
+            y = min(42.5, 42.5 - vb * e + 0.5 * g * e * e)
+            fade = max(0, 1 - e / 0.9)
+        }
+        guard fade > 0, y > -2 else { continue }
+        let ix = Int(x.rounded(.down)), iy = Int(y.rounded(.down))
+        if Int(e * 14 + Double(i)) % 2 == 0 {
+            c.px(ix, iy, coin.alpha(fade)); c.px(ix + 1, iy, coinLight.alpha(fade))
+        } else {
+            c.px(ix, iy, coinDark.alpha(fade)); c.px(ix, iy - 1, coin.alpha(fade))
+        }
+    }
 }
 
 /// A dragon's bat wing: the arm bone from the front root up to the `wrist`, finger bones out to the `tips`, and the
@@ -185,11 +237,19 @@ private let azogHand: (x: Double, y: Double) = (43.5, 32.5)
 /// domed head with a heavy brow, ice-blue eyes and a tusked underbite, bare to the waist, a leather belt hung with
 /// trophies (a skull, teeth, a braided dwarf beard) over a dark kilt, and for a left arm an iron claw, a hooked prong
 /// riveted to a cuff on the stump. In his right fist a spiked iron mace, hanging forward at rest; a fast swing smears
-/// its head a long way behind it. No signature.
+/// its head a long way behind it. Signature: the Defiler's roar. He swings his iron claw up over his head, high and
+/// hooked against the sky (…0.25), and roars, jaws wide, eyes blazing, shaking with it and the roar rolling off him
+/// (0.3…0.72), then lowers the claw again.
 private func drawAzog(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0xE6E4DC), skinShade = C(0xC4C0B6), skinLight = C(0xF8F8F4), scar = C(0xB4989A), scarDeep = C(0x8A6E70)
     let leather = C(0x3A2C22), leatherDark = C(0x241A14), bone = C(0xD8CC9A), beard = C(0xA8582A)
     let iron = C(0x5A5E66), ironLight = C(0x8E929A), ironDark = C(0x34383E), eye = C(0x8AD0F0)
+    let sig = p.signature.flatMap { $0 > 0 && $0 < 1 && !seatedPose ? $0 : nil }
+    let raise: Double = sig.map { $0 < 0.25 ? smooth($0 / 0.25) : $0 < 0.75 ? 1 : 1 - smooth(($0 - 0.75) / 0.2) } ?? 0
+    let roar = sig.map { $0 > 0.3 && $0 < 0.72 } ?? false
+    let ox = c.ox
+    if roar, Int(p.lt * 24) % 2 == 0 { c.ox += 1 }                                 // shaking with it
+    defer { c.ox = ox }
     // Bare pale legs, leather wraps round the shins and feet.
     for (i, lx) in [18, 23, 31, 36].enumerated() {
         if seatedPose { c.rect(lx - 1, 38, 4, 2, skin); c.rect(lx + 1, 38, 2, 2, leather); continue }
@@ -200,15 +260,19 @@ private func drawAzog(_ c: PixelCanvas, _ p: Pose) {
     }
     c.oy += p.breathe
     // The iron claw on the back arm: a cuff on the stump, a long hooked prong and a short spur.
-    c.rect(13, 28, 3, 3, skin)
-    line(c, 12, 32, 9, 38, iron, 0.9)
-    line(c, 9, 38, 10, 40.5, iron, 0.7)
-    line(c, 10, 40.5, 13, 40.5, ironLight, 0.5)
-    line(c, 12, 31.5, 7.5, 34, iron, 0.6)
-    c.px(7, 34, ironLight)
-    c.rect(11, 30, 5, 3, ironDark)
-    c.rect(11, 30, 5, 1, ironLight)
-    c.px(12, 31, ironLight); c.px(14, 31, ironLight)                               // the rivets
+    if raise > 0 {
+        drawRaisedClaw(c, raise, skin: skin, iron: iron, ironLight: ironLight, ironDark: ironDark)
+    } else {
+        c.rect(13, 28, 3, 3, skin)
+        line(c, 12, 32, 9, 38, iron, 0.9)
+        line(c, 9, 38, 10, 40.5, iron, 0.7)
+        line(c, 10, 40.5, 13, 40.5, ironLight, 0.5)
+        line(c, 12, 31.5, 7.5, 34, iron, 0.6)
+        c.px(7, 34, ironLight)
+        c.rect(11, 30, 5, 3, ironDark)
+        c.rect(11, 30, 5, 1, ironLight)
+        c.px(12, 31, ironLight); c.px(14, 31, ironLight)                           // the rivets
+    }
     // The body, tall, the head domed and bald.
     c.rect(18, 19, 20, 1, skin)
     c.rect(17, 20, 22, 1, skin)
@@ -230,6 +294,22 @@ private func drawAzog(_ c: PixelCanvas, _ p: Pose) {
     ]
     for (k, cut) in cuts.enumerated() { line(c, cut.0.0, cut.0.1, cut.1.0, cut.1.1, k % 3 == 0 ? scarDeep : scar, 0.4) }
     for (x, y) in [(21, 23), (23, 24), (21, 32), (25, 33)] { c.px(x, y, scarDeep); c.px(x + 1, y - 1, scarDeep) }
+    // Roaring: the jaws gape on the tusks, the eyes blaze, and the roar rolls off him.
+    if roar, let s = sig {
+        c.rect(27, 29, 11, 3, C(0x3A2A2E)); c.rect(29, 31, 7, 1, C(0x8A3A3A))
+        c.px(29, 28, bone); c.px(29, 29, bone); c.px(36, 28, bone); c.px(36, 29, bone)
+        c.rect(27, 32, 11, 1, skinShade)
+        for ex in [24.5, 34.5] {
+            c.glowLine(ex, 25.5, ex, 25.5, core: eye, glow: C(0x4AA8E0), coreR: 0.4, glowR: 2.2, strength: 0.7)
+        }
+        for j in 0..<3 {
+            let f = frac((s - 0.3) * 5 + Double(j) / 3), r = 3 + f * 10
+            for a in stride(from: -50.0, through: 50, by: 10) {
+                let u = unit(a)
+                c.px(Int((38 + u.x * r).rounded(.down)), Int((30 + u.y * r).rounded(.down)), C(0xE8ECF0, 0.8 * (1 - f)))
+            }
+        }
+    }
     // The belt and its trophies, over a dark kilt.
     c.rect(16, 34, 24, 4, leatherDark)
     for x in stride(from: 17, through: 39, by: 3) { c.px(x, 37, leather) }
@@ -252,6 +332,29 @@ private func drawAzog(_ c: PixelCanvas, _ p: Pose) {
     // The mace arm and fist.
     c.rect(40, 30, 2, 4, skin)
     c.rect(42, 31, 3, 3, skin); c.px(44, 33, skinShade)
+}
+
+/// Azog's iron claw swung `k` of the way up (0 hanging at his side, 1 raised high over his head): the hanging claw
+/// turned up about his shoulder, the arm stretched out to its full reach.
+private func drawRaisedClaw(_ c: PixelCanvas, _ k: Double, skin: Px, iron: Px, ironLight: Px, ironDark: Px) {
+    let sh: (x: Double, y: Double) = (14.5, 29.5), a: Double = 144 * k * .pi / 180, reach = 1 + 0.7 * k
+    func at(_ x: Double, _ y: Double) -> (x: Double, y: Double) {
+        let dx = (x - sh.x) * reach, dy = (y - sh.y) * reach
+        return (sh.x + dx * cos(a) - dy * sin(a), sh.y + dx * sin(a) + dy * cos(a))
+    }
+    func seg(_ p: (x: Double, y: Double), _ q: (x: Double, y: Double), _ col: Px, _ r: Double) {
+        line(c, p.x, p.y, q.x, q.y, col, r)
+    }
+    func dot(_ q: (x: Double, y: Double), _ col: Px) { c.px(Int(q.x.rounded(.down)), Int(q.y.rounded(.down)), col) }
+    seg(sh, at(13.5, 31.5), skin, 1.5)                                              // the arm, up to the cuff
+    seg(at(12, 32), at(9, 38), iron, 0.9)
+    seg(at(9, 38), at(10, 40.5), iron, 0.7)
+    seg(at(10, 40.5), at(13, 40.5), ironLight, 0.5)
+    seg(at(12, 31.5), at(7.5, 34), iron, 0.6)
+    dot(at(7.5, 34.5), ironLight)
+    seg(at(11.5, 31.5), at(15.5, 31.5), ironDark, 1.4)                             // the cuff
+    seg(at(11.5, 30.5), at(15.5, 30.5), ironLight, 0.5)
+    dot(at(12.5, 31.5), ironLight); dot(at(14.5, 31.5), ironLight)                 // the rivets
 }
 
 /// Azog's mace: an iron-shod wooden haft and a spiked iron ball.
@@ -278,11 +381,17 @@ private let kingHand: (x: Double, y: Double) = (45.5, 32.5)
 /// warty, on stubby legs, no neck, a pointed ear with a gold ring, small mean eyes over a drooping bulb of a nose, a
 /// wide snaggle-toothed grin, chins hanging in folds and a great goitre wobbling under them (it bounces as he walks),
 /// a ragged loincloth, and a tiny gold crown perched on top. He fights with his staff, a crooked stick topped with a
-/// skull: held upright at rest, swung like a club, the skull smearing behind a fast swing. No signature.
+/// skull: held upright at rest, swung like a club, the skull smearing behind a fast swing. Signature: "Down, down to
+/// Goblin-town!" He sings, beating time: four times (0.05…0.85) he lifts his staff and thumps it on the floor, a puff of
+/// dust at its foot, bobbing on each beat with his mouth wide on the note, his goitre jiggling, and a note floating up
+/// off each one.
 private func drawGoblinKing(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0xCFC69A), skinShade = C(0xADA47A), skinDark = C(0x8C845E), skinLight = C(0xE2DCB8), wart = C(0x9A8A56)
     let goitre = C(0xD8C096), goitreShade = C(0xB49C74)
     let rag = C(0x5A4630), ragDark = C(0x3E3020), gold = C(0xE0B040), goldLight = C(0xFFE07A)
+    let sig = p.signature.flatMap { $0 > 0 && $0 < 1 ? $0 : nil }
+    // Where he is in the song: the beat (0 as the staff lands, 0…1 to the next) and how far into the four beats.
+    let beat: Double? = sig.flatMap { $0 > 0.05 && $0 < 0.85 ? frac(($0 - 0.05) / 0.2) : nil }
     // Stubby legs under the belly.
     for (i, lx) in [18, 23, 31, 36].enumerated() {
         let up = p.step >= 0 && i % 2 == p.step ? 1 : 0
@@ -290,7 +399,10 @@ private func drawGoblinKing(_ c: PixelCanvas, _ p: Pose) {
         c.rect(lx, 43 - up, 4, 1, skinDark)
     }
     c.oy += p.breathe
-    let wobble = p.walking ? (p.step == 0 ? 1 : 0) : (sin(p.lt * 2.6) > 0.5 ? 1 : 0)
+    let bob = beat.map { $0 < 0.25 ? 1 : 0 } ?? 0                                  // a bob on the beat
+    c.oy += bob
+    var wobble = p.walking ? (p.step == 0 ? 1 : 0) : (sin(p.lt * 2.6) > 0.5 ? 1 : 0)
+    if let s = sig, s > 0.05, s < 0.9 { wobble = [0, 2, 1, -1, 1, 2][Int(s * 40) % 6] }   // jiggling
     // The back arm, hanging flabby.
     c.rect(10, 29, 4, 7, skinShade)
     c.rect(9, 35, 4, 3, skinShade)
@@ -320,6 +432,10 @@ private func drawGoblinKing(_ c: PixelCanvas, _ p: Pose) {
     c.rect(24, 26, 13, 1, C(0x4A3A2A))
     for x in [25, 29, 34] { c.px(x, 25, C(0xF0E8C8)) }
     c.px(31, 27, C(0xF0E8C8))
+    if let f = beat, f < 0.6 {                                                    // singing out the note
+        c.rect(28, 25, 6, 3, C(0x4A3A2A)); c.rect(29, 27, 4, 1, C(0x8A3A3A))
+        c.px(28, 25, C(0xF0E8C8)); c.px(33, 25, C(0xF0E8C8))
+    }
     // The chins in folds, and the goitre hanging under them, wobbling.
     c.rect(21, 28, 17, 2, skin)
     c.rect(22, 28, 15, 1, skinShade)
@@ -331,6 +447,19 @@ private func drawGoblinKing(_ c: PixelCanvas, _ p: Pose) {
     c.px(32, 30 + wobble, skinLight); c.px(37, 33 + wobble, wart)
     // The tiny crown.
     c.pattern(25, 16, ["G.G.G", "GGGGG", "GgRgG"], ["G": gold, "g": goldLight, "R": C(0xC8202A)])
+    // Singing: a note floating up off each beat, and the staff lifted and thumped down on it, dust puffing at its foot.
+    if let s = sig, let f = beat {
+        let n = Int((s - 0.05) / 0.2), x = Int((33 + f * 5).rounded()), y = Int((16 - f * 12).rounded())
+        let col = (n % 2 == 0 ? goldLight : C(0xF0E8C8)).alpha(1 - f * f)
+        c.rect(x, y, 2, 1, col); c.rect(x + 1, y - 3, 1, 3, col); c.px(x + 2, y - 3, col); c.px(x + 3, y - 2, col)
+        if f < 0.2 {
+            let dust = C(0xA89878, 0.8 * (1 - f / 0.2)), up = p.breathe + bob, spread = Int(f * 15)
+            for (dx, dy) in [(-2, 0), (2, 0), (-3, -1), (3, -1)] { c.px(44 + dx + dx.signum() * spread, 43 + dy - up, dust) }
+        }
+    }
+    let tap = beat.map { Int((1 - 3 * sin(.pi * $0)).rounded()) } ?? 0
+    c.oy += tap
+    defer { c.oy -= tap }
     // The staff, and a ghost of its skull behind a fast swing.
     let staff = p.melee ?? -80
     if p.melee != nil {
@@ -364,12 +493,18 @@ private let spiderJaws: (x: Double, y: Double) = (45, 35)
 /// A spider of Mirkwood, a little wider than a Man and nothing like Shellob's size: a raised, bristly dark-green abdomen
 /// with yellow chevrons along its back, high on eight hairy legs banded green and yellow (the far four duller), a cluster
 /// of eight glowing red eyes, and two hooked fangs under them that spread as it spits. A silk thread trails from its
-/// spinnerets up into the trees, swaying. It spits webs. No signature.
+/// spinnerets up into the trees, swaying. It spits webs. Signature: crawled, indexed, wrapped. In front of its jaws
+/// sits a little dwarf (a red hood, a ginger beard); it spits silk over him and rolls him round under its front foot
+/// (0.08…0.62), the silk thickening until he's a white bundle with only the beard sticking out, its eyes glint with
+/// satisfaction (…0.78), and a thread from the trees whisks the bundle up and away, cached for later.
 private func drawMirkwoodSpider(_ c: PixelCanvas, _ p: Pose) {
     let green = C(0x34462A), greenDark = C(0x1E2A16), greenLight = C(0x4E6436), band = C(0xD8B830)
     let far = C(0x2A3820), farBand = C(0x8A7A2A), hair = C(0x6A7A42)
     let eye = C(0xFF4A2A), eyeHot = C(0xFFC0A0)
-    let spitting = p.fire.map { frac($0.t / p.firePeriod) < 0.2 } ?? false
+    let sig = p.signature.flatMap { $0 > 0 && $0 < 1 ? $0 : nil }
+    let wrapping = sig.map { $0 > 0.1 && $0 < 0.62 } ?? false
+    let holding: Double = sig.map { $0 < 0.06 ? 0 : $0 < 0.12 ? smooth(($0 - 0.06) / 0.06) : $0 < 0.7 ? 1 : 1 - smooth(($0 - 0.7) / 0.1) } ?? 0
+    let spitting = (wrapping && Int((sig ?? 0) * 30) % 3 == 0) || (p.fire.map { frac($0.t / p.firePeriod) < 0.2 } ?? false)
     // The silk thread, from the spinnerets up and away behind it.
     let sway: Double = 1.5 * sin(p.lt * 1.1)
     for (a, b) in [((8.0, 30.0), (4.5 + sway * 0.4, 20.0)), ((4.5 + sway * 0.4, 20.0), (1.5 + sway, 6.0))] {
@@ -384,7 +519,12 @@ private func drawMirkwoodSpider(_ c: PixelCanvas, _ p: Pose) {
     ]
     func leg(_ l: Leg, _ i: Int, near: Bool) {
         let lifted = p.step >= 0 && (i + (near ? 0 : 1)) % 2 == p.step
-        let knee = (l.k.0, l.k.1 - (lifted ? 1 : 0)), tip = (l.t.0 + (lifted ? 1 : 0), l.t.1 - (lifted ? 2 : 0))
+        let knee = (l.k.0, l.k.1 - (lifted ? 1 : 0))
+        var tip = (l.t.0 + (lifted ? 1 : 0), l.t.1 - (lifted ? 2 : 0))
+        if near, i == 0, holding > 0 {                                              // the front foot on the bundle, rolling it
+            let roll: Double = wrapping ? 1.5 * sin((sig ?? 0) * 40) : 0
+            tip = (tip.0 + (53 + roll - tip.0) * holding, tip.1 + (37 - tip.1) * holding)
+        }
         hairyLeg(c, l.a, knee, near ? green : far, near ? band : farBand, hair: near ? hair : nil, r: 1.1)
         hairyLeg(c, knee, tip, near ? green : far, near ? band : farBand, hair: near ? hair : nil, r: 0.8)
         c.px(Int(knee.0), Int(knee.1), near ? band : farBand)
@@ -410,6 +550,7 @@ private func drawMirkwoodSpider(_ c: PixelCanvas, _ p: Pose) {
     c.ellipse(31, 33, 6, 4, green)
     c.rect(27, 30, 8, 1, greenLight)
     c.oy -= p.breathe
+    if let s = sig { drawWrappedDwarf(c, s) }
     for (i, l) in nearLegs.enumerated() { leg(l, i, near: true) }
     c.oy += p.breathe
     c.ellipse(39, 33, 4, 3, greenDark)
@@ -423,6 +564,42 @@ private func drawMirkwoodSpider(_ c: PixelCanvas, _ p: Pose) {
     c.rect(40, 31, 2, 2, eye); c.rect(43, 31, 2, 2, eye)
     for (x, y) in [(38, 30), (40, 29), (42, 29), (44, 30), (39, 33), (42, 33)] { c.px(x, y, eye.alpha(0.9)) }
     c.px(40, 31, eyeHot.alpha(flick)); c.px(43, 31, eyeHot.alpha(flick))
+    guard let s = sig else { return }
+    // The signature: silk spat from the fangs over the bundle, and a glint of satisfaction in the eyes when it's done.
+    if wrapping {
+        let y = 39.5 + 1.5 * sin(s * 40)
+        for x0 in [41.5, 44.5] { c.glowLine(x0, 37.5, 49.5, y, core: C(0xE8ECF0, 0.75), glow: clear, coreR: 0.3, glowR: 0.4) }
+    }
+    if s > 0.62, s < 0.8 {
+        let k = (s - 0.62) / 0.18, star = white.alpha(1 - abs(2 * k - 1))
+        c.px(40, 31, white); c.px(43, 31, white)
+        for (dx, dy) in [(0, -1), (-1, 0), (1, 0), (0, 1), (0, 0)] { c.px(45 + dx, 30 + dy, star) }
+    }
+}
+
+/// The little dwarf the Mirkwood spider wraps up `s` through its signature, in front of its jaws: let down on a thread
+/// from the trees (…0.1), wrapped in more and more silk as it spins him (0.1…0.6) until only his beard sticks out of
+/// the bundle, then hauled back up out of sight (0.8…0.98).
+private func drawWrappedDwarf(_ c: PixelCanvas, _ s: Double) {
+    let silk = C(0xE8ECF0), silkShade = C(0xB4BCC6)
+    let wrap: Double = min(1, max(0, (s - 0.1) / 0.5))
+    let away: Double = s < 0.1 ? pow(1 - s / 0.1, 2) : s < 0.8 ? 0 : pow(min(1, (s - 0.8) / 0.18), 2)
+    let top = 38 - Int((away * 52).rounded())
+    if away > 0 {                                                                  // the thread up into the trees
+        c.glowLine(50.5, -2, 50.5, Double(top), core: C(0xE8ECF0, 0.8), glow: clear, coreR: 0.35, glowR: 0.4)
+    }
+    let dwarf: [Character: Px] = ["H": C(0xA82A24), "F": C(0xE8B890), "B": C(0xD07A2A), "T": C(0x5A4A3A), "K": C(0x2A2420)]
+    let rows = [".HHH.", "HFFFH", "BBBBB", ".BBB.", "TTTTT", ".K.K."]
+    let cocoon = [".SSS.", "SSSSS", "SSSSS", "SSBSS", "SSSSS", ".SSS."]
+    let spin = Int(s * 24)
+    for (y, (row, wrapped)) in zip(rows, cocoon).enumerated() {
+        for (x, (d, w)) in zip(row, wrapped).enumerated() {
+            let covered = w == "S" && noise(x * 7 + y * 13 + 3) < wrap * 1.15
+            let col: Px?
+            if covered { col = (x + y + spin) % 3 == 0 ? silkShade : silk } else { col = dwarf[d] }
+            if let col { c.px(48 + x, top + y, col) }
+        }
+    }
 }
 
 /// A spider's leg segment: `col` with a yellow band every few pixels, and bristles sticking out to alternate sides.
@@ -445,6 +622,12 @@ private func hairyLeg(_ c: PixelCanvas, _ a: (Double, Double), _ b: (Double, Dou
 // MARK: - Shared helpers
 
 private let clear = C(0x000000, 0)
+
+/// Smoothstep: 0→1 eased at both ends.
+private func smooth(_ x: Double) -> Double {
+    let u = min(1, max(0, x))
+    return u * u * (3 - 2 * u)
+}
 
 /// The angles a heavy swing smears through: from now back past `trail`'s last angle by half as far again, so the smear
 /// is longer than a light blade's. Empty when it isn't being swung fast.

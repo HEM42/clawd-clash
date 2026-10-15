@@ -9,13 +9,13 @@ import Foundation
 // slim, smooth-barked rowan, with only a warm Clawd-orange glow left in his eyes.
 
 let ringsHeroes8: [LOTRHero: Persona] = [
-    .eomer: Persona(name: "Éomore", weapon: .saber, headTop: 13,
+    .eomer: Persona(name: "Éomore", weapon: .saber, headTop: 13, signature: 3.0,
                     callout: "I am Éomore, son of Éomund, Third Marshal of the Riddermark… --More--", draw: drawEomer),
-    .bard: Persona(name: "Bard the Bowmanpage", weapon: .blaster, shot: .arrow, muzzle: (46, 34), handGun: false, headTop: 20,
+    .bard: Persona(name: "Bard the Bowmanpage", weapon: .blaster, shot: .arrow, muzzle: (46, 34), handGun: false, headTop: 20, signature: 3.4,
                    callout: "Black Arrow, I saved you for the last man page.", draw: drawBard),
-    .beorn: Persona(name: "Beorn the Bearer-token", weapon: .saber, pivot: beornFist, bulk: 4, headTop: 13,
+    .beorn: Persona(name: "Beorn the Bearer-token", weapon: .saber, pivot: beornFist, bulk: 4, headTop: 13, signature: 3.6,
                     callout: "Authorization: Bear. Now state your business.", draw: drawBeorn),
-    .quickbeam: Persona(name: "Quicksort", weapon: .saber, canSit: false, pivot: quickbeamShoulder, bulk: 4, headTop: 7,
+    .quickbeam: Persona(name: "Quicksort", weapon: .saber, canSit: false, pivot: quickbeamShoulder, bulk: 4, headTop: 7, signature: 3.2,
                         callout: "Hasty? I'm O(n log n). On average.", draw: drawQuickbeam),
 ]
 
@@ -26,7 +26,9 @@ let ringsHeroes8: [LOTRHero: Persona] = [
 /// finial and hanging down his back; a short dark-gold beard; a dark leather cuirass with the gold horse of the Mark on
 /// it, over mail, a mail skirt below the belt; the green-and-gold cloak, the sun-horse shield on his off arm, and a
 /// tall ash spear with a leaf blade and a little green-and-white pennon, upright in his fist at rest, its butt on the
-/// ground. Swung, it smears behind a fast stroke. No signature.
+/// ground. Swung, it smears behind a fast stroke. Signature: the Marshal has more to say: he lifts the spear high,
+/// and a pager's "--More--" prompt pops up over his head in reverse video, its cursor blinking, until (a key pressed)
+/// it's gone and the spear comes down.
 private func drawEomer(_ c: PixelCanvas, _ p: Pose) {
     let leather = C(0x5A3A24), leatherDark = C(0x3E2818), leatherLight = C(0x7A5232)
     let beard = C(0xA8823E), beardDark = C(0x7E5E28)
@@ -64,9 +66,38 @@ private func drawEomer(_ c: PixelCanvas, _ p: Pose) {
         c.glowLine(h.x + u.x * 4, h.y + u.y * 4, h.x + u.x * 26, h.y + u.y * 26, core: C(0xE8EEF4), glow: C(0xA8B4C0),
                    coreR: 0.5, glowR: 1.6, strength: 0.32 / Double(i + 1))
     }
+    let up = Int((6 * (p.signature.map { arc($0, rise: 0.16, fall: 0.86) } ?? 0)).rounded())
+    c.oy -= up                                                                // raised high in his signature
     drawSpear(c, angle: angle, t: p.t, butt: seatedPose ? 3 : 9)
-    c.rect(38, 33, 2, 3, rohanMail); c.rect(40, 33, 2, 3, clawdOrange); c.px(40, 35, clawdShade)   // the fist round the shaft
+    c.rect(38, 33, 2, 3 + up, rohanMail); c.rect(40, 33, 2, 3, clawdOrange); c.px(40, 35, clawdShade)   // the fist round the shaft
+    c.oy += up
     drawRohanShield(c, cx: 14, cy: seatedPose ? 33 : 35)
+    if let s = p.signature, s >= 0.24, s < 0.8 { drawMorePrompt(c, s) }
+}
+
+/// The pager's "--More--" prompt over Éomore's head, `s` through his signature: popping up (a pixel high for a
+/// moment), light grey with dark letters like a terminal's reverse video, a block cursor blinking after it.
+private func drawMorePrompt(_ c: PixelCanvas, _ s: Double) {
+    let paper = C(0xE4E4DC), letter = C(0x16161A)
+    let x = 7, y = 1 + (s < 0.27 ? -1 : 0)
+    c.rect(x, y, 34, 9, paper)
+    c.rect(x, y + 8, 34, 1, C(0xA8A8A0))
+    let glyphs: [[String]] = [
+        ["..", "..", "--", "..", ".."],
+        ["..", "..", "--", "..", ".."],
+        ["M...M", "MM.MM", "M.M.M", "M...M", "M...M"],
+        ["...", ".o.", "o.o", "o.o", ".o."],
+        ["...", "r.r", "rr.", "r..", "r.."],
+        ["...", ".e.", "eee", "e..", ".ee"],
+        ["..", "..", "--", "..", ".."],
+        ["..", "..", "--", "..", ".."],
+    ]
+    var gx = x + 1
+    for g in glyphs {
+        c.pattern(gx, y + 2, g, ["-": letter, "M": letter, "o": letter, "r": letter, "e": letter])
+        gx += g[0].count + 1
+    }
+    if Int(s * 14) % 2 == 0 { c.rect(gx, y + 2, 2, 5, letter) }              // the cursor, blinking
 }
 
 /// Éomore's helmet: taller than Éowin's, a steel dome rising to a gold finial, a gold ridge up its front, a dark band
@@ -147,6 +178,8 @@ private func drawSpear(_ c: PixelCanvas, angle: Double, t: Double, butt: Double)
 /// middle, past his shoulders, and a short dark beard; a quiver on his back, black-feathered; and a great black yew
 /// longbow, taller than he is, held out in front of him. Shooting, he nocks an arrow and draws the string back before
 /// each shot, as Leggolas does; the arrow on his string is the Black Arrow, black-shafted, its iron head barbed.
+/// Signature: the dragon overhead: he turns the great bow up over his head, the Black Arrow on the string, draws it and
+/// holds it aimed straight up at the sky, steady, a glint on its head; then eases the string and lowers the bow.
 private func drawBard(_ c: PixelCanvas, _ p: Pose) {
     let coat = C(0x34424E), coatShade = C(0x26323C), coatLight = C(0x4A5A68), stain = C(0x2C3842)
     let leather = C(0x6A4A30), leatherDark = C(0x4A3220), leatherLight = C(0x86603E)
@@ -219,6 +252,10 @@ private func drawBard(_ c: PixelCanvas, _ p: Pose) {
         if ph > 0.6 { pull = Int(((ph - 0.6) / 0.4 * 3).rounded()) }
     }
     c.oy += p.gunY + (seatedPose ? -3 : 0)
+    if let s = p.signature, s > 0.02, s < 0.98 {
+        drawBardAimUp(c, s, coat: coat)
+        return
+    }
     drawBlackLongbow(c, pull: pull)
     c.rect(38, 33, 4, 2, coat)
     c.rect(42, 33, 2, 3, clawdOrange)
@@ -229,6 +266,52 @@ private func drawBard(_ c: PixelCanvas, _ p: Pose) {
         c.px(47, 34, C(0x5A5E68)); c.px(48, 34, C(0x8A8E98)); c.px(49, 34, C(0xC8CCD4))       // the iron head
         c.px(tail, 33, C(0x5A5A62)); c.px(tail, 35, C(0x5A5A62))
         c.rect(tail - 1, 34, 2, 2, clawdOrange)                                                // the hand on the string
+    }
+}
+
+/// Bard's signature, `s` through it: the longbow turned up over his head (…0.2), the Black Arrow drawn (…0.36) and
+/// held aimed straight up, a glint running over its head; the string eased (0.74…) and the bow lowered (0.8…).
+private func drawBardAimUp(_ c: PixelCanvas, _ s: Double, coat: Px) {
+    let raise = arc(s, rise: 0.2, fall: 0.8)
+    let angle = -90 * raise
+    let grip = (x: 44.5 - 3 * raise, y: 34.5 - 19 * raise)
+    let draw = s < 0.22 ? 0 : s < 0.36 ? smooth((s - 0.22) / 0.14) : s < 0.72 ? 1 : 1 - smooth((s - 0.72) / 0.08)
+    let pull = Int((3 * draw).rounded())
+    // A point on the bow at rest, (`x`, `y`) from its grip, where it is now.
+    func turned(_ x: Double, _ y: Double) -> (x: Double, y: Double) {
+        let u = unit(angle)
+        return (grip.x + x * u.x - y * u.y, grip.y + x * u.y + y * u.x)
+    }
+    let fist = turned(-1.5, 0)
+    line(c, 38.5, 33.5, fist.x, fist.y, coat, 0.9)                                         // the bow arm, up
+    let b = PixelCanvas(61, 61)
+    b.ox = -14; b.oy = -4                                                                  // the bow's grip on (30, 30)
+    drawBlackLongbow(b, pull: pull)
+    b.rect(42, 33, 2, 3, clawdOrange)
+    if s > 0.08 && s < 0.92 {
+        let tail = 40 - pull
+        b.rect(tail, 34, 47 - tail, 1, C(0x1E1E22))
+        b.px(47, 33, C(0x3A3E46)); b.px(47, 35, C(0x3A3E46))
+        b.px(47, 34, C(0x5A5E68)); b.px(48, 34, C(0x8A8E98)); b.px(49, 34, C(0xC8CCD4))
+        b.px(tail, 33, C(0x5A5A62)); b.px(tail, 35, C(0x5A5A62))
+        b.rect(tail - 1, 34, 2, 2, clawdOrange)
+    }
+    let r = b.rotated(angle, about: (30.5, 30.5), into: 61, 61, at: (30.5, 30.5))
+    let x0 = Int(floor(grip.x - 30.5)), y0 = Int(floor(grip.y - 30.5))
+    for y in 0..<r.h where y0 + y + c.oy <= 43 {                                          // never through the floor
+        for x in 0..<r.w {
+            let i = (y * r.w + x) * 4
+            guard r.buf[i + 3] > 0 else { continue }
+            let m = 255 / Double(r.buf[i + 3])
+            c.px(x0 + x, y0 + y, Px(r: UInt8(min(255, Double(r.buf[i]) * m)), g: UInt8(min(255, Double(r.buf[i + 1]) * m)),
+                                    b: UInt8(min(255, Double(r.buf[i + 2]) * m)), a: r.buf[i + 3]))
+        }
+    }
+    // Held aimed at the sky: a glint on the arrowhead now and then.
+    if s > 0.4 && s < 0.7 && Int(s * 20) % 3 == 0 {
+        let h = turned(5, 0)
+        c.glowLine(h.x - 2, h.y, h.x + 2, h.y, core: C(0xFFFFFF), glow: C(0xC8D8FF), coreR: 0.3, glowR: 1.2, strength: 0.8)
+        c.glowLine(h.x, h.y - 2, h.x, h.y + 2, core: C(0xFFFFFF), glow: C(0xC8D8FF), coreR: 0.3, glowR: 1.2, strength: 0.8)
     }
 }
 
@@ -259,7 +342,9 @@ private let beornFist: (x: Double, y: Double) = (45.0, 33.5)
 /// brow; a wild black mane spilling out from under it, heavy black brows and a great wild black beard down his chest;
 /// a plain undyed wool tunic, sleeveless, roped at the waist, over his bare, heavy arms; rough leggings, fur wrapped
 /// round his feet. In his fist a knobbly oak club, held low at rest; swung, it smears behind it a long way (it's heavy).
-/// No signature.
+/// Signature: the skin-changer changes: brown fur rises over him from his feet to his brow, his fist a clawed paw, until
+/// he's all bear under the bear's head, which comes alive, eyes burning, and growls with its jaws wide; then the fur
+/// sinks away again and he's Beorn.
 private func drawBeorn(_ c: PixelCanvas, _ p: Pose) {
     let skin = clawdOrange, skinShade = clawdShade, skinLight = C(0xE8906E)
     let fur = C(0x5A3A22), furDark = C(0x3E2614), furLight = C(0x7A5232), muzzle = C(0x9A7450)
@@ -319,6 +404,8 @@ private func drawBeorn(_ c: PixelCanvas, _ p: Pose) {
     // The front arm, bare and heavy, out to the fist round the club.
     line(c, 40, 27, 44, 32, skin, 1.8)
     c.px(41, 27, skinLight); c.px(42, 28, skinLight); c.px(42, 31, skinShade)
+    let bear = p.signature.map { arc($0, rise: 0.3, fall: 0.72) } ?? 0
+    if let s = p.signature, bear > 0.02 { drawBearShift(c, s, bear: bear, fur: fur, dark: furDark, light: furLight, muzzle: muzzle) }
     let angle = p.melee ?? (seatedPose ? 8 : 25)
     for (i, a) in heavySmear(angle, p.melee == nil ? [] : p.trail).enumerated() {
         let u = unit(a), fade: Double = 0.36 * (1 - Double(i) / 12)
@@ -329,6 +416,42 @@ private func drawBeorn(_ c: PixelCanvas, _ p: Pose) {
     }
     drawClub(c, angle: angle)
     c.rect(43, 32, 4, 3, skin); c.px(46, 32, skinLight); c.rect(43, 34, 4, 1, skinShade)    // the fist
+    if bear > 0.6 {                                                                        // a bear's paw, clawed
+        c.rect(43, 32, 4, 3, fur); c.px(46, 32, furLight); c.rect(43, 34, 4, 1, furDark)
+        for y in [32, 34] { c.px(47, y, C(0xE8E0D0)) }
+    }
+}
+
+/// Beorn turning bear, `bear` of the way (0…1), `s` through his signature: everything drawn of him from his feet up to
+/// a ragged line rising with `bear` to his brow is shaggy fur; fully bear, the bear's head on top comes alive, its eyes
+/// burning and its jaws open wide in a growl, growl lines shaking off it.
+private func drawBearShift(_ c: PixelCanvas, _ s: Double, bear: Double, fur: Px, dark: Px, light: Px, muzzle: Px) {
+    let level = 43.5 - bear * 22.5                                                         // up to row 21, under the skin
+    for x in 6...48 {
+        let top = Int((level + Double((x * 5) % 3) - 1).rounded(.down))
+        guard max(21, top) <= 43 else { continue }
+        for y in max(21, top)...43 where c.isDrawn(x + c.ox, y + c.oy + c.baseY) {
+            let n = (x * 7 + y * 13) % 11
+            c.px(x, y, y == top ? dark : n == 0 ? light : n == 5 || n == 8 ? dark : fur)
+        }
+    }
+    guard s > 0.36 && s < 0.68 else { return }
+    // The growl: the jaw drops open under the muzzle, fangs white, eyes burning, lines shaking off it.
+    let shake = Int(s * 40) % 2
+    c.pattern(23 + shake, 20, [
+        ".mmmmmmmm.",
+        "mWkkkkkkWm",
+        "mkkrrrrkkm",
+        "mkWkkkkWkm",
+        ".mmmmmmmm.",
+    ], ["m": muzzle, "k": C(0x2A0E0A), "r": C(0x8A2A2A), "W": C(0xF4F0E4)])
+    for ex in [22, 33] { c.px(ex, 17, C(0xFFB040)); c.px(ex + 1, 17, C(0xFF7A2A).alpha(0.6)) }
+    if Int(s * 20) % 2 == 0 {
+        for (i, y) in [15.0, 19.0, 23.0].enumerated() {
+            let x = 46.0 + Double(i % 2)
+            c.glowLine(x, y, x + 4, y - 1 + Double(i), core: C(0xF4F0E4), glow: C(0xF4F0E4, 0), coreR: 0.4, glowR: 0.5)
+        }
+    }
 }
 
 /// Beorn's four big legs in rough leggings, fur wrapped round the feet (folded forward when he sits).
@@ -393,7 +516,9 @@ private let quickbeamShoulder: (x: Double, y: Double) = (35.5, 20.5)
 /// a twig of a nose and a ruddy grin; a crown of bright green rowan leaves swept back off his head as if he's been
 /// running, red berry clusters in it. His back arm is a slim branch hanging from the shoulder with a sprig and berries
 /// at its end; the front one is his weapon: at rest it hangs forward beside him, and to fight he swats with it, quick,
-/// a short green smear behind it. No signature.
+/// a short green smear behind it. Signature: a hasty quicksort: swaying fast from side to side, he sets out his rowan
+/// berries in front of him as five little stacks, jumbled, then flicks them into order round a bright pivot stack, and
+/// once they stand in a neat row, short to tall, he stops, pleased, and they fade.
 private func drawQuickbeam(_ c: PixelCanvas, _ p: Pose) {
     let bark = C(0x8A7C6C), barkDark = C(0x66594C), barkLight = C(0xA49684), mark = C(0x74685A)
     let leaf = C(0x4CB83A), leafLight = C(0x8AE05A), leafDark = C(0x2E8A2A)
@@ -406,6 +531,9 @@ private func drawQuickbeam(_ c: PixelCanvas, _ p: Pose) {
         c.rect(lx + 1, 35, 2, 1, mark); c.rect(lx + 2, 38, 2, 1, mark)
         c.pattern(lx - 2, 41 - up, ["..RRRR..", ".RRRRRR.", "R.R..R.R"], ["R": i == 0 ? mark : barkDark])
     }
+    // In his signature he sways fast from side to side above the legs, sorting.
+    let sway = p.signature.map { s in Int((2 * sin(s * .pi * 16) * arc(s, rise: 0.05, fall: 0.6)).rounded()) } ?? 0
+    c.ox += sway
     c.oy += p.breathe
     // The back arm: a slim branch hanging from the shoulder, twig fingers, a sprig and berries at its end.
     line(c, 23, 20, 17, 31, barkDark, 1)
@@ -458,7 +586,8 @@ private func drawQuickbeam(_ c: PixelCanvas, _ p: Pose) {
         "..L....................",
     ], ["L": leaf, "l": leafLight, "d": leafDark, "R": berry, "r": berryDark])
     // The front arm, his weapon: a slim branch from the shoulder, hanging forward at rest, swatting in a fight, quick.
-    let angle = p.melee ?? 64
+    let flick = p.signature.map { s in s < 0.1 || s > 0.62 ? 0 : 26 * abs(sin(s * .pi * 12)) * arc(s, rise: 0.12, fall: 0.55) } ?? 0
+    let angle = p.melee ?? 64 - flick
     for (i, a) in (p.melee == nil ? [] : p.trail).enumerated() {
         let u = unit(a), s = quickbeamShoulder
         c.glowLine(s.x + u.x * 5, s.y + u.y * 5, s.x + u.x * 18, s.y + u.y * 18, core: C(0xD8F4C0), glow: C(0x6AC84A),
@@ -466,6 +595,33 @@ private func drawQuickbeam(_ c: PixelCanvas, _ p: Pose) {
     }
     drawRowanArm(c, angle: angle, bark: bark, light: barkLight, dark: barkDark, leaf: leaf, leafLight: leafLight,
                  berry: berry, berryDark: berryDark)
+    c.ox -= sway; c.oy -= p.breathe                                          // the berries stand on the floor
+    if let s = p.signature { drawBerrySort(c, s, berry: berry, berryDark: berryDark) }
+}
+
+/// Quicksort's berries, `s` through his signature: five stacks set out jumbled one by one (0.08…), partitioned round
+/// the pivot, which shines (0.4), sorted short to tall (0.54), a sparkle running along the neat row (0.6…), and gone
+/// (0.82…).
+private func drawBerrySort(_ c: PixelCanvas, _ s: Double, berry: Px, berryDark: Px) {
+    guard s >= 0.08, s < 0.97 else { return }
+    let jumbled = [3, 1, 5, 2, 4], partitioned = [2, 1, 3, 5, 4], sorted = [1, 2, 3, 4, 5]
+    let row = s < 0.4 ? jumbled : s < 0.54 ? partitioned : sorted
+    let fade = s > 0.82 ? 1 - (s - 0.82) / 0.15 : 1
+    let shine = C(0xFF8A6A)
+    for (i, h) in row.enumerated() {
+        guard s >= 0.08 + 0.05 * Double(i) else { continue }                 // set out one at a time
+        let pivot = h == 3 && s >= 0.36 && s < 0.6
+        let moved = (s >= 0.4 && s < 0.44 && partitioned[i] != jumbled[i]) || (s >= 0.54 && s < 0.58 && sorted[i] != partitioned[i])
+        let x = 46 + 3 * i, hop = moved ? 1 : 0
+        for j in 0..<h {
+            c.pattern(x, 42 - 2 * j - hop, [".R", "Rr"], ["R": (pivot ? shine : berry).alpha(fade), "r": berryDark.alpha(fade)])
+        }
+    }
+    if s >= 0.6 && s < 0.78 {                                                // done: a sparkle runs along the row
+        let k = (s - 0.6) / 0.18, x = 46 + 14 * k, y = 41 - 9 * k
+        c.glowLine(x - 1.5, y, x + 1.5, y, core: C(0xFFFFFF), glow: C(0xFFE8A0), coreR: 0.3, glowR: 1.2, strength: 0.9)
+        c.glowLine(x, y - 1.5, x, y + 1.5, core: C(0xFFFFFF), glow: C(0xFFE8A0), coreR: 0.3, glowR: 1.2, strength: 0.9)
+    }
 }
 
 /// Quicksort's front arm at `angle` from his shoulder: a slim branch, a little thicker at the shoulder, a sprig of
@@ -511,6 +667,18 @@ private func drawBoots(_ c: PixelCanvas, _ step: Int, _ col: Px, rows: Int = 2) 
 /// A solid pixel line (no glow), `r` its half-width.
 private func line(_ c: PixelCanvas, _ x0: Double, _ y0: Double, _ x1: Double, _ y1: Double, _ col: Px, _ r: Double = 0.7) {
     c.glowLine(x0, y0, x1, y1, core: col, glow: clear, coreR: r, glowR: r + 0.1)
+}
+
+/// Smoothstep: 0→1 eased at both ends (clamped).
+private func smooth(_ x: Double) -> Double {
+    let k = min(1, max(0, x))
+    return k * k * (3 - 2 * k)
+}
+
+/// A signature's envelope `s` through it: eased up from 0 to 1 by `rise`, held, and eased back to 0 from `fall` to the
+/// end, so the move starts and ends in the idle look.
+private func arc(_ s: Double, rise: Double, fall: Double) -> Double {
+    s < rise ? smooth(s / rise) : s < fall ? 1 : 1 - smooth((s - fall) / (1 - fall))
 }
 
 private func unit(_ degrees: Double) -> (x: Double, y: Double) {

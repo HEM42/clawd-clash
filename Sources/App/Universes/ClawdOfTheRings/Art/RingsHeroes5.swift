@@ -5,7 +5,7 @@ import Foundation
 // it. The face is Clawd's own orange, and the eyes stay ink.
 
 let ringsHeroes5: [LOTRHero: Persona] = [
-    .butterbur: Persona(name: "Barliman Butterbug", weapon: .none, bulk: 3, headTop: 22,
+    .butterbur: Persona(name: "Barliman Butterbug", weapon: .none, bulk: 3, headTop: 22, signature: 3.2,
                         callout: "I'll remember it in the morning… let me file it in the backlog.", draw: drawButterbur),
 ]
 
@@ -14,7 +14,9 @@ let ringsHeroes5: [LOTRHero: Persona] = [
 /// Barliman Butterbug, the landlord of the Prancing Ponytail, round and stout: a big belly bulging out in front under a
 /// long white apron tied over a brown waistcoat and cream shirt, the sleeves rolled up to the elbow, dark breeches and
 /// boots; a bald, shiny dome of a head with bushy grey-brown tufts over the ears, ruddy cheeks, and a checked bar rag
-/// over his back arm. In his front hand a foaming tankard, held up proudly. He keeps out of fights. No signature.
+/// over his back arm. In his front hand a foaming tankard, held up proudly. He keeps out of fights. Signature: the
+/// letter he forgot to send: one brow up, he scratches his head under a "?"; then it comes to him, a "!" pops up in
+/// its place and he slaps his hand to his forehead, eyes squeezed shut, before letting it drop again.
 private func drawButterbur(_ c: PixelCanvas, _ p: Pose) {
     let shirt = C(0xE8E0CC), shirtShade = C(0xC0B8A4), waistcoat = C(0x6A4A2A), waistcoatDark = C(0x4E361E)
     let apron = C(0xF4F2EA), apronShade = C(0xC8C4B8)
@@ -51,6 +53,55 @@ private func drawButterbur(_ c: PixelCanvas, _ p: Pose) {
     c.rect(38, 32, 3, 1, shirt); c.rect(38, 33, 3, 1, shirtShade)
     drawTankard(c, x: 39, y: 27)
     c.rect(38, 30, 3, 2, clawdOrange); c.px(40, 31, clawdShade)             // the fist round the handle
+    if let s = p.signature, s > 0.04 && s < 0.92 { drawRemembering(c, s: s, t: p.t) }
+}
+
+/// Butterbug's signature at `s` (0.04…0.92): puzzling (…0.4), one brow up and his back hand scratching his head under
+/// a "?"; then the "!" pops up, and his hand comes over to slap his forehead (0.5), his eyes squeezed shut, until it
+/// drops back down (0.8…).
+private func drawRemembering(_ c: PixelCanvas, s: Double, t: Double) {
+    let bang = C(0xFFE14A), shade = clawdShade, palm = C(0xF2A482)
+    let puzzled = s < 0.4
+    // The hand: scratching above the tuft, over to the forehead, held there, then back down behind him.
+    let scratch = (x: 17.0 + (Int(t * 12) % 2 == 0 ? 0 : 1), y: 24.0), brow = (x: 24.0, y: 26.0)
+    var hand: (x: Double, y: Double)?
+    if s < 0.1 {
+        let u = smooth((s - 0.04) / 0.06)
+        hand = (16 + (scratch.x - 16) * u, 33 + (scratch.y - 33) * u)
+    } else if puzzled {
+        hand = scratch
+    } else if s < 0.5 {
+        let u = smooth((s - 0.4) / 0.1)
+        hand = (scratch.x + (brow.x - scratch.x) * u, scratch.y + (brow.y - scratch.y) * u)
+    } else if s < 0.8 {
+        hand = brow
+    } else if s < 0.88 {
+        let u = smooth((s - 0.8) / 0.08)
+        hand = (brow.x + (16 - brow.x) * u, brow.y + (33 - brow.y) * u)
+    }
+    if puzzled {
+        c.rect(31, 28, 4, 1, clawdOrange); c.rect(31, 27, 4, 1, C(0x625646))   // one brow up
+        c.pattern(27, 13 + (Int(t * 3) % 2), [".QQ.", "Q..Q", "..Q.", "..Q.", "....", "..Q."], ["Q": C(0xE8F0FF)])
+    } else {
+        if s > 0.48 && s < 0.82 {                                             // eyes squeezed shut
+            c.rect(22, 29, 2, 3, clawdOrange); c.rect(32, 29, 2, 3, clawdOrange)
+            c.rect(21, 30, 3, 1, ink); c.rect(32, 30, 3, 1, ink)
+        }
+        let pop = s < 0.44 ? 1 : 0
+        c.rect(28, 14 - pop, 2, 4, bang); c.rect(28, 19 - pop, 2, 1, bang)
+    }
+    guard let h = hand else { return }
+    // The bare forearm (the sleeve's rolled up) from the back shoulder, and the hand, outlined against his face.
+    c.glowLine(16.5, 33.5, h.x + 1, h.y + 1.5, core: shade, glow: C(0, 0), coreR: 1.3, glowR: 1.4)
+    c.glowLine(16.5, 33.5, h.x + 1, h.y + 1.5, core: palm, glow: C(0, 0), coreR: 0.6, glowR: 0.7)
+    let hx = Int(h.x.rounded()), hy = Int(h.y.rounded())
+    c.pattern(hx - 1, hy - 1, [".SSS.", "SOOOS", "SOOOS", ".SSS."], ["S": shade, "O": palm])
+    if s > 0.5 && s < 0.58 {                                                  // smack!
+        let a: Double = 1 - (s - 0.5) / 0.08
+        for (x, y) in [(hx - 3, hy - 2), (hx - 4, hy - 3), (hx + 2, hy - 3), (hx + 3, hy - 4), (hx + 5, hy), (hx + 6, hy)] {
+            c.px(x, y, C(0xFFFFFF, a))
+        }
+    }
 }
 
 /// A pewter tankard, `x`, `y` its top left: a head of white foam spilling over the rim, a pewter body with a band round
@@ -71,6 +122,12 @@ private func drawTankard(_ c: PixelCanvas, x: Int, y: Int) {
 }
 
 // MARK: - Shared helpers
+
+/// Smoothstep: 0→1 eased at both ends.
+private func smooth(_ x: Double) -> Double {
+    let u = min(1, max(0, x))
+    return u * u * (3 - 2 * u)
+}
 
 /// Boots over the bottom `rows` of each leg (a bit of the folded foot when sitting).
 private func drawBoots(_ c: PixelCanvas, _ step: Int, _ col: Px, rows: Int = 2) {

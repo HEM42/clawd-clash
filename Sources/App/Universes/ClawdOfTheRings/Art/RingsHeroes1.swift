@@ -12,14 +12,14 @@ let ringsHeroes1: [LOTRHero: Persona] = [
                   callout: "Po-tay-toes!", draw: drawSam),
     .pippin: Persona(name: "Pippin Tookmuch", weapon: .saber, pivot: hobbitHand, headTop: 27, signature: 3.0,
                      callout: "Second breakfast?", draw: drawPippin),
-    .merry: Persona(name: "Merge-y Brandybranch", weapon: .saber, pivot: hobbitHand, headTop: 27,
+    .merry: Persona(name: "Merge-y Brandybranch", weapon: .saber, pivot: hobbitHand, headTop: 27, signature: 3.0,
                     callout: "Ride now, ride for main!", draw: drawMerry),
-    .bilbo: Persona(name: "Bilbyte Bagclawds", weapon: .saber, pivot: hobbitHand, headTop: 27,
+    .bilbo: Persona(name: "Bilbyte Bagclawds", weapon: .saber, pivot: hobbitHand, headTop: 27, signature: 3.4,
                     callout: "I'm going on a refactor!", draw: drawBilbo),
-    .rosie: Persona(name: "Rosie Kotlin", weapon: .saber, pivot: hobbitHand, headTop: 26,
+    .rosie: Persona(name: "Rosie Kotlin", weapon: .saber, pivot: hobbitHand, headTop: 26, signature: 3.0,
                     callout: "Samwise? He's my one non-nullable.", draw: drawRosie),
     .farmerMaggot: Persona(name: "Farmer Mag-git", weapon: .saber, pivot: hobbitHand, bulk: 1, headTop: 23,
-                           callout: "Trespassers! Who's been cherry-picking my mushrooms?", draw: drawMaggot),
+                           signature: 3.2, callout: "Trespassers! Who's been cherry-picking my mushrooms?", draw: drawMaggot),
 ]
 
 // MARK: - The hobbit
@@ -361,27 +361,74 @@ private let merryKit = HobbitKit(curl: C(0xA8782E), curlLight: C(0xD4A456), curl
 
 /// Merge-y, hobbit-sized: Clawd under golden-brown curls, a russet waistcoat, the deep green cloak of the Mark with
 /// its gold edge, bare hairy feet, and a little horn of the Mark, ivory banded with gold, slung at his hip. Like Pippin
-/// he has a short sword at his side that he fights with.
+/// he has a short sword at his side that he fights with. Signature: the horn-call that roused the Shire: he lifts the
+/// horn from his hip to his lips and blows it, eyes squeezed shut and cheeks flushed, the call ringing out of its bell
+/// and a stream of gold notes rising up and away, then hangs it back at his hip.
 private func drawMerry(_ c: PixelCanvas, _ p: Pose) {
-    drawHobbit(c, p, merryKit, sheath: p.melee == nil)
-    drawHornOfTheMark(c)
-    if let a = p.melee {
-        for (i, ta) in p.trail.enumerated() { drawShortSword(c, angle: ta, alpha: 0.3 / Double(i + 1)) }
-        drawShortSword(c, angle: a)
+    let sig = p.signature.flatMap { $0 > 0.06 && $0 < 0.94 ? $0 : nil }
+    // 0.06…0.13 and 0.86…0.94 on the way up and back down; at his lips in between, blowing 0.18…0.8.
+    let atLips = sig.map { $0 > 0.13 && $0 < 0.86 } ?? false
+    let blowing = sig.map { $0 > 0.18 && $0 < 0.8 } ?? false
+    drawHobbit(c, p, merryKit, armRight: sig == nil ? 0 : atLips ? 1 : 0, wince: blowing, sheath: p.melee == nil)
+    guard let s = sig else {
+        drawHornOfTheMark(c)
+        if let a = p.melee {
+            for (i, ta) in p.trail.enumerated() { drawShortSword(c, angle: ta, alpha: 0.3 / Double(i + 1)) }
+            drawShortSword(c, angle: a)
+            c.rect(36, 36, 2, 2, clawdOrange)
+        }
+        return
+    }
+    guard atLips else {
+        drawHornOfTheMark(c, dx: 5, dy: -3)                                   // half way, in his hand
         c.rect(36, 36, 2, 2, clawdOrange)
+        return
+    }
+    drawRaisedHorn(c)
+    c.rect(36, 35, 2, 2, clawdOrange)
+    guard blowing else { return }
+    c.rect(33, 35, 2, 1, C(0xF08A78))                                         // cheeks puffed and flushed
+    // The call ringing out of the bell.
+    let ring = C(0xFFF4C8)
+    for (i, (dx, dy)) in [(1, -2), (2, 0), (1, 2)].enumerated() where Int(p.t * 9 + Double(i)) % 3 != 0 {
+        c.px(45 + dx, 31 + dy, ring.alpha(0.75)); c.px(46 + dx, 31 + dy + (dy > 0 ? 1 : dy < 0 ? -1 : 0), ring.alpha(0.45))
+    }
+    // The notes, one after another, rising out of the bell and drifting off.
+    let note = C(0xF8DC6A)
+    for (i, start) in [0.2, 0.31, 0.42, 0.53, 0.64].enumerated() {
+        let u = (s - start) / 0.3
+        guard u > 0, u < 1 else { continue }
+        let a: Double = min(1, u * 6) * (1 - pow(u, 3))
+        let x = 43 + Int((u * 9 + sin(u * 7 + Double(i)) * 1.5).rounded()), y = 27 - Int((u * 16).rounded())
+        let shape = i % 2 == 0 ? [".NN", ".N.", ".N.", "NN.", "NN."] : [".NNNN", ".N..N", ".N..N", "NN.NN", "NN.NN"]
+        c.pattern(x, y, shape, ["N": note.alpha(a)])
     }
 }
 
 /// The horn of the Mark at his hip on a leather strap: a small curved ivory horn, its bell forward, two gold bands.
-private func drawHornOfTheMark(_ c: PixelCanvas) {
+/// `dx`, `dy` move the horn (not the strap) off his hip, on its way up to his lips.
+private func drawHornOfTheMark(_ c: PixelCanvas, dx: Int = 0, dy: Int = 0) {
     let ivory = C(0xEDE4C8), ivoryDark = C(0xB8AA88), gold = C(0xE0B840), strap = C(0x5A3A22)
     c.px(27, 38, strap); c.px(28, 39, strap)
-    c.pattern(26, 39, [
+    c.pattern(26 + dx, 39 + dy, [
         "i.....",
         "IIGIIG",
         ".IIIGI",
     ], ["I": ivory, "i": ivoryDark, "G": gold])
-    c.px(31, 41, ivoryDark)
+    c.px(31 + dx, 41 + dy, ivoryDark)
+}
+
+/// The horn of the Mark at his lips, blown: the mouthpiece at his face, curving out and up to the bell.
+private func drawRaisedHorn(_ c: PixelCanvas) {
+    let ivory = C(0xEDE4C8), ivoryDark = C(0xB8AA88), gold = C(0xE0B840)
+    c.pattern(35, 30, [
+        ".......iI",
+        "......IIIi",
+        ".....GIIIi",
+        "...IIGIIi.",
+        "iIIIIIi...",
+        ".ii.......",
+    ], ["I": ivory, "i": ivoryDark, "G": gold])
 }
 
 // MARK: - Bilbyte
@@ -393,9 +440,15 @@ private let bilboKit = HobbitKit(curl: C(0xC8C8C2), curlLight: C(0xEDEDE8), curl
 
 /// Bilbyte, an old hobbit, hobbit-sized: Clawd under grey-white curls, a burgundy waistcoat over a cream shirt, a
 /// brown travelling cloak and bare hairy feet, with his little red book (the one he's writing, a gold mark on the
-/// cover) tucked under his arm. He fights with a small blade, a letter-opener of a sword, kept at his hip.
+/// cover) tucked under his arm. He fights with a small blade, a letter-opener of a sword, kept at his hip. Signature:
+/// "I'm going on an adventure!": he holds up the Dwarves' contract and lets it drop; it unrolls down to the floor and
+/// keeps on going, spilling across the floor to a red seal at the very end, and then rolls itself back up into his hand.
 private func drawBilbo(_ c: PixelCanvas, _ p: Pose) {
-    drawHobbit(c, p, bilboKit, sheath: p.melee == nil)
+    let sig = p.signature.flatMap { $0 > 0.03 && $0 < 0.97 ? $0 : nil }
+    // The hand up by 0.1 and down again from 0.88; unrolled 0.12…0.42, held, rolled back up 0.6…0.86.
+    let raise = sig.map { smooth(($0 - 0.03) / 0.07) * (1 - smooth(($0 - 0.88) / 0.08)) } ?? 0
+    let up = Int((5 * raise).rounded())
+    drawHobbit(c, p, bilboKit, armRight: up, sheath: p.melee == nil)
     // The book, under the back arm.
     let red = C(0xA82A2A), redDark = C(0x6E1A1A), pages = C(0xF0E8D0)
     c.rect(14, 34, 5, 5, red)
@@ -407,6 +460,39 @@ private func drawBilbo(_ c: PixelCanvas, _ p: Pose) {
         drawSmallBlade(c, angle: a)
         c.rect(36, 36, 2, 2, clawdOrange)
     }
+    guard let s = sig else { return }
+    let unrolled: Double = s < 0.42 ? pow(min(1, max(0, (s - 0.12) / 0.3)), 1.4)
+        : s < 0.6 ? 1 : 1 - smooth((s - 0.6) / 0.26)
+    let fade = min(1, (s - 0.03) / 0.05, (0.97 - s) / 0.05)
+    drawContract(c, top: 36 - up, floor: 43 - c.oy, unrolled: unrolled, alpha: fade)
+    c.rect(36, 36 - up, 2, 2, clawdOrange)                                  // his fist round the top
+}
+
+/// The contract, its top rolled round a rod in his hand at row `top`: as it `unrolled` (0…1) the paper drops down to
+/// the `floor` row, the roll at its foot, and runs on along the floor to the right, two dozen pixels more, with the red
+/// seal at the very end. Lines of small print run all the way down it.
+private func drawContract(_ c: PixelCanvas, top: Int, floor: Int, unrolled: Double, alpha: Double) {
+    let paper = C(0xF2E8CC, alpha), paperDark = C(0xC8B48A, alpha), writing = C(0x7A6A52, alpha)
+    let hang = top + 2, drop = floor - hang + 1, run = 24
+    let length = Int((Double(drop + run) * unrolled).rounded())
+    c.rect(36, top, 7, 2, paper); c.rect(36, top + 1, 7, 1, paperDark); c.px(43, top, paperDark)    // the rod
+    // Hanging down in front of him, small print on every other row.
+    let down = min(length, drop)
+    for y in hang..<(hang + down) {
+        c.rect(38, y, 5, 1, paper); c.px(42, y, paperDark)
+        if (y - hang) % 2 == 1 { for x in 38...41 where noise(y * 5 + x) > 0.3 { c.px(x, y, writing) } }
+    }
+    guard length > drop else {
+        let y = hang + down                                                 // the roll at its foot, dropping
+        c.rect(37, y, 7, 2, paper); c.rect(37, y + 1, 7, 1, paperDark)
+        return
+    }
+    // Along the floor, then the seal and the roll at the far end.
+    let end = 43 + length - drop
+    c.rect(38, floor - 1, end - 38, 2, paper); c.rect(38, floor, end - 38, 1, paperDark)
+    for x in 44..<end where x % 3 != 0 { c.px(x, floor - 1, writing) }
+    if length - drop > run - 2 { c.rect(end - 3, floor - 1, 2, 2, C(0xB0262A, alpha)) }
+    c.pattern(end - 1, floor - 3, [".PP.", "PPdP", "PdPP", ".PP."], ["P": paper, "d": paperDark])
 }
 
 /// Bilbyte's small blade, gripped at the hand: a wooden grip, a little brass guard and a short (5 px) bright blade.
@@ -432,10 +518,15 @@ private let rosieKit = HobbitKit(curl: C(0x9A4626), curlLight: C(0xC8683A), curl
 /// Rosie, a hobbit lass, hobbit-sized: Clawd under auburn curls that tumble down past her shoulders, a pink flower
 /// tucked in them, a bright yellow bodice and a short full skirt to the shin trimmed with lace, a rose shawl
 /// round her shoulders and bare hairy feet. On her back arm a wicker basket of bread and flowers; she fights with a
-/// rolling pin, swung like a club.
+/// rolling pin, swung like a club. Signature: she plucks the flower from her hair and tosses it high, watching it
+/// spin up and tumble back down; she catches it, holds it to her face with her eyes shut happily while a little heart
+/// floats up, and tucks it back in her curls.
 private func drawRosie(_ c: PixelCanvas, _ p: Pose) {
     let k = rosieKit, white = C(0xF4F0E6)
-    drawHobbit(c, p, k)
+    let sig = p.signature.flatMap { $0 > 0.03 && $0 < 0.97 ? $0 : nil }
+    let up = sig.map { rosieReach($0) } ?? 0
+    let flower = sig.map { rosieFlower($0, up: up) }
+    drawHobbit(c, p, k, armRight: up)
     // The skirt, flaring a little to the shin, a lace trim at its hem.
     c.rect(20, 38, 16, 1, k.waistcoat)
     c.rect(19, 39, 18, 1, k.waistcoat)
@@ -446,8 +537,11 @@ private func drawRosie(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(17, 31, ["CCl", "CdC", "lCC", "CCd", ".Cl", ".d."], ["C": k.curl, "l": k.curlLight, "d": k.curlDark])
     c.px(36, 33, k.curl); c.px(36, 34, k.curlDark)
     // The flower in her hair.
-    c.pattern(31, 26, [".P.", "PYP", ".P."], ["P": C(0xF4A0C0), "Y": C(0xF8D84A)])
-    c.px(30, 28, C(0x5A9A3A))
+    let petal = C(0xF4A0C0), middle = C(0xF8D84A), stem = C(0x5A9A3A)
+    if flower == nil {
+        c.pattern(31, 26, [".P.", "PYP", ".P."], ["P": petal, "Y": middle])
+        c.px(30, 28, stem)
+    }
     // The basket on her back arm, the bread and a flower peeping out.
     let wicker = C(0xB88A4A), wickerDark = C(0x8A6230)
     c.pattern(12, 33, [
@@ -465,6 +559,57 @@ private func drawRosie(_ c: PixelCanvas, _ p: Pose) {
         drawRollingPin(c, angle: a)
         c.rect(36, 36, 2, 2, clawdOrange)
     }
+    guard let s = sig, let f = flower else { return }
+    // Her eyes: up after the flower while it's in the air, shut happily while she smells it.
+    if s > 0.27 && s < 0.6 {
+        c.rect(23, 35, 2, 1, clawdOrange); c.rect(31, 35, 2, 1, clawdOrange)
+        c.rect(23, 32, 2, 1, ink); c.rect(31, 32, 2, 1, ink)
+    } else if s > 0.63 && s < 0.84 {
+        c.rect(23, 33, 2, 3, clawdOrange); c.rect(31, 33, 2, 3, clawdOrange)
+        for ex in [22, 30] { c.pattern(ex, 33, [".II.", "I..I"], ["I": ink]) }
+    }
+    c.rect(36, 36 - up, 2, 2, clawdOrange)                                  // her hand, over the curls
+    if f.spin {
+        c.pattern(f.x - 1, f.y - 1, ["P.P", ".Y.", "P.P"], ["P": petal, "Y": middle])
+    } else {
+        c.pattern(f.x - 1, f.y - 1, [".P.", "PYP", ".P."], ["P": petal, "Y": middle])
+        c.px(f.x - 2, f.y + 1, stem)
+    }
+    // The little heart, floating up while she smells it.
+    let u = (s - 0.64) / 0.26
+    if u > 0, u < 1 {
+        let a: Double = min(1, u * 5) * (1 - u * u)
+        c.pattern(40 + Int((u * 3).rounded()), 27 - Int((u * 10).rounded()), [".H.H.", "HHHHH", ".HHH.", "..H.."],
+                  ["H": C(0xF06A8A, a)])
+    }
+}
+
+/// How far Rosie's front hand is raised at `s` through her signature: up to her hair to pluck the flower, down to toss
+/// it, a little higher to catch it, down at her face to smell it, back up to her hair and down again.
+private func rosieReach(_ s: Double) -> Int {
+    let keys: [(s: Double, up: Double)] = [(0.03, 0), (0.12, 7), (0.2, 7), (0.26, 4), (0.27, 5), (0.32, 3), (0.58, 4),
+                                           (0.62, 3), (0.8, 3), (0.86, 7), (0.9, 7), (0.97, 0)]
+    for (a, b) in zip(keys, keys.dropFirst()) where s < b.s {
+        return Int((a.up + (b.up - a.up) * smooth((s - a.s) / (b.s - a.s))).rounded())
+    }
+    return 0
+}
+
+/// Where Rosie's flower is at `s` through her signature, its hand raised `up`: in her hair, slid into her hand,
+/// tossed up spinning (0.27…0.6) and caught again, then slid back into her hair at the end.
+private func rosieFlower(_ s: Double, up: Int) -> (x: Int, y: Int, spin: Bool) {
+    let hair = (x: 32.0, y: 27.0), hand = (x: 37.0, y: Double(34 - up))
+    func slide(_ u: Double) -> (x: Int, y: Int, spin: Bool) {
+        let v = smooth(u)
+        return (Int((hair.x + (hand.x - hair.x) * v).rounded()), Int((hair.y + (hand.y - hair.y) * v).rounded()), false)
+    }
+    if s < 0.12 { return (Int(hair.x), Int(hair.y), false) }
+    if s < 0.2 { return slide((s - 0.12) / 0.08) }
+    if s > 0.86 { return slide(1 - (s - 0.86) / 0.04) }
+    guard s > 0.27 && s < 0.6 else { return (Int(hand.x), Int(hand.y), false) }
+    let u = (s - 0.27) / 0.33
+    let y = 31 - 19 * 4 * u * (1 - u)
+    return (37 + Int((sin(u * .pi) * 2).rounded()), Int(y.rounded()), Int(u * 9) % 2 == 0)
 }
 
 /// Rosie's rolling pin, gripped by one handle: a fat pale-wood roller between two turned handles.
@@ -488,10 +633,17 @@ private let maggotKit = HobbitKit(curl: C(0x8A8274), curlLight: C(0xB0A898), cur
 /// Farmer Mag-git, an old hobbit farmer, hobbit-sized but stout: Clawd under grizzled grey curls and a wide, frayed
 /// straw hat with a red band, a heavy leather apron bulging over his belly, a dull brown coat and bare hairy feet. A
 /// brass dog whistle hangs on a cord at his chest (his dogs are never far off), and a basket of mushrooms rides on his
-/// back arm. His pitchfork stands upright in his fist at rest; he fights with it, prongs first.
+/// back arm. His pitchfork stands upright in his fist at rest; he fights with it, prongs first. Signature: trespassers!
+/// Brows down, he shakes his pitchfork high over his head at them, and his dog Fang pops up out of the long grass in
+/// front of him, barking his head off, then ducks back down again as the farmer lowers the fork.
 private func drawMaggot(_ c: PixelCanvas, _ p: Pose) {
     let k = maggotKit, leather = C(0x7A5232), leatherDark = C(0x5A3A22), leatherLight = C(0x96683E)
-    drawHobbit(c, p, k)
+    let sig = p.signature.flatMap { $0 > 0.02 && $0 < 0.98 ? $0 : nil }
+    // Raised by 0.12 and shaken, lowered 0.62…0.74.
+    let shake: Double = sig.map { smooth(($0 - 0.02) / 0.1) * (1 - smooth(($0 - 0.62) / 0.12)) } ?? 0
+    let lift = Int((3 * shake).rounded()) + (shake > 0.6 && Int(p.t * 14) % 2 == 0 ? 1 : 0)
+    drawHobbit(c, p, k, armRight: lift)
+    let floor = 43 - c.oy
     // The leather apron, bulging out over his belly, with a pocket.
     c.rect(22, 36, 14, 5, leather)
     c.rect(36, 37, 1, 3, leather); c.px(37, 38, leatherDark); c.px(36, 40, leatherDark)
@@ -521,21 +673,62 @@ private func drawMaggot(_ c: PixelCanvas, _ p: Pose) {
         ".WdWdW..",
     ], ["C": cap, "c": capDark, "s": stalk, "k": capDark, "W": wicker, "d": wickerDark])
     c.rect(18, 36, 2, 2, clawdOrange)
-    // The pitchfork: upright at rest, swung prongs first in a fight.
-    let a = p.melee ?? -90
+    if let s = sig {
+        if s > 0.06 && s < 0.8 {                                              // brows down, glaring
+            c.pattern(22, 31, ["II...", "..I.."], ["I": ink]); c.pattern(30, 31, ["..II", ".I.."], ["I": ink])
+        }
+        drawFang(c, s: s, t: p.t, floor: floor)
+    }
+    // The pitchfork: upright at rest (shaken over his head in the signature), swung prongs first in a fight.
+    let a = p.melee ?? -90 + 12 * shake * sin(p.t * 19)
     for (i, ta) in (p.melee == nil ? [] : p.trail).enumerated() { drawPitchfork(c, angle: ta, alpha: 0.3 / Double(i + 1)) }
-    drawPitchfork(c, angle: a)
-    c.rect(36, 36, 2, 2, clawdOrange)
+    drawPitchfork(c, angle: a, lift: lift)
+    c.rect(36, 36 - lift, 2, 2, clawdOrange)
 }
 
 /// Mag-git's pitchfork, gripped two thirds down its long ash shaft (the butt sticks out behind the hand): an iron
-/// crossbar and three long prongs.
-private func drawPitchfork(_ c: PixelCanvas, angle: Double, alpha: Double = 1) {
-    prop(c, at: hobbitHand, angle: angle, alpha: alpha) { s in
+/// crossbar and three long prongs. `lift` raises the hand holding it.
+private func drawPitchfork(_ c: PixelCanvas, angle: Double, alpha: Double = 1, lift: Int = 0) {
+    prop(c, at: (hobbitHand.x, hobbitHand.y - Double(lift)), angle: angle, alpha: alpha) { s in
         let ash = C(0xA8865A), ashDark = C(0x7A5E3A), iron = C(0x8A8E94), ironLight = C(0xB8BCC4)
         s.rect(14, 20, 18, 1, ash); s.rect(14, 21, 18, 1, ashDark)
         s.rect(32, 18, 1, 5, iron)
         for y in [18, 20, 22] { s.rect(33, y, 5, 1, iron); s.px(38, y, ironLight) }
+    }
+}
+
+/// Fang, Mag-git's dog, in Mag-git's signature at `s`: a clump of long grass in front of the farmer, the dog's head
+/// popping up out of it (0.2…0.28), barking at the trespassers (the jaw snapping open and shut on `t`, the barks
+/// flying off its nose), and ducking back down (0.76…0.84). Nothing of him shows below the grass, or the `floor` row.
+private func drawFang(_ c: PixelCanvas, s: Double, t: Double, floor: Int) {
+    let grass: Double = smooth((s - 0.12) / 0.07) * (1 - smooth((s - 0.86) / 0.07))
+    let rise: Double = smooth((s - 0.2) / 0.08) * (1 - smooth((s - 0.76) / 0.08))
+    let barking = rise > 0.95 && Int(t * 8) % 2 == 0
+    if rise > 0 {
+        let x0 = 44, y0 = floor - 2 - Int((13 * rise).rounded())
+        let face = barking ? [".BBBBBBoooo", ".BBBBBotto.", ".BBBBBmmm..", ".BBBB......"]
+                           : [".BBBBBMMMM.", ".BBBBBmmm..", ".BBBBB.....", ".BBBB......"]
+        let rows = [".E.........", "EEE........", "EBBBB......", "BBBBBBB....", "BBBkBBBMM..", "BBBBBBMMMMn"] + face
+        let pal: [Character: Px] = ["B": C(0x8A5A30), "E": C(0x4A2E18), "M": C(0xD8B07A), "m": C(0xA8804A), "n": ink,
+                                    "k": ink, "o": C(0x3A1A14), "t": C(0xE0607A)]
+        for (r, row) in rows.enumerated() where y0 + r <= floor {
+            for (i, ch) in row.enumerated() { if let col = pal[ch] { c.px(x0 + i, y0 + r, col) } }
+        }
+        if y0 + 10 <= floor { c.rect(x0 + 1, y0 + 10, 4, floor - y0 - 9, pal["B"]!) }       // his neck
+        if barking {                                                          // the barks, flying off his nose
+            let bark = C(0xFFF4D8, 0.85)
+            c.px(x0 + 12, y0 + 3, bark); c.px(x0 + 13, y0 + 2, bark)
+            c.px(x0 + 13, y0 + 5, bark); c.px(x0 + 14, y0 + 5, bark)
+            c.px(x0 + 12, y0 + 7, bark); c.px(x0 + 13, y0 + 8, bark)
+        }
+    }
+    // The long grass in front of him.
+    guard grass > 0 else { return }
+    let blade = C(0x6A9A3A, grass), bladeDark = C(0x4A7A2A, grass), seed = C(0xD8C070, grass)
+    for (i, x) in [41, 42, 44, 45, 47, 48, 49, 51, 52, 54, 55, 57].enumerated() {
+        let h = 4 + Int(noise(i * 7 + 3) * 4), lean = i % 3 == 0 ? 1 : 0
+        for k in 0..<h { c.px(x + (k > h / 2 ? lean : 0), floor - k, k % 2 == 0 ? blade : bladeDark) }
+        if i % 2 == 0 { c.px(x + lean, floor - h, seed) }
     }
 }
 

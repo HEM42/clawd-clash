@@ -7,14 +7,15 @@ import Foundation
 
 let ringsVillains4: [LOTRVillain: Persona] = [
     .watcher: Persona(name: "The Watcher in the Waterfall", weapon: .saber, canSit: false, pivot: watcherRoot, bulk: 8,
-                      headTop: 13, callout: "Requirements… design… nobody gets out of the Waterfall.", draw: drawWatcher),
+                      headTop: 13, signature: 3.2, callout: "Requirements… design… nobody gets out of the Waterfall.", draw: drawWatcher),
     .oliphaunt: Persona(name: "Oli-PHP-aunt", weapon: .saber, armoured: true, canSit: false, pivot: mumakTusks, bulk: 12,
-                        headTop: 7, callout: "I am the elePHPant in the room.", draw: drawOliphaunt),
+                        headTop: 7, signature: 3.0,
+                        callout: "I am the elePHPant in the room.", draw: drawOliphaunt),
     .barrowWight: Persona(name: "Barrow-write", weapon: .lightning, motion: .hover,
                           magic: Magic(core: C(0xF0FFF4), glow: C(0x8FE8B0), jagged: false), canSit: false,
-                          pivot: wightHand, headTop: 19, callout: "Cold be hand and heart and disk… write once, sleep forever.",
+                          pivot: wightHand, headTop: 19, signature: 3.4, callout: "Cold be hand and heart and disk… write once, sleep forever.",
                           draw: drawBarrowWight),
-    .warg: Persona(name: "Wargh-rider", weapon: .saber, canSit: false, pivot: riderHand, bulk: 9, headTop: 17,
+    .warg: Persona(name: "Wargh-rider", weapon: .saber, canSit: false, pivot: riderHand, bulk: 9, headTop: 17, signature: 3.0,
                    callout: "Grrr… I smell Clawd in the commit log!", draw: drawWargRider),
 ]
 
@@ -29,6 +30,10 @@ private let watcherRoot: (x: Double, y: Double) = (39.5, 36.5)
 /// one darker), two more groping along the water before and behind. It doesn't walk: the tentacles shift one way and
 /// the other with `p.step`, and sway slowly when it's still. It lashes with the front one, which rears up and hooks
 /// over forward at rest; swung, it follows the swing, its tip lagging behind, with a pale smear behind a fast lash.
+/// Signature: up from the deep. The lashing tentacle rears up out of the pool, straight up to the top of the canvas
+/// (…0.3), and gropes there, its tip curling and snatching at the air twice; then it comes crashing down forward
+/// (0.55…0.62), a pale smear behind it, and slaps flat along the water: spray flies up and a ripple spreads from where
+/// it hit, before it curls back up into its hook.
 private func drawWatcher(_ c: PixelCanvas, _ p: Pose) {
     let hide = C(0x1E2A22), hideDark = C(0x121A15), hideLight = C(0x34463A)
     let tent = C(0x2A3E2E), tentFar = C(0x18241C), sucker = C(0xB4C4A0), suckerFar = C(0x6E7E66)
@@ -66,6 +71,10 @@ private func drawWatcher(_ c: PixelCanvas, _ p: Pose) {
     drawTentacle(c, root: (37, 41), angle: -5, bend: 40 + 25 * sway, n: 4, r0: 1.1, col: tent, sucker: sucker)
     // The lashing tentacle: hooked over at rest; swung, along the swing with the tip lagging.
     guard let a = p.melee else {
+        if let s = p.signature, s > 0, s < 1 {
+            drawWatcherGrab(c, p, s, sway: sway, tent: tent, sucker: sucker, foam: foam, ripple: ripple)
+            return
+        }
         drawTentacle(c, root: watcherRoot, angle: -78 + 4 * sway, bend: 230, n: 13, r0: 1.8, col: tent, sucker: sucker)
         return
     }
@@ -97,6 +106,52 @@ private func drawTentacle(_ c: PixelCanvas, root: (x: Double, y: Double), angle:
     }
 }
 
+/// The lashing tentacle `s` through the Watcher's signature: its angle, bend and length in steps. From the hook at rest
+/// up to straight overhead (…0.3), groping and snatching (…0.55), crashing down forward (…0.62), lying along the water,
+/// and curling back up into the hook (0.8…).
+private func watcherGrab(_ s: Double, sway: Double) -> (angle: Double, bend: Double, n: Double) {
+    typealias Shape = (angle: Double, bend: Double, n: Double)
+    let rest: Shape = (-78 + 4 * sway, 230, 13), high: Shape = (-95, -30, 17), down: Shape = (8, 25, 15)
+    func mix(_ a: Shape, _ b: Shape, _ k: Double) -> Shape {
+        (a.angle + (b.angle - a.angle) * k, a.bend + (b.bend - a.bend) * k, a.n + (b.n - a.n) * k)
+    }
+    if s < 0.3 { return mix(rest, high, smooth(s / 0.3)) }
+    if s < 0.55 {
+        let u = (s - 0.3) / 0.25
+        return (high.angle + 4 * sin(u * 2 * .pi), high.bend + 120 * (0.5 - 0.5 * cos(u * 4 * .pi)), high.n)
+    }
+    if s < 0.62 { let u = (s - 0.55) / 0.07; return mix(high, down, u * u) }
+    if s < 0.8 { return down }
+    return mix(down, rest, smooth((s - 0.8) / 0.2))
+}
+
+/// The Watcher's signature, its lashing tentacle `s` through the grab (`watcherGrab`): a pale smear behind it as it
+/// crashes down, then spray and a spreading ripple where it slaps the water.
+private func drawWatcherGrab(_ c: PixelCanvas, _ p: Pose, _ s: Double, sway: Double, tent: Px, sucker: Px, foam: Px,
+                             ripple: Px) {
+    if s > 0.55, s < 0.66 {
+        for i in 1...3 {
+            let g = watcherGrab(max(0.55, s - 0.012 * Double(i)), sway: sway)
+            drawTentacle(c, root: watcherRoot, angle: g.angle, bend: g.bend, n: Int(g.n.rounded()), r0: 1.2,
+                         col: C(0x7A9A80), sucker: nil, alpha: 0.32 / Double(i))
+        }
+    }
+    let g = watcherGrab(s, sway: sway)
+    drawTentacle(c, root: watcherRoot, angle: g.angle, bend: g.bend, n: Int(g.n.rounded()), r0: 1.8, col: tent, sucker: sucker)
+    // The splash where it lands: a ripple spreading over the floor, drops of spray flying up and falling back.
+    guard s >= 0.62, s < 0.9 else { return }
+    let k = (s - 0.62) / 0.28, oy = c.oy
+    c.oy -= p.breathe
+    defer { c.oy = oy }
+    ring(c, cx: 58.5, cy: 42.5, rx: 2 + k * 9, ry: 0.6 + k, ripple.alpha(1 - k))
+    if k < 0.2 { for x in [54, 57, 60, 63] { c.px(x, 41, foam) } }
+    for i in 0..<8 {
+        let vx: Double = (Double(i) - 3.5) * 3.2, lift: Double = 9 + 7 * noise(i * 11 + 5)
+        let x = 58.5 + vx * k * 1.6, y = 42 - lift * 4 * k * (1 - k)
+        c.px(Int(x.rounded(.down)), Int(y.rounded(.down)), (i % 3 == 0 ? white : foam).alpha(1 - k * k))
+    }
+}
+
 /// An ellipse's outline, one pixel thick (ripples on water).
 private func ring(_ c: PixelCanvas, cx: Double, cy: Double, rx: Double, ry: Double, _ col: Px) {
     var seen = Set<Int>()
@@ -119,17 +174,63 @@ private let mumakTusks: (x: Double, y: Double) = (49.5, 31.5)
 /// war paint under its eye, a trunk hanging to the floor and curling forward, and four ivory tusks, the near pair over
 /// the far. Over its back a red war blanket trimmed and tasselled in gold, and on top a small wooden howdah under a
 /// red canopy with a tiny rider peering out. It sweeps with its tusks: the head tosses up on the wind-up and down on
-/// the strike, the tusks turning with it and a pale smear behind a fast sweep.
+/// the strike, the tusks turning with it and a pale smear behind a fast sweep. Signature: the elePHPant in the room
+/// makes itself heard. It rears up on its hind legs (…0.22), front feet off the floor and its trunk swinging up and
+/// curling back, and trumpets: blasts of sound ringing out of the trunk's tip and a little "PHP" puffing out of it,
+/// then it comes back down with a thump (0.82) that kicks up dust under its front feet.
 private func drawOliphaunt(_ c: PixelCanvas, _ p: Pose) {
+    guard let s = p.signature, s > 0, s < 1 else { drawOliphauntBody(c, p, trunkUp: nil); return }
+    let far = C(0x62584F), hide = C(0x7A6E64)
+    let rear: Double = s < 0.22 ? smooth(s / 0.22) : s < 0.72 ? 1 : s < 0.82 ? 1 - pow((s - 0.72) / 0.1, 2) : 0
+    let trunkUp: Double = s < 0.05 ? 0 : s < 0.25 ? smooth((s - 0.05) / 0.2) : s < 0.72 ? 1 : 1 - smooth((s - 0.72) / 0.23)
+    let tilt = -12 * rear + (s > 0.22 && s < 0.72 ? 1.2 * sin((s - 0.22) * 6 * .pi) : 0)
+    let hind: (x: Double, y: Double) = (11, 43.5)
+    // The hind legs stay planted; everything else turns up about the hind feet.
+    drawMumakLeg(c, 13, far, up: 0)
+    if s >= 0.82, s < 0.86 { c.oy += 1 }                                          // the thump of landing
+    turned(c, about: hind, degrees: tilt) { drawOliphauntBody($0, p, trunkUp: trunkUp) }
+    drawMumakLeg(c, 7, hide, up: 0)
+    // The trumpeting: rings of sound out of the trunk's tip, and a "PHP" puffing up out of it.
+    if s > 0.25, s < 0.74 {
+        let k = (s - 0.25) / 0.49
+        let tip = turn(curve((51.5, 28.5), angle: -30, bend: -90, n: 7, step: 2).last!, about: hind, tilt)
+        for j in 0..<3 {
+            let f = frac(k * 5 + Double(j) / 3)
+            for a in stride(from: -150.0, through: -60, by: 10) {
+                let u = unit(a), r = 2 + f * 7
+                c.px(Int((tip.x + u.x * r).rounded(.down)), Int((tip.y + u.y * r).rounded(.down)), C(0xF0F4FF, 0.85 * (1 - f)))
+            }
+        }
+        let php = C(0x8892BF, min(1, 3 * (1 - k))), ry = Int((tip.y - 2 - 6 * k).rounded(.down))
+        c.pattern(Int(tip.x) + 3, ry, ["PP..P.P.PP.", "P.P.P.P.P.P", "PP..PPP.PP.", "P...P.P.P..", "P...P.P.P.."], ["P": php])
+    }
+    // Dust kicked up under its front feet as they land.
+    if s >= 0.82, s < 0.98 {
+        let k = (s - 0.82) / 0.16
+        for (i, x) in [28.0, 33, 38, 43].enumerated() {
+            let d = (Double(i) - 1.5) * 2 * k
+            c.px(Int(x + d), 42 - Int(3 * k), C(0xB0A08A, 0.7 * (1 - k)))
+            c.px(Int(x + d) + 1, 43 - Int(2 * k), C(0xB0A08A, 0.5 * (1 - k)))
+        }
+    }
+}
+
+/// A Mûmak's leg: a pillar with toenails, a dark crease down its back edge; `up` 1 while it's lifted.
+private func drawMumakLeg(_ c: PixelCanvas, _ x: Int, _ col: Px, up: Int) {
+    c.rect(x, 33, 7, 11 - up, col)
+    c.rect(x, 36, 1, 6 - up, C(0x5A5048))
+    for k in 0..<3 { c.px(x + 1 + k * 2, 43 - up, C(0xBCAE90)) }
+}
+
+/// Oli-PHP-aunt; `trunkUp` (in the signature) how far its trunk is swung up, 0…1, its hind legs left for the caller.
+private func drawOliphauntBody(_ c: PixelCanvas, _ p: Pose, trunkUp: Double?) {
     let hide = C(0x7A6E64), hideDark = C(0x5A5048), hideLight = C(0x968A7E), far = C(0x62584F)
     let red = C(0xA82A24), redDark = C(0x7A1A16), gold = C(0xD8A83A), goldLight = C(0xF4D47A)
     let ivory = C(0xECE2C8), ivoryShade = C(0xBCAE90), wood = C(0x6A4A2A), woodDark = C(0x4A321C)
     // The legs: pillars with toenails; a diagonal pair lifts at each step.
     func leg(_ x: Int, _ col: Px, group: Int) {
-        let up = p.step >= 0 && group == p.step ? 1 : 0
-        c.rect(x, 33, 7, 11 - up, col)
-        c.rect(x, 36, 1, 6 - up, hideDark)
-        for k in 0..<3 { c.px(x + 1 + k * 2, 43 - up, ivoryShade) }
+        if trunkUp != nil, x == 7 || x == 13 { return }
+        drawMumakLeg(c, x, col, up: p.step >= 0 && group == p.step ? 1 : 0)
     }
     leg(13, far, group: 1); leg(35, far, group: 0)
     c.oy += p.breathe
@@ -187,7 +288,11 @@ private func drawOliphaunt(_ c: PixelCanvas, _ p: Pose) {
     c.rect(39, 21, 1, 9, hideDark)
     // The trunk, ridged, hanging to the floor and curling forward, swinging a little.
     let swing: Double = p.walking ? (p.step == 0 ? 6 : -6) : 4 * sin(p.lt * 1.1)
-    let trunk = curve((51.5, 28.5), angle: 82 + swing * 0.5, bend: -80 + swing, n: 7, step: 2)
+    var trunk = curve((51.5, 28.5), angle: 82 + swing * 0.5, bend: -80 + swing, n: 7, step: 2)
+    if let up = trunkUp {                                                          // swung up and curling back
+        trunk = curve((51.5, 28.5), angle: 82 + swing * 0.5 + (-30 - 82 - swing * 0.5) * up,
+                      bend: -80 + swing + (-90 + 80 - swing) * up, n: 7, step: 2)
+    }
     taper(c, trunk, r0: 2.2, r1: 1.0, hide)
     for q in trunk.dropFirst().dropLast() where q.y + Double(c.oy) < 43 { c.px(Int(q.x.rounded(.down)) - 1, Int(q.y), hideDark) }
     // The near tusks, and a smear behind a fast sweep.
@@ -220,13 +325,17 @@ private let wightHand: (x: Double, y: Double) = (42.5, 33.5)
 /// Barrow-write, a Barrow-wight: Clawd's block turned pale and see-through, blue-white, fading into wisps below the
 /// waist where the legs should be (it floats), with cold glowing pale-green eyes. A tattered grey shroud over its head
 /// and down its sides, its rags trailing and stirring; a gold torc at its throat, gold rings on its bony fingers. It
-/// casts from its outstretched hand, a cold pale-green ray.
+/// casts from its outstretched hand, a cold pale-green ray. Signature: "Cold be hand and heart and disk…". It chants,
+/// its eyes flaring and cold notes drifting up out of its hood, while its ringed hand lets go of the sleeve, drops to
+/// the floor (…0.1) and crawls off along it on its fingertips, stops to drum its fingers (0.45…0.55), crawls back
+/// and leaps up onto the wrist again (0.85…0.95).
 private func drawBarrowWight(_ c: PixelCanvas, _ p: Pose) {
     let ghost = C(0xC8DCF0, 0.72), ghostShade = C(0x96B0CC, 0.72), bone = C(0xDCEAF8, 0.9)
     let shroud = C(0x7A7E86), shroudDark = C(0x585C64), shroudLight = C(0x9498A0)
     let gold = C(0xD8A83A), goldLight = C(0xF4D47A)
     let eye = C(0xE8FFF0), eyeGlow = C(0x7FE8A8)
     let tick = Int(p.t * 6)
+    let sig = p.signature.flatMap { $0 > 0 && $0 < 1 ? $0 : nil }
     c.oy += p.breathe
     // The body, pale and see-through, fading into wisps below the waist.
     c.rect(18, 26, 19, 11, ghost)
@@ -239,8 +348,10 @@ private func drawBarrowWight(_ c: PixelCanvas, _ p: Pose) {
     }
     // The cold eyes, glowing.
     let pulse: Double = 0.5 + 0.5 * sin(p.lt * 2.6)
+    let flare: Double = sig.map { 0.35 * habitArc($0, hold: 0.8) } ?? 0             // chanting
     for ex in [23.0, 33.0] {
-        c.glowLine(ex, 30.5, ex, 30.5, core: eye, glow: eyeGlow, coreR: 0.4, glowR: 2.4, strength: 0.45 + 0.35 * pulse)
+        c.glowLine(ex, 30.5, ex, 30.5, core: eye, glow: eyeGlow, coreR: 0.4, glowR: 2.4 + flare * 2,
+                   strength: 0.45 + 0.35 * pulse + flare)
     }
     c.rect(22, 29, 2, 3, eye); c.rect(32, 29, 2, 3, eye)
     // The gold torc round its throat, a heavy collar knobbed at the ends.
@@ -282,9 +393,47 @@ private func drawBarrowWight(_ c: PixelCanvas, _ p: Pose) {
     // The casting arm: a ragged sleeve and a bony hand, clawed, rings on its fingers, raised as it casts.
     let up = p.armRaise
     c.rect(37, 32 - up, 3, 3, shroud); c.px(37, 34 - up, shroudDark)
-    c.rect(40, 33 - up, 3, 2, bone)
-    c.px(43, 32 - up, bone); c.px(43, 35 - up, bone)
-    c.px(41, 33 - up, gold); c.px(42, 34 - up, goldLight)
+    guard let s = sig, s > 0.02, s < 0.95 else {
+        c.rect(40, 33 - up, 3, 2, bone)
+        c.px(43, 32 - up, bone); c.px(43, 35 - up, bone)
+        c.px(41, 33 - up, gold); c.px(42, 34 - up, goldLight)
+        return
+    }
+    // The signature: the chant drifting up out of the hood, and the hand off on its own along the floor.
+    c.px(40, 33, ghostShade); c.px(40, 34, ghost.alpha(0.5))                     // the bare wrist
+    for i in 0..<3 {
+        let f = frac(s * 2.5 + Double(i) / 3), x = Int((39 + f * 6 + 2 * sin(f * 9)).rounded()), y = Int((22 - f * 14).rounded())
+        let col = eyeGlow.alpha(0.9 * (1 - f) * habitArc(s, hold: 0.8))
+        c.rect(x, y, 2, 1, col); c.rect(x + 1, y - 3, 1, 3, col); c.px(x + 2, y - 3, col)
+    }
+    c.oy -= p.breathe
+    drawCrawlingHand(c, s, bone: bone, gold: gold)
+}
+
+/// Where the Barrow-wight's hand is `s` through its signature, and which way it faces: dropping from the wrist to the
+/// floor, crawling out, drumming its fingers, crawling back and leaping up onto the wrist again. Drawn as a little
+/// bony hand on its fingertips, a gold ring on one finger, its fingers stepping as it goes.
+private func drawCrawlingHand(_ c: PixelCanvas, _ s: Double, bone: Px, gold: Px) {
+    let floorY = 41.0
+    var x = 40.0, y = floorY, back = false, gait = 0
+    if s < 0.1 {
+        let u = s / 0.1
+        x = 40 + 2 * u; y = 33 + (floorY - 33) * u * u
+    } else if s < 0.45 {
+        let u = (s - 0.1) / 0.35
+        x = 42 + 16 * u; gait = Int(u * 14) % 2
+    } else if s < 0.55 {
+        x = 58; gait = Int((s - 0.45) * 60) % 2
+    } else if s < 0.85 {
+        let u = (s - 0.55) / 0.3
+        x = 58 - 16 * u; back = true; gait = Int(u * 12) % 2
+    } else {
+        let u = min(1, (s - 0.85) / 0.1)
+        x = 42 - 2 * u; y = floorY - 10 * u * (1 - u) * 1.2 + (33 - floorY) * u * u; back = true
+    }
+    let rows: [String] = gait == 0 ? [".BBBg..", "BBBBBBB", "B..B..B"] : [".BBBg..", "BBBBBBB", ".B..B.."]
+    let ix = Int(x.rounded(.down)), iy = Int(y.rounded(.down))
+    c.pattern(ix, iy, back ? rows.map { String($0.reversed()) } : rows, ["B": bone, "g": gold])
 }
 
 // MARK: - Wargh-rider
@@ -296,13 +445,17 @@ private let riderHand: (x: Double, y: Double) = (37.5, 26.5)
 /// its head forward: shaggy mane and ruff, a bushy tail, pointed ears laid back, a yellow eye under a scowl and its jaws
 /// open on bared white teeth (wider as the rider strikes); its legs lift a diagonal pair at a time. The rider, Clawd in
 /// mottled green orc skin with a crooked iron helmet, little tusks and a ragged leather jerkin, sits up on its back,
-/// reins in one hand and a curved blade in the other, held up ready, a smear behind a fast swing.
+/// reins in one hand and a curved blade in the other, held up ready, a smear behind a fast swing. Signature: the warg
+/// throws its head back and howls (…0.15), jaws wide, rings of sound rolling up off its muzzle, while the rider
+/// whoops and waves his blade round over his head; then the head comes down again (0.75…0.9).
 private func drawWargRider(_ c: PixelCanvas, _ p: Pose) {
     let fur = C(0x48484E), furDark = C(0x2A2A2E), furLight = C(0x6E6E76), farFur = C(0x343438)
     let tooth = C(0xF0ECE0), gum = C(0x5A1A1A), wolfEye = C(0xF0C040)
     let skin = C(0x5A6A4A), skinDark = C(0x46543A), skinLight = C(0x6E7E5C)
     let iron = C(0x5A5E66), ironDark = C(0x3E4248), ironLight = C(0x7A7E86)
     let leather = C(0x6A4A2E), leatherDark = C(0x4E3420)
+    let sig = p.signature.flatMap { $0 > 0 && $0 < 1 ? $0 : nil }
+    let howl: Double = sig.map { $0 < 0.15 ? smooth($0 / 0.15) : $0 < 0.75 ? 1 : 1 - smooth(($0 - 0.75) / 0.15) } ?? 0
     // The warg's legs: a thick upper leg, a thin shin, a paw; a diagonal pair lifts at each step.
     func leg(_ x: Int, _ col: Px, group: Int) {
         let up = p.step >= 0 && group == p.step ? 1 : 0
@@ -329,18 +482,37 @@ private func drawWargRider(_ c: PixelCanvas, _ p: Pose) {
     }
     // The ruff round its neck, then the head: ears laid back, a scowl, jaws open on bared teeth.
     c.ellipse(40, 29, 3, 5, furDark)
-    c.ellipse(43, 28, 4, 4, fur)
-    c.pattern(39, 21, ["F...", "FF..", "FFF.", "FFFF"], ["F": fur])
-    c.px(40, 23, gum)
-    c.rect(46, 27, 5, 2, fur); c.rect(46, 27, 4, 1, furLight)
-    c.px(50, 27, ink); c.px(47, 27, furDark)
-    c.px(45, 26, wolfEye); c.px(44, 26, ink)
-    c.rect(43, 25, 3, 1, furDark)
-    let gape = p.melee != nil && !p.trail.isEmpty ? 2 : 1
-    c.rect(44, 29, 6, gape + 1, gum)
-    for x in [45, 47, 49] { c.px(x, 29, tooth) }
-    for x in [46, 48] { c.px(x, 29 + gape, tooth) }
-    c.rect(43, 30 + gape, 6, 2, fur); c.rect(43, 31 + gape, 6, 1, furDark)
+    func head(_ c: PixelCanvas) {
+        c.ellipse(43, 28, 4, 4, fur)
+        c.pattern(39, 21, ["F...", "FF..", "FFF.", "FFFF"], ["F": fur])
+        c.px(40, 23, gum)
+        c.rect(46, 27, 5, 2, fur); c.rect(46, 27, 4, 1, furLight)
+        c.px(50, 27, ink); c.px(47, 27, furDark)
+        c.px(45, 26, wolfEye); c.px(44, 26, ink)
+        c.rect(43, 25, 3, 1, furDark)
+        let gape = howl > 0.5 || (p.melee != nil && !p.trail.isEmpty) ? 2 : 1
+        c.rect(44, 29, 6, gape + 1, gum)
+        for x in [45, 47, 49] { c.px(x, 29, tooth) }
+        for x in [46, 48] { c.px(x, 29 + gape, tooth) }
+        c.rect(43, 30 + gape, 6, 2, fur); c.rect(43, 31 + gape, 6, 1, furDark)
+    }
+    // Howling, the head is thrown back, and rings of sound roll up off the muzzle.
+    if howl > 0 {
+        let neck: (x: Double, y: Double) = (41, 29.5)
+        turned(c, about: neck, degrees: -45 * howl, head)
+        if let s = sig, s > 0.15, s < 0.8 {
+            let tip = turn((50.5, 29.5), about: neck, -45 * howl)
+            for j in 0..<3 {
+                let f = frac((s - 0.15) * 4 + Double(j) / 3)
+                for a in stride(from: -85.0, through: -5, by: 10) {
+                    let u = unit(a - 45 * howl + 45), r = 2 + f * 9
+                    c.px(Int((tip.x + u.x * r).rounded(.down)), Int((tip.y + u.y * r).rounded(.down)), C(0xD8DCE8, 0.85 * (1 - f)))
+                }
+            }
+        }
+    } else {
+        head(c)
+    }
     c.oy -= p.breathe
     leg(14, fur, group: 0); leg(33, fur, group: 1)
     c.oy += p.breathe
@@ -353,6 +525,7 @@ private func drawWargRider(_ c: PixelCanvas, _ p: Pose) {
     c.rect(22, 23, 2, 2, ink); c.rect(29, 23, 2, 2, ink)
     c.px(22, 23, C(0xC8A03A)); c.px(29, 23, C(0xC8A03A))
     c.rect(23, 26, 7, 1, C(0x2E3424))
+    if howl > 0.5 { c.rect(24, 26, 5, 2, C(0x2E3424)); c.rect(25, 27, 3, 1, gum) }    // whooping
     c.px(24, 25, tooth); c.px(29, 25, tooth)
     c.rect(18, 27, 16, 4, leather)
     c.rect(18, 29, 16, 1, leatherDark)
@@ -368,7 +541,8 @@ private func drawWargRider(_ c: PixelCanvas, _ p: Pose) {
     // The reins, from his fist down to the warg's jaws.
     line(c, 33, 29, 44, 30, leatherDark, 0.3)
     // The blade, held up ready; swung, a smear behind it; then his fist round the grip.
-    let blade = p.melee ?? -50
+    var blade = p.melee ?? -50
+    if let s = sig { blade += howl * (-45 + 35 * sin((s - 0.1) * 6 * .pi)) }   // waved round over his head
     for (i, a) in (p.melee == nil ? [] : p.trail).enumerated() {
         let u = unit(a), h = riderHand
         c.glowLine(h.x + u.x * 4, h.y + u.y * 4, h.x + u.x * 15, h.y + u.y * 15, core: C(0xD8DCE4), glow: C(0x8A8E98),
@@ -435,6 +609,42 @@ private func unit(_ degrees: Double) -> (x: Double, y: Double) {
 }
 
 private let clear = C(0x000000, 0)
+
+/// Smoothstep: 0→1 eased at both ends.
+private func smooth(_ x: Double) -> Double {
+    let u = min(1, max(0, x))
+    return u * u * (3 - 2 * u)
+}
+
+/// The point `q` turned `degrees` about `o` (negative: the front lifts).
+private func turn(_ q: (x: Double, y: Double), about o: (x: Double, y: Double), _ degrees: Double) -> (x: Double, y: Double) {
+    let r: Double = degrees * .pi / 180, dx = q.x - o.x, dy = q.y - o.y
+    return (o.x + dx * cos(r) - dy * sin(r), o.y + dx * sin(r) + dy * cos(r))
+}
+
+/// Draws `art` on a scratch canvas (same offsets as `c`) and copies it onto `c` turned `degrees` about `pivot`
+/// (negative: the front lifts), pixel by nearest pixel: a Mûmak rearing, a warg throwing its head back.
+private func turned(_ c: PixelCanvas, about pivot: (x: Double, y: Double), degrees: Double, _ art: (PixelCanvas) -> Void) {
+    let s = PixelCanvas(c.w, c.h)
+    s.ox = c.ox; s.oy = c.oy; s.baseY = c.baseY
+    art(s)
+    let o = (x: pivot.x + Double(c.ox), y: pivot.y + Double(c.oy + c.baseY))
+    let (ox, oy, by) = (c.ox, c.oy, c.baseY)
+    c.ox = 0; c.oy = 0; c.baseY = 0
+    defer { c.ox = ox; c.oy = oy; c.baseY = by }
+    for y in 0..<c.h {
+        for x in 0..<c.w {
+            let from = turn((Double(x) + 0.5, Double(y) + 0.5), about: o, -degrees)
+            let sx = Int(from.x.rounded(.down)), sy = Int(from.y.rounded(.down))
+            guard sx >= 0, sy >= 0, sx < s.w, sy < s.h else { continue }
+            let i = (sy * s.w + sx) * 4, a = s.buf[i + 3]
+            guard a > 0 else { continue }
+            let m = 255 / Double(a)
+            c.px(x, y, Px(r: UInt8(min(255, Double(s.buf[i]) * m)), g: UInt8(min(255, Double(s.buf[i + 1]) * m)),
+                          b: UInt8(min(255, Double(s.buf[i + 2]) * m)), a: a))
+        }
+    }
+}
 
 /// A solid pixel line (no glow), `r` its half-width.
 private func line(_ c: PixelCanvas, _ x0: Double, _ y0: Double, _ x1: Double, _ y1: Double, _ col: Px, _ r: Double = 0.7) {

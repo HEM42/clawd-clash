@@ -8,7 +8,7 @@ import Foundation
 
 let ringsHeroes2: [LOTRHero: Persona] = [
     .gandalf: Persona(name: "Gandclawd the Grey", weapon: .saber, pivot: gandalfHand, headTop: 12, signature: 3.0, callout: "A wizard is never late.", draw: drawGandalf),
-    .aragorn: Persona(name: "Arrogorn", weapon: .saber, headTop: 20, callout: "For Frodough!", draw: drawAragorn),
+    .aragorn: Persona(name: "Arrogorn", weapon: .saber, headTop: 20, signature: 3.4, callout: "For Frodough!", draw: drawAragorn),
     .legolas: Persona(name: "Leggolas", weapon: .blaster, shot: .arrow, muzzle: (46, 34), handGun: false, headTop: 20,
                       signature: 3.0, callout: "A red sun rises.", draw: drawLegolas),
     .gimli: Persona(name: "Gimmie, son of Groan", weapon: .saber, pivot: gimliHand, headTop: 25, signature: 2.6,
@@ -17,9 +17,9 @@ let ringsHeroes2: [LOTRHero: Persona] = [
                       draw: drawBoromir),
     .galadriel: Persona(name: "Gladriel", weapon: .saber, motion: .hover, headTop: 19, signature: 3.0, callout: "Even the smallest Clawd can change the course of the future.",
                         draw: drawGaladriel),
-    .gandalfWhite: Persona(name: "Gandclawd the White", weapon: .saber, pivot: gandalfHand, headTop: 21, callout: "I come back to you now… after a hard reboot.",
+    .gandalfWhite: Persona(name: "Gandclawd the White", weapon: .saber, pivot: gandalfHand, headTop: 21, signature: 3.0, callout: "I come back to you now… after a hard reboot.",
                            draw: drawGandalfWhite),
-    .strider: Persona(name: "Stride-r", weapon: .saber, headTop: 17, callout: "Long strides, Mr. Underhill. Cache-friendly ones.",
+    .strider: Persona(name: "Stride-r", weapon: .saber, headTop: 17, signature: 3.2, callout: "Long strides, Mr. Underhill. Cache-friendly ones.",
                       draw: drawStrider),
 ]
 
@@ -80,8 +80,57 @@ private func drawGandalf(_ c: PixelCanvas, _ p: Pose) {
 /// Gandclawd the White, come back: the Grey's drawing in white. A white robe to the ankles, pale grey shoes, no hat
 /// at all: a bushy crown of white hair swept back off the brow and down to the shoulders, white brows and a long
 /// white beard. His staff is white wood now, the same gnarled twist at its head, and its light is pure white.
+/// Signature: "I come back to you now": he raises the staff high in both hands (…0.2), its light gathering, and it
+/// bursts (0.3): a blinding white flash spreads out from its head in rays, washing him white, and fades while he holds
+/// it up; he lowers it at the end.
 private func drawGandalfWhite(_ c: PixelCanvas, _ p: Pose) {
-    drawGandalfBody(c, p, whiteWizard, sig: nil)
+    guard let s = p.signature else { drawGandalfBody(c, p, whiteWizard, sig: nil); return }
+    let head = (x: gandalfStaffHead.x, y: gandalfStaffHead.y - gandalfRaise(s).rounded() + Double(p.breathe))
+    let burst: Double? = s >= gandalfFlash && s < gandalfFlash + 0.4 ? (s - gandalfFlash) / 0.4 : nil
+    if let k = burst { drawWhiteBurst(c, at: head, k, front: false) }
+    let oy = c.oy
+    if let k = burst {
+        layer(c, flash: 0.95 * (1 - k) * (1 - k)) { drawGandalfBody($0, p, whiteWizard, sig: s, slam: false) }
+    } else {
+        drawGandalfBody(c, p, whiteWizard, sig: s, slam: false)
+    }
+    c.oy = oy
+    if s > 0.14 && s < gandalfFlash {
+        // The light gathering at the staff's head before it bursts.
+        let k = (s - 0.14) / (gandalfFlash - 0.14)
+        c.glowLine(head.x, head.y, head.x, head.y, core: white, glow: C(0xF4F8FF), coreR: 0.8 + k, glowR: 2.5 + 3 * k,
+                   strength: 0.5 + 0.5 * k)
+    }
+    if let k = burst { drawWhiteBurst(c, at: head, k, front: true) }
+}
+
+/// When the White's staff bursts into light in his signature.
+private let gandalfFlash = 0.3
+
+/// How high the White lifts his staff `s` through his signature: raised (…0.2), held up, lowered (0.8…).
+private func gandalfRaise(_ s: Double) -> Double {
+    if s < 0.2 { return 10 * smooth(s / 0.2) }
+    if s < 0.8 { return 10 }
+    return 10 * (1 - smooth((s - 0.8) / 0.2))
+}
+
+/// The White's flash, `k` 0…1 through spreading out from the staff's head `at` and fading: a great soft glow behind
+/// him, and in front, rays of light and the blinding core.
+private func drawWhiteBurst(_ c: PixelCanvas, at: (x: Double, y: Double), _ k: Double, front: Bool) {
+    let fade: Double = (1 - k) * (1 - k), grow: Double = 1 - (1 - k) * (1 - k) * (1 - k)
+    guard front else {
+        c.glowLine(at.x - 8, at.y + 14, at.x - 8, at.y + 14, core: C(0xFFFFFF, 0.5), glow: C(0xF0F4FF), coreR: 3 + 8 * grow,
+                   glowR: 8 + 12 * grow, strength: 0.85 * fade)
+        return
+    }
+    for i in 0..<12 {
+        let u = unit(Double(i) * 30 + 15 * k), long: Double = i % 2 == 0 ? 1 : 0.6
+        let r0: Double = 2 + 4 * grow, r1: Double = r0 + (5 + 16 * grow) * long
+        c.glowLine(at.x + u.x * r0, at.y + u.y * r0, at.x + u.x * r1, at.y + u.y * r1, core: white, glow: C(0xE8F0FF),
+                   coreR: 0.4, glowR: 1.2, strength: fade)
+    }
+    c.glowLine(at.x, at.y, at.x, at.y, core: white, glow: white, coreR: 2.5 * (1 - k) + 0.5, glowR: 4 + 3 * (1 - k),
+               strength: 0.4 + 0.6 * fade)
 }
 
 /// How high the staff is lifted `s` through the signature: raised (…0.2), held up, slammed down (…the impact).
@@ -92,18 +141,20 @@ private func gandalfLift(_ s: Double) -> Double {
     return 0
 }
 
-/// Gandclawd in the look `w`, the Grey or the White (only the Grey has a signature, `sig`).
-private func drawGandalfBody(_ c: PixelCanvas, _ p: Pose, _ w: WizardLook, sig: Double?) {
+/// Gandclawd in the look `w`, the Grey or the White, `sig` through his signature: the Grey's staff slam (`slam`), or
+/// the White's raised staff.
+private func drawGandalfBody(_ c: PixelCanvas, _ p: Pose, _ w: WizardLook, sig: Double?, slam: Bool = true) {
     let robe = w.robe, robeShade = w.robeShade, robeLight = w.robeLight
     let beard = w.beard, beardShade = w.beardShade, hair = w.hair, hairShade = w.hairShade
     // In the signature the staff comes round in front, held up; fighting it's swung from his front hand.
     let forward = sig != nil || p.zap != nil || p.armRaise > 0
     let swing = sig == nil && !p.walking && !p.seated ? p.melee : nil
-    let up = sig.map { Int(gandalfLift($0).rounded()) } ?? p.armRaise
+    let up = sig.map { Int((slam ? gandalfLift($0) : gandalfRaise($0)).rounded()) } ?? p.armRaise
+    let blow = slam ? sig : nil                                               // the slam's jolt and smear
     drawLegs(c, Look(leg: robeShade), step: p.step)
     drawBoots(c, p.step, w.boots, rows: 1)
     c.oy += p.breathe
-    if let s = sig, s >= gandalfImpact, s < gandalfImpact + 0.06 { c.oy += 1 }   // the jolt of the blow
+    if let s = blow, s >= gandalfImpact, s < gandalfImpact + 0.06 { c.oy += 1 }   // the jolt of the blow
     if !forward && swing == nil {
         drawStaffGlow(c, at: (12.5, 15.5), w.glow, bright: false, t: p.t)
         drawGandalfStaff(c, w)
@@ -173,7 +224,7 @@ private func drawGandalfBody(_ c: PixelCanvas, _ p: Pose, _ w: WizardLook, sig: 
     }
     guard forward else { return }
     // The staff in front, the casting arm up along it (both hands on it in the signature), a smear over a slam.
-    if let s = sig, s > 0.25, s < gandalfImpact + 0.02 {
+    if let s = blow, s > 0.25, s < gandalfImpact + 0.02 {
         let before = gandalfLift(max(0, s - 0.03))
         c.glowLine(gandalfStaffHead.x, gandalfStaffHead.y - before, gandalfStaffHead.x, gandalfStaffHead.y - Double(up),
                    core: C(0xE8ECF4, 0.5), glow: clear, coreR: 1.6, glowR: 1.7)
@@ -342,29 +393,94 @@ private let breeRanger = RangerLook(coat: C(0x3C382E), coatShade: C(0x2A2720), c
 /// Arrogorn, the ranger: a weathered green-brown coat to mid-thigh over dark trousers and boots, a leather baldric across
 /// the chest, a dark cloak, dark shaggy hair to the shoulders and two dark pixels of stubble on the jaw. His long sword
 /// is slung across his back, the hilt over his shoulder; to fight he draws it, and it swings in his fist with a smear
-/// behind a fast stroke. No signature.
+/// behind a fast stroke. Signature: the helmet. An orc helmet lies at his feet; he draws his foot back and kicks it
+/// (0.24), and it flies off spinning, out of sight. A beat, and the pain arrives: he doubles over, eyes screwed shut,
+/// mouth open in a howl, the kicked foot clutched up in front of him and smarting (…0.88), and straightens up.
 private func drawAragorn(_ c: PixelCanvas, _ p: Pose) {
-    drawRanger(c, p, kingRanger)
+    guard let s = p.signature else { drawRanger(c, p, kingRanger); return }
+    let k = aragornKick(s)
+    let (ox, oy) = (c.ox, c.oy)
+    drawRanger(c, p, kingRanger, kick: k)
+    c.ox = ox; c.oy = oy
+    if k.leg == .held {
+        // The kicked foot, clutched up in front of him, and the pain at its toe.
+        let by = 39 + p.breathe + k.bend - 3
+        c.rect(39, by, 3, 2, kingRanger.boots); c.px(42, by + 1, kingRanger.boots); c.px(39, by, C(0x3A2C20))
+        c.rect(39, by - 1, 3, 1, clawdOrange)
+        if Int(s * 3.4 * 7) % 2 == 0 {
+            c.pattern(42, by - 4, ["Y.Y", ".W.", "Y.Y"], ["Y": C(0xFFD860), "W": white])
+        } else {
+            c.pattern(42, by - 4, [".Y.", "YWY", ".Y."], ["Y": C(0xFFD860), "W": white])
+        }
+    }
+    if let h = orcHelmetFlight(s) {
+        prop(c, at: (h.x, h.y), angle: h.angle, alpha: h.alpha) { drawOrcHelmet($0) }
+    }
+}
+
+/// When Arrogorn's foot meets the helmet.
+private let aragornKickAt = 0.24
+
+/// What Arrogorn's kicking leg is doing: standing, drawn back, kicked out, or held up, smarting.
+private enum KickLeg { case planted, back, out, held }
+
+/// Arrogorn `s` through his signature: the kicking leg, how far he's doubled over (px), and whether he's howling.
+private func aragornKick(_ s: Double) -> (leg: KickLeg, bend: Int, howl: Bool) {
+    let leg: KickLeg = s < 0.15 ? .planted : s < aragornKickAt - 0.005 ? .back : s < 0.36 ? .out : s < 0.88 ? .held : .planted
+    let k: Double = s < 0.36 ? 0 : s < 0.42 ? (s - 0.36) / 0.06 : s < 0.86 ? 1 : max(0, 1 - (s - 0.86) / 0.06)
+    return (leg, Int((3 * k).rounded()), s >= 0.38 && s < 0.87)
+}
+
+/// The orc helmet `s` through Arrogorn's signature, where it is, turned, and how solid (it fades in at his feet before
+/// he kicks it); nil once it's flown out of sight.
+private func orcHelmetFlight(_ s: Double) -> (x: Double, y: Double, angle: Double, alpha: Double)? {
+    let rest = (x: 46.5, y: 40.5)
+    if s < aragornKickAt { return (rest.x, rest.y, 0, min(1, s / 0.06)) }
+    let u = (s - aragornKickAt) / 0.2
+    guard u < 1 else { return nil }
+    return (rest.x + 34 * u, rest.y - 30 * sin(u * .pi * 0.75), -900 * u, 1)
+}
+
+/// A battered orc helmet, upright, its middle at (20.5, 20.5) of a prop canvas: a dented iron dome with a spike on top
+/// and a jagged, rusty rim.
+private func drawOrcHelmet(_ s: PixelCanvas) {
+    s.pattern(16, 17, [
+        "....S....",
+        "..DDIDD..",
+        ".DIIiIID.",
+        "DIIiIIIID",
+        "DIIIIIIDD",
+        "DDIIIIDDD",
+        "R.RDRDR.R",
+    ],["S": C(0x9A968E), "D": C(0x3E3C3A), "I": C(0x5C5852), "i": C(0x7E7A72), "R": C(0x6A3E26)])
 }
 
 /// Stride-r, the same ranger in the corner of the Prancing Ponytail: a weathered brown travelling cloak with the hood
 /// up, the face shadowed under it and wisps of his dark hair at its edges, more stubble, a pipe smouldering in the
 /// corner of his mouth (smoking when he's idle), mud on the coat and boots. His sword hangs at his hip in a plain
-/// scabbard, no baldric; drawn, it's the broken blade, snapped off short with a jagged end. No signature.
+/// scabbard, no baldric; drawn, it's the broken blade, snapped off short with a jagged end. Signature: a smoke ring.
+/// His hand comes up to the pipe and he draws on it, the bowl glowing (…0.25), then blows a fat smoke ring that
+/// drifts up and fades, and a little one after it that sails through the middle of the first.
 private func drawStrider(_ c: PixelCanvas, _ p: Pose) {
     drawRanger(c, p, breeRanger)
 }
 
-/// The ranger in the look `r`: Arrogorn, or Stride-r with the hood up.
-private func drawRanger(_ c: PixelCanvas, _ p: Pose, _ r: RangerLook) {
+/// The ranger in the look `r`: Arrogorn, or Stride-r with the hood up; `kick`: Arrogorn's signature.
+private func drawRanger(_ c: PixelCanvas, _ p: Pose, _ r: RangerLook,
+                        kick: (leg: KickLeg, bend: Int, howl: Bool)? = nil) {
     let coat = r.coat, coatShade = r.coatShade, coatLight = r.coatLight
     let hair = C(0x2A2018), hairLight = C(0x46362A), leather = C(0x5A4430)
     drawBackCape(c, t: p.t, speed: p.capeSpeed, color: r.cloak, edge: r.cloakEdge, hem: 42)
-    drawLegs(c, Look(leg: r.trousers), step: p.step)
-    drawBoots(c, p.step, r.boots, rows: 3)
+    if let k = kick {
+        drawKickLegs(c, r, k.leg)
+    } else {
+        drawLegs(c, Look(leg: r.trousers), step: p.step)
+        drawBoots(c, p.step, r.boots, rows: 3)
+    }
     if r.hooded { drawMud(c, p.step) }
     c.oy += p.breathe
-    drawBody(c, Look(arm: coat))
+    if let k = kick { c.oy += k.bend; c.ox += k.bend > 1 ? 1 : 0 }           // doubled over
+    drawBody(c, Look(arm: coat, eye: kick?.howl == true ? nil : ink))
     // The coat: the collar to mid-thigh, open below the belt.
     c.rect(18, 33, 20, 5, coat)
     c.rect(37, 33, 1, 5, coatShade)
@@ -375,7 +491,7 @@ private func drawRanger(_ c: PixelCanvas, _ p: Pose, _ r: RangerLook) {
     c.rect(18, 36, 20, 1, leather); c.px(26, 36, C(0x9A8A6A))               // the belt and its buckle
     if r.hooded {
         drawStriderHood(c, r)
-        drawPipe(c, p)
+        drawPipe(c, p, puff: p.signature)
     } else {
         for i in 0..<5 { c.rect(33 - i * 3, 33 + i, 3, 1, leather) }          // the baldric
         c.rect(15, 33, 3, 3, coat)
@@ -397,6 +513,11 @@ private func drawRanger(_ c: PixelCanvas, _ p: Pose, _ r: RangerLook) {
             "..H..................H.H",
         ], ["H": hair, "l": hairLight])
         c.px(25, 32, ink); c.px(30, 32, ink)                                 // the stubble
+        if kick?.howl == true {
+            // Howling: the eyes screwed shut, the mouth wide open.
+            c.pattern(22, 29, ["X.........X.", ".X.......X..", "X.........X."], ["X": ink])
+            c.rect(27, 32, 2, 2, C(0x3A1418)); c.px(27, 32, ink)
+        }
     }
     guard let a = p.melee else { if r.hooded { drawHipSword(c) } else { drawBackSword(c) }; return }
     drawLongSword(c, angle: a, trail: p.trail, broken: r.hooded)
@@ -446,20 +567,80 @@ private func drawStriderHood(_ c: PixelCanvas, _ r: RangerLook) {
 }
 
 /// Stride-r's pipe, in the corner of his mouth: the stem slanting down to the bowl, its ember glowing, and (idle) a
-/// thread of smoke rising and drifting back.
-private func drawPipe(_ c: PixelCanvas, _ p: Pose) {
+/// thread of smoke rising and drifting back; `puff` through his signature, the smoke rings as well.
+private func drawPipe(_ c: PixelCanvas, _ p: Pose, puff: Double?) {
     let stem = C(0x6A4A2A), bowl = C(0x7A5230), bowlShade = C(0x4A3018)
     for x in 28...31 { c.px(x, 32, stem) }
     c.px(32, 33, stem); c.px(33, 33, stem)
     c.rect(34, 32, 2, 3, bowl); c.px(35, 33, bowlShade); c.px(35, 34, bowlShade)
     let glow: Double = 0.7 + 0.3 * noise(Int(p.lt * 5))
     c.px(34, 32, C(0xFF8A3A, glow)); c.px(35, 32, C(0x2A1A10))
+    if let s = puff { drawSmokeRings(c, s) }
     guard p.resting || p.mode == .thinking else { return }
+    // The thread of smoke (thinned out while he blows his rings).
+    let m: Double = puff.map { max(0, 1 - $0 / 0.08, ($0 - 0.92) / 0.08) } ?? 1
     for k in 0..<3 {
         let f = frac(p.lt * 0.45 + Double(k) / 3)
         let x = 34.5 - f * 3 + sin(p.lt * 2 + Double(k) * 2) * 1.2, y = 30 - f * 11
-        c.px(Int(x.rounded()), Int(y.rounded()), C(0xC8C4BC, 0.55 * (1 - f)))
-        if f > 0.4 { c.px(Int(x.rounded()) - 1, Int(y.rounded()), C(0xC8C4BC, 0.35 * (1 - f))) }
+        c.px(Int(x.rounded()), Int(y.rounded()), C(0xC8C4BC, 0.55 * (1 - f) * m))
+        if f > 0.4 { c.px(Int(x.rounded()) - 1, Int(y.rounded()), C(0xC8C4BC, 0.35 * (1 - f) * m)) }
+    }
+}
+
+/// Stride-r `s` through his signature: his hand up at the bowl while he draws on the pipe, its ember flaring (…0.3),
+/// then a fat smoke ring blown out (0.26) that drifts up, swells and fades, and a little one after it (0.44), quicker,
+/// that sails up through the middle of the first.
+private func drawSmokeRings(_ c: PixelCanvas, _ s: Double) {
+    if s > 0.04 && s < 0.3 {
+        let k: Double = min(1, (s - 0.04) / 0.06) * min(1, (0.3 - s) / 0.04)
+        c.glowLine(34.5, 32.5, 34.5, 32.5, core: C(0xFFC870), glow: C(0xFF7A2A), coreR: 0.6, glowR: 2.2,
+                   strength: k * (0.75 + 0.25 * sin(s * 60)))
+        c.rect(38, 31, 3, 3, breeRanger.coat); c.rect(36, 32, 2, 2, clawdOrange); c.px(36, 33, clawdShade)   // the hand
+    }
+    if s > 0.22 && s < 0.34 {
+        // The breath, puffed out ahead of the ring.
+        let k = (s - 0.22) / 0.12
+        for (dx, dy) in [(0, 0), (1, -1), (2, 0), (1, 1)] {
+            c.px(37 + dx + Int(k * 2), 30 + dy, C(0xD8D4CC, 0.5 * (1 - k)))
+        }
+    }
+    let u1 = (s - 0.26) / 0.74, u2 = (s - 0.44) / 0.5
+    if u1 > 0 && u1 < 1 {
+        smokeRing(c, x: 38 + 6 * u1, y: 30 - 22 * u1, r: 2 + 3.5 * u1, alpha: 0.85 * min(1, u1 / 0.06) * pow(1 - u1, 0.8))
+    }
+    if u2 > 0 && u2 < 1 {
+        smokeRing(c, x: 38 + 7 * u2, y: 30 - 30 * u2, r: 0.9 + 0.5 * u2, alpha: 0.8 * min(1, u2 / 0.08) * pow(1 - u2, 0.9))
+    }
+}
+
+/// A smoke ring round (`x`, `y`), `r` across, seen a little from below: its near (lower) half the brighter.
+private func smokeRing(_ c: PixelCanvas, x: Double, y: Double, r: Double, alpha: Double) {
+    let n = max(10, Int(r * 9))
+    var done = Set<Int>()
+    for i in 0..<n {
+        let a: Double = Double(i) / Double(n) * 2 * .pi
+        let px = Int((x + cos(a) * r).rounded(.down)), py = Int((y + sin(a) * r * 0.8).rounded(.down))
+        guard done.insert((px + 100) * 1000 + py + 100).inserted else { continue }
+        c.px(px, py, C(0xDEDAD2, alpha * (sin(a) > 0 ? 1 : 0.65)))
+    }
+}
+
+/// Arrogorn's legs in his signature: three standing, the front one `leg`.
+private func drawKickLegs(_ c: PixelCanvas, _ r: RangerLook, _ leg: KickLeg) {
+    for lx in [19, 23, 31] { c.rect(lx, 36, 2, 8, r.trousers); c.rect(lx, 41, 2, 3, r.boots) }
+    switch leg {
+    case .planted:
+        c.rect(35, 36, 2, 8, r.trousers); c.rect(35, 41, 2, 3, r.boots)
+    case .back:
+        // Drawn back for the kick, the foot off the floor behind the knee.
+        c.rect(35, 36, 2, 3, r.trousers); c.rect(34, 38, 2, 2, r.trousers)
+        c.rect(32, 39, 3, 3, r.boots)
+    case .out:
+        // Kicked out straight in front, the toe up.
+        line(c, 36, 37.5, 40.5, 40.5, r.trousers, 1.0)
+        c.rect(40, 39, 3, 2, r.boots); c.px(43, 39, r.boots)
+    case .held:
+        c.rect(35, 36, 2, 3, r.trousers)                                     // the rest is clutched up in front
     }
 }
 

@@ -9,15 +9,15 @@ import Foundation
 // crimson robe and twin curved blades. The face is Clawd's own orange, and the eyes stay ink.
 
 let ringsHeroes6: [LOTRHero: Persona] = [
-    .radagast: Persona(name: "Radagast the Brownfield", weapon: .saber, pivot: radagastHand, headTop: 15,
+    .radagast: Persona(name: "Radagast the Brownfield", weapon: .saber, pivot: radagastHand, headTop: 15, signature: 3.2,
                        callout: "The Greenwood is sick. It's gone brownfield.", draw: drawRadagast),
-    .glorfindel: Persona(name: "Glorfind", weapon: .saber, armoured: true, headTop: 20,
+    .glorfindel: Persona(name: "Glorfind", weapon: .saber, armoured: true, headTop: 20, signature: 3.0,
                          callout: "find / -name Frodough: one match, very small.", draw: drawGlorfindel),
-    .haldir: Persona(name: "Haldirectory", weapon: .blaster, shot: .arrow, muzzle: (46, 32), handGun: false, headTop: 18,
+    .haldir: Persona(name: "Haldirectory", weapon: .blaster, shot: .arrow, muzzle: (46, 32), handGun: false, headTop: 18, signature: 2.8,
                      callout: "None may enter the Golden Wood without an absolute path.", draw: drawHaldir),
-    .celeborn: Persona(name: "Celeborne-again", weapon: .saber, headTop: 21,
+    .celeborn: Persona(name: "Celeborne-again", weapon: .saber, headTop: 21, signature: 3.2,
                        callout: "Three Ages in this wood, and born again in every shell.", draw: drawCeleborn),
-    .thranduil: Persona(name: "Thrandual", weapon: .saber, headTop: 12, callout: "I do not duel. I dual-wield.",
+    .thranduil: Persona(name: "Thrandual", weapon: .saber, headTop: 12, signature: 3.0, callout: "I do not duel. I dual-wield.",
                         draw: drawThranduil),
 ]
 
@@ -37,8 +37,58 @@ private let radagastGlow = StaffGlow(core: C(0xE4F0B0), glow: C(0x7A9A3A))
 /// drooping; straggly grey-brown hair and bushy brows, a straggly beard streaked white with bird droppings, and a bird's
 /// nest stuck in his hair behind his ear, a little blue bird sitting in it. His gnarled staff, its head a curl of wood
 /// with a leaf on it and a soft earthy green light in it, stands in his front hand, always; in a fight he swings it
-/// like a sword.
+/// like a sword. Signature: a robin flutters down out of the sky onto the top of his hat (…0.3), hops about on it,
+/// turns round and sings, and the little blue bird in his nest sings back (…0.8); then it's off again, up and away.
 private func drawRadagast(_ c: PixelCanvas, _ p: Pose) {
+    let oy = c.oy
+    drawRadagastBody(c, p)
+    c.oy = oy
+    guard let s = p.signature else { return }
+    let r = robinFlight(s)
+    drawRobin(c, at: (Int(r.x.rounded()), Int(r.y.rounded())), right: r.right, wingsUp: r.wingsUp)
+    // Their songs: a note or two from the robin, and one back from the nest.
+    for (start, x, y) in [(0.48, r.x + (r.right ? 3 : -4), r.y - 5), (0.58, r.x + (r.right ? 3 : -4), r.y - 5), (0.68, 9.0, 21.0)] {
+        let u = (s - start) / 0.14
+        guard u > 0 && u < 1 else { continue }
+        c.pattern(Int(x.rounded()) + Int((u * 2).rounded()), Int((y - u * 5).rounded()), [".N", ".N", "NN"],
+                  ["N": C(0xFFF2A0, 1 - u * u)])
+    }
+}
+
+/// Where the robin is `s` through Radagast's signature: its feet, whether it faces right, and its wings, up or down in
+/// flight (nil: perched).
+private func robinFlight(_ s: Double) -> (x: Double, y: Double, right: Bool, wingsUp: Bool?) {
+    let perch = (x: 26.0, y: 15.0)
+    let flap = Int(s * 3.2 * 14) % 2 == 0
+    if s < 0.3 {
+        let u = smooth(s / 0.3)
+        return (70 + (perch.x - 70) * u, -2 + (perch.y + 2) * u - 6 * sin(u * .pi), false, flap)
+    }
+    if s < 0.8 {
+        let hop: Double = (s > 0.38 && s < 0.42) || (s > 0.74 && s < 0.78) ? -1 : 0
+        return (perch.x + (s > 0.4 ? 1 : 0), perch.y + hop, s > 0.44, nil)
+    }
+    let u = (s - 0.8) / 0.2, e = u * u
+    return (perch.x + 1 + 46 * e, perch.y - 24 * e - 3 * sin(u * .pi), true, flap)
+}
+
+/// A robin, its feet at `at`: a brown back and tail, a red-orange breast, a yellow beak and a bead of an eye; wings up
+/// or down in flight, folded when perched (`wingsUp` nil).
+private func drawRobin(_ c: PixelCanvas, at: (x: Int, y: Int), right: Bool, wingsUp: Bool?) {
+    let rows: [String]
+    switch wingsUp {
+    case nil: rows = ["...HH.", "..HeHy", "TBBRR.", ".BBR..", "..ff.."]
+    case true?: rows = ["WW....", ".WWHH.", "TBWeHy", ".BRR..", "......"]
+    case false?: rows = ["...HH.", "..HeHy", "TBBRR.", ".WWR..", "..W..."]
+    }
+    let art = right ? rows : rows.map { String($0.reversed()) }
+    c.pattern(at.x - 3, at.y - rows.count + 1, art, ["H": C(0x8A6038), "B": C(0x7A5232), "T": C(0x5E3E24),
+                                                     "W": C(0x5E3E24), "R": C(0xE0602A), "e": ink, "y": C(0xE8C040),
+                                                     "f": C(0x4A3A2A)])
+}
+
+/// Radagast himself, everything but his signature's robin.
+private func drawRadagastBody(_ c: PixelCanvas, _ p: Pose) {
     let robe = C(0x6E5234), robeShade = C(0x4E3A22), robeLight = C(0x8A6C46)
     let patch = C(0x5E6A34), patchDark = C(0x46502A), rope = C(0xA8945C)
     let hair = C(0x9A8E78), hairShade = C(0x766A56)
@@ -141,7 +191,28 @@ private func drawRadagastStaff(_ c: PixelCanvas, up: Int) {
 /// to the shoulders and swept back off them in a mass behind, pointed ears; white plate armour trimmed in gold, a gold
 /// flower on the breastplate, gold-edged pauldrons and white greaves, a cream cape. His long straight sword has a gold
 /// hilt and a faint glow on the blade; at rest he holds it low, point forward; swung, it smears behind a fast stroke.
+/// Signature: his radiant form, as at the Ford: a golden light wells up round him (…0.3), he lifts his sword upright,
+/// shining, and the light washes over him, pulsing, sparks of gold rising through it, then ebbs away (0.75…).
 private func drawGlorfindel(_ c: PixelCanvas, _ p: Pose) {
+    guard let s = p.signature else { drawGlorfindelBody(c, p, shine: 0); return }
+    let k: Double = s < 0.3 ? smooth(s / 0.3) : s < 0.75 ? 1 : 1 - smooth((s - 0.75) / 0.25)
+    guard k > 0.01 else { drawGlorfindelBody(c, p, shine: 0); return }
+    let pulse: Double = 0.85 + 0.15 * sin(s * 3.0 * 2 * .pi * 1.5)
+    c.glowLine(28, 30, 28, 30, core: C(0xFFF4C8, 0.55), glow: C(0xFFD048), coreR: 4 + 7 * k, glowR: 9 + 15 * k,
+               strength: 0.75 * k * pulse)
+    layer(c, tint: C(0xFFF0B8), amount: 0.5 * k * pulse) { drawGlorfindelBody($0, p, shine: k) }
+    // Sparks of gold rising through the light.
+    for i in 0..<10 {
+        let f = frac(s * 2.4 + Double(i) * 0.317)
+        let x = 10 + (i * 13) % 36, y = Int((44 - f * 36).rounded())
+        let a: Double = k * (1 - f)
+        c.px(x, y, C(0xFFF2B0, a))
+        if f < 0.4 { c.px(x, y + 1, C(0xE8B830, a * 0.6)) }
+    }
+}
+
+/// Glorfind himself, `shine` 0…1 through his signature's radiance: the sword lifted upright and glowing.
+private func drawGlorfindelBody(_ c: PixelCanvas, _ p: Pose, shine: Double) {
     let plate = C(0xF0F2F6), plateShade = C(0xC4CAD4), plateLight = C(0xFFFFFF)
     let gold = C(0xE8B830), goldDark = C(0xB08420), goldLight = C(0xFFE07A)
     let hair = C(0xF2BE2E), hairShade = C(0xC89418), hairLight = C(0xFFE07E)
@@ -212,16 +283,16 @@ private func drawGlorfindel(_ c: PixelCanvas, _ p: Pose) {
         "..H.....................",
     ], ["H": hair, "h": hairShade, "l": hairLight])
     c.px(15, 28, clawdOrange); c.px(40, 28, clawdOrange)                      // the pointed ears
-    let angle = p.melee ?? (seatedPose ? 5 : 20)
-    drawGlorfindSword(c, angle: angle, trail: p.melee == nil ? [] : p.trail)
+    let angle = shine > 0 ? 20 - 105 * shine : p.melee ?? (seatedPose ? 5 : 20)
+    drawGlorfindSword(c, angle: angle, trail: p.melee == nil ? [] : p.trail, glow: 0.28 + 0.55 * shine)
     c.pattern(36, 31, [".GGG.", "GPPPG", "GPPPg"], ["G": gold, "g": goldDark, "P": plate])   // the front pauldron
     c.rect(38, 34, 2, 2, plate); c.rect(40, 33, 2, 3, clawdOrange); c.px(40, 35, clawdShade)
 }
 
 /// Glorfind's sword in his fist at `angle`: a gold pommel, a white grip and a wide gold crossguard, a long straight
 /// bright blade with a darker edge and a faint golden glow along it; a pale gold smear along `trail` behind a fast
-/// stroke.
-private func drawGlorfindSword(_ c: PixelCanvas, angle: Double, trail: [Double]) {
+/// stroke. `glow`: how strongly the blade glows.
+private func drawGlorfindSword(_ c: PixelCanvas, angle: Double, trail: [Double], glow: Double = 0.28) {
     let hand = Sprite.hand, steel = C(0xF2F6FC), edge = C(0xA8B2C0), gold = C(0xE8B830)
     for (i, a) in trail.enumerated() {
         let u = unit(a)
@@ -230,7 +301,7 @@ private func drawGlorfindSword(_ c: PixelCanvas, angle: Double, trail: [Double])
     }
     let u = unit(angle), n = (x: -u.y, y: u.x)
     c.glowLine(hand.x + u.x * 3, hand.y + u.y * 3, hand.x + u.x * 19, hand.y + u.y * 19, core: clear,
-               glow: C(0xFFE07A), coreR: 0, glowR: 1.8, strength: 0.28)
+               glow: C(0xFFE07A), coreR: 0, glowR: 1.8, strength: glow)
     line(c, hand.x - u.x * 2.5, hand.y - u.y * 2.5, hand.x + u.x * 1.5, hand.y + u.y * 1.5, C(0xE0E2E8), 0.6)   // the grip
     c.px(Int((hand.x - u.x * 3).rounded(.down)), Int((hand.y - u.y * 3).rounded(.down)), gold)                 // the pommel
     line(c, hand.x + u.x * 3, hand.y + u.y * 3, hand.x + u.x * 19, hand.y + u.y * 19, steel, 0.75)
@@ -247,8 +318,11 @@ private func drawGlorfindSword(_ c: PixelCanvas, angle: Double, trail: [Double])
 /// his back arm, pinned at the throat with a green leaf brooch, over a long dark-green tunic belted in grey, grey-green
 /// trousers and soft grey boots; long straight ash-blond hair to below the shoulders; a quiver with white fletchings and
 /// a pale Galadhrim longbow, its tips curving forward, held out in front of him. Shooting, he nocks an arrow and draws
-/// the string back before each shot, as Leggolas does.
+/// the string back before each shot, as Leggolas does. Signature: "You breathe so loud…": he nocks an arrow, lifts the
+/// bow to his eye and draws it right back (…0.28), and holds it on you, dead steady, eyes narrowed and brows down, a
+/// glint running along the arrowhead; then he eases the string and lowers it.
 private func drawHaldir(_ c: PixelCanvas, _ p: Pose) {
+    let aim = p.signature.map(haldirAim)
     let tunic = C(0x2E4A2C), tunicShade = C(0x203820), tunicLight = C(0x3E5E3A)
     let cloak = C(0xA8AEB4), cloakShade = C(0x80868E), cloakLight = C(0xC8CED4)
     let hair = C(0xD8BE78), hairShade = C(0xB09656), brow = C(0x8A7440)
@@ -282,7 +356,7 @@ private func drawHaldir(_ c: PixelCanvas, _ p: Pose) {
         "....QQQQ",
         ".....QQq",
     ], ["W": C(0xF0F0F0), "w": C(0xB8BCC4), "Q": C(0x5A4A3A), "q": C(0x3E3226)])
-    drawBody(c, Look(arm: tunic))
+    drawBody(c, Look(arm: tunic, eye: aim?.stern == true ? nil : ink))
     // The long tunic, to the knee.
     c.rect(18, 32, 20, 6, tunic)
     c.rect(37, 32, 1, 6, tunicShade)
@@ -314,9 +388,16 @@ private func drawHaldir(_ c: PixelCanvas, _ p: Pose) {
         "..h...................h.",
     ], ["H": hair, "h": hairShade])
     c.px(15, 28, clawdOrange); c.px(40, 28, clawdOrange)                      // the pointed ears
-    // Stern brows, drawn down toward the middle.
-    c.px(20, 27, brow); c.px(21, 27, brow); c.px(22, 28, brow); c.px(23, 28, brow)
-    c.px(32, 28, brow); c.px(33, 28, brow); c.px(34, 27, brow); c.px(35, 27, brow)
+    if aim?.stern == true {
+        // Sterner still: the eyes narrowed to slits, the brows right down on them.
+        c.rect(22, 30, 2, 2, ink); c.rect(32, 30, 2, 2, ink)
+        c.px(20, 28, brow); c.px(21, 28, brow); c.px(22, 29, brow); c.px(23, 29, brow)
+        c.px(32, 29, brow); c.px(33, 29, brow); c.px(34, 28, brow); c.px(35, 28, brow)
+    } else {
+        // Stern brows, drawn down toward the middle.
+        c.px(20, 27, brow); c.px(21, 27, brow); c.px(22, 28, brow); c.px(23, 28, brow)
+        c.px(32, 28, brow); c.px(33, 28, brow); c.px(34, 27, brow); c.px(35, 27, brow)
+    }
     // The longbow held out; an arrow on the string while he aims, drawn back before he shoots.
     var pull = 0, nocked = p.ready
     if let f = p.fire {
@@ -324,7 +405,8 @@ private func drawHaldir(_ c: PixelCanvas, _ p: Pose) {
         nocked = ph >= 0.45
         if ph > 0.6 { pull = Int(((ph - 0.6) / 0.4 * 3).rounded()) }
     }
-    c.oy += p.gunY + (seatedPose ? -3 : 0)
+    if let a = aim { pull = a.pull; nocked = a.nocked }
+    c.oy += p.gunY + (seatedPose ? -3 : 0) - (aim?.raise ?? 0)
     drawGaladhrimBow(c, pull: pull)
     c.rect(38, 33, 4, 2, tunic)
     c.rect(42, 33, 2, 3, clawdOrange)
@@ -335,6 +417,21 @@ private func drawHaldir(_ c: PixelCanvas, _ p: Pose) {
         c.px(tail, 33, C(0xF0F0F0)); c.px(tail, 35, C(0xF0F0F0))
         c.rect(tail - 1, 34, 2, 2, clawdOrange)                                // the hand on the string
     }
+    if let s = p.signature, s > 0.44, s < 0.56 {
+        // The glint along the arrowhead.
+        let k = (s - 0.44) / 0.12, a: Double = sin(k * .pi)
+        c.px(48, 34, C(0xFFFFFF, a))
+        for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] { c.px(48 + dx, 34 + dy, C(0xFFFFFF, a * 0.6)) }
+        if a > 0.6 { c.px(48, 32, C(0xFFFFFF, a * 0.5)); c.px(48, 36, C(0xFFFFFF, a * 0.5)); c.px(50, 34, C(0xFFFFFF, a * 0.5)) }
+    }
+}
+
+/// Haldirectory `s` through his signature: the arrow nocked, the string drawn back `pull` px, the bow lifted `raise` px
+/// to his eye, and his look stern.
+private func haldirAim(_ s: Double) -> (nocked: Bool, pull: Int, raise: Int, stern: Bool) {
+    let draw: Double = s < 0.14 ? 0 : s < 0.28 ? (s - 0.14) / 0.14 : s < 0.84 ? 1 : s < 0.92 ? 1 - (s - 0.84) / 0.08 : 0
+    let up: Double = s < 0.14 ? smooth(s / 0.14) : s < 0.86 ? 1 : 1 - smooth((s - 0.86) / 0.14)
+    return (s >= 0.06 && s < 0.94, Int((4 * draw).rounded()), Int((3 * up).rounded()), s >= 0.2 && s < 0.88)
 }
 
 /// A pale Galadhrim longbow gripped at (43, 34), wrapped green at the grip, its tips curving forward; the string back at
@@ -358,8 +455,40 @@ private func drawGaladhrimBow(_ c: PixelCanvas, pull: Int = 0) {
 /// embroidery down the front and round the hem, under a slate-grey mantle across his shoulders and down his back,
 /// clasped in silver; long straight silver-white hair to the waist, pointed ears, level silver brows, and a silver
 /// circlet of three little leaves. His slender sword hangs sheathed at his hip, his hand resting on the hilt; to fight
-/// he draws it, and it smears behind a fast stroke.
+/// he draws it, and it smears behind a fast stroke. Signature: born again in every shell, the Golden Wood stirring
+/// round him: golden leaves lift off the floor and swirl up round him (…0.5), his hand lifted, palm up, then drift
+/// down and settle, and fade.
 private func drawCeleborn(_ c: PixelCanvas, _ p: Pose) {
+    guard let s = p.signature else { drawCelebornBody(c, p, lift: 0); return }
+    let lift: Double = s < 0.15 ? smooth(s / 0.15) : s < 0.8 ? 1 : 1 - smooth((s - 0.8) / 0.15)
+    drawLeafSwirl(c, s, front: false)
+    let (ox, oy) = (c.ox, c.oy)
+    drawCelebornBody(c, p, lift: lift)
+    c.ox = ox; c.oy = oy
+    drawLeafSwirl(c, s, front: true)
+}
+
+/// Celeborne-again's golden leaves `s` through his signature, the far half of the swirl (behind him) or the near half
+/// (`front`): lifting off the floor round his feet, swirling up round him, drifting down again and fading.
+private func drawLeafSwirl(_ c: PixelCanvas, _ s: Double, front: Bool) {
+    let rise: Double = s < 0.1 ? 0 : s < 0.5 ? smooth((s - 0.1) / 0.4) : s < 0.58 ? 1 : 1 - smooth((s - 0.58) / 0.34)
+    let fade: Double = min(1, s / 0.08) * min(1, (1 - s) / 0.08)
+    let turn: Double = 2 * .pi * 2.2 * smooth(s)
+    let cols = [C(0xE8B840), C(0xD88A2A), C(0xFFE07A), C(0xC8962A)]
+    for i in 0..<18 {
+        let th = Double(i) / 18 * 2 * .pi + turn * (0.8 + 0.4 * frac(Double(i) * 0.43))
+        guard (sin(th) > 0) == front else { continue }
+        let high: Double = rise * (8 + 22 * frac(Double(i) * 0.618))
+        let rx: Double = 15 + 4 * rise + 2 * sin(Double(i) * 1.7), ry: Double = 2.5 + 2 * rise
+        let x = Int((28 + rx * cos(th)).rounded()), y = Int((42.5 - high + ry * sin(th)).rounded())
+        let col = cols[i % cols.count].alpha(fade)
+        // Tumbling: lying flat, then on edge.
+        if Int(th * 1.5 + Double(i)) % 2 == 0 { c.rect(x, y, 2, 1, col) } else { c.rect(x, y, 1, 2, col) }
+    }
+}
+
+/// Celeborne-again himself, his front hand lifted `lift` 0…1, palm up, in his signature.
+private func drawCelebornBody(_ c: PixelCanvas, _ p: Pose, lift: Double) {
     let robe = C(0xB4BCC8), robeShade = C(0x8C96A4), robeLight = C(0xD4DAE2)
     let mantle = C(0x5E6878), mantleShade = C(0x465062), mantleLight = C(0x76808E)
     let silver = C(0xE0E6EE), silverDark = C(0x9AA4B2)
@@ -416,7 +545,14 @@ private func drawCeleborn(_ c: PixelCanvas, _ p: Pose) {
         line(c, 38, 36, 41, 34.5, C(0x2E3440), 0.5)                            // the grip
         line(c, 37, 34.5, 38.5, 37.5, silver, 0.4)                             // the guard
         c.px(41, 34, silver)                                                    // the pommel
-        c.rect(38, 33, 2, 3, robe); c.rect(40, 33, 2, 2, clawdOrange); c.px(40, 34, clawdShade)
+        let up = Int((3 * lift).rounded())
+        guard up > 0 else {
+            c.rect(38, 33, 2, 3, robe); c.rect(40, 33, 2, 2, clawdOrange); c.px(40, 34, clawdShade)
+            return
+        }
+        // His hand lifted off the hilt, open, palm up.
+        c.rect(38, 33 - up, 3, 3, robe); c.rect(38, 35 - up, 3, 1, robeShade)
+        c.rect(41, 34 - up, 3, 1, clawdOrange); c.px(41, 33 - up, clawdOrange); c.px(43, 33 - up, clawdOrange)
         return
     }
     drawSlenderSword(c, angle: a, trail: p.trail)
@@ -447,14 +583,21 @@ private func drawSlenderSword(_ c: PixelCanvas, angle: Double, trail: [Double]) 
 /// gold leaves on its twigs, on long straight pale-blond hair to the waist; arched brows. A crimson robe to the ankles
 /// worked in silver at the collar, down the front and round the hem, a silver brocade on the chest, and a darker crimson
 /// cloak lined in silver down his back. A curved elven blade in each hand: at rest both held low, the front one point
-/// forward, the back one point back; fighting, the back one fans out opposite the front one's stroke.
+/// forward, the back one point back; fighting, the back one fans out opposite the front one's stroke. Signature: "I
+/// dual-wield": hands lifted, he twirls both blades round twice, in mirror image, smears behind them (…0.5), snaps them up
+/// to stand upright either side of him, and holds the pose, eyes closed, insufferably pleased with himself, a gleam
+/// running up the blades and on his crown; then lowers them.
 private func drawThranduil(_ c: PixelCanvas, _ p: Pose) {
     let robe = C(0xA01E2A), robeShade = C(0x741520), robeLight = C(0xC0343E)
     let silver = C(0xD4DAE2), silverDark = C(0x9AA4B2)
     let hair = C(0xF4EED2), hairShade = C(0xD2C9A2), brow = C(0xB8AC80)
-    let a = p.melee ?? (seatedPose ? 10 : 30)
+    let twirl = p.signature.map(thranduilTwirl)
+    let a = twirl?.angle ?? p.melee ?? (seatedPose ? 10 : 30)
+    let trail = twirl?.trail ?? (p.melee == nil ? [] : p.trail)
+    let smug = twirl?.smug == true
+    let lift = twirl?.lift ?? 0
     // The back blade, behind him in his other hand, mirroring the front one.
-    drawCurvedBlade(c, at: (16.0, 34.5 + Double(p.breathe)), angle: 180 - a, trail: [])
+    drawCurvedBlade(c, at: (16.0, 34.5 + Double(p.breathe - lift)), angle: 180 - a, trail: twirl?.trail.map { 180 - $0 } ?? [])
     drawBackCape(c, t: p.t, speed: p.capeSpeed, color: C(0x6A1018), edge: silver, hem: 42)
     drawLegs(c, Look(leg: robeShade), step: p.step)
     drawBoots(c, p.step, C(0x3A2A2A), rows: 1)
@@ -462,7 +605,7 @@ private func drawThranduil(_ c: PixelCanvas, _ p: Pose) {
     // His hair down his back, to the waist.
     c.pattern(13, 26, ["HHHH", "HhHH", "HHHH", "HHhH", "hHHH", "HHHH", "HHhH", ".HHH", ".HhH", "..HH"],
               ["H": hair, "h": hairShade])
-    drawBody(c, Look(arm: robe))
+    drawBody(c, Look(arm: robe, eye: smug ? nil : ink))
     // The robe, the shoulders to the ankles, flaring a little, silver at the collar, down the front and round the hem.
     c.rect(18, 32, 20, 6, robe)
     c.rect(37, 32, 1, 6, robeShade)
@@ -475,8 +618,8 @@ private func drawThranduil(_ c: PixelCanvas, _ p: Pose) {
     c.rect(29, 33, 1, 8, silver)
     c.pattern(21, 33, ["s.s.s", ".s.s.", "s.s.s"], ["s": silverDark])           // the brocade
     c.rect(18, 36, 20, 1, silverDark); c.rect(28, 36, 3, 1, silver)          // the girdle and its clasp
-    c.rect(14, 33, 4, 4, robe); c.rect(14, 36, 4, 1, silver); c.px(14, 33, robeLight)   // the back sleeve
-    c.rect(15, 34, 2, 2, clawdOrange)                                          // the back fist on its hilt
+    c.rect(14, 33 - lift, 4, 4 + lift, robe); c.rect(14, 36 - lift, 4, 1, silver); c.px(14, 33 - lift, robeLight)   // the back sleeve
+    c.rect(15, 34 - lift, 2, 2, clawdOrange)                                   // the back fist on its hilt
     // Long straight pale hair, parted in the middle, framing the face, past the shoulders.
     c.pattern(16, 20, [
         ".......HHHHHHHHHH.......",
@@ -495,8 +638,15 @@ private func drawThranduil(_ c: PixelCanvas, _ p: Pose) {
         ".Hh..................hH.",
     ], ["H": hair, "h": hairShade])
     c.px(15, 28, clawdOrange); c.px(40, 28, clawdOrange)                      // the pointed ears
-    c.px(21, 28, brow); c.px(22, 27, brow); c.px(23, 27, brow)                // arched brows
-    c.px(32, 27, brow); c.px(33, 27, brow); c.px(34, 28, brow)
+    if smug {
+        // Eyes closed, brows raised: insufferably pleased with himself.
+        c.rect(22, 31, 2, 1, ink); c.px(21, 30, ink); c.rect(32, 31, 2, 1, ink); c.px(34, 30, ink)
+        c.px(21, 27, brow); c.px(22, 26, brow); c.px(23, 26, brow)
+        c.px(32, 26, brow); c.px(33, 26, brow); c.px(34, 27, brow)
+    } else {
+        c.px(21, 28, brow); c.px(22, 27, brow); c.px(23, 27, brow)                // arched brows
+        c.px(32, 27, brow); c.px(33, 27, brow); c.px(34, 28, brow)
+    }
     // The crown: bare branches rising from a band, berries and autumn leaves on the twigs.
     c.pattern(17, 12, [
         "..........RR..........",
@@ -511,9 +661,34 @@ private func drawThranduil(_ c: PixelCanvas, _ p: Pose) {
         "...BBBBBBBBBBBBBBBB...",
     ], ["b": C(0x6A4424), "B": C(0x4E321A), "R": C(0xD8202A), "L": C(0xD8782A), "l": C(0xE8B440)])
     c.px(23, 21, C(0xE8B440)); c.px(28, 21, C(0xD8202A)); c.px(33, 21, C(0xE8B440))   // set in the band
-    drawCurvedBlade(c, at: Sprite.hand, angle: a, trail: p.melee == nil ? [] : p.trail)
-    c.rect(38, 33, 2, 3, robe); c.rect(38, 36, 2, 1, silver)
-    c.rect(40, 33, 2, 3, clawdOrange); c.px(40, 35, clawdShade)               // the fist round the grip
+    drawCurvedBlade(c, at: (Sprite.hand.x, Sprite.hand.y - Double(lift)), angle: a, trail: trail)
+    c.rect(38, 33 - lift, 2, 3 + lift, robe); c.rect(38, 36 - lift, 2, 1, silver)
+    c.rect(40, 33 - lift, 2, 3, clawdOrange); c.px(40, 35 - lift, clawdShade)        // the fist round the grip
+    guard smug, let s = p.signature else { return }
+    // A gleam running up each blade, and one on the crown.
+    let k = (s - 0.6) / 0.26
+    let up = Int((15 * min(1, k * 1.6)).rounded())
+    for x in [41, 16] where k < 0.65 { c.px(x, 31 - up, white); c.px(x, 32 - up, C(0xFFFFFF, 0.5)) }
+    if k > 0.4 && k < 0.95 {
+        let g: Double = sin((k - 0.4) / 0.55 * .pi)
+        c.px(27, 11, C(0xFFFFFF, g)); c.px(26, 11, C(0xFFF4C0, g * 0.6)); c.px(28, 11, C(0xFFF4C0, g * 0.6))
+        c.px(27, 10, C(0xFFF4C0, g * 0.6)); c.px(27, 9, C(0xFFF4C0, g * 0.3))
+    }
+}
+
+/// Thrandual `s` through his signature: the front blade's angle (the back one mirrors it), its smear, how high (px) his
+/// hands are lifted to twirl them clear of the floor, and whether he's holding his pose, pleased with himself.
+private func thranduilTwirl(_ s: Double) -> (angle: Double, trail: [Double], lift: Int, smug: Bool) {
+    func angle(_ s: Double) -> Double {
+        if s < 0.06 { return 30 }
+        if s < 0.5 { return 30 - 720 * (0.5 - 0.5 * cos((s - 0.06) / 0.44 * .pi)) }
+        if s < 0.6 { return 30 - 120 * smooth((s - 0.5) / 0.1) }
+        if s < 0.86 { return -90 }
+        return -90 + 120 * smooth((s - 0.86) / 0.14)
+    }
+    let now = angle(s), trail = [angle(s - 0.008), angle(s - 0.016)]
+    let up: Double = s < 0.04 ? 0 : s < 0.12 ? smooth((s - 0.04) / 0.08) : s < 0.5 ? 1 : 1 - smooth((s - 0.5) / 0.08)
+    return (now, abs(trail[0] - now) > 6 ? trail : [], Int((9 * up).rounded()), s >= 0.6 && s < 0.86)
 }
 
 /// A curved elven blade in a fist at `hand`, at `angle`: a dark grip, a silver pommel and a short leaf-shaped guard, and
@@ -584,4 +759,39 @@ private func drawBackCape(_ c: PixelCanvas, t: Double, speed: Double, color: Px,
         c.rect(l, y, r - l + 1, 1, color)
         c.px(l, y, edge)
     }
+}
+
+/// Smoothstep: 0→1 eased at both ends.
+private func smooth(_ x: Double) -> Double {
+    let u = min(1, max(0, x))
+    return u * u * (3 - 2 * u)
+}
+
+/// Draws `art` on a scratch canvas (same offsets as `c`) and copies it onto `c`, its colours washed toward `tint` by
+/// `amount` (0…1).
+private func layer(_ c: PixelCanvas, tint: Px, amount: Double, _ art: (PixelCanvas) -> Void) {
+    let s = PixelCanvas(c.w, c.h)
+    s.ox = c.ox; s.oy = c.oy; s.baseY = c.baseY
+    art(s)
+    let (ox, oy, by) = (c.ox, c.oy, c.baseY)
+    c.ox = 0; c.oy = 0; c.baseY = 0
+    defer { c.ox = ox; c.oy = oy; c.baseY = by }
+    let f = min(1, max(0, amount))
+    for y in 0..<s.h {
+        for x in 0..<s.w {
+            let i = (y * s.w + x) * 4
+            guard s.buf[i + 3] > 0 else { continue }
+            var col = unpremultiplied(s, i)
+            col.r = UInt8(Double(col.r) + (Double(tint.r) - Double(col.r)) * f)
+            col.g = UInt8(Double(col.g) + (Double(tint.g) - Double(col.g)) * f)
+            col.b = UInt8(Double(col.b) + (Double(tint.b) - Double(col.b)) * f)
+            c.px(x, y, col)
+        }
+    }
+}
+
+private func unpremultiplied(_ s: PixelCanvas, _ i: Int) -> Px {
+    let a = s.buf[i + 3], m = 255 / Double(a)
+    return Px(r: UInt8(min(255, Double(s.buf[i]) * m)), g: UInt8(min(255, Double(s.buf[i + 1]) * m)),
+              b: UInt8(min(255, Double(s.buf[i + 2]) * m)), a: a)
 }

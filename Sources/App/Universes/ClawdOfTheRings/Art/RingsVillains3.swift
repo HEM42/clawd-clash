@@ -6,11 +6,11 @@ import Foundation
 // the Mouth's tall helmet takes him higher.
 
 let ringsVillains3: [LOTRVillain: Persona] = [
-    .wormtongue: Persona(name: "Grep-ma Wormtongue", weapon: .saber, headTop: 22,
+    .wormtongue: Persona(name: "Grep-ma Wormtongue", weapon: .saber, headTop: 22, signature: 3.2,
                          callout: "Psst… I grepped the logs, my lord. They whisper of you.", draw: drawWormtongue),
-    .gothmog: Persona(name: "Gothmock", weapon: .saber, bulk: 1, headTop: 21,
+    .gothmog: Persona(name: "Gothmock", weapon: .saber, bulk: 1, headTop: 21, signature: 2.8,
                       callout: "The age of Men is over. The time of the Mock has come!", draw: drawGothmog),
-    .mouthOfSauron: Persona(name: "The Mouth of Sourun", weapon: .saber, headTop: 11,
+    .mouthOfSauron: Persona(name: "The Mouth of Sourun", weapon: .saber, headTop: 11, signature: 3.0,
                             callout: "My master Sourun bids you welcome… to the review queue.", draw: drawMouthOfSauron),
 ]
 
@@ -20,8 +20,13 @@ let ringsVillains3: [LOTRVillain: Persona] = [
 /// back, Clawd's face gone pale and sickly (a wan, greyed orange with dark rings under the eyes), narrow sly eyes under
 /// heavy brows and a thin smirk. Greasy black hair hangs lank either side of the face past the shoulders, a sheen on
 /// it. Heavy black robes to the ankles, trimmed with dark fur at the collar and the hem. A small dagger, held low and
-/// close between fights, with a faint smear behind a quick stab. No signature.
+/// close between fights, with a faint smear behind a quick stab. Signature: "Psst…": he brings his other hand round
+/// and rubs the two together, eyes darting sly from side to side and the smirk spreading (…0.45), then whispers,
+/// his lips working, little wavy whisper-marks drifting off from his mouth and fading (…0.88).
 private func drawWormtongue(_ c: PixelCanvas, _ p: Pose) {
+    let sig = p.signature.flatMap { $0 > 0.03 && $0 < 0.97 ? $0 : nil }
+    let rubbing = sig.map { $0 >= 0.08 && $0 < 0.9 } ?? false
+    let whispering = sig.map { $0 >= 0.45 && $0 < 0.88 } ?? false
     let pale = C(0xC4A493), paleShade = C(0xA08676), sallow = C(0x8E7A80)
     let robe = C(0x24202A), robeShade = C(0x16141A), robeLight = C(0x3A3542)
     let fur = C(0x3A322A), furLight = C(0x56493C), furDark = C(0x241E18)
@@ -36,11 +41,26 @@ private func drawWormtongue(_ c: PixelCanvas, _ p: Pose) {
     c.rect(19, 26, 20, 12, pale)
     c.rect(38, 26, 1, 12, paleShade)
     // Narrow sly eyes under heavy brows that slant down to the middle, dark rings under them, and a thin smirk.
-    c.rect(23, 29, 2, 2, ink); c.rect(33, 29, 2, 2, ink)
+    if let s = sig, rubbing && !whispering {
+        // Darting from side to side: half-shut, the pupil to one corner, then the other.
+        let look = Int(s * 3.2 * 2.5) % 2 == 0 ? 0 : 1
+        c.rect(23, 30, 2, 1, paleShade); c.rect(33, 30, 2, 1, paleShade)
+        c.px(23 + look, 30, ink); c.px(33 + look, 30, ink)
+    } else {
+        c.rect(23, 29, 2, 2, ink); c.rect(33, 29, 2, 2, ink)
+    }
     c.rect(22, 28, 2, 1, hair); c.px(24, 28, hair); c.px(25, 29, hair)
     c.rect(34, 28, 2, 1, hair); c.px(33, 28, hair); c.px(32, 29, hair)
     c.rect(23, 31, 2, 1, sallow); c.rect(33, 31, 2, 1, sallow)
-    c.rect(27, 32, 4, 1, paleShade); c.px(31, 31, paleShade)
+    if let s = sig, whispering {
+        // Lips working: a little round mouth, and shut again, the smirk at the corner.
+        if Int(s * 3.2 * 7) % 2 == 0 { c.rect(29, 32, 2, 2, C(0x2A1A1E)); c.px(31, 31, paleShade) }
+        else { c.rect(28, 32, 3, 1, paleShade); c.px(31, 31, paleShade) }
+    } else if rubbing {
+        c.rect(26, 32, 5, 1, paleShade); c.px(31, 31, paleShade); c.px(25, 31, paleShade)   // the smirk spreading
+    } else {
+        c.rect(27, 32, 4, 1, paleShade); c.px(31, 31, paleShade)
+    }
     // The heavy robe: the body to the ankles, flaring a little, fur at the hem.
     c.rect(18, 33, 21, 5, robe)
     c.rect(38, 33, 1, 5, robeShade)
@@ -54,8 +74,8 @@ private func drawWormtongue(_ c: PixelCanvas, _ p: Pose) {
             c.px(l, y, robeLight); c.px(r, y, robeShade); c.px(29, y, robeShade)
         }
     }
-    // Long hanging sleeves, the back one to below the belt, fur at the cuff.
-    c.rect(14, 33, 4, 5, robe); c.rect(14, 37, 4, 1, fur); c.px(14, 33, robeLight)
+    // Long hanging sleeves, the back one to below the belt, fur at the cuff (brought round in front to rub his hands).
+    if !rubbing { c.rect(14, 33, 4, 5, robe); c.rect(14, 37, 4, 1, fur); c.px(14, 33, robeLight) }
     // The fur collar, heavy across the shoulders.
     c.pattern(16, 32, [
         "..FfFFlFFfFFFFfFFlFFfFFF.",
@@ -85,6 +105,22 @@ private func drawWormtongue(_ c: PixelCanvas, _ p: Pose) {
     let angle = p.melee ?? (seatedPose ? 15 : 70)
     drawDagger(c, angle: angle, trail: p.melee == nil ? [] : p.trail)
     c.rect(38, 33, 3, 3, robe); c.rect(40, 33, 2, 3, pale); c.px(40, 35, paleShade)
+    if let s = sig, rubbing {
+        // The other hand, round in front, rubbing against the first: up and down and round, its fur cuff behind it.
+        let a: Double = s * 3.2 * 2 * .pi * 2.2
+        let hx = 37 + Int((sin(a) * 1.5).rounded()), hy = 32 + Int((cos(a) * 1.2).rounded())
+        c.rect(hx - 2, hy, 2, 3, fur); c.px(hx - 2, hy, furLight)
+        c.rect(hx, hy, 2, 3, pale); c.px(hx + 1, hy + 2, paleShade)
+    }
+    if let s = sig, whispering {
+        // The whisper: little wavy marks drifting off from the mouth, rising a little and fading.
+        for i in 0..<3 {
+            let k = frac((s - 0.45) * 3.2 / 0.9 + Double(i) / 3)
+            let x = 34 + Int(k * 14), y = 30 - Int(k * 6)
+            let mark = C(0xF0ECF8, 1 - k * 0.8)
+            c.pattern(x, y, [".mm..m", "m..mm."], ["m": mark])
+        }
+    }
 }
 
 /// Grep-ma's dagger in his fist at `angle`: a dark grip, a small brass crossguard and pommel and a thin 8 px blade,
@@ -110,8 +146,11 @@ private func drawDagger(_ c: PixelCanvas, angle: Double, trail: [Double]) {
 /// back, the face deformed: a swollen lump closing one eye to a slit, the other huge, bulging and bloodshot, and a
 /// crooked jaw with snaggle teeth. Badly hunched, a great hump on his back plated in battered, rusted black iron, with
 /// dented plate over the chest and a ragged plate skirt. A heavy flanged mace held low in front of him; idle he heaves
-/// it up and brings it down, and a swing smears a long way behind it. No signature.
+/// it up and brings it down, and a swing smears a long way behind it. Signature: "You!": he levels the mace straight
+/// out in front of him at you (…0.2), jabbing it twice, and his one good eye bulges bigger and bigger, red veins
+/// throbbing round it, the pupil shrinking to a pinpoint (…0.8); then it shrinks back and the mace comes down.
 private func drawGothmog(_ c: PixelCanvas, _ p: Pose) {
+    let sig = p.signature.flatMap { $0 > 0.02 && $0 < 0.98 ? $0 : nil }
     let skin = C(0xB4A68E), skinDark = C(0x8C7C66), skinLight = C(0xCCC0A8), blotch = C(0x9A6A58)
     let iron = C(0x34322E), ironDark = C(0x22201E), ironLight = C(0x56524C), rust = C(0x6A4430)
     drawLegs(c, Look(leg: C(0x2E2A26)), step: p.step)
@@ -147,7 +186,7 @@ private func drawGothmog(_ c: PixelCanvas, _ p: Pose) {
     // The swollen lump over one eye, closing it to a slit.
     c.pattern(20, 27, [".llll.", "lLLLLl", "LLLLLd", "dkkkd."], ["l": skinLight, "L": skin, "d": skinDark, "k": ink])
     // The other eye, huge, bulging, bloodshot, the pupil wandering.
-    c.pattern(30, 25, [
+    if let s = sig, s >= 0.22 && s < 0.86 { drawBulgingEye(c, s, skinDark: skinDark) } else { c.pattern(30, 25, [
         "..ddd..",
         ".dEEEd.",
         "dEEErEd",
@@ -155,7 +194,7 @@ private func drawGothmog(_ c: PixelCanvas, _ p: Pose) {
         "dErPPEd",
         ".dEEEd.",
         "..ddd..",
-    ], ["d": skinDark, "E": C(0xE8DCA0), "P": ink, "r": C(0xC0503A)])
+    ], ["d": skinDark, "E": C(0xE8DCA0), "P": ink, "r": C(0xC0503A)]) }
     // The crooked jaw and snaggle teeth.
     c.rect(25, 33, 4, 1, C(0x3A2A22)); c.rect(29, 32, 7, 1, C(0x3A2A22))
     c.px(26, 32, C(0xE8E0C8)); c.px(31, 33, C(0xE8E0C8)); c.px(34, 31, C(0xE8E0C8))
@@ -172,8 +211,9 @@ private func drawGothmog(_ c: PixelCanvas, _ p: Pose) {
     c.rect(15, 33, 4, 3, skin); c.rect(15, 33, 4, 1, iron)
     // A dented pauldron on the front shoulder.
     c.pattern(35, 31, [".PPP.", "PhPPP", "PPrPd", ".Pdd."], ["P": iron, "h": ironLight, "r": rust, "d": ironDark])
-    // The mace: held low, heaved up and brought down for the idle flourish, a long smear behind a swing.
-    let angle = heaved(p, from: 15, by: -105) ?? 15
+    // The mace: held low, heaved up and brought down for the idle flourish, a long smear behind a swing; levelled at
+    // you in the signature.
+    let angle = sig.map(gothmogPoint) ?? heaved(p, from: 15, by: -105) ?? 15
     var trail = p.melee == nil ? [] : p.trail
     if let h = idlePlay(p), h.kind == .flourish {
         let before: Double = 15 - 105 * habitArc(max(0, h.p - 0.04), hold: 0.2)
@@ -188,6 +228,46 @@ private func drawGothmog(_ c: PixelCanvas, _ p: Pose) {
     }
     drawFlangedMace(c, angle: seatedPose && p.melee == nil ? -20 : angle)
     c.rect(38, 33, 3, 3, iron); c.rect(40, 33, 2, 3, skin); c.px(40, 35, skinDark)
+}
+
+/// The mace's angle `s` through Gothmock's signature: levelled out in front (…0.2), jabbed at you twice, held, and
+/// lowered again from 0.84.
+private func gothmogPoint(_ s: Double) -> Double {
+    let level: Double = -6
+    if s < 0.2 { return 15 + (level - 15) * smooth(s / 0.2) }
+    if s >= 0.84 { return level + (15 - level) * smooth((s - 0.84) / 0.12) }
+    for j in [0.3, 0.42] where s >= j && s < j + 0.06 { return level + 7 * sin((s - j) / 0.06 * .pi) }
+    return level
+}
+
+/// Gothmock's good eye in his signature, `s` through it: bulging out of his head, two pixels bigger all round at the
+/// most, bloodshot, red veins throbbing round it, the pupil shrunk to a pinpoint that quivers; shrinking back at the end.
+private func drawBulgingEye(_ c: PixelCanvas, _ s: Double, skinDark: Px) {
+    let white = C(0xE8DCA0), vein = C(0xC0503A)
+    let grow = s < 0.3 ? (s - 0.22) / 0.08 : s < 0.5 ? 1 + (s - 0.3) / 0.2 : s < 0.78 ? 2 : 2 - (s - 0.78) / 0.08 * 2
+    let r = 3 + Int(grow.rounded()), cx = 33, cy = 28 - Int((grow / 2).rounded())
+    c.ellipse(cx, cy, r + 1, r + 1, skinDark)
+    c.ellipse(cx, cy, r, r, white)
+    // Bloodshot: veins running in from the rim, longer as it swells.
+    for (k, a) in [20.0, 115, 200, 290].enumerated() {
+        let u = unit(a), len = Double(r) * (0.4 + 0.15 * Double(k % 2)) + grow * 0.3
+        for d in stride(from: Double(r) - 0.5, to: Double(r) - 0.5 - len, by: -1) {
+            c.px(cx + Int((u.x * d).rounded()), cy + Int((u.y * d).rounded()), vein)
+        }
+    }
+    let quiver = Int(s * 2.8 * 24) % 2
+    if grow > 1.5 {
+        c.rect(cx + 1 + quiver, cy, 1, 1, ink)                                       // a pinpoint, quivering
+        // Throbbing: a red pulse round the rim.
+        if Int(s * 2.8 * 6) % 2 == 0 {
+            for a in stride(from: 0.0, to: 360, by: 30) {
+                let u = unit(a)
+                c.px(cx + Int((u.x * Double(r + 2)).rounded()), cy + Int((u.y * Double(r + 2)).rounded()), vein.alpha(0.7))
+            }
+        }
+    } else {
+        c.rect(cx + 1, cy, 2, 2, ink)
+    }
 }
 
 /// Gothmock's mace: a wooden haft with a wrapped grip and a round iron head ringed with flanges, rust on it.
@@ -217,13 +297,17 @@ private func drawFlangedMace(_ c: PixelCanvas, angle: Double) {
 /// over the whole upper face, no eyes to be seen; below its rim, cheek guards either side, a huge grin, lips peeled
 /// back over two rows of far too many yellowed teeth, with Clawd's orange showing round it. Black robes to the ankles
 /// with a red collar, a red panel down the front and red trim at the hem. A long blackened sword with a pale edge, held
-/// low between fights, swung with a smear behind a fast stroke. No signature.
+/// low between fights, swung with a smear behind a fast stroke. Signature: the grin stretches, a pixel at a time,
+/// wider and wider, out past the cheek guards, the corners curling up, the teeth growing longer and more of them
+/// showing (…0.72), quivers at its widest, and snaps shut back to its usual size with a jolt and a clack.
 private func drawMouthOfSauron(_ c: PixelCanvas, _ p: Pose) {
+    let sig = p.signature.flatMap { $0 > 0.03 && $0 < 0.97 ? $0 : nil }
     let robe = C(0x1A1618), robeShade = C(0x100C0E), robeLight = C(0x2C2628), red = C(0x8A1C1C), redDark = C(0x5E1212)
     let helm = C(0x26262C), helmDark = C(0x16161A), helmLight = C(0x484852), rune = C(0x9A2018)
     let lip = C(0x6A2A22), tooth = C(0xE6DCB8), toothShade = C(0xB0A27C), gap = C(0x1A0A0A)
     drawLegs(c, Look(leg: robeShade), step: p.step)
     c.oy += p.breathe
+    if let s = sig, s >= 0.76 && s < 0.84 { c.oy += 1 }                        // the jolt as the grin snaps shut
     drawBody(c, Look(arm: robe, eye: nil))
     // The robe, the collar to the ankles: a red collar, a red panel down the front, flaring to a red-trimmed hem.
     c.rect(18, 36, 20, 2, robe)
@@ -269,14 +353,16 @@ private func drawMouthOfSauron(_ c: PixelCanvas, _ p: Pose) {
         "R.R.R.R..R.R.R.R",
     ], ["R": rune])
     // The grin: lips peeled back, corners up, two rows of too many teeth.
-    c.pattern(20, 30, [
+    if let s = sig {
+        drawStretchedGrin(c, s, lip: lip, tooth: tooth, toothShade: toothShade, gap: gap)
+    } else { c.pattern(20, 30, [
         "L..............L",
         "LLLLLLLLLLLLLLLL",
         "LTsTsTsTsTsTsTTL",
         "LggggggggggggggL",
         "LTsTsTsTsTsTsTTL",
         ".LLLLLLLLLLLLLL.",
-    ], ["L": lip, "T": tooth, "s": toothShade, "g": gap])
+    ], ["L": lip, "T": tooth, "s": toothShade, "g": gap]) }
     // The sword, a smear behind a fast stroke.
     let angle = p.melee ?? (seatedPose ? 8 : 32)
     for (i, a) in (p.melee == nil ? [] : p.trail).enumerated() {
@@ -286,6 +372,38 @@ private func drawMouthOfSauron(_ c: PixelCanvas, _ p: Pose) {
     }
     drawBlackSword(c, angle: angle, red: red)
     c.rect(38, 33, 3, 3, robe); c.rect(40, 33, 2, 3, clawdOrange); c.px(40, 35, clawdShade)
+}
+
+/// The Mouth's grin `s` through his signature. At its usual size it's the grin he always wears: corners, a top lip, a
+/// row of teeth, the dark gap, a row of teeth and the bottom lip, 16 wide from x 20. Stretched (…0.72) it widens a
+/// pixel each side at a time to 24, the corners curl two pixels higher, and the teeth grow to two pixels long; it
+/// quivers at its widest, then snaps back (0.76), the head jolting down a pixel and a clack flashing off the corners.
+private func drawStretchedGrin(_ c: PixelCanvas, _ s: Double, lip: Px, tooth: Px, toothShade: Px, gap: Px) {
+    var k: Double = s < 0.1 ? 0 : s < 0.72 ? smooth((s - 0.1) / 0.62) : s < 0.76 ? 1 : 0
+    if s >= 0.66 && s < 0.76 && Int(s * 3 * 20) % 2 == 0 { k -= 0.12 }          // quivering, straining
+    let snap = s >= 0.76 && s < 0.84
+    let half = 8 + Int((4 * k).rounded()), rise = 1 + Int((2 * k).rounded()), teeth = 1 + Int(k.rounded())
+    let l = 28 - half, r = 27 + half
+    var y = 30
+    for j in 0..<rise { c.px(l, y - j, lip); c.px(r, y - j, lip) }               // the corners, curling up
+    if rise > 1 { c.px(l + 1, y - rise + 1, lip); c.px(r - 1, y - rise + 1, lip) }
+    y += 1
+    c.rect(l, y, r - l + 1, 1, lip); y += 1                                    // the top lip
+    func row() {
+        c.px(l, y, lip); c.px(r, y, lip)
+        for x in (l + 1)..<r { c.px(x, y, x == r - 1 || (x - l) % 2 == 1 ? tooth : toothShade) }
+        y += 1
+    }
+    for _ in 0..<teeth { row() }
+    c.px(l, y, lip); c.px(r, y, lip); c.rect(l + 1, y, r - l - 1, 1, gap); y += 1
+    for _ in 0..<teeth { row() }
+    c.rect(l + 1, y, r - l - 1, 1, lip)                                        // the bottom lip
+    if snap {
+        // The clack: short white strokes flashing off the corners.
+        for (x, dir) in [(l - 1, -1), (r + 1, 1)] {
+            c.px(x, 31, C(0xFFFFFF, 0.8)); c.px(x + dir, 30, C(0xFFFFFF, 0.6)); c.px(x + dir, 33, C(0xFFFFFF, 0.6))
+        }
+    }
 }
 
 /// The Mouth's long sword: a black grip with a red pommel stone, a black crossguard tipped in red, and a long
@@ -368,4 +486,10 @@ private func unpremultiplied(_ s: PixelCanvas, _ i: Int) -> Px {
     let a = s.buf[i + 3], m = 255 / Double(a)
     return Px(r: UInt8(min(255, Double(s.buf[i]) * m)), g: UInt8(min(255, Double(s.buf[i + 1]) * m)),
               b: UInt8(min(255, Double(s.buf[i + 2]) * m)), a: a)
+}
+
+/// Smoothstep: 0→1 eased at both ends.
+private func smooth(_ x: Double) -> Double {
+    let u = min(1, max(0, x))
+    return u * u * (3 - 2 * u)
 }

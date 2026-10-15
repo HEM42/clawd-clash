@@ -7,15 +7,17 @@ import Foundation
 
 let ringsVillains2: [LOTRVillain: Persona] = [
     .balrog: Persona(name: "The Ballrog", weapon: .saber, armoured: true, canSit: false, pivot: balrogHand, bulk: 8, headTop: 11,
-                     draw: drawBalrog),
+                     signature: 3.4, draw: drawBalrog),
     .gollum: Persona(name: "Smeagull", weapon: .saber, pivot: gollumShoulder, headTop: 27, signature: 3.6, callout: "My precious!",
                      draw: drawGollum),
-    .uruk: Persona(name: "Uruk-Hi", weapon: .saber, headTop: 19, callout: "Meat's back on the menu!",
+    .uruk: Persona(name: "Uruk-Hi", weapon: .saber, headTop: 19, signature: 3.4, callout: "Meat's back on the menu!",
                    draw: drawUruk),
-    .orc: Persona(name: "Gorbage", weapon: .saber, bulk: 2, headTop: 23, callout: "Collecting garbage!", draw: drawOrc),
-    .shelob: Persona(name: "Shellob", weapon: .saber, canSit: false, pivot: shelobFangs, bulk: 8, headTop: 22, draw: drawShelob),
+    .orc: Persona(name: "Gorbage", weapon: .saber, bulk: 2, headTop: 23, signature: 3.0, callout: "Collecting garbage!",
+                  draw: drawOrc),
+    .shelob: Persona(name: "Shellob", weapon: .saber, canSit: false, pivot: shelobFangs, bulk: 8, headTop: 22, signature: 3.6,
+                     draw: drawShelob),
     .lurtz: Persona(name: "Lintz", weapon: .blaster, shot: .arrow, muzzle: (46, 34), handGun: false, headTop: 20,
-                    callout: "Find the Halflings! Lint the others!", draw: drawLurtz),
+                    signature: 3.2, callout: "Find the Halflings! Lint the others!", draw: drawLurtz),
 ]
 
 // MARK: - The Ballrog
@@ -26,11 +28,17 @@ private let balrogHand: (x: Double, y: Double) = (45.5, 30.5)
 /// The Ballrog, a demon of the ancient world, half again a Man's height: dark rock-hide split by glowing cracks, two
 /// black horns, fire licking up from its head and shoulders, smoky wings folded behind it, eyes and mouth like a
 /// furnace door. In its fist a fire whip, coiled on the floor in front of it at rest; swung, it follows the fist round
-/// with a lag, the tip coming last, and sags when it slows; idle, it cracks it out in front of it. No signature.
+/// with a lag, the tip coming last, and sags when it slows; idle, it cracks it out in front of it. Signature: "You
+/// cannot pass": it rears up to its full height, its smoky wings spreading wide either side of it, the flames leaping
+/// up off its head and shoulders and the cracks in its hide blazing (…0.22); it draws the whip up overhead and cracks
+/// it out in front of it in a burst of sparks (…0.52), holds it there, smouldering, then sinks back and folds its wings.
 private func drawBalrog(_ c: PixelCanvas, _ p: Pose) {
+    let sig = p.signature.flatMap { $0 > 0.02 && $0 < 0.98 ? $0 : nil }
+    let rise = sig.map(balrogRise) ?? 0
     let rock = C(0x3A1A10), rockDark = C(0x2A120A), rockLight = C(0x52281A), horn = C(0x1E0E0A)
     let crack = C(0xE8501E), hot = C(0xFFB03A)
-    let glow: Double = 0.75 + 0.25 * sin(p.lt * 2.3)
+    var glow: Double = 0.75 + 0.25 * sin(p.lt * 2.3)
+    if rise > 0 { glow = min(1, glow + 0.35 * rise) }                         // blazing as it rears
     // Two massive legs, cloven into claws.
     for (i, lx) in [19, 30].enumerated() {
         let up = p.step >= 0 && i == p.step ? 1 : 0
@@ -41,8 +49,8 @@ private func drawBalrog(_ c: PixelCanvas, _ p: Pose) {
         c.px(lx + 3, 37, crack.alpha(glow)); c.px(lx + 2, 38, crack.alpha(glow)); c.px(lx + 3, 40, crack.alpha(glow * 0.7))
     }
     // All of it above the legs a pixel low (the head top on row 11), so the wings and flames keep off the canvas top.
-    c.oy += p.breathe + 1
-    drawBalrogWings(c, p)
+    c.oy += p.breathe + 1 - Int((2 * rise).rounded())                          // rearing up, two pixels taller
+    drawBalrogWings(c, p, spread: rise)
     // The back arm, hanging.
     c.rect(10, 19, 4, 13, rockDark)
     c.rect(9, 31, 5, 4, rockDark)
@@ -96,16 +104,37 @@ private func drawBalrog(_ c: PixelCanvas, _ p: Pose) {
         "..HHH.........HHH...",
         "....HH......HHH.....",
     ], ["H": horn])
-    drawBalrogFlames(c, p)
+    drawBalrogFlames(c, p, flare: rise)
     // The whip arm, reaching forward, the fist and the whip.
     line(c, 39, 19, 43, 24, rock, 2)
     line(c, 43, 24, 45, 28, rock, 1.8)
     c.rect(43, 27, 5, 4, rock); c.px(47, 27, rockLight); c.rect(43, 30, 5, 1, rockDark)
-    drawFireWhip(c, p)
+    drawFireWhip(c, p, sig: sig.flatMap(balrogSignatureWhip), burst: sig.map { $0 >= 0.5 && $0 < 0.6 } ?? false)
+}
+
+/// How far the Ballrog has reared up `s` through its signature, 0…1: its wings spread and its fire flared with it.
+private func balrogRise(_ s: Double) -> Double {
+    if s < 0.22 { return smooth((s - 0.02) / 0.2) }
+    if s < 0.78 { return 1 }
+    return 1 - smooth((s - 0.78) / 0.17)
+}
+
+/// The whip in the Ballrog's signature: hanging from the fist, drawn slowly up overhead (…0.42), cracked out in front
+/// (…0.52) and held there; let fall again at 0.76. Its angle and the swing's trail, as `whipCrack` gives them.
+private func balrogSignatureWhip(_ s: Double) -> (angle: Double, trail: [Double])? {
+    guard s >= 0.14 && s < 0.76 else { return nil }
+    func crack(_ s: Double) -> Double {
+        if s < 0.46 { return 25 - 135 * smooth((s - 0.14) / 0.28) }
+        let f: Double = min(1, (s - 0.46) / 0.06)
+        return -110 + 135 * (1 - pow(1 - f, 3))
+    }
+    let dt = 0.01, now = crack(s), prev = crack(s - dt)
+    return (now, abs(now - prev) > 6 ? [prev, crack(s - 2 * dt)] : [])
 }
 
 /// Fire licking up off the Ballrog's head and shoulders: flickering columns, yellow at the root, red at the tips.
-private func drawBalrogFlames(_ c: PixelCanvas, _ p: Pose) {
+/// `flare` (0…1): leaping higher, up to the canvas top.
+private func drawBalrogFlames(_ c: PixelCanvas, _ p: Pose, flare: Double = 0) {
     let colours: [Px] = [C(0xFFB03A), C(0xE8501E), C(0x8A1E0A)]
     let tick = Int(p.t * 10)
     let spots: [(x: Int, y: Int, h: Int)] = [
@@ -113,8 +142,9 @@ private func drawBalrogFlames(_ c: PixelCanvas, _ p: Pose) {
         (14, 16, 2), (15, 16, 3), (16, 16, 3), (17, 16, 2), (38, 16, 2), (39, 16, 3), (40, 16, 2),
         (24, 11, 2), (24, 12, 2),
     ]
+    let extra = Int((flare * 5).rounded()), cap = flare > 0 ? c.oy + c.baseY : -3
     for (i, s) in spots.enumerated() {
-        let h = min(s.y - 3, max(1, s.h - 1 + Int(noise(i * 13 + tick) * 3)))          // the tips stay on row 5 or lower
+        let h = min(s.y + cap, max(1, s.h - 1 + extra + Int(noise(i * 13 + tick) * 3)))  // the tips on row 5 or lower
         for k in 0..<h {
             let band = min(2, k * 3 / h)
             c.px(s.x, s.y - k, colours[band].alpha(k == h - 1 ? 0.7 : 1))
@@ -123,12 +153,23 @@ private func drawBalrogFlames(_ c: PixelCanvas, _ p: Pose) {
 }
 
 /// Smoky wings folded behind the Ballrog: two dark triangles rising over its back, their edges fraying into smoke.
-private func drawBalrogWings(_ c: PixelCanvas, _ p: Pose) {
-    let tick = Int(p.t * 6)
-    triangle(c, (22, 17), (11, 3), (14, 24), C(0x2E1A12), fray: tick)
-    triangle(c, (18, 19), (2, 4), (7, 34), C(0x1E0E0A), fray: tick + 3)
-    line(c, 17, 20, 4, 6, C(0x34201A), 0.4)
-    line(c, 17, 22, 6, 24, C(0x34201A), 0.4)
+/// `spread` (0…1): unfurled wide, the far one swept up over its head and out in front of it, the near one back to the
+/// canvas edge, bones showing along them.
+private func drawBalrogWings(_ c: PixelCanvas, _ p: Pose, spread w: Double = 0) {
+    let tick = Int(p.t * 6), bone = C(0x34201A)
+    func mix(_ a: (Double, Double), _ b: (Double, Double)) -> (Double, Double) { (a.0 + (b.0 - a.0) * w, a.1 + (b.1 - a.1) * w) }
+    let root = mix((22, 17), (35, 15)), tip = mix((11, 3), (64, 0)), foot = mix((14, 24), (57, 20))
+    triangle(c, root, tip, foot, C(0x2E1A12), fray: tick)
+    triangle(c, (18, 19), mix((2, 4), (0, 0)), mix((7, 34), (0, 28)), C(0x1E0E0A), fray: tick + 3)
+    let b1 = mix((4, 6), (1, 2)), b2 = mix((6, 24), (2, 19))
+    line(c, 17, 20, b1.0, b1.1, bone, 0.4)
+    line(c, 17, 22, b2.0, b2.1, bone, 0.4)
+    if w > 0 {
+        for f in [0.35, 0.7] {                                                 // the far wing's bones, fanned
+            let end = (tip.0 + (foot.0 - tip.0) * f, tip.1 + (foot.1 - tip.1) * f)
+            line(c, root.0, root.1, end.0, end.1, bone.alpha(w), 0.4)
+        }
+    }
 }
 
 /// A filled triangle; the pixels on its edge are thinned to smoke, changing on `fray`.
@@ -159,8 +200,8 @@ private func triangle(_ c: PixelCanvas, _ a: (Double, Double), _ b: (Double, Dou
 /// it. Swung (`p.melee`), it leaves the fist at the swing's angle and lags behind along its length: each bit of it
 /// points the way the fist pointed a moment earlier (`p.trail`, carried on past its last angle), so the tip comes last,
 /// and whatever isn't moving fast sags toward the floor. A fast swing leaves the whip's last shapes smeared behind it
-/// in fire, and the tip cracks.
-private func drawFireWhip(_ c: PixelCanvas, _ p: Pose) {
+/// in fire, and the tip cracks. `sig`: swung as the signature has it instead; `burst`: sparks fly off the tip.
+private func drawFireWhip(_ c: PixelCanvas, _ p: Pose, sig: (angle: Double, trail: [Double])? = nil, burst: Bool = false) {
     let core = C(0xFFB03A), glow = C(0xE8501E)
     let floor = Double(43 - c.oy)
     let flick: Double = 0.85 + 0.15 * noise(Int(p.t * 20))
@@ -174,6 +215,7 @@ private func drawFireWhip(_ c: PixelCanvas, _ p: Pose) {
     }
     var swing = p.melee, trail = p.trail
     if swing != nil, let crack = whipCrack(p) { swing = crack.angle; trail = crack.trail }
+    if let s = sig { swing = s.angle; trail = s.trail }
     guard let now = swing else {
         draw([(46, 31), (47, 34), (48, 37), (49.5, 40), (51.5, 42), (54.5, 43), (58, 43), (61, 42.5), (63.5, 41), (65, 41.5)],
              strength: flick)
@@ -193,6 +235,15 @@ private func drawFireWhip(_ c: PixelCanvas, _ p: Pose) {
     if fast, let tip = pts.last {
         c.glowLine(tip.x, min(tip.y, floor), tip.x, min(tip.y, floor), core: C(0xFFF0C0), glow: core, coreR: 0.5, glowR: 1.8,
                    strength: 0.5 + 0.5 * noise(Int(p.t * 30)))
+    }
+    if burst, let tip = pts.last {
+        // The crack: sparks flying off the tip every way, flickering.
+        for k in 0..<8 {
+            let u = unit(Double(k) * 45 + 20 * noise(k + Int(p.t * 20))), r: Double = 2 + 2 * noise(k * 7 + Int(p.t * 20))
+            let y = min(tip.y, floor)
+            c.glowLine(tip.x + u.x * r, y + u.y * r, tip.x + u.x * (r + 2), y + u.y * (r + 2), core: C(0xFFF0C0), glow: core,
+                       coreR: 0.35, glowR: 1, strength: 0.8)
+        }
     }
 }
 
@@ -388,17 +439,22 @@ private func drawGrab(_ c: PixelCanvas, _ p: Pose, angle: Double, skin: Px, claw
 
 /// Uruk-Hi, the big fighting orc: dark brown skin, a white hand print over the face (the eyes looking out between the
 /// fingers), a black iron helmet with the White Hand painted on its front, black armour plates on chest and shoulders,
-/// and a heavy, notched sword, held low; it is heavy, so a fast swing smears a long way behind it. No signature.
+/// and a heavy, notched sword, held low; it is heavy, so a fast swing smears a long way behind it. Signature: "Meat's
+/// back on the menu!": it brings up a roast haunch of meat in its off hand (…0.12), chomps it in three big bites, the
+/// head ducking into each and the crumbs flying, down to the bare bone (…0.72), holds the bone up, and tosses it away
+/// back over its shoulder.
 private func drawUruk(_ c: PixelCanvas, _ p: Pose) {
+    let sig = p.signature.flatMap { $0 > 0.02 && $0 < 0.98 ? $0 : nil }
     let skin = C(0x4A3A2E), skinDark = C(0x3A2C22), hand = C(0xF0EEE8)
     let plate = C(0x1E1E22), plateLight = C(0x3A3A42), plateMid = C(0x2A2A30), helm = C(0x2A2A30), helmLight = C(0x46464E)
     drawLegs(c, Look(leg: C(0x2E2620)), step: p.step)
     drawBoots(c, p.step, plate, rows: 3)
     c.oy += p.breathe
+    if let s = sig, urukChomp(s) != nil { c.oy += 1 }                          // ducking into a bite
     // The body, broad, in its own dark skin, and the arms in black plate.
     c.rect(17, 26, 22, 12, skin)
     c.rect(38, 26, 1, 12, skinDark)
-    c.rect(14, 33, 3, 3, plate)
+    if sig == nil { c.rect(14, 33, 3, 3, plate) }
     // The face: the white hand over it, the eyes between the fingers.
     c.pattern(21, 26, [
         "..W..W.W..W...",
@@ -430,6 +486,7 @@ private func drawUruk(_ c: PixelCanvas, _ p: Pose) {
         "KKKKKKKKKKKKKKKKKKKKKKKKKK",
     ], ["K": helm, "h": helmLight])
     c.pattern(25, 20, [".W.W.W.", ".W.W.W.", ".WWWWW.", "WWWWWW.", ".WWWW.."], ["W": hand])
+    if let s = sig { drawMeat(c, p, s, plate: plate) }
     // The sword, and a long smear behind a fast swing (never through the floor). Idle, he doesn't twirl it: it's
     // heaved up overhead and chopped down in front of him.
     var sword = p.melee ?? (seatedPose ? 6 : 32)
@@ -455,6 +512,59 @@ private func drawUruk(_ c: PixelCanvas, _ p: Pose) {
     }
     drawUrukSword(c, angle: sword)
     c.rect(38, 33, 3, 3, plate); c.px(38, 33, plateLight)
+}
+
+/// The bites in Uruk-Hi's signature: when each one starts.
+private let urukBites: [Double] = [0.2, 0.38, 0.56]
+
+/// Which bite the Uruk is chomping `s` through its signature (its head ducked into it), if any.
+private func urukChomp(_ s: Double) -> Int? {
+    urukBites.firstIndex { s >= $0 && s < $0 + 0.06 }
+}
+
+/// The haunch of meat in the Uruk's off hand, `s` through its signature: brought up from its side to its mouth, bitten
+/// down to the bone (a bite gone at each chomp, the red showing, crumbs flying), held up bare, then tossed back over
+/// its shoulder, end over end, and the arm let down again.
+private func drawMeat(_ c: PixelCanvas, _ p: Pose, _ s: Double, plate: Px) {
+    let crust = C(0x8A4420), meat = C(0xB45E2C), roast = C(0xD88A48), red = C(0xD8505A)
+    let bone = C(0xE8E0CC), boneShade = C(0xB8AE98)
+    let bites = urukBites.filter { s >= $0 + 0.03 }.count
+    // The arm: from the back shoulder, up to the mouth (lowered at the start and the end).
+    let up: Double = s < 0.12 ? smooth(s / 0.12) : s < 0.86 ? 1 : 1 - smooth((s - 0.86) / 0.08)
+    let hand = (x: 15 + 7 * up, y: 34 - 3 * up)
+    line(c, 15.5, 33.5, hand.x, hand.y, plate, 1.2)
+    if s < 0.86 {
+        let hx = Int(hand.x.rounded()), hy = Int(hand.y.rounded())
+        // The bone in the fist, its knob sticking out behind; the meat on its end at the mouth.
+        c.rect(hx - 3, hy - 1, 2, 3, bone); c.px(hx - 3, hy, boneShade)
+        c.rect(hx, hy, 9, 1, bone)
+        let meatArt: [[String]] = [
+            ["..MMMMM..", ".MhhhmmM.", "MhhmmmmmM", "MmmmmmmmM", ".MmmmmmM.", "..MMMMM.."],
+            ["..MMMr...", ".Mhhhr...", "Mhhmmr...", "Mmmmmr...", ".Mmmr....", "..MMr...."],
+            ["..Mr.....", ".Mhr.....", "Mhr......", "Mmr......", ".Mr......", "..r......"],
+            [],
+        ]
+        c.pattern(hx + 3, hy - 3, meatArt[bites], ["M": crust, "m": meat, "h": roast, "r": red])
+        if bites == 3 { c.rect(hx + 8, hy - 1, 2, 3, bone); c.px(hx + 9, hy + 1, boneShade) }   // the bare bone's far knob
+        c.rect(hx - 1, hy - 1, 3, 3, plate)                                    // the fist
+    }
+    // Crumbs flying off each bite, out and down.
+    for b in urukBites where s >= b + 0.03 && s < b + 0.15 {
+        let k = (s - b - 0.03) / 0.12
+        for (i, v) in [(1.0, -0.6), (1.4, 0.2), (0.6, -1.1), (1.2, 0.9)].enumerated() {
+            let x = 30 + v.0 * 9 * k, y = 30 + v.1 * 6 * k + 10 * k * k
+            c.px(Int(x.rounded()), Int(y.rounded()), (i % 2 == 0 ? meat : roast).alpha(1 - k * 0.6))
+        }
+    }
+    // Tossed: the bone flies back over its shoulder, end over end, off the canvas.
+    if s >= 0.86 {
+        let k = (s - 0.86) / 0.12
+        let x = 22 - 26 * k, y = 30 - 22 * k + 18 * k * k
+        let spin = unit(k * 540)
+        line(c, x - spin.x * 3, y - spin.y * 3, x + spin.x * 3, y + spin.y * 3, bone, 0.6)
+        c.rect(Int((x - spin.x * 3).rounded()) - 1, Int((y - spin.y * 3).rounded()) - 1, 2, 2, bone)
+        c.rect(Int((x + spin.x * 3).rounded()) - 1, Int((y + spin.y * 3).rounded()) - 1, 2, 2, bone)
+    }
 }
 
 /// The Uruk's heavy sword: a crude broad blade, notched along the edge and flaring to a clipped point, a heavy iron
@@ -484,13 +594,18 @@ private func drawUrukSword(_ c: PixelCanvas, angle: Double) {
 /// and his scalp, his yellow eyes looking out either side. Black armour pieces strapped on over the bare chest: one
 /// spiked pauldron on the front shoulder, a strap across the chest, a black belt and a skirt of plates, a black bracer,
 /// and a quiver of dark-fletched arrows on his back. A black recurved longbow held out in front of him; shooting, he
-/// nocks an arrow and draws the string back before each shot, as Leggolas does. No signature.
+/// nocks an arrow and draws the string back before each shot, as Leggolas does. Signature: he nocks three arrows at
+/// once, fanned out on the string (…0.12), draws them back (…0.4) and roars, mouth wide under the painted palm, shaking
+/// with it (…0.75); then lets all three fly off the canvas together, the string twanging.
 private func drawLurtz(_ c: PixelCanvas, _ p: Pose) {
+    let sig = p.signature.flatMap { $0 > 0.03 && $0 < 0.97 ? $0 : nil }
+    let roaring = sig.map { $0 >= 0.42 && $0 < 0.75 } ?? false
     let skin = C(0x3A2A22), skinDark = C(0x2A1E18), skinLight = C(0x56412F), paint = C(0xF0EEE8)
     let plate = C(0x1E1E22), plateLight = C(0x3A3A42), plateMid = C(0x2A2A30)
     drawLegs(c, Look(leg: C(0x2E2620)), step: p.step)
     drawBoots(c, p.step, plate, rows: 3)
     c.oy += p.breathe
+    if roaring, let s = sig { c.ox += Int(s * 3.2 * 18) % 2 == 0 ? 0 : 1 }       // shaking with the roar
     // The quiver, slung over his back, the dark fletchings over his shoulder.
     c.pattern(11, 18, [
         "F.F.....",
@@ -540,6 +655,20 @@ private func drawLurtz(_ c: PixelCanvas, _ p: Pose) {
     }
     // The one spiked pauldron, on the front shoulder.
     c.pattern(35, 28, ["..K.K", ".KKKK", "KKKKK", "KKKHK", ".KKK."], ["K": plate, "H": plateLight])
+    if roaring {
+        // The roar: the mouth wide open under the painted palm, fangs top and bottom, and the noise of it.
+        c.rect(24, 30, 7, 4, C(0x1A0C0A)); c.rect(25, 32, 5, 1, C(0x6A1E1A))
+        for x in [24, 26, 28, 30] { c.px(x, 30, paint) }
+        c.px(25, 33, paint); c.px(29, 33, paint)
+        for a in [-40.0, -15, 10] {
+            let u = unit(a)
+            line(c, 45 + u.x * 3, 27 + u.y * 3, 45 + u.x * 9, 27 + u.y * 9, C(0xF0EEE8, 0.9), 0.5)
+        }
+    }
+    if let s = sig {
+        drawThreeArrows(c, p, s, skin: skin, plate: plate)
+        return
+    }
     // The black bow held out; an arrow on the string while he aims, drawn back before he shoots.
     var pull = 0, nocked = p.ready
     if let f = p.fire {
@@ -558,6 +687,33 @@ private func drawLurtz(_ c: PixelCanvas, _ p: Pose) {
         c.px(tail, 33, C(0x6A6A72)); c.px(tail, 35, C(0x6A6A72))
         c.rect(tail - 1, 34, 2, 2, skin)                                       // the hand on the string
     }
+}
+
+/// Lintz's bow in his signature, `s` through it: three arrows fanned on the string (from 0.12), drawn back three pixels
+/// (…0.4) and held; loosed at 0.75, all three flying off together while the string twangs.
+private func drawThreeArrows(_ c: PixelCanvas, _ p: Pose, _ s: Double, skin: Px, plate: Px) {
+    let shaft = C(0x4A3424), head = C(0xC8CCD4), headDark = C(0x8A8E98), fletch = C(0x6A6A72)
+    let pull: Int
+    if s < 0.12 { pull = 0 } else if s < 0.4 { pull = Int((3 * smooth((s - 0.12) / 0.28)).rounded()) }
+    else if s < 0.75 { pull = 3 } else if s < 0.87 { pull = Int(s * 3.2 * 30) % 2 == 0 ? -1 : 1 }   // the twang
+    else { pull = 0 }
+    c.oy += p.gunY
+    drawBlackBow(c, pull: pull)
+    c.rect(38, 33, 4, 2, skin); c.rect(38, 33, 2, 2, plate)
+    c.rect(42, 33, 2, 3, skin)
+    let fly: Double = s < 0.75 ? 0 : (s - 0.75) / 0.12 * 40
+    guard s >= 0.06, fly < 40 else { return }
+    let tail = Double(40 - (s < 0.75 ? pull : 0))
+    for d in [-1.0, 0, 1] {
+        // Each arrow from its nock on the string out past the bow, the three fanned a little apart.
+        let y0 = 34.5 + d, slope: Double = d * 0.3
+        let x0 = tail + fly, x1 = x0 + 8
+        line(c, x0, y0 + slope * fly, x1, y0 + slope * (fly + 8), shaft, 0.45)
+        let tip = (x: x1, y: y0 + slope * (fly + 8))
+        c.px(Int(tip.x), Int(tip.y), headDark); c.px(Int(tip.x) + 1, Int(tip.y), head)
+        c.px(Int(x0), Int(y0 + slope * fly) - (d < 0 ? 1 : 0), fletch)
+    }
+    if s < 0.75 { c.rect(Int(tail) - 1, 33, 2, 3, skin) }                       // the hand on the string
 }
 
 /// Lintz's longbow: black limbs gripped in leather at (43, 34), the tips curling forward, the string back at x 40,
@@ -580,8 +736,12 @@ private func drawBlackBow(_ c: PixelCanvas, pull: Int = 0) {
 
 /// Gorbage, an orc of the rank and file: hunched, his head pushed forward, mottled green-grey skin, big pointed ears,
 /// tusks, a crooked dented iron helmet, a ragged leather jerkin, and for a shield a dented bin lid with its handle
-/// (he collects the garbage). A scimitar, held low between fights, a smear behind a fast swing. No signature.
+/// (he collects the garbage). A scimitar, held low between fights, a smear behind a fast swing. Signature: "Collecting
+/// garbage!": he swings the bin lid round in front of him like a drum (…0.1), the scimitar up on end in his fist, and
+/// bangs out a beat on it with the pommel, ba-dum, ba-dum-dum… CRASH (…0.8), the lid jumping and ringing with each
+/// one, then slings it back on his arm.
 private func drawOrc(_ c: PixelCanvas, _ p: Pose) {
+    let sig = p.signature.flatMap { $0 > 0.02 && $0 < 0.98 ? $0 : nil }
     let skin = C(0x5A6A4A), skinDark = C(0x46543A), skinLight = C(0x6E7E5C)
     let iron = C(0x5A5E66), ironDark = C(0x3E4248), ironLight = C(0x7A7E86)
     let jerkin = C(0x6A4A2E), jerkinDark = C(0x4E3420)
@@ -620,6 +780,10 @@ private func drawOrc(_ c: PixelCanvas, _ p: Pose) {
         "III.................",
     ], ["I": iron, "h": ironLight, "i": ironDark, "d": ironDark])
     // The bin lid on his off arm, the scimitar in his fist.
+    if let s = sig {
+        drawBinDrum(c, p, s, skin: skin, skinDark: skinDark)
+        return
+    }
     drawBinLid(c, cx: 13, cy: seatedPose ? 33 : 34)
     let blade = p.melee ?? (seatedPose ? 4 : 30)
     for (i, a) in (p.melee == nil ? [] : p.trail).enumerated() {
@@ -629,6 +793,35 @@ private func drawOrc(_ c: PixelCanvas, _ p: Pose) {
     }
     drawScimitar(c, angle: blade)
     c.rect(38, 33, 3, 3, skin); c.px(40, 35, skinDark)
+}
+
+/// The beats Gorbage bangs out on his bin lid: when each lands, the last one the big crash.
+private let orcBeats: [Double] = [0.18, 0.28, 0.42, 0.5, 0.58, 0.74]
+
+/// Gorbage's drum, `s` through his signature: the bin lid swung round in front of his belly, and the scimitar held up
+/// on end, its pommel brought down on the lid for each beat (raised high just before), the lid jumping a pixel and
+/// ringing as it's struck, three rings round it for the crash.
+private func drawBinDrum(_ c: PixelCanvas, _ p: Pose, _ s: Double, skin: Px, skinDark: Px) {
+    let held: Double = s < 0.1 ? smooth(s / 0.1) : s < 0.88 ? 1 : 1 - smooth((s - 0.88) / 0.08)
+    let struck = orcBeats.lastIndex { s >= $0 && s < $0 + 0.05 }
+    let windup = orcBeats.contains { s >= $0 - 0.05 && s < $0 }
+    let cx = Int((13 + 25 * held).rounded()), cy = 34 + Int((3 * held).rounded()) + (struck != nil ? 1 : 0)
+    drawBinLid(c, cx: cx, cy: cy)
+    if let b = struck {
+        // The ring of it: short strokes off the lid's edge, more for the crash.
+        let crash = b == orcBeats.count - 1
+        for a in crash ? [-75.0, -40, -5, 30, 160, 200] : [-40.0, -5, 30] {
+            let u = unit(a), r0: Double = 6.5, r1: Double = crash ? 11 : 9.5
+            line(c, Double(cx) + 0.5 + u.x * r0, Double(cy) + 0.5 + u.y * r0, Double(cx) + 0.5 + u.x * r1,
+                 Double(cy) + 0.5 + u.y * r1, C(0xFFF4C0), 0.5)
+        }
+    }
+    // The fist: raised high before a beat, down on the lid as it lands, in between otherwise; low at either end.
+    let beat: (x: Double, y: Double) = struck != nil ? (40.5, 32.5) : windup ? (43.5, 25.5) : (41.5, 30.5)
+    let hand = (x: 41.5 + (beat.x - 41.5) * held, y: 34.5 + (beat.y - 34.5) * held)
+    drawScimitar(c, angle: 30 - 112 * held, at: hand)
+    line(c, 37.5, 33.5, hand.x, hand.y, skin, 0.6)
+    c.rect(Int(hand.x) - 3, Int(hand.y) - 1, 3, 3, skin); c.px(Int(hand.x) - 1, Int(hand.y) + 1, skinDark)
 }
 
 /// A dented bin lid used as a shield: a tin disk with a rolled rim, a ridge ring, dents, and the handle in the middle.
@@ -644,8 +837,8 @@ private func drawBinLid(_ c: PixelCanvas, cx: Int, cy: Int) {
 }
 
 /// Gorbage's scimitar: a short grip, a plain crossguard and a curved blade that widens toward the tip and sweeps back.
-private func drawScimitar(_ c: PixelCanvas, angle: Double) {
-    let h = Sprite.hand, u = unit(angle), n = (x: u.y, y: -u.x)                  // n: toward the back of the blade
+private func drawScimitar(_ c: PixelCanvas, angle: Double, at h: (x: Double, y: Double) = Sprite.hand) {
+    let u = unit(angle), n = (x: u.y, y: -u.x)                                  // n: toward the back of the blade
     let blade = C(0xA8ACB4), edge = C(0x6E727C)
     func at(_ d: Double, _ o: Double = 0) -> (x: Double, y: Double) { (h.x + u.x * d + n.x * o, h.y + u.y * d + n.y * o) }
     let g0 = at(-2), g1 = at(1.5)
@@ -672,10 +865,20 @@ private let shelobFangs: (x: Double, y: Double) = (45.5, 38.5)
 /// (the far four paler), a cluster of glinting yellow eyes at the front and two curved fangs under them. Walking, the
 /// legs step four and four. She bites: in a fight she rears her two front legs up in front of her, their tips stabbing
 /// with the swing, and the fangs flex with it, spread wide on the wind-up and snapping shut on the strike, a faint
-/// ghost of them behind a fast one. No signature.
+/// ghost of them behind a fast one. Signature: she scuttles up a thread and out of sight off the top (…0.12); a moment
+/// later drops back down on it from above, bouncing on the end of it, fangs spread wide (…0.36), and dangles there,
+/// bobbing, legs curled and twitching; climbs a little way back up, and lets herself down onto her feet again.
 private func drawShelob(_ c: PixelCanvas, _ p: Pose) {
     let body = C(0x2A221E), dark = C(0x1A1412), light = C(0x40362F), far = C(0x4A3E36), mark = C(0xC8C0A8)
     let eye = C(0xFFE08A)
+    let hang = p.signature.flatMap { $0 > 0.02 && $0 < 0.98 ? shelobHang($0, lt: p.lt) : nil }
+    if let h = hang {
+        // Lifted off the floor on her thread, from the top of her back up off the canvas.
+        c.oy -= h.lift
+        let top = -(c.oy + c.baseY)
+        if 22 > top { c.rect(16, top, 1, 22 - top, C(0xE0E0E8, 0.7)) }
+    }
+    let curl = hang?.curl ?? 0
     // The near legs arch high over the body; the far ones bend behind it, only their feet showing between.
     typealias Leg = (a: (Double, Double), k: (Double, Double), t: (Double, Double))
     let nearLegs: [Leg] = [
@@ -687,7 +890,13 @@ private func drawShelob(_ c: PixelCanvas, _ p: Pose) {
     func leg(_ l: Leg, _ i: Int, near: Bool) {
         let lifted = p.step >= 0 && (i + (near ? 0 : 1)) % 2 == p.step
         let knee = (l.k.0, l.k.1 - (lifted ? 1 : 0))
-        let tip = (l.t.0 + (lifted ? 1 : 0), l.t.1 - (lifted ? 2 : 0))
+        var tip = (l.t.0 + (lifted ? 1 : 0), l.t.1 - (lifted ? 2 : 0))
+        if curl > 0 {
+            // Hanging, the legs curl in under her, the tips drawn back toward the knees, twitching.
+            let twitch: Double = sin(p.lt * 9 + Double(i) * 1.7 + (near ? 0 : 0.9))
+            let tucked = (knee.0 + (tip.0 - knee.0) * 0.35, knee.1 + 6 + twitch)
+            tip = (tip.0 + (tucked.0 - tip.0) * curl, tip.1 + (tucked.1 - tip.1) * curl)
+        }
         let col = near ? body : far
         line(c, l.a.0, l.a.1, knee.0, knee.1, col, 1.3)
         line(c, knee.0, knee.1, tip.0, tip.1, col, 0.95)
@@ -738,6 +947,8 @@ private func drawShelob(_ c: PixelCanvas, _ p: Pose) {
         if let prev = p.trail.first, fangSpread(prev) > fangSpread(a) + 0.2 {     // snapping shut: a flash of the bite
             line(c, 47, 38, 49, 37.5, C(0xF4F0E0, 0.5), 0.35); line(c, 47, 40, 49, 40.5, C(0xF4F0E0, 0.5), 0.35)
         }
+    } else if let f = hang?.fangs, f > 0 {
+        drawFangs(c, spread: f)
     } else {
         c.pattern(41, 37, [".F..F", "F..F.", "F..F.", "M..M."], ["F": C(0x5A4A40), "M": mark])
     }
@@ -746,6 +957,38 @@ private func drawShelob(_ c: PixelCanvas, _ p: Pose) {
     c.rect(40, 31, 2, 2, eye); c.rect(43, 31, 2, 2, eye)
     for (x, y) in [(39, 33), (42, 30), (45, 33), (42, 33), (38, 31)] { c.px(x, y, eye.alpha(0.85)) }
     c.px(40, 31, white.alpha(glint)); c.px(43, 31, white.alpha(glint))
+}
+
+/// Shellob on her thread `s` through her signature: how many pixels she's lifted off the floor (50 is out of sight
+/// above the canvas), how far her legs are curled in (0…1) and her fangs spread (0…1).
+private func shelobHang(_ s: Double, lt: Double) -> (lift: Int, curl: Double, fangs: Double) {
+    let dangle = 12.0
+    var lift: Double, curl: Double = 1, fangs: Double = 0
+    switch s {
+    case ..<0.12:                                                               // up the thread and away, faster and faster
+        let k = (s - 0.02) / 0.1
+        lift = 50 * k * k; curl = min(1, k * 3)
+    case ..<0.2:
+        lift = 50                                                               // gone
+    case ..<0.27:                                                               // dropping from above, past where she stops
+        let k = (s - 0.2) / 0.07
+        lift = 50 - (50 - dangle + 5) * k * k
+        fangs = 1
+    case ..<0.36:                                                               // bouncing on the end of the thread
+        let k = (s - 0.27) / 0.09
+        lift = dangle - 5 * cos(k * .pi * 1.5) * (1 - k)
+        fangs = 1
+    case ..<0.62:                                                               // dangling, bobbing
+        lift = dangle + sin(lt * 2.4)
+        fangs = s < 0.45 ? 1 - (s - 0.36) / 0.09 : 0
+    case ..<0.72:                                                               // climbing a little way back up, pull by pull
+        let k = (s - 0.62) / 0.1
+        lift = dangle + 2 * (k * 4).rounded(.down) + 2 * smooth(frac(k * 4) * 2)
+    default:                                                                    // let down to the floor, legs reaching out
+        let k = min(1, (s - 0.72) / 0.22)
+        lift = (dangle + 8) * (1 - smooth(k)); curl = 1 - smooth((k - 0.4) / 0.6)
+    }
+    return (Int(lift.rounded()), curl, fangs)
 }
 
 /// How far Shellob's fangs are spread at swing angle `a`: 1 wide open (the weapon raised, winding up), 0 at rest,
