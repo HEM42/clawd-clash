@@ -855,6 +855,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let prompts = Universe.shown == .doctor
             ? ["make the rotor pump faster", "make the window resize to fit the Claudes", "why won't the Angle move?",
                "write a nice README with screenshots", "fix the portrait crop for the Dalick Emperor"]
+            : Universe.shown == .clawdFiles
+            ? ["redact the case file before Skinnard sees it", "make the window resize to fit the Claudes",
+               "why does the slide projector keep flickering?", "write a nice README with screenshots",
+               "fix the portrait crop for the Smoking Clawd's smoke"]
             : ["add a snowtaunt", "make the window resize to fit the Claudes", "why does the duel not start?",
                "write a nice README with screenshots", "fix the portrait crop for wide characters"]
         let nowActs = ["Edit WindowMode.swift", "Bash: swift build", "Read Locations.swift", "Grep opaqueBounds", "Agent: Review the diff"]

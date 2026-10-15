@@ -74,7 +74,7 @@ final class ClawdClashSaverView: ScreenSaverView {
               let options = try? JSONDecoder().decode([String: String].self, from: data) else { return [:] }
         return options
     }
-    /// "same" (the app's), "starWars", "marvel", "dc", "doctor", "clawdRoyale" or "random" (a new pick on each trip).
+    /// "same" (the app's), "starWars", "marvel", "dc", "doctor", "clawdFiles", "clawdRoyale" or "random" (a new pick on each trip).
     static var choice: String { options["universe"] ?? "same" }
     /// The clock top right, on unless turned off.
     static var clockShown: Bool { options["clock"] != "off" }
@@ -83,7 +83,7 @@ final class ClawdClashSaverView: ScreenSaverView {
     private let picker = NSPopUpButton(frame: NSRect(x: 20, y: 90, width: 280, height: 26), pullsDown: false)
     private let clockBox = NSButton(checkboxWithTitle: "Show the clock", target: nil, action: nil)
     private static let choices = [("same", "The same as Clawd Clash"), ("starWars", Universe.starWars.title), ("marvel", Universe.marvel.title), ("dc", Universe.dc.title),
-                                  ("doctor", Universe.doctor.title),
+                                  ("doctor", Universe.doctor.title), ("clawdFiles", Universe.clawdFiles.title),
                                   ("clawdRoyale", "Clawd Royale"),
                                   ("random", "Random (a new one on each trip)")]
 
@@ -207,6 +207,7 @@ final class ClawdClashSaverView: ScreenSaverView {
                 case "marvel": tripUniverse = .marvel; tripMixed = false
                 case "dc": tripUniverse = .dc; tripMixed = false
                 case "doctor": tripUniverse = .doctor; tripMixed = false
+                case "clawdFiles": tripUniverse = .clawdFiles; tripMixed = false
                 case "clawdRoyale": tripMixed = true
                 case "random":
                     tripMixed = false

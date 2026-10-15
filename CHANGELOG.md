@@ -9,6 +9,11 @@ Its first three universes started as separate apps. Their changelogs from before
 
 Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://github.com/rodclemen/doctor-clawd)), so its whole history is below, from 3.1.0.
 
+## Unreleased
+
+### Added
+- **A fifth universe, The Clawd Files** (in progress). Settings → Universe → The Clawd Files, and in the screen saver's Options. So far: Fox Clawder and Dana Scrawly, sidearms drawn and flashlight beams cutting ahead of them in a fight (he cracks sunflower seeds and points at the sky, where a little saucer blinks; she holds up her badge, one eyebrow raised), the Cigarette-Smoking Clawd, smoke always rising off his cigarette (he lights a fresh one and blows a smoke ring), and HEM in a trench coat with an FBI lanyard and a flashlight. One place, the X-Files office in the FBI basement: pencils in the ceiling tiles, the I WANT TO BELIEVE poster, a corkboard of clippings tied up with red string, and the slide projector clicking through a saucer, something in the woods and a crop circle. A flying saucer in the menu bar.
+
 ## 3.2.0 (2026-10-15)
 
 ### Added

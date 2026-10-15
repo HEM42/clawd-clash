@@ -50,7 +50,8 @@ extension Cast {
     /// Force users in Star Wars (Jedi and Sith alike), sorcerers and other mystics elsewhere.
     private var meditates: Bool {
         guard persona.canSit else { return false }
-        guard universe != .doctor else { return false }   // a sonic screwdriver is no reason to float cross-legged
+        // A sonic screwdriver or a flashlight is no reason to float cross-legged.
+        guard universe != .doctor, universe != .clawdFiles else { return false }
         return weapon == .lightning || (universe == .starWars && weapon == .saber)
     }
 
