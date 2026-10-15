@@ -1880,9 +1880,18 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     /// The universe's menu bar icon (`Theme.menuIcon`: Vader's helmet, Captain America's shield). In colour it gets
     /// a white outline so it reads on a dark menu bar; monochrome is a template image macOS tints to match the bar.
+    /// While Universe is Random it keeps the icon of the universe last picked by hand (remembered across launches),
+    /// so it doesn't change every few minutes; it changes again when a single universe is picked.
     private func statusIcon(mono: Bool) -> NSImage? {
+        let u: Universe
+        if Self.universeEvery != nil, let kept = UserDefaults.standard.string(forKey: "menuIconUniverse").flatMap(Universe.init(key:)) {
+            u = kept
+        } else {
+            u = .shown
+            UserDefaults.standard.set(u.key, forKey: "menuIconUniverse")
+        }
         let c = PixelCanvas(28, 26)
-        Theme.of(.shown).menuIcon(c, mono)
+        Theme.of(u).menuIcon(c, mono)
         if !mono { c.addOutline(C(0xFFFFFF, 0.92)) }
         guard let cg = c.makeImage() else { return nil }
         let img = NSImage(cgImage: cg, size: NSSize(width: 19, height: 18))
@@ -2367,6 +2376,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                         default:
                             Self.universeEvery = nil
                             if universes[i] != .shown || Universe.mixed { self.switchScene(to: universes[i], mixed: false) }
+                            // Off Random: the menu bar icon is this universe's again, even if Random had already landed here.
+                            self.statusItem?.button?.image = self.statusIcon(mono: self.monoMenuBarIcon)
                         }
                     }),
             // Only with Universe set to Random; otherwise a blank row, so the window keeps its size.

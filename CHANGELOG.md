@@ -12,6 +12,7 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 ## Unreleased
 
 ### Changed
+- **The menu bar icon stays put on Random.** With Settings → Universe → Random, the icon used to change every time Random moved to another universe. It now keeps the icon of the universe you last picked yourself (remembered across launches), and changes again when you pick a single universe.
 - **The blooper reel has its own section in the README**, under the universe trailers: the takes where the universes get mixed up, with a line about what it is and a link to the full 1080p version (`promo/clawd-clash-bloopers.mp4`, now committed like the main trailer). It used to be reachable only inside the full promo-plus-bloopers cut.
 
 ## 3.3.0 (2026-10-15)
