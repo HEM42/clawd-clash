@@ -16,6 +16,11 @@ enum ShootsFirst {
 
     static let hanSays = "Sorry about the mess."
     static let greedoSays = ["That hurt!", "Ow! Maclunkey…", "Han shot first!", "Not the vest!", "I'm OK!", "Every time…"]
+    /// Indy's version (Stevie Clawdberg): what he says over the Cairo Swordsman, and what the swordsman says getting up.
+    static let indySays = "I don't have time for this."
+    static let swordsmanSays = ["But my twirl!", "I practised for weeks!", "Not fair!", "I'm OK!", "Every time…"]
+    static func says(_ who: Cast) -> String { who.universe == .clawdberg ? indySays : hanSays }
+    static func comebacks(_ who: Cast) -> [String] { who.universe == .clawdberg ? swordsmanSays : greedoSays }
 
     /// How long until Han tries it again: soon after they first face off, then every minute or so.
     static func delay(first: Bool) -> Double {
@@ -107,6 +112,17 @@ enum ShootsFirst {
                        coreR: 0.6, glowR: 1.8)
         }
         let muzzle = han.point(han.muzzle.x + 2, han.muzzle.y + 0.5)
+        // Indy's revolver: a small hot tracer instead of a bolt, and a swordsman has no blaster to go off.
+        if case .bullet = han.shot {
+            if e < hit {
+                let g = e / hit, a = muzzle, b = greedo.body
+                let x = a.x + (b.x - a.x) * g, y = a.y + (b.y - a.y) * g
+                c.glowLine(x - 3 * han.side, y, x, y, core: C(0xFFF6C8), glow: C(0xFFB84A), coreR: 0.5, glowR: 1.3)
+            }
+            if e < 0.12 { c.glowLine(muzzle.x, muzzle.y, muzzle.x + 2 * han.side, muzzle.y, core: C(0xFFFFFF), glow: C(0xFFC84A), coreR: 1, glowR: 2.6) }
+            if e >= hit && e < hit + 0.15 { drawSparks(c, x: greedo.body.x, y: greedo.body.y, t: t, size: 3) }
+            return
+        }
         if e < hit { bolt(muzzle, greedo.body, e / hit) }
         if e >= hit && e < hit + 0.15 { drawSparks(c, x: greedo.body.x, y: greedo.body.y, t: t, size: 3.5) }
         // His finger tightens as he goes over: a wild shot straight up.

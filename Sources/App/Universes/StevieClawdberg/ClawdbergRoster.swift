@@ -153,7 +153,34 @@ let clawdbergTheme = Theme(
                  : .clawdbergHome(of: ClawdbergHero(rawValue: c.index) ?? .indianaBones)
     },
     nemeses: clawdbergNemeses.map { (.hero($0.0), .villain($0.1)) },
-    ride: { _ in nil },
+    ride: { c in
+        // The DeLorean for Back to the Future's people (and Old Biff, who stole it); the moon bike for the E.T. kids
+        // and the Goonies; the mothership for Close Encounters; the park jeep for Jurassic Park's people. Everyone
+        // else leaves on foot.
+        guard c.universe == .clawdberg else { return nil }
+        if c.isDark {
+            switch ClawdbergVillain(rawValue: c.index) {
+            case .oldBiff?: return .delorean
+            case .dennisNerdry?, .gennarrow?, .drWoo?: return .jeep
+            default: return nil
+            }
+        }
+        switch ClawdbergHero(rawValue: c.index) {
+        case .martyMcFry?, .docBrawn?, .jenniferParka?, .georgeMcFry?, .lorraineBaynes?, .einsteinDog?, .claraClawton?,
+             .goldieWilsun?:
+            return .delorean
+        case .eClawd?, .elliclawd?, .gurtie?, .mikeyWaltz?, .brandWaltz?, .chunk?, .mouth?, .data?, .andyCarmichaw?,
+             .stefSteinclawd?, .slawth?:
+            return .moonBike
+        case .royNeery?, .jillianGeyser?, .littleBarry?, .clawdLacombe?, .tallVisitor?:
+            return .mothership
+        case .alanGrand?, .ellieSaddler?, .ianMalclawm?, .johnHammend?, .muldune?, .timMurphey?, .lexMurphey?,
+             .rayArnie?, .owenGravy?, .claireDaring?:
+            return .jeep
+        default:
+            return nil
+        }
+    },
     menuIcon: drawMoonBikeIcon,
     legend: .hero(.indianaBones))
 

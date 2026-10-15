@@ -4,7 +4,7 @@ import Foundation
 // blocky body, with Clawd's own orange face showing.
 
 let clawdbergHeroes1: [ClawdbergHero: Persona] = [
-    .indianaBones: Persona(name: "Indiana Bones", weapon: .saber, headTop: 20, signature: 3.0,
+    .indianaBones: Persona(name: "Indiana Bones", weapon: .saber, shot: .bullet, muzzle: (47, 32), headTop: 20, signature: 3.0,
                            callout: "It belongs in a museum!", draw: drawIndianaBones),
 ]
 
@@ -51,6 +51,14 @@ private func drawIndianaBones(_ c: PixelCanvas, _ p: Pose) {
         let a = -170 + k * 175
         c.rect(38, 30, 3, 3, jacket)
         cbWhip(c, angle: a, trail: [a - 30, a - 55], t: p.t, leather: whip, from: (39.5, 31.5))
+        return
+    }
+    if p.fire != nil, p.melee == nil {
+        // His revolver, drawn for the Cairo Swordsman (`ShootsFirst`): the whip back on his hip.
+        cbWhipCoil(c, whip)
+        c.rect(38, 33, 3, 3, jacket)
+        c.oy += p.gunY
+        c.pattern(40, 31, ["KKKKKKK", "KKGKK..", "KW.....", "KW....."], ["K": C(0x2A2A30), "G": C(0x6A6E78), "W": C(0x6A4A2A)])
         return
     }
     if let a = p.melee {

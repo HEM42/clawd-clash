@@ -65,7 +65,15 @@ enum Universe: Int, CaseIterable, Codable {
     /// The Clawd Files: the seven FBI agents (Clawder, Scrawly, Skinnard, Doggedd, Reyez, Einstine, Millar), as global
     /// ids. When one's session is compacted they lose some time: abducted and set back down, the same face
     /// (`StatusStore`'s PreCompact, `MissingTime`).
-    var abductees: Set<Int> { self == .clawdFiles ? Set((0...6).map { base + StatusStore.heroBase + $0 }) : [] }
+    /// Stevie Clawdberg: Back to the Future's time travellers (Marty, Doc Brawn, Jennifer, Einstein the Dog, and Old
+    /// Biff, who stole the DeLorean). When one's session is compacted they hit 88 mph and come back (`OutaTime`).
+    var abductees: Set<Int> {
+        switch self {
+        case .clawdFiles: return Set((0...6).map { base + StatusStore.heroBase + $0 })
+        case .clawdberg: return Set([55, 56, 57, 60].map { base + StatusStore.heroBase + $0 } + [base + 44])
+        default: return []
+        }
+    }
 
     var regenerations: [Int] {
         self == .doctor ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14].map { base + StatusStore.heroBase + $0 } : []

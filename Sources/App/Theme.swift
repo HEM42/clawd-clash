@@ -65,4 +65,4 @@ extension Cast {
 }
 
 /// The ships that come to pick someone up (`Theme.ride`).
-enum Ride { case falcon, quinjet, milano, javelin, batwing, tardis, sedan, helicopter, saucer }
+enum Ride { case falcon, quinjet, milano, javelin, batwing, tardis, sedan, helicopter, saucer, delorean, moonBike, mothership, jeep }

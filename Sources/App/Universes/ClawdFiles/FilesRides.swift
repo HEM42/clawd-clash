@@ -133,8 +133,10 @@ func drawSaucer(_ c: PixelCanvas, ramp: Double, engines: Bool) {
 
 extension Ride {
     /// Drives in along the ground and away again instead of flying.
-    var drives: Bool { self == .sedan }
+    var drives: Bool { self == .sedan || clawdbergDrives }
     /// How far left of centre (canvas pixels) whoever boards walks to: the ships' ramps 14, the TARDIS's door 6, the
-    /// saucer's beam right under its middle.
-    var boardingOffset: CGFloat { self == .tardis ? 6 : self == .saucer ? 0 : 14 }
+    /// saucer's beam, the mothership's light and the moon bike right under their middles.
+    var boardingOffset: CGFloat {
+        switch self { case .tardis: return 6; case .saucer, .mothership, .moonBike: return 0; default: return 14 }
+    }
 }
