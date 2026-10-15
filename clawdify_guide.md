@@ -347,7 +347,7 @@ Do these freely (on the branch):
 - **`Tools/RenderDocs`:** a `<prefix>Lineup` desktop strip, the roster and locations sheets, and a social preview. Output goes to `docs/`, named by the universe's title (`roster-the-clawd-files.png` …).
 - **`Tools/MakeIcon`:** the app icon shows every universe. Add a character from the new one.
 - **`Tools/MakeSocial`**, and **`Tools/RenderShowcase`** for the universe's own showcase pictures.
-- Every trailer's end card says **"One of N universes in Clawd Clash"**: update N in every reel.
+- Trailers never say how many universes there are (the end card reads "One of many universes in Clawd Clash"), so nothing needs updating when one is added. Don't add a count anywhere else either: the README and `llms.txt` say "many" or "several".
 - `CHANGELOG.md`.
 
 **Ask the user first**, because these are public:
@@ -375,7 +375,7 @@ Use `doctorShots` as the pattern. The trailer runs about 45–50 seconds:
 | `agents` | 4 s | `agentsOf(...)`: "Every subagent gets to be a <hero word>." |
 | `window` | ~4.8 s | `windowShot(ctx, .<key>, …, at: .<defaultPlace>)`, with an in-universe pun ("It's bigger on the inside."). |
 | `ais` | ~4.4 s | `everyAI(...)`: six sessions. "Claude plays the <heroes>. Everyone else gets to be the <villains>." |
-| `endcard` | ~4.2 s | The default place, the crew lined up, the title lands, "Have fun. Keep track.", "One of N universes in Clawd Clash · free for macOS", the app icon and the GitHub URL. |
+| `endcard` | ~4.2 s | The default place, the crew lined up, the title lands, "Have fun. Keep track.", "One of many universes in Clawd Clash · free for macOS", the app icon and the GitHub URL. |
 
 ### Wiring a new reel `REEL=<reel>`
 

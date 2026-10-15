@@ -226,9 +226,9 @@ read at pixel scale).
   (`roster-the-clawd-files.png` or the like, matching how it names the others), a desktop line-up and a social
   preview.
 - **The app icon** gains a fifth universe (`Tools/MakeIcon`).
-- **`llms.txt`:** "four universes" becomes five in several places. The README's tagline and other counts change too.
+- **`llms.txt`:** names The Clawd Files. The user's rule: never state how many universes there are ("many", "several").
 - **Trailer:** `REEL=files` in `Tools/RenderPromo`, **opening on the montage transition** as its title sequence. The
-  other trailers' end cards say "One of four universes"; that becomes five.
+  end cards say "One of many universes", never a number.
 - **Ask the user first, since these are public:** a `the-clawd-files` (or similar) showcase repo, and a cask in
   `release.sh` (`write_cask`, the `others` list, and its universe preset, which now uses `preflight_steps`).
 - **Before release:** delete this file, merge `x-files` into `main`, rename `Unreleased` in CHANGELOG.md, and get the

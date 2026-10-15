@@ -21,7 +21,7 @@ https://github.com/user-attachments/assets/f90c90d0-274a-493a-804f-8a52dd08b155
 
 <p align="center"><sub>Full 1080p version: <a href="promo/clawd-clash-promo.mp4">promo/clawd-clash-promo.mp4</a></sub></p>
 
-Clawd Clash is one app with five universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars), **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars), **[Doctor Clawd](https://github.com/rodclemen/doctor-clawd)** and **The Clawd Files**. Pick one in Settings, or Clawd Royale for all five at once. The universes' own pages show each one on its own; this one is the app.
+Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars), **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars), **[Doctor Clawd](https://github.com/rodclemen/doctor-clawd)** and **The Clawd Files**. Pick one in Settings, or Clawd Royale for all of them at once. The universes' own pages show each one on its own; this one is the app.
 
 | Star Clawds | Marvelous Clawds |
 |---|---|
@@ -36,7 +36,7 @@ Clawd Clash is one app with five universes: **[Star Clawds](https://github.com/r
 ## Contents
 
 - [What it does](#what-it-does)
-- [Five universes](#five-universes)
+- [The universes](#the-universes)
 - [Window mode and the screen saver](#window-mode-and-the-screen-saver)
 - [The little things](#the-little-things)
 - [Supported AIs and harnesses](#supported-ais-and-harnesses)
@@ -66,9 +66,9 @@ You run Claude Code in three terminals. One is thinking, one is waiting for your
   <img src="docs/desktop-the-clawd-files.png" alt="The Clawd Files sessions and agents fighting along the bottom of the screen">
 </p>
 
-## Five universes
+## The universes
 
-Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, **Detective Clawds**, **Doctor Clawd**, **The Clawd Files**, **Clawd Royale** or **Random**. Switching recasts everyone on screen (each character becomes the one in the same place in the other cast, on the same side), moves the scene to one of the new universe's places, and changes the menu bar icon (Darth Vapor's helmet, Captain Americlawd's shield, Superb-Man's C-shield, the police box or a flying saucer). In the window, the whole window changes over with the new universe's transition. **Random** switches on its own every 1, 5, 10, 15, 30 or 60 minutes. **Clawd Royale** throws all five casts into one scene, heroes against villains, each character as itself, in a random place from any universe every ten minutes (the Location menu is greyed out meanwhile); the menu bar icon is the universe of the place. The screen saver follows it with "The same as Clawd Clash", or picks it in its own Options.
+Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, **Detective Clawds**, **Doctor Clawd**, **The Clawd Files**, **Clawd Royale** or **Random**. Switching recasts everyone on screen (each character becomes the one in the same place in the other cast, on the same side), moves the scene to one of the new universe's places, and changes the menu bar icon (Darth Vapor's helmet, Captain Americlawd's shield, Superb-Man's C-shield, the police box or a flying saucer). In the window, the whole window changes over with the new universe's transition. **Random** switches on its own every 1, 5, 10, 15, 30 or 60 minutes. **Clawd Royale** throws every cast into one scene, heroes against villains, each character as itself, in a random place from any universe every ten minutes (the Location menu is greyed out meanwhile); the menu bar icon is the universe of the place. The screen saver follows it with "The same as Clawd Clash", or picks it in its own Options.
 
 | | Star Clawds | Marvelous Clawds | Detective Clawds | Doctor Clawd | The Clawd Files |
 |---|---|---|---|---|---|
