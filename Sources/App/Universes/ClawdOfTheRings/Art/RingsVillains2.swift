@@ -14,6 +14,8 @@ let ringsVillains2: [LOTRVillain: Persona] = [
                    draw: drawUruk),
     .orc: Persona(name: "Gorbage", weapon: .saber, bulk: 2, headTop: 23, callout: "Collecting garbage!", draw: drawOrc),
     .shelob: Persona(name: "Shellob", weapon: .saber, canSit: false, pivot: shelobFangs, bulk: 8, headTop: 22, draw: drawShelob),
+    .lurtz: Persona(name: "Lintz", weapon: .blaster, shot: .arrow, muzzle: (46, 34), handGun: false, headTop: 20,
+                    callout: "Find the Halflings! Lint the others!", draw: drawLurtz),
 ]
 
 // MARK: - The Ballrog
@@ -473,6 +475,105 @@ private func drawUrukSword(_ c: PixelCanvas, angle: Double) {
     for d in [6.0, 9.5, 12.5] { let q = at(d, 1.3); c.px(Int(q.x), Int(q.y), dark) }   // the notches
     let q0 = at(2.2, -3), q1 = at(2.2, 3)
     line(c, q0.x, q0.y, q1.x, q1.y, C(0x2A2A30), 0.75)                           // the crossguard
+}
+
+// MARK: - Lintz
+
+/// Lintz, the first Uruk captain: as big as Uruk-Hi but bareheaded, bald, his dark skin bare from the crown to the
+/// belt, and the White Hand painted across his face, the palm over his mouth and the fingers spread up over his brow
+/// and his scalp, his yellow eyes looking out either side. Black armour pieces strapped on over the bare chest: one
+/// spiked pauldron on the front shoulder, a strap across the chest, a black belt and a skirt of plates, a black bracer,
+/// and a quiver of dark-fletched arrows on his back. A black recurved longbow held out in front of him; shooting, he
+/// nocks an arrow and draws the string back before each shot, as Leggolas does. No signature.
+private func drawLurtz(_ c: PixelCanvas, _ p: Pose) {
+    let skin = C(0x3A2A22), skinDark = C(0x2A1E18), skinLight = C(0x56412F), paint = C(0xF0EEE8)
+    let plate = C(0x1E1E22), plateLight = C(0x3A3A42), plateMid = C(0x2A2A30)
+    drawLegs(c, Look(leg: C(0x2E2620)), step: p.step)
+    drawBoots(c, p.step, plate, rows: 3)
+    c.oy += p.breathe
+    // The quiver, slung over his back, the dark fletchings over his shoulder.
+    c.pattern(11, 18, [
+        "F.F.....",
+        ".F.F....",
+        "..QQQ...",
+        "..QQQq..",
+        "...QQQq.",
+        "...QQQQ.",
+        "....QQQq",
+        "....QQQQ",
+        ".....QQq",
+    ], ["F": C(0x6A6A72), "Q": C(0x4A3424), "q": C(0x33241A)])
+    // The broad body in his bare dark skin, and the bald dome of his head with a sheen on the crown.
+    c.rect(17, 26, 22, 12, skin)
+    c.rect(38, 26, 1, 12, skinDark)
+    c.pattern(17, 20, [
+        "......SSSSSSSSSS......",
+        "...SSSSlllSSSSSSSSS...",
+        "..SSSlllSSSSSSSSSSSS..",
+        ".SSSllSSSSSSSSSSSSSSd.",
+        "SSSSSSSSSSSSSSSSSSSSSd",
+        "SSSSSSSSSSSSSSSSSSSSSd",
+    ], ["S": skin, "l": skinLight, "d": skinDark])
+    c.rect(14, 33, 3, 3, skin); c.rect(14, 33, 3, 1, plate)
+    // The White Hand: the palm over the mouth, the fingers up over the brow onto the scalp, the eyes either side.
+    c.pattern(19, 21, [
+        ".......W.W........",
+        ".....W.W.W.W......",
+        ".....W.W.W.W......",
+        ".....W.W.W.W......",
+        ".....W.W.W.W......",
+        ".....W.W.W.W......",
+        ".....W.W.W.W......",
+        ".....WWWWWWWW.....",
+        ".....WWWWWWWW.....",
+        "...WWWWWWWWWW.....",
+        "....WWWWWWWW......",
+    ], ["W": paint])
+    c.rect(21, 27, 2, 2, ink); c.rect(33, 27, 2, 2, ink)
+    c.px(21, 27, C(0xC89A3A)); c.px(34, 27, C(0xC89A3A))
+    // The bare chest, a strap across it, the belt and a skirt of plates.
+    c.rect(20, 34, 6, 1, skinDark); c.rect(29, 34, 6, 1, skinDark); c.px(27, 35, skinDark)
+    for i in 0..<4 { c.rect(33 - i * 3, 32 + i, 3, 1, plate) }
+    c.rect(17, 36, 22, 2, plate); c.rect(17, 36, 22, 1, plateMid); c.px(27, 36, plateLight)
+    for y in 38...39 where y + c.oy <= 43 {
+        for x in stride(from: 17, through: 36, by: 4) { c.rect(x, y, 3, 1, y == 38 ? plateMid : plate) }
+    }
+    // The one spiked pauldron, on the front shoulder.
+    c.pattern(35, 28, ["..K.K", ".KKKK", "KKKKK", "KKKHK", ".KKK."], ["K": plate, "H": plateLight])
+    // The black bow held out; an arrow on the string while he aims, drawn back before he shoots.
+    var pull = 0, nocked = p.ready
+    if let f = p.fire {
+        let ph = frac(f.t / p.firePeriod)
+        nocked = ph >= 0.45
+        if ph > 0.6 { pull = Int(((ph - 0.6) / 0.4 * 3).rounded()) }
+    }
+    c.oy += p.gunY + (seatedPose ? -3 : 0)
+    drawBlackBow(c, pull: pull)
+    c.rect(38, 33, 4, 2, skin); c.rect(38, 33, 2, 2, plate)
+    c.rect(42, 33, 2, 3, skin)
+    if nocked {
+        let tail = 40 - pull
+        c.rect(tail, 34, 47 - tail, 1, C(0x4A3424))
+        c.px(47, 34, C(0x8A8E98)); c.px(48, 34, C(0xC8CCD4))
+        c.px(tail, 33, C(0x6A6A72)); c.px(tail, 35, C(0x6A6A72))
+        c.rect(tail - 1, 34, 2, 2, skin)                                       // the hand on the string
+    }
+}
+
+/// Lintz's longbow: black limbs gripped in leather at (43, 34), the tips curling forward, the string back at x 40,
+/// drawn back `pull` pixels more at the middle.
+private func drawBlackBow(_ c: PixelCanvas, pull: Int = 0) {
+    let limb = C(0x1E1E22), limbLight = C(0x46464E), grip = C(0x5A3A26), string = C(0xC8C8D0)
+    for y in 24...44 where y + c.oy <= 43 {
+        let d = abs(y - 34)
+        let x = d <= 2 ? 44 : d <= 5 ? 43 : d <= 8 ? 42 : 41
+        c.px(x, y, d <= 1 ? grip : d % 4 == 2 ? limbLight : limb)
+        if d == 10 { c.px(x + 1, y, limb) }                                    // the recurved tips
+    }
+    for y in 25...43 where y + c.oy <= 43 {
+        let d = Double(abs(y - 34)) / 9
+        c.px(40 - Int((Double(pull) * (1 - d)).rounded()), y, string)
+    }
 }
 
 // MARK: - Gorbage

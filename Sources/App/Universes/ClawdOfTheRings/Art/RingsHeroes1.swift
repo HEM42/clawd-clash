@@ -12,23 +12,31 @@ let ringsHeroes1: [LOTRHero: Persona] = [
                   callout: "Po-tay-toes!", draw: drawSam),
     .pippin: Persona(name: "Pippin Tookmuch", weapon: .saber, pivot: hobbitHand, headTop: 27, signature: 3.0,
                      callout: "Second breakfast?", draw: drawPippin),
+    .merry: Persona(name: "Merge-y Brandybranch", weapon: .saber, pivot: hobbitHand, headTop: 27,
+                    callout: "Ride now, ride for main!", draw: drawMerry),
+    .bilbo: Persona(name: "Bilbyte Bagclawds", weapon: .saber, pivot: hobbitHand, headTop: 27,
+                    callout: "I'm going on a refactor!", draw: drawBilbo),
+    .rosie: Persona(name: "Rosie Kotlin", weapon: .saber, pivot: hobbitHand, headTop: 26,
+                    callout: "Samwise? He's my one non-nullable.", draw: drawRosie),
+    .farmerMaggot: Persona(name: "Farmer Mag-git", weapon: .saber, pivot: hobbitHand, bulk: 1, headTop: 23,
+                           callout: "Trespassers! Who's been cherry-picking my mushrooms?", draw: drawMaggot),
 ]
 
 // MARK: - The hobbit
 
 /// Where a hobbit's weapon hand is: just past the 2×2 fist at x 36…37, rows 36…37 (Clawd's is (41.5, 34.5)).
-private let hobbitHand = (x: 38.5, y: 36.5)
+let hobbitHand = (x: 38.5, y: 36.5)
 
 /// What tells one hobbit from another: the colours of the curls, waistcoat, shirt, breeches and cloak, and what each
 /// carries about him (the Ring on its chain, a pack with the pan on it, or nothing at all).
-private struct HobbitKit {
+struct HobbitKit {
     let curl: Px, curlLight: Px, curlDark: Px
     let waistcoat: Px, waistcoatDark: Px, shirt: Px, breeches: Px
     let cloak: Px, cloakEdge: Px
     let prop: HobbitProp
 }
 
-private enum HobbitProp { case ring, pack, none }
+enum HobbitProp { case ring, pack, none }
 
 private let brass = C(0xC8A04A), leaf = C(0x7FBF5A), silver = C(0xC8D0D8)
 private let ringGold = C(0xE8B33A), ringChain = C(0x9AA0A8)
@@ -38,9 +46,10 @@ private let ringGold = C(0xE8B33A), ringChain = C(0x9AA0A8)
 /// rows 31…39) with ink eyes and arm nubs, the waistcoat open over the shirt with two brass buttons, the cloak's front
 /// edges and the leaf brooch, the curls over the head top (row 27), and what the kit carries (the pack behind, or the
 /// Ring on its chain at the chest). `armRight` raises the right hand; `wince` squeezes the eyes shut; a sword still in
-/// its sheath (`sheath`) hangs at the hip. Sitting, it sits 2 px less low than a Clawd, so its feet still show.
-private func drawHobbit(_ c: PixelCanvas, _ p: Pose, _ k: HobbitKit, armRight: Int = 0, wince: Bool = false,
-                        sheath: Bool = false) {
+/// its sheath (`sheath`) hangs at the hip. Sitting, it sits 2 px less low than a Clawd, so its feet still show. Shared
+/// with the hobbits drawn in other files (Lotho), along with `HobbitKit` and `hobbitHand`.
+func drawHobbit(_ c: PixelCanvas, _ p: Pose, _ k: HobbitKit, armRight: Int = 0, wince: Bool = false,
+                 sheath: Bool = false) {
     if seatedPose { c.oy -= 2 }
     drawBackCape(c, t: p.t, speed: p.capeSpeed, color: k.cloak, edge: k.cloakEdge, hem: 42)
     if sheath { drawSheath(c) }
@@ -340,6 +349,193 @@ private func drawShortSword(_ c: PixelCanvas, angle: Double, alpha: Double = 1) 
         s.rect(22, 21, 8, 1, edge)
         s.rect(23, 20, 5, 1, C(0xF0F2F6))
         s.px(30, 20, blade); s.px(31, 20, edge)
+    }
+}
+
+// MARK: - Merge-y
+
+private let merryKit = HobbitKit(curl: C(0xA8782E), curlLight: C(0xD4A456), curlDark: C(0x74501C),
+                                 waistcoat: C(0x8E4A26), waistcoatDark: C(0x683418),
+                                 shirt: C(0xE8E0C8), breeches: C(0x5A4A32), cloak: C(0x2E6A3A), cloakEdge: C(0xD4AE4A),
+                                 prop: .none)
+
+/// Merge-y, hobbit-sized: Clawd under golden-brown curls, a russet waistcoat, the deep green cloak of the Mark with
+/// its gold edge, bare hairy feet, and a little horn of the Mark, ivory banded with gold, slung at his hip. Like Pippin
+/// he has a short sword at his side that he fights with.
+private func drawMerry(_ c: PixelCanvas, _ p: Pose) {
+    drawHobbit(c, p, merryKit, sheath: p.melee == nil)
+    drawHornOfTheMark(c)
+    if let a = p.melee {
+        for (i, ta) in p.trail.enumerated() { drawShortSword(c, angle: ta, alpha: 0.3 / Double(i + 1)) }
+        drawShortSword(c, angle: a)
+        c.rect(36, 36, 2, 2, clawdOrange)
+    }
+}
+
+/// The horn of the Mark at his hip on a leather strap: a small curved ivory horn, its bell forward, two gold bands.
+private func drawHornOfTheMark(_ c: PixelCanvas) {
+    let ivory = C(0xEDE4C8), ivoryDark = C(0xB8AA88), gold = C(0xE0B840), strap = C(0x5A3A22)
+    c.px(27, 38, strap); c.px(28, 39, strap)
+    c.pattern(26, 39, [
+        "i.....",
+        "IIGIIG",
+        ".IIIGI",
+    ], ["I": ivory, "i": ivoryDark, "G": gold])
+    c.px(31, 41, ivoryDark)
+}
+
+// MARK: - Bilbyte
+
+private let bilboKit = HobbitKit(curl: C(0xC8C8C2), curlLight: C(0xEDEDE8), curlDark: C(0x96968E),
+                                 waistcoat: C(0x8A2232), waistcoatDark: C(0x621624),
+                                 shirt: C(0xEEE6D0), breeches: C(0x6A5A40), cloak: C(0x6E4E30), cloakEdge: C(0x4E3620),
+                                 prop: .none)
+
+/// Bilbyte, an old hobbit, hobbit-sized: Clawd under grey-white curls, a burgundy waistcoat over a cream shirt, a
+/// brown travelling cloak and bare hairy feet, with his little red book (the one he's writing, a gold mark on the
+/// cover) tucked under his arm. He fights with a small blade, a letter-opener of a sword, kept at his hip.
+private func drawBilbo(_ c: PixelCanvas, _ p: Pose) {
+    drawHobbit(c, p, bilboKit, sheath: p.melee == nil)
+    // The book, under the back arm.
+    let red = C(0xA82A2A), redDark = C(0x6E1A1A), pages = C(0xF0E8D0)
+    c.rect(14, 34, 5, 5, red)
+    c.rect(14, 34, 5, 1, pages); c.rect(14, 38, 5, 1, redDark); c.rect(14, 34, 1, 5, redDark)
+    c.px(16, 36, C(0xE0B840))
+    c.rect(18, 36, 2, 2, clawdOrange)                                       // his arm over it
+    if let a = p.melee {
+        for (i, ta) in p.trail.enumerated() { drawSmallBlade(c, angle: ta, alpha: 0.3 / Double(i + 1)) }
+        drawSmallBlade(c, angle: a)
+        c.rect(36, 36, 2, 2, clawdOrange)
+    }
+}
+
+/// Bilbyte's small blade, gripped at the hand: a wooden grip, a little brass guard and a short (5 px) bright blade.
+private func drawSmallBlade(_ c: PixelCanvas, angle: Double, alpha: Double = 1) {
+    prop(c, at: hobbitHand, angle: angle, alpha: alpha) { s in
+        let blade = C(0xD0D4DC), edge = C(0x8E94A0)
+        s.rect(18, 20, 3, 1, C(0x6A4A2A))
+        s.rect(21, 19, 1, 3, brass)
+        s.rect(22, 20, 5, 1, blade)
+        s.rect(22, 21, 4, 1, edge)
+        s.px(23, 20, C(0xF2F6FA))
+        s.px(27, 20, edge)
+    }
+}
+
+// MARK: - Rosie
+
+private let rosieKit = HobbitKit(curl: C(0x9A4626), curlLight: C(0xC8683A), curlDark: C(0x6A2C16),
+                                 waistcoat: C(0xE8C04A), waistcoatDark: C(0xB8902A),
+                                 shirt: C(0xF2EADA), breeches: C(0xE8C04A), cloak: C(0xC8607A), cloakEdge: C(0x9A4058),
+                                 prop: .none)
+
+/// Rosie, a hobbit lass, hobbit-sized: Clawd under auburn curls that tumble down past her shoulders, a pink flower
+/// tucked in them, a bright yellow bodice and a short full skirt to the shin trimmed with lace, a rose shawl
+/// round her shoulders and bare hairy feet. On her back arm a wicker basket of bread and flowers; she fights with a
+/// rolling pin, swung like a club.
+private func drawRosie(_ c: PixelCanvas, _ p: Pose) {
+    let k = rosieKit, white = C(0xF4F0E6)
+    drawHobbit(c, p, k)
+    // The skirt, flaring a little to the shin, a lace trim at its hem.
+    c.rect(20, 38, 16, 1, k.waistcoat)
+    c.rect(19, 39, 18, 1, k.waistcoat)
+    c.rect(18, 40, 20, 1, k.waistcoatDark)
+    c.px(36, 39, k.waistcoatDark); c.px(25, 39, k.waistcoatDark); c.px(30, 39, k.waistcoatDark)
+    for x in stride(from: 19, through: 37, by: 2) { c.px(x, 40, white) }
+    // The curls tumbling down behind the shoulders and over the shawl.
+    c.pattern(17, 31, ["CCl", "CdC", "lCC", "CCd", ".Cl", ".d."], ["C": k.curl, "l": k.curlLight, "d": k.curlDark])
+    c.px(36, 33, k.curl); c.px(36, 34, k.curlDark)
+    // The flower in her hair.
+    c.pattern(31, 26, [".P.", "PYP", ".P."], ["P": C(0xF4A0C0), "Y": C(0xF8D84A)])
+    c.px(30, 28, C(0x5A9A3A))
+    // The basket on her back arm, the bread and a flower peeping out.
+    let wicker = C(0xB88A4A), wickerDark = C(0x8A6230)
+    c.pattern(12, 33, [
+        "..wwww..",
+        ".w....w.",
+        "BBFpBBB.",
+        "WWWWWWW.",
+        "WdWdWdW.",
+        "WWWWWWW.",
+        ".WdWdW..",
+    ], ["w": wickerDark, "W": wicker, "d": wickerDark, "B": C(0xD8A860), "F": C(0xF4A0C0), "p": C(0x5A9A3A)])
+    c.rect(18, 36, 2, 2, clawdOrange)                                       // her arm through the handle
+    if let a = p.melee {
+        for (i, ta) in p.trail.enumerated() { drawRollingPin(c, angle: ta, alpha: 0.3 / Double(i + 1)) }
+        drawRollingPin(c, angle: a)
+        c.rect(36, 36, 2, 2, clawdOrange)
+    }
+}
+
+/// Rosie's rolling pin, gripped by one handle: a fat pale-wood roller between two turned handles.
+private func drawRollingPin(_ c: PixelCanvas, angle: Double, alpha: Double = 1) {
+    prop(c, at: hobbitHand, angle: angle, alpha: alpha) { s in
+        let wood = C(0xE0C090), woodDark = C(0xB0905A), handle = C(0xA87A44)
+        s.rect(17, 20, 3, 1, handle)
+        s.rect(20, 19, 9, 3, wood)
+        s.rect(20, 21, 9, 1, woodDark); s.rect(21, 19, 6, 1, C(0xF0DAB0))
+        s.rect(29, 20, 2, 1, handle)
+    }
+}
+
+// MARK: - Farmer Mag-git
+
+private let maggotKit = HobbitKit(curl: C(0x8A8274), curlLight: C(0xB0A898), curlDark: C(0x605A4E),
+                                  waistcoat: C(0x5A6A3A), waistcoatDark: C(0x424E2A),
+                                  shirt: C(0xDCD4BC), breeches: C(0x6A4A2A), cloak: C(0x6A5E4A), cloakEdge: C(0x4E4434),
+                                  prop: .none)
+
+/// Farmer Mag-git, an old hobbit farmer, hobbit-sized but stout: Clawd under grizzled grey curls and a wide, frayed
+/// straw hat with a red band, a heavy leather apron bulging over his belly, a dull brown coat and bare hairy feet. A
+/// brass dog whistle hangs on a cord at his chest (his dogs are never far off), and a basket of mushrooms rides on his
+/// back arm. His pitchfork stands upright in his fist at rest; he fights with it, prongs first.
+private func drawMaggot(_ c: PixelCanvas, _ p: Pose) {
+    let k = maggotKit, leather = C(0x7A5232), leatherDark = C(0x5A3A22), leatherLight = C(0x96683E)
+    drawHobbit(c, p, k)
+    // The leather apron, bulging out over his belly, with a pocket.
+    c.rect(22, 36, 14, 5, leather)
+    c.rect(36, 37, 1, 3, leather); c.px(37, 38, leatherDark); c.px(36, 40, leatherDark)
+    c.rect(22, 40, 15, 1, leatherDark); c.rect(22, 36, 14, 1, leatherLight)
+    c.rect(27, 38, 4, 2, leatherDark); c.rect(27, 38, 4, 1, leatherLight)
+    // The dog whistle on its cord.
+    dots(c, 23, 35, 25, 37, C(0x3A2A1C)); c.rect(25, 37, 2, 1, brass); c.px(26, 38, C(0x8A6A2A))
+    // The straw hat: a low crown with a red band, and a wide, frayed brim.
+    let straw = C(0xE0C070), strawDark = C(0xB8984A), strawLight = C(0xF4DC98)
+    c.pattern(15, 23, [
+        ".......SSSSlSSSS.........",
+        "......SSlSSSSSSdS........",
+        "......RRRRRRRRRRR........",
+        "...dSSSSSlSSSSSSSSSSd....",
+        "SSlSSSSSSSSSSSdSSSSSlSSSS",
+        ".d.S.dS.S..dS.S.d.S.dS.d.",
+    ], ["S": straw, "d": strawDark, "l": strawLight, "R": C(0xA83A2A)])
+    // The basket of mushrooms on his back arm.
+    let wicker = C(0xA8804A), wickerDark = C(0x7A5A30), cap = C(0xE8DCC4), capDark = C(0xA88A6A), stalk = C(0xF4EEE0)
+    c.pattern(12, 33, [
+        ".cC..Cc.",
+        "CCCsCCCC",
+        "CsCkCCsC",
+        "WWWWWWW.",
+        "WdWdWdW.",
+        "WWWWWWW.",
+        ".WdWdW..",
+    ], ["C": cap, "c": capDark, "s": stalk, "k": capDark, "W": wicker, "d": wickerDark])
+    c.rect(18, 36, 2, 2, clawdOrange)
+    // The pitchfork: upright at rest, swung prongs first in a fight.
+    let a = p.melee ?? -90
+    for (i, ta) in (p.melee == nil ? [] : p.trail).enumerated() { drawPitchfork(c, angle: ta, alpha: 0.3 / Double(i + 1)) }
+    drawPitchfork(c, angle: a)
+    c.rect(36, 36, 2, 2, clawdOrange)
+}
+
+/// Mag-git's pitchfork, gripped two thirds down its long ash shaft (the butt sticks out behind the hand): an iron
+/// crossbar and three long prongs.
+private func drawPitchfork(_ c: PixelCanvas, angle: Double, alpha: Double = 1) {
+    prop(c, at: hobbitHand, angle: angle, alpha: alpha) { s in
+        let ash = C(0xA8865A), ashDark = C(0x7A5E3A), iron = C(0x8A8E94), ironLight = C(0xB8BCC4)
+        s.rect(14, 20, 18, 1, ash); s.rect(14, 21, 18, 1, ashDark)
+        s.rect(32, 18, 1, 5, iron)
+        for y in [18, 20, 22] { s.rect(33, y, 5, 1, iron); s.px(38, y, ironLight) }
     }
 }
 

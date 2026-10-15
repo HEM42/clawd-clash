@@ -95,8 +95,8 @@ func cast(named n: String) -> [Cast] {
     for (i, b) in filesHeroes.enumerated() { batches["filesHeroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
     for (i, b) in filesVillains.enumerated() { batches["filesVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
     for (i, b) in doctorVillains.enumerated() { batches["doctorVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
-    for (name, b) in [("ringsHeroes1", ringsHeroes1), ("ringsHeroes2", ringsHeroes2)] { batches[name] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
-    for (name, b) in [("ringsVillains1", ringsVillains1), ("ringsVillains2", ringsVillains2)] { batches[name] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
+    for (name, b) in [("ringsHeroes1", ringsHeroes1), ("ringsHeroes2", ringsHeroes2), ("ringsHeroes3", ringsHeroes3), ("ringsHeroes4", ringsHeroes4), ("ringsHeroes5", ringsHeroes5), ("ringsHeroes6", ringsHeroes6), ("ringsHeroes7", ringsHeroes7), ("ringsHeroes8", ringsHeroes8)] { batches[name] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
+    for (name, b) in [("ringsVillains1", ringsVillains1), ("ringsVillains2", ringsVillains2), ("ringsVillains3", ringsVillains3), ("ringsVillains4", ringsVillains4), ("ringsVillains5", ringsVillains5), ("ringsVillains6", ringsVillains6), ("ringsVillains7", ringsVillains7), ("ringsVillains8", ringsVillains8)] { batches[name] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
     batches["ringsHem"] = [.hero(LOTRHero.hem)]   // "hem" and "HEM" resolve to Marvel's first, and fight takes the first match
     for u in Universe.allCases { batches[squashed(u.title)] = Theme.of(u).cast }
     if let b = batches[n] ?? batches[squashed(n)] { return b }

@@ -1,0 +1,346 @@
+import Foundation
+
+// Villains: the small ones close to home, and the oldest thing in the Old Forest. Lotho is a hobbit, drawn with the
+// hobbits' own `drawHobbit` (RingsHeroes1.swift) in his own kit; Bill Firmware is Clawd in costume at a Man's height.
+// Old Man Pillow isn't Clawd at all: an old willow half again a Man's height (the size is drawn on the canvas, so his
+// `headTop`, the root he grabs with and his `bulk` say so), drooping, grey-green and very, very sleepy.
+
+let ringsVillains5: [LOTRVillain: Persona] = [
+    .lotho: Persona(name: "Lotho Sackville-Bagclawds", weapon: .saber, pivot: hobbitHand, headTop: 27,
+                    callout: "I'm the Chief now. Every commit in the Shire needs my sign-off.", draw: drawLotho),
+    .billFerny: Persona(name: "Bill Firmware", weapon: .saber, headTop: 21,
+                        callout: "Want your pony back? That's a paid firmware upgrade.", draw: drawBillFerny),
+    .oldManWillow: Persona(name: "Old Man Pillow", weapon: .saber, canSit: false, pivot: willowRoot, bulk: 6, headTop: 7,
+                           callout: "Rest your head on me… this Pillow never wakes a sleeping thread.", draw: drawWillow),
+]
+
+// MARK: - Lotho
+
+private let lothoKit = HobbitKit(curl: C(0x241C1A), curlLight: C(0x4A3C36), curlDark: C(0x120E0C),
+                                 waistcoat: C(0x2A2232), waistcoatDark: C(0x18121E),
+                                 shirt: C(0xF4F0E4), breeches: C(0x3A3040), cloak: C(0x5A2A4A), cloakEdge: C(0xC8A040),
+                                 prop: .none)
+
+/// Lotho, the upstart "Chief", hobbit-sized: Clawd under slick, oiled black curls, with a smug face (heavy-lidded eyes,
+/// one brow cocked, a smirk) and a few angry red pimples; a too-fine near-black waistcoat with gold buttons and a brass
+/// watch chain looped across it, a frilled white shirt, a mulberry cloak edged in gold, bare hairy feet. He carries a
+/// black cane with a gold knob, planted at his side at rest and swung like a stick to fight.
+private func drawLotho(_ c: PixelCanvas, _ p: Pose) {
+    let k = lothoKit, gold = C(0xE0B840), pimple = C(0xB82A22), pimpleTip = C(0xF4C0A8)
+    drawHobbit(c, p, k)
+    // The smug face: heavy lids over the eyes, one brow cocked, a smirk; and the pimples.
+    c.rect(23, 33, 2, 1, clawdShade); c.rect(31, 33, 2, 1, clawdShade)
+    c.rect(22, 32, 3, 1, ink); c.px(31, 31, ink); c.px(32, 31, ink); c.px(33, 32, ink)
+    c.rect(27, 35, 3, 1, C(0x7A3420)); c.px(30, 34, C(0x7A3420))
+    for (x, y) in [(21, 34), (29, 32), (34, 35)] { c.px(x, y, pimple) }
+    c.px(29, 31, pimpleTip)
+    // The frilled shirt front, the gold buttons and the watch chain looped across the waistcoat.
+    c.px(27, 36, C(0xD8D0C0)); c.px(28, 37, C(0xD8D0C0))
+    c.px(29, 38, gold); c.px(29, 36, gold)
+    for (x, y) in [(23, 37), (24, 38), (25, 38), (26, 39), (27, 39), (28, 38)] { c.px(x, y, gold) }
+    c.px(22, 37, C(0xF4E08A))
+    // The cane: planted at his side at rest, swung like a stick to fight.
+    let a = p.melee ?? 90
+    for (i, ta) in (p.melee == nil ? [] : p.trail).enumerated() { drawCane(c, angle: ta, alpha: 0.3 / Double(i + 1)) }
+    drawCane(c, angle: a)
+    c.rect(36, 36, 2, 2, clawdOrange)
+}
+
+/// Lotho's cane, gripped below its gold knob: a slim black stick with a gold ferrule at the tip.
+private func drawCane(_ c: PixelCanvas, angle: Double, alpha: Double = 1) {
+    prop(c, at: hobbitHand, angle: angle, alpha: alpha) { s in
+        let gold = C(0xE0B840)
+        s.rect(18, 19, 2, 3, gold); s.px(18, 19, C(0xF8E08A))
+        s.rect(20, 20, 7, 1, C(0x1A1A20)); s.rect(21, 20, 4, 1, C(0x2E2E38))
+        s.px(27, 20, gold)
+    }
+}
+
+// MARK: - Bill Firmware
+
+/// Bill Firmware, the Bree ruffian: a grubby, stained yellow-green coat to the thigh with a patch on it, tied with a
+/// rope belt, over dark trousers and muddy boots; a mean squint under low, scowling brows, dark stubble along the jaw,
+/// greasy black hair hanging lank from under a battered, drooping brown hat. He fights with a knotted cudgel, held low
+/// at his side at rest and swung with a smear behind a fast stroke. No signature.
+private func drawBillFerny(_ c: PixelCanvas, _ p: Pose) {
+    let coat = C(0x5A6430), coatShade = C(0x404A22), coatLight = C(0x707A3E), grime = C(0x4A4426)
+    let hat = C(0x5A4430), hatDark = C(0x3E2E1E), hatLight = C(0x74583C)
+    let hair = C(0x1E1A18), hairLight = C(0x38302A), stubble = C(0x9A4E34)
+    drawLegs(c, Look(leg: C(0x3A3228)), step: p.step)
+    drawBoots(c, p.step, C(0x3A2C1C), rows: 3)
+    c.oy += p.breathe
+    drawBody(c, Look(arm: coat, eye: nil))
+    // The squint, the scowl and the stubble.
+    c.rect(22, 29, 2, 2, ink); c.rect(32, 29, 2, 2, ink)
+    c.px(22, 29, clawdShade); c.px(33, 29, clawdShade)                      // the lids, slanting in
+    c.pattern(20, 26, ["BB...........BB", "..BBB.....BBB.."], ["B": C(0x2A1E18)])
+    for (x, y) in [(20, 32), (22, 32), (24, 32), (27, 32), (29, 32), (31, 32), (34, 32), (21, 31), (33, 31), (36, 32)] {
+        c.px(x, y, stubble)
+    }
+    // The coat: shoulders to mid-thigh, stained, patched, a rope round the waist.
+    c.rect(18, 33, 20, 5, coat)
+    c.rect(37, 33, 1, 5, coatShade)
+    c.rect(18, 33, 20, 1, coatLight)
+    for y in 38...39 where y + c.oy <= 43 { c.rect(18, y, 20, 1, coat); c.px(26, y, coatShade); c.px(37, y, coatShade) }
+    for (x, y) in [(21, 34), (22, 35), (33, 38), (34, 37), (29, 34)] { c.px(x, y, grime) }
+    c.rect(30, 37, 3, 2, C(0x8A7448)); c.px(30, 37, C(0x5A4A2A)); c.px(32, 38, C(0x5A4A2A))   // the patch
+    c.rect(18, 36, 20, 1, C(0xA8946A)); c.px(25, 37, C(0xA8946A)); c.px(25, 38, C(0x8A7652))   // the rope belt
+    c.rect(15, 33, 3, 3, coat)
+    // The lank hair, hanging from under the hat.
+    c.pattern(16, 25, ["HH....................HH", "Hl....................lH", "HH....................H.",
+                       "H.....................H.", "l.......................", "H......................."],
+              ["H": hair, "l": hairLight])
+    // The battered hat: a dented crown and a wide brim drooping at the front.
+    c.pattern(15, 19, [
+        "........hHHHHHh.........",
+        "......HHHdHHHHHHH.......",
+        ".....HHHHHHHHdHHHH......",
+        ".....dddddddddddddd.....",
+        "..HHHHHHHHHHHHHHHHHHHL..",
+        "HHHHlHHHHHHHHHlHHHHHHHHH",
+        "d.......................",
+    ], ["H": hat, "d": hatDark, "l": hatLight, "h": hatLight, "L": hatLight])
+    c.px(39, 25, hat); c.px(40, 26, hatDark)
+    // The cudgel: low at his side at rest, swung in a fight.
+    let angle = p.melee ?? (seatedPose ? 10 : 55)
+    for (i, a) in (p.melee == nil ? [] : p.trail).enumerated() {
+        let u = unit(a)
+        c.glowLine(Sprite.hand.x + u.x * 4, Sprite.hand.y + u.y * 4, Sprite.hand.x + u.x * 12, Sprite.hand.y + u.y * 12,
+                   core: C(0xC8B89A), glow: C(0x8A7A5A), coreR: 0.8, glowR: 1.9, strength: 0.32 / Double(i + 1))
+    }
+    drawCudgel(c, angle: angle)
+    c.rect(38, 33, 3, 3, coat); c.rect(40, 33, 2, 3, clawdOrange); c.px(40, 35, clawdShade)
+}
+
+/// Bill's cudgel, gripped at the hand: a short handle swelling into a thick, knotted club head.
+private func drawCudgel(_ c: PixelCanvas, angle: Double) {
+    prop(c, at: Sprite.hand, angle: angle) { s in
+        let wood = C(0x6A4A2A), dark = C(0x4A321C), light = C(0x8A6A44)
+        s.rect(17, 20, 6, 1, wood); s.rect(17, 21, 6, 1, dark)
+        s.rect(23, 19, 4, 3, wood); s.rect(27, 18, 5, 5, wood)
+        s.rect(23, 21, 9, 1, dark); s.rect(27, 22, 5, 1, dark)
+        s.rect(24, 19, 7, 1, light)
+        s.px(25, 18, dark); s.px(29, 17, dark); s.px(32, 20, dark); s.px(30, 23, dark)   // the knots
+    }
+}
+
+// MARK: - Old Man Pillow
+
+/// Where Old Man Pillow's grabbing root reaches out from: low at the front of his trunk, just above the ground.
+private let willowRoot: (x: Double, y: Double) = (40.5, 40.5)
+
+/// The tip of his front branch, drooping out in front of him.
+private let willowTip: (x: Double, y: Double) = (49.5, 29.5)
+
+/// Old Man Pillow, the ancient willow of the Old Forest, half again a Man's height: a gnarled, leaning grey trunk split
+/// by a great dark hollow, on a tangle of roots that shuffle along for feet; a crown of grey-green leaves weeping down
+/// in long fronds on every side, swaying; and a face in the bark, sleepy and sly, one eye closed, the other a pale-green
+/// slit, a crooked smile. His front branch droops out in front of him, fronds trailing. He fights with a gnarled root
+/// that lies coiled at his base at rest and, swung, snakes forward along the floor and up, its tip curling like a
+/// grasping hand and lagging behind the swing, with a smear behind a fast grab. When he's idle a little "z" drifts up
+/// from him now and then. No signature.
+private func drawWillow(_ c: PixelCanvas, _ p: Pose) {
+    let bark = C(0x7A7C68), barkDark = C(0x56584A), barkLight = C(0x9A9C86), furrow = C(0x3A3C30), hollow = C(0x1A1C16)
+    let frond = C(0x8A9A6A), frondDark = C(0x66764E), frondLight = C(0xB0C08C)
+    let sway: Double = sin(p.lt * 1.1)
+    // The fronds hanging behind the trunk (the back of the crown).
+    drawFronds(c, p, xs: [12, 14, 16, 18, 20, 23], top: 14, length: 22, col: frondDark, light: frond, phase: 0.5)
+    // The roots: a tangle spreading over the ground, its tips shuffling as he moves.
+    for (i, lx) in [14, 20, 27, 33, 39].enumerated() {
+        let up = p.step >= 0 && i % 2 == p.step ? 1 : 0
+        let col = i % 2 == 0 ? barkDark : bark
+        line(c, Double(lx + 6 - i), 37, Double(lx), Double(43 - up), col, 1)
+        line(c, Double(lx), Double(43 - up), Double(lx - 2), Double(43 - up), col, 0.5)
+        c.px(lx + 1, 41 - up, furrow)
+    }
+    c.oy += p.breathe
+    // The trunk: wide at the root, leaning a little forward as it rises, the bark grain running up it.
+    for y in 13...39 {
+        let k = Double(39 - y) / 26
+        let l = Int((17 + k * 6 + 1.2 * sin(Double(y) * 0.45)).rounded())
+        let r = Int((38 + k * 3 - 1.0 * sin(Double(y) * 0.3)).rounded())
+        c.rect(l, y, r - l + 1, 1, bark)
+        c.px(l, y, barkLight); c.px(r, y, barkDark)
+        for fx in [l + 3, l + 8, r - 4] where (y * 3 + fx) % 5 != 0 { c.px(fx, y, barkDark) }
+    }
+    // The great hollow, low in the trunk.
+    c.pattern(24, 29, [
+        "...FF...",
+        "..FHHF..",
+        ".FHHHHF.",
+        ".FHHHHHF",
+        "FHHHHHHF",
+        "FHHHHHHF",
+        "FHHHHHF.",
+        ".FHHHF..",
+    ], ["F": furrow, "H": hollow])
+    // The sleepy, sly face: heavy brows, one eye closed in a droop, the other a pale-green slit; a crooked smile.
+    let glint: Double = 0.65 + 0.35 * sin(p.lt * 0.9)
+    c.rect(26, 18, 5, 1, barkLight); c.rect(34, 18, 5, 1, barkLight)
+    c.pattern(26, 19, ["F...F", ".FFF."], ["F": furrow])
+    c.rect(34, 19, 5, 1, furrow); c.rect(35, 20, 3, 1, C(0xC8F0A8).alpha(glint)); c.px(34, 20, furrow); c.px(38, 20, furrow)
+    c.rect(34, 21, 5, 1, furrow)
+    c.pattern(31, 21, [".B..", "BBb.", ".bb."], ["B": barkLight, "b": barkDark])     // the knobbly nose
+    c.pattern(27, 25, ["F.........F", ".FF.....FF.", "...FFFFF..."], ["F": furrow])
+    c.px(38, 24, furrow)
+    // The crown, grey-green and weeping, swaying a little.
+    c.pattern(13, 5, [
+        "..........LlLLl.lLL.......",
+        "......lLLLLLLLLLLLLLLl....",
+        "...lLLLLmLLLLLmLLLLLLLLl..",
+        "..LLmLLLLLLmLLLLLLmLLLLLL.",
+        ".LLLLLLdLLLLLLdLLLLLLLmLLL",
+        "LLmLLLLLLLLmLLLLLmLLLLLLLL",
+        "LLLLdLLmLLLLLLLLLLLLdLLLmL",
+        "LdLLLLLLLLdLLLLmLLLLLLLLLL",
+        "LLL.dLL.LLL.dLL.LdL.LLd.Ld",
+    ], ["L": frond, "l": frondLight, "m": frondLight, "d": frondDark])
+    // The fronds hanging in front, either side of his face, and from the branch.
+    drawFronds(c, p, xs: [13, 15, 21, 24, 40, 42], top: 14, length: 18, col: frond, light: frondLight, phase: 0)
+    drawFronds(c, p, xs: [17, 19, 44], top: 14, length: 25, col: frondDark, light: frond, phase: 1.3)
+    // The front branch, drooping out in front of him.
+    let lift = Double(p.armRaise)
+    let tip = (x: willowTip.x, y: willowTip.y - lift + sway * 0.4)
+    line(c, 38, 22, 44, 23 - lift * 0.5, bark, 1.3)
+    line(c, 44, 23 - lift * 0.5, tip.x, tip.y, barkDark, 0.8)
+    c.px(Int(tip.x), Int(tip.y) + 1, furrow)
+    for (i, fx) in [43.0, 46.0, 48.0].enumerated() {
+        let top = 24 - lift * (fx - 38) / 12 + (i == 2 ? 2 : 0)
+        let len = 9.0 - Double(i) * 2
+        for k in 0..<Int(len) {
+            let x = fx + sin(p.lt * 1.1 + Double(k) * 0.4 + Double(i)) * Double(k) / len * 1.2
+            c.px(Int(x.rounded()), Int(top) + k, k % 3 == 1 ? frondLight : frond)
+        }
+    }
+    // Idle and dozing: a little "z" drifting up now and then.
+    if p.resting {
+        let f = frac(p.lt / 3.2)
+        if f < 0.7 {
+            let a: Double = sin(f / 0.7 * .pi) * 0.85, y = 14 - Int(f * 10), x = 41 + Int(f * 5)
+            c.pattern(x, y, ["ZZZ", ".Z.", "ZZZ"], ["Z": C(0xE8F4DC, a)])
+        }
+    }
+    // The grabbing root, from the base of the trunk (on the ground, so it doesn't breathe): coiled at rest; swung, out
+    // along the floor and up along the swing, its grasping tip curling over and lagging behind.
+    c.oy -= p.breathe
+    guard let a = p.melee else {
+        drawRoot(c, angle: 6, rise: -30 + 4 * sway, curl: -280, col: bark, dark: barkDark, knot: furrow)
+        return
+    }
+    func reach(_ a: Double) -> Double { min(30, max(-120, wrapped(a))) }
+    let now = reach(a)
+    for (i, ta) in p.trail.enumerated() {
+        drawRoot(c, angle: 4, rise: reach(ta) - 4, curl: 100, col: C(0xA8AC94), dark: nil, knot: nil,
+                 alpha: 0.32 / Double(i + 1))
+    }
+    let lag: Double = p.trail.first.map { reach($0) - now } ?? 0
+    drawRoot(c, angle: 4, rise: now - 4, curl: min(200, max(40, 100 + lag * 2)), col: bark, dark: barkDark, knot: furrow)
+}
+
+/// Old Man Pillow's grabbing root, from `willowRoot`: setting off along `angle` over the floor, turning `rise` degrees
+/// more as it lifts, then curling `curl` degrees more at its tapering tip, where three rootlet fingers splay out like a
+/// grasping hand; a darker underside and a few knots along it.
+private func drawRoot(_ c: PixelCanvas, angle: Double, rise: Double, curl: Double, col: Px, dark: Px?, knot: Px?,
+                      alpha: Double = 1) {
+    let body = curve(willowRoot, angle: angle, bend: rise, n: 6, step: 2, power: 1)
+    let tip = curve(body[body.count - 1], angle: angle + rise, bend: curl, n: 6, step: 1.6, power: 2)
+    let pts = body + tip.dropFirst()
+    let floor = Double(43 - c.oy) + 0.5
+    for i in 1..<pts.count {
+        let a = pts[i - 1], b = pts[i], f = Double(i) / Double(pts.count - 1)
+        let r: Double = 1.9 + (0.45 - 1.9) * f
+        if let dark { line(c, a.x, min(a.y + 0.6, floor), b.x, min(b.y + 0.6, floor), dark.alpha(alpha), r) }
+        line(c, a.x, min(a.y, floor), b.x, min(b.y, floor), col.alpha(alpha), r * (dark == nil ? 1 : 0.8))
+    }
+    // The rootlet fingers, splaying from just behind the tip.
+    let hand = pts[pts.count - 3], end = angle + rise + curl
+    for spread in [-55.0, -15.0, 25.0] {
+        let u = unit(end + spread)
+        line(c, hand.x, min(hand.y, floor), hand.x + u.x * 3.5, min(hand.y + u.y * 3.5, floor), col.alpha(alpha), 0.4)
+    }
+    guard let knot else { return }
+    for i in [3, 6, 9] where i < pts.count && pts[i].y < floor {
+        c.px(Int(pts[i].x.rounded(.down)), Int(pts[i].y.rounded(.down)), knot.alpha(alpha))
+    }
+}
+
+/// The points along a curving limb: from `root`, setting off along `angle` (degrees, 0 forward, -90 up) and turning
+/// `bend` degrees more by its tip, the turn tightening toward the tip with `power`; `n` steps of `step`.
+private func curve(_ root: (x: Double, y: Double), angle: Double, bend: Double, n: Int, step: Double, power: Double) -> [(x: Double, y: Double)] {
+    var pts = [root]
+    for i in 1...n {
+        let f = Double(i) / Double(n)
+        let u = unit(angle + bend * pow(f, power)), q = pts[pts.count - 1]
+        pts.append((q.x + u.x * step, q.y + u.y * step))
+    }
+    return pts
+}
+
+/// An angle in degrees brought into -180…180.
+private func wrapped(_ a: Double) -> Double {
+    var w: Double = a.truncatingRemainder(dividingBy: 360)
+    if w > 180 { w -= 360 } else if w <= -180 { w += 360 }
+    return w
+}
+
+/// Long, thin willow fronds hanging from row `top` at each of `xs`, `length` rows, their ends swaying more than their
+/// tops, a lighter leaf every few pixels.
+private func drawFronds(_ c: PixelCanvas, _ p: Pose, xs: [Int], top: Int, length: Int, col: Px, light: Px, phase: Double) {
+    for (i, fx) in xs.enumerated() {
+        let len = length - (i * 3) % 7
+        for k in 0..<len {
+            let y = top + k
+            guard y + c.oy <= 43 else { break }
+            let x = Double(fx) + sin(p.lt * 1.1 + phase + Double(i) * 0.7 + Double(k) * 0.15) * Double(k) / Double(len) * 1.5
+            c.px(Int(x.rounded()), y, (k + i) % 4 == 2 ? light : col)
+        }
+    }
+}
+
+// MARK: - Shared helpers
+
+private let clear = C(0x000000, 0)
+
+/// Boots over the bottom `rows` of each leg (a bit of the folded foot when sitting).
+private func drawBoots(_ c: PixelCanvas, _ step: Int, _ col: Px, rows: Int = 2) {
+    if seatedPose {
+        for lx in [19, 23, 31, 35] { c.rect(lx + 1, 38, 2, 2, col) }
+        return
+    }
+    for (i, lx) in [19, 23, 31, 35].enumerated() {
+        let bottom = step >= 0 && i % 2 == step ? 42 : 43
+        c.rect(lx, bottom - rows + 1, 2, rows, col)
+    }
+}
+
+/// A solid pixel line (no glow), `r` its half-width.
+private func line(_ c: PixelCanvas, _ x0: Double, _ y0: Double, _ x1: Double, _ y1: Double, _ col: Px, _ r: Double = 0.7) {
+    c.glowLine(x0, y0, x1, y1, core: col, glow: clear, coreR: r, glowR: r + 0.1)
+}
+
+private func unit(_ degrees: Double) -> (x: Double, y: Double) {
+    let r: Double = degrees * .pi / 180
+    return (cos(r), sin(r))
+}
+
+/// A prop drawn pointing right from pixel (20, 20) of a scratch canvas, turned to `angle` degrees (0 forward, -90 up)
+/// and placed with that point on `at`.
+private func prop(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double, alpha: Double = 1, _ art: (PixelCanvas) -> Void) {
+    let s = PixelCanvas(41, 41)
+    art(s)
+    let r = s.rotated(angle, about: (20.5, 20.5), into: 41, 41, at: (20.5, 20.5))
+    let x0 = Int(floor(at.x - 20.5)), y0 = Int(floor(at.y - 20.5))
+    for y in 0..<r.h {
+        for x in 0..<r.w {
+            let i = (y * r.w + x) * 4
+            guard r.buf[i + 3] > 0 else { continue }
+            c.px(x0 + x, y0 + y, unpremultiplied(r, i).alpha(alpha))
+        }
+    }
+}
+
+private func unpremultiplied(_ s: PixelCanvas, _ i: Int) -> Px {
+    let a = s.buf[i + 3], m = 255 / Double(a)
+    return Px(r: UInt8(min(255, Double(s.buf[i]) * m)), g: UInt8(min(255, Double(s.buf[i + 1]) * m)),
+              b: UInt8(min(255, Double(s.buf[i + 2]) * m)), a: a)
+}

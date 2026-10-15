@@ -1,27 +1,39 @@
 import Foundation
 
-// The Clawd of the Rings universe (inspired by The Lord of the Rings): 9 villains, 10 heroes and 4 places. Not released yet
-// (`Universe.isReleased`): only the tools show it. Each character is a `Persona` registered in one of the Art/*.swift
-// files next to its drawing code. Who lives where, the arch-enemies and the Eagle are decided here, in `middleEarthTheme`.
+// The Clawd of the Rings universe (inspired by The Lord of the Rings): 38 villains, 38 heroes and 4 places. Each
+// character is a `Persona` registered in one of the Art/*.swift files next to its drawing code. Who lives where, the
+// arch-enemies and the Eagle are decided here, in `middleEarthTheme`.
 //
 // Ids: villains `LOTRVillain.rawValue`, heroes 100 + `LOTRHero.rawValue`, plus `Universe.middleEarth.base`. Only ever
 // append cases, so running sessions keep their characters across an update.
 
 enum LOTRVillain: Int, CaseIterable {
     case sauron, saruman, witchKing, nazgul, balrog, gollum, uruk, orc, shelob
+    case wormtongue, lurtz, gothmog, mouthOfSauron, watcher, oliphaunt, barrowWight, warg
+    case denethor, ugluk, grishnakh, shagrat, ologHai, caveTroll, kingOfTheDead, corsair, haradrim, easterling, oldManWillow
+    case lotho, billFerny, sharkey, necromancer, smaug, azog, bolg, goblinKing, mirkwoodSpider, masterOfLaketown
 
     var persona: Persona { middleEarthVillainPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
 enum LOTRHero: Int, CaseIterable {
     case gandalf, frodo, sam, pippin, aragorn, legolas, gimli, boromir, galadriel
+    case merry, bilbo, elrond, arwen, theoden, faramir, treebeard, bombadil, gandalfWhite, eowyn
+    case radagast, glorfindel, haldir, celeborn, eomer, butterbur, rosie, farmerMaggot, quickbeam, strider
+    case thorin, balin, kili, fili, gloin, bard, beorn, thranduil
     case hem   // always last (`Universe.hem`)
 
     var persona: Persona { middleEarthHeroPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
 let middleEarthVillainPersonas: [LOTRVillain: Persona] = ringsVillains1.merging(ringsVillains2) { a, _ in a }
+    .merging(ringsVillains3) { a, _ in a }.merging(ringsVillains4) { a, _ in a }
+    .merging(ringsVillains5) { a, _ in a }.merging(ringsVillains6) { a, _ in a }.merging(ringsVillains7) { a, _ in a }
+    .merging(ringsVillains8) { a, _ in a }
 let middleEarthHeroPersonas: [LOTRHero: Persona] = ringsHeroes1.merging(ringsHeroes2) { a, _ in a }
+    .merging(ringsHeroes3) { a, _ in a }.merging(ringsHeroes4) { a, _ in a }
+    .merging(ringsHeroes5) { a, _ in a }.merging(ringsHeroes6) { a, _ in a }.merging(ringsHeroes7) { a, _ in a }
+    .merging(ringsHeroes8) { a, _ in a }
     .merging([.hem: hemPersona(.middleEarth)]) { a, _ in a }
 
 // MARK: - Homes
@@ -29,16 +41,22 @@ let middleEarthHeroPersonas: [LOTRHero: Persona] = ringsHeroes1.merging(ringsHer
 extension Location {
     static func middleEarthHome(of villain: LOTRVillain) -> Location {
         switch villain {
-        case .sauron, .saruman, .witchKing, .nazgul, .uruk, .shelob: return .mountDoom
-        case .balrog, .gollum, .orc: return .moria
+        case .sauron, .saruman, .witchKing, .nazgul, .uruk, .shelob, .wormtongue, .lurtz, .gothmog, .mouthOfSauron, .oliphaunt,
+             .warg, .denethor, .ugluk, .grishnakh, .shagrat, .ologHai, .kingOfTheDead, .corsair, .haradrim, .easterling,
+             .necromancer, .smaug: return .mountDoom
+        case .balrog, .gollum, .orc, .watcher, .barrowWight, .caveTroll, .azog, .bolg, .goblinKing, .mirkwoodSpider: return .moria
+        case .oldManWillow, .lotho, .sharkey: return .bagEnd
+        case .billFerny, .masterOfLaketown: return .prancingPony
         }
     }
 
     static func middleEarthHome(of hero: LOTRHero) -> Location {
         switch hero {
-        case .frodo, .sam, .pippin, .galadriel: return .bagEnd
-        case .aragorn, .legolas, .boromir, .hem: return .prancingPony
-        case .gandalf, .gimli: return .moria
+        case .frodo, .sam, .pippin, .galadriel, .merry, .bilbo, .treebeard, .bombadil, .radagast, .rosie, .farmerMaggot,
+             .quickbeam, .beorn: return .bagEnd
+        case .aragorn, .legolas, .boromir, .hem, .elrond, .arwen, .theoden, .faramir, .eowyn, .glorfindel, .haldir,
+             .celeborn, .eomer, .butterbur, .strider, .bard, .thranduil: return .prancingPony
+        case .gandalf, .gimli, .gandalfWhite, .thorin, .balin, .kili, .fili, .gloin: return .moria
         }
     }
 }

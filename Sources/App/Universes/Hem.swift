@@ -325,14 +325,14 @@ private func drawWand(_ c: PixelCanvas, raised: Bool, gunY: Int, t: Double) {
 
 // MARK: - Clawd of the Rings: Éowyn
 
-private let rohanMail = C(0x8A8E98), rohanMailDark = C(0x6A6E78), rohanMailLight = C(0xAEB2BA)
-private let rohanTunic = C(0x3A6A3A), rohanTunicDark = C(0x2A522A), rohanCloak = C(0x2E5A2E), rohanGold = C(0xE8B33A)
-private let rohanSteel = C(0xC8CCD4), rohanSteelDark = C(0x9A9EA8), rohanCrest = C(0xF0EEE8)
-private let rohanTrousers = C(0x5A5E66), rohanBoot = C(0x4A3420)
+let rohanMail = C(0x8A8E98), rohanMailDark = C(0x6A6E78), rohanMailLight = C(0xAEB2BA)
+let rohanTunic = C(0x3A6A3A), rohanTunicDark = C(0x2A522A), rohanCloak = C(0x2E5A2E), rohanGold = C(0xE8B33A)
+let rohanSteel = C(0xC8CCD4), rohanSteelDark = C(0x9A9EA8), rohanCrest = C(0xF0EEE8)
+let rohanTrousers = C(0x5A5E66), rohanBoot = C(0x4A3420)
 
 /// The green-and-gold cloak hanging down the back: it shows past the shoulder and between the back legs, its hem
 /// swaying at `speed`, a gold trim down its edge and along the hem.
-private func drawRohanCloak(_ c: PixelCanvas, t: Double, speed: Double) {
+func drawRohanCloak(_ c: PixelCanvas, t: Double, speed: Double) {
     let hem = 42, last = min(hem, 43 - c.oy)
     guard last >= 27 else { return }
     for y in 27...last {
@@ -370,7 +370,7 @@ private let rohanHelmetGone = 34, rohanReach = 5
 /// The Rohan helmet over the face, `rise` px up off the head: a steel dome with a gold-riveted band, cheek pieces and a
 /// nose guard, and the white horsehair crest streaming back off the top. It hides the buns; one strand of hair
 /// escapes at the back (`strand`, which stays on the head).
-private func drawRohanHelmet(_ c: PixelCanvas, t: Double, rise: Int = 0, strand: Bool = true) {
+func drawRohanHelmet(_ c: PixelCanvas, t: Double, rise: Int = 0, strand: Bool = true) {
     if strand { for (x, y) in [(16, 26), (16, 27), (16, 28), (17, 29)] { c.px(x, y, hairMain) } }   // the one strand of hair
     guard rise < rohanHelmetGone else { return }
     let oy = c.oy
@@ -399,7 +399,7 @@ private func drawRohanHelmet(_ c: PixelCanvas, t: Double, rise: Int = 0, strand:
 }
 
 /// Éowyn's round shield: green, a gold rim, and the gold sun-horse of Rohan in the middle.
-private func drawRohanShield(_ c: PixelCanvas, cx: Int, cy: Int) {
+func drawRohanShield(_ c: PixelCanvas, cx: Int, cy: Int) {
     c.ellipse(cx, cy, 5, 5, rohanGold)
     c.ellipse(cx, cy, 4, 4, rohanCloak)
     c.rect(cx - 1, cy - 1, 3, 3, rohanGold)                                   // the horse's body
@@ -410,7 +410,7 @@ private func drawRohanShield(_ c: PixelCanvas, cx: Int, cy: Int) {
 
 /// Éowyn's sword, gripped at the hand: a leather grip, a gold crossguard and pommel, a straight steel blade.
 /// `alpha` < 1: a ghost of it, for the smear of a swing.
-private func drawRohanSword(_ c: PixelCanvas, angle: Double, alpha: Double = 1) {
+func drawRohanSword(_ c: PixelCanvas, angle: Double, alpha: Double = 1) {
     let h = Sprite.hand, r: Double = angle * .pi / 180
     let u = (x: cos(r), y: sin(r)), n = (x: -sin(r), y: cos(r))
     let clear = C(0x000000, 0)

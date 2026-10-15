@@ -32,11 +32,11 @@ enum Universe: Int, CaseIterable, Codable {
 
     var villainCount: Int {
         switch self { case .starWars: return 46; case .marvel: return 88; case .dc: return 97; case .doctor: return 42; case .clawdFiles: return 46
-        case .clawdberg: return 54; case .middleEarth: return 9 }
+        case .clawdberg: return 54; case .middleEarth: return 38 }
     }
     var heroCount: Int {
         switch self { case .starWars: return 36; case .marvel: return 106; case .dc: return 111; case .doctor: return 56; case .clawdFiles: return 36
-        case .clawdberg: return 64; case .middleEarth: return 10 }
+        case .clawdberg: return 64; case .middleEarth: return 38 }
     }
 
     /// HEM: the same rare face in every universe, last of the heroes. He's never in the regular pools (`lightCast`);

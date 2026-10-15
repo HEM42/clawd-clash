@@ -3,17 +3,22 @@ import Foundation
 // Villains: the Dark Lord's side, Sourun, the wizard who went over to him and the ring-wraiths. Clawd in costume, every
 // one of them: the armour, robes and hoods drawn over (and around) the blocky body. Where a face shows it's Clawd's own
 // orange; Sourun's helmet and the wraiths' hoods show none, which is rather the point of them.
+// Sharkey is Sarumanual fallen low, drawn by the same function; the Necro-maintainer is Sourun with no body at all.
 
 let ringsVillains1: [LOTRVillain: Persona] = [
     .sauron: Persona(name: "Sourun", weapon: .saber, armoured: true, bulk: 2, headTop: 14, callout: "One Ring to rule them all.",
                      draw: drawSauron),
-    .saruman: Persona(name: "Sarumanual", weapon: .lightning, magic: Magic(core: C(0xFFFFFF), glow: C(0xC8B8FF)),
-                      pivot: sarumanCrystal, headTop: 18, callout: "Read the manual, Gandclawd.",
+    .saruman: Persona(name: "Sarumanual", weapon: .saber, pivot: sarumanHand, headTop: 18, callout: "Read the manual, Gandclawd.",
                       draw: drawSaruman),
     .witchKing: Persona(name: "The Twitch-king", weapon: .saber, canSit: false, headTop: 16, callout: "No Clawd can kill me!",
                         draw: drawWitchKing),
     .nazgul: Persona(name: "Nazgulp", weapon: .saber, canSit: false, headTop: 18, callout: "Bagclawds… Shire…",
                      draw: drawNazgul),
+    .sharkey: Persona(name: "Sharkey", weapon: .saber, pivot: sarumanHand, headTop: 18, callout: "Fine. Then I'll leave a nitpick on every line.",
+                      draw: drawSharkey),
+    .necromancer: Persona(name: "The Necro-maintainer", weapon: .lightning, motion: .hover,
+                          magic: Magic(core: C(0xFFB050), glow: C(0x8A1A30)), canSit: false, pivot: necroHand, headTop: 14,
+                          callout: "Nothing is ever deleted. Only deprecated.", draw: drawNecromancer),
 ]
 
 // MARK: - Shared bits
@@ -92,27 +97,7 @@ private func drawSauron(_ c: PixelCanvas, _ p: Pose) {
     }
     c.oy += p.breathe
     drawBody(c, Look(body: plate, shade: deep, arm: plate, eye: nil))
-    c.pattern(16, 14, [
-        "...........KK...........",
-        ".....K.....KK.....K.....",
-        ".....K....KKKK....K.....",
-        "..K..KK...KKKK...KK..K..",
-        "..KK.KK..KKKKKK..KK.KK..",
-        "..KKKKKKKKKKKKKKKKKKKK..",
-        ".KKKKKKKKKKKKKKKKKKKKKK.",
-        ".KHHKKKKKKKKKKKKKKKKKKK.",
-        ".KHKKKKKKKKKKKKKKKKKKKK.",
-        ".KKKKKKKKKKKKKKKKKKKKKK.",
-        ".KKKKKKKKKKKKKKKKKKKKKK.",
-        ".KKKKKKKKKKKKKKKKKKKKKK.",
-        "KKKKKKKKKKKKKKKKKKKKKKKK",
-        "KKKKDDDDDDDDDDDDDDDDKKKK",
-        "KKKDDDDDDDDKKDDDDDDDDKKK",
-        "KKKDDOOOODDKKDDOOOODDKKK",
-        "KKKDDDDDDDDKKDDDDDDDDKKK",
-        ".KKDDDDDDDDKKDDDDDDDDKK.",
-        ".KKKDDDDDDDKKDDDDDDDKKK.",
-    ], ["K": plate, "D": deep, "H": shine, "O": glow])
+    c.pattern(16, 14, sauronHelm, ["K": plate, "D": deep, "H": shine, "O": glow])
     // The eye slits glow, flaring now and then.
     let flare: Double = 0.55 + 0.25 * sin(p.lt * 3.1) + (noise(Int(p.lt * 6)) > 0.85 ? 0.2 : 0)
     for sx in [21.0, 31.0] {
@@ -164,22 +149,84 @@ private func drawSauron(_ c: PixelCanvas, _ p: Pose) {
     c.px(38, 33, shine)
 }
 
-// MARK: - Saruman
+/// Sourun's helmet, the spikes of its crown down to the eye slits (`O`): K plate, D deep, H shine. The
+/// Necro-maintainer's crown is its top rows, half-seen through his smoke.
+private let sauronHelm: [String] = [
+        "...........KK...........",
+        ".....K.....KK.....K.....",
+        ".....K....KKKK....K.....",
+        "..K..KK...KKKK...KK..K..",
+        "..KK.KK..KKKKKK..KK.KK..",
+        "..KKKKKKKKKKKKKKKKKKKK..",
+        ".KKKKKKKKKKKKKKKKKKKKKK.",
+        ".KHHKKKKKKKKKKKKKKKKKKK.",
+        ".KHKKKKKKKKKKKKKKKKKKKK.",
+        ".KKKKKKKKKKKKKKKKKKKKKK.",
+        ".KKKKKKKKKKKKKKKKKKKKKK.",
+        ".KKKKKKKKKKKKKKKKKKKKKK.",
+        "KKKKKKKKKKKKKKKKKKKKKKKK",
+        "KKKKDDDDDDDDDDDDDDDDKKKK",
+        "KKKDDDDDDDDKKDDDDDDDDKKK",
+        "KKKDDOOOODDKKDDOOOODDKKK",
+        "KKKDDDDDDDDKKDDDDDDDDKKK",
+        ".KKDDDDDDDDKKDDDDDDDDKK.",
+        ".KKKDDDDDDDKKDDDDDDDKKK.",
+]
 
-/// Where Sarumanual's magic leaves from: the white crystal in his staff's claw.
+// MARK: - Sarumanual and Sharkey
+
+/// The white crystal in his staff's claw, held upright.
 private let sarumanCrystal: (x: Double, y: Double) = (41.5, 17.5)
+
+/// The fist (in his sleeve) that holds the staff, and swings it in a fight.
+private let sarumanHand: (x: Double, y: Double) = Sprite.hand
+
+/// What tells Sarumanual from Sharkey, the same wizard fallen low: the colours of the robe, hair, shoes and staff, the
+/// light in its crystal, and whether he's gone to seed (a ragged robe, a tangled mane and beard, a sneer, a bent staff
+/// and a tattered manual).
+private struct WizardRobes {
+    let robe: Px, robeShade: Px, fold: Px
+    let hair: Px, hairShade: Px, beardEdge: Px
+    let shoes: Px, staff: Px, staffLight: Px
+    let glow: StaffGlow
+    let fallen: Bool
+}
+
+private let whiteRobes = WizardRobes(robe: C(0xE4E4E0), robeShade: C(0xB4B4AE), fold: C(0xCACAC4),
+                                     hair: C(0xF0F0EC), hairShade: C(0xC4C4BE), beardEdge: C(0xA4A49E),
+                                     shoes: C(0x7A7A76), staff: C(0x2A2A30), staffLight: C(0x4A4A54),
+                                     glow: StaffGlow(core: C(0xF4F0FF), glow: C(0xC8B8FF)), fallen: false)
+
+private let shabbyRobes = WizardRobes(robe: C(0x857D70), robeShade: C(0x5E574C), fold: C(0x726B5F),
+                                      hair: C(0xB8B3A6), hairShade: C(0x8A857A), beardEdge: C(0x6E695F),
+                                      shoes: C(0x3E342A), staff: C(0x4A4036), staffLight: C(0x6A5E50),
+                                      glow: StaffGlow(core: C(0xD8D4B0), glow: C(0x9A9468), strength: 0.6, sputters: true),
+                                      fallen: true)
 
 /// Sarumanual the White: white robes, long white hair falling past his shoulders and a beard to his belt, Clawd's
 /// orange face between. In his off hand, always open, the manual (he has read it; you haven't). His black staff ends
-/// in a claw clutching a white crystal, and that's where his magic comes from: lifted, it crackles, and in a fight the
-/// stream leaves the crystal. No signature.
+/// in a claw clutching a white crystal that glows a pale violet, always, and brighter in a fight, where he swings the
+/// staff like a sword. No signature.
 private func drawSaruman(_ c: PixelCanvas, _ p: Pose) {
-    let robe = C(0xE4E4E0), robeShade = C(0xB4B4AE), fold = C(0xCACAC4), hair = C(0xF0F0EC), hairShade = C(0xC4C4BE)
+    drawWizard(c, p, whiteRobes)
+}
+
+/// Sharkey, Sarumanual fallen low in the Shire: the same wizard in a dirty grey-brown robe, patched, stained and
+/// ragged at the hem, his hair and beard grown into a tangled, dingy mess, his brows knotted and his mouth in a sneer.
+/// The manual is still in his hand, dog-eared and torn; his staff is bent and splintered, the claw broken, the crystal
+/// cracked and clouded, its light a dim, sickly, sputtering glimmer; he still swings it in a fight. No signature.
+private func drawSharkey(_ c: PixelCanvas, _ p: Pose) {
+    drawWizard(c, p, shabbyRobes)
+}
+
+/// The wizard in the robes `w`: Sarumanual, or Sharkey.
+private func drawWizard(_ c: PixelCanvas, _ p: Pose, _ w: WizardRobes) {
+    let robe = w.robe, robeShade = w.robeShade, fold = w.fold, hair = w.hair, hairShade = w.hairShade
     drawLegs(c, Look(leg: robeShade), step: p.step)
-    if !seatedPose {                                                           // grey shoes under the hem
+    if !seatedPose {                                                           // shoes under the hem
         for (i, lx) in [19, 23, 31, 35].enumerated() {
             let bottom = p.step >= 0 && i % 2 == p.step ? 42 : 43
-            c.rect(lx, bottom, 2, 1, C(0x7A7A76))
+            c.rect(lx, bottom, 2, 1, w.shoes)
         }
     }
     c.oy += p.breathe
@@ -188,13 +235,41 @@ private func drawSaruman(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, robe)
     for y in 38...40 where y + c.oy <= 43 {
         let k = y - 38
+        if w.fallen && y == 40 {
+            // Sharkey's hem, in tatters.
+            for x in (17 - k / 2)...(38 + k - k / 2) where (x * 7 + 3) % 5 > 1 { c.px(x, y, robe) }
+            continue
+        }
         c.rect(17 - k / 2, y, 22 + k, 1, robe)
         c.px(17 - k / 2, y, robeShade); c.px(38 + k - k / 2, y, robeShade)
     }
     c.rect(37, 33, 1, 5, robeShade)
     c.rect(18, 37, 20, 1, fold)
-    // Hair: swept back off the brow and down either side of the face to the shoulders.
-    c.pattern(16, 20, [
+    if w.fallen {
+        // A patch sewn on with big stitches, and stains.
+        c.rect(19, 34, 3, 3, C(0x6A6050)); c.px(19, 34, C(0x4A4236)); c.px(21, 36, C(0x4A4236))
+        let stain = C(0x5A4E3C, 0.7)
+        for (x, y) in [(33, 35), (34, 35), (34, 36), (24, 38), (25, 39), (36, 39), (20, 39)] { c.px(x, y, stain) }
+    }
+    // Hair: swept back off the brow and down either side of the face to the shoulders (Sharkey's tangled, tufts sticking
+    // out every way).
+    c.pattern(16, w.fallen ? 19 : 20, w.fallen ? [
+        "....H....H..H.....H.....",
+        "........HHhHHHhH...H....",
+        "....hHHHHHHHHHHHHHH.....",
+        "..HHHHHhHHHHHHHHHHHhH...",
+        "..HHhHHHHHHhHHHHHHhHHHH.",
+        "HHHhHHHHHHHHHHHHHHHHhHHH",
+        "HHHHHHH.H......H.HHHHHHH",
+        "HHHH................HHHH",
+        "hHH..................HHh",
+        "HHh..................hHH",
+        "HHH..................HHH",
+        "hH....................H.",
+        "HH....................HH",
+        "Hh....................h.",
+        "H.H..................H.H",
+    ] : [
         "........HHHHHHHH........",
         ".....HHHHHHHHHHHHHH.....",
         "...HHHHHHHHHHHHHHHHHH...",
@@ -210,8 +285,20 @@ private func drawSaruman(_ c: PixelCanvas, _ p: Pose) {
         "Hh....................hH",
         "HH....................HH",
     ], ["H": hair, "h": hairShade])
-    // The long beard, over the robe, tapering to a point (folded up on his lap when he sits).
-    let beard: [String] = [
+    // The long beard, over the robe, tapering to a point (folded up on his lap when he sits); Sharkey's straggles
+    // into ragged forks.
+    let beard: [String] = w.fallen ? [
+        ".bHHHHHHHHHHHHb.",
+        "bHHhHHHHHHHhHHHb",
+        ".bHHHHhHHHHHHHb.",
+        "..bHHhHHHHhHHb..",
+        "..bHHHHHHHHHhHb.",
+        "...bHhHHHHHHb...",
+        "...bHHHb.bHHb...",
+        "....bHHb..bHb...",
+        ".....bH....b....",
+        "......b.........",
+    ] : [
         "..bHHHHHHHHHHb..",
         ".bHHHHHHHHHHHHb.",
         ".bHHhHHHHHHhHHb.",
@@ -223,38 +310,83 @@ private func drawSaruman(_ c: PixelCanvas, _ p: Pose) {
         ".....bHHhHb.....",
         "......bHHb......",
     ]
-    c.pattern(21, 32, Array(beard.prefix(max(0, 43 - c.oy - 32 + 1))), ["H": hair, "h": hairShade, "b": C(0xA4A49E)])
+    c.pattern(21, 32, Array(beard.prefix(max(0, 43 - c.oy - 32 + 1))), ["H": hair, "h": hairShade, "b": w.beardEdge])
     c.rect(24, 32, 8, 1, hair)                                                 // the moustache
-    // The manual, open in his left hand.
-    c.pattern(8, 31, [
+    if w.fallen {
+        // Knotted brows and a sneer, curling up at one corner.
+        for (x, y) in [(21, 27), (22, 27), (23, 28), (34, 27), (33, 27), (32, 28)] { c.px(x, y, ink) }
+        for x in 26...29 { c.px(x, 33, ink) }
+        c.px(30, 32, ink); c.px(31, 32, C(0x8A3A2A))
+    }
+    drawManual(c, tattered: w.fallen)
+    c.rect(15, 33, 3, 3, robe); c.px(15, 33, robeShade)
+    if let angle = p.walking || p.seated ? nil : p.melee {
+        // Fighting: the staff swung like a sword from his fist, the crystal's light bright and smeared behind it.
+        drawSwungStaff(c, hand: sarumanHand, head: sarumanCrystal, angle: angle, trail: p.trail, glow: w.glow, t: p.t) {
+            drawSarumanStaff($0, w, up: 0)
+        }
+    } else {
+        // The staff upright in his hand, the crystal glowing softly (Sharkey's bent halfway down, and splintered).
+        let up = p.armRaise
+        let crystal = (x: sarumanCrystal.x, y: sarumanCrystal.y - Double(up))
+        drawStaffGlow(c, at: crystal, w.glow, bright: false, t: p.t)
+        drawSarumanStaff(c, w, up: up)
+        drawStaffGlow(c, at: crystal, w.glow, bright: false, t: p.t, front: true)
+    }
+    c.rect(38, 33 - p.armRaise, 4, 3, robe)                                    // sleeve and fist round the staff
+    c.rect(38, 35 - p.armRaise, 4, 1, robeShade)
+}
+
+/// Sarumanual's black staff, upright in his hand and lifted `up` pixels: a claw at its head clutching the white
+/// crystal. Sharkey's is bent halfway down and splintered, the claw broken and the crystal cracked and clouded.
+private func drawSarumanStaff(_ c: PixelCanvas, _ w: WizardRobes, up: Int) {
+    let sx = Int(sarumanCrystal.x), top = Int(sarumanCrystal.y) - up
+    let foot = 43 - c.oy - up
+    if w.fallen {
+        let kink = top + 9
+        c.rect(sx, top + 2, 1, kink - (top + 2), w.staff)
+        c.rect(sx + 1, kink, 1, 4, w.staff); c.px(sx, kink, w.staffLight)
+        c.rect(sx, kink + 4, 1, foot - (kink + 4) + 1, w.staff)
+        c.px(sx - 1, kink + 2, w.staff); c.px(sx, top + 5, w.staffLight); c.px(sx, kink + 8, w.staffLight)
+        c.pattern(sx - 2, top - 2, [
+            "K....",
+            "K.W..",
+            "KWdWK",
+            "KWwWK",
+            ".KWK.",
+            "..K..",
+        ], ["K": w.staff, "W": C(0xB8B8B0), "w": C(0x9A9A94), "d": C(0x4A4A44)])
+    } else {
+        c.rect(sx, top + 2, 1, foot - (top + 2) + 1, w.staff)
+        c.rect(sx, top + 2, 1, 1, w.staffLight)
+        c.pattern(sx - 2, top - 2, [
+            "K...K",
+            "K.W.K",
+            "KWWWK",
+            "KWwWK",
+            ".KWK.",
+            "..K..",
+        ], ["K": w.staff, "W": white, "w": C(0xD8E2EC)])
+    }
+}
+
+/// The manual, open in his left hand; `tattered`: Sharkey's, dog-eared, stained, a page torn out and hanging loose.
+private func drawManual(_ c: PixelCanvas, tattered: Bool) {
+    c.pattern(8, 31, tattered ? [
+        "..PPKPP..",
+        "P.ppKppPP",
+        "PPPPKPsPP",
+        "PpppKppP.",
+        "CCCCCCCCC",
+    ] : [
         ".PPPKPPP.",
         "PpppKpppP",
         "PPPPKPPPP",
         "PpppKppPP",
         "CCCCCCCCC",
-    ], ["P": C(0xE8E0C8), "p": C(0x8A8270), "K": C(0x4A3A22), "C": C(0x6A4A2A)])
-    c.rect(15, 33, 3, 3, robe); c.px(15, 33, robeShade)
-    // The staff, lifted as he casts.
-    let up = p.armRaise
-    let sx = Int(sarumanCrystal.x), top = Int(sarumanCrystal.y) - up
-    c.rect(sx, top + 2, 1, 43 - c.oy - up - (top + 2) + 1, C(0x2A2A30))
-    c.rect(sx, top + 2, 1, 1, C(0x4A4A54))
-    c.pattern(sx - 2, top - 2, [
-        "K...K",
-        "K.W.K",
-        "KWWWK",
-        "KWwWK",
-        ".KWK.",
-        "..K..",
-    ], ["K": C(0x2A2A30), "W": white, "w": C(0xD8E2EC)])
-    if p.zap != nil {
-        let pulse: Double = 0.5 + 0.5 * sin(p.t * 9)
-        let y: Double = sarumanCrystal.y - Double(up)
-        c.glowLine(sarumanCrystal.x, y, sarumanCrystal.x, y, core: white, glow: C(0xC8B8FF), coreR: 0.4, glowR: 2.2,
-                   strength: 0.4 + 0.4 * pulse)
-    }
-    c.rect(38, 33 - up, 4, 3, robe)                                            // sleeve and fist round the staff
-    c.rect(38, 35 - up, 4, 1, robeShade)
+    ], ["P": tattered ? C(0xC8BC9C) : C(0xE8E0C8), "p": C(0x8A8270), "K": C(0x4A3A22), "C": C(0x6A4A2A),
+        "s": C(0x8A6A3A)])
+    if tattered { c.pattern(7, 36, ["PP", ".P"], ["P": C(0xC8BC9C)]) }        // the loose page
 }
 
 // MARK: - The ring-wraiths
@@ -391,4 +523,93 @@ private func drawWraithSword(_ c: PixelCanvas, _ p: Pose) {
          hand.y + u.y * 17 + n.y * 0.5, C(0x9AA4B0), 0.35)
     let g = (x: hand.x + u.x * 3, y: hand.y + u.y * 3)
     line(c, g.x - n.x * 2.5, g.y - n.y * 2.5, g.x + n.x * 2.5, g.y + n.y * 2.5, C(0x4A4E58), 0.6)          // the crossguard
+}
+
+// MARK: - The Necro-maintainer
+
+/// Where the Necro-maintainer's magic leaves from: the claws of his iron gauntlet, reaching out of the smoke.
+private let necroHand: (x: Double, y: Double) = (43.5, 32.5)
+
+/// The Necro-maintainer, Sourun before he had a body again, haunting Dol Guldur: a tall hood of dark purple smoke with
+/// nothing solid in it, the spikes of his helm half-seen through the murk on top, two eyes burning orange in the black
+/// of the hood, and below the waist no legs at all, only smoke thinning into wisps that trail out behind him, embers
+/// drifting up off it. He floats. One iron gauntlet reaches out of the smoke, and his magic is a dark fire that leaves
+/// its claws. No signature.
+private func drawNecromancer(_ c: PixelCanvas, _ p: Pose) {
+    let smoke = C(0x2A2034), rim = C(0x5E4C72), deep = C(0x140E18), void = C(0x07050A)
+    let wisp = C(0x6E5C86)
+    // The wisps trailing out behind, under everything else.
+    for k in 0..<3 {
+        let sx: Double = 21 - Double(k) * 2, sy: Double = 35 + Double(k) * 3
+        for i in 0..<12 {
+            let f = Double(i) / 12
+            let x = sx - Double(i) * (p.walking ? 1.5 : 1.2)
+            let y = sy + sin(p.lt * 2.2 + Double(i) * 0.55 + Double(k) * 2.1) * 1.4 + Double(i) * (k == 0 ? -0.25 : 0.2)
+            c.px(Int(x.rounded()), Int(y.rounded()), wisp.alpha(0.6 * (1 - f)))
+            if i < 6 { c.px(Int(x.rounded()), Int(y.rounded()) + 1, smoke.alpha(0.5 * (1 - f))) }
+        }
+    }
+    c.oy += p.breathe
+    // The faint helm under the hood's crown (drawn first: the smoke half covers it).
+    c.pattern(16, 14, Array(sauronHelm.prefix(7)), ["K": C(0x4E4660, 0.95), "H": C(0x8E82A6)])
+    // The smoke, row by row: the hood, the shoulders, then thinning out below the waist and drifting back.
+    let widths: [Double] = [2, 4, 5.5, 6.5, 7.5, 8.5, 9.5, 10, 10.5, 11, 11, 11.5, 11.5,     // rows 18…30, the hood
+                            12, 12.5, 13, 13, 12.5, 12,                                        // 31…36, the shoulders
+                            11, 9.5, 8, 6.5, 5, 3.5, 2]                                        // 37…43, thinning out
+    for (i, hw) in widths.enumerated() {
+        let y = 18 + i
+        let k: Double = max(0, Double(y - 33)) / 10
+        let drift: Double = k * (p.walking ? 6 : 4) + sin(p.lt * 1.6 + Double(y) * 0.4) * (0.3 + k * 1.2)
+        let cx: Double = 28 - drift
+        let l = Int((cx - hw).rounded()), r = Int((cx + hw).rounded()) - 1
+        guard r >= l else { continue }
+        if y >= 40 {
+            // The last rows only a dithered haze.
+            for x in l...r where (x + y + Int(p.lt * 3)) % 2 == 0 { c.px(x, y, smoke.alpha(0.8 - Double(y - 40) * 0.18)) }
+            continue
+        }
+        c.rect(l, y, r - l + 1, 1, smoke)
+        c.px(l, y, rim); c.px(r, y, deep)
+        // The edges never quite still: a pixel of thinner smoke flickering on either side.
+        let n = Int(p.lt * 7) + y * 13
+        if noise(n) > 0.4 { c.px(l - 1, y, wisp.alpha(0.5)) }
+        if noise(n + 5) > 0.5 { c.px(r + 1, y, smoke.alpha(0.6)) }
+        if (19...24).contains(y) { c.px(l + 1, y, rim) }                       // light catching the hood
+    }
+    // The murk over the crown: a veil drifting across the helm's spikes.
+    for x in 16...39 {
+        let a: Double = 0.15 + 0.25 * noise(x * 7 + Int(p.lt * 4))
+        c.px(x, 17 + Int(noise(x + Int(p.lt * 3)) * 3), wisp.alpha(a))
+    }
+    // The hood's opening, black, and the two eyes burning in it.
+    let opening: [Int] = [3, 5, 6, 6, 7, 7, 7, 7, 6, 4]                                   // rows 24…33
+    for (i, ow) in opening.enumerated() {
+        c.rect(27 - ow, 24 + i, ow * 2 + 2, 1, rim)
+        c.rect(28 - ow, 24 + i, ow * 2, 1, void)
+    }
+    let burn: Double = 0.7 + 0.2 * sin(p.lt * 2.7) + (noise(Int(p.lt * 9)) > 0.8 ? 0.15 : 0)
+    for ex in [23.0, 30.0] {
+        c.glowLine(ex, 28.5, ex + 2, 28.5, core: C(0xFFD27A), glow: C(0xFF4A1E), coreR: 0.4, glowR: 1.5, strength: burn)
+    }
+    // Embers rising off the smoke.
+    for k in 0..<3 {
+        let f = frac(p.lt * 0.35 + Double(k) * 0.37)
+        let x = 16 + Double(k) * 9 + sin(p.lt * 3 + Double(k)) * 1.5, y = 38 - f * 22
+        c.px(Int(x.rounded()), Int(y.rounded()), C(0xFF7A2A, 0.8 * (1 - f)))
+    }
+    // The sleeve of smoke and the iron gauntlet out of it, lifted as he casts.
+    let up = p.armRaise
+    c.rect(36, 31 - up, 5, 4, smoke); c.px(36, 34 - up, deep); c.rect(37, 35 - up, 3, 1, smoke.alpha(0.6))
+    c.pattern(40, 30 - up, [
+        "....c",
+        "..GGc",
+        ".GGGGc",
+        "GGgGG.",
+        ".GGc.c",
+    ], ["G": C(0x3A3A42), "g": C(0x5E5E6A), "c": C(0x6A6A76)])
+    if p.zap != nil {
+        let pulse: Double = 0.5 + 0.5 * sin(p.t * 8)
+        c.glowLine(necroHand.x, necroHand.y - Double(up), necroHand.x, necroHand.y - Double(up), core: C(0xFFB050),
+                   glow: C(0x8A1A30), coreR: 0.4, glowR: 2, strength: 0.4 + 0.4 * pulse)
+    }
 }
