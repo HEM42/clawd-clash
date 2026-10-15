@@ -252,9 +252,10 @@ was fixed except:
 
 **Still open:**
 - **Engine-wide, so not fixed inside this universe:** steady rays waver as they travel (Frohack's flash, Gibson's ray,
-  every universe's); callouts of neighbours can overlap; the white outline fills the gaps between dark legs (the shared
-  `drawLegs` in `Characters.swift`; this universe works round it with `h14Trousers` in Heroes1 and `v23LegGaps` in
-  Villains3, and other files' dark-legged characters could use them too).
+  every universe's); callouts of neighbours can overlap.
+- **Legs stay four.** Shading the gap inside each pair of dark legs (so they'd read as trousers) was tried and undone:
+  it made Clawd look two-legged. The user's rule: every character reads as standing on four legs, whatever else
+  changes (the Flukeman has four; Tooms keeps four while he squeezes).
 - **Eve 6's hair** is still a little rounded on top at this size. **The Mothmen's antennae** get an outline that reads a
   little like horns. Some railcar plates overlap the lower pipe; Lake Okobogee's reeds are subtle.
 - **Lord Kinbote** stays unarmoured (armoured means shots ricochet; he's hide, not metal).

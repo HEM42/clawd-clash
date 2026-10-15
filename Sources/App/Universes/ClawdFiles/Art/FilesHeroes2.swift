@@ -66,7 +66,7 @@ private func drawSkinnard(_ c: PixelCanvas, _ p: Pose) {
     let off = sig.map { $0 > 0.12 && $0 < 0.88 } ?? false
     let rubbing = sig.map { $0 > 0.25 && $0 < 0.75 } ?? false
 
-    h14Trousers(c, leg: trousers, step: p.step)
+    drawLegs(c, Look(leg: trousers), step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: shirt))
@@ -116,7 +116,7 @@ private func drawDoggedd(_ c: PixelCanvas, _ p: Pose) {
     let guarding = sig.map { $0 > 0.08 && $0 < 0.92 } ?? false
     if guarding && Int(p.t * 5) % 2 == 0 { c.oy -= 1 }
 
-    h14Trousers(c, leg: suit, step: p.step)
+    drawLegs(c, Look(leg: suit), step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
@@ -158,7 +158,7 @@ private func drawReyez(_ c: PixelCanvas, _ p: Pose) {
     let hair = C(0x241812), hairL = C(0x3E2A1E)
     let sig = p.signature
 
-    h14Trousers(c, leg: C(0x2A2A32), step: p.step)
+    drawLegs(c, Look(leg: C(0x2A2A32)), step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: jacket))
@@ -224,7 +224,7 @@ private func drawEinstine(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
     let folded = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
-    h14Trousers(c, leg: suit, step: p.step)
+    drawLegs(c, Look(leg: suit), step: p.step)
     if folded && !seatedPose {
         // One foot tapping.
         let up = Int(p.t * 6) % 2 == 0
@@ -281,7 +281,7 @@ private func drawMillar(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
     let laptop = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
-    h14Trousers(c, leg: suit, step: p.step)
+    drawLegs(c, Look(leg: suit), step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))

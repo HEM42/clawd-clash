@@ -87,9 +87,8 @@ private func drawTooms(_ c: PixelCanvas, _ p: Pose) {
     v4ToomsSqueezedLegs(c, wf: wf, hf: hf, dx: dx, alpha: alpha)
 }
 
-/// His legs while he squeezes: drawn, not resampled (resampled, four thin legs merged into one line). Each keeps its
-/// place across the narrowed body, at least a pixel wide; when they'd touch, only the outer two are left, a gap
-/// between them, so he still stands on two legs.
+/// His legs while he squeezes: drawn, not resampled (resampled, four thin legs merged into one line). All four stay,
+/// at least a pixel wide with a clear pixel between each, closing up across the narrowed body as far as that allows.
 private func v4ToomsSqueezedLegs(_ c: PixelCanvas, wf: Double, hf: Double, dx: Double, alpha: Double) {
     let trousers = C(0x4E4636).alpha(alpha), shoe = C(0x2A2018).alpha(alpha)
     let legW: Int = max(1, Int((2 * wf).rounded()))
@@ -98,10 +97,11 @@ private func v4ToomsSqueezedLegs(_ c: PixelCanvas, wf: Double, hf: Double, dx: D
         let mid: Double = 28 + dx + (Double(lx) + 1 - 28) * wf
         return Int((mid - Double(legW) / 2).rounded())
     }
-    // The outer two always; an inner one only with a clear pixel either side of it.
+    // Each at its place, or a clear pixel past the one before; then the row is centred back under him.
     var kept: [Int] = [xs[0]]
-    for x in xs[1..<3] where x >= kept[kept.count - 1] + legW + 1 && x + legW + 1 <= xs[3] { kept.append(x) }
-    kept.append(max(xs[3], kept[kept.count - 1] + legW + 1))
+    for x in xs[1...] { kept.append(max(x, kept[kept.count - 1] + legW + 1)) }
+    let spread: Int = (kept[3] - xs[3]) / 2
+    kept = kept.map { $0 - spread }
     for x in kept {
         c.rect(x, top, legW, 42 - top, trousers)
         c.rect(x, 42, legW, 2, shoe)
@@ -171,7 +171,7 @@ private func drawFlukeman(_ c: PixelCanvas, _ p: Pose) {
 }
 
 /// Half the Flukeman's width at row `y`: a domed head, then ringed segments, each bulging at its middle, tapering to
-/// the stubby legs. Centred on x 27.5.
+/// the legs. Centred on x 27.5.
 private func v4FlukeHalf(_ y: Int) -> Int {
     let dome: [Int] = [3, 5, 6, 7, 7]                 // rows 12…16
     if y < 12 { return 0 }
@@ -184,14 +184,9 @@ private func v4FlukeHalf(_ y: Int) -> Int {
 private func flukeFigure(_ c: PixelCanvas, _ p: Pose) {
     let pale = C(0xD6D2C0), paleD = C(0xA8A490), paleL = C(0xEEECE2), paleS = C(0x8E8A78)
     let gum = C(0x9A4A52), throat = C(0x3A1418), tooth = C(0xF2EEDC)
-    // Two stubby legs, ringed like the rest of him, one lifted as he shambles.
-    for (i, lx) in [21, 31].enumerated() {
-        let lift: Int = p.step >= 0 && i == p.step ? 1 : 0
-        c.rect(lx, 37, 5, 6 - lift, pale)
-        c.rect(lx + 4, 37, 1, 6 - lift, paleD)
-        c.rect(lx, 40 - lift, 5, 1, paleD)
-        c.rect(lx - 1, 42 - lift, 7, 1, pale)            // the splayed, flattened foot
-    }
+    // Clawd's four legs, pale and ringed like the rest of him.
+    drawLegs(c, Look(leg: pale), step: p.step)
+    if !seatedPose { for lx in [19, 23, 31, 35] { c.rect(lx, 40, 2, 1, paleD) } }
     c.oy += p.breathe
     // The body: a long pale worm standing up, ringed every four rows, lit from the left, shaded on the right.
     for y in 12...38 {

@@ -31,7 +31,7 @@ private func drawBytes(_ c: PixelCanvas, _ p: Pose) {
     let tie_ = sig.map { $0 > 0.05 && $0 < 0.3 } ?? false
     let reading = sig.map { $0 >= 0.35 && $0 < 0.95 } ?? false
 
-    h14Trousers(c, leg: suit, step: p.step)
+    drawLegs(c, Look(leg: suit), step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
@@ -86,7 +86,7 @@ private func drawFrohack(_ c: PixelCanvas, _ p: Pose) {
     let framing = sig.map { $0 > 0.05 && $0 < 0.95 } ?? false
     let snap = sig.map { $0 > 0.55 && $0 < 0.72 } ?? false
 
-    h14Trousers(c, leg: C(0x2E3440), step: p.step)
+    drawLegs(c, Look(leg: C(0x2E3440)), step: p.step)
     drawDressShoes(c, step: p.step, color: C(0x3A2A1E))
     c.oy += p.breathe
     let using = framing || p.zap != nil || p.ready || p.cheering || (!p.resting && !p.walking)
@@ -146,7 +146,7 @@ private func drawLanky(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
     let typing = sig.map { $0 > 0.08 && $0 < 0.95 } ?? false
 
-    h14Trousers(c, leg: jeans, step: p.step)
+    drawLegs(c, Look(leg: jeans), step: p.step)
     drawDressShoes(c, step: p.step, color: C(0xEDEDE8))
     c.oy += p.breathe
     drawBody(c, Look(arm: tee))
@@ -207,7 +207,7 @@ private func drawDeepClawt(_ c: PixelCanvas, _ p: Pose) {
     if !seatedPose {
         c.rect(17, 38, 22, 4, coat); c.rect(17, 41, 22, 1, coatD); c.rect(28, 38, 1, 4, coatD)
     }
-    h14Trousers(c, leg: suit, step: p.step)
+    drawLegs(c, Look(leg: suit), step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: coat))

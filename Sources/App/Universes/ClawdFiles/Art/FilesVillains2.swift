@@ -65,7 +65,6 @@ private func drawClawcek(_ c: PixelCanvas, _ p: Pose) {
     let oil = sig.map { $0 > 0.08 && $0 < 0.92 } ?? habit
 
     drawLegs(c, Look(leg: jeans), step: p.step)
-    v23LegGaps(c)
     drawDressShoes(c, step: p.step, color: C(0x2A1E16))
     c.oy += p.breathe
     drawBody(c, Look(arm: leather, eye: nil))
@@ -125,7 +124,6 @@ private func drawWellManicured(_ c: PixelCanvas, _ p: Pose) {
     let sipping = sig.map { $0 > 0.55 && $0 < 0.85 } ?? false
 
     drawLegs(c, Look(leg: navy), step: p.step)
-    v23LegGaps(c)
     drawDressShoes(c, step: p.step, color: C(0x3A1E10))
     c.oy += p.breathe
     drawBody(c, Look(arm: navy))
@@ -183,7 +181,6 @@ private func drawFirstElder(_ c: PixelCanvas, _ p: Pose) {
     let tap = sig.map { s -> Int in (s > 0.08 && s < 0.18) || (s > 0.25 && s < 0.35) ? 1 : 0 } ?? 0
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    v23LegGaps(c)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
@@ -232,7 +229,6 @@ private func drawDianaFowlclaw(_ c: PixelCanvas, _ p: Pose) {
     let phoning = sig.map { $0 >= 0.4 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    v23LegGaps(c)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit, eye: nil))
@@ -284,7 +280,6 @@ private func drawKersh(_ c: PixelCanvas, _ p: Pose) {
     let slam = sig.map { $0 >= 0.45 && $0 < 0.8 } ?? false
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    v23LegGaps(c)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit, eye: nil))
@@ -354,7 +349,6 @@ private func drawToothpickMan(_ c: PixelCanvas, _ p: Pose) {
     let roll = sig.map { $0 >= 0.5 && $0 < 0.9 } ?? false
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    v23LegGaps(c)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
     if roll { c.ox += Int(sin((sig! - 0.5) / 0.4 * 2 * .pi).rounded()) }

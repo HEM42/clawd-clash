@@ -60,7 +60,7 @@ private func drawMisterX(_ c: PixelCanvas, _ p: Pose) {
     }
     // The coat's long tails over black trousers.
     let tails = seatedPose ? 1 : 4
-    h14Trousers(c, leg: C(0x18181C), step: p.step)
+    drawLegs(c, Look(leg: C(0x18181C)), step: p.step)
     drawDressShoes(c, step: p.step)
     c.rect(17, 38, 22, tails, coat); c.rect(17, 37 + tails, 22, 1, coatD); c.rect(28, 38, 1, tails, coatD)
     c.oy += p.breathe

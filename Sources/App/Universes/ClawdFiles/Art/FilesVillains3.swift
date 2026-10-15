@@ -70,13 +70,6 @@ private func drawFists(_ c: PixelCanvas, _ p: Pose, sleeve: Px) {
     c.rect(15, 33, 3, 3, sleeve)
 }
 
-/// A faint shadow between each pair of legs: not solid enough to be outlined itself, and covering the gap the outline
-/// would otherwise fill, so thin dark legs read as legs, not as the white stripes between them.
-func v23LegGaps(_ c: PixelCanvas) {
-    guard !seatedPose else { return }
-    let shade = C(0x0A0A0E, 0.32)
-    c.rect(21, 36, 2, 8, shade); c.rect(33, 36, 2, 8, shade)
-}
 
 /// Work boots: the bottom two rows of each leg.
 private func drawBoots(_ c: PixelCanvas, step: Int, _ col: Px) {
@@ -144,7 +137,6 @@ func v23DrawScrawlyLook(_ c: PixelCanvas, _ p: Pose) {
     let hair = C(0xB4492E), hairL = C(0xD4643E), hairD = C(0x86321E)
     if !seatedPose { c.rect(17, 38, 22, 4, coat); c.rect(17, 41, 22, 1, coatD); c.rect(28, 38, 1, 4, coatD) }
     drawLegs(c, Look(leg: suit), step: p.step)
-    v23LegGaps(c)
     drawBoots(c, step: p.step, C(0x1A1A1E))
     c.oy += p.breathe
     drawBody(c, Look(arm: coat))
@@ -173,7 +165,6 @@ private func drawBountyHunterSelf(_ c: PixelCanvas, _ p: Pose) {
     let leather = C(0x1E1E24), leatherL = C(0x3A3A44), leatherD = C(0x101014), roll = C(0x2E2E36)
     let hair = C(0x1A1612)
     drawLegs(c, Look(leg: leather), step: p.step)
-    v23LegGaps(c)
     drawBoots(c, step: p.step, C(0x0A0A0C))
     c.oy += p.breathe
     drawBody(c, Look(arm: leather, eye: nil))
@@ -377,7 +368,6 @@ private func drawFacelessRebel(_ c: PixelCanvas, _ p: Pose) {
 
     // The coat, long to the ankles.
     drawLegs(c, Look(leg: C(0x2A221C)), step: p.step)
-    v23LegGaps(c)
     drawBoots(c, step: p.step, C(0x14100C))
     c.rect(17, 38, 22, seatedPose ? 1 : 4, coat); c.rect(28, 38, 1, seatedPose ? 1 : 4, coatD)
     c.oy += p.breathe
@@ -450,7 +440,6 @@ private func drawKnowleRohrer(_ c: PixelCanvas, _ p: Pose) {
     let roll: Int = sig.map { s in s > 0.05 && s < 0.3 ? (Int(s * 30) % 2 == 0 ? 1 : -1) : 0 } ?? 0
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    v23LegGaps(c)
     drawBoots(c, step: p.step, C(0x0E0E10))
     c.oy += p.breathe
     drawBody(c, Look(arm: suit, eye: nil))
@@ -492,7 +481,6 @@ private func drawBillyMiles(_ c: PixelCanvas, _ p: Pose) {
     } ?? 0
 
     drawLegs(c, Look(leg: jeans), step: p.step)
-    v23LegGaps(c)
     drawBoots(c, step: p.step, C(0x5A3A22))
     c.oy += p.breathe
     // The lower half: shirt tails and belt.
