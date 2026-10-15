@@ -67,6 +67,16 @@ enum Universe: Int, CaseIterable, Codable {
     /// Characters that never lead two sessions back to back (Vader and Kylo), as global ids.
     var rivals: Set<Int> { self == .starWars ? [0, 1] : [] }
 
+    /// One character in two guises, as global ids: never on screen together (the casting and `StatusStore.snapshot`
+    /// keep to it). Clawd of the Rings: Gandclawd the Grey and the White (`LOTRHero` 0 and 17), Arrogorn and Stride-r
+    /// (`LOTRHero` 4 and 28), Sarumanual and Sharkey (`LOTRVillain` 1 and 30), Sourun and the Necro-maintainer
+    /// (`LOTRVillain` 0 and 31).
+    var guises: [Set<Int>] {
+        guard self == .middleEarth else { return [] }
+        let hero = base + StatusStore.heroBase
+        return [[hero, hero + 17], [hero + 4, hero + 28], [base + 1, base + 30], [base, base + 31]]
+    }
+
     /// Doctor Clawd: the Doctors in order (One … Fifteen), as global ids. When a session's context is compacted, its
     /// Doctor regenerates into the next one (`StatusStore`'s PreCompact); nobody else changes.
     /// The Clawd Files: the seven FBI agents (Clawder, Scrawly, Skinnard, Doggedd, Reyez, Einstine, Millar), as global
@@ -123,6 +133,11 @@ struct Roster {
     var lightCast: [Int] { universes.flatMap(\.lightCast) }
     var agentOnly: Set<Int> { universes.reduce(into: Set<Int>()) { $0.formUnion($1.agentOnly) } }
     var rivals: Set<Int> { universes.reduce(into: Set<Int>()) { $0.formUnion($1.rivals) } }
+    var guises: [Set<Int>] { universes.flatMap(\.guises) }
+    /// Who can't join while `shown` (ids as of this roster) are on screen: the other guises of anyone there.
+    func ruledOut(by shown: Set<Int>) -> Set<Int> {
+        guises.reduce(into: Set<Int>()) { out, g in if !g.isDisjoint(with: shown) { out.formUnion(g.subtracting(shown)) } }
+    }
     /// With another AI running, Claude Code's side (`Universe.claudeSide`); in Clawd Royale, the heroes.
     var claudeSide: Bool? { mixed ? false : universes[0].claudeSide }
     /// HEM, once for each universe here.
