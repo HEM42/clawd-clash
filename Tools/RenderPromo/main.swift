@@ -51,11 +51,14 @@ func hexColor(_ h: UInt32) -> NSColor {
 }
 
 /// Every AI Clawd Wars supports, with its outline colour from `AIStyle`.
-enum AI: CaseIterable { case claude, desktop, codex, qwen, gemini, copilot
+enum AI: CaseIterable { case claude, desktop, codex, qwen, gemini, copilot, pi
+    /// The six in the trailers' "every AI" line-up so far (pi came later).
+    static let lineUp: [AI] = [.claude, .desktop, .codex, .qwen, .gemini, .copilot]
     var hex: UInt32 {
         switch self {
         case .claude: return 0xFFFFFF; case .desktop: return 0xFF9E7A; case .codex: return 0x6FD3FF
         case .qwen: return 0xC08CFF; case .gemini: return 0xFFD166; case .copilot: return 0x7CF5A4
+        case .pi: return 0xFF7AC8
         }
     }
     var ns: NSColor { hexColor(hex) }
@@ -63,12 +66,14 @@ enum AI: CaseIterable { case claude, desktop, codex, qwen, gemini, copilot
         switch self {
         case .claude: return "Claude Code"; case .desktop: return "Claude Desktop"; case .codex: return "OpenAI Codex"
         case .qwen: return "Qwen Code"; case .gemini: return "Gemini CLI"; case .copilot: return "GitHub Copilot CLI"
+        case .pi: return "pi"
         }
     }
     var tag: String {
         switch self {
         case .claude: return "CLAUDE"; case .desktop: return "DESKTOP"; case .codex: return "CODEX"
         case .qwen: return "QWEN"; case .gemini: return "GEMINI"; case .copilot: return "GITHUB\nCOPILOT CLI"
+        case .pi: return "PI"
         }
     }
 }
@@ -427,6 +432,9 @@ func windowSpec(_ u: Universe, needsAt: Double = 99, at override: Location? = ni
         case .doctor: return (.consoleRoom, .hero(DoctorHero.doctorTen), .villain(DoctorVillain.dalick), .hero(DoctorHero.rose),
                               .hero(DoctorHero.donna), .villain(DoctorVillain.cyberperson), "You: “make the rotor pump faster”",
                               "You: “exterminate the dead code”")
+        case .clawdFiles: return (.xFilesOffice, .hero(FilesHero.foxClawder), .villain(FilesVillain.smokingClawd),
+                                  .hero(FilesHero.danaScrawly), .hero(FilesHero.skinnard), .villain(FilesVillain.grey),
+                                  "You: “find out who deleted the logs”", "You: “redact the error messages”")
         }
     }()
     let duel = fightIsCloseQuarters(claude.weapon, other.weapon)
@@ -745,6 +753,7 @@ func brawl(_ ctx: CGContext, _ u: Universe, local: Double, t: Double, drop: Bool
         case .marvel: return (.hero(MarvelHero.captainAmerica), .villain(MarvelVillain.redSkull), .hero(MarvelHero.spiderMan), .villain(MarvelVillain.greenGoblin))
         case .dc: return (.hero(DCHero.batman), .villain(DCVillain.joker), .hero(DCHero.greenArrow), .villain(DCVillain.captainCold))
         case .doctor: return (.hero(DoctorHero.doctorTen), .villain(DoctorVillain.dalick), .hero(DoctorHero.river), .villain(DoctorVillain.sontaron))
+        case .clawdFiles: return (.hero(FilesHero.foxClawder), .villain(FilesVillain.smokingClawd), .hero(FilesHero.danaScrawly), .villain(FilesVillain.bountyHunter))
         }
     }()
     let (ra, rb) = fightRoles(a.weapon, b.weapon), close = fightIsCloseQuarters(a.weapon, b.weapon)
@@ -766,6 +775,7 @@ func brawl(_ ctx: CGContext, _ u: Universe, local: Double, t: Double, drop: Bool
         case .marvel: return ("Switch to Marvelous Clawds in Settings.", "Shields, hammers and webs: 193 characters in 43 places.")
         case .dc: return ("Or pick Detective Clawds.", "Capes, power rings and one very serious bat: 207 characters in 43 places.")
         case .doctor: return ("Or step into Doctor Clawd.", "Sonic screwdrivers, a blue box and a lot of shouting about extermination.")
+        case .clawdFiles: return ("Or open The Clawd Files.", "Flashlights, black helicopters and a conspiracy behind every bug: 82 characters in 20 places.")
         }
     }()
     caption(line, ctx, local: local, start: drop ? 0.3 : 0.15, y: 900)
@@ -1655,20 +1665,26 @@ func halftone(_ ctx: CGContext, _ r: CGRect, base: CGColor, dot: CGColor, step: 
 
 // MARK: The Star Clawds trailer (the old Clawd Wars trailer, rebuilt on Clawd Clash)
 
-/// Every AI it supports in one line-up, Claude's character a head taller, duelling Codex's; the names above, Claude
-/// Code biggest. `cast` is one character per AI, in `AI.allCases` order.
-func everyAI(_ ctx: CGContext, local: Double, t: Double, cast: [Cast], line: String) {
+/// Every AI it supports in one line-up, each session in its AI's outline, Claude's character a head taller, duelling
+/// Codex's: BRING YOUR OWN AI, every session gets a character, and with more than one AI they pick sides. A footnote
+/// sends you to the README for the full list, so the shot needn't change when another AI or harness is supported.
+/// `cast` is one character per AI in `AI.lineUp` order, and a seventh (pi, labelled with the model it runs) if given.
+func everyAI(_ ctx: CGContext, local: Double, t: Double, cast: [Cast]) {
     desktop(ctx, dim: 1)
-    let xs: [Double] = [36, 104, 165, 216, 258, 298], facing: [Double] = [-1, 1, -1, -1, -1, -1]
+    let withPi = cast.count > AI.lineUp.count
+    let ais: [AI] = withPi ? AI.lineUp + [.pi] : AI.lineUp
+    // Where each stands: Claude Desktop far left, then Claude Code, Codex, Qwen, Gemini, Copilot (and pi).
+    let xs: [Double] = withPi ? [86, 26, 144, 186, 224, 262, 300] : [104, 36, 165, 216, 258, 298]
     var actors: [Actor] = []
     let (ra, rb) = fightRoles(cast[0].weapon, cast[2].weapon)
-    for (i, ai) in AI.allCases.enumerated() {
+    for (i, ai) in ais.enumerated() {
         let d = 0.15 + Double(i) * 0.1
         guard local > d else { continue }
         let f = backOut((local - d) / 0.3)
-        let order = [1, 0, 2, 3, 4, 5][i]                               // Claude Desktop stands on the far left
-        var a = Actor(cast: cast[i], x: xs[order], facing: facing[order], role: i == 0 ? ra : (i == 2 ? rb : .cheer), label: ai.tag, ai: ai)
-        if ai == .claude { a.grow = 1.25; a.labelSize = 36 } else { a.labelSize = 22 }
+        let label = ai == .pi ? "PI · DEVSTRAL" : ai.tag
+        // Claude Code faces Codex; everyone else faces left.
+        var a = Actor(cast: cast[i], x: xs[i], facing: i == 0 ? 1 : -1, role: i == 0 ? ra : (i == 2 ? rb : .cheer), label: label, ai: ai)
+        if ai == .claude { a.grow = 1.25; a.labelSize = 36 } else { a.labelSize = ai == .pi ? 18 : 22 }
         a.lift = (1 - f) * -10; a.alpha = clamp(f)
         actors.append(a)
         draw(a, ctx, t: t)
@@ -1676,19 +1692,13 @@ func everyAI(_ ctx: CGContext, local: Double, t: Double, cast: [Cast], line: Str
     if let c = actors.first(where: { $0.ai == .claude }), let x = actors.first(where: { $0.ai == .codex }) { drawFX([(c, x)], ctx, t: t) }
     let fc = easeOut((local - 0.05) / 0.35)
     if fc > 0 {
-        let tf = NSFont(name: "Futura-CondensedExtraBold", size: 140) ?? .systemFont(ofSize: 130, weight: .black)
-        text("CLAUDE CODE", ctx, y: 790 - 30 * (1 - fc), size: 140, alpha: fc, font: tf, kern: 8)
+        let tf = NSFont(name: "Futura-CondensedExtraBold", size: 130) ?? .systemFont(ofSize: 120, weight: .black)
+        text("BRING YOUR OWN AI*", ctx, y: 800 - 30 * (1 - fc), size: 130, alpha: fc, font: tf, kern: 6)
     }
-    let fr = easeOut((local - 0.35) / 0.35)
-    if fr > 0 {
-        let row = NSMutableAttributedString(attributedString: attributed("+  ", size: 40, weight: .heavy, color: dimText, alpha: fr))
-        for (i, ai) in AI.allCases.dropFirst().enumerated() {
-            if i > 0 { row.append(attributed("  ·  ", size: 40, weight: .heavy, color: dimText, alpha: fr)) }
-            row.append(attributed(ai.name, size: 40, weight: .heavy, color: ai.ns, alpha: fr))
-        }
-        row.draw(at: NSPoint(x: (Double(W) - row.size().width) / 2, y: 720 - 20 * (1 - fr)))
-    }
-    caption(line, ctx, local: local, start: 0.7, y: 640, size: 40, color: yellow, weight: .bold)
+    caption("Every session gets a character, whatever runs it.", ctx, local: local, start: 0.35, y: 730, size: 44, color: bodyText)
+    caption("One AI plays everyone. Run two and they pick sides.", ctx, local: local, start: 0.7, y: 655, size: 40, color: yellow, weight: .bold)
+    caption("*Every supported AI and harness, and how to connect it, is in the README.", ctx, local: local, start: 1.0, y: 40,
+            size: 26, color: dimText, weight: .semibold)
 }
 
 /// A line-up of four sessions, one per state, with the state named under each.
@@ -1875,8 +1885,7 @@ let starClawdsShots: [Shot] = [
     },
     Shot(name: "ais", start: 44.6, end: 49.0) { ctx, local, t in
         everyAI(ctx, local: local, t: t, cast: [.villain(SWVillain.vader), .villain(SWVillain.kylo), .hero(SWHero.luke), .hero(SWHero.yoda),
-                                                .hero(SWHero.leia), .hero(SWHero.r2d2)],
-                line: "Everyone picks a side. Nobody plays nice.")
+                                                .hero(SWHero.leia), .hero(SWHero.r2d2), .villain(SWVillain.trooper)])
     },
     // The end card: the Millennial Falcon flies through, the crew on the horizon, the title lands.
     Shot(name: "endcard", start: 49.0, end: 53.2) { ctx, local, t in
@@ -1935,7 +1944,7 @@ let starClawdsBeats: [(key: Double, beat: Beat)] = [
     (33.9, ("AT A GLANCE", "Four sessions pop in, each in its AI's outline: Darth Vapor working, the Emperor thinking, Boba Feta's jumping NEEDS YOU, Jabbo the Glutt napping.", "“All fun and games, and you still see everything.”  ·  “(Leave Boba Feta waiting and he starts jumping.)”", "blips, alert beeps")),
     (38.0, ("SUBAGENTS", "Darth Vapor stands guard; Luke, Princess Laya, Chewbarka and Ahh2-De2 march in with their jobs on their labels.", "“Every subagent reports for duty.”", "footsteps, a droid chirp")),
     (42.6, ("WINDOW MODE", "The window in the Mos Easy Cantina; live cards tick, then Luke's Codex card flips to NEEDS YOU.", "WINDOW MODE  ·  “Prefer a window? Grab the popcorn.”", "a ping")),
-    (47.0, ("EVERY AI", "Six sessions, one per AI outline; Claude's Darth Vapor a head taller, duelling Codex's Luke.", "CLAUDE CODE  ·  + the other five  ·  “Everyone picks a side. Nobody plays nice.”", "laser-sword clashes")),
+    (47.0, ("EVERY AI", "Six sessions, one per AI outline; Claude's Darth Vapor a head taller, duelling Codex's Luke.", "BRING YOUR OWN AI*  ·  “One AI plays everyone. Run two and they pick sides.”  ·  *README for the full list", "laser-sword clashes")),
     (52.0, ("END CARD", "Space: the Millennial Falcon flies through, the crew lines up on the horizon, STAR CLAWDS lands.", "STAR CLAWDS  ·  “Have fun. Keep track.”  ·  “One of four universes in Clawd Clash · free for macOS”  ·  github.com/rodclemen/clawd-clash", "a flyby, the final sting")),
 ]
 
@@ -2161,8 +2170,8 @@ let marvelousShots: [Shot] = [
     },
     Shot(name: "ais", start: 41.6, end: 46.0) { ctx, local, t in
         everyAI(ctx, local: local, t: t, cast: [.hero(MarvelHero.captainAmerica), .hero(MarvelHero.ironMan), .villain(MarvelVillain.thanos),
-                                                .villain(MarvelVillain.loki), .villain(MarvelVillain.ultron), .villain(MarvelVillain.greenGoblin)],
-                line: "Claude plays the heroes. Everyone else gets to be the villain.")
+                                                .villain(MarvelVillain.loki), .villain(MarvelVillain.ultron), .villain(MarvelVillain.greenGoblin),
+                                                .villain(MarvelVillain.hydraAgent)])
     },
     // The end card: Clawdvengers Tower at night, the Clawdjet flies through, the title lands.
     Shot(name: "endcard", start: 46.0, end: 50.2) { ctx, local, t in
@@ -2216,7 +2225,7 @@ let marvelousBeats: [(key: Double, beat: Beat)] = [
     (30.9, ("AT A GLANCE", "Thorr working, Lokee thinking, Ultraton's jumping NEEDS YOU, Thanoz sat down napping.", "“All fun and games, and you still see everything.”  ·  “(Thanoz sits down when the job's done. Relatable.)”", "blips, alert beeps")),
     (35.0, ("SUBAGENTS", "Iron Clawd stands guard; Spider-Clawd, Black Window, Grout and Racket march in with their jobs on their labels.", "“Every subagent suits up.”", "footsteps, a Grout rumble")),
     (39.6, ("WINDOW MODE", "The window at Clawdvengers Tower: the shield blocks Red Skulk, live cards tick, then his Codex card flips to NEEDS YOU.", "WINDOW MODE  ·  “Prefer a window? Grab some shawarma.”", "a ping")),
-    (44.0, ("EVERY AI", "Six sessions, one per AI outline; Claude's Captain Americlawd a head taller, holding his shield into Thanoz' gauntlet.", "CLAUDE CODE  ·  + the other five  ·  “Claude plays the heroes. Everyone else gets to be the villain.”", "the beam on the shield")),
+    (44.0, ("EVERY AI", "Six sessions, one per AI outline; Claude's Captain Americlawd a head taller, holding his shield into Thanoz' gauntlet.", "BRING YOUR OWN AI*  ·  “One AI plays everyone. Run two and they pick sides.”  ·  *README for the full list", "the beam on the shield")),
     (49.0, ("END CARD", "Clawdvengers Tower at night: the Clawdjet streaks across, the crew lines up, MARVELOUS CLAWDS lands.", "MARVELOUS CLAWDS  ·  “Have fun. Keep track.”  ·  “One of four universes in Clawd Clash · free for macOS”  ·  github.com/rodclemen/clawd-clash", "a flyby, the final sting")),
 ]
 
@@ -2437,8 +2446,8 @@ let detectiveShots: [Shot] = [
     },
     Shot(name: "ais", start: 42.6, end: 47.0) { ctx, local, t in
         everyAI(ctx, local: local, t: t, cast: [.hero(DCHero.superman), .hero(DCHero.wonderWoman), .villain(DCVillain.lexLuthor),
-                                                .villain(DCVillain.sinestro), .villain(DCVillain.cheetah), .villain(DCVillain.blackManta)],
-                line: "Claude plays the heroes. Everyone else gets to be the villain.")
+                                                .villain(DCVillain.sinestro), .villain(DCVillain.cheetah), .villain(DCVillain.blackManta),
+                                                .villain(DCVillain.jokerGoon)])
     },
     // The end card: Gothamburg's rooftop under the beacon, the Clawdwing flies through, the title lands.
     Shot(name: "endcard", start: 47.0, end: 51.2) { ctx, local, t in
@@ -2492,7 +2501,7 @@ let detectiveBeats: [(key: Double, beat: Beat)] = [
     (31.9, ("AT A GLANCE", "Superb-Man working, the Puzzler thinking, Harlee Quinn's jumping NEEDS YOU, Solomon Grundy sat down napping.", "“All fun and games, and you still see everything.”  ·  “(Solomon Grundy: born on a Monday, napping by Thursday.)”", "blips, alert beeps")),
     (36.0, ("SUBAGENTS", "Wondrous Woman stands guard; Wren, Nightglider, Cyb-Org and Kryptro arrive with their jobs on their labels.", "“Every subagent answers the beacon.”", "footsteps, a bark")),
     (40.6, ("WINDOW MODE", "The window in the Night Grotto: Batclawd against the Jester, live cards tick, then the Jester's Codex card flips to NEEDS YOU.", "WINDOW MODE  ·  “Prefer a window? Step into The Night Grotto.”", "a ping")),
-    (45.0, ("EVERY AI", "Six sessions, one per AI outline; Claude's Superb-Man a head taller, trading heat vision with Codex's Lex Lugar.", "CLAUDE CODE  ·  + the other five  ·  “Claude plays the heroes. Everyone else gets to be the villain.”", "heat vision crackle")),
+    (45.0, ("EVERY AI", "Six sessions, one per AI outline; Claude's Superb-Man a head taller, trading heat vision with Codex's Lex Lugar.", "BRING YOUR OWN AI*  ·  “One AI plays everyone. Run two and they pick sides.”  ·  *README for the full list", "heat vision crackle")),
     (50.0, ("END CARD", "Gothamburg's rooftop under the beacon: the Clawdwing streaks across, the crew lines up, DETECTIVE CLAWDS lands.", "DETECTIVE CLAWDS  ·  “Have fun. Keep track.”  ·  “One of four universes in Clawd Clash · free for macOS”  ·  github.com/rodclemen/clawd-clash", "a flyby, the final sting")),
 ]
 
@@ -2860,8 +2869,8 @@ let doctorShots: [Shot] = [
     },
     Shot(name: "ais", start: 40.1, end: 44.5) { ctx, local, t in
         everyAI(ctx, local: local, t: t, cast: [.hero(DoctorHero.doctorTen), .hero(DoctorHero.doctorThirteen), .villain(DoctorVillain.dalick),
-                                                .villain(DoctorVillain.cyberperson), .villain(DoctorVillain.weepingAngle), .villain(DoctorVillain.master)],
-                line: "Claude plays the Doctors. Everyone else gets to be the monster.")
+                                                .villain(DoctorVillain.cyberperson), .villain(DoctorVillain.weepingAngle), .villain(DoctorVillain.master),
+                                                .villain(DoctorVillain.sontaron)])
     },
     // The end card: the console room, the crew lines up, the title lands.
     Shot(name: "endcard", start: 44.5, end: 48.7) { ctx, local, t in
@@ -2905,7 +2914,7 @@ let doctorBeats: [(key: Double, beat: Beat)] = [
     (29.4, ("AT A GLANCE", "Doctor Eleven working, the Master thinking, Missy's jumping NEEDS YOU, Donna Nobble sat down napping.", "“All fun and games, and you still see everything.”  ·  “(Donna Nobble, napping. Nobody wake her. Seriously.)”", "blips, alert beeps")),
     (33.5, ("SUBAGENTS", "The Brigadier stands guard; Rose, Captain Jack, K-Canine and Martha arrive with their jobs on their labels.", "“Every subagent gets to be a companion.”", "footsteps")),
     (38.1, ("WINDOW MODE", "The window in the Console Room: Doctor Ten against a Dalick, live cards tick, then the Dalick's Codex card flips to NEEDS YOU.", "WINDOW MODE  ·  “Prefer a window? It's bigger on the inside.”", "a ping")),
-    (42.5, ("EVERY AI", "Six sessions, one per AI outline; Claude's Doctor Ten a head taller, his sonic on Codex's Dalick.", "CLAUDE CODE  ·  + the other five  ·  “Claude plays the Doctors. Everyone else gets to be the monster.”", "the sonic")),
+    (42.5, ("EVERY AI", "Six sessions, one per AI outline; Claude's Doctor Ten a head taller, his sonic on Codex's Dalick.", "BRING YOUR OWN AI*  ·  “One AI plays everyone. Run two and they pick sides.”  ·  *README for the full list", "the sonic")),
     (47.5, ("END CARD", "The console room: the crew lines up, DOCTOR CLAWD lands.", "DOCTOR CLAWD  ·  “Have fun. Keep track.”  ·  “One of four universes in Clawd Clash · free for macOS”  ·  github.com/rodclemen/clawd-clash", "the wheeze, the final sting")),
 ]
 
