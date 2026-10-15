@@ -25,10 +25,11 @@ func hex(_ h: UInt32, _ a: CGFloat = 1) -> CGColor {
 func rnd(_ i: Int) -> CGFloat { CGFloat(noise(i)) }
 let inkColor = hex(0x111018)
 
-/// STYLE=1 slanted panels (the default), 2 a comic page of square panels, 3 a line-up on the horizon, 4 windows into
+/// STYLE=8 (the default): tilted pop-art panels round a big centre title panel. The others, for comparison:
+/// STYLE=1 slanted panels, 2 a comic page of square panels, 3 a line-up on the horizon, 4 windows into
 /// each universe's own place, 5 everyone in one Clawd Royale brawl. Every style takes `verses`, so another universe
 /// is another entry.
-let style = Int(ProcessInfo.processInfo.environment["STYLE"] ?? "") ?? 1
+let style = Int(ProcessInfo.processInfo.environment["STYLE"] ?? "") ?? 8   // 8 is the one in docs/
 struct Verse { let name: String; let hero: Cast; let villain: Cast; let place: Location; let sound: String
                let burst: UInt32; let face: (UInt32, UInt32); let sky: (UInt32, UInt32); var caption = "" }
 let allVerses: [Verse] = [
@@ -310,7 +311,7 @@ func grid(_ n: Int, in area: CGRect, perRow: Int, gap: CGFloat) -> [CGRect] {
 }
 
 let full = CGRect(x: 0, y: 0, width: W, height: H)
-var titleW: CGFloat? = nil
+var titleW: CGFloat? = nil, titleAngle: CGFloat = 0.02
 var titleY: CGFloat = 522, titleH: CGFloat = 138, titleFaces: [(UInt32, UInt32)] =
     [(0xFFFFFF, 0xFF8A8A), (0xFFFFFF, 0x8FB8FF), (0xFFF3B0, 0xFFC21A), (0xFFFFFF, 0x8AB0FF), (0xE8FFF0, 0x6AE88A)]
 
@@ -522,6 +523,7 @@ case 7, 8:   // pop-art panels: 7 rows with the title band across the middle; 8 
     ctx.addPath(titlePanel); ctx.setStrokeColor(inkColor); ctx.setLineWidth(5); ctx.strokePath()
     let tb = titlePanel.boundingBox
     titleY = tb.midY; titleH = min(120, tb.height * 0.72); titleW = tb.width * 0.84; titleFaces = [(0xFFF3B0, 0xFFC21A)]
+    if style == 8 { titleAngle = 0.1; titleH *= 0.92 }   // tilted up, with the panel's slant, so it reads as moving
 case 9:   // a starburst: a wedge of colour per universe round the title, halftone between, clouds in the corners
     ctx.setFillColor(hex(0xFFFFFF)); ctx.fill(full)
     halftone(full, color: hex(0xB8B8C0), cell: 11) { _ in 0.42 }
@@ -585,7 +587,7 @@ default:
 }
 
 // The name, across all the panels.
-word("CLAWD CLASH", at: CGPoint(x: 640, y: titleY), width: titleW ?? 1060 * titleH / 138, height: titleH, angle: style == 1 ? 0.035 : 0.02, depth: 12,
+word("CLAWD CLASH", at: CGPoint(x: 640, y: titleY), width: titleW ?? 1060 * titleH / 138, height: titleH, angle: style == 1 ? 0.035 : titleAngle, depth: 12,
      faces: titleFaces)
 
 // The gutters, over everything, cutting through the name too.
