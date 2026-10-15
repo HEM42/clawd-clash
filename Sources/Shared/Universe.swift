@@ -10,24 +10,27 @@ enum Universe: Int, CaseIterable, Codable {
     case dc = 2
     case doctor = 3
     case clawdFiles = 4
+    case clawdberg = 5
 
     var key: String {
         switch self { case .starWars: return "starWars"; case .marvel: return "marvel"; case .dc: return "dc"; case .doctor: return "doctor"
-        case .clawdFiles: return "clawdFiles" }
+        case .clawdFiles: return "clawdFiles"; case .clawdberg: return "clawdberg" }
     }
     init?(key: String) { self.init(rawValue: Universe.allCases.first { $0.key == key }?.rawValue ?? -1) }
 
     var title: String {
         switch self { case .starWars: return "Star Clawds"; case .marvel: return "Marvelous Clawds"; case .dc: return "Detective Clawds"; case .doctor: return "Doctor Clawd"
-        case .clawdFiles: return "The Clawd Files" }
+        case .clawdFiles: return "The Clawd Files"; case .clawdberg: return "Stevie Clawdberg" }
     }
     var base: Int { rawValue * 1000 }
 
     var villainCount: Int {
-        switch self { case .starWars: return 46; case .marvel: return 88; case .dc: return 97; case .doctor: return 42; case .clawdFiles: return 46 }
+        switch self { case .starWars: return 46; case .marvel: return 88; case .dc: return 97; case .doctor: return 42; case .clawdFiles: return 46
+        case .clawdberg: return 54 }
     }
     var heroCount: Int {
-        switch self { case .starWars: return 36; case .marvel: return 106; case .dc: return 111; case .doctor: return 56; case .clawdFiles: return 36 }
+        switch self { case .starWars: return 36; case .marvel: return 106; case .dc: return 111; case .doctor: return 56; case .clawdFiles: return 36
+        case .clawdberg: return 64 }
     }
 
     /// HEM: the same rare face in every universe, last of the heroes. He's never in the regular pools (`lightCast`);
@@ -46,6 +49,7 @@ enum Universe: Int, CaseIterable, Codable {
         case .dc: return Set([22, 49, 77, 131, 139, 206, 207, 208, 209].map { base + $0 })
         case .doctor: return Set([39, 40, 41].map { base + $0 })                // Adipoze, Cybermite, Toclafayne
         case .clawdFiles: return Set([43, 44, 45].map { base + $0 })            // killer bee, robo-roach, flukeworm
+        case .clawdberg: return Set((49...53).map { base + $0 })                // Compy, mogwai pup, snake, frog, Croc Clock
         }
     }
 

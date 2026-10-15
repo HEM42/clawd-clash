@@ -41,6 +41,7 @@ struct Theme {
         case .dc: return dcTheme
         case .doctor: return doctorTheme
         case .clawdFiles: return filesTheme
+        case .clawdberg: return clawdbergTheme
         }
     }
 }
