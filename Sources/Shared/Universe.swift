@@ -24,10 +24,10 @@ enum Universe: Int, CaseIterable, Codable {
     var base: Int { rawValue * 1000 }
 
     var villainCount: Int {
-        switch self { case .starWars: return 46; case .marvel: return 88; case .dc: return 97; case .doctor: return 42; case .clawdFiles: return 17 }
+        switch self { case .starWars: return 46; case .marvel: return 88; case .dc: return 97; case .doctor: return 42; case .clawdFiles: return 46 }
     }
     var heroCount: Int {
-        switch self { case .starWars: return 36; case .marvel: return 106; case .dc: return 111; case .doctor: return 56; case .clawdFiles: return 16 }
+        switch self { case .starWars: return 36; case .marvel: return 106; case .dc: return 111; case .doctor: return 56; case .clawdFiles: return 36 }
     }
 
     /// HEM: the same rare face in every universe, last of the heroes. He's never in the regular pools (`lightCast`);
@@ -45,7 +45,7 @@ enum Universe: Int, CaseIterable, Codable {
         // Joker Goon, Dex-Starr, Mister Mind, Krypto, Ch'p, Ace the Bat-Hound, Streaky, Gleek, Beppo
         case .dc: return Set([22, 49, 77, 131, 139, 206, 207, 208, 209].map { base + $0 })
         case .doctor: return Set([39, 40, 41].map { base + $0 })                // Adipoze, Cybermite, Toclafayne
-        case .clawdFiles: return []
+        case .clawdFiles: return Set([43, 44, 45].map { base + $0 })            // killer bee, robo-roach, flukeworm
         }
     }
 
