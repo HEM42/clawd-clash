@@ -842,11 +842,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private func playgroundSessions(_ villains: [Int]) -> [SessionSnapshot] {
         let activities = ["Read Overlay.swift", "Grep fightRoles", "Bash: swift build", "Edit Leaders.swift",
                           "Fetch github.com", "Glob **/*.swift", "Bash: run the tests", "Read README.md"]
-        // Heroes by `MarvelHero` index; the agent-only villains as `playgroundVillainAgent` + their cast id.
+        // Heroes by their index in the universe on show; the agent-only villains as `playgroundVillainAgent` + their
+        // cast id. Adopted from the universe on show (its base added), so HEM, the last hero, stays HEM.
         let crew = playgroundAgents.enumerated().map { i, c in
             AgentRecord(id: "pg-a\(c)", session: "pg", type: "playground", character: c >= Self.playgroundVillainAgent ? 0 : c,
-                        cast: Universe.shown.adopt(c >= Self.playgroundVillainAgent ? c - Self.playgroundVillainAgent
-                                                                                    : StatusStore.heroBase + c),
+                        cast: Universe.shown.adopt(Universe.shown.base + (c >= Self.playgroundVillainAgent ? c - Self.playgroundVillainAgent
+                                                                                                           : StatusStore.heroBase + c)),
                         started: start - Double(30 + i * 47),
                         lastSeen: 0, task: Self.sampleTasks[c % Self.sampleTasks.count],
                         activity: activities[(c + i) % activities.count], tools: 3 + (c * 7) % 23)
