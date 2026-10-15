@@ -144,7 +144,7 @@ $preset$QUARANTINE
 end
 CASK
 }
-write_cask clawd-clash "" "Claude Code sessions as a pixel-art Star Clawds, Marvelous Clawds or Detective Clawds battle on your desktop"
+write_cask clawd-clash "" "Your AI coding sessions as a pixel-art battle across many universes, on your desktop"
 write_cask star-clawds starWars "Claude Code sessions as a pixel-art Star Clawds battle on your desktop"
 write_cask marvelous-clawds marvel "Claude Code sessions as a pixel-art Marvelous Clawds battle on your desktop"
 write_cask detective-clawds dc "Claude Code sessions as a pixel-art Detective Clawds battle on your desktop"
