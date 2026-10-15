@@ -584,7 +584,14 @@ final class HeaderView: NSView, NSViewToolTipOwner {
             let since = now - (typing?.start ?? now)
             let label = NSAttributedString(string: FilesCaption.typed(location, after: max(0, since)).joined(separator: "  ·  "),
                                            attributes: [.font: FilesCaption.font(11.5), .foregroundColor: NSColor(white: 0.92, alpha: 1)])
-            label.draw(at: NSPoint(x: 14, y: (midY - label.size().height / 2).rounded()))
+            let at = NSPoint(x: 14, y: (midY - label.size().height / 2).rounded())
+            // A dark box behind it, like subtitles, so it reads over a busy ceiling.
+            if label.length > 0 {
+                NSColor(white: 0, alpha: 0.55).setFill()
+                NSBezierPath(roundedRect: NSRect(x: at.x - 6, y: at.y - 2, width: label.size().width + 12, height: label.size().height + 4),
+                             xRadius: 4, yRadius: 4).fill()
+            }
+            label.draw(at: at)
             if !FilesCaption.done(location, after: since) {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in self?.needsDisplay = true }
             }

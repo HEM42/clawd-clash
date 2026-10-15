@@ -885,8 +885,18 @@ final class ClawdClashSaverView: ScreenSaverView {
                          right: shifted, typed: location.universe == .clawdFiles ? 2 : 0)
         let ps = sized(place)
         if !isPreview {
-            items.append(Item(image: place, rect: rectFor(place, x: shifted ? bounds.width - m - ps.width : m, top: bounds.height - m * 0.9),
-                              alpha: 0.95, smooth: true))
+            let rect = rectFor(place, x: shifted ? bounds.width - m - ps.width : m, top: bounds.height - m * 0.9)
+            // The Clawd Files' typed caption gets a dark box behind it, like subtitles, so it reads over a busy ceiling.
+            if location.universe == .clawdFiles {
+                let pad = 10 * u
+                let box = rect.insetBy(dx: -pad, dy: -pad * 0.7)
+                let shade = image(box.size) { ctx, size in
+                    ctx.addPath(CGPath(roundedRect: CGRect(origin: .zero, size: size), cornerWidth: 6 * self.u, cornerHeight: 6 * self.u, transform: nil))
+                    ctx.setFillColor(CGColor(gray: 0, alpha: 0.5)); ctx.fillPath()
+                }
+                items.append(Item(image: shade, rect: box, alpha: 1, smooth: true))
+            }
+            items.append(Item(image: place, rect: rect, alpha: 0.95, smooth: true))
         }
 
         // The clock (not in the window: the menu bar has one), unless turned off in Options.
