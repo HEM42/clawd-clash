@@ -2,6 +2,11 @@
 
 Clawd Clash brings three apps together as its first three universes: Clawd Wars became Star Clawds, Avengers: Clawd Wars became Marvelous Clawds and Justice League: Clawd Wars became Detective Clawds. Doctor Clawd, the fourth, was built for Clawd Clash in its own repo, [doctor-clawd](https://github.com/rodclemen/doctor-clawd). Their history before that is in [history/star-clawds.md](history/star-clawds.md) (up to 2.28.3), [history/marvelous-clawds.md](history/marvelous-clawds.md) (0.1.0) and [history/detective-clawds.md](history/detective-clawds.md) (0.1.0).
 
+## Unreleased
+
+### Added
+- **pi.** Clawd Clash can show [pi](https://github.com/badlogic/pi-mono) sessions, whichever model pi runs (Mistral, GPT, Gemini, local models…), with a pink outline and the model's name on the character. pi has no hooks, so connecting it writes a small extension of Clawd Clash's own to `~/.pi/agent/extensions/clawd-clash.ts`, which sends pi's events (session start and end, the prompt, each tool, the reply, compaction) to the hook; sessions already open load it after `/reload`. Nobody is assumed to use pi: the app offers it once, like the other AIs, only when it finds `pi` on the Mac, and Settings connects or removes it (removing deletes the extension). There's no "Needs you" for pi, since it never asks permission.
+
 ## 3.1.0 (2026-10-15)
 
 ### Added

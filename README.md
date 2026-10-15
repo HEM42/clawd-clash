@@ -5,7 +5,7 @@
 <h1 align="center">Clawd Clash</h1>
 
 <p align="center">
-  <b>Your Claude Code, Codex, Qwen Code, Gemini CLI and GitHub Copilot CLI sessions, as a pixel-art Star Clawds, Marvelous Clawds or Detective Clawds battle on your desktop.</b><br>
+  <b>Your Claude Code, Codex, Qwen Code, Gemini CLI, GitHub Copilot CLI and pi sessions, as a pixel-art Star Clawds, Marvelous Clawds or Detective Clawds battle on your desktop.</b><br>
   Every session is a hero or a villain, every subagent joins in, and they fight while they work.
 </p>
 
@@ -125,7 +125,7 @@ It opens in a window by default (switch to the desktop from the menu): the whole
 | sitting on the floor | idle for 2+ minutes |
 | zZz | idle for 5+ minutes |
 | bobbing yellow marker | the Claude whose terminal you're looking at right now |
-| outline colour | which AI: Claude white, Claude desktop app coral, Codex cyan, Qwen lavender, Gemini gold, Copilot mint |
+| outline colour | which AI: Claude white, Claude desktop app coral, Codex cyan, Qwen lavender, Gemini gold, Copilot mint, pi pink |
 
 <p align="center">
   <img src="docs/hover.png" alt="The hover card" width="640">
@@ -140,7 +140,7 @@ It opens in a window by default (switch to the desktop from the menu): the whole
 
 ## Install
 
-Needs macOS 13+ (Apple Silicon or Intel) and at least one of [Claude Code](https://claude.com/claude-code), [Codex](https://developers.openai.com/codex), [Qwen Code](https://github.com/QwenLM/qwen-code), [Gemini CLI](https://github.com/google-gemini/gemini-cli) or [GitHub Copilot CLI](https://github.com/github/copilot-cli). Clawd Clash asks before connecting any of them, and only touches the ones you connect.
+Needs macOS 13+ (Apple Silicon or Intel) and at least one of [Claude Code](https://claude.com/claude-code), [Codex](https://developers.openai.com/codex), [Qwen Code](https://github.com/QwenLM/qwen-code), [Gemini CLI](https://github.com/google-gemini/gemini-cli) [GitHub Copilot CLI](https://github.com/github/copilot-cli) or [pi](https://github.com/badlogic/pi-mono) (with any model it runs: Mistral, GPT, local models…). Clawd Clash asks before connecting any of them, and only touches the ones you connect.
 
 **With Homebrew:**
 
@@ -164,6 +164,8 @@ git clone https://github.com/rodclemen/clawd-clash.git && cd clawd-clash
 Claude Code sessions that were already running pick up the hooks after a restart (`/exit`, then `claude --continue`). Until then they still show up, with a `?`.
 
 > **Codex users:** Codex only runs hooks you've approved. After connecting it, run **`/hooks`** in Codex once and approve Clawd Clash.
+
+> **pi users:** pi has no hooks, so connecting it adds a small extension of Clawd Clash's own, `~/.pi/agent/extensions/clawd-clash.ts`; removing pi in Settings deletes it. Sessions already open load it after **`/reload`**. Each pi character shows the model it's running.
 
 Clicking to jump to a session in Terminal or iTerm2 asks once for **Automation** permission; jumping to VS Code or Cursor asks once for **Accessibility** permission.
 

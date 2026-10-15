@@ -154,7 +154,7 @@ enum ClaudeProcesses {
         return found.filter { !drop.contains($0.pid) }.sorted { $0.pid < $1.pid }
     }
 
-    private static let names: Set<String> = ["claude", "codex", "qwen", "gemini", "copilot"]
+    private static let names: Set<String> = ["claude", "codex", "qwen", "gemini", "copilot", "pi"]
     /// Per AI, since they don't agree: Codex's `-p` is `--profile`, an interactive session.
     private static let oneShotFlags: [String: Set<String>] = [
         "claude": ["-p", "--print", "--chrome-native-host", "--version", "-v"],
@@ -162,6 +162,7 @@ enum ClaudeProcesses {
         "qwen": ["-p", "--prompt", "--version", "-v"],
         "gemini": ["-p", "--prompt", "--version", "-v"],
         "copilot": ["-p", "--prompt", "--version", "-v"],
+        "pi": ["-p", "--print", "--mode", "--export", "--list-models", "--version", "-v", "--help", "-h"],
     ]
     private static let subcommands: [String: Set<String>] = [
         "claude": ["mcp", "update", "doctor", "install", "config", "setup-token", "migrate-installer", "plugin"],
@@ -169,6 +170,7 @@ enum ClaudeProcesses {
         "qwen": ["mcp", "extensions"],
         "gemini": ["mcp", "extensions"],
         "copilot": ["update", "help", "version"],
+        "pi": ["install", "remove", "uninstall", "update", "list", "config"],
     ]
 
     /// Background servers editors start (the VS Code ChatGPT extension runs `codex -c … app-server`): never a prompt
@@ -201,10 +203,16 @@ enum ClaudeProcesses {
         let isGemini = exe == "gemini" || args.contains { $0.contains("@google/gemini-cli/") && $0.hasSuffix(".js") }
         // "@github/copilot/" with the slash: not VS Code's copilot-language-server
         let isCopilot = exe == "copilot" || args.contains { $0.contains("@github/copilot/") && $0.hasSuffix(".js") }
-        guard isClaude || isCodex || isQwen || isGemini || isCopilot else { return (nil, nil) }
-        let assistant = isCodex ? "codex" : isQwen ? "qwen" : isGemini ? "gemini" : isCopilot ? "copilot" : "claude"
+        // pi is a node script: run as `node /opt/homebrew/bin/pi` through its npm link, or by its package path.
+        let isPiName = { (arg: String) in (arg as NSString).lastPathComponent == "pi" }
+        let piScript = exe == "pi" ? 0
+            : ["node", "bun"].contains(exe) && args.count > 1 && isPiName(args[1]) ? 1
+            : args.firstIndex { $0.contains("/pi-coding-agent/") && $0.hasSuffix(".js") }
+        let isPi = !isClaude && !isCodex && !isQwen && !isGemini && !isCopilot && piScript != nil
+        guard isClaude || isCodex || isQwen || isGemini || isCopilot || isPi else { return (nil, nil) }
+        let assistant = isCodex ? "codex" : isQwen ? "qwen" : isGemini ? "gemini" : isCopilot ? "copilot" : isPi ? "pi" : "claude"
         // The AI's own arguments: after the executable, or after the script when node runs it.
-        let script = names.contains(exe) ? 0 : args.firstIndex { $0.hasSuffix(".js") } ?? 0
+        let script = isPi ? piScript ?? 0 : names.contains(exe) ? 0 : args.firstIndex { $0.hasSuffix(".js") } ?? 0
         let own = args.dropFirst(script + 1)
         // One-shots and helpers aren't sessions. Flags count anywhere; subcommands only as the first word
         // (`claude "update the docs"` is a session, `claude update` isn't).

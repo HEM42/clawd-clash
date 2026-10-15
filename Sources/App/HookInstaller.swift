@@ -142,16 +142,17 @@ enum HookInstaller {
         try writeSettings(root)
     }
 
-    // MARK: Other AIs (Codex, Qwen Code, Gemini CLI, Copilot CLI)
+    // MARK: Other AIs (Codex, Qwen Code, Gemini CLI, Copilot CLI, pi)
     //
     // All read Claude Code-style hook config: { "hooks": { Event: [ { matcher?, hooks: [ {type, command, timeout} ] } ] } }
     // (Copilot CLI uses flat entries: { "hooks": { Event: [ {type, bash, timeoutSec} ] } }). Our handler runs the same
     // hook binary with `--assistant <name>` so it knows which AI is calling, and `--event <name>` where the payload
     // doesn't say (or uses that AI's own event names, which the hook translates).
+    // pi has no hooks config: it loads extensions, so we write one of our own that runs the hook (see `piExtension`).
 
     struct OtherAI {
-        let name: String            // "codex" / "qwen" / "gemini" / "copilot", passed to the hook as --assistant
-        let dir: URL                // ~/.codex, ~/.qwen, ~/.gemini, ~/.copilot
+        let name: String            // "codex" / "qwen" / "gemini" / "copilot" / "pi", passed to the hook as --assistant
+        let dir: URL                // ~/.codex, ~/.qwen, ~/.gemini, ~/.copilot, ~/.pi
         let file: URL               // the file our hooks go in
         let events: [String]
         let toolEvents: Set<String> // events that take a matcher
@@ -166,6 +167,7 @@ enum HookInstaller {
         var name_: String? = nil     // handler "name" (lets the AI toggle it in /hooks)
         var eventAliases: [String: String] = [:]   // config key → event name to pass (Copilot's camelCase subagentStart)
         var ownFile = false          // the whole file is ours (deleted on uninstall when nothing else is left)
+        var isExtension = false      // pi: the file is an extension we write whole, not a hooks config
     }
 
     static let codex = OtherAI(
@@ -199,7 +201,13 @@ enum HookInstaller {
         binaries: ["copilot"], flat: true, commandKey: "bash", timeoutKey: "timeoutSec", passEvent: true,
         eventAliases: ["subagentStart": "SubagentStart"], ownFile: true)
 
-    static let others = [codex, qwen, gemini, copilot]
+    /// pi (any model it runs: Mistral, GPT, local ones…): an extension of our own in ~/.pi/agent/extensions that
+    /// turns pi's events into the hook's payloads. It's the whole file, so connecting writes it and removing deletes it.
+    static let pi = OtherAI(
+        name: "pi", dir: home(".pi"), file: home(".pi/agent/extensions/clawd-clash.ts"),
+        events: [], toolEvents: [], matcherAll: nil, binaries: ["pi"], ownFile: true, isExtension: true)
+
+    static let others = [codex, qwen, gemini, copilot, pi]
 
     static func other(_ name: String) -> OtherAI? { others.first { $0.name == name } }
 
@@ -217,6 +225,7 @@ enum HookInstaller {
         case "qwen": return "Qwen Code"
         case "gemini": return "Gemini CLI"
         case "copilot": return "Copilot CLI"
+        case "pi": return "pi"
         case "claude-desktop": return "Claude Desktop"
         default: return "Claude Code"
         }
@@ -229,6 +238,7 @@ enum HookInstaller {
         case "qwen": return "type /hooks in Qwen Code and make sure clawd-clash is enabled"
         case "gemini": return "type /hooks panel in Gemini CLI and make sure clawd-clash is enabled"
         case "copilot": return "check hooks aren't turned off (disableAllHooks) and restart Copilot CLI"
+        case "pi": return "type /reload in pi to load the Clawd Clash extension"
         default: return "type /hooks in Claude Code and check the Clawd Clash hooks are listed"
         }
     }
@@ -267,6 +277,7 @@ enum HookInstaller {
     }
 
     static func installed(_ ai: OtherAI) -> Bool {
+        if ai.isExtension { return extensionBinary(ai).map(isCurrent) ?? false }
         guard let root = try? read(ai), let hooks = root["hooks"] as? [String: Any] else { return false }
         func current(_ entry: [String: Any]) -> Bool {   // an old app's hook doesn't count
             let handlers = (entry["hooks"] as? [[String: Any]] ?? []) + [entry]
@@ -278,6 +289,12 @@ enum HookInstaller {
     /// Adds our hook to every event, keeping everything else in the file (a backup is kept the first time).
     static func install(_ ai: OtherAI) throws {
         guard available(ai) else { return }
+        if ai.isExtension {
+            let target = ai.file.resolvingSymlinksInPath()
+            try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try piExtension.write(to: target, atomically: true, encoding: .utf8)
+            return
+        }
         var root = try read(ai)
         if !ai.ownFile { backUp(ai.file, as: "before-clawd-clash") }
         if ai.flat { root["version"] = 1 }
@@ -304,6 +321,10 @@ enum HookInstaller {
 
     static func uninstall(_ ai: OtherAI) throws {
         guard FileManager.default.fileExists(atPath: ai.file.path) else { return }
+        if ai.isExtension {
+            if extensionBinary(ai) != nil { try FileManager.default.removeItem(at: ai.file) }   // only if it's ours
+            return
+        }
         var root = try read(ai)
         guard var hooks = root["hooks"] as? [String: Any] else { return }
         for e in ai.events {
@@ -362,7 +383,9 @@ enum HookInstaller {
         var repaired: [String] = []
         if let root = try? readSettings(), isStale(root), (try? install()) != nil { repaired.append("claude") }
         for ai in others where available(ai) {
-            if let root = try? read(ai), isStale(root), (try? install(ai)) != nil { repaired.append(ai.name) }
+            let stale = ai.isExtension ? extensionBinary(ai).map { !FileManager.default.isExecutableFile(atPath: $0) } ?? false
+                : (try? read(ai)).map(isStale) ?? false
+            if stale, (try? install(ai)) != nil { repaired.append(ai.name) }
         }
         return repaired
     }
@@ -388,7 +411,7 @@ enum HookInstaller {
         let claudeHad = (try? readSettings()).map { !ourBinaries(in: $0).isEmpty } ?? false
         do { try uninstall(); if claudeHad { done.append("claude") } } catch { errors.append("Claude Code: \(error.localizedDescription)") }
         for ai in others {
-            let had = (try? read(ai)).map { !ourBinaries(in: $0).isEmpty } ?? false
+            let had = ai.isExtension ? extensionBinary(ai) != nil : (try? read(ai)).map { !ourBinaries(in: $0).isEmpty } ?? false
             do { try uninstall(ai); if had { done.append(ai.name) } } catch { errors.append("\(displayName(ai.name)): \(error.localizedDescription)") }
         }
         return (done, errors)
@@ -415,6 +438,7 @@ enum HookInstaller {
         var names: [String] = []
         if let root = try? readSettings(), !ourBinaries(in: root).isEmpty { names.append("claude") }
         for ai in others {
+            if ai.isExtension { if extensionBinary(ai) != nil { names.append(ai.name) }; continue }
             guard let hooks = (try? read(ai))?["hooks"] as? [String: Any] else { continue }
             if hooks.values.contains(where: { ($0 as? [[String: Any]] ?? []).contains(where: isOurs) }) { names.append(ai.name) }
         }
@@ -454,6 +478,73 @@ enum HookInstaller {
         var unique: [String] = []
         for n in names where !unique.contains(n) { unique.append(n) }
         return unique.isEmpty ? ([], []) : installAll(unique)
+    }
+
+    // MARK: pi extension
+    //
+    // pi loads every .ts file in ~/.pi/agent/extensions when a session starts (or on /reload). Ours sends each event
+    // to the hook binary as a Claude Code-shaped payload, without waiting for it, so pi is never held up.
+
+    private static let hookLinePrefix = "const HOOK = "
+
+    /// The hook binary our extension file runs, or nil if the file is missing or isn't ours.
+    private static func extensionBinary(_ ai: OtherAI) -> String? {
+        guard let text = try? String(contentsOf: ai.file, encoding: .utf8),
+              let line = text.split(separator: "\n").first(where: { $0.hasPrefix(hookLinePrefix) }) else { return nil }
+        let literal = line.dropFirst(hookLinePrefix.count).trimmingCharacters(in: CharacterSet(charactersIn: "; "))
+        guard let path = try? JSONDecoder().decode(String.self, from: Data(literal.utf8)), isOurs(command: path) else { return nil }
+        return path
+    }
+
+    static var piExtension: String {
+        // A JSON string is a valid TypeScript string literal.
+        let path = String(decoding: (try? JSONEncoder().encode(hookBinary)) ?? Data("\"\"".utf8), as: UTF8.self)
+            .replacingOccurrences(of: "\\/", with: "/")
+        return """
+            // Clawd Clash: shows what this pi session is doing in the Clawd Clash app.
+            // Written by Clawd Clash, which removes it when you disconnect pi in its Settings (or delete this file).
+            import { spawn } from "node:child_process";
+
+            \(hookLinePrefix)\(path);
+
+            export default function (pi: any) {
+              const send = (event: string, ctx: any, extra: Record<string, unknown> = {}) => {
+                try {
+                  const sm = ctx?.sessionManager;
+                  const payload = {
+                    hook_event_name: event,
+                    session_id: sm?.getSessionId?.() ?? sm?.getSessionFile?.() ?? `pi-${process.pid}`,
+                    transcript_path: sm?.getSessionFile?.(),
+                    cwd: ctx?.cwd ?? process.cwd(),
+                    model: ctx?.model?.id,
+                    ...extra,
+                  };
+                  const child = spawn(HOOK, ["--assistant", "pi"], { stdio: ["pipe", "ignore", "ignore"] });
+                  child.on("error", () => {});
+                  child.stdin.on("error", () => {});
+                  child.stdin.end(JSON.stringify(payload));
+                  child.unref();
+                } catch {}
+              };
+              // The text of the last assistant message of a run.
+              const reply = (messages: any[] = []) => {
+                const last = [...messages].reverse().find((m) => m?.role === "assistant");
+                const content = last?.content;
+                if (typeof content === "string") return content;
+                return (content ?? []).filter((c: any) => c?.type === "text").map((c: any) => c.text).join("\\n");
+              };
+
+              pi.on("session_start", (_e: any, ctx: any) => send("SessionStart", ctx));
+              pi.on("before_agent_start", (e: any, ctx: any) => send("UserPromptSubmit", ctx, { prompt: e?.prompt }));
+              pi.on("tool_call", (e: any, ctx: any) => send("PreToolUse", ctx, { tool_name: e?.toolName, tool_input: e?.input }));
+              pi.on("tool_result", (e: any, ctx: any) =>
+                send(e?.isError ? "PostToolUseFailure" : "PostToolUse", ctx, { tool_name: e?.toolName, tool_input: e?.input }));
+              pi.on("agent_end", (e: any, ctx: any) => send("Stop", ctx, { last_assistant_message: reply(e?.messages) }));
+              pi.on("session_before_compact", (_e: any, ctx: any) => send("PreCompact", ctx));
+              pi.on("session_shutdown", (_e: any, ctx: any) => send("SessionEnd", ctx));
+            }
+
+            """
     }
 
     // Codex conveniences used by the app and CLI

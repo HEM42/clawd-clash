@@ -38,7 +38,7 @@ enum Legend {
     private static var around: [Entry] {
         [
             Entry(title: "Outline colour", detail: "Which AI runs it: Claude white, Claude desktop app coral, Codex cyan, "
-                  + "Qwen Code lavender, Gemini CLI gold, Copilot CLI mint",
+                  + "Qwen Code lavender, Gemini CLI gold, Copilot CLI mint, pi pink",
                   icon: outlines()),
             Entry(title: "Label colour", detail: "A Claude and its agents share their project's colour",
                   icon: swatches(Array(Accents.palette.prefix(3)))),
@@ -115,7 +115,7 @@ enum Legend {
 
     /// One square per AI in its outline colour.
     private static func outlines() -> NSImage? {
-        swatches(["claude", "claude-desktop", "codex", "qwen", "gemini", "copilot"].map(AIStyle.color), size: 4, columns: 3)
+        swatches(AIStyle.order.map(AIStyle.color), size: 4, columns: 4)
     }
 
     private static func swatches(_ colors: [NSColor], size: CGFloat = 6, columns: Int? = nil) -> NSImage? {

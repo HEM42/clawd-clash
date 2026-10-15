@@ -20,7 +20,7 @@ struct SessionRecord: Codable {
     var model: String?
     var tools: Int?        // tool calls this session
     var prompts: Int?      // prompts this session
-    var assistant: String? // "claude", "codex", "qwen", "gemini", "copilot" (nil = claude, from before Codex support)
+    var assistant: String? // "claude", "codex", "qwen", "gemini", "copilot", "pi" (nil = claude, from before Codex support)
     var client: String?    // where Claude Code runs: CLAUDE_CODE_ENTRYPOINT ("cli", "claude-desktop", "claude-vscode"…)
     var regenerated: Double? // a Doctor's last regeneration (its context compacted), for the golden flare
 }
@@ -103,7 +103,7 @@ struct SessionSnapshot {
     var live = true        // false = found in the process table but its hooks never fired
     var pid: Int32?        // the claude process, for jumping to its terminal
     var record: SessionRecord?   // everything the hooks know (nil for sessions without hooks)
-    var assistant = "claude"     // which AI runs this session: "claude", "codex", "qwen", "gemini" or "copilot"
+    var assistant = "claude"     // which AI runs this session: "claude", "codex", "qwen", "gemini", "copilot" or "pi"
     var stalled = false          // hooks say idle, but the process has been busy for a minute: not reporting
     var hookSilent = false       // started after our hooks were installed and ran a turn, yet never reported (e.g. Codex: not approved)
     var cwd: String?
@@ -199,6 +199,17 @@ enum StatusStore {
             if j["last_assistant_message"] == nil, let reply = j["prompt_response"] { j["last_assistant_message"] = reply }
             if (j["notification_type"] as? String) == "ToolPermission" { j["notification_type"] = "permission_prompt" }
         }
+        // pi's built-in tools, by the names and fields Claude Code uses for them.
+        if assistant == "pi" {
+            let names = ["bash": "Bash", "read": "Read", "write": "Write", "edit": "Edit", "grep": "Grep", "find": "Glob",
+                         "ls": "list_directory"]
+            if let t = j["tool_name"] as? String, let mapped = names[t] { j["tool_name"] = mapped }
+            if var input = j["tool_input"] as? [String: Any], input["file_path"] == nil, let path = input["path"],
+               ["Read", "Write", "Edit"].contains(j["tool_name"] as? String ?? "") {
+                input["file_path"] = path
+                j["tool_input"] = input
+            }
+        }
         return j
     }
 
@@ -273,6 +284,7 @@ enum StatusStore {
                 else if let m = (json["model"] as? [String: Any])?["id"] as? String { s.sessions[session]?.model = m }
             case "UserPromptSubmit":
                 set("thinking")
+                if let m = json["model"] as? String { s.sessions[session]?.model = m }   // pi can switch model mid-session
                 s.sessions[session]?.prompt = clip(json["prompt"], 240)
                 let promptsCount = (s.sessions[session]?.prompts ?? 0) + 1
                     s.sessions[session]?.prompts = promptsCount

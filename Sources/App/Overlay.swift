@@ -877,7 +877,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             if !playgroundAIs.isEmpty {
                 snap.assistant = playgroundAIs[i % playgroundAIs.count]
                 // a sample model name that matches the AI, for screenshots
-                let models = ["codex": "gpt-5-codex", "qwen": "qwen3-coder", "gemini": "gemini-3-pro", "copilot": "copilot-cli"]
+                let models = ["codex": "gpt-5-codex", "qwen": "qwen3-coder", "gemini": "gemini-3-pro", "copilot": "copilot-cli",
+                              "pi": "devstral-medium"]
                 if let m = models[snap.assistant] { snap.record?.model = m }
             }
             return snap
@@ -2845,6 +2846,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             try HookInstaller.install(ai)
             alert("\(display) hooks installed", name == "codex"
                   ? "Codex only runs new hooks after you trust them: run /hooks in Codex and approve them. Codex sessions that are already open pick them up after a restart."
+                  : name == "pi" ? "pi sessions that are already open pick it up after /reload (or a restart)."
                   : "\(display) sessions that are already open pick them up after a restart.")
         } catch { alert("Couldn't install \(display) hooks", error.localizedDescription) }
     }
