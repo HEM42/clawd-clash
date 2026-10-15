@@ -1,13 +1,65 @@
 import CoreGraphics
 import Foundation
 
-/// The trips between Clawd of the Rings places. There is only the one: the Eye.
+/// The trips between Clawd of the Rings places.
 enum RingsWipe: Int, CaseIterable {
-    case eye    // the old place sinks into embers, a lidless Eye of fire opens, and its pupil swallows the frame
+    case eye        // the old place sinks into embers, a lidless Eye of fire opens, and its pupil swallows the frame
+    case map        // the old place yellows into the map of Middle-earth; a dotted line walks from where the crew was to
+                    // where it's going, and the new place opens out of its end (RingsMapTrip.swift)
+    case redBook    // the old place becomes a page of the Red Book, which turns to the new place on the page behind,
+                    // its name in red letters at the top (RingsBookTrip.swift)
+    case eagles     // a Great Eagle swoops across and carries the view off to the new place (RingsEagleTrip.swift)
+    case ring       // the Ring goes on: the world turns wraith-grey and smeared, and clears on the new place
+                    // (RingsRingTrip.swift)
+    case beacons    // the beacons of Gondor light from peak to peak, and the last one's fire opens on the new place
+                    // (RingsBeaconTrip.swift)
+    case mirror     // the old place ripples into the silver basin of Gladriel's Mirror, and the new one surfaces
+                    // (RingsMirrorTrip.swift)
+    case fireworks  // one of Gandclawd's rockets bursts into a fiery dragon, and the new place shows in the sparks
+                    // (RingsFireworksTrip.swift)
+    case palantir   // the view clouds into a seeing-stone, a fiery glimpse, and clears on the new place
+                    // (RingsPalantirTrip.swift)
 
     var duration: Double {
         switch self {
         case .eye: return 1.4
+        case .map: return 2.4
+        case .redBook: return 2.0
+        case .eagles: return 2.2
+        case .ring: return 2.0
+        case .beacons: return 2.4
+        case .mirror: return 2.2
+        case .fireworks: return 2.2
+        case .palantir: return 2.0
+        }
+    }
+
+    /// Who makes it likelier (on stage when the crew moves on), as in Detective Clawds' trips.
+    var owners: [Cast] {
+        switch self {
+        case .eye: return [.villain(.sauron), .villain(.necromancer), .villain(.mouthOfSauron), .villain(.witchKing), .villain(.nazgul)]
+        case .map: return [.hero(.bilbo), .hero(.frodo), .hero(.sam), .hero(.strider)]
+        case .redBook: return [.hero(.bilbo), .hero(.frodo), .hero(.sam)]
+        case .eagles: return [.hero(.gandalf), .hero(.gandalfWhite), .hero(.frodo), .hero(.sam), .hero(.radagast)]
+        case .ring: return [.hero(.frodo), .hero(.bilbo), .villain(.gollum)]
+        case .beacons: return [.hero(.pippin), .hero(.gandalfWhite), .villain(.denethor), .hero(.theoden), .hero(.aragorn)]
+        case .mirror: return [.hero(.galadriel), .hero(.celeborn), .hero(.haldir)]
+        case .fireworks: return [.hero(.gandalf), .hero(.bilbo)]
+        case .palantir: return [.villain(.saruman), .villain(.denethor), .hero(.pippin), .hero(.aragorn)]
+        }
+    }
+
+    /// Where it's likelier to go.
+    var turf: [Location] {
+        switch self {
+        case .eye: return [.mountDoom, .blackGate, .dolGuldur]
+        case .map: return [.bagEnd, .rivendell]
+        case .redBook, .fireworks: return [.bagEnd, .greenDragon]
+        case .eagles: return [.mountDoom, .isengard]
+        case .ring: return [.bagEnd, .mountDoom]
+        case .beacons: return [.minasTirith, .edoras]
+        case .mirror: return [.lothlorien]
+        case .palantir: return [.isengard, .minasTirith]
         }
     }
 }
@@ -17,11 +69,21 @@ enum RingsWipe: Int, CaseIterable {
 /// an 800-pixel-tall frame.
 struct RingsTrip {
     let kind: RingsWipe
+    /// Where the crew was and where it's going: the map draws the journey between them.
+    var from: Location = .bagEnd, to: Location = .bagEnd
     var duration: Double { kind.duration }
 
-    /// Always the Eye, whoever's on screen and wherever it's going.
+    /// Any trip but the last one's kind, likelier with one of its owners on stage or going to its turf, from `from`
+    /// (the Shire, when it isn't known) to `place`.
     static func pick(after last: RingsWipe?, cast: [Cast], from: Location?, to place: Location) -> RingsTrip {
-        RingsTrip(kind: .eye)
+        let here = Set(cast)
+        var kinds: [RingsWipe] = []
+        for kind in RingsWipe.allCases where kind != last {
+            kinds.append(kind)
+            if kind.owners.contains(where: here.contains) { kinds += [kind, kind, kind] }
+            if kind.turf.contains(place) { kinds += [kind, kind] }
+        }
+        return RingsTrip(kind: kinds.randomElement() ?? .eye, from: from ?? .bagEnd, to: place)
     }
 
     // MARK: Drawing
@@ -37,6 +99,14 @@ struct RingsTrip {
         ctx.interpolationQuality = .none
         switch kind {
         case .eye: drawEye(ctx, old: old, new: new, k: k, in: r)
+        case .map: drawMap(ctx, old: old, new: new, k: k, in: r)
+        case .redBook: drawBook(ctx, old: old, new: new, k: k, in: r)
+        case .eagles: drawEagles(ctx, old: old, new: new, k: k, in: r)
+        case .ring: drawRing(ctx, old: old, new: new, k: k, in: r)
+        case .beacons: drawBeacons(ctx, old: old, new: new, k: k, in: r)
+        case .mirror: drawMirror(ctx, old: old, new: new, k: k, in: r)
+        case .fireworks: drawFireworks(ctx, old: old, new: new, k: k, in: r)
+        case .palantir: drawPalantir(ctx, old: old, new: new, k: k, in: r)
         }
     }
 
