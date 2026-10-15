@@ -141,6 +141,31 @@ struct FilesTrip {
         ctx.interpolationQuality = .none
         ctx.draw(img, in: r)
         ctx.restoreGState()
+        if kind == .montage { Self.truth(ctx, k: k, in: r) }
+    }
+
+    /// THE TRUTH IS OUT THERE, over the montage's racing clouds: drawn at full resolution in the typewriter face, not
+    /// on the pixel grid, where lettering this size breaks up.
+    private static func truth(_ ctx: CGContext, k: Double, in r: CGRect) {
+        let u = span(k, 0.66, 0.9)
+        let words = bump(u, 0.12, 0.3, 0.8, 0.95)
+        guard words > 0.01 else { return }
+        let size = r.height * 0.06
+        let font = FilesCaption.font(size)
+        let attrs: [NSAttributedString.Key: Any] = [
+            NSAttributedString.Key(kCTFontAttributeName as String): font,
+            NSAttributedString.Key(kCTForegroundColorAttributeName as String): rgb(0xF2F4EE, CGFloat(words)),
+            NSAttributedString.Key(kCTKernAttributeName as String): size * 0.12,
+        ]
+        let line = CTLineCreateWithAttributedString(NSAttributedString(string: "THE TRUTH IS OUT THERE", attributes: attrs))
+        let width = CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
+        ctx.saveGState()
+        ctx.setShouldAntialias(true)
+        ctx.setShadow(offset: .zero, blur: size * 0.5, color: rgb(0x000000, 0.7 * CGFloat(words)))
+        ctx.textMatrix = .identity
+        ctx.textPosition = CGPoint(x: r.midX - width / 2, y: r.minY + r.height * 0.46)
+        CTLineDraw(line, ctx)
+        ctx.restoreGState()
     }
 
     // MARK: Timing
@@ -525,15 +550,8 @@ struct FilesTrip {
         case 5:   // the hand, in red light
             lo.fill(0x060202)
             Self.hand(lo, reach: u)
-        case 6:   // time-lapse clouds, THE TRUTH IS OUT THERE
+        case 6:   // time-lapse clouds; THE TRUTH IS OUT THERE goes over them at full resolution (`truth`)
             Self.clouds(lo, t: k * 9)
-            let words = Self.bump(u, 0.12, 0.3, 0.8, 0.95)
-            if words > 0 {
-                let size = max(6, (h * 0.075).rounded())
-                let tw = lo.textWidth("THE TRUTH IS OUT THERE", size: size)
-                lo.text("THE TRUTH IS OUT THERE", size: size, at: CGPoint(x: (w - tw) / 2, y: h * 0.46), colour: 0xF2F4EE,
-                        alpha: CGFloat(words))
-            }
         default:   // the clouds part on the new place
             lo.image(new)
             guard let sky = Lo(lo.w, lo.h) else { break }

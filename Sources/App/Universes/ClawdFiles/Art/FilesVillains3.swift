@@ -135,10 +135,10 @@ func v23Compose(_ c: PixelCanvas, top: PixelCanvas, bottom: PixelCanvas, split: 
 func v23DrawScrawlyLook(_ c: PixelCanvas, _ p: Pose) {
     let coat = C(0xB08A5A), coatD = C(0x86683F), coatL = C(0xCCA672), suit = C(0x2E3442), shirt = C(0xE6E2DA)
     let hair = C(0xB4492E), hairL = C(0xD4643E), hairD = C(0x86321E)
-    if !seatedPose { c.rect(17, 38, 22, 4, coat); c.rect(17, 41, 22, 1, coatD); c.rect(28, 38, 1, 4, coatD) }
     drawLegs(c, Look(leg: suit), step: p.step)
     drawBoots(c, step: p.step, C(0x1A1A1E))
     c.oy += p.breathe
+    if !seatedPose { c.rect(17, 38, 22, 3, coat); c.rect(17, 40, 22, 1, coatD); c.rect(28, 38, 1, 3, coatD) }
     drawBody(c, Look(arm: coat))
     c.rect(18, 34, 20, 4, suit); c.rect(25, 34, 6, 2, shirt)
     c.rect(18, 33, 4, 5, coat); c.rect(34, 33, 4, 5, coat); c.rect(37, 33, 1, 5, coatD)
@@ -369,8 +369,8 @@ private func drawFacelessRebel(_ c: PixelCanvas, _ p: Pose) {
     // The coat, long to the ankles.
     drawLegs(c, Look(leg: C(0x2A221C)), step: p.step)
     drawBoots(c, step: p.step, C(0x14100C))
-    c.rect(17, 38, 22, seatedPose ? 1 : 4, coat); c.rect(28, 38, 1, seatedPose ? 1 : 4, coatD)
     c.oy += p.breathe
+    c.rect(17, 38, 22, seatedPose ? 1 : 3, coat); c.rect(28, 38, 1, seatedPose ? 1 : 3, coatD)
     drawBody(c, Look(arm: coat, eye: nil))
     c.rect(18, 33, 20, 5, coat); c.rect(37, 33, 1, 5, coatD); c.rect(27, 33, 1, 5, coatD)
     c.rect(18, 37, 20, 1, coatD)

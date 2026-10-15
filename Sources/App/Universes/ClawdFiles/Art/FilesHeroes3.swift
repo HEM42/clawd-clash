@@ -203,13 +203,11 @@ private func drawDeepClawt(_ c: PixelCanvas, _ p: Pose) {
     let shadow = sig.map { s -> Double in s < 0.15 ? s / 0.15 : s > 0.85 ? (1 - s) / 0.15 : 1 } ?? 0
     let offering = sig.map { $0 > 0.2 && $0 < 0.8 } ?? false
 
-    // The coat's tails, long, over the legs.
-    if !seatedPose {
-        c.rect(17, 38, 22, 4, coat); c.rect(17, 41, 22, 1, coatD); c.rect(28, 38, 1, 4, coatD)
-    }
     drawLegs(c, Look(leg: suit), step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
+    // The coat's tails, over the tops of the legs.
+    if !seatedPose { c.rect(17, 38, 22, 3, coat); c.rect(17, 40, 22, 1, coatD); c.rect(28, 38, 1, 3, coatD) }
     drawBody(c, Look(arm: coat))
     // The suit and tie under the open coat.
     c.rect(18, 33, 20, 5, coat); c.rect(23, 33, 10, 5, suit)

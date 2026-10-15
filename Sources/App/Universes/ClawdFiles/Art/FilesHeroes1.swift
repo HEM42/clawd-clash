@@ -58,10 +58,10 @@ private func drawFoxClawder(_ c: PixelCanvas, _ p: Pose) {
     let seeds = sig.map { $0 > 0.05 && $0 < 0.45 } ?? false
     let pointing = sig.map { $0 > 0.5 && $0 < 0.95 } ?? false
 
-    drawCoatTails(c, coat: coat, dark: coatD, length: 3)
     drawLegs(c, Look(leg: C(0x3A3C44)), step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
+    drawCoatTails(c, coat: coat, dark: coatD, length: 3)
     drawBody(c, Look(arm: coat))
     // The suit and its tie, the coat open over it.
     c.rect(18, 34, 20, 4, suit); c.rect(37, 34, 1, 4, C(0x52565E))
@@ -120,10 +120,10 @@ private func drawDanaScrawly(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
     let badge = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
-    drawCoatTails(c, coat: coat, dark: coatD, length: 4)
     drawLegs(c, Look(leg: suit), step: p.step)
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
+    drawCoatTails(c, coat: coat, dark: coatD, length: 3)
     drawBody(c, Look(arm: coat))
     // The suit, its open collar and the cross; the coat over it.
     c.rect(18, 34, 20, 4, suit); c.rect(37, 34, 1, 4, C(0x20242E))

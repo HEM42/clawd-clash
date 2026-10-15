@@ -59,11 +59,11 @@ private func drawMisterX(_ c: PixelCanvas, _ p: Pose) {
         for i in 0..<Int(second * 12) { c.px(56 - i, 16 + i * 14 / 12, tape); c.px(55 - i, 16 + i * 14 / 12, tape) }
     }
     // The coat's long tails over black trousers.
-    let tails = seatedPose ? 1 : 4
     drawLegs(c, Look(leg: C(0x18181C)), step: p.step)
     drawDressShoes(c, step: p.step)
-    c.rect(17, 38, 22, tails, coat); c.rect(17, 37 + tails, 22, 1, coatD); c.rect(28, 38, 1, tails, coatD)
     c.oy += p.breathe
+    let tails = seatedPose ? 1 : 3
+    c.rect(17, 38, 22, tails, coat); c.rect(17, 37 + tails, 22, 1, coatD); c.rect(28, 38, 1, tails, coatD)
     // A taller body: the head rises four rows above plain Clawd's.
     c.rect(18, 22, 20, 16, clawdOrange); c.rect(37, 22, 1, 16, clawdShade)
     c.rect(19, 22, 18, 1, C(0xC8664A))   // the shaved scalp catching the light
@@ -103,8 +103,8 @@ private func drawMarita(_ c: PixelCanvas, _ p: Pose) {
     // Legs below the skirt, dark heels.
     drawLegs(c, Look(leg: C(0xD8A890)), step: p.step)
     drawDressShoes(c, step: p.step, color: C(0x2A2028))
-    c.rect(17, 38, 22, seatedPose ? 1 : 2, suit); c.rect(17, seatedPose ? 38 : 39, 22, 1, suitD)
     c.oy += p.breathe
+    c.rect(17, 38, 22, seatedPose ? 1 : 2, suit); c.rect(17, seatedPose ? 38 : 39, 22, 1, suitD)
     drawBody(c, Look(arm: suit, eye: nil))
     // The eyes: straight ahead, or slid hard to the back as she glances over her shoulder.
     if glance { c.rect(19, 29, 2, 3, ink); c.rect(29, 29, 2, 3, ink) } else { c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink) }

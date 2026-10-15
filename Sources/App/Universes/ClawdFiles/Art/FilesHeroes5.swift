@@ -135,12 +135,12 @@ private func drawYvesHarlowe(_ c: PixelCanvas, _ p: Pose) {
 
     // The coat to below the knees, black boots.
     drawLegs(c, Look(leg: C(0x16161C)), step: p.step)
-    if !seatedPose {
-        c.rect(17, 38, 22, 4, coat); c.rect(17, 41, 22, 1, coatL); c.rect(28, 38, 1, 4, coatL)
-        c.rect(17, 38, 1, 4, coatL); c.rect(38, 38, 1, 4, coatD)   // the coat's edges, lit on one side
-    }
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
+    if !seatedPose {
+        c.rect(17, 38, 22, 3, coat); c.rect(17, 40, 22, 1, coatL); c.rect(28, 38, 1, 3, coatL)
+        c.rect(17, 38, 1, 3, coatL); c.rect(38, 38, 1, 3, coatD)   // the coat's edges, lit on one side
+    }
     drawBody(c, Look(arm: coat))
     // The coat buttoned up to a high collar, wide lapels picked out, a belt with a silver buckle.
     c.rect(18, 33, 20, 5, coat); c.rect(37, 33, 1, 5, coatD)
@@ -191,9 +191,9 @@ private func drawMelissaScrawly(_ c: PixelCanvas, _ p: Pose) {
     // The long hair behind her, down past the shoulders.
     c.rect(15, 30, 3, 9, hair); c.rect(38, 30, 3, 9, hair); c.px(15, 38, hairD); c.px(40, 38, hairD)
     drawLegs(c, Look(leg: C(0x8A6A4E)), step: p.step)
-    if !seatedPose { c.rect(17, 38, 22, 3, tunic); c.rect(17, 40, 22, 1, tunicD) }   // the tunic's hem, to the knee
     drawDressShoes(c, step: p.step, color: C(0x6A4A2E))
     c.oy += p.breathe
+    if !seatedPose { c.rect(17, 38, 22, 3, tunic); c.rect(17, 40, 22, 1, tunicD) }   // the tunic's hem, to the knee
     drawBody(c, Look(arm: tunic))
     c.rect(18, 33, 20, 5, tunic); c.rect(37, 33, 1, 5, tunicD); c.rect(18, 36, 20, 1, sash)
     c.px(27, 33, C(0x8A6A4E)); c.px(27, 34, crystal)   // the crystal on its cord
@@ -240,9 +240,9 @@ private func drawMargaretScrawly(_ c: PixelCanvas, _ p: Pose) {
     let hugging = sig.map { $0 > 0.12 && $0 < 0.88 } ?? false
 
     drawLegs(c, Look(leg: C(0x5A5048)), step: p.step)
-    if !seatedPose { c.rect(17, 38, 22, 2, C(0x6A5E54)) }   // a skirt to the knee
     drawDressShoes(c, step: p.step, color: C(0x4A3A2E))
     c.oy += p.breathe
+    if !seatedPose { c.rect(17, 38, 22, 2, C(0x6A5E54)) }   // a skirt to the knee
     drawBody(c, Look(arm: cardigan))
     c.rect(18, 33, 20, 5, cardigan); c.rect(37, 33, 1, 5, cardiganD); c.rect(18, 37, 20, 1, cardiganD)
     c.rect(24, 33, 8, 5, blouse); for y in [34, 36] { c.px(23, y, C(0xD8D0B8)) }
@@ -291,9 +291,9 @@ private func drawTeenaClawder(_ c: PixelCanvas, _ p: Pose) {
     let guarded = sig.map { $0 > 0.1 && $0 < 0.92 } ?? false
 
     drawLegs(c, Look(leg: C(0x6A6A70)), step: p.step)
-    if !seatedPose { c.rect(17, 38, 22, 2, C(0x5A5A62)) }
     drawDressShoes(c, step: p.step)
     c.oy += p.breathe
+    if !seatedPose { c.rect(17, 38, 22, 2, C(0x5A5A62)) }
     drawBody(c, Look(arm: twin, eye: guarded ? nil : ink))
     if guarded {   // the eyes slid to one side, not meeting yours
         c.rect(20, 30, 2, 2, ink); c.rect(30, 30, 2, 2, ink)

@@ -411,11 +411,11 @@ private func drawVirgilIncanto(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
     let offering = sig.map { $0 > 0.08 && $0 < 0.92 } ?? false
 
-    // The coat's long tails behind the legs.
-    if !seatedPose { c.rect(17, 36, 22, 5, coat); c.rect(28, 37, 1, 4, coatL) }
     drawLegs(c, Look(leg: coat), step: p.step)
     drawDressShoes(c, step: p.step, color: C(0x0A0A0C))
     c.oy += p.breathe
+    // The coat's tails, over the tops of the legs.
+    if !seatedPose { c.rect(17, 38, 22, 3, coat); c.rect(28, 38, 1, 3, coatL) }
     drawBody(c, Look(arm: coat, eye: nil))
     // The turtleneck up to the chin, the coat open over it.
     c.rect(18, 33, 20, 5, coat); c.rect(24, 33, 8, 5, turtle); c.rect(18, 37, 20, 1, coatL)
