@@ -2,10 +2,12 @@ import AppKit
 import AVFoundation
 
 // The comic-book transitions between places, rendered as short clips and a sheet of key frames: Marvel's (`ComicWipe`)
-// or, between two DC places, DC's (`DCComicWipe`), or between two Doctor Clawd places, its trips (`DoctorWipe`).
+// or, between two DC places, DC's (`DCComicWipe`), or between two Doctor Clawd places, its trips (`DoctorWipe`), or
+// between two Clawd Files places, its own (`FilesWipe`), each clip ending on the typed caption.
 //   Tools/Transitions/build.sh && build/transitions <out folder> [from place] [to place]
 //   build/transitions build/transitions-dc watchtower gotham     DC's fifteen
 //   build/transitions build/transitions-doctor consoleRoom skarro   Doctor Clawd's ten
+//   build/transitions build/transitions-files xFilesOffice area51    The Clawd Files' ten
 
 let args = Array(CommandLine.arguments.dropFirst())
 let outDir = args.first ?? "build/transitions"
@@ -13,7 +15,9 @@ let from = Location(rawValue: args.count > 1 ? args[1] : "avengersTower") ?? .av
 let to = Location(rawValue: args.count > 2 ? args[2] : "wakanda") ?? .wakanda
 try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
 
-let W = 1280, H = 800, P = 4                          // output size, screen pixels per art pixel
+// Output size and screen pixels per art pixel; W=960 H=224 renders at about the window's scene strip.
+let env = ProcessInfo.processInfo.environment
+let W = Int(env["W"] ?? "") ?? 1280, H = Int(env["H"] ?? "") ?? 800, P = 4
 let fps = 30.0
 
 /// A place as the screen saver shows it: the still picture plus its moving layer, scaled up crisp.
@@ -60,6 +64,30 @@ func shownDoctor(_ kind: DoctorWipe) -> Transition {
     }
 }
 
+/// The Clawd Files' trips (`FilesTrip`), every one of them.
+func shownFiles(_ kind: FilesWipe) -> Transition {
+    let trip = FilesTrip(kind: kind, from: from, to: to)
+    return Transition(key: "\(kind.rawValue + 1)-\(kind)", title: "\(kind)", duration: kind.duration) { ctx, old, new, k in
+        trip.draw(ctx, old: old, new: new, k: k, in: full)
+    }
+}
+
+/// The Clawd Files' caption, typed in top left `t` seconds after the trip.
+func caption(_ ctx: CGContext, t: Double) {
+    let lines = FilesCaption.typed(to, after: t)
+    let gc = NSGraphicsContext(cgContext: ctx, flipped: false)
+    NSGraphicsContext.saveGraphicsState(); NSGraphicsContext.current = gc
+    var y = CGFloat(H) - 40
+    for (i, line) in lines.enumerated() {
+        let str = NSAttributedString(string: line, attributes: [.font: FilesCaption.font(i == 0 ? 26 : 17),
+                                                                 .foregroundColor: NSColor(white: 0.92, alpha: 1)])
+        y -= str.size().height
+        str.draw(at: NSPoint(x: 40, y: y))
+        y -= 4
+    }
+    NSGraphicsContext.restoreGraphicsState()
+}
+
 let marvel: [Transition] = [
     shown(.halftone, "1-halftone", "Halftone dots"),
     shown(.burst, "2-burst-kapow", "KAPOW! (nobody in particular)"),
@@ -78,7 +106,8 @@ let marvel: [Transition] = [
 /// ONLY="1,4,12" renders just those (by number or name).
 let only = ProcessInfo.processInfo.environment["ONLY"]?.split(separator: ",").map(String.init)
 let transitions: [Transition] = (to.universe == .dc ? DCComicWipe.allCases.map(shownDC)
-                                  : to.universe == .doctor ? DoctorWipe.allCases.map(shownDoctor) : marvel).filter { tr in
+                                  : to.universe == .doctor ? DoctorWipe.allCases.map(shownDoctor)
+                                  : to.universe == .clawdFiles ? FilesWipe.allCases.map(shownFiles) : marvel).filter { tr in
     only.map { $0.contains { tr.key.hasPrefix("\($0)-") || tr.key.hasSuffix("-\($0)") } } ?? true
 }
 
@@ -89,7 +118,8 @@ func frameContext() -> CGContext {
               bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)!
 }
 
-/// A clip: the old place for 0.6 s, the transition, the new place for 0.8 s.
+/// A clip: the old place for 0.6 s, the transition, the new place for 0.8 s (2.6 s, typing its caption, in The Clawd
+/// Files).
 func clip(_ tr: Transition) {
     let url = URL(fileURLWithPath: "\(outDir)/\(tr.key).mp4")
     try? FileManager.default.removeItem(at: url)
@@ -101,7 +131,7 @@ func clip(_ tr: Transition) {
         kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA, kCVPixelBufferWidthKey as String: W,
         kCVPixelBufferHeightKey as String: H])
     writer.add(input); writer.startWriting(); writer.startSession(atSourceTime: .zero)
-    let lead = 0.6, tail = 0.8
+    let lead = 0.6, tail = to.universe == .clawdFiles ? 2.6 : 0.8
     let total = lead + tr.duration + tail
     let frames = Int(total * fps)
     for f in 0..<frames {
@@ -110,7 +140,10 @@ func clip(_ tr: Transition) {
         ctx.interpolationQuality = .none
         let old = placeImage(from, t: t), new = placeImage(to, t: t)
         if t < lead { ctx.draw(old, in: full) }
-        else if t > lead + tr.duration { ctx.draw(new, in: full) }
+        else if t > lead + tr.duration {
+            ctx.draw(new, in: full)
+            if to.universe == .clawdFiles { caption(ctx, t: t - lead - tr.duration) }
+        }
         else { tr.draw(ctx, old, new, (t - lead) / tr.duration) }
         let img = ctx.makeImage()!
         var pb: CVPixelBuffer?
@@ -134,7 +167,7 @@ func clip(_ tr: Transition) {
 /// One sheet: a row per transition, five moments through it.
 func sheet() {
     let moments = [0.15, 0.35, 0.5, 0.65, 0.85]
-    let cw = 320, chh = 200, label = 34
+    let cw = 320, chh = 320 * H / W, label = 34
     let ctx = CGContext(data: nil, width: cw * moments.count, height: (chh + label) * transitions.count,
                         bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
                         bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)!

@@ -1,17 +1,18 @@
 # The Clawd Files: handoff
 
 Everything needed to pick up work on the fifth universe, **The Clawd Files** (an X-Files parody), in a new session.
-Written 2026-10-15 at the end of phase 4. **Delete this file before the branch is merged into `main`.**
+Written 2026-10-15 at the end of phase 4, updated at the end of phase 5. **Delete this file before the branch is merged into `main`.**
 
 ## Where things stand
 
 - **Branch:** `x-files`, off `main` after the 3.2.0 release. Local only: **not pushed**, unless the user has since
   agreed to push it.
-- **Done:** phases 1–4.
+- **Done:** phases 1–5.
   - **Phase 1:** the skeleton.
   - **Phase 2:** the core ensemble.
   - **Phase 3:** the full cast of 82 characters and all 20 places.
   - **Phase 4:** rides, missing time, bespoke drills.
+  - **Phase 5:** the ten transitions and the typed captions.
 - **Commits on the branch,** newest first:
   - `cc1f774` phase 4: rides, missing time, drills
   - `1d2d3da` phase 3: full cast and all places
@@ -19,7 +20,7 @@ Written 2026-10-15 at the end of phase 4. **Delete this file before the branch i
   - `bd39438` phase 2
   - `53a6945` phase 2 groundwork
   - `820025f` phase 1 skeleton
-- **Next:** phase 5, the transitions. Then phase 6 (docs, icon, trailer, release prep), then the polish pass.
+- **Next:** phase 6 (docs, icon, trailer, release prep), then the polish pass.
 - **Installed app:** the user's Mac runs Clawd Clash **3.2.0** from `/Applications`. That's the `main` build, without
   The Clawd Files.
 - **CHANGELOG.md** has an `## Unreleased` section describing The Clawd Files as it stands. Keep it up to date in each
@@ -151,7 +152,31 @@ Phases 2 and 3 were drawn by parallel `fork` helpers, one file each, `isolation:
   - `SaverView.swift`: the Options choice and the trip switch.
   - `Tools/Preview`: batches and lookups.
 
-## Phase 5: transitions (next)
+## Phase 5: transitions (done)
+
+**As built:**
+- `FilesWipes.swift`: `FilesWipe` (the ten, with owners, turf and `isRare` for the montage, which is offered 30% of
+  the time), `FilesTrip` (carries `from`/`to` for the satellite), `FilesMap` (rough lat/long per place),
+  `FilesCaption` (the city line per place, the typing, the typewriter font).
+- Every frame is put together at one cell per art pixel in a private `Lo` frame (Core Graphics without antialiasing,
+  plus pixel ops: grade, green, grain, tear, warp, dither, the map) and scaled up crisp. The cell size comes from the
+  old picture's size, so it matches the art in the window, the screen saver and the tools.
+- `ComicTransition.pick` takes an optional `from:`; the window's place change and the screen saver pass it.
+- The typed caption: `HeaderView` (window title bar, one line joined with " · ", redrawing itself every 0.05 s while
+  it types; starts when `SceneView.wipeEnds` / `ClawdWindow.switchEnds` say the transition's over) and the screen
+  saver's HUD (`caption`, two lines in the typewriter face via `text(…, typed: 2)`).
+- `Tools/Transitions`: the Clawd Files branch, clips end on the typed caption, and `W`/`H` env vars render at another
+  size (`W=960 H=224` is about the window's scene strip).
+- **The trailer's title sequence** is `FilesWipe.montage` (6 s): `FilesTrip(kind: .montage, from:, to:)`.
+- The Antarctic's saucer is in the moving layer, but the window and the screen saver flatten the live layer into the
+  frozen picture, so the transitions do show it.
+
+**Weak spots in phase 5** (for the polish pass): at the window's size the lettering (TOP SECRET, the satellite's
+readout, REC) is only a few pixels tall; the satellite's map is noise, not real coastlines; the smoke's office tower
+is a plain block; the montage's corridor ghost is the Colonist as a white silhouette, which is small at window size.
+The screen saver's typed caption was checked by building, not by watching it run.
+
+**The brief, as given:**
 
 Model them on Doctor Clawd:
 - **Reference files:** `Sources/App/Universes/DoctorClawd/DoctorWipes.swift` (`DoctorTrip`/`DoctorWipe`: kinds,
@@ -280,7 +305,6 @@ read at pixel scale).
 - **Bellefleur Woods:** the screen saver's upper half is mostly empty sky. That was intended, to leave room for the
   clock.
 - **The Antarctic:**
-  - The saucer is in the moving layer, so the transitions' still snapshots won't show it. Phase 5 should check this.
   - The ice ridges are simple flat-topped shapes.
 - **The bee domes and Ruskin Dam:** plain starry skies on the screen saver.
 - **Ruskin Dam:** the fire is small in the window.

@@ -51,6 +51,8 @@ final class ClawdClashSaverView: ScreenSaverView {
     /// new, into `comicLayer`.
     private let comicLayer = CALayer()
     private var comic: (trip: ComicTransition, start: Double, old: CGImage)?
+    /// The Clawd Files' typed caption: the place, and when it starts typing (once any transition there is over).
+    private var caption: (location: Location, start: Double)?
     private var lastComic: ComicTransition?
     /// With Clawd Clash not running: a made-up crew, cast for `demoPlace` (a local or two among them), off somewhere
     /// new every `demoEvery`.
@@ -253,7 +255,7 @@ final class ClawdClashSaverView: ScreenSaverView {
         if let room {
             let liveNow = liveLayer.contents.flatMap { CFGetTypeID($0 as CFTypeRef) == CGImage.typeID ? ($0 as! CGImage) : nil }
             if let frozen = Wipe.flatten([room.image] + (liveNow.map { [$0] } ?? [])),
-               let trip = ComicTransition.pick(after: lastComic, cast: onStage, to: next) {
+               let trip = ComicTransition.pick(after: lastComic, cast: onStage, from: here, to: next) {
                 lastComic = trip
                 wipe = nil
                 wipeLayer.isHidden = true
@@ -867,10 +869,20 @@ final class ClawdClashSaverView: ScreenSaverView {
         var counts = ["\(sessions.count) SESSION\(sessions.count == 1 ? "" : "S")"]
         if agents > 0 { counts.append("\(agents) AGENT\(agents == 1 ? "" : "S")") }
         if waiting > 0 { counts.append("\(waiting) NEED\(waiting == 1 ? "S" : "") YOU") }
-        let place = text([(location.name.uppercased(), inWindow ? 27 : 18, .heavy, NSColor(white: 0.88, alpha: 1), inWindow ? 6 : 4),
+        // In The Clawd Files the place types itself in, with where it is under it, as every scene opens in the show.
+        var name: [(String, CGFloat, NSFont.Weight, NSColor, CGFloat)] = [
+            (location.name.uppercased(), inWindow ? 27 : 18, .heavy, NSColor(white: 0.88, alpha: 1), inWindow ? 6 : 4)]
+        if location.universe == .clawdFiles {
+            let arrives = max(now, comic.map { $0.start + $0.trip.duration } ?? 0, wipe.map { $0.start + Wipe.duration } ?? 0)
+            if caption?.location != location { caption = (location, arrives) }
+            let typed = FilesCaption.typed(location, after: now - (caption?.start ?? now))
+            name = [(typed.first ?? " ", inWindow ? 27 : 18, .heavy, NSColor(white: 0.9, alpha: 1), inWindow ? 3 : 2),
+                    (typed.count > 1 ? typed[1] : " ", inWindow ? 17 : 12, .heavy, NSColor(white: 0.8, alpha: 1), inWindow ? 2 : 1)]
+        }
+        let place = text(name + [
                           (idle ? "NO AI SESSIONS RUNNING  ·  THE LOCALS ARE HOLDING THE FORT"
                                 : feed == nil ? "" : counts.joined(separator: "  ·  "), 14, .semibold, NSColor(white: 0.65, alpha: 1), 2)],
-                         right: shifted)
+                         right: shifted, typed: location.universe == .clawdFiles ? 2 : 0)
         let ps = sized(place)
         if !isPreview {
             items.append(Item(image: place, rect: rectFor(place, x: shifted ? bounds.width - m - ps.width : m, top: bounds.height - m * 0.9),
@@ -983,13 +995,15 @@ final class ClawdClashSaverView: ScreenSaverView {
 
     /// Lines of text stacked top to bottom: (string, size, weight, colour, kern).
     private func text(_ lines: [(String, CGFloat, NSFont.Weight, NSColor, CGFloat)], font: NSFont? = nil,
-                      second: (String, CGFloat, NSFont.Weight, NSColor, CGFloat)? = nil, right: Bool = false) -> CGImage {
+                      second: (String, CGFloat, NSFont.Weight, NSColor, CGFloat)? = nil, right: Bool = false, typed: Int = 0) -> CGImage {
         let all = lines + (second.map { [$0] } ?? [])
-        let key = "text" + all.map { $0.0 }.joined(separator: "\u{1}") + "\(u)\(scale)\(right)"
+        let key = "text" + all.map { $0.0 }.joined(separator: "\u{1}") + "\(u)\(scale)\(right)\(typed)"
         if let hit = textCache[key] { return hit }
+        // The first `typed` lines in The Clawd Files' typewriter face.
         let texts = all.enumerated().filter { !$0.element.0.isEmpty }.map { i, l in
             NSAttributedString(string: l.0, attributes: [
-                .font: i == 0 && font != nil ? font! : NSFont.monospacedSystemFont(ofSize: l.1 * u, weight: l.2),
+                .font: i == 0 && font != nil ? font! : i < typed ? FilesCaption.font(l.1 * u)
+                    : NSFont.monospacedSystemFont(ofSize: l.1 * u, weight: l.2),
                 .foregroundColor: l.3, .kern: l.4 * u])
         }
         let w = texts.map { $0.size().width }.max() ?? 1, gap = 6 * u
