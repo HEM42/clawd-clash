@@ -10,7 +10,7 @@ let clawdbergHeroes3: [ClawdbergHero: Persona] = [
     .kateBeringer: Persona(name: "Kate Beringer", weapon: .blaster,
                            shot: .energy(core: C(0xFFFFFF), glow: C(0xFFF2A0)), muzzle: (46, 30), headTop: 21,
                            signature: 2.8, draw: drawKateBeringer),
-    .gizmoe: Persona(name: "Gizmoe", weapon: .blaster, shot: .arrow, muzzle: (48, 34), headTop: 24, signature: 3.2,
+    .gizmoe: Persona(name: "Gizmoe", weapon: .blaster, shot: .arrow, muzzle: (48, 34), headTop: 22, signature: 3.2,
                      callout: "Bright light!", draw: drawGizmoe),
     .randPeltclawd: Persona(name: "Rand Peltclawd", weapon: .blaster,
                             shot: .beam(core: C(0xFFD27A), glow: C(0xFF8A1A)), muzzle: (49, 32), headTop: 19,
@@ -162,7 +162,7 @@ private func drawKateBeringer(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Gizmoe
 
-/// Gizmoe: Clawd in a small mogwai suit, shorter than the rest: a brown back and crown, a white face and tummy, big
+/// Gizmoe: Clawd in a mogwai suit with a big round head: a brown crown and sides, a cream face and tummy, big
 /// dark eyes with a glint, a pink nose, and huge leaf-shaped ears with pink insides out to either side; the red
 /// headband from his Rambo days tied round his head, its tails flying. He fights with a little bow and a flaming
 /// arrow. Signature: he hums his little song, eyes closed, ears swaying, notes floating up.
@@ -182,11 +182,20 @@ private func drawGizmoe(_ c: PixelCanvas, _ p: Pose) {
     }
     c.oy += p.breathe
     let shooting = p.fire != nil || p.ready || p.gunLift > 0
-    // The body, a few rows shorter than Clawd's: brown back and crown, white face and tummy.
-    c.rect(18, 29, 20, 9, cream)
-    c.rect(18, 29, 20, 2, fur); c.rect(18, 29, 3, 9, fur); c.rect(25, 31, 6, 1, fur)
-    c.rect(36, 31, 2, 4, fur); c.rect(18, 37, 20, 1, creamD); c.rect(37, 29, 1, 9, furD)
-    c.rect(21, 35, 2, 2, furD)
+    // A round mogwai head on the body: a brown crown and sides, the cream face and tummy, a brown patch in the middle
+    // of the brow.
+    c.pattern(18, 22, [
+        "....FFFFFFFFFFFF....",
+        "..FFFFFFFFFFFFFFFF..",
+        ".FFFFFFFFFFFFFFFFFF.",
+        "FFFFFFFFCFFCFFFFFFFF",
+        "FFFFCCCCCFFCCCCCFFFD",
+        "FFCCCCCCCCCCCCCCCCFD",
+    ], ["F": fur, "C": cream, "D": furD])
+    c.rect(18, 28, 20, 10, cream)
+    c.rect(18, 28, 2, 10, fur); c.rect(36, 28, 1, 10, fur); c.rect(37, 28, 1, 10, furD)
+    c.rect(18, 37, 20, 1, creamD)
+    c.rect(26, 23, 4, 4, furD)
     // The ears: big leaves out to either side, swaying while he hums.
     let sway = humming ? (sin(p.t * 5) > 0 ? 1 : -1) : 0
     let earL = [
@@ -197,22 +206,24 @@ private func drawGizmoe(_ c: PixelCanvas, _ p: Pose) {
         "...EEEEEEE",
         ".....EEEE.",
     ], earR = earL.map { String($0.reversed()) }
-    c.pattern(8, 28 + sway, earL, ["E": fur, "p": pink])
-    c.pattern(38, 28 - sway, earR, ["E": fur, "p": pink])
-    // Eyes, nose and mouth.
+    c.pattern(8, 24 + sway, earL, ["E": fur, "p": pink])
+    c.pattern(38, 24 - sway, earR, ["E": fur, "p": pink])
+    // Big round dark eyes with a glint, the pink nose and a little smile.
     if humming {
-        c.rect(22, 32, 3, 1, ink); c.rect(31, 32, 3, 1, ink)
-        c.rect(27, 35, 2, 1, C(0x8A3A3A))
+        c.rect(21, 30, 4, 1, ink); c.rect(31, 30, 4, 1, ink)
+        c.rect(27, 34, 2, 1, C(0x8A3A3A))
     } else {
-        c.rect(22, 31, 3, 3, ink); c.rect(31, 31, 3, 3, ink)
-        c.px(22, 31, white); c.px(31, 31, white)
-        c.pattern(26, 35, ["M..M", ".MM."], ["M": C(0x8A3A3A)])
+        for ex in [21, 31] {
+            c.pattern(ex, 28, [".KK.", "KKKK", "KKKK", ".KK."], ["K": C(0x1A1210)])
+            c.px(ex + 1, 29, white)
+        }
+        c.pattern(26, 34, ["M..M", ".MM."], ["M": C(0x8A3A3A)])
     }
-    c.rect(27, 34, 2, 1, pink)
-    // The red headband round his crown, its tails flying out behind.
-    c.rect(18, 29, 20, 1, band)
+    c.rect(27, 32, 2, 1, pink)
+    // The red headband tied round his brow, its tails flying out behind.
+    c.rect(18, 26, 20, 1, band)
     let flap = Int(p.t * 6) % 2
-    c.pattern(13, 29, ["BBBBB", flap == 0 ? "BB..." : ".BB..", flap == 0 ? "...B." : "B...."], ["B": band])
+    c.pattern(13, 26, ["BBBBB", flap == 0 ? "BB..." : ".BB..", flap == 0 ? "...B." : "B...."], ["B": band])
     c.rect(15, 33, 3, 3, cream)
 
     if humming {
