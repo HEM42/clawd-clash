@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Resources/AppIcon.png" width="180" alt="Clawd Clash icon: a comic cover in three panels, one per universe, with CLAWD CLASH across them, Spider-Clawd hanging on his web, Darth Vapor raising his saber, a Dalick from Doctor Clawd under the name and Batclawd under the Night Beacon">
+  <img src="Resources/AppIcon.png" width="180" alt="Clawd Clash icon: a comic cover in three panels with CLAWD CLASH across them, Spider-Clawd hanging on his web, The Clawd Files' flying saucer over the name, Darth Vapor raising his saber, a Dalick from Doctor Clawd under the name and Batclawd under the Night Beacon">
 </p>
 
 <h1 align="center">Clawd Clash</h1>

@@ -3,8 +3,9 @@ import CoreText
 
 // Renders Resources/AppIcon.png (1024²): a comic cover in three slanted panels, one per universe (Star Wars, Marvel,
 // DC), with CLAWD CLASH across all three, each panel colouring its part of the name and the gutters cutting through
-// the letters. Spider-Man hangs on his web over the name, Darth Vader raises his saber, Doctor Clawd's Dalick sits in the
-// middle panel under the name and Batman squares up under the Bat-Signal, all drawn with the app's own sprite code. build.sh turns it into AppIcon.icns.
+// the letters. Spider-Man hangs on his web over the name, The Clawd Files' saucer hovers in the Star Wars sky, Darth
+// Vader raises his saber, Doctor Clawd's Dalick sits in the middle panel under the name and Batman squares up under the
+// Bat-Signal, all drawn with the app's own sprite code. build.sh turns it into AppIcon.icns.
 //   swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
 //          Sources/App/Universes/**/*.swift Sources/Shared/*.swift Tools/MakeIcon/main.swift -o build/makeicon \
 //          && build/makeicon Resources/AppIcon.png
@@ -189,6 +190,13 @@ ctx.addPath(saber); ctx.setStrokeColor(hex(0xFF2A2A)); ctx.setLineWidth(22); ctx
 ctx.setShadow(offset: .zero, blur: 0, color: nil)
 ctx.addPath(saber); ctx.setStrokeColor(hex(0xFFFFFF)); ctx.setLineWidth(9); ctx.strokePath()
 ctx.restoreGState()
+
+// The Clawd Files' saucer in the Star Wars panel's sky, over the name, its pale beam on the C.
+let saucerCanvas = PixelCanvas(66, 29)
+drawSaucer(saucerCanvas, ramp: 0.7, engines: true)
+saucerCanvas.addOutline(C(0xFFFFFF, 0.92))
+let sp: CGFloat = 3.6
+ctx.draw(saucerCanvas.makeImage()!, in: CGRect(x: 268 - 33 * sp, y: 868 - 29 * sp, width: 66 * sp, height: 29 * sp))
 
 // A Dalick from Doctor Clawd in the middle panel, under the name, its gun on Batman.
 put(.villain(DoctorVillain.dalick), t: 0.3, x: 462, feet: 112, p: 6.2)
