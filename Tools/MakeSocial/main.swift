@@ -1,11 +1,12 @@
 import AppKit
 import CoreText
 
-// Renders docs/social-preview.png (1280×640, GitHub → Settings → Social preview): a comic cover in three slanted
-// panels, one per universe, each with a fight in full swing, drawn with the app's own sprite and fight-effect code:
-// Luke and Vader's sabers locked under the stars, Thor and Loki trading lightning and magic, Batman against the
-// Joker under the Night Beacon. CLAWD CLASH runs across all three, coloured by the panel each part is in, with a sound
-// effect in each panel and the tagline in a caption box.
+// Renders docs/social-preview.png (1280×640, GitHub → Settings → Social preview): a comic cover in slanted panels,
+// one per universe, each with a fight in full swing, drawn with the app's own sprite and fight-effect code: Luke and
+// Vader's sabers locked under the stars, Thor and Loki trading lightning and magic, Batman against the Joker, Doctor
+// Ten's sonic on a Dalick in the time vortex's blue, Fox Clawder against the Grey in the woods at night. CLAWD CLASH
+// runs across them all, coloured by the panel each part is in, with a sound effect in each panel and the tagline in a
+// caption box. A new universe adds a panel: a cut, a centre, a sky, a floor, a fight, a sound and a face.
 //   swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
 //          Sources/App/Universes/**/*.swift Sources/Shared/*.swift Tools/MakeSocial/main.swift -o build/makesocial \
 //          && build/makesocial docs/social-preview.png
@@ -27,8 +28,9 @@ let inkColor = hex(0x111018)
 // MARK: The panels
 
 /// Where the gutters cross the bottom and top edges, and how far they lean.
-let cuts: [CGFloat] = [-200, 440, 860, 1500], tilt: CGFloat = 60
-/// Panel `i` (0 Star Wars, 1 Marvel, 2 DC).
+let cuts: [CGFloat] = [-200, 296, 552, 808, 1064, 1500], tilt: CGFloat = 60
+let panels = cuts.count - 1
+/// Panel `i` (0 Star Wars, 1 Marvel, 2 DC, 3 Doctor Clawd, 4 The Clawd Files).
 func panel(_ i: Int) -> CGPath {
     let p = CGMutablePath()
     p.addLines(between: [CGPoint(x: cuts[i] - tilt, y: 0), CGPoint(x: cuts[i + 1] - tilt, y: 0),
@@ -37,7 +39,7 @@ func panel(_ i: Int) -> CGPath {
     return p
 }
 /// Each panel's middle, along the ground.
-let centres: [CGFloat] = [205, 645, 1065]
+let centres: [CGFloat] = [138, 384, 640, 896, 1150]
 
 func halftone(_ r: CGRect, color: CGColor, cell: CGFloat, dot: (CGPoint) -> CGFloat) {
     var y = r.minY, row = 0
@@ -54,9 +56,10 @@ func halftone(_ r: CGRect, color: CGColor, cell: CGFloat, dot: (CGPoint) -> CGFl
 }
 
 let ground: CGFloat = 108          // where the fighters stand
-let skies: [(UInt32, UInt32)] = [(0x7A0E1E, 0x14050C), (0xC21E2E, 0x0E2A6E), (0x2E4482, 0x0A1028)]
-let floors: [UInt32] = [0x22141C, 0x16203E, 0x121A30]
-for i in 0..<3 {
+let skies: [(UInt32, UInt32)] = [(0x7A0E1E, 0x14050C), (0xC21E2E, 0x0E2A6E), (0x2E4482, 0x0A1028), (0x2A4AC8, 0x0A0A2E),
+                                 (0x2A5A44, 0x050A08)]
+let floors: [UInt32] = [0x22141C, 0x16203E, 0x121A30, 0x141A3A, 0x0E1A14]
+for i in 0..<panels {
     ctx.saveGState()
     ctx.addPath(panel(i)); ctx.clip()
     let sky = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [hex(skies[i].0), hex(skies[i].1)] as CFArray, locations: [0, 1])!
@@ -72,21 +75,26 @@ for i in 0..<3 {
     }
     ctx.setFillColor(hex(0xFFFFFF, 0.06)); ctx.fillPath()
     halftone(CGRect(x: 0, y: 0, width: W, height: H), color: hex(0x000000, 0.2), cell: 14) { p in 0.15 + 0.45 * (1 - p.y / H) }
-    if i == 0 {
+    if i == 0 || i == 4 {
         for s in 0..<60 {   // pixel stars
             let big = rnd(7 + s * 3 + 2) > 0.85, d: CGFloat = big ? 6 : 3
-            let x = rnd(7 + s * 3) * W * 0.45, y = 250 + rnd(7 + s * 3 + 1) * (H - 250)
+            let x = (i == 0 ? 0 : W * 0.75) + rnd(7 + s * 3 + i) * W * 0.3, y = 250 + rnd(7 + s * 3 + 1) * (H - 250)
             ctx.setFillColor(hex(0xFFFFFF, big ? 0.95 : 0.55))
             ctx.fill(CGRect(x: (x / d).rounded() * d, y: (y / d).rounded() * d, width: d, height: d))
         }
     }
     if i == 2 {
-        let signal = CGPoint(x: 1192, y: 392)   // under the name, over the fight
-        ctx.setFillColor(hex(0xFFE36B, 0.18))
-        ctx.move(to: CGPoint(x: 1240, y: 0)); ctx.addLine(to: CGPoint(x: signal.x - 58, y: signal.y)); ctx.addLine(to: CGPoint(x: signal.x + 58, y: signal.y))
+        let signal = CGPoint(x: 700, y: 410)   // high in the sky, under the name
+        ctx.setFillColor(hex(0xFFE36B, 0.14))
+        ctx.move(to: CGPoint(x: 740, y: 0)); ctx.addLine(to: CGPoint(x: signal.x - 36, y: signal.y)); ctx.addLine(to: CGPoint(x: signal.x + 36, y: signal.y))
         ctx.closePath(); ctx.fillPath()
-        ctx.setFillColor(hex(0xFFE36B, 0.92)); ctx.fillEllipse(in: CGRect(x: signal.x - 58, y: signal.y - 40, width: 116, height: 80))
-        ctx.addPath(cowlMaskPath(signal, width: 92)); ctx.setFillColor(inkColor); ctx.fillPath(using: .evenOdd)
+        ctx.setFillColor(hex(0xFFE36B, 0.92)); ctx.fillEllipse(in: CGRect(x: signal.x - 36, y: signal.y - 25, width: 72, height: 50))
+        ctx.addPath(cowlMaskPath(signal, width: 57)); ctx.setFillColor(inkColor); ctx.fillPath(using: .evenOdd)
+    }
+    if i == 4 {   // a saucer's beam slanting down through the trees
+        ctx.setFillColor(hex(0xC8FFE0, 0.12))
+        ctx.move(to: CGPoint(x: 1120, y: 440)); ctx.addLine(to: CGPoint(x: 1180, y: 440))
+        ctx.addLine(to: CGPoint(x: 1260, y: ground)); ctx.addLine(to: CGPoint(x: 1040, y: ground)); ctx.closePath(); ctx.fillPath()
     }
     // The ground each fight stands on.
     ctx.setFillColor(hex(floors[i])); ctx.fill(CGRect(x: 0, y: 0, width: W, height: ground))
@@ -121,10 +129,12 @@ func fight(_ left: Cast, _ right: Cast, centre: CGFloat, dist: Double, p: CGFloa
     ctx.draw(fx.makeImage()!, in: CGRect(x: lx - CGFloat(margin) * p, y: ground - 8 * p, width: CGFloat(fx.w) * p, height: CGFloat(fx.h) * p))
 }
 
-let p: CGFloat = 4.4
-fight(.hero(SWHero.luke), .villain(SWVillain.vader), centre: centres[0], dist: 46, p: p, t: 0.55)
-fight(.hero(MarvelHero.thor), .villain(MarvelVillain.loki), centre: centres[1], dist: 56, p: p, t: 0.35)
-fight(.hero(DCHero.batman), .villain(DCVillain.joker), centre: centres[2], dist: 56, p: p, t: 0.3)
+let p: CGFloat = 3.1
+fight(.hero(SWHero.luke), .villain(SWVillain.vader), centre: centres[0], dist: 40, p: p, t: 0.55)
+fight(.hero(MarvelHero.thor), .villain(MarvelVillain.loki), centre: centres[1], dist: 46, p: p, t: 0.35)
+fight(.hero(DCHero.batman), .villain(DCVillain.joker), centre: centres[2], dist: 46, p: p, t: 0.3)
+fight(.hero(DoctorHero.doctorTen), .villain(DoctorVillain.dalick), centre: centres[3], dist: 46, p: p, t: 0.42)
+fight(.hero(FilesHero.foxClawder), .villain(FilesVillain.grey), centre: centres[4], dist: 44, p: p, t: 0.42)
 
 // MARK: Lettering
 
@@ -166,7 +176,7 @@ func word(_ s: String, at c: CGPoint, width: CGFloat, height: CGFloat, angle: CG
         ctx.restoreGState()
     }
     ctx.addPath(path); ctx.setStrokeColor(inkColor); ctx.setLineWidth(line); ctx.strokePath()
-    for i in 0..<3 {
+    for i in 0..<panels {
         let f = faces[min(i, faces.count - 1)]
         ctx.saveGState()
         if faces.count > 1 { ctx.addPath(panel(i)); ctx.clip() }
@@ -197,19 +207,23 @@ func burst(_ c: CGPoint, r: CGFloat, color: UInt32, seed: Int) {
 }
 
 // A sound effect in each panel, over the fight.
-burst(CGPoint(x: 205, y: 352), r: 50, color: 0xFFE14D, seed: 11)
-word("VWOOM!", at: CGPoint(x: 205, y: 352), width: 100, height: 42, angle: 0.12, depth: 4, faces: [(0xFFFFFF, 0xFF6A5A)])
-burst(CGPoint(x: 640, y: 358), r: 54, color: 0x7FD0FF, seed: 31)
-word("KRAKOOM!", at: CGPoint(x: 640, y: 358), width: 120, height: 42, angle: -0.1, depth: 4, faces: [(0xFFF6B0, 0xFFC21A)])
-burst(CGPoint(x: 1040, y: 352), r: 48, color: 0xFF5A8A, seed: 51)
-word("BLAM!", at: CGPoint(x: 1040, y: 352), width: 92, height: 42, angle: 0.1, depth: 4, faces: [(0xFFFFFF, 0xC8F06A)])
+let sounds: [(String, UInt32, (UInt32, UInt32), CGFloat)] = [
+    ("VWOOM!", 0xFFE14D, (0xFFFFFF, 0xFF6A5A), 0.12), ("KRAKOOM!", 0x7FD0FF, (0xFFF6B0, 0xFFC21A), -0.1),
+    ("BLAM!", 0xFF5A8A, (0xFFFFFF, 0xC8F06A), 0.1), ("VWORP!", 0xFFB45A, (0xFFFFFF, 0x8FB8FF), -0.08),
+    ("ZZZT!", 0x9AF0C8, (0xFFFFFF, 0x6AE88A), 0.1),
+]
+for (i, s) in sounds.enumerated() {
+    let c = CGPoint(x: centres[i] + (i == 2 ? -30 : 0), y: 330)
+    burst(c, r: 38, color: s.1, seed: 11 + i * 20)
+    word(s.0, at: c, width: 74, height: 32, angle: s.3, depth: 3, faces: [s.2])
+}
 
-// The name, across all three panels.
+// The name, across all the panels.
 word("CLAWD CLASH", at: CGPoint(x: 640, y: 522), width: 1060, height: 138, angle: 0.035, depth: 12,
-     faces: [(0xFFFFFF, 0xFF8A8A), (0xFFFFFF, 0x8FB8FF), (0xFFF3B0, 0xFFC21A)])
+     faces: [(0xFFFFFF, 0xFF8A8A), (0xFFFFFF, 0x8FB8FF), (0xFFF3B0, 0xFFC21A), (0xFFFFFF, 0x8AB0FF), (0xE8FFF0, 0x6AE88A)])
 
 // The gutters, over everything, cutting through the name too.
-for i in 1...2 {
+for i in 1..<panels {
     ctx.move(to: CGPoint(x: cuts[i] - tilt, y: 0)); ctx.addLine(to: CGPoint(x: cuts[i] + tilt, y: H))
     ctx.setStrokeColor(inkColor); ctx.setLineWidth(18); ctx.strokePath()
     ctx.move(to: CGPoint(x: cuts[i] - tilt, y: 0)); ctx.addLine(to: CGPoint(x: cuts[i] + tilt, y: H))
