@@ -2,6 +2,23 @@
 
 What to look at first, after a night of building Stevie Clawdberg without approval gates. Delete this file before merging.
 
+## Start here
+
+1. **Try it:** `./build.sh` on the `stevie_clawdberg` branch, then Settings → Universe → Stevie Clawdberg. For a quick show: hold ⌘ in the menu for the Playground. To see 88 mph and the set pieces in a test run: `CLAWD_GREEDO_EVERY=3 "build/Clawd Clash.app/Contents/MacOS/ClawdClash" -universe clawdberg -location hillValley1955 --missing-time --playground=5155,5021,5122,5031,5040` (Marty, the Cairo Swordsman, Indy, T. Wrecks, Captain Clawk).
+2. **Watch the trailer:** `promo/stevie-clawdberg-promo.mp4` (1080p) and `promo/720p/Stevie-Clawdberg.mp4` (9.4 MB, for uploading). The storyboard is at `/private/tmp/claude-501/-Volumes-8TB---CODE---clawd-app-Clawd-Clash/da854249-bba2-4366-97d0-571ff0e34a26/scratchpad/cb/promo/storyboard-stevie-clawdberg.png`. The storyboard approval gate was skipped; the video was rendered straight away.
+3. **Skim the sheets:** `docs/roster-stevie-clawdberg.png`, `docs/locations-stevie-clawdberg.png`, `docs/desktop-stevie-clawdberg.png`, `docs/social-preview-stevie-clawdberg.png`.
+4. **The overview page** with the polish pass's before and after, the transitions and the trailer is linked in the session's last message.
+
+## What's done (all committed on `stevie_clawdberg`, not pushed)
+
+- The universe: `case clawdberg = 5`, wired everywhere (theme, places, HEM, screen saver Options, Playground prompts, Preview, Transitions, RenderDocs, RenderPromo).
+- All 117 characters and HEM (fedora, leather jacket, bullwhip), checked against the approved roster: every weapon, signature and callout matches.
+- All 23 places, the moon-bike menu icon.
+- Rides (DeLorean, moon bike, mothership, park jeep), 88 mph, Indy shoots first, the two habits, five drills, ten transitions.
+- Polish pass: Einstein the Dog, Trike, the Tall Visitor, Thud Butt's legs, Gizmoe's head, the Inferno, the Jolly Roger and the park gates were redrawn.
+- README, `llms.txt`, CHANGELOG, the guide's gaps fixed, the trailer.
+- Tested in the app: a Playground run at Hill Valley showed the storm, the water glass, Clawk, 88 mph with OUTATIME, and Indy's revolver knocking the swordsman over.
+
 ## Decisions made without you (gate 4)
 
 These were yours to approve. I picked them so the build could go on; change any of them freely.
@@ -36,11 +53,17 @@ The helpers flagged these; some I fixed in the polish pass (marked there), the r
 - **README totals were stale:** "481 characters, 108 places" dated from when Detective Clawds was added. I recounted every universe: 778 characters plus HEM (779) and 171 places. Worth a glance.
 - **The trailer cell in the README's video table** is not there yet for Stevie Clawdberg: it needs the 720p video uploaded to GitHub by hand first (see below).
 
+## Not done, on purpose or for lack of a tool
+
+- **The showcase pictures** (`Tools/RenderShowcase`) and the **MakeSocial demo** have no Stevie Clawdberg branch yet: they only matter for a showcase page, which is a public step.
+- **Engine-wide, not fixed here:** two callouts can overlap when neighbours speak at once (seen with Indy and T. Wrecks); The Clawd Files' `FilesWipes.swift:1062` takes 2.5 s to type-check (it shipped fine in 3.3.0, but it's the slowest expression in the app).
+- **Housekeeping:** the helpers' local branches (`worktree-agent-*`, 18 of them) are merged and can be deleted with `git branch -D`.
+
 ## Public steps I did not take
 
-- Pushing the `stevie_clawdberg` branch.
-- A showcase repo (the private `rodclemen/stevie-clawdberg` could become it), a cask, a release.
-- Uploading the trailer to GitHub so the README can link it.
+- Pushing the `stevie_clawdberg` branch, merging it, a release.
+- A showcase repo (the private `rodclemen/stevie-clawdberg` could become it, with `docs/social-preview-stevie-clawdberg.png` as its social preview) and a cask in `release.sh`.
+- Uploading `promo/720p/Stevie-Clawdberg.mp4` to GitHub, then adding its link to the README's trailer table (the Stevie Clawdberg cell isn't there yet).
 
 ## Still to verify (from the roster research)
 
