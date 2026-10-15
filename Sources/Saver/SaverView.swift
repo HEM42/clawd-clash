@@ -26,6 +26,9 @@ final class ClawdClashSaverView: ScreenSaverView {
     /// System Settings' preview) in the same one, each picking its own at random: so each view sets it to its own
     /// before every frame it draws, or they'd take turns overwriting it and the scene would flick between universes.
     private var tripUniverse: Universe?
+    /// Clawd Royale on this trip (its own choice, or the app's with "same"): everyone as themselves, and the
+    /// universe on show is the place's.
+    private var tripMixed = false
     /// Inside the app (the window's screen-saver view) it's handed the feed directly instead of reading the file.
     var feedSource: (() -> SaverFeed?)?
     /// Shown in the app's window rather than as the screen saver: no clock (the menu bar has one), a bigger place
@@ -71,7 +74,7 @@ final class ClawdClashSaverView: ScreenSaverView {
               let options = try? JSONDecoder().decode([String: String].self, from: data) else { return [:] }
         return options
     }
-    /// "same" (the app's), "starWars", "marvel", "dc" or "random" (a new pick on each trip).
+    /// "same" (the app's), "starWars", "marvel", "dc", "doctor", "clawdRoyale" or "random" (a new pick on each trip).
     static var choice: String { options["universe"] ?? "same" }
     /// The clock top right, on unless turned off.
     static var clockShown: Bool { options["clock"] != "off" }
@@ -80,6 +83,8 @@ final class ClawdClashSaverView: ScreenSaverView {
     private let picker = NSPopUpButton(frame: NSRect(x: 20, y: 90, width: 280, height: 26), pullsDown: false)
     private let clockBox = NSButton(checkboxWithTitle: "Show the clock", target: nil, action: nil)
     private static let choices = [("same", "The same as Clawd Clash"), ("starWars", Universe.starWars.title), ("marvel", Universe.marvel.title), ("dc", Universe.dc.title),
+                                  ("doctor", Universe.doctor.title),
+                                  ("clawdRoyale", "Clawd Royale"),
                                   ("random", "Random (a new one on each trip)")]
 
     override var hasConfigureSheet: Bool { true }
@@ -198,16 +203,24 @@ final class ClawdClashSaverView: ScreenSaverView {
                 showClock = Self.clockShown
                 let appUniverse = feed?.universe.flatMap(Universe.init(rawValue:)) ?? .starWars
                 switch Self.choice {
-                case "starWars": tripUniverse = .starWars
-                case "marvel": tripUniverse = .marvel
-                case "dc": tripUniverse = .dc
-                case "random": if tripUniverse == nil { tripUniverse = Universe.allCases.randomElement() }
-                default: tripUniverse = appUniverse
+                case "starWars": tripUniverse = .starWars; tripMixed = false
+                case "marvel": tripUniverse = .marvel; tripMixed = false
+                case "dc": tripUniverse = .dc; tripMixed = false
+                case "doctor": tripUniverse = .doctor; tripMixed = false
+                case "clawdRoyale": tripMixed = true
+                case "random":
+                    tripMixed = false
+                    if tripUniverse == nil { tripUniverse = Universe.allCases.randomElement() }
+                default: tripUniverse = appUniverse; tripMixed = feed?.mixed == true
                 }
                 if tripUniverse == nil { tripUniverse = appUniverse }
             }
         }
-        if feedSource == nil, let tripUniverse { Universe.shown = tripUniverse }
+        if feedSource == nil {
+            Universe.mixed = tripMixed
+            if tripMixed { Universe.shown = (visit ?? lastLocation).universe }
+            else if let tripUniverse { Universe.shown = tripUniverse }
+        }
         let p = isPreview ? 0 : Int((now - started) / Self.shiftEvery)
         shifted = p % 2 == 1
         if p != period { period = p; travel(now) }
@@ -229,8 +242,13 @@ final class ClawdClashSaverView: ScreenSaverView {
         let here = visit ?? lastLocation
         let crew = (running(now) ? feed?.sessions ?? [] : []).flatMap { [$0.cast] + $0.agents.map(\.cast) }.map { Cast(id: $0) }
         let homes = Set(crew.map(\.home)).subtracting([here])
-        guard let next = crew.count > 1 && !homes.isEmpty ? homes.randomElement()
-                : Location.all(in: .shown).filter({ $0 != here }).randomElement() else { return }
+        let next: Location?
+        if Universe.mixed { next = Location.everywhere.filter { $0 != here }.randomElement() }   // Clawd Royale: anywhere
+        else {
+            next = crew.count > 1 && !homes.isEmpty ? homes.randomElement()
+                : Location.all(in: .shown).filter({ $0 != here }).randomElement()
+        }
+        guard let next else { return }
         if let room {
             let liveNow = liveLayer.contents.flatMap { CFGetTypeID($0 as CFTypeRef) == CGImage.typeID ? ($0 as! CGImage) : nil }
             if let frozen = Wipe.flatten([room.image] + (liveNow.map { [$0] } ?? [])),
@@ -292,9 +310,9 @@ final class ClawdClashSaverView: ScreenSaverView {
         guard let root = host.layer else { return }
         let running = running(now)
         // Stale or not, the feed says where the crew was last: the place stays when Clawd Clash quits.
-        if let f = feed, let l = Location(rawValue: f.location), l.universe == .shown { lastLocation = l }
-        if lastLocation.universe != .shown { lastLocation = Location.all(in: .shown)[0] }
-        if let v = visit, v.universe != .shown { visit = nil }
+        if let f = feed, let l = Location(rawValue: f.location), Universe.mixed || l.universe == .shown { lastLocation = l }
+        if !Universe.mixed, lastLocation.universe != .shown { lastLocation = Location.all(in: .shown)[0] }
+        if !Universe.mixed, let v = visit, v.universe != .shown { visit = nil }
         let location = visit ?? lastLocation
         let P = self.P
         let cw = Int((bounds.width / P).rounded(.up)), ch = Int((bounds.height / P).rounded(.up))
@@ -893,8 +911,8 @@ final class ClawdClashSaverView: ScreenSaverView {
     /// The show's crew for `place`: four to six characters in all, light against dark where it can, a local or two
     /// among them (whoever calls the place home), up to two of them agents at someone's side.
     private func cast(for place: Location, now: Double) -> [SaverFeed.Session] {
-        let u = Universe.shown
-        let armed = (u.darkCast + u.lightCast).filter { Cast(id: $0).weapon != .none && !u.agentOnly.contains($0) }
+        let r = Roster.shown
+        let armed = (r.darkCast + r.lightCast).filter { Cast(id: $0).weapon != .none && !r.agentOnly.contains($0) }
         let locals = armed.filter { Cast(id: $0).home == place }.shuffled().prefix(2)
         var dark = armed.filter { StatusStore.isDark($0) && !locals.contains($0) }.shuffled()
         var light = armed.filter { !StatusStore.isDark($0) && !locals.contains($0) }.shuffled()

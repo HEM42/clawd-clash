@@ -3,8 +3,8 @@ import CoreText
 
 // Renders Resources/AppIcon.png (1024²): a comic cover in three slanted panels, one per universe (Star Wars, Marvel,
 // DC), with CLAWD CLASH across all three, each panel colouring its part of the name and the gutters cutting through
-// the letters. Spider-Man hangs on his web over the name, Darth Vader raises his saber and Batman squares up under the
-// Bat-Signal, all drawn with the app's own sprite code. build.sh turns it into AppIcon.icns.
+// the letters. Spider-Man hangs on his web over the name, Darth Vader raises his saber, Doctor Clawd's Dalick sits in the
+// middle panel under the name and Batman squares up under the Bat-Signal, all drawn with the app's own sprite code. build.sh turns it into AppIcon.icns.
 //   swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
 //          Sources/App/Universes/**/*.swift Sources/Shared/*.swift Tools/MakeIcon/main.swift -o build/makeicon \
 //          && build/makeicon Resources/AppIcon.png
@@ -163,7 +163,8 @@ for x in [380.0, 650.0] as [CGFloat] {
 /// `who` with its body's centre at `x` and feet at `feet`, `p` icon pixels a sprite pixel, white-outlined as in the app.
 func put(_ who: Cast, t: Double, role: FightRole = .none, x: CGFloat, feet: CGFloat, p: CGFloat, mirrored: Bool = false, angle: CGFloat = 0) {
     let c = PixelCanvas(72, 52)
-    who.draw(c, t: t, mode: .working, walking: false, role: role, asSession: true)
+    // Drawn as an agent: a session working alone would be doing its solo practice (Drills.swift) instead of posing.
+    who.draw(c, t: t, mode: .working, walking: false, role: role, asSession: false)
     c.addOutline(C(0xFFFFFF, 0.92))
     ctx.saveGState()
     ctx.translateBy(x: x, y: feet); ctx.rotate(by: angle)
@@ -188,6 +189,9 @@ ctx.addPath(saber); ctx.setStrokeColor(hex(0xFF2A2A)); ctx.setLineWidth(22); ctx
 ctx.setShadow(offset: .zero, blur: 0, color: nil)
 ctx.addPath(saber); ctx.setStrokeColor(hex(0xFFFFFF)); ctx.setLineWidth(9); ctx.strokePath()
 ctx.restoreGState()
+
+// A Dalick from Doctor Clawd in the middle panel, under the name, its gun on Batman.
+put(.villain(DoctorVillain.dalick), t: 0.3, x: 462, feet: 112, p: 6.2)
 
 // Batman squaring up, facing them.
 put(.hero(DCHero.batman), t: 0.6, role: .duel, x: 790, feet: 130, p: 7.5, mirrored: true)

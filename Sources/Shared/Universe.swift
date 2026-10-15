@@ -1,6 +1,6 @@
 import Foundation
 
-/// The universes Clawd Clash can show. One at a time: a scene never mixes characters from two of them.
+/// The universes Clawd Clash can show. One at a time, except in Clawd Royale (`Roster`), where a scene mixes all of them.
 ///
 /// Cast ids are stored in the status file and the screen-saver feed: `universe.base + local`, where local ids are
 /// villains `0..<100` and heroes `100…`. Star Wars keeps Clawd Wars' ids (base 0), so its saved state carries over.
@@ -8,22 +8,23 @@ enum Universe: Int, CaseIterable, Codable {
     case starWars = 0
     case marvel = 1
     case dc = 2
+    case doctor = 3
 
     var key: String {
-        switch self { case .starWars: return "starWars"; case .marvel: return "marvel"; case .dc: return "dc" }
+        switch self { case .starWars: return "starWars"; case .marvel: return "marvel"; case .dc: return "dc"; case .doctor: return "doctor" }
     }
     init?(key: String) { self.init(rawValue: Universe.allCases.first { $0.key == key }?.rawValue ?? -1) }
 
     var title: String {
-        switch self { case .starWars: return "Star Clawds"; case .marvel: return "Marvelous Clawds"; case .dc: return "Detective Clawds" }
+        switch self { case .starWars: return "Star Clawds"; case .marvel: return "Marvelous Clawds"; case .dc: return "Detective Clawds"; case .doctor: return "Doctor Clawd" }
     }
     var base: Int { rawValue * 1000 }
 
     var villainCount: Int {
-        switch self { case .starWars: return 46; case .marvel: return 88; case .dc: return 97 }
+        switch self { case .starWars: return 46; case .marvel: return 88; case .dc: return 97; case .doctor: return 42 }
     }
     var heroCount: Int {
-        switch self { case .starWars: return 36; case .marvel: return 106; case .dc: return 111 }
+        switch self { case .starWars: return 36; case .marvel: return 106; case .dc: return 111; case .doctor: return 56 }
     }
 
     /// HEM: the same rare face in every universe, last of the heroes. He's never in the regular pools (`lightCast`);
@@ -40,6 +41,7 @@ enum Universe: Int, CaseIterable, Codable {
         case .marvel: return Set([11, 33, 190, 202, 203, 204].map { base + $0 })  // Ultron Sentry, Doombot, Jeff, Zabu, Morris, Dum-E
         // Joker Goon, Dex-Starr, Mister Mind, Krypto, Ch'p, Ace the Bat-Hound, Streaky, Gleek, Beppo
         case .dc: return Set([22, 49, 77, 131, 139, 206, 207, 208, 209].map { base + $0 })
+        case .doctor: return Set([39, 40, 41].map { base + $0 })                // Adipoze, Cybermite, Toclafayne
         }
     }
 
@@ -49,6 +51,12 @@ enum Universe: Int, CaseIterable, Codable {
 
     /// Characters that never lead two sessions back to back (Vader and Kylo), as global ids.
     var rivals: Set<Int> { self == .starWars ? [0, 1] : [] }
+
+    /// Doctor Clawd: the Doctors in order (One … Fifteen), as global ids. When a session's context is compacted, its
+    /// Doctor regenerates into the next one (`StatusStore`'s PreCompact); nobody else changes.
+    var regenerations: [Int] {
+        self == .doctor ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14].map { base + StatusStore.heroBase + $0 } : []
+    }
 
     var darkCast: [Int] { (0..<villainCount).map { base + $0 } }
     var lightCast: [Int] { (0..<heroCount - 1).map { base + StatusStore.heroBase + $0 } }   // all but HEM
@@ -66,4 +74,25 @@ enum Universe: Int, CaseIterable, Codable {
         return Universe.isDark(id) ? base + local % villainCount
                                    : base + StatusStore.heroBase + (local - StatusStore.heroBase) % (heroCount - 1)
     }
+}
+
+/// Who can be cast and shown: one universe, or every one of them at once (Clawd Royale), each character as itself.
+struct Roster {
+    let universes: [Universe]
+
+    init(_ universe: Universe, mixed: Bool) { universes = mixed ? Universe.allCases : [universe] }
+
+    var mixed: Bool { universes.count > 1 }
+    var darkCast: [Int] { universes.flatMap(\.darkCast) }
+    var lightCast: [Int] { universes.flatMap(\.lightCast) }
+    var agentOnly: Set<Int> { universes.reduce(into: Set<Int>()) { $0.formUnion($1.agentOnly) } }
+    var rivals: Set<Int> { universes.reduce(into: Set<Int>()) { $0.formUnion($1.rivals) } }
+    /// With another AI running, Claude Code's side (`Universe.claudeSide`); in Clawd Royale, the heroes.
+    var claudeSide: Bool? { mixed ? false : universes[0].claudeSide }
+    /// HEM, once for each universe here.
+    var hems: Set<Int> { Set(universes.map(\.hem)) }
+    /// Whether `id` is HEM, in whichever universe it's from.
+    static func isHem(_ id: Int) -> Bool { Universe.of(id).isHem(id) }
+    /// `id` as one of this roster: itself in Clawd Royale, otherwise the universe's `adopt`.
+    func adopt(_ id: Int) -> Int { mixed ? id : universes[0].adopt(id) }
 }
