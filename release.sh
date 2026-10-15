@@ -104,8 +104,11 @@ write_cask() {   # write_cask <cask name> <universe key or empty> <description>
     if [[ -n $universe ]]; then
         preset="
   # Start in $universe, unless a universe was already picked.
-  preflight do
-    system_command \"/bin/sh\", args: [\"-c\", \"defaults read com.rodclemen.clawdclash universe >/dev/null 2>&1 || defaults write com.rodclemen.clawdclash universe -string $universe\"]
+  preflight_steps do
+    run \"/bin/sh\",
+        args:           [\"-c\", \"defaults read com.rodclemen.clawdclash universe >/dev/null 2>&1 || defaults write com.rodclemen.clawdclash universe -string $universe\"],
+        writable_paths: [\"Library/Preferences\"],
+        writable_base:  :home
   end
 "
     fi
