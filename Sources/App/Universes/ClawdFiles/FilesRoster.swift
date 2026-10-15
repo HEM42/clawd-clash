@@ -10,8 +10,13 @@ import Foundation
 // across an update.
 
 enum FilesHero: Int, CaseIterable {
-    // The X-Files unit
+    // The X-Files unit and the FBI
     case foxClawder, danaScrawly
+    case skinnard, doggedd, reyez, einstine, millar
+    // The Lone Gunclawds
+    case bytes, frohack, lanky
+    // Informants and allies
+    case deepClawt, misterX, marita, gibsonPrays, samantha
     case hem   // always last (`Universe.hem`)
 
     var persona: Persona { filesHeroPersonas[self] ?? Persona.missing(String(describing: self)) }
@@ -20,13 +25,18 @@ enum FilesHero: Int, CaseIterable {
 enum FilesVillain: Int, CaseIterable {
     // The Syndicate
     case smokingClawd
+    case clawcek, wellManicured, firstElder, dianaFowlclaw, kersh, toothpickMan
+    // The aliens and their soldiers
+    case bountyHunter, blackOil, grey, facelessRebel, knowleRohrer, billyMiles
+    // Monsters of the week
+    case tooms, flukeman, pusher, jerseyDevil
 
     var persona: Persona { filesVillainPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-let filesHeroPersonas: [FilesHero: Persona] = [filesHeroes1]
+let filesHeroPersonas: [FilesHero: Persona] = [filesHeroes1, filesHeroes2, filesHeroes3, filesHeroes4]
     .reduce([.hem: hemPersona(.clawdFiles)]) { $0.merging($1) { a, _ in a } }
-let filesVillainPersonas: [FilesVillain: Persona] = [filesVillains1]
+let filesVillainPersonas: [FilesVillain: Persona] = [filesVillains1, filesVillains2, filesVillains3, filesVillains4]
     .reduce([:]) { $0.merging($1) { a, _ in a } }
 
 // MARK: - Homes
@@ -34,13 +44,24 @@ let filesVillainPersonas: [FilesVillain: Persona] = [filesVillains1]
 extension Location {
     static func filesHome(of leader: FilesVillain) -> Location {
         switch leader {
-        case .smokingClawd: return .xFilesOffice
+        case .smokingClawd, .clawcek, .wellManicured, .firstElder: return .syndicateClub
+        case .dianaFowlclaw: return .xFilesOffice
+        case .kersh, .toothpickMan, .pusher: return .skinnardsOffice
+        case .bountyHunter, .grey, .billyMiles, .jerseyDevil: return .bellefleurWoods
+        case .blackOil, .facelessRebel, .knowleRohrer: return .area51
+        case .tooms, .flukeman: return .newarkSewers
         }
     }
 
     static func filesHome(of hero: FilesHero) -> Location {
         switch hero {
-        case .foxClawder, .danaScrawly, .hem: return .xFilesOffice
+        case .foxClawder, .danaScrawly, .einstine, .millar, .hem: return .xFilesOffice
+        case .skinnard, .doggedd: return .skinnardsOffice
+        case .reyez, .samantha: return .bellefleurWoods
+        case .bytes, .frohack, .lanky: return .gunclawdsDen
+        case .misterX: return .apartment42
+        case .deepClawt, .gibsonPrays: return .area51
+        case .marita: return .syndicateClub
         }
     }
 }
@@ -54,14 +75,18 @@ extension Cast {
 
 /// Arch-enemies: whenever both are fighting, they're paired with each other first, wherever they are in the line.
 private let filesNemeses: [(FilesHero, FilesVillain)] = [
-    (.foxClawder, .smokingClawd),
+    (.foxClawder, .smokingClawd), (.danaScrawly, .tooms), (.skinnard, .clawcek), (.doggedd, .knowleRohrer),
+    (.reyez, .toothpickMan), (.deepClawt, .wellManicured), (.misterX, .bountyHunter), (.marita, .blackOil),
+    (.gibsonPrays, .facelessRebel), (.einstine, .pusher), (.millar, .flukeman), (.bytes, .firstElder),
+    (.samantha, .grey),
 ]
 
 let filesTheme = Theme(
     universe: .clawdFiles,
     villains: FilesVillain.allCases.map(\.persona),
     heroes: FilesHero.allCases.map(\.persona),
-    places: [.xFilesOffice],
+    places: [.xFilesOffice, .skinnardsOffice, .gunclawdsDen, .apartment42, .syndicateClub, .bellefleurWoods, .area51,
+             .newarkSewers],
     home: { c in
         c.isDark ? .filesHome(of: FilesVillain(rawValue: c.index) ?? .smokingClawd)
                  : .filesHome(of: FilesHero(rawValue: c.index) ?? .foxClawder)
@@ -75,8 +100,15 @@ let filesTheme = Theme(
 
 extension Location {
     static let xFilesOffice = Location("xFilesOffice")
+    static let skinnardsOffice = Location("skinnardsOffice")
+    static let gunclawdsDen = Location("gunclawdsDen")
+    static let apartment42 = Location("apartment42")
+    static let syndicateClub = Location("syndicateClub")
+    static let bellefleurWoods = Location("bellefleurWoods")
+    static let area51 = Location("area51")
+    static let newarkSewers = Location("newarkSewers")
 }
 
 /// Every Clawd Files place, from the Places/FilesScenes*.swift files.
-let filesPlaces: [Location: Place] = [filesScenes1]
+let filesPlaces: [Location: Place] = [filesScenes1, filesScenes2, filesScenes3]
     .reduce([:]) { $0.merging($1) { a, _ in a } }
