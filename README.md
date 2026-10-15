@@ -5,7 +5,7 @@
 <h1 align="center">Clawd Clash</h1>
 
 <p align="center">
-  <b>Your Claude Code, Codex, Qwen Code, Gemini CLI, GitHub Copilot CLI and pi sessions, as a pixel-art Star Clawds, Marvelous Clawds or Detective Clawds battle on your desktop.</b><br>
+  <b>Your Claude Code, Codex, Qwen Code, Gemini CLI, GitHub Copilot CLI and pi sessions, as a pixel-art Star Clawds, Marvelous Clawds, Detective Clawds or Doctor Clawd battle on your desktop.</b><br>
   Every session is a hero or a villain, every subagent joins in, and they fight while they work.
 </p>
 
@@ -140,7 +140,7 @@ It opens in a window by default (switch to the desktop from the menu): the whole
 
 ## Install
 
-Needs macOS 13+ (Apple Silicon or Intel) and at least one of [Claude Code](https://claude.com/claude-code), [Codex](https://developers.openai.com/codex), [Qwen Code](https://github.com/QwenLM/qwen-code), [Gemini CLI](https://github.com/google-gemini/gemini-cli) [GitHub Copilot CLI](https://github.com/github/copilot-cli) or [pi](https://github.com/badlogic/pi-mono) (with any model it runs: Mistral, GPT, local models…). Clawd Clash asks before connecting any of them, and only touches the ones you connect.
+Needs macOS 13+ (Apple Silicon or Intel) and at least one of [Claude Code](https://claude.com/claude-code), [Codex](https://developers.openai.com/codex), [Qwen Code](https://github.com/QwenLM/qwen-code), [Gemini CLI](https://github.com/google-gemini/gemini-cli), [GitHub Copilot CLI](https://github.com/github/copilot-cli) or [pi](https://github.com/badlogic/pi-mono) (with any model it runs: Mistral, GPT, local models…). Clawd Clash asks before connecting any of them, and only touches the ones you connect.
 
 **With Homebrew:**
 
@@ -165,7 +165,7 @@ Claude Code sessions that were already running pick up the hooks after a restart
 
 > **Codex users:** Codex only runs hooks you've approved. After connecting it, run **`/hooks`** in Codex once and approve Clawd Clash.
 
-> **pi users:** pi has no hooks, so connecting it adds a small extension of Clawd Clash's own, `~/.pi/agent/extensions/clawd-clash.ts`; removing pi in Settings deletes it. Sessions already open load it after **`/reload`**. Each pi character shows the model it's running.
+> **pi users:** [pi](https://github.com/badlogic/pi-mono) runs almost any model (Mistral, GPT, Gemini, local ones…), and Clawd Clash shows them all, each character labelled with the model it's running. pi has no hooks, so connecting it adds a small extension of Clawd Clash's own, `~/.pi/agent/extensions/clawd-clash.ts`; removing pi in Settings deletes it. Sessions already open load it after **`/reload`**. Clawd Clash only offers pi when it finds the `pi` command on your Mac. pi never asks permission, so its characters never show the red `!`.
 
 Clicking to jump to a session in Terminal or iTerm2 asks once for **Automation** permission; jumping to VS Code or Cursor asks once for **Accessibility** permission.
 
@@ -175,13 +175,13 @@ Clawd Clash replaces Clawd Wars, Clawdvengers: Clawd Wars and Justice Clawds: Cl
 
 ## How it works
 
-- A tiny Foundation-only binary, `clawd-clash-hook`, is registered for each connected AI's hook events (session start/end, prompts, tool calls, permission requests, subagents, stop, and for Claude Code context compaction). It writes `~/.claude/clawd-clash/state.json` under a file lock and exits silently, so it can never get in Claude's way. It casts new characters from the universe on show.
+- A tiny Foundation-only binary, `clawd-clash-hook`, is registered for each connected AI's hook events (session start/end, prompts, tool calls, permission requests, subagents, stop, and context compaction for Claude Code and pi, where a Doctor Clawd Doctor regenerates). pi has no hooks, so its connection is an extension that runs the same binary for each of pi's events. It writes `~/.claude/clawd-clash/state.json` under a file lock and exits silently, so it can never get in Claude's way. It casts new characters from the universe on show.
 - The app reads that twice a second, finds sessions without hooks from the process table, and drops a session the moment its process exits.
 - Everything you see (481 characters, their weapons and effects, 108 places, the ships, the icon) is pixel art drawn in Swift at runtime. The whole app is about 10 MB; only the characters and the place on screen are ever drawn.
 
 ## Uninstall
 
-With Homebrew: `brew uninstall --cask clawd-clash` (add `--zap` to also remove its settings and status file). Otherwise: menu bar icon → **Settings…** → **Remove** beside each connected AI, then **Quit**, or from the terminal:
+With Homebrew: `brew uninstall --cask clawd-clash` (add `--zap` to also remove its settings and status file). Otherwise: menu bar icon → **Settings…** → **Remove** beside each connected AI (for pi that deletes its extension), then **Quit**, or from the terminal:
 
 ```sh
 "/Applications/Clawd Clash.app/Contents/MacOS/ClawdClash" --uninstall-hooks
