@@ -123,6 +123,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         switchView.isHidden = true
         content.addSubview(switchView)   // on top of everything, only while the universe changes
         header.controller = controller
+        header.arrival = { [weak self] in max(self?.sceneView.wipeEnds ?? 0, self?.switchEnds ?? 0) }
         layout()
         applyPin()
     }
@@ -381,6 +382,8 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     private let switchView = SwitchView()
     private var switching: (old: CGImage, start: Double, comic: ComicTransition?, clock: Bool)?
     private var switchTimer: Timer?
+    /// When the change of universe is over (or was).
+    var switchEnds: Double { switching.map { $0.start + ($0.comic?.duration ?? Wipe.duration) } ?? 0 }
 
     /// The whole window as it looks now (header, scene, crew and cards), at the screen's resolution. Drawn through the
     /// views' `draw(_:)`, which for the scene also draws the crew; the screen-saver view is layers only and isn't in it.
@@ -496,6 +499,10 @@ final class HeaderView: NSView, NSViewToolTipOwner {
     weak var controller: OverlayController?
     var onClose: (() -> Void)?
     var onToggleList: (() -> Void)?
+    /// When the scene's current transition ends: The Clawd Files types its place in after it.
+    var arrival: (() -> Double)?
+    /// The Clawd Files' typed caption: the place, and when it starts typing.
+    private var typing: (location: Location, start: Double)?
 
     static let yellow = NSColor(srgbRed: 1, green: 0.91, blue: 0.12, alpha: 1)   // the opening-crawl yellow
 
@@ -569,8 +576,26 @@ final class HeaderView: NSView, NSViewToolTipOwner {
         shadow.set()
         defer { NSGraphicsContext.restoreGraphicsState() }
 
-        // Where the crew is, on the left.
-        if let where_ = controller?.location.name {
+        // Where the crew is, on the left; in The Clawd Files, typed in once the scene has changed, as in the show.
+        if let location = controller?.location, location.universe == .clawdFiles {
+            let now = Date().timeIntervalSince1970
+            if typing?.location != location { typing = (location, now + 0.15) }
+            if var t = typing, now < t.start { t.start = max(t.start, arrival?() ?? 0); typing = t }
+            let since = now - (typing?.start ?? now)
+            let label = NSAttributedString(string: FilesCaption.typed(location, after: max(0, since)).joined(separator: "  ·  "),
+                                           attributes: [.font: FilesCaption.font(11.5), .foregroundColor: NSColor(white: 0.92, alpha: 1)])
+            let at = NSPoint(x: 14, y: (midY - label.size().height / 2).rounded())
+            // A dark box behind it, like subtitles, so it reads over a busy ceiling.
+            if label.length > 0 {
+                NSColor(white: 0, alpha: 0.55).setFill()
+                NSBezierPath(roundedRect: NSRect(x: at.x - 6, y: at.y - 2, width: label.size().width + 12, height: label.size().height + 4),
+                             xRadius: 4, yRadius: 4).fill()
+            }
+            label.draw(at: at)
+            if !FilesCaption.done(location, after: since) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in self?.needsDisplay = true }
+            }
+        } else if let where_ = controller?.location.name {
             let label = NSAttributedString(string: where_.uppercased(), attributes: [
                 .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold), .foregroundColor: NSColor(white: 0.92, alpha: 1),
                 .kern: 1.2])
@@ -658,6 +683,8 @@ final class SceneView: NSView {
     /// Changing place: the old picture, frozen, wiped away over the new one (a hard edge and a clock wipe, taking
     /// turns), as the screen saver does; in Marvel and DC, one of the comic-book transitions (`ComicTransition`) instead.
     private var wipe: (old: CGImage, start: Double, clock: Bool, comic: ComicTransition?)?
+    /// When the change of place is over (or was).
+    var wipeEnds: Double { wipe.map { $0.start + ($0.comic?.duration ?? Wipe.duration) } ?? 0 }
     private var clockWipeNext = false
     private var lastComic: ComicTransition?
     /// Set while the universe changes: the whole window has its own transition then (`ClawdWindow.playSwitch`).
@@ -685,7 +712,7 @@ final class SceneView: NSView {
         guard room?.size != bounds.size || room?.location != location else { return }
         if !skipWipe, let old = room, old.size == bounds.size, old.location != location,
            let frozen = Wipe.flatten([old.image] + (old.location.hasAnimatedLayer ? lastLive.map { [$0] } ?? [] : [])) {
-            if let comic = ComicTransition.pick(after: lastComic, cast: controller.onStage, to: location) {
+            if let comic = ComicTransition.pick(after: lastComic, cast: controller.onStage, from: old.location, to: location) {
                 lastComic = comic
                 wipe = (frozen, Date().timeIntervalSince1970, false, comic)
             } else {

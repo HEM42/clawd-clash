@@ -130,6 +130,20 @@ let doctorLineup: [[Extra]] = [
      Extra(who: .villain(DoctorVillain.dalick), leader: true, label: "Dalick", x: 352, facing: -1, role: .shoot(offset: 0))],
     [Extra(who: .hero(DoctorHero.kCanine), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
 ]
+/// The Clawd Files: each pair's roles from their own weapons, as the app pairs them.
+func filesPair(_ a: Cast, _ aLead: Bool, _ aLabel: String, _ ax: Double,
+               _ b: Cast, _ bLead: Bool, _ bLabel: String, _ bx: Double) -> [Extra] {
+    let (ra, rb) = fightRoles(a.weapon, b.weapon)
+    return [Extra(who: a, leader: aLead, label: aLabel, x: ax, facing: 1, role: ra),
+            Extra(who: b, leader: bLead, label: bLabel, x: bx, facing: -1, role: rb)]
+}
+let filesLineup: [[Extra]] = [
+    filesPair(.villain(FilesVillain.smokingClawd), true, "", 30, .hero(FilesHero.foxClawder), true, "", 98),
+    filesPair(.hero(FilesHero.danaScrawly), false, "Check git history", 132, .villain(FilesVillain.clawcek), false, "Write changelog", 182),
+    filesPair(.hero(FilesHero.frohack), false, "Plan the refactor", 214, .villain(FilesVillain.grey), false, "Review Overlay.swift", 244),
+    filesPair(.hero(FilesHero.doggedd), true, "", 282, .villain(FilesVillain.knowleRohrer), true, "", 352),
+    [Extra(who: .hero(FilesHero.queequeg), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
+]
 func desktop(_ lineup: [[Extra]], file: String) {
 let desktop = canvas(2600, 400) { ctx in
     var tags: [CGRect] = []   // labels already placed: one that would overlap moves up a row, as in the app
@@ -185,6 +199,7 @@ desktop(starWarsLineup, file: "desktop-star-clawds.png")
 desktop(marvelLineup, file: "desktop-marvelous-clawds.png")
 desktop(dcLineup, file: "desktop-detective-clawds.png")
 desktop(doctorLineup, file: "desktop-doctor-clawd.png")
+desktop(filesLineup, file: "desktop-the-clawd-files.png")
 
 // MARK: Locations (one sheet per universe)
 
@@ -292,4 +307,8 @@ socialPreview(title: "DOCTOR CLAWD", subtitle: "Your Claude Code sessions as a p
               groups: [[.hero(DoctorHero.doctorTen), .hero(DoctorHero.doctorFour), .hero(DoctorHero.rose), .hero(DoctorHero.doctorEleven),
                         .villain(DoctorVillain.dalick), .villain(DoctorVillain.master), .villain(DoctorVillain.cyberperson), .villain(DoctorVillain.weepingAngle)]],
               file: "social-preview-doctor-clawd.png")
+socialPreview(title: "THE CLAWD FILES", subtitle: "Your AI sessions as a pixel-art paranormal investigation on your desktop",
+              groups: [[.hero(FilesHero.foxClawder), .hero(FilesHero.danaScrawly), .hero(FilesHero.skinnard), .hero(FilesHero.lanky),
+                        .villain(FilesVillain.smokingClawd), .villain(FilesVillain.grey), .villain(FilesVillain.flukeman), .villain(FilesVillain.bountyHunter)]],
+              file: "social-preview-the-clawd-files.png")
 print("wrote the social previews to \(out)")

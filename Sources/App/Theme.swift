@@ -40,6 +40,7 @@ struct Theme {
         case .marvel: return marvelTheme
         case .dc: return dcTheme
         case .doctor: return doctorTheme
+        case .clawdFiles: return filesTheme
         }
     }
 }
@@ -63,4 +64,4 @@ extension Cast {
 }
 
 /// The ships that come to pick someone up (`Theme.ride`).
-enum Ride { case falcon, quinjet, milano, javelin, batwing, tardis }
+enum Ride { case falcon, quinjet, milano, javelin, batwing, tardis, sedan, helicopter, saucer }

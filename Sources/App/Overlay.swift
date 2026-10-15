@@ -36,6 +36,7 @@ private struct Actor {
     var air: CGFloat = 0         // a flyer: 0 on the ground … 1 cruising in the air
     var watched: CGFloat = 0     // a Weeping Angle: seconds it's been held still by someone looking at it
     var regenerated: Double?     // a Doctor's session: when it last regenerated (the golden flare plays for a moment)
+    var abducted: Double?        // an FBI agent's session: when it last lost time (the abduction plays for a moment)
 
     var isLeader: Bool { if case .leader = kind { return true } else { return false } }
     var cast: Cast { switch kind { case .leader(let c), .agent(let c): return c } }
@@ -796,6 +797,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 actors[idx].accent = accent; actors[idx].focused = focused
                 actors[idx].sitting = sitting; actors[idx].detail = detail
                 actors[idx].regenerated = u.session?.record?.regenerated
+                actors[idx].abducted = u.session?.record?.abducted
             } else {
                 // Newcomers walk in from the side, one at a time (from agent-view's walk-in through the door).
                 var startX = target, born = now
@@ -811,6 +813,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 a.bubble = bubble; a.urgent = urgent; a.accent = accent; a.focused = focused
                 a.sitting = sitting; a.detail = detail
                 a.regenerated = u.session?.record?.regenerated
+                a.abducted = u.session?.record?.abducted
                 actors.append(a)
             }
         }
@@ -855,6 +858,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let prompts = Universe.shown == .doctor
             ? ["make the rotor pump faster", "make the window resize to fit the Claudes", "why won't the Angle move?",
                "write a nice README with screenshots", "fix the portrait crop for the Dalick Emperor"]
+            : Universe.shown == .clawdFiles
+            ? ["redact the case file before Skinnard sees it", "make the window resize to fit the Claudes",
+               "why does the slide projector keep flickering?", "write a nice README with screenshots",
+               "fix the portrait crop for the Smoking Clawd's smoke"]
             : ["add a snowtaunt", "make the window resize to fit the Claudes", "why does the duel not start?",
                "write a nice README with screenshots", "fix the portrait crop for wide characters"]
         let nowActs = ["Edit WindowMode.swift", "Bash: swift build", "Read Locations.swift", "Grep opaqueBounds", "Agent: Review the diff"]
@@ -863,6 +870,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let leader = Universe.shown.adopt(l)
             var rec = SessionRecord(state: playgroundMood.rawValue, updated: start, leader: leader, project: "")
             rec.created = start - Double(600 + i * 1700)
+            // `--missing-time`: the sessions' contexts are compacted two seconds in (The Clawd Files' FBI agents lose time).
+            if CommandLine.arguments.contains("--missing-time") { rec.abducted = start + 2 }
             // On "Idle", spread them over the idle stages: standing, sitting (2 min+), asleep (5 min+).
             rec.since = playgroundMood == .idle ? start - Double(60 + i * 160) : start - Double(20 + i * 35)
             rec.model = "claude-opus-5-5"
@@ -1068,13 +1077,15 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         func weapon(_ a: Actor) -> Weapon {
             a.cast.weapon
         }
+        /// Missing time: an agent being taken stops fighting, and the other side holds fire until they're set down.
+        func taken(_ a: Actor) -> Bool { a.isLeader && a.abducted.map { now - $0 < missingTimeLength } == true }
         var roles: [String: FightRole] = [:]
         var fx: [(Actor, Actor)] = []
         var incoming: [String: Double] = [:]   // blaster-vs-blaster: each defender → its shooter's clock offset
         for fight in fights {
             guard let a = actors.first(where: { $0.key == fight.a && $0.leaving == nil }),
                   let b = actors.first(where: { $0.key == fight.b && $0.leaving == nil }),
-                  a.walkDir == 0, b.walkDir == 0 else { continue }
+                  a.walkDir == 0, b.walkDir == 0, !taken(a), !taken(b) else { continue }
             let (l, r) = a.x <= b.x ? (a, b) : (b, a)
             let (lRole, rRole) = fightRoles(weapon(l), weapon(r))
             roles[l.key] = lRole; roles[r.key] = rRole
@@ -1139,8 +1150,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 // ramp up, lift off and away (0.72–1).
                 let p = min(1, (now - left) / falconExit)
                 let cs0 = Self.companionScale * z
-                // The ships' ramps come down 14 px left of centre; the TARDIS's open door is 6 px left of it.
-                let rampFoot = exit.landX - exit.dir * (actor.cast.ride?.materialises == true ? 6 : 14) * cs0
+                // Where they board, left of the ride's centre (`Ride.boardingOffset`).
+                let rampFoot = exit.landX - exit.dir * (actor.cast.ride?.boardingOffset ?? 14) * cs0
                 if p >= 0.36 && p < 0.62 {
                     let k = (p - 0.36) / 0.26
                     actor.x = exit.startX + (rampFoot - exit.startX) * CGFloat(k)
@@ -1200,10 +1211,24 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     out.append(web)
                 }
             }
+            // Missing time: lifted away in a beam of light and set back down (The Clawd Files' FBI agents).
+            let abduction = actor.isLeader ? actor.abducted.flatMap { now - $0 < missingTimeLength
+                ? MissingTime(k: (now - $0) / missingTimeLength) : nil } : nil
+            if let ab = abduction {
+                lift += CGFloat(ab.lift) * scale
+                let beam = PixelCanvas(24, Sprite.height + 90)
+                drawAbductionBeam(beam, strength: ab.beam, t: t)
+                if let img = beam.makeImage() {
+                    let w = CGFloat(beam.w) * scale, h = CGFloat(beam.h) * scale
+                    out.append(DrawItem(image: img, rect: NSRect(x: (actor.x - w / 2).rounded(), y: y, width: w, height: h),
+                                        mirrored: false, alpha: 1))
+                }
+            }
             lastLift[actor.key] = lift
             canvas.addOutline(AIStyle.outline(actor.assistant))
             guard let img = canvas.makeImage() else { continue }
             var alpha = min(1, (now - actor.born) / 0.25)
+            if let ab = abduction { alpha = min(alpha, ab.alpha) }
             var drop = 0.0
             if let left = actor.leaving, actor.exit == nil {
                 let f = min(1, (now - left) / fadeOut)
@@ -1246,6 +1271,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 if actor.key == s.greedo, s.e >= ShootsFirst.standing { line = s.line; overHead = true }
             }
             if let b = bunTalk { line = b.line; overHead = true }
+            if let caption = abduction?.caption { line = caption; overHead = true }
             if let line {
                 let sc = actor.isLeader ? ls : cs
                 let callout = NSAttributedString(string: line, attributes: [
@@ -1493,10 +1519,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             return DrawItem(image: c.makeImage(), rect: NSRect(x: (x - w / 2).rounded(), y: (feet - 1 * s).rounded(), width: w, height: h),
                             mirrored: exit.dir < 0, alpha: alpha)
         }
+        let flight: CGFloat = ride.drives ? 0 : 1      // a car comes along the ground
         if p < 0.3 {                                   // swoops in overhead and settles
             let e = CGFloat(1 - pow(1 - p / 0.3, 2))
             x = exit.landX - exit.dir * 260 * z * (1 - e)
-            lift = 150 * z * (1 - e) * (1 - e)
+            lift = 150 * z * (1 - e) * (1 - e) * flight
             engines = true; gear = p > 0.22
         } else if p < 0.72 {                           // landed: ramp down, they board, ramp up
             ramp = p < 0.36 ? (p - 0.3) / 0.06 : (p < 0.64 ? 1 : max(0, 1 - (p - 0.64) / 0.06))
@@ -1504,7 +1531,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         } else {                                       // lift off and away
             let e = CGFloat(pow((p - 0.72) / 0.28, 2))
             x = exit.landX + exit.dir * 320 * z * e
-            lift = 170 * z * e
+            lift = 170 * z * e * flight
             engines = true; gear = p < 0.78
         }
         let c = PixelCanvas(Ride.width, Ride.height)

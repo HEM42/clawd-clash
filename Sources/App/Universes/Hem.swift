@@ -1,11 +1,12 @@
 import Foundation
 
-// HEM: the one character in all four universes, with the same face in each: big buns, wire glasses, a scowl and a
+// HEM: the one character in every universe, with the same face in each: big buns, wire glasses, a scowl and a
 // salt-and-pepper goatee. He's the last hero of every cast (`Universe.hem`), kept out of the regular pools and turning
 // up only now and then (`Universe.hemOdds`). Star Clawds: Laya's white robe and a blaster (and a word for her about
 // buns, `Overlay`). Marvelous Clawds: a purple-and-gold captain with an H and its shield. Detective Clawds: Harlee's
 // jacket, dyed buns and a toy wand. Doctor Clawd: a tweed jacket, a red bow tie, a fez (fezzes are cool) and a sonic
-// screwdriver. Signature, everywhere: he shakes his fist at you.
+// screwdriver. The Clawd Files: a tan trench coat, an FBI lanyard and a flashlight. Signature, everywhere: he shakes
+// his fist at you.
 
 func hemPersona(_ u: Universe) -> Persona {
     switch u {
@@ -20,6 +21,9 @@ func hemPersona(_ u: Universe) -> Persona {
     case .doctor:
         return Persona(name: "HEM", weapon: .lightning, magic: Magic(core: C(0xE8FFE0), glow: C(0x4ADB5A), jagged: false),
                        pivot: hemSonicTip, headTop: 15, signature: 2.6, draw: { drawHem($0, $1, .doctor) })
+    case .clawdFiles:
+        return Persona(name: "HEM", weapon: .lightning, magic: Magic(core: C(0xFFFBE8), glow: C(0xFFE9A0), jagged: false),
+                       pivot: hemSonicTip, headTop: 21, signature: 2.6, draw: { drawHem($0, $1, .clawdFiles) })
     }
 }
 
@@ -33,7 +37,9 @@ private let robe = C(0xF4F4F0), robeShade = C(0xD2D4DA)
 private let capPurple = C(0x5B2D8E), capPurpleDark = C(0x43206A), capGold = C(0xE8B33A)
 private let harleeRed = C(0xC8202A), harleeBlue = C(0x2E5CC9)
 private let tweed = C(0x7A5232), tweedDark = C(0x5A3C24), fezRed = C(0xB8202A), fezDark = C(0x7A1218)
-/// Where the sonic screwdriver's tip is, held out (its beam leaves from there, raised by the pose's `armRaise`).
+private let trench = C(0xB89A66), trenchDark = C(0x8A7048)
+/// Where the sonic screwdriver's tip (or the flashlight's lens) is, held out: the beam leaves from there, raised by
+/// the pose's `armRaise`.
 private let hemSonicTip = (x: 46.0, y: 30.0)
 
 private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
@@ -71,6 +77,10 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
         if !seatedPose {
             for (i, lx) in [19, 23, 31, 35].enumerated() { c.rect(lx, p.step >= 0 && i % 2 == p.step ? 41 : 42, 2, 2, C(0x3A2416)) }
         }
+    case .clawdFiles:   // the trench coat's tails over grey trousers and black shoes
+        drawLegs(c, Look(leg: C(0x4A4A54)), step: p.step)
+        drawDressShoes(c, step: p.step)
+        c.rect(17, 38, 22, seatedPose ? 1 : 3, trench); c.rect(28, 38, 1, seatedPose ? 1 : 3, trenchDark)
     }
 
     c.oy += p.breathe
@@ -81,6 +91,7 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
     case .marvel: top = capPurple; topShade = capPurpleDark; arm = capPurple; armRight = capPurple
     case .dc: top = white; topShade = C(0xD8D8DC); arm = harleeRed; armRight = harleeBlue
     case .doctor: top = tweed; topShade = tweedDark; arm = tweed; armRight = tweed
+    case .clawdFiles: top = trench; topShade = trenchDark; arm = trench; armRight = trench
     }
     c.rect(17, 26, 22, 12, clawdOrange); c.rect(38, 26, 1, 12, hemShade)
     c.rect(17, 34, 22, 4, top); c.rect(38, 34, 1, 4, topShade); c.rect(20, 34, 16, 1, topShade)   // the turtleneck's roll
@@ -96,11 +107,15 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
     case .doctor:   // the jacket open over a shirt, red braces and the bow tie
         c.rect(24, 34, 8, 4, C(0xE8E2D4)); c.rect(25, 35, 1, 3, fezRed); c.rect(30, 35, 1, 3, fezRed)
         c.pattern(25, 34, ["RRrRR", "R...R"], ["R": fezRed, "r": fezDark])
+    case .clawdFiles:   // the coat open over a shirt, the lanyard and its FBI card
+        c.rect(24, 34, 8, 4, C(0xE8E6E0)); c.px(25, 34, C(0x2E4A8A)); c.px(30, 34, C(0x2E4A8A))
+        c.px(26, 35, C(0x2E4A8A)); c.px(29, 35, C(0x2E4A8A))
+        c.pattern(26, 36, ["WWWW", "WBBW"], ["W": white, "B": C(0x2E4A8A)])
     }
     // Arms: hands on hips at rest, the right one forward to fight.
     let forward = !shaking && (!p.resting || p.melee != nil)
     c.rect(14, 33, 3, 3, arm)
-    let lift = u == .doctor ? p.armRaise : 0
+    let lift = u == .doctor || u == .clawdFiles ? p.armRaise : 0
     if !shaking { c.rect(39, (forward ? 31 : 33) - lift, 3, 3, armRight) }
     if !forward { c.px(16, 35, clawdOrange); if !shaking { c.px(39, 35, clawdOrange) } }
 
@@ -149,6 +164,20 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
         drawWand(c, raised: p.fire != nil || p.ready || p.cheering, gunY: p.gunY, t: p.t)
     case .doctor:
         drawHemSonic(c, out: forward || p.zap != nil, lift: lift)
+    case .clawdFiles:
+        drawHemFlashlight(c, out: forward || p.zap != nil, lift: lift)
+    }
+}
+
+/// His flashlight: held down by his side at rest; pointed out, its lens at `hemSonicTip` (`lift` higher). The beam
+/// itself is the persona's steady stream.
+private func drawHemFlashlight(_ c: PixelCanvas, out: Bool, lift: Int) {
+    let body = C(0x2E2E34), rim = C(0x6A6A74), lens = C(0xFFF6D0)
+    if out {
+        let y = 31 - lift
+        c.rect(41, y, 4, 2, body); c.rect(45, y - 1, 1, 4, rim); c.rect(46, y, 1, 2, lens)
+    } else {
+        c.rect(40, 34, 2, 4, body); c.rect(40, 38, 2, 1, rim)
     }
 }
 

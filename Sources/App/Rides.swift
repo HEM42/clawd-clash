@@ -2,7 +2,8 @@ import Foundation
 
 // The ships that come to pick someone up when their agent is done (`Cast.ride`): the Millennium Falcon for Han, the
 // Quinjet for the Avengers, the Milano for the Guardians, the Javelin for the Justice League, the Batwing for the
-// Bat-family, the TARDIS for the Doctors and their companions. Drawn nose to the right on a `Ride.width`×`Ride.height` canvas, sitting on its bottom row when landed;
+// Bat-family, the TARDIS for the Doctors and their companions, and The Clawd Files' sedan, helicopter and saucer
+// (Universes/ClawdFiles/FilesRides.swift). Drawn nose to the right on a `Ride.width`×`Ride.height` canvas, sitting on its bottom row when landed;
 // the boarding ramp comes down to the left of centre, its foot about 14 px left of the middle.
 
 extension Ride {
@@ -18,6 +19,9 @@ func drawRide(_ c: PixelCanvas, _ ride: Ride, ramp: Double, engines: Bool, gear:
     case .javelin: drawJavelin(c, ramp: ramp, engines: engines, gear: gear)
     case .batwing: drawBatwing(c, ramp: ramp, engines: engines, gear: gear)
     case .tardis: drawTardis(c, door: ramp, lamp: engines)
+    case .sedan: drawSedan(c, ramp: ramp, lights: engines)
+    case .helicopter: drawHelicopter(c, ramp: ramp, engines: engines, gear: gear)
+    case .saucer: drawSaucer(c, ramp: ramp, engines: engines)
     }
 }
 
