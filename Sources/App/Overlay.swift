@@ -856,19 +856,23 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             return [SessionSnapshot(id: "home", leader: Universe.shown.base, project: "", mood: .idle, agents: crew)]
         }
         // Sample details so the Playground's cards look like live ones.
-        let prompts = Universe.shown == .doctor
-            ? ["make the rotor pump faster", "make the window resize to fit the Claudes", "why won't the Angle move?",
-               "write a nice README with screenshots", "fix the portrait crop for the Dalick Emperor"]
-            : Universe.shown == .clawdFiles
-            ? ["redact the case file before Skinnard sees it", "make the window resize to fit the Claudes",
-               "why does the slide projector keep flickering?", "write a nice README with screenshots",
-               "fix the portrait crop for the Smoking Clawd's smoke"]
-            : Universe.shown == .clawdberg
-            ? ["get the DeLorean up to 88 mph", "make the window resize to fit the Claudes",
-               "why does the water glass keep rippling?", "write a nice README with screenshots",
-               "fix the portrait crop for T. Wrecks's tiny arms"]
-            : ["add a snowtaunt", "make the window resize to fit the Claudes", "why does the duel not start?",
-               "write a nice README with screenshots", "fix the portrait crop for wide characters"]
+        let prompts: [String] = {
+            switch Universe.shown {
+            case .doctor: return ["make the rotor pump faster", "make the window resize to fit the Claudes", "why won't the Angle move?",
+                                  "write a nice README with screenshots", "fix the portrait crop for the Dalick Emperor"]
+            case .clawdFiles: return ["redact the case file before Skinnard sees it", "make the window resize to fit the Claudes",
+                                      "why does the slide projector keep flickering?", "write a nice README with screenshots",
+                                      "fix the portrait crop for the Smoking Clawd's smoke"]
+            case .clawdberg: return ["get the DeLorean up to 88 mph", "make the window resize to fit the Claudes",
+                                     "why does the water glass keep rippling?", "write a nice README with screenshots",
+                                     "fix the portrait crop for T. Wrecks's tiny arms"]
+            case .middleEarth: return ["make the Eagle wait for the last subagent", "make the window resize to fit the Claudes",
+                                       "why won't the Ballrog cross the bridge?", "write a nice README with screenshots",
+                                       "fix the portrait crop for Shellob's legs"]
+            default: return ["add a snowtaunt", "make the window resize to fit the Claudes", "why does the duel not start?",
+                             "write a nice README with screenshots", "fix the portrait crop for wide characters"]
+            }
+        }()
         let nowActs = ["Edit WindowMode.swift", "Bash: swift build", "Read Locations.swift", "Grep opaqueBounds", "Agent: Review the diff"]
         // Agents join the first villain. Empty project → the label shows the villain's name.
         return villains.enumerated().map { i, l in

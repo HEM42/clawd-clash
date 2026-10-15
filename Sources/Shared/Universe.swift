@@ -88,7 +88,7 @@ enum Universe: Int, CaseIterable, Codable {
 
     /// Whether people can pick it: Settings, Random, Clawd Royale and the screen saver only offer released universes.
     /// An unreleased one exists for the tools (the workbench, the docs and promo renderers) until it's ready.
-    var isReleased: Bool { self != .middleEarth }
+    var isReleased: Bool { true }
     /// The universes people can pick, in menu order.
     static var offered: [Universe] { allCases.filter(\.isReleased) }
     /// A stored key, but only for a universe people can pick: an unreleased one reads as unset.
