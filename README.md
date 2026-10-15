@@ -5,7 +5,7 @@
 <h1 align="center">Clawd Clash</h1>
 
 <p align="center">
-  <b>Your Claude Code, Codex, Qwen Code, Gemini CLI, GitHub Copilot CLI and pi sessions, as a pixel-art Star Clawds, Marvelous Clawds, Detective Clawds or Doctor Clawd battle on your desktop.</b><br>
+  <b>Your Claude Code sessions, and those of every other AI you run, as a pixel-art Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd or The Clawd Files battle on your desktop.</b><br>
   Every session is a hero or a villain, every subagent joins in, and they fight while they work.
 </p>
 
@@ -21,7 +21,7 @@ https://github.com/user-attachments/assets/f90c90d0-274a-493a-804f-8a52dd08b155
 
 <p align="center"><sub>Full 1080p version: <a href="promo/clawd-clash-promo.mp4">promo/clawd-clash-promo.mp4</a></sub></p>
 
-Clawd Clash is one app with four universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars), **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars) and **[Doctor Clawd](https://github.com/rodclemen/doctor-clawd)**. Pick one in Settings, or Clawd Royale for all four at once. Those four pages show each universe on its own; this one is the app.
+Clawd Clash is one app with five universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars), **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars), **[Doctor Clawd](https://github.com/rodclemen/doctor-clawd)** and **The Clawd Files**. Pick one in Settings, or Clawd Royale for all five at once. The universes' own pages show each one on its own; this one is the app.
 
 | Star Clawds | Marvelous Clawds |
 |---|---|
@@ -36,7 +36,7 @@ Clawd Clash is one app with four universes: **[Star Clawds](https://github.com/r
 ## Contents
 
 - [What it does](#what-it-does)
-- [Four universes](#four-universes)
+- [Five universes](#five-universes)
 - [Window mode and the screen saver](#window-mode-and-the-screen-saver)
 - [The little things](#the-little-things)
 - [Supported AIs and harnesses](#supported-ais-and-harnesses)
@@ -62,20 +62,21 @@ You run Claude Code in three terminals. One is thinking, one is waiting for your
   <img src="docs/desktop-star-clawds.png" alt="Star Clawds sessions and agents fighting along the bottom of the screen"><br>
   <img src="docs/desktop-marvelous-clawds.png" alt="Marvelous Clawds sessions and agents fighting along the bottom of the screen"><br>
   <img src="docs/desktop-detective-clawds.png" alt="Detective Clawds sessions and agents fighting along the bottom of the screen"><br>
-  <img src="docs/desktop-doctor-clawd.png" alt="Doctor Clawd sessions and agents fighting along the bottom of the screen">
+  <img src="docs/desktop-doctor-clawd.png" alt="Doctor Clawd sessions and agents fighting along the bottom of the screen"><br>
+  <img src="docs/desktop-the-clawd-files.png" alt="The Clawd Files sessions and agents fighting along the bottom of the screen">
 </p>
 
-## Four universes
+## Five universes
 
-Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, **Detective Clawds**, **Doctor Clawd**, **Clawd Royale** or **Random**. Switching recasts everyone on screen (each character becomes the one in the same place in the other cast, on the same side), moves the scene to one of the new universe's places, and changes the menu bar icon (Darth Vapor's helmet, Captain Americlawd's shield, Superb-Man's C-shield or the police box). In the window, the whole window changes over with the new universe's transition. **Random** switches on its own every 1, 5, 10, 15, 30 or 60 minutes. **Clawd Royale** throws all four casts into one scene, heroes against villains, each character as itself, in a random place from any universe every ten minutes (the Location menu is greyed out meanwhile); the menu bar icon is the universe of the place. The screen saver follows it with "The same as Clawd Clash", or picks it in its own Options.
+Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, **Detective Clawds**, **Doctor Clawd**, **The Clawd Files**, **Clawd Royale** or **Random**. Switching recasts everyone on screen (each character becomes the one in the same place in the other cast, on the same side), moves the scene to one of the new universe's places, and changes the menu bar icon (Darth Vapor's helmet, Captain Americlawd's shield, Superb-Man's C-shield, the police box or a flying saucer). In the window, the whole window changes over with the new universe's transition. **Random** switches on its own every 1, 5, 10, 15, 30 or 60 minutes. **Clawd Royale** throws all five casts into one scene, heroes against villains, each character as itself, in a random place from any universe every ten minutes (the Location menu is greyed out meanwhile); the menu bar icon is the universe of the place. The screen saver follows it with "The same as Clawd Clash", or picks it in its own Options.
 
-| | Star Clawds | Marvelous Clawds | Detective Clawds | Doctor Clawd |
-|---|---|---|---|---|
-| Cast | 46 villains, 35 heroes | 88 villains, 105 heroes | 97 villains, 110 heroes | 42 villains, 56 heroes |
-| Places | 22, from the Mos Easy Cantina to the Battle of Froth | 43, from Clawdvengers Tower to Ta Loh | 43, from the Lookout to the Hall of Gloom | 20, from the TARDIS console room to Sanctuary Base 6 |
-| Weapons | laser swords, blasters, dark lightning | shields, hammers, claws, repulsors, webs, arrows, magic | fists, swords, heat vision, power rings, clawdarangs, arrows, magic | sonic screwdrivers, Dalick guns, cyber blasters, the odd cricket ball and umbrella |
-| Set pieces | Han Yolo and Greedy-O face off, and Han shoots first; the Millennial Falcon picks Han up | arch-enemies face off first; the Clawdjet and the Milano pick people up; flyers take to the air and fight from there | arch-enemies face off first; the Lance and the Clawdwing pick people up; the Batclawd family swings on grapnel lines | arch-enemies face off first; the TARDIS wheezes in to pick people up; the Weeping Angle only moves while nobody looks; when Claude Code compacts its context, its Doctor regenerates into the next one |
-| Sides | whoever came first keeps their side; Darth Vapor and Kylo Rant never lead back to back | Claude Code plays the heroes when another AI runs | Claude Code plays the heroes when another AI runs | Claude Code plays the heroes when another AI runs |
+| | Star Clawds | Marvelous Clawds | Detective Clawds | Doctor Clawd | The Clawd Files |
+|---|---|---|---|---|---|
+| Cast | 46 villains, 35 heroes | 88 villains, 105 heroes | 97 villains, 110 heroes | 42 villains, 56 heroes | 46 villains, 36 heroes |
+| Places | 22, from the Mos Easy Cantina to the Battle of Froth | 43, from Clawdvengers Tower to Ta Loh | 43, from the Lookout to the Hall of Gloom | 20, from the TARDIS console room to Sanctuary Base 6 | 20, from the X-Files office to the mothership |
+| Weapons | laser swords, blasters, dark lightning | shields, hammers, claws, repulsors, webs, arrows, magic | fists, swords, heat vision, power rings, clawdarangs, arrows, magic | sonic screwdrivers, Dalick guns, cyber blasters, the odd cricket ball and umbrella | FBI sidearms and flashlights, alien stilettos, black oil, monster claws |
+| Set pieces | Han Yolo and Greedy-O face off, and Han shoots first; the Millennial Falcon picks Han up | arch-enemies face off first; the Clawdjet and the Milano pick people up; flyers take to the air and fight from there | arch-enemies face off first; the Lance and the Clawdwing pick people up; the Batclawd family swings on grapnel lines | arch-enemies face off first; the TARDIS wheezes in to pick people up; the Weeping Angle only moves while nobody looks; when Claude Code compacts its context, its Doctor regenerates into the next one | arch-enemies face off first; an unmarked sedan, a black helicopter or a saucer picks people up; when an FBI agent's session compacts its context, they lose some time: abducted in a beam of light and set back down; each scene's place types itself in, as in the show |
+| Sides | whoever came first keeps their side; Darth Vapor and Kylo Rant never lead back to back | Claude Code plays the heroes when another AI runs | Claude Code plays the heroes when another AI runs | Claude Code plays the heroes when another AI runs | Claude Code plays the FBI when another AI runs |
 
 <details>
 <summary><b>The Star Clawds cast and places</b></summary>
@@ -101,6 +102,12 @@ Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, *
 <p align="center"><img src="docs/locations-doctor-clawd.png" alt="All Doctor Clawd places" width="760"></p>
 </details>
 
+<details>
+<summary><b>The Clawd Files cast and places</b></summary>
+<p align="center"><img src="docs/roster-the-clawd-files.png" alt="All The Clawd Files characters" width="760"></p>
+<p align="center"><img src="docs/locations-the-clawd-files.png" alt="All The Clawd Files places" width="760"></p>
+</details>
+
 ## Window mode and the screen saver
 
 It opens in a window by default (switch to the desktop from the menu): the whole crew in a scene set where the first session's character belongs, with a card for every session: its project, what it's doing right now, your last prompt, its last reply, and its agents in a little tree.
@@ -109,7 +116,7 @@ It opens in a window by default (switch to the desktop from the menu): the whole
   <img src="docs/window-cantina.png" alt="Window mode in the Mos Easy Cantina: Han Yolo with Luke Skyclawder and Obi-Juan Kanoobie, Greedy-O on Codex" width="760">
 </p>
 
-**The screen saver** (Settings… → Screen Saver → Install…) shows the place full screen with the crew fighting across its floor, a card per session, name tags, a clock and a crawl of what happened lately, and moves somewhere new every 10 minutes: with a Star Clawds wipe, or in Marvelous Clawds with a comic-book transition (halftone dots, a SNIKT!, PHOOMF!, FWIP! or KAPOW! for whoever's on screen, panels, speed lines, "MEANWHILE…", and with Deadpond about, Deadpond peeling the page off the screen or surfing past on a chimichanga), or in Detective Clawds with one of fifteen of its own (the Flare racing through the Speed Source, the Night Beacon, Superb-Man bursting through the page, the Lariat of Truth, a Jester card, Darksyde's Omicron Beams and more), or in Doctor Clawd with one of ten built on the show's own travels (the TARDIS dematerialising, each era's title sequence from the 1963 howlaround to today's neon vortex, a regeneration, and with an Angle or a Dalick about, Blink or the view through a Dalick's eyestalk). Its **Options…** button in System Settings picks the universe: the same as the app, Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd, Clawd Royale, or Random (a new pick on each trip).
+**The screen saver** (Settings… → Screen Saver → Install…) shows the place full screen with the crew fighting across its floor, a card per session, name tags, a clock and a crawl of what happened lately, and moves somewhere new every 10 minutes: with a Star Clawds wipe, or in Marvelous Clawds with a comic-book transition (halftone dots, a SNIKT!, PHOOMF!, FWIP! or KAPOW! for whoever's on screen, panels, speed lines, "MEANWHILE…", and with Deadpond about, Deadpond peeling the page off the screen or surfing past on a chimichanga), or in Detective Clawds with one of fifteen of its own (the Flare racing through the Speed Source, the Night Beacon, Superb-Man bursting through the page, the Lariat of Truth, a Jester card, Darksyde's Omicron Beams and more), or in Doctor Clawd with one of ten built on the show's own travels (the TARDIS dematerialising, each era's title sequence from the 1963 howlaround to today's neon vortex, a regeneration, and with an Angle or a Dalick about, Blink or the view through a Dalick's eyestalk), or in The Clawd Files with one of ten of its own (the Black Oil, a blinking eye, a classified case file, a TV losing sync, a UFO's beam, flashlights in the dark, cigarette smoke, a spy satellite, a paranormal warp and, now and then, the whole opening titles), after which the new place types itself in at the corner. Its **Options…** button in System Settings picks the universe: the same as the app, Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd, The Clawd Files, Clawd Royale, or Random (a new pick on each trip).
 
 <p align="center">
   <img src="docs/screensaver.png" alt="The screen saver" width="760">
@@ -194,7 +201,7 @@ Clawd Clash replaces Clawd Wars, Clawdvengers: Clawd Wars and Justice Clawds: Cl
 
 ## How it works
 
-- A tiny Foundation-only binary, `clawd-clash-hook`, is registered for each connected AI's hook events (session start/end, prompts, tool calls, permission requests, subagents, stop, and context compaction for Claude Code and pi, where a Doctor Clawd Doctor regenerates). pi has no hooks, so its connection is an extension that runs the same binary for each of pi's events. It writes `~/.claude/clawd-clash/state.json` under a file lock and exits silently, so it can never get in Claude's way. It casts new characters from the universe on show.
+- A tiny Foundation-only binary, `clawd-clash-hook`, is registered for each connected AI's hook events (session start/end, prompts, tool calls, permission requests, subagents, stop, and context compaction for Claude Code and pi, where a Doctor Clawd Doctor regenerates or a Clawd Files FBI agent loses time). pi has no hooks, so its connection is an extension that runs the same binary for each of pi's events. It writes `~/.claude/clawd-clash/state.json` under a file lock and exits silently, so it can never get in Claude's way. It casts new characters from the universe on show.
 - The app reads that twice a second, finds sessions without hooks from the process table, and drops a session the moment its process exits.
 - Everything you see (481 characters, their weapons and effects, 108 places, the ships, the icon) is pixel art drawn in Swift at runtime. The whole app is about 10 MB; only the characters and the place on screen are ever drawn.
 
@@ -209,7 +216,7 @@ rm -rf "/Applications/Clawd Clash.app" ~/.claude/clawd-clash
 
 ## Contributing
 
-Each universe lives in its own folder, `Sources/App/Universes/StarClawds`, `.../MarvelousClawds` and `.../DetectiveClawds`:
+Each universe lives in its own folder, `Sources/App/Universes/StarClawds`, `.../MarvelousClawds`, `.../DetectiveClawds`, `.../DoctorClawd` and `.../ClawdFiles`:
 
 - **A character** is a `Persona` (name, weapon, how it moves, what its shots or magic look like, its signature move) registered next to its drawing function in the universe's `Art/*.swift` files. Add its case at the **end** of the universe's hero or villain enum (ids are saved, so never reorder), give it a home in the roster file, and bump the count in `Sources/Shared/Universe.swift`. `Sources/App/Pose.swift` explains what a drawing function gets and must do.
 - **A place** is a `Place` in the universe's `Places/` files: a still picture and an optional moving layer.
