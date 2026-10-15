@@ -10,6 +10,7 @@ struct SaverFeed: Codable {
     var events: [Event]
     var universe: Int?             // `Universe.rawValue` the app shows (nil: from before universes, Star Wars)
     var saverUniverse: String?     // the screen saver's universe: "same", "starWars", "marvel" or "random"
+    var mixed: Bool? = nil         // Clawd Royale: everyone as themselves, places from every universe
 
     struct Session: Codable {
         var id: String

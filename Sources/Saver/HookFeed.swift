@@ -20,11 +20,11 @@ extension SaverFeed {
                 mood: s.mood.rawValue, urgent: s.mood == .waiting && held > 60, asleep: resting && held > 300,
                 sitting: resting && held > 120, unknown: false, focused: nil, since: since,
                 activity: s.mood == .idle ? nil : s.record?.activity, prompt: s.record?.prompt,
-                agents: s.agents.map { Agent(id: $0.id, cast: Cast.of($0).id, task: $0.label.isEmpty ? "Agent" : $0.label) })
+                agents: s.agents.map { Agent(id: $0.id, cast: $0.cast ?? StatusStore.heroBase + $0.character, task: $0.label.isEmpty ? "Agent" : $0.label) })
         }
         guard !sessions.isEmpty else { return nil }
         let universe = file.shownUniverse
         return SaverFeed(at: now, location: last?.location ?? Location.all(in: universe)[0].rawValue, sessions: sessions, events: [],
-                         universe: universe.rawValue, saverUniverse: file.saverUniverse)
+                         universe: universe.rawValue, saverUniverse: file.saverUniverse, mixed: file.mixed)
     }
 }
