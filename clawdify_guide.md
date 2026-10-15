@@ -10,7 +10,7 @@ Each step below ends at an **approval gate**: show the user what you have, then 
 
 Reference builds to read when you get stuck:
 - **Doctor Clawd** (`Sources/App/Universes/DoctorClawd/`, commit `37e1d4b`) is the most complete recent universe: roster, art, places, transitions, a ride, regeneration on compaction, and a trailer.
-- **The Clawd Files** (`Sources/App/Universes/ClawdFiles/`, branch `x-files`) was built phase by phase using this process. Its early commits show what a skeleton and a phase look like.
+- **The Clawd Files** (`Sources/App/Universes/ClawdFiles/`, released in 3.3.0) was built phase by phase using this process. Its early commits show what a skeleton and a phase look like.
 
 ---
 
