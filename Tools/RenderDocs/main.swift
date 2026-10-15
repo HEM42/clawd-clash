@@ -137,6 +137,14 @@ func filesPair(_ a: Cast, _ aLead: Bool, _ aLabel: String, _ ax: Double,
     return [Extra(who: a, leader: aLead, label: aLabel, x: ax, facing: 1, role: ra),
             Extra(who: b, leader: bLead, label: bLabel, x: bx, facing: -1, role: rb)]
 }
+/// Stevie Clawdberg: Indy and René Bellock, Marty and Biff, Bruise the Shark circling, a raptor and a gremlin.
+let clawdbergLineup: [[Extra]] = [
+    filesPair(.villain(ClawdbergVillain.reneBellock), true, "", 30, .hero(ClawdbergHero.indianaBones), true, "", 98),
+    filesPair(.hero(ClawdbergHero.martyMcFry), false, "Check git history", 132, .villain(ClawdbergVillain.biffTannin), false, "Write changelog", 182),
+    filesPair(.hero(ClawdbergHero.gizmoe), false, "Plan the refactor", 214, .villain(ClawdbergVillain.strype), false, "Review Overlay.swift", 244),
+    filesPair(.hero(ClawdbergHero.chiefBroody), true, "", 282, .villain(ClawdbergVillain.bruise), true, "", 352),
+    [Extra(who: .hero(ClawdbergHero.eClawd), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
+]
 let filesLineup: [[Extra]] = [
     filesPair(.villain(FilesVillain.smokingClawd), true, "", 30, .hero(FilesHero.foxClawder), true, "", 98),
     filesPair(.hero(FilesHero.danaScrawly), false, "Check git history", 132, .villain(FilesVillain.clawcek), false, "Write changelog", 182),
@@ -200,6 +208,7 @@ desktop(marvelLineup, file: "desktop-marvelous-clawds.png")
 desktop(dcLineup, file: "desktop-detective-clawds.png")
 desktop(doctorLineup, file: "desktop-doctor-clawd.png")
 desktop(filesLineup, file: "desktop-the-clawd-files.png")
+desktop(clawdbergLineup, file: "desktop-stevie-clawdberg.png")
 
 // MARK: Locations (one sheet per universe)
 
@@ -311,4 +320,8 @@ socialPreview(title: "THE CLAWD FILES", subtitle: "Your AI sessions as a pixel-a
               groups: [[.hero(FilesHero.foxClawder), .hero(FilesHero.danaScrawly), .hero(FilesHero.skinnard), .hero(FilesHero.lanky),
                         .villain(FilesVillain.smokingClawd), .villain(FilesVillain.grey), .villain(FilesVillain.flukeman), .villain(FilesVillain.bountyHunter)]],
               file: "social-preview-the-clawd-files.png")
+socialPreview(title: "STEVIE CLAWDBERG", subtitle: "Your AI sessions as a pixel-art blockbuster on your desktop",
+              groups: [[.hero(ClawdbergHero.indianaBones), .hero(ClawdbergHero.martyMcFry), .hero(ClawdbergHero.eClawd), .hero(ClawdbergHero.gizmoe),
+                        .villain(ClawdbergVillain.tWrecks), .villain(ClawdbergVillain.bruise), .villain(ClawdbergVillain.captainClawk), .villain(ClawdbergVillain.biffTannin)]],
+              file: "social-preview-stevie-clawdberg.png")
 print("wrote the social previews to \(out)")
