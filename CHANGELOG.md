@@ -9,7 +9,7 @@ Its first three universes started as separate apps. Their changelogs from before
 
 Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://github.com/rodclemen/doctor-clawd)), so its whole history is below, from 3.1.0.
 
-## Unreleased
+## 3.2.0 (2026-10-15)
 
 ### Added
 - **pi.** Clawd Clash can show [pi](https://github.com/badlogic/pi-mono) sessions, whichever model pi runs (Mistral, GPT, Gemini, local models…), with a pink outline and the model's name on the character. pi has no hooks, so connecting it writes a small extension of Clawd Clash's own to `~/.pi/agent/extensions/clawd-clash.ts`, which sends pi's events (session start and end, the prompt, each tool, the reply, compaction) to the hook; sessions already open load it after `/reload`. In Doctor Clawd, a pi session's Doctor regenerates when pi compacts its context, as a Claude Code one does. Nobody is assumed to use pi: the app offers it once, like the other AIs, only when it finds `pi` on the Mac, and Settings connects or removes it (removing deletes the extension). There's no "Needs you" for pi, since it never asks permission.
