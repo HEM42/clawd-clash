@@ -76,7 +76,8 @@ final class ClawdClashSaverView: ScreenSaverView {
               let options = try? JSONDecoder().decode([String: String].self, from: data) else { return [:] }
         return options
     }
-    /// "same" (the app's), "starWars", "marvel", "dc", "doctor", "clawdFiles", "clawdberg", "clawdRoyale" or "random" (a new pick on each trip).
+    /// "same" (the app's), an offered universe's key (`Universe.offered`, by `Universe.key`: "starWars", "marvel",
+    /// "dc", "doctor", "clawdFiles"…), "clawdRoyale" or "random" (a new pick on each trip).
     static var choice: String { options["universe"] ?? "same" }
     /// The clock top right, on unless turned off.
     static var clockShown: Bool { options["clock"] != "off" }
@@ -84,11 +85,9 @@ final class ClawdClashSaverView: ScreenSaverView {
     private var sheet: NSWindow?
     private let picker = NSPopUpButton(frame: NSRect(x: 20, y: 90, width: 280, height: 26), pullsDown: false)
     private let clockBox = NSButton(checkboxWithTitle: "Show the clock", target: nil, action: nil)
-    private static let choices = [("same", "The same as Clawd Clash"), ("starWars", Universe.starWars.title), ("marvel", Universe.marvel.title), ("dc", Universe.dc.title),
-                                  ("doctor", Universe.doctor.title), ("clawdFiles", Universe.clawdFiles.title),
-                                  ("clawdberg", Universe.clawdberg.title),
-                                  ("clawdRoyale", "Clawd Royale"),
-                                  ("random", "Random (a new one on each trip)")]
+    /// The Options choices: every offered universe by its key, so a universe appears here once it's released.
+    private static let choices = [("same", "The same as Clawd Clash")] + Universe.offered.map { ($0.key, $0.title) }
+                                 + [("clawdRoyale", "Clawd Royale"), ("random", "Random (a new one on each trip)")]
 
     override var hasConfigureSheet: Bool { true }
     override var configureSheet: NSWindow? {
@@ -206,12 +205,7 @@ final class ClawdClashSaverView: ScreenSaverView {
                 showClock = Self.clockShown
                 let appUniverse = feed?.universe.flatMap(Universe.init(rawValue:)) ?? .starWars
                 switch Self.choice {
-                case "starWars": tripUniverse = .starWars; tripMixed = false
-                case "marvel": tripUniverse = .marvel; tripMixed = false
-                case "dc": tripUniverse = .dc; tripMixed = false
-                case "doctor": tripUniverse = .doctor; tripMixed = false
-                case "clawdFiles": tripUniverse = .clawdFiles; tripMixed = false
-                case "clawdberg": tripUniverse = .clawdberg; tripMixed = false
+                case let key where Universe.offered(key: key) != nil: tripUniverse = Universe.offered(key: key); tripMixed = false
                 case "clawdRoyale": tripMixed = true
                 case "random":
                     tripMixed = false
