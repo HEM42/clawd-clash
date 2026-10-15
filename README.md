@@ -39,6 +39,7 @@ Clawd Clash is one app with four universes: **[Star Clawds](https://github.com/r
 - [Four universes](#four-universes)
 - [Window mode and the screen saver](#window-mode-and-the-screen-saver)
 - [The little things](#the-little-things)
+- [Supported AIs and harnesses](#supported-ais-and-harnesses)
 - [Install](#install)
 - [Coming from Clawd Wars, Clawdvengers or Justice Clawds](#coming-from-clawd-wars-clawdvengers-or-justice-clawds)
 - [How it works](#how-it-works)
@@ -138,9 +139,27 @@ It opens in a window by default (switch to the desktop from the menu): the whole
 - **Settings…** (⌘,) opens one window with every option: the universe, the window and the desktop, which AIs are connected, the screen saver, and Forget Idle Sessions.
 - Hold **⌘** in the menu for the **Playground** (put anyone on stage and watch them fight) and Demo Mode.
 
+## Supported AIs and harnesses
+
+Every session gets a character, whichever AI runs it. Each AI has its own outline colour, so you can tell at a glance who's who, and Clawd Clash asks before connecting any of them.
+
+| AI or harness | How Clawd Clash connects | Outline | Notes |
+|---|---|---|---|
+| [Claude Code](https://claude.com/claude-code) | hooks in `~/.claude/settings.json` | white | Compacting the context sets off a Doctor's regeneration or an FBI agent's missing time (pi's does too). |
+| Claude Code in the Claude desktop app | the same hooks | coral | Spotted by where it runs, so it gets its own colour. |
+| [Codex](https://developers.openai.com/codex) | hooks in `~/.codex/hooks.json` | cyan | Codex only runs hooks you've approved: run **`/hooks`** in Codex once after connecting. |
+| [Qwen Code](https://github.com/QwenLM/qwen-code) | hooks in `~/.qwen/settings.json` | lavender | |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | hooks in `~/.gemini/settings.json` | gold | |
+| [GitHub Copilot CLI](https://github.com/github/copilot-cli) | hooks in `~/.copilot/hooks/clawd-clash.json` | mint | |
+| [pi](https://github.com/badlogic/pi-mono), a harness for almost any model (Mistral, GPT, Gemini, local ones…) | an extension, `~/.pi/agent/extensions/clawd-clash.ts` (pi has no hooks) | pink | Each character is labelled with the model it's running. Sessions already open load it after **`/reload`**. pi never asks permission, so its characters never show the red `!`. |
+
+Clawd Clash only offers an AI when it finds it on your Mac, and only touches the ones you connect. **Settings** connects or removes each one; removing pi deletes its extension.
+
+**Who plays whom.** One AI on its own plays everyone, heroes and villains alike, fighting among themselves. Run two or more and they pick sides: Claude Code always takes the heroes (in Star Clawds, whoever got there first keeps their side), and every other AI takes the villains. Without Claude, the AI that's been running longest keeps its side and the rest take the other.
+
 ## Install
 
-Needs macOS 13+ (Apple Silicon or Intel) and at least one of [Claude Code](https://claude.com/claude-code), [Codex](https://developers.openai.com/codex), [Qwen Code](https://github.com/QwenLM/qwen-code), [Gemini CLI](https://github.com/google-gemini/gemini-cli), [GitHub Copilot CLI](https://github.com/github/copilot-cli) or [pi](https://github.com/badlogic/pi-mono) (with any model it runs: Mistral, GPT, local models…). Clawd Clash asks before connecting any of them, and only touches the ones you connect.
+Needs macOS 13+ (Apple Silicon or Intel) and at least one of the [supported AIs and harnesses](#supported-ais-and-harnesses).
 
 **With Homebrew:**
 
