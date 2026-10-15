@@ -375,7 +375,7 @@ final class ClawdClashSaverView: ScreenSaverView {
                                                                height: bounds.height * 0.4), smooth: true)]
         let feet = CGFloat(floorRows) * P * 0.55
         if crewed(now), let f = feed {
-            items += crew(f.sessions, now: now, feet: feet)
+            items += crew(atPlace(f.sessions, location), now: now, feet: feet)
         } else {
             if demoPlace != location { demo = cast(for: location, now: now); demoPlace = location }
             items += crew(demo, now: now, feet: feet, cards: false)
@@ -383,6 +383,22 @@ final class ClawdClashSaverView: ScreenSaverView {
         items += hud(running ? feed : nil, location: location, now: now, idle: !running)
         show(items, in: root)
         CATransaction.commit()
+    }
+
+    /// `sessions` as they may appear at `place`: the homebound away from home shown as someone else (`Roster.recast`),
+    /// the same someone on every frame.
+    private func atPlace(_ sessions: [SaverFeed.Session], _ place: Location) -> [SaverFeed.Session] {
+        let r = Roster.shown
+        var ids = sessions.map { r.adopt($0.cast) }, seeds = sessions.map(\.id)
+        for s in sessions { ids += s.agents.map { r.adopt($0.cast) }; seeds += s.agents.map(\.id) }
+        let shown = r.recast(ids, seeds: seeds, at: place.rawValue)
+        guard shown != ids else { return sessions }
+        var out = sessions, k = sessions.count
+        for i in out.indices {
+            out[i].cast = shown[i]
+            for j in out[i].agents.indices { out[i].agents[j].cast = shown[k]; k += 1 }
+        }
+        return out
     }
 
     private func show(_ items: [Item], in root: CALayer) {
@@ -931,7 +947,9 @@ final class ClawdClashSaverView: ScreenSaverView {
     /// among them (whoever calls the place home), up to two of them agents at someone's side.
     private func cast(for place: Location, now: Double) -> [SaverFeed.Session] {
         let r = Roster.shown
-        let armed = (r.darkCast + r.lightCast).filter { Cast(id: $0).weapon != .none && !r.agentOnly.contains($0) }
+        let armed = (r.darkCast + r.lightCast).filter {
+            Cast(id: $0).weapon != .none && !r.agentOnly.contains($0) && r.allowed($0, at: place.rawValue)
+        }
         let locals = armed.filter { Cast(id: $0).home == place }.shuffled().prefix(2)
         var dark = armed.filter { StatusStore.isDark($0) && !locals.contains($0) }.shuffled()
         var light = armed.filter { !StatusStore.isDark($0) && !locals.contains($0) }.shuffled()

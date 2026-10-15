@@ -77,6 +77,11 @@ enum Universe: Int, CaseIterable, Codable {
         return [[hero, hero + 17], [hero + 4, hero + 28], [base + 1, base + 30], [base, base + 31]]
     }
 
+    /// Characters who only ever appear at home, as global id → place key: anywhere else, and on the desktop (no place),
+    /// they're shown as someone else (`Roster.recast`). Clawd of the Rings: Smaug the Stashed (`LOTRVillain` 32) on his
+    /// hoard in the Lonely Mount-point.
+    var homebound: [Int: String] { self == .middleEarth ? [base + 32: "erebor"] : [:] }
+
     /// Doctor Clawd: the Doctors in order (One … Fifteen), as global ids. When a session's context is compacted, its
     /// Doctor regenerates into the next one (`StatusStore`'s PreCompact); nobody else changes.
     /// The Clawd Files: the seven FBI agents (Clawder, Scrawly, Skinnard, Doggedd, Reyez, Einstine, Millar), as global
@@ -137,6 +142,24 @@ struct Roster {
     /// Who can't join while `shown` (ids as of this roster) are on screen: the other guises of anyone there.
     func ruledOut(by shown: Set<Int>) -> Set<Int> {
         guises.reduce(into: Set<Int>()) { out, g in if !g.isDisjoint(with: shown) { out.formUnion(g.subtracting(shown)) } }
+    }
+    var homebound: [Int: String] { universes.reduce(into: [:]) { $0.merge($1.homebound) { a, _ in a } } }
+    /// Whether `id` may appear at `place` (a place key; nil: no place, the desktop): anyone but the homebound, and
+    /// those only at home.
+    func allowed(_ id: Int, at place: String?) -> Bool { homebound[id].map { $0 == place } ?? true }
+    /// `ids` (as of this roster) as they may appear at `place`: anyone homebound elsewhere is shown as someone else on
+    /// the same side, not on screen already and not the other guise of anyone there, picked by `seeds` (one per id) so
+    /// it's the same someone on every refresh.
+    func recast(_ ids: [Int], seeds: [String], at place: String?) -> [Int] {
+        guard !homebound.isEmpty else { return ids }
+        var out = ids
+        for (i, id) in ids.enumerated() where !allowed(id, at: place) {
+            let taken = Set(out), ruled = ruledOut(by: taken)
+            let pool = (StatusStore.isDark(id) ? darkCast : lightCast)
+                .filter { !taken.contains($0) && !ruled.contains($0) && !agentOnly.contains($0) && allowed($0, at: place) }
+            if !pool.isEmpty { out[i] = pool[Int(StatusStore.stableHash(seeds[i]) % UInt64(pool.count))] }
+        }
+        return out
     }
     /// With another AI running, Claude Code's side (`Universe.claudeSide`); in Clawd Royale, the heroes.
     var claudeSide: Bool? { mixed ? false : universes[0].claudeSide }

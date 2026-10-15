@@ -656,6 +656,23 @@ enum StatusStore {
 
     /// Every live session in spawn order (empty when none are running, unless stray agents need a placeholder Vader).
     /// `processes` (from `ClaudeProcesses.running()`) adds sessions whose hooks never fired and drops dead ones.
+    /// `snaps` as they may appear at `place` (a place key; nil: no place, the desktop): the homebound away from home
+    /// are shown as someone else (`Roster.recast`), leaders first, then each session's agents.
+    static func at(_ snaps: [SessionSnapshot], place: String?, roster: Roster) -> [SessionSnapshot] {
+        guard !roster.homebound.isEmpty else { return snaps }
+        var ids: [Int] = [], seeds: [String] = []
+        for s in snaps { ids.append(roster.adopt(s.leader)); seeds.append(s.id) }
+        for s in snaps { for a in s.agents { ids.append(roster.adopt(a.cast ?? heroBase + a.character)); seeds.append(a.id) } }
+        let shown = roster.recast(ids, seeds: seeds, at: place)
+        guard shown != ids else { return snaps }
+        var out = snaps, k = snaps.count
+        for i in out.indices {
+            out[i].leader = shown[i]
+            for j in out[i].agents.indices { out[i].agents[j].cast = shown[k]; k += 1 }
+        }
+        return out
+    }
+
     static func snapshot(_ s: StatusFile, now: Double = Date().timeIntervalSince1970,
                          processes: [ClaudeProcesses.Info]? = nil) -> [SessionSnapshot] {
         var s = s

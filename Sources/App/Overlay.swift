@@ -451,6 +451,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 else { focusCandidate = seen }
             }
         }
+        // The homebound (`Universe.homebound`) only appear at home: in the window's scene when it's theirs, never on the
+        // desktop. The Playground shows whoever was picked.
+        if playground == nil { sessions = StatusStore.at(sessions, place: windowMode ? location.rawValue : nil, roster: .shown) }
         debounceMoods(now)
         Accents.update(visible: sessions.map(\.project))
         relayout()
