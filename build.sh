@@ -34,7 +34,7 @@ FLAGS=(-O -swift-version 5)
 
 rm -rf build && mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-# compile <output> <sources…>: Apple silicon only, for installs and releases alike (Intel was dropped after 3.5.0)
+# compile <output> <sources…>: Apple silicon, for installs and releases alike
 compile() {
     local out=$1; shift
     swiftc "${FLAGS[@]}" -target arm64-apple-macos13.0 "$@" -o "$out"

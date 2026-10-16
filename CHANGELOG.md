@@ -12,7 +12,7 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 ## Unreleased
 
 ### Changed
-- **Apple silicon only.** Clawd Clash is built for Apple silicon (arm64) alone from now on; 3.5.0 was the last release for Intel Macs. Release builds no longer compile everything twice and glue the halves together with `lipo`, so `./release.sh` takes about half as long, and the zip is smaller. The Homebrew casks now say `depends_on arch: :arm64`, so on an Intel Mac brew refuses the upgrade with a clear message instead of installing an app that can't open; Intel users keep 3.5.0. The README's requirements, `llms.txt` and the clawdify guide say so.
+- **Apple silicon only.** Clawd Clash is built for Apple silicon (arm64) alone from now on; 3.5.0 was the last release for Intel Macs. Release builds no longer compile everything twice and glue the halves together with `lipo`, so `./release.sh` takes about half as long, and the zip is smaller. The Homebrew casks now say `depends_on arch: :arm64`, so on an Intel Mac brew refuses the upgrade with a clear message instead of installing an app that can't open; Intel users keep 3.5.0. The README's requirements, `llms.txt` and the clawdify guide just say Apple silicon, without mentioning Intel.
 
 ## 3.5.0 (2026-10-16)
 
