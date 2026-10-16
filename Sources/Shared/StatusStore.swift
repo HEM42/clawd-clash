@@ -63,8 +63,6 @@ struct StatusFile: Codable {
     var pending: [PendingAgent]? = []
     /// The universe on show (`Universe.rawValue`), set by the app; the hook casts new characters from it.
     var universe: Int?
-    /// Which universe the screen saver shows: "same", "starWars", "marvel" or "random" (Settings in the app).
-    var saverUniverse: String?
     /// Clawd Royale: the hook casts from every universe (`Roster`), and nobody is recast. Nil: one universe.
     var mixed: Bool?
 
@@ -85,7 +83,6 @@ extension StatusFile {
         agents = (try? c.decode([Lenient<AgentRecord>].self, forKey: .agents))?.compactMap(\.value) ?? []
         pending = (try? c.decode([Lenient<PendingAgent>].self, forKey: .pending))?.compactMap(\.value) ?? []
         universe = try? c.decode(Int.self, forKey: .universe)
-        saverUniverse = try? c.decode(String.self, forKey: .saverUniverse)
         mixed = try? c.decode(Bool.self, forKey: .mixed)
     }
 }
@@ -581,8 +578,8 @@ enum StatusStore {
 
     /// Tell the hook (and the screen saver, when the app isn't running) what's on show: the universe, and whether it's
     /// Clawd Royale.
-    static func setUniverse(_ universe: Universe, mixed: Bool = false, saver: String?) {
-        withLock { s in s.universe = universe.rawValue; s.mixed = mixed ? true : nil; s.saverUniverse = saver }
+    static func setUniverse(_ universe: Universe, mixed: Bool = false) {
+        withLock { s in s.universe = universe.rawValue; s.mixed = mixed ? true : nil }
     }
 
     /// Drop idle sessions with no agents (e.g. terminals closed without a clean exit). They return on their next event.

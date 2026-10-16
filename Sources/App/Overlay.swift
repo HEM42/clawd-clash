@@ -47,7 +47,6 @@ private struct Fight { let a: String, b: String }
 private let fadeIn = 0.5
 private let fadeOut = 0.6
 private let falconExit = 6.0      // an agent with a ride finishing: its ship lands, it boards, they fly off
-private let fightLinger = 3.0      // keep fighting through brief gaps between tool calls
 
 final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     private let panel: OverlayPanel
@@ -162,7 +161,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private static let gap: CGFloat = 8
     /// How long a Claude keeps fighting after it stops working or thinking.
     private static let fightLinger: Double = 5
-    private static let duelDistance: CGFloat = 170
     private static let walkSpeed: CGFloat = 150
     /// Example agent tasks for the Playground and Demo Mode.
     private static let sampleTasks = ["Find hook events", "Review Overlay.swift", "Run the test suite", "Plan the refactor",
@@ -508,7 +506,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 SaverFeed.Agent(id: a.id, cast: Cast.of(a).id, task: a.label.isEmpty ? "Agent" : a.label)
             }
             out.append(SaverFeed.Session(
-                id: s.id, cast: cast.id, assistant: s.group, project: s.project, remote: s.pid == nil ? nil : (s.remote ?? "Local"),
+                id: s.id, cast: cast.id, assistant: s.group, project: s.project, 
                 accent: hex, mood: s.mood.rawValue, urgent: actor?.urgent ?? false, asleep: asleep, sitting: actor?.sitting ?? false,
                 unknown: !s.live || s.hookSilent, focused: s.pid != nil && s.pid == focusedPid, since: since(s, now: now),
                 activity: s.mood == .idle ? nil : s.record?.activity, prompt: s.record?.prompt, agents: agents))
@@ -536,7 +534,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         feedAgents = agentsNow
         feedEvents = Array(feedEvents.suffix(12))
         let feed = SaverFeed(at: now, location: location.rawValue, sessions: out, events: feedEvents,
-                             universe: Universe.shown.rawValue, saverUniverse: nil, mixed: Universe.mixed ? true : nil)
+                             universe: Universe.shown.rawValue, mixed: Universe.mixed ? true : nil)
         saverFeed = feed
         if real && saverInstalled { feed.save() }
     }
@@ -2578,17 +2576,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         return root
     }
 
-    @objc private func togglePin() {
-        if windowMode {
-            let on = !UserDefaults.standard.bool(forKey: "windowPinned")
-            UserDefaults.standard.set(on, forKey: "windowPinned")
-            clawdWindow?.applyPin()
-        } else {
-            Self.charactersOnTop.toggle()
-            panel.level = Self.charactersOnTop ? .statusBar : Self.desktopLevel
-        }
-    }
-
     /// Settings → Keep Characters on Top (desktop mode): on, the crew stands above every window; off, it lives on the
     /// desktop itself, just above the icons, behind your windows. On by default.
     static var charactersOnTop: Bool {
@@ -2669,7 +2656,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// Tell the hook (and the screen saver, with the app closed) what's on show.
     private func publishUniverse() {
         guard !Self.testRun else { return }
-        StatusStore.setUniverse(Universe.shown, mixed: Universe.mixed, saver: nil)
+        StatusStore.setUniverse(Universe.shown, mixed: Universe.mixed)
     }
 
     /// Random: a different universe every this many minutes (Settings → Universe → Random); nil: it stays on the one picked.
@@ -2955,8 +2942,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         do { try HookInstaller.install() } catch { alert("Couldn't install hooks", error.localizedDescription) }
     }
 
-    @objc private func installOtherHooks(_ sender: NSMenuItem) { installOther(sender.representedObject as? String ?? "") }
-
     private func installOther(_ name: String) {
         guard let ai = HookInstaller.other(name) else { return }
         let display = HookInstaller.displayName(name)
@@ -2968,12 +2953,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                   : name == "pi" ? "pi sessions that are already open pick it up after /reload (or a restart)."
                   : "\(display) sessions that are already open pick them up after a restart.")
         } catch { alert("Couldn't install \(display) hooks", error.localizedDescription) }
-    }
-
-    @objc private func removeOtherHooks(_ sender: NSMenuItem) {
-        guard let name = sender.representedObject as? String, let ai = HookInstaller.other(name) else { return }
-        Self.ignoredHooks.insert(name)   // removed on purpose: no "isn't connected" reminders
-        do { try HookInstaller.uninstall(ai) } catch { alert("Couldn't remove \(HookInstaller.displayName(name)) hooks", error.localizedDescription) }
     }
 
     @objc private func removeHooks() {

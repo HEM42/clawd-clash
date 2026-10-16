@@ -339,7 +339,7 @@ final class ClawdClashSaverView: ScreenSaverView {
             live = nil
         }
         // What moves there.
-        if location.animates(rows: ch) {
+        if location.hasAnimatedLayer {
             if live?.w != cw || live?.h != ch { live = PixelCanvas(cw, ch) } else { live?.clear() }
             if let live {
                 location.drawAnimated(live, floorRows: floorRows, t: now)

@@ -569,10 +569,4 @@ enum HookInstaller {
 
             """
     }
-
-    // Codex conveniences used by the app and CLI
-    static var codexAvailable: Bool { available(codex) }
-    static var codexInstalled: Bool { installed(codex) }
-    static func installCodex() throws { try install(codex) }
-    static func uninstallCodex() throws { try uninstall(codex) }
 }

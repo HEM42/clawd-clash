@@ -48,9 +48,6 @@ struct Location: Hashable, RawRepresentable {
     /// Whether `drawAnimated` draws anything here (the rest are still pictures, with no per-frame layer).
     var hasAnimatedLayer: Bool { place.moving != nil }
 
-    /// `hasAnimatedLayer` for a canvas `rows` tall.
-    func animates(rows: Int) -> Bool { hasAnimatedLayer }
-
     /// The moving bits, drawn every frame on a transparent canvas of the same size.
     func drawAnimated(_ c: PixelCanvas, floorRows f: Int, t: Double) {
         guard let moving = place.moving, c.w > 0, c.h > f, f >= 0 else { return }

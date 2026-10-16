@@ -73,12 +73,6 @@ extension Cast {
 
     var hasSignature: Bool { signatureLength != nil }
 
-    /// The signature move playing right now, 0…1 through it (nil: not playing).
-    static var signatureProgress: Double? {
-        guard let h = idleHabit, h.kind == .signature else { return nil }
-        return h.p
-    }
-
     /// The habit playing at `t`, if any: one per cycle, picked afresh each cycle.
     func habit(at t: Double) -> HabitPlay? {
         if let forced = forcedHabit { return forced }

@@ -25,6 +25,17 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 
 ### Changed
 - **`Ride.drives` and `Ride.boardingOffset` moved into `Theme.swift`**, next to `enum Ride`. They lived in The Clawd Files' and Stevie Clawdberg's folders (`FilesRides.swift`, `ClawdbergRides.swift`) as `extension Ride`, though the overlay's flight and boarding code relies on them. Universe folders now hold only universe code, which lets the PR guard forbid a universe from extending `Ride`. No change in behaviour: the sedan, the DeLorean and the jeep still drive, and everyone boards where they did.
+- **Dead code removed**, all of it confirmed unused across `Sources/` and `Tools/`:
+  - HookInstaller's Codex conveniences (`codexAvailable`, `codexInstalled`, `installCodex`, `uninstallCodex`).
+  - The menu actions left over from before Settings: `installOtherHooks`, `removeOtherHooks` and `togglePin`.
+  - Constants and helpers nothing read:
+    - a second, file-level `fightLinger` (3 s) beside the 5 s one in use
+    - `duelDistance`
+    - `PixelCanvas.rowLuminance`
+    - `ClawdWindow.setSceneHeight`
+    - `Habits.signatureProgress`
+  - `Location.animates(rows:)`, which ignored its argument; the saver asks `hasAnimatedLayer` directly.
+  - The screen-saver feed's `saverUniverse` and `Session.remote`, and `StatusStore.setUniverse`'s `saver:` parameter. The app always wrote nil and the saver never read them; it keeps its own choice in its options file. Old state files still load, as unknown keys are ignored.
 
 ### Fixed
 - **A flying character can be clicked, not just hovered.** Hovering and clicking each worked out where a character is, in two copies that had drifted apart: the click's copy didn't lift with a character in the air (on a ride, levitating, a hop), so its card showed on hover but a click there did nothing. Both now use the same rectangles (`hitRects`), so they always agree.

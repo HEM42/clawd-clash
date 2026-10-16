@@ -187,13 +187,6 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         return NSPoint(x: o.x + (p.x - o.x) / k, y: o.y + (p.y - o.y) / k)
     }
 
-    func setSceneHeight(_ h: CGFloat) {
-        sceneHeight = h
-        let top = (Self.headerHeight + h) * Self.scale
-        if Self.view == .scene { window.minSize.height = top; window.maxSize.height = top }
-        layout()
-    }
-
     /// Show or hide the session list (Settings → Show Session List in Window).
     func applyListShown() {
         guard Self.view != .board else { return }

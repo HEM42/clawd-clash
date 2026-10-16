@@ -265,17 +265,6 @@ final class PixelCanvas {
         return (Double(best.r) / Double(best.n) / 255, Double(best.g) / Double(best.n) / 255, Double(best.b) / Double(best.n) / 255)
     }
 
-    /// Average brightness (0…1) of one row, transparent pixels counting as black.
-    func rowLuminance(_ y: Int) -> Double {
-        guard y >= 0, y < h, w > 0 else { return 0 }
-        var sum = 0.0
-        for x in 0..<w {
-            let i = (y * w + x) * 4
-            sum += 0.2126 * Double(buf[i]) + 0.7152 * Double(buf[i + 1]) + 0.0722 * Double(buf[i + 2])
-        }
-        return sum / Double(w) / 255
-    }
-
     /// Wipe to transparent (and drop any translation), so one canvas can be reused frame after frame.
     func clear() {
         buf.withUnsafeMutableBytes { _ = $0.initializeMemory(as: UInt8.self, repeating: 0) }

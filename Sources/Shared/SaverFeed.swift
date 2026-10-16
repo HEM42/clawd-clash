@@ -9,7 +9,6 @@ struct SaverFeed: Codable {
     var sessions: [Session]
     var events: [Event]
     var universe: Int?             // `Universe.rawValue` the app shows (nil: from before universes, Star Wars)
-    var saverUniverse: String?     // the screen saver's universe: "same", "starWars", "marvel" or "random"
     var mixed: Bool? = nil         // Clawd Royale: everyone as themselves, places from every universe
 
     struct Session: Codable {
@@ -17,7 +16,6 @@ struct SaverFeed: Codable {
         var cast: Int              // `Cast.id`
         var assistant: String      // "claude", "codex"… (its outline colour)
         var project: String
-        var remote: String?        // "GitHub", "Local"…
         var accent: UInt32?        // the project's colour, as in the app
         var mood: String           // "working", "thinking", "waiting", "idle"
         var urgent = false         // waiting and ignored for a while
