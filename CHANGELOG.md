@@ -9,7 +9,7 @@ Its first three universes started as separate apps. Their changelogs from before
 
 Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://github.com/rodclemen/doctor-clawd)), so its whole history is below, from 3.1.0.
 
-## Unreleased
+## 3.5.1 (2026-10-16)
 
 ### Added
 - **`./build.sh --untrusted`, for trying someone's pull request.** It builds into `build/` only and signs ad hoc, so the copy gets none of the permissions you've given the installed app (Accessibility, Automation). It doesn't install it, launch it, or touch any AI's hooks: read the changes, then open `build/Clawd Clash.app` yourself. Plain `./build.sh` installs, rewrites hooks and launches with your Accessibility grant, which is the wrong thing to do with code you haven't reviewed. In the README's build section and `llms.txt`.
