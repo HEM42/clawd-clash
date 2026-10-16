@@ -17,8 +17,9 @@ let ringsVillains1: [LOTRVillain: Persona] = [
     .sharkey: Persona(name: "Sharkey", weapon: .saber, pivot: sarumanHand, headTop: 18, signature: 2.6,
                       callout: "Fine. Then I'll leave a nitpick on every line.", draw: drawSharkey),
     .necromancer: Persona(name: "The Necro-maintainer", weapon: .lightning, motion: .hover,
-                          magic: Magic(core: C(0xFFB050), glow: C(0x8A1A30)), canSit: false, pivot: necroHand, headTop: 14,
-                          signature: 3.6, callout: "Nothing is ever deleted. Only deprecated.", draw: drawNecromancer),
+                          magic: Magic(core: C(0xFFB050), glow: C(0x8A1A30), jagged: false, rings: true), canSit: false,
+                          pivot: necroHand, headTop: 14, signature: 3.6, callout: "Nothing is ever deleted. Only deprecated.",
+                          draw: drawNecromancer),
 ]
 
 // MARK: - Shared bits
@@ -762,8 +763,8 @@ private let necroHand: (x: Double, y: Double) = (43.5, 32.5)
 /// The Necro-maintainer, Sourun before he had a body again, haunting Dol Guldur: a tall hood of dark purple smoke with
 /// nothing solid in it, the spikes of his helm half-seen through the murk on top, two eyes burning orange in the black
 /// of the hood, and below the waist no legs at all, only smoke thinning into wisps that trail out behind him, embers
-/// drifting up off it. He floats. One iron gauntlet reaches out of the smoke, and his magic is a dark fire that leaves
-/// its claws. Signature: he comes apart (…0.35), every wisp of him drawn off into a whirl of smoke and embers that
+/// drifting up off it. He floats. One iron gauntlet reaches out of the smoke, and his magic is rings of dark fire that
+/// ripple out from its claws. Signature: he comes apart (…0.35), every wisp of him drawn off into a whirl of smoke and embers that
 /// gathers round one spot, where the Eye opens, wreathed in flame, and looks about (…0.65); it shuts, and the smoke
 /// streams back into the hooded shape.
 private func drawNecromancer(_ c: PixelCanvas, _ p: Pose) {

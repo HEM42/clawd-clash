@@ -12,7 +12,7 @@ let ringsVillains4: [LOTRVillain: Persona] = [
                         headTop: 7, signature: 3.0,
                         callout: "I am the elePHPant in the room.", draw: drawOliphaunt),
     .barrowWight: Persona(name: "Barrow-write", weapon: .lightning, motion: .hover,
-                          magic: Magic(core: C(0xF0FFF4), glow: C(0x8FE8B0), jagged: false), canSit: false,
+                          magic: Magic(core: C(0x6AF0A0), glow: C(0x14A85A), jagged: false, waves: true), canSit: false,
                           pivot: wightHand, headTop: 19, signature: 3.4, callout: "Cold be hand and heart and disk… write once, sleep forever.",
                           draw: drawBarrowWight),
     .warg: Persona(name: "Wargh-rider", weapon: .saber, canSit: false, pivot: riderHand, bulk: 9, headTop: 17, signature: 3.0,
@@ -342,10 +342,10 @@ private let wightHand: (x: Double, y: Double) = (42.5, 33.5)
 /// Barrow-write, a Barrow-wight: Clawd's block turned pale and see-through, blue-white, fading into wisps below the
 /// waist where the legs should be (it floats), with cold glowing pale-green eyes. A tattered grey shroud over its head
 /// and down its sides, its rags trailing and stirring; a gold torc at its throat, gold rings on its bony fingers. It
-/// casts from its outstretched hand, a cold pale-green ray. Signature: "Cold be hand and heart and disk…". It chants,
-/// its eyes flaring and cold notes drifting up out of its hood, while its ringed hand lets go of the sleeve, drops to
-/// the floor (…0.1) and crawls off along it on its fingertips, stops to drum its fingers (0.45…0.55), crawls back
-/// and leaps up onto the wrist again (0.85…0.95).
+/// casts from its outstretched hand: its chant, cold green arcs pulsing out. Signature: "Cold be hand and heart and
+/// disk…". It chants, its eyes flaring and cold notes drifting up out of its hood, while its ringed hand lets go of the
+/// sleeve, drops to the floor (…0.1) and crawls off along it on its fingertips, stops to drum its fingers
+/// (0.45…0.55), crawls back and leaps up onto the wrist again (0.85…0.95).
 private func drawBarrowWight(_ c: PixelCanvas, _ p: Pose) {
     let ghost = C(0xC8DCF0, 0.72), ghostShade = C(0x96B0CC, 0.72), bone = C(0xDCEAF8, 0.9)
     let shroud = C(0x7A7E86), shroudDark = C(0x585C64), shroudLight = C(0x9498A0)
