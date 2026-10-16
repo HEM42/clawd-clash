@@ -4582,6 +4582,32 @@ func oneRing(_ ctx: CGContext, center c: CGPoint, radius r: Double, squash: Doub
     ctx.restoreGState()
 }
 
+/// When Gandclawd walks up the lane at Bag Endpoint, shot-local seconds, and from where to where (fx units).
+let ringsGandalfWalk: (from: Double, to: Double, x0: Double, x1: Double) = (0.3, 2.1, -30, 112)
+
+/// The cold open, as the films open in the Shire: Bag Endpoint by day. Gandclawd walks up the lane from the left,
+/// Frodough hops to greet him when he arrives, and Bilbyte, by the round door, holds up his contract and lets it unroll.
+/// The fireworks trip that follows takes it away.
+func ringsBagEnd(_ ctx: CGContext, local l: Double, t: Double) {
+    blit(place(.bagEnd, floorRows: 34, t: t), ctx)
+    let w = ringsGandalfWalk
+    let walk: Double = clamp((l - w.from) / (w.to - w.from))
+    let bilbo = Cast.hero(LOTRHero.bilbo), len = bilbo.signatureLength ?? 3.4
+    let crew: [Actor] = [
+        Actor(cast: .hero(LOTRHero.gandalf), x: lerp(w.x0, w.x1, walk), mode: .idle, walking: walk > 0 && walk < 1),
+        Actor(cast: .hero(LOTRHero.frodo), x: 160, facing: -1, mode: .idle, role: l > w.to - 0.2 ? .cheer : .none),
+        Actor(cast: bilbo, x: 222, facing: -1, mode: .idle),
+    ]
+    for var a in crew {
+        a.lift = 8
+        // Bilbyte's contract from 0.6 s; everyone else just stands, with no habit of their own creeping in.
+        forcedHabit = a.cast == bilbo && l > 0.6 ? HabitPlay(kind: .signature, e: min(l - 0.6, len), length: len)
+                                                 : HabitPlay(kind: .glance, e: 0)
+        draw(a, ctx, t: t)
+        forcedHabit = nil
+    }
+}
+
 /// The opening: a black field with embers; the One Ring falls in slow motion, spinning, lands with a bounce, its
 /// fire-letters wake, and its band opens out into the burning title.
 func ringsOpening(_ ctx: CGContext, local l: Double, t: Double) {
@@ -4999,17 +5025,20 @@ let ringsShots: [Shot] = [
         let a: Double = 1 - clamp((local - 3.0) / 0.4)
         if n > 0 { captionBox(String(line.prefix(n)), ctx, center: CGPoint(x: Double(W) / 2, y: Double(H) / 2), size: 54, alpha: a) }
     },
-    // The One Ring falls, lands, its letters burn, and it opens out into the title.
-    Shot(name: "ring", start: 3.5, end: 9.0, into: .cut) { ctx, local, t in ringsOpening(ctx, local: local, t: t) },
+    // Bag Endpoint, as the films open in the Shire: Gandclawd arrives, Bilbyte and Frodough by the round door.
+    Shot(name: "bagend", start: 3.5, end: 8.0, into: .cut) { ctx, local, t in ringsBagEnd(ctx, local: local, t: t) },
+    // One of Gandclawd's rockets (the app's fireworks trip) bursts into a dragon, and in its sparks the One Ring falls,
+    // lands, its letters burn, and it opens out into the title.
+    Shot(name: "ring", start: 8.0, end: 13.5, into: .middleEarth(RingsTrip(kind: .fireworks))) { ctx, local, t in ringsOpening(ctx, local: local, t: t) },
     // The Mines of Mori-ah: the bridge, the Ballrog, YOU SHALL NOT PASS!
-    Shot(name: "bridge", start: 9.0, end: 17.5, into: .cut) { ctx, local, t in ringsBridge(ctx, local: local, t: t) },
+    Shot(name: "bridge", start: 13.5, end: 22.0, into: .cut) { ctx, local, t in ringsBridge(ctx, local: local, t: t) },
     // The ridge at dusk: the Fellowship walks, Gladriel at the end.
-    Shot(name: "fellowship", start: 17.5, end: 22.5, into: .middleEarth(RingsTrip(kind: .eye))) { ctx, local, t in
+    Shot(name: "fellowship", start: 22.0, end: 27.0, into: .middleEarth(RingsTrip(kind: .eye))) { ctx, local, t in
         ringsFellowship(ctx, local: local, t: t)
     },
     // Four panels, four signature moves.
-    Shot(name: "moves", start: 22.5, end: 27.5, into: .cut) { ctx, local, t in ringsMoves(ctx, local: local, t: t) },
-    Shot(name: "hook", start: 27.5, end: 31.5) { ctx, local, t in
+    Shot(name: "moves", start: 27.0, end: 32.0, into: .cut) { ctx, local, t in ringsMoves(ctx, local: local, t: t) },
+    Shot(name: "hook", start: 32.0, end: 36.0) { ctx, local, t in
         let zoom: Double = 1 + 0.03 * local
         ctx.saveGState()
         ctx.translateBy(x: Double(W) / 2, y: Double(H) / 2); ctx.scaleBy(x: zoom, y: zoom); ctx.translateBy(x: -Double(W) / 2, y: -Double(H) / 2)
@@ -5018,56 +5047,60 @@ let ringsShots: [Shot] = [
         caption("Three AIs. Nine agents. One very confused hobbit.", ctx, local: local, start: 0.05, y: 860, size: 60)
         caption("Sound familiar?", ctx, local: local, start: 0.7, y: 120, size: 76, color: yellow)
     },
-    Shot(name: "desktop", start: 31.5, end: 36.1) { ctx, local, t in
+    Shot(name: "desktop", start: 36.0, end: 40.6) { ctx, local, t in
         brawl(ctx, .middleEarth, local: local, t: t, drop: true, chrome: false)
         badge("DESKTOP MODE", ctx, alpha: clamp((local - 0.2) / 0.3))
         caption("Now they're a pixel-art \(Universe.middleEarth.title) battle", ctx, local: local, start: 0.35, y: 900)
         caption("along the bottom of your screen. They fight while they work.", ctx, local: local, start: 0.6, y: 830, size: 40, color: yellow, weight: .bold)
     },
-    Shot(name: "status", start: 36.1, end: 40.3) { ctx, local, t in
+    Shot(name: "status", start: 40.6, end: 44.8) { ctx, local, t in
         let cast: [Cast] = [.hero(LOTRHero.frodo), .villain(LOTRVillain.gollum), .villain(LOTRVillain.saruman), .hero(LOTRHero.pippin)]
         statusOf(ctx, local: local, t: t, cast: cast, badgeText: Universe.middleEarth.title.uppercased(),
                  aside: "(\(cast[3].name): second breakfast, then a nap.)")
     },
-    Shot(name: "agents", start: 40.3, end: 44.3) { ctx, local, t in ringsAgents(ctx, local: local, t: t) },
-    Shot(name: "window", start: 44.3, end: 49.1) { ctx, local, t in
+    Shot(name: "agents", start: 44.8, end: 48.8) { ctx, local, t in ringsAgents(ctx, local: local, t: t) },
+    Shot(name: "window", start: 48.8, end: 53.6) { ctx, local, t in
         windowShot(ctx, .middleEarth, local: local, t: t, rise: true, needsAt: 2.5, at: .prancingPony)
         badge("WINDOW MODE", ctx, alpha: clamp((local - 0.2) / 0.3))
         caption("Prefer a window? Step into \(Location.prancingPony.name).", ctx, local: local, start: 0.1, y: 955, size: 56)
         caption("A live card per session: what it's doing, your last prompt, every agent.", ctx, local: local, start: 0.4, y: 890, size: 32, color: yellow, weight: .bold)
     },
-    Shot(name: "ais", start: 49.1, end: 53.5) { ctx, local, t in
+    Shot(name: "ais", start: 53.6, end: 58.0) { ctx, local, t in
         let cast: [Cast] = [.hero(LOTRHero.gandalf), .hero(LOTRHero.aragorn), .villain(LOTRVillain.sauron), .villain(LOTRVillain.saruman),
                             .villain(LOTRVillain.witchKing), .villain(LOTRVillain.shelob), .villain(LOTRVillain.orc)]
         everyAI(ctx, local: local, t: t, cast: cast)
     },
     // The end card: Mount Doomscroll, the Great Eagle flies through, the title lands.
-    Shot(name: "endcard", start: 53.5, end: 58.0) { ctx, local, t in ringsEndcard(ctx, local: local, t: t) },
+    Shot(name: "endcard", start: 58.0, end: 62.5) { ctx, local, t in ringsEndcard(ctx, local: local, t: t) },
 ]
 
 let ringsBeats: [(key: Double, beat: Beat)] = [
     (2.4, ("MEANWHILE...", "Black screen. A yellow comic caption types itself out.",
            "“MEANWHILE, AT \(Location.bagEnd.name.uppercased())...”", "typewriter keys, a bell")),
-    (7.2, ("THE RING", "Embers in the dark. The One Ring falls in slow motion, spinning, and lands with a chime; fire-letters wake along its band, which opens out into the burning title.",
+    (5.7, ("BAG ENDPOINT", "\(Location.bagEnd.name), as the films open in the Shire: \(ringsName(LOTRHero.gandalf)) walks up the lane; \(ringsName(LOTRHero.frodo)) hops to greet him, \(ringsName(LOTRHero.bilbo)) by the round door unrolls his contract.",
+           "—", "birdsong, the Shire tune on a whistle, footsteps")),
+    (8.0, ("FIREWORKS", "The app's fireworks trip: the Shire dims to night, one of \(ringsName(LOTRHero.gandalf))'s rockets shoots up and bursts into a fiery dragon that sweeps the place away.",
+           "—", "a rising whistle, the bang, crackling sparks")),
+    (11.7, ("THE RING", "In the falling sparks, embers in the dark. The One Ring falls in slow motion, spinning, and lands with a chime; fire-letters wake along its band, which opens out into the burning title.",
            "CLAWD OF THE RINGS", "a low drone, a chime, a fire whoosh, the big hit, the tune begins")),
-    (13.5, ("THE BRIDGE", "\(Location.moria.name), drums in the deep: \(ringsName(LOTRVillain.balrog)) rises and the Fellowship runs. \(ringsName(LOTRHero.gandalf)) slams his staff, the span falls, the whip drags him to the edge; he hangs, then drops.",
+    (18.0, ("THE BRIDGE", "\(Location.moria.name), drums in the deep: \(ringsName(LOTRVillain.balrog)) rises and the Fellowship runs. \(ringsName(LOTRHero.gandalf)) slams his staff, the span falls, the whip drags him to the edge; he hangs, then drops.",
             "“YOU SHALL NOT PASS!”  ·  “Fly, you fools!”", "doom-drums, a roar, the staff's boom, stone cracking, a falling sweep")),
-    (21.0, ("THE FELLOWSHIP", "Through the Eye: a ridge at dusk. Eight walkers march single file, dark against the sky, then lit, each name popping up as they pass; \(ringsName(LOTRHero.galadriel)) appears at the far end and raises her light.",
+    (25.5, ("THE FELLOWSHIP", "Through the Eye: a ridge at dusk. Eight walkers march single file, dark against the sky, then lit, each name popping up as they pass; \(ringsName(LOTRHero.galadriel)) appears at the far end and raises her light.",
             "the walkers' name tags", "a heroic swell, footsteps, the tune again")),
-    (24.6, ("SIGNATURE MOVES", "Four comic panels: \(ringsName(LOTRHero.frodo)) vanishes; \(ringsName(LOTRHero.boromir)) holds forth; \(ringsName(LOTRVillain.gollum)) argues with himself; \(ringsName(LOTRHero.legolas)) surfs a shield.",
+    (29.1, ("SIGNATURE MOVES", "Four comic panels: \(ringsName(LOTRHero.frodo)) vanishes; \(ringsName(LOTRHero.boromir)) holds forth; \(ringsName(LOTRVillain.gollum)) argues with himself; \(ringsName(LOTRHero.legolas)) surfs a shield.",
             "“Everyone gets a signature move.”  →  “Some are more precious than others.”  ·  “One does not simply push to main.”", "a shimmer, a hiss, a whoosh")),
-    (29.0, ("THE HOOK", "Three busy terminals, slow push-in.", "“Three AIs. Nine agents. One very confused hobbit.”  →  “Sound familiar?”", "keyboard clicks")),
-    (33.8, ("DESKTOP MODE", "\(ringsName(LOTRHero.legolas)) against \(ringsName(LOTRVillain.orc)), \(ringsName(LOTRHero.gimli)) against \(ringsName(LOTRVillain.uruk)).",
+    (33.5, ("THE HOOK", "Three busy terminals, slow push-in.", "“Three AIs. Nine agents. One very confused hobbit.”  →  “Sound familiar?”", "keyboard clicks")),
+    (38.3, ("DESKTOP MODE", "\(ringsName(LOTRHero.legolas)) against \(ringsName(LOTRVillain.orc)), \(ringsName(LOTRHero.gimli)) against \(ringsName(LOTRVillain.uruk)).",
             "DESKTOP MODE  ·  “Now they're a pixel-art \(Universe.middleEarth.title) battle along the bottom of your screen. They fight while they work.”", "clangs, arrows")),
-    (38.4, ("AT A GLANCE", "\(ringsName(LOTRHero.frodo)) working, \(ringsName(LOTRVillain.gollum)) thinking, \(ringsName(LOTRVillain.saruman))'s jumping NEEDS YOU, \(ringsName(LOTRHero.pippin)) sat down napping.",
+    (42.9, ("AT A GLANCE", "\(ringsName(LOTRHero.frodo)) working, \(ringsName(LOTRVillain.gollum)) thinking, \(ringsName(LOTRVillain.saruman))'s jumping NEEDS YOU, \(ringsName(LOTRHero.pippin)) sat down napping.",
             "“All fun and games, and you still see everything.”  ·  “(\(ringsName(LOTRHero.pippin)): second breakfast, then a nap.)”", "blips, alert beeps")),
-    (42.6, ("SUBAGENTS", "\(ringsName(LOTRHero.gandalf)) stands guard; \(ringsName(LOTRHero.pippin)), \(ringsName(LOTRHero.gimli)), \(ringsName(LOTRHero.legolas)) and \(ringsName(LOTRHero.sam)) arrive with their jobs on their labels; the Great Eagle swoops down and carries \(ringsName(LOTRHero.sam)) home.",
+    (47.1, ("SUBAGENTS", "\(ringsName(LOTRHero.gandalf)) stands guard; \(ringsName(LOTRHero.pippin)), \(ringsName(LOTRHero.gimli)), \(ringsName(LOTRHero.legolas)) and \(ringsName(LOTRHero.sam)) arrive with their jobs on their labels; the Great Eagle swoops down and carries \(ringsName(LOTRHero.sam)) home.",
             "“Every subagent joins the Fellowship. Some fly home.”", "footsteps, an eagle's cry")),
-    (47.2, ("WINDOW MODE", "The window in \(Location.prancingPony.name): \(ringsName(LOTRHero.aragorn)) against \(ringsName(LOTRVillain.witchKing)), live cards tick, then the Codex card flips to NEEDS YOU.",
+    (51.7, ("WINDOW MODE", "The window in \(Location.prancingPony.name): \(ringsName(LOTRHero.aragorn)) against \(ringsName(LOTRVillain.witchKing)), live cards tick, then the Codex card flips to NEEDS YOU.",
             "WINDOW MODE  ·  “Prefer a window? Step into \(Location.prancingPony.name).”", "clashes, a ping")),
-    (51.5, ("EVERY AI", "Seven sessions, one per AI outline: \(ringsName(LOTRHero.gandalf)) (Claude Code, a head taller) and \(ringsName(LOTRHero.aragorn)) against \(ringsName(LOTRVillain.sauron)), \(ringsName(LOTRVillain.saruman)), \(ringsName(LOTRVillain.witchKing)) and \(ringsName(LOTRVillain.shelob)); \(ringsName(LOTRVillain.orc)) in pi's pink.",
+    (56.0, ("EVERY AI", "Seven sessions, one per AI outline: \(ringsName(LOTRHero.gandalf)) (Claude Code, a head taller) and \(ringsName(LOTRHero.aragorn)) against \(ringsName(LOTRVillain.sauron)), \(ringsName(LOTRVillain.saruman)), \(ringsName(LOTRVillain.witchKing)) and \(ringsName(LOTRVillain.shelob)); \(ringsName(LOTRVillain.orc)) in pi's pink.",
             "BRING YOUR OWN AI*  ·  “One AI plays everyone. Run two and they pick sides.”  ·  *README for the full list", "magic crackle")),
-    (56.5, ("END CARD", "\(Location.mountDoom.name) under the Eye: the Great Eagle flies across, the crew lines up, CLAWD OF THE RINGS lands, then the icon and the URL; \(ringsName(LOTRVillain.shelob)) climbs her thread up out of sight.",
+    (61.0, ("END CARD", "\(Location.mountDoom.name) under the Eye: the Great Eagle flies across, the crew lines up, CLAWD OF THE RINGS lands, then the icon and the URL; \(ringsName(LOTRVillain.shelob)) climbs her thread up out of sight.",
             "CLAWD OF THE RINGS  ·  “Have fun. Keep track.”  ·  “\(ringsTagline)”  ·  github.com/rodclemen/clawd-clash", "an eagle's cry, the closing chord")),
 ]
 
@@ -5109,6 +5142,15 @@ func ringsSound(_ m: Mix) {
     for i in 0..<keys { m.type(mw + 0.3 + Double(i) / Double(keys) * 1.6 + noise(i) * 0.02, vol: 0.18 + noise(i + 50) * 0.08) }
     m.ding(mw + 2.0)
     m.tone(mw + 0.2, 3.0, midi(33), wave: .sine, vol: 0.05, attack: 1.0, release: 0.8)
+    // Bag Endpoint: birdsong, the Shire tune on a whistle, Gandclawd's footsteps up the lane
+    let be = start("bagend")
+    for i in 0..<9 {
+        let c: Double = be + 0.2 + Double(i) * 0.37 + noise(i + 70) * 0.12
+        m.tone(c, 0.07, 2500 + noise(i) * 700, to: 3300 + noise(i + 9) * 600, wave: .sine, vol: 0.02, release: 0.03)
+        if i % 3 == 0 { m.tone(c + 0.1, 0.06, 3100, to: 2700, wave: .sine, vol: 0.015, release: 0.03) }
+    }
+    shireTune(m, at: be + 0.3, bars: 4, vol: 0.035)
+    for k in 0..<7 { m.step(be + ringsGandalfWalk.from + Double(k) * 0.26, vol: 0.05) }
     // the ring: a low drone, the chime as it lands, a fire whoosh as the letters burn, the hit on the title
     let rg = start("ring")
     m.tone(rg, 5.6, midi(33), wave: .sine, vol: 0.12, attack: 0.8, release: 0.8)
@@ -5672,7 +5714,16 @@ func transitionSound(_ m: Mix, _ s: Shot) {
         case .jokerCard: m.flip(t0 + d * 0.2, vol: 0.1); m.slideWhistle(t0 + d * 0.45, up: true)
         default: m.whoosh(s.start, d, vol: 0.08)
         }
-    case .middleEarth: m.tone(t0 + d * 0.3, d * 0.5, 55, to: 40, wave: .saw, vol: 0.06, attack: 0.1, release: 0.3); m.boom(t0 + d * 0.55, vol: 0.18)
+    case .middleEarth(let trip):
+        switch trip.kind {
+        case .fireworks:   // the rocket whistling up, the bang, and the sparks crackling as they fall
+            m.tone(t0 + d * 0.04, d * 0.24, 700, to: 2400, wave: .sine, vol: 0.05, attack: 0.05, release: 0.05)
+            m.noise(t0 + d * 0.04, d * 0.24, vol: 0.04, cutoff: 0.8, attack: 0.05, release: 0.05, highpass: true, seed: 71)
+            m.boom(t0 + d * 0.28, vol: 0.4); m.noise(t0 + d * 0.28, 0.8, vol: 0.12, cutoff: 0.9, decay: 0.3, highpass: true, seed: 72)
+            m.crackle(t0 + d * 0.32, d * 0.6, vol: 0.04)
+        default:
+            m.tone(t0 + d * 0.3, d * 0.5, 55, to: 40, wave: .saw, vol: 0.06, attack: 0.1, release: 0.3); m.boom(t0 + d * 0.55, vol: 0.18)
+        }
     }
 }
 
