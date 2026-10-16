@@ -4966,7 +4966,15 @@ func ringsEndcard(_ ctx: CGContext, local: Double, t: Double) {
         var a = Actor(cast: who, x: xs[i], facing: i < 2 ? 1 : -1, role: role, ai: ai)
         a.lift = 8
         a.alpha = clamp((local - 0.15 - Double(i) * 0.05) / 0.2)
+        // Late in the card Shellob climbs her thread up out of sight, and stays gone (her move held where she's gone; a
+        // signature only plays idle).
+        let len = who.signatureLength ?? 3.6
+        if who == .villain(LOTRVillain.shelob), local > 2.8 {
+            a.mode = .idle
+            forcedHabit = HabitPlay(kind: .signature, e: min(local - 2.8, 0.19 * len), length: len)
+        }
         draw(a, ctx, t: t)
+        forcedHabit = nil
         placed.append(a)
     }
     if local > 0.5 { drawFX([(placed[1], placed[2])], ctx, t: t) }
@@ -5059,7 +5067,7 @@ let ringsBeats: [(key: Double, beat: Beat)] = [
             "WINDOW MODE  ·  “Prefer a window? Step into \(Location.prancingPony.name).”", "clashes, a ping")),
     (51.5, ("EVERY AI", "Seven sessions, one per AI outline: \(ringsName(LOTRHero.gandalf)) (Claude Code, a head taller) and \(ringsName(LOTRHero.aragorn)) against \(ringsName(LOTRVillain.sauron)), \(ringsName(LOTRVillain.saruman)), \(ringsName(LOTRVillain.witchKing)) and \(ringsName(LOTRVillain.shelob)); \(ringsName(LOTRVillain.orc)) in pi's pink.",
             "BRING YOUR OWN AI*  ·  “One AI plays everyone. Run two and they pick sides.”  ·  *README for the full list", "magic crackle")),
-    (56.5, ("END CARD", "\(Location.mountDoom.name) under the Eye: the Great Eagle flies across, the crew lines up, CLAWD OF THE RINGS lands, then the icon and the URL.",
+    (56.5, ("END CARD", "\(Location.mountDoom.name) under the Eye: the Great Eagle flies across, the crew lines up, CLAWD OF THE RINGS lands, then the icon and the URL; \(ringsName(LOTRVillain.shelob)) climbs her thread up out of sight.",
             "CLAWD OF THE RINGS  ·  “Have fun. Keep track.”  ·  “\(ringsTagline)”  ·  github.com/rodclemen/clawd-clash", "an eagle's cry, the closing chord")),
 ]
 
