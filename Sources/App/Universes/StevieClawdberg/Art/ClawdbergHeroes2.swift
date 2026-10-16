@@ -4,7 +4,8 @@ import Foundation
 // 1885 drawn over the blocky body, with Clawd's own orange face showing; Einstein is Clawd in a shaggy sheepdog suit.
 
 let clawdbergHeroes2: [ClawdbergHero: Persona] = [
-    .martyMcFry: Persona(name: "Marty McFry", weapon: .blaster, shot: .thrown(C(0xD4D8E0)), muzzle: (45, 32),
+    .martyMcFry: Persona(name: "Marty McFry", weapon: .lightning,
+                         magic: Magic(core: C(0xFFF4D0), glow: C(0xFFB02A), jagged: false, notes: true), pivot: (28, 38),
                          headTop: 20, signature: 3.4, callout: "Nobody calls me chicken!", draw: drawMartyMcFry),
     .docBrawn: Persona(name: "Doc Brawn", weapon: .lightning, magic: Magic(core: C(0xFFE07A), glow: C(0xFF6A1A), jagged: false, rcCar: true),
                        headTop: 18, signature: 2.8, callout: "Great Scott!", draw: drawDocBrawn),
@@ -38,13 +39,13 @@ private func bttfNote(_ c: PixelCanvas, _ x: Int, _ y: Int, _ col: Px) {
 // MARK: - Marty McFry
 
 /// Marty McFry: Clawd with a brown 1985 sweep of hair, a denim jacket under the red-orange puffer vest (quilted, open
-/// at the front over a checked shirt), jeans and white trainers. He fights by flinging a silver pie tin, frisbee-style.
-/// Signature: the duck walk, a cherry-red guitar across him, bobbing along on bent knees and wailing out a solo while
-/// the notes fly.
+/// at the front over a checked shirt), jeans and white trainers, his cherry-red guitar always slung across him. He
+/// fights with it: he strums and the sound blasts out from its body in a heartbeat rhythm, bam!.bam!.. (`Magic.notes`).
+/// Signature: the duck walk, bobbing along on bent knees and wailing out a solo while the notes fly.
 private func drawMartyMcFry(_ c: PixelCanvas, _ p: Pose) {
     let vest = C(0xD2482A), vestD = C(0x9E3018), denim = C(0x5A7AAE), denimD = C(0x3E5A88)
     let check = C(0xC8C0B0), checkD = C(0x7A6A6A), jeans = C(0x3E5888)
-    let hair = C(0x5E3C22), hairL = C(0x7E5430), tin = C(0xD4D8E0), tinD = C(0x9AA0AA)
+    let hair = C(0x5E3C22), hairL = C(0x7E5430)
     let sig = p.signature
     let solo = sig.map { $0 > 0.05 && $0 < 0.95 } ?? false
 
@@ -99,19 +100,14 @@ private func drawMartyMcFry(_ c: PixelCanvas, _ p: Pose) {
         return
     }
     c.rect(15, 33, 3, 3, denim)
-    if p.fire != nil || p.ready {
-        // The pie tin held flat in his fist, a round dish tilted towards us so it can't pass for a gun, ready to
-        // fling frisbee-style (gone from his hand just as it flies).
-        c.oy += p.gunY
-        c.rect(38, 31, 3, 3, denim)
-        if p.recoil == 0 {
-            c.pattern(39, 28, [".TTTTT.", "TdddddT", "TdddddT", ".TTTTT."], ["T": tin, "d": tinD])
-        }
-        return
-    }
-    // At rest: the round tin hanging from his hand at his side.
-    c.rect(38, 33, 3, 3, denim)
-    c.pattern(40, 32, [".TT.", "TddT", "TddT", "TddT", ".TT."], ["T": tin, "d": tinD])
+    // The guitar slung across him; in a fight he strums it and the sound blasts out from its body at the foe.
+    let red = C(0xB01E24), redL = C(0xD8484A), wood = C(0x5A3A1E)
+    let playing = p.zap != nil   // strumming
+    cbLine(c, 30, 35, 44, 27, wood, 0.7)
+    c.rect(44, 25, 2, 3, C(0x2A1A10))
+    c.pattern(21, 33, [".RRRR..", "RRrRRRR", "RRRRRRR", ".RRWRR.", "..RRR.."], ["R": red, "r": redL, "W": C(0xEEE6D0)])
+    c.rect(39, 28, 3, 3, denim)
+    c.rect(26, 33 + (playing ? Int(p.t * 12) % 2 : 0), 3, 3, denim)
 }
 
 // MARK: - Doc Brawn

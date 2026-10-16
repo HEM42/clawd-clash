@@ -40,6 +40,7 @@ struct Magic {
     var waves = false                 // sound and force: arcs pulsing out towards the target (with jagged false)
     var spell = false                 // sorcery: a twinkling ribbon of sparkles (with jagged false)
     var rcCar = false                 // a little remote-controlled car racing at the target on two trails of fire
+    var notes = false                 // music: big arcs in a heartbeat rhythm, a note riding behind each
     var touch = false                 // no stream at all: a glowing fingertip, and a glow round whoever it's pointed at
     /// Small differences in its drawing (forks, kinks, thickness, speed…) so no two characters' magic looks the same.
     /// Filled in by `Theme.persona`, from `magicVariants`.
@@ -47,7 +48,7 @@ struct Magic {
     /// Not a stream it can fire into the sky or open as a portal: a gadget, or a touch.
     var gadget: Bool { touch || rcCar }
     /// Which family of looks it belongs to; variants are numbered within each.
-    var family: Int { touch ? 6 : rcCar ? 5 : rings ? 1 : waves ? 2 : spell ? 3 : jagged ? 0 : 4 }
+    var family: Int { touch ? 6 : rcCar ? 5 : notes ? 7 : rings ? 1 : waves ? 2 : spell ? 3 : jagged ? 0 : 4 }
     static let lightning = Magic(core: C(0xF4F8FF), glow: C(0x7FB2FF))
 }
 

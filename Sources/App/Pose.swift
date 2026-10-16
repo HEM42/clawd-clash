@@ -362,6 +362,36 @@ func drawMagic(_ c: PixelCanvas, _ m: Magic, from a: (Double, Double), to b: (Do
         }
         return
     }
+    if m.notes {
+        // Music: blasts in a heartbeat rhythm, bam!.bam!.. then a pause. Each is a big thick arc punching out fast and
+        // slowing as it lands (fading, so it doesn't sit over the foe's face), a note riding behind it.
+        let period = 1.5, beats = [0.0, 0.28], travel = 0.75
+        let ang0: Double = atan2(dy, dx)
+        let cycle = floor(t / period)
+        for n in [cycle - 1, cycle] {
+            for (bi, beat) in beats.enumerated() {
+                let age = t - (n * period + beat)
+                guard age >= 0, age < travel else { continue }
+                let g = age / travel
+                let f = 1 - (1 - g) * (1 - g)                    // fast out, easing in
+                let cx = a.0 + dx * f, cy = a.1 + dy * f, r = 3 + f * 7
+                let fade = min(1, (1 - g) / 0.3)
+                for s in -8...8 {
+                    let ang = ang0 + Double(s) / 8 * 1.15
+                    for w in 0..<2 {
+                        let x = Int((cx + cos(ang) * (r + Double(w))).rounded()), y = Int((cy + sin(ang) * (r + Double(w))).rounded())
+                        c.px(x, y, (abs(s) < 5 ? m.core : m.glow).alpha(fade * (w == 0 ? 1 : 0.6)))
+                    }
+                }
+                if g > 0.8 { drawSparks(c, x: b.0, y: b.1, t: t, size: 2.5) }   // bam!
+                let fn = max(0, f - 0.12), bob = sin(g * 10 + Double(bi)) * 1.5
+                let x = Int((a.0 + dx * fn + nx * bob).rounded()), y = Int((a.1 + dy * fn + ny * bob).rounded())
+                let col = (bi == 0 ? m.core : m.glow).alpha(fade)
+                c.rect(x, y + 1, 2, 2, col); c.rect(x + 1, y - 2, 1, 3, col); c.px(x + 2, y - 2, col)
+            }
+        }
+        return
+    }
     if m.waves {
         // Sound and force: arcs pulsing out towards the target, wider as they go.
         let count = pick(&v, [5, 4, 6]), spread = pick(&v, [1.1, 0.8, 1.4]), grow = pick(&v, [4.0, 3, 5.5])
