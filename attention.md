@@ -20,6 +20,13 @@ What to look at first, after a night of building Stevie Clawdberg without approv
 - README, `llms.txt`, CHANGELOG, the guide's gaps fixed, the trailer.
 - Tested in the app: a Playground run at Hill Valley showed the storm, the water glass, Clawk, 88 mph with OUTATIME, and Indy's revolver knocking the swordsman over.
 
+## Done on 2026-10-16 (after review)
+
+- Doc Brawn: RC DeLorean plus the brainwave helmet (your pick). E.Clawd: no beam, just the glowing finger.
+- Every magic user in every universe now has its own small variation (check with `build/preview magic out.png`).
+- Park gates taller, the Jolly Roger a whole galleon from the dock.
+- Trailer: crisp bike, the DeLorean picking Marty up, "universe" under the title. Transitions showcase: `SHOWCASE=` in `Tools/Transitions`.
+
 ## Decisions made without you (gate 4)
 
 These were yours to approve. I picked them so the build could go on; change any of them freely.
