@@ -68,7 +68,7 @@ enum BurtonVillain: Int, CaseIterable {
 
 let burtonHeroPersonas: [BurtonHero: Persona] = [burtonHeroes1]
     .reduce([.hem: hemPersona(.clawdBurton)]) { $0.merging($1) { a, _ in a } }
-let burtonVillainPersonas: [BurtonVillain: Persona] = [burtonVillains1]
+let burtonVillainPersonas: [BurtonVillain: Persona] = [burtonVillains1, burtonVillains2]
     .reduce([:]) { $0.merging($1) { a, _ in a } }
 
 // MARK: - Homes

@@ -1,8 +1,9 @@
 import Foundation
 
 // Heroes: The Nightmare Before Christmas. Halloween Town's own: Jack Skullington, the Pumpkin King, a tall skeleton in
-// a pinstripe suit, and Sallee, the rag doll who keeps sewing herself back together. Here the blocky Clawd is bone,
-// cloth and stitches instead of orange: they're a skeleton and a doll.
+// a pinstripe suit; Sallee, the rag doll who keeps sewing herself back together; Zeero, Jack's ghost dog; the Mayor
+// with his two faces; and from Christmas Town, Sandy Clawz. Here the blocky Clawd is bone, cloth, stitches and
+// ghost-sheet as much as orange.
 
 let burtonHeroes1: [BurtonHero: Persona] = [
     .jackSkullington: Persona(name: "Jack Skullington", weapon: .lightning,
@@ -10,6 +11,11 @@ let burtonHeroes1: [BurtonHero: Persona] = [
                               pivot: jackMouth, headTop: 7, signature: 3.4, callout: "What's this?",
                               draw: drawJackSkullington),
     .sallee: Persona(name: "Sallee", weapon: .none, headTop: 10, signature: 3.6, draw: drawSallee),
+    .zeero: Persona(name: "Zeero", weapon: .none, motion: .hover, canSit: false, headTop: 14, signature: 3.0, callout: "Arf!",
+                    draw: drawZeero),
+    .theMayor: Persona(name: "The Mayor", weapon: .none, bulk: 3, headTop: 1, signature: 3.2, draw: drawMayor),
+    .sandyClawz: Persona(name: "Sandy Clawz", weapon: .blaster, shot: .thrown(C(0xC8202A)), muzzle: (46, 28), bulk: 3,
+                         headTop: 15, signature: 3.0, callout: "Ho ho ho!", draw: drawSandyClawz),
 ]
 
 /// The front of Jack's gaping mouth: his scare pulses out from there (raised by the pose's `armRaise`).
@@ -41,7 +47,7 @@ private func drawJackSkullington(_ c: PixelCanvas, _ p: Pose) {
     if !seatedPose {
         for (i, lx) in [19, 23, 31, 35].enumerated() { c.rect(lx + 1, p.step >= 0 && i % 2 == p.step ? 36 : 37, 1, 4, stripe) }
     }
-    drawDressShoes(c, step: p.step, color: C(0x0C0B0E))
+    burtonBoots(c, step: p.step, C(0x0C0B0E))
     c.oy += p.breathe
     // The bow: the whole upper body tips forward and down.
     let bow = Int((bowK * 3).rounded())
@@ -232,4 +238,194 @@ private func drawSallee(_ c: PixelCanvas, _ p: Pose) {
     } else if !lifting {
         arm(36, 29, 38, 37)
     }
+}
+
+// MARK: - Zeero
+
+/// Zeero: Jack's ghost dog, a little white sheet of a dog floating off the ground, floppy ears, two dark eyes, a
+/// collar with a tiny bow tie, and his glowing pumpkin nose; behind him, no hind legs, just a wispy tail curling
+/// away. Bobs gently as he hovers. He doesn't fight. Signature: his nose lights up bright as a jack-o'-lantern, he
+/// loops once round in the air, and barks.
+private func drawZeero(_ c: PixelCanvas, _ p: Pose) {
+    let sheet = C(0xF4F6F2), sheetD = C(0xC8D0D4), nose = C(0xFF6A1A)
+    let sig = p.signature
+    let glowing = sig.map { $0 > 0.05 && $0 < 0.9 } ?? false
+    let loopK = sig.map { ramp($0, 0.25, 0.75) } ?? 0
+    // Floating: a slow bob, and in the signature a loop round in the air.
+    c.oy += Int((sin(p.t * 2.2) * 1.5).rounded()) - 6
+    if loopK > 0 && loopK < 1 {
+        let a = loopK * 2 * .pi
+        c.ox += Int((sin(a) * 6).rounded()); c.oy += Int(((cos(a) - 1) * 5).rounded())
+    }
+    // The wispy tail, curling down and away behind him, fading at its end.
+    for i in 0..<14 {
+        let f = Double(i) / 13
+        let x = 22 - f * 12 + sin(f * 3 + p.t * 3) * 2, y = 34 + f * 6 - sin(f * .pi) * 3
+        burtonLine(c, x, y, x - 1, y, sheet.alpha(1 - f * 0.7), 2.2 - f * 1.6)
+    }
+    // The body: a sheet rounding up into his head.
+    c.pattern(18, 24, [
+        "..........SSSSSSS....",
+        "........SSSSSSSSSSS..",
+        "......SSSSSSSSSSSSSSS",
+        "....SSSSSSSSSSSSSSSSS",
+        "..SSSSSSSSSSSSSSSSSSd",
+        ".SSSSSSSSSSSSSSSSSSdd",
+        "SSSSSSSSSSSSSSSSSSdd.",
+        "SSSSSSSSSSSSSSSSdd...",
+        ".SSSSSSSSSSSSSdd.....",
+        "..SS.SSS.SSdd........",
+        "...S..S...S..........",
+    ], ["S": sheet, "d": sheetD])
+    // The head, ears flopping, the eyes and the collar.
+    c.pattern(24, 17, [
+        ".....SSSSSSSSS....",
+        "...SSSSSSSSSSSSS..",
+        "EEESSSSSSSSSSSSSS.",
+        "EEESSKKSSSSKKSSSS.",
+        "EEESSKKSSSSKKSSSSS",
+        "EE.SSSSSSSSSSSSSSS",
+        "EE..SSSSSSSSSSSSSS",
+        "EE...SSSSSSSSSSS..",
+        ".E................",
+    ], ["S": sheet, "E": sheetD, "K": C(0x1A1A22)])
+    c.rect(29, 25, 9, 1, C(0x2A2A30)); c.pattern(32, 25, ["OKO", ".O."], ["O": C(0xE8701A), "K": C(0x2A2A30)])
+    // The nose: a little pumpkin, glowing, and lit right up in his signature.
+    let glow = glowing ? 1.0 : 0.55 + 0.15 * sin(p.t * 4)
+    c.glowLine(41.5, 22.5, 41.5, 22.5, core: C(0xFFD27A, glow), glow: nose.alpha(glow * 0.8), coreR: glowing ? 1.4 : 0.9,
+               glowR: glowing ? 4.2 : 2.6)
+    c.rect(40, 22, 3, 2, nose); c.px(41, 21, C(0x3A6A1A))
+}
+
+// MARK: - The Mayor
+
+/// The Mayor: a fat round body in a black tailcoat with a red sash across it and a big gold-and-red rosette, short
+/// legs, and on top his pointy head, widest at the top and tapering steeply to a point at the chin, under a tall black
+/// stovepipe hat with a spider on its band. He carries his megaphone. His head has two faces: the smiling one, pale
+/// with rosy cheeks, and the worried one, pale blue and frowning, which he wears whenever his session needs you.
+/// Signature: his head spins round from one face to the other and back.
+private func drawMayor(_ c: PixelCanvas, _ p: Pose) {
+    let coat = C(0x1E1E26), coatD = C(0x121218), sash = C(0xC8202A), gold = C(0xE8B830)
+    let sig = p.signature
+    let worriedNow = p.ready || p.urgent
+    // The spin: the head turns one full round, the other face coming past at the halfway point.
+    let turn = sig.map { ramp($0, 0.08, 0.92) * 2 * .pi } ?? 0
+    let squash = abs(cos(turn)), backFace = cos(turn) < 0
+    let worried = backFace != worriedNow
+
+    // Short legs and black shoes.
+    if !seatedPose {
+        for (i, lx) in [21, 25, 31, 35].enumerated() {
+            let lifted = p.step >= 0 && i % 2 == p.step
+            c.rect(lx, 39, 2, lifted ? 4 : 5, coat); c.rect(lx - 1, lifted ? 42 : 43, 3, 1, C(0x0A0A0E))
+        }
+    } else {
+        for lx in [21, 25, 31, 35] { c.rect(lx - 1, 39, 4, 2, coat) }
+    }
+    c.oy += p.breathe
+    // The round fat body in the tailcoat, a white shirt front, the sash and the rosette.
+    for y in 24...40 {
+        let k = Double(y - 32) / 9, hw = Int((13 * (1 - k * k * 0.55)).rounded())
+        c.rect(28 - hw, y, hw * 2, 1, coat); c.px(28 + hw - 1, y, coatD)
+    }
+    c.pattern(24, 24, ["WW....WW", ".W....W."], ["W": C(0xF0ECE0)])   // the white collar tips either side of his chin
+    for i in 0..<14 { c.rect(18 + i, 26 + i, 2, 1, sash) }
+    c.pattern(30, 28, [".RRR.", "RGGGR", "RGRGR", "RGGGR", ".RRR.", ".R.R."], ["R": sash, "G": gold])
+    // Short arms, and the megaphone in his right hand.
+    c.rect(13, 31, 3, 3, coat); c.px(13, 34, C(0xF0E0D0))
+    c.rect(41, 30, 3, 3, coat)
+    c.pattern(43, 27, ["......M", "....MMM", "..MMMMM", "HMMMMMM", "..MMMMM", "....MMM", "......M"],
+              ["M": C(0xC8C8D0), "H": C(0x6A6A74)])
+    // The pointy head: widest at the top, under the hat, tapering steeply to a point that sits on his collar;
+    // squashed sideways while it spins.
+    let skin = worried ? C(0xA8C8E0) : C(0xF0E8D8), skinD = worried ? C(0x88A8C4) : C(0xD0C4B0)
+    for (r, w) in [16, 16, 16, 15, 14, 13, 12, 10, 9, 7, 6, 4, 3, 2].enumerated() {
+        let hw = max(1, Int((Double(w) / 2 * max(0.2, squash)).rounded()))
+        c.rect(28 - hw, 12 + r, hw * 2, 1, skin); c.px(28 + hw - 1, 12 + r, skinD)
+    }
+    if squash > 0.55 {
+        func fx(_ dx: Int) -> Int { 28 + Int((Double(dx) * squash).rounded()) }
+        let ink = C(0x1A1A22), brow = C(0x2A2A40)
+        if worried {   // the worried face: brows up in the middle, small eyes, a frown
+            c.px(fx(-5), 14, brow); c.px(fx(-4), 13, brow); c.px(fx(3), 13, brow); c.px(fx(4), 14, brow)
+            c.rect(fx(-4), 16, 1, 2, ink); c.rect(fx(3), 16, 1, 2, ink)
+            c.px(fx(-2), 20, brow); c.px(fx(-1), 19, brow); c.px(fx(0), 19, brow); c.px(fx(1), 20, brow)
+        } else {       // the smiling face: bright eyes, rosy cheeks, a wide grin
+            c.rect(fx(-4), 15, 1, 2, ink); c.rect(fx(3), 15, 1, 2, ink)
+            c.px(fx(-5), 17, C(0xE88A8A)); c.px(fx(4), 17, C(0xE88A8A))
+            c.px(fx(-3), 18, C(0x5A2A2A)); c.px(fx(-2), 19, C(0x5A2A2A)); c.px(fx(-1), 19, C(0x5A2A2A))
+            c.px(fx(0), 19, C(0x5A2A2A)); c.px(fx(1), 19, C(0x5A2A2A)); c.px(fx(2), 18, C(0x5A2A2A))
+        }
+    }
+    // The tall stovepipe hat on the wide top of his head, its red band and the spider on it.
+    c.rect(20, 11, 16, 1, coat)
+    c.rect(23, 1, 10, 10, coat); c.rect(32, 1, 1, 10, coatD)
+    c.rect(23, 8, 10, 2, sash)
+    c.pattern(26, 7, ["K.K.K", ".KKK.", "K.K.K"], ["K": C(0xF0ECE0)])
+}
+
+// MARK: - Sandy Clawz
+
+/// Sandy Clawz: round and red, the fur-trimmed coat with a black belt and a gold buckle, black boots, a big white
+/// beard over rosy cheeks, the red hat with its fur band and a bobble drooping over one side, and his sack of
+/// presents over his shoulder. He throws wrapped presents. Signature: he pats his round tummy, which bounces, and
+/// laughs.
+private func drawSandyClawz(_ c: PixelCanvas, _ p: Pose) {
+    let red = C(0xC8202A), redD = C(0x8E1418), fur = C(0xF4F4F0), furD = C(0xD0D4D8), skin = C(0xF0C8B0)
+    let sig = p.signature
+    let patting = sig.map { $0 > 0.08 && $0 < 0.92 } ?? false
+    let bounce = patting ? (Int(p.t * 6) % 2) : 0
+
+    drawLegs(c, Look(leg: red), step: p.step)
+    burtonBoots(c, step: p.step, C(0x141418), height: 3)
+    c.oy += p.breathe
+    // The sack over his left shoulder, behind him.
+    c.pattern(9, 20, ["...BBB...", ".BBBBBBB.", "BBBBBBBBB", "BBBbBBBBB", "BBBBBBbBB", "BBBBBBBBB", ".BBBBBBB.",
+                      "..BBBBB..", "...BBB..."], ["B": C(0x8A6A3A), "b": C(0x6A4E2A)])
+    // The round red coat, its fur trim, the belt and buckle; the tummy bouncing as he pats it.
+    for y in 26...37 {
+        let k = Double(y - 32) / 6, hw = Int((11.5 * (1 - k * k * 0.3)).rounded()) + (y > 30 ? bounce : 0)
+        c.rect(28 - hw, y, hw * 2, 1, red); c.px(28 + hw - 1, y, redD)
+    }
+    c.rect(18, 36, 20, 2, fur); c.rect(27, 26, 2, 10, fur)
+    c.rect(17, 33, 22, 2, C(0x141418)); c.pattern(26, 33, ["GGGG", "G..G"].map { $0 }, ["G": C(0xE8B830)])
+    // Rosy face, the big white beard, and the hat with its fur band and drooping bobble.
+    c.rect(21, 24, 14, 4, skin); c.px(22, 26, C(0xE88A8A)); c.px(33, 26, C(0xE88A8A))
+    c.rect(23, 25, 2, 2, C(0x1A1A22)); c.rect(31, 25, 2, 2, C(0x1A1A22)); c.rect(27, 26, 2, 2, C(0xE09A88))
+    c.pattern(19, 27, [
+        ".BBBBBBBBBBBBBBBB.",
+        "BBBBBBB....BBBBBBB",
+        "BBBBBBBBBBBBBBBBBB",
+        ".BBBBBBBBBBBBBBBB.",
+        "..BBBbBBBBBbBBBB..",
+        "...BBBBBBBBBBBB...",
+        ".....BBBBBBBB.....",
+    ], ["B": fur, "b": furD])
+    c.pattern(18, 15, [
+        "..........RRR.......",
+        "........RRRRRRR.....",
+        "......RRRRRRRRRR....",
+        "....RRRRRRRRRRRRR...",
+        "..RRRRRRRRRRRRRRRRR.",
+        ".RRRRRRRRRRRRRRRRRR.",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFfFFFFFFFFFFfFFFFF",
+    ], ["R": red, "F": fur, "f": furD])
+    c.pattern(13, 15, ["..RRR..", ".RR....", "RR.....", "FFF....", "FFF...."], ["R": red, "F": fur])   // the tip, drooping behind
+    // Arms: patting the tummy, a present raised to throw, or mittens at his sides.
+    let mitt = C(0x141418)
+    if patting {
+        c.rect(15, 32, 3, 3, red); c.rect(20 + bounce * 2, 31, 3, 3, mitt)
+        c.rect(38, 32, 3, 3, red); c.rect(34 - bounce * 2, 32, 3, 3, mitt)
+        return
+    }
+    c.rect(15, 32, 3, 3, red); c.rect(14, 35, 3, 2, mitt)
+    if p.fire != nil || p.ready || p.gunLift > 0 {
+        c.oy += p.gunY
+        c.rect(38, 29, 3, 3, red)
+        c.pattern(41, 25, ["RRYRR", "RRYRR", "YYYYY", "RRYRR", "RRYRR"], ["R": red, "Y": C(0xF0D040)])
+        return
+    }
+    c.rect(38, 32, 3, 3, red); c.rect(39, 35, 3, 2, mitt)
 }
