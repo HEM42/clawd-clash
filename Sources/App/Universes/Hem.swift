@@ -6,7 +6,8 @@ import Foundation
 // buns, `Overlay`). Marvelous Clawds: a purple-and-gold captain with an H and its shield. Detective Clawds: Harlee's
 // jacket, dyed buns and a toy wand. Doctor Clawd: a tweed jacket, a red bow tie, a fez (fezzes are cool) and a sonic
 // screwdriver. The Clawd Files: a tan trench coat, an FBI lanyard and a flashlight. Stevie Clawdberg: a fedora, a
-// leather jacket and a bullwhip. Signature, everywhere: he shakes his fist at you.
+// leather jacket and a bullwhip. Clawd Slayer: a Watcher's tweed jacket and tie, and a wooden stake. Signature,
+// everywhere: he shakes his fist at you.
 
 func hemPersona(_ u: Universe) -> Persona {
     switch u {
@@ -26,6 +27,8 @@ func hemPersona(_ u: Universe) -> Persona {
                        pivot: hemSonicTip, headTop: 21, signature: 2.6, draw: { drawHem($0, $1, .clawdFiles) })
     case .clawdberg:
         return Persona(name: "HEM", weapon: .saber, headTop: 20, signature: 2.6, draw: { drawHem($0, $1, .clawdberg) })
+    case .slayer:
+        return Persona(name: "HEM", weapon: .saber, headTop: 21, signature: 2.6, draw: { drawHem($0, $1, .slayer) })
     }
 }
 
@@ -41,6 +44,7 @@ private let harleeRed = C(0xC8202A), harleeBlue = C(0x2E5CC9)
 private let tweed = C(0x7A5232), tweedDark = C(0x5A3C24), fezRed = C(0xB8202A), fezDark = C(0x7A1218)
 private let trench = C(0xB89A66), trenchDark = C(0x8A7048)
 private let leather = C(0x6A3E22), leatherDark = C(0x4A2A16), felt = C(0x7A5A3A), feltDark = C(0x5A402A)
+private let watcherTweed = C(0x8A7C5C), watcherTweedDark = C(0x665A40)
 /// Where the sonic screwdriver's tip (or the flashlight's lens) is, held out: the beam leaves from there, raised by
 /// the pose's `armRaise`.
 private let hemSonicTip = (x: 46.0, y: 30.0)
@@ -87,6 +91,9 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
     case .clawdberg:   // khaki trousers and brown boots
         drawLegs(c, Look(leg: C(0xA89468)), step: p.step)
         cbBoots(c, step: p.step, C(0x4A2E1A), height: 3)
+    case .slayer:   // grey flannel trousers and brown brogues
+        drawLegs(c, Look(leg: C(0x5E5E64)), step: p.step)
+        slBoots(c, step: p.step, C(0x5A3A22))
     }
 
     c.oy += p.breathe
@@ -99,6 +106,7 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
     case .doctor: top = tweed; topShade = tweedDark; arm = tweed; armRight = tweed
     case .clawdFiles: top = trench; topShade = trenchDark; arm = trench; armRight = trench
     case .clawdberg: top = leather; topShade = leatherDark; arm = leather; armRight = leather
+    case .slayer: top = watcherTweed; topShade = watcherTweedDark; arm = watcherTweed; armRight = watcherTweed
     }
     c.rect(17, 26, 22, 12, clawdOrange); c.rect(38, 26, 1, 12, hemShade)
     c.rect(17, 34, 22, 4, top); c.rect(38, 34, 1, 4, topShade); c.rect(20, 34, 16, 1, topShade)   // the turtleneck's roll
@@ -121,6 +129,9 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
     case .clawdberg:   // the jacket open over a khaki shirt, and the satchel's strap across it
         c.rect(24, 34, 8, 4, C(0xC8B48A)); c.px(24, 34, leatherDark); c.px(31, 34, leatherDark)
         for i in 0..<4 { c.px(25 + i * 2, 34 + i, C(0x8A7A52)); c.px(26 + i * 2, 34 + i, C(0x8A7A52)) }
+    case .slayer:   // the tweed open over a white shirt and a dark green tie, flecks in the cloth
+        c.rect(24, 34, 8, 4, C(0xEEEAE0)); c.rect(27, 34, 2, 4, C(0x2E4A32)); c.px(27, 37, C(0x1E3222))
+        for (x, y) in [(18, 35), (21, 36), (34, 35), (36, 37), (19, 37)] { c.px(x, y, watcherTweedDark) }
     }
     // Arms: hands on hips at rest, the right one forward to fight.
     let forward = !shaking && (!p.resting || p.melee != nil)
@@ -179,6 +190,8 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
         drawHemFlashlight(c, out: forward || p.zap != nil, lift: lift)
     case .clawdberg:
         if let a = p.melee { cbWhip(c, angle: a, trail: p.trail, t: p.t, leather: C(0x5A3A22)) } else { cbWhipCoil(c, C(0x5A3A22)) }
+    case .slayer:
+        if let a = p.melee { slStake(c, angle: a, trail: p.trail) } else { slStakeHeld(c) }
     }
 }
 

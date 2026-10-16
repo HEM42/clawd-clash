@@ -866,6 +866,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             ? ["get the DeLorean up to 88 mph", "make the window resize to fit the Claudes",
                "why does the water glass keep rippling?", "write a nice README with screenshots",
                "fix the portrait crop for T. Wrecks's tiny arms"]
+            : Universe.shown == .slayer
+            ? ["stake the bug in the Hellmouth loop", "make the window resize to fit the Claudes",
+               "why does the library's book cage keep swinging?", "write a nice README with screenshots",
+               "fix the portrait crop for Glorificlaws's hair"]
             : ["add a snowtaunt", "make the window resize to fit the Claudes", "why does the duel not start?",
                "write a nice README with screenshots", "fix the portrait crop for wide characters"]
         let nowActs = ["Edit WindowMode.swift", "Bash: swift build", "Read Locations.swift", "Grep opaqueBounds", "Agent: Review the diff"]

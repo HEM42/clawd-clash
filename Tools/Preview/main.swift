@@ -57,7 +57,7 @@ func put(_ c: PixelCanvas, _ ctx: CGContext, x: CGFloat, y: CGFloat, outline: Bo
 func squashed(_ s: String) -> String { s.lowercased().filter { $0.isLetter || $0.isNumber } }
 
 /// Characters by batch name (heroes1…, villains1…, starWarsHeroes1…, starWarsVillains1…, dcHeroes1…, dcVillains1…,
-/// doctorHeroes1…, doctorVillains1…, filesHeroes1…, filesVillains1…, clawdbergHeroes1…, clawdbergVillains1…, all, starWars, marvel, dc, doctor, clawdFiles, or a
+/// doctorHeroes1…, doctorVillains1…, filesHeroes1…, filesVillains1…, clawdbergHeroes1…, clawdbergVillains1…, slayerHeroes1…, slayerVillains1…, all, starWars, marvel, dc, doctor, clawdFiles, or a
 /// universe's name), by case name (ironMan, vader, superman…; Marvel's first where both have
 /// one) or by the name shown on screen ("Darth Vapor"). Universes can't be mixed in one call.
 func cast(named n: String) -> [Cast] {
@@ -72,6 +72,8 @@ func cast(named n: String) -> [Cast] {
                            clawdbergHeroes6, clawdbergHeroes7]
     let clawdbergVillains = [clawdbergVillains1, clawdbergVillains2, clawdbergVillains3, clawdbergVillains4,
                              clawdbergVillains5, clawdbergVillains6, clawdbergVillains7]
+    let slayerHeroes = [slayerHeroes1]
+    let slayerVillains = [slayerVillains1]
     let filesHeroes = [filesHeroes1, filesHeroes2, filesHeroes3, filesHeroes4, filesHeroes5, filesHeroes6, filesHeroes7]
     let filesVillains = [filesVillains1, filesVillains2, filesVillains3, filesVillains4, filesVillains5, filesVillains6,
                          filesVillains7, filesVillains8]
@@ -79,7 +81,7 @@ func cast(named n: String) -> [Cast] {
     var batches: [String: [Cast]] = [
         "marvel": Theme.of(.marvel).cast, "starWars": Theme.of(.starWars).cast, "dc": Theme.of(.dc).cast,
         "doctor": Theme.of(.doctor).cast, "clawdFiles": Theme.of(.clawdFiles).cast,
-        "clawdberg": Theme.of(.clawdberg).cast,
+        "clawdberg": Theme.of(.clawdberg).cast, "slayer": Theme.of(.slayer).cast,
         "all": Theme.of(.marvel).cast,
     ]
     for (i, b) in marvelHeroes.enumerated() { batches["heroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
@@ -91,6 +93,8 @@ func cast(named n: String) -> [Cast] {
     for (i, b) in doctorHeroes.enumerated() { batches["doctorHeroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
     for (i, b) in clawdbergHeroes.enumerated() { batches["clawdbergHeroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
     for (i, b) in clawdbergVillains.enumerated() { batches["clawdbergVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
+    for (i, b) in slayerHeroes.enumerated() { batches["slayerHeroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
+    for (i, b) in slayerVillains.enumerated() { batches["slayerVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
     for (i, b) in filesHeroes.enumerated() { batches["filesHeroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
     for (i, b) in filesVillains.enumerated() { batches["filesVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
     for (i, b) in doctorVillains.enumerated() { batches["doctorVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
@@ -106,6 +110,8 @@ func cast(named n: String) -> [Cast] {
     if let v = DoctorVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
     if let h = ClawdbergHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
     if let v = ClawdbergVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
+    if let h = SlayerHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
+    if let v = SlayerVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
     if let h = FilesHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
     if let v = FilesVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
     for u in Universe.allCases {

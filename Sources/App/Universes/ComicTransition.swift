@@ -2,8 +2,8 @@ import CoreGraphics
 
 /// A comic-book trip between two places, in a universe that has them: Marvel's (`ComicTrip`), DC's (`DCComicTrip`) or
 /// Doctor Clawd's trips through time and space (`DoctorTrip`), The Clawd Files' (`FilesTrip`) or Stevie Clawdberg's
-/// (`ClawdbergTrip`). Star Wars has none: it keeps its edge and clock wipes (`Wipe`). Shared by the window and the screen
-/// saver.
+/// (`ClawdbergTrip`). Star Wars has none: it keeps its edge and clock wipes (`Wipe`), and so does Clawd Slayer until its own
+/// trips come. Shared by the window and the screen saver.
 enum ComicTransition {
     case marvel(ComicTrip)
     case dc(DCComicTrip)
@@ -31,7 +31,7 @@ enum ComicTransition {
     /// uses plain wipes. `from`, where it's coming from, if it's known.
     static func pick(after last: ComicTransition?, cast: [Cast], from: Location? = nil, to place: Location) -> ComicTransition? {
         switch place.universe {
-        case .starWars:
+        case .starWars, .slayer:
             return nil
         case .clawdberg:
             if case .clawdberg(let l)? = last { return .clawdberg(ClawdbergTrip.pick(after: l.kind, cast: cast, from: from, to: place)) }

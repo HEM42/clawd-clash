@@ -52,6 +52,8 @@ extension Cast {
         guard persona.canSit else { return false }
         // A sonic screwdriver, a flashlight or a bullwhip is no reason to float cross-legged.
         guard universe != .doctor, universe != .clawdFiles, universe != .clawdberg else { return false }
+        // In Clawd Slayer only the witches do (Willow floats cross-legged in "Lessons" and "Chosen").
+        if universe == .slayer { return !isDark && slayerWitches.contains(index) }
         return weapon == .lightning || (universe == .starWars && weapon == .saber)
     }
 
