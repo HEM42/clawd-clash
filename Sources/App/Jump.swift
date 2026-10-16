@@ -214,7 +214,9 @@ enum Jump {
         return found
     }
 
-    /// Diagnostics (`--ax-dump=<pid> <file>`): what the Accessibility API exposes for the app hosting a session.
+    #if CLAWD_DEV_TOOLS
+    /// Diagnostics (`--ax-dump=<pid> <file>`, `./build.sh --dev-tools` only): what the Accessibility API exposes for
+    /// the app hosting a session.
     static func dump(pid: Int32) -> String {
         var out = "trusted: \(AXIsProcessTrusted())\n"
         guard let app = hostApp(of: pid) else { return out + "no host app\n" }
@@ -231,6 +233,7 @@ enum Jump {
         }
         return out
     }
+    #endif
 
     private static func activate(_ app: NSRunningApplication) {
         guard let url = app.bundleURL else { app.activate(); return }

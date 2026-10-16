@@ -6,9 +6,11 @@
 #   ./build.sh --no-install        build + launch the copy in build/ (nothing copied to /Applications, hooks left alone)
 #   ./build.sh --release <version> Apple silicon (arm64) build into build/, signed for distribution;
 #                                  no install, no hooks (used by release.sh)
-#   ./build.sh --dev-tools         also compile the --jump=<pid> and --ax-dump=<pid> click-to-jump diagnostics
-#                                  (combine with --no-install; refused with --release). Off unless asked for: any
-#                                  process that launches a copy built with it can use the app's Accessibility grant
+#   ./build.sh --no-install --dev-tools
+#                                  also compile the --jump=<pid> <file> and --ax-dump=<pid> [file] click-to-jump
+#                                  diagnostics. Only with --no-install: any process that launches a copy built with
+#                                  it can use the app's Accessibility grant, so it never goes to /Applications or
+#                                  into a release (release.sh also checks the binary for it)
 set -euo pipefail
 cd "${0:A:h}"
 
@@ -26,8 +28,8 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
-if [[ $MODE == release && $DEV_TOOLS == 1 ]]; then
-    echo "error: --dev-tools never goes into a release build" >&2; exit 2
+if [[ $DEV_TOOLS == 1 && $MODE != local ]]; then
+    echo "error: --dev-tools only goes with --no-install (never installed, never released)" >&2; exit 2
 fi
 # Default version: the newest entry in the CHANGELOG.
 if [[ -z "$VERSION" ]]; then

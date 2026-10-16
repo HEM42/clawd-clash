@@ -34,8 +34,11 @@ if args.contains("--install-hooks") || args.contains("--update-hooks") || args.c
 // Click-to-jump diagnostics, only in a `./build.sh --dev-tools` build: they run with the app's Accessibility and
 // Automation grants for whatever launches it, so a plain or release build doesn't answer them.
 #if CLAWD_DEV_TOOLS
+// Heads both reports, and release.sh refuses a binary that contains it. Longer than 15 bytes on purpose: Swift keeps
+// shorter strings inline in the code, where a text search of the binary can't see them.
+let devToolsNote = "Clawd Clash dev-tools build, never ship this one"
 if let arg = args.first(where: { $0.hasPrefix("--jump=") }), let pid = Int32(arg.dropFirst(7)) {
-    var lines: [String] = []
+    var lines: [String] = [devToolsNote]
     Jump.log = { lines.append($0) }
     Jump.toSession(pid: pid)
     RunLoop.main.run(until: Date().addingTimeInterval(2.5))
@@ -45,7 +48,7 @@ if let arg = args.first(where: { $0.hasPrefix("--jump=") }), let pid = Int32(arg
 }
 
 if let arg = args.first(where: { $0.hasPrefix("--ax-dump=") }), let pid = Int32(arg.dropFirst(10)) {
-    let report = Jump.dump(pid: pid)
+    let report = devToolsNote + "\n" + Jump.dump(pid: pid)
     if let out = args.last, out != arg { try? report.write(toFile: out, atomically: true, encoding: .utf8) } else { print(report) }
     exit(0)
 }
