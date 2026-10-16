@@ -334,4 +334,8 @@ socialPreview(title: "STEVIE CLAWDBERG", subtitle: "Your AI sessions as a pixel-
               groups: [[.hero(ClawdbergHero.indianaBones), .hero(ClawdbergHero.martyMcFry), .hero(ClawdbergHero.eClawd), .hero(ClawdbergHero.gizmoe),
                         .villain(ClawdbergVillain.tWrecks), .villain(ClawdbergVillain.bruise), .villain(ClawdbergVillain.captainClawk), .villain(ClawdbergVillain.biffTannin)]],
               file: "social-preview-stevie-clawdberg.png")
+socialPreview(title: "CLAWD OF THE RINGS", subtitle: "Your AI sessions as a pixel-art quest on your desktop",
+              groups: [[.hero(RingsHero.gandalf), .hero(RingsHero.frodo), .hero(RingsHero.aragorn), .hero(RingsHero.legolas),
+                        .villain(RingsVillain.balrog), .villain(RingsVillain.sauron), .villain(RingsVillain.witchKing), .villain(RingsVillain.gollum)]],
+              file: "social-preview-clawd-of-the-rings.png")
 print("wrote the social previews to \(out)")
