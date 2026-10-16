@@ -28,8 +28,8 @@ Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/r
 | https://github.com/user-attachments/assets/aff1b2f9-9b96-4dea-8eef-c3f469c93a6b | https://github.com/user-attachments/assets/6b4f2fc2-30cf-4566-a921-0b84d4066867 |
 | **Detective Clawds** | **Doctor Clawd** |
 | https://github.com/user-attachments/assets/759c0556-da82-4b71-a855-5ab168f14f6f | https://github.com/user-attachments/assets/0d2b3baf-7cc7-4742-a2e5-7c2cea5372b7 |
-| **The Clawd Files** | |
-| https://github.com/user-attachments/assets/d7e07f3a-4abc-454a-a2bc-3a4f3c150738 | |
+| **The Clawd Files** | **Stevie Clawdberg** |
+| https://github.com/user-attachments/assets/d7e07f3a-4abc-454a-a2bc-3a4f3c150738 | https://github.com/user-attachments/assets/19ce502b-a8de-41ef-9a37-3b16bc585722 |
 
 <p align="center"><sub>🔊 Click the speaker in a player for sound: GitHub starts videos muted.</sub></p>
 
