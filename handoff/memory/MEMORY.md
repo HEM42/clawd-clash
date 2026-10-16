@@ -1,0 +1,5 @@
+- [Avengers: Clawd Wars spec](avengers-clawd-wars-spec.md): Marvel reskin decisions: roster, sides, combat, locations, future theme merge
+- [No em dashes](no-em-dashes.md): never use the em dash in any text (docs, commits, comments, UI)
+- [Clawd Clash plan](clawd-clash-plan.md): one combined app, old repos become showcase pages linking to it
+- [Clawd stands on four legs](clawd-four-legs.md): never merge/drop legs in a redesign; label before/after renders
+- [Stevie Clawdberg](stevie-clawdberg.md): built overnight on branch stevie_clawdberg (unpushed); gate 4 decided by Claude; see attention.md

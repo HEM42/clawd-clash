@@ -1,13 +1,14 @@
 # Attention: Stevie Clawdberg, built overnight
 
-What to look at first, after a night of building Stevie Clawdberg without approval gates. Delete this file before merging.
+What to look at first, after a night of building Stevie Clawdberg without approval gates. Delete this file and `handoff/` before merging.
 
 ## Start here
 
 1. **Try it:** `./build.sh` on the `stevie_clawdberg` branch, then Settings → Universe → Stevie Clawdberg. For a quick show: hold ⌘ in the menu for the Playground. To see 88 mph and the set pieces in a test run: `CLAWD_GREEDO_EVERY=3 "build/Clawd Clash.app/Contents/MacOS/ClawdClash" -universe clawdberg -location hillValley1955 --missing-time --playground=5155,5021,5122,5031,5040` (Marty, the Cairo Swordsman, Indy, T. Wrecks, Captain Clawk).
-2. **Watch the trailer:** `promo/stevie-clawdberg-promo.mp4` (1080p) and `promo/720p/Stevie-Clawdberg.mp4` (9.4 MB, for uploading). The storyboard is at `/private/tmp/claude-501/-Volumes-8TB---CODE---clawd-app-Clawd-Clash/da854249-bba2-4366-97d0-571ff0e34a26/scratchpad/cb/promo/storyboard-stevie-clawdberg.png`. The storyboard approval gate was skipped; the video was rendered straight away.
+2. **Watch the trailer:** `promo/stevie-clawdberg-promo.mp4` (1080p) and `promo/720p/Stevie-Clawdberg.mp4` (9.4 MB, for uploading). On another computer, the 720p copy is `handoff/Stevie-Clawdberg.mp4`. The storyboard is `handoff/storyboard-stevie-clawdberg.png`. The storyboard approval gate was skipped; the video was rendered straight away.
 3. **Skim the sheets:** `docs/roster-stevie-clawdberg.png`, `docs/locations-stevie-clawdberg.png`, `docs/desktop-stevie-clawdberg.png`, `docs/social-preview-stevie-clawdberg.png`.
-4. **The overview page** with the trailer, the polish pass before and after, and the transitions: https://claude.ai/artifact/6k9SE1AQcBSnSC4tioHGQB
+4. **On another computer:** `handoff/` holds the plan, Claude's memory notes, the storyboard and the 720p trailer (see `handoff/README.md`).
+5. **The overview page** with the trailer, the polish pass before and after, and the transitions: https://claude.ai/artifact/6k9SE1AQcBSnSC4tioHGQB
 
 ## What's done (all committed on `stevie_clawdberg`, not pushed)
 
