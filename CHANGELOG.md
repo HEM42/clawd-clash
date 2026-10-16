@@ -54,6 +54,11 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
     - why the `before-vader` backup name stays
     - the values that must stay in step between the app and the screen saver
   - No code changed.
+- **The art's copy-pasted helpers are shared.** 90 identical private copies of four drawing helpers now sit in core once each:
+  - `prop` (29 copies), `unpremultiplied` (34) and `rgb` (6) in `Pixel.swift`
+  - `drawBoots` (21) in `Characters.swift`, beside `drawLegs`
+
+  That's about 840 fewer lines across 44 universe files. Copies that really differ stay private: 16 `drawBoots` variants, and two Clawd of the Rings props, renamed `groundedProp` (clipped at the ground) and `wideProp` (a bigger canvas). Checked by rendering every character's poses, every place, the rides and each universe's transitions before and after: all 21 sheets are byte-for-byte identical.
 
 ### Fixed
 - **A flying character can be clicked, not just hovered.** Hovering and clicking each worked out where a character is, in two copies that had drifted apart: the click's copy didn't lift with a character in the air (on a ride, levitating, a hop), so its card showed on hover but a click there did nothing. Both now use the same rectangles (`hitRects`), so they always agree.

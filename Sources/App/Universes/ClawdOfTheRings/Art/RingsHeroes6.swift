@@ -861,9 +861,3 @@ private func layer(_ c: PixelCanvas, tint: Px, amount: Double, _ art: (PixelCanv
         }
     }
 }
-
-private func unpremultiplied(_ s: PixelCanvas, _ i: Int) -> Px {
-    let a = s.buf[i + 3], m = 255 / Double(a)
-    return Px(r: UInt8(min(255, Double(s.buf[i]) * m)), g: UInt8(min(255, Double(s.buf[i + 1]) * m)),
-              b: UInt8(min(255, Double(s.buf[i + 2]) * m)), a: a)
-}

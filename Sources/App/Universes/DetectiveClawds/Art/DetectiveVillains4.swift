@@ -87,15 +87,6 @@ private func glowDot(_ c: PixelCanvas, _ x: Double, _ y: Double, core: Px, glow:
     c.glowLine(x, y, x, y, core: core, glow: glow, coreR: coreR, glowR: glowR, strength: strength)
 }
 
-/// Boots: the bottom `rows` of each leg in `col` (not when sitting, when the legs are folded).
-private func drawBoots(_ c: PixelCanvas, _ col: Px, step: Int, rows: Int) {
-    guard !seatedPose else { return }
-    for (i, lx) in [19, 23, 31, 35].enumerated() {
-        let bottom = step >= 0 && i % 2 == step ? 42 : 43
-        c.rect(lx, bottom - rows + 1, 2, rows, col)
-    }
-}
-
 /// Draws `art` on a scratch canvas (same offsets as `c`) and copies it onto `c`, leaning forward one pixel every
 /// `lean` rows above the feet (0: upright).
 private func layer(_ c: PixelCanvas, lean: Int = 0, _ art: (PixelCanvas) -> Void) {

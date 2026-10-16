@@ -1089,43 +1089,12 @@ private func bar(_ c: PixelCanvas, _ x0: Double, _ y0: Double, _ x1: Double, _ y
     c.glowLine(x0, y0, x1, y1, core: col, glow: clear, coreR: r, glowR: r + 0.1)
 }
 
-/// Boots: the bottom `rows` of each leg in `col` (not when sitting, when the legs are folded).
-private func drawBoots(_ c: PixelCanvas, _ col: Px, step: Int, rows: Int) {
-    guard !seatedPose else { return }
-    for (i, lx) in [19, 23, 31, 35].enumerated() {
-        let bottom = step >= 0 && i % 2 == step ? 42 : 43
-        c.rect(lx, bottom - rows + 1, 2, rows, col)
-    }
-}
-
 /// A flickering jet flame pointing down from (`x`, `y`), `w` wide.
 private func drawJet(_ c: PixelCanvas, x: Int, y: Int, w: Int, t: Double, seed: Int) {
     let len = 2 + Int(noise(Int(t * 30) + seed) * 3)
     c.rect(x, y, w, len + 1, C(0xFF9A2A, 0.85))
     c.rect(x + (w > 2 ? 1 : 0), y, max(1, w - 2), len, C(0xFFE27A))
     c.rect(x, y, w, 1, C(0xF4FCFF))
-}
-
-/// A prop drawn pointing right from pixel (20, 20) of a scratch canvas, turned to `angle` degrees (0 forward, -90 up)
-/// and placed with that point on `at`.
-private func prop(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double, alpha: Double = 1, _ art: (PixelCanvas) -> Void) {
-    let s = PixelCanvas(41, 41)
-    art(s)
-    let r = s.rotated(angle, about: (20.5, 20.5), into: 41, 41, at: (20.5, 20.5))
-    let x0 = Int(floor(at.x - 20.5)), y0 = Int(floor(at.y - 20.5))
-    for y in 0..<r.h {
-        for x in 0..<r.w {
-            let i = (y * r.w + x) * 4
-            guard r.buf[i + 3] > 0 else { continue }
-            c.px(x0 + x, y0 + y, unpremultiplied(r, i).alpha(alpha))
-        }
-    }
-}
-
-private func unpremultiplied(_ s: PixelCanvas, _ i: Int) -> Px {
-    let a = s.buf[i + 3], m = 255 / Double(a)
-    return Px(r: UInt8(min(255, Double(s.buf[i]) * m)), g: UInt8(min(255, Double(s.buf[i + 1]) * m)),
-              b: UInt8(min(255, Double(s.buf[i + 2]) * m)), a: a)
 }
 
 /// Draws `art` on a fresh canvas of sprite size, its origin at (0, 0).

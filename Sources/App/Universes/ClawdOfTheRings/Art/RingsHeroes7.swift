@@ -80,7 +80,7 @@ private func drawThorin(_ c: PixelCanvas, _ p: Pose) {
     let angle = min(20, p.melee ?? -55 - 33 * lift)
     drawSwordSmear(c, at: dwarfHand, reach: 19, trail: p.melee == nil ? [] : p.trail.map { min(20, $0) })
     let hand = (x: dwarfHand.x, y: dwarfHand.y - Double(up))
-    prop(c, at: hand, angle: angle, drawOrcrist)
+    groundedProp(c, at: hand, angle: angle, drawOrcrist)
     c.rect(39, 35 - up, 2, 3 + up, coat); c.rect(41, 35 - up, 2, 3, clawdOrange); c.px(41, 37 - up, clawdShade)   // the fist round the grip
     if let s = p.signature, lift > 0.3 {
         // A glint running up the blade, and the Arkenstone gleaming over his off fist.
@@ -215,7 +215,7 @@ private func drawBalin(_ c: PixelCanvas, _ p: Pose) {
     // The staff: planted at rest, swung with a long smear (it's heavy).
     let angle = min(20, p.melee ?? p.signature.map(balinPoint) ?? -90)
     drawHeavySmear(c, angle: angle, reach: 13, half: 3, trail: p.melee == nil ? [] : p.trail.map { min(20, $0) })
-    prop(c, at: dwarfHand, angle: angle, drawStaff)
+    groundedProp(c, at: dwarfHand, angle: angle, drawStaff)
     c.rect(39, 35, 2, 3, coat); c.rect(41, 35, 2, 3, clawdOrange); c.px(41, 37, clawdShade)
     // Round-robin: a tick at each spot he has pointed at so far.
     if let s = p.signature {
@@ -355,7 +355,7 @@ private func drawKiliShotUp(_ c: PixelCanvas, _ s: Double, tunic: Px) {
     }
     let fist = turned(-1.5, 0)
     line(c, 40, 35.5, fist.x, fist.y, tunic, 0.9)                                      // the bow arm, up
-    prop(c, at: grip, angle: angle) { b in
+    groundedProp(c, at: grip, angle: angle) { b in
         b.ox = -25; b.oy = -16                                                         // the bow's grip on (20, 20)
         drawShortBow(b, pull: pull)
         b.rect(43, 35, 2, 3, clawdOrange)
@@ -484,9 +484,9 @@ private func drawFili(_ c: PixelCanvas, _ p: Pose) {
         drawSwordSmear(c, at: offHand, reach: 13, trail: trail.map { 180 - $0 })
         drawSwordSmear(c, at: hand, reach: 13, trail: trail)
     }
-    prop(c, at: offHand, angle: off, drawShortSword)
+    groundedProp(c, at: offHand, angle: off, drawShortSword)
     c.rect(15, 35 - up, 2, 3 + up, coat); c.rect(13, 35 - up, 2, 3, clawdOrange); c.px(13, 37 - up, clawdShade)   // the off fist
-    prop(c, at: hand, angle: angle, drawShortSword)
+    groundedProp(c, at: hand, angle: angle, drawShortSword)
     c.rect(39, 35 - up, 2, 3 + up, coat); c.rect(41, 35 - up, 2, 3, clawdOrange); c.px(41, 37 - up, clawdShade)
 }
 
@@ -584,7 +584,7 @@ private func drawGloin(_ c: PixelCanvas, _ p: Pose) {
     // The axe, upright at rest, swung with a long smear (it's heavy); the floor stops a low stroke.
     let angle = min(5, p.melee ?? -80)
     drawHeavySmear(c, angle: angle, reach: 9, half: 6, trail: p.melee == nil ? [] : p.trail.map { min(5, $0) })
-    prop(c, at: dwarfHand, angle: angle, drawGloinAxe)
+    groundedProp(c, at: dwarfHand, angle: angle, drawGloinAxe)
     c.rect(40, 35, 1, 3, gold); c.rect(41, 35, 2, 3, C(0x5A3A1E)); c.px(41, 37, C(0x3E2812))   // the ring and the glove
 }
 
@@ -699,7 +699,7 @@ private func unit(_ degrees: Double) -> (x: Double, y: Double) {
 
 /// A prop drawn pointing right from pixel (20, 20) of a scratch canvas, turned to `angle` degrees (0 forward, -90 up)
 /// and placed with that point on `at`. Nothing is drawn below the floor (row 43).
-private func prop(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double, _ art: (PixelCanvas) -> Void) {
+private func groundedProp(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double, _ art: (PixelCanvas) -> Void) {
     let s = PixelCanvas(41, 41)
     art(s)
     let r = s.rotated(angle, about: (20.5, 20.5), into: 41, 41, at: (20.5, 20.5))
@@ -711,12 +711,6 @@ private func prop(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double, _
             c.px(x0 + x, y0 + y, unpremultiplied(r, i))
         }
     }
-}
-
-private func unpremultiplied(_ s: PixelCanvas, _ i: Int) -> Px {
-    let a = s.buf[i + 3], m = 255 / Double(a)
-    return Px(r: UInt8(min(255, Double(s.buf[i]) * m)), g: UInt8(min(255, Double(s.buf[i + 1]) * m)),
-              b: UInt8(min(255, Double(s.buf[i + 2]) * m)), a: a)
 }
 
 /// The angles a heavy swing smears through: from now back past `trail`'s last angle by half as far again, so the smear

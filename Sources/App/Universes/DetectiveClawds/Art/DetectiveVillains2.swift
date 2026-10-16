@@ -88,15 +88,6 @@ private func claws(_ c: PixelCanvas, _ x: Double, _ y: Double, angle: Double, sp
     }
 }
 
-/// Boots: the bottom `rows` of each leg in `col` (not when sitting, when the legs are folded).
-private func drawBoots(_ c: PixelCanvas, _ col: Px, step: Int, rows: Int) {
-    guard !seatedPose else { return }
-    for (i, lx) in [19, 23, 31, 35].enumerated() {
-        let bottom = step >= 0 && i % 2 == step ? 42 : 43
-        c.rect(lx, bottom - rows + 1, 2, rows, col)
-    }
-}
-
 /// A long coat flaring round the legs from the waist down to `bottom` (shorter when sitting).
 private func drawCoatTails(_ c: PixelCanvas, _ p: Pose, _ col: Px, _ edge: Px, bottom: Int = 41) {
     let end = seatedPose ? 39 : bottom

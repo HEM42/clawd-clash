@@ -108,6 +108,16 @@ struct Look {
 var seatedPose = false
 
 /// Legs are drawn without the body's breathing offset so a 1px bob never leaves a gap.
+/// Boots: the bottom `rows` of each leg in `col` (not when sitting, when the legs are folded). `step` as in
+/// `drawLegs`, so a lifted leg's boot lifts with it. Shared by the Marvel and DC casts.
+func drawBoots(_ c: PixelCanvas, _ col: Px, step: Int, rows: Int) {
+    guard !seatedPose else { return }
+    for (i, lx) in [19, 23, 31, 35].enumerated() {
+        let bottom = step >= 0 && i % 2 == step ? 42 : 43
+        c.rect(lx, bottom - rows + 1, 2, rows, col)
+    }
+}
+
 /// `step` alternates which pair of legs is lifted while walking (-1 = standing).
 func drawLegs(_ c: PixelCanvas, _ look: Look, step: Int = -1) {
     guard look.legs else { return }

@@ -135,7 +135,7 @@ private func drawUglukLookup(_ c: PixelCanvas, _ s: Double, skin: Px, skinDark: 
 /// Ug-lookup's falchion: a leather grip, a plain iron guard and a broad single-edged blade that widens toward its
 /// clipped tip, the back saw-toothed, a bright edge along the bottom.
 private func drawFalchion(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double) {
-    prop(c, at: at, angle: angle) { s in
+    wideProp(c, at: at, angle: angle) { s in
         let blade = C(0x6E727A), back = C(0x4A4E56), edge = C(0xC8CCD4), grip = C(0x3A2A1E), iron = C(0x2A2A30)
         s.px(-4, 0, iron)
         s.rect(-3, 0, 5, 1, grip)
@@ -261,7 +261,7 @@ private func drawGrishnakhSearch(_ c: PixelCanvas, _ s: Double, skin: Px, skinDa
 /// Grish-NaN's knife: a bone grip, a stub of an iron guard and a wicked blade that curves up to a hooked point, the
 /// edge serrated.
 private func drawKnife(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double) {
-    prop(c, at: at, angle: angle) { s in
+    wideProp(c, at: at, angle: angle) { s in
         let bone = C(0xC8BC98), iron = C(0x3A3A40), blade = C(0x8A9098), edge = C(0xDCE0E8)
         s.rect(-3, 0, 4, 1, bone); s.px(-3, 0, C(0x9A8E70))
         s.rect(1, -1, 1, 3, iron)
@@ -403,7 +403,7 @@ private func drawShield(_ c: PixelCanvas, x: Int, y: Int) {
 /// Shagradle's broad sword: a heavy round pommel, a leather grip, a wide iron crossguard and a broad straight blade with
 /// a fuller down its middle, coming to a blunt point.
 private func drawBroadsword(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double) {
-    prop(c, at: at, angle: angle) { s in
+    wideProp(c, at: at, angle: angle) { s in
         let steel = C(0x8A8E96), light = C(0xC0C4CC), fuller = C(0x5A5E66), iron = C(0x3A3632), grip = C(0x3A281A)
         s.rect(-5, -1, 2, 3, iron)
         s.rect(-3, 0, 5, 1, grip)
@@ -556,7 +556,7 @@ private func drawImpact(_ c: PixelCanvas, _ k: Double, x: Int) {
 /// Olog-HA's war hammer: a long haft, iron-shod at the butt and bound below the head, and a massive banded iron head
 /// with studs, a short spike on its face.
 private func drawWarHammer(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double) {
-    prop(c, at: at, angle: angle) { s in
+    wideProp(c, at: at, angle: angle) { s in
         let wood = C(0x3E2C1E), woodDark = C(0x2A1E14), iron = C(0x5E6066), dark = C(0x3A3C42), light = C(0x8E9096)
         s.rect(-5, 0, 20, 2, wood); s.rect(-5, 1, 20, 1, woodDark)
         s.rect(-5, 0, 2, 2, dark); s.rect(11, 0, 3, 2, dark)
@@ -714,7 +714,7 @@ private func drawTrollFace(_ c: PixelCanvas, puzzled: Bool, skin: Px, mouth: Px,
 /// The Cave Troll-ing's club: a length of tree, thin at the grip and swelling to a great knobbly head, a few iron
 /// spikes driven through it.
 private func drawClub(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double) {
-    prop(c, at: at, angle: angle) { s in
+    wideProp(c, at: at, angle: angle) { s in
         let wood = C(0x6A4A2E), dark = C(0x4A321E), light = C(0x8A6440), spike = C(0x9A9CA2)
         for x in -4...17 {
             let r: Int = x < 4 ? 1 : min(4, 1 + (x - 2) / 5)
@@ -860,7 +860,7 @@ private func drawBolgPost(_ c: PixelCanvas, _ s: Double, skin: Px, skinDark: Px,
 
 /// Blog's mace: a dark wooden haft and a heavy iron ball bristling with long spikes.
 private func drawSpikedMace(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double) {
-    prop(c, at: at, angle: angle) { s in
+    wideProp(c, at: at, angle: angle) { s in
         let wood = C(0x3A2A1E), woodDark = C(0x281C14), iron = C(0x3E4048), dark = C(0x26282E), light = C(0x6E7078)
         let spike = C(0xA8ACB4)
         s.rect(-4, 0, 15, 2, wood); s.rect(-4, 1, 15, 1, woodDark)
@@ -1015,7 +1015,7 @@ private func line(_ c: PixelCanvas, _ x0: Double, _ y0: Double, _ x1: Double, _ 
 
 /// A prop drawn pointing right from the hand at pixel (0, 0) of a scratch canvas (it reaches 30 pixels every way),
 /// turned to `angle` degrees (0 forward, -90 up) and placed with the hand on `at`.
-private func prop(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double, _ art: (PixelCanvas) -> Void) {
+private func wideProp(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double, _ art: (PixelCanvas) -> Void) {
     let s = PixelCanvas(61, 61)
     s.ox = 30; s.oy = 30
     art(s)
@@ -1028,10 +1028,4 @@ private func prop(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double, _
             c.px(x0 + x, y0 + y, unpremultiplied(r, i))
         }
     }
-}
-
-private func unpremultiplied(_ s: PixelCanvas, _ i: Int) -> Px {
-    let a = s.buf[i + 3], m = 255 / Double(a)
-    return Px(r: UInt8(min(255, Double(s.buf[i]) * m)), g: UInt8(min(255, Double(s.buf[i + 1]) * m)),
-              b: UInt8(min(255, Double(s.buf[i + 2]) * m)), a: a)
 }

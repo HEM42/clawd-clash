@@ -66,15 +66,6 @@ private func drawPunch(_ c: PixelCanvas, angle: Double, trail: [Double], arm: Px
     c.rect(Int(e.x.rounded()) - size / 2, Int(e.y.rounded()) - size / 2, size, size, fist)
 }
 
-/// Boots: the bottom `rows` of each leg in `col` (not when sitting, when the legs are folded).
-private func drawBoots(_ c: PixelCanvas, _ col: Px, step: Int, rows: Int) {
-    guard !seatedPose else { return }
-    for (i, lx) in [19, 23, 31, 35].enumerated() {
-        let bottom = step >= 0 && i % 2 == step ? 42 : 43
-        c.rect(lx, bottom - rows + 1, 2, rows, col)
-    }
-}
-
 /// A flickering jet flame pointing down from (`x`, `y`), `w` wide.
 private func drawJet(_ c: PixelCanvas, x: Int, y: Int, w: Int, t: Double, seed: Int, hot: Px = C(0xFFE27A), flame: Px = C(0xFF9A2A)) {
     let len = 2 + Int(noise(Int(t * 30) + seed) * 3)
@@ -147,12 +138,6 @@ private func scaled(_ c: PixelCanvas, _ scale: Double, about: (x: Double, y: Dou
             c.px(x, y, unpremultiplied(s, i).alpha(alpha))
         }
     }
-}
-
-private func unpremultiplied(_ s: PixelCanvas, _ i: Int) -> Px {
-    let a = s.buf[i + 3], m = 255 / Double(a)
-    return Px(r: UInt8(min(255, Double(s.buf[i]) * m)), g: UInt8(min(255, Double(s.buf[i + 1]) * m)),
-              b: UInt8(min(255, Double(s.buf[i + 2]) * m)), a: a)
 }
 
 /// A four-point twinkle.

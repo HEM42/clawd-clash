@@ -95,15 +95,6 @@ private func heatEyes(_ c: PixelCanvas, _ k: Double, t: Double) {
     }
 }
 
-/// Boots: the bottom `rows` of each leg in `col` (not when sitting, when the legs are folded).
-private func drawBoots(_ c: PixelCanvas, _ col: Px, step: Int, rows: Int) {
-    guard !seatedPose else { return }
-    for (i, lx) in [19, 23, 31, 35].enumerated() {
-        let bottom = step >= 0 && i % 2 == step ? 42 : 43
-        c.rect(lx, bottom - rows + 1, 2, rows, col)
-    }
-}
-
 /// A flickering jet flame pointing down from (`x`, `y`), `w` wide.
 private func drawJet(_ c: PixelCanvas, x: Int, y: Int, w: Int, t: Double, seed: Int) {
     let len = 2 + Int(noise(Int(t * 30) + seed) * 3)
@@ -161,28 +152,6 @@ private func layer(_ c: PixelCanvas, alpha: Double = 1, lean: Int = 0, _ art: (P
             c.px(x + shift, y, unpremultiplied(s, i).alpha(alpha))
         }
     }
-}
-
-/// A prop drawn pointing right from pixel (20, 20) of a scratch canvas, turned to `angle` degrees (0 forward, -90 up)
-/// and placed with that point on `at`.
-private func prop(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double, alpha: Double = 1, _ art: (PixelCanvas) -> Void) {
-    let s = PixelCanvas(41, 41)
-    art(s)
-    let r = s.rotated(angle, about: (20.5, 20.5), into: 41, 41, at: (20.5, 20.5))
-    let x0 = Int(floor(at.x - 20.5)), y0 = Int(floor(at.y - 20.5))
-    for y in 0..<r.h {
-        for x in 0..<r.w {
-            let i = (y * r.w + x) * 4
-            guard r.buf[i + 3] > 0 else { continue }
-            c.px(x0 + x, y0 + y, unpremultiplied(r, i).alpha(alpha))
-        }
-    }
-}
-
-private func unpremultiplied(_ s: PixelCanvas, _ i: Int) -> Px {
-    let a = s.buf[i + 3], m = 255 / Double(a)
-    return Px(r: UInt8(min(255, Double(s.buf[i]) * m)), g: UInt8(min(255, Double(s.buf[i + 1]) * m)),
-              b: UInt8(min(255, Double(s.buf[i + 2]) * m)), a: a)
 }
 
 /// Long blonde hair over the head and down both sides of the face (Supergirl), lifted `up` pixels.
