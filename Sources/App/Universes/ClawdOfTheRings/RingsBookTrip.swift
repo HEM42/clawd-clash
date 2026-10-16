@@ -10,7 +10,7 @@ extension RingsTrip {
     /// (0–0.2); the page lifts from its outer edge, curls over the spine and lies down on the left, uncovering the new
     /// place on the page behind it, its name in red letters at the top (0.2–0.75); the view pushes into the new picture
     /// until it fills the frame (0.75–1). The places are drawn as they are; the book (binding, gilt edges, parchment,
-    /// lettering, writing) is pixel art, drawn into a bitmap about a sixth of `r` in each direction and scaled up
+    /// lettering, writing) is pixel art, drawn into a bitmap about 180 pixels tall and scaled up
     /// without smoothing, and the turning page is cut into columns on that same grid.
     func drawBook(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
         guard k > 0 else { ctx.draw(old, in: r); return }

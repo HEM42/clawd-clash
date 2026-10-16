@@ -19,7 +19,7 @@ enum FightRole {
     case zap                     // lightning (arcs drawn by the FX layer)
     case hit                     // non-saber caught by lightning: shake
     case cheer                   // odd one out: bounce and wave the weapon
-    case rest                    // a hero leading an idle session: saber off, blaster lowered
+    case rest                    // any character leading an idle session: saber off, blaster lowered
     case ready(urgent: Bool)     // a hero whose session needs you: weapon held up (waved, with hops, when urgent)
 }
 
@@ -64,7 +64,7 @@ func duckAmount(t: Double, shooterOffset: Double, armoured: Bool) -> Double {
     return down * (1 - up)
 }
 let boltArrival = 0.4          // fraction of the period a bolt spends in flight
-private let deflectPeak = -15.0
+private let deflectPeak = -15.0   // the top of `deflectAngle`'s swing (-75 + 60): keep the two in step
 
 func frac(_ v: Double) -> Double { v - floor(v) }
 

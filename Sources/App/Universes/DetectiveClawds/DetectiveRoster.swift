@@ -267,7 +267,7 @@ extension Location {
     static let hallOfDoom = Location("hallOfDoom")
 }
 
-/// Every DC place, from the Places/Scenes*.swift files.
+/// Every DC place, from the Places/DetectiveScenes*.swift files.
 let dcPlaces: [Location: Place] = dcScenes1.merging(dcScenes2) { a, _ in a }.merging(dcScenes3) { a, _ in a }
     .merging(dcScenes4) { a, _ in a }.merging(dcScenes5) { a, _ in a }.merging(dcScenes6) { a, _ in a }
     .merging(dcScenes7) { a, _ in a }

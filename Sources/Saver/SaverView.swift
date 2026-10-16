@@ -40,14 +40,14 @@ final class ClawdClashSaverView: ScreenSaverView {
     private static let shiftEvery = 600.0       // ten minutes
     private var started = Date().timeIntervalSince1970
     private var shifted = false
-    /// Every 10 minutes the saver also wipes, Star Wars style, to somewhere new: the home of someone else in the crew
+    /// Every 10 minutes the saver also changes place to somewhere new: the home of someone else in the crew
     /// (anywhere at all with just the one). `visit` is where it went; nil until the first wipe (where the app says).
     private var period = 0
     private var visit: Location?
     private let wipeLayer = CALayer(), wipeMask = CAShapeLayer()
     private var wipe: (start: Double, clock: Bool)?
     private var trips = 0                       // the wipes take turns: a hard edge, then a clock
-    /// In Marvel and DC, a comic-book transition instead (`ComicTransition`): each frame drawn whole, old place and
+    /// In every universe but Star Wars, that universe's own transition instead (`ComicTransition`): each frame drawn whole, old place and
     /// new, into `comicLayer`.
     private let comicLayer = CALayer()
     private var comic: (trip: ComicTransition, start: Double, old: CGImage)?

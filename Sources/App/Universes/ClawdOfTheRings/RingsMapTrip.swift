@@ -9,7 +9,7 @@ extension RingsTrip {
     /// dithers into a parchment map of Middle-earth (0–0.24); a dotted line walks from where the crew was to where it's
     /// going (0.2–0.62), and the destination's name is written beside its marker (0.6–0.74); the new place opens out of
     /// the marker in a growing circle (0.65–0.97). The places are drawn as they are; the map and everything on it is
-    /// pixel art, drawn into a bitmap about a sixth of `r` and scaled up without smoothing, like the Eye.
+    /// pixel art, drawn into a bitmap about 180 pixels tall and scaled up without smoothing, like the Eye.
     func drawMap(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
         RingsMap.draw(ctx, from: from, to: to, old: old, new: new, k: k, in: r)
     }

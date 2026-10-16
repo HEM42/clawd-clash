@@ -40,6 +40,7 @@ struct SaverFeed: Codable {
         var text: String
     }
 
+    /// The app writes the feed about once a second, so a few seconds without one means it isn't running.
     static let staleAfter = 5.0
 
     /// The real home folder: inside the screen saver's sandbox `NSHomeDirectory()` and `$HOME` point at its container.

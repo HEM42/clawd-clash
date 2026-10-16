@@ -17,7 +17,7 @@ final class PixelCanvas {
     let w: Int, h: Int
     private(set) var buf: [UInt8]   // premultiplied RGBA
     var ox = 0, oy = 0               // translation applied to every draw call
-    var baseY = 0                    // extra vertical shift under `oy`: moves a whole sprite (a hop, sitting down)
+    var baseY = 0                    // extra vertical shift under `oy`: moves a whole sprite (hovering, meditating, a Dalick's Elevate)
                                      // whose drawing code sets `oy` itself
 
     init(_ w: Int, _ h: Int) {

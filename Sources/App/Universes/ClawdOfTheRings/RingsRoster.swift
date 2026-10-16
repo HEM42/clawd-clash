@@ -1,6 +1,6 @@
 import Foundation
 
-// The Clawd of the Rings universe (inspired by The Lord of the Rings): 38 villains, 38 heroes and 22 places. Each
+// The Clawd of the Rings universe (inspired by The Lord of the Rings): 38 villains, 37 heroes (and HEM) and 22 places. Each
 // character is a `Persona` registered in one of the Art/*.swift files next to its drawing code. Who lives where, the
 // arch-enemies and the Eagle are decided here, in `middleEarthTheme`.
 //

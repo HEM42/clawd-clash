@@ -11,8 +11,8 @@ extension RingsTrip {
     /// settling into the new place as it rises out of the depths and turns upright (0.58–0.82); then the stone's rim
     /// widens past the frame, its highlight and dark edge fading, and leaves the new place (0.8–1). The places are
     /// drawn as they are, but inside the stone, while they turn, they're drawn onto the art's grid; everything of the
-    /// stone's own (its glass, rim, highlight, glow, smoke, fire and the Eye) is pixel art, drawn into a bitmap about a
-    /// sixth of `r` in each direction and scaled up without smoothing. The stone is cut on that same grid.
+    /// stone's own (its glass, rim, highlight, glow, smoke, fire and the Eye) is pixel art, drawn into a bitmap about
+    /// 180 pixels tall and scaled up without smoothing. The stone is cut on that same grid.
     func drawPalantir(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
         guard k > 0 else { ctx.draw(old, in: r); return }
         guard k < 1 else { ctx.draw(new, in: r); return }

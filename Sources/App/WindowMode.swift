@@ -78,7 +78,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
                           backing: .buffered, defer: false)
         super.init()
         window.title = "Clawd Clash"
-        // Our own themed title bar instead of the system one; the traffic lights stay.
+        // Our own themed title bar instead of the system one, with its own buttons (HeaderView).
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         // Our header has its own close and minimize (which hides the list); no system traffic lights.
@@ -128,9 +128,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         applyPin()
     }
 
-    /// Make the window exactly as tall as the scene plus the cards (one per Claude), keeping its top edge
-    /// where it is and never taller than the screen, past that the cards scroll.
-    /// Settings → Show Session List in Window. Off: the window is just the header and the scene.
+    /// Settings → Show the session list. Off: the window is just the header and the scene.
     static var listShown: Bool { UserDefaults.standard.object(forKey: "windowList") as? Bool ?? true }
 
     /// What the window shows: the scene with the session list or just the scene (the header's view button switches
@@ -143,6 +141,8 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     /// How many session cards "fit height" makes room for before the list scrolls.
     static let cardsShown = 3
 
+    /// Make the window exactly as tall as the scene plus the cards (one per session), keeping its top edge
+    /// where it is and never taller than the screen, past that the cards scroll.
     func fitToContent() {
         let k = Self.scale
         let top = (Self.headerHeight + sceneHeight) * k
@@ -187,7 +187,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         return NSPoint(x: o.x + (p.x - o.x) / k, y: o.y + (p.y - o.y) / k)
     }
 
-    /// Show or hide the session list (Settings → Show Session List in Window).
+    /// Show or hide the session list (Settings → Show the session list).
     func applyListShown() {
         guard Self.view != .board else { return }
         let top = (Self.headerHeight + sceneHeight) * Self.scale
@@ -498,7 +498,7 @@ final class ThemedScroller: NSScroller {
 }
 
 /// The themed title bar: the location's colours and, on the right, where the crew is.
-/// The traffic lights sit on its left; drag anywhere else on it to move the window.
+/// The location's name on the left, our own minimise and close buttons on the right; drag anywhere else to move it.
 final class HeaderView: NSView, NSViewToolTipOwner {
     weak var controller: OverlayController?
     var onClose: (() -> Void)?
@@ -648,9 +648,6 @@ final class HeaderView: NSView, NSViewToolTipOwner {
     }
 }
 
-/// The scene strip: the Mos Eisley cantina, with the crew standing on its floor.
-/// The location's static picture, behind `SceneView`. Its own view so its pixels are kept between frames:
-/// redrawing it 10–30 times a second was most of the window's CPU time.
 /// A frame of the change of universe, over the whole window (`ClawdWindow.playSwitch`). Clicks go through.
 final class SwitchView: NSView {
     override init(frame: NSRect) {
@@ -663,6 +660,8 @@ final class SwitchView: NSView {
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
 
+/// The location's static picture, behind `SceneView`. Its own view so its pixels are kept between frames:
+/// redrawing it 10–30 times a second was most of the window's CPU time.
 final class RoomView: NSView {
     var image: CGImage? { didSet { needsDisplay = true } }
     var drawRect = CGRect.zero
@@ -677,6 +676,7 @@ final class RoomView: NSView {
     }
 }
 
+/// The scene strip: the current location, with the crew standing on its floor.
 final class SceneView: NSView {
     weak var controller: OverlayController?
     weak var roomView: RoomView?
@@ -685,7 +685,7 @@ final class SceneView: NSView {
     private var live: PixelCanvas?
     private var lastLive: CGImage?
     /// Changing place: the old picture, frozen, wiped away over the new one (a hard edge and a clock wipe, taking
-    /// turns), as the screen saver does; in Marvel and DC, one of the comic-book transitions (`ComicTransition`) instead.
+    /// turns), as the screen saver does; in every universe but Star Wars, that universe's own transition (`ComicTransition`).
     private var wipe: (old: CGImage, start: Double, clock: Bool, comic: ComicTransition?)?
     /// When the change of place is over (or was).
     var wipeEnds: Double { wipe.map { $0.start + ($0.comic?.duration ?? Wipe.duration) } ?? 0 }
@@ -849,9 +849,11 @@ final class CardsView: NSView {
     }
 
     private static let pad: CGFloat = 12
-    // Portraits are cropped to 46×38 sprite pixels; the Compact Window draws them at 1.5× to save height.
+    // Portraits are cropped to each character's outline (`portrait` in Overlay); the Compact Window draws them at
+    // 1.5× to save height.
     private static var portraitScale: CGFloat { ClawdWindow.scale < 1 ? 1.5 : 2 }
-    // Measured: the widest portrait is the AT-AT (53 px), the tallest the Rancor (42 px), both fit at 2×.
+    // The box was sized for Star Wars' widest (the AT-AT, 53 px) and tallest (the Rancor, 42 px) at 2×; anything
+    // bigger is scaled down to fit.
     private static var portraitSize: NSSize { NSSize(width: 56 * portraitScale, height: 43 * portraitScale) }
     private static let lineH: CGFloat = 16
     private static let agentH: CGFloat = 34
@@ -1014,7 +1016,7 @@ final class CardsView: NSView {
             let box = NSBezierPath(roundedRect: r, xRadius: 8, yRadius: 8)
             (controller?.location.panel.blended(withFraction: 0.35, of: .black) ?? NSColor.black).withAlphaComponent(0.94).setFill()
             box.fill()
-            c.accent.withAlphaComponent(0.55).setStroke()     // steady; the focused card's project name fades instead
+            c.accent.withAlphaComponent(0.55).setStroke()     // steady; the focused card says "◆ you're here" instead
             box.lineWidth = 1
             box.stroke()
 

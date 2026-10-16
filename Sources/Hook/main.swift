@@ -1,7 +1,7 @@
 import Foundation
 
 // Hook entry point for Claude Code, Codex, Qwen Code, Gemini CLI, Copilot CLI and pi (through its extension). Reads the hook JSON from stdin, records it, prints nothing,
-// and always exits 0 so it can never block or disturb either.
+// and always exits 0 so it can never block or disturb any of them.
 
 // Whatever the hook creates is yours alone (the state folder and its files are chmodded too, for older installs).
 umask(0o077)

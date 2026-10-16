@@ -3,7 +3,7 @@ import Foundation
 // How every character in every universe is described: what it fights with, how it moves, what its shots and magic
 // look like, and its drawing function. A universe registers one `Persona` per character in its art files.
 
-/// How a character fights. The cases keep Clawd Wars' names; in the Marvel cast they mean:
+/// How a character fights. The cases keep Clawd Wars' names; across the universes they mean:
 /// - `saber`: up close, shields, hammers, claws, fists, swords, staffs. Deflects shots, blocks magic.
 /// - `blaster`: at range, repulsors, webs, arrows, bullets, optic blasts, fire, ice… (`Persona.shot` says which).
 /// - `lightning`: magic and energy streams, sorcery, telekinesis, Thanos' gauntlet (`Persona.magic` says how it looks).

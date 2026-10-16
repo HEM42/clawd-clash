@@ -1,7 +1,7 @@
 import Foundation
 
 /// The universes Clawd Clash can show. One at a time, except in Clawd Royale (`Roster`), where a scene mixes all of them.
-/// Some are not released yet (`isReleased`): only the tools see those.
+/// A universe can be built before it's released (`isReleased`; every one is today): only the tools see an unreleased one.
 ///
 /// Cast ids are stored in the status file and the screen-saver feed: `universe.base + local`, where local ids are
 /// villains `0..<100` and heroes `100…`. Star Wars keeps Clawd Wars' ids (base 0), so its saved state carries over.
@@ -82,8 +82,6 @@ enum Universe: Int, CaseIterable, Codable {
     /// hoard in the Lonely Mount-point.
     var homebound: [Int: String] { self == .middleEarth ? [base + 32: "erebor"] : [:] }
 
-    /// Doctor Clawd: the Doctors in order (One … Fifteen), as global ids. When a session's context is compacted, its
-    /// Doctor regenerates into the next one (`StatusStore`'s PreCompact); nobody else changes.
     /// The Clawd Files: the seven FBI agents (Clawder, Scrawly, Skinnard, Doggedd, Reyez, Einstine, Millar), as global
     /// ids. When one's session is compacted they lose some time: abducted and set back down, the same face
     /// (`StatusStore`'s PreCompact, `MissingTime`).
@@ -97,6 +95,8 @@ enum Universe: Int, CaseIterable, Codable {
         }
     }
 
+    /// Doctor Clawd: the Doctors in order (One … Fifteen), as global ids. When a session's context is compacted, its
+    /// Doctor regenerates into the next one (`StatusStore`'s PreCompact); nobody else changes.
     var regenerations: [Int] {
         self == .doctor ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14].map { base + StatusStore.heroBase + $0 } : []
     }

@@ -1,6 +1,7 @@
 import Foundation
 
-/// Adds/removes the clawd-clash-hook entries in ~/.claude/settings.json, leaving everything else untouched.
+/// Adds/removes the clawd-clash-hook entries in Claude Code's ~/.claude/settings.json and in each other AI's hook
+/// config (see Other AIs below), leaving everything else untouched.
 enum HookInstaller {
     static let events = [
         "SessionStart", "SessionEnd", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PostToolUseFailure",
@@ -141,6 +142,7 @@ enum HookInstaller {
 
     static func install() throws {
         var root = try readSettings()
+        // Clawd Wars' (Vader Claude's) old name, kept so a Clawd Wars user's original backup isn't joined by a second.
         try backUp(settingsURL, as: "before-vader")
         var hooks = root["hooks"] as? [String: Any] ?? [:]
         for e in events {
@@ -454,8 +456,6 @@ enum HookInstaller {
         try? (names.joined(separator: "\n") + "\n").write(to: removedMarker, atomically: true, encoding: .utf8)
     }
 
-    /// Reconnects the AIs a `--uninstall-hooks` removed (those still on this Mac), then forgets the note.
-    @discardableResult
     /// The AIs that have any of our hooks: the ones you've connected. `--update-hooks` refreshes only these.
     static func connected() -> [String] {
         var names: [String] = []
@@ -468,6 +468,8 @@ enum HookInstaller {
         return names
     }
 
+    /// Reconnects the AIs a `--uninstall-hooks` removed (those still on this Mac), then forgets the note.
+    @discardableResult
     static func restoreRemoved() -> (installed: [String], errors: [String]) {
         guard let text = try? String(contentsOf: removedMarker, encoding: .utf8) else { return ([], []) }
         try? FileManager.default.removeItem(at: removedMarker)

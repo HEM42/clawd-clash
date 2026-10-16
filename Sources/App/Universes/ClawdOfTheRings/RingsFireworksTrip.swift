@@ -7,10 +7,10 @@ extension RingsTrip {
     /// One of Gandclawd's rockets, at Bilbo's party. The old place dims to night and the rocket shoots up from the
     /// bottom of the frame, trailing sparks (0.04–0.29); it bursts with a bang of light (0.27–0.42) into a fiery dragon
     /// of sparks, red-gold, wings spread, that grows out of the burst and swoops across the frame and out to the right
-    /// (0.3–0.8). The burst blows the old place away around it and the dragon's wings sweep the rest of it away behind
+    /// (0.3–0.76). The burst blows the old place away around it and the dragon's wings sweep the rest of it away behind
     /// a white-hot edge; where it's gone, sparks and smoke are left that fall and fade like glitter, the new place
     /// showing through them, until it's clear (to 1). The places are drawn as they are; everything of the rocket's
-    /// own is pixel art, into a bitmap about a sixth of `r` in each direction, scaled up without smoothing: the
+    /// own is pixel art, into a bitmap about 180 pixels tall, scaled up without smoothing: the
     /// night, smoke and glitter set pixel by pixel, and the rocket, burst, flash and dragon drawn over them.
     func drawFireworks(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
         guard k < 1 else { ctx.draw(new, in: r); return }
@@ -160,7 +160,7 @@ extension RingsTrip {
         dot(cx, c.y - px * 2, 0xFFFFFF, 1, 1, 1)
     }
 
-    /// The burst's sparks: rays of gold flying out from `burst` to its `reach`, fading (0.29–0.45).
+    /// The burst's sparks: rays of gold flying out from `burst` to its `reach`, fading (0.29–0.46).
     private static func fwBurstSparks(_ ctx: CGContext, burst: CGPoint, reach: CGFloat, k: Double, px: CGFloat) {
         let life = fwSpan(k, 0.29, 0.46)
         guard life > 0, life < 1, reach > 0 else { return }

@@ -2,7 +2,7 @@ import CoreGraphics
 
 /// A comic-book trip between two places, in a universe that has them: Marvel's (`ComicTrip`), DC's (`DCComicTrip`),
 /// Doctor Clawd's trips through time and space (`DoctorTrip`), The Clawd Files' (`FilesTrip`), Stevie Clawdberg's
-/// (`ClawdbergTrip`) or Clawd of the Rings's Eye (`RingsTrip`).
+/// (`ClawdbergTrip`) or Clawd of the Rings' (`RingsTrip`).
 /// Star Wars has none: it keeps its edge and clock wipes (`Wipe`). Shared by the window and the screen saver.
 enum ComicTransition {
     case marvel(ComicTrip)

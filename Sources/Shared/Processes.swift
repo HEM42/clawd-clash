@@ -1,7 +1,7 @@
 import Darwin
 import Foundation
 
-/// Finds running Claude Code sessions directly from the process table, so sessions show up even
+/// Finds running AI sessions (Claude Code and the other AIs) directly from the process table, so sessions show up even
 /// before (or without) their hooks firing, and vanish the moment their process exits.
 enum ClaudeProcesses {
     struct Info { let pid: Int32; let project: String; var assistant = "claude"; var started: Double = 0; var client: String? = nil }
@@ -100,7 +100,8 @@ enum ClaudeProcesses {
         }.max { $0.started < $1.started }?.pid
     }
 
-    /// Interactive `claude` sessions (not `claude -p` one-shots, MCP servers or the Chrome bridge).
+    /// Interactive sessions of every supported AI (claude, codex, qwen, gemini, copilot, pi), not one-shots such as
+    /// `claude -p`, MCP servers or helpers like the Chrome bridge.
     /// Empty if the process table can't be read; see `runningOrNil`.
     static func running() -> [Info] { runningOrNil() ?? [] }
 

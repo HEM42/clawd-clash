@@ -1,8 +1,8 @@
 import AppKit
 
 /// One accent colour per project, shared by a Claude and its agents so you can see who belongs to whom
-/// even mid-fight. Handed out first-come-first-served without collisions among the projects on screen,
-/// and remembered, so a project keeps its colour between launches.
+/// even mid-fight. Handed out first-come-first-served without collisions among the projects on screen (while there
+/// are no more of them than colours), and remembered, so a project keeps its colour between launches.
 enum Accents {
     static let palette: [NSColor] = ([0xFF8A3D, 0x3DD6FF, 0xFF4FD8, 0x9BE84A, 0xFFD23D, 0xA57BFF, 0x2EE6B0, 0xFF6B6B] as [Int])
         .map { NSColor(srgbRed: CGFloat(($0 >> 16) & 0xFF) / 255, green: CGFloat(($0 >> 8) & 0xFF) / 255,

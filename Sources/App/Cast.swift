@@ -71,11 +71,6 @@ struct Cast: Hashable {
 extension Cast {
     private static var measuredTops: [String: Int] = [:]
 
-    /// The top row of this character as drawn at rest, standing or sitting, within 14 px of its body's centre: the
-    /// hand-measured `headTop` misses some (horns, wings) and doesn't know a seated character sits lower, and
-    /// the band leaves out what floats above (a raised hammer). Standing, never lower than `headTop`
-    /// says; sitting, as much lower as the sprite really drops (nothing, for those that don't sit). Measured once per
-    /// character and pose; name tags sit just above it.
     /// Its outline from above, standing at rest: for each column within 14 px of the body's centre, the top row drawn
     /// there (`Sprite.height` where nothing is, and outside that band). What a name tag must clear.
     func drawnProfile() -> [Int] {
@@ -92,6 +87,11 @@ extension Cast {
     }
     private static var profiles: [Int: [Int]] = [:]
 
+    /// The top row of this character as drawn at rest, standing or sitting, within 14 px of its body's centre: the
+    /// hand-measured `headTop` misses some (horns, wings) and doesn't know a seated character sits lower, and
+    /// the band leaves out what floats above (a raised hammer). Standing, never lower than `headTop`
+    /// says; sitting, as much lower as the sprite really drops (nothing, for those that don't sit). Measured once per
+    /// character and pose; name tags sit just above it.
     func drawnTop(sitting: Bool = false) -> Int {
         let key = "\(id)/\(sitting)"
         if let hit = Self.measuredTops[key] { return hit }

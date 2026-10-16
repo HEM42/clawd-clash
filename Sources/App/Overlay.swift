@@ -46,7 +46,7 @@ private struct Fight { let a: String, b: String }
 
 private let fadeIn = 0.5
 private let fadeOut = 0.6
-private let falconExit = 6.0      // an agent with a ride finishing: its ship lands, it boards, they fly off
+private let falconExit = 6.0      // a character with a ride (agent or session) leaving: ship lands, it boards, off
 
 final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     private let panel: OverlayPanel
@@ -58,7 +58,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private var fights: [Fight] = []
     private var cheering: Set<String> = []
     private var fightUntil: [String: Double] = [:]
-    private var home = NSPoint.zero    // Vader's resting spot (between his feet)
+    private var home = NSPoint.zero    // the crew's spot on the desktop, where you dragged it (saved as anchorX/anchorY)
     private var demo = CommandLine.arguments.contains("--demo")
     private var demoStart = 0.0
     // Playground: villains picked from the menu, in the order added (which decides who fights whom).
@@ -81,7 +81,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private var frameCount = 0
     private static let forcedHover = ProcessInfo.processInfo.environment["CLAWD_HOVER"]   // read once: it showed up in profiles
     private var refitting = false
-    private let debug = ProcessInfo.processInfo.environment["VADER_DEBUG"] != nil
+    private let debug = ProcessInfo.processInfo.environment["VADER_DEBUG"] != nil   // Clawd Wars' old name, kept
     private var lastDebug = 0
     private var processes: [ClaudeProcesses.Info] = []
     private var lastScan = 0.0
@@ -323,8 +323,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         if debug { FileHandle.standardError.write("clawd royale: \(place.name), \(place.universe.title)\n".data(using: .utf8)!) }
     }
 
-    /// Height of the cantina floor in the window's scene strip; feet stand a little way into it.
+    /// Height of the floor in the window's scene strip (in points), as the place is drawn (`SceneView`).
     static let cantinaFloor: CGFloat = 20
+    /// Where feet stand in the scene strip, a little way into that floor.
     var windowFloor: CGFloat { 16 }
 
     // MARK: Status
@@ -1089,7 +1090,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         func weapon(_ a: Actor) -> Weapon {
             a.cast.weapon
         }
-        /// Missing time: an agent being taken stops fighting, and the other side holds fire until they're set down.
+        /// Missing time: an FBI agent's session being taken stops fighting, and the other side holds fire until they're set down.
         func taken(_ a: Actor) -> Bool { a.isLeader && a.abducted.map { now - $0 < missingTimeLength } == true }
         var roles: [String: FightRole] = [:]
         var fx: [(Actor, Actor)] = []
@@ -1685,8 +1686,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         Jump.toSession(pid: pid)
     }
 
-    /// Installed from a download (Homebrew) rather than build.sh: offer once to connect every AI that's on this
-    /// Mac but not hooked up yet (also catches Codex / Qwen Code added after Claude was already connected).
+    /// On launch, offer once per AI to connect every AI on this Mac that isn't hooked up or waved off yet (also
+    /// catches one installed after the others were connected).
     private func offerHooksOnFirstLaunch() {
         guard playground == nil, !demo, shotPath == nil, chaosSeconds == nil else { return }
         SaverInstaller.refreshIfOutdated()
@@ -1732,10 +1733,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
     }
 
-    // MARK: Chaos test
-
-    /// HEM standing next to Princess Laya, both out of the fight: for five seconds in every twenty he turns to her and
-    /// has a word about buns (a different one each time).
     /// Captain Clawk at the Croc Clock's tick (in Pirate Town, or with the Croc Clock about as an agent): every three
     /// seconds a jump and a shiver, sprite pixels; now and then he mutters about it.
     private func clawkFlinch(_ a: Actor, t: Double) -> (dx: Int, up: Int, line: String?) {
@@ -1770,6 +1767,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                         mirrored: false, alpha: 1)
     }
 
+    /// HEM standing next to Princess Laya, both out of the fight: for five seconds in every twenty he turns to her and
+    /// has a word about buns (a different one each time).
     private func hemBunTalk(_ a: Actor, t: Double, z: CGFloat) -> (facing: CGFloat, line: String)? {
         guard a.cast.universe == .starWars, a.cast.universe.isHem(a.cast.id), a.leaving == nil else { return nil }
         guard let laya = actors.first(where: { $0.cast == .hero(SWHero.leia) && $0.walkDir == 0 && $0.leaving == nil
@@ -1778,6 +1777,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         guard frac(cycle) < 0.25 else { return nil }
         return (laya.x > a.x ? 1 : -1, hemBunLines[Int(floor(cycle)) % hemBunLines.count])
     }
+
+    // MARK: Chaos test
 
     /// One random step: Claudes and agents come and go and change mood, much faster than real use.
     private func chaosStep(_ now: Double) -> [SessionSnapshot] {
@@ -1925,9 +1926,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         return clawdWindow?.window.occlusionState.contains(.visible) ?? false
     }
 
-    /// Captain America's shield in the menu bar, opening the same menu as right-clicking a character.
-    /// Double-clicking it hides or shows Clawd Clash, so a single click opens the menu only once the
-    /// double-click time has passed; right-click (or ⌃-click) opens it straight away.
+    /// The universe's menu bar icon, opening the same menu as right-clicking a character. The menu opens at once;
+    /// clicking the icon again while it's open closes it and hides or shows Clawd Clash.
     private func installStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         item.button?.image = statusIcon(mono: monoMenuBarIcon)
@@ -2602,7 +2602,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     @objc private func toggleBoard() { setBoard(ClawdWindow.view != .board) }
 
-    /// Settings → Show Session List in Window (and the view button's last step): from the screen-saver view, back to
+    /// Settings → Show the session list (and the view button's last step): from the screen-saver view, back to
     /// the scene with the list.
     @objc private func toggleWindowList() {
         if ClawdWindow.view == .board {
@@ -2624,7 +2624,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     // MARK: Universe
 
-    /// The universe picked: Star Wars, Marvel or DC (in Clawd Royale, the last one picked, for when it ends). A fresh
+    /// The universe picked (in Clawd Royale, the last one picked, for when it ends). A fresh
     /// install takes after whichever app it replaces (Clawd Wars: Star Wars; Avengers: Clawd Wars: Marvel; Justice
     /// League: Clawd Wars: DC); the Homebrew casks preset it.
     static var universe: Universe {

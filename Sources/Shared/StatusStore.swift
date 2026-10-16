@@ -1,12 +1,13 @@
 import Foundation
 
-// Shared state between the Claude Code hook binary (writer) and the overlay app (reader).
+// Shared state between the hook binary, which every AI's events go through, and the app, which reads it (and writes
+// the universe on show and tidies stale sessions); the screen saver reads it too when the app isn't running.
 // Lives at ~/.claude/clawd-clash/state.json.
 
 struct SessionRecord: Codable {
     var state: String      // idle | thinking | working | waiting
     var updated: Double
-    var leader: Int?       // cast id of this session's character (see Cast: <100 dark side, 100+ light side)
+    var leader: Int?       // cast id of this session's character (`Universe.base` + local: villains <100, heroes 100+)
     var project: String?   // last path component of the session's cwd
     var lastTool: Double?  // last PreToolUse, so brief "thinking" gaps between tools still read as working
     var pid: Int32?        // the claude process, so the session disappears as soon as it exits
@@ -31,7 +32,7 @@ struct AgentRecord: Codable {
     var session: String
     var type: String
     var character: Int     // legacy hero index (Companion); `cast` supersedes it
-    var cast: Int?         // cast id: <100 villains (Leader), 100+ heroes (Companion)
+    var cast: Int?         // cast id: `Universe.base` + local (villains <100, heroes 100+)
     var started: Double
     var lastSeen: Double
     var task: String?      // the Agent tool's short description, e.g. "Find hook events"
@@ -184,7 +185,6 @@ enum StatusStore {
         }
     }
 
-    /// Apply one Claude Code hook event (the JSON Claude Code pipes to the hook on stdin).
     /// Brings other AIs' payloads to the Claude Code shape `apply` reads: Copilot's camelCase fields, Gemini CLI's
     /// event names (BeforeAgent → UserPromptSubmit, AfterTool → PostToolUse…), tool input sent as a JSON string.
     static func normalize(_ input: [String: Any], assistant: String, event: String?) -> [String: Any] {
@@ -216,12 +216,14 @@ enum StatusStore {
         return j
     }
 
+    /// Apply one Claude Code hook event (the JSON Claude Code pipes to the hook on stdin), after `normalize`.
     static func apply(event json: [String: Any], assistant: String = "claude", now: Double = Date().timeIntervalSince1970) {
         let event = json["hook_event_name"] as? String ?? ""
         let session = json["session_id"] as? String ?? "default"
         let agentId = json["agent_id"] as? String
         let project = (json["cwd"] as? String).map { URL(fileURLWithPath: $0).lastPathComponent }
         let hookOwner = agentId == nil ? ClaudeProcesses.hookOwner() : nil
+        // Codex hooks run under its shared app-server; `ClaudeProcesses.codexSession` finds the session's own process.
         let owner = assistant == "codex" ? hookOwner.map { ClaudeProcesses.codexSession(server: $0, cwd: json["cwd"] as? String) ?? $0 } : hookOwner
         let ownerStart = owner.flatMap(ClaudeProcesses.startTime)
 
@@ -433,11 +435,10 @@ enum StatusStore {
         }
     }
 
-    /// A random hero not already on screen (repeats only once all of them are out).
     // MARK: Cast and sides
     //
     // Cast ids: see `Universe` (villains local 0..<100, heroes 100…, plus the universe's base). One AI running: every
-    // new character is random from the roster's whole cast (one universe, or all three in Clawd Royale). Two AIs running:
+    // new character is random from the roster's whole cast (one universe, or every released one in Clawd Royale). Two AIs running:
     // the roster's `claudeSide` says which side Claude takes; otherwise the AI that was there first keeps the side it
     // mostly has and the other takes the opposite. Each one's agents join their session's side. If a side is all on
     // screen, the other lends someone.
@@ -448,8 +449,9 @@ enum StatusStore {
     static func assistantOf(_ r: SessionRecord) -> String { r.assistant ?? "claude" }
 
     /// The side `assistant` should use right now (true: villains), or nil when it's the only AI running (anything
-    /// goes). Claude Code is the heroes whenever another AI is running, and the others the villains; with no Claude
-    /// among them, whoever has been running longest keeps the side it mostly has and the rest take the other.
+    /// goes). Claude Code takes the roster's `claudeSide` (the heroes everywhere but Star Wars) and the others the
+    /// opposite; otherwise, or with no Claude among them, whoever has been running longest keeps the side it mostly
+    /// has and the rest take the other.
     static func side(for assistant: String, in sessions: [String: SessionRecord], roster: Roster) -> Bool? {
         let live = sessions.values.filter { $0.leader != nil }
         guard live.contains(where: { assistantOf($0) != assistant }) else { return nil }
@@ -550,6 +552,8 @@ enum StatusStore {
         s.agents.removeAll { now - $0.lastSeen > agentTTL }
         s.sessions = s.sessions.filter { now - $0.value.updated < sessionTTL && isAlive($0.value.pid, started: $0.value.pidStart) }
         let sessions = Set(s.sessions.keys)
+        // An agent whose session is gone goes after a minute; an Agent call still waiting for its SubagentStart after
+        // two minutes isn't coming.
         s.agents.removeAll { !sessions.contains($0.session) && now - $0.started > 60 }
         s.pending = (s.pending ?? []).filter { now - $0.at < 120 && sessions.contains($0.session) }
     }
@@ -634,14 +638,15 @@ enum StatusStore {
         // Nothing written since the question: still waiting. Otherwise look at the newest interruption in the tail
         // (the real entry, unescaped: a command that merely mentions it is stored with escaped quotes).
         var result = false
+        // (Half a second of slack between the question's time and the file's modification date.)
         if modified.timeIntervalSince1970 > since + 0.5, let h = try? FileHandle(forReadingFrom: url) {
             defer { try? h.close() }
             let size = (try? h.seekToEnd()) ?? 0
-            try? h.seek(toOffset: size > 32_768 ? size - 32_768 : 0)
+            try? h.seek(toOffset: size > 32_768 ? size - 32_768 : 0)   // only the last 32 KB: the newest entries
             let tail = String(decoding: h.readDataToEndOfFile(), as: UTF8.self)
             if let line = tail.split(separator: "\n").last(where: { $0.contains(#""text":"[Request interrupted by user"#) }),
                let r = line.range(of: #""timestamp":"([^"]+)""#, options: .regularExpression) {
-                let stamp = line[r].dropFirst(13).dropLast()
+                let stamp = line[r].dropFirst(13).dropLast()   // 13: the length of `"timestamp":"`
                 let iso = ISO8601DateFormatter()
                 iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
                 if let when = iso.date(from: String(stamp)) { result = when.timeIntervalSince1970 > since }
@@ -656,8 +661,6 @@ enum StatusStore {
         git?.name ?? cwd.map { ($0 as NSString).lastPathComponent }
     }
 
-    /// Every live session in spawn order (empty when none are running, unless stray agents need a placeholder Vader).
-    /// `processes` (from `ClaudeProcesses.running()`) adds sessions whose hooks never fired and drops dead ones.
     /// `snaps` as they may appear at `place` (a place key; nil: no place, the desktop): the homebound away from home
     /// are shown as someone else (`Roster.recast`), leaders first, then each session's agents.
     static func at(_ snaps: [SessionSnapshot], place: String?, roster: Roster) -> [SessionSnapshot] {
@@ -675,6 +678,9 @@ enum StatusStore {
         return out
     }
 
+    /// Every live session in spawn order (empty when none are running, unless stray agents need a placeholder: the
+    /// universe's first villain). `processes` (from `ClaudeProcesses.running()`) adds sessions whose hooks never fired
+    /// and drops dead ones.
     static func snapshot(_ s: StatusFile, now: Double = Date().timeIntervalSince1970,
                          processes: [ClaudeProcesses.Info]? = nil) -> [SessionSnapshot] {
         var s = s
@@ -730,7 +736,8 @@ enum StatusStore {
                 }
             }
             for p in processes where !claimed.contains(p.pid) {
-                // Seeded by pid so the same process keeps the same villain across refreshes.
+                // Seeded by pid so the same process keeps the same character across refreshes; Knuth's multiplicative
+                // hash spreads nearby pids across the pool.
                 let leader = pickLeader(used: used, previous: previous, seed: UInt64(p.pid) &* 2654435761, pool: cast, roster: roster)
                 used.insert(leader)
                 previous = leader
@@ -743,12 +750,12 @@ enum StatusStore {
             }
         }
         let agents = s.agents.filter { now - $0.lastSeen <= agentTTL && !replaced.contains($0.session) }.sorted { $0.started < $1.started }
-        // No AI running: the stage stays empty. Only stray agents still reporting in get a placeholder Vader to stand with.
+        // No AI running: the stage stays empty. Only stray agents still reporting in get a placeholder (the universe's first villain) to stand with.
         if result.isEmpty && !agents.isEmpty {
             result.append(SessionSnapshot(id: "home", leader: universe.base, project: "", mood: .idle, agents: []))
         }
         for a in agents {
-            // Agents whose session we never heard from stand with the first villain.
+            // Agents whose session we never heard from stand with the first session's character.
             let i = result.firstIndex { $0.id == a.session } ?? 0
             result[i].agents.append(a)
         }

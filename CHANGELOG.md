@@ -36,6 +36,24 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
     - `Habits.signatureProgress`
   - `Location.animates(rows:)`, which ignored its argument; the saver asks `hasAnimatedLayer` directly.
   - The screen-saver feed's `saverUniverse` and `Session.remote`, and `StatusStore.setUniverse`'s `saver:` parameter. The app always wrote nil and the saver never read them; it keeps its own choice in its options file. Old state files still load, as unknown keys are ignored.
+- **About 45 code comments corrected.**
+  - **Doc comments on the wrong declaration:** `restoreRemoved` (with its `@discardableResult`), `apply`, `snapshot`, `regenerations`, `fitToContent`, the window's three scene views, `drawTop`, `drawLegs` and HEM's bun talk.
+  - **Descriptions from when there were three universes and one AI:** Clawd Royale's size, which universes have comic transitions, the hook installer and the process finder covering every AI, and the cast ids' universe base.
+  - **Details that were simply wrong:**
+    - the window's title bar
+    - the menu bar icon's click behaviour
+    - portrait cropping
+    - Clawd of the Rings' trip timings and pixel sizes
+    - Rings' hero count
+  - **New explanations:**
+    - the transcript tail read
+    - the Codex owner remap
+    - the prune windows
+    - the pid hash
+    - Jump's delays
+    - why the `before-vader` backup name stays
+    - the values that must stay in step between the app and the screen saver
+  - No code changed.
 
 ### Fixed
 - **A flying character can be clicked, not just hovered.** Hovering and clicking each worked out where a character is, in two copies that had drifted apart: the click's copy didn't lift with a character in the air (on a ride, levitating, a hop), so its card showed on hover but a click there did nothing. Both now use the same rectangles (`hitRects`), so they always agree.

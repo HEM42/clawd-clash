@@ -104,11 +104,11 @@ struct Look {
     var legs = true
 }
 
-/// Legs are drawn without the body's breathing offset so a 1px bob never leaves a gap.
-/// `step` alternates which pair of legs is lifted while walking (-1 = standing).
 /// Set while drawing a seated character: legs fold forward onto the ground (the body is drawn 4 px lower).
 var seatedPose = false
 
+/// Legs are drawn without the body's breathing offset so a 1px bob never leaves a gap.
+/// `step` alternates which pair of legs is lifted while walking (-1 = standing).
 func drawLegs(_ c: PixelCanvas, _ look: Look, step: Int = -1) {
     guard look.legs else { return }
     if seatedPose {

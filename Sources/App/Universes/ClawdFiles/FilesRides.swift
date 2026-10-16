@@ -1,8 +1,9 @@
 import Foundation
 
 // The Clawd Files' rides (`Ride`), drawn nose to the right on the ships' `Ride.width`×`Ride.height` canvas: the FBI's
-// unmarked sedan for the agents and their friends (it drives in along the ground rather than flying, `Ride.drives`),
-// the Syndicate's black helicopter, and the saucer that takes the aliens, whose "ramp" is its beam of light.
+// unmarked sedan for the agents and their friends (it drives in along the ground rather than flying, `Ride.drives`
+// in Theme.swift), the Syndicate's black helicopter, and the saucer that takes the aliens, whose "ramp" is its beam
+// of light.
 
 /// The FBI's unmarked sedan: a boxy dark blue-grey four-door saloon (bonnet, cabin, a boot of its own), its rear door the
 /// boarding ramp (`ramp` 0…1 swings it open on the lit inside, its foot about 14 px left of centre), `lights` on:

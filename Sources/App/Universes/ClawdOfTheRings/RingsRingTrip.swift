@@ -6,13 +6,13 @@ import Foundation
 extension RingsTrip {
     /// A frame `k` (0…1) of the Ring going on and coming off, over the whole of `r`. A gold ring spins down out of the
     /// top into the middle of the frame and settles, face on (0–0.24); the world drains to a cold wraith-world grey-blue,
-    /// coarse, smeared and wavering (0.12–0.35); ring-shaped ripples spread from the Ring (0.3–0.85) while, far off, a
+    /// coarse, smeared and wavering (0.12–0.35); ring-shaped ripples spread from the Ring (0.3–0.94) while, far off, a
     /// fiery Eye glimmers and is gone (0.4–0.74, at its brightest about 0.57), and the grey world under it drifts from
     /// the old place to the new (0.42–0.62); the Ring spins up and away out of the top (0.66–0.84) and the colour floods
     /// back from the middle, a warm edge running out past the corners, as the new place (0.78–1). The places are drawn
     /// as they are; the wraith-world is the place itself, drawn down onto a grid twice as coarse as the art's and
     /// scaled back up unsmoothed; everything of the trip's own (the Ring, its glow, the ripples, the Eye, the dark at
-    /// the edges and the flood's rim) is pixel art, drawn into a bitmap about a sixth of `r` in each direction and
+    /// the edges and the flood's rim) is pixel art, drawn into a bitmap about 180 pixels tall and
     /// scaled up without smoothing. The flood is cut on that same grid.
     func drawRing(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
         guard k > 0 else { ctx.draw(old, in: r); return }

@@ -10,8 +10,8 @@ extension RingsTrip {
     /// into wobbling bands, and the new place surfaces under them as they settle (0.3–0.8); then the basin's rim
     /// widens past the frame and the water clears on the new place (0.8–1). The places are drawn as they are (in
     /// bands, shifted, while the water wobbles); everything of the Mirror's own (the garden, rim, water's tint, the
-    /// moon's reflection, the drop and the ripples) is drawn as pixel art: into a bitmap about a sixth of `r` in each
-    /// direction, in stepped bands of colour, then scaled up without smoothing. The water is cut on that same grid.
+    /// moon's reflection, the drop and the ripples) is drawn as pixel art: into a bitmap about 180 pixels tall, in
+    /// stepped bands of colour, then scaled up without smoothing. The water is cut on that same grid.
     func drawMirror(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
         guard k < 1 else { ctx.draw(new, in: r); return }
         let px: CGFloat = max(1, (r.height / 180).rounded())  // screen pixels per pixel of the Mirror's art

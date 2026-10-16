@@ -114,9 +114,9 @@ struct RingsTrip {
     /// The old place darkens to embers (0–0.3); the Eye opens across the middle, fire with a slit pupil (0.3–0.55);
     /// the pupil widens past the frame with the new place inside it (0.55–0.85); the Eye's burning rim peels outward
     /// and fades over the new place (0.85–1). The places are drawn as they are; everything of the Eye's own (the
-    /// darkening, embers, fire, veins, pupil and rim) is drawn as pixel art: into a bitmap about a sixth of `r` in
-    /// each direction, in stepped bands of colour, then scaled up without smoothing. The pupil that lets the new
-    /// place through is cut on that same grid.
+    /// darkening, embers, fire, veins, pupil and rim) is drawn as pixel art: into a bitmap about 180 pixels tall, in
+    /// stepped bands of colour, then scaled up without smoothing. The pupil that lets the new place through is cut on
+    /// that same grid.
     private func drawEye(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
         let s = r.height / 800
         let px: CGFloat = max(1, (r.height / 180).rounded())  // screen pixels per pixel of the Eye's art

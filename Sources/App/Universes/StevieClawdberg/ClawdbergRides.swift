@@ -1,9 +1,10 @@
 import Foundation
 
 // Stevie Clawdberg's rides (`Ride`), drawn nose to the right on the ships' `Ride.width`×`Ride.height` canvas: the
-// DeLorean for Back to the Future (it drives in along the ground, `Ride.drives`, crackling blue with fire in its
-// tracks), the moon bike for the E.T. kids and the Goonies (it flies, the basket up front), the mothership for Close
-// Encounters (its "ramp" is the light pouring out under it), and the park jeep for Jurassic Park's people.
+// DeLorean for Back to the Future (it drives in along the ground, crackling blue with fire in its tracks), the moon
+// bike for the E.T. kids and the Goonies (it flies, the basket up front), the mothership for Close Encounters (its
+// "ramp" is the light pouring out under it), and the park jeep for Jurassic Park's people, which drives too. Which
+// rides drive is `Ride.drives`, in Theme.swift.
 
 /// The DeLorean: a low brushed-steel wedge with gull-wing doors, the flux-capacitor glow through the back window and the
 /// time machine's coils and vents on its tail. `ramp` 0…1 lifts the gull-wing door; `lit`: on the move at 88 mph, blue
