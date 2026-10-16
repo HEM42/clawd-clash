@@ -6,13 +6,14 @@ import Foundation
 
 let burtonHeroes1: [BurtonHero: Persona] = [
     .jackSkullington: Persona(name: "Jack Skullington", weapon: .lightning,
-                              magic: Magic(core: C(0xD9FFC2), glow: C(0x2FBF5A), jagged: false), pivot: jackHand,
-                              headTop: 7, signature: 3.4, callout: "What's this?", draw: drawJackSkullington),
+                              magic: Magic(core: C(0xFFF0D8), glow: C(0xFF8A2A), jagged: false, waves: true),
+                              pivot: jackMouth, headTop: 7, signature: 3.4, callout: "What's this?",
+                              draw: drawJackSkullington),
     .sallee: Persona(name: "Sallee", weapon: .none, headTop: 19, signature: 3.6, draw: drawSallee),
 ]
 
-/// Where Jack holds out his bony hand: the ghost-green flame leaves from there (raised by the pose's `armRaise`).
-private let jackHand = (x: 42.5, y: 33.5)
+/// The front of Jack's gaping mouth: his scare pulses out from there (raised by the pose's `armRaise`).
+private let jackMouth = (x: 37.5, y: 21.5)
 
 /// 0 before `a`, 1 after `b`, a straight line between.
 private func ramp(_ s: Double, _ a: Double, _ b: Double) -> Double { max(0, min(1, (s - a) / (b - a))) }
@@ -22,15 +23,18 @@ private func ramp(_ s: Double, _ a: Double, _ b: Double) -> Double { max(0, min(
 /// Jack Skullington: the Pumpkin King, tall and thin. An egg-shaped bone-white skull on a thin neck, huge black eye
 /// sockets, two nose slits and a long stitched grin curling up at its ends; the spiky bat-wing collar fanned out
 /// behind his head; a black pinstripe suit with a heart-shaped white shirt front and a bat for a bow tie, ragged
-/// tailcoat tails, long thin arms and bony white fingers. He fights with a wavering ghost-green flame held in his
-/// hand. Signature: his scary face, the skull stretching tall, the mouth gaping full of teeth, eyes angry and both bony
-/// hands up clawing beside it; then a deep showman's bow.
+/// tailcoat tails, long thin arms and bony white fingers. He fights by scaring: he pulls his scary face, hands up
+/// clawing, and the fright pulses out of his gaping mouth in bone-white arcs with a pumpkin glow. Signature: the
+/// scary face at its biggest, the skull stretching tall, then a deep showman's bow.
 private func drawJackSkullington(_ c: PixelCanvas, _ p: Pose) {
     let suit = C(0x1C1A22), suitD = C(0x121016), stripe = C(0x5A5664), bone = C(0xF2EEE3), boneD = C(0xC8C2B4)
     let sig = p.signature
-    let scaring = sig.map { $0 > 0.06 && $0 < 0.55 } ?? false
+    let signatureScare = sig.map { $0 > 0.06 && $0 < 0.55 } ?? false
+    let dueling: Bool = { if case .zap = p.role { return true } else { return false } }()
+    let scaring = signatureScare || p.zap == true || dueling              // pulling the scary face
     let bowK = sig.map { $0 >= 0.6 && $0 < 0.95 ? sin(ramp($0, 0.6, 0.95) * .pi) : 0 } ?? 0
-    let stretch = scaring ? Int((sin(ramp(sig!, 0.06, 0.55) * .pi) * 5).rounded()) : 0
+    let stretch = signatureScare ? Int((sin(ramp(sig!, 0.06, 0.55) * .pi) * 5).rounded())
+                                 : scaring ? 1 + jackThrob(p.t) : 0      // in a fight, a smaller stretch that throbs
 
     // Long thin pinstriped legs and black shoes.
     drawLegs(c, Look(leg: suit), step: p.step)
@@ -72,23 +76,19 @@ private func drawJackSkullington(_ c: PixelCanvas, _ p: Pose) {
         c.pattern(11, 13, ["B.B.B", "B.B.B", ".BBB."], ["B": bone]); c.pattern(40, 13, ["B.B.B", "B.B.B", ".BBB."], ["B": bone])
         return
     }
-    // The left arm hanging long, the bony fingers below the cuff.
-    c.rect(18, 29, 2, 9, suit); c.pattern(17, 38, [".B.", "BBB", "B.B"], ["B": bone])
-    let casting = p.zap != nil || p.armRaise > 0
-    let raise = p.armRaise
-    if casting {
-        // The right arm out, the hand open, and the flame dancing on the palm.
-        burtonLine(c, 36, 29, 41, Double(33 - raise), suit, 1.0)
-        c.pattern(41, 31 - raise, ["B.B.", ".BBB", "BB.."], ["B": bone])
-        if p.zap != true {
-            let hx = jackHand.x, hy = jackHand.y - Double(raise)
-            let flick = sin(p.t * 9) * 0.6
-            c.glowLine(hx, hy - 1, hx + flick, hy - 4, core: C(0xD9FFC2), glow: C(0x2FBF5A, 0.8), coreR: 0.7, glowR: 2.2)
-        }
-    } else {
-        c.rect(36, 29, 2, 9, suit); c.pattern(36, 38, [".B.", "BBB", "B.B"], ["B": bone])
+    if p.zap != nil || p.armRaise > 0 {
+        // Ready to scare: both hands half up in front of him, bony fingers curled like claws.
+        burtonLine(c, 19, 29, 15, 24, suit, 1.0); burtonLine(c, 36, 29, 41, 24, suit, 1.0)
+        c.pattern(13, 21, ["B.B", "B.B", ".BB"], ["B": bone]); c.pattern(40, 21, ["B.B", "B.B", "BB."], ["B": bone])
+        return
     }
+    // At rest: the long arms hanging, the bony fingers below the cuffs.
+    c.rect(18, 29, 2, 9, suit); c.pattern(17, 38, [".B.", "BBB", "B.B"], ["B": bone])
+    c.rect(36, 29, 2, 9, suit); c.pattern(36, 38, [".B.", "BBB", "B.B"], ["B": bone])
 }
+
+/// 0 or 1, flipping a few times a second: the scary face throbbing while he scares.
+private func jackThrob(_ t: Double) -> Int { sin(t * 9) > 0 ? 1 : 0 }
 
 /// Jack's skull, 18 across from x 19, its top on row `top`: round above, narrowing to the chin. `stretch` extra rows
 /// open between the eyes and the mouth; `scary`: angry eyes and a huge gaping mouth full of teeth.
