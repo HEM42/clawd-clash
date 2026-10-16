@@ -49,7 +49,10 @@ FLAGS=(-O -swift-version 5)
 DEV_FLAGS=()
 [[ $DEV_TOOLS == 0 ]] || DEV_FLAGS=(-D CLAWD_DEV_TOOLS)
 
-rm -rf build && mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+# Separate commands, not `&&`: set -e doesn't stop on a failure inside a chain, and a build/ that couldn't be cleared
+# (Finder rewriting its .DS_Store mid-delete) would otherwise go on to fail at the link step, far from the cause.
+rm -rf build
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 # compile <output> <sources…>: Apple silicon, for installs and releases alike
 compile() {
@@ -188,7 +191,8 @@ if [[ $MODE == local ]]; then
 fi
 
 echo "→ installing to $DEST"
-rm -rf "$DEST" "${OLD_DESTS[@]}" && cp -R "$APP" "$DEST"
+rm -rf "$DEST" "${OLD_DESTS[@]}"
+cp -R "$APP" "$DEST"
 
 if [[ $HOOKS == 1 ]]; then
     "$DEST/Contents/MacOS/ClawdClash" --update-hooks
