@@ -6333,8 +6333,21 @@ func write720p(from input: String, to output: String) {
     let out = URL(fileURLWithPath: output); try? FileManager.default.removeItem(at: out)
     try? FileManager.default.createDirectory(at: out.deletingLastPathComponent(), withIntermediateDirectories: true)
     let seconds = asset.duration.seconds
-    // long videos overshoot the average a little, so they aim lower
-    let bitrate = Int(min(1_600_000, (seconds > 90 ? 8_900_000 : 9_500_000) * 8 / seconds - 128_000))
+    // long videos overshoot the average a little, so they aim lower; busy ones (halftones, fine pixel detail) can still
+    // overshoot, so a copy over 9.7 MB is made again at a bitrate cut by as much as it went over
+    var bitrate = Int(min(1_600_000, (seconds > 90 ? 8_900_000 : 9_500_000) * 8 / seconds - 128_000))
+    for attempt in 0..<3 {
+        let size = encode720p(asset, to: out, bitrate: bitrate)
+        print(String(format: "wrote %@ (%.1f MB at %d kb/s)", output, Double(size) / 1_000_000, bitrate / 1000))
+        if size <= 9_700_000 || attempt == 2 { return }
+        let audio = 128_000.0 * seconds / 8, target = 9_300_000.0
+        bitrate = Int(Double(bitrate) * pow((target - audio) / (Double(size) - audio), 1.6))   // it shrinks less than the bitrate does
+    }
+}
+
+/// One 1280×720 H.264 encode of `asset` at `bitrate`, with its sound as 128 kb/s AAC; the file's size in bytes.
+func encode720p(_ asset: AVURLAsset, to out: URL, bitrate: Int) -> Int {
+    try? FileManager.default.removeItem(at: out)
     let reader = try! AVAssetReader(asset: asset)
     let vt = asset.tracks(withMediaType: .video)[0], at = asset.tracks(withMediaType: .audio)[0]
     let vOut = AVAssetReaderTrackOutput(track: vt, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA])
@@ -6359,8 +6372,7 @@ func write720p(from input: String, to output: String) {
     group.wait()
     let done = DispatchSemaphore(value: 0); writer.finishWriting { done.signal() }; done.wait()
     if writer.status != .completed { print("720p failed: \(String(describing: writer.error))"); exit(1) }
-    let size = (try? FileManager.default.attributesOfItem(atPath: output)[.size] as? Int) ?? 0
-    print(String(format: "wrote %@ (%.1f MB at %d kb/s)", output, Double(size) / 1_000_000, bitrate / 1000))
+    return (try? FileManager.default.attributesOfItem(atPath: out.path)[.size] as? Int) ?? 0
 }
 
 /// Puts the soundtrack under the silent video: WAV → AAC with afconvert, then a passthrough export.

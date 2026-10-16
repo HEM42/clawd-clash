@@ -30,6 +30,7 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 - **The bloopers.** The Bulk's take is gone.
   - Take 7 is now the TARDIS landing in the Mos Easy Cantina in front of Darth Vapor ("Ah. Wrong universe."), then failing to take off ("…Handbrake.").
   - The wrap adds Doctor Ten, Rose Tiler and a Dalick, has Spider-Clawd swing across upside down while Superb-Man flies the other way, and makes Deadpond, Star-Laird and Harold the Duck moonwalk.
+- **A 720p copy that still comes out over 9.7 MB is made again at a lower bitrate**, up to three times. Busy videos (halftones, fine pixel detail) overshoot the encoder's target: the seven-universe promo came out at 10.8 MB, now 9.8 MB.
 - **The 720p copies of videos over 90 seconds aim a little lower** (8.9 MB instead of 9.5 MB), because the encoder overshoots its target on long videos and the full cut came out over 10 MB.
 
 ## 3.5.1 (2026-10-16)
