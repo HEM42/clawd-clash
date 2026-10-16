@@ -4,7 +4,7 @@ import Foundation
 // films' trickster: a pale, mouldy face in a bursting lime mane, and the black-and-white striped suit.
 
 let burtonVillains1: [BurtonVillain: Persona] = [
-    .beetlejooce: Persona(name: "Beetlejooce", weapon: .saber, pivot: jooceHand, headTop: 10, signature: 4.0,
+    .beetlejooce: Persona(name: "Beetlejooce", weapon: .saber, pivot: jooceHand, bulk: 7, headTop: 10, signature: 4.0,
                           callout: "It's showtime!", draw: drawBeetlejooce),
 ]
 
@@ -101,6 +101,7 @@ private func drawJooceFigure(_ c: PixelCanvas, _ p: Pose) {
 
     // The left arm: a striped sleeve and a grubby long-nailed hand.
     c.pattern(13, 34, ["FF", ".F", ".F"], ["F": hand])
+    if !seatedPose { jooceBeetle(c, lt: p.lt) }
     if let a = p.melee {
         // The right arm turned into a striped snake, lashing out along `a` from the sleeve.
         burtonStripes(c, 38, 33, 3, 3, alongX: false, width: 1)
@@ -111,40 +112,73 @@ private func drawJooceFigure(_ c: PixelCanvas, _ p: Pose) {
     }
 }
 
-/// His snake arm: a black-and-white striped body from the sleeve along `angle`, writhing as it goes and lagging
-/// behind a fast swing, a faint smear where it just was, and the snake's head on the end, jaws open and a forked red
-/// tongue flicking when it strikes.
-private func jooceSnake(_ c: PixelCanvas, angle: Double, trail: [Double], t: Double) {
+/// His snake arm: a long black-and-white banded body slithering out of the sleeve along `angle` in an S that ripples
+/// down its length, lagging behind a fast swing, a faint smear where it just was, and a big diamond head on the end
+/// with a lime eye; when it strikes the jaws gape and a forked red tongue flicks out. Kept in front of him: it never
+/// swings back over his own face.
+private func jooceSnake(_ c: PixelCanvas, angle raw: Double, trail: [Double], t: Double) {
+    let angle = max(-100, min(70, raw))
     for (i, a) in trail.enumerated() {
-        let p0 = burtonReach(jooceHand, a, 4), p1 = burtonReach(jooceHand, a, 16)
-        c.glowLine(p0.x, p0.y, p1.x, p1.y, core: C(0xE8E8DC), glow: C(0xE8E8DC), coreR: 0.6, glowR: 1.8, strength: 0.3 / Double(i + 1))
+        let p0 = burtonReach(jooceHand, max(-100, min(70, a)), 5), p1 = burtonReach(jooceHand, max(-100, min(70, a)), 20)
+        c.glowLine(p0.x, p0.y, p1.x, p1.y, core: C(0xE8E8DC), glow: C(0xE8E8DC), coreR: 0.8, glowR: 2.2, strength: 0.3 / Double(i + 1))
     }
-    let lag = trail.first.map { $0 - angle } ?? 0
-    var prev = (x: jooceHand.x, y: jooceHand.y)
-    var dir = angle
-    let n = 9
-    for i in 1...n {
-        let f = Double(i) / Double(n)
-        dir = angle + lag * f * f * 0.8 + sin(t * 8 - f * 6) * 12 * f
-        let q = burtonReach(prev, dir, 1.7)
-        burtonLine(c, prev.x, prev.y, q.x, q.y, i % 2 == 0 ? burtonInk : burtonBone, 1.25 - 0.3 * f)
-        prev = q
+    let lag = trail.first.map { max(-100, min(70, $0)) - angle } ?? 0
+    let length = 19.0, step = 0.5
+    var pts: [(x: Double, y: Double)] = []
+    for i in 0...Int(length / step) {
+        let s = Double(i) * step, f = s / length
+        let a = (angle + lag * f * f * 0.7) * .pi / 180
+        let wave = sin(s / 7.5 * 2 * .pi - t * 9) * 2.6 * min(1, s / 4)
+        pts.append((jooceHand.x + cos(a) * s - sin(a) * wave, jooceHand.y + sin(a) * s + cos(a) * wave))
     }
-    // The head: a wedge on the end, an eye, and jaws that open as it strikes.
-    let striking = !trail.isEmpty
-    let tip = burtonReach(prev, dir, 3.5)
-    let side = (x: -sin(dir * .pi / 180), y: cos(dir * .pi / 180))
-    let open = striking ? 1.6 : 0.6
-    burtonTriangle(c, (prev.x + side.x * 1.8, prev.y + side.y * 1.8), (prev.x - side.x * 1.8, prev.y - side.y * 1.8),
-                   (tip.x - side.x * open, tip.y - side.y * open), burtonInk)
+    // The body, banded across, thick at the sleeve and thinner towards the head.
+    for i in 1..<pts.count {
+        let s = Double(i) * step, r = 1.7 - 0.6 * s / length
+        let col = Int(s / 2.2) % 2 == 0 ? burtonInk : burtonBone
+        burtonLine(c, pts[i - 1].x, pts[i - 1].y, pts[i].x, pts[i].y, col, r)
+    }
+    // The head, along the body's last stretch.
+    let neck = pts[pts.count - 3], end = pts[pts.count - 1]
+    let dir = atan2(end.y - neck.y, end.x - neck.x)
+    let ux = cos(dir), uy = sin(dir), sx = -uy, sy = ux
+    let striking = !trail.isEmpty || raw > 20
+    let back = (x: end.x - ux * 1, y: end.y - uy * 1), nose = (x: end.x + ux * 5, y: end.y + uy * 5)
     if striking {
-        burtonTriangle(c, (prev.x + side.x * 1.2, prev.y + side.y * 1.2), (prev.x, prev.y), (tip.x + side.x * open, tip.y + side.y * open),
-                       burtonInk)
-        let tongue = burtonReach(tip, dir, 2.5)
-        burtonLine(c, tip.x, tip.y, tongue.x, tongue.y, C(0xD8242A), 0.4)
+        // Jaws gaping: the upper and lower jaw apart, the red mouth between and the forked tongue out.
+        let gape = 2.6
+        burtonTriangle(c, (back.x + sx * 2.4, back.y + sy * 2.4), (back.x - sx * 0.4, back.y - sy * 0.4),
+                       (nose.x + sx * gape, nose.y + sy * gape), burtonInk)
+        burtonTriangle(c, (back.x - sx * 2.4, back.y - sy * 2.4), (back.x + sx * 0.4, back.y + sy * 0.4),
+                       (nose.x - sx * gape, nose.y - sy * gape), burtonInk)
+        burtonTriangle(c, (back.x + ux * 1.5, back.y + uy * 1.5), (nose.x + sx * 1.6, nose.y + sy * 1.6),
+                       (nose.x - sx * 1.6, nose.y - sy * 1.6), C(0xB8241E))
+        let tip = (x: nose.x + ux * 3, y: nose.y + uy * 3)
+        burtonLine(c, nose.x - ux, nose.y - uy, tip.x, tip.y, C(0xFF3A3A), 0.45)
+        burtonLine(c, tip.x, tip.y, tip.x + ux * 1.4 + sx * 1.2, tip.y + uy * 1.4 + sy * 1.2, C(0xFF3A3A), 0.4)
+        burtonLine(c, tip.x, tip.y, tip.x + ux * 1.4 - sx * 1.2, tip.y + uy * 1.4 - sy * 1.2, C(0xFF3A3A), 0.4)
+    } else {
+        // Closed: a diamond head with a bone stripe down it.
+        let mid = (x: end.x + ux * 2, y: end.y + uy * 2)
+        burtonTriangle(c, (back.x, back.y), (mid.x + sx * 2.6, mid.y + sy * 2.6), (mid.x - sx * 2.6, mid.y - sy * 2.6), burtonInk)
+        burtonTriangle(c, (nose.x, nose.y), (mid.x + sx * 2.6, mid.y + sy * 2.6), (mid.x - sx * 2.6, mid.y - sy * 2.6), burtonInk)
+        burtonLine(c, back.x + ux, back.y + uy, nose.x - ux * 1.5, nose.y - uy * 1.5, burtonBone, 0.45)
     }
-    let eye = burtonReach(prev, dir, 1.0)
-    c.px(Int((eye.x - side.x).rounded()), Int((eye.y - side.y).rounded()), C(0x9ADB2E))
+    let eye = (x: end.x + ux * 1.6 - sx * 1.4, y: end.y + uy * 1.6 - sy * 1.4)
+    c.rect(Int(eye.x.rounded()), Int(eye.y.rounded()), 1, 1, C(0xC8F060))
+}
+
+/// Now and then a beetle drops out of his left sleeve, lands, and scuttles off along the floor behind him, on his own
+/// clock (`lt`), once every seven seconds.
+private func jooceBeetle(_ c: PixelCanvas, lt: Double) {
+    let k = (lt + 3).truncatingRemainder(dividingBy: 7) / 7
+    guard k < 0.4 else { return }
+    let x: Int, y: Int
+    if k < 0.08 {   // falling from the cuff, tumbling
+        x = 14; y = 37 + Int((k / 0.08 * 6).rounded())
+    } else {        // scuttling away
+        x = 14 - Int(((k - 0.08) / 0.32 * 18).rounded()); y = 43
+    }
+    burtonBeetle(c, x: x, y: y, step: Int(lt * 16) % 2 == 0, left: true)
 }
 
 /// One of the three speech bubbles his name rises in: the first on the left, the third on the right, each with a
