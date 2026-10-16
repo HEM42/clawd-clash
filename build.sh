@@ -44,7 +44,8 @@ fi
 APP="build/Clawd Clash.app"
 DEST="/Applications/Clawd Clash.app"
 OLD_DESTS=("$HOME/Applications/Clawd Clash.app" )   # earlier installs
-FLAGS=(-O -swift-version 5)
+# -num-threads: -O compiles each binary as one whole-module job, which would otherwise generate code on one core.
+FLAGS=(-O -swift-version 5 -num-threads "$(sysctl -n hw.ncpu)")
 # The app's diagnostics (main.swift), only with --dev-tools.
 DEV_FLAGS=()
 [[ $DEV_TOOLS == 0 ]] || DEV_FLAGS=(-D CLAWD_DEV_TOOLS)
@@ -60,21 +61,25 @@ compile() {
     swiftc "${FLAGS[@]}" -target arm64-apple-macos13.0 "$@" -o "$out"
 }
 
-echo "→ compiling app"
-# The app carries the screen saver's view too: the window's third view is the screen saver itself.
-compile "$APP/Contents/MacOS/ClawdClash" "${DEV_FLAGS[@]}" -framework ScreenSaver Sources/Shared/*.swift Sources/App/*.swift Sources/App/Universes/**/*.swift Sources/Saver/*.swift
-echo "→ compiling hook"
-compile "$APP/Contents/MacOS/clawd-clash-hook" Sources/Shared/*.swift Sources/Hook/main.swift
-
-# The screen saver: a plug-in bundle macOS's screen saver host loads, carried inside the app, which installs it
-# (Settings → Install Screen Saver) and keeps the installed copy up to date. It shares the sprite and location code.
-echo "→ compiling screen saver"
+# The app, the hook and the screen saver compile side by side (each is its own process; `wait` stops the build if one
+# fails). The screen saver: a plug-in bundle macOS's screen saver host loads, carried inside the app, which installs
+# it (Settings → Screen Saver) and keeps the installed copy up to date. It shares the sprite and location code.
 SAVER="$APP/Contents/Resources/Clawd Clash.saver"
 mkdir -p "$SAVER/Contents/MacOS"
+echo "→ compiling app, hook and screen saver"
+# The app carries the screen saver's view too: the window's third view is the screen saver itself.
+compile "$APP/Contents/MacOS/ClawdClash" "${DEV_FLAGS[@]}" -framework ScreenSaver Sources/Shared/*.swift Sources/App/*.swift Sources/App/Universes/**/*.swift Sources/Saver/*.swift &
+APP_JOB=$!
+compile "$APP/Contents/MacOS/clawd-clash-hook" Sources/Shared/*.swift Sources/Hook/main.swift &
+HOOK_JOB=$!
 compile "$SAVER/Contents/MacOS/ClawdClashSaver" -module-name ClawdClashSaver -emit-library -framework ScreenSaver \
     -Xlinker -install_name -Xlinker @rpath/ClawdClashSaver \
     Sources/Shared/*.swift Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Accents,Habits,Drills,Icon}.swift \
-    Sources/App/Universes/**/*.swift Sources/Saver/*.swift
+    Sources/App/Universes/**/*.swift Sources/Saver/*.swift &
+SAVER_JOB=$!
+wait $APP_JOB
+wait $HOOK_JOB
+wait $SAVER_JOB
 # Its picture under "Other" in System Settings (180×116).
 mkdir -p "$SAVER/Contents/Resources"
 cp Resources/SaverThumbnail.png "$SAVER/Contents/Resources/thumbnail@2x.png"

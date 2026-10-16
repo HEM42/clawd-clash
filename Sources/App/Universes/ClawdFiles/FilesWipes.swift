@@ -1059,8 +1059,11 @@ enum FilesMap {
         return hit
     }
 
-    private static let boxes: [(minX: Double, maxX: Double, minY: Double, maxY: Double)] = coasts.map { p in
-        (p.map(\.0).min()! - 2, p.map(\.0).max()! + 2, p.map(\.1).min()! - 2, p.map(\.1).max()! + 2)
+    // Typed out and split up: the one-line tuple took the type checker over 2 s in every build.
+    private static let boxes: [(minX: Double, maxX: Double, minY: Double, maxY: Double)] = coasts.map {
+        p -> (minX: Double, maxX: Double, minY: Double, maxY: Double) in
+        let xs: [Double] = p.map { $0.0 }, ys: [Double] = p.map { $0.1 }
+        return (xs.min()! - 2, xs.max()! + 2, ys.min()! - 2, ys.max()! + 2)
     }
 
     /// How much land there is at a point, 0 (open sea) … 1, its coast roughened with noise so it holds up close.
