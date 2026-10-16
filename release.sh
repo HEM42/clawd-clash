@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Publishes a release: universal build → (optional) notarization → zip → GitHub release → Homebrew cask.
+# Publishes a release: Apple silicon build → (optional) notarization → zip → GitHub release → Homebrew cask.
 # Only the newest two GitHub releases are kept; older ones are deleted (their tags stay).
 #   ./release.sh 2.14.0            refuses if tag v2.14.0 or its GitHub release already exists
 #   ./release.sh 2.14.0 --force    replaces an existing tag and GitHub release
@@ -123,6 +123,7 @@ cask "$name" do
   homepage "https://github.com/rodclemen/clawd-clash"
 
   depends_on macos: :ventura
+  depends_on arch: :arm64
   conflicts_with cask: [$others]
 
   app "Clawd Clash.app"

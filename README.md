@@ -192,7 +192,7 @@ Clawd Clash only offers an AI when it finds it on your Mac, and only touches the
 
 ## Install
 
-Needs macOS 13+ (Apple Silicon or Intel) and at least one of the [supported AIs and harnesses](#supported-ais-and-harnesses).
+Needs macOS 13+ on Apple silicon (3.5.0 was the last release for Intel Macs) and at least one of the [supported AIs and harnesses](#supported-ais-and-harnesses).
 
 **With Homebrew:**
 

@@ -4,7 +4,7 @@
 #   ./build.sh                     build + install + refresh connected hooks + launch
 #   ./build.sh --no-hooks          build + install + launch (leave every AI's settings alone)
 #   ./build.sh --no-install        build + launch the copy in build/ (nothing copied to /Applications, hooks left alone)
-#   ./build.sh --release <version> universal (arm64 + x86_64) build into build/, signed for distribution;
+#   ./build.sh --release <version> Apple silicon (arm64) build into build/, signed for distribution;
 #                                  no install, no hooks (used by release.sh)
 set -euo pipefail
 cd "${0:A:h}"
@@ -34,18 +34,10 @@ FLAGS=(-O -swift-version 5)
 
 rm -rf build && mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-# compile <output> <sources…>: native arch for installs, a universal binary for releases
+# compile <output> <sources…>: Apple silicon only, for installs and releases alike (Intel was dropped after 3.5.0)
 compile() {
     local out=$1; shift
-    if [[ $MODE == release ]]; then
-        swiftc "${FLAGS[@]}" -target arm64-apple-macos13.0 "$@" -o "$out.arm64"
-        swiftc "${FLAGS[@]}" -target x86_64-apple-macos13.0 "$@" -o "$out.x86_64"
-        lipo -create "$out.arm64" "$out.x86_64" -output "$out"
-        rm "$out.arm64" "$out.x86_64"
-    else
-        local arch=arm64; [[ "$(uname -m)" == "x86_64" ]] && arch=x86_64
-        swiftc "${FLAGS[@]}" -target $arch-apple-macos13.0 "$@" -o "$out"
-    fi
+    swiftc "${FLAGS[@]}" -target arm64-apple-macos13.0 "$@" -o "$out"
 }
 
 echo "→ compiling app"

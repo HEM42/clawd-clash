@@ -320,7 +320,7 @@ Any exhaustive `switch` on `Universe` turns a missed spot into a compile error. 
 ### Verification, every phase
 
 - `./build.sh` builds, installs and launches. The cast-size `assert` in `Overlay.swift` catches a `heroCount` or `villainCount` that doesn't match the enums.
-- The optimized and universal builds can hit Swift's "unable to type-check in reasonable time" on dense `sin`/`cos` drawing expressions. Find them with `-Xfrontend -warn-long-expression-type-checking=300` and split them up. Check with `./build.sh --release <version>` before calling a phase done.
+- The optimized release build can hit Swift's "unable to type-check in reasonable time" on dense `sin`/`cos` drawing expressions. Find them with `-Xfrontend -warn-long-expression-type-checking=300` and split them up. Check with `./build.sh --release <version>` before calling a phase done.
 - `Tools/Preview/build.sh`, then:
   - `build/preview cast out.png "<Name>"` shows every pose of one character;
   - `build/preview fight out.png "<Hero>" "<Villain>"`;
