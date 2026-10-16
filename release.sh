@@ -129,11 +129,14 @@ cask "$name" do
   app "Clawd Clash.app"
 $preset$QUARANTINE
   # brew runs this on upgrade too (uninstall, then install): the hooks come out, and the new app puts
-  # them back on its next launch.
+  # them back on its next launch. It may fail (macOS can refuse to run an installed copy that's been
+  # changed, and kills it), and that mustn't stop the upgrade: the hooks then just stay, pointing at the
+  # same path the new app is installed to.
   uninstall quit:   "com.rodclemen.clawdclash",
             script: {
-              executable: "#{appdir}/Clawd Clash.app/Contents/MacOS/ClawdClash",
-              args:       ["--uninstall-hooks"],
+              executable:   "#{appdir}/Clawd Clash.app/Contents/MacOS/ClawdClash",
+              args:         ["--uninstall-hooks"],
+              must_succeed: false,
             }
 
   zap trash: [
