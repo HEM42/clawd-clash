@@ -100,17 +100,18 @@ private func drawMartyMcFry(_ c: PixelCanvas, _ p: Pose) {
     }
     c.rect(15, 33, 3, 3, denim)
     if p.fire != nil || p.ready {
-        // The pie tin held out edge-on, ready to fling (gone from his hand just as it flies).
+        // The pie tin held flat in his fist, a round dish tilted towards us so it can't pass for a gun, ready to
+        // fling frisbee-style (gone from his hand just as it flies).
         c.oy += p.gunY
         c.rect(38, 31, 3, 3, denim)
         if p.recoil == 0 {
-            c.rect(41, 31, 5, 1, tin); c.rect(42, 32, 3, 1, tinD)
+            c.pattern(39, 28, [".TTTTT.", "TdddddT", "TdddddT", ".TTTTT."], ["T": tin, "d": tinD])
         }
         return
     }
-    // At rest: the tin hanging from his hand at his side.
+    // At rest: the round tin hanging from his hand at his side.
     c.rect(38, 33, 3, 3, denim)
-    c.rect(41, 32, 1, 5, tin); c.rect(42, 33, 1, 3, tinD)
+    c.pattern(40, 32, [".TT.", "TddT", "TddT", "TddT", ".TT."], ["T": tin, "d": tinD])
 }
 
 // MARK: - Doc Brawn

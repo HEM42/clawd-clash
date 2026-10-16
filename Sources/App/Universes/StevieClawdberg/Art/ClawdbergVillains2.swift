@@ -73,7 +73,7 @@ private func drawBiffTannin(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Old Biff
 
 /// Old Biff: Clawd in 2015, thin grey hair combed back, heavy grey brows, a brown suit jacket over a pale shirt and a
-/// dark tie, a little stooped; he fights with his walking cane. Signature: he waves the sports almanac overhead, the
+/// dark tie, a little stooped; he leans on his walking cane and only swings it in a fight. Signature: he waves the sports almanac overhead, the
 /// red-and-white book that makes him rich.
 private func drawOldBiff(_ c: PixelCanvas, _ p: Pose) {
     let suit = C(0x6E5440), suitD = C(0x4E3A2C), shirt = C(0xA8B8CC), tie = C(0x8A2A30)
@@ -110,7 +110,14 @@ private func drawOldBiff(_ c: PixelCanvas, _ p: Pose) {
         c.rect(14, 30, 3, 1, cane); c.rect(14, 31, 1, 7, cane)
         return
     }
-    if let a = p.melee {
+    // He only swings the cane in a real fight, or shaking it when your session needs you; the rest of the time
+    // (walking, practising alone, cheering) he leans on it, so it reads as a walking stick, not a wand.
+    let swinging: Bool
+    switch p.role {
+    case .duel, .deflect, .block, .ready: swinging = true
+    default: swinging = false
+    }
+    if let a = p.melee, swinging {
         cbSmear(c, cbHand, p.trail, from: 3, to: 13, C(0xE8D8B8))
         cbBar(c, cbHand, a, from: -1, to: 12, cane, r: 0.7)
         let grip = cbReach(cbHand, a, -1)
@@ -118,10 +125,13 @@ private func drawOldBiff(_ c: PixelCanvas, _ p: Pose) {
         c.rect(38, 33, 3, 3, suit)
         return
     }
-    // At rest: leaning on the cane, planted on the floor.
+    // Leaning on the cane, planted on the floor; walking, it goes forward with each step, and working alone he taps
+    // it impatiently now and then.
+    let tap = !p.walking && p.melee != nil && frac(p.t * 0.8) < 0.18 ? 1 : 0
+    let x = p.walking && p.step == 1 ? 42 : 41
     c.rect(38, 33, 3, 3, suit)
-    c.rect(41, 33, 1, 11, cane)
-    c.rect(41, 32, 3, 1, caneL); c.px(43, 33, caneL)
+    c.rect(x, 33 - tap, 1, 11, cane)
+    c.rect(x, 32 - tap, 3, 1, caneL); c.px(x + 2, 33 - tap, caneL)
 }
 
 // MARK: - Griff Tannin
