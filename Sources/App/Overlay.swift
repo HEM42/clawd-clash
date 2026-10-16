@@ -172,9 +172,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private static let footroom: CGFloat = 7 * leaderScale
 
     override init() {
-        // The hook only knows the cast sizes (`Universe`); a character added without bumping them would never be picked.
+        // The hook only knows the cast sizes (`Universe`); a character added without bumping them would never be picked,
+        // and saved ids would point at the wrong one. A `precondition`, not an `assert`: every build here is optimised
+        // (-O), which compiles asserts out, so this is what stops a mismatched build at its first launch.
         for u in Universe.allCases {
-            assert(Theme.of(u).villains.count == u.villainCount && Theme.of(u).heroes.count == u.heroCount, "\(u) cast size")
+            let villains = Theme.of(u).villains.count, heroes = Theme.of(u).heroes.count
+            precondition(villains == u.villainCount && heroes == u.heroCount,
+                         "\(u.title): the roster has \(villains) villains and \(heroes) heroes, but Universe.swift says "
+                         + "\(u.villainCount) and \(u.heroCount). Update villainCount/heroCount in Sources/Shared/Universe.swift.")
         }
         panel = OverlayPanel(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10),
                              styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
