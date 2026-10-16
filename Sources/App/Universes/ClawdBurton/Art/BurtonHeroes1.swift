@@ -9,7 +9,7 @@ let burtonHeroes1: [BurtonHero: Persona] = [
                               magic: Magic(core: C(0xFFF0D8), glow: C(0xFF8A2A), jagged: false, waves: true),
                               pivot: jackMouth, headTop: 7, signature: 3.4, callout: "What's this?",
                               draw: drawJackSkullington),
-    .sallee: Persona(name: "Sallee", weapon: .none, headTop: 19, signature: 3.6, draw: drawSallee),
+    .sallee: Persona(name: "Sallee", weapon: .none, headTop: 10, signature: 3.6, draw: drawSallee),
 ]
 
 /// The front of Jack's gaping mouth: his scare pulses out from there (raised by the pose's `armRaise`).
@@ -133,72 +133,103 @@ private func drawJackSkull(_ c: PixelCanvas, top: Int, stretch: Int, scary: Bool
 
 // MARK: - Sallee
 
-/// Sallee: the rag doll, Clawd in pale blue cloth with stitches across her cheek and round her neck, long red yarn
-/// hair falling past her shoulders, red lips, and a patchwork dress of mismatched squares sewn together. She doesn't
-/// fight. Signature: her left arm comes loose and drops to the ground; she picks it up and sews it back on, needle
-/// flashing, then gives it a little shake to check it holds.
+/// Sallee: Dr. Finkelclawd's rag doll. A tall pale-blue face on a thin stitched neck, big white eyes glancing to one
+/// side under dark lashes, dark lips and black stitched seams running out from the corners of her mouth; long
+/// straight red yarn hair parted at the side and falling past her waist; a patchwork dress of mustard, teal, lilac,
+/// black and pink, cross-stitched at the seams; long thin stitched arms and legs. She doesn't fight. Signature: her
+/// left arm drops off at the shoulder seam and lands on the floor; she looks down at it, picks it up, sews it back
+/// on with a big needle and red thread, and gives it a wiggle to check it holds.
 private func drawSallee(_ c: PixelCanvas, _ p: Pose) {
-    let cloth = C(0xA8C2E2), clothD = C(0x8AA2C6), thread = C(0x2E3448)
-    let hair = C(0xB8252A), hairD = C(0x7E1418), hairL = C(0xD8423E)
-    let patches = [C(0x6A8AA8), C(0xC8A048), C(0x8A6A9A), C(0x5A8A5A)]
+    let skin = C(0xC8DCEA), skinD = C(0xA4BED2), thread = C(0x1E1E26), red = C(0xD8242A)
+    let hair = C(0xC8303A), hairD = C(0x8A1A22), hairL = C(0xE05A5A)
     let sig = p.signature
-    let fallK = sig.map { ramp($0, 0.08, 0.28) } ?? 0          // the arm dropping
-    let sewK = sig.map { ramp($0, 0.38, 0.82) } ?? 0           // sewn back up to the shoulder
-    let loose = sig.map { $0 > 0.08 && $0 < 0.82 } ?? false
-    let sewing = sig.map { $0 >= 0.38 && $0 < 0.82 } ?? false
+    let dropK = sig.map { ramp($0, 0.06, 0.2) } ?? 0          // the arm falling
+    let lifting = sig.map { $0 >= 0.34 && $0 < 0.45 } ?? false
+    let sewing = sig.map { $0 >= 0.45 && $0 < 0.82 } ?? false
+    let off = sig.map { $0 > 0.06 && $0 < 0.45 } ?? false     // the arm not on her
+    let looking = sig.map { $0 > 0.2 && $0 < 0.45 } ?? false  // eyes down at the arm
+    let wiggle = sig.map { $0 >= 0.82 && $0 < 0.95 ? sin(ramp($0, 0.82, 0.95) * .pi * 4) * 25 : 0 } ?? 0
     let frame = Int(p.t * 8) % 2
 
-    drawLegs(c, Look(leg: cloth), step: p.step)
-    if !seatedPose { for lx in [19, 31] { c.px(lx, 40, thread) } }
+    // Long thin stitched legs.
+    drawLegs(c, Look(leg: skin), step: p.step)
+    if !seatedPose { for lx in [19, 31] { c.px(lx, 41, thread); c.px(lx + 1, 41, thread) } }
     c.oy += p.breathe
-    // Her body, without its left arm while that's off.
-    c.rect(18, 26, 20, 12, cloth); c.rect(18, 37, 20, 1, clothD); c.rect(37, 26, 1, 12, clothD)
-    c.rect(38, 33, 3, 3, cloth)
-    if !loose { c.rect(15, 33, 3, 3, cloth) }
-    // Big eyes with lashes, red lips, the stitched seam across her cheek and round her neck.
-    c.rect(22, 29, 2, 3, burtonInk); c.rect(32, 29, 2, 3, burtonInk)
-    c.px(21, 28, burtonInk); c.px(34, 28, burtonInk)
-    c.rect(26, 32, 4, 1, C(0xC8202A))
-    burtonStitches(c, 33, 31, n: 2, gap: 2, down: false, thread)
-    // The patchwork dress: squares of different cloth, stitched together, its hem over her knees.
-    let hemRows = seatedPose ? 1 : 3
-    for y in 34..<(38 + hemRows) {
-        for x in 17...38 {
-            let k = (x - 17) / 6 + (y - 34) / 3
-            let seam = (x - 17) % 6 == 5 && y % 2 == 0
-            c.px(x, y, seam ? thread : patches[k % patches.count])
+    // The long red hair hanging down behind her, in strands.
+    for y in 9...38 {
+        let top = y - 9
+        let x0 = top < 4 ? 22 - top * 2 : 17, x1 = top < 4 ? 33 + top * 2 : 38
+        for x in x0...x1 {
+            if y > 33, x > 21, x < 34 { continue }                       // the ends hang at her sides
+            if y > 35, (x + y) % 3 == 0 { continue }                     // ragged ends
+            c.px(x, y, x % 3 == 0 ? hairD : (x % 5 == 1 ? hairL : hair))
         }
     }
-    // The long red yarn hair: a fringe, and strands falling past her shoulders on both sides.
-    c.pattern(15, 19, [
-        ".....HHHHHHHHHHHHHHH......",
-        "...HHHHHlHHHHHHHHlHHHH....",
-        "..HHHHHHHHHHHHHHHHHHHHHH..",
-        ".HHHHlHHHHHHHHHHHHHlHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHHHHHH.",
-        "HHHHHHHHdHHHHHHHHdHHHHHHHH",
-        "HHHHHHddHHHHHHHHHHddHHHHHH",
-        "HHHH..................HHHH",
-        "HHHH..................HHHH",
-        "HHdH..................HdHH",
-        "HHHH..................HHHH",
-        ".HdH..................HdH.",
-        ".HHH..................HHH.",
-        ".HdH..................HdH.",
-        ".HH....................HH.",
-        ".Hd....................dH.",
-        "..H....................H..",
-    ], ["H": hair, "d": hairD, "l": hairL])
+    // The patchwork dress: a narrow bodice flaring to a hem over her knees.
+    let hem = seatedPose ? 38 : 40
+    for y in 28...hem {
+        let flare = (y - 28) / 4
+        for x in (21 - flare)...(34 + flare) {
+            let col: Px
+            switch y {
+            case ..<33: col = x < 28 ? C(0xE0A830) : ((x + y) % 4 == 0 ? C(0x7A3A80) : C(0xB87AB8))
+            case ..<37: col = x < 26 ? (y % 2 == 0 ? C(0x2E7A80) : C(0x4A9AA0)) : x < 31 ? C(0x1E1E22)
+                                     : (y % 2 == 0 ? C(0xB86A92) : C(0xD88AB0))
+            default: col = x < 25 ? ((x + y) % 3 == 0 ? C(0xB86A92) : C(0xD88AB0)) : x < 30 ? C(0xE0A830) : C(0x4A9AA0)
+            }
+            c.px(x, y, col)
+        }
+    }
+    for y in stride(from: 28, through: 32, by: 2) { c.px(27, y, thread); c.px(28, y, thread) }   // cross-stitched seams
+    for x in stride(from: 20, through: 35, by: 2) { c.px(x, 33, thread); c.px(x, 37, thread) }
+    // The thin stitched neck.
+    c.rect(27, 25, 2, 4, skin); c.px(27, 27, thread); c.px(28, 26, thread)
+    // The tall pale face: big eyes with lashes, dark lips, and the stitched seams from her mouth.
+    c.pattern(21, 12, [
+        "....FFFFFF....",
+        "..FFFFFFFFFF..",
+        ".FFFFFFFFFFFf.",
+        "FFFFFFFFFFFFFf",
+        "FKKWWFFFFWWKKf",
+        "FKWWWWFFWWWWKf",
+        looking ? "FFWWWWFFWWWWFf" : "FFWWKWFFWWKWFf",
+        looking ? "FFFKWFFFFKWFFf" : "FFFWWFFFFWWFFf",
+        "FFFFFFFFFFFFFf",
+        "FFKFFFFFFFFKFf",
+        "FKFKFLLLLFKFKf",
+        ".FKFFFLLFFFKf.",
+        "..FFFFFFFFFf..",
+        "....FFFFFf....",
+    ], ["F": skin, "f": skinD, "W": C(0xFFFFFF), "K": thread, "L": C(0x3A1A26)])
+    // The side-parted fringe sweeping across her forehead.
+    c.pattern(20, 10, ["..HHHHHHhHHHH...", ".HHHHHHHHhHHHHH.", "HHHHHHHHHHhH....", "HHHH.HHH........"],
+                      ["H": hair, "h": hairD])
 
-    guard loose else { return }
-    // The arm off: down on the ground, then lifted back to the shoulder as she sews, the thread joining them.
-    let ay = sewing ? Int((41 - 8 * sewK).rounded()) : 33 + Int((8 * fallK).rounded())
-    let ax = sewing ? 15 : 14 - Int((2 * fallK).rounded())
-    c.rect(ax, ay, 3, 3, cloth); c.px(ax, ay + 2, clothD)
-    burtonLine(c, 17.5, 34.5, Double(ax) + 1.5, Double(ay) + 1, thread, 0.4)
+    // The arms: long and thin, a stitch at each elbow.
+    func arm(_ x0: Double, _ y0: Double, _ x1: Double, _ y1: Double) {
+        burtonLine(c, x0, y0, x1, y1, skin, 0.9)
+        c.px(Int(((x0 + x1) / 2).rounded()), Int(((y0 + y1) / 2).rounded()), thread)
+        c.rect(Int(x1.rounded()) - 1, Int(y1.rounded()), 2, 2, skin)
+    }
+    if off && !lifting {
+        // The left arm off: falling, then lying on the floor beside her, a loose thread trailing from it.
+        let ax = 19.5 - 9.5 * dropK, ay = 29.0 + 13 * dropK
+        arm(ax, ay, ax - 2 * (1 - dropK) + 8 * dropK, ay + 8 * (1 - dropK))
+        burtonLine(c, 20, 29.5, ax, ay, red.alpha(0.8), 0.35)
+    } else if lifting {
+        // Picking it up: her right hand brings it back up to the shoulder.
+        arm(19.5, 29, 16, 35); arm(36, 29, 19, 33)
+    } else {
+        let a = wiggle * .pi / 180
+        arm(19.5, 29, 19.5 - sin(a + 0.25) * 8.3, 29 + cos(a + 0.25) * 8.3)
+    }
     if sewing {
-        // Her right hand reaches across with the needle, stitching up and down.
-        c.rect(19, 31 + frame, 3, 2, cloth)
-        c.px(18, 30 + frame, C(0xD8DCE4)); c.px(17, 29 + frame, C(0xD8DCE4))
+        // Sewing it back on: her right hand at the left shoulder, the big needle stabbing in and out, red thread.
+        arm(36, 29, 22, 28 + Double(frame))
+        burtonLine(c, 21, Double(26 + frame), 23, Double(23 + frame), C(0xE0E4EC), 0.5)
+        burtonLine(c, 23, Double(23 + frame), 26, 21, red, 0.35)
+        c.px(20, 29, red); c.px(21, 30, red)
+    } else if !lifting {
+        arm(36, 29, 38, 37)
     }
 }
