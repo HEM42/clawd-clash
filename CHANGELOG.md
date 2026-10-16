@@ -11,7 +11,11 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 
 ## Unreleased
 
+### Added
+- **`./build.sh --untrusted`, for trying someone's pull request.** It builds into `build/` only and signs ad hoc, so the copy gets none of the permissions you've given the installed app (Accessibility, Automation). It doesn't install it, launch it, or touch any AI's hooks: read the changes, then open `build/Clawd Clash.app` yourself. Plain `./build.sh` installs, rewrites hooks and launches with your Accessibility grant, which is the wrong thing to do with code you haven't reviewed. In the README's build section and `llms.txt`.
+
 ### Changed
+- **Every build has the hardened runtime**, not only releases. Local builds (`./build.sh`, `--no-install`, `--untrusted`) are signed with `--options runtime` and the Apple Events entitlement, so another program running as you can't load its own code into the app with `DYLD_INSERT_LIBRARIES` and use the app's Accessibility grant. Click-to-jump works as before.
 - **Apple silicon only.** Clawd Clash is built for Apple silicon (arm64) alone from now on; 3.5.0 was the last release for Intel Macs. Release builds no longer compile everything twice and glue the halves together with `lipo`, so `./release.sh` takes about half as long, and the zip is smaller. The Homebrew casks now say `depends_on arch: :arm64`, so on an Intel Mac brew refuses the upgrade with a clear message instead of installing an app that can't open; Intel users keep 3.5.0. The README's requirements, `llms.txt` and the clawdify guide just say Apple silicon, without mentioning Intel.
 
 ### Fixed

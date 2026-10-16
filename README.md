@@ -213,6 +213,8 @@ git clone https://github.com/rodclemen/clawd-clash.git && cd clawd-clash
 ./build.sh                 # build, install "Clawd Clash.app" to /Applications, refresh connected hooks, launch
 ```
 
+Trying out someone's pull request? Build it with `./build.sh --untrusted`. That signs it ad hoc, so it gets none of the permissions you've given the installed app, and it doesn't install it, launch it or touch any AI's settings. Read the changes first, then open `build/Clawd Clash.app` yourself.
+
 Claude Code sessions that were already running pick up the hooks after a restart (`/exit`, then `claude --continue`). Until then they still show up, with a `?`.
 
 > **Codex users:** Codex only runs hooks you've approved. After connecting it, run **`/hooks`** in Codex once and approve Clawd Clash.

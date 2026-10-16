@@ -4,6 +4,9 @@
 #   ./build.sh                     build + install + refresh connected hooks + launch
 #   ./build.sh --no-hooks          build + install + launch (leave every AI's settings alone)
 #   ./build.sh --no-install        build + launch the copy in build/ (nothing copied to /Applications, hooks left alone)
+#   ./build.sh --untrusted         build into build/ only, for trying someone's PR: signed ad hoc (so it gets none of
+#                                  the installed app's permissions), not installed, not launched, hooks left alone.
+#                                  Start it yourself once you've read the code: open "build/Clawd Clash.app"
 #   ./build.sh --release <version> Apple silicon (arm64) build into build/, signed for distribution;
 #                                  no install, no hooks (used by release.sh)
 #   ./build.sh --no-install --dev-tools
@@ -22,6 +25,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --no-hooks) HOOKS=0 ;;
         --no-install) MODE=local; HOOKS=0 ;;
+        --untrusted) MODE=untrusted; HOOKS=0 ;;
         --release) MODE=release; VERSION="${2:?--release needs a version}"; shift ;;
         --dev-tools) DEV_TOOLS=1 ;;
         *) echo "unknown option: $1" >&2; exit 2 ;;
@@ -128,29 +132,34 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 PLIST
 
 # Sign. Releases need a Developer ID (for distribution) and fail without one; local builds take any real
-# identity so macOS keeps the Accessibility grant across rebuilds, and fall back to ad-hoc.
+# identity so macOS keeps the Accessibility grant across rebuilds, and fall back to ad-hoc. An --untrusted build is
+# always ad hoc: a real identity would hand it the installed app's Accessibility grant.
 # No --deep (deprecated): the nested hook binary is signed on its own first, then the bundle.
-IDENTITIES=$(security find-identity -v -p codesigning 2>/dev/null || true)
-if [[ $MODE == release ]]; then
-    IDENTITY=$(echo "$IDENTITIES" | grep -m1 -oE '"Developer ID Application[^"]*"' | tr -d '"' || true)
-    [[ -n "$IDENTITY" ]] || { echo "error: no 'Developer ID Application' signing identity in the keychain" >&2; exit 1; }
-    # Hardened runtime + secure timestamp: what notarization requires. Apple Events entitlement keeps
-    # click-to-jump working for Terminal and iTerm2.
-    cat > build/entitlements.plist <<'ENT'
+# Every build has the hardened runtime, so no other program can load code into the app (DYLD_INSERT_LIBRARIES) and
+# borrow its permissions. The Apple Events entitlement keeps click-to-jump working for Terminal and iTerm2.
+cat > build/entitlements.plist <<'ENT'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict><key>com.apple.security.automation.apple-events</key><true/></dict></plist>
 ENT
+IDENTITIES=$(security find-identity -v -p codesigning 2>/dev/null || true)
+if [[ $MODE == release ]]; then
+    IDENTITY=$(echo "$IDENTITIES" | grep -m1 -oE '"Developer ID Application[^"]*"' | tr -d '"' || true)
+    [[ -n "$IDENTITY" ]] || { echo "error: no 'Developer ID Application' signing identity in the keychain" >&2; exit 1; }
+    # Plus a secure timestamp: what notarization requires.
     codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP/Contents/MacOS/clawd-clash-hook"
     codesign --force --options runtime --timestamp --sign "$IDENTITY" "$SAVER"
     codesign --force --options runtime --timestamp --entitlements build/entitlements.plist \
         --sign "$IDENTITY" "$APP"
 else
-    IDENTITY=$(echo "$IDENTITIES" | grep -m1 -oE '"(Developer ID Application|Apple Development)[^"]*"' | tr -d '"' || true)
+    IDENTITY=""
+    [[ $MODE == untrusted ]] || \
+        IDENTITY=$(echo "$IDENTITIES" | grep -m1 -oE '"(Developer ID Application|Apple Development)[^"]*"' | tr -d '"' || true)
     sign_local() {
-        codesign --force --timestamp=none --sign "$1" "$APP/Contents/MacOS/clawd-clash-hook" \
-            && codesign --force --timestamp=none --sign "$1" "$SAVER" \
-            && codesign --force --timestamp=none --sign "$1" "$APP"
+        codesign --force --options runtime --timestamp=none --sign "$1" "$APP/Contents/MacOS/clawd-clash-hook" \
+            && codesign --force --options runtime --timestamp=none --sign "$1" "$SAVER" \
+            && codesign --force --options runtime --timestamp=none --entitlements build/entitlements.plist \
+                --sign "$1" "$APP"
     }
     if [[ -z "$IDENTITY" ]] || ! sign_local "$IDENTITY" >/dev/null 2>&1; then
         IDENTITY=""
@@ -161,6 +170,10 @@ echo "→ signed with: ${IDENTITY:-ad-hoc} (version $VERSION)"
 
 if [[ $MODE == release ]]; then
     echo "✓ release build ready: $APP"
+    exit 0
+fi
+if [[ $MODE == untrusted ]]; then
+    echo "✓ untrusted build ready: $APP (ad hoc, not installed, not launched; read the code, then open it yourself)"
     exit 0
 fi
 
