@@ -5,7 +5,7 @@ import Foundation
 // lumpy orc hide, and the Mouth of Sourun shows nothing above the grin but black iron. All three stand a Man's height;
 // the Mouth's tall helmet takes him higher.
 
-let ringsVillains3: [LOTRVillain: Persona] = [
+let ringsVillains3: [RingsVillain: Persona] = [
     .wormtongue: Persona(name: "Grep-ma Wormtongue", weapon: .saber, headTop: 22, signature: 3.2,
                          callout: "Psst… I grepped the logs, my lord. They whisper of you.", draw: drawWormtongue),
     .gothmog: Persona(name: "Gothmock", weapon: .saber, bulk: 1, headTop: 21, signature: 2.8,

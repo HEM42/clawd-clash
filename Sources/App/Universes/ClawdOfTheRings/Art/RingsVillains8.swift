@@ -5,7 +5,7 @@ import Foundation
 // so), the spider a little wider than a Man, high on banded legs. Azog and the Goblin King are Clawd underneath, the
 // blocky body in their own skin: Azog a head taller, chalk-white and scarred, the King half again as wide, all belly.
 
-let ringsVillains8: [LOTRVillain: Persona] = [
+let ringsVillains8: [RingsVillain: Persona] = [
     .smaug: Persona(name: "Smaug the Stashed", weapon: .blaster, shot: .fire, armoured: true, canSit: false,
                     muzzle: smaugJaws, handGun: false, bulk: 12, headTop: 10, signature: 3.4,
                     callout: "Thief! Who dared git stash pop my hoard?", draw: drawSmaug),

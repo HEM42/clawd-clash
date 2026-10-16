@@ -5,7 +5,7 @@ import Foundation
 // with the leaf brooch and big bare hairy feet (no boots), drawn over and around a small blocky body of their own. The
 // face is Clawd's own orange.
 
-let ringsHeroes1: [LOTRHero: Persona] = [
+let ringsHeroes1: [RingsHero: Persona] = [
     .frodo: Persona(name: "Frodough Bagclawds", weapon: .saber, pivot: hobbitHand, headTop: 27, signature: 3.0,
                     callout: "I will take the Ring!", draw: drawFrodo),
     .sam: Persona(name: "Samwise Gamjee", weapon: .saber, pivot: hobbitHand, headTop: 27, signature: 3.2,

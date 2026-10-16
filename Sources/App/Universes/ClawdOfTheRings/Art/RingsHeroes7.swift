@@ -7,7 +7,7 @@ import Foundation
 // forked white beard and a staff, Kill-i stubbled and dark-haired with a short bow, File-i blond with a braided
 // moustache and two swords, and Groan, Gimmie's father, a round grizzled red beard under a fur hat, with a great axe.
 
-let ringsHeroes7: [LOTRHero: Persona] = [
+let ringsHeroes7: [RingsHero: Persona] = [
     .thorin: Persona(name: "Thorin Oakenshell", weapon: .saber, pivot: dwarfHand, headTop: 25, signature: 3.2,
                      callout: "King under the Mountain, and root in every shell.", draw: drawThorin),
     .balin: Persona(name: "Load Balin-cer", weapon: .saber, pivot: dwarfHand, headTop: 23, signature: 3.4,

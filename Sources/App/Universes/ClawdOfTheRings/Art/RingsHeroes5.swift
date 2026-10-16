@@ -4,7 +4,7 @@ import Foundation
 // drawn out in front of the blocky body (so `bulk` says so), the apron, the sleeves and the bald head over and around
 // it. The face is Clawd's own orange, and the eyes stay ink.
 
-let ringsHeroes5: [LOTRHero: Persona] = [
+let ringsHeroes5: [RingsHero: Persona] = [
     .butterbur: Persona(name: "Barliman Butterbug", weapon: .none, bulk: 3, headTop: 22, signature: 3.2,
                         callout: "I'll remember it in the morning… let me file it in the backlog.", draw: drawButterbur),
 ]

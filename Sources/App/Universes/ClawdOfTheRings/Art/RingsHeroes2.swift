@@ -6,7 +6,7 @@ import Foundation
 // shorter than the Men and broader (`headTop` and his axe hand moved to match); the rest stand Clawd's full height.
 // Stride-r is Arrogorn again, hooded and rougher, drawn by the same function (as the White is drawn by the Grey's).
 
-let ringsHeroes2: [LOTRHero: Persona] = [
+let ringsHeroes2: [RingsHero: Persona] = [
     .gandalf: Persona(name: "Gandclawd the Grey", weapon: .saber, pivot: gandalfHand, headTop: 12, signature: 3.0, callout: "A wizard is never late.", draw: drawGandalf),
     .aragorn: Persona(name: "Arrogorn", weapon: .saber, headTop: 20, signature: 3.4, callout: "For Frodough!", draw: drawAragorn),
     .legolas: Persona(name: "Leggolas", weapon: .blaster, shot: .arrow, muzzle: (46, 34), handGun: false, headTop: 20,

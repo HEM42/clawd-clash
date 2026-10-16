@@ -4,10 +4,10 @@ import Foundation
 // character is a `Persona` registered in one of the Art/*.swift files next to its drawing code. Who lives where, the
 // arch-enemies and the Eagle are decided here, in `middleEarthTheme`.
 //
-// Ids: villains `LOTRVillain.rawValue`, heroes 100 + `LOTRHero.rawValue`, plus `Universe.middleEarth.base`. Only ever
+// Ids: villains `RingsVillain.rawValue`, heroes 100 + `RingsHero.rawValue`, plus `Universe.middleEarth.base`. Only ever
 // append cases, so running sessions keep their characters across an update.
 
-enum LOTRVillain: Int, CaseIterable {
+enum RingsVillain: Int, CaseIterable {
     case sauron, saruman, witchKing, nazgul, balrog, gollum, uruk, orc, shelob
     case wormtongue, lurtz, gothmog, mouthOfSauron, watcher, oliphaunt, barrowWight, warg
     case denethor, ugluk, grishnakh, shagrat, ologHai, caveTroll, kingOfTheDead, corsair, haradrim, easterling, oldManWillow
@@ -16,7 +16,7 @@ enum LOTRVillain: Int, CaseIterable {
     var persona: Persona { middleEarthVillainPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-enum LOTRHero: Int, CaseIterable {
+enum RingsHero: Int, CaseIterable {
     case gandalf, frodo, sam, pippin, aragorn, legolas, gimli, boromir, galadriel
     case merry, bilbo, elrond, arwen, theoden, faramir, treebeard, bombadil, gandalfWhite, eowyn
     case radagast, glorfindel, haldir, celeborn, eomer, butterbur, rosie, farmerMaggot, quickbeam, strider
@@ -26,11 +26,11 @@ enum LOTRHero: Int, CaseIterable {
     var persona: Persona { middleEarthHeroPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-let middleEarthVillainPersonas: [LOTRVillain: Persona] = ringsVillains1.merging(ringsVillains2) { a, _ in a }
+let middleEarthVillainPersonas: [RingsVillain: Persona] = ringsVillains1.merging(ringsVillains2) { a, _ in a }
     .merging(ringsVillains3) { a, _ in a }.merging(ringsVillains4) { a, _ in a }
     .merging(ringsVillains5) { a, _ in a }.merging(ringsVillains6) { a, _ in a }.merging(ringsVillains7) { a, _ in a }
     .merging(ringsVillains8) { a, _ in a }
-let middleEarthHeroPersonas: [LOTRHero: Persona] = ringsHeroes1.merging(ringsHeroes2) { a, _ in a }
+let middleEarthHeroPersonas: [RingsHero: Persona] = ringsHeroes1.merging(ringsHeroes2) { a, _ in a }
     .merging(ringsHeroes3) { a, _ in a }.merging(ringsHeroes4) { a, _ in a }
     .merging(ringsHeroes5) { a, _ in a }.merging(ringsHeroes6) { a, _ in a }.merging(ringsHeroes7) { a, _ in a }
     .merging(ringsHeroes8) { a, _ in a }
@@ -39,7 +39,7 @@ let middleEarthHeroPersonas: [LOTRHero: Persona] = ringsHeroes1.merging(ringsHer
 // MARK: - Homes
 
 extension Location {
-    static func middleEarthHome(of villain: LOTRVillain) -> Location {
+    static func middleEarthHome(of villain: RingsVillain) -> Location {
         switch villain {
         case .sauron, .shelob, .grishnakh, .shagrat: return .mountDoom
         case .balrog, .orc, .watcher, .caveTroll: return .moria
@@ -62,7 +62,7 @@ extension Location {
         }
     }
 
-    static func middleEarthHome(of hero: LOTRHero) -> Location {
+    static func middleEarthHome(of hero: RingsHero) -> Location {
         switch hero {
         case .frodo, .sam, .bilbo, .farmerMaggot: return .bagEnd
         case .merry, .pippin, .rosie: return .greenDragon
@@ -86,12 +86,12 @@ extension Location {
 // MARK: - The theme
 
 extension Cast {
-    static func hero(_ h: LOTRHero) -> Cast { Cast(universe: .middleEarth, isDark: false, index: h.rawValue) }
-    static func villain(_ v: LOTRVillain) -> Cast { Cast(universe: .middleEarth, isDark: true, index: v.rawValue) }
+    static func hero(_ h: RingsHero) -> Cast { Cast(universe: .middleEarth, isDark: false, index: h.rawValue) }
+    static func villain(_ v: RingsVillain) -> Cast { Cast(universe: .middleEarth, isDark: true, index: v.rawValue) }
 }
 
 /// Arch-enemies: whenever both are fighting, they're paired with each other first, wherever they are in the line.
-private let middleEarthNemeses: [(LOTRHero, LOTRVillain)] = [
+private let middleEarthNemeses: [(RingsHero, RingsVillain)] = [
     (.gandalf, .balrog), (.frodo, .gollum), (.sam, .shelob), (.aragorn, .sauron), (.boromir, .uruk), (.gimli, .orc),
     (.galadriel, .nazgul), (.hem, .witchKing),
     // The Fellowship, again: who each of them faced on the way.
@@ -114,21 +114,21 @@ private let middleEarthNemeses: [(LOTRHero, LOTRVillain)] = [
 
 /// When these agents are done, the Great Eagle comes for them: Gandclawd from Orthanc's roof, Frodough and Samwise
 /// from the slopes of Mount Doom.
-private let eagleCrew: [LOTRHero] = [.gandalf, .frodo, .sam]
+private let eagleCrew: [RingsHero] = [.gandalf, .frodo, .sam]
 
 let middleEarthTheme = Theme(
     universe: .middleEarth,
-    villains: LOTRVillain.allCases.map(\.persona),
-    heroes: LOTRHero.allCases.map(\.persona),
+    villains: RingsVillain.allCases.map(\.persona),
+    heroes: RingsHero.allCases.map(\.persona),
     places: [.bagEnd, .prancingPony, .moria, .mountDoom, .greenDragon, .oldForest, .barrowDowns, .weathertop, .rivendell,
              .lothlorien, .mirkwood, .edoras, .helmsDeep, .fangorn, .isengard, .minasTirith, .blackGate, .deadMarshes,
              .dolGuldur, .goblinTown, .erebor, .laketown],
     home: { c in
-        c.isDark ? .middleEarthHome(of: LOTRVillain(rawValue: c.index) ?? .sauron) : .middleEarthHome(of: LOTRHero(rawValue: c.index) ?? .frodo)
+        c.isDark ? .middleEarthHome(of: RingsVillain(rawValue: c.index) ?? .sauron) : .middleEarthHome(of: RingsHero(rawValue: c.index) ?? .frodo)
     },
     nemeses: middleEarthNemeses.map { (.hero($0.0), .villain($0.1)) },
     ride: { c in
-        guard c.universe == .middleEarth, !c.isDark, let h = LOTRHero(rawValue: c.index) else { return nil }
+        guard c.universe == .middleEarth, !c.isDark, let h = RingsHero(rawValue: c.index) else { return nil }
         return eagleCrew.contains(h) ? .eagle : nil
     },
     menuIcon: { c, mono in drawOneRingIcon(c, mono: mono) },

@@ -5,7 +5,7 @@ import Foundation
 // Barrow-wight is a Man-sized ghost floating over its own shroud, and the warg rider is an orc astride a wolf as long
 // as a pony, its head forward of where Clawd's front would be.
 
-let ringsVillains4: [LOTRVillain: Persona] = [
+let ringsVillains4: [RingsVillain: Persona] = [
     .watcher: Persona(name: "The Watcher in the Waterfall", weapon: .saber, canSit: false, pivot: watcherRoot, bulk: 8,
                       headTop: 6, signature: 3.2, callout: "Requirements… design… nobody gets out of the Waterfall.", draw: drawWatcher),
     .oliphaunt: Persona(name: "Oli-PHP-aunt", weapon: .saber, armoured: true, canSit: false, pivot: mumakTusks, bulk: 12,

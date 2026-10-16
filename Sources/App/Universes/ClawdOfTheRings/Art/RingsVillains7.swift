@@ -7,7 +7,7 @@ import Foundation
 // Dead is a pale green ghost, see-through and glowing, a skull where the face should be, a head taller for his crown.
 // The Master is round: his belly bulges out of his coat (`bulk` says how far).
 
-let ringsVillains7: [LOTRVillain: Persona] = [
+let ringsVillains7: [RingsVillain: Persona] = [
     .denethor: Persona(name: "Denethrow", weapon: .blaster, shot: .fire, muzzle: (44, 22), headTop: 20, signature: 3.2,
                        callout: "Abandon your try blocks! Throw for your lives!", draw: drawDenethor),
     .kingOfTheDead: Persona(name: "The King of the Dead Code", weapon: .saber, canSit: false, headTop: 16, signature: 3.0,

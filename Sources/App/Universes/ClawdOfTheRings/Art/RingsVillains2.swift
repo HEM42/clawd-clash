@@ -5,7 +5,7 @@ import Foundation
 // at all: the Ballrog is half again a Man's height (the size is drawn on the canvas, so its `headTop`, its whip hand and
 // its `bulk` say so), Shellob half again as wide, low on eight legs.
 
-let ringsVillains2: [LOTRVillain: Persona] = [
+let ringsVillains2: [RingsVillain: Persona] = [
     .balrog: Persona(name: "The Ballrog", weapon: .saber, armoured: true, canSit: false, pivot: balrogHand, bulk: 8, headTop: 11,
                      signature: 3.4, draw: drawBalrog),
     .gollum: Persona(name: "Smeagull", weapon: .saber, pivot: gollumShoulder, headTop: 27, signature: 3.6, callout: "My precious!",

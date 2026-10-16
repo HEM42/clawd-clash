@@ -7,7 +7,7 @@ import Foundation
 // height (the size is drawn on the canvas, so his `headTop`, his branch arm's shoulder and his `bulk` say so), with
 // only a warm Clawd-orange glow left in his eyes.
 
-let ringsHeroes4: [LOTRHero: Persona] = [
+let ringsHeroes4: [RingsHero: Persona] = [
     .elrond: Persona(name: "Elcron", weapon: .saber, headTop: 20, signature: 3.0,
                      callout: "Cast it into the fire! It's in the crontab.", draw: drawElrond),
     .arwen: Persona(name: "Arwen Undoable", weapon: .saber, headTop: 20, signature: 3.4,

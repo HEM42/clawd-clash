@@ -8,7 +8,7 @@ import Foundation
 // hair, leafy circlet and slate mantle, his sword sheathed until he fights; Thrandual's crown of autumn branches,
 // crimson robe and twin curved blades. The face is Clawd's own orange, and the eyes stay ink.
 
-let ringsHeroes6: [LOTRHero: Persona] = [
+let ringsHeroes6: [RingsHero: Persona] = [
     .radagast: Persona(name: "Radagast the Brownfield", weapon: .saber, pivot: radagastHand, headTop: 15, signature: 3.2,
                        callout: "The Greenwood is sick. It's gone brownfield.", draw: drawRadagast),
     .glorfindel: Persona(name: "Glorfind", weapon: .saber, armoured: true, headTop: 20, signature: 3.0,

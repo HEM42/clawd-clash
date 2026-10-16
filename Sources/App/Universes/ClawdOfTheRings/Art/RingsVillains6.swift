@@ -7,7 +7,7 @@ import Foundation
 // Clawd at all: Olog-HA is a quarter again a Man's height, the Cave Troll-ing half again (like the Ballrog), the sizes
 // drawn on the canvas, so their `headTop`, weapon hands and `bulk` say so.
 
-let ringsVillains6: [LOTRVillain: Persona] = [
+let ringsVillains6: [RingsVillain: Persona] = [
     .ugluk: Persona(name: "Ug-lookup", weapon: .saber, headTop: 13, signature: 3.2,
                     callout: "The prisoners are not for eating! They go in the hash map, for O(1) lookup.", draw: drawUgluk),
     .grishnakh: Persona(name: "Grish-NaN", weapon: .saber, pivot: grishnakhHand, headTop: 22, signature: 3.0,

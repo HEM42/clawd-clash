@@ -5,7 +5,7 @@ import Foundation
 // Old Man Pillow isn't Clawd at all: an old willow half again a Man's height (the size is drawn on the canvas, so his
 // `headTop`, the root he grabs with and his `bulk` say so), drooping, grey-green and very, very sleepy.
 
-let ringsVillains5: [LOTRVillain: Persona] = [
+let ringsVillains5: [RingsVillain: Persona] = [
     .lotho: Persona(name: "Lotho Sackville-Bagclawds", weapon: .saber, pivot: hobbitHand, headTop: 27, signature: 3.0,
                     callout: "I'm the Chief now. Every commit in the Shire needs my sign-off.", draw: drawLotho),
     .billFerny: Persona(name: "Bill Firmware", weapon: .saber, headTop: 21, signature: 2.6,

@@ -68,9 +68,9 @@ enum Universe: Int, CaseIterable, Codable {
     var rivals: Set<Int> { self == .starWars ? [0, 1] : [] }
 
     /// One character in two guises, as global ids: never on screen together (the casting and `StatusStore.snapshot`
-    /// keep to it). Clawd of the Rings: Gandclawd the Grey and the White (`LOTRHero` 0 and 17), Arrogorn and Stride-r
-    /// (`LOTRHero` 4 and 28), Sarumanual and Sharkey (`LOTRVillain` 1 and 30), Sourun and the Necro-maintainer
-    /// (`LOTRVillain` 0 and 31).
+    /// keep to it). Clawd of the Rings: Gandclawd the Grey and the White (`RingsHero` 0 and 17), Arrogorn and Stride-r
+    /// (`RingsHero` 4 and 28), Sarumanual and Sharkey (`RingsVillain` 1 and 30), Sourun and the Necro-maintainer
+    /// (`RingsVillain` 0 and 31).
     var guises: [Set<Int>] {
         guard self == .middleEarth else { return [] }
         let hero = base + StatusStore.heroBase
@@ -78,7 +78,7 @@ enum Universe: Int, CaseIterable, Codable {
     }
 
     /// Characters who only ever appear at home, as global id → place key: anywhere else, and on the desktop (no place),
-    /// they're shown as someone else (`Roster.recast`). Clawd of the Rings: Smaug the Stashed (`LOTRVillain` 32) on his
+    /// they're shown as someone else (`Roster.recast`). Clawd of the Rings: Smaug the Stashed (`RingsVillain` 32) on his
     /// hoard in the Lonely Mount-point.
     var homebound: [Int: String] { self == .middleEarth ? [base + 32: "erebor"] : [:] }
 

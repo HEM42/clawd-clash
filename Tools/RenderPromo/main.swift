@@ -469,8 +469,8 @@ func windowSpec(_ u: Universe, needsAt: Double = 99, at override: Location? = ni
         case .clawdberg: return (.hillValley1955, .hero(ClawdbergHero.indianaBones), .villain(ClawdbergVillain.reneBellock),
                                  .hero(ClawdbergHero.martyMcFry), .hero(ClawdbergHero.docBrawn), .villain(ClawdbergVillain.strype),
                                  "You: “get the DeLorean up to 88 mph”", "You: “put it back in the museum”")
-        case .middleEarth: return (.prancingPony, .hero(LOTRHero.aragorn), .villain(LOTRVillain.witchKing), .hero(LOTRHero.legolas),
-                                   .hero(LOTRHero.gimli), .villain(LOTRVillain.orc), "You: “make the sword glow when orcs are near”",
+        case .middleEarth: return (.prancingPony, .hero(RingsHero.aragorn), .villain(RingsVillain.witchKing), .hero(RingsHero.legolas),
+                                   .hero(RingsHero.gimli), .villain(RingsVillain.orc), "You: “make the sword glow when orcs are near”",
                                    "You: “make the Eye watch every request”")
         }
     }()
@@ -794,7 +794,7 @@ func brawl(_ ctx: CGContext, _ u: Universe, local: Double, t: Double, drop: Bool
         case .doctor: return (.hero(DoctorHero.doctorTen), .villain(DoctorVillain.dalick), .hero(DoctorHero.river), .villain(DoctorVillain.sontaron))
         case .clawdFiles: return (.hero(FilesHero.foxClawder), .villain(FilesVillain.smokingClawd), .hero(FilesHero.danaScrawly), .villain(FilesVillain.bountyHunter))
         case .clawdberg: return (.hero(ClawdbergHero.indianaBones), .villain(ClawdbergVillain.reneBellock), .hero(ClawdbergHero.martyMcFry), .villain(ClawdbergVillain.biffTannin))
-        case .middleEarth: return (.hero(LOTRHero.legolas), .villain(LOTRVillain.orc), .hero(LOTRHero.gimli), .villain(LOTRVillain.uruk))
+        case .middleEarth: return (.hero(RingsHero.legolas), .villain(RingsVillain.orc), .hero(RingsHero.gimli), .villain(RingsVillain.uruk))
         }
     }()
     let (ra, rb) = fightRoles(a.weapon, b.weapon), close = fightIsCloseQuarters(a.weapon, b.weapon)
@@ -1328,7 +1328,7 @@ func pickVerse(_ u: Universe) -> (hero: Cast, villain: Cast, sound: String, pop:
     case .doctor: return (.hero(DoctorHero.doctorTen), .villain(DoctorVillain.dalick), "VWORP!", (0x7CC84A, 0xB8EC88))
     case .clawdFiles: return (.hero(FilesHero.foxClawder), .villain(FilesVillain.grey), "ZZZT!", (0xFF7A1E, 0xFFC27A))
     case .clawdberg: return (.hero(ClawdbergHero.indianaBones), .villain(ClawdbergVillain.reneBellock), "CRACK!", (0xA65AE8, 0xD2A8FF))
-    case .middleEarth: return (.hero(LOTRHero.gandalf), .villain(LOTRVillain.balrog), "KA-THOOM!", (0x1EB8A8, 0x8AE8DC))
+    case .middleEarth: return (.hero(RingsHero.gandalf), .villain(RingsVillain.balrog), "KA-THOOM!", (0x1EB8A8, 0x8AE8DC))
     }
 }
 
@@ -4380,8 +4380,8 @@ func royaleSound(_ m: Mix) {
 var ringsTagline: String { Universe.middleEarth.isReleased ? "Now in Clawd Clash · free for macOS" : "Coming soon to Clawd Clash" }
 
 /// A Clawd of the Rings character's name, as the app has it.
-func ringsName(_ h: LOTRHero) -> String { Cast.hero(h).name }
-func ringsName(_ v: LOTRVillain) -> String { Cast.villain(v).name }
+func ringsName(_ h: RingsHero) -> String { Cast.hero(h).name }
+func ringsName(_ v: RingsVillain) -> String { Cast.villain(v).name }
 
 /// The title's face: a tall classical serif, the first of these the Mac has, else its bold system serif.
 func ringsSerif(_ size: CGFloat) -> CTFont {
@@ -4592,10 +4592,10 @@ func ringsBagEnd(_ ctx: CGContext, local l: Double, t: Double) {
     blit(place(.bagEnd, floorRows: 34, t: t), ctx)
     let w = ringsGandalfWalk
     let walk: Double = clamp((l - w.from) / (w.to - w.from))
-    let bilbo = Cast.hero(LOTRHero.bilbo), len = bilbo.signatureLength ?? 3.4
+    let bilbo = Cast.hero(RingsHero.bilbo), len = bilbo.signatureLength ?? 3.4
     let crew: [Actor] = [
-        Actor(cast: .hero(LOTRHero.gandalf), x: lerp(w.x0, w.x1, walk), mode: .idle, walking: walk > 0 && walk < 1),
-        Actor(cast: .hero(LOTRHero.frodo), x: 160, facing: -1, mode: .idle, role: l > w.to - 0.2 ? .cheer : .none),
+        Actor(cast: .hero(RingsHero.gandalf), x: lerp(w.x0, w.x1, walk), mode: .idle, walking: walk > 0 && walk < 1),
+        Actor(cast: .hero(RingsHero.frodo), x: 160, facing: -1, mode: .idle, role: l > w.to - 0.2 ? .cheer : .none),
         Actor(cast: bilbo, x: 222, facing: -1, mode: .idle),
     ]
     for var a in crew {
@@ -4718,7 +4718,7 @@ func ringsHanging(_ who: Actor, _ ctx: CGContext, x: Double, deck g: Int, sway: 
 /// his feet, and he hangs from the edge (Fly, you fools!), lets go and falls into the deep.
 func ringsBridge(_ ctx: CGContext, local l: Double, t: Double) {
     let g = fxH - 42                                          // the bridge's top row (the camera up a little: room below)
-    let gandalf = Cast.hero(LOTRHero.gandalf), balrog = Cast.villain(LOTRVillain.balrog)
+    let gandalf = Cast.hero(RingsHero.gandalf), balrog = Cast.villain(RingsVillain.balrog)
     let sigAt: Double = 3.5, sigLength: Double = gandalf.signatureLength ?? 3.0
     let slamAt: Double = sigAt + sigLength * 0.29             // the staff strikes (his signature's impact)
     let fallAt: Double = 4.5
@@ -4757,7 +4757,7 @@ func ringsBridge(_ ctx: CGContext, local l: Double, t: Double) {
     }
     onStage(ctx, CGRect(x: 0, y: 0, width: W, height: H), scale: 6, ground: Double(g + 2)) {
         // the Fellowship: out over the bridge, then (the Ballrog!) back the way they came, running
-        let walkers: [LOTRHero] = [.frodo, .sam, .pippin, .aragorn, .legolas, .gimli, .boromir]
+        let walkers: [RingsHero] = [.frodo, .sam, .pippin, .aragorn, .legolas, .gimli, .boromir]
         for (i, who) in walkers.enumerated() {
             let x0: Double = 100 - Double(i) * 28
             var a = Actor(cast: .hero(who), x: x0 + min(l, 2.0) * 30, mode: .working, role: .rest, walking: l < 2.0)
@@ -4858,7 +4858,7 @@ func ringsFellowship(_ ctx: CGContext, local l: Double, t: Double) {
         land.rect(x, r, 1, fxH - r, C(0x14101A))
     }
     blit(land, ctx)
-    let walkers: [LOTRHero] = [.gandalf, .aragorn, .legolas, .gimli, .boromir, .frodo, .sam, .pippin]
+    let walkers: [RingsHero] = [.gandalf, .aragorn, .legolas, .gimli, .boromir, .frodo, .sam, .pippin]
     let dark: Double = 0.92 * (1 - clamp((l - 1.5) / 0.4))
     // Gladriel at the far end, and the light round her
     let gf: Double = clamp((l - 3.0) / 0.5)
@@ -4870,9 +4870,9 @@ func ringsFellowship(_ ctx: CGContext, local l: Double, t: Double) {
         if let g = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: glow as CFArray, locations: gs) {
             ctx.drawRadialGradient(g, startCenter: c, startRadius: 0, endCenter: c, endRadius: 520, options: [])
         }
-        var a = Actor(cast: .hero(LOTRHero.galadriel), x: gx, facing: -1, mode: .idle)
+        var a = Actor(cast: .hero(RingsHero.galadriel), x: gx, facing: -1, mode: .idle)
         a.lift = groundY - ringsRidge(gx); a.alpha = gf
-        forcedHabit = HabitPlay(kind: .signature, e: l - 3.0, length: Cast.hero(LOTRHero.galadriel).signatureLength)
+        forcedHabit = HabitPlay(kind: .signature, e: l - 3.0, length: Cast.hero(RingsHero.galadriel).signatureLength)
         draw(a, ctx, t: t)
         forcedHabit = nil
     }
@@ -4892,8 +4892,8 @@ func ringsFellowship(_ ctx: CGContext, local l: Double, t: Double) {
 /// Four quick comic panels, one signature move each.
 func ringsMoves(_ ctx: CGContext, local l: Double, t: Double) {
     ctx.setFillColor(CGColor(gray: 0, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
-    let panels: [(Location, Cast, Double, Double)] = [(.bagEnd, .hero(LOTRHero.frodo), 0.2, 1), (.prancingPony, .hero(LOTRHero.boromir), 0.45, -1),
-                                                      (.moria, .villain(LOTRVillain.gollum), 0.7, 1), (.prancingPony, .hero(LOTRHero.legolas), 0.95, -1)]
+    let panels: [(Location, Cast, Double, Double)] = [(.bagEnd, .hero(RingsHero.frodo), 0.2, 1), (.prancingPony, .hero(RingsHero.boromir), 0.45, -1),
+                                                      (.moria, .villain(RingsVillain.gollum), 0.7, 1), (.prancingPony, .hero(RingsHero.legolas), 0.95, -1)]
     let pw = Double(W) / 2, ph = Double(H) / 2
     for (i, (loc, who, at, facing)) in panels.enumerated() {
         let r = CGRect(x: Double(i % 2) * pw, y: i < 2 ? ph : 0, width: pw, height: ph)
@@ -4908,7 +4908,7 @@ func ringsMoves(_ ctx: CGContext, local l: Double, t: Double) {
             forcedHabit = HabitPlay(kind: .signature, e: e, length: len)
             draw(a, ctx, t: t)
             forcedHabit = nil
-            if who == .hero(LOTRHero.boromir) && e / len >= 0.2 {
+            if who == .hero(RingsHero.boromir) && e / len >= 0.2 {
                 let pop: Double = backOut((e / len - 0.2) * len / 0.25)
                 balloon("One does not simply push to main.", ctx, center: CGPoint(x: 560, y: 420), tail: headPoint(a),
                         size: max(4, 26 * CGFloat(pop)), width: 380)
@@ -4932,10 +4932,10 @@ func ringsMoves(_ ctx: CGContext, local l: Double, t: Double) {
 
 /// Subagents walking in; then the Great Eagle swoops down and carries the leftmost one, Samwise, home.
 func ringsAgents(_ ctx: CGContext, local l: Double, t: Double) {
-    let crew: [Cast] = [.hero(LOTRHero.pippin), .hero(LOTRHero.gimli), .hero(LOTRHero.legolas), .hero(LOTRHero.sam)]
+    let crew: [Cast] = [.hero(RingsHero.pippin), .hero(RingsHero.gimli), .hero(RingsHero.legolas), .hero(RingsHero.sam)]
     let pickupAt: Double = 1.4, grabAt: Double = 2.2, goneAt: Double = 3.6
     let picking = l > pickupAt && l < goneAt
-    agentsOf(ctx, local: l, t: t, guardCast: .hero(LOTRHero.gandalf), crew: l > pickupAt ? Array(crew.prefix(3)) : crew,
+    agentsOf(ctx, local: l, t: t, guardCast: .hero(RingsHero.gandalf), crew: l > pickupAt ? Array(crew.prefix(3)) : crew,
              line: "Every subagent joins the Fellowship. Some fly home.", badgeText: Universe.middleEarth.title.uppercased())
     guard picking else { return }
     // the talons' path, screen pixels: down from the top right to the agent's shoulders, then away up to the left
@@ -4982,10 +4982,10 @@ func ringsEndcard(_ ctx: CGContext, local: Double, t: Double) {
             ctx.restoreGState()
         }
     }
-    let duel = fightRoles(Cast.hero(LOTRHero.aragorn).weapon, Cast.villain(LOTRVillain.witchKing).weapon)
-    let crew: [(Cast, FightRole, AI)] = [(.hero(LOTRHero.gandalf), .cheer, .desktop), (.hero(LOTRHero.aragorn), duel.0, .claude),
-                                         (.villain(LOTRVillain.witchKing), duel.1, .codex), (.villain(LOTRVillain.shelob), .none, .copilot),
-                                         (.villain(LOTRVillain.saruman), .cheer, .qwen), (.villain(LOTRVillain.gollum), .none, .gemini)]
+    let duel = fightRoles(Cast.hero(RingsHero.aragorn).weapon, Cast.villain(RingsVillain.witchKing).weapon)
+    let crew: [(Cast, FightRole, AI)] = [(.hero(RingsHero.gandalf), .cheer, .desktop), (.hero(RingsHero.aragorn), duel.0, .claude),
+                                         (.villain(RingsVillain.witchKing), duel.1, .codex), (.villain(RingsVillain.shelob), .none, .copilot),
+                                         (.villain(RingsVillain.saruman), .cheer, .qwen), (.villain(RingsVillain.gollum), .none, .gemini)]
     let xs: [Double] = [28, 84, 156, 206, 252, 296]
     var placed: [Actor] = []
     for (i, (who, role, ai)) in crew.enumerated() {
@@ -4995,7 +4995,7 @@ func ringsEndcard(_ ctx: CGContext, local: Double, t: Double) {
         // Late in the card Shellob climbs her thread up out of sight, and stays gone (her move held where she's gone; a
         // signature only plays idle).
         let len = who.signatureLength ?? 3.6
-        if who == .villain(LOTRVillain.shelob), local > 2.8 {
+        if who == .villain(RingsVillain.shelob), local > 2.8 {
             a.mode = .idle
             forcedHabit = HabitPlay(kind: .signature, e: min(local - 2.8, 0.19 * len), length: len)
         }
@@ -5054,7 +5054,7 @@ let ringsShots: [Shot] = [
         caption("along the bottom of your screen. They fight while they work.", ctx, local: local, start: 0.6, y: 830, size: 40, color: yellow, weight: .bold)
     },
     Shot(name: "status", start: 40.6, end: 44.8) { ctx, local, t in
-        let cast: [Cast] = [.hero(LOTRHero.frodo), .villain(LOTRVillain.gollum), .villain(LOTRVillain.saruman), .hero(LOTRHero.pippin)]
+        let cast: [Cast] = [.hero(RingsHero.frodo), .villain(RingsVillain.gollum), .villain(RingsVillain.saruman), .hero(RingsHero.pippin)]
         statusOf(ctx, local: local, t: t, cast: cast, badgeText: Universe.middleEarth.title.uppercased(),
                  aside: "(\(cast[3].name): second breakfast, then a nap.)")
     },
@@ -5066,8 +5066,8 @@ let ringsShots: [Shot] = [
         caption("A live card per session: what it's doing, your last prompt, every agent.", ctx, local: local, start: 0.4, y: 890, size: 32, color: yellow, weight: .bold)
     },
     Shot(name: "ais", start: 53.6, end: 58.0) { ctx, local, t in
-        let cast: [Cast] = [.hero(LOTRHero.gandalf), .hero(LOTRHero.aragorn), .villain(LOTRVillain.sauron), .villain(LOTRVillain.saruman),
-                            .villain(LOTRVillain.witchKing), .villain(LOTRVillain.shelob), .villain(LOTRVillain.orc)]
+        let cast: [Cast] = [.hero(RingsHero.gandalf), .hero(RingsHero.aragorn), .villain(RingsVillain.sauron), .villain(RingsVillain.saruman),
+                            .villain(RingsVillain.witchKing), .villain(RingsVillain.shelob), .villain(RingsVillain.orc)]
         everyAI(ctx, local: local, t: t, cast: cast)
     },
     // The end card: Mount Doomscroll, the Great Eagle flies through, the title lands.
@@ -5077,30 +5077,30 @@ let ringsShots: [Shot] = [
 let ringsBeats: [(key: Double, beat: Beat)] = [
     (2.4, ("MEANWHILE...", "Black screen. A yellow comic caption types itself out.",
            "“MEANWHILE, AT \(Location.bagEnd.name.uppercased())...”", "typewriter keys, a bell")),
-    (5.7, ("BAG ENDPOINT", "\(Location.bagEnd.name), as the films open in the Shire: \(ringsName(LOTRHero.gandalf)) walks up the lane; \(ringsName(LOTRHero.frodo)) hops to greet him, \(ringsName(LOTRHero.bilbo)) by the round door unrolls his contract.",
+    (5.7, ("BAG ENDPOINT", "\(Location.bagEnd.name), as the films open in the Shire: \(ringsName(RingsHero.gandalf)) walks up the lane; \(ringsName(RingsHero.frodo)) hops to greet him, \(ringsName(RingsHero.bilbo)) by the round door unrolls his contract.",
            "—", "birdsong, the Shire tune on a whistle, footsteps")),
-    (8.0, ("FIREWORKS", "The app's fireworks trip: the Shire dims to night, one of \(ringsName(LOTRHero.gandalf))'s rockets shoots up and bursts into a fiery dragon that sweeps the place away.",
+    (8.0, ("FIREWORKS", "The app's fireworks trip: the Shire dims to night, one of \(ringsName(RingsHero.gandalf))'s rockets shoots up and bursts into a fiery dragon that sweeps the place away.",
            "—", "a rising whistle, the bang, crackling sparks")),
     (11.7, ("THE RING", "In the falling sparks, embers in the dark. The One Ring falls in slow motion, spinning, and lands with a chime; fire-letters wake along its band, which opens out into the burning title.",
            "CLAWD OF THE RINGS", "a low drone, a chime, a fire whoosh, the big hit, the tune begins")),
-    (18.0, ("THE BRIDGE", "\(Location.moria.name), drums in the deep: \(ringsName(LOTRVillain.balrog)) rises and the Fellowship runs. \(ringsName(LOTRHero.gandalf)) slams his staff, the span falls, the whip drags him to the edge; he hangs, then drops.",
+    (18.0, ("THE BRIDGE", "\(Location.moria.name), drums in the deep: \(ringsName(RingsVillain.balrog)) rises and the Fellowship runs. \(ringsName(RingsHero.gandalf)) slams his staff, the span falls, the whip drags him to the edge; he hangs, then drops.",
             "“YOU SHALL NOT PASS!”  ·  “Fly, you fools!”", "doom-drums, a roar, the staff's boom, stone cracking, a falling sweep")),
-    (25.5, ("THE FELLOWSHIP", "Through the Eye: a ridge at dusk. Eight walkers march single file, dark against the sky, then lit, each name popping up as they pass; \(ringsName(LOTRHero.galadriel)) appears at the far end and raises her light.",
+    (25.5, ("THE FELLOWSHIP", "Through the Eye: a ridge at dusk. Eight walkers march single file, dark against the sky, then lit, each name popping up as they pass; \(ringsName(RingsHero.galadriel)) appears at the far end and raises her light.",
             "the walkers' name tags", "a heroic swell, footsteps, the tune again")),
-    (29.1, ("SIGNATURE MOVES", "Four comic panels: \(ringsName(LOTRHero.frodo)) vanishes; \(ringsName(LOTRHero.boromir)) holds forth; \(ringsName(LOTRVillain.gollum)) argues with himself; \(ringsName(LOTRHero.legolas)) surfs a shield.",
+    (29.1, ("SIGNATURE MOVES", "Four comic panels: \(ringsName(RingsHero.frodo)) vanishes; \(ringsName(RingsHero.boromir)) holds forth; \(ringsName(RingsVillain.gollum)) argues with himself; \(ringsName(RingsHero.legolas)) surfs a shield.",
             "“Everyone gets a signature move.”  →  “Some are more precious than others.”  ·  “One does not simply push to main.”", "a shimmer, a hiss, a whoosh")),
     (33.5, ("THE HOOK", "Three busy terminals, slow push-in.", "“Three AIs. Nine agents. One very confused hobbit.”  →  “Sound familiar?”", "keyboard clicks")),
-    (38.3, ("DESKTOP MODE", "\(ringsName(LOTRHero.legolas)) against \(ringsName(LOTRVillain.orc)), \(ringsName(LOTRHero.gimli)) against \(ringsName(LOTRVillain.uruk)).",
+    (38.3, ("DESKTOP MODE", "\(ringsName(RingsHero.legolas)) against \(ringsName(RingsVillain.orc)), \(ringsName(RingsHero.gimli)) against \(ringsName(RingsVillain.uruk)).",
             "DESKTOP MODE  ·  “Now they're a pixel-art \(Universe.middleEarth.title) battle along the bottom of your screen. They fight while they work.”", "clangs, arrows")),
-    (42.9, ("AT A GLANCE", "\(ringsName(LOTRHero.frodo)) working, \(ringsName(LOTRVillain.gollum)) thinking, \(ringsName(LOTRVillain.saruman))'s jumping NEEDS YOU, \(ringsName(LOTRHero.pippin)) sat down napping.",
-            "“All fun and games, and you still see everything.”  ·  “(\(ringsName(LOTRHero.pippin)): second breakfast, then a nap.)”", "blips, alert beeps")),
-    (47.1, ("SUBAGENTS", "\(ringsName(LOTRHero.gandalf)) stands guard; \(ringsName(LOTRHero.pippin)), \(ringsName(LOTRHero.gimli)), \(ringsName(LOTRHero.legolas)) and \(ringsName(LOTRHero.sam)) arrive with their jobs on their labels; the Great Eagle swoops down and carries \(ringsName(LOTRHero.sam)) home.",
+    (42.9, ("AT A GLANCE", "\(ringsName(RingsHero.frodo)) working, \(ringsName(RingsVillain.gollum)) thinking, \(ringsName(RingsVillain.saruman))'s jumping NEEDS YOU, \(ringsName(RingsHero.pippin)) sat down napping.",
+            "“All fun and games, and you still see everything.”  ·  “(\(ringsName(RingsHero.pippin)): second breakfast, then a nap.)”", "blips, alert beeps")),
+    (47.1, ("SUBAGENTS", "\(ringsName(RingsHero.gandalf)) stands guard; \(ringsName(RingsHero.pippin)), \(ringsName(RingsHero.gimli)), \(ringsName(RingsHero.legolas)) and \(ringsName(RingsHero.sam)) arrive with their jobs on their labels; the Great Eagle swoops down and carries \(ringsName(RingsHero.sam)) home.",
             "“Every subagent joins the Fellowship. Some fly home.”", "footsteps, an eagle's cry")),
-    (51.7, ("WINDOW MODE", "The window in \(Location.prancingPony.name): \(ringsName(LOTRHero.aragorn)) against \(ringsName(LOTRVillain.witchKing)), live cards tick, then the Codex card flips to NEEDS YOU.",
+    (51.7, ("WINDOW MODE", "The window in \(Location.prancingPony.name): \(ringsName(RingsHero.aragorn)) against \(ringsName(RingsVillain.witchKing)), live cards tick, then the Codex card flips to NEEDS YOU.",
             "WINDOW MODE  ·  “Prefer a window? Step into \(Location.prancingPony.name).”", "clashes, a ping")),
-    (56.0, ("EVERY AI", "Seven sessions, one per AI outline: \(ringsName(LOTRHero.gandalf)) (Claude Code, a head taller) and \(ringsName(LOTRHero.aragorn)) against \(ringsName(LOTRVillain.sauron)), \(ringsName(LOTRVillain.saruman)), \(ringsName(LOTRVillain.witchKing)) and \(ringsName(LOTRVillain.shelob)); \(ringsName(LOTRVillain.orc)) in pi's pink.",
+    (56.0, ("EVERY AI", "Seven sessions, one per AI outline: \(ringsName(RingsHero.gandalf)) (Claude Code, a head taller) and \(ringsName(RingsHero.aragorn)) against \(ringsName(RingsVillain.sauron)), \(ringsName(RingsVillain.saruman)), \(ringsName(RingsVillain.witchKing)) and \(ringsName(RingsVillain.shelob)); \(ringsName(RingsVillain.orc)) in pi's pink.",
             "BRING YOUR OWN AI*  ·  “One AI plays everyone. Run two and they pick sides.”  ·  *README for the full list", "magic crackle")),
-    (61.0, ("END CARD", "\(Location.mountDoom.name) under the Eye: the Great Eagle flies across, the crew lines up, CLAWD OF THE RINGS lands, then the icon and the URL; \(ringsName(LOTRVillain.shelob)) climbs her thread up out of sight.",
+    (61.0, ("END CARD", "\(Location.mountDoom.name) under the Eye: the Great Eagle flies across, the crew lines up, CLAWD OF THE RINGS lands, then the icon and the URL; \(ringsName(RingsVillain.shelob)) climbs her thread up out of sight.",
             "CLAWD OF THE RINGS  ·  “Have fun. Keep track.”  ·  “\(ringsTagline)”  ·  github.com/rodclemen/clawd-clash", "an eagle's cry, the closing chord")),
 ]
 
@@ -5162,7 +5162,7 @@ func ringsSound(_ m: Mix) {
     shireTune(m, at: rg + 2.0, bars: 4, vol: 0.04)
     // the bridge: doom-drums, a low drone, the Ballrog's roar, the staff, the stone giving way, the fall
     let br = start("bridge")
-    let slam: Double = br + 3.5 + (Cast.hero(LOTRHero.gandalf).signatureLength ?? 3.0) * 0.29
+    let slam: Double = br + 3.5 + (Cast.hero(RingsHero.gandalf).signatureLength ?? 3.0) * 0.29
     var d: Double = 0
     while br + d < slam { m.boom(br + d, vol: 0.3); m.snare(br + d + 0.3, vol: 0.05); d += 0.6 }
     m.tone(br, 8.6, midi(26), wave: .saw, vol: 0.03, attack: 1.0, release: 1.0)

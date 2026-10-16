@@ -5,7 +5,7 @@ import Foundation
 // orange; Sourun's helmet and the wraiths' hoods show none, which is rather the point of them.
 // Sharkey is Sarumanual fallen low, drawn by the same function; the Necro-maintainer is Sourun with no body at all.
 
-let ringsVillains1: [LOTRVillain: Persona] = [
+let ringsVillains1: [RingsVillain: Persona] = [
     .sauron: Persona(name: "Sourun", weapon: .saber, armoured: true, bulk: 2, headTop: 14, signature: 3.2,
                      callout: "One Ring to rule them all.", draw: drawSauron),
     .saruman: Persona(name: "Sarumanual", weapon: .saber, pivot: sarumanHand, headTop: 18, signature: 3.0,

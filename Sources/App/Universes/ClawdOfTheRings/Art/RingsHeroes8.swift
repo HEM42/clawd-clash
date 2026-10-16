@@ -8,7 +8,7 @@ import Foundation
 // and his `bulk` say so). Quicksort isn't Clawd at all: an Ent, half again a Man's height like B-Treebeard, but a
 // slim, smooth-barked rowan, with only a warm Clawd-orange glow left in his eyes.
 
-let ringsHeroes8: [LOTRHero: Persona] = [
+let ringsHeroes8: [RingsHero: Persona] = [
     .eomer: Persona(name: "Éomore", weapon: .saber, headTop: 13, signature: 3.0,
                     callout: "I am Éomore, son of Éomund, Third Marshal of the Riddermark… --More--", draw: drawEomer),
     .bard: Persona(name: "Bard the Bowmanpage", weapon: .blaster, shot: .arrow, muzzle: (46, 34), handGun: false, headTop: 20, signature: 3.4,

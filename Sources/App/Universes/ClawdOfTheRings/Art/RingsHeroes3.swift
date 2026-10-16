@@ -5,7 +5,7 @@ import Foundation
 // `drawRohanShield`, `drawRohanSword` and the `rohan…` colours in Hem.swift), so they read as one people; Faramirror's
 // longbow is held and drawn the way Leggolas holds and draws his. All three stand Clawd's full height.
 
-let ringsHeroes3: [LOTRHero: Persona] = [
+let ringsHeroes3: [RingsHero: Persona] = [
     .theoden: Persona(name: "King Théodone", weapon: .saber, headTop: 20, signature: 3.0,
                       callout: "Where now the build that was green?", draw: drawTheoden),
     .faramir: Persona(name: "Faramirror", weapon: .blaster, shot: .arrow, muzzle: (46, 34), handGun: false, headTop: 18,
