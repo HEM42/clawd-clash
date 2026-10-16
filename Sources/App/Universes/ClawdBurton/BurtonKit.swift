@@ -136,3 +136,13 @@ func burtonBeetle(_ c: PixelCanvas, x: Int, y: Int, step: Bool, left: Bool = fal
     let rows = [".SSSS..", "SGGSSSK", "SSSSSSK", ".SSSS..", step ? "L.L.L.." : ".L.L.L."]
     c.pattern(x - 3, y - 3, left ? rows.map { String($0.reversed()) } : rows, ["S": shell, "G": shine, "L": burtonInk, "K": burtonInk])
 }
+
+/// Boots or shoes over the bottom of the four standing legs, `height` rows tall; the lifted pair a row higher while
+/// walking. Seated legs fold away, so they get none.
+func burtonBoots(_ c: PixelCanvas, step: Int, _ col: Px, height: Int = 2) {
+    guard !seatedPose else { return }
+    for (i, lx) in [19, 23, 31, 35].enumerated() {
+        let lifted = step >= 0 && i % 2 == step
+        c.rect(lx, (lifted ? 43 : 44) - height, 2, height, col)
+    }
+}
