@@ -21,7 +21,7 @@ https://github.com/user-attachments/assets/f90c90d0-274a-493a-804f-8a52dd08b155
 
 <p align="center"><sub>Full 1080p version: <a href="promo/clawd-clash-promo.mp4">promo/clawd-clash-promo.mp4</a></sub></p>
 
-Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars), **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars), **[Doctor Clawd](https://github.com/rodclemen/doctor-clawd)**, **[The Clawd Files](https://github.com/rodclemen/the-clawd-files)** and **Stevie Clawdberg**. Pick one in Settings, or Clawd Royale for all of them at once. The universes' own pages show each one on its own; this one is the app.
+Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars), **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars), **[Doctor Clawd](https://github.com/rodclemen/doctor-clawd)**, **[The Clawd Files](https://github.com/rodclemen/the-clawd-files)** and **[Stevie Clawdberg](https://github.com/rodclemen/stevie-clawdberg)**. Pick one in Settings, or Clawd Royale for all of them at once. The universes' own pages show each one on its own; this one is the app.
 
 | Star Clawds | Marvelous Clawds |
 |---|---|
