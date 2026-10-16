@@ -1023,7 +1023,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         view.showFrame()
     }
 
-    /// Where each character can be hovered or clicked (villains first, so they win overlaps).
+    /// Where each character can be hovered or clicked: sessions' leaders first, so they win overlaps over agents.
+    /// The one place this is worked out, so hovering and clicking always agree (a flying character included).
     private func hitRects() -> [(String, NSRect)] {
         let s = Self.leaderScale * zoom, c = Self.companionScale * zoom
         return actors.filter { $0.leaving == nil }.sorted { $0.isLeader && !$1.isLeader }.map {
@@ -1678,17 +1679,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
     }
 
-    /// Clicking a villain brings its Claude session's terminal/editor window to the front.
+    /// Clicking a character brings its session's terminal or editor window to the front (an agent's, its session's).
     private func jump(at point: NSPoint) {
-        let s = Self.leaderScale * zoom
-        let c = Self.companionScale * zoom
-        guard let actor = actors.first(where: {
-            $0.isLeader && $0.leaving == nil
-                && NSRect(x: $0.x - 16 * s, y: anchor.y + 5 * s, width: 32 * s, height: 35 * s).contains(point)
-        }) ?? actors.first(where: {   // an agent jumps to its Claude
-            !$0.isLeader && $0.leaving == nil
-                && NSRect(x: $0.x - 16 * c, y: anchor.y + (s - c) * 8 + 5 * c, width: 32 * c, height: 35 * c).contains(point)
-        }) else { return }
+        guard let key = hitRects().first(where: { $0.1.contains(point) })?.0,
+              let actor = actors.first(where: { $0.key == key }) else { return }
         guard let pid = actor.pid else { NSSound.beep(); return }
         Jump.toSession(pid: pid)
     }
