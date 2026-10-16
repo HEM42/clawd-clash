@@ -9,6 +9,20 @@ Its first three universes started as separate apps. Their changelogs from before
 
 Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://github.com/rodclemen/doctor-clawd)), so its whole history is below, from 3.1.0.
 
+## Unreleased
+
+### Changed
+- **The promo, rebuilt for more than three universes** (`Tools/RenderPromo`, `REEL=promo`). This is the four-universe cut that was rendered and shown on 2026-10-15 but never committed; its code is put back here on top of main.
+  - It opens down Doctor Clawd's time vortex: the police box and a character from each universe tumble past, then CLAWD CLASH flies out of the vortex and lands in the middle of the screen.
+  - A Choose your universe section, after a fighting-game character select: characters run along the desktop, then a slanted panel per universe swipes in with a big close-up of its lead.
+  - A comic page of each universe's big moment, and Clawd Royale before the end card: the emblems collide, then the Cantina crossover with Spider-Clawd swinging over everyone.
+  - The window and Random shots are in Doctor Clawd.
+  - The renderer can now play any universe's own trips (`Into.trip`), and the Royale collision has an emblem for each of four sides.
+- **The bloopers.** The Bulk's take is gone.
+  - Take 7 is now the TARDIS landing in the Mos Easy Cantina in front of Darth Vapor ("Ah. Wrong universe."), then failing to take off ("…Handbrake.").
+  - The wrap adds Doctor Ten, Rose Tiler and a Dalick, has Spider-Clawd swing across upside down while Superb-Man flies the other way, and makes Deadpond, Star-Laird and Harold the Duck moonwalk.
+- **The 720p copies of videos over 90 seconds aim a little lower** (8.9 MB instead of 9.5 MB), because the encoder overshoots its target on long videos and the full cut came out over 10 MB.
+
 ## 3.5.1 (2026-10-16)
 
 ### Added
