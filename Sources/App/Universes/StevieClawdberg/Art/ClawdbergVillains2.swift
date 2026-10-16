@@ -11,7 +11,7 @@ let clawdbergVillains2: [ClawdbergVillain: Persona] = [
     .griffTannin: Persona(name: "Griff Tannin", weapon: .saber, motion: .hover, canSit: false, headTop: 15,
                           signature: 2.4, draw: drawGriffTannin),
     .madDogTannin: Persona(name: "Mad Dog Tannin", weapon: .blaster, shot: .bullet, muzzle: (47, 32), headTop: 18,
-                           signature: 3.0, draw: drawMadDogTannin),
+                           signature: 3.0, callout: "Dance! Come on, runt!", draw: drawMadDogTannin),
     .mrStricklaw: Persona(name: "Mr. Stricklaw", headTop: 23, signature: 3.0, callout: "Slacker!",
                           draw: drawMrStricklaw),
     .needles: Persona(name: "Needles", headTop: 20, signature: 2.6, callout: "Chicken!", draw: drawNeedles),
