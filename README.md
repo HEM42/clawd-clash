@@ -29,7 +29,7 @@ Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/r
 | **Detective Clawds** | **Doctor Clawd** |
 | https://github.com/user-attachments/assets/759c0556-da82-4b71-a855-5ab168f14f6f | https://github.com/user-attachments/assets/0d2b3baf-7cc7-4742-a2e5-7c2cea5372b7 |
 | **The Clawd Files** | **Stevie Clawdberg** |
-| https://github.com/user-attachments/assets/d7e07f3a-4abc-454a-a2bc-3a4f3c150738 | https://github.com/user-attachments/assets/19ce502b-a8de-41ef-9a37-3b16bc585722 |
+| https://github.com/user-attachments/assets/c3c0f4a1-ac2b-41b5-9b72-bc03c1e123c9 | https://github.com/user-attachments/assets/76bd2d03-f7af-4e76-9ec8-9087f5f4badd |
 | **Clawd of the Rings** | |
 | https://github.com/user-attachments/assets/d733b9d3-9ca9-4781-b05f-7b20deea4dde | |
 
@@ -39,7 +39,7 @@ Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/r
 
 <p align="center">What happens when the universes get mixed up: the Bulk wanders into the cantina, Darth Vapor makes his big reveal to the wrong kid, Yodle lifts Thorr's hammer, Superb-Man tries to keep up with the jump to hyperspace… and every take ends on CUT!</p>
 
-https://github.com/user-attachments/assets/5c28bcc8-101e-475d-b545-e9c94791e6a0
+https://github.com/user-attachments/assets/cc30764d-80d0-4364-8638-db88c1598480
 
 <p align="center"><sub>Full 1080p version: <a href="promo/clawd-clash-bloopers.mp4">promo/clawd-clash-bloopers.mp4</a></sub></p>
 
