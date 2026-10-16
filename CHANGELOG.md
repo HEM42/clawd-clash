@@ -9,6 +9,11 @@ Its first three universes started as separate apps. Their changelogs from before
 
 Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://github.com/rodclemen/doctor-clawd)), so its whole history is below, from 3.1.0.
 
+## Unreleased
+
+### Changed
+- **`Ride.drives` and `Ride.boardingOffset` moved into `Theme.swift`**, next to `enum Ride`. They lived in The Clawd Files' and Stevie Clawdberg's folders (`FilesRides.swift`, `ClawdbergRides.swift`) as `extension Ride`, though the overlay's flight and boarding code relies on them. Universe folders now hold only universe code, which lets the PR guard forbid a universe from extending `Ride`. No change in behaviour: the sedan, the DeLorean and the jeep still drive, and everyone boards where they did.
+
 ## 3.5.1 (2026-10-16)
 
 ### Added

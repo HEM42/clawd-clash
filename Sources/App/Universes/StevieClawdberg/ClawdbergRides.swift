@@ -129,8 +129,3 @@ func drawParkJeep(_ c: PixelCanvas, ramp: Double, lit: Bool) {
     c.rect(58, 18, 1, 2, lit ? C(0xFFF6C8) : C(0xC8C8B8))
     if ramp > 0 { c.rect(22, 12, 10, 4, C(0xE8D8A8, 0.5 * ramp)) }
 }
-
-extension Ride {
-    /// Stevie Clawdberg's rides that drive in along the ground.
-    var clawdbergDrives: Bool { self == .delorean || self == .jeep }
-}
