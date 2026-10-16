@@ -1281,87 +1281,152 @@ func detectiveShowcase(_ ctx: CGContext, local l: Double, t: Double) {
     }
 }
 
-// MARK: Pick your universe: one comic page
+// MARK: Pick your universe: the pop-art page (as on the social preview), a panel per universe round a centre panel
 
-/// The page's three panels (screen rects): Star Clawds across the top, Marvelous Clawds and Detective Clawds below.
-let pickPanels: [CGRect] = [CGRect(x: 40, y: 590, width: 1840, height: 330), CGRect(x: 40, y: 240, width: 905, height: 330),
-                            CGRect(x: 975, y: 240, width: 905, height: 330)]
-let pickWords = ["VWOOM!", "KAPOW!", "KRAK!"]
-
-/// A brawl, framed into a comic panel: the part of the frame where the crew stands, filling the panel.
-func panelImage(_ u: Universe, _ r: CGRect, local: Double, t: Double) -> CGImage? {
-    guard let full = shotImage({ brawl($0, u, local: local, t: t, drop: false, chrome: false) }) else { return nil }
-    let h = Double(W) * Double(r.height) / Double(r.width), centre = 300.0       // the crew's band, from the bottom
-    let crop = CGRect(x: 0, y: Double(H) - centre - h / 2, width: Double(W), height: h)
-    return full.cropping(to: crop)
-}
-
-/// The Settings choice under the page, `selected` 0…3 (Star Clawds, Marvelous Clawds, Detective Clawds, Random).
-func universePicker(_ ctx: CGContext, selected: Int, alpha: Double) {
-    let names = ["Star Clawds", "Marvelous Clawds", "Detective Clawds", "Random"]
-    let r = CGRect(x: 360, y: 70, width: 1200, height: 120)
-    ctx.saveGState(); ctx.setAlpha(CGFloat(alpha))
-    ctx.setShadow(offset: CGSize(width: 0, height: -8), blur: 24, color: CGColor(gray: 0, alpha: 0.6))
-    ctx.addPath(CGPath(roundedRect: r, cornerWidth: 22, cornerHeight: 22, transform: nil))
-    ctx.setFillColor(CGColor(red: 0.13, green: 0.13, blue: 0.17, alpha: 0.97)); ctx.fillPath()
-    ctx.setShadow(offset: .zero, blur: 0)
-    NSAttributedString(string: "Settings… → Universe", attributes: [.font: NSFont.systemFont(ofSize: 24, weight: .semibold),
-                                                                    .foregroundColor: NSColor(white: 0.7, alpha: 1)])
-        .draw(at: NSPoint(x: r.minX + 28, y: r.maxY - 42))
-    let seg = CGRect(x: r.minX + 24, y: r.minY + 16, width: r.width - 48, height: 50)
-    ctx.addPath(CGPath(roundedRect: seg, cornerWidth: 12, cornerHeight: 12, transform: nil))
-    ctx.setFillColor(CGColor(gray: 0.24, alpha: 1)); ctx.fillPath()
-    let w = seg.width / CGFloat(names.count)
-    for (i, n) in names.enumerated() {
-        let cell = CGRect(x: seg.minX + CGFloat(i) * w + 3, y: seg.minY + 3, width: w - 6, height: seg.height - 6)
-        if i == selected {
-            ctx.addPath(CGPath(roundedRect: cell, cornerWidth: 10, cornerHeight: 10, transform: nil))
-            ctx.setFillColor(CGColor(red: 0.85, green: 0.47, blue: 0.34, alpha: 1)); ctx.fillPath()
-        }
-        let a = NSAttributedString(string: n, attributes: [.font: NSFont.systemFont(ofSize: 24, weight: i == selected ? .bold : .medium),
-                                                           .foregroundColor: NSColor.white])
-        a.draw(at: NSPoint(x: cell.midX - a.size().width / 2, y: cell.midY - a.size().height / 2))
+/// Each universe's face-off on the page, its sound word, and its panel's pop-art colours (base, pattern).
+func pickVerse(_ u: Universe) -> (hero: Cast, villain: Cast, sound: String, pop: (UInt32, UInt32)) {
+    switch u {
+    case .starWars: return (.hero(SWHero.luke), .villain(SWVillain.vader), "VWOOM!", (0xFFD62E, 0xFFF08A))
+    case .marvel: return (.hero(MarvelHero.thor), .villain(MarvelVillain.loki), "KRAKOOM!", (0xE8322E, 0xFF7A70))
+    case .dc: return (.hero(DCHero.batman), .villain(DCVillain.joker), "BLAM!", (0x2EA8E8, 0x8AD8FF))
+    case .doctor: return (.hero(DoctorHero.doctorTen), .villain(DoctorVillain.dalick), "VWORP!", (0x7CC84A, 0xB8EC88))
+    case .clawdFiles: return (.hero(FilesHero.foxClawder), .villain(FilesVillain.grey), "ZZZT!", (0xFF7A1E, 0xFFC27A))
+    case .clawdberg: return (.hero(ClawdbergHero.indianaBones), .villain(ClawdbergVillain.reneBellock), "CRACK!", (0xA65AE8, 0xD2A8FF))
     }
-    ctx.restoreGState()
 }
+
+/// A pop-art fill over `r`: 0 diagonal stripes, 1 halftone dots, 2 a sunburst, 3 swirling rays, 4 dots fading up.
+func pickFill(_ ctx: CGContext, _ r: CGRect, kind: Int, pair: (UInt32, UInt32), spin: Double = 0) {
+    ctx.setFillColor(hexCG(pair.0)); ctx.fill(r)
+    let light = hexCG(pair.1)
+    func dots(_ cell: Double, _ size: (Double) -> Double) {
+        var y = r.minY, row = 0
+        while y < r.maxY + cell {
+            var x = r.minX + (row % 2 == 0 ? 0 : cell / 2)
+            while x < r.maxX + cell {
+                let d = size((y - r.minY) / r.height) * cell
+                if d > 0.5 { ctx.addEllipse(in: CGRect(x: x - d / 2, y: y - d / 2, width: d, height: d)) }
+                x += cell
+            }
+            y += cell; row += 1
+        }
+        ctx.setFillColor(light); ctx.fillPath()
+    }
+    switch kind {
+    case 0:
+        var x = r.minX - r.height
+        while x < r.maxX { ctx.move(to: CGPoint(x: x, y: r.minY)); ctx.addLine(to: CGPoint(x: x + r.height, y: r.maxY)); x += 45 }
+        ctx.setStrokeColor(light); ctx.setLineWidth(18); ctx.strokePath()
+    case 1: dots(18) { _ in 0.55 }
+    case 2, 3:
+        let f = CGPoint(x: r.midX, y: r.midY), far = hypot(r.width, r.height)
+        for k in 0..<40 where k % 2 == 0 {
+            let a0 = Double(k) / 40 * 2 * .pi + spin, a1 = Double(k + 1) / 40 * 2 * .pi + spin
+            if kind == 2 {
+                ctx.move(to: f); ctx.addLine(to: CGPoint(x: f.x + cos(a0) * far, y: f.y + sin(a0) * far))
+                ctx.addLine(to: CGPoint(x: f.x + cos(a1) * far, y: f.y + sin(a1) * far)); ctx.closePath()
+            } else {
+                ctx.move(to: f)
+                ctx.addQuadCurve(to: CGPoint(x: f.x + cos(a0 + 0.6) * far, y: f.y + sin(a0 + 0.6) * far),
+                                 control: CGPoint(x: f.x + cos(a0) * far * 0.5, y: f.y + sin(a0) * far * 0.5))
+                ctx.addLine(to: CGPoint(x: f.x + cos(a1 + 0.6) * far, y: f.y + sin(a1 + 0.6) * far))
+                ctx.addQuadCurve(to: f, control: CGPoint(x: f.x + cos(a1) * far * 0.5, y: f.y + sin(a1) * far * 0.5))
+            }
+        }
+        ctx.setFillColor(light); ctx.fillPath()
+    default: dots(15) { q in 0.15 + 0.6 * q }
+    }
+}
+
+/// The page's panels: one per universe, and the centre one. The layout grows with the universes: two flank the
+/// centre panel, the rest split between a row above and a row below, the gutters leaning alternately.
+let pickLayout: (slots: [CGPath], centre: CGPath) = {
+    let n = Universe.allCases.count, edge = 26.0, gut = 18.0, lean = 27.0, w = Double(W)
+    struct Band { let b0, b1, t0, t1: Double
+        func bottom(_ x: Double) -> Double { b0 + (b1 - b0) * x / Double(W) }
+        func top(_ x: Double) -> Double { t0 + (t1 - t0) * x / Double(W) } }
+    func split(_ band: Band, _ weights: [Double]) -> [CGPath] {
+        let total = weights.reduce(0, +), free = w - edge * 2 - gut * Double(weights.count - 1)
+        var x = edge, out: [CGPath] = []
+        for (k, wt) in weights.enumerated() {
+            let wpx = free * wt / total
+            let l = k == 0 ? 0 : (k % 2 == 0 ? lean : -lean), r = k == weights.count - 1 ? 0 : ((k + 1) % 2 == 0 ? lean : -lean)
+            let x0b = x - l, x0t = x + l, x1b = x + wpx - r, x1t = x + wpx + r
+            let p = CGMutablePath()
+            p.addLines(between: [CGPoint(x: x0b, y: band.bottom(x0b)), CGPoint(x: x1b, y: band.bottom(x1b)),
+                                 CGPoint(x: x1t, y: band.top(x1t)), CGPoint(x: x0t, y: band.top(x0t))])
+            p.closeSubpath(); out.append(p)
+            x += wpx + gut
+        }
+        return out
+    }
+    let flanks = n >= 3 ? 2 : 0, rest = n - flanks, topN = (rest + 1) / 2, botN = rest - topN
+    let top = Band(b0: 742, b1: 790, t0: Double(H) - edge, t1: Double(H) - edge)
+    let mid = Band(b0: 380, b1: 428, t0: 722, t1: 770)
+    let bot = Band(b0: edge, b1: edge, t0: 360, t1: 408)
+    var slots: [CGPath] = []
+    if topN > 0 { slots = split(top, (0..<topN).map { [0.8, 1.3, 1.0][$0 % 3] }) }
+    let middle = split(mid, flanks == 2 ? [0.8, 2.0, 0.8] : [1])
+    if flanks == 2 { slots += [middle[0], middle[2]] }
+    if botN > 0 { slots += split(bot, (0..<botN).map { [1.2, 0.9, 1.0][$0 % 3] }) }
+    return (slots, flanks == 2 ? middle[1] : middle[0])
+}()
 
 func pickYourUniverse(_ ctx: CGContext, local l: Double, t: Double) {
-    halftone(ctx, fullRect, base: CGColor(red: 0.1, green: 0.1, blue: 0.14, alpha: 1), dot: CGColor(red: 0.2, green: 0.2, blue: 0.28, alpha: 1), step: 22)
-    let lands = [0.3, 1.2, 2.1]
-    var selected = 0
-    for (i, u) in Universe.allCases.enumerated() {
+    ctx.setFillColor(hexCG(0xFDFCF6)); ctx.fill(fullRect)
+    let all = Universe.allCases, step = min(0.45, 2.4 / Double(all.count))
+    let lands = all.indices.map { 0.5 + Double($0) * step }
+    // The centre panel first: a turning red sunburst, ONE APP. and PICK YOUR UNIVERSE.
+    let cp = pickLayout.centre, cb = cp.boundingBox
+    ctx.saveGState(); ctx.addPath(cp); ctx.clip()
+    pickFill(ctx, cb, kind: 2, pair: (0xE8322E, 0xFF6A5A), spin: t * 0.08)
+    ctx.restoreGState()
+    ctx.addPath(cp); ctx.setStrokeColor(inkColor); ctx.setLineWidth(8); ctx.strokePath()
+    let head = backOut((l - 0.05) / 0.35)
+    if l > 0.05 {
+        ctx.saveGState()
+        ctx.translateBy(x: cb.midX, y: cb.midY - 20); ctx.rotate(by: 0.05); ctx.scaleBy(x: CGFloat(head), y: CGFloat(head))
+        inkLettered("ONE APP.", CGPoint(x: 0, y: 92), size: 60, color: .white, kern: 4)
+        inkLettered("PICK YOUR UNIVERSE", CGPoint(x: 0, y: 0), size: 104, color: yellow, kern: 4)
+        ctx.restoreGState()
+    }
+    for (i, u) in all.enumerated() where i < pickLayout.slots.count {
         let at = lands[i]
         guard l > at else { continue }
-        selected = i
-        let f = backOut((l - at) / 0.35), r = pickPanels[i]
+        let v = pickVerse(u), path = pickLayout.slots[i], r = path.boundingBox
+        let f = backOut((l - at) / 0.35)
         ctx.saveGState()
         ctx.translateBy(x: r.midX, y: r.midY)
-        ctx.rotate(by: CGFloat((1 - f) * (i == 1 ? -0.12 : 0.12)))
+        ctx.rotate(by: CGFloat((1 - f) * (i % 2 == 0 ? 0.12 : -0.12)))
         ctx.scaleBy(x: CGFloat(1.5 - 0.5 * f), y: CGFloat(1.5 - 0.5 * f))
         ctx.translateBy(x: -r.midX, y: -r.midY)
         ctx.setAlpha(CGFloat(clamp((l - at) / 0.12)))
-        ctx.setFillColor(CGColor(gray: 0, alpha: 1)); ctx.fill(r.offsetBy(dx: 12, dy: -12))
-        if let img = panelImage(u, r, local: l + 3, t: t) { ctx.interpolationQuality = .high; ctx.draw(img, in: r) }
-        ctx.setStrokeColor(inkColor); ctx.setLineWidth(12); ctx.stroke(r)
-        ctx.setStrokeColor(CGColor(gray: 1, alpha: 1)); ctx.setLineWidth(4); ctx.stroke(r.insetBy(dx: -8, dy: -8))
-        captionBox(u.title.uppercased(), ctx, center: CGPoint(x: r.minX + 40 + Double(u.title.count) * 13, y: r.maxY - 36), size: 30)
+        ctx.saveGState(); ctx.addPath(path); ctx.clip()
+        pickFill(ctx, r, kind: i % 5, pair: v.pop)
+        // the face-off, as the app draws it: the hero on the left, the villain on the right, the fight between them
+        let scale = min(7.0, r.height * 0.62 / 44)
+        onStage(ctx, r, scale: scale, ground: (r.height - 34) / scale) {
+            let mid = stageW / S / 2
+            var (h, vl) = versus(v.hero, mid - 22, v.villain, mid + 22)
+            h.label = nil; vl.label = nil
+            draw(h, ctx, t: t); draw(vl, ctx, t: t)
+            drawFX([(h, vl)], ctx, t: t)
+        }
         ctx.restoreGState()
-        // the panel's sound word, popping and fading
+        ctx.addPath(path); ctx.setStrokeColor(inkColor); ctx.setLineWidth(8); ctx.strokePath()
+        captionBox(u.title.uppercased(), ctx, center: CGPoint(x: r.minX + 70 + Double(u.title.count) * 10, y: r.maxY - 48), size: 24)
+        ctx.restoreGState()
+        // its sound word, popping over the border and fading
         let w = l - at
         if w < 0.9 {
             let p = backOut(w / 0.2), fade = 1 - clamp((w - 0.6) / 0.3)
-            let c = CGPoint(x: r.maxX - 160, y: r.maxY - 30)
+            let c = CGPoint(x: r.maxX - 125, y: r.midY + 30)
             ctx.saveGState(); ctx.setAlpha(CGFloat(fade))
-            starburst(ctx, center: c, inner: 70 * p, outer: 120 * p, spikes: 12, color: CGColor(red: 1, green: 0.88, blue: 0.29, alpha: 1), spin: Double(i))
-            let tf = NSFont(name: "Futura-CondensedExtraBold", size: 52 * p) ?? .systemFont(ofSize: 50, weight: .black)
-            let a = NSAttributedString(string: pickWords[i], attributes: [.font: tf, .foregroundColor: NSColor(srgbRed: 0.85, green: 0.12, blue: 0.12, alpha: 1)])
-            a.draw(at: NSPoint(x: c.x - a.size().width / 2, y: c.y - a.size().height / 2))
+            starburst(ctx, center: c, inner: 55 * p, outer: 95 * p, spikes: 12, color: hexCG(v.pop.1), spin: Double(i))
             ctx.restoreGState()
+            inkLettered(v.sound, c, size: CGFloat(44 * p), color: NSColor(srgbRed: 0.85, green: 0.12, blue: 0.12, alpha: 1), alpha: fade, kern: 2)
         }
     }
-    if l > 3.1 { selected = 3 }
-    if l > 0.3 { universePicker(ctx, selected: selected, alpha: clamp((l - 0.3) / 0.3)) }
-    caption("One app. Three universes. Pick yours.", ctx, local: l, start: 0.05, y: 960, size: 60)
 }
 
 /// A showcase's title card: the universe's name in a caption box and a line about it.
@@ -4403,7 +4468,7 @@ let promoBeats: [(key: Double, beat: Beat)] = [
     (2.4, ("COLD OPEN", "Black screen. A yellow comic caption types itself out.", "“MEANWHILE, IN A TERMINAL NEAR YOU...”", "typewriter keys, a bell")),
     (7.0, ("THREE WORLDS", "Hard cut to the icon's three slanted panels, each its universe's place and arch-enemies. CLAWD CLASH slams in across all three, coloured by each panel and cut by the gutters, like the icon.", "CLAWD CLASH", "three fights at once, then the big hit")),
     (11.5, ("THE HOOK", "Three busy terminals (Claude, Codex, Gemini), slow push-in.", "“Three AIs. Nine agents. One very confused human.”  →  “Sound familiar?”", "keyboard clicks")),
-    (17.5, ("PICK YOUR UNIVERSE", "One comic page: three panels slam in one after another, each a desktop brawl in its universe with its name in a caption box and a sound word (VWOOM!, KAPOW!, KRAK!). Under them, the app's Settings → Universe choice clicks along: Star Clawds, Marvelous Clawds, Detective Clawds, then Random.", "“One app. Three universes. Pick yours.”", "three panel slams, clicks")),
+    (17.0, ("PICK YOUR UNIVERSE", "The pop-art page from the social preview: a red sunburst centre panel, and round it a tilted panel per universe slamming in one after another, each a face-off with its name in a caption box and a sound word (VWOOM!, KRAKOOM!, BLAM!, VWORP!, ZZZT!, CRACK!). The layout grows with every universe.", "ONE APP.  ·  PICK YOUR UNIVERSE", "a slam per panel")),
     (24.0, ("STAR CLAWDS", "An edge wipe into space: the camera tilts down to the desert planet, a blockade runner flees under laser fire, and the giant wedge ship slides in overhead until its engines fill the top of the frame.", "STAR CLAWDS caption  ·  “Laser swords, blasters and one very, very big ship.”", "a dark pulse, turbolasers, the rumble")),
     (31.2, ("MARVELOUS CLAWDS", "A KAPOW! burst into the Battle of New York: a space whale noses out of the portal and dives at us, Iron Clawd rockets up firing repulsors.", "MARVELOUS CLAWDS caption  ·  “Shields, hammers, webs and a giant space whale.”", "the portal hum, roars, repulsors")),
     (38.2, ("DETECTIVE CLAWDS", "The Night Beacon transition into Megalopolis: a horned kaiju stomps in, roars, and Superb-Man hits it with heat vision.", "DETECTIVE CLAWDS caption  ·  “Capes, power rings and a horned kaiju to deal with.”", "stomps, two roars, heat vision")),
