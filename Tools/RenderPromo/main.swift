@@ -4377,7 +4377,7 @@ func royaleSound(_ m: Mix) {
 // MARK: The Clawd of the Rings trailer
 
 /// The end card's line under "Have fun. Keep track.": never a count of universes, and "coming soon" until it ships.
-var ringsTagline: String { Universe.middleEarth.isReleased ? "Now in Clawd Clash · free for macOS" : "Coming soon to Clawd Clash" }
+var ringsTagline: String { Universe.middleEarth.isReleased ? "One of many universes in Clawd Clash · free for macOS" : "Coming soon to Clawd Clash" }
 
 /// A Clawd of the Rings character's name, as the app has it.
 func ringsName(_ h: RingsHero) -> String { Cast.hero(h).name }
