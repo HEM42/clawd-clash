@@ -13,10 +13,21 @@ enum HookInstaller {
     static let binaryName = "clawd-clash-hook"
     static let replacedBinaries = ["clawd-wars-hook", "vader-hook", "avengers-hook", "justice-hook"]
     static func isOurs(command: String) -> Bool {
-        command.contains(binaryName) || replacedBinaries.contains { command.contains($0) }
+        runs(binaryName, command) || replacedBinaries.contains { runs($0, command) }
     }
     /// Runs Clawd Clash's own hook (not one of the apps it replaces): what "connected" means.
-    static func isCurrent(command: String) -> Bool { command.contains(binaryName) }
+    static func isCurrent(command: String) -> Bool { runs(binaryName, command) }
+    /// The command runs a file called exactly `name`: a `/` before it, and the end, a quote or a space after. So a
+    /// hook of your own whose command merely mentions the name (`my-clawd-clash-hook-wrapper`) is never touched.
+    /// Not parsed with `binary(_:)`, because the old apps wrote unquoted paths that may contain spaces.
+    private static func runs(_ name: String, _ command: String) -> Bool {
+        var rest = command[...]
+        while let r = rest.range(of: "/" + name) {
+            if r.upperBound == rest.endIndex || "'\" ".contains(rest[r.upperBound]) { return true }
+            rest = rest[r.upperBound...]
+        }
+        return false
+    }
 
     /// The AI (by name) still runs the hook of an app Clawd Clash replaces, so it reports to that app instead.
     static func reportsToReplacedApp(_ name: String) -> Bool {
@@ -40,9 +51,17 @@ enum HookInstaller {
 
     private static func writeSettings(_ root: [String: Any]) throws { try writeJSON(root, to: settingsURL) }
 
-    /// A settings file as a JSON object ([:] when it's missing or empty).
+    /// A settings file as a JSON object ([:] when it's missing or empty). A file that's there but can't be read
+    /// (say, root-owned after `sudo claude`) throws: treating it as empty would write our hooks over everything in it.
     private static func readJSON(_ url: URL) throws -> [String: Any] {
-        guard let data = try? Data(contentsOf: url), !data.isEmpty else { return [:] }
+        let data: Data
+        do { data = try Data(contentsOf: url) } catch let error as CocoaError where error.code == .fileReadNoSuchFile {
+            return [:]
+        } catch {
+            throw NSError(domain: "ClawdClash", code: 4, userInfo: [NSLocalizedDescriptionKey:
+                "Couldn't read \(url.path), so it was left alone: \(error.localizedDescription)"])
+        }
+        guard !data.isEmpty else { return [:] }
         let parsed: Any
         do { parsed = try JSONSerialization.jsonObject(with: data) } catch {
             // Comments are allowed by some of these AIs, but rewriting the file would drop them: leave it alone.
@@ -83,12 +102,16 @@ enum HookInstaller {
         try data.write(to: target, options: .atomic)
     }
 
-    /// Keeps a copy of a file the first time we change it.
-    private static func backUp(_ url: URL, as ext: String) {
+    /// Keeps a copy of a file the first time we change it. Throws if that copy can't be made, so the file is never
+    /// changed without one.
+    private static func backUp(_ url: URL, as ext: String) throws {
         let source = url.resolvingSymlinksInPath()
         let backup = source.appendingPathExtension(ext)
         if FileManager.default.fileExists(atPath: source.path), !FileManager.default.fileExists(atPath: backup.path) {
-            try? FileManager.default.copyItem(at: source, to: backup)
+            do { try FileManager.default.copyItem(at: source, to: backup) } catch {
+                throw NSError(domain: "ClawdClash", code: 5, userInfo: [NSLocalizedDescriptionKey:
+                    "Couldn't back up \(source.path) before changing it, so it was left alone: \(error.localizedDescription)"])
+            }
         }
     }
 
@@ -118,7 +141,7 @@ enum HookInstaller {
 
     static func install() throws {
         var root = try readSettings()
-        backUp(settingsURL, as: "before-vader")
+        try backUp(settingsURL, as: "before-vader")
         var hooks = root["hooks"] as? [String: Any] ?? [:]
         for e in events {
             var groups = withoutOurs(hooks[e] as? [[String: Any]] ?? [])
@@ -296,7 +319,7 @@ enum HookInstaller {
             return
         }
         var root = try read(ai)
-        if !ai.ownFile { backUp(ai.file, as: "before-clawd-clash") }
+        if !ai.ownFile { try backUp(ai.file, as: "before-clawd-clash") }
         if ai.flat { root["version"] = 1 }
         var hooks = root["hooks"] as? [String: Any] ?? [:]
         for e in ai.events {
