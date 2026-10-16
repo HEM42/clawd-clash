@@ -127,3 +127,12 @@ func burtonTriangle(_ c: PixelCanvas, _ a: (Double, Double), _ b: (Double, Doubl
         }
     }
 }
+
+/// A beetle about 7 pixels long, centred on (x, y), facing right (`left` to face left): a dark shell with a lime
+/// shine, its head, and six legs scuttling in two frames (`step`). Beetlejooce drops them; Ooogie Boogie is full of
+/// them.
+func burtonBeetle(_ c: PixelCanvas, x: Int, y: Int, step: Bool, left: Bool = false,
+                  shell: Px = C(0x1E2A16), shine: Px = C(0x9ADB2E)) {
+    let rows = [".SSSS..", "SGGSSSK", "SSSSSSK", ".SSSS..", step ? "L.L.L.." : ".L.L.L."]
+    c.pattern(x - 3, y - 3, left ? rows.map { String($0.reversed()) } : rows, ["S": shell, "G": shine, "L": burtonInk, "K": burtonInk])
+}
