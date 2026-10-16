@@ -42,6 +42,8 @@ func fightRoles(_ a: Weapon, _ b: Weapon) -> (FightRole, FightRole) {
 func fightIsCloseQuarters(_ a: Weapon, _ b: Weapon) -> Bool { a == .saber && b == .saber }
 
 let blasterPeriod = 0.9
+/// Seconds between the bursts of a pulsing scream (`Magic.pulse`); a screamer's drawing can keep time with it.
+let screamPeriod = 1.6
 
 /// A telekinetic grip (`Magic.grip`) in rhythm: how far its victim is lifted, 0…1, at fight time `t`. They're hauled
 /// up, held there kicking, dropped, and get a breath before the next.

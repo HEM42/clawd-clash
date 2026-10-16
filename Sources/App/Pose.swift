@@ -443,6 +443,30 @@ func drawMagic(_ c: PixelCanvas, _ m: Magic, from a: (Double, Double), to b: (Do
         }
         return
     }
+    if m.waves, m.pulse {
+        // A scream: every `screamPeriod` seconds a burst of three thick arcs, close together, travels out slowly,
+        // swelling as it goes and fading as it lands; then a pause before the next.
+        let ang0: Double = atan2(dy, dx), travel = 1.25
+        let cycle = floor(t / screamPeriod)
+        for n in [cycle - 1, cycle] {
+            for k in 0..<3 {
+                let age = t - (n * screamPeriod + Double(k) * 0.16)
+                guard age >= 0, age < travel else { continue }
+                let g = age / travel
+                let f = 1 - (1 - g) * (1 - g) * 0.85 - 0.15 * (1 - g)    // out quickly, easing as it goes
+                let cx = a.0 + dx * f, cy = a.1 + dy * f, r = 2 + g * 7
+                let fade = min(1, (1 - g) / 0.35) * (k == 0 ? 1 : 0.8)
+                for s in -7...7 {
+                    let ang = ang0 + Double(s) / 7 * 1.2
+                    for w in 0..<2 {
+                        let x = Int((cx + cos(ang) * (r + Double(w))).rounded()), y = Int((cy + sin(ang) * (r + Double(w))).rounded())
+                        c.px(x, y, (abs(s) < 4 ? m.core : m.glow).alpha(fade * (w == 0 ? 1 : 0.55)))
+                    }
+                }
+            }
+        }
+        return
+    }
     if m.waves {
         // Sound and force: arcs pulsing out towards the target, wider as they go.
         let count = pick(&v, [5, 4, 6]), spread = pick(&v, [1.1, 0.8, 1.4]), grow = pick(&v, [4.0, 3, 5.5])
