@@ -145,6 +145,15 @@ let clawdbergLineup: [[Extra]] = [
     filesPair(.hero(ClawdbergHero.chiefBroody), true, "", 282, .villain(ClawdbergVillain.bruise), true, "", 352),
     [Extra(who: .hero(ClawdbergHero.eClawd), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
 ]
+/// Clawd of the Rings: the Witch-king and Arrogorn, Leggolas against an orc, Gimli against an Uruk, Gandclawd and the
+/// Ballrog, Samwise cheering.
+let ringsLineup: [[Extra]] = [
+    filesPair(.villain(RingsVillain.witchKing), true, "", 30, .hero(RingsHero.aragorn), true, "", 98),
+    filesPair(.hero(RingsHero.legolas), false, "Check git history", 132, .villain(RingsVillain.orc), false, "Write changelog", 182),
+    filesPair(.hero(RingsHero.gimli), false, "Plan the refactor", 214, .villain(RingsVillain.uruk), false, "Review Overlay.swift", 244),
+    filesPair(.hero(RingsHero.gandalf), true, "", 282, .villain(RingsVillain.balrog), true, "", 342),
+    [Extra(who: .hero(RingsHero.sam), leader: false, label: "Run the test suite", x: 396, facing: 1, role: .cheer)],
+]
 let filesLineup: [[Extra]] = [
     filesPair(.villain(FilesVillain.smokingClawd), true, "", 30, .hero(FilesHero.foxClawder), true, "", 98),
     filesPair(.hero(FilesHero.danaScrawly), false, "Check git history", 132, .villain(FilesVillain.clawcek), false, "Write changelog", 182),
@@ -209,6 +218,7 @@ desktop(dcLineup, file: "desktop-detective-clawds.png")
 desktop(doctorLineup, file: "desktop-doctor-clawd.png")
 desktop(filesLineup, file: "desktop-the-clawd-files.png")
 desktop(clawdbergLineup, file: "desktop-stevie-clawdberg.png")
+desktop(ringsLineup, file: "desktop-clawd-of-the-rings.png")
 
 // MARK: Locations (one sheet per universe)
 
