@@ -42,6 +42,8 @@ func fightRoles(_ a: Weapon, _ b: Weapon) -> (FightRole, FightRole) {
 func fightIsCloseQuarters(_ a: Weapon, _ b: Weapon) -> Bool { a == .saber && b == .saber }
 
 let blasterPeriod = 0.9
+/// Seconds between the bursts of a pulsing scream (`Magic.pulse`); a screamer's drawing can keep time with it.
+let screamPeriod = 1.6
 
 /// What happens to a bolt in a blaster-vs-blaster shoot-out. Plain hits stay in the mix, but most shots are saved.
 enum BoltOutcome { case hit, duck, collide, shield, ricochet }

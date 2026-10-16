@@ -48,6 +48,7 @@ struct Magic {
     var jagged = true                 // forked like lightning; false: a steady, wavering ray
     var rings = false                 // mind powers: rings rippling out along a faint ray (with jagged false)
     var waves = false                 // sound and force: arcs pulsing out towards the target (with jagged false)
+    var pulse = false                 // waves only: a scream sent out in slow throbbing bursts instead of a steady stream
     var spell = false                 // sorcery: a twinkling ribbon of sparkles (with jagged false)
     var rcCar = false                 // a little remote-controlled car racing at the target on two trails of fire
     var notes = false                 // music: big arcs in a heartbeat rhythm, a note riding behind each
