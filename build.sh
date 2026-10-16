@@ -125,7 +125,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSMinimumSystemVersion</key><string>13.0</string>
     <key>LSUIElement</key><true/>
     <key>NSHighResolutionCapable</key><true/>
-    <key>NSHumanReadableCopyright</key><string>MIT licensed. A Marvel fan project for Claude Code.</string>
+    <key>NSHumanReadableCopyright</key><string>MIT licensed. A fan parody project for AI coding sessions.</string>
     <key>NSAppleEventsUsageDescription</key><string>Clicking a character (hero or villain) selects the Terminal or iTerm tab running that AI session.</string>
 </dict>
 </plist>
@@ -183,7 +183,7 @@ pkill -x ClawdClash 2>/dev/null || true
 if [[ $MODE == local ]]; then
     # Not installed: the build/ copy never takes over hooks that still point at a working app (HookInstaller.repairMoved).
     open "$APP"
-    echo "✓ Clawd Clash is running from $APP (not installed). Right-click any villain for options."
+    echo "✓ Clawd Clash is running from $APP (not installed). Right-click any character for options."
     exit 0
 fi
 
@@ -195,4 +195,4 @@ if [[ $HOOKS == 1 ]]; then
 fi
 
 open "$DEST"
-echo "✓ Clawd Clash is running. Right-click any villain for options."
+echo "✓ Clawd Clash is running. Right-click any character for options."

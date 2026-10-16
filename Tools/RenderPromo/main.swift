@@ -24,7 +24,7 @@ import CoreText
 //   build/renderpromo frame promo 9.5            → a single frame at 9.5 s
 //   REEL=full build/renderpromo check            → renders every frame once (prints how far it got)
 //   REEL=full build/renderpromo 720p promo       → promo/720p/Clawd-Clash-Full.mp4: the copy under 10 MB for GitHub
-// See promo-video-idea.md for the whole routine (reels, where each upload goes, building beside another session).
+// clawdify_guide.md's "Promo: the universe's trailer" section has the whole routine (reels, music, wiring a new one).
 
 let W = 1920, H = 1080, fps = 30.0
 
@@ -5081,9 +5081,9 @@ let ringsBeats: [(key: Double, beat: Beat)] = [
     (2.4, ("MEANWHILE...", "Black screen. A yellow comic caption types itself out.",
            "“MEANWHILE, AT \(Location.bagEnd.name.uppercased())...”", "typewriter keys, a bell")),
     (5.7, ("BAG ENDPOINT", "\(Location.bagEnd.name), as the films open in the Shire: \(ringsName(RingsHero.gandalf)) walks up the lane; \(ringsName(RingsHero.frodo)) hops to greet him, \(ringsName(RingsHero.bilbo)) by the round door unrolls his contract.",
-           "—", "birdsong, the Shire tune on a whistle, footsteps")),
+           "(none)", "birdsong, the Shire tune on a whistle, footsteps")),
     (8.0, ("FIREWORKS", "The app's fireworks trip: the Shire dims to night, one of \(ringsName(RingsHero.gandalf))'s rockets shoots up and bursts into a fiery dragon that sweeps the place away.",
-           "—", "a rising whistle, the bang, crackling sparks")),
+           "(none)", "a rising whistle, the bang, crackling sparks")),
     (11.7, ("THE RING", "In the falling sparks, embers in the dark. The One Ring falls in slow motion, spinning, and lands with a chime; fire-letters wake along its band, which opens out into the burning title.",
            "CLAWD OF THE RINGS", "a low drone, a chime, a fire whoosh, the big hit, the tune begins")),
     (18.0, ("THE BRIDGE", "\(Location.moria.name), drums in the deep: \(ringsName(RingsVillain.balrog)) rises and the Fellowship runs. \(ringsName(RingsHero.gandalf)) slams his staff, the span falls, the whip drags him to the edge; he hangs, then drops.",

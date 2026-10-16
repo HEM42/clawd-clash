@@ -10,6 +10,9 @@ build/
 # Agent worktrees
 .claude/
 
+# Claude Security scan reports (kept locally, never committed)
+CLAUDE-SECURITY-*/
+
 # Rendered promo videos and storyboards (large, regenerable). The 720p copies
 # in promo/720p/ are uploaded to GitHub by hand for the README; the full 1080p
 # trailer and blooper reel are committed so the README can link to them

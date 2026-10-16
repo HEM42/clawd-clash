@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Resources/AppIcon.png" width="180" alt="Clawd Clash icon: Captain Americlawd standing on a big CLAWD CLASH, in front of a comic burst over a starburst with a colour for each universe">
+  <img src="Resources/AppIcon.png" width="180" alt="Clawd Clash icon: Captain Americlawd standing on a big CLAWD CLASH, in front of a comic burst over a burst of colours">
 </p>
 
 <h1 align="center">Clawd Clash</h1>
@@ -86,7 +86,7 @@ Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, *
 
 | | Star Clawds | Marvelous Clawds | Detective Clawds | Doctor Clawd | The Clawd Files | Stevie Clawdberg | Clawd of the Rings |
 |---|---|---|---|---|---|---|---|
-| Cast | 46 villains, 35 heroes | 88 villains, 105 heroes | 97 villains, 110 heroes | 42 villains, 56 heroes | 46 villains, 36 heroes | 54 villains, 63 heroes | 38 villains, 37 heroes |
+| Cast | 46 villains, 35 heroes | 88 villains, 105 heroes | 97 villains, 110 heroes | 42 villains, 55 heroes | 46 villains, 35 heroes | 54 villains, 63 heroes | 38 villains, 37 heroes |
 | Places | 22, from the Mos Easy Cantina to the Battle of Froth | 43, from Clawdvengers Tower to Ta Loh | 43, from the Lookout to the Hall of Gloom | 20, from the TARDIS console room to Sanctuary Base 6 | 20, from the X-Files office to the mothership | 23, from Hill Valley in 1955 to the Jolly Roger | 22, from Bag Endpoint to Data Lake-town |
 | Weapons | laser swords, blasters, dark lightning | shields, hammers, claws, repulsors, webs, arrows, magic | fists, swords, heat vision, power rings, clawdarangs, arrows, magic | sonic screwdrivers, Dalick guns, cyber blasters, the odd cricket ball and umbrella | FBI sidearms and flashlights, alien stilettos, black oil, monster claws | bullwhips, revolvers, harpoons, 1.21 gigawatts, flares, pie tins, the hook, dinosaur jaws | swords, axes, bows, wizard staffs swung like swords, orc blades, the Ballrog's fiery whip, dark fire and Barrow-write's chant |
 | Set pieces | Han Yolo and Greedy-O face off, and Han shoots first; the Millennial Falcon picks Han up | arch-enemies face off first; the Clawdjet and the Milano pick people up; flyers take to the air and fight from there | arch-enemies face off first; the Lance and the Clawdwing pick people up; the Batclawd family swings on grapnel lines | arch-enemies face off first; the TARDIS wheezes in to pick people up; the Weeping Angle only moves while nobody looks; when Claude Code compacts its context, its Doctor regenerates into the next one | arch-enemies face off first; an unmarked sedan, a black helicopter or a saucer picks people up; when an FBI agent's session compacts its context, they lose some time: abducted in a beam of light and set back down; each scene's place types itself in, as in the show | arch-enemies face off first, and Indiana Bones shoots the Cairo Swordsman mid-twirl; the DeLorean, the moon bike, the mothership or the park jeep picks people up; when a time traveller's session compacts its context, they hit 88 mph and come back with three sonic booms; T. Wrecks's footsteps ripple a glass of water; Captain Clawk jumps at every tick of the Croc Clock | arch-enemies face off first; the Great Eagle swoops in for Gandclawd, Frodough and Samwise; one character in two guises (Gandclawd the Grey and the White, Arrogorn and Stride-r, Sarumanual and Sharkey, Sourun and the Necro-maintainer) is never on screen twice; Smaug the Stashed only ever appears on his hoard in the Lonely Mount-point; Shellob climbs her thread up out of sight and back down |
@@ -231,7 +231,7 @@ Clawd Clash replaces Clawd Wars, Clawdvengers: Clawd Wars and Justice Clawds: Cl
 
 - A tiny Foundation-only binary, `clawd-clash-hook`, is registered for each connected AI's hook events (session start/end, prompts, tool calls, permission requests, subagents, stop, and context compaction for Claude Code and pi, where a Doctor Clawd Doctor regenerates, a Clawd Files FBI agent loses time or a Stevie Clawdberg time traveller hits 88 mph). pi has no hooks, so its connection is an extension that runs the same binary for each of pi's events. It writes `~/.claude/clawd-clash/state.json` under a file lock and exits silently, so it can never get in Claude's way. It casts new characters from the universe on show.
 - The app reads that twice a second, finds sessions without hooks from the process table, and drops a session the moment its process exits.
-- Everything you see (854 characters, their weapons and effects, 193 places, the ships, the icon) is pixel art drawn in Swift at runtime. The whole app is about 10 MB; only the characters and the place on screen are ever drawn.
+- Everything you see (852 characters, their weapons and effects, 193 places, the ships, the icon) is pixel art drawn in Swift at runtime. The download is about 10 MB (about 20 MB installed); only the characters and the place on screen are ever drawn.
 
 ## Uninstall
 
@@ -244,7 +244,7 @@ rm -rf "/Applications/Clawd Clash.app" ~/.claude/clawd-clash
 
 ## Contributing
 
-Each universe lives in its own folder, `Sources/App/Universes/StarClawds`, `.../MarvelousClawds`, `.../DetectiveClawds`, `.../DoctorClawd` and `.../ClawdFiles`:
+Each universe lives in its own folder under `Sources/App/Universes/`, named after it (`StarClawds`, `MarvelousClawds`, `ClawdOfTheRings`…):
 
 - **A character** is a `Persona` (name, weapon, how it moves, what its shots or magic look like, its signature move) registered next to its drawing function in the universe's `Art/*.swift` files. Add its case at the **end** of the universe's hero or villain enum (ids are saved, so never reorder), give it a home in the roster file, and bump the count in `Sources/Shared/Universe.swift`. `Sources/App/Pose.swift` explains what a drawing function gets and must do.
 - **A place** is a `Place` in the universe's `Places/` files: a still picture and an optional moving layer.

@@ -9,7 +9,8 @@ Any film, show, game or comic works. The assistant reads this file and knows wha
 Each step below ends at an **approval gate**: show the user what you have, then wait. Don't go on to the next step until they've said yes, or they've said what to change and you've changed it. Clawd Clash's universes were built this way, a step at a time with the user signing off. Expect the user to swap characters, rename things, and add ideas of their own.
 
 Reference builds to read when you get stuck:
-- **Doctor Clawd** (`Sources/App/Universes/DoctorClawd/`, commit `37e1d4b`) is the most complete recent universe: roster, art, places, transitions, a ride, regeneration on compaction, and a trailer.
+- **Clawd of the Rings** (`Sources/App/Universes/ClawdOfTheRings/`, released in 3.5.0) is the newest: roster, art, places, nine trips, the Great Eagle, guises and a homebound dragon, and a trailer. It was built on `main` behind `Universe.isReleased` (below).
+- **Doctor Clawd** (`Sources/App/Universes/DoctorClawd/`, commit `37e1d4b`) is the most compact complete one: roster, art, places, transitions, a ride, regeneration on compaction, and a trailer.
 - **The Clawd Files** (`Sources/App/Universes/ClawdFiles/`, released in 3.3.0) was built phase by phase using this process. Its early commits show what a skeleton and a phase look like.
 
 ---
@@ -216,7 +217,7 @@ Once all four gates are passed, write the whole plan to `~/.claude/plans/<slug>.
 8. **Transitions:** the approved table, the style, and what was left out.
 9. **Promo:** which transition opens the trailer.
 
-If the assistant has a memory system, save a short project memory pointing at the plan file and branch. Then create the branch off `main` and start phase 1 when the user says so.
+If the assistant has a memory system, save a short project memory pointing at the plan file and branch. Then create the branch off `main` and start phase 1 when the user says so. Alternatively, build on `main` with the universe unreleased: `Universe.isReleased` returning `false` for it keeps it out of Settings, Random, Clawd Royale and the screen saver's Options, while the tools (Preview, the docs and promo renderers) still see it. Clawd of the Rings was built that way. Flip it to released in phase 6.
 
 ---
 
@@ -308,9 +309,9 @@ Any exhaustive `switch` on `Universe` turns a missed spot into a compile error. 
 - [ ] **`Sources/App/Universes/Hem.swift`:** HEM's persona and costume in every switch.
 - [ ] **`Sources/App/Universes/ComicTransition.swift`:** add the universe to the `nil` cases in phase 1. In phase 5, add a `.<key>(<Prefix>Trip)` case to `duration`, `draw` and `pick`, and update the doc comment.
 - [ ] **`Sources/App/Rides.swift`:** the ride's drawing (phase 4). A ride that drives in along the ground instead of flying also goes in `Ride.drives` (`Theme.swift`).
-- [ ] ⚠︎ **`Sources/Saver/SaverView.swift`:** the Options doc comment, the choices list, and the trip switch (`case "<key>": tripUniverse = …`).
+- [ ] **`Sources/Saver/SaverView.swift`:** nothing to add. The Options list and the trip choice build themselves from `Universe.offered`.
 - [ ] ⚠︎ **`Sources/App/Drills.swift`:** the meditation guard, plus bespoke drills keyed by cast.
-- [ ] ⚠︎ **`Sources/App/Overlay.swift`:** the Playground's sample prompts per universe, `Universe.shown == .<key> ? [...]`. Write five in-universe ones. Also check the Weeping-Angle-style habit hooks in the tick if you add a habit.
+- [ ] ⚠︎ **`Sources/App/Overlay.swift`:** the Playground's sample prompts, a `case .<key>:` in the `switch Universe.shown` that builds them. It has a `default`, so the compiler won't flag a missing one. Write five in-universe ones. Also check the Weeping-Angle-style habit hooks in the tick if you add a habit.
 - [ ] ⚠︎ **`Sources/App/Pose.swift`** (`classic`), **`Habits.swift`**: universe-specific `if`s. Decide whether the new universe joins each one.
 - [ ] ⚠︎ **Compaction mechanic only:** `StatusStore.swift` (PreCompact handling) and `HookInstaller.swift`. Doctor Clawd already registers the hook. Both are the maintainer's (`CONTRIBUTING.md`): from a fork, say in the PR what the mechanic needs instead.
 - [ ] **Clawd Royale** gets the new cast and places through `Universe.allCases`. Check that the menu bar icon and arch-enemies still behave when a scene is in one of the new places.
@@ -410,7 +411,7 @@ Use `doctorShots` as the pattern. The trailer runs about 45–50 seconds:
 5. `REEL=<reel> build/renderpromo video promo` writes `promo/<universe-name>-promo.mp4` at 1080p, H.264 + AAC.
 6. `REEL=<reel> build/renderpromo 720p promo` writes `promo/720p/<Universe-Name>.mp4`, the copy under 10 MB for GitHub. The user uploads it by hand.
 
-`promo/` is git-ignored apart from the main trailer, so rendered videos aren't committed.
+`promo/` is git-ignored apart from the main trailer and the blooper reel, so rendered videos aren't committed.
 
 ---
 

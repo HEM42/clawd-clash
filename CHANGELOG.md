@@ -26,6 +26,23 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 ### Changed
 - **`Ride.drives` and `Ride.boardingOffset` moved into `Theme.swift`**, next to `enum Ride`. They lived in The Clawd Files' and Stevie Clawdberg's folders (`FilesRides.swift`, `ClawdbergRides.swift`) as `extension Ride`, though the overlay's flight and boarding code relies on them. Universe folders now hold only universe code, which lets the PR guard forbid a universe from extending `Ride`. No change in behaviour: the sedan, the DeLorean and the jeep still drive, and everyone boards where they did.
 
+### Fixed
+- **Docs that had gone stale since the universes multiplied.**
+  - `llms.txt`:
+    - its file map points at the real files: each universe's `<Prefix>Roster.swift`, `Art/` and `Places/`, `Persona.swift`, and the saver feed's `Application Support/Clawd Clash/` folder
+    - it names today's symbols: `<Prefix>Hero`/`<Prefix>Villain`, `Location.<prefix>Home(of:)`, `Universe.heroCount`/`agentOnly`
+    - it adds pi where it was missing, and Apple silicon to the requirements
+    - it lists the docs images each tool really writes, and Preview's `drills` and `magic` modes
+  - The README's cast table counted HEM among Doctor Clawd's and The Clawd Files' heroes but nobody else's, now 55 and 35. Its total says 852 characters (3.5.0's 854 was the table's sum plus one too many), and the size says about 10 MB to download and 20 MB installed. Its Contributing section no longer lists only five universe folders.
+  - The clawdify guide:
+    - points at Clawd of the Rings as the newest reference
+    - explains building an unreleased universe on `main` with `Universe.isReleased`
+    - drops the SaverView wiring step (it builds itself now)
+    - says the Playground prompts' `switch` has a `default`, so the compiler won't catch a missing universe
+  - `Tools/Preview` accepts `middleEarth` as a batch and its usage lists every mode. The Transitions tool's comments list all nine Clawd of the Rings trips. RenderPromo points at the guide's Promo section instead of a file that isn't in the repo, and its storyboard placeholders say "(none)" instead of an em dash. The icon's alt text and MakeIcon's comments no longer promise a colour per universe (there are five wedges).
+  - The app's copyright line reads "A fan parody project for AI coding sessions", and `build.sh` says to right-click any character, not any villain.
+  - `.gitignore` ignores `CLAUDE-SECURITY-*/` scan folders, and the empty `Tools/OldPromos` folder is gone.
+
 ## 3.5.1 (2026-10-16)
 
 ### Added

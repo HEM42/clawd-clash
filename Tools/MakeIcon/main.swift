@@ -2,7 +2,7 @@ import AppKit
 import CoreText
 
 // Renders Resources/AppIcon.png (1024²): Captain Americlawd, big, standing on CLAWD CLASH, the name stacked on two
-// lines, in front of a white comic burst over a starburst with a wedge of colour for each universe (speed lines in
+// lines, in front of a white comic burst over a starburst of colour wedges (speed lines in
 // each, halftone between them). Drawn with the app's own sprite code. Simple on purpose, so it still reads at the
 // 16 and 32 px Finder and the Dock use, and it doesn't need changing when a universe is added. build.sh turns it into
 // AppIcon.icns.
@@ -86,7 +86,7 @@ func word(_ s: String, at c: CGPoint, width: CGFloat, height: CGFloat, angle: CG
 
 ctx.saveGState(); ctx.addPath(shape); ctx.clip()
 
-// The starburst: white, halftone, and a wedge of colour for each universe, speed lines running out in each.
+// The starburst: white, halftone, and five wedges of colour, speed lines running out in each.
 let centre = CGPoint(x: 512, y: 640)
 let wedges: [(UInt32, UInt32)] = [(0xE8322E, 0xFF7A70), (0x2EA8E8, 0x8AD8FF), (0xFFD62E, 0xFFF08A), (0xA65AE8, 0xD2A8FF), (0x7CC84A, 0xB8EC88)]
 ctx.setFillColor(hex(0xFFFFFF)); ctx.fill(tile)

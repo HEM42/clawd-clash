@@ -4,15 +4,15 @@ import AVFoundation
 // The comic-book transitions between places, rendered as short clips and a sheet of key frames: Marvel's (`ComicWipe`)
 // or, between two DC places, DC's (`DCComicWipe`), or between two Doctor Clawd places, its trips (`DoctorWipe`), or
 // between two Clawd Files places, its own (`FilesWipe`), each clip ending on the typed caption, or between two Stevie
-// Clawdberg places, its film moments (`ClawdbergWipe`), or, to a Clawd of the Rings place, its trips (`RingsWipe`):
-// the Eye, the map journey and the Red Book.
+// Clawdberg places, its film moments (`ClawdbergWipe`), or, to a Clawd of the Rings place, its nine trips (`RingsWipe`):
+// the Eye, the map journey, the Red Book, the Great Eagles, the Ring, the beacons, the Mirror, the fireworks and the palantír.
 //   Tools/Transitions/build.sh && build/transitions <out folder> [from place] [to place]
 //   build/transitions build/transitions-dc watchtower gotham     DC's fifteen
 //   build/transitions build/transitions-doctor consoleRoom skarro   Doctor Clawd's ten
 //   build/transitions build/transitions-files xFilesOffice area51    The Clawd Files' ten
 //   build/transitions build/transitions-clawdberg hillValley1955 moonHill   Stevie Clawdberg's ten
 //   W=1280 H=720 SHOWCASE=build/clawdberg-transitions.mp4 build/transitions   all ten back to back, one video
-//   build/transitions build/transitions-rings bagEnd mountDoom   the Eye, the map and the Red Book
+//   build/transitions build/transitions-rings bagEnd mountDoom   all nine of its trips
 
 let args = Array(CommandLine.arguments.dropFirst())
 let outDir = args.first ?? "build/transitions"
@@ -85,7 +85,7 @@ func shownClawdberg(_ kind: ClawdbergWipe) -> Transition {
     }
 }
 
-/// Clawd of the Rings's transitions (`RingsTrip`): the Eye, the map journey (from `from` to `to`) and the Red Book.
+/// Clawd of the Rings' transitions (`RingsTrip`), every `RingsWipe` kind; the map journey runs from `from` to `to`.
 func shownRings(_ kind: RingsWipe) -> Transition {
     let trip = RingsTrip(kind: kind, from: from, to: to)
     return Transition(key: "\(kind.rawValue + 1)-\(kind)", title: "\(kind)", duration: kind.duration) { ctx, old, new, k in

@@ -3,18 +3,20 @@ import AppKit
 // Sprite and location contact sheets, for checking art while drawing it.
 //
 //   Tools/Preview/build.sh                         compiles it into build/preview
-//   build/preview cast  out.png ironMan thor ...   every pose of each character (or a batch: heroes1 … villains4, all)
+//   build/preview cast  out.png ironMan thor ...   every pose of each character (or a batch: heroes1 … villains9,
+//                                                  ringsHeroes1 …, a universe's key or title, all)
 //   build/preview fight out.png ironMan ultron     two characters fighting, a few moments of it, with the effects
 //   build/preview drills out.png luke ironMan ...  each solo practice set it does, at a few moments (blank: not one of its);
 //                                                  DRILL=bespoke shows just that one, at more moments
 //   build/preview place out.png avengersTower ...  locations at window size and at screen-saver size
+//   build/preview magic out.png [names…]           every magic user's stream side by side, at a few moments
 //   build/preview rides out.png                    the ships, landed and flying
 //
 // SCALE=4 makes cells bigger (default 3).
 
 let args = Array(CommandLine.arguments.dropFirst())
 guard args.count >= 2 else {
-    print("usage: preview cast|fight|place|rides <out.png> [names…]")
+    print("usage: preview cast|fight|drills|magic|place|rides <out.png> [names…]")
     exit(2)
 }
 let mode = args[0], out = args[1], names = Array(args.dropFirst(2))
@@ -80,7 +82,7 @@ func cast(named n: String) -> [Cast] {
     var batches: [String: [Cast]] = [
         "marvel": Theme.of(.marvel).cast, "starWars": Theme.of(.starWars).cast, "dc": Theme.of(.dc).cast,
         "doctor": Theme.of(.doctor).cast, "clawdFiles": Theme.of(.clawdFiles).cast,
-        "clawdberg": Theme.of(.clawdberg).cast,
+        "clawdberg": Theme.of(.clawdberg).cast, "middleEarth": Theme.of(.middleEarth).cast,
         "all": Theme.of(.marvel).cast,
     ]
     for (i, b) in marvelHeroes.enumerated() { batches["heroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
