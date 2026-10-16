@@ -17,7 +17,7 @@
   <img src="https://img.shields.io/badge/free-to%20use-brightgreen" alt="Free to use">
 </p>
 
-https://github.com/user-attachments/assets/f90c90d0-274a-493a-804f-8a52dd08b155
+https://github.com/user-attachments/assets/99a5df8a-eee4-4f55-aa98-7fce24c0d134
 
 <p align="center"><sub>Full 1080p version: <a href="promo/clawd-clash-promo.mp4">promo/clawd-clash-promo.mp4</a></sub></p>
 
@@ -25,9 +25,9 @@ Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/r
 
 | Star Clawds | Marvelous Clawds |
 |---|---|
-| https://github.com/user-attachments/assets/aff1b2f9-9b96-4dea-8eef-c3f469c93a6b | https://github.com/user-attachments/assets/6b4f2fc2-30cf-4566-a921-0b84d4066867 |
+| https://github.com/user-attachments/assets/35f67088-d170-497e-be08-9812f16cd455 | https://github.com/user-attachments/assets/faef45ca-2aff-4f8d-a276-b8285a81f15a |
 | **Detective Clawds** | **Doctor Clawd** |
-| https://github.com/user-attachments/assets/759c0556-da82-4b71-a855-5ab168f14f6f | https://github.com/user-attachments/assets/0d2b3baf-7cc7-4742-a2e5-7c2cea5372b7 |
+| https://github.com/user-attachments/assets/fbd261a9-c887-4a7d-b287-31e40fb7a322 | https://github.com/user-attachments/assets/6f0bf1af-ab98-4459-a7aa-e6c7e0a90951 |
 | **The Clawd Files** | **Stevie Clawdberg** |
 | https://github.com/user-attachments/assets/c3c0f4a1-ac2b-41b5-9b72-bc03c1e123c9 | https://github.com/user-attachments/assets/76bd2d03-f7af-4e76-9ec8-9087f5f4badd |
 | **Clawd of the Rings** | |
