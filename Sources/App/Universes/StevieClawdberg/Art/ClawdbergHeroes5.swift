@@ -13,7 +13,7 @@ let clawdbergHeroes5: [ClawdbergHero: Persona] = [
     .johnHammend: Persona(name: "John Hammend", headTop: 20, signature: 3.2, callout: "Spared no expense",
                           draw: drawJohnHammend),
     .muldune: Persona(name: "Muldune", weapon: .blaster, shot: .bullet, muzzle: (54, 31), headTop: 20,
-                      signature: 3.2, callout: "Shoot her!", draw: drawMuldune),
+                      signature: 3.2, callout: "Clever girl…", draw: drawMuldune),
     .timMurphey: Persona(name: "Tim Murphey", headTop: 21, signature: 3.2, draw: drawTimMurphey),
     .lexMurphey: Persona(name: "Lex Murphey", headTop: 20, signature: 3.0, callout: "It’s a Unix system!",
                          draw: drawLexMurphey),

@@ -23,6 +23,7 @@ What to look at first, after a night of building Stevie Clawdberg without approv
 ## Done on 2026-10-16 (after review)
 
 - Doc Brawn: RC DeLorean plus the brainwave helmet (your pick). E.Clawd: no beam, just the glowing finger.
+- Decided: Mad Dog says "Dance! Come on, runt!", Little Barry stays quiet, Ray Arnie keeps his cigarette, Billy keeps the sword (he uses one in the film).
 - Every magic user in every universe now has its own small variation (check with `build/preview magic out.png`).
 - Park gates taller, the Jolly Roger a whole galleon from the dock.
 - Trailer: crisp bike, the DeLorean picking Marty up, "universe" under the title. Transitions showcase: `SHOWCASE=` in `Tools/Transitions`.
@@ -44,7 +45,7 @@ The helpers flagged these; some I fixed in the polish pass (marked there), the r
 
 - **Biff's letterman patch** is a "C" (for Clawd), since a real school letter felt like an insignia.
 - **Ray Arnie** has a lit cigarette, as in the film. Easy to drop.
-- **Blue and Trike** are full creature suits. Muldune's callout is "Shoot her!" as the roster says (his famous line is "Clever girl").
+- **Blue and Trike** are full creature suits. Muldune now says "Clever girl…" (2026-10-16: "Shoot her!" was too aggressive).
 - **One-Eyed Willy's** signature (sitting on his gold) briefly sets the shared `seatedPose` flag inside his own draw function, then restores it.
 - **Squint's harpoon** flies as the shared arrow shot (two red fletch pixels); a real harpoon shot would need a new shared shot style. Same for the Gas-Mask Trooper's gas, which flies as a yellow-green streak (his signature draws real puffs).
 - **Bruise the Shark's** signature puts semi-transparent water over his belly; the four legs still show through and below.
