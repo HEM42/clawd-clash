@@ -18,6 +18,13 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
   - A comic page of each universe's big moment, and Clawd Royale before the end card: the emblems collide, then the Cantina crossover with Spider-Clawd swinging over everyone.
   - The window and Random shots are in Doctor Clawd.
   - The renderer can now play any universe's own trips (`Into.trip`), and the Royale collision has an emblem for each of four sides.
+- **The promo shows all seven universes, and makes room for more on its own.** Every part of it that lists universes now comes from the universe list, so a new universe shows up without editing it.
+  - The vortex intro sends the police box and every universe's legend out two at a time, from opposite sides. The second of each pair starts a beat later, on its own curve, reach and spin, so they never mirror and a new universe doesn't make the intro longer.
+  - Choose your universe has a panel per universe, sharing the bottom of the screen equally, each its legend at its home. The names wrap and shrink to fit.
+  - The comic page of big moments has a panel per universe in two rows, adding the saucer over Bellefleur Woods, the DeLorean at 88 mph and the bridge in the Mines of Mori-ah.
+  - The features come from the newest universes' own trailers: the status line-up in The Clawd Files, subagents in Stevie Clawdberg, the window in Clawd of the Rings. Each comes in on its universe's own transition.
+  - Clawd Royale's emblems fly in from all round the frame, however many there are. The crossover has a character from every universe: Fox Clawder against a Dalick, Batclawd against Darth Vapor, Gandclawd against Thanoz, Spider-Clawd swinging over, and E.Clawd's bike flying the other way.
+  - The end card and the captions say how many universes there are, in words.
 - **The bloopers.** The Bulk's take is gone.
   - Take 7 is now the TARDIS landing in the Mos Easy Cantina in front of Darth Vapor ("Ah. Wrong universe."), then failing to take off ("…Handbrake.").
   - The wrap adds Doctor Ten, Rose Tiler and a Dalick, has Spider-Clawd swing across upside down while Superb-Man flies the other way, and makes Deadpond, Star-Laird and Harold the Duck moonwalk.
