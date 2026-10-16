@@ -827,7 +827,7 @@ private func drawMasterCoins(_ c: PixelCanvas, _ s: Double, gold: Px, goldDark: 
     let goldLight = C(0xFFE89A), glint = C(0xFFF8D0)
     let lands = [0.16, 0.26, 0.36, 0.46]
     var n = 1 + lands.filter { s >= $0 }.count
-    if s > 0.9 { n = max(0, n - Int((s - 0.9) / 0.02)) }
+    if s > 0.9 { n = max(0, n - Int((s - 0.9) / 0.016)) }   // all five pocketed by 0.98, the palm with them
     guard n > 0 else { return }
     c.rect(11, 33, 4, 1, clawdOrange); c.px(14, 33, clawdShade)              // the palm
     for i in 0..<n {

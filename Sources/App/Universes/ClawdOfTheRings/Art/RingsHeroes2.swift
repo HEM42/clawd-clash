@@ -151,15 +151,18 @@ private func drawGandalfBody(_ c: PixelCanvas, _ p: Pose, _ w: WizardLook, sig: 
     let swing = sig == nil && !p.walking && !p.seated ? p.melee : nil
     let up = sig.map { Int((slam ? gandalfLift($0) : gandalfRaise($0)).rounded()) } ?? p.armRaise
     let blow = slam ? sig : nil                                               // the slam's jolt and smear
+    // The staff passes from his off hand to the front over the move's first moments, and back over its last.
+    let handover: Double = sig.map { min(1, min($0, 1 - $0) / 0.1) } ?? 1
     drawLegs(c, Look(leg: robeShade), step: p.step)
     drawBoots(c, p.step, w.boots, rows: 1)
     c.oy += p.breathe
     if let s = blow, s >= gandalfImpact, s < gandalfImpact + 0.06 { c.oy += 1 }   // the jolt of the blow
-    if !forward && swing == nil {
+    func offHand(_ c: PixelCanvas) {
         drawStaffGlow(c, at: (12.5, 15.5), w.glow, bright: false, t: p.t)
         drawGandalfStaff(c, w)
         drawStaffGlow(c, at: (12.5, 15.5), w.glow, bright: false, t: p.t, front: true)
     }
+    if !forward && swing == nil { offHand(c) } else if handover < 1 { faded(c, alpha: 1 - handover, offHand) }
     drawBody(c, Look(arm: robe))
     // The robe, the shoulders to the ankles, flaring a little, with a fold or two.
     c.rect(18, 32, 20, 6, robe)
@@ -224,19 +227,31 @@ private func drawGandalfBody(_ c: PixelCanvas, _ p: Pose, _ w: WizardLook, sig: 
     }
     guard forward else { return }
     // The staff in front, the casting arm up along it (both hands on it in the signature), a smear over a slam.
-    if let s = blow, s > 0.25, s < gandalfImpact + 0.02 {
-        let before = gandalfLift(max(0, s - 0.03))
-        c.glowLine(gandalfStaffHead.x, gandalfStaffHead.y - before, gandalfStaffHead.x, gandalfStaffHead.y - Double(up),
-                   core: C(0xE8ECF4, 0.5), glow: clear, coreR: 1.6, glowR: 1.7)
+    func inFront(_ c: PixelCanvas) {
+        if let s = blow, s > 0.25, s < gandalfImpact + 0.02 {
+            let before = gandalfLift(max(0, s - 0.03))
+            c.glowLine(gandalfStaffHead.x, gandalfStaffHead.y - before, gandalfStaffHead.x, gandalfStaffHead.y - Double(up),
+                       core: C(0xE8ECF4, 0.5), glow: clear, coreR: 1.6, glowR: 1.7)
+        }
+        let head = (x: gandalfStaffHead.x, y: gandalfStaffHead.y - Double(up))
+        drawStaffGlow(c, at: head, w.glow, bright: true, t: p.t)
+        drawGandalfStaffForward(c, w, up: up)
+        drawStaffGlow(c, at: head, w.glow, bright: true, t: p.t, front: true)
+        let reach = sig == nil ? 0 : 3                                        // the other hand, above it
+        c.rect(38, 33 - up - reach, 4, 3 + up + reach, robe); c.rect(38, 35, 4, 1, robeShade)
+        c.rect(42, 33 - up, 3, 3, clawdOrange); c.px(42, 35 - up, clawdShade)
+        if reach > 0 { c.rect(42, 30 - up, 3, 3, clawdOrange); c.px(42, 32 - up, clawdShade) }
     }
-    let head = (x: gandalfStaffHead.x, y: gandalfStaffHead.y - Double(up))
-    drawStaffGlow(c, at: head, w.glow, bright: true, t: p.t)
-    drawGandalfStaffForward(c, w, up: up)
-    drawStaffGlow(c, at: head, w.glow, bright: true, t: p.t, front: true)
-    let reach = sig == nil ? 0 : 3                                            // the other hand, above it
-    c.rect(38, 33 - up - reach, 4, 3 + up + reach, robe); c.rect(38, 35, 4, 1, robeShade)
-    c.rect(42, 33 - up, 3, 3, clawdOrange); c.px(42, 35 - up, clawdShade)
-    if reach > 0 { c.rect(42, 30 - up, 3, 3, clawdOrange); c.px(42, 32 - up, clawdShade) }
+    if handover < 1 { faded(c, alpha: handover, inFront) } else { inFront(c) }
+}
+
+/// Draws `art` on a layer of its own and lays it over `c` faded to `alpha`, as if drawn on `c` (its offsets kept).
+private func faded(_ c: PixelCanvas, alpha: Double, _ art: (PixelCanvas) -> Void) {
+    guard alpha > 0.02 else { return }
+    let s = PixelCanvas(c.w, c.h)
+    s.ox = c.ox; s.oy = c.oy; s.baseY = c.baseY
+    art(s)
+    c.paste(s, x: -c.ox, y: -(c.oy + c.baseY), alpha: alpha)
 }
 
 /// Gandclawd's staff in his off hand: a gnarled shaft of old wood with a knot or two, its head a twist of roots, and

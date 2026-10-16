@@ -298,13 +298,17 @@ private let gollumShoulder: (x: Double, y: Double) = (33.5, 33.5)
 /// arguing with Smeagull (…0.75); and turns back, all smiles again.
 private func drawGollum(_ c: PixelCanvas, _ p: Pose) {
     guard let s = p.signature, p.melee == nil else { drawGollumBody(c, p, mood: .plain); return }
-    guard s >= 0.45 && s < 0.75 else { drawGollumBody(c, p, mood: .precious); return }
+    guard s >= 0.45 && s < 0.75 else {
+        // Into his arms over the first moments of the move and back out at the end, so it starts and ends as he stands.
+        drawGollumBody(c, p, mood: .precious, hug: min(1, min(s, 1 - s) / 0.08)); return
+    }
     mirrored(c, aboutX: 27.5) { drawGollumBody($0, p, mood: .gollum) }
 }
 
 private enum GollumMood { case plain, precious, gollum }
 
-private func drawGollumBody(_ c: PixelCanvas, _ p: Pose, mood: GollumMood) {
+/// `hug` (precious only): how far into hugging himself he is, from 0 (arms down, as he stands) to 1.
+private func drawGollumBody(_ c: PixelCanvas, _ p: Pose, mood: GollumMood, hug: Double = 1) {
     let skin = C(0xB8B49A), shade = C(0x8A866E), light = C(0xD0CCB4), eye = C(0xA8D8F0)
     let cloth = C(0x6A5A3A), clothDark = C(0x4E422A), hair = C(0x7A7460), claw = C(0xE8E4D0), mouth = C(0x5A5444)
     // Crouched legs: the knees out to the sides, the feet flat and long-toed.
@@ -326,10 +330,11 @@ private func drawGollumBody(_ c: PixelCanvas, _ p: Pose, mood: GollumMood) {
         }
     }
     c.oy += p.breathe
-    if mood == .precious { c.ox += Int((2 * sin(p.lt * 3.4)).rounded()) }        // rocking side to side, the precious in his arms
+    if mood == .precious { c.ox += Int((2 * hug * sin(p.lt * 3.4)).rounded()) }  // rocking side to side, the precious in his arms
     // The thin arms, down to the floor in front of him and behind (the front one is drawn below when it's busy).
-    if mood != .precious { line(c, 21, 33, 18.5, 39, skin, 0.55); c.rect(17, 39, 2, 2, skin); c.px(16, 40, claw) }
-    if mood == .plain && p.melee == nil {
+    let armsDown = mood == .plain || (mood == .precious && hug <= 0)
+    if mood != .precious || armsDown { line(c, 21, 33, 18.5, 39, skin, 0.55); c.rect(17, 39, 2, 2, skin); c.px(16, 40, claw) }
+    if armsDown && p.melee == nil {
         line(c, 33, 33, 37, 38, skin, 0.55)
         c.rect(37, 38, 2, 2, skin); c.px(39, 39, claw); c.px(39, 38, claw)
     }
@@ -345,7 +350,7 @@ private func drawGollumBody(_ c: PixelCanvas, _ p: Pose, mood: GollumMood) {
     // A few lank strands of hair.
     for (x, y) in [(24, 28), (23, 27), (27, 28), (27, 27), (30, 28), (31, 27)] { c.px(x, y, hair) }
     let palette: [Character: Px] = ["E": eye, "W": white, "K": ink, "h": shade]
-    switch mood {
+    switch mood == .precious && hug < 0.5 ? .plain : mood {   // his eyes go wide halfway into the hug
     case .plain:
         // The huge round eyes, the pupils looking ahead; a thin mouth and a snaggle tooth, or open to bite.
         for ex in [22, 28] { c.pattern(ex, 30, [".EE.", "EEWE", "EEKK", "EEKK", ".EE."], palette) }
@@ -376,6 +381,20 @@ private func drawGollumBody(_ c: PixelCanvas, _ p: Pose, mood: GollumMood) {
     c.rect(23, 37, 9, 1, clothDark)
     for x in stride(from: 23, through: 31, by: 2) where 39 + c.oy <= 43 { c.px(x, 39, cloth) }
     switch mood {
+    case .precious where hug <= 0:
+        break                                                                       // arms still down, drawn above
+    case .precious where hug < 1:
+        // On the way into the hug (or out of it): the arms swing up from the floor to cross in front of him.
+        func mix(_ a: (Double, Double), _ b: (Double, Double)) -> (Double, Double) {
+            (a.0 + (b.0 - a.0) * hug, a.1 + (b.1 - a.1) * hug)
+        }
+        for (sh, down, elbow, wrist) in [((21.0, 33.0), (18.5, 39.0), (18.0, 36.5), (24.0, 35.0)),
+                                         ((33.0, 33.0), (37.5, 38.5), (37.0, 36.5), (31.0, 35.0))] {
+            let e = mix(((sh.0 + down.0) / 2, (sh.1 + down.1) / 2), elbow), w = mix(down, wrist)
+            line(c, sh.0, sh.1, e.0, e.1, skin, 0.55)
+            line(c, e.0, e.1, w.0, w.1, skin, 0.55)
+            c.rect(Int(w.0.rounded()) - 1, Int(w.1.rounded()), 2, 2, skin)
+        }
     case .precious:
         // Both arms wrapped round himself, the elbows sticking out at his sides, the hands cupped together under his
         // chin, the fingers of one stroking what's in them; and over his head, the twinkle of something precious.

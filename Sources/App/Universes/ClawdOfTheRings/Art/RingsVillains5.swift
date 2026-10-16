@@ -255,6 +255,8 @@ private func drawWillow(_ c: PixelCanvas, _ p: Pose) {
     let frond = C(0x8A9A6A), frondDark = C(0x66764E), frondLight = C(0xB0C08C)
     let sway: Double = sin(p.lt * 1.1)
     let yawn = p.signature.map { willowYawn($0) }
+    // The yawn's hollow fades in over his own as the move starts, and back out as it ends.
+    let settle = p.signature.map { min(1, min($0, 1 - $0) / 0.08) } ?? 1
     let stretch = Int(((yawn?.stretch ?? 0) * 2).rounded())
     // The fronds hanging behind the trunk (the back of the crown).
     drawFronds(c, p, xs: [12, 14, 16, 18, 20, 23], top: 14, length: 22, col: frondDark, light: frond, phase: 0.5)
@@ -277,7 +279,7 @@ private func drawWillow(_ c: PixelCanvas, _ p: Pose) {
         for fx in [l + 3, l + 8, r - 4] where (y * 3 + fx) % 5 != 0 { c.px(fx, y, barkDark) }
     }
     // The great hollow, low in the trunk (in the signature, drawn over the face below).
-    if yawn == nil {
+    if yawn == nil || settle < 1 {
         c.pattern(24, 29, [
             "...FF...",
             "..FHHF..",
@@ -337,7 +339,7 @@ private func drawWillow(_ c: PixelCanvas, _ p: Pose) {
     }
     // The grabbing root, from the base of the trunk (on the ground, so it doesn't breathe): coiled at rest; swung, out
     // along the floor and up along the swing, its grasping tip curling over and lagging behind.
-    if let y = yawn, let s = p.signature { drawYawn(c, y, s: s, t: p.t) }
+    if let y = yawn, let s = p.signature { drawYawn(c, y, s: s, t: p.t, alpha: settle) }
     c.oy -= p.breathe - stretch
     // Not his bark: an old root, near-black earthy brown and mossy along its length, paling to a raw fresh tip.
     let root = C(0x4A3F2E), rootDark = C(0x2A241A), moss = C(0x6E9440), rootTip = C(0xD8CCA4)
@@ -380,10 +382,11 @@ private func willowYawn(_ s: Double) -> WillowYawn {
 /// What the yawn changes on Old Man Pillow (drawn over his face and trunk): the hollow as the yawn has it, splinters
 /// round the rim when it gapes; his open eye screwed shut while he yawns and flying wide when the crack snaps shut,
 /// the snap's lines either side of it, and the burst of "z"s puffing up out of his crown afterwards.
-private func drawYawn(_ c: PixelCanvas, _ y: WillowYawn, s: Double, t: Double) {
-    let bark = C(0x7A7C68), barkLight = C(0x9A9C86), furrow = C(0x3A3C30), hollow = C(0x1A1C16)
+/// `alpha`: how much of the yawn's hollow shows over his own (it fades in and out at the ends of the move).
+private func drawYawn(_ c: PixelCanvas, _ y: WillowYawn, s: Double, t: Double, alpha: Double = 1) {
+    let bark = C(0x7A7C68), barkLight = C(0x9A9C86).alpha(alpha), furrow = C(0x3A3C30), hollow = C(0x1A1C16)
     // The hollow: a furrowed rim round a dark oval, a little crooked, down to a one-pixel crack.
-    for (r, col) in [(1.0, furrow), (0.0, hollow)] {
+    for (r, col) in [(1.0, furrow.alpha(alpha)), (0.0, hollow.alpha(alpha))] {
         let rx = y.rx + r, ry = y.ry + r
         for row in Int((y.y - ry).rounded(.down))...Int((y.y + ry).rounded(.up)) {
             let dy = (Double(row) + 0.5 - y.y) / ry

@@ -168,10 +168,11 @@ private func drawFrodo(_ c: PixelCanvas, _ p: Pose) {
 private func drawFrodoBody(_ c: PixelCanvas, _ p: Pose, sig: Double?) {
     let k = frodoKit, gold = ringGold, chain = ringChain
     // The Ring: on its chain at the chest; lifted on the chain up to the hand (…0.15); off the chain and slipped on
-    // (…0.35); on the finger from then on.
+    // (…0.35); on the finger until he takes it off and tucks it back on its chain at his chest (0.9…1).
     let lift: Double = sig.map { smooth(min(1, $0 / 0.15)) } ?? 0
     let slip: Double = sig.map { smooth(min(1, max(0, ($0 - 0.15) / 0.2))) } ?? 0
-    let raise = sig == nil ? 0 : Int((4 * lift - 2 * slip).rounded())
+    let back: Double = sig.map { smooth(max(0, ($0 - 0.9) / 0.1)) } ?? 0
+    let raise = sig == nil ? 0 : Int(((4 * lift - 2 * slip) * (1 - back)).rounded())
     drawHobbit(c, p, k, armRight: raise, sheath: p.melee == nil)
     if let a = p.melee {
         for (i, ta) in p.trail.enumerated() { drawSting(c, angle: ta, alpha: 0.3 / Double(i + 1)) }
@@ -185,6 +186,13 @@ private func drawFrodoBody(_ c: PixelCanvas, _ p: Pose, sig: Double?) {
         // Up on the chain, out of the shirt, into his hand.
         let rx = 28 + (hand.x - 28) * lift, ry = 38 + (hand.y - 1 - 38) * lift
         let x = Int(rx.rounded()), y = Int(ry.rounded())
+        dots(c, 26, 36, x, y, chain); dots(c, 29, 36, x, y, chain)
+        c.px(x, y, gold)
+        return
+    }
+    if back > 0 {
+        // Off the finger and down on its chain to his chest again.
+        let x = Int((hand.x + (28 - hand.x) * back).rounded()), y = Int((hand.y - 1 + (38 - (hand.y - 1)) * back).rounded())
         dots(c, 26, 36, x, y, chain); dots(c, 29, 36, x, y, chain)
         c.px(x, y, gold)
         return
@@ -303,7 +311,8 @@ private func drawPippin(_ c: PixelCanvas, _ p: Pose) {
     c.oy = ground
     if s < 0.3 {
         let u = max(0, (s - 0.12) / 0.18)
-        drawBucket(c, x: 45 + 5 * smooth(u), y: 40, angle: u > 0.75 ? 70 * (u - 0.75) / 0.25 : 0)
+        drawBucket(c, x: 45 + 5 * smooth(u), y: 40, angle: u > 0.75 ? 70 * (u - 0.75) / 0.25 : 0,
+                   alpha: min(1, s / 0.05))                                // fading in with the well
     } else {
         let u = (s - 0.3) / 0.7
         drawBucket(c, x: 51 + 4 * u, y: 40 + 60 * pow(u, 1.5), angle: 70 + 300 * u)
@@ -328,9 +337,9 @@ private func drawWell(_ c: PixelCanvas, alpha: Double) {
 }
 
 /// A little wooden bucket with an iron band and a handle, standing on (`x`, `y`) (its bottom sits on the row above),
-/// tipped `angle` degrees.
-private func drawBucket(_ c: PixelCanvas, x: Double, y: Double, angle: Double) {
-    prop(c, at: (x, y - 1), angle: angle) { s in
+/// tipped `angle` degrees, faded to `alpha`.
+private func drawBucket(_ c: PixelCanvas, x: Double, y: Double, angle: Double, alpha: Double = 1) {
+    prop(c, at: (x, y - 1), angle: angle, alpha: alpha) { s in
         let wood = C(0x6A4A2A), dark = C(0x4A3220), band = C(0x8A8E94)
         s.rect(18, 20, 4, 2, wood); s.rect(17, 19, 6, 1, wood)
         s.rect(18, 20, 4, 1, band)
