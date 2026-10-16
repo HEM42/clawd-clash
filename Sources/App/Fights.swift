@@ -280,12 +280,13 @@ func drawFightFX(_ c: PixelCanvas, t: Double, left: Fighter, right: Fighter) {
             let from = (h.x, h.y - 2 * me.k)
             let to: (x: Double, y: Double)
             switch foeRole {
+            case _ where me.magic.gadget: to = foe.body   // a touch or a gadget goes for the foe, not its blade
             case .block: to = foe.blade(-60, 13)
             case .zap: to = ((me.x + foe.x) / 2, h.y - 4)
             default: to = foe.body
             }
             drawMagic(c, me.magic, from: from, to: (to.x, to.y), t: t + me.side)
-            drawSparks(c, x: to.x, y: to.y, t: t + me.side, size: 2.5)
+            if !me.magic.gadget { drawSparks(c, x: to.x, y: to.y, t: t + me.side, size: 2.5) }
         default:
             break
         }

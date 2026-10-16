@@ -6,7 +6,7 @@ import Foundation
 let clawdbergHeroes2: [ClawdbergHero: Persona] = [
     .martyMcFry: Persona(name: "Marty McFry", weapon: .blaster, shot: .thrown(C(0xD4D8E0)), muzzle: (45, 32),
                          headTop: 20, signature: 3.4, callout: "Nobody calls me chicken!", draw: drawMartyMcFry),
-    .docBrawn: Persona(name: "Doc Brawn", weapon: .lightning, magic: Magic(core: C(0xF4F8FF), glow: C(0x86B4FF)),
+    .docBrawn: Persona(name: "Doc Brawn", weapon: .lightning, magic: Magic(core: C(0xFFE07A), glow: C(0xFF6A1A), jagged: false, rcCar: true),
                        headTop: 18, signature: 2.8, callout: "Great Scott!", draw: drawDocBrawn),
     .jenniferParka: Persona(name: "Jennifer Parka", headTop: 19, draw: drawJenniferParka),
     .georgeMcFry: Persona(name: "George McFry", weapon: .saber, headTop: 21, signature: 3.0,
@@ -116,8 +116,8 @@ private func drawMartyMcFry(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Doc Brawn
 
 /// Doc Brawn: Clawd with a great wild shock of white hair sticking out every way, welding goggles pushed up on his
-/// forehead, a long white lab coat (its tails over his legs) over a yellow shirt and a dark tie. He fights with forked
-/// blue-white lightning: 1.21 gigawatts. Signature: struck by a thought, he claps a hand to his head, eyes wide, the
+/// forehead, a long white lab coat (its tails over his legs) over a yellow shirt and a dark tie. In a fight he puts on
+/// the brainwave analyser and sends a remote-controlled DeLorean racing at the foe on two trails of fire. Signature: struck by a thought, he claps a hand to his head, eyes wide, the
 /// alarm marks going off over him.
 private func drawDocBrawn(_ c: PixelCanvas, _ p: Pose) {
     let coat = C(0xF0F0EA), coatD = C(0xC4C6C0), shirt = C(0xE8D890), tie = C(0x3A3A48)
@@ -170,6 +170,28 @@ private func drawDocBrawn(_ c: PixelCanvas, _ p: Pose) {
         return
     }
     c.rect(15, 33, 3, 3, coat)
+    if p.zap != nil { drawDocGadget(c, p) }
+}
+
+/// Doc's kit while he fights: the brainwave analyser on his head (a metal cap bristling with blinking bulbs and wires)
+/// and the remote control in his hand, its aerial up and red light blinking, steering a little DeLorean at the foe.
+private func drawDocGadget(_ c: PixelCanvas, _ p: Pose) {
+    let hy = Int(Sprite.hand.y) - p.armRaise, hx = Int(Sprite.hand.x)
+    let metal = C(0xA8AEB8), metalD = C(0x6E747E), wire = C(0xD04A3A)
+    c.rect(17, 17, 22, 5, metal); c.rect(19, 15, 18, 2, metal); c.rect(17, 21, 22, 1, metalD)
+    c.rect(23, 14, 10, 1, metalD)
+    let bulbs = [(18, 16), (22, 13), (27, 12), (32, 13), (37, 16), (20, 18), (35, 18)]
+    let cols = [C(0xFF5A4A), C(0x6AFF6A), C(0xFFE04A), C(0x5AB4FF)]
+    for (i, b) in bulbs.enumerated() {
+        c.px(b.0, b.1 + 1, metalD)
+        c.px(b.0, b.1, (Int(p.t * 7) + i) % 3 != 0 ? cols[i % 4] : metalD)
+    }
+    for (x, y) in [(39, 20), (40, 21), (41, 22), (41, 23), (16, 20), (15, 21)] { c.px(x, y, wire) }
+    let blink = Int(p.t * 8) % 2 == 0
+    c.rect(hx - 1, hy - 2, 4, 5, C(0x2A2A30)); c.px(hx, hy - 1, blink ? C(0xFF3A2A) : C(0x6A2A2A))
+    c.px(hx + 1, hy - 1, C(0x8A8A92))
+    for i in 1...6 { c.px(hx + 2, hy - 2 - i, C(0xC8CCD4)) }
+    c.px(hx + 2, hy - 9, C(0xE8E8F0))
 }
 
 // MARK: - Jennifer Parka

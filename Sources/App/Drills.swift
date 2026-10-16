@@ -62,7 +62,7 @@ extension Cast {
         switch weapon {
         case .saber: list += [.kata, .kata, .flourish]
         case .blaster: list += [.skyShots, .skyShots] + (p.handGun ? [.checkWeapon] : [])
-        case .lightning: list += [.skyCast, .crackle] + (p.magic.jagged ? [] : [.portal, .portal])
+        case .lightning: list += p.magic.gadget ? [.crackle] : [.skyCast, .crackle] + (p.magic.jagged ? [] : [.portal, .portal])
         case .none: break
         }
         if hasSignature { list += [.signature, .signature] }

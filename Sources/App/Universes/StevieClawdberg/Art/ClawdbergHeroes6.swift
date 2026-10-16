@@ -6,7 +6,7 @@ import Foundation
 
 let clawdbergHeroes6: [ClawdbergHero: Persona] = [
     .eClawd: Persona(name: "E.Clawd", weapon: .lightning,
-                     magic: Magic(core: C(0xFFF4E4), glow: C(0xFF3A2A), jagged: false),
+                     magic: Magic(core: C(0xFFF4E4), glow: C(0xFF3A2A), jagged: false, touch: true),
                      pivot: (45.5, 33.5), headTop: 23, signature: 3.6, callout: "Phone… home", draw: drawEClawd),
     .elliclawd: Persona(name: "Elliclawd", headTop: 21, signature: 3.4, draw: drawElliclawd),
     .gurtie: Persona(name: "Gurtie", headTop: 21, signature: 3.2, callout: "Aaaah!", draw: drawGurtie),
@@ -92,7 +92,7 @@ private func risePattern(_ c: PixelCanvas, _ x: Int, _ y: Int, _ rows: [String],
 
 /// E.Clawd: Clawd in the wrinkly brown alien's skin. A squat, pot-bellied body creased all over, the wide flat head
 /// on a long ringed neck, big dark eyes under heavy lids, long thin arms and splayed feet, and the heart showing faint
-/// through his chest. He fights with the glow from his fingertip, a warm white light rimmed in red. Signature: his neck
+/// through his chest. He fights with nothing but his glowing fingertip, a warm white light rimmed in red, pointed at whoever he's up against (who glows too). Signature: his neck
 /// stretches up and up while his heart lights his chest red and pulses.
 private func drawEClawd(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0x8A6A4C), skinD = C(0x654A32), skinL = C(0xA88A68), eye = C(0x161E2E)
