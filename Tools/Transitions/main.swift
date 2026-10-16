@@ -10,6 +10,7 @@ import AVFoundation
 //   build/transitions build/transitions-doctor consoleRoom skarro   Doctor Clawd's ten
 //   build/transitions build/transitions-files xFilesOffice area51    The Clawd Files' ten
 //   build/transitions build/transitions-clawdberg hillValley1955 moonHill   Stevie Clawdberg's ten
+//   W=1280 H=720 SHOWCASE=build/clawdberg-transitions.mp4 build/transitions   all ten back to back, one video
 
 let args = Array(CommandLine.arguments.dropFirst())
 let outDir = args.first ?? "build/transitions"
@@ -129,19 +130,51 @@ func frameContext() -> CGContext {
               bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)!
 }
 
+/// An H.264 file written a frame at a time.
+final class Movie {
+    let url: URL, writer: AVAssetWriter, input: AVAssetWriterInput, adaptor: AVAssetWriterInputPixelBufferAdaptor
+    var frames = 0
+
+    init(_ path: String) {
+        url = URL(fileURLWithPath: path)
+        try? FileManager.default.removeItem(at: url)
+        writer = try! AVAssetWriter(outputURL: url, fileType: .mp4)
+        input = AVAssetWriterInput(mediaType: .video, outputSettings: [
+            AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: W, AVVideoHeightKey: H,
+            AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: 6_000_000]])
+        adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: input, sourcePixelBufferAttributes: [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA, kCVPixelBufferWidthKey as String: W,
+            kCVPixelBufferHeightKey as String: H])
+        writer.add(input); writer.startWriting(); writer.startSession(atSourceTime: .zero)
+    }
+
+    func append(_ img: CGImage) {
+        var pb: CVPixelBuffer?
+        CVPixelBufferCreate(nil, W, H, kCVPixelFormatType_32BGRA, nil, &pb)
+        CVPixelBufferLockBaseAddress(pb!, [])
+        let pctx = CGContext(data: CVPixelBufferGetBaseAddress(pb!), width: W, height: H, bitsPerComponent: 8,
+                             bytesPerRow: CVPixelBufferGetBytesPerRow(pb!), space: CGColorSpaceCreateDeviceRGB(),
+                             bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)!
+        pctx.draw(img, in: full)
+        CVPixelBufferUnlockBaseAddress(pb!, [])
+        while !input.isReadyForMoreMediaData { usleep(1000) }
+        adaptor.append(pb!, withPresentationTime: CMTime(value: CMTimeValue(frames), timescale: CMTimeScale(fps)))
+        frames += 1
+    }
+
+    func finish() {
+        input.markAsFinished()
+        let done = DispatchSemaphore(value: 0)
+        writer.finishWriting { done.signal() }
+        done.wait()
+        print("wrote \(url.path)")
+    }
+}
+
 /// A clip: the old place for 0.6 s, the transition, the new place for 0.8 s (2.6 s, typing its caption, in The Clawd
 /// Files).
 func clip(_ tr: Transition) {
-    let url = URL(fileURLWithPath: "\(outDir)/\(tr.key).mp4")
-    try? FileManager.default.removeItem(at: url)
-    let writer = try! AVAssetWriter(outputURL: url, fileType: .mp4)
-    let input = AVAssetWriterInput(mediaType: .video, outputSettings: [
-        AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: W, AVVideoHeightKey: H,
-        AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: 6_000_000]])
-    let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: input, sourcePixelBufferAttributes: [
-        kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA, kCVPixelBufferWidthKey as String: W,
-        kCVPixelBufferHeightKey as String: H])
-    writer.add(input); writer.startWriting(); writer.startSession(atSourceTime: .zero)
+    let movie = Movie("\(outDir)/\(tr.key).mp4")
     let lead = 0.6, tail = to.universe == .clawdFiles ? 2.6 : 0.8
     let total = lead + tr.duration + tail
     let frames = Int(total * fps)
@@ -156,23 +189,113 @@ func clip(_ tr: Transition) {
             if to.universe == .clawdFiles { caption(ctx, t: t - lead - tr.duration) }
         }
         else { tr.draw(ctx, old, new, (t - lead) / tr.duration) }
-        let img = ctx.makeImage()!
-        var pb: CVPixelBuffer?
-        CVPixelBufferCreate(nil, W, H, kCVPixelFormatType_32BGRA, nil, &pb)
-        CVPixelBufferLockBaseAddress(pb!, [])
-        let pctx = CGContext(data: CVPixelBufferGetBaseAddress(pb!), width: W, height: H, bitsPerComponent: 8,
-                             bytesPerRow: CVPixelBufferGetBytesPerRow(pb!), space: CGColorSpaceCreateDeviceRGB(),
-                             bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)!
-        pctx.draw(img, in: full)
-        CVPixelBufferUnlockBaseAddress(pb!, [])
-        while !input.isReadyForMoreMediaData { usleep(1000) }
-        adaptor.append(pb!, withPresentationTime: CMTime(value: CMTimeValue(f), timescale: CMTimeScale(fps)))
+        movie.append(ctx.makeImage()!)
     }
-    input.markAsFinished()
-    let done = DispatchSemaphore(value: 0)
-    writer.finishWriting { done.signal() }
-    done.wait()
-    print("wrote \(url.path)")
+    movie.finish()
+}
+
+// MARK: Stevie Clawdberg's showcase
+
+/// The trailer's title: STEVIE over CLAWDBERG in warm gold with a blue glow, and a small "universe" tucked under the
+/// right end of CLAWDBERG.
+func clawdbergTitle(_ ctx: CGContext, center: CGPoint, scale s: Double, alpha: Double = 1) {
+    let font = NSFont(name: "AvenirNextCondensed-Heavy", size: 100) ?? .systemFont(ofSize: 100, weight: .black)
+    let gold = NSColor(srgbRed: 1.0, green: 0.86, blue: 0.48, alpha: CGFloat(alpha))
+    ctx.saveGState()
+    ctx.translateBy(x: center.x, y: center.y); ctx.scaleBy(x: s, y: s)
+    NSGraphicsContext.saveGraphicsState(); NSGraphicsContext.current = NSGraphicsContext(cgContext: ctx, flipped: false)
+    var right = 0.0
+    for (word, size, y, kern) in [("STEVIE", 74.0, 70.0, 26.0), ("CLAWDBERG", 200.0, -120.0, 10.0)] {
+        let f = NSFont(descriptor: font.fontDescriptor, size: CGFloat(size)) ?? font
+        let glow = NSShadow(); glow.shadowColor = NSColor(srgbRed: 0.35, green: 0.62, blue: 1.0, alpha: 0.9 * CGFloat(alpha))
+        glow.shadowBlurRadius = 36
+        let a = NSAttributedString(string: word, attributes: [.font: f, .kern: kern, .foregroundColor: gold, .shadow: glow])
+        a.draw(at: NSPoint(x: -a.size().width / 2, y: y))
+        right = a.size().width / 2 - kern
+    }
+    let small = NSFont(name: "AvenirNext-DemiBold", size: 40) ?? .systemFont(ofSize: 40, weight: .semibold)
+    let glow = NSShadow(); glow.shadowColor = NSColor(srgbRed: 0.35, green: 0.62, blue: 1.0, alpha: 0.7 * CGFloat(alpha))
+    glow.shadowBlurRadius = 14
+    let u = NSAttributedString(string: "universe", attributes: [.font: small, .kern: 6, .foregroundColor: gold, .shadow: glow])
+    u.draw(at: NSPoint(x: right - (u.size().width - 6), y: -140))
+    NSGraphicsContext.restoreGraphicsState()
+    ctx.restoreGState()
+}
+
+extension ClawdbergWipe {
+    /// Its name in the showcase.
+    var showcaseName: String {
+        switch self {
+        case .moonBike: return "The moon bike"
+        case .eightyEight: return "88 mph"
+        case .mapRoute: return "The map route"
+        case .fin: return "The fin"
+        case .flashbulb: return "The flashbulb"
+        case .parkGates: return "The park gates"
+        case .fiveTones: return "The five tones"
+        case .boulder: return "The boulder"
+        case .pixieDust: return "Pixie dust"
+        case .doubloon: return "The doubloon"
+        }
+    }
+}
+
+/// The transition's number and name, and where it goes from and to, small in the bottom left.
+func showcaseLabel(_ ctx: CGContext, n: Int, of total: Int, name: String, route: String, alpha: Double) {
+    guard alpha > 0.01 else { return }
+    NSGraphicsContext.saveGraphicsState(); NSGraphicsContext.current = NSGraphicsContext(cgContext: ctx, flipped: false)
+    let shadow = NSShadow(); shadow.shadowColor = NSColor.black.withAlphaComponent(0.8); shadow.shadowBlurRadius = 6
+    let a = NSAttributedString(string: "\(n)/\(total)  \(name)", attributes: [
+        .font: NSFont.systemFont(ofSize: CGFloat(H) * 0.04, weight: .heavy), .shadow: shadow,
+        .foregroundColor: NSColor(srgbRed: 1.0, green: 0.86, blue: 0.48, alpha: CGFloat(alpha))])
+    let b = NSAttributedString(string: route, attributes: [
+        .font: NSFont.systemFont(ofSize: CGFloat(H) * 0.024, weight: .semibold), .shadow: shadow,
+        .foregroundColor: NSColor(white: 0.92, alpha: CGFloat(alpha))])
+    let x = CGFloat(H) * 0.04
+    b.draw(at: NSPoint(x: x, y: x))
+    a.draw(at: NSPoint(x: x, y: x + b.size().height + 2))
+    NSGraphicsContext.restoreGraphicsState()
+}
+
+/// All ten of Stevie Clawdberg's trips back to back, each between two different places (mostly its own turf), its
+/// number and name in the corner, after a title card.
+func clawdbergShowcase(_ path: String) {
+    let movie = Movie(path)
+    // The title card.
+    for f in 0..<Int(2.6 * fps) {
+        let t = Double(f) / fps
+        let ctx = frameContext()
+        ctx.setFillColor(CGColor(red: 0.03, green: 0.04, blue: 0.10, alpha: 1)); ctx.fill(full)
+        let a = min(1, t / 0.5) * min(1, (2.6 - t) / 0.4)
+        clawdbergTitle(ctx, center: CGPoint(x: Double(W) / 2, y: Double(H) * 0.56), scale: Double(W) / 1920 * 0.85, alpha: a)
+        NSGraphicsContext.saveGraphicsState(); NSGraphicsContext.current = NSGraphicsContext(cgContext: ctx, flipped: false)
+        let s = NSAttributedString(string: "Ten trips between places", attributes: [
+            .font: NSFont.systemFont(ofSize: CGFloat(H) * 0.04, weight: .semibold),
+            .foregroundColor: NSColor(white: 0.9, alpha: CGFloat(a))])
+        s.draw(at: NSPoint(x: (CGFloat(W) - s.size().width) / 2, y: CGFloat(H) * 0.22))
+        NSGraphicsContext.restoreGraphicsState()
+        movie.append(ctx.makeImage()!)
+    }
+    var here: Location = .hillValley1955
+    let kinds = ClawdbergWipe.allCases
+    for (i, kind) in kinds.enumerated() {
+        let there = kind.turf.first { $0 != here } ?? (here == .hillValley1955 ? .moonHill : .hillValley1955)
+        let trip = ClawdbergTrip(kind: kind, from: here, to: there)
+        let lead = 0.7, tail = 1.0, d = kind.duration
+        let route = "\(here.name)  →  \(there.name)"
+        for f in 0..<Int((lead + d + tail) * fps) {
+            let t = Double(f) / fps
+            let ctx = frameContext(); ctx.interpolationQuality = .none
+            if t < lead { ctx.draw(placeImage(here, t: t), in: full) }
+            else if t > lead + d { ctx.draw(placeImage(there, t: t), in: full) }
+            else { trip.draw(ctx, old: placeImage(here, t: lead), new: placeImage(there, t: t), k: (t - lead) / d, in: full) }
+            let a = min(1, t / 0.3) * min(1, (lead + d + tail - t) / 0.3)
+            showcaseLabel(ctx, n: i + 1, of: kinds.count, name: kind.showcaseName, route: route, alpha: a)
+            movie.append(ctx.makeImage()!)
+        }
+        here = there
+    }
+    movie.finish()
 }
 
 /// One sheet: a row per transition, five moments through it.
@@ -213,6 +336,11 @@ if let spec = ProcessInfo.processInfo.environment["FRAMES"], let colon = spec.fi
         try! NSBitmapImageRep(cgImage: f.makeImage()!).representation(using: .png, properties: [:])!
             .write(to: URL(fileURLWithPath: "\(outDir)/\(tr.key)-\(part).png"))
     }
+    exit(0)
+}
+/// SHOWCASE=<file.mp4> writes Stevie Clawdberg's ten trips back to back into one video, and nothing else.
+if let path = ProcessInfo.processInfo.environment["SHOWCASE"] {
+    clawdbergShowcase(path)
     exit(0)
 }
 sheet()
