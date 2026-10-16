@@ -131,13 +131,28 @@ func draw(_ a: Actor, _ ctx: CGContext, t: Double) {
     let c = PixelCanvas(Sprite.width, Sprite.height)
     a.cast.draw(c, t: t, mode: a.mode, walking: a.walking, role: a.role, urgent: a.urgent, sitting: a.sitting,
                 asSession: a.session, airborne: a.airborne)
+    // A signature that climbs a thread (`Persona.climb`, Shellob): risen and faded by the move, its thread up to the top
+    // of the frame.
+    let climb = drawnSignature.flatMap { p in a.cast.persona.climb.map { (move: $0, p: p) } }
+    let rise = climb.map { $0.move.rise($0.p) * a.k } ?? 0
     if a.facing < 0 { c.flipHorizontally() }
     c.addOutline(C(a.ai.hex, 0.92))
     guard let img = c.makeImage() else { return }
     let px = S * a.k
     let x0 = (a.facing > 0 ? a.x - Sprite.bodyCenterX * a.k : a.x - (Double(Sprite.width) - Sprite.bodyCenterX) * a.k) * S
-    let yTop = a.top * S
-    ctx.saveGState(); ctx.setAlpha(CGFloat(a.alpha))
+    let yTop = (a.top - rise) * S
+    if let cl = climb {
+        let fx = (a.x + a.facing * (cl.move.from.x - Sprite.bodyCenterX) * a.k) * S
+        let fy = stageH - (a.top - rise + cl.move.from.y * a.k) * S
+        let reach = (stageH - fy) * cl.move.thread(cl.p)
+        if reach > px {
+            ctx.saveGState(); ctx.setAlpha(CGFloat(0.9 * a.alpha * cl.move.alpha(cl.p)))   // the thread fades with her
+            ctx.setFillColor(CGColor(red: 0.96, green: 0.96, blue: 0.97, alpha: 1))
+            ctx.fill(CGRect(x: fx - px * 0.3, y: fy, width: max(1, px * 0.6), height: reach))
+            ctx.restoreGState()
+        }
+    }
+    ctx.saveGState(); ctx.setAlpha(CGFloat(a.alpha * (climb.map { $0.move.alpha($0.p) } ?? 1)))
     ctx.draw(img, in: CGRect(x: x0, y: stageH - yTop - Double(Sprite.height) * px,
                              width: Double(Sprite.width) * px, height: Double(Sprite.height) * px))
     // Speech bubble beside the head, tail pointing back at it.

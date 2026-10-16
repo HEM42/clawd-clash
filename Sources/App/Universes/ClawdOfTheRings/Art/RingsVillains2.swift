@@ -15,7 +15,7 @@ let ringsVillains2: [LOTRVillain: Persona] = [
     .orc: Persona(name: "Gorbage", weapon: .saber, bulk: 2, headTop: 23, signature: 3.0, callout: "Collecting garbage!",
                   draw: drawOrc),
     .shelob: Persona(name: "Shellob", weapon: .saber, canSit: false, pivot: shelobFangs, bulk: 8, headTop: 22, signature: 3.6,
-                     draw: drawShelob),
+                     climb: shelobClimb, draw: drawShelob),
     .lurtz: Persona(name: "Lintz", weapon: .blaster, shot: .arrow, muzzle: (46, 34), handGun: false, headTop: 20,
                     signature: 3.2, callout: "Find the Halflings! Lint the others!", draw: drawLurtz),
 ]
@@ -865,19 +865,16 @@ private let shelobFangs: (x: Double, y: Double) = (45.5, 38.5)
 /// (the far four paler), a cluster of glinting yellow eyes at the front and two curved fangs under them. Walking, the
 /// legs step four and four. She bites: in a fight she rears her two front legs up in front of her, their tips stabbing
 /// with the swing, and the fangs flex with it, spread wide on the wind-up and snapping shut on the strike, a faint
-/// ghost of them behind a fast one. Signature: she scuttles up a thread and out of sight off the top (…0.12); a moment
-/// later drops back down on it from above, bouncing on the end of it, fangs spread wide (…0.36), and dangles there,
-/// bobbing, legs curled and twitching; climbs a little way back up, and lets herself down onto her feet again.
+/// ghost of them behind a fast one. Signature: a thread shoots up to the top of the screen and she scuttles up it,
+/// fading out on the way (…0.12); a moment later she drops back down it, fading in, bouncing on the end of it, fangs
+/// spread wide (…0.36), and dangles there, bobbing, legs curled and twitching; climbs a little way back up, and lets
+/// herself down onto her feet again, reeling the thread in (`shelobClimb`).
 private func drawShelob(_ c: PixelCanvas, _ p: Pose) {
     let body = C(0x2A221E), dark = C(0x1A1412), light = C(0x40362F), far = C(0x4A3E36), mark = C(0xC8C0A8)
     let eye = C(0xFFE08A)
+    // On her thread (the signature), whoever places her lifts her, fades her and draws the thread (`shelobClimb`);
+    // here she only curls her legs and spreads her fangs.
     let hang = p.signature.flatMap { $0 > 0.02 && $0 < 0.98 ? shelobHang($0, lt: p.lt) : nil }
-    if let h = hang {
-        // Lifted off the floor on her thread, from the top of her back up off the canvas.
-        c.oy -= h.lift
-        let top = -(c.oy + c.baseY)
-        if 22 > top { c.rect(16, top, 1, 22 - top, C(0xE0E0E8, 0.7)) }
-    }
     let curl = hang?.curl ?? 0
     // The near legs arch high over the body; the far ones bend behind it, only their feet showing between.
     typealias Leg = (a: (Double, Double), k: (Double, Double), t: (Double, Double))
@@ -961,19 +958,23 @@ private func drawShelob(_ c: PixelCanvas, _ p: Pose) {
 
 /// Shellob on her thread `s` through her signature: how many pixels she's lifted off the floor (50 is out of sight
 /// above the canvas), how far her legs are curled in (0…1) and her fangs spread (0…1).
-private func shelobHang(_ s: Double, lt: Double) -> (lift: Int, curl: Double, fangs: Double) {
+private func shelobHang(_ s: Double, lt: Double) -> (lift: Double, curl: Double, fangs: Double, alpha: Double, thread: Double) {
     let dangle = 12.0
-    var lift: Double, curl: Double = 1, fangs: Double = 0
+    var lift: Double, curl: Double = 1, fangs: Double = 0, alpha: Double = 1
+    // The thread shoots up to the top of the screen first, and is reeled in at the very end.
+    let thread = min(1, max(0, s / 0.03)) * (1 - smooth(max(0, (s - 0.94) / 0.06)))
     switch s {
-    case ..<0.12:                                                               // up the thread and away, faster and faster
+    case ..<0.02:
+        lift = 0; curl = 0
+    case ..<0.12:                                                               // up the thread, fading out on the way
         let k = (s - 0.02) / 0.1
-        lift = 50 * k * k; curl = min(1, k * 3)
+        lift = 50 * k * k; curl = min(1, k * 3); alpha = 1 - smooth(min(1, k * 1.6))
     case ..<0.2:
-        lift = 50                                                               // gone
-    case ..<0.27:                                                               // dropping from above, past where she stops
+        lift = 50; alpha = 0                                                    // gone, the thread still hanging there
+    case ..<0.27:                                                               // dropping from above, fading back in
         let k = (s - 0.2) / 0.07
         lift = 50 - (50 - dangle + 5) * k * k
-        fangs = 1
+        fangs = 1; alpha = smooth(min(1, k * 2))
     case ..<0.36:                                                               // bouncing on the end of the thread
         let k = (s - 0.27) / 0.09
         lift = dangle - 5 * cos(k * .pi * 1.5) * (1 - k)
@@ -988,8 +989,17 @@ private func shelobHang(_ s: Double, lt: Double) -> (lift: Int, curl: Double, fa
         let k = min(1, (s - 0.72) / 0.22)
         lift = (dangle + 8) * (1 - smooth(k)); curl = 1 - smooth((k - 0.4) / 0.6)
     }
-    return (Int(lift.rounded()), curl, fangs)
+    return (lift, curl, fangs, alpha, thread)
 }
+
+/// Shellob's signature as whoever places her draws it (`Persona.climb`): risen on her thread from the top of her back,
+/// faded out on the way up and back in on the way down, the thread up to the top of the screen. The bobbing runs on
+/// the move's own clock (`s` × its length).
+private let shelobClimb = Climb(
+    from: (16, 22),
+    rise: { s in shelobHang(s, lt: s * 3.6).lift },
+    alpha: { s in shelobHang(s, lt: s * 3.6).alpha },
+    thread: { s in shelobHang(s, lt: s * 3.6).thread })
 
 /// How far Shellob's fangs are spread at swing angle `a`: 1 wide open (the weapon raised, winding up), 0 at rest,
 /// -1 snapped shut (the strike, forward and down).

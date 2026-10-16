@@ -1228,6 +1228,20 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     out.append(web)
                 }
             }
+            // A signature that climbs a thread (`Persona.climb`, Shellob): risen and faded by the move, its thread from the
+            // body up towards the top of the stage (the screen, or the window's scene).
+            let climb = drawnSignature.flatMap { p in actor.cast.persona.climb.map { (move: $0, p: p) } }
+            if let cl = climb {
+                lift += CGFloat(cl.move.rise(cl.p)) * scale
+                let from = NSPoint(x: actor.x + facing * CGFloat(cl.move.from.x - pivotX) * scale,
+                                   y: y + lift + CGFloat(Double(Sprite.height) - cl.move.from.y) * scale)
+                let reach = from.y + (stage.maxY - from.y) * CGFloat(cl.move.thread(cl.p))
+                if reach > from.y + scale, var web = webLine(from: from, anchor: NSPoint(x: from.x, y: reach), scale: scale,
+                                                             universe: actor.cast.universe) {
+                    web.alpha = CGFloat(cl.move.alpha(cl.p))          // the thread fades with her
+                    out.append(web)
+                }
+            }
             // Missing time: lifted away in a beam of light and set back down (The Clawd Files' FBI agents); 88 mph,
             // gone in a flash and back with three booms (Stevie Clawdberg's time travellers).
             let tripK = actor.isLeader ? actor.abducted.flatMap { now - $0 < missingTimeLength ? (now - $0) / missingTimeLength : nil } : nil
@@ -1259,6 +1273,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             var alpha = min(1, (now - actor.born) / 0.25)
             if let ab = abduction { alpha = min(alpha, ab.alpha) }
             if let o = outaTime { alpha = min(alpha, o.alpha) }
+            if let cl = climb { alpha = min(alpha, cl.move.alpha(cl.p)) }
             var drop = 0.0
             if let left = actor.leaving, actor.exit == nil {
                 let f = min(1, (now - left) / fadeOut)

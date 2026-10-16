@@ -276,6 +276,13 @@ final class ClawdClashSaverView: ScreenSaverView {
 
     // MARK: Frame
 
+    /// A web thread (`Persona.climb`): one pale pixel, stretched.
+    private static let thread: CGImage? = {
+        let c = PixelCanvas(1, 1)
+        c.px(0, 0, C(0xF4F4F8))
+        return c.makeImage()
+    }()
+
     private struct Item {
         var image: CGImage
         var rect: CGRect
@@ -530,15 +537,28 @@ final class ClawdClashSaverView: ScreenSaverView {
                 p.m.cast.draw(c, t: role != nil ? t : t + phase, mode: .working, walking: false, role: role ?? .none, asSession: false,
                               aloft: up > 0.3)
             }
+            // A signature that climbs a thread (`Persona.climb`, Shellob): risen and faded by the move.
+            let climb = drawnSignature.flatMap { k in p.m.cast.persona.climb.map { (move: $0, p: k) } }
             c.addOutline(AIStyle.outline(p.m.session.assistant))
             guard let img = c.makeImage() else { continue }
             let mirrored = p.facing < 0
             let bodyX = (mirrored ? CGFloat(Sprite.width) - CGFloat(Sprite.bodyCenterX) : CGFloat(Sprite.bodyCenterX)) * s
             let duck = incoming[p.m.key].map { CGFloat(duckAmount(t: t, shooterOffset: $0, armoured: p.m.cast.armoured)) } ?? 0
-            let y = (p.m.isLeader ? base : base + (ls - cs) * 8) + up * flightHeight * s
+            let rise = climb.map { CGFloat($0.move.rise($0.p)) * s } ?? 0
+            let y = (p.m.isLeader ? base : base + (ls - cs) * 8) + up * flightHeight * s + rise
+            if let cl = climb, let line = Self.thread {
+                // The thread, from the body up towards the top of the screen.
+                let fx = p.x + p.facing * CGFloat(cl.move.from.x - Sprite.bodyCenterX) * s
+                let fy = y + CGFloat(Double(Sprite.height) - cl.move.from.y) * s
+                let reach = (bounds.height - fy) * CGFloat(cl.move.thread(cl.p))
+                if reach > s {   // the thread fades with her
+                    items.append(Item(image: line, rect: CGRect(x: (fx - s * 0.3).rounded(), y: fy, width: max(1, s * 0.6), height: reach),
+                                      alpha: 0.9 * CGFloat(cl.move.alpha(cl.p))))
+                }
+            }
             items.append(Item(image: img, rect: CGRect(x: (p.x - bodyX).rounded(), y: y, width: CGFloat(Sprite.width) * s,
                                                        height: (CGFloat(Sprite.height) * s * (1 - 0.22 * duck)).rounded()),
-                              mirrored: mirrored))
+                              mirrored: mirrored, alpha: climb.map { CGFloat($0.move.alpha($0.p)) } ?? 1))
         }
         // Bolts, deflections, lightning and sparks.
         for (l, r) in fights {
