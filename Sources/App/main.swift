@@ -31,6 +31,9 @@ if args.contains("--install-hooks") || args.contains("--update-hooks") || args.c
     exit(errors.isEmpty ? 0 : 1)
 }
 
+// Click-to-jump diagnostics, only in a `./build.sh --dev-tools` build: they run with the app's Accessibility and
+// Automation grants for whatever launches it, so a plain or release build doesn't answer them.
+#if CLAWD_DEV_TOOLS
 if let arg = args.first(where: { $0.hasPrefix("--jump=") }), let pid = Int32(arg.dropFirst(7)) {
     var lines: [String] = []
     Jump.log = { lines.append($0) }
@@ -46,6 +49,7 @@ if let arg = args.first(where: { $0.hasPrefix("--ax-dump=") }), let pid = Int32(
     if let out = args.last, out != arg { try? report.write(toFile: out, atomically: true, encoding: .utf8) } else { print(report) }
     exit(0)
 }
+#endif
 
 // Only one Clawd Clash at a time.
 if let id = Bundle.main.bundleIdentifier,

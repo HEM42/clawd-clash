@@ -155,7 +155,10 @@ enum StatusStore {
     /// skipping one event beats two writers clobbering each other.
     static func withLock(_ body: (inout StatusFile) -> Void) {
         try? FileManager.default.createDirectory(at: StatusPaths.dir, withIntermediateDirectories: true)
-        let fd = open(StatusPaths.lock.path, O_CREAT | O_RDWR, 0o644)
+        // Owner-only, like Claude Code's ~/.claude/projects: the state holds your prompts, replies and commands.
+        // A chmod rather than a create attribute, so folders made earlier with 0755 are tightened too.
+        chmod(StatusPaths.dir.path, 0o700)
+        let fd = open(StatusPaths.lock.path, O_CREAT | O_RDWR, 0o600)
         guard fd >= 0 else { return }
         defer { close(fd) }
         var locked = flock(fd, LOCK_EX) == 0
@@ -171,6 +174,7 @@ enum StatusStore {
                 let corrupt = StatusPaths.state.appendingPathExtension("corrupt")
                 try? FileManager.default.removeItem(at: corrupt)
                 try? data.write(to: corrupt)
+                chmod(corrupt.path, 0o600)
                 status = StatusFile()
             }
         } else {
@@ -179,6 +183,7 @@ enum StatusStore {
         body(&status)
         if let data = try? JSONEncoder().encode(status) {
             try? data.write(to: StatusPaths.state, options: .atomic)
+            chmod(StatusPaths.state.path, 0o600)
         }
     }
 

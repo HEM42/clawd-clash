@@ -6,21 +6,29 @@
 #   ./build.sh --no-install        build + launch the copy in build/ (nothing copied to /Applications, hooks left alone)
 #   ./build.sh --release <version> Apple silicon (arm64) build into build/, signed for distribution;
 #                                  no install, no hooks (used by release.sh)
+#   ./build.sh --dev-tools         also compile the --jump=<pid> and --ax-dump=<pid> click-to-jump diagnostics
+#                                  (combine with --no-install; refused with --release). Off unless asked for: any
+#                                  process that launches a copy built with it can use the app's Accessibility grant
 set -euo pipefail
 cd "${0:A:h}"
 
 MODE=install
 HOOKS=1
 VERSION=""
+DEV_TOOLS=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --no-hooks) HOOKS=0 ;;
         --no-install) MODE=local; HOOKS=0 ;;
         --release) MODE=release; VERSION="${2:?--release needs a version}"; shift ;;
+        --dev-tools) DEV_TOOLS=1 ;;
         *) echo "unknown option: $1" >&2; exit 2 ;;
     esac
     shift
 done
+if [[ $MODE == release && $DEV_TOOLS == 1 ]]; then
+    echo "error: --dev-tools never goes into a release build" >&2; exit 2
+fi
 # Default version: the newest entry in the CHANGELOG.
 if [[ -z "$VERSION" ]]; then
     VERSION=$(grep -m1 -oE '^## [0-9]+\.[0-9]+\.[0-9]+' CHANGELOG.md | cut -c4- || true)
@@ -31,6 +39,9 @@ APP="build/Clawd Clash.app"
 DEST="/Applications/Clawd Clash.app"
 OLD_DESTS=("$HOME/Applications/Clawd Clash.app" )   # earlier installs
 FLAGS=(-O -swift-version 5)
+# The app's diagnostics (main.swift), only with --dev-tools.
+DEV_FLAGS=()
+[[ $DEV_TOOLS == 0 ]] || DEV_FLAGS=(-D CLAWD_DEV_TOOLS)
 
 rm -rf build && mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
@@ -42,7 +53,7 @@ compile() {
 
 echo "→ compiling app"
 # The app carries the screen saver's view too: the window's third view is the screen saver itself.
-compile "$APP/Contents/MacOS/ClawdClash" -framework ScreenSaver Sources/Shared/*.swift Sources/App/*.swift Sources/App/Universes/**/*.swift Sources/Saver/*.swift
+compile "$APP/Contents/MacOS/ClawdClash" "${DEV_FLAGS[@]}" -framework ScreenSaver Sources/Shared/*.swift Sources/App/*.swift Sources/App/Universes/**/*.swift Sources/Saver/*.swift
 echo "→ compiling hook"
 compile "$APP/Contents/MacOS/clawd-clash-hook" Sources/Shared/*.swift Sources/Hook/main.swift
 
