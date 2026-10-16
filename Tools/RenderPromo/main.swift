@@ -3430,7 +3430,7 @@ func clawdbergTitle(_ ctx: CGContext, center: CGPoint, scale s: Double, alpha: D
     let glow = NSShadow(); glow.shadowColor = NSColor(srgbRed: 0.35, green: 0.62, blue: 1.0, alpha: 0.7 * CGFloat(alpha))
     glow.shadowBlurRadius = 14
     let u = NSAttributedString(string: "universe", attributes: [.font: small, .kern: 6, .foregroundColor: gold, .shadow: glow])
-    u.draw(at: NSPoint(x: right - (u.size().width - 6), y: -140))
+    u.draw(at: NSPoint(x: right - (u.size().width - 6), y: -106))
     NSGraphicsContext.restoreGraphicsState()
     ctx.restoreGState()
 }
