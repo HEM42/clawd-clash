@@ -27,6 +27,7 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 - **`Ride.drives` and `Ride.boardingOffset` moved into `Theme.swift`**, next to `enum Ride`. They lived in The Clawd Files' and Stevie Clawdberg's folders (`FilesRides.swift`, `ClawdbergRides.swift`) as `extension Ride`, though the overlay's flight and boarding code relies on them. Universe folders now hold only universe code, which lets the PR guard forbid a universe from extending `Ride`. No change in behaviour: the sedan, the DeLorean and the jeep still drive, and everyone boards where they did.
 
 ### Fixed
+- **Settings → Compact window turns on again.** Ticking it resized the window, and macOS reports an animated resize with the same "live resize ended" notice as dragging the window's edge by hand, which is how Clawd Clash leaves the Compact Window. So it switched itself straight back off and the box came back unticked. The same thing quietly turned Compact off whenever the app resized the window itself, say when showing or hiding the session list. The app's own resizes now go through one helper that marks them as its own (`ClawdWindow.animateFrame`), and only a resize by hand leaves the Compact Window.
 - **Docs that had gone stale since the universes multiplied.**
   - `llms.txt`:
     - its file map points at the real files: each universe's `<Prefix>Roster.swift`, `Art/` and `Places/`, `Persona.swift`, and the saver feed's `Application Support/Clawd Clash/` folder

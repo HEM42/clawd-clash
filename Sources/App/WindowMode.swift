@@ -158,7 +158,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         var f = window.frame
         f.size.height += delta
         f.origin.y -= delta
-        window.setFrame(onScreen(f), display: true, animate: true)
+        animateFrame(onScreen(f))
     }
 
     /// Grows downward from where the window is, but never past the screen: a window parked at the bottom grows
@@ -208,7 +208,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
                 var f = window.frame
                 f.origin.y -= h - f.height
                 f.size.height = h
-                window.setFrame(onScreen(f), display: true, animate: true)
+                animateFrame(onScreen(f))
             }
         }
         fitToContent()
@@ -231,7 +231,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
             f.origin.y = window.frame.maxY - f.height
             board.isHidden = false
             [sceneView, roomView, scroll].forEach { $0.isHidden = true }
-            window.setFrame(onScreen(f), display: true, animate: true)
+            animateFrame(onScreen(f))
             layout()
             board.animateOneFrame()
             let t = Timer(timeInterval: 1.0 / 15, repeats: true) { [weak self] _ in self?.board.animateOneFrame() }
@@ -248,7 +248,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
                 var f = window.frame
                 f.size = before.size
                 f.origin.y = window.frame.maxY - f.height
-                window.setFrame(onScreen(f), display: true, animate: true)
+                animateFrame(onScreen(f))
             }
             layout()
             applyListShown()
@@ -338,7 +338,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         f.origin.y = top - f.height
         window.minSize = NSSize(width: 0, height: 0)          // free to shrink or grow past the old limits
         window.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
-        window.setFrame(onScreen(f), display: true, animate: true)
+        animateFrame(onScreen(f))
         if Self.view == .board {
             UserDefaults.standard.set(NSStringFromSize(f.size), forKey: "windowBoardSize")
             let back = presetSize(Self.listShown ? .list : .scene)
@@ -351,6 +351,17 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         fitToContent()
     }
 
+    /// True while the app resizes the window itself. An animated `setFrame` sends the same live-resize
+    /// notifications as dragging the edge, and only a drag by hand should leave the Compact Window.
+    private var resizingInCode = false
+
+    /// Animates the window to `frame`. `setFrame(_:display:animate:)` runs the animation before it returns.
+    private func animateFrame(_ frame: NSRect) {
+        resizingInCode = true
+        defer { resizingInCode = false }
+        window.setFrame(frame, display: true, animate: true)
+    }
+
     /// Resized by hand while Compact: it isn't the Compact Window any more. The window keeps its new size (only the
     /// scene-only view's height follows the scene, now drawn at full size) and everything is drawn at 100% again.
     private func leaveSmallAfterResize() {
@@ -361,7 +372,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
             f.size.height = Self.headerHeight + sceneHeight
             f.origin.y = top - f.height
             window.maxSize.height = .greatestFiniteMagnitude
-            window.setFrame(onScreen(f), display: true, animate: true)
+            animateFrame(onScreen(f))
         }
         applyLimits()
         layout()
@@ -462,7 +473,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
 
     func windowDidMove(_ notification: Notification) { onGeometryChange?() }
     func windowDidEndLiveResize(_ notification: Notification) {
-        if Self.small { leaveSmallAfterResize() }
+        if Self.small && !resizingInCode { leaveSmallAfterResize() }
         fitToContent()
     }
     func windowDidResize(_ notification: Notification) {
