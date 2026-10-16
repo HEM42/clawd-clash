@@ -31,6 +31,16 @@ enum ShotStyle {
     case thrown(Px)                   // something spinning: knives, pumpkin bombs, shuriken
 }
 
+/// A signature move that climbs a thread (`Persona.climb`): where the thread leaves the body (canvas pixels, facing
+/// right), and at each point `p` (0…1) of the move how far the body has risen (canvas pixels), how visible it is
+/// (0…1), and how much of the thread is out (0…1 of the way from the body to the top of the screen).
+struct Climb {
+    var from: (x: Double, y: Double)
+    var rise: (Double) -> Double
+    var alpha: (Double) -> Double
+    var thread: (Double) -> Double
+}
+
 /// What a magic or energy stream looks like.
 struct Magic {
     var core: Px
@@ -86,6 +96,9 @@ struct Persona {
     /// Its own target-practice rhythm when working alone (seconds between shots, and where in that it starts), on the
     /// shared clock; nil: every `blasterPeriod` on its own clock. Clawd Wars' heroes each had one.
     var soloFire: (period: Double, phase: Double)? = nil
+    /// A signature that climbs a thread up out of sight and back down (Shellob): drawn by whoever places the sprite,
+    /// since the thread runs up to the top of the screen, past the canvas.
+    var climb: Climb? = nil
     /// Draws it facing right on the 72×52 canvas.
     let draw: (PixelCanvas, Pose) -> Void
 

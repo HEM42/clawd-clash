@@ -1,19 +1,26 @@
 import CoreGraphics
 
-/// A comic-book trip between two places, in a universe that has them: Marvel's (`ComicTrip`), DC's (`DCComicTrip`) or
-/// Doctor Clawd's trips through time and space (`DoctorTrip`), The Clawd Files' (`FilesTrip`) or Stevie Clawdberg's
-/// (`ClawdbergTrip`). Star Wars has none: it keeps its edge and clock wipes (`Wipe`). Shared by the window and the screen
-/// saver.
+/// A comic-book trip between two places, in a universe that has them: Marvel's (`ComicTrip`), DC's (`DCComicTrip`),
+/// Doctor Clawd's trips through time and space (`DoctorTrip`), The Clawd Files' (`FilesTrip`), Stevie Clawdberg's
+/// (`ClawdbergTrip`) or Clawd of the Rings's Eye (`RingsTrip`).
+/// Star Wars has none: it keeps its edge and clock wipes (`Wipe`). Shared by the window and the screen saver.
 enum ComicTransition {
     case marvel(ComicTrip)
     case dc(DCComicTrip)
     case doctor(DoctorTrip)
     case files(FilesTrip)
     case clawdberg(ClawdbergTrip)
+    case middleEarth(RingsTrip)
 
     var duration: Double {
-        switch self { case .marvel(let t): return t.duration; case .dc(let t): return t.duration; case .doctor(let t): return t.duration
-        case .files(let t): return t.duration; case .clawdberg(let t): return t.duration }
+        switch self {
+        case .marvel(let t): return t.duration
+        case .dc(let t): return t.duration
+        case .doctor(let t): return t.duration
+        case .files(let t): return t.duration
+        case .clawdberg(let t): return t.duration
+        case .middleEarth(let t): return t.duration
+        }
     }
 
     /// A frame `k` (0…1) of the way from `old` to `new`, over the whole of `r`.
@@ -24,6 +31,7 @@ enum ComicTransition {
         case .doctor(let t): t.draw(ctx, old: old, new: new, k: k, in: r)
         case .files(let t): t.draw(ctx, old: old, new: new, k: k, in: r)
         case .clawdberg(let t): t.draw(ctx, old: old, new: new, k: k, in: r)
+        case .middleEarth(let t): t.draw(ctx, old: old, new: new, k: k, in: r)
         }
     }
 
@@ -48,6 +56,9 @@ enum ComicTransition {
         case .doctor:
             if case .doctor(let l)? = last { return .doctor(DoctorTrip.pick(after: l.kind, cast: cast, to: place)) }
             return .doctor(DoctorTrip.pick(after: nil, cast: cast, to: place))
+        case .middleEarth:
+            if case .middleEarth(let l)? = last { return .middleEarth(RingsTrip.pick(after: l.kind, cast: cast, from: from, to: place)) }
+            return .middleEarth(RingsTrip.pick(after: nil, cast: cast, from: from, to: place))
         }
     }
 }

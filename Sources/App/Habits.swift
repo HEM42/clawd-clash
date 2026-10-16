@@ -46,6 +46,10 @@ var idleHabit: HabitPlay?
 /// Previews and the docs renderer: play this habit instead of the scheduled one.
 var forcedHabit: HabitPlay?
 
+/// How far through its signature move the last `Cast.draw` was, 0…1 (nil: it wasn't playing one): kept after the
+/// draw, for whoever places the sprite (`Persona.climb`).
+var drawnSignature: Double?
+
 extension Cast {
     /// What this character does when idle: its weapon habit (if it handles one by hand) comes up twice as often.
     var habits: [IdleHabit] {

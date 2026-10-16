@@ -57,9 +57,10 @@ func put(_ c: PixelCanvas, _ ctx: CGContext, x: CGFloat, y: CGFloat, outline: Bo
 func squashed(_ s: String) -> String { s.lowercased().filter { $0.isLetter || $0.isNumber } }
 
 /// Characters by batch name (heroes1…, villains1…, starWarsHeroes1…, starWarsVillains1…, dcHeroes1…, dcVillains1…,
-/// doctorHeroes1…, doctorVillains1…, filesHeroes1…, filesVillains1…, clawdbergHeroes1…, clawdbergVillains1…, all, starWars, marvel, dc, doctor, clawdFiles, or a
-/// universe's name), by case name (ironMan, vader, superman…; Marvel's first where both have
-/// one) or by the name shown on screen ("Darth Vapor"). Universes can't be mixed in one call.
+/// doctorHeroes1…, doctorVillains1…, filesHeroes1…, filesVillains1…, clawdbergHeroes1…, clawdbergVillains1…,
+/// ringsHeroes1…, ringsVillains1…, ringsHem, all, starWars, marvel, dc, doctor, clawdFiles, middleEarth, or a universe's
+/// name), by case name (ironMan, vader, superman…; Marvel's first where both have one) or by the name shown on screen
+/// ("Darth Vapor"). Universes can't be mixed in one call.
 func cast(named n: String) -> [Cast] {
     let marvelHeroes = [heroes1, heroes2, heroes3, heroes4, heroes5, heroes6, heroes7, heroes8, heroes9, heroes10]
     let marvelVillains = [villains1, villains2, villains3, villains4, villains5, villains6, villains7, villains8, villains9]
@@ -94,6 +95,9 @@ func cast(named n: String) -> [Cast] {
     for (i, b) in filesHeroes.enumerated() { batches["filesHeroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
     for (i, b) in filesVillains.enumerated() { batches["filesVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
     for (i, b) in doctorVillains.enumerated() { batches["doctorVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
+    for (name, b) in [("ringsHeroes1", ringsHeroes1), ("ringsHeroes2", ringsHeroes2), ("ringsHeroes3", ringsHeroes3), ("ringsHeroes4", ringsHeroes4), ("ringsHeroes5", ringsHeroes5), ("ringsHeroes6", ringsHeroes6), ("ringsHeroes7", ringsHeroes7), ("ringsHeroes8", ringsHeroes8)] { batches[name] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
+    for (name, b) in [("ringsVillains1", ringsVillains1), ("ringsVillains2", ringsVillains2), ("ringsVillains3", ringsVillains3), ("ringsVillains4", ringsVillains4), ("ringsVillains5", ringsVillains5), ("ringsVillains6", ringsVillains6), ("ringsVillains7", ringsVillains7), ("ringsVillains8", ringsVillains8)] { batches[name] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
+    batches["ringsHem"] = [.hero(RingsHero.hem)]   // "hem" and "HEM" resolve to Marvel's first, and fight takes the first match
     for u in Universe.allCases { batches[squashed(u.title)] = Theme.of(u).cast }
     if let b = batches[n] ?? batches[squashed(n)] { return b }
     if let h = MarvelHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
@@ -108,6 +112,8 @@ func cast(named n: String) -> [Cast] {
     if let v = ClawdbergVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
     if let h = FilesHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
     if let v = FilesVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
+    if let h = RingsHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
+    if let v = RingsVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
     for u in Universe.allCases {
         if let c = Theme.of(u).cast.first(where: { squashed($0.name) == squashed(n) }) { return [c] }
     }

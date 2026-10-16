@@ -451,6 +451,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 else { focusCandidate = seen }
             }
         }
+        // The homebound (`Universe.homebound`) only appear at home: in the window's scene when it's theirs, never on the
+        // desktop. The Playground shows whoever was picked.
+        if playground == nil { sessions = StatusStore.at(sessions, place: windowMode ? location.rawValue : nil, roster: .shown) }
         debounceMoods(now)
         Accents.update(visible: sessions.map(\.project))
         relayout()
@@ -842,11 +845,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private func playgroundSessions(_ villains: [Int]) -> [SessionSnapshot] {
         let activities = ["Read Overlay.swift", "Grep fightRoles", "Bash: swift build", "Edit Leaders.swift",
                           "Fetch github.com", "Glob **/*.swift", "Bash: run the tests", "Read README.md"]
-        // Heroes by `MarvelHero` index; the agent-only villains as `playgroundVillainAgent` + their cast id.
+        // Heroes by their index in the universe on show; the agent-only villains as `playgroundVillainAgent` + their
+        // cast id. Adopted from the universe on show (its base added), so HEM, the last hero, stays HEM.
         let crew = playgroundAgents.enumerated().map { i, c in
             AgentRecord(id: "pg-a\(c)", session: "pg", type: "playground", character: c >= Self.playgroundVillainAgent ? 0 : c,
-                        cast: Universe.shown.adopt(c >= Self.playgroundVillainAgent ? c - Self.playgroundVillainAgent
-                                                                                    : StatusStore.heroBase + c),
+                        cast: Universe.shown.adopt(Universe.shown.base + (c >= Self.playgroundVillainAgent ? c - Self.playgroundVillainAgent
+                                                                                                           : StatusStore.heroBase + c)),
                         started: start - Double(30 + i * 47),
                         lastSeen: 0, task: Self.sampleTasks[c % Self.sampleTasks.count],
                         activity: activities[(c + i) % activities.count], tools: 3 + (c * 7) % 23)
@@ -855,19 +859,23 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             return [SessionSnapshot(id: "home", leader: Universe.shown.base, project: "", mood: .idle, agents: crew)]
         }
         // Sample details so the Playground's cards look like live ones.
-        let prompts = Universe.shown == .doctor
-            ? ["make the rotor pump faster", "make the window resize to fit the Claudes", "why won't the Angle move?",
-               "write a nice README with screenshots", "fix the portrait crop for the Dalick Emperor"]
-            : Universe.shown == .clawdFiles
-            ? ["redact the case file before Skinnard sees it", "make the window resize to fit the Claudes",
-               "why does the slide projector keep flickering?", "write a nice README with screenshots",
-               "fix the portrait crop for the Smoking Clawd's smoke"]
-            : Universe.shown == .clawdberg
-            ? ["get the DeLorean up to 88 mph", "make the window resize to fit the Claudes",
-               "why does the water glass keep rippling?", "write a nice README with screenshots",
-               "fix the portrait crop for T. Wrecks's tiny arms"]
-            : ["add a snowtaunt", "make the window resize to fit the Claudes", "why does the duel not start?",
-               "write a nice README with screenshots", "fix the portrait crop for wide characters"]
+        let prompts: [String] = {
+            switch Universe.shown {
+            case .doctor: return ["make the rotor pump faster", "make the window resize to fit the Claudes", "why won't the Angle move?",
+                                  "write a nice README with screenshots", "fix the portrait crop for the Dalick Emperor"]
+            case .clawdFiles: return ["redact the case file before Skinnard sees it", "make the window resize to fit the Claudes",
+                                      "why does the slide projector keep flickering?", "write a nice README with screenshots",
+                                      "fix the portrait crop for the Smoking Clawd's smoke"]
+            case .clawdberg: return ["get the DeLorean up to 88 mph", "make the window resize to fit the Claudes",
+                                     "why does the water glass keep rippling?", "write a nice README with screenshots",
+                                     "fix the portrait crop for T. Wrecks's tiny arms"]
+            case .middleEarth: return ["make the Eagle wait for the last subagent", "make the window resize to fit the Claudes",
+                                       "why won't the Ballrog cross the bridge?", "write a nice README with screenshots",
+                                       "fix the portrait crop for Shellob's legs"]
+            default: return ["add a snowtaunt", "make the window resize to fit the Claudes", "why does the duel not start?",
+                             "write a nice README with screenshots", "fix the portrait crop for wide characters"]
+            }
+        }()
         let nowActs = ["Edit WindowMode.swift", "Bash: swift build", "Read Locations.swift", "Grep opaqueBounds", "Agent: Review the diff"]
         // Agents join the first villain. Empty project → the label shows the villain's name.
         return villains.enumerated().map { i, l in
@@ -1220,6 +1228,20 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     out.append(web)
                 }
             }
+            // A signature that climbs a thread (`Persona.climb`, Shellob): risen and faded by the move, its thread from the
+            // body up towards the top of the stage (the screen, or the window's scene).
+            let climb = drawnSignature.flatMap { p in actor.cast.persona.climb.map { (move: $0, p: p) } }
+            if let cl = climb {
+                lift += CGFloat(cl.move.rise(cl.p)) * scale
+                let from = NSPoint(x: actor.x + facing * CGFloat(cl.move.from.x - pivotX) * scale,
+                                   y: y + lift + CGFloat(Double(Sprite.height) - cl.move.from.y) * scale)
+                let reach = from.y + (stage.maxY - from.y) * CGFloat(cl.move.thread(cl.p))
+                if reach > from.y + scale, var web = webLine(from: from, anchor: NSPoint(x: from.x, y: reach), scale: scale,
+                                                             universe: actor.cast.universe) {
+                    web.alpha = CGFloat(cl.move.alpha(cl.p))          // the thread fades with her
+                    out.append(web)
+                }
+            }
             // Missing time: lifted away in a beam of light and set back down (The Clawd Files' FBI agents); 88 mph,
             // gone in a flash and back with three booms (Stevie Clawdberg's time travellers).
             let tripK = actor.isLeader ? actor.abducted.flatMap { now - $0 < missingTimeLength ? (now - $0) / missingTimeLength : nil } : nil
@@ -1251,6 +1273,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             var alpha = min(1, (now - actor.born) / 0.25)
             if let ab = abduction { alpha = min(alpha, ab.alpha) }
             if let o = outaTime { alpha = min(alpha, o.alpha) }
+            if let cl = climb { alpha = min(alpha, cl.move.alpha(cl.p)) }
             var drop = 0.0
             if let left = actor.leaving, actor.exit == nil {
                 let f = min(1, (now - left) / fadeOut)
@@ -1948,7 +1971,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// so it doesn't change every few minutes; it changes again when a single universe is picked.
     private func statusIcon(mono: Bool) -> NSImage? {
         let u: Universe
-        if Self.universeEvery != nil, let kept = UserDefaults.standard.string(forKey: "menuIconUniverse").flatMap(Universe.init(key:)) {
+        if Self.universeEvery != nil, let kept = UserDefaults.standard.string(forKey: "menuIconUniverse").flatMap(Universe.offered(key:)) {
             u = kept
         } else {
             u = .shown
@@ -2416,7 +2439,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// Everything the Settings window shows, read afresh each time it's built.
     private func settingsSections() -> [SettingsSection] {
         let d = UserDefaults.standard
-        let universes = Universe.allCases
+        let universes = Universe.offered
         let clawdRoyaleRow = universes.count, randomRow = universes.count + 1
         var general: [SettingsRow] = [
             .choice("Universe", options: universes.map(\.title) + ["Clawd Royale", "Random"],
@@ -2626,7 +2649,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     static var universe: Universe {
         get {
             let d = UserDefaults.standard
-            if let key = d.string(forKey: "universe"), let u = Universe(key: key) { return u }
+            if let key = d.string(forKey: "universe"), let u = Universe.offered(key: key) { return u }
             let used = { (id: String) in UserDefaults(suiteName: id)?.object(forKey: "windowMode") != nil }
             if !used("com.rodclemen.vaderclaude") {
                 if used("com.rodclemen.justiceleagueclawdwars") { return .dc }
@@ -2670,7 +2693,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private func randomUniverseTick(_ now: Double) {
         guard let every = Self.universeEvery, now - universeSince >= Double(every * 60),
               playground == nil, !demo, chaosSeconds == nil, shotPath == nil,
-              let next = Universe.allCases.filter({ $0 != Universe.shown }).randomElement() else { return }
+              let next = Universe.offered.filter({ $0 != Universe.shown }).randomElement() else { return }
         switchScene(to: next, mixed: false)
     }
 

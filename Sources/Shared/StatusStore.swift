@@ -97,7 +97,7 @@ enum Mood: String {
 /// One Claude Code session as the overlay should draw it.
 struct SessionSnapshot {
     let id: String
-    let leader: Int
+    var leader: Int
     let project: String
     var mood: Mood
     var agents: [AgentRecord]
@@ -226,15 +226,17 @@ enum StatusStore {
         withLock { s in
             prune(&s, now: now)
             if event != "SessionEnd" {
+                let agentCasts = s.agents.compactMap { $0.cast ?? (heroBase + $0.character) }
                 if s.sessions[session] == nil {
                     var rec = SessionRecord(state: "idle", updated: now,
-                                            leader: nextLeader(castable(s.sessions, now: now), assistant: assistant, roster: s.roster), project: project)
+                                            leader: nextLeader(castable(s.sessions, now: now), agents: agentCasts, assistant: assistant,
+                                                               roster: s.roster), project: project)
                     rec.assistant = assistant
                     rec.created = now
                     s.sessions[session] = rec
                 }
                 if s.sessions[session]?.leader == nil {
-                    let leader = nextLeader(castable(s.sessions, now: now), assistant: assistant, roster: s.roster)
+                    let leader = nextLeader(castable(s.sessions, now: now), agents: agentCasts, assistant: assistant, roster: s.roster)
                     s.sessions[session]?.leader = leader
                 }
                 if let project, agentId == nil { s.sessions[session]?.project = project }
@@ -465,8 +467,9 @@ enum StatusStore {
 
     /// Character for a new session: random from the whole cast, or from this AI's side when two AIs are running
     /// (borrowing from the other side only when its own is all on screen).
-    static func nextLeader(_ sessions: [String: SessionRecord], assistant: String = "claude", roster: Roster) -> Int {
+    static func nextLeader(_ sessions: [String: SessionRecord], agents: [Int] = [], assistant: String = "claude", roster: Roster) -> Int {
         let used = Set(sessions.values.compactMap(\.leader))
+        let ruled = roster.ruledOut(by: Set((Array(used) + agents).map(roster.adopt)))
         let latest = sessions.values.filter { $0.leader != nil }.max { ($0.created ?? $0.updated) < ($1.created ?? $1.updated) }
         let pool: [Int]
         let dark = roster.darkCast, light = roster.lightCast
@@ -480,7 +483,7 @@ enum StatusStore {
            Double.random(in: 0..<1) < Universe.hemOdds.session {
             return roster.hems.randomElement()!
         }
-        return pickLeader(used: used, previous: latest?.leader, pool: pool, roster: roster)
+        return pickLeader(used: used, previous: latest?.leader, pool: pool, roster: roster, ruledOut: ruled)
     }
 
     /// Character for a new agent: its session's side when two AIs are running, otherwise anyone;
@@ -494,6 +497,9 @@ enum StatusStore {
         if let rec = s.sessions[session], let leader = rec.leader, side(for: assistantOf(rec), in: s.sessions, roster: r) != nil {
             pool = isDark(leader) ? r.darkCast : r.lightCast
         }
+        let ruled = r.ruledOut(by: Set(onScreen.map(r.adopt)))
+        let allowed = pool.filter { !ruled.contains($0) }   // never the other guise of someone on screen
+        if !allowed.isEmpty { pool = allowed }
         if !onScreen.contains(where: Roster.isHem), pool.contains(where: { !isDark($0) }),
            Double.random(in: 0..<1) < Universe.hemOdds.agent {
             return r.hems.randomElement()!
@@ -503,8 +509,11 @@ enum StatusStore {
     }
 
     /// `seed` makes the choice deterministic (for sessions found by the process scan, re-evaluated every refresh).
-    static func pickLeader(used: Set<Int>, previous: Int?, seed: UInt64? = nil, pool: [Int], roster: Roster) -> Int {
-        let pool = pool.filter { !roster.agentOnly.contains($0) }
+    static func pickLeader(used: Set<Int>, previous: Int?, seed: UInt64? = nil, pool: [Int], roster: Roster,
+                           ruledOut: Set<Int> = []) -> Int {
+        var pool = pool.filter { !roster.agentOnly.contains($0) }
+        let allowed = pool.filter { !ruledOut.contains($0) }   // never the other guise of someone on screen
+        if !allowed.isEmpty { pool = allowed }
         var free = pool.filter { !used.contains($0) }
         if free.isEmpty { free = pool }                      // the whole pool is on screen: repeats are fine
         let rivals = roster.rivals                           // Vader and Kylo never lead two sessions back to back
@@ -647,6 +656,23 @@ enum StatusStore {
 
     /// Every live session in spawn order (empty when none are running, unless stray agents need a placeholder Vader).
     /// `processes` (from `ClaudeProcesses.running()`) adds sessions whose hooks never fired and drops dead ones.
+    /// `snaps` as they may appear at `place` (a place key; nil: no place, the desktop): the homebound away from home
+    /// are shown as someone else (`Roster.recast`), leaders first, then each session's agents.
+    static func at(_ snaps: [SessionSnapshot], place: String?, roster: Roster) -> [SessionSnapshot] {
+        guard !roster.homebound.isEmpty else { return snaps }
+        var ids: [Int] = [], seeds: [String] = []
+        for s in snaps { ids.append(roster.adopt(s.leader)); seeds.append(s.id) }
+        for s in snaps { for a in s.agents { ids.append(roster.adopt(a.cast ?? heroBase + a.character)); seeds.append(a.id) } }
+        let shown = roster.recast(ids, seeds: seeds, at: place)
+        guard shown != ids else { return snaps }
+        var out = snaps, k = snaps.count
+        for i in out.indices {
+            out[i].leader = shown[i]
+            for j in out[i].agents.indices { out[i].agents[j].cast = shown[k]; k += 1 }
+        }
+        return out
+    }
+
     static func snapshot(_ s: StatusFile, now: Double = Date().timeIntervalSince1970,
                          processes: [ClaudeProcesses.Info]? = nil) -> [SessionSnapshot] {
         var s = s
@@ -723,6 +749,34 @@ enum StatusStore {
             // Agents whose session we never heard from stand with the first villain.
             let i = result.firstIndex { $0.id == a.session } ?? 0
             result[i].agents.append(a)
+        }
+        // One guise at a time (`Universe.guises`), even when the casting couldn't see it coming (the universe switched
+        // with sessions open): whoever comes later is shown as someone else, the same someone on every refresh.
+        if !roster.guises.isEmpty {
+            // Every leader counts as taken, later ones too, so a stand-in never doubles someone further along.
+            let leaders = Set(result.map(\.leader))
+            var shown = Set<Int>()
+            for i in result.indices {
+                let leader = result[i].leader
+                if roster.ruledOut(by: shown).contains(leader) {
+                    // Someone on the same side, so with two AIs running it stays on its AI's side.
+                    result[i].leader = pickLeader(used: shown.union(leaders), previous: nil, seed: stableHash(result[i].id),
+                                                  pool: isDark(leader) ? roster.darkCast : roster.lightCast,
+                                                  roster: roster, ruledOut: roster.ruledOut(by: shown))
+                }
+                shown.insert(result[i].leader)
+                for j in result[i].agents.indices {
+                    let a = result[i].agents[j], id = roster.adopt(a.cast ?? heroBase + a.character)
+                    let ruled = roster.ruledOut(by: shown)
+                    if ruled.contains(id) {
+                        let pool = (isDark(id) ? roster.darkCast : roster.lightCast).filter {
+                            !ruled.contains($0) && !shown.contains($0) && !leaders.contains($0)
+                        }
+                        if !pool.isEmpty { result[i].agents[j].cast = pool[Int(stableHash(a.id) % UInt64(pool.count))] }
+                    }
+                    shown.insert(roster.adopt(result[i].agents[j].cast ?? heroBase + a.character))
+                }
+            }
         }
         return result
     }
