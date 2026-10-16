@@ -4285,9 +4285,12 @@ let royaleShots: [Shot] = [
             placed.append(a)
         }
         if local > 0.5 { drawFX([(placed[2], placed[3])], ctx, t: t) }
-        for (i, u) in Universe.offered.enumerated() {
+        // One emblem per universe, the row centred however many there are (closer together if they'd run off the frame).
+        let offered = Universe.offered, gap = min(200, Double(W - 160) / Double(offered.count))
+        for (i, u) in offered.enumerated() {
             let f = backOut((local - 0.25 - Double(i) * 0.08) / 0.35)
-            if f > 0 { emblem(u, ctx, center: CGPoint(x: 760 + Double(i) * 200, y: 990), px: 4 * f) }
+            let x = Double(W) / 2 + (Double(i) - Double(offered.count - 1) / 2) * gap
+            if f > 0 { emblem(u, ctx, center: CGPoint(x: x, y: 990), px: 4 * f) }
         }
         if local > 0.35 { royaleTitle(ctx, center: CGPoint(x: Double(W) / 2, y: 750), scale: backOut((local - 0.35) / 0.4) * 0.72) }
         caption("New in Clawd Clash", ctx, local: local, start: 0.6, y: 500, size: 56)
