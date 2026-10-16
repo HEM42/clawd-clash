@@ -105,9 +105,9 @@ extension Scenes {
                                                                       beamH: Int, k: Int, lift: Int, flame: Int) {
         let s = unit(g), tall = isTall(c)
         let cx = c.w / 2
-        if tall { return (cx, 74 * s, 34 * s, g - 236 * s, g - 214 * s, 26 * s, 2 * s, 8 * s, 5 * s) }
-        let top = max(12 * s, g - 53 * s)
-        return (cx, 46 * s, 20 * s, top, top, 8 * s, s, 5 * s, 3 * s)
+        if tall { return (cx, 78 * s, 40 * s, g - 250 * s, g - 226 * s, 28 * s, 2 * s, 8 * s, 5 * s) }
+        let top = max(9 * s, g - 56 * s)
+        return (cx, 46 * s, 22 * s, top, top + s, 9 * s, s, 5 * s, 3 * s)
     }
 
     /// The gates of the park: a grey-green misty sky over layered jungle and tree ferns, a log palisade running off
@@ -139,7 +139,7 @@ extension Scenes {
         let midTop = tall ? g - 90 * s : g - 30 * s
         jpJungle(c, top: midTop, bottom: g, col: C(0x3A5040), seed: 2, size: (tall ? 16 : 8) * s)
         // The palisade: sharpened logs either side of the gates.
-        let wallTop = tall ? g - 110 * s : g - 36 * s
+        let wallTop = tall ? g - 84 * s : g - 22 * s
         let logW = (tall ? 7 : 5) * s
         var lx = 0
         while lx < c.w {
@@ -155,7 +155,7 @@ extension Scenes {
             }
             lx += logW
         }
-        let rail = wallTop + (tall ? 30 : 10) * s
+        let rail = wallTop + (tall ? 24 : 7) * s
         c.rect(0, rail, f.cx - f.gap - f.pw, 2 * s, C(0x3A2A1A))
         c.rect(f.cx + f.gap + f.pw, rail, c.w, 2 * s, C(0x3A2A1A))
         // Vines down the palisade.

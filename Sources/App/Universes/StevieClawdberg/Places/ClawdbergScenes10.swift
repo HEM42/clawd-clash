@@ -465,52 +465,75 @@ extension Scenes {
 // MARK: - The Jolly Roger
 
 extension Scenes {
-    private typealias HkDeck = (sea: Int, rail: Int, masts: [Int], mw: Int, yards: [Int], quarter: (x: Int, top: Int),
-                                wheel: (x: Int, y: Int, r: Int), lanterns: [(Int, Int)])
+    /// One mast: its x, its top row, and its yards' rows, sails' heights and sails' half-widths, top sail first.
+    private typealias HkMast = (x: Int, top: Int, yards: [Int], heights: [Int], halves: [Int])
 
-    /// Where things are on Captain Clawk's deck: the horizon, the bulwark's top, the masts' x and width, the yards'
-    /// rows, the quarterdeck's left edge and top, the wheel, and where the lanterns hang.
-    private static func hkDeckFrame(_ c: PixelCanvas, _ g: Int) -> HkDeck {
+    /// Captain Clawk's galleon at the quay: the horizon, the waterline and the main deck, bow and stern, the
+    /// forecastle's back edge and top, the stern castle's front edge and top, the three masts (fore, main, mizzen),
+    /// the bowsprit's tip, where the flag's staff is and the flag's pixel size, and where the lanterns hang.
+    private typealias HkGalleon = (sea: Int, water: Int, deck: Int, x0: Int, x1: Int, fore: (x: Int, top: Int),
+                                   castle: (x: Int, top: Int), masts: [HkMast], sprit: (x: Int, y: Int),
+                                   flag: (x: Int, y: Int, k: Int), lanterns: [(Int, Int)])
+
+    /// Where the galleon lies. In the window's strip the fore- and mainmast run off the top and the flag flies from
+    /// a staff on the stern; on the screen saver every sail shows and the flag flies from the maintop.
+    private static func hkGalleonFrame(_ c: PixelCanvas, _ g: Int) -> HkGalleon {
         let s = unit(g), tall = isTall(c)
-        let masts = [c.w * 16 / 100, c.w * 52 / 100]
-        let qx = c.w * (tall ? 80 : 82) / 100, wx = qx + (c.w - qx) / 2
-        if tall {
-            let yards = [g - 218 * s, g - 162 * s, g - 106 * s], qt = g - 30 * s
-            return (g - 52 * s, g - 22 * s, masts, 8 * s, yards, (qx, qt), (wx, qt - 34 * s, 14 * s),
-                    [(masts[0] + 30 * s, g - 104 * s), (masts[1] - 34 * s, g - 104 * s), (masts[1] + 40 * s, g - 104 * s),
-                     (c.w * 96 / 100 - 8 * s, g - 76 * s)])
+        let x0 = c.w * 9 / 100, x1 = c.w * 90 / 100, span = x1 - x0
+        let water = g - (tall ? 12 : 3) * s
+        let deck = water - (tall ? 56 : 15) * s
+        let fore = (x: x0 + span * 16 / 100, top: deck - (tall ? 12 : 4) * s)
+        let castle = (x: x0 + span * 74 / 100, top: deck - (tall ? 34 : 10) * s)
+        let cap = span * 11 / 100   // the widest half a sail may have, so neighbours don't overlap
+        let mainYards = tall ? [g - 250 * s, g - 196 * s, g - 142 * s] : [g - 62 * s, g - 49 * s, g - 34 * s]
+        let mainH = tall ? [34, 44, 50] : [9, 11, 12], mainHalf = tall ? [34, 44, 52] : [18, 24, 30]
+        func mast(_ x: Int, top: Int, yards: [Int], heights: [Int], halves: [Int], scale: Double) -> HkMast {
+            (x, max(0, top), yards, heights.map { $0 * s }, halves.map { min(cap, Int(Double($0 * s) * scale)) })
         }
-        let qt = g - 20 * s
-        return (g - 27 * s, g - 16 * s, masts, 5 * s, [-8 * s, 10 * s], (qx, qt), (wx, qt - 19 * s, 9 * s),
-                [(masts[0] + 24 * s, 12 * s), (masts[1] - 26 * s, 12 * s), (masts[1] + 26 * s, 12 * s)])
+        let foreDrop = (tall ? 10 : 2) * s, mizDrop = (tall ? 16 : 6) * s
+        let foremast = mast(x0 + span * 28 / 100, top: mainYards[0] + foreDrop - (tall ? 18 : 8) * s,
+                            yards: mainYards.map { $0 + foreDrop }, heights: mainH, halves: mainHalf, scale: 0.9)
+        let mainmast = mast(x0 + span * 51 / 100, top: g - 286 * s, yards: mainYards, heights: mainH, halves: mainHalf,
+                            scale: 1)
+        let mizzen = mast(x0 + span * 84 / 100, top: mainYards[0] + mizDrop - (tall ? 16 : 6) * s,
+                          yards: mainYards.prefix(2).map { $0 + mizDrop }, heights: Array(mainH.prefix(2)),
+                          halves: Array(mainHalf.prefix(2)), scale: 0.75)
+        let sprit = (x: x0 - span * 9 / 100, y: fore.top - (tall ? 34 : 10) * s)
+        let flag = tall ? (x: mainmast.x, y: mainmast.top + 2 * s, k: 2 * s)
+                        : (x: x1 - 2 * s, y: castle.top - 20 * s, k: s)
+        let lift = (tall ? 16 : 5) * s
+        let lanterns = [(x1 - 3 * s, castle.top - lift), (castle.x + (tall ? 8 : 3) * s, castle.top - lift),
+                        (x0 + span * 4 / 100, fore.top - lift)]
+        return (tall ? g - 120 * s : g - 34 * s, water, deck, x0, x1, fore, castle, [foremast, mainmast, mizzen], sprit,
+                flag, lanterns)
     }
 
-    /// The shrouds: rope ladders from each mast down to the bulwark either side, four lines a side with the ratlines
-    /// across them and a deadeye at each foot.
-    private static func hkShrouds(_ c: PixelCanvas, _ g: Int, f: HkDeck, s: Int) {
-        let rope = C(0x2A1A14), top = max(0, f.yards[f.yards.count - 1] + 2 * s)
-        let spread = (f.rail - top) * 3 / 10
-        for m in f.masts {
-            for side in [-1, 1] {
-                let feet = (0..<4).map { m + side * (spread + $0 * 4 * s) }
-                for x in feet {
-                    hkLine(c, Double(m), Double(top), Double(x), Double(f.rail), rope, 0.5)
-                    c.rect(x - s, f.rail - 2 * s, 2 * s + 1, 2 * s, C(0x1A100C))
-                }
-                for y in stride(from: top + 6 * s, to: f.rail - 2 * s, by: 3 * s) {
-                    let k = Double(y - top) / Double(f.rail - top)
-                    let a = m + Int(Double(feet[0] - m) * k), b = m + Int(Double(feet[3] - m) * k)
-                    c.rect(min(a, b), y, abs(b - a) + 1, 1, C(0x3A2A1E, 0.9))
-                }
-            }
+    /// The hull's top and bottom rows at column `x` (nil past the bow or the stern): the deck's sheer rising to both
+    /// ends, the forecastle and the stern castle raised over it, the stem raking forward up from the waterline and
+    /// the stern's counter overhanging the water.
+    private static func hkHullSpan(_ f: HkGalleon, _ x: Int, s: Int, tall: Bool) -> (top: Int, bottom: Int)? {
+        guard x >= f.x0 && x <= f.x1 else { return nil }
+        let t = Double(x - f.x0) / Double(f.x1 - f.x0)
+        let sheer = Double((tall ? 10 : 3) * s)
+        let dip: Double = abs(t - 0.5) / 0.5
+        var top = f.deck - Int(sheer * dip * dip)
+        if x < f.fore.x { top = min(top, f.fore.top - Int(sheer * (1 - t / 0.16))) }
+        if x >= f.castle.x { top = min(top, f.castle.top - Int(sheer * 0.6 * (t - 0.74) / 0.26)) }
+        var bottom = f.water
+        let hullH = Double(bottom - top)
+        if t < 0.08 {
+            let k: Double = 1 - t / 0.08
+            bottom -= Int(hullH * pow(k, 1.5) * 0.85)
         }
+        if t > 0.95 { bottom -= Int(hullH * 0.45 * (t - 0.95) / 0.05) }
+        return (top, max(top + s, bottom))
     }
 
     /// A sail set and drawing: cream canvas bellied out by the wind, its sides bowed and its foot curved, the cloth
     /// panels running down it, warm sunset light on it and shadow in the belly, the bolt rope round the edge and a
     /// patch or two sewn on.
     private static func hkSail(_ c: PixelCanvas, m: Int, y: Int, half: Int, h: Int, s: Int, seed: Int) {
-        let bow = Double(3 * s), sag = Double(4 * s)
+        let bow = Double(3 * s), sag = Double((h > 10 * s ? 4 : 2) * s)
         for r in 0..<(h + Int(sag)) {
             let q = Double(r) / Double(h)
             let hw = half - s + Int(sin(min(1, q) * .pi) * bow)
@@ -525,183 +548,265 @@ extension Scenes {
                 if u > 0.6 && !rim { c.rect(m + dx, y + r, 1, 1, C(0xB8805A, (u - 0.6) * 0.8)) }
             }
         }
-        for p in 0..<2 {
-            let px = m - half / 2 + Int(noise(seed + p) * Double(half)), py = y + h / 4 + p * h / 3
-            c.rect(px, py, 6 * s, 4 * s, C(0xC8A87A))
-            for k in 0..<3 { c.rect(px + k * 2 * s, py, s, s, C(0x8A6A48)); c.rect(px + k * 2 * s + s, py + 3 * s, s, s, C(0x8A6A48)) }
+        if h > 10 * s {
+            for p in 0..<2 {
+                let px = m - half / 2 + Int(noise(seed + p) * Double(half)), py = y + h / 4 + p * h / 3
+                c.rect(px, py, 6 * s, 4 * s, C(0xC8A87A))
+                for k in 0..<3 { c.rect(px + k * 2 * s, py, s, s, C(0x8A6A48)); c.rect(px + k * 2 * s + s, py + 3 * s, s, s, C(0x8A6A48)) }
+            }
         }
         // The yard it hangs from: tapered to the yardarms.
         c.rect(m - half - 3 * s, y - 2 * s, 2 * half + 6 * s, 2 * s, C(0x4A3020))
         c.rect(m - half + 4 * s, y - 2 * s, 2 * half - 8 * s, s, C(0x7A5232))
     }
 
-    /// The Jolly Roger at sunset: a violet-to-orange sky with the sun going down into a purple sea, two masts with
-    /// their yards and patched sails billowing, the shrouds and ratlines running down to the bulwark, lantern hooks on
-    /// the yards, the bulwark of planks under a scarlet strake with its gun ports open on the sea and the cannons on
-    /// their carriages, and Captain Clawk's raised quarterdeck with its gilded balustrade and the big ship's wheel.
-    /// The deck's planks underfoot. On the screen saver the masts climb high, sail over sail, with the crow's nest
-    /// on the mainmast (the flag flies in the moving layer).
+    /// A filled triangle (the jibs).
+    private static func hkTriangle(_ c: PixelCanvas, _ a: (Int, Int), _ b: (Int, Int), _ p: (Int, Int), _ col: Px) {
+        let minX = min(a.0, b.0, p.0), maxX = max(a.0, b.0, p.0), minY = min(a.1, b.1, p.1), maxY = max(a.1, b.1, p.1)
+        func side(_ u: (Int, Int), _ v: (Int, Int), _ x: Int, _ y: Int) -> Int { (v.0 - u.0) * (y - u.1) - (v.1 - u.1) * (x - u.0) }
+        for y in minY...maxY {
+            for x in minX...maxX {
+                let d1 = side(a, b, x, y), d2 = side(b, p, x, y), d3 = side(p, a, x, y)
+                let neg = d1 < 0 || d2 < 0 || d3 < 0, pos = d1 > 0 || d2 > 0 || d3 > 0
+                if !(neg && pos) { c.px(x, y, col) }
+            }
+        }
+    }
+
+    /// The Jolly Roger moored at the quay at sunset, seen whole from the dock: a violet-to-orange sky with the sun
+    /// going down into a purple sea, the galleon side-on with the bowsprit and its jibs out over the water, three
+    /// masts with sail over patched sail, the shrouds and stays, the hull with its gold cap rail, scarlet strake and
+    /// open gun ports with cannons in them, the raised forecastle and the tall stern castle with its row of lit
+    /// windows and lanterns on its rail, its reflection in the water, and the planks of the quay underfoot with
+    /// mooring posts, ropes out to the hull and the gangplank up to the deck. On the screen saver the masts climb to
+    /// the topgallants and a second tier of gun ports shows (the flag flies in the moving layer).
     static func jollyRoger(_ c: PixelCanvas, _ g: Int) {
-        let s = unit(g), tall = isTall(c), f = hkDeckFrame(c, g)
+        let s = unit(g), tall = isTall(c), f = hkGalleonFrame(c, g)
+        let gold = C(0xD8A83A), rope = C(0x2A1A14)
         c.gradient(0, f.sea, C(0x2E1C4A), C(0xF29A4A), bands: 8)
-        let sunY = f.sea - (tall ? 30 : 9) * s
-        c.circle(c.w * 34 / 100, sunY, (tall ? 26 : 12) * s, C(0xFFC87A, 0.25))
-        c.circle(c.w * 34 / 100, sunY, (tall ? 18 : 7) * s, C(0xFFD27A))
+        let sunX = (f.masts[0].x + f.masts[1].x) / 2, sunY = f.sea - (tall ? 22 : 6) * s
+        c.circle(sunX, sunY, (tall ? 26 : 12) * s, C(0xFFC87A, 0.25))
+        c.circle(sunX, sunY, (tall ? 18 : 7) * s, C(0xFFD27A))
         for i in 0..<(tall ? 6 : 3) {
             let wx = Int(noise(i + 5000) * Double(c.w)), wy = sunY - Int(noise(i + 5010) * Double((tall ? 120 : 20) * s))
             wisp(c, wx, wy, (40 + Int(noise(i + 5020) * 50)) * s, C(0xF8B8A0, 0.5), s: s)
         }
-        // The sea down to the rail.
-        c.gradient(f.sea, f.rail, C(0x5A3A6A), C(0x2A1E4A), bands: 3)
-        c.rect(c.w * 34 / 100 - (tall ? 22 : 8) * s, f.sea, (tall ? 44 : 16) * s, s, C(0xFFC87A, 0.8))
-        for i in 0..<(tall ? 20 : 8) {
-            let wx = c.w * 34 / 100 + Int((noise(i + 5100) - 0.5) * Double((tall ? 60 : 30) * s))
-            let wy = f.sea + 2 * s + Int(noise(i + 5110) * Double(f.rail - f.sea - 2 * s))
+        // The sea, the sun's path on it, and on the screen saver the far shore of Neverland.
+        c.gradient(f.sea, g, C(0x5A3A6A), C(0x2A1E4A), bands: 4)
+        if tall {
+            c.dunes(base: f.sea - 4 * s, amp: Double(6 * s), freq: 0.03, phase: 2.2, bottom: f.sea, C(0x3A2A4A))
+            c.rect(0, f.sea, c.w, s, C(0xF8B880, 0.6))
+        }
+        c.rect(sunX - (tall ? 22 : 8) * s, f.sea, (tall ? 44 : 16) * s, s, C(0xFFC87A, 0.8))
+        for i in 0..<(tall ? 24 : 10) {
+            let wx = sunX + Int((noise(i + 5100) - 0.5) * Double((tall ? 70 : 30) * s))
+            let wy = f.sea + 2 * s + Int(noise(i + 5110) * Double(g - f.sea - 3 * s))
             c.rect(wx, wy, (2 + Int(noise(i + 5120) * 4)) * s, s, C(0xF8A85A, 0.6))
         }
-        // The masts, yards and sails, the sheets from the sails' corners down to the rail.
+        // The stays from mast to mast, behind the sails: the backstay to the stern, the forestay out to the bowsprit.
+        let fm = f.masts[0], main = f.masts[1], miz = f.masts[2]
+        let foreHead = (x: Double(fm.x), y: Double(fm.yards[0] - 2 * s))
+        hkLine(c, foreHead.x, foreHead.y, Double(f.sprit.x), Double(f.sprit.y), rope, 0.5)
+        hkLine(c, Double(main.x), Double(main.yards[0] - 2 * s), Double(fm.x), Double(fm.yards[2] + 2 * s), rope, 0.5)
+        hkLine(c, Double(miz.x), Double(miz.yards[0] - 2 * s), Double(main.x), Double(main.yards[2] + 2 * s), rope, 0.5)
+        hkLine(c, Double(miz.x), Double(miz.top), Double(f.x1), Double(f.castle.top - (tall ? 6 : 2) * s), rope, 0.5)
+        // The bowsprit, and the jibs set on the forestay: each one's luff up the stay, its foot down to the bow.
+        let bowTop = (f.x0 + 2 * s, f.fore.top - (tall ? 6 : 2) * s)
+        hkLine(c, Double(bowTop.0), Double(bowTop.1), Double(f.sprit.x), Double(f.sprit.y), C(0x5A3A22), Double(s) * (tall ? 1.6 : 0.8))
+        func onStay(_ u: Double) -> (Int, Int) {
+            (Int(Double(f.sprit.x) + (foreHead.x - Double(f.sprit.x)) * u), Int(Double(f.sprit.y) + (foreHead.y - Double(f.sprit.y)) * u))
+        }
+        for (tackU, headU) in (tall ? [(0.04, 0.5), (0.3, 0.72)] : [(0.06, 0.55)]) {
+            let tack = onStay(tackU), head = onStay(headU)
+            let clew = (head.0 + (tall ? 4 : 1) * s, bowTop.1 - (tall ? 8 : 2) * s)
+            hkTriangle(c, tack, head, clew, C(0xEAD4AC))
+            hkLine(c, Double(head.0), Double(head.1), Double(clew.0), Double(clew.1), C(0xA8845A), 0.5)
+            hkLine(c, Double(tack.0), Double(tack.1), Double(clew.0), Double(clew.1), C(0xA8845A), 0.5)
+            hkLine(c, Double(tack.0), Double(tack.1), Double(head.0), Double(head.1), C(0xA8845A), 0.5)
+        }
+        // The masts with their yards and sails, and fighting tops on the screen saver.
+        let mw = (tall ? 7 : 3) * s
         for (mi, m) in f.masts.enumerated() {
-            c.rect(m - f.mw / 2, 0, f.mw, f.rail, C(0x5A3A22))
-            c.rect(m - f.mw / 2 + s, 0, s, f.rail, C(0x8A5E36)); c.rect(m + f.mw / 2 - s, 0, s, f.rail, C(0x3A2416))
-            for by in stride(from: 6 * s, to: f.rail, by: (tall ? 24 : 12) * s) { c.rect(m - f.mw / 2, by, f.mw, s, C(0x2A1A10)) }
-            for (yi, y) in f.yards.enumerated() {
-                let half = (tall ? 54 - yi * 6 : 34 - yi * 4) * s
-                let last = yi == f.yards.count - 1
-                let sh = (last ? (tall ? 40 : 18) : (tall ? 50 : 12)) * s
-                hkSail(c, m: m, y: y + 2 * s, half: half, h: sh, s: s, seed: mi * 10 + yi + 5200)
-                guard last else { continue }
-                for d in [-1, 1] {
-                    let cx = Double(m + d * (half - s)), cy = Double(y + 2 * s + sh)
-                    hkLine(c, cx, cy, cx + Double(d * 10 * s), Double(f.rail), C(0x3A2A1E), 0.5)
+            c.rect(m.x - mw / 2, m.top, mw, f.deck - m.top, C(0x5A3A22))
+            c.rect(m.x - mw / 2 + s, m.top, s, f.deck - m.top, C(0x8A5E36))
+            for by in stride(from: m.top + 6 * s, to: f.deck, by: (tall ? 24 : 12) * s) { c.rect(m.x - mw / 2, by, mw, s, C(0x2A1A10)) }
+            for (yi, y) in m.yards.enumerated() {
+                hkSail(c, m: m.x, y: y + 2 * s, half: m.halves[yi], h: m.heights[yi], s: s, seed: mi * 10 + yi + 5200)
+            }
+            if tall {
+                for y in m.yards.dropFirst() {
+                    c.rect(m.x - 9 * s, y - 8 * s, 18 * s, 3 * s, C(0x4A3020)); c.rect(m.x - 9 * s, y - 8 * s, 18 * s, s, gold)
                 }
             }
-            if tall && mi == 1 {
-                // The crow's nest.
-                c.rect(m - 12 * s, f.yards[0] - 30 * s, 24 * s, 10 * s, C(0x6A4428))
-                c.rect(m - 12 * s, f.yards[0] - 30 * s, 24 * s, 2 * s, C(0xD8A83A))
+        }
+        // The shrouds: rope ladders from below each mast's lowest yard down to the rail either side.
+        for m in f.masts {
+            let top = m.yards[m.yards.count - 1] - s
+            let foot = m.x >= f.castle.x ? f.castle.top : f.deck - (tall ? 4 : 1) * s
+            let spread = (foot - top) * 3 / 10
+            for side in [-1, 1] {
+                let feet = (0..<3).map { m.x + side * (spread + $0 * (tall ? 5 : 3) * s) }
+                for x in feet { hkLine(c, Double(m.x), Double(top), Double(x), Double(foot), rope, 0.5) }
+                for y in stride(from: top + 6 * s, to: foot - s, by: (tall ? 4 : 3) * s) {
+                    let k = Double(y - top) / Double(foot - top)
+                    let a = m.x + Int(Double(feet[0] - m.x) * k), b = m.x + Int(Double(feet[2] - m.x) * k)
+                    c.rect(min(a, b), y, abs(b - a) + 1, 1, C(0x3A2A1E, 0.85))
+                }
             }
         }
-        hkShrouds(c, g, f: f, s: s)
-        for l in f.lanterns { c.rect(l.0, l.1, s, 3 * s, C(0x2A1A14)) }
-        hkBulwark(c, g, f)
-        hkQuarterdeck(c, g, f)
-        // The deck: planks running along, their butts staggered, tar in the seams.
-        c.ground(g, C(0x7A5434), edge: C(0x3A2416), speck: C(0x6A4628), seed: 71)
+        // The flag's staff on the stern (in the strip) and the lanterns' posts on the rails.
+        if !tall { c.rect(f.flag.x, f.flag.y, s, f.castle.top - f.flag.y, C(0x4A3020)) }
+        for l in f.lanterns {
+            let base = l.0 < f.castle.x ? f.fore.top : f.castle.top
+            c.rect(l.0, l.1, s, base - l.1, C(0x2A1A14))
+        }
+        hkHull(c, g, f)
+        // The quay: planks running along, tarred seams, the mooring posts with ropes out to the hull, and the
+        // gangplank up to the deck.
+        c.ground(g, C(0x7A5A3A), edge: C(0xB08A5A), speck: C(0x6A4A2E), seed: 43)
         for (i, y) in stride(from: g + 2 * s, to: c.h, by: 3 * s).enumerated() {
-            c.rect(0, y, c.w, s, C(0x4A3020))
-            for x in stride(from: (i * 23 % 47) * s, to: c.w, by: 47 * s) { c.rect(x, y - 2 * s, s, 2 * s, C(0x4A3020)) }
+            c.rect(0, y, c.w, s, C(0x5A402A))
+            for x in stride(from: (i * 23 % 47) * s, to: c.w, by: 47 * s) { c.rect(x, y - 2 * s, s, 2 * s, C(0x5A402A)) }
+        }
+        let span = f.x1 - f.x0
+        let gx = f.x0 + span * 38 / 100, plankTop = f.deck - (tall ? 2 : 1) * s, rise = g - plankTop
+        let run = rise * 3 / 2
+        for i in 0..<run {
+            let y = g - i * rise / run
+            c.rect(gx + i, y - (tall ? 5 : 2) * s, 1, (tall ? 5 : 2) * s, C(0x8A6440))
+            c.rect(gx + i, y - (tall ? 5 : 2) * s, 1, s, C(0xB08A5A))
+            if i % ((tall ? 8 : 5) * s) == 0 { c.rect(gx + i, y - (tall ? 6 : 3) * s, s, s, C(0x5A402A)) }
+        }
+        let pw = (tall ? 6 : 3) * s, ph = (tall ? 12 : 5) * s
+        for px in [f.x0 + span * 14 / 100, f.x0 + span * 66 / 100, f.x0 + span * 94 / 100] {
+            hkRope(c, (px + pw / 2, g - ph + s), (px + (tall ? 30 : 10) * s, f.deck + (tall ? 6 : 2) * s), sag: (tall ? 6 : 2) * s,
+                   C(0xC8A870))
+            c.rect(px, g - ph, pw, ph, C(0x3A2818)); c.rect(px, g - ph, s, ph, C(0x6A4A2E))
+            c.rect(px - s, g - ph - s, pw + 2 * s, 2 * s, C(0x2A1A10))
+            c.rect(px, g - ph + 2 * s, pw, s, C(0xC8A870))
         }
     }
 
-    /// The bulwark from the deck: the cap rail with its gold trim over a scarlet strake, planks below with the frames
-    /// standing up through them, and the gun ports open on the sea with a cannon run out through each on its carriage.
-    private static func hkBulwark(_ c: PixelCanvas, _ g: Int, _ f: HkDeck) {
-        let s = unit(g), tall = isTall(c), r = f.rail, end = f.quarter.x
-        c.rect(0, r, end, g - r, C(0x6A4428))
-        for y in stride(from: r + 6 * s, to: g, by: 3 * s) { c.rect(0, y, end, s, C(0x4A2E1A)) }
-        c.rect(0, r + 2 * s, end, 4 * s, C(0x9A2A22)); c.rect(0, r + 5 * s, end, s, C(0x5A1A14))
-        c.rect(0, r, end, 2 * s, C(0x8A5A30)); c.rect(0, r, end, s, C(0xD8A83A))
-        for x in stride(from: 10 * s, to: end, by: 30 * s) { c.rect(x, r + 2 * s, 2 * s, g - r - 2 * s, C(0x4A2E1A)) }
-        let ph = (tall ? 9 : 6) * s, pw = (tall ? 12 : 9) * s, py = r + 7 * s
-        for gx in stride(from: 22 * s, to: end - pw, by: 46 * s) {
-            c.rect(gx - s, py - s, pw + 2 * s, ph + 2 * s, C(0xD8A83A))
-            c.rect(gx, py, pw, ph, C(0x3A2A5A)); c.rect(gx, py, pw, s, C(0x6A4A7A))
-            // The cannon: the barrel out through the port, the carriage and its little wheels on the deck.
-            let by = py + ph / 2
-            c.rect(gx + s, by - s, pw - 2 * s, 3 * s, C(0x1E1E22)); c.rect(gx + s, by - s, pw - 2 * s, s, C(0x5A5A62))
-            c.rect(gx - s, by + 2 * s, pw + 2 * s, g - by - 3 * s, C(0x5A3A22))
-            c.rect(gx - s, by + 2 * s, pw + 2 * s, s, C(0x8A5E36))
-            c.circle(gx + s, g - 2 * s, 2 * s, C(0x2A1A10)); c.circle(gx + pw - s, g - 2 * s, 2 * s, C(0x2A1A10))
+    /// The hull, column by column: the gold cap rail, the upper works in planks, the scarlet strake, the dark lower
+    /// hull down to the water; the gun ports along the waist with a cannon's mouth in each, the forecastle's rail,
+    /// the stern castle's lit windows and gilded stern; then the hull's broken reflection in the water below and the
+    /// water slapping along its foot.
+    private static func hkHull(_ c: PixelCanvas, _ g: Int, _ f: HkGalleon) {
+        let s = unit(g), tall = isTall(c), gold = C(0xD8A83A)
+        let strake = f.deck + (tall ? 4 : 1) * s, strakeH = (tall ? 6 : 2) * s
+        for x in max(0, f.x0)...min(c.w - 1, f.x1) {
+            guard let sp = hkHullSpan(f, x, s: s, tall: tall) else { continue }
+            for y in sp.top..<sp.bottom {
+                let col: Px
+                if y < sp.top + s { col = gold }
+                else if y < sp.top + 2 * s { col = C(0x8A5A30) }
+                else if y >= strake && y < strake + strakeH { col = y == strake ? gold : (y >= strake + strakeH - s ? C(0x5A1A14) : C(0x9A2A22)) }
+                else if y < strake { col = (y - sp.top) % (3 * s) == 0 ? C(0x4A2E1A) : C(0x6A4428) }
+                else if y >= f.water - 2 * s { col = C(0x241610) }
+                else { col = (y - strake) % (3 * s) == 0 ? C(0x2E1C12) : C(0x46301E) }
+                c.px(x, y, col)
+            }
+            // A touch of light on the bow, shade under the counter.
+            if x < f.x0 + 3 * s { c.rect(x, sp.top + 2 * s, 1, max(0, sp.bottom - sp.top - 2 * s), C(0xF8B880, 0.18)) }
         }
-    }
-
-    /// The quarterdeck: its front bulkhead with panelled doors, the steps up, the gilded balustrade, and the wheel
-    /// on its pedestal standing up against the sky, spokes and handles round the rim and a brass hub.
-    private static func hkQuarterdeck(_ c: PixelCanvas, _ g: Int, _ f: HkDeck) {
-        let s = unit(g), tall = isTall(c), q = f.quarter, gold = C(0xD8A83A)
-        c.rect(q.x, q.top, c.w - q.x, g - q.top, C(0x6A4428))
-        for y in stride(from: q.top + 4 * s, to: g, by: 3 * s) { c.rect(q.x, y, c.w - q.x, s, C(0x4A2E1A)) }
-        c.rect(q.x, q.top, c.w - q.x, 2 * s, gold)
-        let dw = (tall ? 14 : 8) * s
-        c.rect(q.x + 10 * s, q.top + 4 * s, dw, g - q.top - 4 * s, C(0x4A2E1A))
-        c.rect(q.x + 11 * s, q.top + 5 * s, dw - 2 * s, g - q.top - 6 * s, C(0x7A5232))
-        c.rect(q.x + 9 * s + dw, q.top + (g - q.top) / 2, s, s, gold)
-        for i in 0..<4 {
-            let sw = 4 * s, sy = q.top + i * (g - q.top) / 4
-            c.rect(q.x - (i + 1) * sw, sy, sw, g - sy, C(0x5A3A22)); c.rect(q.x - (i + 1) * sw, sy, sw, s, C(0x9A6A3A))
-        }
-        // The wheel, behind the balustrade.
-        let w = f.wheel, wc = C(0x7A4A26)
-        c.rect(w.x - s, w.y, 3 * s, q.top - w.y, C(0x4A3020))
-        c.rect(w.x - 3 * s, w.y + w.r + 2 * s, 7 * s, q.top - w.y - w.r - 2 * s, C(0x5A3A22))
-        for k in 0..<8 {
-            let a = Double(k) / 8 * .pi * 2
-            let ex = Double(w.x) + cos(a) * Double(w.r + 3 * s), ey = Double(w.y) + sin(a) * Double(w.r + 3 * s)
-            hkLine(c, Double(w.x), Double(w.y), ex, ey, wc, Double(s) * 0.6)
-            c.rect(Int(ex) - s / 2, Int(ey) - s / 2, s + s / 2 + 1, s + s / 2 + 1, C(0xA86E3A))
-        }
-        for rr in [w.r, w.r - s] {
-            for k in 0..<64 {
-                let a = Double(k) / 64 * 2 * .pi
-                c.rect(w.x + Int(cos(a) * Double(rr)), w.y + Int(sin(a) * Double(rr)), s, s, rr == w.r ? C(0x9A6236) : wc)
+        // The gun ports: lids hinged up, the port dark, a cannon's muzzle looking out. Two tiers on the screen saver.
+        let p = (tall ? 8 : 3) * s
+        let tiers = tall ? [f.deck + 14 * s, f.deck + 30 * s] : [f.deck + 4 * s]
+        for (ti, py) in tiers.enumerated() {
+            let step = (tall ? 24 : 11) * s
+            for gx in stride(from: f.fore.x + (tall ? 8 : 4) * s + ti * step / 2, to: f.castle.x + (tall ? 20 : 6) * s - p, by: step) {
+                c.rect(gx - s, py - s, p + 2 * s, p + 2 * s, gold)
+                c.rect(gx, py, p, p, C(0x140E0C))
+                c.rect(gx, py - p / 2 - s, p, p / 2, C(0x9A2A22)); c.rect(gx, py - p / 2 - s, p, s, C(0x5A1A14))
+                if tall {
+                    c.circle(gx + p / 2, py + p / 2, 3 * s, C(0x2A2A30)); c.circle(gx + p / 2, py + p / 2, s, C(0x0A0808))
+                    c.rect(gx + p / 2 - 2 * s, py + p / 2 - 3 * s, 3 * s, s, C(0x5A5A62))
+                } else {
+                    c.rect(gx + s, py + s, max(1, p - 2 * s), max(1, p - 2 * s), C(0x3A3A40))
+                }
             }
         }
-        c.circle(w.x, w.y, 2 * s, gold); c.rect(w.x, w.y, s, s, C(0xFFF0A0))
-        let balTop = q.top - (tall ? 14 : 8) * s
-        c.rect(q.x, balTop, c.w - q.x, 2 * s, gold)
-        for bx in stride(from: q.x, to: c.w, by: 4 * s) {
-            c.rect(bx, balTop + 2 * s, 2 * s, q.top - balTop - 2 * s, C(0xB8862A))
-            c.rect(bx, balTop + 2 * s + (q.top - balTop) / 2 - s, 2 * s, s, C(0x8A5A1A))
+        // The forecastle's rail.
+        let rail = (tall ? 8 : 3) * s
+        for x in stride(from: f.x0 + (tall ? 8 : 3) * s, to: f.fore.x, by: (tall ? 4 : 2) * s) {
+            guard let sp = hkHullSpan(f, x, s: s, tall: tall) else { continue }
+            c.rect(x, sp.top - rail, s, rail, C(0xB8862A))
         }
-        if tall, let stern = f.lanterns.last {
-            // The stern lantern's post with its arm.
-            c.rect(stern.0 + 8 * s, stern.1, 2 * s, q.top - stern.1, C(0x4A3020))
-            c.rect(stern.0, stern.1, 10 * s, 2 * s, C(0x4A3020))
+        // The stern castle: its balustrade, a row of lit windows (two on the screen saver), the gilded stern post.
+        let cx0 = f.castle.x + (tall ? 6 : 2) * s
+        for x in stride(from: f.castle.x, to: f.x1, by: (tall ? 4 : 2) * s) {
+            guard let sp = hkHullSpan(f, x, s: s, tall: tall) else { continue }
+            c.rect(x, sp.top - rail, s, rail, C(0xB8862A))
+        }
+        if let sp = hkHullSpan(f, f.castle.x + 1, s: s, tall: tall) {
+            c.rect(f.castle.x, sp.top - rail, f.x1 - f.castle.x, s, gold)
+        }
+        let ww = (tall ? 6 : 2) * s, wh = (tall ? 8 : 3) * s
+        let rows = tall ? [f.castle.top + 8 * s, f.castle.top + 22 * s] : [f.castle.top + 3 * s]
+        for wy in rows {
+            for wx in stride(from: cx0, to: f.x1 - ww - (tall ? 6 : 2) * s, by: ww + (tall ? 6 : 3) * s) {
+                c.rect(wx - s, wy - s, ww + 2 * s, wh + 2 * s, gold)
+                c.rect(wx, wy, ww, wh, C(0xFFD27A))
+                if tall { c.rect(wx + ww / 2, wy, s, wh, C(0xB8862A)); c.rect(wx, wy + wh / 2, ww, s, C(0xB8862A)) }
+            }
+        }
+        if let sp = hkHullSpan(f, f.x1, s: s, tall: tall) {
+            c.rect(f.x1 - (tall ? 4 : 1) * s, sp.top, (tall ? 4 : 1) * s + s, sp.bottom - sp.top, gold)
+        }
+        // The reflection, broken by the ripples, and the water along the hull's foot.
+        for x in max(0, f.x0)...min(c.w - 1, f.x1) {
+            guard let sp = hkHullSpan(f, x, s: s, tall: tall), sp.bottom >= f.water - s else { continue }
+            for y in stride(from: f.water, to: g, by: 1) where ((y - f.water) / s) % 2 == 0 {
+                let wob = Int(sin(Double(y) * 0.9) * Double(s))
+                c.px(x + wob, y, C(0x1A1024, 0.55))
+            }
+            if (x / s) % 5 != 0 { c.px(x, f.water, C(0xF8C890, 0.35)) }
         }
     }
 
-    /// What moves on the Jolly Roger: the ship rolling (the horizon tilting and rising against the rail, the
-    /// lanterns swinging on their hooks), gulls of spray glinting on the sea, and on the screen saver the black
-    /// skull-and-crossbones flag streaming from the mainmast.
+    /// What moves on the Jolly Roger: the lanterns glowing and flickering on the rails, glints on the sea, the
+    /// water lapping at the hull, gulls wheeling round the masts, and the black skull-and-crossbones flag streaming
+    /// out from the maintop (from the stern's staff in the window's strip).
     static func jollyRogerLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
-        let s = unit(g), tall = isTall(c), f = hkDeckFrame(c, g)
-        // The roll: the sea's edge tilting, painted over a band either side of the still horizon.
-        let roll = sin(t * 0.9)
-        let amp = Double((tall ? 5 : 2) * s)
-        let mid = Double(c.w / 2)
-        for x in 0..<(f.quarter.x - 16 * s) {
-            if f.masts.contains(where: { abs($0 - x) <= f.mw / 2 }) { continue }
-            let tilt = (Double(x) - mid) / mid
-            let off = Int((roll * amp * 0.6 + tilt * roll * amp).rounded())
-            if off < 0 {
-                c.rect(x, f.sea + off, 1, -off, C(0x5A3A6A))
-            } else if off > 0 {
-                c.rect(x, f.sea, 1, off, C(0xF29A4A))
-            }
-        }
-        hkShrouds(c, g, f: f, s: s)
-        // The lanterns, swinging against the roll.
+        let s = unit(g), tall = isTall(c), f = hkGalleonFrame(c, g)
+        // The lanterns.
         for (i, l) in f.lanterns.enumerated() {
-            let a = -roll * 0.35 + sin(t * 2.3 + Double(i)) * 0.06
-            let len = Double((tall ? 14 : 7) * s)
-            let lx = Double(l.0) + sin(a) * len, ly = Double(l.1 + 3 * s) + cos(a) * len
-            hkLine(c, Double(l.0), Double(l.1 + 3 * s), lx, ly, C(0x2A1A14), 0.5)
+            let flick = 0.85 + sin(t * 9 + Double(i) * 2.1) * 0.08 + sin(t * 23 + Double(i)) * 0.05
             let w = (tall ? 6 : 3) * s, h = (tall ? 8 : 4) * s
-            c.rect(Int(lx) - w / 2, Int(ly), w, h, C(0x3A2A1A))
-            c.rect(Int(lx) - w / 2 + s, Int(ly) + s, w - 2 * s, h - 2 * s, C(0xFFD27A))
-            c.glowLine(lx, ly + Double(h / 2), lx + 0.1, ly + Double(h / 2), core: C(0xFFE8A0, 0.3), glow: C(0xFFB84A, 0.25),
-                       coreR: Double(s), glowR: Double(h + 2 * s))
+            let lx = Double(l.0), ly = Double(l.1 - h / 2)
+            c.glowLine(lx, ly, lx + 0.1, ly, core: C(0xFFE8A0, 0.3 * flick), glow: C(0xFFB84A, 0.25 * flick),
+                       coreR: Double(s), glowR: Double(h + 3 * s))
+            c.rect(l.0 - w / 2, l.1 - h, w, h, C(0x3A2A1A))
+            c.rect(l.0 - w / 2 + s, l.1 - h + s, w - 2 * s, h - 2 * s, C(0xFFD27A, flick))
+            c.rect(l.0 - w / 2 - s, l.1 - h - s, w + 2 * s, s, C(0x2A1A10))
         }
-        // Glints on the sea.
-        for i in 0..<5 where noise(i * 7 + Int(t * 3)) > 0.5 {
-            let wx = Int(noise(i + 5300) * Double(c.w)), wy = f.sea + 2 * s + Int(noise(i + 5310) * Double(f.rail - f.sea - 3 * s))
+        // Glints on the open sea either side of the ship and in the water at its foot.
+        for i in 0..<(tall ? 10 : 6) where noise(i * 7 + Int(t * 3)) > 0.5 {
+            let wx = Int(noise(i + 5300) * Double(c.w))
+            let front = i % 2 == 0
+            if !front && wx > f.sprit.x - 4 * s && wx < f.x1 + 4 * s { continue }
+            let y0 = front ? f.water + s : f.sea + 2 * s
+            let wy = y0 + Int(noise(i + 5310) * Double(max(1, (front ? g : f.water) - y0 - s)))
             c.rect(wx, wy, 2 * s, s, C(0xFFD8A0, 0.8))
         }
-        guard tall else { return }
-        // The flag on the mainmast's top, streaming and rippling.
-        let m = f.masts[1], fy = f.yards[0] - 66 * s
-        c.rect(m - s, fy, 2 * s, f.yards[0] - 30 * s - fy, C(0x5A3A22))
-        let fw = 50 * s, fh = 32 * s
+        // The water lapping along the hull.
+        for x in stride(from: f.x0, to: f.x1, by: s) where sin(Double(x) * 0.35 + t * 3) > 0.55 {
+            c.rect(x, f.water - s, s, s, C(0xF8D0A0, 0.6))
+        }
+        // The gulls.
+        for i in 0..<(tall ? 5 : 3) {
+            let span = Double(c.w + 60)
+            let speed = 12 + noise(i + 5400) * 10
+            let x = Int((noise(i + 5410) * span + t * speed).truncatingRemainder(dividingBy: span)) - 30
+            let y = Int(noise(i + 5420) * Double(tall ? g / 3 : 10 * s)) + 2 * s + Int(sin(t * 0.9 + Double(i)) * Double(2 * s))
+            let flap = Int(t * 6 + Double(i)) % 2 == 0
+            c.rect(x, y, s, s, C(0xF8F8F4))
+            c.rect(x - s, y + (flap ? -s : 0), s, s, C(0xF8F8F4)); c.rect(x + s, y + (flap ? -s : 0), s, s, C(0xF8F8F4))
+            c.rect(x - 2 * s, y + (flap ? -s : s), s, s, C(0x3A3A3A)); c.rect(x + 2 * s, y + (flap ? -s : s), s, s, C(0x3A3A3A))
+        }
+        // The flag, streaming and rippling.
+        let k = f.flag.k
+        let fw = 25 * k, fh = 16 * k
         let flag = PixelCanvas(fw, fh)
         flag.rect(0, 0, fw, fh, C(0x141014))
         let sk: [String] = [
@@ -722,19 +827,20 @@ extension Scenes {
         ]
         for (ry, row) in sk.enumerated() {
             for (rx, p) in row.enumerated() where p == "#" {
-                flag.rect(fw / 2 - 11 * s + rx * 2 * s, 2 * s + ry * 2 * s, 2 * s, 2 * s, C(0xF0ECE0))
+                flag.rect(fw / 2 - 11 * k / 2 + rx * k, k + ry * k, k, k, C(0xF0ECE0))
             }
         }
         for x in 0..<fw {
-            let wave = sin(Double(x) * 0.18 - t * 5) * Double(2 * s) * Double(x) / Double(fw)
+            let phase = Double(x) / Double(k) * 0.36 - t * 5
+            let wave = sin(phase) * Double(k) * Double(x) / Double(fw)
+            let shade = sin(phase) > 0.6 ? 0.85 : 1.0
             for y in 0..<fh {
                 let i = (y * fw + x) * 4
                 let a = flag.buf[i + 3]
                 guard a > 0 else { continue }
-                let col = Px(r: flag.buf[i], g: flag.buf[i + 1], b: flag.buf[i + 2], a: a)
-                let shade = sin(Double(x) * 0.18 - t * 5) > 0.6 ? 0.85 : 1.0
-                c.px(m + s + x, fy + y + Int(wave), Px(r: UInt8(Double(col.r) * shade), g: UInt8(Double(col.g) * shade),
-                                                         b: UInt8(Double(col.b) * shade), a: 255))
+                c.px(f.flag.x + s + x, f.flag.y + y + Int(wave),
+                     Px(r: UInt8(Double(flag.buf[i]) * shade), g: UInt8(Double(flag.buf[i + 1]) * shade),
+                        b: UInt8(Double(flag.buf[i + 2]) * shade), a: 255))
             }
         }
     }
