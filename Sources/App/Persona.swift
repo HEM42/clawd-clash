@@ -31,7 +31,6 @@ enum ShotStyle {
     case thrown(Px)                   // something spinning: knives, pumpkin bombs, shuriken
 }
 
-/// What a magic or energy stream looks like.
 /// A signature move that climbs a thread (`Persona.climb`): where the thread leaves the body (canvas pixels, facing
 /// right), and at each point `p` (0…1) of the move how far the body has risen (canvas pixels), how visible it is
 /// (0…1), and how much of the thread is out (0…1 of the way from the body to the top of the screen).
@@ -42,6 +41,7 @@ struct Climb {
     var thread: (Double) -> Double
 }
 
+/// What a magic or energy stream looks like.
 struct Magic {
     var core: Px
     var glow: Px

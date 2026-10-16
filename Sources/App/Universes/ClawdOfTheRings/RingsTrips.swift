@@ -74,7 +74,7 @@ struct RingsTrip {
     var duration: Double { kind.duration }
 
     /// Any trip but the last one's kind, likelier with one of its owners on stage or going to its turf, from `from`
-    /// (the Shire, when it isn't known) to `place`.
+    /// (the Shire, when it isn't known or is in another universe, as in Clawd Royale) to `place`.
     static func pick(after last: RingsWipe?, cast: [Cast], from: Location?, to place: Location) -> RingsTrip {
         let here = Set(cast)
         var kinds: [RingsWipe] = []
@@ -83,7 +83,8 @@ struct RingsTrip {
             if kind.owners.contains(where: here.contains) { kinds += [kind, kind, kind] }
             if kind.turf.contains(place) { kinds += [kind, kind] }
         }
-        return RingsTrip(kind: kinds.randomElement() ?? .eye, from: from ?? .bagEnd, to: place)
+        let start = from.flatMap { $0.universe == .middleEarth ? $0 : nil } ?? .bagEnd
+        return RingsTrip(kind: kinds.randomElement() ?? .eye, from: start, to: place)
     }
 
     // MARK: Drawing
