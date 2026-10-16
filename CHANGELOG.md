@@ -12,6 +12,7 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 ## Unreleased
 
 ### Added
+- **Clawd Clash's social preview has every universe.** The pop-art cover GitHub shows when the repo is shared (`docs/social-preview.png`, from `Tools/MakeSocial`) had five panels, from before Stevie Clawdberg and Clawd of the Rings. It now has seven: Indiana Bones against René Bellock, and Gandclawd the Grey against the Ballrog.
 - **A guard for pull requests** (`scripts/pr-guard.py`, run on every PR by `.github/workflows/pr-guard.yml`). A universe is Swift compiled into the app, so a malicious one could use the app's Accessibility grant or rewrite the AIs' hooks. The guard reads a PR with git as plain text, never building or running it, and:
   - **sorts every changed file** into green (a universe's own folder, the docs' pictures, README, CHANGELOG), yellow (passes, listed for the maintainer to read closely: registration files and the rest of the app) and red (fails: build and release scripts, dotfiles such as `.github/` and `.claude/`, instructions for AI assistants, the hook and the code compiled into it, `HookInstaller`, `SaverInstaller`, `Jump`, `main.swift`, new core files, symlinks, executables);
   - **checks the Swift lines a PR adds to a universe folder**: no file, process, network, other-app, environment or app-internal APIs (including a call hidden in a string's `\( )`, or a backticked name), only the four imports drawing needs, no attributes such as `@_silgen_name`, no `#if` or macros, no `main.swift`;

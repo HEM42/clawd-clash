@@ -4,7 +4,8 @@ import CoreText
 // Renders docs/social-preview.png (1280×640, GitHub → Settings → Social preview): a comic cover in slanted panels,
 // one per universe, each with a fight in full swing, drawn with the app's own sprite and fight-effect code: Luke and
 // Vader's sabers locked under the stars, Thor and Loki trading lightning and magic, Batman against the Joker, Doctor
-// Ten's sonic on a Dalick in the time vortex's blue, Fox Clawder against the Grey in the woods at night. CLAWD CLASH
+// Ten's sonic on a Dalick in the time vortex's blue, Fox Clawder against the Grey in the woods at night, Indiana Bones
+// against René Bellock, Gandclawd the Grey against the Ballrog. CLAWD CLASH
 // runs across them all, coloured by the panel each part is in, with a sound effect in each panel and the tagline in a
 // caption box. A new universe adds a panel: a cut, a centre, a sky, a floor, a fight, a sound and a face.
 //   swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
@@ -43,6 +44,10 @@ let allVerses: [Verse] = [
           burst: 0xFFB45A, face: (0xFFFFFF, 0x8FB8FF), sky: (0x2A4AC8, 0x0A0A2E), caption: "SOMEWHERE IN TIME…"),
     Verse(name: "THE CLAWD FILES", hero: .hero(FilesHero.foxClawder), villain: .villain(FilesVillain.grey), place: .bellefleurWoods, sound: "ZZZT!",
           burst: 0x9AF0C8, face: (0xFFFFFF, 0x6AE88A), sky: (0x2A5A44, 0x050A08), caption: "THE TRUTH IS OUT THERE…"),
+    Verse(name: "STEVIE CLAWDBERG", hero: .hero(ClawdbergHero.indianaBones), villain: .villain(ClawdbergVillain.reneBellock), place: .idolTemple,
+          sound: "CRACK!", burst: 0xFFD27A, face: (0xFFFFFF, 0xFFB43A), sky: (0xB8642A, 0x2A1208), caption: "IN A TEMPLE FAR AWAY…"),
+    Verse(name: "CLAWD OF THE RINGS", hero: .hero(RingsHero.gandalf), villain: .villain(RingsVillain.balrog), place: .moria, sound: "KA-THOOM!",
+          burst: 0xFF8A3A, face: (0xFFFFFF, 0xFFD27A), sky: (0x6A1E0A, 0x120604), caption: "DEEP IN THE MINES…"),
 ]
 /// `UNIVERSES=8` repeats the list up to that many, to see how a style holds up with more universes.
 let versesWanted = Int(ProcessInfo.processInfo.environment["UNIVERSES"] ?? "") ?? 0
