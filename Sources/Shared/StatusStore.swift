@@ -753,10 +753,15 @@ enum StatusStore {
         // One guise at a time (`Universe.guises`), even when the casting couldn't see it coming (the universe switched
         // with sessions open): whoever comes later is shown as someone else, the same someone on every refresh.
         if !roster.guises.isEmpty {
+            // Every leader counts as taken, later ones too, so a stand-in never doubles someone further along.
+            let leaders = Set(result.map(\.leader))
             var shown = Set<Int>()
             for i in result.indices {
-                if roster.ruledOut(by: shown).contains(result[i].leader) {
-                    result[i].leader = pickLeader(used: shown, previous: nil, seed: stableHash(result[i].id), pool: cast,
+                let leader = result[i].leader
+                if roster.ruledOut(by: shown).contains(leader) {
+                    // Someone on the same side, so with two AIs running it stays on its AI's side.
+                    result[i].leader = pickLeader(used: shown.union(leaders), previous: nil, seed: stableHash(result[i].id),
+                                                  pool: isDark(leader) ? roster.darkCast : roster.lightCast,
                                                   roster: roster, ruledOut: roster.ruledOut(by: shown))
                 }
                 shown.insert(result[i].leader)
@@ -764,7 +769,9 @@ enum StatusStore {
                     let a = result[i].agents[j], id = roster.adopt(a.cast ?? heroBase + a.character)
                     let ruled = roster.ruledOut(by: shown)
                     if ruled.contains(id) {
-                        let pool = (isDark(id) ? roster.darkCast : roster.lightCast).filter { !ruled.contains($0) && !shown.contains($0) }
+                        let pool = (isDark(id) ? roster.darkCast : roster.lightCast).filter {
+                            !ruled.contains($0) && !shown.contains($0) && !leaders.contains($0)
+                        }
                         if !pool.isEmpty { result[i].agents[j].cast = pool[Int(stableHash(a.id) % UInt64(pool.count))] }
                     }
                     shown.insert(roster.adopt(result[i].agents[j].cast ?? heroBase + a.character))
