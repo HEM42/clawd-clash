@@ -9,7 +9,7 @@ Its first three universes started as separate apps. Their changelogs from before
 
 Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://github.com/rodclemen/doctor-clawd)), so its whole history is below, from 3.1.0.
 
-## Unreleased
+## 3.5.0 (2026-10-16)
 
 ### Added
 - **A new universe, Clawd of the Rings**: the hobbits, the Fellowship and the One Ring, with The Hobbit's dwarves and dragon along. Settings → Universe → Clawd of the Rings, and in the screen saver's Options. A cast of 75, 37 heroes and 38 villains: the hobbits of the Shire, the Fellowship, the elves, Rohan and Gondor, the Ents, Thorin's company and Bard, against Sourun and the Eye, Sarumanual, the wraiths, the Ballrog, Smeagull, Shellob, the orcs and Uruks, the Necro-maintainer, Smaug and Azog. Each has a signature move and a callout: Gandclawd the Grey slams his staff down ("You shall not pass!"), Frodough slips the Ring on and fades to a ghost, Smeagull hugs his precious and then argues with himself, Boromeme holds up a finger and thumb ("One does not simply…"), and Elcron's cron job comes due. Wizard staffs are swung like swords, not fired; only the Necro-maintainer (rings of dark fire) and Barrow-write (a cold chant) cast magic. Every fighter has an arch-enemy. HEM wears Rohan's helmet, mail and sun-horse shield, and the helmet comes off to let the buns out. Twenty-two places, each with a moving layer and extras for the screen saver's tall frame, from Bag Endpoint and the Prancing Ponytail to Rivendev, Lothlorem, the Mines of Mori-ah, Helm Chart's Deep, Minas Tiered, Mount Doomscroll and the Lonely Mount-point; everyone calls one of them home. The menu bar icon is the One Ring.
