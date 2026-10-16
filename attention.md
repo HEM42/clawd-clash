@@ -23,7 +23,7 @@ What to look at first, after a night of building Stevie Clawdberg without approv
 ## Done on 2026-10-16 (after review)
 
 - Doc Brawn: RC DeLorean plus the brainwave helmet (your pick). E.Clawd: no beam, just the glowing finger.
-- Decided: Mad Dog says "Dance! Come on, runt!", Little Barry stays quiet, Ray Arnie keeps his cigarette, Billy keeps the sword (he uses one in the film).
+- Decided: Mad Dog says "Dance! Come on, runt!", Little Barry stays quiet, Ray Arnie keeps his cigarette, Billy keeps the sword (he uses one in the film), Biff keeps the "C" patch.
 - Every magic user in every universe now has its own small variation (check with `build/preview magic out.png`).
 - Park gates taller, the Jolly Roger a whole galleon from the dock.
 - Trailer: crisp bike, the DeLorean picking Marty up, "universe" under the title. Transitions showcase: `SHOWCASE=` in `Tools/Transitions`.
