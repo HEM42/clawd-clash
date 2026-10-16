@@ -292,7 +292,7 @@ renders what's done.
   - `Location.<prefix>Home(of:)` for heroes and villains.
   - `Cast.hero(_:)` and `Cast.villain(_:)`, the nemeses, and `let <prefix>Theme = Theme(universe:villains:heroes:places:home:nemeses:ride:menuIcon:legend:)`.
   - The `static let` place keys, and `let <prefix>Places` merged from the Places files.
-- **`Art/<Prefix>Heroes1…N.swift` and `Art/<Prefix>Villains1…N.swift`:** 8–10 personas per file, each a `Persona(...)` entry plus its `private func draw…(_ c: PixelCanvas, _ p: Pose)`. Read the comment at the top of `Sources/App/Pose.swift` before drawing: it covers the 72×52 canvas facing right, `drawLegs`, `p.breathe`, melee angles, `armRaise`, `signature`. Every character is Clawd (the orange body) in costume, always on Clawd's four legs. Draw the legs and shoes first, then `c.oy += p.breathe`, then the body; anything that hangs over the legs (coat tails, skirts, a robe's hem) goes after the breath, over the legs, and still leaves four distinct legs showing below. Keep a group's shared helpers private to its file; anything shared across a universe's art files goes in one `<Prefix>Kit.swift` with prefixed names (Preview compiles every universe together, so top-level names must be unique app-wide).
+- **`Art/<Prefix>Heroes1…N.swift` and `Art/<Prefix>Villains1…N.swift`:** 8–10 personas per file, each a `Persona(...)` entry plus its `private func draw…(_ c: PixelCanvas, _ p: Pose)`. Read the comment at the top of `Sources/App/Pose.swift` before drawing: it covers the 72×52 canvas facing right, `drawLegs`, `p.breathe`, melee angles, `armRaise`, `signature`. Every character is Clawd (the orange body) in costume, always on Clawd's four legs. Draw the legs and shoes first, then `c.oy += p.breathe`, then the body; anything that hangs over the legs (coat tails, skirts, a robe's hem) goes after the breath, over the legs, and still leaves four distinct legs showing below. Keep a group's shared helpers private to its file; anything shared across a universe's art files goes in one `<Prefix>Kit.swift` with prefixed names (Preview compiles every universe together, so top-level names must be unique app-wide). Every other top-level name is `private` or starts with the prefix too: `scripts/pr-guard.py` refuses a plain one, because it could shadow a system function the app relies on.
 - **`Places/<Prefix>Scenes1…N.swift`:** `let <prefix>ScenesN: [Location: Place]` entries, each `Place(name:panel:still:moving:)`, drawn in code. Scale landmarks up when `Scenes.isTall(c)`.
 - **`<Prefix>Icon.swift`:** the menu bar icon, 28×26, in colour and in mono (a template image).
 - **`<Prefix>Wipes.swift`:** the transitions (phase 5). Follow `DoctorClawd/DoctorWipes.swift`: an enum of kinds with `duration`, `needsOwner`, `isOwned(by:)` and `turf`, and a `…Trip` struct with `pick(after:cast:to:)` and `draw(_:old:new:k:in:)`.
@@ -307,12 +307,12 @@ Any exhaustive `switch` on `Universe` turns a missed spot into a compile error. 
 - [ ] **`Sources/App/Locations.swift`:** `.merging(<prefix>Places)` in `places`.
 - [ ] **`Sources/App/Universes/Hem.swift`:** HEM's persona and costume in every switch.
 - [ ] **`Sources/App/Universes/ComicTransition.swift`:** add the universe to the `nil` cases in phase 1. In phase 5, add a `.<key>(<Prefix>Trip)` case to `duration`, `draw` and `pick`, and update the doc comment.
-- [ ] **`Sources/App/Rides.swift`:** the ride's drawing (phase 4).
+- [ ] **`Sources/App/Rides.swift`:** the ride's drawing (phase 4). A ride that drives in along the ground instead of flying also goes in `Ride.drives` (`Theme.swift`).
 - [ ] ⚠︎ **`Sources/Saver/SaverView.swift`:** the Options doc comment, the choices list, and the trip switch (`case "<key>": tripUniverse = …`).
 - [ ] ⚠︎ **`Sources/App/Drills.swift`:** the meditation guard, plus bespoke drills keyed by cast.
 - [ ] ⚠︎ **`Sources/App/Overlay.swift`:** the Playground's sample prompts per universe, `Universe.shown == .<key> ? [...]`. Write five in-universe ones. Also check the Weeping-Angle-style habit hooks in the tick if you add a habit.
 - [ ] ⚠︎ **`Sources/App/Pose.swift`** (`classic`), **`Habits.swift`**: universe-specific `if`s. Decide whether the new universe joins each one.
-- [ ] ⚠︎ **Compaction mechanic only:** `StatusStore.swift` (PreCompact handling) and `HookInstaller.swift`. Doctor Clawd already registers the hook.
+- [ ] ⚠︎ **Compaction mechanic only:** `StatusStore.swift` (PreCompact handling) and `HookInstaller.swift`. Doctor Clawd already registers the hook. Both are the maintainer's (`CONTRIBUTING.md`): from a fork, say in the PR what the mechanic needs instead.
 - [ ] **Clawd Royale** gets the new cast and places through `Universe.allCases`. Check that the menu bar icon and arch-enemies still behave when a scene is in one of the new places.
 - [ ] **`Tools/Preview/main.swift`:** the batch names (`<prefix>Heroes1…`), the universe lookup, and the enum lookups by case name.
 - [ ] **`Tools/Transitions/main.swift`:** the branch that renders this universe's trips (phase 5).
@@ -357,6 +357,8 @@ Do these freely (on the branch):
 - creating or publishing a showcase repo (`rodclemen/<universe-name>`);
 - adding a cask in `release.sh`: `write_cask <name> <key> "<description>"`, adding it to the `others` list in `write_cask`, and updating the main cask's description;
 - releasing (`./release.sh <version>`), pushing, opening a PR.
+
+**Sending it as a pull request from a fork:** run `python3 scripts/pr-guard.py main HEAD` and fix what it reports. Leave `llms.txt`, `release.sh` and the other files `CONTRIBUTING.md` lists as red to the maintainer, and say in the PR what they need.
 
 ---
 

@@ -250,6 +250,7 @@ Each universe lives in its own folder, `Sources/App/Universes/StarClawds`, `.../
 - **A place** is a `Place` in the universe's `Places/` files: a still picture and an optional moving layer.
 - **A whole universe** is a `Theme` (`Sources/App/Theme.swift`): its cast, places, homes, arch-enemies, ships, menu bar icon. Add a case to `Universe` and a theme folder.
 - **Check it** with `Tools/Preview/build.sh`, then `build/preview cast out.png "Darth Vapor"` (every pose), `build/preview fight out.png "Luke Skyclawder" "Darth Vapor"`, `build/preview place out.png "Mos Easy Cantina"`. Characters and places go by the names you see on screen. `Tools/RenderDocs` renders this page's sheets, `Tools/MakeIcon` the icon.
+- **Sending a pull request:** read [CONTRIBUTING.md](CONTRIBUTING.md) first. A guard (`scripts/pr-guard.py`) checks every PR before anyone builds it: universe code may only draw, and a few files (the build scripts, the hook, anything holding the app's permissions) are the maintainer's. Run it on your branch with `python3 scripts/pr-guard.py main HEAD`.
 
 ## License
 
