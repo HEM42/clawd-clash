@@ -862,6 +862,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             ? ["redact the case file before Skinnard sees it", "make the window resize to fit the Claudes",
                "why does the slide projector keep flickering?", "write a nice README with screenshots",
                "fix the portrait crop for the Smoking Clawd's smoke"]
+            : Universe.shown == .clawdberg
+            ? ["get the DeLorean up to 88 mph", "make the window resize to fit the Claudes",
+               "why does the water glass keep rippling?", "write a nice README with screenshots",
+               "fix the portrait crop for T. Wrecks's tiny arms"]
             : ["add a snowtaunt", "make the window resize to fit the Claudes", "why does the duel not start?",
                "write a nice README with screenshots", "fix the portrait crop for wide characters"]
         let nowActs = ["Edit WindowMode.swift", "Bash: swift build", "Read Locations.swift", "Grep opaqueBounds", "Agent: Review the diff"]
@@ -870,7 +874,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let leader = Universe.shown.adopt(l)
             var rec = SessionRecord(state: playgroundMood.rawValue, updated: start, leader: leader, project: "")
             rec.created = start - Double(600 + i * 1700)
-            // `--missing-time`: the sessions' contexts are compacted two seconds in (The Clawd Files' FBI agents lose time).
+            // `--missing-time`: the sessions' contexts are compacted two seconds in (The Clawd Files' FBI agents lose time,
+            // Stevie Clawdberg's time travellers hit 88 mph).
             if CommandLine.arguments.contains("--missing-time") { rec.abducted = start + 2 }
             // On "Idle", spread them over the idle stages: standing, sitting (2 min+), asleep (5 min+).
             rec.since = playgroundMood == .idle ? start - Double(60 + i * 160) : start - Double(20 + i * 35)
@@ -1104,10 +1109,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 greedoShot = nil
                 nextShootsFirst = now + ShootsFirst.delay(first: false)
             }
+            // Indy fights with his whip: as his moment comes he puts it away and draws his revolver instead.
+            if han.cast.universe == .clawdberg, greedoShot != nil || nextShootsFirst.map({ now >= $0 - 1.2 }) == true {
+                roles[han.key] = .shoot(offset: 0)
+            }
             if greedoShot == nil {
                 if let next = nextShootsFirst, now >= next, case .shoot(let offset)? = roles[han.key] {
                     let fire = (floor((t + offset) / blasterPeriod) + 1) * blasterPeriod - offset
-                    greedoShot = (han.key, greedo.key, start + fire, ShootsFirst.greedoSays.randomElement() ?? "That hurt!")
+                    greedoShot = (han.key, greedo.key, start + fire, ShootsFirst.comebacks(greedo.cast).randomElement() ?? "That hurt!")
                     nextShootsFirst = nil
                 } else if nextShootsFirst == nil {
                     nextShootsFirst = now + ShootsFirst.delay(first: true)
@@ -1211,9 +1220,21 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     out.append(web)
                 }
             }
-            // Missing time: lifted away in a beam of light and set back down (The Clawd Files' FBI agents).
-            let abduction = actor.isLeader ? actor.abducted.flatMap { now - $0 < missingTimeLength
-                ? MissingTime(k: (now - $0) / missingTimeLength) : nil } : nil
+            // Missing time: lifted away in a beam of light and set back down (The Clawd Files' FBI agents); 88 mph,
+            // gone in a flash and back with three booms (Stevie Clawdberg's time travellers).
+            let tripK = actor.isLeader ? actor.abducted.flatMap { now - $0 < missingTimeLength ? (now - $0) / missingTimeLength : nil } : nil
+            let outaTime = actor.cast.universe == .clawdberg ? tripK.map { OutaTime(k: $0) } : nil
+            let abduction = outaTime == nil ? tripK.map { MissingTime(k: $0) } : nil
+            if let o = outaTime {
+                let fx = PixelCanvas(outaTimeWidth, Sprite.height)
+                drawOutaTime(fx, o, t: t)
+                if let img = fx.makeImage() {
+                    let w = CGFloat(fx.w) * scale, h = CGFloat(fx.h) * scale
+                    let left = facing < 0 ? actor.x - (CGFloat(fx.w - outaTimeAnchor)) * scale : actor.x - CGFloat(outaTimeAnchor) * scale
+                    out.append(DrawItem(image: img, rect: NSRect(x: left.rounded(), y: y, width: w, height: h),
+                                        mirrored: facing < 0, alpha: 1))
+                }
+            }
             if let ab = abduction {
                 lift += CGFloat(ab.lift) * scale
                 let beam = PixelCanvas(24, Sprite.height + 90)
@@ -1229,6 +1250,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             guard let img = canvas.makeImage() else { continue }
             var alpha = min(1, (now - actor.born) / 0.25)
             if let ab = abduction { alpha = min(alpha, ab.alpha) }
+            if let o = outaTime { alpha = min(alpha, o.alpha) }
             var drop = 0.0
             if let left = actor.leaving, actor.exit == nil {
                 let f = min(1, (now - left) / fadeOut)
@@ -1239,9 +1261,16 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let bodyX = (mirrored ? CGFloat(canvas.w) - CGFloat(pivotX) : CGFloat(pivotX)) * scale
             // Ducking a bolt in a shoot-out: squat (squashed from the feet up).
             let duck = incoming[actor.key].map { CGFloat(duckAmount(t: t, shooterOffset: $0, armoured: actor.cast.armoured)) } ?? 0
-            let rect = NSRect(x: (actor.x - bodyX).rounded(), y: y + CGFloat(drop) * z + lift,
+            // Captain Clawk flinches at every tick of the Croc Clock (Stevie Clawdberg), in Pirate Town or with it about.
+            let flinch = clawkFlinch(actor, t: t)
+            let rect = NSRect(x: (actor.x - bodyX).rounded() + CGFloat(flinch.dx) * scale, y: y + CGFloat(drop) * z + lift + CGFloat(flinch.up) * scale,
                               width: CGFloat(canvas.w) * scale, height: (CGFloat(canvas.h) * scale * (1 - 0.22 * duck)).rounded())
             out.append(DrawItem(image: img, rect: rect, mirrored: mirrored, alpha: CGFloat(alpha)))
+            // T. Wrecks's footsteps ripple a glass of water standing on the ground in front of him.
+            if actor.cast == .villain(ClawdbergVillain.tWrecks), actor.leaving == nil,
+               let glass = waterGlassItem(x: actor.x + facing * 34 * scale, ground: y, scale: scale, t: t, walking: walking) {
+                out.append(glass)
+            }
 
             // Speech bubble on whichever side of the head fits on screen (Claudes only).
             var bubbleSpan: (minX: CGFloat, maxX: CGFloat, maxY: CGFloat)?
@@ -1267,11 +1296,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             if case .leader(let who) = actor.kind, let said = who.callout, actor.walkDir == 0,
                (t / 5 + actor.phase).truncatingRemainder(dividingBy: 1) < 0.3 { line = said }
             if let s = shot {
-                if actor.key == s.han, s.e >= ShootsFirst.hanLine.from, s.e < ShootsFirst.hanLine.to { line = ShootsFirst.hanSays; overHead = true }
+                if actor.key == s.han, s.e >= ShootsFirst.hanLine.from, s.e < ShootsFirst.hanLine.to { line = ShootsFirst.says(actor.cast); overHead = true }
                 if actor.key == s.greedo, s.e >= ShootsFirst.standing { line = s.line; overHead = true }
             }
             if let b = bunTalk { line = b.line; overHead = true }
-            if let caption = abduction?.caption { line = caption; overHead = true }
+            if let said = flinch.line { line = said; overHead = true }
+            if let caption = abduction?.caption ?? outaTime?.caption { line = caption; overHead = true }
             if let line {
                 let sc = actor.isLeader ? ls : cs
                 let callout = NSAttributedString(string: line, attributes: [
@@ -1691,6 +1721,40 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     /// HEM standing next to Princess Laya, both out of the fight: for five seconds in every twenty he turns to her and
     /// has a word about buns (a different one each time).
+    /// Captain Clawk at the Croc Clock's tick (in Pirate Town, or with the Croc Clock about as an agent): every three
+    /// seconds a jump and a shiver, sprite pixels; now and then he mutters about it.
+    private func clawkFlinch(_ a: Actor, t: Double) -> (dx: Int, up: Int, line: String?) {
+        guard a.cast == .villain(ClawdbergVillain.captainClawk), a.leaving == nil, a.walkDir == 0 else { return (0, 0, nil) }
+        let croc = Cast.villain(ClawdbergVillain.crocClock)
+        guard actors.contains(where: { $0.cast == croc && $0.leaving == nil }) || location == .pirateTown else { return (0, 0, nil) }
+        let tick = frac(t / 3 + a.phase)
+        let line = frac(t / 18 + a.phase) < 0.12 ? "Tick… tock…" : nil
+        guard tick < 0.1 else { return (0, 0, line) }
+        return (Int(t * 30) % 2 == 0 ? 1 : -1, 2, line)
+    }
+
+    /// A glass of water on the ground at `x`, its surface rippling in rings with each of T. Wrecks's footsteps
+    /// (every half second walking, a heavy thud every two standing still).
+    private func waterGlassItem(x: CGFloat, ground y: CGFloat, scale: CGFloat, t: Double, walking: Bool) -> DrawItem? {
+        let c = PixelCanvas(11, Sprite.height)
+        let beat = frac(t / (walking ? 0.5 : 2))
+        let glass = C(0xDCEAF2, 0.55), rim = C(0xF4FAFF, 0.9), water = C(0x6AA8D8, 0.6)
+        c.rect(3, 36, 5, 8, glass); c.rect(3, 36, 1, 8, rim); c.rect(7, 36, 1, 8, rim); c.rect(3, 43, 5, 1, rim)
+        c.rect(4, 38, 3, 5, water)
+        // The surface: flat, then rings running out and fading after each step.
+        let ring = max(0, 1 - beat * 3)
+        c.rect(4, 38, 3, 1, C(0xC8E8FF, 0.6 + 0.4 * ring))
+        if ring > 0 {
+            let r = Int((beat * 3 * 3).rounded())
+            c.px(5 - min(1, r), 37, C(0xFFFFFF, ring)); c.px(5 + min(1, r), 37, C(0xFFFFFF, ring))
+            c.px(5, 38, C(0x3A78B8, ring))
+        }
+        c.addOutline(C(0xFFFFFF, 0.5))
+        guard let img = c.makeImage() else { return nil }
+        return DrawItem(image: img, rect: NSRect(x: (x - 5.5 * scale).rounded(), y: y, width: 11 * scale, height: CGFloat(c.h) * scale),
+                        mirrored: false, alpha: 1)
+    }
+
     private func hemBunTalk(_ a: Actor, t: Double, z: CGFloat) -> (facing: CGFloat, line: String)? {
         guard a.cast.universe == .starWars, a.cast.universe.isHem(a.cast.id), a.leaving == nil else { return nil }
         guard let laya = actors.first(where: { $0.cast == .hero(SWHero.leia) && $0.walkDir == 0 && $0.leaving == nil

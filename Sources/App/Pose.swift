@@ -316,80 +316,165 @@ func drawProjectile(_ c: PixelCanvas, _ style: ShotStyle, from a: (x: Double, y:
     }
 }
 
-/// A magic or energy stream from `a` to `b`: forked like lightning, or a steady wavering ray.
+/// One of `options`, by the next digit of `v` (counting in base `options.count`), so a run of variants changes the
+/// earliest pick first.
+private func pick<T>(_ v: inout Int, _ options: [T]) -> T {
+    let o = options[v % options.count]
+    v /= options.count
+    return o
+}
+
+/// A magic or energy stream from `a` to `b`: forked like lightning, or a steady wavering ray. `m.variant` tweaks the
+/// shape a little (forks, kinks, thickness, speed…); variant 0 is the classic look.
 func drawMagic(_ c: PixelCanvas, _ m: Magic, from a: (Double, Double), to b: (Double, Double), t: Double) {
-    let seed = Int(t * 20)
+    var seed = Int(t * 20)
     let dx = b.0 - a.0, dy = b.1 - a.1
     let len = max(sqrt(dx * dx + dy * dy), 0.01)
     let nx = -dy / len, ny = dx / len
+    var v = m.variant
+    if m.touch {
+        // No stream: the fingertip lights up, and whoever it points at glows, motes of light drifting up round them.
+        let pulse = 0.75 + 0.25 * sin(t * 7)
+        c.glowLine(a.0, a.1, a.0 + 0.5, a.1, core: m.core.alpha(pulse), glow: m.glow.alpha(pulse), coreR: 0.9, glowR: 3.2)
+        c.glowLine(b.0 - 1, b.1, b.0 + 1, b.1, core: m.glow.alpha(0.18 * pulse), glow: m.glow.alpha(0.25 * pulse),
+                   coreR: 3, glowR: 9)
+        for k in 0..<6 {
+            let f = frac(t * 0.6 + Double(k) / 6)
+            let x = b.0 + (noise(k * 7 + Int(t * 0.6 + Double(k) / 6) * 3) - 0.5) * 14, y = b.1 + 6 - f * 16
+            c.px(Int(x.rounded()), Int(y.rounded()), (k % 2 == 0 ? m.core : m.glow).alpha(1 - f))
+        }
+        return
+    }
     if m.rings {
         // Mind control: a faint thread of light, with rings rippling out along it and growing as they go.
+        let count = pick(&v, [4, 3, 5]), grow = pick(&v, [3.4, 2.4, 4.4]), dots = pick(&v, [2, 3, 1])
+        let speed = pick(&v, [0.9, 0.65, 1.2])
         c.glowLine(a.0, a.1, b.0, b.1, core: m.core.alpha(0.35), glow: m.glow.alpha(0.3), coreR: 0.4, glowR: 1.4)
-        for k in 0..<4 {
-            let f: Double = frac(t * 0.9 + Double(k) / 4)
-            let cx: Double = a.0 + dx * f, cy: Double = a.1 + dy * f, r: Double = 1.2 + f * 3.4
+        for k in 0..<count {
+            let f: Double = frac(t * speed + Double(k) / Double(count))
+            let cx: Double = a.0 + dx * f, cy: Double = a.1 + dy * f, r: Double = 1.2 + f * grow
             let fade: Double = 1 - f * 0.4
             for s in 0..<24 {
                 let ang: Double = Double(s) / 24 * 2 * .pi
                 let x = Int((cx + cos(ang) * r).rounded()), y = Int((cy + sin(ang) * r * 0.85).rounded())
-                c.px(x, y, (s % 2 == 0 ? m.core : m.glow).alpha(fade))
+                c.px(x, y, (s % dots == 0 ? m.core : m.glow).alpha(fade))
             }
         }
         return
     }
     if m.waves {
         // Sound and force: arcs pulsing out towards the target, wider as they go.
+        let count = pick(&v, [5, 4, 6]), spread = pick(&v, [1.1, 0.8, 1.4]), grow = pick(&v, [4.0, 3, 5.5])
+        let speed = pick(&v, [1.3, 1.0, 1.7])
         let ang0: Double = atan2(dy, dx)
-        for k in 0..<5 {
-            let f: Double = frac(t * 1.3 + Double(k) / 5)
-            let cx: Double = a.0 + dx * f, cy: Double = a.1 + dy * f, r: Double = 1.5 + f * 4
+        for k in 0..<count {
+            let f: Double = frac(t * speed + Double(k) / Double(count))
+            let cx: Double = a.0 + dx * f, cy: Double = a.1 + dy * f, r: Double = 1.5 + f * grow
             let fade: Double = 1 - f * 0.5
             for s in -5...5 {
-                let ang: Double = ang0 + Double(s) / 5 * 1.1
+                let ang: Double = ang0 + Double(s) / 5 * spread
                 let x = Int((cx + cos(ang) * r).rounded()), y = Int((cy + sin(ang) * r).rounded())
                 c.px(x, y, (abs(s) < 3 ? m.core : m.glow).alpha(fade))
             }
         }
         return
     }
+    if m.rcCar {
+        // A little DeLorean on the ground under the stream's line, racing from the caster's feet to the target's,
+        // two trails of fire burning behind it; the remote's signal pulses off the hand.
+        let ground = a.1 + 12, sgn: Double = dx >= 0 ? 1 : -1
+        let f = min(frac(t * 0.7) / 0.85, 1)
+        let x0 = a.0 + sgn * 2, x = x0 + (b.0 - 4 * sgn - x0) * f
+        let gy = Int(ground.rounded())
+        var tx = x0
+        while sgn * (x - tx) > 3 {
+            let fade = 0.35 + 0.65 * (1 - abs(x - tx) / max(abs(x - x0), 1))
+            let flick = noise(seed * 13 + Int(tx))
+            c.px(Int(tx.rounded()), gy + 1, (flick > 0.5 ? C(0xFFD040) : C(0xFF6A1A)).alpha(fade))
+            c.px(Int(tx.rounded()), gy - 1, (flick > 0.3 ? C(0xFF8A2A) : C(0xFFE07A)).alpha(fade * 0.8))
+            if flick > 0.75 { c.px(Int(tx.rounded()), gy - 2, C(0xFFB040).alpha(fade * 0.6)) }
+            tx += sgn
+        }
+        if f < 1 {
+            let ix = Int(x.rounded())
+            let body = C(0xC8CCD4), dark = C(0x4A4E58)
+            // Side on, nose to the right: a wedge of brushed steel, a dark window, two black wheels.
+            let rows = ["...ddd...", ".bbdddbb.", "bbbbbbbbb", "bwwbbbwwb", ".ww...ww."]
+            for (ry, row) in rows.enumerated() {
+                for (rx, ch) in row.enumerated() {
+                    let col: Px? = ch == "b" ? body : ch == "d" ? dark : ch == "w" ? ink : nil
+                    if let col { c.px(ix + Int(sgn) * (rx - 4), gy - 4 + ry, col) }
+                }
+            }
+            c.px(ix - Int(sgn) * 4, gy - 2, C(0xFF4A2A))   // the tail light
+        }
+        // The signal off the remote's aerial: small arcs, pulsing.
+        let ring = Int(t * 6) % 3
+        for s in -1...1 { c.px(Int(a.0 + sgn * Double(2 + ring)), Int(a.1) - 3 + s - ring, C(0xFFE07A).alpha(0.8 - Double(ring) * 0.2)) }
+        return
+    }
     if m.spell {
         // Sorcery: a ribbon of sparkles winding along the path, each one twinkling.
+        let count = pick(&v, [9, 7, 11]), wobble = pick(&v, [2.2, 1.4, 3.0]), cross = pick(&v, [false, true])
+        let speed = pick(&v, [0.7, 0.5, 0.95])
+        let star = cross ? [(1, 1), (-1, -1), (1, -1), (-1, 1)] : [(1, 0), (-1, 0), (0, 1), (0, -1)]
         c.glowLine(a.0, a.1, b.0, b.1, core: m.core.alpha(0.25), glow: m.glow.alpha(0.25), coreR: 0.3, glowR: 1.2)
-        for k in 0..<9 {
-            let f: Double = frac(t * 0.7 + Double(k) / 9)
-            let wob: Double = sin(f * 10 + t * 6 + Double(k)) * 2.2
+        for k in 0..<count {
+            let f: Double = frac(t * speed + Double(k) / Double(count))
+            let wob: Double = sin(f * 10 + t * 6 + Double(k)) * wobble
             let x: Double = a.0 + dx * f + nx * wob, y: Double = a.1 + dy * f + ny * wob
             let tw: Double = 0.5 + 0.5 * sin(t * 18 + Double(k) * 2.3)
             let ix = Int(x.rounded()), iy = Int(y.rounded())
             c.px(ix, iy, m.core.alpha(0.6 + 0.4 * tw))
             if tw > 0.45 {   // a little four-point star
-                for (ox, oy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] { c.px(ix + ox, iy + oy, m.glow.alpha(tw)) }
+                for (ox, oy) in star { c.px(ix + ox, iy + oy, m.glow.alpha(tw)) }
             }
         }
         return
     }
     if !m.jagged {
+        // A steady ray, wavering; some have bright beads running along it.
+        let width = pick(&v, [(0.7, 2.2), (0.5, 1.6), (1.0, 2.8)]), beads = pick(&v, [false, true])
+        let wobble = pick(&v, [1.4, 0.5, 2.4]), waves = pick(&v, [9.0, 5, 14])
+        let speed = pick(&v, [14.0, 8, 20])
         let n = 8
         var prev = a
         for i in 1...n {
             let f = Double(i) / Double(n)
-            let off = i == n ? 0 : sin(f * 9 + t * 14) * 1.4
+            let off = i == n ? 0 : sin(f * waves + t * speed) * wobble
             let q = (a.0 + dx * f + nx * off, a.1 + dy * f + ny * off)
-            c.glowLine(prev.0, prev.1, q.0, q.1, core: m.core, glow: m.glow, coreR: 0.7, glowR: 2.2,
+            c.glowLine(prev.0, prev.1, q.0, q.1, core: m.core, glow: m.glow, coreR: width.0, glowR: width.1,
                        strength: 0.85 + 0.15 * noise(seed + i))
             prev = q
         }
+        if beads {
+            for k in 0..<3 {
+                let f = frac(t * 1.4 + Double(k) / 3)
+                let off = sin(f * waves + t * speed) * wobble
+                c.glowLine(a.0 + dx * f + nx * off, a.1 + dy * f + ny * off, a.0 + dx * f + nx * off + 0.5, a.1 + dy * f + ny * off,
+                           core: white, glow: m.glow, coreR: 0.9, glowR: 2.4)
+            }
+        }
         return
     }
-    for bolt in 0..<2 {
+    // Lightning: forked bolts, re-struck many times a second.
+    let bolts = pick(&v, [2, 1, 3]), n = pick(&v, [6, 4, 8, 5, 7]), spread = pick(&v, [7.0, 5, 9.5])
+    let sprigs = pick(&v, [false, true]), width = pick(&v, [(0.5, 1.8), (0.7, 2.3)])
+    seed = Int(t * pick(&v, [20.0, 12, 30]))
+    for bolt in 0..<bolts {
         var prev = a
-        let n = 6
         for i in 1...n {
             let f = Double(i) / Double(n)
-            let off = i == n ? 0 : (noise(seed * 31 + bolt * 7 + i) - 0.5) * 7
+            let off = i == n ? 0 : (noise(seed * 31 + bolt * 7 + i) - 0.5) * spread
             let q = (a.0 + dx * f + nx * off, a.1 + dy * f + ny * off)
-            c.glowLine(prev.0, prev.1, q.0, q.1, core: m.core, glow: m.glow, coreR: 0.5, glowR: 1.8,
-                       strength: bolt == 0 ? 1 : 0.6)
+            c.glowLine(prev.0, prev.1, q.0, q.1, core: m.core, glow: m.glow, coreR: width.0, glowR: width.1,
+                       strength: bolt == 0 ? 1 : bolt == 1 ? 0.6 : 0.45)
+            if sprigs, bolt == 0, i < n, noise(seed * 17 + i) > 0.45 {
+                // A little side fork off the kink.
+                let side: Double = noise(seed * 5 + i) > 0.5 ? 1 : -1
+                c.glowLine(q.0, q.1, q.0 + dx / len * 2 + nx * side * 3, q.1 + dy / len * 2 + ny * side * 3,
+                           core: m.core, glow: m.glow, coreR: 0.4, glowR: 1.3, strength: 0.55)
+            }
             prev = q
         }
     }

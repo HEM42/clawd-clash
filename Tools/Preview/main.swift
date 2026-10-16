@@ -57,7 +57,7 @@ func put(_ c: PixelCanvas, _ ctx: CGContext, x: CGFloat, y: CGFloat, outline: Bo
 func squashed(_ s: String) -> String { s.lowercased().filter { $0.isLetter || $0.isNumber } }
 
 /// Characters by batch name (heroes1…, villains1…, starWarsHeroes1…, starWarsVillains1…, dcHeroes1…, dcVillains1…,
-/// doctorHeroes1…, doctorVillains1…, filesHeroes1…, filesVillains1…, all, starWars, marvel, dc, doctor, clawdFiles, or a
+/// doctorHeroes1…, doctorVillains1…, filesHeroes1…, filesVillains1…, clawdbergHeroes1…, clawdbergVillains1…, all, starWars, marvel, dc, doctor, clawdFiles, or a
 /// universe's name), by case name (ironMan, vader, superman…; Marvel's first where both have
 /// one) or by the name shown on screen ("Darth Vapor"). Universes can't be mixed in one call.
 func cast(named n: String) -> [Cast] {
@@ -68,6 +68,10 @@ func cast(named n: String) -> [Cast] {
     let dcHeroes = [dcHeroes1, dcHeroes2, dcHeroes3, dcHeroes4, dcHeroes5, dcHeroes6, dcHeroes7, dcHeroes8, dcHeroes9, dcHeroes10]
     let doctorHeroes = [doctorHeroes1, doctorHeroes2, doctorHeroes3, doctorHeroes4, doctorHeroes5, doctorHeroes6, doctorHeroes7]
     let doctorVillains = [doctorVillains1, doctorVillains2, doctorVillains3, doctorVillains4, doctorVillains5]
+    let clawdbergHeroes = [clawdbergHeroes1, clawdbergHeroes2, clawdbergHeroes3, clawdbergHeroes4, clawdbergHeroes5,
+                           clawdbergHeroes6, clawdbergHeroes7]
+    let clawdbergVillains = [clawdbergVillains1, clawdbergVillains2, clawdbergVillains3, clawdbergVillains4,
+                             clawdbergVillains5, clawdbergVillains6, clawdbergVillains7]
     let filesHeroes = [filesHeroes1, filesHeroes2, filesHeroes3, filesHeroes4, filesHeroes5, filesHeroes6, filesHeroes7]
     let filesVillains = [filesVillains1, filesVillains2, filesVillains3, filesVillains4, filesVillains5, filesVillains6,
                          filesVillains7, filesVillains8]
@@ -75,6 +79,7 @@ func cast(named n: String) -> [Cast] {
     var batches: [String: [Cast]] = [
         "marvel": Theme.of(.marvel).cast, "starWars": Theme.of(.starWars).cast, "dc": Theme.of(.dc).cast,
         "doctor": Theme.of(.doctor).cast, "clawdFiles": Theme.of(.clawdFiles).cast,
+        "clawdberg": Theme.of(.clawdberg).cast,
         "all": Theme.of(.marvel).cast,
     ]
     for (i, b) in marvelHeroes.enumerated() { batches["heroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
@@ -84,6 +89,8 @@ func cast(named n: String) -> [Cast] {
     for (i, b) in dcHeroes.enumerated() { batches["dcHeroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
     for (i, b) in dcVillains.enumerated() { batches["dcVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
     for (i, b) in doctorHeroes.enumerated() { batches["doctorHeroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
+    for (i, b) in clawdbergHeroes.enumerated() { batches["clawdbergHeroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
+    for (i, b) in clawdbergVillains.enumerated() { batches["clawdbergVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
     for (i, b) in filesHeroes.enumerated() { batches["filesHeroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
     for (i, b) in filesVillains.enumerated() { batches["filesVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
     for (i, b) in doctorVillains.enumerated() { batches["doctorVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
@@ -97,6 +104,8 @@ func cast(named n: String) -> [Cast] {
     if let v = DCVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
     if let h = DoctorHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
     if let v = DoctorVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
+    if let h = ClawdbergHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
+    if let v = ClawdbergVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
     if let h = FilesHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
     if let v = FilesVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
     for u in Universe.allCases {
@@ -228,6 +237,70 @@ case "fight":
         }
     })
 
+case "magic":
+    // Every magic user's stream side by side (or just the names given), at a few moments: no two should look alike.
+    let everyone = Universe.allCases.flatMap { Theme.of($0).cast }.filter { $0.weapon == .lightning }
+    let who = names.isEmpty ? everyone : names.flatMap(cast(named:))
+    let moments = [0.1, 0.37, 0.71]
+    let len = 46.0, cellW = CGFloat(len + 10) * scale, cellH: CGFloat = 16 * scale, nameW: CGFloat = 170
+    let cols = 3, rows = (who.count + cols - 1) / cols
+    let w = Int((nameW + cellW * CGFloat(moments.count)) * CGFloat(cols)), h = Int(cellH * CGFloat(rows) + 10)
+    save(sheet(w, h) { ctx in
+        for (i, c) in who.enumerated() {
+            let x0 = CGFloat(i / rows) * (nameW + cellW * CGFloat(moments.count)), y = CGFloat(h) - 5 - cellH * CGFloat(i % rows + 1)
+            let m = c.persona.magic
+            label("\(c.name) [\(m.family).\(m.variant)]", x0 + 4, y + cellH / 2 - 6, size: 11)
+            for (j, t) in moments.enumerated() {
+                let canvas = PixelCanvas(Int(len) + 10, 16)
+                drawMagic(canvas, m, from: (3, 8), to: (3 + len, 8), t: t)
+                put(canvas, ctx, x: x0 + nameW + CGFloat(j) * cellW, y: y, outline: false)
+            }
+        }
+    })
+
+case "fightclip":
+    // An animated fight: two characters for SECONDS (default 4) at 30 fps, as an mp4 (needs ffmpeg). LABEL captions it.
+    guard names.count == 2 else { print("fightclip needs two characters"); exit(2) }
+    let a = cast(named: names[0])[0], b = cast(named: names[1])[0]
+    let (ra, rb) = fightRoles(a.weapon, b.weapon)
+    let close = fightIsCloseQuarters(a.weapon, b.weapon)
+    let gap = close ? 30.0 + a.persona.bulk + b.persona.bulk : 64.0, margin = 24.0
+    let width = Int(gap + margin * 2 + 36), headroom = 12
+    let seconds = Double(ProcessInfo.processInfo.environment["SECONDS"] ?? "") ?? 4
+    let caption = ProcessInfo.processInfo.environment["LABEL"] ?? "\(a.name) vs \(b.name)"
+    let frames = URL(fileURLWithPath: out + ".frames")
+    try? FileManager.default.removeItem(at: frames)
+    try! FileManager.default.createDirectory(at: frames, withIntermediateDirectories: true)
+    let w = Int(CGFloat(width) * scale) / 2 * 2, h = (Int(CGFloat(Sprite.height + headroom) * scale) + 30) / 2 * 2
+    for i in 0..<Int(seconds * 30) {
+        let t = Double(i) / 30
+        let rep = sheet(w, h) { ctx in
+            let c = PixelCanvas(width, Sprite.height + headroom)
+            let lx = margin + 10, rx = lx + gap
+            let ca = PixelCanvas(Sprite.width, Sprite.height), cb = PixelCanvas(Sprite.width, Sprite.height)
+            a.draw(ca, t: t, mode: .working, walking: false, role: ra, asSession: false)
+            b.draw(cb, t: t, mode: .working, walking: false, role: rb, asSession: false)
+            cb.flipHorizontally()
+            c.paste(ca, x: Int(lx - Sprite.bodyCenterX), y: headroom)
+            c.paste(cb, x: Int(rx - (Double(Sprite.width) - Sprite.bodyCenterX)), y: headroom)
+            func fighter(_ who: Cast, x: Double, side: Double) -> Fighter {
+                Fighter(weapon: who.weapon, x: x, k: 1, top: Double(headroom), side: side, muzzle: who.muzzle,
+                        armoured: who.armoured, pivot: who.weaponPivot).dressed(as: who)
+            }
+            drawFightFX(c, t: t, left: fighter(a, x: lx, side: 1), right: fighter(b, x: rx, side: -1))
+            put(c, ctx, x: 0, y: 0, outline: false)
+            label(caption, 8, CGFloat(h) - 22, size: 14)
+        }
+        try! rep.representation(using: .png, properties: [:])!.write(to: frames.appendingPathComponent(String(format: "f%04d.png", i)))
+    }
+    let ff = Process()
+    ff.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/ffmpeg")
+    ff.arguments = ["-y", "-loglevel", "error", "-framerate", "30", "-i", frames.path + "/f%04d.png",
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p", out]
+    try! ff.run(); ff.waitUntilExit()
+    try? FileManager.default.removeItem(at: frames)
+    print("wrote \(out)")
+
 case "place":
     let everywhere = Universe.allCases.flatMap { Location.all(in: $0) }
     let universe = names.count == 1
@@ -262,7 +335,7 @@ case "place":
 case "rides":
     let cellW = CGFloat(Ride.width) * scale + 12, cellH = CGFloat(Ride.tardis.canvasHeight) * scale + 30
     let states: [(String, Double, Bool, Bool)] = [("landed", 0, false, true), ("ramp down", 1, false, true), ("flying", 0, true, false)]
-    let rides: [Ride] = [.falcon, .quinjet, .milano, .javelin, .batwing, .tardis, .sedan, .helicopter, .saucer]
+    let rides: [Ride] = [.falcon, .quinjet, .milano, .javelin, .batwing, .tardis, .sedan, .helicopter, .saucer, .delorean, .moonBike, .mothership, .jeep]
     save(sheet(Int(cellW * 3), Int(cellH * CGFloat(rides.count))) { ctx in
         for (i, ride) in rides.enumerated() {
             for (j, st) in states.enumerated() {

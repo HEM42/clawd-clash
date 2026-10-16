@@ -10,24 +10,27 @@ enum Universe: Int, CaseIterable, Codable {
     case dc = 2
     case doctor = 3
     case clawdFiles = 4
+    case clawdberg = 5
 
     var key: String {
         switch self { case .starWars: return "starWars"; case .marvel: return "marvel"; case .dc: return "dc"; case .doctor: return "doctor"
-        case .clawdFiles: return "clawdFiles" }
+        case .clawdFiles: return "clawdFiles"; case .clawdberg: return "clawdberg" }
     }
     init?(key: String) { self.init(rawValue: Universe.allCases.first { $0.key == key }?.rawValue ?? -1) }
 
     var title: String {
         switch self { case .starWars: return "Star Clawds"; case .marvel: return "Marvelous Clawds"; case .dc: return "Detective Clawds"; case .doctor: return "Doctor Clawd"
-        case .clawdFiles: return "The Clawd Files" }
+        case .clawdFiles: return "The Clawd Files"; case .clawdberg: return "Stevie Clawdberg" }
     }
     var base: Int { rawValue * 1000 }
 
     var villainCount: Int {
-        switch self { case .starWars: return 46; case .marvel: return 88; case .dc: return 97; case .doctor: return 42; case .clawdFiles: return 46 }
+        switch self { case .starWars: return 46; case .marvel: return 88; case .dc: return 97; case .doctor: return 42; case .clawdFiles: return 46
+        case .clawdberg: return 54 }
     }
     var heroCount: Int {
-        switch self { case .starWars: return 36; case .marvel: return 106; case .dc: return 111; case .doctor: return 56; case .clawdFiles: return 36 }
+        switch self { case .starWars: return 36; case .marvel: return 106; case .dc: return 111; case .doctor: return 56; case .clawdFiles: return 36
+        case .clawdberg: return 64 }
     }
 
     /// HEM: the same rare face in every universe, last of the heroes. He's never in the regular pools (`lightCast`);
@@ -46,6 +49,7 @@ enum Universe: Int, CaseIterable, Codable {
         case .dc: return Set([22, 49, 77, 131, 139, 206, 207, 208, 209].map { base + $0 })
         case .doctor: return Set([39, 40, 41].map { base + $0 })                // Adipoze, Cybermite, Toclafayne
         case .clawdFiles: return Set([43, 44, 45].map { base + $0 })            // killer bee, robo-roach, flukeworm
+        case .clawdberg: return Set((49...53).map { base + $0 })                // Compy, mogwai pup, snake, frog, Croc Clock
         }
     }
 
@@ -61,7 +65,15 @@ enum Universe: Int, CaseIterable, Codable {
     /// The Clawd Files: the seven FBI agents (Clawder, Scrawly, Skinnard, Doggedd, Reyez, Einstine, Millar), as global
     /// ids. When one's session is compacted they lose some time: abducted and set back down, the same face
     /// (`StatusStore`'s PreCompact, `MissingTime`).
-    var abductees: Set<Int> { self == .clawdFiles ? Set((0...6).map { base + StatusStore.heroBase + $0 }) : [] }
+    /// Stevie Clawdberg: Back to the Future's time travellers (Marty, Doc Brawn, Jennifer, Einstein the Dog, and Old
+    /// Biff, who stole the DeLorean). When one's session is compacted they hit 88 mph and come back (`OutaTime`).
+    var abductees: Set<Int> {
+        switch self {
+        case .clawdFiles: return Set((0...6).map { base + StatusStore.heroBase + $0 })
+        case .clawdberg: return Set([55, 56, 57, 60].map { base + StatusStore.heroBase + $0 } + [base + 44])
+        default: return []
+        }
+    }
 
     var regenerations: [Int] {
         self == .doctor ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14].map { base + StatusStore.heroBase + $0 } : []

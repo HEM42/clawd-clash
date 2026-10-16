@@ -5,8 +5,8 @@ import Foundation
 // up only now and then (`Universe.hemOdds`). Star Clawds: Laya's white robe and a blaster (and a word for her about
 // buns, `Overlay`). Marvelous Clawds: a purple-and-gold captain with an H and its shield. Detective Clawds: Harlee's
 // jacket, dyed buns and a toy wand. Doctor Clawd: a tweed jacket, a red bow tie, a fez (fezzes are cool) and a sonic
-// screwdriver. The Clawd Files: a tan trench coat, an FBI lanyard and a flashlight. Signature, everywhere: he shakes
-// his fist at you.
+// screwdriver. The Clawd Files: a tan trench coat, an FBI lanyard and a flashlight. Stevie Clawdberg: a fedora, a
+// leather jacket and a bullwhip. Signature, everywhere: he shakes his fist at you.
 
 func hemPersona(_ u: Universe) -> Persona {
     switch u {
@@ -24,6 +24,8 @@ func hemPersona(_ u: Universe) -> Persona {
     case .clawdFiles:
         return Persona(name: "HEM", weapon: .lightning, magic: Magic(core: C(0xFFFBE8), glow: C(0xFFE9A0), jagged: false),
                        pivot: hemSonicTip, headTop: 21, signature: 2.6, draw: { drawHem($0, $1, .clawdFiles) })
+    case .clawdberg:
+        return Persona(name: "HEM", weapon: .saber, headTop: 20, signature: 2.6, draw: { drawHem($0, $1, .clawdberg) })
     }
 }
 
@@ -38,6 +40,7 @@ private let capPurple = C(0x5B2D8E), capPurpleDark = C(0x43206A), capGold = C(0x
 private let harleeRed = C(0xC8202A), harleeBlue = C(0x2E5CC9)
 private let tweed = C(0x7A5232), tweedDark = C(0x5A3C24), fezRed = C(0xB8202A), fezDark = C(0x7A1218)
 private let trench = C(0xB89A66), trenchDark = C(0x8A7048)
+private let leather = C(0x6A3E22), leatherDark = C(0x4A2A16), felt = C(0x7A5A3A), feltDark = C(0x5A402A)
 /// Where the sonic screwdriver's tip (or the flashlight's lens) is, held out: the beam leaves from there, raised by
 /// the pose's `armRaise`.
 private let hemSonicTip = (x: 46.0, y: 30.0)
@@ -81,6 +84,9 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
         drawLegs(c, Look(leg: C(0x4A4A54)), step: p.step)
         drawDressShoes(c, step: p.step)
         c.rect(17, 38, 22, seatedPose ? 1 : 3, trench); c.rect(28, 38, 1, seatedPose ? 1 : 3, trenchDark)
+    case .clawdberg:   // khaki trousers and brown boots
+        drawLegs(c, Look(leg: C(0xA89468)), step: p.step)
+        cbBoots(c, step: p.step, C(0x4A2E1A), height: 3)
     }
 
     c.oy += p.breathe
@@ -92,6 +98,7 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
     case .dc: top = white; topShade = C(0xD8D8DC); arm = harleeRed; armRight = harleeBlue
     case .doctor: top = tweed; topShade = tweedDark; arm = tweed; armRight = tweed
     case .clawdFiles: top = trench; topShade = trenchDark; arm = trench; armRight = trench
+    case .clawdberg: top = leather; topShade = leatherDark; arm = leather; armRight = leather
     }
     c.rect(17, 26, 22, 12, clawdOrange); c.rect(38, 26, 1, 12, hemShade)
     c.rect(17, 34, 22, 4, top); c.rect(38, 34, 1, 4, topShade); c.rect(20, 34, 16, 1, topShade)   // the turtleneck's roll
@@ -111,6 +118,9 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
         c.rect(24, 34, 8, 4, C(0xE8E6E0)); c.px(25, 34, C(0x2E4A8A)); c.px(30, 34, C(0x2E4A8A))
         c.px(26, 35, C(0x2E4A8A)); c.px(29, 35, C(0x2E4A8A))
         c.pattern(26, 36, ["WWWW", "WBBW"], ["W": white, "B": C(0x2E4A8A)])
+    case .clawdberg:   // the jacket open over a khaki shirt, and the satchel's strap across it
+        c.rect(24, 34, 8, 4, C(0xC8B48A)); c.px(24, 34, leatherDark); c.px(31, 34, leatherDark)
+        for i in 0..<4 { c.px(25 + i * 2, 34 + i, C(0x8A7A52)); c.px(26 + i * 2, 34 + i, C(0x8A7A52)) }
     }
     // Arms: hands on hips at rest, the right one forward to fight.
     let forward = !shaking && (!p.resting || p.melee != nil)
@@ -130,6 +140,7 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
         c.pattern(22, 15, ["...FFFFFF..", "...FFFFFFK.", "..FFFFFFFFK", "..FFFFFFFF.", ".FFFFFFFFFF", ".ffffffffff"],
                   ["F": fezRed, "f": fezDark, "K": ink])
     }
+    if u == .clawdberg { cbFedora(c, felt: felt, dark: feltDark, band: C(0x3A2416)) }
     drawHemFace(c, yelling: shaking && frame == 1)
     if u == .dc { c.pattern(36, 32, [".R.R", "RRRR", ".RR."], ["R": C(0xE8323A)]) }   // the little heart on his cheek
 
@@ -166,6 +177,8 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
         drawHemSonic(c, out: forward || p.zap != nil, lift: lift)
     case .clawdFiles:
         drawHemFlashlight(c, out: forward || p.zap != nil, lift: lift)
+    case .clawdberg:
+        if let a = p.melee { cbWhip(c, angle: a, trail: p.trail, t: p.t, leather: C(0x5A3A22)) } else { cbWhipCoil(c, C(0x5A3A22)) }
     }
 }
 

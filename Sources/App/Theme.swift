@@ -24,7 +24,10 @@ struct Theme {
 
     func persona(_ c: Cast) -> Persona {
         let list = c.isDark ? villains : heroes
-        return list.indices.contains(c.index) ? list[c.index] : Persona.missing("\(universe.key) \(c.id)")
+        guard list.indices.contains(c.index) else { return Persona.missing("\(universe.key) \(c.id)") }
+        var p = list[c.index]
+        if p.weapon == .lightning { p.magic.variant = magicVariants[c.id] ?? 0 }
+        return p
     }
 
     var cast: [Cast] {
@@ -41,9 +44,27 @@ struct Theme {
         case .dc: return dcTheme
         case .doctor: return doctorTheme
         case .clawdFiles: return filesTheme
+        case .clawdberg: return clawdbergTheme
         }
     }
 }
+
+/// Each magic user's `Magic.variant`, by cast id: numbered in order through every universe within each family of looks
+/// (lightning, rays, rings…), so no two characters anywhere draw their magic exactly alike.
+let magicVariants: [Int: Int] = {
+    var next: [Int: Int] = [:], out: [Int: Int] = [:]
+    for u in Universe.allCases {
+        let theme = Theme.of(u)
+        for c in theme.cast {
+            let list = c.isDark ? theme.villains : theme.heroes
+            guard list.indices.contains(c.index), list[c.index].weapon == .lightning else { continue }
+            let f = list[c.index].magic.family
+            out[c.id] = next[f, default: 0]
+            next[f, default: 0] += 1
+        }
+    }
+    return out
+}()
 
 extension Universe {
     /// The universe on show in this process: the app's choice, or the screen saver's for the trip it's on. In Clawd
@@ -64,4 +85,4 @@ extension Cast {
 }
 
 /// The ships that come to pick someone up (`Theme.ride`).
-enum Ride { case falcon, quinjet, milano, javelin, batwing, tardis, sedan, helicopter, saucer }
+enum Ride { case falcon, quinjet, milano, javelin, batwing, tardis, sedan, helicopter, saucer, delorean, moonBike, mothership, jeep }

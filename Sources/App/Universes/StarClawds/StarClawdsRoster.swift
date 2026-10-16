@@ -82,9 +82,10 @@ extension Cast {
     static func hero(_ h: SWHero) -> Cast { Cast(universe: .starWars, isDark: false, index: h.rawValue) }
     static func villain(_ v: SWVillain) -> Cast { Cast(universe: .starWars, isDark: true, index: v.rawValue) }
 
-    /// Han Solo and Greedo: they face off first, and now and then Han shoots first (`ShootsFirst`).
-    var isHan: Bool { self == .hero(SWHero.han) }
-    var isGreedo: Bool { self == .villain(SWVillain.greedo) }
+    /// Han Solo and Greedo: they face off first, and now and then Han shoots first (`ShootsFirst`). Stevie
+    /// Clawdberg's Indiana Bones and the Cairo Swordsman play it too: the sword flashes, Indy shrugs and shoots.
+    var isHan: Bool { self == .hero(SWHero.han) || self == .hero(ClawdbergHero.indianaBones) }
+    var isGreedo: Bool { self == .villain(SWVillain.greedo) || self == .villain(ClawdbergVillain.cairoSwordsman) }
 }
 
 let starWarsTheme = Theme(
