@@ -6,7 +6,7 @@ import Foundation
 
 let burtonHeroes1: [BurtonHero: Persona] = [
     .jackSkullington: Persona(name: "Jack Skullington", weapon: .lightning,
-                              magic: Magic(core: C(0xFFF0D8), glow: C(0xFF8A2A), jagged: false, waves: true),
+                              magic: Magic(core: C(0xFFF0D8), glow: C(0xFF8A2A), jagged: false, waves: true, pulse: true),
                               pivot: jackMouth, headTop: 7, signature: 3.4, callout: "What's this?",
                               draw: drawJackSkullington),
     .sallee: Persona(name: "Sallee", weapon: .none, headTop: 10, signature: 3.6, draw: drawSallee),
@@ -34,7 +34,7 @@ private func drawJackSkullington(_ c: PixelCanvas, _ p: Pose) {
     let scaring = signatureScare || p.zap == true || dueling              // pulling the scary face
     let bowK = sig.map { $0 >= 0.6 && $0 < 0.95 ? sin(ramp($0, 0.6, 0.95) * .pi) : 0 } ?? 0
     let stretch = signatureScare ? Int((sin(ramp(sig!, 0.06, 0.55) * .pi) * 5).rounded())
-                                 : scaring ? 1 + jackThrob(p.t) : 0      // in a fight, a smaller stretch that throbs
+                                 : scaring ? 1 + jackThrob(p.t) : 0      // in a fight, gaping wider with each burst of the scream
 
     // Long thin pinstriped legs and black shoes.
     drawLegs(c, Look(leg: suit), step: p.step)
@@ -87,8 +87,8 @@ private func drawJackSkullington(_ c: PixelCanvas, _ p: Pose) {
     c.rect(36, 29, 2, 9, suit); c.pattern(36, 38, [".B.", "BBB", "B.B"], ["B": bone])
 }
 
-/// 0 or 1, flipping a few times a second: the scary face throbbing while he scares.
-private func jackThrob(_ t: Double) -> Int { sin(t * 9) > 0 ? 1 : 0 }
+/// 1 while a burst of his scream is going out (`screamPeriod`), 0 between: the scary face gaping in time with it.
+private func jackThrob(_ t: Double) -> Int { frac(t / screamPeriod) < 0.4 ? 2 : 0 }
 
 /// Jack's skull, 18 across from x 19, its top on row `top`: round above, narrowing to the chin. `stretch` extra rows
 /// open between the eyes and the mouth; `scary`: angry eyes and a huge gaping mouth full of teeth.
