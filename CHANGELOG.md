@@ -20,8 +20,10 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
   - The renderer can now play any universe's own trips (`Into.trip`), and the Royale collision has an emblem for each of four sides.
 - **The promo shows all seven universes, and makes room for more on its own.** Every part of it that lists universes now comes from the universe list, so a new universe shows up without editing it.
   - The vortex intro sends the police box and every universe's legend out two at a time, from opposite sides. The second of each pair starts a beat later, on its own curve, reach and spin, so they never mirror and a new universe doesn't make the intro longer.
-  - Choose your universe has a panel per universe, sharing the bottom of the screen equally, each its legend at its home. The names wrap and shrink to fit.
-  - The comic page of big moments has a panel per universe in two rows, adding the saucer over Bellefleur Woods, the DeLorean at 88 mph and the bridge in the Mines of Mori-ah.
+  - Choose your universe and the big moments are now one shot, read like a comic book. A page slams down over the runners, and the camera reads it panel by panel, each its universe's big moment, including the saucer over Bellefleur Woods, the DeLorean at 88 mph and the bridge in the Mines of Mori-ah.
+    - Each page has two rows split by a slanted divider, with slanted gutters that never line up between the rows, and facing pages slant differently.
+    - Up to six panels fit on a page; with more universes they're shared out over more pages, and the page turns over between them with a curl, its paper back showing and its shadow on the next page.
+    - It ends on the whole last page: "ONE APP. SEVEN UNIVERSES. PICK YOURS."
   - The features come from the newest universes' own trailers: the status line-up in The Clawd Files, subagents in Stevie Clawdberg, the window in Clawd of the Rings. Each comes in on its universe's own transition.
   - Clawd Royale's emblems fly in from all round the frame, however many there are. The crossover has a character from every universe: Fox Clawder against a Dalick, Batclawd against Darth Vapor, Gandclawd against Thanoz, Spider-Clawd swinging over, and E.Clawd's bike flying the other way.
   - The end card and the captions say how many universes there are, in words.
