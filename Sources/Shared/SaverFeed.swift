@@ -68,7 +68,16 @@ struct SaverFeed: Codable {
 
     func save() {
         guard let data = try? JSONEncoder().encode(self) else { return }
-        try? FileManager.default.createDirectory(at: Self.url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        _ = Self.ownerOnlyFolder
         try? data.write(to: Self.url, options: .atomic)
+        chmod(Self.url.path, 0o600)
     }
+
+    /// The feed holds your prompts and projects: its folder is made owner-only once per launch, which tightens
+    /// folders created 0755 by earlier versions too.
+    private static let ownerOnlyFolder: Void = {
+        let dir = url.deletingLastPathComponent()
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        chmod(dir.path, 0o700)
+    }()
 }

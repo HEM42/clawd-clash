@@ -56,9 +56,11 @@ struct GitRemote {
         return parse(resolve(url, config: text, globalConfigs: globalConfigs()))
     }
 
-    /// Only regular files are read: a FIFO or device named `.git` or `config` would block the read.
+    /// Only regular files are read: a FIFO or device named `.git` or `config` would block the read. And only up to
+    /// 1 MB: a real git config is a few KB, and the hook reads this on every event.
     private static func readText(_ path: String) -> String? {
-        guard kind(path) == S_IFREG else { return nil }
+        var st = stat()
+        guard stat(path, &st) == 0, st.st_mode & S_IFMT == S_IFREG, st.st_size <= 1 << 20 else { return nil }
         return try? String(contentsOfFile: path, encoding: .utf8)
     }
 

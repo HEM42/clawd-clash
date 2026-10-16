@@ -1,5 +1,8 @@
 import AppKit
 
+// Every file the app creates is yours alone: the state, the screen saver's feed, the AIs' settings it rewrites.
+umask(0o077)
+
 let args = CommandLine.arguments
 
 if args.contains("--install-hooks") || args.contains("--update-hooks") || args.contains("--uninstall-hooks") {
