@@ -11,6 +11,17 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 
 ## Unreleased
 
+### Added
+- **A guard for pull requests** (`scripts/pr-guard.py`, run on every PR by `.github/workflows/pr-guard.yml`). A universe is Swift compiled into the app, so a malicious one could use the app's Accessibility grant or rewrite the AIs' hooks. The guard reads a PR with git as plain text, never building or running it, and:
+  - **sorts every changed file** into green (a universe's own folder, the docs' pictures, README, CHANGELOG), yellow (passes, listed for the maintainer to read closely: registration files and the rest of the app) and red (fails: build and release scripts, dotfiles such as `.github/` and `.claude/`, instructions for AI assistants, the hook and the code compiled into it, `HookInstaller`, `SaverInstaller`, `Jump`, `main.swift`, new core files, symlinks, executables);
+  - **checks the Swift lines a PR adds to a universe folder**: no file, process, network, other-app, environment or app-internal APIs (including a call hidden in a string's `\( )`, or a backticked name), only the four imports drawing needs, no attributes such as `@_silgen_name`, no `#if` or macros, no `main.swift`;
+  - **blocks shadowing**: a new non-private top-level name must start with the universe's prefix and must not reuse a name from the app's own code, and extensions are allowed only on `Scenes`, `Location`, `Cast` and the universe's own types, with no added conformances. That stops a one-line `func chmod` in an art file from silently switching off the state folder's permission fix;
+  - **refuses hidden code**: invisible and text-direction Unicode, non-ASCII outside strings and comments, code after a long run of spaces, lines over 260 characters, universe files over 2,000 lines;
+  - **checks cast ids**: no universe has more villains than the hero ids leave room for, or more heroes than fit before the next universe's ids. This replaces the cast-size `assert`, which release builds compile out.
+
+  CI uses `pull_request_target`, so it's always main's copy of the guard that runs, and a PR can't edit the guard to pass itself. It has a read-only token and no secrets. Run it locally with `python3 scripts/pr-guard.py <PR number>` or `python3 scripts/pr-guard.py main <branch>`. Tested against Clawd of the Rings' PR #3, where it flags the hook-side `StatusStore.swift` and `llms.txt` changes and seven unprefixed names, and against a fake malicious universe, where all 24 planted tricks were caught.
+- **`.github/CODEOWNERS`** names the maintainer on every path, for main's ruleset to require that review.
+
 ### Changed
 - **`Ride.drives` and `Ride.boardingOffset` moved into `Theme.swift`**, next to `enum Ride`. They lived in The Clawd Files' and Stevie Clawdberg's folders (`FilesRides.swift`, `ClawdbergRides.swift`) as `extension Ride`, though the overlay's flight and boarding code relies on them. Universe folders now hold only universe code, which lets the PR guard forbid a universe from extending `Ride`. No change in behaviour: the sedan, the DeLorean and the jeep still drive, and everyone boards where they did.
 
