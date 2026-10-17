@@ -309,7 +309,7 @@ Any exhaustive `switch` on `Universe` turns a missed spot into a compile error. 
 - [ ] **`Sources/App/Theme.swift`:** `Theme.of`.
 - [ ] **`Sources/App/Locations.swift`:** `.merging(<prefix>Places)` in `places`.
 - [ ] **`Sources/App/Universes/Hem.swift`:** HEM's persona and costume in every switch.
-- [ ] **`Sources/App/Universes/ComicTransition.swift`:** add the universe to the `nil` cases in phase 1. In phase 5, add a `.<key>(<Prefix>Trip)` case to `duration`, `draw` and `pick`, and update the doc comment.
+- [ ] **`Sources/App/Universes/ComicTransition.swift`:** in phase 1, give the universe plain wipes by adding it next to Star Clawds in `pick` (`case .starWars, .<key>: return nil`), the only universe left without trips of its own. The switch is exhaustive, so the build fails until it's there. In phase 5, take it out of that line and add a `.<key>(<Prefix>Trip)` case to `duration`, `draw` and `pick`, and update the doc comment.
 - [ ] **`Sources/App/Rides.swift`:** the ride's drawing (phase 4). A ride that drives in along the ground instead of flying also goes in `Ride.drives` (`Theme.swift`).
 - [ ] **`Sources/Saver/SaverView.swift`:** nothing to add. The Options list and the trip choice build themselves from `Universe.offered`.
 - [ ] ⚠︎ **`Sources/App/Drills.swift`:** the meditation guard, plus bespoke drills keyed by cast.
