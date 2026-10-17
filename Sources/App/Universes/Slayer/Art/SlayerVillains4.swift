@@ -7,7 +7,7 @@ import Foundation
 
 let slayerVillains4: [SlayerVillain: Persona] = [
     .judge: Persona(name: "The Judge", weapon: .lightning,
-                    magic: Magic(core: C(0xF6F4FF), glow: C(0x6C5CF0), jagged: false),
+                    magic: Magic(core: C(0xF6F4FF), glow: C(0x6C5CF0), jagged: false, thick: true),
                     armoured: true, bulk: 2, headTop: 14, signature: 3.0, draw: drawJudge),
     .mayorWilclaws: Persona(name: "Mayor Wilclaws", armoured: true, headTop: 21, signature: 3.4, callout: "Gosh!",
                             draw: drawMayorWilclaws),
