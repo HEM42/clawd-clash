@@ -89,12 +89,15 @@ extension Cast {
 /// The ships that come to pick someone up (`Theme.ride`).
 enum Ride {
     case falcon, quinjet, milano, javelin, batwing, tardis, sedan, helicopter, saucer, delorean, moonBike, mothership, jeep, eagle
+    case schoolBus, deSoto, gtx
 
-    /// Drives in along the ground and away again instead of flying: the Files' sedan, Clawdberg's DeLorean and jeep.
-    var drives: Bool { self == .sedan || self == .delorean || self == .jeep }
+    /// Drives in along the ground and away again instead of flying: the Files' sedan, Clawdberg's DeLorean and jeep,
+    /// and Clawd Slayer's school bus, Spike's DeSoto and Angel's convertible.
+    var drives: Bool { [.sedan, .delorean, .jeep, .schoolBus, .deSoto, .gtx].contains(self) }
     /// How far left of centre (canvas pixels) whoever boards walks to: the ships' ramps 14, the TARDIS's door 6, the
-    /// saucer's beam, the mothership's light and the moon bike right under their middles.
+    /// saucer's beam, the mothership's light and the moon bike right under their middles, and the school bus's door,
+    /// up front by the bonnet, 11 right of centre.
     var boardingOffset: CGFloat {
-        switch self { case .tardis: return 6; case .saucer, .mothership, .moonBike: return 0; default: return 14 }
+        switch self { case .tardis: return 6; case .saucer, .mothership, .moonBike: return 0; case .schoolBus: return -11; default: return 14 }
     }
 }

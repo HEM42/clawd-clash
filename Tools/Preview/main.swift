@@ -10,7 +10,7 @@ import AppKit
 //                                                  DRILL=bespoke shows just that one, at more moments
 //   build/preview place out.png avengersTower ...  locations at window size and at screen-saver size
 //   build/preview magic out.png [names…]           every magic user's stream side by side, at a few moments
-//   build/preview rides out.png                    the ships, landed and flying
+//   build/preview rides out.png [rides…]           the ships, landed and flying (all, or only those named, e.g. gtx)
 //   build/preview edges out.txt ironMan ...        every moment solid art touches the frame's top or side edges, where
 //                                                  its outline is cut off (shots and exits leaving on purpose show too)
 //
@@ -416,7 +416,8 @@ case "place":
 case "rides":
     let cellW = CGFloat(Ride.width) * scale + 12, cellH = CGFloat(Ride.tardis.canvasHeight) * scale + 30
     let states: [(String, Double, Bool, Bool)] = [("landed", 0, false, true), ("ramp down", 1, false, true), ("flying", 0, true, false)]
-    let rides: [Ride] = [.falcon, .quinjet, .milano, .javelin, .batwing, .tardis, .sedan, .helicopter, .saucer, .delorean, .moonBike, .mothership, .jeep]
+    let every: [Ride] = [.falcon, .quinjet, .milano, .javelin, .batwing, .tardis, .sedan, .helicopter, .saucer, .delorean, .moonBike, .mothership, .jeep, .schoolBus, .deSoto, .gtx]
+    let rides = names.isEmpty ? every : every.filter { names.contains("\($0)") }
     save(sheet(Int(cellW * 3), Int(cellH * CGFloat(rides.count))) { ctx in
         for (i, ride) in rides.enumerated() {
             for (j, st) in states.enumerated() {

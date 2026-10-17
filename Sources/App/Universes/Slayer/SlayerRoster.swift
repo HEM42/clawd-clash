@@ -130,8 +130,31 @@ let slayerTheme = Theme(
                  : .slayerHome(of: SlayerHero(rawValue: c.index) ?? .buffyClawmers)
     },
     nemeses: slayerNemeses.map { (.hero($0.0), .villain($0.1)) },
-    // The school bus, Spike's DeSoto and Angel's convertible come in phase 4; until then everyone leaves on foot.
-    ride: { _ in nil },
+    ride: { c in
+        // The school bus for the Scooby Gang, the Slayers, the Watchers and the Potentials; Spike's DeSoto for Spyke
+        // and the vampires; Angel's convertible for Angel Investigations (Angstel too: it's his car). Everyone else
+        // leaves on foot: the Sunnydale friends, Miss Kitty, HEM, and every villain who isn't a vampire.
+        guard c.universe == .slayer else { return nil }
+        if c.isDark {
+            switch SlayerVillain(rawValue: c.index) {
+            case .oldMaster?, .lukewarm?, .darlah?, .drusillah?, .mrTricks?, .harmonyClawdall?, .kakistoes?, .sundae?,
+                 .lyleGrouch?, .draclawla?, .turokHahn?, .fledgling?:
+                return .deSoto
+            default: return nil
+            }
+        }
+        switch SlayerHero(rawValue: c.index) {
+        case .buffyClawmers?, .willowRosenclaw?, .xanderHarrows?, .rupertGyles?, .cordeliaChaise?, .ozz?, .anyaJinkins?,
+             .taraMaclaw?, .dawnClawmers?, .joyceClawmers?, .faithLehayne?, .kendraYung?, .firstSlayer?,
+             .jennyClawlendar?, .robinWoode?, .kennedie?, .vy?, .rhona?:
+            return .schoolBus
+        case .spyke?: return .deSoto
+        case .angstel?, .wesleyWindupPryce?, .charlesGunne?, .fredBurkel?, .lorn?, .doyl?, .conner?, .kateLockclaw?,
+             .groosalug?, .drogynn?:
+            return .gtx
+        default: return nil
+        }
+    },
     menuIcon: slayerMenuIcon,
     legend: .hero(.buffyClawmers))
 
