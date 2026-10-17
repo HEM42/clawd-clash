@@ -20,7 +20,7 @@ private func slayerWheels(_ c: PixelCanvas, _ xs: [Int], r: Int = 4, arch: Px, h
 /// The school bus (the "Chosen" escape): a yellow body with black rub rails, a row of windows (one cracked), the
 /// stubby bonnet out front and dents and scrapes down its side. Its folding door, just behind the front wheel, is
 /// where whoever's taken climbs aboard (`Ride.boardingOffset` puts them there, right of centre): `ramp` 0…1 folds it
-/// open on the lit steps. `lit`: headlights on and the roof lamps on, amber up front and red at the back.
+/// open on the steps. `lit`: headlights on and the roof lamps on, amber up front and red at the back.
 func slayerSchoolBus(_ c: PixelCanvas, ramp: Double, lit: Bool) {
     let yellow = C(0xF0B21E), light = C(0xFFD65A), dark = C(0xB87810), black = C(0x1C1C20), glass = C(0x26303C)
     let shine = C(0x9AB4C8), chrome = C(0xC8CCD2), arch = C(0x141418)
@@ -60,23 +60,33 @@ func slayerSchoolBus(_ c: PixelCanvas, ramp: Double, lit: Bool) {
     c.rect(3, 17, 1, 2, C(0xC82A2A))
     c.rect(61, 13, 1, 2, lit ? C(0xFFF6C8) : C(0xC8C8B8))
     if lit { c.rect(62, 13, 2, 2, C(0xFFF6C8, 0.5)) }
-    // The folding door: two glass leaves with black frames, between the windows and the windscreen.
-    let open = Int((5 * ramp).rounded())
+    // The folding door: two glass leaves with black frames, between the windows and the windscreen. Opening, they
+    // fold back to the doorway's sides, two narrow edge-on panels, and show the steps going up into the dark bus.
     if ramp > 0 {
-        c.rect(42, 6, 5, 17, C(0xFFE8B0, 0.85))
-        for (i, y) in [21, 18].enumerated() { c.rect(42 + i, y, 5 - i, 1, C(0x7A6A50)) }   // the steps
+        c.rect(42, 6, 5, 17, C(0x16161C))                                    // the doorway
+        c.rect(43, 6, 3, 1, C(0x3A3A44))                                     // the dim ceiling light
+        for y in [21, 18, 15] {                                              // the steps, up to the floor
+            c.rect(42, y, 5, 1, C(0x8A8A92)); c.rect(42, y + 1, 5, 2, C(0x34343A))
+        }
+        c.rect(42, 21, 5, 1, C(0x9A9AA2)); c.px(42, 21, light)                // the bottom step's yellow-nosed edge
+        c.rect(44, 8, 1, 7, chrome); c.px(44, 8, C(0xF4F6F8))                 // the grab rail
+        let gap = Int((3 * ramp).rounded()), left = (5 - gap) / 2, right = 5 - gap - left
+        for (x0, w) in [(42, left), (47 - right, right)] where w > 0 {
+            c.rect(x0, 6, w, 17, black)
+            if w > 1 { c.rect(x0 + 1, 7, w - 1, 7, glass); c.rect(x0 + 1, 15, w - 1, 6, glass); c.px(x0 + 1, 7, shine) }
+            else { c.px(x0, 7, C(0x5A6470)); c.px(x0, 14, C(0x5A6470)); c.px(x0, 21, C(0x5A6470)) }   // the glass's edges
+        }
+    } else {
+        c.rect(42, 6, 5, 17, black)
+        c.rect(43, 7, 3, 7, glass); c.rect(43, 15, 3, 6, glass); c.px(43, 7, shine)
     }
-    let leaf = max(1, 5 - open)
-    c.rect(42, 6, leaf, 17, black)
-    if leaf > 2 { c.rect(43, 7, leaf - 2, 7, glass); c.rect(43, 15, leaf - 2, 6, glass); c.px(43, 7, shine) }
-    else { c.rect(42 + leaf - 1, 6, 1, 17, C(0x3A3A40)) }
     // The wheels.
     slayerWheels(c, [13, 53], r: 4, arch: arch, hub: C(0x9AA0A8))
 }
 
 /// Spike's DeSoto: a rounded black 1950s four-door with fat chrome bumpers, the toothy grille, whitewall tyres and
 /// windows blacked out with paint and taped-up paper so a vampire can drive by day. Its rear door is the ramp
-/// (`ramp` 0…1 swings it open on a dim, smoky red inside); `lit`: headlights on.
+/// (`ramp` 0…1 swings it open on a dim, smoky red inside and the back seat); `lit`: headlights on.
 func slayerDeSoto(_ c: PixelCanvas, ramp: Double, lit: Bool) {
     let body = C(0x24242C), light = C(0x50505E), dark = C(0x101014), chrome = C(0xC8CCD2), chromeDark = C(0x7A8088)
     let paint = C(0x0A0A0C), paper = C(0xD8CCA8), paperDark = C(0xA89A78), tape = C(0x8A7A5A), arch = C(0x08080A)
@@ -124,14 +134,36 @@ func slayerDeSoto(_ c: PixelCanvas, ramp: Double, lit: Bool) {
     // The wheels: whitewalls, half under the fenders' skirts.
     slayerWheels(c, [13, 51], r: 4, arch: arch, hub: chrome, whitewall: true)
     c.rect(14, 19, 44, 1, chrome)                                    // the spear, over the arches' tops
-    // The rear door swinging open on the dim red inside, a curl of cigarette smoke.
+    // The rear door, hinged at its front edge (x 32), swinging out toward us: it narrows to an edge-on panel, its
+    // painted window and newspaper squeezed thin, and the doorway shows the dim red inside and the back seat, a curl
+    // of cigarette smoke coming out over it.
     if ramp > 0 {
-        let w = 12, open = Int((Double(w) * ramp).rounded())
-        c.rect(20, 10, w, 14, C(0x6A1E1E, 0.9)); c.rect(20, 10, w, 1, C(0x8A3A2A))
+        let seat = C(0x7A2A26), seatLight = C(0xA44A3E), seatDark = C(0x4A1A1A)
+        for x in 20...31 {   // the doorway: the back window's curve on top, the door below the waist
+            let f = Double(25 - x) / 9, top = x == 31 ? 16 : x < 25 ? min(16, 10 + Int((f * f * 5).rounded())) : 10
+            c.rect(x, top, 1, 24 - top, C(0x1C1012))
+        }
+        c.rect(26, 10, 3, 1, C(0x5A2420))                                    // the dim red dome light
+        c.rect(20, 13, 3, 7, seat); c.rect(21, 12, 2, 1, seatLight); c.px(20, 13, seatLight); c.rect(22, 14, 1, 5, seatDark)
+        c.rect(20, 19, 10, 1, seatLight); c.rect(20, 20, 10, 1, seat); c.rect(20, 21, 10, 1, seatDark)
         c.px(24, 9, C(0xB8B8C0, 0.5 * ramp)); c.px(25, 8, C(0xB8B8C0, 0.35 * ramp)); c.px(24, 7, C(0xB8B8C0, 0.25 * ramp))
-        let lw = max(1, w - open)
-        c.rect(20, 9, lw, 15, body); c.rect(20, 9, lw, 1, light)
-        if lw > 3 { c.rect(21, 11, lw - 2, 4, paint) }
+        let pw = slayerDoorWidth(12, ramp), x0 = 32 - pw, drop = Int((2 * ramp).rounded()), rise = Int((1.5 * ramp).rounded())
+        c.rect(x0, 9, pw, 15, ramp < 0.25 ? body : light)                  // the door's skin, turning to the light
+        if pw > 2 {
+            c.rect(x0 + 1, 10, pw - 2, 5, paint)
+            c.rect(x0 + 1, 11, max(1, pw - 3), 3, paper); c.rect(x0 + 1, 13, max(1, pw - 3), 1, paperDark); c.px(x0 + 1, 11, tape)
+            c.px(x0 + 1, 18, chrome)                                         // the handle
+        }
+        c.rect(x0, 19, pw, 1, chrome); c.rect(x0, 20, pw, 1, chromeDark)
+        c.rect(x0, 22, pw, 2, body)
+        for i in 0..<pw {   // nearer us toward its free edge, it reaches a little past the body, top and bottom
+            let k = Double(pw - 1 - i) / Double(max(1, pw - 1))
+            let down = Int((Double(drop) * k).rounded()), up = Int((Double(rise) * k).rounded())
+            if down > 0 { c.rect(x0 + i, 24, 1, down, dark) }
+            if up > 0 { c.rect(x0 + i, 9 - up, 1, up, light) }
+        }
+        c.rect(x0, 9 - rise, 1, 15 + rise + drop, chromeDark)                // its free edge, nearest us
+        c.rect(31, 9, 1, 15, dark)                                           // the hinge side, in shade
     }
 }
 
@@ -175,11 +207,30 @@ func slayerGTX(_ c: PixelCanvas, ramp: Double, lit: Bool) {
     // The wheels: chrome mags.
     slayerWheels(c, [13, 52], r: 4, arch: arch, hub: chrome)
     for wx in [13, 52] { c.px(wx, 24, chromeDark); c.px(wx - 1, 23, C(0xF4F6F8)) }
-    // The door swinging open: the red-lit footwell behind it.
+    // The driver's door, hinged at its front edge (x 36), swinging out toward us: it narrows to an edge-on panel
+    // standing at the hinge, and with the top down the doorway shows the whole bucket seat and the footwell.
     if ramp > 0 {
-        let w = 14, open = Int((Double(w) * ramp).rounded())
-        c.rect(23, 16, w - 1, 7, C(0xFFE8B0, 0.75)); c.rect(23, 21, w - 1, 2, seat)
-        let lw = max(1, w - open)
-        c.rect(23, 15, lw, 8, body); c.rect(23, 15, lw, 1, light)
+        let cushion = C(0xA0948E), cushionSide = C(0x6E6462)
+        c.rect(23, 16, 13, 6, C(0x0A090B))                                   // the doorway
+        c.rect(27, 16, 3, 2, cushionSide); c.px(27, 16, cushion)            // the seat back, down to the cushion
+        c.rect(27, 18, 7, 1, cushion); c.rect(27, 19, 7, 1, cushionSide); c.rect(27, 20, 7, 1, C(0x2A2424))
+        c.rect(28, 21, 2, 1, C(0x2A2626))                                    // the seat's runner
+        c.px(34, 16, C(0x3A3A40)); c.px(35, 17, C(0x3A3A40))                 // the steering column
+        c.rect(23, 22, 13, 1, chromeDark)                                    // the sill's scuff plate
+        let pw = slayerDoorWidth(13, ramp), x0 = 36 - pw, drop = Int((2 * ramp).rounded()), rise = Int((1.5 * ramp).rounded())
+        c.rect(x0, 16, pw, 7, ramp < 0.25 ? body : light)                   // the door's skin, turning to the light
+        c.rect(x0, 16, pw, 1, chromeDark); c.rect(x0, 19, pw, 1, body); c.rect(x0, 22, pw, 1, body)
+        if pw > 2 { c.px(x0 + 1, 18, chrome) }                               // the handle
+        for i in 0..<pw {   // nearer us toward its free edge, it reaches a little past the body, top and bottom
+            let k = Double(pw - 1 - i) / Double(max(1, pw - 1))
+            let down = Int((Double(drop) * k).rounded()), up = Int((Double(rise) * k).rounded())
+            if down > 0 { c.rect(x0 + i, 24, 1, down, dark) }
+            if up > 0 { c.rect(x0 + i, 16 - up, 1, up, chromeDark) }
+        }
+        c.rect(x0, 16 - rise, 1, 7 + rise + drop, chrome)                    // its free edge, nearest us
+        c.rect(35, 16, 1, 7, dark)                                           // the hinge side, in shade
     }
 }
+
+/// How wide a door `w` px long looks, side on, when it's swung `ramp` 0…1 of the way open (about 63°).
+private func slayerDoorWidth(_ w: Int, _ ramp: Double) -> Int { max(2, Int((Double(w) * cos(ramp * 1.1)).rounded())) }
