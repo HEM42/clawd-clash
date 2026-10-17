@@ -12,8 +12,8 @@ let slayerHeroes3: [SlayerHero: Persona] = [
     .kendraYung: Persona(name: "Kendra Yung", weapon: .saber, headTop: 20, signature: 3.0,
                          callout: "Mr. Pointy.", draw: drawKendraYung),
     .jennyClawlendar: Persona(name: "Jenny Clawlendar", weapon: .lightning,
-                              magic: Magic(core: C(0xFFF2C4), glow: C(0xE0961E), jagged: false),
-                              headTop: 21, signature: 3.4, draw: drawJennyClawlendar),
+                              magic: Magic(core: C(0xFFF2C4), glow: C(0xE0961E), jagged: false, touch: true),
+                              pivot: (40, 29.5), headTop: 21, signature: 3.4, draw: drawJennyClawlendar),
     .angstel: Persona(name: "Angstel", weapon: .saber, headTop: 17, signature: 3.6,
                       callout: "We help the helpless.", draw: drawAngstel),
     .wesleyWindupPryce: Persona(name: "Wesley Windup-Pryce", weapon: .blaster, shot: .bullet, muzzle: (47, 32),
@@ -274,8 +274,10 @@ private func drawKendraYung(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Jenny Clawlendar
 
 /// Jenny Clawlendar: Clawd with dark chin-length hair and a fringe, a long plum cardigan to her knees over a rust
-/// patterned dress, and her laptop tucked under one arm. The technopagan's magic is a steady amber ray. Signature: she
-/// holds up the Orb of Thessulah, and it lights from within, pale gold.
+/// patterned dress, her laptop tucked under one arm and the Orb of Thessulah in her other hand. The Orb is the Romani
+/// spirit vessel of the Ritual of Restoration, the one that gives a vampire back his soul: it never fires anything, it
+/// glows. So when she casts it lights from within, pale gold, and whoever she holds it up to is bathed in amber light,
+/// motes drifting up round them (a touch, not a stream). Signature: she holds it up high, and it lights slowly.
 private func drawJennyClawlendar(_ c: PixelCanvas, _ p: Pose) {
     let cardi = C(0x6A3A5E), cardiD = C(0x4A2842), cardiL = C(0x8A5478), dress = C(0xB8622E), dot = C(0xE8A060)
     let hair = C(0x2E1E1A), hairL = C(0x4C342C), hairD = C(0x1A100E)
@@ -283,8 +285,11 @@ private func drawJennyClawlendar(_ c: PixelCanvas, _ p: Pose) {
 
     drawLegs(c, Look(leg: C(0x3A2A30)), step: p.step)
     slayerBoots(c, step: p.step, C(0x1E1418), height: 2)
+    // Casting (a fight, practice, or waiting on you): the Orb raised and lit; her signature: held up high.
+    let casting = p.zap != nil
+    let raise = orbK >= 0 ? 4 : casting ? max(2, p.armRaise) : p.armRaise
     c.oy += p.breathe
-    drawBody(c, Look(arm: cardi), armRight: orbK >= 0 ? 4 : p.armRaise)
+    drawBody(c, Look(arm: cardi), armRight: raise)
     // The dress showing down the middle, the long cardigan open over it and hanging to her knees.
     c.rect(18, 33, 20, 5, cardi); c.rect(24, 33, 8, 5, dress)
     for (x, y) in [(25, 34), (28, 33), (30, 35), (26, 36), (29, 37)] { c.px(x, y, dot) }
@@ -309,10 +314,9 @@ private func drawJennyClawlendar(_ c: PixelCanvas, _ p: Pose) {
     // The laptop, shut, tucked under her left arm.
     c.rect(13, 31, 2, 7, C(0x5A5E66)); c.rect(13, 31, 1, 7, C(0x7E828C)); c.px(14, 37, C(0x3A3E46))
 
-    guard orbK >= 0 else { return }
-    // The Orb of Thessulah on her raised palm: clear glass, then lit from within, pale gold.
-    let lit = max(0, min(1, (orbK - 0.25) * 3)) * min(1, (1 - orbK) * 6)
-    let ox = 40, oy = 24
+    // The Orb of Thessulah on her palm: clear glass at rest, lit from within, pale gold, when she casts.
+    let lit = orbK >= 0 ? max(0, min(1, (orbK - 0.25) * 3)) * min(1, (1 - orbK) * 6) : casting ? 1 : 0
+    let ox = 40, oy = 28 - raise
     c.rect(ox - 1, oy + 4, 3, 2, clawdOrange)
     let glass = lit > 0.5 ? C(0xFFE89A) : C(0xC8D8E4), rim = lit > 0.5 ? C(0xE0A030) : C(0x8AA0B4)
     c.pattern(ox - 2, oy, [".rrr.", "rgggr", "rgwgr", ".rrr."], ["r": rim, "g": glass, "w": white])
