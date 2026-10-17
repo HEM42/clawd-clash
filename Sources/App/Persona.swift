@@ -57,6 +57,8 @@ struct Magic {
     var variant = 0
     /// Lightning: how many bolts, where a character's look needs a set number; nil leaves it to the variant.
     var bolts: Int?
+    /// A steady ray drawn at its thickest, whatever the variant (a ray that burns, rather than a beam).
+    var thick = false
     /// Not a stream it can fire into the sky or open as a portal: a gadget, or a touch.
     var gadget: Bool { touch || rcCar }
     /// How far short of the frame's edge a stream practised at nobody must stop, so what lands isn't cut in half.

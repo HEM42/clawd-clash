@@ -484,7 +484,8 @@ func drawMagic(_ c: PixelCanvas, _ m: Magic, from a: (Double, Double), to b: (Do
     }
     if !m.jagged {
         // A steady ray, wavering; some have bright beads running along it.
-        let width = pick(&v, [(0.7, 2.2), (0.5, 1.6), (1.0, 2.8)]), beads = pick(&v, [false, true])
+        var width = pick(&v, [(0.7, 2.2), (0.5, 1.6), (1.0, 2.8)]), beads = pick(&v, [false, true])
+        if m.thick { width = (1.0, 2.8) }
         let wobble = pick(&v, [1.4, 0.5, 2.4]), waves = pick(&v, [9.0, 5, 14])
         let speed = pick(&v, [14.0, 8, 20])
         let n = 8
