@@ -335,9 +335,15 @@ private func drawAzog(_ c: PixelCanvas, _ p: Pose) {
 }
 
 /// Azog's iron claw swung `k` of the way up (0 hanging at his side, 1 raised high over his head): the hanging claw
-/// turned up about his shoulder, the arm stretched out to its full reach.
+/// turned up about his shoulder, the arm stretched out to its full reach, except while it sweeps out behind him, where
+/// it reaches only as far as the frame's left edge leaves room for (two pixels clear, so its outline isn't cut).
 private func drawRaisedClaw(_ c: PixelCanvas, _ k: Double, skin: Px, iron: Px, ironLight: Px, ironDark: Px) {
-    let sh: (x: Double, y: Double) = (14.5, 29.5), a: Double = 144 * k * .pi / 180, reach = 1 + 0.7 * k
+    let sh: (x: Double, y: Double) = (14.5, 29.5), a: Double = 144 * k * .pi / 180
+    var reach = 1 + 0.7 * k
+    let rim: [(Double, Double)] = [(9, 38), (10, 40.5), (13, 40.5), (7.5, 34), (12, 32)]
+    let back = rim.map { sh.x + (($0.0 - sh.x) * cos(a) - ($0.1 - sh.y) * sin(a)) * reach }.min() ?? sh.x
+    let edge = 2 - Double(c.ox)                                                     // canvas x 2, in drawing units
+    if back < edge { reach *= (sh.x - edge) / (sh.x - back) }
     func at(_ x: Double, _ y: Double) -> (x: Double, y: Double) {
         let dx = (x - sh.x) * reach, dy = (y - sh.y) * reach
         return (sh.x + dx * cos(a) - dy * sin(a), sh.y + dx * sin(a) + dy * cos(a))
