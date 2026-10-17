@@ -1079,7 +1079,7 @@ final class CardsView: NSView {
             let box = NSBezierPath(roundedRect: r, xRadius: 8, yRadius: 8)
             (controller?.location.panel.blended(withFraction: 0.35, of: .black) ?? NSColor.black).withAlphaComponent(0.94).setFill()
             box.fill()
-            c.accent.withAlphaComponent(0.55).setStroke()     // steady; the focused card says "◆ you're here" instead
+            c.accent.withAlphaComponent(0.55).setStroke()     // steady; the focused card says "● you're here" instead
             box.lineWidth = 1
             box.stroke()
 
@@ -1132,7 +1132,7 @@ final class CardsView: NSView {
                 px = rp.minX - 6
             }
             if c.focused {
-                header.append(NSAttributedString(string: "   ◆ you're here", attributes: [
+                header.append(NSAttributedString(string: "   ● you're here", attributes: [
                     .font: NSFont.systemFont(ofSize: 11, weight: .semibold),
                     .foregroundColor: Self.focusYellow]))
             }
