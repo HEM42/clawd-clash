@@ -517,7 +517,8 @@ func drawMagic(_ c: PixelCanvas, _ m: Magic, from a: (Double, Double), to b: (Do
         var prev = a
         for i in 1...n {
             let f = Double(i) / Double(n)
-            let off = i == n ? 0 : (noise(seed * 31 + bolt * 7 + i) - 0.5) * spread
+            // Later strands wander further from the line, so they part from the first instead of hugging it.
+            let off = i == n ? 0 : (noise(seed * 31 + bolt * 7 + i) - 0.5) * spread * (1 + 0.45 * Double(bolt))
             let q = (a.0 + dx * f + nx * off, a.1 + dy * f + ny * off)
             c.glowLine(prev.0, prev.1, q.0, q.1, core: core, glow: glow, coreR: width.0, glowR: width.1,
                        strength: bolt == 0 ? 1 : bolt == 1 ? 0.6 : 0.45)
