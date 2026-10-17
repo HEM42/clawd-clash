@@ -346,9 +346,8 @@ Any exhaustive `switch` on `Universe` turns a missed spot into a compile error. 
 Do these freely (on the branch):
 - **README.md:**
   - the tagline and intro say "many" or "several" universes, never a number, so they need no change;
-  - the universe table's new column (set pieces, ride, mechanic);
+  - the universe's own section under "The universes" (a `###` heading, then Cast, Places, Weapons, Set pieces as sub-bullets, and Sides, copying the layout of the others), followed by its collapsible cast-and-places pictures;
   - the screen-saver paragraph about transitions;
-  - a collapsible cast-and-places section;
   - the developer notes on where universes live.
 - **`llms.txt`:** the count, the universe list, the folder and file-prefix list, and any new mechanic.
 - **`Tools/RenderDocs`:** a `<prefix>Lineup` desktop strip, the roster and locations sheets, and a social preview. Output goes to `docs/`, named by the universe's title (`roster-the-clawd-files.png` …).

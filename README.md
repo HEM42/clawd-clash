@@ -84,13 +84,15 @@ You run Claude Code in three terminals. One is thinking, one is waiting for your
 
 Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, **Detective Clawds**, **Doctor Clawd**, **The Clawd Files**, **Stevie Clawdberg**, **Clawd of the Rings**, **Clawd Royale** or **Random**. Switching recasts everyone on screen (each character becomes the one in the same place in the other cast, on the same side), moves the scene to one of the new universe's places, and changes the menu bar icon (Darth Vapor's helmet, Captain Americlawd's shield, Superb-Man's C-shield, the police box, a flying saucer, the bike crossing the moon or the One Ring). In the window, the whole window changes over with the new universe's transition. **Random** switches on its own every 1, 5, 10, 15, 30 or 60 minutes. **Clawd Royale** throws every cast into one scene, heroes against villains, each character as itself, in a random place from any universe every ten minutes (the Location menu is greyed out meanwhile); the menu bar icon is the universe of the place. The screen saver follows it with "The same as Clawd Clash", or picks it in its own Options.
 
-| | Star Clawds | Marvelous Clawds | Detective Clawds | Doctor Clawd | The Clawd Files | Stevie Clawdberg | Clawd of the Rings |
-|---|---|---|---|---|---|---|---|
-| Cast | 46 villains, 35 heroes | 88 villains, 105 heroes | 97 villains, 110 heroes | 42 villains, 55 heroes | 46 villains, 35 heroes | 54 villains, 63 heroes | 38 villains, 37 heroes |
-| Places | 22, from the Mos Easy Cantina to the Battle of Froth | 43, from Clawdvengers Tower to Ta Loh | 43, from the Lookout to the Hall of Gloom | 20, from the TARDIS console room to Sanctuary Base 6 | 20, from the X-Files office to the mothership | 23, from Hill Valley in 1955 to the Jolly Roger | 22, from Bag Endpoint to Data Lake-town |
-| Weapons | laser swords, blasters, dark lightning | shields, hammers, claws, repulsors, webs, arrows, magic | fists, swords, heat vision, power rings, clawdarangs, arrows, magic | sonic screwdrivers, Dalick guns, cyber blasters, the odd cricket ball and umbrella | FBI sidearms and flashlights, alien stilettos, black oil, monster claws | bullwhips, revolvers, harpoons, 1.21 gigawatts, flares, pie tins, the hook, dinosaur jaws | swords, axes, bows, wizard staffs swung like swords, orc blades, the Ballrog's fiery whip, dark fire and Barrow-write's chant |
-| Set pieces | Han Yolo and Greedy-O face off, and Han shoots first; the Millennial Falcon picks Han up | arch-enemies face off first; the Clawdjet and the Milano pick people up; flyers take to the air and fight from there | arch-enemies face off first; the Lance and the Clawdwing pick people up; the Batclawd family swings on grapnel lines | arch-enemies face off first; the TARDIS wheezes in to pick people up; the Weeping Angle only moves while nobody looks; when Claude Code compacts its context, its Doctor regenerates into the next one | arch-enemies face off first; an unmarked sedan, a black helicopter or a saucer picks people up; when an FBI agent's session compacts its context, they lose some time: abducted in a beam of light and set back down; each scene's place types itself in, as in the show | arch-enemies face off first, and Indiana Bones shoots the Cairo Swordsman mid-twirl; the DeLorean, the moon bike, the mothership or the park jeep picks people up; when a time traveller's session compacts its context, they hit 88 mph and come back with three sonic booms; T. Wrecks's footsteps ripple a glass of water; Captain Clawk jumps at every tick of the Croc Clock | arch-enemies face off first; the Great Eagle swoops in for Gandclawd, Frodough and Samwise; one character in two guises (Gandclawd the Grey and the White, Arrogorn and Stride-r, Sarumanual and Sharkey, Sourun and the Necro-maintainer) is never on screen twice; Smaug the Stashed only ever appears on his hoard in the Lonely Mount-point; Shellob climbs her thread up out of sight and back down |
-| Sides | whoever came first keeps their side; Darth Vapor and Kylo Rant never lead back to back | Claude Code plays the heroes when another AI runs | Claude Code plays the heroes when another AI runs | Claude Code plays the heroes when another AI runs | Claude Code plays the FBI when another AI runs | Claude Code plays the heroes when another AI runs | Claude Code plays the heroes when another AI runs |
+### Star Clawds
+
+- **Cast:** 46 villains, 35 heroes
+- **Places:** 22, from the Mos Easy Cantina to the Battle of Froth
+- **Weapons:** Laser swords, blasters, dark lightning
+- **Set pieces:**
+  - Han Yolo and Greedy-O face off, and Han shoots first
+  - The Millennial Falcon picks Han up
+- **Sides:** Whoever came first keeps their side; Darth Vapor and Kylo Rant never lead back to back
 
 <details>
 <summary><b>The Star Clawds cast and places</b></summary>
@@ -98,11 +100,33 @@ Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, *
 <p align="center"><img src="docs/locations-star-clawds.png" alt="All Star Clawds places" width="760"></p>
 </details>
 
+### Marvelous Clawds
+
+- **Cast:** 88 villains, 105 heroes
+- **Places:** 43, from Clawdvengers Tower to Ta Loh
+- **Weapons:** Shields, hammers, claws, repulsors, webs, arrows, magic
+- **Set pieces:**
+  - Arch-enemies face off first
+  - The Clawdjet and the Milano pick people up
+  - Flyers take to the air and fight from there
+- **Sides:** Claude Code plays the heroes when another AI runs
+
 <details>
 <summary><b>The Marvelous Clawds cast and places</b></summary>
 <p align="center"><img src="docs/roster-marvelous-clawds.png" alt="All Marvelous Clawds characters" width="760"></p>
 <p align="center"><img src="docs/locations-marvelous-clawds.png" alt="All Marvelous Clawds places" width="760"></p>
 </details>
+
+### Detective Clawds
+
+- **Cast:** 97 villains, 110 heroes
+- **Places:** 43, from the Lookout to the Hall of Gloom
+- **Weapons:** Fists, swords, heat vision, power rings, clawdarangs, arrows, magic
+- **Set pieces:**
+  - Arch-enemies face off first
+  - The Lance and the Clawdwing pick people up
+  - The Batclawd family swings on grapnel lines
+- **Sides:** Claude Code plays the heroes when another AI runs
 
 <details>
 <summary><b>The Detective Clawds cast and places</b></summary>
@@ -110,11 +134,35 @@ Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, *
 <p align="center"><img src="docs/locations-detective-clawds.png" alt="All Detective Clawds places" width="760"></p>
 </details>
 
+### Doctor Clawd
+
+- **Cast:** 42 villains, 55 heroes
+- **Places:** 20, from the TARDIS console room to Sanctuary Base 6
+- **Weapons:** Sonic screwdrivers, Dalick guns, cyber blasters, the odd cricket ball and umbrella
+- **Set pieces:**
+  - Arch-enemies face off first
+  - The TARDIS wheezes in to pick people up
+  - The Weeping Angle only moves while nobody looks
+  - When Claude Code compacts its context, its Doctor regenerates into the next one
+- **Sides:** Claude Code plays the heroes when another AI runs
+
 <details>
 <summary><b>The Doctor Clawd cast and places</b></summary>
 <p align="center"><img src="docs/roster-doctor-clawd.png" alt="All Doctor Clawd characters" width="760"></p>
 <p align="center"><img src="docs/locations-doctor-clawd.png" alt="All Doctor Clawd places" width="760"></p>
 </details>
+
+### The Clawd Files
+
+- **Cast:** 46 villains, 35 heroes
+- **Places:** 20, from the X-Files office to the mothership
+- **Weapons:** FBI sidearms and flashlights, alien stilettos, black oil, monster claws
+- **Set pieces:**
+  - Arch-enemies face off first
+  - An unmarked sedan, a black helicopter or a saucer picks people up
+  - When an FBI agent's session compacts its context, they lose some time: abducted in a beam of light and set back down
+  - Each scene's place types itself in, as in the show
+- **Sides:** Claude Code plays the FBI when another AI runs
 
 <details>
 <summary><b>The Clawd Files cast and places</b></summary>
@@ -122,11 +170,37 @@ Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, *
 <p align="center"><img src="docs/locations-the-clawd-files.png" alt="All The Clawd Files places" width="760"></p>
 </details>
 
+### Stevie Clawdberg
+
+- **Cast:** 54 villains, 63 heroes
+- **Places:** 23, from Hill Valley in 1955 to the Jolly Roger
+- **Weapons:** Bullwhips, revolvers, harpoons, 1.21 gigawatts, flares, pie tins, the hook, dinosaur jaws
+- **Set pieces:**
+  - Arch-enemies face off first, and Indiana Bones shoots the Cairo Swordsman mid-twirl
+  - The DeLorean, the moon bike, the mothership or the park jeep picks people up
+  - When a time traveller's session compacts its context, they hit 88 mph and come back with three sonic booms
+  - T. Wrecks's footsteps ripple a glass of water
+  - Captain Clawk jumps at every tick of the Croc Clock
+- **Sides:** Claude Code plays the heroes when another AI runs
+
 <details>
 <summary><b>The Stevie Clawdberg cast and places</b></summary>
 <p align="center"><img src="docs/roster-stevie-clawdberg.png" alt="All Stevie Clawdberg characters" width="760"></p>
 <p align="center"><img src="docs/locations-stevie-clawdberg.png" alt="All Stevie Clawdberg places" width="760"></p>
 </details>
+
+### Clawd of the Rings
+
+- **Cast:** 38 villains, 37 heroes
+- **Places:** 22, from Bag Endpoint to Data Lake-town
+- **Weapons:** Swords, axes, bows, wizard staffs swung like swords, orc blades, the Ballrog's fiery whip, dark fire and Barrow-write's chant
+- **Set pieces:**
+  - Arch-enemies face off first
+  - The Great Eagle swoops in for Gandclawd, Frodough and Samwise
+  - One character in two guises (Gandclawd the Grey and the White, Arrogorn and Stride-r, Sarumanual and Sharkey, Sourun and the Necro-maintainer) is never on screen twice
+  - Smaug the Stashed only ever appears on his hoard in the Lonely Mount-point
+  - Shellob climbs her thread up out of sight and back down
+- **Sides:** Claude Code plays the heroes when another AI runs
 
 <details>
 <summary><b>The Clawd of the Rings cast and places</b></summary>
