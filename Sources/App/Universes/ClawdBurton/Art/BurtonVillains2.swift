@@ -6,7 +6,7 @@ import Foundation
 
 let burtonVillains2: [BurtonVillain: Persona] = [
     .ooogieBoogie: Persona(name: "Ooogie Boogie", weapon: .blaster, shot: .thrown(C(0xF4F2EA)), canSit: false,
-                           muzzle: (50, 25), bulk: 10, headTop: 7, signature: 4.0, callout: "Well, well, well…",
+                           muzzle: (44, 24), bulk: 3, headTop: 16, signature: 4.0, callout: "Well, well, well…",
                            draw: drawOoogieBoogie),
     .lok: Persona(name: "Lok", weapon: .saber, pivot: kidHand, headTop: 23, signature: 2.8, draw: drawLok),
     .shok: Persona(name: "Shok", weapon: .saber, pivot: kidHand, headTop: 15, signature: 2.8, draw: drawShok),
@@ -14,18 +14,18 @@ let burtonVillains2: [BurtonVillain: Persona] = [
                       signature: 2.8, draw: drawBarrell),
     .drFinkelclawd: Persona(name: "Dr. Finkelclawd", weapon: .blaster, shot: .thrown(C(0x6AD04A)), canSit: false,
                             muzzle: (43, 25), headTop: 20, signature: 3.2, draw: drawFinkelclawd),
-    .wolfclawd: Persona(name: "The Wolfclawd", weapon: .saber, bulk: 3, headTop: 13, signature: 3.0, draw: drawWolfclawd),
-    .tearAwayClown: Persona(name: "The Tear-Away Clown", weapon: .none, canSit: false, headTop: 14, signature: 3.2,
+    .wolfclawd: Persona(name: "The Wolfclawd", weapon: .saber, bulk: 4, headTop: 19, signature: 3.0, draw: drawWolfclawd),
+    .tearAwayClown: Persona(name: "The Tear-Away Clown", weapon: .none, canSit: false, headTop: 17, signature: 3.2,
                             draw: drawTearAwayClown),
     .halloweenWitch: Persona(name: "The Halloween Witch", weapon: .lightning, motion: .fly,
-                             magic: Magic(core: C(0xFFE0B0), glow: C(0xFF7A1A)), pivot: witchHand, headTop: 9,
+                             magic: Magic(core: C(0xFFE0B0), glow: C(0xFF7A1A)), pivot: witchHand, headTop: 11,
                              signature: 3.2, callout: "Hee hee hee!", draw: drawHalloweenWitch),
 ]
 
 /// The trick-or-treaters' hand: their pitchfork and broom swing from there.
 private let kidHand = (x: 36.5, y: 34.5)
 /// The Witch's raised hand: her lightning leaves from there (raised by `armRaise`).
-private let witchHand = (x: 42.5, y: 30.5)
+private let witchHand = (x: 43.5, y: 30.5)
 
 /// 0 before `a`, 1 after `b`, a straight line between.
 private func ramp(_ s: Double, _ a: Double, _ b: Double) -> Double { max(0, min(1, (s - a) / (b - a))) }
@@ -36,11 +36,11 @@ private func ramp(_ s: Double, _ a: Double, _ b: Double) -> Double { max(0, min(
 private let bugColours: [(Px, Px)] = [(C(0x3A8A1A), C(0xB8F060)), (C(0x7A3AB0), C(0xD8A8FF)), (C(0xC8581A), C(0xFFB060)),
                                       (C(0x2A5AC8), C(0x9AC8FF)), (C(0xC8A01A), C(0xFFF08A))]
 
-/// Ooogie Boogie: the biggest thing in Halloween Town, a huge sack of pale burlap, its tied top flopping over like a
-/// cap, stitched seams down it, two dark slanted holes for eyes and a wide dark stitched grin; stubby sack arms and
-/// four stumpy feet. Bugs keep falling out of his seams, in every colour, and scuttling off. He rolls dice at you.
-/// Signature: he shakes the dice in his fist and rolls them along the floor, then throws his head back laughing as a
-/// seam bulges and a bug pops out.
+/// Ooogie Boogie: the biggest thing in Halloween Town, a Clawd block grown a size up and made of pale burlap, its tied
+/// top flopping over like a cap, stitched seams down it, two dark slanted holes for eyes and a wide dark stitched
+/// grin; stubby sack arms. Bugs keep falling out of his seams, in every colour, and scuttling off. He rolls dice at
+/// you. Signature: he shakes the dice in his fist and rolls them along the floor, then throws his head back laughing
+/// as a seam bulges and a bug pops out.
 private func drawOoogieBoogie(_ c: PixelCanvas, _ p: Pose) {
     let sack = C(0xC8B888), sackD = C(0xA0905E), sackDD = C(0x7A6C44), stitch = C(0x4A3E28), hole = C(0x1A160E)
     let sig = p.signature
@@ -48,76 +48,66 @@ private func drawOoogieBoogie(_ c: PixelCanvas, _ p: Pose) {
     let rolling = sig.map { $0 >= 0.4 && $0 < 0.95 } ?? false
     let laughing = sig.map { $0 >= 0.62 && $0 < 0.95 } ?? false
 
-    // Four stumpy feet.
-    if !seatedPose {
-        for (i, lx) in [14, 21, 33, 40].enumerated() {
-            let lifted = p.step >= 0 && i % 2 == p.step
-            c.rect(lx, lifted ? 39 : 40, 4, 4, sack); c.rect(lx, lifted ? 42 : 43, 4, 1, sackDD)
-        }
-    }
+    drawLegs(c, Look(leg: sack), step: p.step)
+    if !seatedPose { for lx in [19, 23, 31, 35] { c.rect(lx, 43, 2, 1, sackDD) } }
     c.oy += p.breathe + (laughing ? (Int(p.t * 10) % 2) : 0)
-    // The sack: a bell shape, wider than anyone, its burlap weave picked out.
-    for y in 12...41 {
-        let k = Double(y - 12) / 29
-        let hw = Int((7 + 13 * sin(min(1, k * 1.25) * .pi / 2) - (y > 37 ? Double(y - 37) * 1.5 : 0)).rounded())
-        for x in (28 - hw)..<(28 + hw) {
-            let edge = x >= 28 + hw - 2
-            c.px(x, y, edge ? sackD : ((x * 2 + y * 3) % 7 == 0 ? sackD : sack))
+    // The sack: a block a size bigger than Clawd, its burlap weave picked out, rounded a little at the top.
+    for y in 23...37 {
+        let inset = y == 23 ? 2 : y == 24 ? 1 : 0
+        for x in (16 + inset)..<(40 - inset) {
+            c.px(x, y, x >= 39 - inset - 1 ? sackD : ((x * 2 + y * 3) % 7 == 0 ? sackD : sack))
         }
     }
     // The tied top flopping over to one side like a cap.
-    c.pattern(20, 5, ["......SSSSS....", "....SSSSSSSSS..", "...SSSSSSSSSSS.", "..SSSSSSdSSSSSS", ".SSSSSSSdSSSSSS",
-                      "SSSSSSSSdSSSSS.", "....dddddddd...", "....SSSSSSSS..."], ["S": sack, "d": sackDD])
-    c.pattern(33, 9, ["SSS..", ".SSSS", "..SSS", "...SS"], ["S": sackD])
+    c.pattern(21, 16, ["....SSSSS....", "..SSSSSSSSS..", ".SSSSSSdSSSSS", "SSSSSSSdSSSSS", "....ddddd....", "....SSSSS...."],
+              ["S": sack, "d": sackDD])
+    c.pattern(33, 18, ["SSS.", ".SSS", "..SS"], ["S": sackD])
     // The seams: one down his side, one across near the bottom, cross-stitched.
-    for y in stride(from: 15, through: 38, by: 2) { c.px(13 + (y - 15) / 6, y, stitch); c.px(14 + (y - 15) / 6, y, stitch) }
-    for x in stride(from: 12, through: 44, by: 3) { c.px(x, 37, stitch); c.px(x + 1, 36, stitch) }
+    for y in stride(from: 25, through: 37, by: 2) { c.px(19, y, stitch); c.px(20, y, stitch) }
+    for x in stride(from: 16, through: 38, by: 3) { c.px(x, 36, stitch); c.px(x + 1, 35, stitch) }
     // The face: slanted hollow eyes and the wide stitched grin, gaping when he laughs.
-    c.pattern(18, 18, ["HHHH.......HHHH.", ".HHHHH...HHHHH..", "..HHHH...HHHH...", "...HH.....HH...."], ["H": hole])
+    c.pattern(21, 26, ["HHH......HHH", ".HHH....HHH.", "..HH....HH.."], ["H": hole])
     if laughing {
-        c.pattern(16, 25, ["HHHHHHHHHHHHHHHHHHHH", ".HHHHHHHHHHHHHHHHHH.", "..HHHHHHHHHHHHHHHH..", "....HHHHHHHHHHHH....",
-                           "......HHHHHHHH......"], ["H": hole])
-        for x in stride(from: 18, through: 34, by: 3) { c.rect(x, 24, 1, 3, stitch) }
+        c.pattern(20, 30, ["HHHHHHHHHHHHHHHH", ".HHHHHHHHHHHHHH.", "..HHHHHHHHHHHH..", "....HHHHHHHH...."], ["H": hole])
+        for x in stride(from: 22, through: 34, by: 3) { c.rect(x, 29, 1, 2, stitch) }
     } else {
-        c.pattern(16, 26, ["H..................H", ".HHHHHHHHHHHHHHHHHH.", "..HHHHHHHHHHHHHHHH..", "....HHHHHHHHHHHH...."],
-                  ["H": hole])
-        for x in stride(from: 18, through: 34, by: 3) { c.rect(x, 25, 1, 4, stitch) }
+        c.pattern(20, 31, ["H..............H", ".HHHHHHHHHHHHHH.", "...HHHHHHHHHH..."], ["H": hole])
+        for x in stride(from: 22, through: 34, by: 3) { c.rect(x, 30, 1, 3, stitch) }
     }
     // Stubby arms; the dice in his right fist, shaken in the signature, raised to throw in a fight.
-    c.rect(6, 27, 3, 6, sack); c.rect(5, 32, 4, 3, sack)
+    c.rect(13, 31, 3, 5, sack)
     let dice = { (x: Int, y: Int) in
-        c.rect(x, y, 4, 4, C(0xF4F2EA)); c.px(x + 1, y + 1, hole); c.px(x + 2, y + 2, hole)
-        c.rect(x + 3, y + 4, 4, 4, C(0xE4E2DA)); c.px(x + 4, y + 5, hole); c.px(x + 5, y + 6, hole); c.px(x + 4, y + 6, hole)
+        c.rect(x, y, 3, 3, C(0xF4F2EA)); c.px(x + 1, y + 1, hole)
+        c.rect(x + 3, y + 2, 3, 3, C(0xE4E2DA)); c.px(x + 3, y + 2, hole); c.px(x + 5, y + 4, hole)
     }
     if shaking {
         let j = Int(p.t * 14) % 2
-        c.rect(46, 20 + j, 4, 8, sack); c.rect(45, 17 + j, 6, 4, sack); dice(47, 13 + j)
+        c.rect(40, 25 + j, 3, 6, sack); dice(40, 21 + j)
     } else if rolling, let s = sig {
-        c.rect(46, 26, 4, 6, sack)
+        c.rect(40, 30, 3, 5, sack)
         let k = ramp(s, 0.4, 0.62)
-        let x = 50 + Int(k * 14), y = 34 + Int(abs(sin(k * .pi * 3)) * -6) + 4
-        dice(x, y)
+        dice(44 + Int(k * 12), 38 - Int(abs(sin(k * .pi * 3)) * 5))
     } else if p.fire != nil || p.ready || p.gunLift > 0 {
         c.oy += p.gunY
-        c.rect(46, 22, 4, 8, sack); dice(48, 18)
+        c.rect(40, 27, 3, 6, sack); dice(41, 23)
     } else {
-        c.rect(46, 27, 4, 6, sack); c.rect(46, 32, 5, 3, sack)
+        c.rect(40, 31, 3, 5, sack)
     }
     // Bugs: one pops out of the seam as he laughs; and all the time, bugs of every colour drop out of him and scuttle off.
     if laughing, let s = sig {
         let k = ramp(s, 0.62, 0.8)
         let col = bugColours[1]
-        burtonBeetle(c, x: 14 - Int(k * 6), y: 24 + Int(k * 18), step: Int(p.t * 16) % 2 == 0, left: true, shell: col.0, shine: col.1)
+        burtonBeetle(c, x: 17 - Int(k * 6), y: 30 + Int(k * 12), step: Int(p.t * 16) % 2 == 0, left: true, shell: col.0, shine: col.1)
     }
     c.oy -= p.breathe
     for i in 0..<3 {
         let period = 3.6, k = (p.lt / period + Double(i) / 3).truncatingRemainder(dividingBy: 1)
         let n = Int(p.lt / period + Double(i) / 3) + i * 7
         let col = bugColours[n % bugColours.count], left = n % 2 == 0
-        let sx = left ? 15 : 41, sy = 18 + (n * 7) % 16
+        let sx = left ? 17 : 39, sy = 26 + (n * 7) % 10
         let x: Int, y: Int
         if k < 0.15 { x = sx; y = sy + Int(k / 0.15 * Double(43 - sy)) }
-        else { x = sx + (left ? -1 : 1) * Int((k - 0.15) / 0.85 * 26); y = 43 }
+        else { x = sx + (left ? -1 : 1) * Int((k - 0.15) / 0.85 * 22); y = 43 }
         burtonBeetle(c, x: x, y: y, step: Int(p.t * 16) % 2 == 0, left: left, shell: col.0, shine: col.1)
     }
 }
@@ -294,105 +284,111 @@ private func drawFinkelclawd(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - The Wolfclawd
 
-/// The Wolfclawd: a werewolf in a tattered brown suit, grey-brown fur, pointed ears, a long snout with a black nose
-/// and teeth, yellow eyes; claws. Signature: he throws his head back and howls at the moon.
+/// The Wolfclawd: a werewolf: the Clawd block in grey-brown fur, pointed ears on top, yellow eyes under a heavy brow,
+/// his long snout jutting out in front with a black nose and teeth, a tattered brown suit; claws. Signature: he lifts
+/// his snout to the moon and howls.
 private func drawWolfclawd(_ c: PixelCanvas, _ p: Pose) {
     let fur = C(0x7A6A5A), furD = C(0x5A4A3A), furL = C(0x9A8A78), suit = C(0x5A4430), suitD = C(0x3E2E20)
+    let yellow = C(0xF0D040), tooth = C(0xF0ECE0), nose = C(0x141418)
     let howling = p.signature.map { $0 > 0.1 && $0 < 0.9 } ?? false
     drawLegs(c, Look(leg: fur), step: p.step)
-    if !seatedPose { for lx in [19, 23, 31, 35] { c.px(lx, 43, C(0xE8E0D0)); c.px(lx + 1, 43, C(0xE8E0D0)) } }   // claws
+    if !seatedPose { for lx in [19, 23, 31, 35] { c.px(lx, 43, tooth); c.px(lx + 1, 43, tooth) } }   // claws
     c.oy += p.breathe
+    // Pointed ears on top of the block.
+    burtonTriangle(c, (18, 27), (24, 27), (19, 19), fur); burtonTriangle(c, (19.5, 26), (22.5, 26), (20, 22), furD)
+    burtonTriangle(c, (31, 27), (37, 27), (35, 19), fur); burtonTriangle(c, (32.5, 26), (35.5, 26), (34.5, 22), furD)
     drawBody(c, Look(body: fur, shade: furD, arm: fur, eye: nil))
-    // The tattered suit, ragged at the hem.
-    c.rect(18, 31, 20, 6, suit); c.rect(37, 31, 1, 6, suitD)
-    c.pattern(18, 37, ["SS.SSS.SS..SSS.SS.SS", "S...S...S...S...S..."], ["S": suit])
-    c.pattern(25, 31, ["WW..WW", ".W..W."], ["W": furL])
-    // The head: up, ears back and muzzle to the sky, when he howls; otherwise the snout out in front.
+    c.rect(18, 26, 20, 1, furL); for x in stride(from: 19, to: 37, by: 3) { c.px(x, 27, furL) }
+    // The tattered suit over the bottom of him, ragged at the hem.
+    c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, suitD)
+    c.pattern(18, 38, ["SS.SSS.SS..SSS.SS.SS", "S...S...S...S...S..."], ["S": suit])
+    c.pattern(25, 33, ["WW..WW", ".W..W."], ["W": furL])
     if howling {
-        c.pattern(20, 16, ["......EE.....", ".....EEE.....", "....FFFFFFF..", "...FFFFFFFFF.", "..FFFYFFFFFFF", "..FFFFFFFFFFF",
-                           ".FFFFFFFFFFF.", "FFFFFFFFFFF..", "FFFFFFFFFF...", "FFFFFFFFFF..."], ["E": furD, "F": fur, "Y": C(0xF0D040)])
-        c.pattern(29, 10, ["...N", "..FF", ".FFF", "FFFF", "FTFF", "FKKF", "FFF."], ["N": C(0x141418), "F": fur, "T": C(0xF0ECE0), "K": C(0x3A1A1A)])
+        // Eyes shut, the snout lifted to the sky, the howl rippling up off it.
+        c.rect(21, 30, 3, 1, furD); c.rect(31, 30, 3, 1, furD)
+        c.pattern(32, 18, ["....N", "...FF", "..FFF", ".FFFF", "FTFFF", "FKKF.", "FFF.."], ["N": nose, "F": furL, "T": tooth, "K": C(0x3A1A1A)])
         for k in 0..<3 {
             let f = (p.t * 1.2 + Double(k) / 3).truncatingRemainder(dividingBy: 1)
             let r = 2 + f * 6
             for s in -3...3 {
                 let a = -1.2 + Double(s) * 0.18
-                c.px(33 + Int((cos(a) * r).rounded()), 10 + Int((sin(a) * r).rounded()), C(0xF0ECE0, 1 - f))
+                c.px(37 + Int((cos(a) * r).rounded()), 18 + Int((sin(a) * r).rounded()), tooth.alpha(1 - f))
             }
         }
     } else {
-        c.pattern(18, 17, ["..EE......EE....", ".EEEE....EEEE...", ".FFFFFFFFFFFFF..", "FFFFFFFFFFFFFFF.", "FFFYFFFFFFYFFFF.",
-                           "FFFFFFFFFFFFFFFF", "FFFFFFFFFFFFFFFF", "FFFFFFFFFFFFFFFF", ".FFFFFFFFFFFFFF."],
-                  ["E": furD, "F": fur, "Y": C(0xF0D040)])
-        c.pattern(33, 21, ["FFFFFFFN", "FFFFFFFN", "TFTFTF..", "KKKKK..."], ["F": furL, "N": C(0x141418), "T": C(0xF0ECE0), "K": C(0x3A1A1A)])
+        // Yellow eyes under the heavy brow, and the long snout out in front.
+        c.rect(21, 28, 4, 1, furD); c.rect(31, 28, 4, 1, furD)
+        c.rect(22, 29, 2, 2, yellow); c.px(23, 30, ink); c.rect(32, 29, 2, 2, yellow); c.px(33, 30, ink)
+        c.pattern(35, 29, ["FFFFFFFN", "FFFFFFFN", "FTFTFT..", "KKKKK..."], ["F": furL, "N": nose, "T": tooth, "K": C(0x3A1A1A)])
     }
     // Claws: the arm swung along `p.melee`, three white claws at the end and their slashes.
     if let a = p.melee {
         for (i, ta) in p.trail.enumerated() {
             for o in [-1.5, 0, 1.5] {
                 let s = burtonReach(Sprite.hand, ta, 6), e = burtonReach(Sprite.hand, ta + o * 6, 11)
-                c.glowLine(s.x, s.y, e.x, e.y, core: C(0xF0ECE0), glow: C(0xF0ECE0), coreR: 0.3, glowR: 1, strength: 0.35 / Double(i + 1))
+                c.glowLine(s.x, s.y, e.x, e.y, core: tooth, glow: tooth, coreR: 0.3, glowR: 1, strength: 0.35 / Double(i + 1))
             }
         }
         let h = burtonReach(Sprite.hand, a, 5)
         burtonLine(c, Sprite.hand.x - 2, Sprite.hand.y, h.x, h.y, fur, 1.2)
         for o in [-1.0, 0, 1] {
             let e = burtonReach(h, a + o * 18, 3)
-            burtonLine(c, h.x, h.y, e.x, e.y, C(0xF0ECE0), 0.45)
+            burtonLine(c, h.x, h.y, e.x, e.y, tooth, 0.45)
         }
     }
 }
 
 // MARK: - The Tear-Away Clown
 
-/// The Tear-Away Clown: a pale clown riding a unicycle on the spot, a dark purple shirt with orange pom-poms, red tufts
-/// of hair, a red nose and a little hat. He doesn't fight. Signature: he grabs his face and tears it right off, leaving
-/// a dark hole where it was, holds it out, then claps it back on.
+/// The Tear-Away Clown: a Clawd riding a unicycle on the spot, his block a white clown face with a red nose and a red
+/// grin, red tufts of hair at its sides and a little black hat on top, a dark purple shirt with an orange ruff and
+/// orange pom-poms. He doesn't fight. Signature: he grabs his face and tears it right off, leaving a dark hole where
+/// it was, holds it out, then claps it back on.
 private func drawTearAwayClown(_ c: PixelCanvas, _ p: Pose) {
     let shirt = C(0x4A2A5A), shirtD = C(0x341C42), face = C(0xF4F2EA), faceD = C(0xD4D2CA), red = C(0xD8242A)
     let sig = p.signature
     let tornK = sig.map { min(ramp($0, 0.12, 0.3), 1 - ramp($0, 0.75, 0.9)) } ?? 0
-    // The unicycle: a spoked wheel turning, the post up to his seat, one pedal going round.
+    // The unicycle: a spoked wheel turning under him, one pedal going round.
     let wheel = (x: 28, y: 39), spin = p.t * 4
-    c.circle(wheel.x, wheel.y, 5, C(0x2A2A30)); c.circle(wheel.x, wheel.y, 3, C(0, 0))
-    for k in 0..<36 {
-        let a = Double(k) / 36 * 2 * .pi
-        c.px(wheel.x + Int((cos(a) * 4).rounded()), wheel.y + Int((sin(a) * 4).rounded()), C(0x9A9AA8))
+    for y in 34...44 {
+        for x in 22...34 {
+            let d = hypot(Double(x) + 0.5 - Double(wheel.x) - 0.5, Double(y) + 0.5 - Double(wheel.y) - 0.5)
+            if d > 3.4 && d <= 4.8 { c.px(x, y, C(0x2A2A30)) }
+        }
     }
     for k in 0..<3 {
         let a = spin + Double(k) / 3 * 2 * .pi
-        burtonLine(c, Double(wheel.x), Double(wheel.y), Double(wheel.x) + cos(a) * 4, Double(wheel.y) + sin(a) * 4, C(0x9A9AA8), 0.3)
+        burtonLine(c, Double(wheel.x) + 0.5, Double(wheel.y) + 0.5, Double(wheel.x) + 0.5 + cos(a) * 3.4,
+                   Double(wheel.y) + 0.5 + sin(a) * 3.4, C(0x9A9AA8), 0.3)
     }
-    c.rect(27, 30, 2, 9, C(0x6A6E78))
-    let pedal = (x: Double(wheel.x) + cos(spin) * 3, y: Double(wheel.y) + sin(spin) * 3)
-    burtonLine(c, 26, 34, pedal.x, pedal.y, shirt, 0.9)
+    let pedal = (x: Double(wheel.x) + cos(spin) * 2.5, y: Double(wheel.y) + sin(spin) * 2.5)
+    burtonLine(c, 26, 35, pedal.x, pedal.y, shirt, 0.9)
     let bob = Int((sin(spin * 2) * 0.6).rounded())
-    c.oy += p.breathe + bob
-    // His body on the seat: the purple shirt with pom-poms, his arms.
-    c.rect(19, 22, 18, 11, shirt); c.rect(36, 22, 1, 11, shirtD)
-    for y in [24, 27, 30] { c.rect(27, y, 2, 2, C(0xFF8A2A)) }
-    c.rect(19, 32, 18, 1, C(0xFF8A2A))
-    // The face, or where it was: a dark hole, the face held out in his hand.
-    let hold = (x: 40 + Int(tornK * 6), y: 18 - Int(tornK * 2))
-    if tornK > 0.2 {
-        c.ellipse(28, 17, 6, 5, C(0x08080C))
-        c.rect(37, 24, 3, 2, shirt); burtonLine(c, 37, 24, Double(hold.x), Double(hold.y + 4), shirt, 0.9)
-    }
-    let fx = tornK > 0.2 ? hold.x - 6 : 22, fy = tornK > 0.2 ? hold.y - 4 : 12
-    c.pattern(fx, fy, ["...FFFFFF...", ".FFFFFFFFFF.", "FFFFFFFFFFFf", "FKKFFFFFKKFf", "FFFFFRRFFFFf", "FFFFRRRRFFFf",
-                       "FFFFFRRFFFFf", "FKFFFFFFFKFf", ".FKKKKKKKKf.", "...FFFFFf..."],
-              ["F": face, "f": faceD, "K": C(0x1A1A22), "R": red])
-    // His hair tufts and little hat stay on his head.
-    c.pattern(18, 13, ["RR...........RR..", "RRR.........RRRR.", ".RR..........RR.."], ["R": red])
-    c.pattern(24, 8, ["...HH...", "..HHHH..", ".HHHHHH.", "HHHHHHHH"], ["H": C(0x1E1E26)])
-    if tornK <= 0.2 { c.rect(37, 25, 3, 3, shirt); c.rect(16, 25, 3, 3, shirt) }
+    c.oy += p.breathe + bob - 2
+    // The face block, or where it was: a dark hole, the face held out in his hand.
+    let held = tornK > 0.2
+    let hold = (x: 44 + Int(tornK * 4), y: 22 - Int(tornK * 2))
+    c.rect(18, 26, 20, 7, held ? C(0x08080C) : face); if !held { c.rect(37, 26, 1, 7, faceD) }
+    let fx = held ? hold.x - 10 : 18, fy = held ? hold.y - 3 : 26
+    if held { c.rect(fx, fy, 20, 7, face); c.rect(fx + 19, fy, 1, 7, faceD) }
+    c.pattern(fx + 3, fy + 2, ["KK........KK", "KK...RR...KK", "KK..RRRR..KK", ".....RR.....", "..RRRRRRRR.."], ["K": ink, "R": red])
+    // The shirt: an orange ruff, pom-poms down its front, sleeves.
+    c.rect(18, 33, 20, 5, shirt); c.rect(37, 33, 1, 5, shirtD)
+    c.pattern(17, 33, ["O.O.O.O.O.O.O.O.O.O.O", ".O.O.O.O.O.O.O.O.O.O."], ["O": C(0xFF8A2A)])
+    c.rect(27, 35, 2, 2, C(0xFF8A2A))
+    c.rect(15, 33, 3, 3, shirt)
+    if held { burtonLine(c, 39, 34, Double(hold.x), Double(hold.y + 5), shirt, 0.9) } else { c.rect(38, 33, 3, 3, shirt) }
+    // His red hair tufts and little hat stay on his head.
+    c.pattern(14, 23, ["RR..................RR.", "RRR................RRRR", ".RRR..............RRR..", "..RR..............RR..."],
+              ["R": red])
+    c.pattern(24, 19, ["..HHHH..", "..HHHH..", "..HHHH..", "..OOOO..", "HHHHHHHH"], ["H": C(0x1E1E26), "O": C(0xFF8A2A)])
 }
 
 // MARK: - The Halloween Witch
 
-/// The Halloween Witch: a green face with a long nose and chin, a tall crooked black hat with a buckle, a black dress,
-/// and her broom. She flies about on it, and fights with forked orange lightning. Signature: she sits on the broom
-/// and loops round in the air, cackling.
+/// The Halloween Witch: a green Clawd with a long hooked nose jutting out in front, stringy dark hair, a tall crooked
+/// black hat with a gold buckle, a black dress, and her broom. She flies about on it, and fights with forked orange
+/// lightning. Signature: she sits on the broom and loops round in the air, cackling.
 private func drawHalloweenWitch(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0x7ABA5A), skinD = C(0x5A9A3A), dress = C(0x1E1A24), dressD = C(0x14101A), hat = C(0x16141C)
     let sig = p.signature
@@ -405,61 +401,46 @@ private func drawHalloweenWitch(_ c: PixelCanvas, _ p: Pose) {
     if riding {
         // On the broom: its handle along under her, the bristles out behind.
         c.oy -= 2
-        burtonLine(c, 8, 38, 48, 36, C(0x8A6A3A), 0.7)
-        c.pattern(3, 34, ["BB.....", "BBBBBBB", "BBBBBBB", "BBBBBBB", "BB....."], ["B": C(0xC8A04A)])
-        c.rect(20, 37, 3, 4, dress); c.rect(32, 37, 3, 4, dress); c.rect(20, 41, 4, 1, C(0x0A0A0E)); c.rect(32, 41, 4, 1, C(0x0A0A0E))
+        burtonLine(c, 8, 40, 48, 38, C(0x8A6A3A), 0.7)
+        c.pattern(3, 36, ["BB.....", "BBBBBBB", "BBBBBBB", "BBBBBBB", "BB....."], ["B": C(0xC8A04A)])
+        c.rect(20, 38, 3, 4, dress); c.rect(32, 38, 3, 4, dress); c.rect(20, 42, 4, 1, C(0x0A0A0E)); c.rect(32, 42, 4, 1, C(0x0A0A0E))
     } else {
         drawLegs(c, Look(leg: C(0x2A2A30)), step: p.step)
         burtonBoots(c, step: p.step, C(0x0A0A0E))
     }
     c.oy += p.breathe
-    // The black dress, flaring a little.
-    for y in 26...38 {
-        let w = 20 + (y - 26) / 3 * 2
-        c.rect(28 - w / 2, y, w, 1, dress); c.px(28 + w / 2 - 1, y, dressD)
-    }
-    // The green face: a long hooked nose, a pointed chin, a cackling mouth.
-    let cackle = looping || p.zap == true
-    c.pattern(20, 18, [
-        "..FFFFFFFFFF.....",
-        ".FFFFFFFFFFFF....",
-        "FFFKFFFFFKFFFf...",
-        "FFFFFFFFFFFFFNNN.",
-        "FFFFFFFFFFFFNNNNN",
-        cackle ? "FFFFKKKKKFFFf..N." : "FFFFFKKKFFFFf....",
-        cackle ? ".FFFKKKKKFFf....." : ".FFFFFFFFFFf.....",
-        "..FFFFFFFFf......",
-        "....FFFFFf.......",
-        ".....FFf.........",
-    ], ["F": skin, "f": skinD, "K": C(0x1A1A22), "N": skinD])
-    // Stringy dark hair, and the tall crooked hat with its buckle.
-    c.pattern(17, 18, ["HH", "HHH", "HH.", "H..", "H.."].map { $0 }, ["H": C(0x2A2A30)])
-    c.pattern(16, 3, [
-        "................HH..",
-        "..............HHHH..",
+    // The dress: its skirt over her legs, its bodice over the bottom of her.
+    if !riding { c.rect(17, 38, 22, seatedPose ? 1 : 2, dress) }
+    drawBody(c, Look(body: skin, shade: skinD, arm: dress))
+    c.rect(18, 33, 20, 5, dress); c.rect(37, 33, 1, 5, dressD)
+    // The long hooked nose jutting out, a wart on it; a cackling mouth.
+    c.pattern(36, 29, ["SSSS...", "SSSSSS.", ".SSSSSS", "....SS."], ["S": skinD])
+    c.px(39, 29, C(0x3A6A2A))
+    if looping || p.zap == true { c.rect(25, 32, 6, 1, ink) }
+    // Stringy dark hair down her sides, and the tall crooked hat with its buckle.
+    c.pattern(16, 25, ["HHH", "HH.", "HH.", "H..", "H..", "H.."], ["H": C(0x2A2A30)])
+    c.pattern(15, 11, [
+        "...............HH...",
         ".............HHHH...",
         "............HHHH....",
         "...........HHHHH....",
         "..........HHHHHH....",
         ".........HHHHHHH....",
-        "........HHHHHHHH....",
-        ".......HHHHHHHHH....",
-        "......HHHHHHHHHH....",
-        ".....HHHHHHHHHHH....",
-        ".....HHHHGGGHHHH....",
-        ".....HHHHG.GHHHH....",
-        ".....HHHHGGGHHHH....",
-        "HHHHHHHHHHHHHHHHHHHH",
+        "........HHHHHHHHH...",
+        ".......HHHHHHHHHH...",
+        ".......HHHHGGGHHH...",
+        ".......HHHHG.GHHH...",
+        ".......HHHHGGGHHH...",
+        ".......HHHHHHHHHHH..",
+        ".......HHHHHHHHHHH..",
+        "HHHHHHHHHHHHHHHHHHHHHHHHHH",
     ], ["H": hat, "G": C(0xD8B030)])
     // Her arms: the right hand raised, crackling with lightning, or holding the broom upright beside her.
     let raise = p.armRaise
     if p.zap != nil || raise > 0 {
-        c.rect(37, 30 - raise, 3, 3, dress); c.pattern(40, 29 - raise, ["F.F", "FFF"], ["F": skin])
+        burtonLine(c, 39.5, 34, 42.5, Double(32 - raise), dress, 1.2); c.pattern(42, 30 - raise, ["F.F", "FFF"], ["F": skin])
     } else if !riding {
-        c.rect(37, 30, 3, 3, dress); c.rect(40, 18, 1, 22, C(0x8A6A3A))
-        c.pattern(38, 39, [".BBB.", "BBBBB", "B.B.B"], ["B": C(0xC8A04A)])
-    } else {
-        c.rect(37, 33, 3, 3, dress)
+        c.rect(43, 22, 1, 21, C(0x8A6A3A))
+        c.pattern(41, 40, [".BBB.", "BBBBB", "B.B.B"], ["B": C(0xC8A04A)])
     }
-    c.rect(15, 31, 3, 3, dress)
 }
