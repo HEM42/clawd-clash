@@ -1086,6 +1086,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         var boxed = false      // text drawn on a dark rounded box so it reads on any wallpaper
         var agentBox = false   // agents' task boxes get a blue tint to tell them from project names
         var accent: NSColor?   // project colour for the box border
+        var speech = false     // a character's line: dark text on a soft cream backing, nothing like the status bubbles
     }
 
     private func buildItems(now: Double) -> [DrawItem] {
@@ -1345,13 +1346,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             if let caption = abduction?.caption ?? outaTime?.caption { line = caption; overHead = true }
             if let line {
                 let sc = actor.isLeader ? ls : cs
+                // Dark ink on a cream backing (`OverlayView.render`), so it reads on any place: bare text with an
+                // outline got lost in busy, bright scenes.
                 let callout = NSAttributedString(string: line, attributes: [
                     .font: NSFont.monospacedSystemFont(ofSize: max(9, 10 * z), weight: .heavy),
-                    .foregroundColor: NSColor(calibratedRed: 1, green: 0.85, blue: 0.4, alpha: 1),
-                    .strokeColor: NSColor.black,
-                    .strokeWidth: -4.0,
+                    .foregroundColor: NSColor(calibratedRed: 0.16, green: 0.11, blue: 0.08, alpha: 1),
                 ])
-                let size = callout.size()
+                let ts = callout.size()
+                let size = NSSize(width: (ts.width + 10 * z).rounded(.up), height: (ts.height + 4 * z).rounded(.up))
                 // On the side away from the speech bubble, level with the head.
                 let onLeft = bubbleSpan.map { $0.minX > actor.x } ?? (facing > 0)
                 var cx = onLeft ? actor.x - 16 * sc - size.width : actor.x + 16 * sc
@@ -1363,7 +1365,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 }
                 cx = min(max(cx, screenFrame.minX + 2), screenFrame.maxX - size.width - 2)
                 let item = DrawItem(text: callout, rect: NSRect(x: cx.rounded(), y: cy, width: size.width, height: size.height),
-                                    alpha: CGFloat(alpha))
+                                    alpha: CGFloat(alpha), speech: true)
                 if overHead { speeches.append((actor.key, item)) } else { overlay.append(item) }
             }
 
@@ -1495,7 +1497,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         for sp in speeches {
             var r = sp.item.rect
             if let tag = named.first(where: { $0.key == sp.key })?.item.rect { r.origin.y = max(r.minY, tag.maxY + 2 * z) }
-            overlay.append(DrawItem(text: sp.item.text, rect: r, alpha: sp.item.alpha))
+            overlay.append(DrawItem(text: sp.item.text, rect: r, alpha: sp.item.alpha, speech: true))
         }
         // Hover card (from agent-view's hover-for-details): next to the character, kept on screen.
         if let key = hoveredKey, let actor = actors.first(where: { $0.key == key && $0.leaving == nil }), !actor.detail.isEmpty {
@@ -3219,6 +3221,15 @@ final class OverlayView: NSView {
                 ctx.saveGState()
                 ctx.setAlpha(item.alpha)
                 defer { ctx.restoreGState() }
+                if item.speech {
+                    // A character's line: a soft cream backing with fully rounded ends, no border or tail.
+                    let box = NSBezierPath(roundedRect: r, xRadius: r.height / 2, yRadius: r.height / 2)
+                    NSColor(calibratedRed: 0.98, green: 0.94, blue: 0.84, alpha: 0.95).setFill()
+                    box.fill()
+                    let ts = text.size(), tw = ts.width.rounded(.up) + 1, th = ts.height.rounded(.up) + 1
+                    text.draw(in: NSRect(x: r.midX - tw / 2, y: r.midY - th / 2, width: tw, height: th))
+                    continue
+                }
                 if item.boxed {
                     let box = NSBezierPath(roundedRect: r, xRadius: 4, yRadius: 4)
                     (item.agentBox ? NSColor(calibratedRed: 0.05, green: 0.10, blue: 0.24, alpha: 0.82)
