@@ -19,8 +19,8 @@ struct CardModel {
     let portrait: CGImage?
     let pid: Int32?
     var group: (title: String, color: NSColor)? = nil   // first card of an AI's group, when several AIs run
-    var spriteColor = NSColor.white                     // the character's main colour, for the name pill
     var remote: String? = nil                           // "GitHub", "GitLab"… or "Local", in a pill by the name
+    var context: Double? = nil                          // how full its context window is (0…1), in a pill by the status
     /// One of several sessions in the same project, drawn on a tree under a project header.
     struct Tree: Equatable {
         let sessions: Int?   // on the first card only: the header goes above it, saying how many there are
@@ -32,7 +32,7 @@ struct CardModel {
     /// The card's visible content as text (portraits are cached per character, so the villain's name stands in).
     var signature: String {
         var parts = [id, villain, project, accent.description, status, statusColor.description, "\(focused)", "\(pid ?? 0)",
-                     group?.title ?? "", remote ?? "", tree.map { "\($0.sessions ?? 0)/\($0.last)" } ?? ""]
+                     group?.title ?? "", remote ?? "", context.map { "\(Int($0 * 100))" } ?? "", tree.map { "\($0.sessions ?? 0)/\($0.last)" } ?? ""]
         parts += lines.map { $0.text + "\u{2}" + $0.color.description }
         parts += agents.map { $0.name + "\u{2}" + $0.task + "\u{2}" + $0.detail }
         return parts.joined(separator: "\u{3}")
@@ -1079,7 +1079,7 @@ final class CardsView: NSView {
             let box = NSBezierPath(roundedRect: r, xRadius: 8, yRadius: 8)
             (controller?.location.panel.blended(withFraction: 0.35, of: .black) ?? NSColor.black).withAlphaComponent(0.94).setFill()
             box.fill()
-            c.accent.withAlphaComponent(0.55).setStroke()     // steady; the focused card says "◆ you're here" instead
+            c.accent.withAlphaComponent(0.55).setStroke()     // steady; the focused card says "● you're here" instead
             box.lineWidth = 1
             box.stroke()
 
@@ -1099,45 +1099,44 @@ final class CardsView: NSView {
             c.statusColor.withAlphaComponent(0.16).setFill()
             NSBezierPath(roundedRect: chip, xRadius: 9.5, yRadius: 9.5).fill()
             status.draw(at: NSPoint(x: chip.minX + 7, y: chip.minY + 2))
-            // The project as the title, in its colour; the character in a pill on the right under the status.
-            // (No project? Then the character is the title and there's no pill.)
+            // The project as the title, in its colour, then "  ·  " and the character's name in plain text. Under the
+            // status, right-aligned: where the repo lives, then how full the context window is (green, amber from
+            // 60%, red from 80%, when it'll compact soon). No project? Then the character is the title.
             // In a project's tree the header above names the project and where it lives, so the card is titled with
-            // the character instead, in the project's colour, and needs no pills.
+            // the character instead, in the project's colour, with only the context pill.
             let inTree = c.tree != nil
             let header = NSMutableAttributedString(string: inTree || c.project.isEmpty ? c.villain : c.project, attributes: [
                 .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: c.project.isEmpty ? NSColor.white : c.accent])
-            var namePill: NSRect?
             if !c.project.isEmpty && !inTree {
-                // Tinted with the character's main colour; the text lightened enough to read on the dark card,
-                // and very dark costumes (Vader) lifted a little so the pill still shows.
-                let base = c.spriteColor.usingColorSpace(.sRGB) ?? c.spriteColor
-                let lum = 0.2126 * base.redComponent + 0.7152 * base.greenComponent + 0.0722 * base.blueComponent
-                let fill = lum < 0.2 ? (base.blended(withFraction: 0.35, of: .white) ?? base) : base
-                let text = base.blended(withFraction: max(0.35, 0.85 - lum), of: .white) ?? .white
-                let name = NSAttributedString(string: c.villain, attributes: [
-                    .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold), .foregroundColor: text])
-                let nw = name.size().width
-                let pill = NSRect(x: r.maxX - 12 - nw - 14, y: chip.maxY + 5, width: nw + 14, height: 17)
-                fill.withAlphaComponent(0.28).setFill()
-                NSBezierPath(roundedRect: pill, xRadius: 8.5, yRadius: 8.5).fill()
-                name.draw(at: NSPoint(x: pill.minX + 7, y: pill.minY + 2))
-                namePill = pill
-                // Where the repo lives, in a pill to its left, in that host's colour.
-                if let remote = c.remote {
-                    let hue = Self.remoteColor(remote)
-                    let label = NSAttributedString(string: remote, attributes: [
-                        .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold),
-                        .foregroundColor: hue.blended(withFraction: 0.45, of: .white) ?? hue])
-                    let lw = label.size().width
-                    let rp = NSRect(x: pill.minX - 6 - lw - 14, y: pill.minY, width: lw + 14, height: pill.height)
-                    hue.withAlphaComponent(0.24).setFill()
-                    NSBezierPath(roundedRect: rp, xRadius: 8.5, yRadius: 8.5).fill()
-                    label.draw(at: NSPoint(x: rp.minX + 7, y: rp.minY + 2))
-                    namePill = pill.union(rp)
-                }
+                header.append(NSAttributedString(string: "  ·  " + c.villain, attributes: [
+                    .font: NSFont.systemFont(ofSize: 13, weight: .regular), .foregroundColor: NSColor(white: 0.6, alpha: 1)]))
+            }
+            var pills: [(text: String, hue: NSColor, mono: Bool)] = []
+            if let remote = c.remote, !c.project.isEmpty && !inTree { pills.append((remote, Self.remoteColor(remote), false)) }
+            if let used = c.context {
+                let hue = used >= 0.8 ? NSColor.systemRed : used >= 0.6 ? NSColor.systemOrange : NSColor.systemGreen
+                pills.append(("ctx \(Int((used * 100).rounded()))%", hue, true))
+            }
+            var namePill: NSRect?
+            var px = r.maxX - 12
+            for p in pills.reversed() {
+                let label = NSAttributedString(string: p.text, attributes: [
+                    .font: p.mono ? NSFont.monospacedSystemFont(ofSize: 10.5, weight: .semibold) : NSFont.systemFont(ofSize: 10.5, weight: .semibold),
+                    .foregroundColor: p.hue.blended(withFraction: 0.45, of: .white) ?? p.hue])
+                let lw = label.size().width
+                let rp = NSRect(x: px - lw - 14, y: chip.maxY + 5, width: lw + 14, height: 17)
+                p.hue.withAlphaComponent(0.24).setFill()
+                NSBezierPath(roundedRect: rp, xRadius: 8.5, yRadius: 8.5).fill()
+                label.draw(at: NSPoint(x: rp.minX + 7, y: rp.minY + 2))
+                namePill = namePill.map { $0.union(rp) } ?? rp
+                px = rp.minX - 6
             }
             if c.focused {
-                header.append(NSAttributedString(string: "   ◆ you're here", attributes: [
+                // A small dot, raised to sit level with the words.
+                header.append(NSAttributedString(string: "   ●", attributes: [
+                    .font: NSFont.systemFont(ofSize: 7, weight: .semibold), .baselineOffset: 2,
+                    .foregroundColor: Self.focusYellow]))
+                header.append(NSAttributedString(string: " you're here", attributes: [
                     .font: NSFont.systemFont(ofSize: 11, weight: .semibold),
                     .foregroundColor: Self.focusYellow]))
             }
