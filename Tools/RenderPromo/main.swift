@@ -754,6 +754,7 @@ enum Into {
     case marvel(ComicTrip)
     case dc(DCComicTrip)
     case middleEarth(RingsTrip)
+    case trip(ComicTransition)    // any other universe's own trips (Doctor Clawd, The Clawd Files, Stevie Clawdberg)
 
     var duration: Double {
         switch self {
@@ -763,6 +764,7 @@ enum Into {
         case .marvel(let t): return t.duration * 1.25
         case .dc(let t): return t.duration * 1.25
         case .middleEarth(let t): return t.duration * 1.25
+        case .trip(let t): return t.duration * 1.25
         }
     }
 }
@@ -1478,28 +1480,350 @@ func showcaseTitle(_ ctx: CGContext, _ u: Universe, _ line: String, local l: Dou
     sub.draw(at: NSPoint(x: (Double(W) - sub.size().width) / 2, y: 885))
 }
 
+/// The promo's opening, in the style of Doctor Clawd's title sequence: down the time vortex, with the police box and
+/// every universe's legend tumbling up out of it and past us, then CLAWD CLASH flying up out of the eye of it and landing
+/// with a bang in the middle of the screen. They come out in waves of two from opposite sides, the second a beat
+/// later, on its own curve and at its own speed, so a new universe adds to a wave instead of making the intro longer.
+var introTumblers: [Cast?] { [nil] + Universe.offered.map { Theme.of($0).legend } }
+let introPerWave = 2, introWave = 1.25, introFly = 2.7
+
+/// When tumbler `i` sets off and how long it takes to fly past.
+func introTiming(_ i: Int) -> (start: Double, fly: Double) {
+    let wave = i / introPerWave, j = i % introPerWave
+    return (0.3 + Double(wave) * introWave + Double(j) * 0.35, introFly + Double(j) * 0.35)
+}
+var introSlam: Double {
+    let last = introTumblers.indices.map { introTiming($0).start + introTiming($0).fly }.max() ?? 0
+    return last + 0.4
+}
+
+func clashIntro(_ ctx: CGContext, local l: Double, t: Double) {
+    let c = CGPoint(x: Double(fxW) / 2 + sin(l * 0.7) * 14, y: Double(fxH) / 2 + cos(l * 0.5) * 6)
+    let slam = introSlam, since = l - slam, shake = since > 0 && since < 0.3 ? (0.3 - since) * 60 : 0
+    ctx.saveGState(); ctx.translateBy(x: sin(t * 80) * shake, y: cos(t * 70) * shake)
+    if let img = lowRes({ g in
+        vortexTunnel(g, t: l + 2, glow: clamp(l / 0.5), centre: c)
+        if l > 0.1 && l < 0.4 { vortexLightning(g, seed: 11, to: c, alpha: 1 - (l - 0.1) / 0.3) }
+    }) { ctx.saveGState(); ctx.interpolationQuality = .none; ctx.draw(img, in: fullRect.insetBy(dx: -40, dy: -40)); ctx.restoreGState() }
+    let eye = CGPoint(x: c.x * 6, y: c.y * 6), lamp = Int(l * 5) % 2 == 0
+    for (i, who) in introTumblers.enumerated() {
+        let (start, fly) = introTiming(i), f = (l - start) / fly
+        guard f > 0, f < 1 else { continue }
+        let wave = i / introPerWave, j = i % introPerWave
+        // opposite sides of the wave, but not a mirror: its own curl, reach and spin
+        let z = pow(f, 2.4)
+        let a = Double(wave) * 2.1 + 0.6 + Double(j) * (2 * .pi / Double(introPerWave) + 0.35) + z * (j == 0 ? 0.7 : -0.45)
+        let p = CGPoint(x: eye.x + cos(a) * z * (1100 - Double(j) * 120), y: eye.y + sin(a) * z * (700 + Double(j) * 90))
+        let h = 20 + z * (1000 - Double(j) * 140), turn = sin(l * (0.9 + 0.4 * Double(j)) + Double(i)) * (0.6 - 0.25 * Double(j)) + Double(i) * 0.4
+        guard let who else { drawBox(ctx, at: p, height: h, turn: 0.5 * sin(l * 1.5), lamp: lamp, alpha: clamp(f * 8)); continue }
+        let pc = PixelCanvas(Sprite.width, Sprite.height)
+        who.draw(pc, t: l, mode: .working, walking: false, role: .none, asSession: false)   // posed, not practising
+        pc.addOutline(C(AI.claude.hex, 0.92))
+        guard let b = pc.opaqueBounds(), let img = pc.makeImage()?.cropping(to: b) else { continue }
+        let w = h * Double(img.width) / Double(img.height)
+        ctx.saveGState(); ctx.interpolationQuality = .none
+        ctx.translateBy(x: p.x, y: p.y); ctx.rotate(by: CGFloat(turn)); ctx.setAlpha(CGFloat(clamp(f * 8)))
+        ctx.draw(img, in: CGRect(x: -w / 2, y: -h / 2, width: w, height: h))
+        ctx.restoreGState()
+    }
+    // CLAWD CLASH flies up out of the eye, faster and faster, and lands with a bang
+    if l > slam - 1.1 {
+        let fly = easeIn((l - (slam - 1.1)) / 1.1)
+        let s = since < 0 ? CGFloat(0.04 + 0.96 * fly) : CGFloat(1 + 0.12 * sin(min(1, since / 0.35) * .pi) * max(0, 1 - since / 0.35))
+        let pull = since < 0 ? 1 - fly : 0
+        if since > 0 { ctx.setFillColor(CGColor(gray: 0, alpha: 0.18 * clamp(since / 0.2))); ctx.fill(fullRect) }
+        coverWord(ctx, "CLAWD", at: CGPoint(x: lerp(960, eye.x, pull), y: lerp(675, eye.y + 40, pull)), width: 1560, height: 270, angle: 0.05, depth: 14, scale: s)
+        coverWord(ctx, "CLASH", at: CGPoint(x: lerp(960, eye.x, pull), y: lerp(415, eye.y - 40, pull)), width: 1680, height: 290, angle: 0.05, depth: 16, scale: s)
+    }
+    ctx.restoreGState()
+    if since > 0 && since < 0.3 { ctx.setFillColor(CGColor(gray: 1, alpha: 0.85 * (1 - since / 0.3))); ctx.fill(fullRect) }   // the flash
+}
+
+/// How many universes, in words: "SEVEN", or "Seven" with `capital`.
+func universeCount(capital: Bool = false) -> String {
+    let n = Universe.offered.count
+    let w = ["ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT", "NINE", "TEN", "ELEVEN", "TWELVE"]
+    let s = n < w.count ? w[n] : "\(n)"
+    return capital ? s.prefix(1) + s.dropFirst().lowercased() : s
+}
+
+/// Choose your universe, read as a comic: characters from every universe run along the desktop under the title, a
+/// page with a panel per universe slams down over them, and the camera reads it panel by panel, each its universe's big
+/// moment, then pulls back to the whole page. The layout and the reading grow with the universe list.
+var chooseRunners: [Cast] {
+    Universe.offered.flatMap { u -> [Cast] in
+        let lead = Theme.of(u).legend
+        return (0..<3).map { Cast(universe: u, isDark: false, index: $0) }.filter { $0 != lead }.prefix(2).map { $0 }
+    }
+}
+
+/// Each universe's big moment, from its own trailer, and its sound word.
+func setPiece(_ u: Universe) -> (word: String, draw: (CGContext, Double, Double) -> Void) {
+    switch u {
+    case .starWars: return ("VWOOM!", { starClawsShowcase($0, local: 1.6 + $1, t: $2) })
+    case .marvel: return ("KAPOW!", { clawvelShowcase($0, local: 3.2 + $1, t: $2) })
+    case .dc: return ("KRAK!", { detectiveShowcase($0, local: 2.2 + $1, t: $2) })
+    case .doctor: return ("VWORP!", { doctorInvasion($0, local: 3.3 + $1, t: $2) })
+    case .clawdFiles: return ("HMMMM!", { filesWoods($0, local: 3.2 + $1, t: $2) })
+    case .clawdberg: return ("88 MPH!", { clawdbergHillValley($0, local: 3.0 + $1, t: $2) })
+    case .middleEarth: return ("DOOM!", { ringsBridge($0, local: 2.8 + $1, t: $2) })
+    }
+}
+
+/// The pages, in page units (y up), screen-shaped: up to six panels each, the universes shared out evenly between as
+/// many pages as that takes. On each page two rows split by a slanted divider, each row split by slanted gutters that
+/// never line up with the other row's.
+let pageW = 3200.0, pageH = 1800.0
+struct PagePanel { let u: Universe; let corners: [CGPoint]
+    var path: CGPath { let p = CGMutablePath(); p.addLines(between: corners); p.closeSubpath(); return p }
+    var rect: CGRect { path.boundingBoxOfPath }
+}
+
+/// Where two lines (each a point and a direction) cross.
+func crossing(_ p: CGPoint, _ d: CGVector, _ q: CGPoint, _ e: CGVector) -> CGPoint {
+    let den = d.dx * e.dy - d.dy * e.dx
+    let t = ((q.x - p.x) * e.dy - (q.y - p.y) * e.dx) / den
+    return CGPoint(x: p.x + d.dx * t, y: p.y + d.dy * t)
+}
+
+/// One page's panels, for `shown`, its divider rising (`page` even) or falling, so facing pages differ.
+func pageLayout(_ shown: [Universe], page: Int) -> [PagePanel] {
+    let n = shown.count, top = (n + 1) / 2, rows = [top, n - top]
+    let m = 70.0, gap = 46.0
+    let mid = CGPoint(x: pageW / 2, y: pageH / 2), slope = CGVector(dx: 1, dy: page % 2 == 0 ? 0.05 : -0.045)
+    let lean = page % 2 == 0 ? [CGVector(dx: 0.2, dy: 1), CGVector(dx: 0.16, dy: 1)] : [CGVector(dx: -0.17, dy: 1), CGVector(dx: 0.21, dy: 1)]
+    let weights = page % 2 == 0 ? [[1.0, 1.3, 0.9], [1.25, 0.85, 1.15]] : [[1.3, 0.9, 1.1], [0.85, 1.2, 1.0]]
+    var panels: [PagePanel] = [], k = 0
+    for (r, count) in rows.enumerated() where count > 0 {
+        let full = rows[1] == 0                                                     // one row: the whole page
+        let topEdge = r == 0 ? (CGPoint(x: 0, y: pageH - m), CGVector(dx: 1, dy: 0)) : (CGPoint(x: mid.x, y: mid.y - gap / 2), slope)
+        let botEdge = r == 0 && !full ? (CGPoint(x: mid.x, y: mid.y + gap / 2), slope) : (CGPoint(x: 0, y: m), CGVector(dx: 1, dy: 0))
+        let ws = (0..<count).map { weights[r][$0 % weights[r].count] }, sum = ws.reduce(0, +)
+        let rowMid = r == 0 ? (full ? pageH / 2 : (pageH - m + mid.y) / 2) : (mid.y + m) / 2
+        var cuts = [m - gap / 2], x = m
+        for c in 0..<count { x += (pageW - 2 * m) * ws[c] / sum; cuts.append(c == count - 1 ? pageW - m + gap / 2 : x) }
+        for c in 0..<count {
+            let left = c == 0 ? (CGPoint(x: m, y: 0), CGVector(dx: 0, dy: 1)) : (CGPoint(x: cuts[c] + gap / 2, y: rowMid), lean[r])
+            let right = c == count - 1 ? (CGPoint(x: pageW - m, y: 0), CGVector(dx: 0, dy: 1)) : (CGPoint(x: cuts[c + 1] - gap / 2, y: rowMid), lean[r])
+            let corners = [crossing(left.0, left.1, topEdge.0, topEdge.1), crossing(right.0, right.1, topEdge.0, topEdge.1),
+                           crossing(right.0, right.1, botEdge.0, botEdge.1), crossing(left.0, left.1, botEdge.0, botEdge.1)]
+            panels.append(PagePanel(u: shown[k], corners: corners)); k += 1
+        }
+    }
+    return panels
+}
+
+let comicPages: [[PagePanel]] = {
+    let shown = Universe.offered, count = (shown.count + 5) / 6, per = (shown.count + count - 1) / count
+    return stride(from: 0, to: shown.count, by: per).enumerated().map { p, s in pageLayout(Array(shown[s..<min(shown.count, s + per)]), page: p) }
+}()
+
+/// What the camera looks at: a whole page, or one panel on it.
+enum PageView { case whole(Int), panel(Int, Int) }
+/// The camera's stops in order: each held from `from` to `to`; between two stops it moves, or, into a new page, the
+/// page turns.
+struct PageKey { let view: PageView; let from: Double; let to: Double; let turn: Bool }
+let pageDrop = 2.4, pageHold = 0.95, pageMove = 0.4, pageTurn = 0.95
+let pageKeys: [PageKey] = {
+    var keys: [PageKey] = [], t = pageDrop + 0.5
+    for (p, page) in comicPages.enumerated() {
+        let look = p == 0 ? 0.5 : 0.35
+        keys.append(PageKey(view: .whole(p), from: t, to: t + look, turn: p > 0)); t += look + pageMove
+        for j in page.indices { keys.append(PageKey(view: .panel(p, j), from: t, to: t + pageHold, turn: false)); t += pageHold + pageMove }
+        let last = p == comicPages.count - 1
+        keys.append(PageKey(view: .whole(p), from: t, to: t + (last ? 2.6 : 0.3), turn: false)); t += last ? 2.6 : 0.3 + pageTurn
+    }
+    return keys
+}()
+/// When the camera gets to universe `i`'s panel, and when it's back on the last page as a whole.
+func pageArrive(_ i: Int) -> Double {
+    var k = 0
+    for key in pageKeys { if case .panel = key.view { if k == i { return key.from }; k += 1 } }
+    return 0
+}
+var pageBack: Double { pageKeys.last!.from }
+var chooseLength: Double { pageKeys.last!.to }
+/// When the pages turn.
+var pageTurns: [Double] { pageKeys.filter(\.turn).map { $0.from - pageTurn } }
+
+typealias Camera = (c: CGPoint, s: Double, turn: Double)
+func camera(_ v: PageView) -> Camera {
+    switch v {
+    case .whole: return (CGPoint(x: pageW / 2, y: pageH / 2), Double(W) / pageW * 0.97, 0)
+    case .panel(let p, let j):
+        let r = comicPages[p][j].rect
+        return (CGPoint(x: r.midX, y: r.midY), min(Double(W) * 0.9 / r.width, Double(H) * 0.9 / r.height), 0)
+    }
+}
+func blend(_ a: Camera, _ b: Camera, _ f: Double) -> Camera {
+    let e = f * f * (3 - 2 * f)
+    // zooming feels even in log scale; a little pull back and a lean mid-move, like a camera finding the next panel
+    let s = exp(lerp(log(a.s), log(b.s), e)) * (1 - 0.12 * sin(.pi * f))
+    let lean = (b.c.x > a.c.x ? -1.0 : 1.0) * 0.05 * sin(.pi * f)
+    return (CGPoint(x: lerp(a.c.x, b.c.x, e), y: lerp(a.c.y, b.c.y, e)), s, lerp(a.turn, b.turn, e) + lean)
+}
+func page(of v: PageView) -> Int { switch v { case .whole(let p), .panel(let p, _): return p } }
+
+/// One page through the camera: the paper, its border, and every panel playing its universe's big moment.
+func drawPage(_ ctx: CGContext, _ p: Int, cam: Camera, zoom: Double = 1, tilt: Double = 0, l: Double, t: Double) {
+    ctx.saveGState()
+    ctx.translateBy(x: 960, y: 540); ctx.rotate(by: CGFloat(cam.turn + tilt))
+    ctx.scaleBy(x: CGFloat(cam.s * zoom), y: CGFloat(cam.s * zoom)); ctx.translateBy(x: -cam.c.x, y: -cam.c.y)
+    let sheet = CGRect(x: 0, y: 0, width: pageW, height: pageH)
+    ctx.setFillColor(CGColor(gray: 0, alpha: 0.5)); ctx.fill(sheet.offsetBy(dx: 24, dy: -24))
+    ctx.setFillColor(CGColor(gray: 0.96, alpha: 1)); ctx.fill(sheet)
+    ctx.setStrokeColor(inkColor); ctx.setLineWidth(14); ctx.stroke(sheet.insetBy(dx: 30, dy: 30))
+    let first = comicPages.prefix(p).map(\.count).reduce(0, +)
+    let view = CGRect(x: cam.c.x - 960 / (cam.s * zoom), y: cam.c.y - 540 / (cam.s * zoom), width: 1920 / (cam.s * zoom), height: 1080 / (cam.s * zoom))
+    for (j, panel) in comicPages[p].enumerated() {
+        let i = first + j, piece = setPiece(panel.u), r = panel.rect, shape = panel.path
+        ctx.saveGState(); ctx.translateBy(x: 16, y: -16); ctx.addPath(shape); ctx.setFillColor(CGColor(gray: 0, alpha: 1)); ctx.fillPath(); ctx.restoreGState()
+        // only the panels in view get their scene drawn; before the camera gets there it holds a moment of the action
+        if r.insetBy(dx: -300, dy: -300).intersects(view), let full = shotImage({ piece.draw($0, max(0.8, l - pageArrive(i) + 0.6), t) }) {
+            let h = min(Double(H), Double(W) * Double(r.height) / Double(r.width)), w = h * Double(r.width) / Double(r.height)
+            if let img = full.cropping(to: CGRect(x: (Double(W) - w) / 2, y: (Double(H) - h) / 2, width: w, height: h)) {
+                ctx.saveGState(); ctx.addPath(shape); ctx.clip()
+                ctx.interpolationQuality = cam.s * zoom > 0.9 ? .none : .high; ctx.draw(img, in: r)
+                ctx.restoreGState()
+            }
+        }
+        ctx.addPath(shape); ctx.setStrokeColor(inkColor); ctx.setLineWidth(16); ctx.strokePath()
+        let label = NSAttributedString(string: panel.u.title.uppercased(), attributes: [.font: NSFont.systemFont(ofSize: 40, weight: .heavy)]).size().width
+        captionBox(panel.u.title.uppercased(), ctx, center: CGPoint(x: max(panel.corners[0].x, panel.corners[3].x) + 60 + label / 2,
+                                                                     y: min(panel.corners[0].y, panel.corners[1].y) - 50), size: 40)
+        // the sound word pops as the camera gets there
+        let w = l - pageArrive(i) + 0.1
+        if w > 0 && w < pageHold + pageMove {
+            let pop = backOut(w / 0.2), a = 1 - clamp((w - pageHold) / 0.3)
+            ctx.saveGState()
+            ctx.translateBy(x: r.maxX - r.width * 0.24, y: r.minY + r.height * 0.2); ctx.rotate(by: i % 2 == 0 ? 0.12 : -0.12)
+            ctx.scaleBy(x: CGFloat(pop), y: CGFloat(pop))
+            inkLettered(piece.word, .zero, size: CGFloat(min(170, r.height * 0.22)), color: yellow, alpha: a, kern: 6)
+            ctx.restoreGState()
+        }
+    }
+    ctx.restoreGState()
+}
+
+/// The part of polygon `poly` on the side of the line through `a` (direction `u`) where `keepLeft` says.
+func clipPolygon(_ poly: [CGPoint], _ a: CGPoint, _ u: CGVector, keepLeft: Bool) -> [CGPoint] {
+    let side = { (p: CGPoint) -> Double in let s = Double(u.dx * (p.y - a.y) - u.dy * (p.x - a.x)); return keepLeft ? s : -s }
+    var out: [CGPoint] = []
+    for i in poly.indices {
+        let p = poly[i], q = poly[(i + 1) % poly.count], sp = side(p), sq = side(q)
+        if sp >= 0 { out.append(p) }
+        if (sp >= 0) != (sq >= 0) {
+            let f = sp / (sp - sq)
+            out.append(CGPoint(x: p.x + (q.x - p.x) * f, y: p.y + (q.y - p.y) * f))
+        }
+    }
+    return out
+}
+
+/// `p` mirrored across the line through `a` with unit direction `u`.
+func mirrored(_ p: CGPoint, _ a: CGPoint, _ u: CGVector) -> CGPoint {
+    let dx = p.x - a.x, dy = p.y - a.y, d = dx * u.dx + dy * u.dy
+    return CGPoint(x: a.x + 2 * d * u.dx - dx, y: a.y + 2 * d * u.dy - dy)
+}
+
+/// A page turning over, right to left, `k` 0…1, curling back from its right edge: the fold sweeps across at a slant,
+/// the new page shows behind it with the curl's shadow on it, and the curled-over flap is the paper back of the old one.
+func turnPage(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double) {
+    let e = k * k * (3 - 2 * k), lean = 0.28
+    let len = sqrt(1 + lean * lean), u = CGVector(dx: lean / len, dy: 1 / len)          // the fold, leaning right at the top
+    let a = CGPoint(x: lerp(Double(W) + 60, -Double(H) * lean - 120, e), y: 0)
+    let sheet = [CGPoint(x: 0, y: 0), CGPoint(x: W, y: 0), CGPoint(x: W, y: H), CGPoint(x: 0, y: H)]
+    func path(_ pts: [CGPoint]) -> CGPath { let p = CGMutablePath(); if !pts.isEmpty { p.addLines(between: pts); p.closeSubpath() }; return p }
+    ctx.draw(new, in: fullRect)
+    // the old page, what's left of it on this side of the fold
+    let stays = clipPolygon(sheet, a, u, keepLeft: true)
+    if stays.count > 2 { ctx.saveGState(); ctx.addPath(path(stays)); ctx.clip(); ctx.draw(old, in: fullRect); ctx.restoreGState() }
+    // the curl's shadow on the new page, just past the fold
+    let n = CGVector(dx: u.dy, dy: -u.dx)                                                     // pointing right, away from the old page
+    let shadow = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [CGColor(gray: 0, alpha: 0.5), CGColor(gray: 0, alpha: 0)] as CFArray, locations: [0, 1])!
+    let turned = clipPolygon(sheet, a, u, keepLeft: false)
+    if turned.count > 2 {   // (clipping to nothing would clip nothing away)
+        ctx.saveGState(); ctx.addPath(path(turned)); ctx.clip()
+        ctx.drawLinearGradient(shadow, start: a, end: CGPoint(x: a.x + n.dx * 140, y: a.y + n.dy * 140), options: [.drawsBeforeStartLocation])
+        ctx.restoreGState()
+    }
+    // the flap: the turned part, mirrored over the fold, its paper back lit at the fold and shaded at its edge
+    let flap = turned.map { mirrored($0, a, u) }
+    guard flap.count > 2 else { return }
+    ctx.saveGState()
+    ctx.setShadow(offset: CGSize(width: -10, height: -6), blur: 30, color: CGColor(gray: 0, alpha: 0.5))
+    ctx.addPath(path(flap)); ctx.setFillColor(CGColor(gray: 0.86, alpha: 1)); ctx.fillPath()
+    ctx.restoreGState()
+    ctx.saveGState(); ctx.addPath(path(flap)); ctx.clip()
+    let paper = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [CGColor(gray: 1, alpha: 0.9), CGColor(gray: 0.7, alpha: 0.9)] as CFArray, locations: [0, 1])!
+    ctx.drawLinearGradient(paper, start: a, end: CGPoint(x: a.x - n.dx * 700, y: a.y - n.dy * 700), options: [.drawsAfterEndLocation])
+    ctx.restoreGState()
+    ctx.addPath(path(flap)); ctx.setStrokeColor(CGColor(gray: 0.55, alpha: 1)); ctx.setLineWidth(3); ctx.strokePath()
+}
+
+func chooseUniverse(_ ctx: CGContext, local l: Double, t: Double) {
+    // the runners, along the bottom of the desktop, under the title
+    if l < pageDrop + 0.5 {
+        desktop(ctx, dim: 1)
+        for (i, who) in chooseRunners.enumerated() {
+            let x = -40 + (l - Double(i) * 0.15) * 170
+            guard x > -40, x < 360 else { continue }
+            draw(Actor(cast: who, x: x, mode: .idle, walking: true), ctx, t: t * 1.6 + Double(i) * 0.2)
+        }
+        let f = backOut((l - 0.15) / 0.4)
+        if f > 0 {
+            ctx.saveGState(); ctx.translateBy(x: 960, y: 640); ctx.scaleBy(x: CGFloat(f), y: CGFloat(f)); ctx.rotate(by: 0.035)
+            inkLettered("CHOOSE YOUR", CGPoint(x: 0, y: 110), size: 120, color: yellow, kern: 8)
+            inkLettered("UNIVERSE", CGPoint(x: 0, y: -40), size: 190, color: yellow, kern: 10)
+            ctx.restoreGState()
+        }
+    }
+    guard l > pageDrop else { return }
+    if l > pageDrop + 0.5 { halftone(ctx, fullRect, base: CGColor(red: 0.06, green: 0.06, blue: 0.09, alpha: 1), dot: CGColor(red: 0.13, green: 0.13, blue: 0.18, alpha: 1), step: 22) }
+    let since = l - pageDrop, shake = since > 0.3 && since < 0.55 ? (0.55 - since) * 50 : 0
+    ctx.saveGState(); ctx.translateBy(x: sin(t * 80) * shake, y: cos(t * 70) * shake)
+    // where the camera is: on a stop, moving between two, or turning the page
+    let next = pageKeys.firstIndex { $0.to > l } ?? pageKeys.count - 1, key = pageKeys[next]
+    if l < pageKeys[0].from {                                  // the first page slamming down
+        let drop = backOut(since / 0.4)
+        ctx.setAlpha(CGFloat(clamp(since / 0.12)))
+        drawPage(ctx, 0, cam: camera(.whole(0)), zoom: 1.5 - 0.5 * drop, tilt: (1 - drop) * 0.08, l: l, t: t)
+    } else if l >= key.from {
+        drawPage(ctx, page(of: key.view), cam: camera(key.view), l: l, t: t)
+    } else {
+        let prev = pageKeys[next - 1], f = (l - prev.to) / (key.from - prev.to)
+        if key.turn,
+           let old = shotImage({ drawPage($0, page(of: prev.view), cam: camera(prev.view), l: l, t: t) }),
+           let new = shotImage({ drawPage($0, page(of: key.view), cam: camera(key.view), l: l, t: t) }) {
+            turnPage(ctx, old: old, new: new, k: f)
+        } else {
+            drawPage(ctx, page(of: key.view), cam: blend(camera(prev.view), camera(key.view), f), l: l, t: t)
+        }
+    }
+    ctx.restoreGState()
+    // and the line, once it's back on the last page as a whole
+    let f = backOut((l - pageBack - 0.2) / 0.35)
+    if f > 0 {
+        ctx.saveGState(); ctx.translateBy(x: 960, y: 60); ctx.scaleBy(x: CGFloat(f), y: CGFloat(f)); ctx.translateBy(x: -960, y: -60)
+        captionBox("ONE APP. \(universeCount()) UNIVERSES. PICK YOURS.", ctx, center: CGPoint(x: 960, y: 60), size: 46)
+        ctx.restoreGState()
+    }
+}
+
+/// Where the comic page ends: everything after it moves with the number of universes.
+var afterChoose: Double { 16.5 + chooseLength }
+
 let promoShots: [Shot] = [
-    Shot(name: "meanwhile", start: 0, end: 3.5, into: .cut) { ctx, local, t in
+    Shot(name: "meanwhile", start: 0, end: 3.0, into: .cut) { ctx, local, t in
         ctx.setFillColor(CGColor(gray: 0, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
         let line = "MEANWHILE, IN A TERMINAL NEAR YOU..."
         let n = Int(clamp((local - 0.3) / 1.6) * Double(line.count))
-        let a = 1 - clamp((local - 3.0) / 0.4)
+        let a = 1 - clamp((local - 2.6) / 0.35)
         if n > 0 { captionBox(String(line.prefix(n)), ctx, center: CGPoint(x: Double(W) / 2, y: Double(H) / 2), size: 54, alpha: a) }
     },
-    Shot(name: "worlds", start: 3.5, end: 9.5, into: .cut) { ctx, local, t in
-        let slam = clamp((local - 1.6) / 0.3), shake = local > 1.9 && local < 2.2 ? (2.2 - local) * 60 : 0
-        ctx.saveGState(); ctx.translateBy(x: sin(t * 80) * shake, y: cos(t * 70) * shake)
-        coverPanels(ctx, t: t, dim: 0.15 * slam)
-        if local > 1.6 {
-            let s = CGFloat(1 + 1.6 * pow(1 - backOut(slam), 1))
-            // high in the sky, clear of the fighters on the ground
-            coverWord(ctx, "CLAWD", at: CGPoint(x: 960, y: 900), width: 1560, height: 270, angle: 0.05, depth: 14, scale: s)
-            coverWord(ctx, "CLASH", at: CGPoint(x: 960, y: 640), width: 1680, height: 290, angle: 0.05, depth: 16, scale: s)
-            coverGutters(ctx)
-        }
-        ctx.restoreGState()
-    },
-    Shot(name: "hook", start: 9.5, end: 13.5) { ctx, local, t in
+    // Down the time vortex: a character from every universe tumbles past, and CLAWD CLASH lands with a bang.
+    Shot(name: "worlds", start: 3.0, end: 12.5, into: .cut) { ctx, local, t in clashIntro(ctx, local: local, t: t) },
+    Shot(name: "hook", start: 12.5, end: 16.5) { ctx, local, t in
         let zoom = 1 + 0.03 * local
         ctx.saveGState()
         ctx.translateBy(x: Double(W) / 2, y: Double(H) / 2); ctx.scaleBy(x: zoom, y: zoom)
@@ -1509,41 +1833,55 @@ let promoShots: [Shot] = [
         caption("Three AIs. Nine agents. One very confused human.", ctx, local: local, start: 0.05, y: 860, size: 60)
         caption("Sound familiar?", ctx, local: local, start: 0.7, y: 120, size: 76, color: yellow)
     },
-    Shot(name: "pick", start: 13.5, end: 20.5) { ctx, local, t in pickYourUniverse(ctx, local: local, t: t) },
-    // A showcase for each universe: its big moment, from the single-universe promos, shorter.
-    Shot(name: "showStarClaws", start: 20.5, end: 27.5, into: .starWars(clock: false)) { ctx, local, t in
-        starClawsShowcase(ctx, local: 1.4 + local, t: t)
-        showcaseTitle(ctx, .starWars, "Laser swords, blasters and one very, very big ship.", local: local)
+    // Choose your universe: everyone runs past, a comic page slams down, and the camera reads it panel by panel.
+    Shot(name: "choose", start: 16.5, end: afterChoose) { ctx, local, t in chooseUniverse(ctx, local: local, t: t) },
+    // The features, one each in the newest universes, as their own trailers show them.
+    Shot(name: "status", start: afterChoose, end: afterChoose + 4.5, into: .trip(.files(FilesTrip(kind: .classifiedFile)))) { ctx, local, t in
+        filesShots.first { $0.name == "status" }!.render(ctx, local, t)
     },
-    Shot(name: "showMarvelous Clawds", start: 27.5, end: 34.5, into: .marvel(ComicTrip(kind: .burst, sound: .kapow))) { ctx, local, t in
-        clawvelShowcase(ctx, local: 2.2 + local, t: t)
-        showcaseTitle(ctx, .marvel, "Shields, hammers, webs and a giant space whale.", local: local)
+    Shot(name: "agents", start: afterChoose + 4.5, end: afterChoose + 9.0, into: .trip(.clawdberg(ClawdbergTrip(kind: .mapRoute)))) { ctx, local, t in
+        clawdbergShots.first { $0.name == "agents" }!.render(ctx, local, t)
     },
-    Shot(name: "showDetective", start: 34.5, end: 41.5, into: .dc(DCComicTrip(kind: .batSignal, caption: "MEANWHILE, IN MEGALOPOLIS…"))) { ctx, local, t in
-        detectiveShowcase(ctx, local: 0.4 + local, t: t)
-        showcaseTitle(ctx, .dc, "Capes, power rings and a horned kaiju to deal with.", local: local)
-    },
-    // The features, one universe each.
-    Shot(name: "status", start: 41.5, end: 46.0, into: .marvel(ComicTrip(kind: .halftone))) { ctx, local, t in statusLineup(ctx, local: local, t: t) },
-    Shot(name: "agents", start: 46.0, end: 50.5, into: .dc(DCComicTrip(kind: .grapple))) { ctx, local, t in agentsArrive(ctx, local: local, t: t) },
-    Shot(name: "window", start: 50.5, end: 56.0, into: .starWars(clock: true)) { ctx, local, t in
-        windowShot(ctx, .starWars, local: local, t: t, rise: true, needsAt: 2.6)
-        badge(Universe.starWars.title.uppercased(), ctx, alpha: 1)
-        caption("Prefer a window? Grab the popcorn.", ctx, local: local, start: 0.1, y: 955, size: 56)
-        caption("A live card per session: what it's doing, your last prompt, every agent.", ctx, local: local, start: 0.4, y: 890, size: 32, color: yellow, weight: .bold)
+    Shot(name: "window", start: afterChoose + 9.0, end: afterChoose + 14.5, into: .middleEarth(RingsTrip(kind: .map))) { ctx, local, t in
+        ringsShots.first { $0.name == "window" }!.render(ctx, local, t)
     },
     // Random: the whole window changes universe on its own, each time with that universe's transition.
-    Shot(name: "random1", start: 56.0, end: 58.3) { ctx, local, t in windowShot(ctx, .marvel, local: local + 3, t: t, rise: false) },
-    Shot(name: "random2", start: 58.3, end: 61.0, into: .dc(DCComicTrip(kind: .jokerCard)), inWindow: true) { ctx, local, t in
-        windowShot(ctx, .dc, local: local + 3, t: t, rise: false)
+    Shot(name: "random1", start: afterChoose + 14.5, end: afterChoose + 16.6) { ctx, local, t in windowShot(ctx, .middleEarth, local: local + 3, t: t, rise: false, at: .prancingPony) },
+    Shot(name: "random2", start: afterChoose + 16.6, end: afterChoose + 18.9, into: .trip(.doctor(DoctorTrip(kind: .vortex))), inWindow: true) { ctx, local, t in
+        windowShot(ctx, .doctor, local: local + 3, t: t, rise: false, at: .consoleRoom)
     },
-    Shot(name: "random3", start: 61.0, end: 63.1, into: .starWars(clock: false), inWindow: true) { ctx, local, t in
+    Shot(name: "random3", start: afterChoose + 18.9, end: afterChoose + 21.0, into: .starWars(clock: false), inWindow: true) { ctx, local, t in
         windowShot(ctx, .starWars, local: local + 3, t: t, rise: false)
     },
-    Shot(name: "random4", start: 63.1, end: 65.5, into: .marvel(ComicTrip(kind: .speedLines)), inWindow: true) { ctx, local, t in
-        windowShot(ctx, .marvel, local: local + 3, t: t, rise: false)
+    // Clawd Royale: the emblems collide, then everyone at once, each as themselves.
+    Shot(name: "royale", start: afterChoose + 21.0, end: afterChoose + 24.0, into: .cut) { ctx, local, t in royaleCollide(ctx, local: local, t: t) },
+    Shot(name: "crossover", start: afterChoose + 24.0, end: afterChoose + 28.5, into: .marvel(ComicTrip(kind: .burst, sound: .thwip))) { ctx, local, t in
+        let (fox, dalick) = versus(.hero(FilesHero.foxClawder), 30, .villain(DoctorVillain.dalick), 96)
+        let (bat, vapor) = versus(.hero(DCHero.batman), 150, .villain(SWVillain.vader), 207)
+        let (gandclawd, thanoz) = versus(.hero(RingsHero.gandalf), 250, .villain(MarvelVillain.thanos), 306)
+        let swing = webSwing(local, start: 0.7)
+        royaleScene(ctx, .cantina, t: t, fights: [(fox, dalick), (bat, vapor), (gandclawd, thanoz)], also: swing.map { [$0.actor] } ?? [])
+        let bf = (local - 1.2) / 2.4                                // E.Clawd's bike, flying the other way over everyone
+        if bf > 0 && bf < 1 {
+            let c = PixelCanvas(Ride.width, Ride.moonBike.canvasHeight)
+            drawRide(c, .moonBike, ramp: 0, engines: true, gear: false); c.flipHorizontally(); c.addOutline(C(0xFFFFFF, 0.92))
+            if let img = c.makeImage() {
+                ctx.saveGState(); ctx.interpolationQuality = .none
+                ctx.draw(img, in: CGRect(x: lerp(Double(W) + 60, -Double(Ride.width) * 6 - 60, bf), y: 560 + sin(bf * .pi) * 60,
+                                         width: Double(Ride.width) * 6, height: Double(c.h) * 6))
+                ctx.restoreGState()
+            }
+        }
+        if let s = swing {                                          // his web line, from the raised hand up out of the frame
+            let web = PixelCanvas(fxW, fxH), hand = s.actor.fighter.point(41, 22)
+            web.glowLine(hand.x, hand.y, s.anchor.x, s.anchor.y, core: C(0xF4F4F8, 0.9), glow: C(0xFFFFFF, 0), coreR: 0.35, glowR: 0.4)
+            blit(web, ctx)
+        }
+        badge("CLAWD ROYALE", ctx, alpha: clamp(local / 0.3))
+        caption("Nobody asked who'd win. We're answering anyway.", ctx, local: local, start: 0.8, y: 905, size: 58)
+        caption("Settings → Universe → Clawd Royale. A new place every ten minutes.", ctx, local: local, start: 1.6, y: 840, size: 38, color: yellow, weight: .bold)
     },
-    Shot(name: "endcard", start: 65.5, end: 70.5) { ctx, local, t in
+    Shot(name: "endcard", start: afterChoose + 28.5, end: afterChoose + 33.5) { ctx, local, t in
         coverPanels(ctx, t: t, fighters: false, dim: 0.45)
         let f = backOut((local - 0.2) / 0.5)
         if let icon = appIcon, local > 0.2 {
@@ -1552,14 +1890,19 @@ let promoShots: [Shot] = [
             ctx.draw(icon, in: CGRect(x: 960 - s / 2, y: 660 - s / 2, width: s, height: s))
             ctx.restoreGState()
         }
+        let shown = Universe.offered
+        for (i, u) in shown.enumerated() {
+            let e = backOut((local - 0.5 - Double(i) * 0.08) / 0.35)
+            if e > 0 { emblem(u, ctx, center: CGPoint(x: 960 + (Double(i) - Double(shown.count - 1) / 2) * 170, y: 335), px: 4 * e) }
+        }
         caption("Have fun. Keep track.", ctx, local: local, start: 0.8, y: 190, size: 64)
-        caption("Free for macOS · github.com/rodclemen/clawd-clash", ctx, local: local, start: 1.1, y: 120, size: 36,
+        caption("\(universeCount(capital: true)) universes, or all of them at once · free for macOS · github.com/rodclemen/clawd-clash", ctx, local: local, start: 1.1, y: 120, size: 34,
                 color: NSColor(white: 0.88, alpha: 1), weight: .bold)
     },
 ]
 
 let promoOverlays: [Overlay] = [
-    Overlay(start: 56.0, end: 65.5) { ctx, l in
+    Overlay(start: afterChoose + 14.5, end: afterChoose + 21.0) { ctx, l in
         badge("RANDOM · EVERY 5 MIN", ctx, alpha: 1)
         caption("Can't decide? Random switches the whole window", ctx, local: l, start: 0.2, y: 950, size: 50)
         caption("to a new universe every few minutes.", ctx, local: l, start: 0.4, y: 885, size: 40, color: yellow, weight: .bold)
@@ -1588,6 +1931,29 @@ func hammer(_ ctx: CGContext, x: Double, y: Double, k: Double, tilt: Double) {
     ctx.restoreGState()
 }
 
+/// The TARDIS standing at `x` (fx units) with its foot on `ground`, `door` 0…1 open, its lamp lit or not.
+func standingTardis(_ ctx: CGContext, x: Double, ground: Double, alpha: Double, door: Double, lamp: Bool) {
+    guard alpha > 0.01 else { return }
+    let c = PixelCanvas(Ride.width, Ride.tardis.canvasHeight)
+    drawRide(c, .tardis, ramp: door, engines: lamp, gear: true)
+    c.addOutline(C(0xFFFFFF, 0.92))
+    guard let img = c.makeImage() else { return }
+    ctx.saveGState(); ctx.interpolationQuality = .none; ctx.setAlpha(CGFloat(alpha))
+    ctx.draw(img, in: CGRect(x: (x - Double(Ride.width) / 2) * S, y: stageH - ground * S - S, width: Double(Ride.width) * S, height: Double(c.h) * S))
+    ctx.restoreGState()
+}
+
+/// How solid the TARDIS is `k` (0…1) of the way through wheezing into being: in and out, getting stronger.
+func wheezePulse(_ k: Double) -> Double { min(1, max(0, k * (0.75 + 0.25 * sin(k * 7 * .pi)))) }
+
+/// An actor drawn upside down, flipped about the middle of its sprite.
+func drawUpsideDown(_ a: Actor, _ ctx: CGContext, t: Double) {
+    let mid = stageH - (a.top + 22 * a.k) * S
+    ctx.saveGState(); ctx.translateBy(x: 0, y: 2 * mid); ctx.scaleBy(x: 1, y: -1)
+    draw(a, ctx, t: t)
+    ctx.restoreGState()
+}
+
 let blooperShots: [Shot] = [
     // The clapperboard slams in: BLOOPERS.
     Shot(name: "clapper", start: 0, end: 3.0, into: .cut) { ctx, local, t in
@@ -1598,28 +1964,29 @@ let blooperShots: [Shot] = [
         let open = local < 1.0 ? 1.0 : max(0, 1 - (local - 1.0) / 0.12)
         clapper(ctx, center: CGPoint(x: 960, y: 540 + 700 * (1 - drop)), width: 1100, open: open, take: "1", title: "BLOOPERS")
     },
-    // Take 3: the Bulk wanders into the cantina; the band stops.
-    Shot(name: "take3", start: 3.0, end: 8.2, into: .cut) { ctx, l, t in
-        set(ctx, .cantina, t: t, frozen: l > 1.3 ? 1.3 + 3.0 : nil)
-        let f = easeOut(l / 1.2)
-        let bulk = Actor(cast: .hero(MarvelHero.hulk), x: lerp(-40, 130, f), mode: .idle, walking: f < 0.99)
-        draw(bulk, ctx, t: t)
-        if l > 1.6 { balloon("…wrong set?", ctx, center: CGPoint(x: 1000, y: 760), tail: headPoint(bulk), size: 48, alpha: clamp((l - 1.6) / 0.15)) }
-        cutAndSlate(ctx, local: l, at: 3.9, take: "3")
-    },
-    // Take 7: Darth Vapor's big reveal, to the wrong kid.
-    Shot(name: "take7", start: 8.2, end: 15.2, into: .cut) { ctx, l, t in
-        set(ctx, .deathStar, t: t)
-        let turn = l > 0.6
-        let vapor = Actor(cast: .villain(SWVillain.vader), x: 90, facing: turn ? 1 : -1, mode: .idle)
-        let spidey = Actor(cast: .hero(MarvelHero.spiderMan), x: 220, facing: -1, mode: .idle)
-        draw(vapor, ctx, t: t); draw(spidey, ctx, t: t)
-        if l > 0.9 && l < 4.1 { balloon("Spider-Clawd… I am your… landlord.", ctx, center: CGPoint(x: 820, y: 860), tail: headPoint(vapor), size: 44, width: 900) }
-        if l > 3.6 { balloon("Pretty sure it's an aunt thing.", ctx, center: CGPoint(x: 1260, y: 640), tail: headPoint(spidey), size: 42, width: 700) }
-        cutAndSlate(ctx, local: l, at: 5.8, take: "7")
+    // Take 7: the TARDIS lands in the Mos Easy Cantina, in the wrong universe, and then won't take off again.
+    Shot(name: "take7", start: 3.0, end: 12.4, into: .cut) { ctx, l, t in
+        set(ctx, .cantina, t: t)
+        let lamp = Int(l * 5) % 2 == 0
+        var alpha = wheezePulse(clamp(l / 1.6)), lit = l < 1.6 && lamp
+        if l > 5.4 && l < 6.8 { alpha = 0.55 + 0.45 * abs(cos((l - 5.4) / 1.4 * 3 * .pi)); lit = lamp }     // tries to go, and can't
+        let door = min(1, clamp((l - 1.9) / 0.25) * (1 - clamp((l - 5.0) / 0.25)) + clamp((l - 7.0) / 0.25))
+        standingTardis(ctx, x: 66, ground: groundY, alpha: alpha, door: door, lamp: lit)
+        let vapor = Actor(cast: .villain(SWVillain.vader), x: 240, facing: l > 1.2 ? -1 : 1, mode: .idle)
+        draw(vapor, ctx, t: t)
+        // the Doctor: out, back in, and out again
+        let x = l < 4.6 ? lerp(70, 112, easeOut((l - 2.1) / 0.6)) : l < 7.2 ? lerp(112, 70, easeIn((l - 4.6) / 0.5)) : lerp(70, 104, easeOut((l - 7.2) / 0.5))
+        let walking = (l > 2.1 && l < 2.7) || (l > 4.6 && l < 5.1) || (l > 7.2 && l < 7.7)
+        var doc = Actor(cast: .hero(DoctorHero.doctorTen), x: x, facing: l > 4.6 && l < 7.2 ? -1 : 1, mode: .idle, walking: walking)
+        doc.alpha = (l > 2.05 && l < 5.15) || l > 7.15 ? 1 : 0
+        draw(doc, ctx, t: t)
+        if l > 2.9 && l < 4.5 { balloon("Ah. Wrong universe.", ctx, center: CGPoint(x: 700, y: 820), tail: headPoint(doc), size: 46) }
+        if l > 3.6 && l < 5.3 { balloon("…Is that a phone box?", ctx, center: CGPoint(x: 1300, y: 760), tail: headPoint(vapor), size: 44) }
+        if l > 7.7 { balloon("…Handbrake.", ctx, center: CGPoint(x: 700, y: 800), tail: headPoint(doc), size: 46) }
+        cutAndSlate(ctx, local: l, at: 8.2, take: "7")
     },
     // Take 12: the Night Beacon over the Doom Moon; the Stormtroupers open fire and miss every shot.
-    Shot(name: "take12", start: 15.2, end: 20.4, into: .cut) { ctx, l, t in
+    Shot(name: "take12", start: 12.4, end: 17.6, into: .cut) { ctx, l, t in
         set(ctx, .deathStar, t: t)
         let on = clamp(l / 0.25)
         let sig = CGPoint(x: 1300, y: 860)
@@ -1645,7 +2012,7 @@ let blooperShots: [Shot] = [
         cutAndSlate(ctx, local: l, at: 4.0, take: "12")
     },
     // Take 15: the Jester Card flips over and Thanoz is on the back.
-    Shot(name: "take15", start: 20.4, end: 24.6, into: .cut) { ctx, l, t in
+    Shot(name: "take15", start: 17.6, end: 21.8, into: .cut) { ctx, l, t in
         let jester = Actor(cast: .villain(DCVillain.joker), x: 150, mode: .idle)
         func front() -> CGImage? { shotImage { c in set(c, .gotham, t: t); draw(jester, c, t: t) } }
         func back() -> CGImage? {
@@ -1665,7 +2032,7 @@ let blooperShots: [Shot] = [
         cutAndSlate(ctx, local: l, at: 3.4, take: "15")
     },
     // Take 21: Yodle lifts Thorr's hammer. Thorr stares.
-    Shot(name: "take21", start: 24.6, end: 30.8, into: .cut) { ctx, l, t in
+    Shot(name: "take21", start: 21.8, end: 28.0, into: .cut) { ctx, l, t in
         set(ctx, .asgard, t: t)
         let yodle = Actor(cast: .hero(SWHero.yoda), x: 90, mode: .idle)
         let thorr = Actor(cast: .hero(MarvelHero.thor), x: 220, facing: -1, mode: .idle)
@@ -1684,7 +2051,7 @@ let blooperShots: [Shot] = [
         cutAndSlate(ctx, local: l, at: 5.4, take: "21")
     },
     // Take 22: Superb-Man tries to keep up with the jump to hyperspace.
-    Shot(name: "take22", start: 30.8, end: 35.8, into: .cut) { ctx, l, t in
+    Shot(name: "take22", start: 28.0, end: 33.0, into: .cut) { ctx, l, t in
         ctx.setFillColor(CGColor(red: 0.01, green: 0.02, blue: 0.06, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
         let jump = clamp((l - 0.8) / 0.6), centre = CGPoint(x: 1300, y: 600)
         for i in 0..<160 {                                           // stars, stretching into streaks
@@ -1713,31 +2080,57 @@ let blooperShots: [Shot] = [
         cutAndSlate(ctx, local: l, at: 4.0, take: "22")
     },
     // The final take: everyone in one frame, Deadpond in front, and a wrap.
-    Shot(name: "wrap", start: 35.8, end: 43.5, into: .cut) { ctx, l, t in
+    Shot(name: "wrap", start: 33.0, end: 41.9, into: .cut) { ctx, l, t in
         set(ctx, .avengersTower, t: t)
-        let wave = l > 4.4
+        let wave = l > 5.6
         let back: [(Cast, Double)] = [(.villain(SWVillain.vader), 22), (.hero(SWHero.luke), 58), (.villain(MarvelVillain.thanos), 100),
-                                      (.hero(MarvelHero.thor), 146), (.hero(DCHero.superman), 190), (.villain(DCVillain.joker), 232),
-                                      (.hero(SWHero.han), 270), (.hero(MarvelHero.hulk), 306)]
+                                      (.hero(MarvelHero.thor), 146), (.villain(DoctorVillain.dalick), 190), (.villain(DCVillain.joker), 232),
+                                      (.hero(SWHero.han), 270), (.hero(DoctorHero.rose), 306)]
         for (i, (who, x)) in back.enumerated() {
             var a = Actor(cast: who, x: x, facing: i % 2 == 0 ? 1 : -1, mode: .idle, role: wave ? .cheer : .none)
             a.grow = 0.85; a.lift = 18
             draw(a, ctx, t: t + Double(i) * 0.3)
         }
-        let front: [(Cast, Double)] = [(.hero(SWHero.yoda), 40), (.hero(MarvelHero.spiderMan), 92), (.hero(DCHero.batman), 236), (.villain(MarvelVillain.loki), 284)]
+        // the dancers moonwalk until the wrap is called
+        let moon = { (who: Cast, offset: Double) in
+            if !wave && who.persona.fidgets { forcedHabit = HabitPlay(kind: .moonwalk, e: (l + offset).truncatingRemainder(dividingBy: IdleHabit.moonwalk.length)) }
+        }
+        let front: [(Cast, Double)] = [(.hero(MarvelHero.starLord), 36), (.hero(DoctorHero.doctorTen), 88), (.hero(DCHero.batman), 236), (.hero(MarvelHero.howardTheDuck), 288)]
         for (i, (who, x)) in front.enumerated() {
             var a = Actor(cast: who, x: x, facing: x < 160 ? 1 : -1, mode: .idle, role: wave ? .cheer : .none)
             a.grow = 1.05
+            if Cast.moonwalkers.contains(who) { moon(who, Double(i) * 0.9) }
             draw(a, ctx, t: t + Double(i) * 0.5)
+            forcedHabit = nil
         }
         var dp = Actor(cast: .hero(MarvelHero.deadpool), x: 162, mode: .idle, role: wave ? .cheer : .none)
         dp.grow = 1.7; dp.lift = -18
+        moon(dp.cast, 1.8)
         draw(dp, ctx, t: t)
-        if l > 0.6 && l < 4.4 {
+        forcedHabit = nil
+        // Spider-Clawd swings across, upside down, as Superb-Man flies the other way
+        let u = (l - 0.3) / 0.6
+        if u > 0 && u < 4 {
+            let reach = 58.0, i = floor(u), th = -swingAngle * cos(.pi * (u - i)), step = 2 * reach * sin(swingAngle)
+            let anchor = (x: -20 + step * i, y: -10.0), feet = (x: anchor.x + reach * sin(th), y: anchor.y + reach * cos(th))
+            var spidey = Actor(cast: .hero(MarvelHero.spiderMan), x: feet.x, mode: .idle)
+            spidey.lift = groundY - 44 - feet.y
+            drawUpsideDown(spidey, ctx, t: t)
+            let web = PixelCanvas(fxW, fxH)
+            web.glowLine(feet.x, feet.y + 2, anchor.x, anchor.y, core: C(0xF4F4F8, 0.9), glow: C(0xFFFFFF, 0), coreR: 0.35, glowR: 0.4)
+            blit(web, ctx)
+        }
+        let fl = (l - 0.7) / 2.0
+        if fl > 0 && fl < 1 {
+            var sup = Actor(cast: .hero(DCHero.superman), x: lerp(370, -50, fl), facing: -1, mode: .idle)
+            sup.airborne = true; sup.lift = 64 + sin(fl * .pi) * 8
+            draw(sup, ctx, t: t)
+        }
+        if l > 2.7 && l < 5.6 {
             balloon("Separate universes, they said. Totally under control.", ctx, center: CGPoint(x: 960, y: 880), tail: headPoint(dp), size: 44, width: 1100)
         }
-        cutAndSlate(ctx, local: l, at: 4.4, take: "99", wrap: true)
-        let fade = clamp((l - 6.9) / 0.6)
+        cutAndSlate(ctx, local: l, at: 5.6, take: "99", wrap: true)
+        let fade = clamp((l - 8.1) / 0.6)
         if fade > 0 { ctx.setFillColor(CGColor(gray: 0, alpha: fade)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H)) }
     },
 ]
@@ -4006,11 +4399,21 @@ func royaleCollide(_ ctx: CGContext, local l: Double, t: Double) {
         starburst(ctx, center: mid, inner: 300 * f, outer: 540 * f, spikes: 18, color: hexCG(0xFFE04A), spin: l * 0.12)
         starburst(ctx, center: mid, inner: 230 * f, outer: 400 * f, spikes: 14, color: hexCG(0xE8332A), spin: -l * 0.16)
     }
-    // the emblems: in from the left, the top and the right, spinning, then knocked out to a row over the title
-    let from: [(x: Double, y: Double, turn: Double)] = [(-300, 470, -1.2), (960, 1450, 0.9), (2220, 470, 1.4)]
-    let meet: [(x: Double, y: Double)] = [(800, 480), (960, 650), (1120, 480)]
-    let rest: [(x: Double, y: Double)] = [(560, 930), (960, 975), (1360, 930)]
-    for (i, u) in Universe.offered.prefix(from.count).enumerated() {   // the page has three emblems
+    // the emblems: in from all round the frame, spinning, then knocked out to a row over the title
+    let shown = Universe.offered, n = Double(shown.count), gap = min(320, 1500 / max(1, n - 1))
+    let from = shown.indices.map { i -> (x: Double, y: Double, turn: Double) in
+        let a = -Double.pi / 2 + 2 * .pi * Double(i) / n
+        return (960 + cos(a) * 1500, 540 + sin(a) * 950, (i % 2 == 0 ? -1 : 1) * (0.8 + Double(i % 3) * 0.3))
+    }
+    let meet = shown.indices.map { i -> (x: Double, y: Double) in
+        let a = -Double.pi / 2 + 2 * .pi * Double(i) / n
+        return (960 + cos(a) * 190, 560 + sin(a) * 150)
+    }
+    let rest = shown.indices.map { i -> (x: Double, y: Double) in
+        let k = Double(i) - (n - 1) / 2
+        return (960 + k * gap, 975 - abs(k) * 14)
+    }
+    for (i, u) in shown.enumerated() {
         if since < 0 {
             let f = easeIn((l - 0.05) / (royaleSlam - 0.05))
             emblem(u, ctx, center: CGPoint(x: lerp(from[i].x, meet[i].x, f), y: lerp(from[i].y, meet[i].y, f)), px: 11,
@@ -4018,7 +4421,7 @@ func royaleCollide(_ ctx: CGContext, local l: Double, t: Double) {
         } else {
             let f = backOut((since - 0.05) / 0.4)
             emblem(u, ctx, center: CGPoint(x: lerp(meet[i].x, rest[i].x, f), y: lerp(meet[i].y, rest[i].y, f)),
-                   px: lerp(11, 5, clamp(f)), angle: sin(since * 9) * 0.25 * max(0, 1 - since / 0.6))
+                   px: lerp(11, n > 5 ? 4.2 : 5, clamp(f)), angle: sin(since * 9) * 0.25 * max(0, 1 - since / 0.6))
         }
     }
     // the sound word, popping on the slam and gone as the title lands
@@ -4039,7 +4442,7 @@ func royaleCollide(_ ctx: CGContext, local l: Double, t: Double) {
         let f = backOut((l - sub) / 0.3), c = CGPoint(x: mid.x, y: 130)
         ctx.saveGState()
         ctx.translateBy(x: c.x, y: c.y); ctx.scaleBy(x: CGFloat(f), y: CGFloat(f)); ctx.translateBy(x: -c.x, y: -c.y)
-        captionBox("ALL THREE UNIVERSES. ONE SCENE.", ctx, center: c, size: 46)
+        captionBox("ALL \(universeCount()) UNIVERSES. ONE SCENE.", ctx, center: c, size: 46)
         ctx.restoreGState()
     }
 }
@@ -5301,7 +5704,7 @@ func frame(_ t: Double) -> NSBitmapImageRep {
         let poster = reel == "bloopers" ? (shots[0], 2.0)
             : ["starclawds", "marvelous", "detective", "doctor", "files", "clawdberg", "clawdoftherings"].contains(reel) ? (shots.first { $0.name == "endcard" }!, 2.5)
             : reel == "royale" ? (shots.first { $0.name == "collide" }!, 2.2)
-            : (shots.first { $0.name == "worlds" }!, 4.0)
+            : (shots.first { $0.name == "worlds" }!, 9.0)
         renderShot(poster.0, at: poster.0.start + poster.1, into: ctx)
         NSGraphicsContext.current = nil
         return rep
@@ -5323,7 +5726,7 @@ func frame(_ t: Double) -> NSBitmapImageRep {
             ctx.addPath(Wipe.remaining(k, clock: clock, in: r)); ctx.clip()
             renderShot(prev, at: t, into: ctx)
             ctx.restoreGState()
-        case .marvel, .dc, .middleEarth:
+        case .marvel, .dc, .middleEarth, .trip:
             let old = shotImage { renderShot(prev, at: t, into: $0) }, new = shotImage { renderShot(cur, at: t, into: $0) }
             let r = cur.inWindow ? windowRect : fullRect
             if cur.inWindow { renderShot(cur, at: t, into: ctx) }
@@ -5337,6 +5740,7 @@ func frame(_ t: Double) -> NSBitmapImageRep {
                 if case .marvel(let trip) = cur.into { trip.draw(ctx, old: o, new: n, k: k, in: r) }
                 if case .dc(let trip) = cur.into { trip.draw(ctx, old: o, new: n, k: k, in: r) }
                 if case .middleEarth(let trip) = cur.into { trip.draw(ctx, old: o, new: n, k: k, in: r) }
+                if case .trip(let trip) = cur.into { trip.draw(ctx, old: o, new: n, k: k, in: r) }
                 if cur.inWindow { ctx.restoreGState() }
             }
         case .cut:
@@ -5363,30 +5767,37 @@ func save(_ rep: NSBitmapImageRep, _ path: String) {
 
 typealias Beat = (title: String, action: String, onScreen: String, sound: String)
 
-let promoBeats: [(key: Double, beat: Beat)] = [
+/// "a, b, c and d".
+func listed(_ items: [String]) -> String { items.count < 2 ? items.joined() : items.dropLast().joined(separator: ", ") + " and " + items.last! }
+var legendNames: String { listed(Universe.offered.map { Theme.of($0).legend.name }) }
+
+var promoBeats: [(key: Double, beat: Beat)] { [
     (2.4, ("COLD OPEN", "Black screen. A yellow comic caption types itself out.", "“MEANWHILE, IN A TERMINAL NEAR YOU...”", "typewriter keys, a bell")),
-    (7.0, ("THREE WORLDS", "Hard cut to the icon's three slanted panels, each its universe's place and arch-enemies. CLAWD CLASH slams in across all three, coloured by each panel and cut by the gutters, like the icon.", "CLAWD CLASH", "three fights at once, then the big hit")),
-    (11.5, ("THE HOOK", "Three busy terminals (Claude, Codex, Gemini), slow push-in.", "“Three AIs. Nine agents. One very confused human.”  →  “Sound familiar?”", "keyboard clicks")),
-    (17.0, ("PICK YOUR UNIVERSE", "The pop-art page from the social preview: a red sunburst centre panel, and round it a tilted panel per universe slamming in one after another, each a face-off with its name in a caption box and a sound word (VWOOM!, KRAKOOM!, BLAM!, VWORP!, ZZZT!, CRACK!, KA-THOOM!). The layout grows with every universe.", "ONE APP.  ·  PICK YOUR UNIVERSE", "a slam per panel")),
-    (24.0, ("STAR CLAWDS", "An edge wipe into space: the camera tilts down to the desert planet, a blockade runner flees under laser fire, and the giant wedge ship slides in overhead until its engines fill the top of the frame.", "STAR CLAWDS caption  ·  “Laser swords, blasters and one very, very big ship.”", "a dark pulse, turbolasers, the rumble")),
-    (31.2, ("MARVELOUS CLAWDS", "A KAPOW! burst into the Battle of New York: a space whale noses out of the portal and dives at us, Iron Clawd rockets up firing repulsors.", "MARVELOUS CLAWDS caption  ·  “Shields, hammers, webs and a giant space whale.”", "the portal hum, roars, repulsors")),
-    (38.2, ("DETECTIVE CLAWDS", "The Night Beacon transition into Megalopolis: a horned kaiju stomps in, roars, and Superb-Man hits it with heat vision.", "DETECTIVE CLAWDS caption  ·  “Capes, power rings and a horned kaiju to deal with.”", "stomps, two roars, heat vision")),
-    (44.5, ("AT A GLANCE (MARVELOUS CLAWDS)", "A halftone print-in brings the status line-up: Thorr working, Lokee thinking, Ultraton's jumping NEEDS YOU, Thanoz sat down napping.", "“All fun and games, and you still see everything.”  ·  “(Thanoz sits down when the job's done. Relatable.)”", "blips, alert beeps")),
-    (49.0, ("SUBAGENTS (DETECTIVE CLAWDS)", "A grapnel yanks the panel away: agents arrive with their jobs on their labels.", "“Every subagent reports for duty.”  ·  “Its job is right there on its label. No more guessing.”", "footsteps, a bark")),
-    (54.5, ("WINDOW (STAR CLAWDS)", "A clock wipe opens on the window in the Mos Easy Cantina; live cards tick, then Luke's Codex card flips to NEEDS YOU.", "“Prefer a window? Grab the popcorn.”", "a ping")),
-    (59.6, ("RANDOM", "The window changes universe on its own, three times in a row, each with that universe's transition, inside the window only.", "RANDOM · EVERY 5 MIN  ·  “Can't decide? Random switches the whole window to a new universe every few minutes.”", "the transitions' own sounds")),
-    (68.5, ("END CARD", "The app icon pops up over the three panels.", "“Have fun. Keep track.”  ·  “Free for macOS · github.com/rodclemen/clawd-clash”", "final sting")),
-]
+    (5.6, ("DOWN THE VORTEX", "Lightning, then down Doctor Clawd's time vortex. The police box and every universe's legend tumble out two at a time, from opposite sides, on their own curves and spins: \(legendNames).", "no text", "thunder, the title-sequence tune, whooshes")),
+    (11.0, ("CLAWD CLASH", "CLAWD CLASH flies up out of the eye of the vortex, faster and faster, and lands with a bang in the middle of the screen: a flash, the frame shakes.", "CLAWD CLASH", "a rising sweep, the big hit and the fanfare")),
+    (14.5, ("THE HOOK", "Three busy terminals (Claude, Codex, Gemini), slow push-in.", "“Three AIs. Nine agents. One very confused human.”  →  “Sound familiar?”", "keyboard clicks")),
+    (18.2, ("CHOOSE YOUR UNIVERSE", "Two heroes from every universe run along the bottom of the desktop, and CHOOSE YOUR UNIVERSE pops up over them.", "CHOOSE YOUR UNIVERSE", "running feet, a hit")),
+    (16.5 + pageArrive(0) + 0.5, ("READING THE PAGE", "A comic page slams down over them, its panels split by slanted gutters that never line up. The camera swoops into the first panel and reads them one by one, straightening each up as it fills the screen with that universe's big moment.", "the universe's name on each panel  ·  \(Universe.offered.map { setPiece($0).word }.joined(separator: "  "))", "a whoosh and a hit per panel, a taste of each set piece")),
+    (16.5 + (pageTurns.first ?? pageArrive(3)) + pageTurn * 0.3, ("PANEL BY PANEL", "On through the page in reading order, each with its sound word popping as the camera arrives. Back on the whole page, it curls over like a comic book's onto the next: \(listed(comicPages.map { listed($0.map(\.u.title)) }.map { "(\($0))" })).", "the panel's name and sound word", "each universe's own sound")),
+    (16.5 + pageBack + 1.0, ("PICK YOURS", "The camera pulls back to the whole page, every universe's moment still playing in its panel.", "“ONE APP. \(universeCount()) UNIVERSES. PICK YOURS.”", "a ping")),
+    (afterChoose + 2.5, ("AT A GLANCE (THE CLAWD FILES)", "A case file opens on the status line-up: \(Cast.hero(FilesHero.foxClawder).name) working, a Grey thinking, the Flukeman's jumping NEEDS YOU, \(Cast.hero(FilesHero.skinnard).name) sat down napping.", "“All fun and games, and you still see everything.”", "blips, alert beeps")),
+    (afterChoose + 7.0, ("SUBAGENTS (STEVIE CLAWDBERG)", "The treasure map routes us in: \(Cast.hero(ClawdbergHero.mikeyWaltz).name) stands guard, the Goonies walk in with their jobs on their labels.", "“Every subagent gets to be a Goonie.”", "footsteps")),
+    (afterChoose + 12.3, ("WINDOW (CLAWD OF THE RINGS)", "The map of Middle-earth walks us to the window in \(Location.prancingPony.name): live cards tick, then a Codex card flips to NEEDS YOU.", "“Prefer a window? Step into \(Location.prancingPony.name).”", "a ping")),
+    (afterChoose + 18.2, ("RANDOM", "The window changes universe on its own, twice, each with that universe's transition, inside the window only: down the vortex into Doctor Clawd, then a Star Clawds wipe.", "RANDOM · EVERY 5 MIN  ·  “Can't decide? Random switches the whole window to a new universe every few minutes.”", "the transitions' own sounds")),
+    (afterChoose + 23.0, ("CLAWD ROYALE", "Halftone blue: every universe's menu bar emblem flies in from all round the frame and they slam together, KRA-KOOM!, and CLAWD ROYALE stamps in.", "KRA-KOOM!  ·  CLAWD ROYALE  ·  “ALL \(universeCount()) UNIVERSES. ONE SCENE.”", "whooshes, the big hit, a fanfare")),
+    (afterChoose + 26.4, ("THE CROSSOVER", "A FWIP! web burst into \(Location.cantina.name): \(Cast.hero(FilesHero.foxClawder).name) against a Dalick, Batclawd duelling Darth Vapor, \(Cast.hero(RingsHero.gandalf).name) holding off Thanoz' gauntlet; Spider-Clawd swings over everyone as E.Clawd's bike flies the other way.", "CLAWD ROYALE  ·  “Nobody asked who'd win. We're answering anyway.”  ·  “Settings → Universe → Clawd Royale. A new place every ten minutes.”", "sabers, blasters, web thwips, a whoosh")),
+    (afterChoose + 31.5, ("END CARD", "The icon lands over its dimmed panels, and every universe's emblem pops in under it.", "“Have fun. Keep track.”  ·  “\(universeCount(capital: true)) universes, or all of them at once · free for macOS · github.com/rodclemen/clawd-clash”", "a heroic cadence")),
+] }
+
 
 let blooperBeats: [(key: Double, beat: Beat)] = [
     (1.8, ("BLOOPERS", "A record scratch; a clapperboard slams down over red halftone: BLOOPERS, take 1, and snaps.", "BLOOPERS", "record scratch, slate clack, a goofier tune starts")),
-    (5.0, ("TAKE 3", "The Bulk wanders into the Mos Easy Cantina. The band freezes mid-note. Then CUT! from off screen and the slate snaps: TAKE 3.", "“…wrong set?”", "the band stops dead")),
-    (12.2, ("TAKE 7", "Darth Vapor turns dramatically to Spider-Clawd on the Doom Moon.", "“Spider-Clawd… I am your… landlord.”  ·  “Pretty sure it's an aunt thing.”", "a dramatic sting, then CUT!")),
-    (17.6, ("TAKE 12", "Batclawd lights the Night Beacon over the Doom Moon. Two Stormtroupers open fire on it and miss every shot.", "“You know it's a light, right?”", "blasters, all missing")),
-    (23.4, ("TAKE 15", "The Jester Card transition spins in and flips: Thanoz is on the back, on Titan. The Jester peeks into the shot with a ?.", "no text", "the card flip, a slide whistle")),
-    (28.4, ("TAKE 21", "Yodle calmly floats Thorr's hammer up off the floor. Thorr stares.", "“…”  ·  “Worthy, hmm. Heavy, it is not.”", "a shimmer, then CUT!")),
-    (33.2, ("TAKE 22", "The Millennial Falcon jumps to hyperspace in a blink; Superb-Man is left behind in the star streaks.", "“Hey! Wait up!”", "the jump, a whoosh")),
-    (38.3, ("THAT'S A WRAP", "Everyone crammed into one frame at Clawdvengers Tower, Deadpond leaning into the camera. Then the whole cast waves.", "“Separate universes, they said. Totally under control.”  ·  “CUT! THAT'S A WRAP!”", "a final sting and applause")),
+    (6.9, ("TAKE 7", "The TARDIS wheezes into the Mos Easy Cantina and Doctor Ten steps out, face to face with Darth Vapor. He ducks back in, the box tries to leave, sputters and stays put; he steps out again, sheepish.", "“Ah. Wrong universe.”  ·  “…Is that a phone box?”  ·  “…Handbrake.”", "the wheeze, a sputter and a clunk, then CUT!")),
+    (14.8, ("TAKE 12", "Batclawd lights the Night Beacon over the Doom Moon. Two Stormtroupers open fire on it and miss every shot.", "“You know it's a light, right?”", "blasters, all missing")),
+    (20.6, ("TAKE 15", "The Jester Card transition spins in and flips: Thanoz is on the back, on Titan. The Jester peeks into the shot with a ?.", "no text", "the card flip, a slide whistle")),
+    (25.6, ("TAKE 21", "Yodle calmly floats Thorr's hammer up off the floor. Thorr stares.", "“…”  ·  “Worthy, hmm. Heavy, it is not.”", "a shimmer, then CUT!")),
+    (30.4, ("TAKE 22", "The Millennial Falcon jumps to hyperspace in a blink; Superb-Man is left behind in the star streaks.", "“Hey! Wait up!”", "the jump, a whoosh")),
+    (34.6, ("THAT'S A WRAP", "Everyone crammed into one frame at Clawdvengers Tower, Doctor Ten, Rose Tiler and a Dalick among them. Spider-Clawd swings across upside down as Superb-Man flies the other way; Deadpond, Star-Laird and Harold the Duck moonwalk. Then the whole cast waves.", "“Separate universes, they said. Totally under control.”  ·  “CUT! THAT'S A WRAP!”", "web thwips, a whoosh, a final sting and applause")),
 ]
 
 func storyboard(_ title: String, _ beats: [(key: Double, beat: Beat)], shift: Double = 0) -> NSBitmapImageRep {
@@ -5727,6 +6138,9 @@ func transitionSound(_ m: Mix, _ s: Shot) {
         default:
             m.tone(t0 + d * 0.3, d * 0.5, 55, to: 40, wave: .saw, vol: 0.06, attack: 0.1, release: 0.3); m.boom(t0 + d * 0.55, vol: 0.18)
         }
+    case .trip(let trip):
+        if case .doctor(let dt) = trip, dt.kind == .dematerialise { m.wheeze(t0 + d * 0.05, cycles: Int(d / 0.62), vol: 0.1) }
+        else { m.whoosh(s.start, d, vol: 0.12) }
     }
 }
 
@@ -5739,15 +6153,15 @@ func promoSound(_ m: Mix) {
     let mw = start("meanwhile")
     for i in 0..<35 { m.type(mw + 0.3 + Double(i) / 35 * 1.6 + noise(i) * 0.02, vol: 0.18 + noise(i + 50) * 0.08) }
     m.ding(mw + 2.0)
-    m.tone(mw + 0.2, 3.0, midi(33), wave: .sine, vol: 0.05, attack: 1.0, release: 0.8)
+    m.tone(mw + 0.2, 2.8, midi(33), wave: .sine, vol: 0.05, attack: 1.0, release: 0.8)
 
-    // three worlds: all three fights at once, then CLAWD CLASH hits with an original fanfare
-    let w = start("worlds"), we = end("worlds")
-    m.hum(w, we - w, vol: 0.025)
-    for t in clashTimes(w, we) { m.clash(t, vol: 0.12) }
-    for t in shotTimes(w, we, offset: 0) { m.pew(t, vol: 0.07); m.clang(t + boltArrival * blasterPeriod, vol: 0.06) }
-    m.crackle(w, we - w, vol: 0.03)
-    let hit = w + 1.6
+    // the vortex: lightning, the title-sequence tune, everyone whooshing past, then CLAWD CLASH hits with an original fanfare
+    let w = start("worlds"), hit = w + introSlam
+    m.noise(w + 0.1, 0.25, vol: 0.22, cutoff: 0.9, decay: 0.06, highpass: true, seed: 10); m.boom(w + 0.15, vol: 0.3)
+    m.noise(w, hit - w, vol: 0.05, cutoff: 0.01, cutoffTo: 0.05, attack: 0.5, release: 0.2, seed: 3)
+    doctorTune(m, from: hit - 8.0, bars: 5)
+    for i in introTumblers.indices { let (s0, fly) = introTiming(i); m.whoosh(w + s0 + fly * 0.85, 0.9, vol: 0.11) }
+    m.tone(hit - 1.1, 1.1, 200, to: 2400, wave: .saw, vol: 0.05, attack: 0.5, release: 0.05)
     m.boom(hit, vol: 0.6); m.noise(hit, 1.8, vol: 0.13, cutoff: 0.9, decay: 0.55, highpass: true, seed: 3)
     for n in [48, 55, 60, 64, 67] { m.tone(hit, 1.4, midi(n), wave: .saw, vol: 0.05, release: 0.6, decay: 0.8) }
     for (s, d, n) in [(0.3, 0.25, 67), (0.6, 0.25, 72), (0.9, 0.6, 76), (1.6, 0.25, 74), (1.9, 0.25, 72), (2.2, 1.2, 79)] as [(Double, Double, Int)] {
@@ -5755,76 +6169,32 @@ func promoSound(_ m: Mix) {
         m.tone(hit + s, d, midi(n), wave: .saw, vol: 0.045, release: 0.08)
     }
 
-    // the groove: under the hook and the comic page, then again from the features to the end card
-    let g0 = start("hook"), beat = 0.5, bar = 2.0
-    let roots = [45, 41, 48, 43], triads = [[69, 72, 76], [65, 69, 72], [67, 72, 76], [67, 71, 74]]
-    let melodyA: [[(Int, Double)]] = [[(76, 1), (81, 1), (84, 0.5), (83, 0.5), (81, 1)], [(84, 1), (81, 1), (77, 0.5), (79, 0.5), (81, 1)],
-                                      [(79, 1), (76, 0.5), (79, 0.5), (84, 1), (83, 1)], [(86, 1), (83, 1), (79, 2)]]
-    let melodyB: [[(Int, Double)]] = [[(81, 0.5), (84, 0.5), (88, 1), (86, 0.5), (84, 0.5), (83, 1)], [(81, 1.5), (84, 0.5), (81, 1), (77, 1)],
-                                      [(79, 0.5), (81, 0.5), (79, 0.5), (76, 0.5), (79, 1), (84, 1)], [(83, 1), (86, 1), (91, 2)]]
-    let quiet = (start("showStarClaws"), start("status"))
-    let outer = m, gm = Mix(seconds: duration)
-    do {
-    let m = gm                                         // the groove goes on its own track, faded round the showcases
-    let bars = Int(((start("endcard") - g0) / bar).rounded())
-    for b in 0..<bars {
-        let t0 = g0 + Double(b) * bar, c = b % 4, full = b >= 2
-        if t0 > quiet.0 + 1.5 && t0 + bar < quiet.1 - 1.0 { continue }
-        for e in 0..<8 {
-            m.tone(t0 + Double(e) * beat / 2, beat / 2 * 0.9, midi(roots[c] - 12 + (e % 2) * 12), wave: .square(0.25), vol: full ? 0.075 : 0.05, release: 0.02)
-            m.hat(t0 + Double(e) * beat / 2, vol: e % 2 == 1 ? 0.04 : 0.025)
-        }
-        m.kick(t0)
-        if full {
-            m.kick(t0 + 2 * beat); m.kick(t0 + 2.5 * beat, vol: 0.18); m.snare(t0 + beat); m.snare(t0 + 3 * beat)
-            for s in 0..<16 { m.tone(t0 + Double(s) * beat / 4, beat / 4 * 0.8, midi(triads[c][s % 3] - 12 + (s / 3 % 2) * 12), wave: .triangle, vol: 0.03, release: 0.02) }
-            var tt = t0
-            for (n, d) in ((b - 2) / 4 % 2 == 0 ? melodyA : melodyB)[c] { m.tone(tt, d * beat * 0.92, midi(n), wave: .square(0.5), vol: 0.055, release: 0.04, vibrato: 0.004); tt += d * beat }
-        }
-        if b == bars - 1 { for k in 0..<8 { m.snare(t0 + 2 * beat + Double(k) * beat / 4, vol: 0.06 + Double(k) * 0.01) } }
-    }
-    }
-    for i in gm.buf.indices {                           // out over the wipe into Star Clawds, back in under the halftone print
-        let t = Double(i) / sampleRate
-        let g = t < quiet.0 ? clamp((quiet.0 + 0.9 - t) / 1.6) : clamp((t - (quiet.1 - 1.0)) / 1.2)
-        if g > 0 { outer.buf[i] += gm.buf[i] * Float(g) }
-    }
-    outer.noise(quiet.0 - 0.2, 2.2, vol: 0.12, cutoff: 0.9, decay: 0.7, highpass: true, seed: 33)   // a crash on the way in
-    outer.boom(quiet.0 - 0.2, vol: 0.2)
+    // the groove, from the hook to the end card
+    groove(m, from: start("hook"), to: start("endcard"), fadeIn: 1.2)
     let hook = start("hook")
     for i in 0..<26 { m.click(hook + 0.2 + Double(i) * 0.13 + noise(i) * 0.06) }
 
-    // the comic page: three panel slams and the picker's clicks
-    let pk = start("pick")
-    for (i, at) in [0.3, 1.2, 2.1].enumerated() { m.boom(pk + at, vol: 0.22); m.snare(pk + at, vol: 0.1); m.pop(pk + at + 0.05, step: i) }
-    for at in [0.3, 1.2, 2.1, 3.1] { m.click(pk + at + 0.15, vol: 0.12) }
-
-    // Star Clawds: a dark pulse, the turbolasers and the rumble as the big ship passes (its scene runs 1.4 s in)
-    let sw = start("showStarClaws"), swe = end("showStarClaws") + 0.6, so = sw - 1.4
-    for i in 0..<Int((swe - sw + 1.0) / 0.25) { m.tone(sw - 1.0 + Double(i) * 0.25, 0.22, midi(i % 8 == 7 ? 37 : 36), wave: .square(0.25), vol: 0.05 + 0.05 * min(1, Double(i) / 20), release: 0.04) }
-    for (at, chord) in [(0.0, [48, 51, 55]), (2.0, [44, 48, 51]), (4.0, [46, 50, 53]), (6.0, [48, 51, 55])] {
-        for n in chord { m.tone(sw + at, 1.8, midi(n), wave: .saw, vol: 0.035, attack: 0.05, release: 0.6) }
+    // choose your universe: running feet, the page slamming down, and for every panel a whoosh as the camera moves, a hit
+    // as it lands and a taste of its big moment, then a ping for the line
+    let chs = start("choose")
+    for k in 0..<26 { m.step(chs + 0.2 + Double(k) * 0.08, vol: 0.05 + noise(k) * 0.03) }
+    m.boom(chs + 0.2, vol: 0.18); m.snare(chs + 0.2, vol: 0.1)
+    m.whoosh(chs + pageDrop + 0.1, 0.4, vol: 0.14); m.boom(chs + pageDrop + 0.35, vol: 0.3); m.snare(chs + pageDrop + 0.35, vol: 0.12)
+    for (i, p) in comicPages.flatMap({ $0 }).enumerated() {
+        let at = chs + pageArrive(i)
+        m.whoosh(at - pageMove / 2, pageMove + 0.1, vol: 0.12); m.boom(at, vol: 0.18); m.pop(at + 0.05, step: i % 4)
+        switch p.u {
+        case .starWars: for k in 0..<5 { m.turbolaser(at + 0.1 + Double(k) * 0.18, pitch: k % 2 == 0 ? 1 : 0.8, vol: 0.05) }
+        case .marvel: m.roar(at + 0.1, 1.0, vol: 0.16)
+        case .dc: m.boom(at + 0.2, vol: 0.2); m.roar(at + 0.4, 0.8, vol: 0.14)
+        case .doctor: m.wheeze(at, cycles: 2, vol: 0.08)
+        case .clawdFiles: m.tone(at, 1.0, 220, to: 330, wave: .sine, vol: 0.05, attack: 0.3, release: 0.3)
+        case .clawdberg: m.tone(at, 0.4, 300, to: 1800, wave: .saw, vol: 0.04, release: 0.05); m.boom(at + 0.45, vol: 0.2)
+        case .middleEarth: for k in 0..<4 { m.kick(at + Double(k) * 0.24, vol: 0.25) }
+        }
     }
-    for i in 0..<40 { let b = so + 1.3 + Double(i) * 0.17; if b > sw && b < swe { m.turbolaser(b, pitch: noise(i * 7) > 0.5 ? 1 : 0.8, vol: 0.06) } }
-    m.boom(so + 3.0, vol: 0.35)
-    m.noise(so + 2.6, 5.0, vol: 0.28, cutoff: 0.004, cutoffTo: 0.03, attack: 2.4, release: 1.5, seed: 5)
-    m.tone(so + 2.6, 5.0, 41, wave: .sine, vol: 0.16, attack: 2.4, release: 1.5)
-
-    // Marvelous Clawds: the portal humming, the space whale's roars, Iron Clawd's thrusters and repulsors (2.2 s in)
-    let mv = start("showMarvelous Clawds"), mo = mv - 2.2
-    m.tone(mv, 7.6, 110, wave: .sine, vol: 0.05, attack: 0.6, release: 1.2, vibrato: 0.03)
-    m.roar(mo + 2.6, 1.6, vol: 0.22); m.roar(mo + 5.6, 2.2, vol: 0.3)
-    m.noise(mo + 3.0, 6.0, vol: 0.28, cutoff: 0.004, cutoffTo: 0.03, attack: 2.5, release: 1.5, seed: 5)
-    m.noise(mo + 4.2, 4.0, vol: 0.1, cutoff: 0.05, cutoffTo: 0.2, attack: 0.6, release: 1.2, seed: 12)
-    for i in 0..<10 { m.repulsor(mo + 4.9 + Double(i) * 0.3, vol: 0.08) }
-
-    // Detective Clawds: the kaiju's footfalls, two roars, Superb-Man's take-off and heat vision (0.4 s in)
-    let dc = start("showDetective"), dco = dc - 0.4
-    var step = 0.8
-    while step < 6.6 { if dco + step > dc { m.boom(dco + step, vol: 0.14 + (step / 6.6) * 0.22) }; step += 0.9 }
-    m.roar(dco + 2.8, 1.6, vol: 0.26); m.roar(dco + 6.0, 1.8, vol: 0.32)
-    m.whoosh(dco + 4.4, 1.4, vol: 0.18)
-    m.crackle(dco + 5.0, 3.0, vol: 0.06)
+    for at in pageTurns { m.flip(chs + at + 0.1, vol: 0.14); m.whoosh(chs + at + pageTurn / 2, pageTurn, vol: 0.1) }
+    m.ping(chs + pageBack + 0.3)
 
     // the features
     let st = start("status")
@@ -5834,10 +6204,32 @@ func promoSound(_ m: Mix) {
     for k in 0..<14 { m.step(ag + Double(k) * 0.125, vol: 0.06) }
     m.bark(ag + 1.4)
     let wi = start("window")
-    m.hum(wi, 2.6, vol: 0.02)
-    for t in clashTimes(wi, wi + 2.6) { m.clash(t, vol: 0.08) }
+    m.hum(wi, 2.5, vol: 0.02)
     for k in [0.9, 1.8] { m.click(wi + k, vol: 0.06) }
-    m.ping(wi + 2.6)
+    m.ping(wi + 2.5)
+
+    // Clawd Royale: the emblems fly in and slam, the title stamps down to a fanfare, then everyone at once
+    let ro = start("royale"), slam = ro + royaleSlam
+    var r = ro
+    while r < slam - 0.03 { m.snare(r, vol: 0.03 + 0.1 * (r - ro) / royaleSlam); r += 1.0 / 20 }
+    for k in Universe.offered.indices { m.whoosh(ro + 0.3 + Double(k) * 0.03, 0.6, vol: 0.09) }
+    m.boom(slam, vol: 0.65); m.noise(slam, 1.8, vol: 0.14, cutoff: 0.9, decay: 0.55, highpass: true, seed: 3)
+    m.snare(slam, vol: 0.2); m.kick(slam, vol: 0.4)
+    for n in [48, 55, 60, 64, 67] { m.tone(slam, 1.4, midi(n), wave: .saw, vol: 0.05, release: 0.6, decay: 0.8) }
+    let stamp = ro + royaleStamp
+    m.clunk(stamp, vol: 0.3); m.boom(stamp, vol: 0.3)
+    for (s, d, n) in [(0.0, 0.22, 67), (0.25, 0.22, 72), (0.5, 0.5, 76), (1.05, 0.22, 74), (1.3, 0.22, 76), (1.55, 0.9, 79)] as [(Double, Double, Int)] {
+        m.tone(stamp + s, d, midi(n + 12), wave: .square(0.5), vol: 0.07, release: 0.08, vibrato: 0.006)
+        m.tone(stamp + s, d, midi(n), wave: .saw, vol: 0.045, release: 0.08)
+    }
+    let cr = start("crossover"), ce = end("crossover")
+    m.hum(cr, ce - cr, vol: 0.022)
+    for t in clashTimes(cr, ce) { m.clash(t, vol: 0.1) }
+    for t in shotTimes(cr, ce, offset: 0) { m.pew(t, vol: 0.07) }
+    for t in shotTimes(cr, ce, offset: blasterPeriod / 2) { m.pew(t, vol: 0.05) }
+    for k in 0..<3 { m.thwip(cr + 0.7 + Double(k) * swingArc, vol: 0.12) }
+    m.crackle(cr + 0.3, ce - cr - 0.3, vol: 0.03)
+    m.whoosh(cr + 2.4, 2.0, vol: 0.1)                                             // the bike going over
     for s in shots { transitionSound(m, s) }
 
     // end card: a heroic cadence and the icon landing
@@ -5848,6 +6240,7 @@ func promoSound(_ m: Mix) {
         m.tone(ec + s, d, midi(chord[0] - 24), wave: .sine, vol: 0.2, release: d > 1 ? 1.8 : 0.1)
     }
     m.boom(ec + 0.3, vol: 0.45)
+    for k in 0..<Universe.offered.count { m.pop(ec + 0.5 + Double(k) * 0.08, step: k % 4) }
 }
 
 /// The blooper reel's goofy tune and gags.
@@ -5855,8 +6248,8 @@ func bloopersSound(_ m: Mix) {
     let cl = start("clapper")
     m.scratch(cl + 0.05)
     m.clack(cl + 1.0, vol: 0.4)
-    // an oom-pah tune in F, kazoo lead: from the slate to the end, quiet under the takes, stopping dead in take 3
-    let beat = 60.0 / 140, t0 = cl + 1.1, stopA = start("take3") + 1.3, stopB = start("take3") + 4.3
+    // an oom-pah tune in F, kazoo lead: from the slate to the end, quiet under the takes
+    let beat = 60.0 / 140, t0 = cl + 1.1, stopA = -1.0, stopB = -1.0
     let roots = [41, 46, 48, 41], chords = [[65, 69, 72], [65, 70, 74], [64, 67, 72], [65, 69, 72]]
     let tune: [(Int, Double)] = [(72, 1), (74, 0.5), (76, 0.5), (77, 1), (72, 1), (74, 0.5), (72, 0.5), (70, 1), (69, 2),
                                  (69, 1), (70, 0.5), (72, 0.5), (74, 1), (70, 1), (72, 0.5), (70, 0.5), (69, 1), (65, 2)]
@@ -5876,17 +6269,20 @@ func bloopersSound(_ m: Mix) {
         if !(lt > stopA && lt < stopB) { m.tone(lt, d * beat * 0.9, midi(n), wave: .saw, vol: 0.035, attack: 0.02, release: 0.05, vibrato: 0.02) }
         lt += d * beat; i += 1
     }
-    m.recordStop(stopA)
     // every take ends on CUT! and a slate
-    for (name, at) in [("take3", 3.9), ("take7", 5.8), ("take12", 4.0), ("take15", 3.4), ("take21", 5.4), ("take22", 4.0)] {
+    for (name, at) in [("take7", 8.2), ("take12", 4.0), ("take15", 3.4), ("take21", 5.4), ("take22", 4.0)] {
         let s = start(name)
         m.tone(s + at, 0.18, 300, to: 220, wave: .square(0.5), vol: 0.08, release: 0.05)   // a honk for the CUT!
         m.clack(s + at + 0.7)
     }
-    m.step(start("take3") + 0.3, vol: 0.12); m.step(start("take3") + 0.7, vol: 0.12); m.step(start("take3") + 1.1, vol: 0.12)
     let t7 = start("take7")
-    for n in [43, 46, 50] { m.tone(t7 + 0.6, 0.9, midi(n), wave: .saw, vol: 0.05, release: 0.4) }               // the dramatic turn
-    m.wahWah(t7 + 3.7)
+    m.wheeze(t7, cycles: 3, vol: 0.14)
+    m.clunk(t7 + 1.9, vol: 0.1); m.clunk(t7 + 5.0, vol: 0.1); m.clunk(t7 + 7.0, vol: 0.1)
+    for k in 0..<4 { m.step(t7 + 2.15 + Double(k) * 0.15, vol: 0.08); m.step(t7 + 4.65 + Double(k) * 0.12, vol: 0.08) }
+    for n in [43, 46, 50] { m.tone(t7 + 1.3, 0.9, midi(n), wave: .saw, vol: 0.05, release: 0.4) }               // Vapor turns
+    m.wheeze(t7 + 5.4, cycles: 2, vol: 0.12)                                                                     // it tries to go…
+    m.tone(t7 + 6.6, 0.3, 160, to: 60, wave: .saw, vol: 0.08, release: 0.1); m.clunk(t7 + 6.8, vol: 0.25)       // …and can't
+    m.wahWah(t7 + 7.7)
     let t12 = start("take12")
     m.clunk(t12)
     for i in 0..<12 { m.pew(t12 + 0.5 + Double(i) * 0.22, vol: 0.07) }
@@ -5896,9 +6292,11 @@ func bloopersSound(_ m: Mix) {
     let t22 = start("take22")
     m.tone(t22 + 0.6, 0.4, 200, to: 2400, wave: .saw, vol: 0.06, release: 0.1); m.boom(t22 + 0.95, vol: 0.3); m.whoosh(t22 + 1.6, 1.2, vol: 0.12)
     let wr = start("wrap")
-    for n in [53, 57, 60, 65, 69] { m.tone(wr + 4.4, 1.8, midi(n), wave: .saw, vol: 0.045, release: 1.0) }
-    m.boom(wr + 4.4, vol: 0.35)
-    m.applause(wr + 4.5, 2.6)
+    for k in 0..<4 { m.thwip(wr + 0.3 + Double(k) * 0.6, vol: 0.1) }
+    m.whoosh(wr + 1.7, 1.6, vol: 0.14)
+    for n in [53, 57, 60, 65, 69] { m.tone(wr + 5.6, 1.8, midi(n), wave: .saw, vol: 0.045, release: 1.0) }
+    m.boom(wr + 5.6, vol: 0.35)
+    m.applause(wr + 5.7, 2.6)
 }
 
 func soundtrack() -> [Float] {
@@ -5935,7 +6333,21 @@ func write720p(from input: String, to output: String) {
     let out = URL(fileURLWithPath: output); try? FileManager.default.removeItem(at: out)
     try? FileManager.default.createDirectory(at: out.deletingLastPathComponent(), withIntermediateDirectories: true)
     let seconds = asset.duration.seconds
-    let bitrate = Int(min(1_600_000, 9_500_000 * 8 / seconds - 128_000))
+    // long videos overshoot the average a little, so they aim lower; busy ones (halftones, fine pixel detail) can still
+    // overshoot, so a copy over 9.7 MB is made again at a bitrate cut by as much as it went over
+    var bitrate = Int(min(1_600_000, (seconds > 90 ? 8_900_000 : 9_500_000) * 8 / seconds - 128_000))
+    for attempt in 0..<3 {
+        let size = encode720p(asset, to: out, bitrate: bitrate)
+        print(String(format: "wrote %@ (%.1f MB at %d kb/s)", output, Double(size) / 1_000_000, bitrate / 1000))
+        if size <= 9_700_000 || attempt == 2 { return }
+        let audio = 128_000.0 * seconds / 8, target = 9_300_000.0
+        bitrate = Int(Double(bitrate) * pow((target - audio) / (Double(size) - audio), 1.6))   // it shrinks less than the bitrate does
+    }
+}
+
+/// One 1280×720 H.264 encode of `asset` at `bitrate`, with its sound as 128 kb/s AAC; the file's size in bytes.
+func encode720p(_ asset: AVURLAsset, to out: URL, bitrate: Int) -> Int {
+    try? FileManager.default.removeItem(at: out)
     let reader = try! AVAssetReader(asset: asset)
     let vt = asset.tracks(withMediaType: .video)[0], at = asset.tracks(withMediaType: .audio)[0]
     let vOut = AVAssetReaderTrackOutput(track: vt, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA])
@@ -5960,8 +6372,7 @@ func write720p(from input: String, to output: String) {
     group.wait()
     let done = DispatchSemaphore(value: 0); writer.finishWriting { done.signal() }; done.wait()
     if writer.status != .completed { print("720p failed: \(String(describing: writer.error))"); exit(1) }
-    let size = (try? FileManager.default.attributesOfItem(atPath: output)[.size] as? Int) ?? 0
-    print(String(format: "wrote %@ (%.1f MB at %d kb/s)", output, Double(size) / 1_000_000, bitrate / 1000))
+    return (try? FileManager.default.attributesOfItem(atPath: out.path)[.size] as? Int) ?? 0
 }
 
 /// Puts the soundtrack under the silent video: WAV → AAC with afconvert, then a passthrough export.
