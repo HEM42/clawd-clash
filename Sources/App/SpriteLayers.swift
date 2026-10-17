@@ -57,10 +57,11 @@ final class SpriteLayers {
                 let k = pixelsPerPoint
                 r = CGRect(x: (r.minX * k).rounded() / k, y: (r.minY * k).rounded() / k,
                            width: (r.width * k).rounded(.up) / k, height: (r.height * k).rounded(.up) / k)
-                layer.contents = textImage(item, size: r.size, scale: pixelsPerPoint)
+                let image = textImage(item, size: r.size, scale: pixelsPerPoint)
+                if (layer.contents as AnyObject?) !== image { layer.contents = image }
                 layer.contentsScale = pixelsPerPoint
-            } else {
-                layer.contents = item.image
+            } else if (layer.contents as AnyObject?) !== item.image {
+                layer.contents = item.image   // a layer already showing this very image is left alone
             }
             layer.bounds = CGRect(origin: .zero, size: r.size)
             layer.position = CGPoint(x: r.midX, y: r.midY)
@@ -84,7 +85,7 @@ final class SpriteLayers {
         let w = Int((size.width * scale).rounded(.up)), h = Int((size.height * scale).rounded(.up))
         guard w > 0, h > 0, let space = CGColorSpace(name: CGColorSpace.sRGB),
               let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: space,
-                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+                                  bitmapInfo: layerBitmapInfo) else { return nil }
         ctx.scaleBy(x: scale, y: scale)
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(cgContext: ctx, flipped: false)

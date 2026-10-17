@@ -421,7 +421,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         let k = (Date().timeIntervalSince1970 - s.start) / (s.comic?.duration ?? Wipe.duration)
         guard k < 1, let new = snapshot(),
               let ctx = CGContext(data: nil, width: new.width, height: new.height, bitsPerComponent: 8, bytesPerRow: 0,
-                                  space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+                                  space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: layerBitmapInfo)
         else {
             switching = nil
             switchTimer?.invalidate(); switchTimer = nil
@@ -762,7 +762,7 @@ final class SceneView: NSView {
             } else if let comic = w.comic, let new = room.flatMap({ Wipe.flatten([$0.image] + (liveNow.map { [$0] } ?? [])) }),
                       let ctx = CGContext(data: nil, width: w.old.width * 4, height: w.old.height * 4, bitsPerComponent: 8,
                                           bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
-                                          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) {
+                                          bitmapInfo: layerBitmapInfo) {
                 // Four pixels to every art pixel, so the lettering stays sharp.
                 comic.draw(ctx, old: w.old, new: new, k: k, in: CGRect(x: 0, y: 0, width: ctx.width, height: ctx.height))
                 if let img = ctx.makeImage() {
@@ -770,7 +770,7 @@ final class SceneView: NSView {
                 }
             } else if w.comic == nil, let ctx = CGContext(data: nil, width: w.old.width, height: w.old.height, bitsPerComponent: 8, bytesPerRow: 0,
                                           space: CGColorSpace(name: CGColorSpace.sRGB)!,
-                                          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) {
+                                          bitmapInfo: layerBitmapInfo) {
                 let r = CGRect(x: 0, y: 0, width: w.old.width, height: w.old.height)
                 ctx.addPath(Wipe.remaining(k, clock: w.clock, in: r)); ctx.clip()
                 ctx.draw(w.old, in: r)

@@ -271,15 +271,32 @@ final class PixelCanvas {
         ox = 0; oy = 0; baseY = 0
     }
 
+    /// The canvas as an image, in the byte order Core Animation draws from directly (BGRA: premultiplied alpha first,
+    /// 32-bit little-endian). Handed RGBA, it converted every new image on the main thread before showing it, and
+    /// the scene's moving layer is a new image every frame. Same colour space, same values: only the order changes.
     func makeImage() -> CGImage? {
-        let data = Data(buf) as CFData
-        guard let provider = CGDataProvider(data: data) else { return nil }
+        var data = Data(count: buf.count)
+        data.withUnsafeMutableBytes { dst in
+            buf.withUnsafeBytes { src in
+                let s = src.bindMemory(to: UInt32.self), d = dst.bindMemory(to: UInt32.self)
+                for i in 0..<s.count {   // R and B trade places; G and A stay
+                    let v = s[i]
+                    d[i] = (v & 0xFF00_FF00) | (v & 0xFF) << 16 | (v >> 16) & 0xFF
+                }
+            }
+        }
+        guard let provider = CGDataProvider(data: data as CFData) else { return nil }
         return CGImage(width: w, height: h, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: w * 4,
-                       space: CGColorSpaceCreateDeviceRGB(),
-                       bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+                       space: Self.deviceRGB,
+                       bitmapInfo: CGBitmapInfo(rawValue: layerBitmapInfo),
                        provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)
     }
+    private static let deviceRGB = CGColorSpaceCreateDeviceRGB()
 }
+
+/// The pixel layout Core Animation shows without converting (BGRA: premultiplied alpha first, 32-bit little-endian),
+/// for any image drawn to go on a layer. Same colours as RGBA; only the byte order differs.
+let layerBitmapInfo = CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
 
 // Helpers the universes' art shares (each art file used to carry its own copy).
 

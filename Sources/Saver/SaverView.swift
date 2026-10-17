@@ -368,7 +368,7 @@ final class ClawdClashSaverView: ScreenSaverView {
             } else if let room, let new = Wipe.flatten([room.image] + (liveLayer.contents.map { [$0 as! CGImage] } ?? [])),
                       let ctx = CGContext(data: nil, width: Int(picture.width), height: Int(picture.height), bitsPerComponent: 8,
                                           bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
-                                          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) {
+                                          bitmapInfo: layerBitmapInfo) {
                 // Drawn a screen point to a pixel: the art scaled up crisp, the lettering sharp enough.
                 w.trip.draw(ctx, old: w.old, new: new, k: k, in: CGRect(x: 0, y: 0, width: ctx.width, height: ctx.height))
                 comicLayer.contents = ctx.makeImage()
@@ -1080,7 +1080,7 @@ final class ClawdClashSaverView: ScreenSaverView {
         let k = scale
         let w = max(1, Int((size.width * k).rounded(.up))), h = max(1, Int((size.height * k).rounded(.up)))
         let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
-                            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+                            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: layerBitmapInfo)!
         ctx.scaleBy(x: k, y: k)
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(cgContext: ctx, flipped: false)

@@ -98,7 +98,7 @@ enum Wipe {
         let w = first.width, h = first.height
         guard let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
                                   space: CGColorSpace(name: CGColorSpace.sRGB)!,
-                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+                                  bitmapInfo: layerBitmapInfo) else { return nil }
         for img in images { ctx.draw(img, in: CGRect(x: 0, y: 0, width: w, height: h)) }
         return ctx.makeImage()
     }
