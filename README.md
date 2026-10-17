@@ -17,7 +17,7 @@
   <img src="https://img.shields.io/badge/free-to%20use-brightgreen" alt="Free to use">
 </p>
 
-https://github.com/user-attachments/assets/77151f5a-a447-49c4-865e-68bba183a61f
+https://github.com/user-attachments/assets/a64b3b6d-26ff-46ba-b4a1-8e15a8941ea5
 
 <p align="center"><sub>Full 1080p version: <a href="promo/clawd-clash-promo.mp4">promo/clawd-clash-promo.mp4</a></sub></p>
 
