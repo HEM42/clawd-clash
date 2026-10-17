@@ -45,8 +45,11 @@ struct Cast: Hashable {
 
     /// Draw this character. `asSession` = it's a whole Claude/Codex session (it has moods: idle, thinking,
     /// waiting…); agents are always at work. `airborne`: a flyer on its way somewhere.
+    /// `habits: false` draws it at rest whatever the clock says: a portrait or an outline that must not catch it in
+    /// the middle of an idle habit or its signature (Doyl's demon face, the First Evil's borrowed faces).
     func draw(_ c: PixelCanvas, t: Double, mode: VaderMode, walking: Bool, role: FightRole,
-              urgent: Bool = false, sitting: Bool = false, asSession: Bool, airborne: Bool = false, aloft: Bool = false) {
+              urgent: Bool = false, sitting: Bool = false, asSession: Bool, airborne: Bool = false, aloft: Bool = false,
+              habits: Bool = true) {
         drawnSignature = nil
         // Solo practice (`Drills.swift`): a session working with nobody to fight.
         if asSession, mode == .working, !walking, !sitting, case .none = role, let d = drill(at: t) {
@@ -54,7 +57,7 @@ struct Cast: Hashable {
             return
         }
         // Idle habits (`Habits.swift`): only an idle session standing about, not fighting, walking or sitting.
-        var idle = asSession && mode == .idle && !walking && !sitting
+        var idle = habits && asSession && mode == .idle && !walking && !sitting
         switch role { case .none, .rest: break; default: idle = false }
         let play = idle ? habit(at: t) : nil
         idleHabit = play
@@ -83,7 +86,7 @@ extension Cast {
     func drawnProfile() -> [Int] {
         if let hit = Self.profiles[id] { return hit }
         let c = PixelCanvas(Sprite.width, Sprite.height)
-        draw(c, t: 0, mode: .idle, walking: false, role: .none, asSession: true)
+        draw(c, t: 0, mode: .idle, walking: false, role: .none, asSession: true, habits: false)
         let mid = Int(Sprite.bodyCenterX)
         let profile = (0..<Sprite.width).map { x -> Int in
             guard abs(x - mid) <= 14 else { return Sprite.height }

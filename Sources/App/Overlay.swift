@@ -2382,14 +2382,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 if a.type != "general-purpose" && a.type != "playground" && a.type != "demo" { detail.append(a.type) }
                 return CardModel.Agent(name: who.name, task: a.label.isEmpty ? "Agent" : a.label,
                                        detail: detail.joined(separator: "  ·  "),
-                                       portrait: portrait("a\(who.id)", assistant: s.group) { who.draw($0, t: 0.3, mode: .idle, walking: false, role: .rest, asSession: true) })
+                                       portrait: portrait("a\(who.id)", assistant: s.group) { who.draw($0, t: 0.3, mode: .idle, walking: false, role: .rest, asSession: true, habits: false) })
             }
             cards.append(CardModel(
                 // which AI it is shows in the section header above, so the card only names the character
                 villain: leader.name, project: s.project, accent: Accents.color(for: s.project) ?? NSColor(white: 0.5, alpha: 1),
                 status: status, statusColor: color, focused: s.pid != nil && s.pid == focusedPid,
                 lines: lines, agents: agents,
-                portrait: portrait("l\(leader.id)", assistant: s.group) { leader.draw($0, t: 0.1, mode: .idle, walking: false, role: .none, asSession: true) },
+                portrait: portrait("l\(leader.id)", assistant: s.group) { leader.draw($0, t: 0.1, mode: .idle, walking: false, role: .none, asSession: true, habits: false) },
                 pid: s.pid))
             cards[cards.count - 1].id = s.id
             if s.pid != nil { cards[cards.count - 1].remote = s.remote ?? "Local" }

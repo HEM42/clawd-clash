@@ -1130,10 +1130,10 @@ final class CardsView: NSView {
                 namePill = namePill.map { $0.union(rp) } ?? rp
                 px = rp.minX - 6
             }
-            // The card you're in: a faint bar in the focus yellow behind its title, reaching a little past it.
+            // The card you're in: a faint violet bar behind its title, reaching a little past it.
             if c.focused {
                 let w = min(header.size().width, chip.minX - tx - 8)
-                Self.focusYellow.withAlphaComponent(0.13).setFill()
+                NSColor(srgbRed: 0.62, green: 0.46, blue: 1, alpha: 0.16).setFill()
                 NSBezierPath(roundedRect: NSRect(x: tx - 6, y: ty - 1, width: w + 20, height: 20), xRadius: 5, yRadius: 5).fill()
             }
             header.draw(with: NSRect(x: tx, y: ty, width: chip.minX - tx - 8, height: 20),
