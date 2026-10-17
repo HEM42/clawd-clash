@@ -82,7 +82,19 @@ You run Claude Code in three terminals. One is thinking, one is waiting for your
 
 ## The universes
 
-Choose in **Settings… → Universe**: **Star Clawds**, **Marvelous Clawds**, **Detective Clawds**, **Doctor Clawd**, **The Clawd Files**, **Stevie Clawdberg**, **Clawd of the Rings**, **Clawd Royale** or **Random**. Switching recasts everyone on screen (each character becomes the one in the same place in the other cast, on the same side), moves the scene to one of the new universe's places, and changes the menu bar icon (Darth Vapor's helmet, Captain Americlawd's shield, Superb-Man's C-shield, the police box, a flying saucer, the bike crossing the moon or the One Ring). In the window, the whole window changes over with the new universe's transition. **Random** switches on its own every 1, 5, 10, 15, 30 or 60 minutes. **Clawd Royale** throws every cast into one scene, heroes against villains, each character as itself, in a random place from any universe every ten minutes (the Location menu is greyed out meanwhile); the menu bar icon is the universe of the place. The screen saver follows it with "The same as Clawd Clash", or picks it in its own Options.
+Pick one in **Settings… → Universe**:
+
+- **One universe:** Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd, The Clawd Files, Stevie Clawdberg or Clawd of the Rings.
+- **Random:** a different universe on its own every 1, 5, 10, 15, 30 or 60 minutes.
+- **Clawd Royale:** every cast in one scene, heroes against villains, each character as itself. The place is a random one from any universe and changes every ten minutes (the Location menu is greyed out meanwhile).
+
+**What switching does:**
+
+- Everyone on screen is recast: each character becomes the one in the same place in the other cast, on the same side.
+- The scene moves to one of the new universe's places. In the window, the whole window changes over with the new universe's own transition.
+- The menu bar icon changes: Darth Vapor's helmet, Captain Americlawd's shield, Superb-Man's C-shield, the police box, a flying saucer, the bike crossing the moon or the One Ring. In Clawd Royale it shows the universe of the place you're in.
+
+The screen saver follows your pick with "The same as Clawd Clash", or has a universe of its own in its Options.
 
 ### Star Clawds
 
@@ -216,7 +228,21 @@ It opens in a window by default (switch to the desktop from the menu): the whole
   <img src="docs/window-cantina.png" alt="Window mode in the Mos Easy Cantina: Han Yolo with Luke Skyclawder and Obi-Juan Kanoobie, Greedy-O on Codex" width="760">
 </p>
 
-**The screen saver** (Settings… → Screen Saver → Install…) shows the place full screen with the crew fighting across its floor, a card per session, name tags, a clock and a crawl of what happened lately, and moves somewhere new every 10 minutes: with a Star Clawds wipe, or in Marvelous Clawds with a comic-book transition (halftone dots, a SNIKT!, PHOOMF!, FWIP! or KAPOW! for whoever's on screen, panels, speed lines, "MEANWHILE…", and with Deadpond about, Deadpond peeling the page off the screen or surfing past on a chimichanga), or in Detective Clawds with one of fifteen of its own (the Flare racing through the Speed Source, the Night Beacon, Superb-Man bursting through the page, the Lariat of Truth, a Jester card, Darksyde's Omicron Beams and more), or in Doctor Clawd with one of ten built on the show's own travels (the TARDIS dematerialising, each era's title sequence from the 1963 howlaround to today's neon vortex, a regeneration, and with an Angle or a Dalick about, Blink or the view through a Dalick's eyestalk), or in The Clawd Files with one of ten of its own (the Black Oil, a blinking eye, a classified case file, a TV losing sync, a UFO's beam, flashlights in the dark, cigarette smoke, a spy satellite, a paranormal warp and, now and then, the whole opening titles), after which the new place types itself in at the corner, or in Stevie Clawdberg with one of ten from the films (the bike crossing the full moon, the DeLorean at 88 mph, a red line across the map, the fin, a camera flash, the park gates, the five tones, the rolling boulder, pixie dust and One-Eyed Willy's doubloon), or in Clawd of the Rings with one of nine (the Eye opening, a dotted line walking across the map, the Red Book's page turning, the Great Eagles, the Ring going on, the beacons of Gondor lighting, Gladriel's Mirror, Gandclawd's fireworks dragon and the palantír). Its **Options…** button in System Settings picks the universe: the same as the app, Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd, The Clawd Files, Stevie Clawdberg, Clawd of the Rings, Clawd Royale, or Random (a new pick on each trip).
+### The screen saver
+
+Install it from **Settings… → Screen Saver → Install…**. It shows the place full screen, with the crew fighting across its floor, a card per session, name tags, a clock and a crawl of what happened lately.
+
+Every 10 minutes it moves somewhere new, with a transition from the universe it's in:
+
+- **Star Clawds:** a wipe, a hard edge or a clock.
+- **Marvelous Clawds:** a comic-book page: halftone dots, a SNIKT!, PHOOMF!, FWIP! or KAPOW! for whoever's on screen, panels, speed lines, "MEANWHILE…", and with Deadpond about, Deadpond peeling the page off the screen or surfing past on a chimichanga.
+- **Detective Clawds:** one of fifteen of its own, among them the Flare racing through the Speed Source, the Night Beacon, Superb-Man bursting through the page, the Lariat of Truth, a Jester card and Darksyde's Omicron Beams.
+- **Doctor Clawd:** one of ten built on the show's own travels: the TARDIS dematerialising, each era's title sequence from the 1963 howlaround to today's neon vortex, a regeneration, and with an Angle or a Dalick about, Blink or the view through a Dalick's eyestalk.
+- **The Clawd Files:** one of ten: the Black Oil, a blinking eye, a classified case file, a TV losing sync, a UFO's beam, flashlights in the dark, cigarette smoke, a spy satellite, a paranormal warp and, now and then, the whole opening titles. Then the new place types itself in at the corner.
+- **Stevie Clawdberg:** one of ten from the films: the bike crossing the full moon, the DeLorean at 88 mph, a red line across the map, the fin, a camera flash, the park gates, the five tones, the rolling boulder, pixie dust and One-Eyed Willy's doubloon.
+- **Clawd of the Rings:** one of nine: the Eye opening, a dotted line walking across the map, the Red Book's page turning, the Great Eagles, the Ring going on, the beacons of Gondor lighting, Gladriel's Mirror, Gandclawd's fireworks dragon and the palantír.
+
+Its **Options…** button in System Settings picks the universe: the same as the app, any one universe, Clawd Royale, or Random (a new pick on each trip).
 
 <p align="center">
   <img src="docs/screensaver.png" alt="The screen saver" width="760">
