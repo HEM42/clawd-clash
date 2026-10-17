@@ -21,7 +21,6 @@ struct CardModel {
     var group: (title: String, color: NSColor)? = nil   // first card of an AI's group, when several AIs run
     var remote: String? = nil                           // "GitHub", "GitLab"… or "Local", in a pill by the name
     var context: Double? = nil                          // how near its next compaction (0…1), in a pill under the status
-    var spriteColor = NSColor.white                     // the character's main colour, for the name pill
     /// One of several sessions in the same project, drawn on a tree under a project header.
     struct Tree: Equatable {
         let sessions: Int?   // on the first card only: the header goes above it, saying how many there are
@@ -1080,7 +1079,7 @@ final class CardsView: NSView {
             let box = NSBezierPath(roundedRect: r, xRadius: 8, yRadius: 8)
             (controller?.location.panel.blended(withFraction: 0.35, of: .black) ?? NSColor.black).withAlphaComponent(0.94).setFill()
             box.fill()
-            c.accent.withAlphaComponent(0.55).setStroke()     // steady; the focused card says "● you're here" instead
+            c.accent.withAlphaComponent(0.55).setStroke()     // steady; the focused card has a faint bar behind its title instead
             box.lineWidth = 1
             box.stroke()
 
@@ -1092,40 +1091,26 @@ final class CardsView: NSView {
 
             let tx = r.minX + 16 + pw, tw = r.maxX - tx - 12
             var ty = r.minY + Self.pad
-            // Header: the project as the title, in its colour; on the right the status, and right of it the character
-            // in a pill tinted with its costume's colour. Under them, right-aligned: where the repo lives, then how
-            // near the next compaction is (green, amber from 60%, red from 80%). No project? Then the character is the
-            // title and has no pill. In a project's tree the header above names the project and where it lives, so the
-            // card is titled with the character instead, in the project's colour, with only the context pill.
+            // Header: the project as the title, in its colour, then "  ·  " and the character's name, greyed; the status
+            // on the right. Under it, right-aligned: where the repo lives, then how near the next compaction is (green,
+            // amber from 60%, red from 80%). No project? Then the character is the title. In a project's tree the
+            // header above names the project and where it lives, so the card is titled with the character instead, in
+            // the project's colour, with only the context pill.
             let inTree = c.tree != nil
-            var right = r.maxX - 12
             var namePill: NSRect?
-            if !c.project.isEmpty && !inTree {
-                // The text lightened enough to read on the dark card; very dark costumes (Vader) lifted a little so
-                // the pill still shows.
-                let base = c.spriteColor.usingColorSpace(.sRGB) ?? c.spriteColor
-                let lum = 0.2126 * base.redComponent + 0.7152 * base.greenComponent + 0.0722 * base.blueComponent
-                let fill = lum < 0.2 ? (base.blended(withFraction: 0.35, of: .white) ?? base) : base
-                let text = base.blended(withFraction: max(0.35, 0.85 - lum), of: .white) ?? .white
-                let name = NSAttributedString(string: c.villain, attributes: [
-                    .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold), .foregroundColor: text])
-                let nw = name.size().width
-                let pill = NSRect(x: right - nw - 14, y: ty, width: nw + 14, height: 17)
-                fill.withAlphaComponent(0.28).setFill()
-                NSBezierPath(roundedRect: pill, xRadius: 8.5, yRadius: 8.5).fill()
-                name.draw(at: NSPoint(x: pill.minX + 7, y: pill.minY + 2))
-                namePill = pill
-                right = pill.minX - 6
-            }
             let status = NSAttributedString(string: c.status, attributes: [
                 .font: NSFont.monospacedSystemFont(ofSize: 11, weight: .bold), .foregroundColor: c.statusColor])
             let sw = status.size().width
-            let chip = NSRect(x: right - sw - 14, y: ty - 1, width: sw + 14, height: 19)
+            let chip = NSRect(x: r.maxX - 12 - sw - 14, y: ty - 1, width: sw + 14, height: 19)
             c.statusColor.withAlphaComponent(0.16).setFill()
             NSBezierPath(roundedRect: chip, xRadius: 9.5, yRadius: 9.5).fill()
             status.draw(at: NSPoint(x: chip.minX + 7, y: chip.minY + 2))
             let header = NSMutableAttributedString(string: inTree || c.project.isEmpty ? c.villain : c.project, attributes: [
                 .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: c.project.isEmpty ? NSColor.white : c.accent])
+            if !c.project.isEmpty && !inTree {
+                header.append(NSAttributedString(string: "  ·  " + c.villain, attributes: [
+                    .font: NSFont.systemFont(ofSize: 13, weight: .regular), .foregroundColor: NSColor(white: 0.6, alpha: 1)]))
+            }
             var pills: [(text: String, hue: NSColor, mono: Bool)] = []
             if let remote = c.remote, !c.project.isEmpty && !inTree { pills.append((remote, Self.remoteColor(remote), false)) }
             if let used = c.context {
@@ -1145,14 +1130,11 @@ final class CardsView: NSView {
                 namePill = namePill.map { $0.union(rp) } ?? rp
                 px = rp.minX - 6
             }
+            // The card you're in: a faint bar in the focus yellow behind its title, reaching a little past it.
             if c.focused {
-                // A small dot, raised to sit level with the words.
-                header.append(NSAttributedString(string: "   ●", attributes: [
-                    .font: NSFont.systemFont(ofSize: 7, weight: .semibold), .baselineOffset: 2,
-                    .foregroundColor: Self.focusYellow]))
-                header.append(NSAttributedString(string: " you're here", attributes: [
-                    .font: NSFont.systemFont(ofSize: 11, weight: .semibold),
-                    .foregroundColor: Self.focusYellow]))
+                let w = min(header.size().width, chip.minX - tx - 8)
+                Self.focusYellow.withAlphaComponent(0.13).setFill()
+                NSBezierPath(roundedRect: NSRect(x: tx - 6, y: ty - 1, width: w + 20, height: 20), xRadius: 5, yRadius: 5).fill()
             }
             header.draw(with: NSRect(x: tx, y: ty, width: chip.minX - tx - 8, height: 20),
                         options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
