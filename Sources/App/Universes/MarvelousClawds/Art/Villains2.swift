@@ -302,7 +302,7 @@ private func drawDocOck(_ c: PixelCanvas, _ p: Pose) {
         let ph = Double(k) * 2.1, speed = 1.2 + 6 * snap
         let base = [-170.0, -130, 160][k] + 18 * sin(p.lt * speed + ph) + snap * [40.0, 30, -60][k]
         let end = tentacle(c, from: ockHarness, angle: base, bend: 70 * sin(p.lt * speed * 0.8 + ph + 1),
-                           length: 17 + Double(k) * 2, metal, joint: joint, r0: 1.3, r1: 1.0)
+                           length: 15 + Double(k), metal, joint: joint, r0: 1.3, r1: 1.0)
         let open = snap > 0 ? (frac(s * 8 + Double(k) * 0.3) < 0.5 ? 1.0 : 0) : 0.3
         ockClaw(c, end, open: open)
     }
@@ -491,16 +491,18 @@ private func drawWing(_ c: PixelCanvas, spread: Double, shake: Double, far: Bool
     let under = far ? C(0x1E441E) : C(0x2E6A2E)
     let root = (x: far ? 25.0 : 22.0, y: 29.0)
     func dir(_ deg: Double) -> (x: Double, y: Double) { (cos(deg * .pi / 180), sin(deg * .pi / 180)) }
-    // The arm of the wing: shoulder to wrist, wrist to tip. Folded it lies down his back; spread it sweeps up and back.
+    // The arm of the wing: shoulder to wrist, wrist to tip. Folded it lies down his back; spread it sweeps up and back,
+    // a quarter smaller at full stretch so the tips stay inside the frame.
     let arm = 140 + (-110 - 140) * spread + shake * 5 + (far ? 10 : 0), hand = arm - 40 * spread
-    let wrist = (x: root.x + dir(arm).x * (5 + 5 * spread), y: root.y + dir(arm).y * (5 + 5 * spread))
-    let tipPt = (x: wrist.x + dir(hand).x * (4 + 5 * spread), y: wrist.y + dir(hand).y * (4 + 5 * spread))
+    let scale = 1 - 0.25 * spread
+    let wrist = (x: root.x + dir(arm).x * (5 + 5 * spread) * scale, y: root.y + dir(arm).y * (5 + 5 * spread) * scale)
+    let tipPt = (x: wrist.x + dir(hand).x * (4 + 5 * spread) * scale, y: wrist.y + dir(hand).y * (4 + 5 * spread) * scale)
     // Feathers hang back off the arm, longest at the tip: a dark underside packed solid, the feathers laid over it.
     func feather(_ f: Double) -> (from: (x: Double, y: Double), to: (x: Double, y: Double)) {
         let g = f < 0.5 ? f * 2 : (f - 0.5) * 2
         let from = f < 0.5 ? (x: root.x + (wrist.x - root.x) * g, y: root.y + (wrist.y - root.y) * g)
                            : (x: wrist.x + (tipPt.x - wrist.x) * g, y: wrist.y + (tipPt.y - wrist.y) * g)
-        let u = dir((arm + 15) * (1 - spread) + (165 + 30 * f) * spread), len = 5 + (3 + 8 * f) * spread
+        let u = dir((arm + 15) * (1 - spread) + (165 + 30 * f) * spread), len = (5 + (3 + 8 * f) * spread) * scale
         return (from, (from.x + u.x * len, from.y + u.y * len))
     }
     for k in 0...24 {

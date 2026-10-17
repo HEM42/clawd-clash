@@ -4,7 +4,7 @@ import Foundation
 
 let villains5: [MarvelVillain: Persona] = [
     .galactus: Persona(name: "Galacticus", weapon: .lightning, magic: Magic(core: C(0xF0E0FF), glow: C(0xA060FF), jagged: false), armoured: true, canSit: false,
-                  pivot: galactusPalm, bulk: 6, headTop: 0, signature: 3.2, callout: "I'm peckish.",
+                  pivot: galactusPalm, bulk: 6, headTop: 2, signature: 3.2, callout: "I'm peckish.",
                   draw: drawGalactus),
     .kang: Persona(name: "Kangg the Conqueror", weapon: .blaster, shot: .energy(core: C(0xF0E0FF), glow: C(0xA04AFF)), muzzle: (49, 31),
                   headTop: 14, signature: 2.8,
@@ -171,17 +171,15 @@ private func drawGalactus(_ c: PixelCanvas, _ p: Pose) {
               ["P": purple, "L": purpleLight, "D": purpleDark])
     // the forked horns on the sides of the helmet
     for (x0, dir) in [(18.5, -1.0), (37.5, 1.0)] {
-        bar(c, x0, 7, x0 + dir * 5, 4, purple, r: 1.3)
-        bar(c, x0 + dir * 5, 4, x0 + dir * 7, 0.5, purple, r: 0.9)
-        bar(c, x0 + dir * 5, 4, x0 + dir * 3, 0.5, purple, r: 0.9)
-        c.px(Int(x0 + dir * 7), 0, purpleLight); c.px(Int(x0 + dir * 3), 0, purpleLight)
+        bar(c, x0, 7, x0 + dir * 5, 5, purple, r: 1.3)
+        bar(c, x0 + dir * 5, 5, x0 + dir * 7, 2.5, purple, r: 0.9)
+        bar(c, x0 + dir * 5, 5, x0 + dir * 3, 2.5, purple, r: 0.9)
+        c.px(Int(x0 + dir * 7), 2, purpleLight); c.px(Int(x0 + dir * 3), 2, purpleLight)
     }
     // the helmet and his face
-    c.pattern(17, 0, [
-        ".....PPPPPPPPPPPP.....",
+    c.pattern(17, 2, [
         "...PPPPPPPPBBPPPPPP...",
         "..PPPPPPPPPBBPPPPPPP..",
-        ".PPPPPPPPPPBBPPPPPPPP.",
         ".PPPPPPPPPPBBPPPPPPPP.",
         ".PPPPPPDDDDDDDDDDDDPP.",
         ".PPPPPDFFFFFFFFFFFFPP.",
@@ -192,7 +190,7 @@ private func drawGalactus(_ c: PixelCanvas, _ p: Pose) {
         "..PPPPPPFFFFFFFFFPPP..",
         "...BBBBBBBBBBBBBBBB...",
     ], ["P": purple, "B": blue, "D": purpleDark, "F": skin])
-    c.rect(21, 1, 2, 3, purpleLight)                                       // shine on the dome
+    c.rect(21, 3, 2, 2, purpleLight)                                       // shine on the dome
     c.circle(20, 8, 2, blue); c.px(20, 8, blueLight)                       // the ear disc
     if power > 0.1 {
         let hot = C(0xF0E0FF), glow = C(0xA060FF)
@@ -689,9 +687,12 @@ private func drawScorpion(_ c: PixelCanvas, _ p: Pose) {
     c.rect(26, 32, 5, 1, greenDark)
     // the tail, rising from the small of his back
     let s = p.signature ?? 0
-    var start: Double, bend: Double
+    var start: Double, bend: Double, length = 30.0
     if let a = p.melee {
         start = -100 + 0.4 * (a + 90); bend = a - start + 20      // always arched over his back, its tip toward `a`
+        // Raised high or swung round behind him it would leave the frame: it draws in (as if swinging towards us) until
+        // the stinger fits.
+        while length > 8, !scorpionTailFits(start: start, bend: bend, length: length) { length -= 1 }
     } else if s > 0.08 && s < 0.92 {
         if s > 0.62 && s < 0.78 {                                          // the strike
             let k = sin((s - 0.62) / 0.16 * .pi)
@@ -708,12 +709,27 @@ private func drawScorpion(_ c: PixelCanvas, _ p: Pose) {
         bar(c, scorpionTail.x + cos(tr) * 8, scorpionTail.y + sin(tr) * 8, scorpionTail.x + cos(tr) * 20,
             scorpionTail.y + sin(tr) * 20, C(0xC8F0B0, 0.35 / Double(i + 1)), r: 1.3)
     }
-    let end = tentacle(c, from: scorpionTailBase, angle: start, bend: bend, length: 30, [metal, metalDark], r0: 2.0, r1: 1.1, n: 13)
+    let end = tentacle(c, from: scorpionTailBase, angle: start, bend: bend, length: length, [metal, metalDark], r0: 2.0, r1: 1.1,
+                       n: 13)
     let r = end.a * .pi / 180, ux = cos(r), uy = sin(r)
     c.rect(Int(end.x) - 1, Int(end.y) - 1, 3, 3, metalDark)
     bar(c, end.x, end.y, end.x + ux * 4, end.y + uy * 4, sting, r: 0.9)
     bar(c, end.x + ux * 4, end.y + uy * 4, end.x + ux * 4.5 + uy * 2, end.y + uy * 4.5 - ux * 2, sting, r: 0.5)
     c.px(Int(end.x + ux * 2), Int(end.y + uy * 2), C(0xFFF2A0))
+}
+
+/// Whether the Scorpion's tail, set off at `start` and turning `bend` along `length`, keeps its stinger inside the
+/// frame, with room for a hop and a breath.
+private func scorpionTailFits(start: Double, bend: Double, length: Double) -> Bool {
+    var x = scorpionTailBase.x, y = scorpionTailBase.y, a = start
+    var pts: [(Double, Double)] = []
+    for _ in 0..<13 {
+        x += cos(a * .pi / 180) * length / 13; y += sin(a * .pi / 180) * length / 13; a += bend / 13
+        pts.append((x, y))
+    }
+    let ux = cos(a * .pi / 180), uy = sin(a * .pi / 180)
+    pts += [(x + ux * 4, y + uy * 4), (x + ux * 4.5 + uy * 2, y + uy * 4.5 - ux * 2)]
+    return pts.allSatisfy { $0.0 >= 3 && $0.1 >= 4 && $0.1 <= 46 }
 }
 
 // MARK: - Shocker

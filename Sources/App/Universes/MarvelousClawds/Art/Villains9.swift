@@ -310,7 +310,7 @@ private func drawSoulEater(_ c: PixelCanvas, _ p: Pose) {
     // Bat wings on its back: folded into two tall hooked peaks, or unfolded wide.
     typealias Pt = (x: Double, y: Double)
     let wings: [(root: Pt, folded: Pt, open: Pt, foldedLow: Pt, openLow: Pt, side: Double)] = [
-        ((22, 25), (11, 12), (1, 15), (8, 33), (12, 32), -1), ((30, 24), (21, 9), (50, 12), (14, 28), (40, 31), 1),
+        ((22, 25), (11, 12), (3, 15), (8, 33), (12, 32), -1), ((30, 24), (21, 9), (50, 12), (14, 28), (40, 31), 1),
     ]
     for w in wings {
         let tip = (x: w.folded.x + (w.open.x - w.folded.x) * spread, y: w.folded.y + (w.open.y - w.folded.y) * spread + flap * spread)

@@ -704,12 +704,12 @@ private func drawZabu(_ c: PixelCanvas, _ p: Pose) {
     c.ox += lunge
     // Tail, curling up at the tip.
     let flick: Double = sin(p.lt * 2.5)
-    for (a, b, r) in [((10.0, 28.0), (5.0, 31.0), 1.3), ((5.0, 31.0), (2.0, 27.0), 1.1), ((2.0, 27.0), (3.0 + flick, 22.0), 1.0)]
+    for (a, b, r) in [((10.0, 28.0), (7.0, 31.0), 1.3), ((7.0, 31.0), (4.0, 27.0), 1.1), ((4.0, 27.0), (5.0 + flick, 22.0), 1.0)]
         as [((Double, Double), (Double, Double), Double)] {
         stick(c, a.0, a.1, b.0, b.1, orange, r)
     }
-    c.rect(2 + Int(flick.rounded()), 21, 3, 2, stripe)
-    c.px(3, 30, stripe); c.px(2, 26, stripe)
+    c.rect(4 + Int(flick.rounded()), 21, 3, 2, stripe)
+    c.px(5, 30, stripe); c.px(4, 26, stripe)
     // Body.
     c.rect(9, 26, 30, 12, orange)
     c.rect(10, 25, 26, 1, orange)

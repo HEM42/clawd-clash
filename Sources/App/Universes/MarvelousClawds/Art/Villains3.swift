@@ -14,19 +14,19 @@ let villains3: [MarvelVillain: Persona] = [
     .mystique: Persona(name: "Mistique", weapon: .saber, headTop: 21, signature: 3.4,
                   draw: drawMystique),
     .apocalypse: Persona(name: "Apoclawdlypse", weapon: .saber, armoured: true, canSit: false, pivot: apocalypseShoulder,
-                  bulk: 6, headTop: 1, signature: 3.0,
+                  bulk: 6, headTop: 2, signature: 3.0,
                   draw: drawApocalypse),
     .sentinel: Persona(name: "Sentinal", weapon: .blaster, shot: .beam(core: C(0xFFE0E0), glow: C(0xFF3A3A)), armoured: true, canSit: false,
-                  muzzle: (sentinelPalm.x + 1, sentinelPalm.y), handGun: false, headTop: 1, signature: 3.2,
+                  muzzle: (sentinelPalm.x + 1, sentinelPalm.y), handGun: false, headTop: 3, signature: 3.2,
                   draw: drawSentinel),
     .abomination: Persona(name: "Abominator", weapon: .saber, canSit: false, pivot: abominationShoulder,
-                  bulk: 9, headTop: 1, signature: 2.8,
+                  bulk: 9, headTop: 2, signature: 2.8,
                   draw: drawAbomination),
-    .finFangFoom: Persona(name: "Fin Fang Fume", weapon: .blaster, shot: .fire, canSit: false, muzzle: (63, 11), handGun: false,
-                  headTop: 1, signature: 2.8,
+    .finFangFoom: Persona(name: "Fin Fang Fume", weapon: .blaster, shot: .fire, canSit: false, muzzle: (63, 12), handGun: false,
+                  headTop: 4, signature: 2.8,
                   draw: drawFinFangFoom),
     .modok: Persona(name: "MOODOK", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFF6C0), glow: C(0xFFB01E), jagged: false, rings: true), canSit: false,
-                  pivot: (modokEmitter.x, modokEmitter.y + 2), headTop: 3, signature: 2.8,
+                  pivot: (modokEmitter.x, modokEmitter.y + 2), headTop: 6, signature: 2.8,
                   draw: drawModok),
     .dormammu: Persona(name: "Dormamoo", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFE8B0), glow: C(0xFF6A1E), jagged: false), canSit: false,
                   headTop: 12, signature: 3.0,
@@ -422,10 +422,8 @@ private func drawApocalypse(_ c: PixelCanvas, _ p: Pose) {
                   ["B": blue, "L": blueLight, "K": black])
     }
     // the head: black helmet with a ridged crest, grey face, blue lips
-    c.pattern(19, 0, [
-        "......KKKKKKK.....",
+    c.pattern(19, 2, [
         "....KKKKBBKKKKK...",
-        "...KKKKKBBKKKKKK..",
         "..KKKKKKBBKKKKKKK.",
         ".KKKKKKGGGGGGGGGGK",
         "KKKKKKGGGGGGGGGGGK",
@@ -461,7 +459,7 @@ private func drawApocalypse(_ c: PixelCanvas, _ p: Pose) {
     // the blade arm
     let angle = p.melee ?? 82
     smear(c, apocalypseShoulder, p.trail, len: 22, C(0xC8D4FF))
-    let e = limb(c, apocalypseShoulder, angle, len: 10, r: 2.3, blue)
+    let e = limb(c, apocalypseShoulder, angle, len: 10 - 3 * max(0, -sin(angle * .pi / 180)), r: 2.3, blue)   // bent when raised
     let r = angle * .pi / 180, nx = -sin(r), ny = cos(r)
     for k in 0..<10 {                                                     // the blade: broad at the wrist, to a point
         let u = Double(k), w = 2.2 * (1 - u / 11)
@@ -504,10 +502,8 @@ private func drawSentinel(_ c: PixelCanvas, _ p: Pose) {
     // shoulders
     c.pattern(11, 9, [".PPPPPP.", "PPLLPPPP", "PPPPPPPP", "PPPPPPPP", ".PPPPPP."], ["P": purple, "L": purpleLight])
     // the head: flared helmet, face plate, collar
-    c.pattern(16, 0, [
-        "........PPPPPPPP........",
-        "......PPPPPPPPPPPP......",
-        ".....PPLLPPPPPPPPPP.....",
+    c.pattern(16, 3, [
+        "......PPLLPPPPPPPP......",
         "....PPLPPFFFFFFFFPPP....",
         "....PPPPFFFFFFFFFFPP....",
         "...PPPPPFFFFFFFFFFPPP...",
@@ -518,17 +514,17 @@ private func drawSentinel(_ c: PixelCanvas, _ p: Pose) {
         "PPPPPPPPPPPPPPPPPPPPPPPP",
         "DDDDDDDDDDDDDDDDDDDDDDDD",
     ], ["P": purple, "L": purpleLight, "F": face, "D": purpleDark])
-    c.rect(24, 3, 10, 1, faceDark)
-    c.rect(25, 5, 3, 2, eye); c.rect(30, 5, 3, 2, eye)                    // eyes
-    c.rect(26, 8, 5, 1, ink)                                              // the slot mouth
+    c.rect(24, 4, 10, 1, faceDark)
+    c.rect(25, 6, 3, 2, eye); c.rect(30, 6, 3, 2, eye)                    // eyes
+    c.rect(26, 9, 5, 1, ink)                                              // the slot mouth
     // Signature: a scanning beam sweeps the ground.
     if let s = p.signature, s > 0.1, s < 0.9 {
         let k = (s - 0.1) / 0.8
         let gx = 46 + 22 * (0.5 - 0.5 * cos(k * 2 * .pi * 1.5))
         let on = min(1, min(k, 1 - k) * 8)
-        c.glowLine(33, 6, gx, 43, core: C(0xFFD0D0).alpha(on * 0.6), glow: C(0xFF3A3A).alpha(on * 0.45), coreR: 0.3, glowR: 1.5)
+        c.glowLine(33, 7, gx, 43, core: C(0xFFD0D0).alpha(on * 0.6), glow: C(0xFF3A3A).alpha(on * 0.45), coreR: 0.3, glowR: 1.5)
         c.glowLine(gx - 3, 43, gx + 3, 43, core: C(0xFFE0E0).alpha(on), glow: C(0xFF3A3A).alpha(on), coreR: 0.5, glowR: 1.6)
-        c.rect(25, 5, 3, 2, C(0xFF4A3A)); c.rect(30, 5, 3, 2, C(0xFF4A3A))
+        c.rect(25, 6, 3, 2, C(0xFF4A3A)); c.rect(30, 6, 3, 2, C(0xFF4A3A))
     }
     // the near arm: raised to fire, or hanging
     c.pattern(36, 9, [".PPPPPP.", "PPPLLPPP", "PPPPPPPP", "PPPPPPPD", ".PPPPPD."], ["P": purple, "L": purpleLight, "D": purpleDark])
@@ -577,9 +573,8 @@ private func drawAbomination(_ c: PixelCanvas, _ p: Pose) {
     c.rect(15, 28, 25, 6, shorts); c.rect(15, 28, 25, 1, shortsDark)
     for x in stride(from: 16, to: 40, by: 4) { c.rect(x, 34, 2, 1, shorts) }                  // a ragged hem
     // the head, thrown back as he roars
-    c.oy -= Int((roar * 2).rounded())
-    c.pattern(21, 1, [
-        "....GGGGGGGGGG.....",
+    c.oy -= Int(roar.rounded())
+    c.pattern(21, 2, [
         "..GGGGGGGGGGGGGG...",
         ".GGGGLGGGLGGGGGGG..",
         "GGGGGGGGGGGGGGGGGG.",
@@ -606,14 +601,15 @@ private func drawAbomination(_ c: PixelCanvas, _ p: Pose) {
             for dy in -2 - i...(2 + i) where abs(dy) > 0 || i == 0 { c.px(x - abs(dy) / 2, 11 + dy, col) }
         }
     }
-    c.oy += Int((roar * 2).rounded())
+    c.oy += Int(roar.rounded())
     // the clawed arm
     let angle = p.melee ?? 78
     smear(c, abominationShoulder, p.trail, len: 20, C(0xD8F0C0))
     c.circle(39, 17, 3, green)
-    let e = limb(c, abominationShoulder, angle, len: 14, r: 2.3, green)
+    let up = max(0, -sin(angle * .pi / 180))                             // raised overhead, it bends at the elbow
+    let e = limb(c, abominationShoulder, angle, len: 14 - 4 * up, r: 2.3, green)
     c.rect(Int(e.x) - 2, Int(e.y) - 2, 5, 5, dark)
-    claws(c, e, angle, len: 6, spread: 0.5, C(0xD0C4A8))
+    claws(c, e, angle, len: 6 - 2 * up, spread: 0.5, C(0xD0C4A8))
 }
 
 // MARK: - Fin Fang Foom
@@ -652,14 +648,11 @@ private func drawFinFangFoom(_ c: PixelCanvas, _ p: Pose) {
     c.rect(15, 28, 23, 7, purple); c.rect(15, 28, 23, 1, purpleDark)                    // the shorts
     c.rect(15, 34, 23, 1, purpleDark)
     // neck up to the head
-    c.glowLine(30, 14, 41, 9, core: green, glow: clear, coreR: 3.2, glowR: 3.3)
-    c.glowLine(34, 16, 43, 12, core: belly, glow: clear, coreR: 1, glowR: 1.1)
+    c.glowLine(30, 14, 41, 10, core: green, glow: clear, coreR: 3.2, glowR: 3.3)
+    c.glowLine(34, 16, 43, 13, core: belly, glow: clear, coreR: 1, glowR: 1.1)
     // the head
-    c.pattern(37, 0, [
-        "F...F...F.................",
-        "FF..FF..FF................",
-        ".FFGGFFGGFF...............",
-        "..GGGGGGGGGGGG............",
+    c.pattern(37, 4, [
+        "..FFGGFFGGFFGG............",
         ".GGGGGGGGGGGGGGGG.........",
         "GGGGGGGGEEGGGGGGGGGG......",
         "GGGGGGGGGGGGGGGGGGGGGGG...",
@@ -672,15 +665,15 @@ private func drawFinFangFoom(_ c: PixelCanvas, _ p: Pose) {
         ".GGGGGGGGGGGGGGGGGGGGGG...",
         "..LLLLLLLLLLLLLLLLLLL.....",
     ], ["G": green, "F": fin, "E": C(0xFF3A2A), "W": claw, "M": C(0x5A1418), "N": ink, "L": light])
-    c.px(46, 5, C(0xFFE24A))
-    c.rect(43, 4, 6, 1, dark)                                            // the brow
-    c.pattern(33, 5, ["F.......", ".FF.....", "FFFF....", ".FFFFF..", "FFFFFF..", ".FFFFF..", "FFFF....", ".FF.....", "F......."],
+    c.px(46, 6, C(0xFFE24A))
+    c.rect(43, 5, 6, 1, dark)                                            // the brow
+    c.pattern(33, 6, ["F.......", ".FF.....", "FFFF....", ".FFFFF..", "FFFFFF..", ".FFFFF..", "FFFF....", ".FF.....", "F......."],
               ["F": fin])                                                // the frill behind his jaw
     // whiskers, drooping from the snout
-    for (k, (x, y)) in [(60, 9), (61, 10), (62, 11), (63, 13), (63, 15), (62, 17), (61, 18)].enumerated() {
+    for (k, (x, y)) in [(60, 10), (61, 11), (62, 12), (63, 14), (63, 16), (62, 18), (61, 19)].enumerated() {
         c.px(x, y, fin); if k < 5 { c.px(x - 3, y + 6, fin.alpha(k < 3 ? 1 : 0)) }
     }
-    c.rect(44, 15, 2, 4, fin); c.rect(43, 18, 2, 2, fin)                 // the chin barbel
+    c.rect(44, 16, 2, 4, fin); c.rect(43, 19, 2, 2, fin)                 // the chin barbel
     // the little arm, claws out front
     c.glowLine(35, 18, 40, 22, core: green, glow: clear, coreR: 1.5, glowR: 1.6)
     claws(c, (40.5, 22.5), 30, len: 3)
@@ -688,9 +681,9 @@ private func drawFinFangFoom(_ c: PixelCanvas, _ p: Pose) {
     if let s = p.signature, s > 0.1, s < 0.95 {
         for k in 0..<3 {
             let f = frac(s * 2.5 + Double(k) / 3)
-            puff(c, x: 61 - f * 4, y: 6 - f * 7, k: f, C(0x9A9CA4))
+            puff(c, x: 61 - f * 4, y: 7 - f * 7, k: f, C(0x9A9CA4))
         }
-        if frac(s * 6) < 0.5 { c.px(62, 10, C(0xFFB02A)); c.px(63, 10, C(0xFFE27A)) }
+        if frac(s * 6) < 0.5 { c.px(62, 11, C(0xFFB02A)); c.px(63, 11, C(0xFFE27A)) }
     }
 }
 
@@ -715,15 +708,15 @@ private func drawModok(_ c: PixelCanvas, _ p: Pose) {
     // the hover jets
     let flick = noise(Int(p.t * 20))
     c.rect(22, 37, 3, 1 + Int(flick * 2), C(0x7FD8FF)); c.rect(37, 37, 3, 1 + Int((1 - flick) * 2), C(0x7FD8FF))
-    // the head
-    for y in 3...31 {
-        let d = (Double(y) - 18) / 15.5
+    // the head (the dome a little flatter than the jowls are deep, so it clears the top as he hovers)
+    for y in 6...31 {
+        let d = (Double(y) - 18) / (y < 18 ? 12.5 : 15.5)
         let hw = 15.0 * (1 - d * d).squareRoot()
         let l = Int((30.5 - hw).rounded()), r = Int((30.5 + hw).rounded())
         c.rect(l, y, r - l, 1, skin)
         c.px(l, y, skinShade)
     }
-    c.rect(22, 5, 6, 1, skinLight); c.rect(20, 7, 3, 2, skinLight)            // shine on the dome
+    c.rect(22, 8, 6, 1, skinLight); c.rect(20, 9, 3, 2, skinLight)            // shine on the dome
     c.rect(17, 14, 2, 1, skinShade); c.rect(20, 21, 2, 1, skinShade)          // furrows
     // the headband and its emitter
     c.rect(16, 11, 30, 3, gold); c.rect(16, 13, 30, 1, goldDark)
@@ -775,11 +768,11 @@ private func drawDormammu(_ c: PixelCanvas, _ p: Pose) {
     }
     c.oy += p.breathe
     // the flames: tongues rising from the top of his head, licking up the sides
-    let t = p.t, tall = 1 + flare * 0.9
+    let t = p.t, tall = 1 + flare * 0.6
     c.rect(18, 22, 20, 6, C(0xFF8A1E)); c.rect(21, 24, 14, 4, C(0xFFE27A))
     for (i, cx) in [18.5, 22.5, 27.5, 32.5, 36.5].enumerated() {
         let base = [8.0, 12, 15, 12, 8][i]
-        let h = (base + 2.5 * sin(t * 7 + Double(i) * 1.7)) * tall, hw = i == 2 ? 4 : 3.2
+        let h = min(22, (base + 2.5 * sin(t * 7 + Double(i) * 1.7)) * tall), hw = i == 2 ? 4 : 3.2   // inside the frame
         let sway = sin(t * 5 + Double(i)) * 1.5
         for y in 0..<Int(h.rounded()) {
             let f = Double(y) / h, w = hw * (1 - f), x0 = cx + sway * f
