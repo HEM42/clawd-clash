@@ -111,12 +111,16 @@ func drawMothership(_ c: PixelCanvas, ramp: Double, lit: Bool) {
 }
 
 /// The park jeep: a red-and-green Jurassic Park Wrangler with the yellow band and the logo on its door, a roll bar and
-/// a spare tyre on the back. `ramp`: its side opens up (it has no doors to speak of); `lit`: headlights on.
+/// a spare tyre on the back. `ramp` 0…1 swings its half door open on the back seat; `lit`: headlights on.
 func drawParkJeep(_ c: PixelCanvas, ramp: Double, lit: Bool) {
     let green = C(0x2E6A3A), red = C(0xC82A2A), yellow = C(0xF2C82A), dark = C(0x1A2A1E), tyre = C(0x101114)
     // The roll bar and the windscreen.
     c.rect(18, 7, 2, 10, C(0x3A3A40)); c.rect(32, 7, 2, 10, C(0x3A3A40)); c.rect(18, 7, 16, 2, C(0x3A3A40))
     c.rect(42, 9, 2, 8, C(0x3A3A40)); c.rect(42, 10, 2, 6, C(0x8AB8C8, 0.6))
+    // The tan seats' backs showing over the side: the back bench, and the driver's seat behind the windscreen.
+    for (x, top) in [(22, 13), (36, 12)] {
+        c.rect(x, top, 3, 16 - top, C(0xA08C66)); c.rect(x, top, 3, 1, C(0xC4B086)); c.rect(x + 2, top + 1, 1, 15 - top, C(0x6A5A40))
+    }
     // The body: green bonnet and sides, the red flank, the yellow band, the grille.
     c.rect(8, 16, 50, 8, green); c.rect(8, 16, 50, 1, C(0x4A8A56))
     c.rect(8, 20, 50, 2, red); c.rect(8, 19, 50, 1, yellow)
@@ -128,5 +132,29 @@ func drawParkJeep(_ c: PixelCanvas, ramp: Double, lit: Bool) {
     c.circle(6, 18, 4, tyre); c.circle(6, 18, 2, C(0x5A5A60))
     for wx in [17, 49] { c.circle(wx, 24, 5, tyre); c.circle(wx, 24, 2, C(0x8A8A90)); c.px(wx, 24, tyre) }
     c.rect(58, 18, 1, 2, lit ? C(0xFFF6C8) : C(0xC8C8B8))
-    if ramp > 0 { c.rect(22, 12, 10, 4, C(0xE8D8A8, 0.5 * ramp)) }
+    // The half door with the logo, hinged at its front edge (x 34), swinging out toward us: it narrows to an edge-on
+    // panel standing at the hinge, and the doorway shows the dark footwell and the back seat.
+    if ramp > 0 {
+        let seat = C(0xA08C66), seatLight = C(0xC4B086), seatDark = C(0x6A5A40)
+        c.rect(22, 16, 12, 7, C(0x0E120E))                               // the doorway
+        c.rect(22, 16, 3, 3, seat); c.rect(22, 16, 3, 1, seatLight); c.rect(24, 17, 1, 2, seatDark)   // the seat back
+        c.rect(22, 19, 9, 1, seatLight); c.rect(22, 20, 9, 1, seatDark)                               // the cushion
+        c.rect(22, 22, 12, 1, C(0x2A3A2E))                               // the sill plate
+        let pw = clawdbergDoorWidth(12, ramp), x0 = 34 - pw, drop = Int((2 * ramp).rounded()), rise = Int((1.5 * ramp).rounded())
+        c.rect(x0, 16, pw, 3, ramp < 0.25 ? green : C(0x3A7E48)); c.rect(x0, 22, pw, 1, green)   // the door, turning to the light
+        c.rect(x0, 19, pw, 1, yellow); c.rect(x0, 20, pw, 2, red)
+        let lw = max(1, Int((5 * Double(pw) / 12).rounded())), lx = x0 + (pw - lw + 1) / 2   // the logo, squeezed
+        c.rect(lx, 17, lw, 3, red); c.rect(lx + (lw > 2 ? 1 : 0), 16, max(1, lw - 2), 1, red); c.px(lx + lw / 2, 18, C(0x1A1A1A))
+        for i in 0..<pw {   // nearer us toward its free edge, it reaches a little past the body, top and bottom
+            let k = Double(pw - 1 - i) / Double(max(1, pw - 1))
+            let down = Int((Double(drop) * k).rounded()), up = Int((Double(rise) * k).rounded())
+            if down > 0 { c.rect(x0 + i, 24, 1, down, dark) }
+            if up > 0 { c.rect(x0 + i, 16 - up, 1, up, C(0x3A7E48)) }
+        }
+        c.rect(x0, 16 - rise, 1, 7 + rise + drop, C(0x7AB886))            // its free edge, nearest us
+        c.rect(33, 16, 1, 7, dark)                                       // the hinge side, in shade
+    }
 }
+
+/// How wide a door `w` px long looks, side on, when it's swung `ramp` 0…1 of the way open (about 63°).
+private func clawdbergDoorWidth(_ w: Int, _ ramp: Double) -> Int { max(2, Int((Double(w) * cos(ramp * 1.1)).rounded())) }
