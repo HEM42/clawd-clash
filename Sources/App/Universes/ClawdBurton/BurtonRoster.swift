@@ -66,7 +66,7 @@ enum BurtonVillain: Int, CaseIterable {
     var persona: Persona { burtonVillainPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-let burtonHeroPersonas: [BurtonHero: Persona] = [burtonHeroes1]
+let burtonHeroPersonas: [BurtonHero: Persona] = [burtonHeroes1, burtonHeroes2]
     .reduce([.hem: hemPersona(.clawdBurton)]) { $0.merging($1) { a, _ in a } }
 let burtonVillainPersonas: [BurtonVillain: Persona] = [burtonVillains1, burtonVillains2]
     .reduce([:]) { $0.merging($1) { a, _ in a } }
