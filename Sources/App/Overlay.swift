@@ -892,7 +892,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             var rec = SessionRecord(state: playgroundMood.rawValue, updated: start, leader: leader, project: "")
             rec.created = start - Double(600 + i * 1700)
             // `--missing-time`: the sessions' contexts are compacted two seconds in (The Clawd Files' FBI agents lose time,
-            // Stevie Clawdberg's time travellers hit 88 mph).
+            // Stevie Clawdberg's time travellers hit 88 mph, Clawd Slayer's Tabula Rasa eight forget who they are).
             if CommandLine.arguments.contains("--missing-time") { rec.abducted = start + 2 }
             // On "Idle", spread them over the idle stages: standing, sitting (2 min+), asleep (5 min+).
             rec.since = playgroundMood == .idle ? start - Double(60 + i * 160) : start - Double(20 + i * 35)
@@ -1283,10 +1283,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 }
             }
             // Missing time: lifted away in a beam of light and set back down (The Clawd Files' FBI agents); 88 mph,
-            // gone in a flash and back with three booms (Stevie Clawdberg's time travellers).
+            // gone in a flash and back with three booms (Stevie Clawdberg's time travellers); Willow's forgetting spell,
+            // cast and broken (Clawd Slayer's Tabula Rasa eight).
             let tripK = actor.isLeader ? actor.abducted.flatMap { now - $0 < missingTimeLength ? (now - $0) / missingTimeLength : nil } : nil
             let outaTime = actor.cast.universe == .clawdberg ? tripK.map { OutaTime(k: $0) } : nil
-            let abduction = outaTime == nil ? tripK.map { MissingTime(k: $0) } : nil
+            let tabula = actor.cast.universe == .slayer ? tripK.map { SlayerTabulaRasa(k: $0, cast: actor.cast) } : nil
+            let abduction = outaTime == nil && tabula == nil ? tripK.map { MissingTime(k: $0) } : nil
             if let o = outaTime {
                 let fx = PixelCanvas(outaTimeWidth, Sprite.height)
                 drawOutaTime(fx, o, t: t)
@@ -1296,6 +1298,18 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     out.append(DrawItem(image: img, rect: NSRect(x: left.rounded(), y: y, width: w, height: h),
                                         mirrored: facing < 0, alpha: 1))
                 }
+            }
+            if let tr = tabula {
+                let fx = PixelCanvas(slayerTabulaWidth, slayerTabulaTop + Sprite.height)
+                slayerDrawTabulaRasa(fx, tr, headTop: actor.cast.drawnTop(), t: t)
+                if let img = fx.makeImage() {
+                    let w = CGFloat(fx.w) * scale, h = CGFloat(fx.h) * scale
+                    let mid = CGFloat(Sprite.bodyCenterX)
+                    let left = facing < 0 ? actor.x - (CGFloat(fx.w) - mid) * scale : actor.x - mid * scale
+                    out.append(DrawItem(image: img, rect: NSRect(x: left.rounded(), y: y + lift, width: w, height: h),
+                                        mirrored: facing < 0, alpha: 1))
+                }
+                slayerTabulaShimmer(canvas, tr, t: t)
             }
             if let ab = abduction {
                 lift += CGFloat(ab.lift) * scale
@@ -1368,7 +1382,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             if let b = bunTalk { line = b.line; overHead = true }
             if let said = flinch.line { line = said; overHead = true }
             if hushed, let said = line { line = slayerHushed(said) }
-            if let caption = abduction?.caption ?? outaTime?.caption { line = caption; overHead = true }
+            if let caption = abduction?.caption ?? outaTime?.caption ?? tabula?.caption { line = caption; overHead = true }
             if let line {
                 let sc = actor.isLeader ? ls : cs
                 // Dark ink on a cream backing (`OverlayView.render`), so it reads on any place: bare text with an
@@ -1387,6 +1401,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     // Over the head; once the name tags are placed, it moves up above this one's (see below).
                     cx = actor.x - size.width / 2
                     cy = y + CGFloat(Sprite.height - actor.cast.drawnTop()) * sc + 8 * z
+                    if let tr = tabula { cy += CGFloat(tr.markRoom) * sc }   // above the forgetting spell's "?"
                 }
                 cx = min(max(cx, screenFrame.minX + 2), screenFrame.maxX - size.width - 2)
                 let item = DrawItem(text: callout, rect: NSRect(x: cx.rounded(), y: cy, width: size.width, height: size.height),
@@ -1422,6 +1437,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 case .agent(let who): headTop = CGFloat(Sprite.height - who.drawnTop()) * cs + 5 * z
                 }
                 headTop += lift
+                if let tr = tabula { headTop += CGFloat(tr.markRoom) * scale }   // the forgetting spell's "?" goes under it
                 if let top = knockedTop { headTop = CGFloat(canvas.h - top) * scale + (actor.isLeader ? 8 : 5) * z + lift }
                 do {
                     let ly = y + CGFloat(drop) * z + headTop

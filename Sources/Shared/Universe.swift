@@ -97,10 +97,13 @@ enum Universe: Int, CaseIterable, Codable {
     /// (`StatusStore`'s PreCompact, `MissingTime`).
     /// Stevie Clawdberg: Back to the Future's time travellers (Marty, Doc Brawn, Jennifer, Einstein the Dog, and Old
     /// Biff, who stole the DeLorean). When one's session is compacted they hit 88 mph and come back (`OutaTime`).
+    /// Clawd Slayer: the eight from "Tabula Rasa" (Buffy, Willow, Xander, Giles, Anya, Tara, Spyke, Dawn). When one's
+    /// session is compacted Willow's forgetting spell goes off, then wears off: the same face (`SlayerTabulaRasa`).
     var abductees: Set<Int> {
         switch self {
         case .clawdFiles: return Set((0...6).map { base + StatusStore.heroBase + $0 })
         case .clawdberg: return Set([55, 56, 57, 60].map { base + StatusStore.heroBase + $0 } + [base + 44])
+        case .slayer: return Set([0, 1, 2, 3, 6, 7, 8, 9].map { base + StatusStore.heroBase + $0 })
         default: return []
         }
     }
