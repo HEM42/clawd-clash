@@ -1896,7 +1896,7 @@ let promoShots: [Shot] = [
             if e > 0 { emblem(u, ctx, center: CGPoint(x: 960 + (Double(i) - Double(shown.count - 1) / 2) * 170, y: 335), px: 4 * e) }
         }
         caption("Have fun. Keep track.", ctx, local: local, start: 0.8, y: 190, size: 64)
-        caption("\(universeCount(capital: true)) universes, or all of them at once · free for macOS · github.com/rodclemen/clawd-clash", ctx, local: local, start: 1.1, y: 120, size: 34,
+        caption("Pick a universe, or let them collide · free for macOS · github.com/rodclemen/clawd-clash", ctx, local: local, start: 1.1, y: 120, size: 34,
                 color: NSColor(white: 0.88, alpha: 1), weight: .bold)
     },
 ]
@@ -5638,9 +5638,9 @@ var promoBeats: [(key: Double, beat: Beat)] { [
     (afterChoose + 7.0, ("SUBAGENTS (STEVIE CLAWDBERG)", "The treasure map routes us in: \(Cast.hero(ClawdbergHero.mikeyWaltz).name) stands guard, the Goonies walk in with their jobs on their labels.", "“Every subagent gets to be a Goonie.”", "footsteps")),
     (afterChoose + 12.3, ("WINDOW (CLAWD OF THE RINGS)", "The map of Middle-earth walks us to the window in \(Location.prancingPony.name): live cards tick, then a Codex card flips to NEEDS YOU.", "“Prefer a window? Step into \(Location.prancingPony.name).”", "a ping")),
     (afterChoose + 18.2, ("RANDOM", "The window changes universe on its own, twice, each with that universe's transition, inside the window only: down the vortex into Doctor Clawd, then a Star Clawds wipe.", "RANDOM · EVERY 5 MIN  ·  “Can't decide? Random switches the whole window to a new universe every few minutes.”", "the transitions' own sounds")),
-    (afterChoose + 23.0, ("CLAWD ROYALE", "Halftone blue: every universe's menu bar emblem flies in from all round the frame and they slam together, KRA-KOOM!, and CLAWD ROYALE stamps in.", "KRA-KOOM!  ·  CLAWD ROYALE  ·  “ALL \(universeCount()) UNIVERSES. ONE SCENE.”", "whooshes, the big hit, a fanfare")),
+    (afterChoose + 23.0, ("CLAWD ROYALE", "Halftone blue: every universe's menu bar emblem flies in from round the frame and they slam together, KRA-KOOM!, and CLAWD ROYALE stamps in.", "KRA-KOOM!  ·  CLAWD ROYALE  ·  “UNIVERSES COLLIDE.”", "whooshes, the big hit, a fanfare")),
     (afterChoose + 26.4, ("THE CROSSOVER", "A FWIP! web burst into \(Location.cantina.name): \(Cast.hero(FilesHero.foxClawder).name) against a Dalick, Batclawd duelling Darth Vapor, \(Cast.hero(RingsHero.gandalf).name) holding off Thanoz' gauntlet; Spider-Clawd swings over everyone as E.Clawd's bike flies the other way.", "CLAWD ROYALE  ·  “Nobody asked who'd win. We're answering anyway.”  ·  “Settings → Universe → Clawd Royale. A new place every ten minutes.”", "sabers, blasters, web thwips, a whoosh")),
-    (afterChoose + 31.5, ("END CARD", "The icon lands over its dimmed panels, and every universe's emblem pops in under it.", "“Have fun. Keep track.”  ·  “\(universeCount(capital: true)) universes, or all of them at once · free for macOS · github.com/rodclemen/clawd-clash”", "a heroic cadence")),
+    (afterChoose + 31.5, ("END CARD", "The icon lands over its dimmed panels, and every universe's emblem pops in under it.", "“Have fun. Keep track.”  ·  “Pick a universe, or let them collide · free for macOS · github.com/rodclemen/clawd-clash”", "a heroic cadence")),
 ] }
 
 
