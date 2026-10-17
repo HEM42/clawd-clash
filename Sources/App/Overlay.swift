@@ -1077,6 +1077,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         return lines
     }
 
+    /// How often a character says its line (`Cast.callout`), and for how long it stays up, in seconds.
+    static let calloutEvery = 45.0, calloutFor = 4.0
+
     struct DrawItem {
         var image: CGImage?
         var text: NSAttributedString?
@@ -1172,6 +1175,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         var labels: [(item: DrawItem, leader: Bool, focused: Bool, key: String)] = []
         // Speech bubbles are placed after the names (see below), so they're kept here till then.
         var speeches: [(key: String, item: DrawItem)] = []   // lines said over a head, placed above its name tag
+        var asides: [DrawItem] = []                           // lines said beside a head, placed last (see below)
         var bubbles: [(key: String, x: CGFloat, y: CGFloat, kind: BubbleKind, urgent: Bool, preferRight: Bool, alpha: CGFloat)] = []
         // Companions first so leaders (and their sabers) draw on top.
         var falconItems: [DrawItem] = []
@@ -1332,11 +1336,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 bubbles.append((actor.key, actor.x, by, kind, actor.urgent, onRight, CGFloat(alpha)))
             }
 
-            // Some sessions have a line they say now and then (`Cast.callout`). Han and Greedo have words after a shot,
-            // over their heads, clear of the fight.
+            // Some sessions have a line they say now and then (`Cast.callout`): about once every `calloutEvery`
+            // seconds, each on its own beat, up long enough to read. Han and Greedo have words after a shot, over their
+            // heads, clear of the fight.
             var line: String?, overHead = false
             if case .leader(let who) = actor.kind, let said = who.callout, actor.walkDir == 0,
-               (t / 5 + actor.phase).truncatingRemainder(dividingBy: 1) < 0.3 { line = said }
+               (t / Self.calloutEvery + actor.phase).truncatingRemainder(dividingBy: 1) < Self.calloutFor / Self.calloutEvery {
+                line = said
+            }
             if let s = shot {
                 if actor.key == s.han, s.e >= ShootsFirst.hanLine.from, s.e < ShootsFirst.hanLine.to { line = ShootsFirst.says(actor.cast); overHead = true }
                 if actor.key == s.greedo, s.e >= ShootsFirst.standing { line = s.line; overHead = true }
@@ -1366,7 +1373,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 cx = min(max(cx, screenFrame.minX + 2), screenFrame.maxX - size.width - 2)
                 let item = DrawItem(text: callout, rect: NSRect(x: cx.rounded(), y: cy, width: size.width, height: size.height),
                                     alpha: CGFloat(alpha), speech: true)
-                if overHead { speeches.append((actor.key, item)) } else { overlay.append(item) }
+                if overHead { speeches.append((actor.key, item)) } else { asides.append(item) }
             }
 
             // Project name (Claudes) or task (agents) just above the head, centred on it. Speech bubbles make way for it.
@@ -1494,11 +1501,30 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 }
             }
         }
+        // Lines never cover each other: one that would overlap a line already showing moves up a row at a time, only
+        // as far as it has to (a line that overlaps nothing stays where it is). Lines over a head (Han and Greedo, a
+        // flinch, a caption) are placed first; the now-and-then ones beside a head after them. One that still can't
+        // find room in a few rows, or would go off the top, waits for its next turn.
+        var said: [NSRect] = []
+        func say(_ item: DrawItem) {
+            var r = item.rect
+            let gap = 2 * z
+            for _ in 0..<4 {
+                guard let hit = said.first(where: { $0.insetBy(dx: -4 * z, dy: -gap).intersects(r) }) else {
+                    guard r.maxY <= screenFrame.maxY else { return }
+                    said.append(r)
+                    overlay.append(DrawItem(text: item.text, rect: r, alpha: item.alpha, speech: true))
+                    return
+                }
+                r.origin.y = hit.maxY + gap
+            }
+        }
         for sp in speeches {
             var r = sp.item.rect
             if let tag = named.first(where: { $0.key == sp.key })?.item.rect { r.origin.y = max(r.minY, tag.maxY + 2 * z) }
-            overlay.append(DrawItem(text: sp.item.text, rect: r, alpha: sp.item.alpha, speech: true))
+            say(DrawItem(text: sp.item.text, rect: r, alpha: sp.item.alpha, speech: true))
         }
+        for item in asides { say(item) }
         // Hover card (from agent-view's hover-for-details): next to the character, kept on screen.
         if let key = hoveredKey, let actor = actors.first(where: { $0.key == key && $0.leaving == nil }), !actor.detail.isEmpty {
             let text = NSMutableAttributedString()
