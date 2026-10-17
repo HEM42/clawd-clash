@@ -22,7 +22,7 @@ private func drawBuffyClawmers(_ c: PixelCanvas, _ p: Pose) {
     let flipK = p.signature.map { $0 > 0.12 && $0 < 0.82 ? ($0 - 0.12) / 0.7 : -1 } ?? -1   // 0…1 while it's in the air
 
     drawLegs(c, Look(leg: C(0x2E3550)), step: p.step)
-    slBoots(c, step: p.step, C(0x1A1618), height: 3)
+    slayerBoots(c, step: p.step, C(0x1A1618), height: 3)
     c.oy += p.breathe
     drawBody(c, Look(arm: jacket), armRight: flipK >= 0 ? 2 : 0)
     // The jacket, short and open over the red top, with a highlight down its front edges.
@@ -55,13 +55,13 @@ private func drawBuffyClawmers(_ c: PixelCanvas, _ p: Pose) {
         // Up it goes off her raised hand, turning over twice, and back down into it.
         let h = sin(flipK * .pi) * 13
         let angle = -90 + flipK * 720
-        slStake(c, angle: angle, trail: [], from: (slHand.x, slHand.y - 2 - h), fist: false)
+        slayerStake(c, angle: angle, trail: [], from: (slayerHand.x, slayerHand.y - 2 - h), fist: false)
         return
     }
     if let a = p.melee {
-        slStake(c, angle: a, trail: p.trail)
+        slayerStake(c, angle: a, trail: p.trail)
     } else {
-        slStakeHeld(c)
+        slayerStakeHeld(c)
     }
 }
 
@@ -77,7 +77,7 @@ private func drawWillowRosenclaw(_ c: PixelCanvas, _ p: Pose) {
     let spinK = p.signature.map { $0 > 0.1 && $0 < 0.9 ? ($0 - 0.1) / 0.8 : -1 } ?? -1
 
     drawLegs(c, Look(leg: C(0x3E3046)), step: p.step)
-    slBoots(c, step: p.step, C(0x141216), height: 1)
+    slayerBoots(c, step: p.step, C(0x141216), height: 1)
     // The skirt, short, over the tights: all four legs still show below it.
     c.rect(17, 38, 22, seatedPose ? 1 : 2, skirt); c.rect(17, seatedPose ? 38 : 39, 22, 1, skirtD)
     c.oy += p.breathe

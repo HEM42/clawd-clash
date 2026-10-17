@@ -109,7 +109,7 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
         cbBoots(c, step: p.step, C(0x4A2E1A), height: 3)
     case .slayer:   // grey flannel trousers and brown brogues
         drawLegs(c, Look(leg: C(0x5E5E64)), step: p.step)
-        slBoots(c, step: p.step, C(0x5A3A22))
+        slayerBoots(c, step: p.step, C(0x5A3A22))
     }
 
     c.oy += p.breathe
@@ -238,7 +238,7 @@ private func drawHem(_ c: PixelCanvas, _ p: Pose, _ u: Universe) {
     case .clawdberg:
         if let a = p.melee { cbWhip(c, angle: a, trail: p.trail, t: p.t, leather: C(0x5A3A22)) } else { cbWhipCoil(c, C(0x5A3A22)) }
     case .slayer:
-        if let a = p.melee { slStake(c, angle: a, trail: p.trail) } else { slStakeHeld(c) }
+        if let a = p.melee { slayerStake(c, angle: a, trail: p.trail) } else { slayerStakeHeld(c) }
     }
 }
 

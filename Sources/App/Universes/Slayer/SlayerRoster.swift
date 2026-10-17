@@ -132,7 +132,7 @@ let slayerTheme = Theme(
     nemeses: slayerNemeses.map { (.hero($0.0), .villain($0.1)) },
     // The school bus, Spike's DeSoto and Angel's convertible come in phase 4; until then everyone leaves on foot.
     ride: { _ in nil },
-    menuIcon: drawStakeIcon,
+    menuIcon: slayerMenuIcon,
     legend: .hero(.buffyClawmers))
 
 // MARK: - Places

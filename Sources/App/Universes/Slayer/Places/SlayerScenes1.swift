@@ -81,7 +81,7 @@ extension Scenes {
             guard x < c.w else { break }
             c.rect(x, y, c.w - x, rise / steps, wood); c.rect(x, y, c.w - x, s, woodL)
         }
-        slLine(c, Double(sx), Double(g - 10 * s), Double(sx + steps * 4 * s), Double(f.walk - 6 * s), woodD, Double(s) * 0.7)
+        slayerLine(c, Double(sx), Double(g - 10 * s), Double(sx + steps * 4 * s), Double(f.walk - 6 * s), woodD, Double(s) * 0.7)
         // The book cage: a wire-mesh wall and door, books stacked inside.
         let cg = f.cage, cy = g - cg.h
         if cg.h > 10 * s {

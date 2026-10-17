@@ -54,7 +54,7 @@ private func drawOldMaster(_ c: PixelCanvas, _ p: Pose) {
         return
     }
     if let a = p.melee {
-        slClaws(c, angle: a, trail: p.trail, sleeve: robe, nail: nail)
+        slayerClaws(c, angle: a, trail: p.trail, sleeve: robe, nail: nail)
     } else {
         // His hand by his side, the long nails hanging.
         c.px(39, 36, nail); c.px(40, 36, nail); c.px(39, 37, nail)

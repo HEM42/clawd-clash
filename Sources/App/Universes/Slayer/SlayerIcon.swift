@@ -3,7 +3,7 @@ import Foundation
 /// A wooden stake standing point up in front of a rounded gravestone, a crescent moon behind, on a 28×26 canvas, for
 /// the menu bar. `mono`: one colour, the stake split off the stone by a thin gap so both still read, for a template
 /// image macOS tints.
-func drawStakeIcon(_ c: PixelCanvas, mono: Bool = false) {
+func slayerMenuIcon(_ c: PixelCanvas, mono: Bool = false) {
     let rows: [String] = [
         "...................MMM......",
         ".................MMMM.......",
