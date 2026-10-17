@@ -92,6 +92,8 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
   - The app's copyright line reads "A fan parody project for AI coding sessions", and `build.sh` says to right-click any character, not any villain.
   - `.gitignore` ignores `CLAUDE-SECURITY-*/` scan folders, and the empty `Tools/OldPromos` folder is gone.
 
+*Spent a night measuring an app whose window was hidden behind its own screen saver the whole time. The screen saver was very efficient.*
+
 ## 3.5.1 (2026-10-16)
 
 ### Added
