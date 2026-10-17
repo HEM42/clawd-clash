@@ -983,15 +983,6 @@ private func drawCaptainAtom(_ c: PixelCanvas, _ p: Pose) {
 private let hand = Sprite.hand
 private let none = C(0, 0)
 
-/// Boots: the bottom `rows` of each leg in `col` (not when sitting, when the legs are folded).
-private func drawBoots(_ c: PixelCanvas, _ col: Px, step: Int, rows: Int) {
-    guard !seatedPose else { return }
-    for (i, lx) in [19, 23, 31, 35].enumerated() {
-        let bottom = step >= 0 && i % 2 == step ? 42 : 43
-        c.rect(lx, bottom - rows + 1, 2, rows, col)
-    }
-}
-
 /// A flyer's legs, together and trailing: two thick legs with boots on.
 private func flyingLegs(_ c: PixelCanvas, leg: Px, boot: Px, shade: Px) {
     for lx in [21, 31] {

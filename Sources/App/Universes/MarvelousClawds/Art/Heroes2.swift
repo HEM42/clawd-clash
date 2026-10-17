@@ -291,7 +291,7 @@ private func falconWing(_ c: PixelCanvas, spread k: Double, far: Bool, lift: Int
         let fi = Double(i)
         let folded = 104 + fi * 3, open = (far ? 196 : 178) + fi * 9
         let a = (folded + (open - folded) * k) * .pi / 180
-        let len = 11 + k * (far ? 7 : 10) - fi * k * 1.2
+        let len = 11 + k * (far ? 7 : 5) - fi * k * 1.2                 // the near one no longer: it stays in the frame
         let tip = (x: root.x + cos(a) * len, y: root.y + sin(a) * len)
         bar(c, root.x, root.y, tip.x, tip.y, i % 2 == 0 ? steel : steelD, 0.9)
         if !far && k > 0.5 { c.px(Int(tip.x.rounded()), Int(tip.y.rounded()), C(0xCC2630)) }

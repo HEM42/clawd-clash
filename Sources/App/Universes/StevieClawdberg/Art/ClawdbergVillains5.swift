@@ -81,7 +81,7 @@ private func drawTWrecks(_ c: PixelCanvas, _ p: Pose) {
 
     dinoLegs(c, step: p.step, hide, claw)
     c.oy += p.breathe
-    tail(c, root: 19, tip: 1, rootY: 31, tipY: 27, half: 4, sway: sin(p.lt * 1.6) * 1.5, hide, hideD)
+    tail(c, root: 19, tip: 2, rootY: 31, tipY: 27, half: 4, sway: sin(p.lt * 1.6) * 1.5, hide, hideD)
     // The suit's body: mottled back, pale belly, the chest window.
     c.rect(18, 26, 20, 12, hide); c.rect(18, 35, 20, 2, belly); c.rect(18, 37, 20, 1, hideD); c.rect(37, 26, 1, 9, hideD)
     for x in stride(from: 19, through: 34, by: 5) { c.rect(x, 26, 2, 1, hideD); c.px(x + 2, 34, hideD) }
@@ -130,7 +130,8 @@ private func drawTWrecks(_ c: PixelCanvas, _ p: Pose) {
     if let s = sig, s > 0.12 {
         let fall = ramp(s, 0.12, 0.8)
         let calm = ramp(s, 0.65, 0.8)
-        let top = -6.0 + fall * 47
+        let top = 6.0 + fall * 35
+
         let rows = calm >= 1 ? 2 : 5
         let lean = 0.2 * (1 - calm)
         for i in 0..<26 {
@@ -163,7 +164,7 @@ private func drawCleverGirl(_ c: PixelCanvas, _ p: Pose) {
 
     dinoLegs(c, step: p.step, tan, claw)
     c.oy += p.breathe
-    tail(c, root: 19, tip: 0, rootY: 29.5, tipY: 27, half: 2.6, sway: sin(p.lt * 2.2) * 1.2, tan, tanD, stripe: stripe)
+    tail(c, root: 19, tip: 1, rootY: 29.5, tipY: 27, half: 2.6, sway: sin(p.lt * 2.2) * 1.2, tan, tanD, stripe: stripe)
     // The body: stripes over the back, a pale belly, the chest window.
     c.rect(18, 26, 20, 12, tan); c.rect(18, 35, 20, 2, belly); c.rect(18, 37, 20, 1, tanD); c.rect(37, 26, 1, 9, tanD)
     for x in stride(from: 19, through: 35, by: 4) { c.rect(x, 26, 2, 1, stripe); c.px(x + 1, 34, stripe) }
@@ -369,7 +370,7 @@ private func indominusSuit(_ c: PixelCanvas, _ p: Pose) {
 
     dinoLegs(c, step: p.step, hide, claw)
     c.oy += p.breathe
-    tail(c, root: 19, tip: 0, rootY: 29, tipY: 22, half: 4.5, sway: sin(p.lt * 1.4) * 2, hide, hideD, stripe: stripe)
+    tail(c, root: 19, tip: 1, rootY: 29, tipY: 22, half: 4.5, sway: sin(p.lt * 1.4) * 2, hide, hideD, stripe: stripe)
     // The hump of a back with its quills, the body, and the chest window.
     c.rect(14, 21, 18, 6, hide); c.rect(15, 20, 14, 1, hide)
     for x in stride(from: 15, through: 27, by: 3) { c.px(x, 19, quill); c.px(x + 1, 18, quill); c.px(x + 1, 19, quill) }

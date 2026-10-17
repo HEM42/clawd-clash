@@ -54,27 +54,12 @@ private func along(_ angle: Double, _ len: Double, from h: (x: Double, y: Double
     return (h.x + cos(r) * len, h.y + sin(r) * len)
 }
 
-/// Boots: the bottom `rows` of each leg in `col` (not when sitting, when the legs are folded).
-private func drawBoots(_ c: PixelCanvas, _ col: Px, step: Int, rows: Int) {
-    guard !seatedPose else { return }
-    for (i, lx) in [19, 23, 31, 35].enumerated() {
-        let bottom = step >= 0 && i % 2 == step ? 42 : 43
-        c.rect(lx, bottom - rows + 1, 2, rows, col)
-    }
-}
-
 /// `a` washed towards `b` by `k` (0…1), keeping `a`'s opacity.
 private func mix(_ a: Px, _ b: Px, _ k: Double) -> Px {
     let r: Double = Double(a.r) + (Double(b.r) - Double(a.r)) * k
     let g: Double = Double(a.g) + (Double(b.g) - Double(a.g)) * k
     let bl: Double = Double(a.b) + (Double(b.b) - Double(a.b)) * k
     return Px(r: UInt8(r), g: UInt8(g), b: UInt8(bl), a: a.a)
-}
-
-private func unpremultiplied(_ s: PixelCanvas, _ i: Int) -> Px {
-    let a = s.buf[i + 3], m = 255 / Double(a)
-    return Px(r: UInt8(min(255, Double(s.buf[i]) * m)), g: UInt8(min(255, Double(s.buf[i + 1]) * m)),
-              b: UInt8(min(255, Double(s.buf[i + 2]) * m)), a: a)
 }
 
 /// Draws `art` on a scratch canvas (same offsets as `c`) and copies it onto `c`: faded to `alpha`, washed towards
@@ -98,22 +83,6 @@ private func layer(_ c: PixelCanvas, alpha: Double = 1, lean: Int = 0, tint: (Px
             var col = unpremultiplied(s, i)
             if let t = tint { col = mix(col, t.0, t.1) }
             c.px(x + shift, y, col.alpha(alpha))
-        }
-    }
-}
-
-/// A prop drawn pointing right from pixel (20, 20) of a scratch canvas, turned to `angle` degrees (0 forward, -90 up)
-/// and placed with that point on `at`.
-private func prop(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double, alpha: Double = 1, _ art: (PixelCanvas) -> Void) {
-    let s = PixelCanvas(41, 41)
-    art(s)
-    let r = s.rotated(angle, about: (20.5, 20.5), into: 41, 41, at: (20.5, 20.5))
-    let x0 = Int(floor(at.x - 20.5)), y0 = Int(floor(at.y - 20.5))
-    for y in 0..<r.h {
-        for x in 0..<r.w {
-            let i = (y * r.w + x) * 4
-            guard r.buf[i + 3] > 0 else { continue }
-            c.px(x0 + x, y0 + y, unpremultiplied(r, i).alpha(alpha))
         }
     }
 }

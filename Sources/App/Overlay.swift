@@ -46,8 +46,7 @@ private struct Fight { let a: String, b: String }
 
 private let fadeIn = 0.5
 private let fadeOut = 0.6
-private let falconExit = 6.0      // an agent with a ride finishing: its ship lands, it boards, they fly off
-private let fightLinger = 3.0      // keep fighting through brief gaps between tool calls
+private let falconExit = 6.0      // a character with a ride (agent or session) leaving: ship lands, it boards, off
 
 final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     private let panel: OverlayPanel
@@ -59,7 +58,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private var fights: [Fight] = []
     private var cheering: Set<String> = []
     private var fightUntil: [String: Double] = [:]
-    private var home = NSPoint.zero    // Vader's resting spot (between his feet)
+    private var home = NSPoint.zero    // the crew's spot on the desktop, where you dragged it (saved as anchorX/anchorY)
     private var demo = CommandLine.arguments.contains("--demo")
     private var demoStart = 0.0
     // Playground: villains picked from the menu, in the order added (which decides who fights whom).
@@ -82,7 +81,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private var frameCount = 0
     private static let forcedHover = ProcessInfo.processInfo.environment["CLAWD_HOVER"]   // read once: it showed up in profiles
     private var refitting = false
-    private let debug = ProcessInfo.processInfo.environment["VADER_DEBUG"] != nil
+    private let debug = ProcessInfo.processInfo.environment["VADER_DEBUG"] != nil   // Clawd Wars' old name, kept
     private var lastDebug = 0
     private var processes: [ClaudeProcesses.Info] = []
     private var lastScan = 0.0
@@ -162,7 +161,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private static let gap: CGFloat = 8
     /// How long a Claude keeps fighting after it stops working or thinking.
     private static let fightLinger: Double = 5
-    private static let duelDistance: CGFloat = 170
     private static let walkSpeed: CGFloat = 150
     /// Example agent tasks for the Playground and Demo Mode.
     private static let sampleTasks = ["Find hook events", "Review Overlay.swift", "Run the test suite", "Plan the refactor",
@@ -174,9 +172,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private static let footroom: CGFloat = 7 * leaderScale
 
     override init() {
-        // The hook only knows the cast sizes (`Universe`); a character added without bumping them would never be picked.
+        // The hook only knows the cast sizes (`Universe`); a character added without bumping them would never be picked,
+        // and saved ids would point at the wrong one. A `precondition`, not an `assert`: every build here is optimised
+        // (-O), which compiles asserts out, so this is what stops a mismatched build at its first launch.
         for u in Universe.allCases {
-            assert(Theme.of(u).villains.count == u.villainCount && Theme.of(u).heroes.count == u.heroCount, "\(u) cast size")
+            let villains = Theme.of(u).villains.count, heroes = Theme.of(u).heroes.count
+            precondition(villains == u.villainCount && heroes == u.heroCount,
+                         "\(u.title): the roster has \(villains) villains and \(heroes) heroes, but Universe.swift says "
+                         + "\(u.villainCount) and \(u.heroCount). Update villainCount/heroCount in Sources/Shared/Universe.swift.")
         }
         panel = OverlayPanel(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10),
                              styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
@@ -225,7 +228,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         applyDockPolicy()
         offerHooksOnFirstLaunch()
 
-        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.refreshStatus() }
+        let refresh = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.refreshStatus() }
+        refresh.tolerance = 0.1   // macOS may line it up with other wake-ups; nobody sees a status a tenth late
+        // The frame timer has none: animation is paced by it.
         let frame = Timer(timeInterval: 1.0 / 15, repeats: true) { [weak self] _ in self?.tick() }
         RunLoop.main.add(frame, forMode: .common)
     }
@@ -325,8 +330,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         if debug { FileHandle.standardError.write("clawd royale: \(place.name), \(place.universe.title)\n".data(using: .utf8)!) }
     }
 
-    /// Height of the cantina floor in the window's scene strip; feet stand a little way into it.
+    /// Height of the floor in the window's scene strip (in points), as the place is drawn (`SceneView`).
     static let cantinaFloor: CGFloat = 20
+    /// Where feet stand in the scene strip, a little way into that floor.
     var windowFloor: CGFloat { 16 }
 
     // MARK: Status
@@ -451,6 +457,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 else { focusCandidate = seen }
             }
         }
+        // The homebound (`Universe.homebound`) only appear at home: in the window's scene when it's theirs, never on the
+        // desktop. The Playground shows whoever was picked.
+        if playground == nil { sessions = StatusStore.at(sessions, place: windowMode ? location.rawValue : nil, roster: .shown) }
         debounceMoods(now)
         Accents.update(visible: sessions.map(\.project))
         relayout()
@@ -505,7 +514,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 SaverFeed.Agent(id: a.id, cast: Cast.of(a).id, task: a.label.isEmpty ? "Agent" : a.label)
             }
             out.append(SaverFeed.Session(
-                id: s.id, cast: cast.id, assistant: s.group, project: s.project, remote: s.pid == nil ? nil : (s.remote ?? "Local"),
+                id: s.id, cast: cast.id, assistant: s.group, project: s.project, 
                 accent: hex, mood: s.mood.rawValue, urgent: actor?.urgent ?? false, asleep: asleep, sitting: actor?.sitting ?? false,
                 unknown: !s.live || s.hookSilent, focused: s.pid != nil && s.pid == focusedPid, since: since(s, now: now),
                 activity: s.mood == .idle ? nil : s.record?.activity, prompt: s.record?.prompt, agents: agents))
@@ -533,7 +542,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         feedAgents = agentsNow
         feedEvents = Array(feedEvents.suffix(12))
         let feed = SaverFeed(at: now, location: location.rawValue, sessions: out, events: feedEvents,
-                             universe: Universe.shown.rawValue, saverUniverse: nil, mixed: Universe.mixed ? true : nil)
+                             universe: Universe.shown.rawValue, mixed: Universe.mixed ? true : nil)
         saverFeed = feed
         if real && saverInstalled { feed.save() }
     }
@@ -842,11 +851,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private func playgroundSessions(_ villains: [Int]) -> [SessionSnapshot] {
         let activities = ["Read Overlay.swift", "Grep fightRoles", "Bash: swift build", "Edit Leaders.swift",
                           "Fetch github.com", "Glob **/*.swift", "Bash: run the tests", "Read README.md"]
-        // Heroes by `MarvelHero` index; the agent-only villains as `playgroundVillainAgent` + their cast id.
+        // Heroes by their index in the universe on show; the agent-only villains as `playgroundVillainAgent` + their
+        // cast id. Adopted from the universe on show (its base added), so HEM, the last hero, stays HEM.
         let crew = playgroundAgents.enumerated().map { i, c in
             AgentRecord(id: "pg-a\(c)", session: "pg", type: "playground", character: c >= Self.playgroundVillainAgent ? 0 : c,
-                        cast: Universe.shown.adopt(c >= Self.playgroundVillainAgent ? c - Self.playgroundVillainAgent
-                                                                                    : StatusStore.heroBase + c),
+                        cast: Universe.shown.adopt(Universe.shown.base + (c >= Self.playgroundVillainAgent ? c - Self.playgroundVillainAgent
+                                                                                                           : StatusStore.heroBase + c)),
                         started: start - Double(30 + i * 47),
                         lastSeen: 0, task: Self.sampleTasks[c % Self.sampleTasks.count],
                         activity: activities[(c + i) % activities.count], tools: 3 + (c * 7) % 23)
@@ -855,23 +865,26 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             return [SessionSnapshot(id: "home", leader: Universe.shown.base, project: "", mood: .idle, agents: crew)]
         }
         // Sample details so the Playground's cards look like live ones.
-        let prompts = Universe.shown == .doctor
-            ? ["make the rotor pump faster", "make the window resize to fit the Claudes", "why won't the Angle move?",
-               "write a nice README with screenshots", "fix the portrait crop for the Dalick Emperor"]
-            : Universe.shown == .clawdFiles
-            ? ["redact the case file before Skinnard sees it", "make the window resize to fit the Claudes",
-               "why does the slide projector keep flickering?", "write a nice README with screenshots",
-               "fix the portrait crop for the Smoking Clawd's smoke"]
-            : Universe.shown == .clawdberg
-            ? ["get the DeLorean up to 88 mph", "make the window resize to fit the Claudes",
-               "why does the water glass keep rippling?", "write a nice README with screenshots",
-               "fix the portrait crop for T. Wrecks's tiny arms"]
-            : Universe.shown == .slayer
-            ? ["stake the bug in the Hellmouth loop", "make the window resize to fit the Claudes",
-               "why does the library's book cage keep swinging?", "write a nice README with screenshots",
-               "fix the portrait crop for Glorificlaws's hair"]
-            : ["add a snowtaunt", "make the window resize to fit the Claudes", "why does the duel not start?",
-               "write a nice README with screenshots", "fix the portrait crop for wide characters"]
+        let prompts: [String] = {
+            switch Universe.shown {
+            case .doctor: return ["make the rotor pump faster", "make the window resize to fit the Claudes", "why won't the Angle move?",
+                                  "write a nice README with screenshots", "fix the portrait crop for the Dalick Emperor"]
+            case .clawdFiles: return ["redact the case file before Skinnard sees it", "make the window resize to fit the Claudes",
+                                      "why does the slide projector keep flickering?", "write a nice README with screenshots",
+                                      "fix the portrait crop for the Smoking Clawd's smoke"]
+            case .clawdberg: return ["get the DeLorean up to 88 mph", "make the window resize to fit the Claudes",
+                                     "why does the water glass keep rippling?", "write a nice README with screenshots",
+                                     "fix the portrait crop for T. Wrecks's tiny arms"]
+            case .middleEarth: return ["make the Eagle wait for the last subagent", "make the window resize to fit the Claudes",
+                                       "why won't the Ballrog cross the bridge?", "write a nice README with screenshots",
+                                       "fix the portrait crop for Shellob's legs"]
+            case .slayer: return ["stake the bug in the Hellmouth loop", "make the window resize to fit the Claudes",
+                                  "why does the library's book cage keep swinging?", "write a nice README with screenshots",
+                                  "fix the portrait crop for Glorificlaws's hair"]
+            default: return ["add a snowtaunt", "make the window resize to fit the Claudes", "why does the duel not start?",
+                             "write a nice README with screenshots", "fix the portrait crop for wide characters"]
+            }
+        }()
         let nowActs = ["Edit WindowMode.swift", "Bash: swift build", "Read Locations.swift", "Grep opaqueBounds", "Agent: Review the diff"]
         // Agents join the first villain. Empty project → the label shows the villain's name.
         return villains.enumerated().map { i, l in
@@ -991,6 +1004,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
         guard busy || hoverChanged || frameCount % 2 == 0 else { return }
         guard onScreen || shotPath != nil else { return }   // hidden or fully covered: nothing would show
+        // The window's screen-saver view covers the scene strip entirely: no point drawing the crew behind it.
+        guard !(windowMode && ClawdWindow.view == .board) || shotPath != nil else { return }
 
         items = buildItems(now: now)
         if let shotPath, now - lastShot > shotEvery {
@@ -1019,7 +1034,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         view.showFrame()
     }
 
-    /// Where each character can be hovered or clicked (villains first, so they win overlaps).
+    /// Where each character can be hovered or clicked: sessions' leaders first, so they win overlaps over agents.
+    /// The one place this is worked out, so hovering and clicking always agree (a flying character included).
     private func hitRects() -> [(String, NSRect)] {
         let s = Self.leaderScale * zoom, c = Self.companionScale * zoom
         return actors.filter { $0.leaving == nil }.sorted { $0.isLeader && !$1.isLeader }.map {
@@ -1064,6 +1080,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         return lines
     }
 
+    /// How often a character says its line (`Cast.callout`), and for how long it stays up, in seconds.
+    static let calloutEvery = 45.0, calloutFor = 4.0
+
     struct DrawItem {
         var image: CGImage?
         var text: NSAttributedString?
@@ -1073,6 +1092,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         var boxed = false      // text drawn on a dark rounded box so it reads on any wallpaper
         var agentBox = false   // agents' task boxes get a blue tint to tell them from project names
         var accent: NSColor?   // project colour for the box border
+        var speech = false     // a character's line: dark text on a soft cream backing, nothing like the status bubbles
     }
 
     private func buildItems(now: Double) -> [DrawItem] {
@@ -1086,10 +1106,15 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         func weapon(_ a: Actor) -> Weapon {
             a.cast.weapon
         }
-        /// Missing time: an agent being taken stops fighting, and the other side holds fire until they're set down.
+        /// Missing time: an FBI agent's session being taken stops fighting, and the other side holds fire until they're set down.
         func taken(_ a: Actor) -> Bool { a.isLeader && a.abducted.map { now - $0 < missingTimeLength } == true }
         var roles: [String: FightRole] = [:]
         var fx: [(Actor, Actor)] = []
+        /// Each fighting pair keeps its own beat: its clock runs this far ahead of the plain one, so with several
+        /// pairs on screen they don't all strike at once. The two in a pair share it, so they still trade blows.
+        var fightPhase: [String: Double] = [:]
+        /// The clock a character's fight moves (and its effects) run on.
+        func ft(_ key: String) -> Double { t + (fightPhase[key] ?? 0) }
         var incoming: [String: Double] = [:]   // blaster-vs-blaster: each defender → its shooter's clock offset
         for fight in fights {
             guard let a = actors.first(where: { $0.key == fight.a && $0.leaving == nil }),
@@ -1099,6 +1124,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let (lRole, rRole) = fightRoles(weapon(l), weapon(r))
             roles[l.key] = lRole; roles[r.key] = rRole
             fx.append((l, r))
+            // Han and Greedo stay on the plain clock: Han shooting first is timed to one of his own shots.
+            let shootsFirst = (l.cast.isHan && r.cast.isGreedo) || (l.cast.isGreedo && r.cast.isHan)
+            let phase = shootsFirst ? 0 : fightPhaseOffset(l.key, r.key)
+            fightPhase[l.key] = phase; fightPhase[r.key] = phase
             if case .shoot(let lo) = lRole, case .shoot(let ro) = rRole { incoming[l.key] = ro; incoming[r.key] = lo }
         }
         for a in actors where cheering.contains(a.key) && a.walkDir == 0 && a.leaving == nil { roles[a.key] = .cheer }
@@ -1149,6 +1178,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         var labels: [(item: DrawItem, leader: Bool, focused: Bool, key: String)] = []
         // Speech bubbles are placed after the names (see below), so they're kept here till then.
         var speeches: [(key: String, item: DrawItem)] = []   // lines said over a head, placed above its name tag
+        var asides: [DrawItem] = []                           // lines said beside a head, placed last (see below)
         var bubbles: [(key: String, x: CGFloat, y: CGFloat, kind: BubbleKind, urgent: Bool, preferRight: Bool, alpha: CGFloat)] = []
         // Companions first so leaders (and their sabers) draw on top.
         var falconItems: [DrawItem] = []
@@ -1187,18 +1217,18 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             // Flyers ride up to `flightHeight` while they travel, and now and then take to the air where they stand
             // (fighting from up there, if they shoot or cast); Spider-Man swings along in arcs on a web line, the Bat-family
             // on grapnel lines.
-            let air = self.air(actor, role: roles[actor.key], walking: walking, t: t)
+            let air = self.air(actor, role: roles[actor.key], walking: walking, t: ft(actor.key))
             switch actor.kind {
             case .leader(let who):
                 let role = roles[actor.key]
-                who.draw(canvas, t: t, mode: role != nil ? .working : actor.mode, walking: walking, role: role ?? .none,
+                who.draw(canvas, t: ft(actor.key), mode: role != nil ? .working : actor.mode, walking: walking, role: role ?? .none,
                          urgent: actor.urgent && role == nil, sitting: actor.sitting, asSession: true,
                          airborne: walking && air > 0.3, aloft: !walking && air > 0.3)
                 if let r = actor.regenerated, now - r < regenerationFlare { drawRegeneration(canvas, k: (now - r) / regenerationFlare, t: t) }
                 scale = ls; y = ground
             case .agent(let who):
                 let role = roles[actor.key]
-                who.draw(canvas, t: role != nil ? t : t + actor.phase, mode: .working, walking: walking,
+                who.draw(canvas, t: role != nil ? ft(actor.key) : t + actor.phase, mode: .working, walking: walking,
                          role: role ?? .none, asSession: false, airborne: walking && air > 0.3, aloft: !walking && air > 0.3)
                 scale = cs; y = ground + (ls - cs) * 8
             }
@@ -1221,6 +1251,20 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 if let web = webLine(from: NSPoint(x: actor.x + facing * 13 * scale, y: y + lift + 30 * scale),   // the raised hand, (41, 22)
                                      anchor: NSPoint(x: (floor(swing) + 0.5) * 70 * z + facing * 20 * z, y: y + 90 * scale),
                                      scale: scale, universe: actor.cast.universe) {
+                    out.append(web)
+                }
+            }
+            // A signature that climbs a thread (`Persona.climb`, Shellob): risen and faded by the move, its thread from the
+            // body up towards the top of the stage (the screen, or the window's scene).
+            let climb = drawnSignature.flatMap { p in actor.cast.persona.climb.map { (move: $0, p: p) } }
+            if let cl = climb {
+                lift += CGFloat(cl.move.rise(cl.p)) * scale
+                let from = NSPoint(x: actor.x + facing * CGFloat(cl.move.from.x - pivotX) * scale,
+                                   y: y + lift + CGFloat(Double(Sprite.height) - cl.move.from.y) * scale)
+                let reach = from.y + (stage.maxY - from.y) * CGFloat(cl.move.thread(cl.p))
+                if reach > from.y + scale, var web = webLine(from: from, anchor: NSPoint(x: from.x, y: reach), scale: scale,
+                                                             universe: actor.cast.universe) {
+                    web.alpha = CGFloat(cl.move.alpha(cl.p))          // the thread fades with her
                     out.append(web)
                 }
             }
@@ -1255,6 +1299,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             var alpha = min(1, (now - actor.born) / 0.25)
             if let ab = abduction { alpha = min(alpha, ab.alpha) }
             if let o = outaTime { alpha = min(alpha, o.alpha) }
+            if let cl = climb { alpha = min(alpha, cl.move.alpha(cl.p)) }
             var drop = 0.0
             if let left = actor.leaving, actor.exit == nil {
                 let f = min(1, (now - left) / fadeOut)
@@ -1264,7 +1309,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let mirrored = facing < 0
             let bodyX = (mirrored ? CGFloat(canvas.w) - CGFloat(pivotX) : CGFloat(pivotX)) * scale
             // Ducking a bolt in a shoot-out: squat (squashed from the feet up).
-            let duck = incoming[actor.key].map { CGFloat(duckAmount(t: t, shooterOffset: $0, armoured: actor.cast.armoured)) } ?? 0
+            let duck = incoming[actor.key].map { CGFloat(duckAmount(t: ft(actor.key), shooterOffset: $0, armoured: actor.cast.armoured)) } ?? 0
             // Captain Clawk flinches at every tick of the Croc Clock (Stevie Clawdberg), in Pirate Town or with it about.
             let flinch = clawkFlinch(actor, t: t)
             let rect = NSRect(x: (actor.x - bodyX).rounded() + CGFloat(flinch.dx) * scale, y: y + CGFloat(drop) * z + lift + CGFloat(flinch.up) * scale,
@@ -1294,11 +1339,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 bubbles.append((actor.key, actor.x, by, kind, actor.urgent, onRight, CGFloat(alpha)))
             }
 
-            // Some sessions have a line they say now and then (`Cast.callout`). Han and Greedo have words after a shot,
-            // over their heads, clear of the fight.
+            // Some sessions have a line they say now and then (`Cast.callout`): about once every `calloutEvery`
+            // seconds, each on its own beat, up long enough to read. Han and Greedo have words after a shot, over their
+            // heads, clear of the fight.
             var line: String?, overHead = false
             if case .leader(let who) = actor.kind, let said = who.callout, actor.walkDir == 0,
-               (t / 5 + actor.phase).truncatingRemainder(dividingBy: 1) < 0.3 { line = said }
+               (t / Self.calloutEvery + actor.phase).truncatingRemainder(dividingBy: 1) < Self.calloutFor / Self.calloutEvery {
+                line = said
+            }
             if let s = shot {
                 if actor.key == s.han, s.e >= ShootsFirst.hanLine.from, s.e < ShootsFirst.hanLine.to { line = ShootsFirst.says(actor.cast); overHead = true }
                 if actor.key == s.greedo, s.e >= ShootsFirst.standing { line = s.line; overHead = true }
@@ -1308,13 +1356,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             if let caption = abduction?.caption ?? outaTime?.caption { line = caption; overHead = true }
             if let line {
                 let sc = actor.isLeader ? ls : cs
+                // Dark ink on a cream backing (`OverlayView.render`), so it reads on any place: bare text with an
+                // outline got lost in busy, bright scenes.
                 let callout = NSAttributedString(string: line, attributes: [
                     .font: NSFont.monospacedSystemFont(ofSize: max(9, 10 * z), weight: .heavy),
-                    .foregroundColor: NSColor(calibratedRed: 1, green: 0.85, blue: 0.4, alpha: 1),
-                    .strokeColor: NSColor.black,
-                    .strokeWidth: -4.0,
+                    .foregroundColor: NSColor(calibratedRed: 0.16, green: 0.11, blue: 0.08, alpha: 1),
                 ])
-                let size = callout.size()
+                let ts = callout.size()
+                let size = NSSize(width: (ts.width + 10 * z).rounded(.up), height: (ts.height + 4 * z).rounded(.up))
                 // On the side away from the speech bubble, level with the head.
                 let onLeft = bubbleSpan.map { $0.minX > actor.x } ?? (facing > 0)
                 var cx = onLeft ? actor.x - 16 * sc - size.width : actor.x + 16 * sc
@@ -1326,8 +1375,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 }
                 cx = min(max(cx, screenFrame.minX + 2), screenFrame.maxX - size.width - 2)
                 let item = DrawItem(text: callout, rect: NSRect(x: cx.rounded(), y: cy, width: size.width, height: size.height),
-                                    alpha: CGFloat(alpha))
-                if overHead { speeches.append((actor.key, item)) } else { overlay.append(item) }
+                                    alpha: CGFloat(alpha), speech: true)
+                if overHead { speeches.append((actor.key, item)) } else { asides.append(item) }
             }
 
             // Project name (Claudes) or task (agents) just above the head, centred on it. Speech bubbles make way for it.
@@ -1382,19 +1431,19 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let headroom = Int(Self.flightHeight) + 8
             func fighter(_ a: Actor, side: Double) -> Fighter {
                 let sc = a.isLeader ? ls : cs
-                let lift = (a.isLeader ? 0 : (ls - cs) * 8) + self.air(a, role: roles[a.key], walking: false, t: t) * Self.flightHeight * sc
+                let lift = (a.isLeader ? 0 : (ls - cs) * 8) + self.air(a, role: roles[a.key], walking: false, t: ft(a.key)) * Self.flightHeight * sc
                 return Fighter(weapon: weapon(a), x: Double((a.x - left) / ls), k: Double(sc / ls),
                                top: Double((CGFloat(Sprite.height) * (ls - sc) - lift) / ls) + Double(headroom), side: side,
                                muzzle: a.cast.muzzle, armoured: a.cast.armoured, pivot: a.cast.weaponPivot).dressed(as: a.cast)
             }
             let fl = fighter(l, side: 1), fr = fighter(r, side: -1)
             let shotHere = shot.flatMap { s in Set([l.key, r.key]) == [s.han, s.greedo] ? s : nil }
-            guard shotHere != nil || fightFXVisible(t: t, fl.weapon, fr.weapon) else { continue }   // e.g. a duel between clashes
+            guard shotHere != nil || fightFXVisible(t: ft(l.key), fl.weapon, fr.weapon) else { continue }   // e.g. a duel between clashes
             let c = PixelCanvas(width, Sprite.height + headroom)
             if let s = shotHere {
                 ShootsFirst.drawFX(c, e: s.e, t: t, han: l.key == s.han ? fl : fr, greedo: l.key == s.han ? fr : fl)
             } else {
-                drawFightFX(c, t: t, left: fl, right: fr)
+                drawFightFX(c, t: ft(l.key), left: fl, right: fr)
             }
             if let img = c.makeImage() {
                 overlay.append(DrawItem(image: img, rect: NSRect(x: left.rounded(), y: ground,
@@ -1455,11 +1504,30 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 }
             }
         }
+        // Lines never cover each other: one that would overlap a line already showing moves up a row at a time, only
+        // as far as it has to (a line that overlaps nothing stays where it is). Lines over a head (Han and Greedo, a
+        // flinch, a caption) are placed first; the now-and-then ones beside a head after them. One that still can't
+        // find room in a few rows, or would go off the top, waits for its next turn.
+        var said: [NSRect] = []
+        func say(_ item: DrawItem) {
+            var r = item.rect
+            let gap = 2 * z
+            for _ in 0..<4 {
+                guard let hit = said.first(where: { $0.insetBy(dx: -4 * z, dy: -gap).intersects(r) }) else {
+                    guard r.maxY <= screenFrame.maxY else { return }
+                    said.append(r)
+                    overlay.append(DrawItem(text: item.text, rect: r, alpha: item.alpha, speech: true))
+                    return
+                }
+                r.origin.y = hit.maxY + gap
+            }
+        }
         for sp in speeches {
             var r = sp.item.rect
             if let tag = named.first(where: { $0.key == sp.key })?.item.rect { r.origin.y = max(r.minY, tag.maxY + 2 * z) }
-            overlay.append(DrawItem(text: sp.item.text, rect: r, alpha: sp.item.alpha))
+            say(DrawItem(text: sp.item.text, rect: r, alpha: sp.item.alpha, speech: true))
         }
+        for item in asides { say(item) }
         // Hover card (from agent-view's hover-for-details): next to the character, kept on screen.
         if let key = hoveredKey, let actor = actors.first(where: { $0.key == key && $0.leaving == nil }), !actor.detail.isEmpty {
             let text = NSMutableAttributedString()
@@ -1659,23 +1727,16 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
     }
 
-    /// Clicking a villain brings its Claude session's terminal/editor window to the front.
+    /// Clicking a character brings its session's terminal or editor window to the front (an agent's, its session's).
     private func jump(at point: NSPoint) {
-        let s = Self.leaderScale * zoom
-        let c = Self.companionScale * zoom
-        guard let actor = actors.first(where: {
-            $0.isLeader && $0.leaving == nil
-                && NSRect(x: $0.x - 16 * s, y: anchor.y + 5 * s, width: 32 * s, height: 35 * s).contains(point)
-        }) ?? actors.first(where: {   // an agent jumps to its Claude
-            !$0.isLeader && $0.leaving == nil
-                && NSRect(x: $0.x - 16 * c, y: anchor.y + (s - c) * 8 + 5 * c, width: 32 * c, height: 35 * c).contains(point)
-        }) else { return }
+        guard let key = hitRects().first(where: { $0.1.contains(point) })?.0,
+              let actor = actors.first(where: { $0.key == key }) else { return }
         guard let pid = actor.pid else { NSSound.beep(); return }
         Jump.toSession(pid: pid)
     }
 
-    /// Installed from a download (Homebrew) rather than build.sh: offer once to connect every AI that's on this
-    /// Mac but not hooked up yet (also catches Codex / Qwen Code added after Claude was already connected).
+    /// On launch, offer once per AI to connect every AI on this Mac that isn't hooked up or waved off yet (also
+    /// catches one installed after the others were connected).
     private func offerHooksOnFirstLaunch() {
         guard playground == nil, !demo, shotPath == nil, chaosSeconds == nil else { return }
         SaverInstaller.refreshIfOutdated()
@@ -1721,10 +1782,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
     }
 
-    // MARK: Chaos test
-
-    /// HEM standing next to Princess Laya, both out of the fight: for five seconds in every twenty he turns to her and
-    /// has a word about buns (a different one each time).
     /// Captain Clawk at the Croc Clock's tick (in Pirate Town, or with the Croc Clock about as an agent): every three
     /// seconds a jump and a shiver, sprite pixels; now and then he mutters about it.
     private func clawkFlinch(_ a: Actor, t: Double) -> (dx: Int, up: Int, line: String?) {
@@ -1759,6 +1816,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                         mirrored: false, alpha: 1)
     }
 
+    /// HEM standing next to Princess Laya, both out of the fight: for five seconds in every twenty he turns to her and
+    /// has a word about buns (a different one each time).
     private func hemBunTalk(_ a: Actor, t: Double, z: CGFloat) -> (facing: CGFloat, line: String)? {
         guard a.cast.universe == .starWars, a.cast.universe.isHem(a.cast.id), a.leaving == nil else { return nil }
         guard let laya = actors.first(where: { $0.cast == .hero(SWHero.leia) && $0.walkDir == 0 && $0.leaving == nil
@@ -1767,6 +1826,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         guard frac(cycle) < 0.25 else { return nil }
         return (laya.x > a.x ? 1 : -1, hemBunLines[Int(floor(cycle)) % hemBunLines.count])
     }
+
+    // MARK: Chaos test
 
     /// One random step: Claudes and agents come and go and change mood, much faster than real use.
     private func chaosStep(_ now: Double) -> [SessionSnapshot] {
@@ -1914,9 +1975,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         return clawdWindow?.window.occlusionState.contains(.visible) ?? false
     }
 
-    /// Captain America's shield in the menu bar, opening the same menu as right-clicking a character.
-    /// Double-clicking it hides or shows Clawd Clash, so a single click opens the menu only once the
-    /// double-click time has passed; right-click (or ⌃-click) opens it straight away.
+    /// The universe's menu bar icon, opening the same menu as right-clicking a character. The menu opens at once;
+    /// clicking the icon again while it's open closes it and hides or shows Clawd Clash.
     private func installStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         item.button?.image = statusIcon(mono: monoMenuBarIcon)
@@ -1952,7 +2012,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// so it doesn't change every few minutes; it changes again when a single universe is picked.
     private func statusIcon(mono: Bool) -> NSImage? {
         let u: Universe
-        if Self.universeEvery != nil, let kept = UserDefaults.standard.string(forKey: "menuIconUniverse").flatMap(Universe.init(key:)) {
+        if Self.universeEvery != nil, let kept = UserDefaults.standard.string(forKey: "menuIconUniverse").flatMap(Universe.offered(key:)) {
             u = kept
         } else {
             u = .shown
@@ -2410,7 +2470,16 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private var settingsWindow: SettingsWindow?
 
     @objc func openSettings() {
-        if settingsWindow == nil { settingsWindow = SettingsWindow { [weak self] in self?.settingsSections() ?? [] } }
+        if settingsWindow == nil {
+            // One level above the window when it's kept on top, and above the characters when they are, so clicking
+            // them never hides Settings behind them; a normal window otherwise.
+            settingsWindow = SettingsWindow(level: { [weak self] in
+                guard let self else { return .normal }
+                let pinned = self.windowMode ? UserDefaults.standard.bool(forKey: "windowPinned") : Self.charactersOnTop
+                guard pinned else { return .normal }
+                return NSWindow.Level(rawValue: (self.windowMode ? NSWindow.Level.floating : .statusBar).rawValue + 1)
+            }, sections: { [weak self] in self?.settingsSections() ?? [] })
+        }
         settingsWindow?.show()
     }
 
@@ -2420,7 +2489,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// Everything the Settings window shows, read afresh each time it's built.
     private func settingsSections() -> [SettingsSection] {
         let d = UserDefaults.standard
-        let universes = Universe.allCases
+        let universes = Universe.offered
         let clawdRoyaleRow = universes.count, randomRow = universes.count + 1
         var general: [SettingsRow] = [
             .choice("Universe", options: universes.map(\.title) + ["Clawd Royale", "Random"],
@@ -2456,6 +2525,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                         Self.universeEvery = Self.universeIntervals[i]
                         self?.universeSince = Date().timeIntervalSince1970
                     }),
+            .separator,
             .toggle("Show Dock icon", get: { [weak self] in self?.showInDock ?? true },
                     set: { [weak self] _ in self?.toggleDock() }),
             .toggle("Monochrome menu bar icon", get: { [weak self] in self?.monoMenuBarIcon ?? false },
@@ -2463,6 +2533,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             .toggle("Launch at login", get: { SMAppService.mainApp.status == .enabled },
                     set: { [weak self] _ in self?.toggleLogin() }),
         ]
+        general.append(.separator)
         general.append(.button("Forget Idle Sessions", note: "Clears sessions that ended without saying so.",
                                action: { [weak self] in self?.forgetIdle() }))
 
@@ -2471,6 +2542,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     get: { ClawdWindow.closeHides }, set: { ClawdWindow.closeHides = $0 }),
             .toggle("Keep window on top", get: { d.bool(forKey: "windowPinned") },
                     set: { [weak self] on in d.set(on, forKey: "windowPinned"); self?.clawdWindow?.applyPin() }),
+            .separator,
             .toggle("Compact window", note: "The whole window at 75%.", get: { ClawdWindow.small },
                     set: { [weak self] _ in self?.toggleSmallWindow() }),
             .toggle("Show the session list", get: { ClawdWindow.listShown && ClawdWindow.view != .board },
@@ -2479,6 +2551,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     set: { [weak self] _ in self?.toggleBoard() }),
             .toggle("Fit the window's height to the sessions", get: { d.object(forKey: "autoHeight") as? Bool ?? true },
                     set: { [weak self] _ in self?.toggleAutoHeight() }),
+            .separator,
             .toggle("Show project names over the characters", get: { d.object(forKey: "labelsWindow") as? Bool ?? false },
                     set: { on in d.set(on, forKey: "labelsWindow") }),
         ]
@@ -2495,22 +2568,27 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     }),
             .toggle("Show project names over the characters", get: { d.object(forKey: "labels") as? Bool ?? true },
                     set: { on in d.set(on, forKey: "labels") }),
+            .separator,
             .button("Reset Position", note: "Puts the crew back in the bottom-right corner.",
                     action: { [weak self] in self?.resetPosition() }),
         ]
 
-        var ais: [SettingsRow] = []
-        if HookInstaller.claudeAvailable || HookInstaller.isInstalled {
-            ais.append(.status("Claude Code", detail: { HookInstaller.isInstalled ? "Connected" : "Not connected" },
-                               button: { HookInstaller.isInstalled ? "Remove" : "Connect" },
-                               action: { [weak self] in
-                                   if HookInstaller.isInstalled { self?.removeHooks() } else { self?.installHooks() }
-                               }))
-        }
-        for ai in HookInstaller.others where HookInstaller.available(ai) {
+        // Every AI we support, so it's clear what could connect: one that isn't installed is greyed out, without a button.
+        let claudeHere = { HookInstaller.claudeAvailable || HookInstaller.isInstalled }
+        var ais: [SettingsRow] = [
+            .status("Claude Code", detail: { claudeHere() ? (HookInstaller.isInstalled ? "Connected" : "Not connected") : "Not installed" },
+                    button: { claudeHere() ? (HookInstaller.isInstalled ? "Remove" : "Connect") : nil },
+                    dimmed: { !claudeHere() },
+                    action: { [weak self] in
+                        if HookInstaller.isInstalled { self?.removeHooks() } else { self?.installHooks() }
+                    }),
+        ]
+        for ai in HookInstaller.others {
+            let here = { HookInstaller.available(ai) }
             ais.append(.status(HookInstaller.displayName(ai.name),
-                               detail: { HookInstaller.installed(ai) ? "Connected" : "Not connected" },
-                               button: { HookInstaller.installed(ai) ? "Remove" : "Connect" },
+                               detail: { here() ? (HookInstaller.installed(ai) ? "Connected" : "Not connected") : "Not installed" },
+                               button: { here() ? (HookInstaller.installed(ai) ? "Remove" : "Connect") : nil },
+                               dimmed: { !here() },
                                action: { [weak self] in
                                    guard let self else { return }
                                    if HookInstaller.installed(ai) {
@@ -2525,13 +2603,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
 
         var sections = [
-            SettingsSection(title: "General", rows: general),
-            SettingsSection(title: "Window Mode", rows: window),
-            SettingsSection(title: "Desktop Mode", rows: desktop),
-            SettingsSection(title: "AIs", note: "Connected AIs report what they're doing through Clawd Clash's hook.", rows: ais),
+            SettingsSection(title: "General", symbol: "gearshape", rows: general),
+            SettingsSection(title: "Window", symbol: "macwindow", rows: window),
+            SettingsSection(title: "Desktop", symbol: "menubar.dock.rectangle", rows: desktop),
+            SettingsSection(title: "AIs", symbol: "sparkles", note: "Connected AIs report what they're doing through Clawd Clash's hook.",
+                            rows: ais),
         ]
         if SaverInstaller.bundled != nil {
-            sections.append(SettingsSection(title: "Screen Saver", rows: [
+            sections.append(SettingsSection(title: "Screen Saver", symbol: "display", rows: [
                 .status("Clawd Clash", detail: { SaverInstaller.isInstalled ? "Installed" : "Not installed" },
                         button: { SaverInstaller.isInstalled ? "Remove" : "Install…" },
                         action: { [weak self] in
@@ -2539,7 +2618,159 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                         }),
             ]))
         }
+        sections.append(SettingsSection(title: "About", symbol: "info.circle",
+                                        rows: [.custom { [weak self] in self?.aboutView() ?? NSView() }]))
         return sections
+    }
+
+    // MARK: About and updates
+
+    private static let repo = "rodclemen/clawd-clash"
+    private var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?" }
+    /// What the last "Check for Updates" found, shown under the button: a line, and where to get a newer version.
+    private var updateCheck: (text: String, download: URL?)?
+
+    /// The About tab, laid out as macOS apps' own: the icon on the left; beside it the name, the version, buttons to
+    /// check for a newer release, read what's new and visit the repo, what the check found, and the licence.
+    private func aboutView() -> NSView {
+        let icon = NSImageView(image: NSApp.applicationIconImage ?? NSImage())
+        icon.imageScaling = .scaleProportionallyUpOrDown
+        icon.widthAnchor.constraint(equalToConstant: 128).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 128).isActive = true
+        let name = NSTextField(labelWithString: "Clawd Clash")
+        name.font = .systemFont(ofSize: 26)
+        let ver = NSTextField(labelWithString: version)
+        ver.font = .systemFont(ofSize: 15)
+        ver.textColor = .secondaryLabelColor
+
+        let check = NSButton(title: "Check for Updates…", target: self, action: #selector(checkForUpdates))
+        let buttons = NSStackView(views: [check, button("What's New", "https://github.com/\(Self.repo)/blob/main/CHANGELOG.md"),
+                                          button("Website", "https://github.com/\(Self.repo)")])
+        buttons.spacing = 8
+        var views: [NSView] = [name, ver, buttons]
+        if let found = updateCheck {
+            let line = Self.small(found.text, color: found.download == nil ? .secondaryLabelColor : .labelColor)
+            line.font = .systemFont(ofSize: NSFont.systemFontSize)
+            views.append(line)
+            if found.download != nil {
+                let get = NSButton(title: "Download", target: self, action: #selector(openDownload))
+                get.bezelStyle = .rounded
+                get.keyEquivalent = "\r"
+                views.append(get)
+            }
+        }
+        let thanks = NSTextField(labelWithString: "Thanks to")
+        thanks.font = .systemFont(ofSize: NSFont.systemFontSize, weight: .semibold)
+        views.append(thanks)
+        for c in Self.collaborators {
+            // The universes they made, by their current names; a bug fix or a feature is thanked by name alone.
+            var parts: [NSView] = [linkButton(c.name, "https://github.com/\(c.github)")]
+            if !c.universes.isEmpty {
+                parts.append(Self.small(c.universes.map(\.title).joined(separator: ", "), color: .secondaryLabelColor))
+            }
+            let line = NSStackView(views: parts)
+            line.spacing = 6
+            views.append(line)
+        }
+        let copyright = Self.small("© 2026 Rod Clemen", color: .secondaryLabelColor)
+        views += [copyright,
+                  Self.small("Licensed under the MIT License. A fan parody project for AI coding sessions: "
+                             + "free to use, change and share.", color: .secondaryLabelColor),
+                  Self.small("No warranty. See LICENSE for details.", color: .secondaryLabelColor)]
+        let column = NSStackView(views: views)
+        column.orientation = .vertical
+        column.alignment = .leading
+        column.spacing = 8
+        column.setCustomSpacing(2, after: name)
+        column.setCustomSpacing(14, after: ver)
+        column.setCustomSpacing(4, after: thanks)
+        if let i = views.firstIndex(of: thanks), i > 0 { column.setCustomSpacing(18, after: views[i - 1]) }
+        if let i = views.firstIndex(of: copyright), i > 0 { column.setCustomSpacing(18, after: views[i - 1]) }
+
+        let row = NSStackView(views: [icon, column])
+        row.alignment = .top
+        row.spacing = 28
+        return row
+    }
+
+    /// Everyone outside the project whose pull requests were merged, for About's "Thanks to" (add them when merging),
+    /// with the universes they made, if any.
+    static let collaborators: [(name: String, github: String, universes: [Universe])] = [
+        ("Henrik Andersen", "HEM42", [.middleEarth]),
+    ]
+
+    /// A borderless link-coloured button that opens `url`.
+    private func linkButton(_ title: String, _ url: String) -> NSButton {
+        let b = NSButton(title: title, target: self, action: #selector(openLink(_:)))
+        b.isBordered = false
+        b.contentTintColor = .linkColor
+        b.toolTip = url
+        return b
+    }
+
+    /// Small wrapped text for the About tab's column.
+    private static func small(_ s: String, color: NSColor) -> NSTextField {
+        let t = NSTextField(wrappingLabelWithString: s)
+        t.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        t.textColor = color
+        t.preferredMaxLayoutWidth = 360
+        t.widthAnchor.constraint(lessThanOrEqualToConstant: 360).isActive = true
+        return t
+    }
+
+    /// A push button that opens `url`.
+    private func button(_ title: String, _ url: String) -> NSButton {
+        let b = NSButton(title: title, target: self, action: #selector(openLink(_:)))
+        b.bezelStyle = .rounded
+        b.toolTip = url
+        return b
+    }
+
+    @objc private func openLink(_ sender: NSButton) {
+        if let s = sender.toolTip, let url = URL(string: s) { NSWorkspace.shared.open(url) }
+    }
+
+    @objc private func openDownload() {
+        if let url = updateCheck?.download { NSWorkspace.shared.open(url) }
+    }
+
+    /// Asks GitHub for the latest release (only when the button is clicked: Clawd Clash never checks on its own) and
+    /// compares it with this version.
+    @objc private func checkForUpdates() {
+        updateCheck = ("Checking…", nil)
+        settingsWindow?.reload()
+        var request = URLRequest(url: URL(string: "https://api.github.com/repos/\(Self.repo)/releases/latest")!, timeoutInterval: 15)
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
+            let json = data.flatMap { try? JSONSerialization.jsonObject(with: $0) } as? [String: Any]
+            let tag = (json?["tag_name"] as? String).map { $0.hasPrefix("v") ? String($0.dropFirst()) : $0 }
+            let page = (json?["html_url"] as? String).flatMap(URL.init(string:))
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if let tag, let page {
+                    if Self.isNewer(tag, than: self.version) {
+                        let brew = FileManager.default.fileExists(atPath: "/opt/homebrew/Caskroom/clawd-clash")
+                            ? "\nInstalled with Homebrew: brew upgrade --cask clawd-clash" : ""
+                        self.updateCheck = ("Version \(tag) is available (you have \(self.version)).\(brew)", page)
+                    } else {
+                        self.updateCheck = ("You're up to date.", nil)
+                    }
+                } else {
+                    self.updateCheck = ("Couldn't reach GitHub\(error.map { ": \($0.localizedDescription)" } ?? ""). Try again later.", nil)
+                }
+                self.settingsWindow?.reload()
+            }
+        }.resume()
+    }
+
+    /// Whether version `a` ("3.6.0") comes after `b`, number by number.
+    static func isNewer(_ a: String, than b: String) -> Bool {
+        let x = a.split(separator: ".").map { Int($0) ?? 0 }, y = b.split(separator: ".").map { Int($0) ?? 0 }
+        for i in 0..<max(x.count, y.count) {
+            let p = i < x.count ? x[i] : 0, q = i < y.count ? y[i] : 0
+            if p != q { return p > q }
+        }
+        return false
     }
 
     /// Settings → Size: the crew's size on the desktop (the window always fits its crew to the window).
@@ -2563,17 +2794,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
         root.submenu = sub
         return root
-    }
-
-    @objc private func togglePin() {
-        if windowMode {
-            let on = !UserDefaults.standard.bool(forKey: "windowPinned")
-            UserDefaults.standard.set(on, forKey: "windowPinned")
-            clawdWindow?.applyPin()
-        } else {
-            Self.charactersOnTop.toggle()
-            panel.level = Self.charactersOnTop ? .statusBar : Self.desktopLevel
-        }
     }
 
     /// Settings → Keep Characters on Top (desktop mode): on, the crew stands above every window; off, it lives on the
@@ -2602,7 +2822,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     @objc private func toggleBoard() { setBoard(ClawdWindow.view != .board) }
 
-    /// Settings → Show Session List in Window (and the view button's last step): from the screen-saver view, back to
+    /// Settings → Show the session list (and the view button's last step): from the screen-saver view, back to
     /// the scene with the list.
     @objc private func toggleWindowList() {
         if ClawdWindow.view == .board {
@@ -2624,13 +2844,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     // MARK: Universe
 
-    /// The universe picked: Star Wars, Marvel or DC (in Clawd Royale, the last one picked, for when it ends). A fresh
+    /// The universe picked (in Clawd Royale, the last one picked, for when it ends). A fresh
     /// install takes after whichever app it replaces (Clawd Wars: Star Wars; Avengers: Clawd Wars: Marvel; Justice
     /// League: Clawd Wars: DC); the Homebrew casks preset it.
     static var universe: Universe {
         get {
             let d = UserDefaults.standard
-            if let key = d.string(forKey: "universe"), let u = Universe(key: key) { return u }
+            if let key = d.string(forKey: "universe"), let u = Universe.offered(key: key) { return u }
             let used = { (id: String) in UserDefaults(suiteName: id)?.object(forKey: "windowMode") != nil }
             if !used("com.rodclemen.vaderclaude") {
                 if used("com.rodclemen.justiceleagueclawdwars") { return .dc }
@@ -2656,7 +2876,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// Tell the hook (and the screen saver, with the app closed) what's on show.
     private func publishUniverse() {
         guard !Self.testRun else { return }
-        StatusStore.setUniverse(Universe.shown, mixed: Universe.mixed, saver: nil)
+        StatusStore.setUniverse(Universe.shown, mixed: Universe.mixed)
     }
 
     /// Random: a different universe every this many minutes (Settings → Universe → Random); nil: it stays on the one picked.
@@ -2674,7 +2894,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private func randomUniverseTick(_ now: Double) {
         guard let every = Self.universeEvery, now - universeSince >= Double(every * 60),
               playground == nil, !demo, chaosSeconds == nil, shotPath == nil,
-              let next = Universe.allCases.filter({ $0 != Universe.shown }).randomElement() else { return }
+              let next = Universe.offered.filter({ $0 != Universe.shown }).randomElement() else { return }
         switchScene(to: next, mixed: false)
     }
 
@@ -2942,8 +3162,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         do { try HookInstaller.install() } catch { alert("Couldn't install hooks", error.localizedDescription) }
     }
 
-    @objc private func installOtherHooks(_ sender: NSMenuItem) { installOther(sender.representedObject as? String ?? "") }
-
     private func installOther(_ name: String) {
         guard let ai = HookInstaller.other(name) else { return }
         let display = HookInstaller.displayName(name)
@@ -2955,12 +3173,6 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                   : name == "pi" ? "pi sessions that are already open pick it up after /reload (or a restart)."
                   : "\(display) sessions that are already open pick them up after a restart.")
         } catch { alert("Couldn't install \(display) hooks", error.localizedDescription) }
-    }
-
-    @objc private func removeOtherHooks(_ sender: NSMenuItem) {
-        guard let name = sender.representedObject as? String, let ai = HookInstaller.other(name) else { return }
-        Self.ignoredHooks.insert(name)   // removed on purpose: no "isn't connected" reminders
-        do { try HookInstaller.uninstall(ai) } catch { alert("Couldn't remove \(HookInstaller.displayName(name)) hooks", error.localizedDescription) }
     }
 
     @objc private func removeHooks() {
@@ -3038,6 +3250,15 @@ final class OverlayView: NSView {
                 ctx.saveGState()
                 ctx.setAlpha(item.alpha)
                 defer { ctx.restoreGState() }
+                if item.speech {
+                    // A character's line: a soft cream backing with fully rounded ends, no border or tail.
+                    let box = NSBezierPath(roundedRect: r, xRadius: r.height / 2, yRadius: r.height / 2)
+                    NSColor(calibratedRed: 0.98, green: 0.94, blue: 0.84, alpha: 0.95).setFill()
+                    box.fill()
+                    let ts = text.size(), tw = ts.width.rounded(.up) + 1, th = ts.height.rounded(.up) + 1
+                    text.draw(in: NSRect(x: r.midX - tw / 2, y: r.midY - th / 2, width: tw, height: th))
+                    continue
+                }
                 if item.boxed {
                     let box = NSBezierPath(roundedRect: r, xRadius: 4, yRadius: 4)
                     (item.agentBox ? NSColor(calibratedRed: 0.05, green: 0.10, blue: 0.24, alpha: 0.82)

@@ -1,0 +1,3 @@
+# Every change needs the maintainer's review. With "Require review from Code Owners" on main's ruleset, a
+# contributor's PR can't be merged until @rodclemen approves it, after scripts/pr-guard.py has passed.
+* @rodclemen

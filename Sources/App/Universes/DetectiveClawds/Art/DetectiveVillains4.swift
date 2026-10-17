@@ -87,15 +87,6 @@ private func glowDot(_ c: PixelCanvas, _ x: Double, _ y: Double, core: Px, glow:
     c.glowLine(x, y, x, y, core: core, glow: glow, coreR: coreR, glowR: glowR, strength: strength)
 }
 
-/// Boots: the bottom `rows` of each leg in `col` (not when sitting, when the legs are folded).
-private func drawBoots(_ c: PixelCanvas, _ col: Px, step: Int, rows: Int) {
-    guard !seatedPose else { return }
-    for (i, lx) in [19, 23, 31, 35].enumerated() {
-        let bottom = step >= 0 && i % 2 == step ? 42 : 43
-        c.rect(lx, bottom - rows + 1, 2, rows, col)
-    }
-}
-
 /// Draws `art` on a scratch canvas (same offsets as `c`) and copies it onto `c`, leaning forward one pixel every
 /// `lean` rows above the feet (0: upright).
 private func layer(_ c: PixelCanvas, lean: Int = 0, _ art: (PixelCanvas) -> Void) {
@@ -166,12 +157,9 @@ private func drawDarkseid(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(11, 10, [".BBBBBBB.", "BBLLBBBBB", "BBBBBBBBB", "BBBBBBBBB"], ["B": blue, "L": blueLight])
 
     // The stone head.
-    c.pattern(16, 0, [
+    c.pattern(16, 3, [
         "...SSSSSSSSSSSSSSSSSS...",
         ".SSSSSSSSSSSSSSSSSSSSSS.",
-        "SSSSSSSSSSSSSSSSSSSSSSSS",
-        "SSSSSSSSSSSSSSSSSSSSSSSS",
-        "SSSSSSSSSSSSSSSSSSSSSSSS",
         "SSSSSSSSSSSSSSSSSSSSSSSS",
         "SSSSSSSSSSSSSSSSSSSSSSSS",
         "SSSSSSSSSSSSSSSSSSSSSSSS",
@@ -183,14 +171,14 @@ private func drawDarkseid(_ c: PixelCanvas, _ p: Pose) {
         "..SSSSSSSSSSSSSSSSSSSS..",
         "....SSSSSSSSSSSSSSSS....",
     ], ["S": stone])
-    c.rect(16, 3, 1, 8, stoneLight); c.rect(17, 1, 2, 2, stoneLight)
-    c.rect(39, 3, 1, 8, stoneDark); c.rect(38, 11, 1, 2, stoneDark); c.rect(20, 14, 16, 1, stoneDark)
+    c.rect(16, 5, 1, 6, stoneLight); c.rect(17, 4, 2, 2, stoneLight)
+    c.rect(39, 5, 1, 6, stoneDark); c.rect(38, 11, 1, 2, stoneDark); c.rect(20, 14, 16, 1, stoneDark)
     for k in 0..<18 {                                                      // the rough grain of the stone
-        let x = 18 + Int(noise(k * 7 + 3) * 20), y = 1 + Int(noise(k * 11 + 5) * 13)
+        let x = 18 + Int(noise(k * 7 + 3) * 20), y = 4 + Int(noise(k * 11 + 5) * 10)
         c.px(x, y, k % 2 == 0 ? stoneDark : stoneLight)
     }
-    c.rect(22, 1, 12, 1, stoneDark); c.rect(21, 3, 15, 1, stoneDark)        // the ridged brow
-    c.rect(23, 2, 10, 1, stoneLight)
+    c.rect(23, 3, 10, 1, stoneLight)                                       // the ridged brow
+    c.rect(21, 4, 15, 1, stoneDark)
     c.rect(23, 4, 15, 1, stoneLight)
     c.rect(23, 5, 15, 1, crack)
     c.rect(18, 6, 3, 4, stoneDark); c.px(19, 7, crack)                      // the ear
@@ -201,7 +189,7 @@ private func drawDarkseid(_ c: PixelCanvas, _ p: Pose) {
     c.rect(23, 8, 1, 5, crack); c.rect(37, 8, 1, 4, crack)                  // the grooves down his cheeks
     c.rect(27, 11, 7, 1, crack)                                             // the grim mouth
     c.rect(28, 12, 5, 1, stoneLight)
-    c.px(20, 2, crack); c.px(21, 3, crack); c.px(20, 11, crack); c.px(21, 12, crack)
+    c.px(20, 4, crack); c.px(21, 5, crack); c.px(20, 11, crack); c.px(21, 12, crack)
     if glow > 0.02 {
         for ex in [26.5, 33.5] {
             glowDot(c, ex + 0.5, 7.5, core: hot.alpha(glow), glow: red.alpha(glow), coreR: 0.6, glowR: 1.4 + 1.4 * glow)
@@ -557,12 +545,9 @@ private func drawKalibak(_ c: PixelCanvas, _ p: Pose) {
     // Shoulder plates.
     c.pattern(9, 9, ["..S.S.S..", ".SSSSSSS.", "SSLLSSSSS", "SSSSSSSSS", ".DDDDDDD."], ["S": steel, "L": steelLight, "D": steelDark])
     // The head, hunched forward: mane, brow, beard.
-    c.pattern(18, 0, [
-        "....HHHHHHHHHHHH......",
+    c.pattern(18, 3, [
         "..HHHHHHHHHHHHHHHH....",
-        ".HHHHHHHHHHHHHHHHHH...",
         "HHHHHHHHhHHHHHHhHHHH..",
-        "HHHHHHHSSSSSSSSSSSSH..",
         "HHHHHHSSSSSSSSSSSSSSS.",
         "HHHHHSSSSSSSSSSSSSSSS.",
         "HHHHHSSSSSSSSSSSSSSSS.",
@@ -606,7 +591,12 @@ private func drawKalibak(_ c: PixelCanvas, _ p: Pose) {
     }
     let angle = p.melee ?? 75
     smear(c, kalibakShoulder, p.trail, len: 21, C(0xFFB0A0), inner: 0.5)
-    let e = limb(c, kalibakShoulder, angle, len: 7, r: 2.4, skin)
+    // Raised high, the club would leave the top of the frame: he holds it lower then, the fist nearer his shoulder.
+    let a = angle * .pi / 180
+    let top = min(-5 * sin(a), 17.6 * sin(a)) - 2.6 * abs(cos(a))         // the club's top, above the fist
+    let e = (x: kalibakShoulder.x + cos(a) * 7,
+             y: max(kalibakShoulder.y + sin(a) * 7, Double(2 - c.oy - c.baseY) - top))
+    bar(c, kalibakShoulder.x, kalibakShoulder.y, e.x, e.y, skin, r: 2.4)
     drawBetaClub(c, fist: e, angle: angle, t: p.t, glow: p.melee != nil ? 1 : 0.6)
     c.rect(Int(e.x) - 2, Int(e.y) - 2, 5, 5, steelDark)
     c.rect(Int(e.x) - 2, Int(e.y) - 2, 5, 1, steel)
@@ -869,8 +859,7 @@ private func drawMongul(_ c: PixelCanvas, _ p: Pose) {
     }
     c.oy += p.breathe
     // The towering collar behind his head.
-    c.pattern(13, 1, [
-        "PP........................PP",
+    c.pattern(13, 2, [
         "PPP......................PPP",
         "PPPP....................PPPP",
         "PPPP....................PPPP",
@@ -894,11 +883,9 @@ private func drawMongul(_ c: PixelCanvas, _ p: Pose) {
     c.rect(16, 30, 24, 3, purpleDark)
     c.pattern(10, 9, [".PPPPPPP.", "PPLLPPPPP", "PPPPPPPPP", "PPPPPPPPP", ".DDDDDDD."], ["P": purple, "L": purpleLight, "D": purpleDark])
     // The great bald head.
-    c.pattern(18, 0, [
+    c.pattern(18, 2, [
         "......YYYYYYYYYY......",
-        "....YYYYYYYYYYYYYY....",
         "...YYYYYYYYYYYYYYYY...",
-        "..YYYYYYYYYYYYYYYYYY..",
         ".YYYYYYYYYYYYYYYYYYYY.",
         ".YYYYYYYYYYYYYYYYYYYY.",
         "YYYYYYYYYYYYYYYYYYYYYY",
@@ -910,8 +897,8 @@ private func drawMongul(_ c: PixelCanvas, _ p: Pose) {
         "..YYYYYYYYYYYYYYYYYY..",
         "....YYYYYYYYYYYYYY....",
     ], ["Y": yellow])
-    c.rect(22, 1, 2, 4, yellowLight); c.rect(20, 3, 2, 3, yellowLight)      // shine on the dome
-    c.rect(27, 1, 1, 5, yellowDark); c.rect(32, 1, 1, 5, yellowDark)        // the ridges over his skull
+    c.rect(22, 3, 2, 3, yellowLight); c.rect(20, 4, 2, 2, yellowLight)      // shine on the dome
+    c.rect(27, 2, 1, 4, yellowDark); c.rect(32, 2, 1, 4, yellowDark)        // the ridges over his skull
     c.rect(18, 6, 2, 3, yellowDark)                                         // the ear
     c.rect(24, 6, 14, 1, yellowDark)                                        // the jutting brow
     c.rect(25, 7, 3, 2, ink); c.rect(33, 7, 3, 2, ink)
@@ -1009,8 +996,8 @@ private func drawTrigon(_ c: PixelCanvas, _ p: Pose) {
     c.rect(20, 15, 16, 2, gold); c.rect(20, 16, 16, 1, goldDark)
     // The antlers, out of his skull.
     let horns: [[(Double, Double)]] = [
-        [(21, 7), (15, 5), (11, 1), (12, -2)],
-        [(37, 7), (43, 5), (47, 1), (46, -2)],
+        [(21, 8), (14, 6.5), (9, 4), (10, 2.8)],
+        [(37, 8), (44, 6.5), (49, 4), (48, 2.8)],
     ]
     for h in horns {
         for i in 0..<(h.count - 1) {
@@ -1019,14 +1006,13 @@ private func drawTrigon(_ c: PixelCanvas, _ p: Pose) {
         }
         bar(c, h[0].0, h[0].1 + 1, h[1].0, h[1].1 + 1.2, boneDark, r: 0.5)
         let tine = (x: h[1].0 + (h[2].0 - h[1].0) * 0.3, y: h[1].1 + (h[2].1 - h[1].1) * 0.3)
-        bar(c, tine.0, tine.1, tine.0 + (h[1].0 > 28 ? -1 : 1), tine.1 - 4, bone, r: 0.6)
+        bar(c, tine.0, tine.1, tine.0 + (h[1].0 > 28 ? -1 : 1), tine.1 - 3, bone, r: 0.6)
     }
     // The head.
-    c.pattern(19, 3, [
+    c.pattern(19, 4, [
         "....RRRRRRRRRR....",
         "..RRRRRRRRRRRRRR..",
         ".RRRRRRRRRRRRRRRR.",
-        "RRRRRRRRRRRRRRRRRR",
         "RRRRRRRRRRRRRRRRRR",
         "RRRRRRRRRRRRRRRRRR",
         "RRRRRRRRRRRRRRRRRR",
@@ -1036,7 +1022,7 @@ private func drawTrigon(_ c: PixelCanvas, _ p: Pose) {
         "..RRRRRRRRRRRRRR..",
         "....RRRRRRRRRR....",
     ], ["R": red])
-    c.rect(20, 4, 2, 4, redLight)
+    c.rect(20, 6, 2, 3, redLight)
     c.pattern(16, 6, ["R...", "RR..", ".RRR", "..RR"], ["R": redDark])     // the pointed ear
     c.rect(23, 6, 5, 1, black); c.rect(31, 6, 5, 1, black)                 // brows slanting down to the middle
     c.px(27, 7, black); c.px(31, 7, black)
@@ -1115,27 +1101,21 @@ private func drawAntiMonitor(_ c: PixelCanvas, _ p: Pose) {
     }
     c.oy += p.breathe
     // The swept fins rising from his shoulders.
-    c.pattern(9, 0, [
-        "F......................................F",
-        "FF....................................FF",
-        "FFF..................................FFF",
-        "FFFF................................FFFF",
-        ".FFFF..............................FFFF.",
-        ".FFFFF............................FFFFF.",
-        "..FFFFF..........................FFFFF..",
-        "..FFFFFF........................FFFFFF..",
+    c.pattern(9, 6, [
+        "..F..................................F..",
+        "..FF................................FF..",
+        "..FFF..............................FFF..",
+        "..FFFF............................FFFF..",
+        "...FFFF..........................FFFF...",
         "...FFFFF........................FFFFF...",
-        "...FFFFFF......................FFFFFF...",
         "....FFFFF......................FFFFF....",
-        "....FFFFFF....................FFFFFF....",
-        ".....FFFFF....................FFFFF.....",
         ".....FFFFFF..................FFFFFF.....",
     ], ["F": dark])
-    bar(c, 10, 1, 15, 13, light, r: 0.4); bar(c, 47, 1, 42, 13, plate, r: 0.4)
+    bar(c, 11, 6, 15, 13, light, r: 0.4); bar(c, 46, 6, 42, 13, plate, r: 0.4)
     // The far arm.
     c.rect(10, 17, 5, 14, dark)
     if wave > 0.05 {
-        let up = Int((wave * 12).rounded())
+        let up = Int((wave * 7).rounded())
         c.rect(9, 16 - up, 6, up + 2, dark); c.rect(8, 13 - up, 7, 4, plate)
     } else {
         c.rect(9, 29, 7, 5, plate)
@@ -1153,13 +1133,10 @@ private func drawAntiMonitor(_ c: PixelCanvas, _ p: Pose) {
     c.rect(15, 29, 26, 3, dark); c.rect(15, 29, 26, 1, light)
     c.pattern(10, 11, [".PPPPPPP.", "PPLLPPPPP", "PPPPPPPPP", ".DDDDDDD."], ["P": plate, "L": light, "D": dark])
     // The head: a pointed helmet round a black, skull-like face.
-    c.pattern(19, 1, [
+    c.pattern(19, 6, [
         "........PP........",
-        ".......PPPP.......",
         "......PPLPPP......",
-        ".....PPLPPPPP.....",
-        "....PPPPPPPPPP....",
-        "...PPPPPPPPPPPP...",
+        "...PPLPPPPPPPPP...",
         "..PPPKKKKKKKKKPP..",
         "..PPKKKKKKKKKKKP..",
         ".PPPKKKKKKKKKKKPP.",
@@ -1169,16 +1146,16 @@ private func drawAntiMonitor(_ c: PixelCanvas, _ p: Pose) {
         "..PPPPKKKKKKKPPP..",
         "...PPPPKKKKKPPP...",
     ], ["P": plate, "K": face, "L": light])
-    c.rect(27, 1, 1, 6, dark)
+    c.rect(27, 6, 1, 3, dark)
     let eyeK = 0.7 + 0.3 * wave
     for ex in [25.0, 32.0] {
-        c.glowLine(ex - 1, 10, ex + 1.5, 10.5, core: hot, glow: red, coreR: 0.5, glowR: 1.4 + wave, strength: eyeK)
+        c.glowLine(ex - 1, 12, ex + 1.5, 12.5, core: hot, glow: red, coreR: 0.5, glowR: 1.4 + wave, strength: eyeK)
     }
-    for x in [26, 28, 30, 32] { c.rect(x, 12, 1, 2, C(0x3A3060)) }          // the slotted jaw
+    for x in [26, 28, 30, 32] { c.rect(x, 14, 1, 2, C(0x3A3060)) }          // the slotted jaw
     // The near arm: out to cast, raised for the wave, or hanging.
     c.pattern(36, 11, [".PPPPPPP.", "PPLLPPPPP", "PPPPPPPPP", ".DDDDDDD."], ["P": plate, "L": light, "D": dark])
     if wave > 0.05 {
-        let up = Int((wave * 12).rounded())
+        let up = Int((wave * 7).rounded())
         c.rect(40, 16 - up, 5, up + 2, plate); c.rect(40, 13 - up, 7, 4, light)
     } else if p.zap != nil {
         let py = antiMonitorPalm.y - Double(p.armRaise)

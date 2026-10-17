@@ -1,5 +1,7 @@
 # Clawdify guide: adding a universe to Clawd Clash
 
+## Last updated: 17 October 2026 (Clawd Clash 3.6.0)
+
 This guide is for an AI assistant (Claude Code or similar) working in this repo. To start, point the assistant at it along with the franchise you want, for example:
 
 > clawdify fraggle rock using clawdify_guide.md
@@ -9,7 +11,8 @@ Any film, show, game or comic works. The assistant reads this file and knows wha
 Each step below ends at an **approval gate**: show the user what you have, then wait. Don't go on to the next step until they've said yes, or they've said what to change and you've changed it. Clawd Clash's universes were built this way, a step at a time with the user signing off. Expect the user to swap characters, rename things, and add ideas of their own.
 
 Reference builds to read when you get stuck:
-- **Doctor Clawd** (`Sources/App/Universes/DoctorClawd/`, commit `37e1d4b`) is the most complete recent universe: roster, art, places, transitions, a ride, regeneration on compaction, and a trailer.
+- **Clawd of the Rings** (`Sources/App/Universes/ClawdOfTheRings/`, released in 3.5.0) is the newest: roster, art, places, nine trips, the Great Eagle, guises and a homebound dragon, and a trailer. It was built on `main` behind `Universe.isReleased` (below).
+- **Doctor Clawd** (`Sources/App/Universes/DoctorClawd/`, commit `37e1d4b`) is the most compact complete one: roster, art, places, transitions, a ride, regeneration on compaction, and a trailer.
 - **The Clawd Files** (`Sources/App/Universes/ClawdFiles/`, released in 3.3.0) was built phase by phase using this process. Its early commits show what a skeleton and a phase look like.
 
 ---
@@ -216,7 +219,7 @@ Once all four gates are passed, write the whole plan to `~/.claude/plans/<slug>.
 8. **Transitions:** the approved table, the style, and what was left out.
 9. **Promo:** which transition opens the trailer.
 
-If the assistant has a memory system, save a short project memory pointing at the plan file and branch. Then create the branch off `main` and start phase 1 when the user says so.
+If the assistant has a memory system, save a short project memory pointing at the plan file and branch. Then create the branch off `main` and start phase 1 when the user says so. Alternatively, build on `main` with the universe unreleased: `Universe.isReleased` returning `false` for it keeps it out of Settings, Random, Clawd Royale and the screen saver's Options, while the tools (Preview, the docs and promo renderers) still see it. Clawd of the Rings was built that way. Flip it to released in phase 6.
 
 ---
 
@@ -292,7 +295,7 @@ renders what's done.
   - `Location.<prefix>Home(of:)` for heroes and villains.
   - `Cast.hero(_:)` and `Cast.villain(_:)`, the nemeses, and `let <prefix>Theme = Theme(universe:villains:heroes:places:home:nemeses:ride:menuIcon:legend:)`.
   - The `static let` place keys, and `let <prefix>Places` merged from the Places files.
-- **`Art/<Prefix>Heroes1…N.swift` and `Art/<Prefix>Villains1…N.swift`:** 8–10 personas per file, each a `Persona(...)` entry plus its `private func draw…(_ c: PixelCanvas, _ p: Pose)`. Read the comment at the top of `Sources/App/Pose.swift` before drawing: it covers the 72×52 canvas facing right, `drawLegs`, `p.breathe`, melee angles, `armRaise`, `signature`. Every character is Clawd (the orange body) in costume, always on Clawd's four legs. Draw the legs and shoes first, then `c.oy += p.breathe`, then the body; anything that hangs over the legs (coat tails, skirts, a robe's hem) goes after the breath, over the legs, and still leaves four distinct legs showing below. Keep a group's shared helpers private to its file; anything shared across a universe's art files goes in one `<Prefix>Kit.swift` with prefixed names (Preview compiles every universe together, so top-level names must be unique app-wide).
+- **`Art/<Prefix>Heroes1…N.swift` and `Art/<Prefix>Villains1…N.swift`:** 8–10 personas per file, each a `Persona(...)` entry plus its `private func draw…(_ c: PixelCanvas, _ p: Pose)`. Read the comment at the top of `Sources/App/Pose.swift` before drawing: it covers the 72×52 canvas facing right, `drawLegs`, `p.breathe`, melee angles, `armRaise`, `signature`. Every character is Clawd (the orange body) in costume, always on Clawd's four legs. Draw the legs and shoes first, then `c.oy += p.breathe`, then the body; anything that hangs over the legs (coat tails, skirts, a robe's hem) goes after the breath, over the legs, and still leaves four distinct legs showing below. Keep a group's shared helpers private to its file; anything shared across a universe's art files goes in one `<Prefix>Kit.swift` with prefixed names (Preview compiles every universe together, so top-level names must be unique app-wide). Every other top-level name is `private` or starts with the prefix too: `scripts/pr-guard.py` refuses a plain one, because it could shadow a system function the app relies on.
 - **`Places/<Prefix>Scenes1…N.swift`:** `let <prefix>ScenesN: [Location: Place]` entries, each `Place(name:panel:still:moving:)`, drawn in code. Scale landmarks up when `Scenes.isTall(c)`.
 - **`<Prefix>Icon.swift`:** the menu bar icon, 28×26, in colour and in mono (a template image).
 - **`<Prefix>Wipes.swift`:** the transitions (phase 5). Follow `DoctorClawd/DoctorWipes.swift`: an enum of kinds with `duration`, `needsOwner`, `isOwned(by:)` and `turf`, and a `…Trip` struct with `pick(after:cast:to:)` and `draw(_:old:new:k:in:)`.
@@ -306,21 +309,21 @@ Any exhaustive `switch` on `Universe` turns a missed spot into a compile error. 
 - [ ] **`Sources/App/Theme.swift`:** `Theme.of`.
 - [ ] **`Sources/App/Locations.swift`:** `.merging(<prefix>Places)` in `places`.
 - [ ] **`Sources/App/Universes/Hem.swift`:** HEM's persona and costume in every switch.
-- [ ] **`Sources/App/Universes/ComicTransition.swift`:** add the universe to the `nil` cases in phase 1. In phase 5, add a `.<key>(<Prefix>Trip)` case to `duration`, `draw` and `pick`, and update the doc comment.
-- [ ] **`Sources/App/Rides.swift`:** the ride's drawing (phase 4).
-- [ ] ⚠︎ **`Sources/Saver/SaverView.swift`:** the Options doc comment, the choices list, and the trip switch (`case "<key>": tripUniverse = …`).
+- [ ] **`Sources/App/Universes/ComicTransition.swift`:** in phase 1, give the universe plain wipes by adding it next to Star Clawds in `pick` (`case .starWars, .<key>: return nil`), the only universe left without trips of its own. The switch is exhaustive, so the build fails until it's there. In phase 5, take it out of that line and add a `.<key>(<Prefix>Trip)` case to `duration`, `draw` and `pick`, and update the doc comment.
+- [ ] **`Sources/App/Rides.swift`:** the ride's drawing (phase 4). A ride that drives in along the ground instead of flying also goes in `Ride.drives` (`Theme.swift`).
+- [ ] **`Sources/Saver/SaverView.swift`:** nothing to add. The Options list and the trip choice build themselves from `Universe.offered`.
 - [ ] ⚠︎ **`Sources/App/Drills.swift`:** the meditation guard, plus bespoke drills keyed by cast.
-- [ ] ⚠︎ **`Sources/App/Overlay.swift`:** the Playground's sample prompts per universe, `Universe.shown == .<key> ? [...]`. Write five in-universe ones. Also check the Weeping-Angle-style habit hooks in the tick if you add a habit.
+- [ ] ⚠︎ **`Sources/App/Overlay.swift`:** the Playground's sample prompts, a `case .<key>:` in the `switch Universe.shown` that builds them. It has a `default`, so the compiler won't flag a missing one. Write five in-universe ones. Also check the Weeping-Angle-style habit hooks in the tick if you add a habit.
 - [ ] ⚠︎ **`Sources/App/Pose.swift`** (`classic`), **`Habits.swift`**: universe-specific `if`s. Decide whether the new universe joins each one.
-- [ ] ⚠︎ **Compaction mechanic only:** `StatusStore.swift` (PreCompact handling) and `HookInstaller.swift`. Doctor Clawd already registers the hook.
+- [ ] ⚠︎ **Compaction mechanic only:** `StatusStore.swift` (PreCompact handling) and `HookInstaller.swift`. Doctor Clawd already registers the hook. Both are the maintainer's (`CONTRIBUTING.md`): from a fork, say in the PR what the mechanic needs instead.
 - [ ] **Clawd Royale** gets the new cast and places through `Universe.allCases`. Check that the menu bar icon and arch-enemies still behave when a scene is in one of the new places.
 - [ ] **`Tools/Preview/main.swift`:** the batch names (`<prefix>Heroes1…`), the universe lookup, and the enum lookups by case name.
 - [ ] **`Tools/Transitions/main.swift`:** the branch that renders this universe's trips (phase 5).
 
 ### Verification, every phase
 
-- `./build.sh` builds, installs and launches. The cast-size `assert` in `Overlay.swift` catches a `heroCount` or `villainCount` that doesn't match the enums.
-- The optimized and universal builds can hit Swift's "unable to type-check in reasonable time" on dense `sin`/`cos` drawing expressions. Find them with `-Xfrontend -warn-long-expression-type-checking=300` and split them up. Check with `./build.sh --release <version>` before calling a phase done.
+- `./build.sh` builds, installs and launches. The cast-size check at launch (a `precondition` in `Overlay.swift`) stops the app with a message naming the universe if a `heroCount` or `villainCount` doesn't match the enums.
+- The optimized release build can hit Swift's "unable to type-check in reasonable time" on dense `sin`/`cos` drawing expressions. Find them with `-Xfrontend -warn-long-expression-type-checking=300` and split them up. Check with `./build.sh --release <version>` before calling a phase done.
 - `Tools/Preview/build.sh`, then:
   - `build/preview cast out.png "<Name>"` shows every pose of one character;
   - `build/preview fight out.png "<Hero>" "<Villain>"`;
@@ -328,6 +331,7 @@ Any exhaustive `switch` on `Universe` turns a missed spot into a compile error. 
   - and the batch sheets, one per Art file.
   
   **Look at the PNGs yourself** before showing the user. Check that each character reads as who it's meant to be, that nobody is confusable with someone else in the cast, and that there are no outline gaps.
+  - `build/preview edges out.txt "<Universe title>"` lists every moment solid art touches the frame's edge (see Look and style); everything it lists should be on purpose.
 - Transitions: `Tools/Transitions/build.sh`, then `build/transitions <outdir> <placeA> <placeB>` between two of the new places.
 - In the app:
   - Settings → Universe → the new one. New sessions get cast from it, and subagents include villains and small fry.
@@ -342,9 +346,8 @@ Any exhaustive `switch` on `Universe` turns a missed spot into a compile error. 
 Do these freely (on the branch):
 - **README.md:**
   - the tagline and intro say "many" or "several" universes, never a number, so they need no change;
-  - the universe table's new column (set pieces, ride, mechanic);
+  - the universe's own section under "The universes" (a `###` heading, then Cast, Places, Weapons, Set pieces as sub-bullets, and Sides, copying the layout of the others), followed by its collapsible cast-and-places pictures;
   - the screen-saver paragraph about transitions;
-  - a collapsible cast-and-places section;
   - the developer notes on where universes live.
 - **`llms.txt`:** the count, the universe list, the folder and file-prefix list, and any new mechanic.
 - **`Tools/RenderDocs`:** a `<prefix>Lineup` desktop strip, the roster and locations sheets, and a social preview. Output goes to `docs/`, named by the universe's title (`roster-the-clawd-files.png` …).
@@ -357,6 +360,10 @@ Do these freely (on the branch):
 - creating or publishing a showcase repo (`rodclemen/<universe-name>`);
 - adding a cask in `release.sh`: `write_cask <name> <key> "<description>"`, adding it to the `others` list in `write_cask`, and updating the main cask's description;
 - releasing (`./release.sh <version>`), pushing, opening a PR.
+
+**Version numbers:** a new universe, and only a new universe, raises the middle number: 3.6.x → 3.7.0. Everything else (fixes, tweaks, features that don't add a universe) raises only the last: 3.6.0 → 3.6.1 → 3.6.2. So a universe ships as the next `3.N.0`, and its own fixes after that as `3.N.1`, `3.N.2`…
+
+**Sending it as a pull request from a fork:** run `python3 scripts/pr-guard.py main HEAD` and fix what it reports. Leave `llms.txt`, `release.sh` and the other files `CONTRIBUTING.md` lists as red to the maintainer, and say in the PR what they need.
 
 ---
 
@@ -408,9 +415,66 @@ Use `doctorShots` as the pattern. The trailer runs about 45–50 seconds:
 5. `REEL=<reel> build/renderpromo video promo` writes `promo/<universe-name>-promo.mp4` at 1080p, H.264 + AAC.
 6. `REEL=<reel> build/renderpromo 720p promo` writes `promo/720p/<Universe-Name>.mp4`, the copy under 10 MB for GitHub. The user uploads it by hand.
 
-`promo/` is git-ignored apart from the main trailer, so rendered videos aren't committed.
+`promo/` is git-ignored apart from the main trailer and the blooper reel, so rendered videos aren't committed.
 
 ---
+
+## Look and style
+
+Every universe has to sit next to the others in Clawd Royale, so the art follows one house style. Read this before
+drawing anything, and check your work against it at the end of every phase.
+
+### Characters
+
+- **Clawd in costume.** Every character is Clawd's blocky orange body (x 18…37, y 26…37) on four legs (y 38…43),
+  facing right on a 72×52 canvas. The view mirrors it to face left. A costume, hair, a helmet, a prop or a creature
+  body go over and round that; the four legs always show. Giants and creatures can fill the frame, but they still
+  stand on four legs on the ground row.
+- **Pixel art, drawn in code.** Whole pixels, flat colours (`C(0xRRGGBB)`), no gradients or blur on the body. Give
+  each material two or three tones: a base, a darker shade and a lighter highlight (`suit`, `suitDark`, `stripe`).
+  Light comes from the front-left: highlights on top and left edges, shade on the right and underneath.
+- **Don't outline the silhouette yourself.** The app adds a 1-pixel outline round every character in its AI's colour
+  (white for Claude Code), so dark costumes read on a dark desktop. Use the dark `outline` colour only for lines
+  inside the figure: a belt, a visor, the edge of a coat.
+- **Solid or see-through, nothing in between at the edge.** The outline goes round **fully opaque** pixels only.
+  Anything partly see-through counts as a glow and gets no outline. So:
+  - draw the body, costume, hair, props and signs fully opaque;
+  - keep see-through for what should stay soft: glows, magic, smoke, ghosts, phasing, water, speed blur;
+  - where something see-through touches the silhouette, make it either solid or faint (under about 25% opacity).
+    Half-opaque pixels along an edge make the outline dotted. The Necro-maintainer's smoke had exactly this.
+- **Stay inside the frame, with a pixel to spare.** Anything past the canvas edge is cut off, outline and all, and a
+  solid pixel on the edge itself loses its outline on that side. Keep solid art within columns 1…70 and from row 1 down, in
+  **every pose at every moment**: walking, fighting, waiting, cheering, sitting, every idle habit and the whole
+  signature move. Some things eat into that room:
+  - the breathing bob lifts the upper body 1 px;
+  - hovering, hops and the bounce habit lift the whole sprite 2 to 4 px (the engine gives back what it must, but
+    only that lift, not your own raised arms);
+  - raised weapons, arms, wings, tails and signature props swing out further than they rest.
+
+  So a tall character's head should start around row 5 or lower, and long weapons, wings and tails should shorten
+  or tuck in as they swing towards an edge. Set the persona's `headTop` to the head's real top row.
+- **What may leave the frame on purpose:** shots, beams, thrown things, lassos and sound rings flying out; a
+  character running, charging or teleporting off; lightning, birds or ships coming in from above; anything below
+  the feet touching the bottom edge. Nothing of the character's own body or held props.
+- **Check it:** `build/preview edges out.txt "<Universe title>"` draws everyone at 80 moments of every state and 40
+  of every habit and signature move, and lists each state where solid art touches an edge, with a picture of the
+  first such moment next to the report. Everything it lists should be on purpose. `build/preview cast` shows the
+  outline itself: look for gaps.
+
+### Places
+
+- **The same pixel art**, at the same pixel size as the crew. A palette of the franchise's own (The Clawd Files:
+  desaturated greens, cold blue-greys, deep blacks), with grain or halftone where it helps. Nothing painted, glossy or
+  photographic.
+- **The crew has to read on it.** Characters stand on the bottom `floorRows` rows, and their names and speech
+  appear above them. Keep the floor and the band just above it plain and mid-to-dark, so white outlines and labels
+  stand out. Put the busy detail (shelves, machinery, signs, crowds) higher up and at the sides.
+- **The moving layer stays subtle:** a flicker, rain, water, a blinking light. Nothing that flashes across the
+  crew or pulls the eye from them.
+- **Window and screen saver.** The window shows a short strip of the place; the screen saver shows it much taller
+  (`Scenes.isTall`). Check both with `build/preview place`: the strip must read on its own, and the tall version
+  needs something in its upper part, not a big empty sky.
+- **Text in a place** (a sign, a poster) is short and big enough to read at window size, or left out.
 
 ## House style
 

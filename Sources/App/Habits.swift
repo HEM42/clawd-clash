@@ -46,6 +46,10 @@ var idleHabit: HabitPlay?
 /// Previews and the docs renderer: play this habit instead of the scheduled one.
 var forcedHabit: HabitPlay?
 
+/// How far through its signature move the last `Cast.draw` was, 0…1 (nil: it wasn't playing one): kept after the
+/// draw, for whoever places the sprite (`Persona.climb`).
+var drawnSignature: Double?
+
 extension Cast {
     /// What this character does when idle: its weapon habit (if it handles one by hand) comes up twice as often.
     var habits: [IdleHabit] {
@@ -68,12 +72,6 @@ extension Cast {
     var signatureLength: Double? { persona.signature }
 
     var hasSignature: Bool { signatureLength != nil }
-
-    /// The signature move playing right now, 0…1 through it (nil: not playing).
-    static var signatureProgress: Double? {
-        guard let h = idleHabit, h.kind == .signature else { return nil }
-        return h.p
-    }
 
     /// The habit playing at `t`, if any: one per cycle, picked afresh each cycle.
     func habit(at t: Double) -> HabitPlay? {
@@ -104,9 +102,14 @@ func applyHabitTransform(_ c: PixelCanvas, _ play: HabitPlay) {
         // Mirrored about the body's centre; skipped for anyone too wide to turn round inside the canvas.
         if play.p > 0.15 && play.p < 0.85 { c.mirror(aboutX: Sprite.bodyCenterX) }
     case .shuffle:
-        c.shift(dx: Int(play.e / 0.3) % 2 == 0 ? 0 : (Int(play.e / 0.6) % 2 == 0 ? 1 : -1), dy: 0)
+        // Not onto the frame's edge, where the outline would be cut: a long tail or wing just doesn't shuffle that way.
+        var dx = Int(play.e / 0.3) % 2 == 0 ? 0 : (Int(play.e / 0.6) % 2 == 0 ? 1 : -1)
+        if let b = c.solidBounds(), b.minX + dx < 1 || b.maxX + dx > c.w - 2 { dx = 0 }
+        c.shift(dx: dx, dy: 0)
     case .bounce:
-        c.shift(dx: 0, dy: sin(play.p * .pi * 2) > 0.3 ? -2 : 0)
+        // Only as high as the frame leaves room for: the tallest characters bounce less, or not at all.
+        let room = c.solidBounds().map { $0.minY - 1 } ?? 2
+        c.shift(dx: 0, dy: sin(play.p * .pi * 2) > 0.3 ? -max(0, min(2, room)) : 0)
     case .moonwalk:
         moonwalk(c, play)
     default:

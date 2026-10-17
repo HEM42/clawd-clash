@@ -3,18 +3,22 @@ import AppKit
 // Sprite and location contact sheets, for checking art while drawing it.
 //
 //   Tools/Preview/build.sh                         compiles it into build/preview
-//   build/preview cast  out.png ironMan thor ...   every pose of each character (or a batch: heroes1 … villains4, all)
+//   build/preview cast  out.png ironMan thor ...   every pose of each character (or a batch: heroes1 … villains9,
+//                                                  ringsHeroes1 …, a universe's key or title, all)
 //   build/preview fight out.png ironMan ultron     two characters fighting, a few moments of it, with the effects
 //   build/preview drills out.png luke ironMan ...  each solo practice set it does, at a few moments (blank: not one of its);
 //                                                  DRILL=bespoke shows just that one, at more moments
 //   build/preview place out.png avengersTower ...  locations at window size and at screen-saver size
+//   build/preview magic out.png [names…]           every magic user's stream side by side, at a few moments
 //   build/preview rides out.png                    the ships, landed and flying
+//   build/preview edges out.txt ironMan ...        every moment solid art touches the frame's top or side edges, where
+//                                                  its outline is cut off (shots and exits leaving on purpose show too)
 //
 // SCALE=4 makes cells bigger (default 3).
 
 let args = Array(CommandLine.arguments.dropFirst())
 guard args.count >= 2 else {
-    print("usage: preview cast|fight|place|rides <out.png> [names…]")
+    print("usage: preview cast|fight|drills|magic|place|rides|edges <out.png> [names…]")
     exit(2)
 }
 let mode = args[0], out = args[1], names = Array(args.dropFirst(2))
@@ -57,9 +61,11 @@ func put(_ c: PixelCanvas, _ ctx: CGContext, x: CGFloat, y: CGFloat, outline: Bo
 func squashed(_ s: String) -> String { s.lowercased().filter { $0.isLetter || $0.isNumber } }
 
 /// Characters by batch name (heroes1…, villains1…, starWarsHeroes1…, starWarsVillains1…, dcHeroes1…, dcVillains1…,
-/// doctorHeroes1…, doctorVillains1…, filesHeroes1…, filesVillains1…, clawdbergHeroes1…, clawdbergVillains1…, slayerHeroes1…, slayerVillains1…, all, starWars, marvel, dc, doctor, clawdFiles, or a
-/// universe's name), by case name (ironMan, vader, superman…; Marvel's first where both have
-/// one) or by the name shown on screen ("Darth Vapor"). Universes can't be mixed in one call.
+/// doctorHeroes1…, doctorVillains1…, filesHeroes1…, filesVillains1…, clawdbergHeroes1…, clawdbergVillains1…,
+/// ringsHeroes1…, ringsVillains1…, ringsHem, slayerHeroes1…,
+/// slayerVillains1…, all, starWars, marvel, dc, doctor, clawdFiles, middleEarth, slayer, or a universe's
+/// name), by case name (ironMan, vader, superman…; Marvel's first where both have one) or by the name shown on screen
+/// ("Darth Vapor"). Universes can't be mixed in one call.
 func cast(named n: String) -> [Cast] {
     let marvelHeroes = [heroes1, heroes2, heroes3, heroes4, heroes5, heroes6, heroes7, heroes8, heroes9, heroes10]
     let marvelVillains = [villains1, villains2, villains3, villains4, villains5, villains6, villains7, villains8, villains9]
@@ -81,7 +87,7 @@ func cast(named n: String) -> [Cast] {
     var batches: [String: [Cast]] = [
         "marvel": Theme.of(.marvel).cast, "starWars": Theme.of(.starWars).cast, "dc": Theme.of(.dc).cast,
         "doctor": Theme.of(.doctor).cast, "clawdFiles": Theme.of(.clawdFiles).cast,
-        "clawdberg": Theme.of(.clawdberg).cast, "slayer": Theme.of(.slayer).cast,
+        "clawdberg": Theme.of(.clawdberg).cast, "middleEarth": Theme.of(.middleEarth).cast, "slayer": Theme.of(.slayer).cast,
         "all": Theme.of(.marvel).cast,
     ]
     for (i, b) in marvelHeroes.enumerated() { batches["heroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
@@ -98,6 +104,9 @@ func cast(named n: String) -> [Cast] {
     for (i, b) in filesHeroes.enumerated() { batches["filesHeroes\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
     for (i, b) in filesVillains.enumerated() { batches["filesVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
     for (i, b) in doctorVillains.enumerated() { batches["doctorVillains\(i + 1)"] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
+    for (name, b) in [("ringsHeroes1", ringsHeroes1), ("ringsHeroes2", ringsHeroes2), ("ringsHeroes3", ringsHeroes3), ("ringsHeroes4", ringsHeroes4), ("ringsHeroes5", ringsHeroes5), ("ringsHeroes6", ringsHeroes6), ("ringsHeroes7", ringsHeroes7), ("ringsHeroes8", ringsHeroes8)] { batches[name] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .hero($0) } }
+    for (name, b) in [("ringsVillains1", ringsVillains1), ("ringsVillains2", ringsVillains2), ("ringsVillains3", ringsVillains3), ("ringsVillains4", ringsVillains4), ("ringsVillains5", ringsVillains5), ("ringsVillains6", ringsVillains6), ("ringsVillains7", ringsVillains7), ("ringsVillains8", ringsVillains8)] { batches[name] = b.keys.sorted { $0.rawValue < $1.rawValue }.map { .villain($0) } }
+    batches["ringsHem"] = [.hero(RingsHero.hem)]   // "hem" and "HEM" resolve to Marvel's first, and fight takes the first match
     for u in Universe.allCases { batches[squashed(u.title)] = Theme.of(u).cast }
     if let b = batches[n] ?? batches[squashed(n)] { return b }
     if let h = MarvelHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
@@ -114,6 +123,8 @@ func cast(named n: String) -> [Cast] {
     if let v = SlayerVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
     if let h = FilesHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
     if let v = FilesVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
+    if let h = RingsHero.allCases.first(where: { "\($0)" == n }) { return [.hero(h)] }
+    if let v = RingsVillain.allCases.first(where: { "\($0)" == n }) { return [.villain(v)] }
     for u in Universe.allCases {
         if let c = Theme.of(u).cast.first(where: { squashed($0.name) == squashed(n) }) { return [c] }
     }
@@ -122,6 +133,70 @@ func cast(named n: String) -> [Cast] {
 }
 
 switch mode {
+case "edges":
+    // Every moment a character's solid art touches the top, left or right edge of its 72×52 frame, where the white
+    // outline gets cut off: 80 moments each of standing, walking, waiting, cheering, flinching and sitting, and 40 of
+    // every idle habit and its signature move. `out` is a text report (one line per state that touches, with how many
+    // moments); a picture of each state's first such moment goes next to it, as <out>-<name>-<state>.png.
+    let who = names.flatMap(cast(named:))
+    var lines: [String] = []
+    for c in who {
+        var hits: [String: Int] = [:]
+        func probe(_ state: String, _ draw: (PixelCanvas) -> Void) {
+            let n = PixelCanvas(Sprite.width, Sprite.height)
+            draw(n)
+            var edges = Set<String>()
+            for x in 0..<n.w where n.buf[x * 4 + 3] >= 250 { edges.insert("top") }
+            for y in 0..<n.h {
+                if n.buf[(y * n.w) * 4 + 3] >= 250 { edges.insert("left") }
+                if n.buf[(y * n.w + n.w - 1) * 4 + 3] >= 250 { edges.insert("right") }
+            }
+            guard !edges.isEmpty else { return }
+            let key = "\(state), \(edges.sorted().joined(separator: " and "))"
+            if hits[key] == nil {
+                n.addOutline(C(0xFFFFFF, 0.92))
+                let base = (out as NSString).deletingPathExtension
+                if let img = n.makeImage() {
+                    try? NSBitmapImageRep(cgImage: img).representation(using: .png, properties: [:])?
+                        .write(to: URL(fileURLWithPath: "\(base)-\(squashed(c.name))-\(squashed(state)).png"))
+                }
+            }
+            hits[key, default: 0] += 1
+        }
+        for i in 0..<80 {
+            let t = Double(i) * 0.037
+            probe("standing") { c.draw($0, t: t, mode: .idle, walking: false, role: .none, asSession: true) }
+            probe("walking") { c.draw($0, t: t, mode: .working, walking: true, role: .none, asSession: false, airborne: c.motion == .fly) }
+            probe("waiting") { c.draw($0, t: t, mode: .waiting, walking: false, role: .none, urgent: true, asSession: true) }
+            probe("cheering") { c.draw($0, t: t, mode: .working, walking: false, role: .cheer, asSession: false) }
+            probe("hit") { c.draw($0, t: t, mode: .working, walking: false, role: .hit, asSession: false) }
+            probe("sitting") { c.draw($0, t: t, mode: .idle, walking: false, role: .none, sitting: true, asSession: true) }
+        }
+        var kinds: [IdleHabit] = [.glance, .shuffle, .bounce]
+        switch c.weapon {
+        case .saber: kinds.append(.flourish)
+        case .blaster: if c.persona.handGun { kinds.append(.checkWeapon) }
+        case .lightning: kinds.append(.crackle)
+        case .none: break
+        }
+        if c.signatureLength != nil { kinds.append(.signature) }
+        for kind in kinds {
+            let len = kind == .signature ? c.signatureLength ?? kind.length : kind.length
+            for i in 0..<40 {
+                forcedHabit = HabitPlay(kind: kind, e: len * Double(i) / 40, length: len)
+                probe(kind == .signature ? "signature" : "\(kind) habit") {
+                    c.draw($0, t: 0.3 + Double(i) * 0.05, mode: .idle, walking: false, role: .none, asSession: true)
+                }
+                forcedHabit = nil
+            }
+        }
+        for (k, v) in hits.sorted(by: { $0.key < $1.key }) { lines.append("\(c.name): \(k) (\(v) moments)") }
+    }
+    let report = lines.isEmpty ? "Nothing touches the frame's edge." : lines.joined(separator: "\n")
+    try! (report + "\n").write(toFile: out, atomically: true, encoding: .utf8)
+    print(report)
+    print("wrote \(out)")
+
 case "cast":
     let who = names.flatMap(cast(named:))
     // Each pose: a title and how to draw it.

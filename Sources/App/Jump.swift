@@ -14,7 +14,8 @@ enum Jump {
         log?("host \(app.bundleIdentifier ?? "?") pid \(app.processIdentifier); cwd \(ClaudeProcesses.cwd(pid) ?? "?")")
         let tty = ttyPath(pid)
         let cwd = ClaudeProcesses.cwd(pid) ?? ""
-        // Every component up to and including each folder, so the editor fallback opens exactly that folder.
+        // Every component up to and including each folder, so the editor fallback opens exactly that folder. "Users",
+        // "Volumes" and your user name are left out: too generic to pick out a window by its title.
         let components = cwd.split(separator: "/").map(String.init)
         let folders = components.indices
             .filter { !["Users", "Volumes", NSUserName()].contains(components[$0]) }
@@ -76,6 +77,7 @@ enum Jump {
         return el
     }
 
+    /// The process's start time; `ClaudeProcesses.startTime` does the same with a check that it's set (`tv_sec > 0`).
     private static func startTime(_ pid: Int32) -> Double? {
         var info = kinfo_proc()
         var size = MemoryLayout<kinfo_proc>.stride
@@ -166,6 +168,7 @@ enum Jump {
         func selected() -> Bool { titleNames(attribute(window, kAXTitleAttribute) as? String, folder) }
         activate(app)
         AXUIElementSetAttributeValue(axApp, kAXFrontmostAttribute as CFString, kCFBooleanTrue)
+        // A moment for the app to come forward before the press, then another for the title to update.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
             let r = AXUIElementPerformAction(tab, kAXPressAction as CFString)
             log?("pressed tab \(folder) after activating → \(r.rawValue)")
@@ -214,7 +217,9 @@ enum Jump {
         return found
     }
 
-    /// Diagnostics (`--ax-dump=<pid> <file>`): what the Accessibility API exposes for the app hosting a session.
+    #if CLAWD_DEV_TOOLS
+    /// Diagnostics (`--ax-dump=<pid> <file>`, `./build.sh --dev-tools` only): what the Accessibility API exposes for
+    /// the app hosting a session.
     static func dump(pid: Int32) -> String {
         var out = "trusted: \(AXIsProcessTrusted())\n"
         guard let app = hostApp(of: pid) else { return out + "no host app\n" }
@@ -231,6 +236,7 @@ enum Jump {
         }
         return out
     }
+    #endif
 
     private static func activate(_ app: NSRunningApplication) {
         guard let url = app.bundleURL else { app.activate(); return }

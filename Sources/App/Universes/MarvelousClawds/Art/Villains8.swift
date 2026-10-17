@@ -10,7 +10,7 @@ let villains8: [MarvelVillain: Persona] = [
                   headTop: 4, signature: 3.0,
                   draw: drawTheLeader),
     .maestro: Persona(name: "Maestroh", weapon: .saber, canSit: false, pivot: maestroShoulder,
-                  bulk: 5, headTop: 1, signature: 3.0,
+                  bulk: 5, headTop: 2, signature: 3.0,
                   draw: drawMaestro),
     .malekith: Persona(name: "Malekeith", weapon: .lightning, magic: Magic(core: C(0xF0F0FF), glow: C(0x6A6AFF), jagged: false, spell: true),
                   headTop: 20, signature: 3.0,
@@ -22,7 +22,7 @@ let villains8: [MarvelVillain: Persona] = [
                   bulk: 3, headTop: 13, signature: 2.8,
                   draw: drawKurse),
     .frostGiant: Persona(name: "Frost Jötunn", weapon: .saber, canSit: false, pivot: frostShoulder,
-                  bulk: 5, headTop: 1, signature: 3.0,
+                  bulk: 5, headTop: 2, signature: 3.0,
                   draw: drawFrostGiant),
     .hydraSuperSoldier: Persona(name: "Hydrax Super Soldier", weapon: .saber, armoured: true,
                   headTop: 20, signature: 2.8,
@@ -247,10 +247,8 @@ private func drawMaestro(_ c: PixelCanvas, _ p: Pose) {
     c.rect(15, 30, 25, 2, brown); c.rect(26, 29, 5, 4, C(0xA8A8B0)); c.rect(27, 30, 3, 2, brown)   // belt and buckle
     // the head, framed by long grey hair and the beard
     c.ox += tilt
-    c.pattern(17, 0, [
-        ".....HHHHHHHHHHHH.....",
+    c.pattern(17, 2, [
         "...HHHHHHHHHHHHHHHH...",
-        "..HHHHHHHHHHHHHHHHHH..",
         ".HHHHGGGGGGGGGGGGGGHH.",
         ".HHHGGGGGGGGGGGGGGGGH.",
         "HHHHGGGGGGGGGGGGGGGGH.",
@@ -288,7 +286,7 @@ private func drawMaestro(_ c: PixelCanvas, _ p: Pose) {
     let angle = p.melee ?? 80
     smear(c, maestroShoulder, p.trail, from: 6, len: 20, C(0xD8F0C0))
     c.circle(38, 16, 3, coat)
-    let e = limb(c, maestroShoulder, angle, len: 13, r: 2.3, green)
+    let e = limb(c, maestroShoulder, angle, len: 13 - 3 * max(0, -sin(angle * .pi / 180)), r: 2.3, green)   // bent when raised
     let u = (x: cos(angle * .pi / 180), y: sin(angle * .pi / 180))
     line(c, e.x - u.x * 5, e.y - u.y * 5, e.x - u.x * 2, e.y - u.y * 2, brown, 2.4)   // the bracer
     c.rect(Int(e.x) - 3, Int(e.y) - 3, 6, 6, green)
@@ -369,7 +367,7 @@ private let surturArm = (x: 41.0, y: 18.0)
 
 /// Surtur: a fire demon filling the canvas, a body of black rock cracked through with molten lava, burning eyes and
 /// mouth, a crown of great horns with flames licking between its spikes, and the Twilight Sword, a huge blade glowing
-/// like a forge. Signature: his crown flares up into a tower of fire, embers whirling up off it.
+/// like a forge. Signature: his crown flares up into a wall of fire, embers whirling up off it.
 private func drawSurtur(_ c: PixelCanvas, _ p: Pose) {
     let rock = C(0x2E2628), rockDark = C(0x1A1418), rockLight = C(0x4E4040)
     let lava = C(0xFF6A1E), hot = C(0xFFC23A), core = C(0xFFF0A0)
@@ -409,11 +407,11 @@ private func drawSurtur(_ c: PixelCanvas, _ p: Pose) {
     for x in [21, 24, 28, 32, 35] { c.rect(x, x == 28 ? 1 : 3, 1, x == 28 ? 4 : 2, rockLight); c.px(x, x == 28 ? 0 : 2, rock) }
     line(c, 20, 6, 15, 4, rockLight, 1.2); line(c, 15, 4, 12, 0.5, rockLight, 0.8)
     line(c, 37, 6, 42, 4, rockLight, 1.2); line(c, 42, 4, 45, 0.5, rockLight, 0.8)
-    // flames licking between the spikes (a tower of them when the crown flares)
+    // flames licking between the spikes (a wall of them when the crown flares, as high as the frame lets them go)
     for (k, x) in [22, 26, 30, 33].enumerated() {
-        let h = 2 + Int(noise(Int(p.t * 10) + k * 7) * 2) + Int(flare * 8)
+        let h = min(6, 2 + Int(noise(Int(p.t * 10) + k * 7) * 2) + Int(flare * 4))
         for j in 0..<h {
-            let w = max(1, 2 - j / 3), sway = Int((sin(p.t * 9 + Double(k + j)) * Double(j) / 4).rounded())
+            let w = max(1, 2 - j / 3) + (flare > 0.5 && j < 4 ? 1 : 0), sway = Int((sin(p.t * 9 + Double(k + j)) * Double(j) / 4).rounded())
             c.rect(x + sway, 4 - j, w, 1, j < h / 3 ? core : (j < 2 * h / 3 ? hot : lava))
         }
     }
@@ -428,7 +426,7 @@ private func drawSurtur(_ c: PixelCanvas, _ p: Pose) {
     let angle = p.melee ?? 78
     let r = angle * .pi / 180, u = (x: cos(r), y: sin(r))
     let arm = 6.0
-    let blade = p.melee == nil ? 14.0 : 18.0 - 6 * max(0, -u.y)
+    let blade = p.melee == nil ? 14.0 : 18.0 - 10 * max(0, -u.y)               // shorter held high, inside the frame
     smear(c, surturArm, p.trail, from: arm + 3, len: arm + 3 + blade, hot)
     c.circle(40, 17, 3, rock)
     let h = limb(c, surturArm, angle, len: arm, r: 2.4, rock)
@@ -541,10 +539,8 @@ private func drawFrostGiant(_ c: PixelCanvas, _ p: Pose) {
     c.rect(15, 28, 25, 4, leather); c.rect(15, 28, 25, 1, leatherDark)
     for x in stride(from: 16, to: 40, by: 3) { c.rect(x, 32, 2, 3, leather) }
     // the head: bald and ridged, red eyes under a heavy brow
-    c.pattern(20, 0, [
-        "....BBBBBBBBBB....",
+    c.pattern(20, 2, [
         "..BBBBBBBBBBBBBB..",
-        ".BBBBBBBBBBBBBBBB.",
         "BBBBBBBBBBBBBBBBBB",
         "BBBBBBBBBBBBBBBBBB",
         "BBBBBBBBBBBBBBBBBB",
@@ -555,8 +551,8 @@ private func drawFrostGiant(_ c: PixelCanvas, _ p: Pose) {
         "..BBBBBBBBBBBBBB..",
         "....BBBBBBBBBB....",
     ], ["B": blue])
-    c.rect(37, 2, 1, 9, dark)
-    c.rect(28, 0, 2, 3, light); c.rect(24, 1, 1, 2, light); c.rect(33, 1, 1, 2, light)   // ridges on the scalp
+    c.rect(37, 3, 1, 8, dark)
+    c.rect(28, 2, 2, 2, light); c.rect(24, 2, 1, 1, light); c.rect(33, 2, 1, 1, light)   // ridges on the scalp
     c.rect(23, 4, 5, 1, dark); c.rect(31, 4, 5, 1, dark)                        // the brow
     c.rect(24, 5, 3, 2, eye); c.rect(32, 5, 3, 2, eye)
     c.px(25, 5, C(0xFF8A7A)); c.px(33, 5, C(0xFF8A7A))
@@ -575,14 +571,23 @@ private func drawFrostGiant(_ c: PixelCanvas, _ p: Pose) {
             c.px(38 + Int(noise(Int(s * 20) * 7 + k) * 22), 6 + Int(noise(Int(s * 20) * 5 + k) * 8), iceLight.alpha(0.9))
         }
     }
-    // the ice club
+    // the ice club: raised, it swings round in a flattened arc (tilted towards us) so it stays inside the frame
     let angle = p.melee ?? 78
-    let r = angle * .pi / 180, u = (x: cos(r), y: sin(r))
-    smear(c, frostShoulder, p.trail, from: 10, len: 29, ice)
+    func reach(_ deg: Double) -> (x: Double, y: Double) {
+        let r = deg * .pi / 180
+        return (cos(r), sin(r) * (sin(r) < 0 ? 0.38 : 1))
+    }
+    let u = reach(angle), n = (x: -u.y / hypot(u.x, u.y), y: u.x / hypot(u.x, u.y))   // along it, and across it
+    for (i, a) in p.trail.enumerated() {                                         // the smear of a fast swing
+        let v = reach(a)
+        c.glowLine(frostShoulder.x + v.x * 10, frostShoulder.y + v.y * 10, frostShoulder.x + v.x * 29, frostShoulder.y + v.y * 29,
+                   core: ice, glow: ice, coreR: 0.6, glowR: 2, strength: 0.35 / Double(i + 1))
+    }
     c.circle(38, 15, 3, blue)
-    let h = limb(c, frostShoulder, angle, len: 10, r: 2.2, blue)
+    let h = (x: frostShoulder.x + u.x * 10, y: frostShoulder.y + u.y * 10)
+    line(c, frostShoulder.x, frostShoulder.y, h.x, h.y, blue, 2.2)
     c.rect(Int(h.x) - 2, Int(h.y) - 2, 5, 5, dark)
-    let len = p.melee == nil ? 14.0 : 18.0 - 4 * max(0, -u.y)
+    let len = p.melee == nil ? 14.0 : 18.0 - 4 * max(0, -sin(angle * .pi / 180))
     for k in 0..<4 {                                                             // a thickening shaft of ice
         let a = 2 + len * Double(k) / 4, b = 2 + len * Double(k + 1) / 4
         line(c, h.x + u.x * a, h.y + u.y * a, h.x + u.x * b, h.y + u.y * b, k == 0 ? iceDark : ice, 0.8 + Double(k) * 0.55)
@@ -590,7 +595,7 @@ private func drawFrostGiant(_ c: PixelCanvas, _ p: Pose) {
     for k in 1...3 {                                                             // jagged spikes off the head
         let a = 2 + len * (0.5 + Double(k) * 0.15), side: Double = k % 2 == 0 ? 1 : -1
         let bx = h.x + u.x * a, by = h.y + u.y * a
-        line(c, bx, by, bx - u.y * side * 4 + u.x * 2, by + u.x * side * 4 + u.y * 2, iceDark, 0.5)
+        line(c, bx, by, bx + n.x * side * 4 + u.x * 2, by + n.y * side * 4 + u.y * 2, iceDark, 0.5)
     }
     line(c, h.x + u.x * (len * 0.5), h.y + u.y * (len * 0.5), h.x + u.x * (len + 1), h.y + u.y * (len + 1), iceLight, 0.3)
 }

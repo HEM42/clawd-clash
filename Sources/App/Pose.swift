@@ -183,6 +183,7 @@ func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walk
     if p.cheering, !walking { drawCheerSparkles(c, t: t) }
     if aloft, !p.flying { drawAirWash(c, t: t) }
     seatedPose = p.seated
+    poseLift = max(0, -(p.hop + float)); poseShift = p.dx
     let baseY = c.baseY
     c.baseY += float
     c.ox = p.dx; c.oy = p.hop

@@ -78,7 +78,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
                           backing: .buffered, defer: false)
         super.init()
         window.title = "Clawd Clash"
-        // Our own themed title bar instead of the system one; the traffic lights stay.
+        // Our own themed title bar instead of the system one, with its own buttons (HeaderView).
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         // Our header has its own close and minimize (which hides the list); no system traffic lights.
@@ -128,9 +128,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         applyPin()
     }
 
-    /// Make the window exactly as tall as the scene plus the cards (one per Claude), keeping its top edge
-    /// where it is and never taller than the screen, past that the cards scroll.
-    /// Settings → Show Session List in Window. Off: the window is just the header and the scene.
+    /// Settings → Show the session list. Off: the window is just the header and the scene.
     static var listShown: Bool { UserDefaults.standard.object(forKey: "windowList") as? Bool ?? true }
 
     /// What the window shows: the scene with the session list or just the scene (the header's view button switches
@@ -143,6 +141,8 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     /// How many session cards "fit height" makes room for before the list scrolls.
     static let cardsShown = 3
 
+    /// Make the window exactly as tall as the scene plus the cards (one per session), keeping its top edge
+    /// where it is and never taller than the screen, past that the cards scroll.
     func fitToContent() {
         let k = Self.scale
         let top = (Self.headerHeight + sceneHeight) * k
@@ -158,7 +158,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         var f = window.frame
         f.size.height += delta
         f.origin.y -= delta
-        window.setFrame(onScreen(f), display: true, animate: true)
+        animateFrame(onScreen(f))
     }
 
     /// Grows downward from where the window is, but never past the screen: a window parked at the bottom grows
@@ -187,14 +187,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         return NSPoint(x: o.x + (p.x - o.x) / k, y: o.y + (p.y - o.y) / k)
     }
 
-    func setSceneHeight(_ h: CGFloat) {
-        sceneHeight = h
-        let top = (Self.headerHeight + h) * Self.scale
-        if Self.view == .scene { window.minSize.height = top; window.maxSize.height = top }
-        layout()
-    }
-
-    /// Show or hide the session list (Settings → Show Session List in Window).
+    /// Show or hide the session list (Settings → Show the session list).
     func applyListShown() {
         guard Self.view != .board else { return }
         let top = (Self.headerHeight + sceneHeight) * Self.scale
@@ -208,7 +201,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
                 var f = window.frame
                 f.origin.y -= h - f.height
                 f.size.height = h
-                window.setFrame(onScreen(f), display: true, animate: true)
+                animateFrame(onScreen(f))
             }
         }
         fitToContent()
@@ -231,10 +224,15 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
             f.origin.y = window.frame.maxY - f.height
             board.isHidden = false
             [sceneView, roomView, scroll].forEach { $0.isHidden = true }
-            window.setFrame(onScreen(f), display: true, animate: true)
+            animateFrame(onScreen(f))
             layout()
             board.animateOneFrame()
-            let t = Timer(timeInterval: 1.0 / 15, repeats: true) { [weak self] _ in self?.board.animateOneFrame() }
+            let t = Timer(timeInterval: 1.0 / 15, repeats: true) { [weak self] _ in
+                // Minimised, fully covered or hidden: nothing would show, so skip the frame (the next visible one
+                // draws the current moment, so nothing is missed).
+                guard let self, self.window.occlusionState.contains(.visible) else { return }
+                self.board.animateOneFrame()
+            }
             RunLoop.main.add(t, forMode: .common)      // on through live resizes too
             boardTimer = t
         } else {
@@ -248,7 +246,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
                 var f = window.frame
                 f.size = before.size
                 f.origin.y = window.frame.maxY - f.height
-                window.setFrame(onScreen(f), display: true, animate: true)
+                animateFrame(onScreen(f))
             }
             layout()
             applyListShown()
@@ -338,7 +336,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         f.origin.y = top - f.height
         window.minSize = NSSize(width: 0, height: 0)          // free to shrink or grow past the old limits
         window.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
-        window.setFrame(onScreen(f), display: true, animate: true)
+        animateFrame(onScreen(f))
         if Self.view == .board {
             UserDefaults.standard.set(NSStringFromSize(f.size), forKey: "windowBoardSize")
             let back = presetSize(Self.listShown ? .list : .scene)
@@ -351,6 +349,17 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         fitToContent()
     }
 
+    /// True while the app resizes the window itself. An animated `setFrame` sends the same live-resize
+    /// notifications as dragging the edge, and only a drag by hand should leave the Compact Window.
+    private var resizingInCode = false
+
+    /// Animates the window to `frame`. `setFrame(_:display:animate:)` runs the animation before it returns.
+    private func animateFrame(_ frame: NSRect) {
+        resizingInCode = true
+        defer { resizingInCode = false }
+        window.setFrame(frame, display: true, animate: true)
+    }
+
     /// Resized by hand while Compact: it isn't the Compact Window any more. The window keeps its new size (only the
     /// scene-only view's height follows the scene, now drawn at full size) and everything is drawn at 100% again.
     private func leaveSmallAfterResize() {
@@ -361,7 +370,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
             f.size.height = Self.headerHeight + sceneHeight
             f.origin.y = top - f.height
             window.maxSize.height = .greatestFiniteMagnitude
-            window.setFrame(onScreen(f), display: true, animate: true)
+            animateFrame(onScreen(f))
         }
         applyLimits()
         layout()
@@ -412,7 +421,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         let k = (Date().timeIntervalSince1970 - s.start) / (s.comic?.duration ?? Wipe.duration)
         guard k < 1, let new = snapshot(),
               let ctx = CGContext(data: nil, width: new.width, height: new.height, bitsPerComponent: 8, bytesPerRow: 0,
-                                  space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+                                  space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: layerBitmapInfo)
         else {
             switching = nil
             switchTimer?.invalidate(); switchTimer = nil
@@ -462,7 +471,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
 
     func windowDidMove(_ notification: Notification) { onGeometryChange?() }
     func windowDidEndLiveResize(_ notification: Notification) {
-        if Self.small { leaveSmallAfterResize() }
+        if Self.small && !resizingInCode { leaveSmallAfterResize() }
         fitToContent()
     }
     func windowDidResize(_ notification: Notification) {
@@ -494,7 +503,7 @@ final class ThemedScroller: NSScroller {
 }
 
 /// The themed title bar: the location's colours and, on the right, where the crew is.
-/// The traffic lights sit on its left; drag anywhere else on it to move the window.
+/// The location's name on the left, our own minimise and close buttons on the right; drag anywhere else to move it.
 final class HeaderView: NSView, NSViewToolTipOwner {
     weak var controller: OverlayController?
     var onClose: (() -> Void)?
@@ -555,6 +564,18 @@ final class HeaderView: NSView, NSViewToolTipOwner {
         if hovered != nil { hovered = nil; needsDisplay = true }
     }
 
+    /// How far the place's name reaches from its left edge: in The Clawd Files, the whole caption once it has typed
+    /// itself in, so the bar behind it doesn't grow a letter at a time.
+    private func titleWidth() -> CGFloat {
+        guard let location = controller?.location else { return 0 }
+        if location.universe == .clawdFiles {
+            let all = FilesCaption.typed(location, after: 1e6).joined(separator: "  ·  ")
+            return NSAttributedString(string: all, attributes: [.font: FilesCaption.font(11.5)]).size().width + 6
+        }
+        return NSAttributedString(string: location.name.uppercased(), attributes: [
+            .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold), .kern: 1.2]).size().width
+    }
+
     override func draw(_ dirtyRect: NSRect) {
         let b = bounds
         let base = controller?.location.panel ?? NSColor(white: 0.12, alpha: 1)
@@ -563,9 +584,14 @@ final class HeaderView: NSView, NSViewToolTipOwner {
             (base.blended(withFraction: 0.45, of: .black) ?? base).setFill()
             b.fill()
         } else {
-            // The bar at 15% (85% see-through): the scene shows through, with just a hint of the bar behind the title.
-            (base.blended(withFraction: 0.45, of: .black) ?? base).withAlphaComponent(0.15).setFill()
-            b.fill()
+            // Behind the place's name only, fading out just past it: enough to read the name over a busy scene, and
+            // the rest of the bar leaves the scene clear.
+            let tint = (base.blended(withFraction: 0.45, of: .black) ?? base).withAlphaComponent(0.32)
+            let solid = 14 + titleWidth() + 16, fade: CGFloat = 70
+            tint.setFill()
+            NSRect(x: 0, y: 0, width: solid, height: b.height).fill()
+            NSGradient(colors: [tint, tint.withAlphaComponent(0)])?.draw(in: NSRect(x: solid, y: 0, width: fade, height: b.height),
+                                                                        angle: 0)
         }
         // Title and buttons cast a soft shadow, so they stand off any background.
         let shadow = NSShadow()
@@ -644,9 +670,6 @@ final class HeaderView: NSView, NSViewToolTipOwner {
     }
 }
 
-/// The scene strip: the Mos Eisley cantina, with the crew standing on its floor.
-/// The location's static picture, behind `SceneView`. Its own view so its pixels are kept between frames:
-/// redrawing it 10–30 times a second was most of the window's CPU time.
 /// A frame of the change of universe, over the whole window (`ClawdWindow.playSwitch`). Clicks go through.
 final class SwitchView: NSView {
     override init(frame: NSRect) {
@@ -659,6 +682,8 @@ final class SwitchView: NSView {
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
 
+/// The location's static picture, behind `SceneView`. Its own view so its pixels are kept between frames:
+/// redrawing it 10–30 times a second was most of the window's CPU time.
 final class RoomView: NSView {
     var image: CGImage? { didSet { needsDisplay = true } }
     var drawRect = CGRect.zero
@@ -673,6 +698,7 @@ final class RoomView: NSView {
     }
 }
 
+/// The scene strip: the current location, with the crew standing on its floor.
 final class SceneView: NSView {
     weak var controller: OverlayController?
     weak var roomView: RoomView?
@@ -681,7 +707,7 @@ final class SceneView: NSView {
     private var live: PixelCanvas?
     private var lastLive: CGImage?
     /// Changing place: the old picture, frozen, wiped away over the new one (a hard edge and a clock wipe, taking
-    /// turns), as the screen saver does; in Marvel and DC, one of the comic-book transitions (`ComicTransition`) instead.
+    /// turns), as the screen saver does; in every universe but Star Wars, that universe's own transition (`ComicTransition`).
     private var wipe: (old: CGImage, start: Double, clock: Bool, comic: ComicTransition?)?
     /// When the change of place is over (or was).
     var wipeEnds: Double { wipe.map { $0.start + ($0.comic?.duration ?? Wipe.duration) } ?? 0 }
@@ -746,14 +772,16 @@ final class SceneView: NSView {
             }
         }
         // The old place over the new, less of it each frame; under the crew.
+        var crewShown = 1.0
         if let w = wipe {
             let k = (now - w.start) / (w.comic?.duration ?? Wipe.duration)
+            if k < 1, let comic = w.comic { crewShown = comic.crewShown(k) }
             if k >= 1 {
                 wipe = nil
             } else if let comic = w.comic, let new = room.flatMap({ Wipe.flatten([$0.image] + (liveNow.map { [$0] } ?? [])) }),
                       let ctx = CGContext(data: nil, width: w.old.width * 4, height: w.old.height * 4, bitsPerComponent: 8,
                                           bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
-                                          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) {
+                                          bitmapInfo: layerBitmapInfo) {
                 // Four pixels to every art pixel, so the lettering stays sharp.
                 comic.draw(ctx, old: w.old, new: new, k: k, in: CGRect(x: 0, y: 0, width: ctx.width, height: ctx.height))
                 if let img = ctx.makeImage() {
@@ -761,7 +789,7 @@ final class SceneView: NSView {
                 }
             } else if w.comic == nil, let ctx = CGContext(data: nil, width: w.old.width, height: w.old.height, bitsPerComponent: 8, bytesPerRow: 0,
                                           space: CGColorSpace(name: CGColorSpace.sRGB)!,
-                                          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) {
+                                          bitmapInfo: layerBitmapInfo) {
                 let r = CGRect(x: 0, y: 0, width: w.old.width, height: w.old.height)
                 ctx.addPath(Wipe.remaining(k, clock: w.clock, in: r)); ctx.clip()
                 ctx.draw(w.old, in: r)
@@ -770,7 +798,13 @@ final class SceneView: NSView {
                 }
             }
         }
-        return items + controller.items
+        // A trip that leaves the ground (the Eagle's sky) takes the crew with it.
+        if crewShown >= 1 { return items + controller.items }
+        return items + controller.items.compactMap { item in
+            var item = item
+            item.alpha *= CGFloat(crewShown)
+            return item.alpha > 0.01 ? item : nil
+        }
     }
 
     /// A new frame: handed to Core Animation, which scales and composites it on the GPU.
@@ -833,21 +867,45 @@ final class CardsView: NSView {
     private var bannerDismiss: (() -> Void)?
     private var bannerClose = NSRect.zero
 
+    /// Each card's signature and where it was last drawn, so a change inside one card (its status ticks on every
+    /// second) redraws only that card, not every card's text.
+    private var cardSignatures: [String] = []
+    private var cardFrames: [NSRect] = []
+    /// What decides where everything sits: when it's unchanged, a card can be redrawn in place.
+    private var layoutKey = ""
+
     func update(cards: [CardModel], banner: String?, dismiss: (() -> Void)? = nil) {
         bannerDismiss = dismiss
         // The cards are tinted with the location's colours, so a new location redraws them too.
-        let now = ([banner ?? "", "\(dismiss != nil)", controller?.location.rawValue ?? ""] + cards.map(\.signature)).joined(separator: "\u{1}")
+        let signatures = cards.map(\.signature)
+        let now = ([banner ?? "", "\(dismiss != nil)", controller?.location.rawValue ?? ""] + signatures).joined(separator: "\u{1}")
         guard now != shown else { return }
         shown = now
+        let layout = ([banner ?? "", "\(dismiss != nil)", controller?.location.rawValue ?? "", "\(frame.width)"] + cards.map {
+            [$0.id, $0.project, $0.remote ?? "", $0.group?.title ?? "", "\($0.tree.map { "\($0.sessions ?? 0)/\($0.last)" } ?? "")",
+             "\(cardHeight($0))"].joined(separator: "\u{2}")
+        }).joined(separator: "\u{1}")
+        let inPlace = layout == layoutKey && signatures.count == cardSignatures.count && cardFrames.count == cards.count
         self.cards = cards
         self.banner = banner
+        if inPlace {
+            for i in signatures.indices where signatures[i] != cardSignatures[i] {
+                setNeedsDisplay(cardFrames[i].insetBy(dx: -3, dy: -3))
+            }
+            cardSignatures = signatures
+            return
+        }
+        layoutKey = layout
+        cardSignatures = signatures
         relayout()
     }
 
     private static let pad: CGFloat = 12
-    // Portraits are cropped to 46×38 sprite pixels; the Compact Window draws them at 1.5× to save height.
+    // Portraits are cropped to each character's outline (`portrait` in Overlay); the Compact Window draws them at
+    // 1.5× to save height.
     private static var portraitScale: CGFloat { ClawdWindow.scale < 1 ? 1.5 : 2 }
-    // Measured: the widest portrait is the AT-AT (53 px), the tallest the Rancor (42 px), both fit at 2×.
+    // The box was sized for Star Wars' widest (the AT-AT, 53 px) and tallest (the Rancor, 42 px) at 2×; anything
+    // bigger is scaled down to fit.
     private static var portraitSize: NSSize { NSSize(width: 56 * portraitScale, height: 43 * portraitScale) }
     private static let lineH: CGFloat = 16
     private static let agentH: CGFloat = 34
@@ -916,7 +974,9 @@ final class CardsView: NSView {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
         ctx.interpolationQuality = .none
         hitRects = []
+        let lastToggles = toggleRects   // kept for the cards this pass doesn't redraw
         toggleRects = []
+        cardFrames = []
         // The location's tone, with a faint texture, so the whole window feels like the place.
         let panel = controller?.location.panel ?? NSColor(srgbRed: 0.17, green: 0.13, blue: 0.10, alpha: 1)
         panel.setFill()
@@ -962,7 +1022,7 @@ final class CardsView: NSView {
 
         var treeTop: CGFloat = 0   // where the current project's tree line continues from
         for c in cards {
-            if let g = c.group {
+            if let g = c.group, NSRect(x: x, y: y, width: w, height: Self.groupH).intersects(dirtyRect) {
                 // A small divider naming the AI: "CODEX ─────"
                 let t = NSAttributedString(string: g.title.uppercased(), attributes: [
                     .font: NSFont.systemFont(ofSize: 10.5, weight: .heavy), .kern: 1.2, .foregroundColor: g.color])
@@ -970,17 +1030,19 @@ final class CardsView: NSView {
                 t.draw(at: NSPoint(x: x + 2, y: y + 2))
                 g.color.withAlphaComponent(0.35).setFill()
                 NSRect(x: x + ts.width + 10, y: (y + 2 + ts.height / 2).rounded(), width: w - ts.width - 12, height: 1).fill()
-                y += Self.groupH
             }
+            if c.group != nil { y += Self.groupH }
             if let n = c.tree?.sessions {
                 // The project header: its name in its colour, then where it lives and how many sessions are in it.
-                let title = NSMutableAttributedString(string: c.project, attributes: [
-                    .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: c.accent])
-                title.append(NSAttributedString(string: "   " + [c.remote, "\(n) sessions"].compactMap { $0 }.joined(separator: "  ·  "),
-                                                attributes: [.font: NSFont.systemFont(ofSize: 11, weight: .semibold),
-                                                             .foregroundColor: NSColor(white: 0.62, alpha: 1)]))
-                title.draw(with: NSRect(x: x + 2, y: y + 1, width: w - 4, height: 20),
-                           options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
+                if NSRect(x: x, y: y, width: w, height: Self.projectH).intersects(dirtyRect) {
+                    let title = NSMutableAttributedString(string: c.project, attributes: [
+                        .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: c.accent])
+                    title.append(NSAttributedString(string: "   " + [c.remote, "\(n) sessions"].compactMap { $0 }.joined(separator: "  ·  "),
+                                                    attributes: [.font: NSFont.systemFont(ofSize: 11, weight: .semibold),
+                                                                 .foregroundColor: NSColor(white: 0.62, alpha: 1)]))
+                    title.draw(with: NSRect(x: x + 2, y: y + 1, width: w - 4, height: 20),
+                               options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
+                }
                 y += Self.projectH
                 treeTop = y - 4
             }
@@ -1007,10 +1069,17 @@ final class CardsView: NSView {
                 treeTop = r.maxY + 10
             }
             hitRects.append((r, c.pid))
+            cardFrames.append(r)
+            // Outside the area being redrawn (another card changed): leave this one as it is.
+            guard r.insetBy(dx: -3, dy: -3).intersects(dirtyRect) else {
+                toggleRects += lastToggles.filter { $0.1 == c.id }
+                y += h + 10
+                continue
+            }
             let box = NSBezierPath(roundedRect: r, xRadius: 8, yRadius: 8)
             (controller?.location.panel.blended(withFraction: 0.35, of: .black) ?? NSColor.black).withAlphaComponent(0.94).setFill()
             box.fill()
-            c.accent.withAlphaComponent(0.55).setStroke()     // steady; the focused card's project name fades instead
+            c.accent.withAlphaComponent(0.55).setStroke()     // steady; the focused card says "◆ you're here" instead
             box.lineWidth = 1
             box.stroke()
 

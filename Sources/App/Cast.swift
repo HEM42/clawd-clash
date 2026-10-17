@@ -47,6 +47,7 @@ struct Cast: Hashable {
     /// waiting…); agents are always at work. `airborne`: a flyer on its way somewhere.
     func draw(_ c: PixelCanvas, t: Double, mode: VaderMode, walking: Bool, role: FightRole,
               urgent: Bool = false, sitting: Bool = false, asSession: Bool, airborne: Bool = false, aloft: Bool = false) {
+        drawnSignature = nil
         // Solo practice (`Drills.swift`): a session working with nobody to fight.
         if asSession, mode == .working, !walking, !sitting, case .none = role, let d = drill(at: t) {
             drawDrill(c, d, t: t)
@@ -57,9 +58,17 @@ struct Cast: Hashable {
         switch role { case .none, .rest: break; default: idle = false }
         let play = idle ? habit(at: t) : nil
         idleHabit = play
+        drawnSignature = play.flatMap { $0.kind == .signature ? $0.p : nil }
+        poseLift = 0; poseShift = 0
         defer {
             idleHabit = nil
             if let play { applyHabitTransform(c, play) }
+            // A hop or a hover that took the head onto the frame's top edge (where its outline would be cut) is
+            // given back, as far as it was a lift: the tallest characters hop and float a little lower.
+            if poseLift > 0, let b = c.solidBounds(), b.minY < 1 { c.shift(dx: 0, dy: min(poseLift, 1 - b.minY)) }
+            // The same for a step sideways that took a tail or a wing onto the side edge.
+            if poseShift < 0, let b = c.solidBounds(), b.minX < 1 { c.shift(dx: min(-poseShift, 1 - b.minX), dy: 0) }
+            if poseShift > 0, let b = c.solidBounds(), b.maxX > c.w - 2 { c.shift(dx: -min(poseShift, b.maxX - (c.w - 2)), dy: 0) }
         }
         drawPersona(c, self, t: t, mode: asSession ? mode : .working, walking: walking, role: role,
                     urgent: asSession && urgent, sitting: asSession && sitting, airborne: airborne, aloft: aloft)
@@ -69,11 +78,6 @@ struct Cast: Hashable {
 extension Cast {
     private static var measuredTops: [String: Int] = [:]
 
-    /// The top row of this character as drawn at rest, standing or sitting, within 14 px of its body's centre: the
-    /// hand-measured `headTop` misses some (horns, wings) and doesn't know a seated character sits lower, and
-    /// the band leaves out what floats above (a raised hammer). Standing, never lower than `headTop`
-    /// says; sitting, as much lower as the sprite really drops (nothing, for those that don't sit). Measured once per
-    /// character and pose; name tags sit just above it.
     /// Its outline from above, standing at rest: for each column within 14 px of the body's centre, the top row drawn
     /// there (`Sprite.height` where nothing is, and outside that band). What a name tag must clear.
     func drawnProfile() -> [Int] {
@@ -90,6 +94,11 @@ extension Cast {
     }
     private static var profiles: [Int: [Int]] = [:]
 
+    /// The top row of this character as drawn at rest, standing or sitting, within 14 px of its body's centre: the
+    /// hand-measured `headTop` misses some (horns, wings) and doesn't know a seated character sits lower, and
+    /// the band leaves out what floats above (a raised hammer). Standing, never lower than `headTop`
+    /// says; sitting, as much lower as the sprite really drops (nothing, for those that don't sit). Measured once per
+    /// character and pose; name tags sit just above it.
     func drawnTop(sitting: Bool = false) -> Int {
         let key = "\(id)/\(sitting)"
         if let hit = Self.measuredTops[key] { return hit }

@@ -72,15 +72,6 @@ private func ring(_ c: PixelCanvas, _ cx: Double, _ cy: Double, _ r: Double, _ c
     }
 }
 
-/// Boots: the bottom `rows` of each leg in `col` (not when sitting, when the legs are folded).
-private func drawBoots(_ c: PixelCanvas, _ col: Px, step: Int, rows: Int) {
-    guard !seatedPose else { return }
-    for (i, lx) in [19, 23, 31, 35].enumerated() {
-        let bottom = step >= 0 && i % 2 == step ? 42 : 43
-        c.rect(lx, bottom - rows + 1, 2, rows, col)
-    }
-}
-
 /// A sorcerer's glyph: a glowing ring with a turning triangle inside, centred on `at`.
 private func drawSigil(_ c: PixelCanvas, at: (x: Double, y: Double), r: Double, t: Double, core: Px, glow: Px) {
     guard r >= 1 else { return }
@@ -130,28 +121,6 @@ private func overlay(_ c: PixelCanvas, alpha: Double, rim: Px? = nil, _ draw: (P
             }
         }
     }
-}
-
-/// A prop drawn pointing right from pixel (20, 20) of a scratch canvas, turned to `angle` degrees (0 forward, -90 up)
-/// and placed with that point on `at`.
-private func prop(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double, alpha: Double = 1, _ art: (PixelCanvas) -> Void) {
-    let s = PixelCanvas(41, 41)
-    art(s)
-    let r = s.rotated(angle, about: (20.5, 20.5), into: 41, 41, at: (20.5, 20.5))
-    let x0 = Int(floor(at.x - 20.5)), y0 = Int(floor(at.y - 20.5))
-    for y in 0..<r.h {
-        for x in 0..<r.w {
-            let i = (y * r.w + x) * 4
-            guard r.buf[i + 3] > 0 else { continue }
-            c.px(x0 + x, y0 + y, unpremultiplied(r, i).alpha(alpha))
-        }
-    }
-}
-
-private func unpremultiplied(_ s: PixelCanvas, _ i: Int) -> Px {
-    let a = s.buf[i + 3], m = 255 / Double(a)
-    return Px(r: UInt8(min(255, Double(s.buf[i]) * m)), g: UInt8(min(255, Double(s.buf[i + 1]) * m)),
-              b: UInt8(min(255, Double(s.buf[i + 2]) * m)), a: a)
 }
 
 private struct Fire { let tip, outer, mid, core: Px }

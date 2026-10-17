@@ -898,7 +898,8 @@ private func hawkman(_ c: PixelCanvas, _ p: Pose, spread: Double) {
     let beat = spread > 0.9 ? sin(p.lt * 14) : 0
     let rise = p.signature != nil ? Int((-4 * spread).rounded()) - (beat > 0.3 ? 1 : 0) : 0
     c.oy += rise
-    hawkWing(c, spread: spread, flap: beat, far: true, lift: p.breathe, cols: wing)
+    let edge: Double? = p.flying ? nil : 2.5                            // grounded, the tips stop short of the left edge
+    hawkWing(c, spread: spread, flap: beat, far: true, lift: p.breathe, cols: wing, left: edge)
     if p.flying {
         for lx in [21, 31] { c.rect(lx, 36, 3, 6, green); c.rect(lx, 39, 3, 3, boot) }
     } else if rise < 0 {
@@ -915,7 +916,7 @@ private func hawkman(_ c: PixelCanvas, _ p: Pose, spread: Double) {
     c.rect(18, 35, 20, 1, strap)
     bar(c, 20, 32.5, 35, 35, strap, 0.6); bar(c, 35, 32.5, 20, 35, strap, 0.6)
     c.rect(27, 33, 2, 2, gold)
-    hawkWing(c, spread: spread, flap: beat, far: false, lift: p.breathe, cols: wing)
+    hawkWing(c, spread: spread, flap: beat, far: false, lift: p.breathe, cols: wing, left: edge)
     c.rect(15, 33, 3, 3, clawdOrange)
     hawkMaceInHand(c, p, head: C(0x8A8070), light: C(0xC8BC9C), dark: C(0x5A5446), crackle: false)
 }
@@ -1010,9 +1011,10 @@ private func hawkHelmet(_ c: PixelCanvas, gold: Px, dark: Px, light: Px) {
 }
 
 /// One wing, as seven long feathers fanned from the shoulder: folded down the back (`spread` 0) or swept up and out
-/// behind (1), `flap` (-1…1) beating it. The far wing is darker and sits a little higher.
+/// behind (1), `flap` (-1…1) beating it. The far wing is darker and sits a little higher. `left`: if given, a
+/// feather reaching out past this column of the frame is drawn shorter, stopping at it.
 private func hawkWing(_ c: PixelCanvas, spread k: Double, flap: Double, far: Bool,
-                      lift: Int, cols: (main: Px, dark: Px, tip: Px)) {
+                      lift: Int, cols: (main: Px, dark: Px, tip: Px), left: Double? = nil) {
     let root = far ? (x: 21.0, y: 25.0 + Double(lift)) : (x: 19.0, y: 26.0 + Double(lift))
     let dim = far ? 0.75 : 1.0
     for i in 0..<7 {
@@ -1020,7 +1022,8 @@ private func hawkWing(_ c: PixelCanvas, spread k: Double, flap: Double, far: Boo
         let folded: Double = 108 + fi * 4.5
         let open: Double = (far ? 214 : 200) + fi * 8 - flap * 22
         let a = (folded + (open - folded) * k) * .pi / 180
-        let len = 14 + k * (far ? 6 : 9) - fi * k * 1.2 - (1 - k) * fi * 0.5
+        var len = 14 + k * (far ? 6 : 9) - fi * k * 1.2 - (1 - k) * fi * 0.5
+        if let left, cos(a) < 0 { len = min(len, (root.x + Double(c.ox) - left) / -cos(a)) }
         let tip = (x: root.x + cos(a) * len, y: root.y + sin(a) * len)
         let col = i % 2 == 0 ? cols.main : cols.dark
         bar(c, root.x, root.y, tip.x, tip.y, Px(r: UInt8(Double(col.r) * dim), g: UInt8(Double(col.g) * dim),
@@ -1089,43 +1092,12 @@ private func bar(_ c: PixelCanvas, _ x0: Double, _ y0: Double, _ x1: Double, _ y
     c.glowLine(x0, y0, x1, y1, core: col, glow: clear, coreR: r, glowR: r + 0.1)
 }
 
-/// Boots: the bottom `rows` of each leg in `col` (not when sitting, when the legs are folded).
-private func drawBoots(_ c: PixelCanvas, _ col: Px, step: Int, rows: Int) {
-    guard !seatedPose else { return }
-    for (i, lx) in [19, 23, 31, 35].enumerated() {
-        let bottom = step >= 0 && i % 2 == step ? 42 : 43
-        c.rect(lx, bottom - rows + 1, 2, rows, col)
-    }
-}
-
 /// A flickering jet flame pointing down from (`x`, `y`), `w` wide.
 private func drawJet(_ c: PixelCanvas, x: Int, y: Int, w: Int, t: Double, seed: Int) {
     let len = 2 + Int(noise(Int(t * 30) + seed) * 3)
     c.rect(x, y, w, len + 1, C(0xFF9A2A, 0.85))
     c.rect(x + (w > 2 ? 1 : 0), y, max(1, w - 2), len, C(0xFFE27A))
     c.rect(x, y, w, 1, C(0xF4FCFF))
-}
-
-/// A prop drawn pointing right from pixel (20, 20) of a scratch canvas, turned to `angle` degrees (0 forward, -90 up)
-/// and placed with that point on `at`.
-private func prop(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double, alpha: Double = 1, _ art: (PixelCanvas) -> Void) {
-    let s = PixelCanvas(41, 41)
-    art(s)
-    let r = s.rotated(angle, about: (20.5, 20.5), into: 41, 41, at: (20.5, 20.5))
-    let x0 = Int(floor(at.x - 20.5)), y0 = Int(floor(at.y - 20.5))
-    for y in 0..<r.h {
-        for x in 0..<r.w {
-            let i = (y * r.w + x) * 4
-            guard r.buf[i + 3] > 0 else { continue }
-            c.px(x0 + x, y0 + y, unpremultiplied(r, i).alpha(alpha))
-        }
-    }
-}
-
-private func unpremultiplied(_ s: PixelCanvas, _ i: Int) -> Px {
-    let a = s.buf[i + 3], m = 255 / Double(a)
-    return Px(r: UInt8(min(255, Double(s.buf[i]) * m)), g: UInt8(min(255, Double(s.buf[i + 1]) * m)),
-              b: UInt8(min(255, Double(s.buf[i + 2]) * m)), a: a)
 }
 
 /// Draws `art` on a fresh canvas of sprite size, its origin at (0, 0).

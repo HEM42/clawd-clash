@@ -75,15 +75,6 @@ private func ringOutline(_ c: PixelCanvas, _ cx: Double, _ cy: Double, rx: Doubl
     }
 }
 
-/// Boots: the bottom `rows` of each leg in `col` (not when sitting, when the legs are folded).
-private func drawBoots(_ c: PixelCanvas, _ col: Px, step: Int, rows: Int) {
-    guard !seatedPose else { return }
-    for (i, lx) in [19, 23, 31, 35].enumerated() {
-        let bottom = step >= 0 && i % 2 == step ? 42 : 43
-        c.rect(lx, bottom - rows + 1, 2, rows, col)
-    }
-}
-
 /// Legs held together and trailing, for flight: `boot` on the last rows.
 private func flightLegs(_ c: PixelCanvas, _ col: Px, boot: Px, shade: Px) {
     for lx in [21, 31] {
@@ -147,28 +138,6 @@ private func layer(_ c: PixelCanvas, alpha: Double = 1, lean: Int = 0, dx: Int =
             c.px(x + shift, y, unpremultiplied(s, i).alpha(alpha))
         }
     }
-}
-
-/// A prop drawn pointing right from pixel (20, 20) of a scratch canvas, turned to `angle` degrees (0 forward, -90 up)
-/// and placed with that point on `at`.
-private func prop(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double, alpha: Double = 1, _ art: (PixelCanvas) -> Void) {
-    let s = PixelCanvas(41, 41)
-    art(s)
-    let r = s.rotated(angle, about: (20.5, 20.5), into: 41, 41, at: (20.5, 20.5))
-    let x0 = Int(floor(at.x - 20.5)), y0 = Int(floor(at.y - 20.5))
-    for y in 0..<r.h {
-        for x in 0..<r.w {
-            let i = (y * r.w + x) * 4
-            guard r.buf[i + 3] > 0 else { continue }
-            c.px(x0 + x, y0 + y, unpremultiplied(r, i).alpha(alpha))
-        }
-    }
-}
-
-private func unpremultiplied(_ s: PixelCanvas, _ i: Int) -> Px {
-    let a = s.buf[i + 3], m = 255 / Double(a)
-    return Px(r: UInt8(min(255, Double(s.buf[i]) * m)), g: UInt8(min(255, Double(s.buf[i + 1]) * m)),
-              b: UInt8(min(255, Double(s.buf[i + 2]) * m)), a: a)
 }
 
 /// "MINE!" in a tiny pixel font, its top-left at (x, y).
@@ -496,12 +465,12 @@ private func drawParallax(_ c: PixelCanvas, _ p: Pose) {
     c.ellipse(21, 20 - buzz, 7, 3, C(0xFFF4C0, 0.3))
     // The tail: segments curling back and down to a stinger.
     let sw = sin(t * 2.2)
-    let segs: [(Double, Double, Int)] = [(15, 33, 4), (10, 36 + sw * 0.5, 3), (6, 39 + sw, 3), (3.5, 42 + sw * 1.5, 2)]
+    let segs: [(Double, Double, Int)] = [(15, 33, 4), (10.5, 36 + sw * 0.5, 3), (7, 39 + sw, 3), (5, 42 + sw * 1.5, 2)]
     for (i, sg) in segs.enumerated().reversed() {
         c.ellipse(Int(sg.0), Int(sg.1), sg.2, sg.2 - (i == 0 ? 1 : 0), i % 2 == 0 ? shellDark : shell)
         c.px(Int(sg.0) - 1, Int(sg.1) - sg.2 + 1, shellLight)
     }
-    stick(c, 3, 42 + sw * 1.5, 0, 45 + sw * 1.5, pale, 0.6)
+    stick(c, 4.5, 42 + sw * 1.5, 2.5, 45 + sw * 1.5, pale, 0.6)
     // Spindly legs hanging under it.
     let legs: [[(Double, Double)]] = [
         [(21, 37), (17, 41), (18, 46)],
@@ -526,8 +495,8 @@ private func drawParallax(_ c: PixelCanvas, _ p: Pose) {
     let hy = 15 - rear
     stick(c, 37, Double(hy) + 2, 30, Double(hy) - 4, shellDark, 0.6)        // antennae swept back
     stick(c, 30, Double(hy) - 4, 23, Double(hy) - 4 + sin(t * 3), shellDark, 0.45)
-    stick(c, 40, Double(hy) + 1, 36, Double(hy) - 7, shellDark, 0.6)
-    stick(c, 36, Double(hy) - 7, 29, Double(hy) - 9 + sin(t * 3 + 1), shellDark, 0.45)
+    stick(c, 40, Double(hy) + 1, 37, Double(hy) - 4, shellDark, 0.6)
+    stick(c, 37, Double(hy) - 4, 30, Double(hy) - 5 + sin(t * 3 + 1) * 0.5, shellDark, 0.45)
     c.rect(33, hy + 9, 6, 26 - (hy + 9), shellDark)                          // the neck
     c.pattern(31, hy, [
         "....dSSSSd.......",

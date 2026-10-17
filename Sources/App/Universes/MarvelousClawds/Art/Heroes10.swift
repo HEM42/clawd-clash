@@ -704,12 +704,12 @@ private func drawZabu(_ c: PixelCanvas, _ p: Pose) {
     c.ox += lunge
     // Tail, curling up at the tip.
     let flick: Double = sin(p.lt * 2.5)
-    for (a, b, r) in [((10.0, 28.0), (5.0, 31.0), 1.3), ((5.0, 31.0), (2.0, 27.0), 1.1), ((2.0, 27.0), (3.0 + flick, 22.0), 1.0)]
+    for (a, b, r) in [((10.0, 28.0), (7.0, 31.0), 1.3), ((7.0, 31.0), (4.0, 27.0), 1.1), ((4.0, 27.0), (5.0 + flick, 22.0), 1.0)]
         as [((Double, Double), (Double, Double), Double)] {
         stick(c, a.0, a.1, b.0, b.1, orange, r)
     }
-    c.rect(2 + Int(flick.rounded()), 21, 3, 2, stripe)
-    c.px(3, 30, stripe); c.px(2, 26, stripe)
+    c.rect(4 + Int(flick.rounded()), 21, 3, 2, stripe)
+    c.px(5, 30, stripe); c.px(4, 26, stripe)
     // Body.
     c.rect(9, 26, 30, 12, orange)
     c.rect(10, 25, 26, 1, orange)
@@ -891,14 +891,6 @@ private func stick(_ c: PixelCanvas, _ x0: Double, _ y0: Double, _ x1: Double, _
     c.glowLine(x0, y0, x1, y1, core: col, glow: C(0x000000, 0), coreR: r, glowR: r + 0.05)
 }
 
-private func drawBoots(_ c: PixelCanvas, _ col: Px, step: Int, rows: Int) {
-    guard !seatedPose else { return }
-    for (i, lx) in [19, 23, 31, 35].enumerated() {
-        let bottom = step >= 0 && i % 2 == step ? 42 : 43
-        c.rect(lx, bottom - rows + 1, 2, rows, col)
-    }
-}
-
 /// Draws `art` on a scratch canvas (same offsets as `c`) and copies it onto `c`: faded to `alpha`, moved `dx`
 /// pixels, washed towards `tint`'s colour by its amount, and leaning forward one pixel every `lean` rows above the
 /// feet (0: upright).
@@ -929,25 +921,4 @@ private func mix(_ a: Px, _ b: Px, _ k: Double) -> Px {
     let g: Double = Double(a.g) + (Double(b.g) - Double(a.g)) * k
     let bl: Double = Double(a.b) + (Double(b.b) - Double(a.b)) * k
     return Px(r: UInt8(r), g: UInt8(g), b: UInt8(bl), a: a.a)
-}
-
-/// Draws `art` (pointing right from (20.5, 20.5) on a 41×41 scratch canvas) turned to `angle` degrees about `at`.
-private func prop(_ c: PixelCanvas, at: (x: Double, y: Double), angle: Double, alpha: Double = 1, _ art: (PixelCanvas) -> Void) {
-    let s = PixelCanvas(41, 41)
-    art(s)
-    let r = s.rotated(angle, about: (20.5, 20.5), into: 41, 41, at: (20.5, 20.5))
-    let x0 = Int(floor(at.x - 20.5)), y0 = Int(floor(at.y - 20.5))
-    for y in 0..<r.h {
-        for x in 0..<r.w {
-            let i = (y * r.w + x) * 4
-            guard r.buf[i + 3] > 0 else { continue }
-            c.px(x0 + x, y0 + y, unpremultiplied(r, i).alpha(alpha))
-        }
-    }
-}
-
-private func unpremultiplied(_ s: PixelCanvas, _ i: Int) -> Px {
-    let a = s.buf[i + 3], m = 255 / Double(a)
-    return Px(r: UInt8(min(255, Double(s.buf[i]) * m)), g: UInt8(min(255, Double(s.buf[i + 1]) * m)),
-              b: UInt8(min(255, Double(s.buf[i + 2]) * m)), a: a)
 }

@@ -1,9 +1,10 @@
 import Foundation
 
 // Stevie Clawdberg's rides (`Ride`), drawn nose to the right on the ships' `Ride.width`×`Ride.height` canvas: the
-// DeLorean for Back to the Future (it drives in along the ground, `Ride.drives`, crackling blue with fire in its
-// tracks), the moon bike for the E.T. kids and the Goonies (it flies, the basket up front), the mothership for Close
-// Encounters (its "ramp" is the light pouring out under it), and the park jeep for Jurassic Park's people.
+// DeLorean for Back to the Future (it drives in along the ground, crackling blue with fire in its tracks), the moon
+// bike for the E.T. kids and the Goonies (it flies, the basket up front), the mothership for Close Encounters (its
+// "ramp" is the light pouring out under it), and the park jeep for Jurassic Park's people, which drives too. Which
+// rides drive is `Ride.drives`, in Theme.swift.
 
 /// The DeLorean: a low brushed-steel wedge with gull-wing doors, the flux-capacitor glow through the back window and the
 /// time machine's coils and vents on its tail. `ramp` 0…1 lifts the gull-wing door; `lit`: on the move at 88 mph, blue
@@ -128,9 +129,4 @@ func drawParkJeep(_ c: PixelCanvas, ramp: Double, lit: Bool) {
     for wx in [17, 49] { c.circle(wx, 24, 5, tyre); c.circle(wx, 24, 2, C(0x8A8A90)); c.px(wx, 24, tyre) }
     c.rect(58, 18, 1, 2, lit ? C(0xFFF6C8) : C(0xC8C8B8))
     if ramp > 0 { c.rect(22, 12, 10, 4, C(0xE8D8A8, 0.5 * ramp)) }
-}
-
-extension Ride {
-    /// Stevie Clawdberg's rides that drive in along the ground.
-    var clawdbergDrives: Bool { self == .delorean || self == .jeep }
 }

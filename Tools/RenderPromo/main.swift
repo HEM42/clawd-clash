@@ -19,11 +19,12 @@ import CoreText
 //   REEL=clawdberg build/renderpromo video promo  → promo/stevie-clawdberg-promo.mp4: the Stevie Clawdberg trailer
 //   REEL=royale build/renderpromo video promo     → promo/clawd-royale-promo.mp4: the Clawd Royale teaser
 //   REEL=royale build/renderpromo 720p promo      → promo/720p/Clawd-Royale.mp4 (storyboard: storyboard-clawd-royale.png)
+//   REEL=clawdoftherings build/renderpromo video promo → promo/clawd-of-the-rings-promo.mp4: the Clawd of the Rings trailer
 //   build/renderpromo audio promo                → the soundtrack alone, as a .wav
 //   build/renderpromo frame promo 9.5            → a single frame at 9.5 s
 //   REEL=full build/renderpromo check            → renders every frame once (prints how far it got)
 //   REEL=full build/renderpromo 720p promo       → promo/720p/Clawd-Clash-Full.mp4: the copy under 10 MB for GitHub
-// See promo-video-idea.md for the whole routine (reels, where each upload goes, building beside another session).
+// clawdify_guide.md's "Promo: the universe's trailer" section has the whole routine (reels, music, wiring a new one).
 
 let W = 1920, H = 1080, fps = 30.0
 
@@ -130,13 +131,28 @@ func draw(_ a: Actor, _ ctx: CGContext, t: Double) {
     let c = PixelCanvas(Sprite.width, Sprite.height)
     a.cast.draw(c, t: t, mode: a.mode, walking: a.walking, role: a.role, urgent: a.urgent, sitting: a.sitting,
                 asSession: a.session, airborne: a.airborne)
+    // A signature that climbs a thread (`Persona.climb`, Shellob): risen and faded by the move, its thread up to the top
+    // of the frame.
+    let climb = drawnSignature.flatMap { p in a.cast.persona.climb.map { (move: $0, p: p) } }
+    let rise = climb.map { $0.move.rise($0.p) * a.k } ?? 0
     if a.facing < 0 { c.flipHorizontally() }
     c.addOutline(C(a.ai.hex, 0.92))
     guard let img = c.makeImage() else { return }
     let px = S * a.k
     let x0 = (a.facing > 0 ? a.x - Sprite.bodyCenterX * a.k : a.x - (Double(Sprite.width) - Sprite.bodyCenterX) * a.k) * S
-    let yTop = a.top * S
-    ctx.saveGState(); ctx.setAlpha(CGFloat(a.alpha))
+    let yTop = (a.top - rise) * S
+    if let cl = climb {
+        let fx = (a.x + a.facing * (cl.move.from.x - Sprite.bodyCenterX) * a.k) * S
+        let fy = stageH - (a.top - rise + cl.move.from.y * a.k) * S
+        let reach = (stageH - fy) * cl.move.thread(cl.p)
+        if reach > px {
+            ctx.saveGState(); ctx.setAlpha(CGFloat(0.9 * a.alpha * cl.move.alpha(cl.p)))   // the thread fades with her
+            ctx.setFillColor(CGColor(red: 0.96, green: 0.96, blue: 0.97, alpha: 1))
+            ctx.fill(CGRect(x: fx - px * 0.3, y: fy, width: max(1, px * 0.6), height: reach))
+            ctx.restoreGState()
+        }
+    }
+    ctx.saveGState(); ctx.setAlpha(CGFloat(a.alpha * (climb.map { $0.move.alpha($0.p) } ?? 1)))
     ctx.draw(img, in: CGRect(x: x0, y: stageH - yTop - Double(Sprite.height) * px,
                              width: Double(Sprite.width) * px, height: Double(Sprite.height) * px))
     // Speech bubble beside the head, tail pointing back at it.
@@ -229,6 +245,19 @@ func modeBadge(_ s: String, _ ctx: CGContext, local: Double) {
 
 // MARK: Backgrounds
 
+/// What Gemini's terminal on the desktop is busy with, in the reel's universe.
+var geminiTask: String {
+    switch reel {
+    case "starclawds": return "gemini ▸ add a \(Cast.hero(SWHero.tauntaun).name.lowercased())"
+    case "marvelous": return "gemini ▸ polish the shield"
+    case "doctor": return "gemini ▸ reverse the polarity"
+    case "files": return "gemini ▸ declassify the logs"
+    case "clawdberg": return "gemini ▸ get it up to 88 mph"
+    case "clawdoftherings": return "gemini ▸ hide the ring from the logs"
+    default: return "gemini ▸ fix the clawdarang"
+    }
+}
+
 /// The user's desktop: a dusky wallpaper with three terminal windows (dimmed once the battle starts).
 func desktop(_ ctx: CGContext, dim: Double, floor: Bool = true) {
     let g = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
@@ -239,7 +268,7 @@ func desktop(_ ctx: CGContext, dim: Double, floor: Bool = true) {
     ctx.setFillColor(CGColor(gray: 0, alpha: 0.35)); ctx.fill(CGRect(x: 0, y: H - 34, width: W, height: 34))
     let lines = [["claude ▸ refactor the hook installer", "● Reading HookInstaller.swift", "● Editing 3 files…", "✻ Thinking…"],
                  ["codex ▸ write the changelog", "● Bash(git log --oneline)", "", "Allow this command?  ❯ Yes   No"],
-                 [reel == "starclawds" ? "gemini ▸ add a \(Cast.hero(SWHero.tauntaun).name.lowercased())" : reel == "marvelous" ? "gemini ▸ polish the shield" : reel == "doctor" ? "gemini ▸ reverse the polarity" : reel == "files" ? "gemini ▸ declassify the logs" : reel == "clawdberg" ? "gemini ▸ get it up to 88 mph" : "gemini ▸ fix the clawdarang", "✓ Done in 4m 12s", "", "> _"]]
+                 [geminiTask, "✓ Done in 4m 12s", "", "> _"]]
     for i in 0..<3 {
         let r = CGRect(x: 110 + Double(i) * 580, y: 330 + Double(i % 2) * 70, width: 540, height: 360)
         ctx.saveGState(); ctx.setAlpha(CGFloat(1 - dim * 0.75))
@@ -440,6 +469,9 @@ func windowSpec(_ u: Universe, needsAt: Double = 99, at override: Location? = ni
         case .clawdberg: return (.hillValley1955, .hero(ClawdbergHero.indianaBones), .villain(ClawdbergVillain.reneBellock),
                                  .hero(ClawdbergHero.martyMcFry), .hero(ClawdbergHero.docBrawn), .villain(ClawdbergVillain.strype),
                                  "You: “get the DeLorean up to 88 mph”", "You: “put it back in the museum”")
+        case .middleEarth: return (.prancingPony, .hero(RingsHero.aragorn), .villain(RingsVillain.witchKing), .hero(RingsHero.legolas),
+                                   .hero(RingsHero.gimli), .villain(RingsVillain.orc), "You: “make the sword glow when orcs are near”",
+                                   "You: “make the Eye watch every request”")
         case .slayer: return (.slayerLibrary, .hero(SlayerHero.buffyClawmers), .villain(SlayerVillain.oldMaster),
                               .hero(SlayerHero.willowRosenclaw), .hero(SlayerHero.rupertGyles), .villain(SlayerVillain.lukewarm),
                               "You: “stake the memory leak”", "You: “reopen the Hellmouth”")
@@ -724,6 +756,8 @@ enum Into {
     case starWars(clock: Bool)
     case marvel(ComicTrip)
     case dc(DCComicTrip)
+    case middleEarth(RingsTrip)
+    case trip(ComicTransition)    // any other universe's own trips (Doctor Clawd, The Clawd Files, Stevie Clawdberg)
 
     var duration: Double {
         switch self {
@@ -732,6 +766,8 @@ enum Into {
         case .starWars: return Wipe.duration * 1.6
         case .marvel(let t): return t.duration * 1.25
         case .dc(let t): return t.duration * 1.25
+        case .middleEarth(let t): return t.duration * 1.25
+        case .trip(let t): return t.duration * 1.25
         }
     }
 }
@@ -763,6 +799,7 @@ func brawl(_ ctx: CGContext, _ u: Universe, local: Double, t: Double, drop: Bool
         case .doctor: return (.hero(DoctorHero.doctorTen), .villain(DoctorVillain.dalick), .hero(DoctorHero.river), .villain(DoctorVillain.sontaron))
         case .clawdFiles: return (.hero(FilesHero.foxClawder), .villain(FilesVillain.smokingClawd), .hero(FilesHero.danaScrawly), .villain(FilesVillain.bountyHunter))
         case .clawdberg: return (.hero(ClawdbergHero.indianaBones), .villain(ClawdbergVillain.reneBellock), .hero(ClawdbergHero.martyMcFry), .villain(ClawdbergVillain.biffTannin))
+        case .middleEarth: return (.hero(RingsHero.legolas), .villain(RingsVillain.orc), .hero(RingsHero.gimli), .villain(RingsVillain.uruk))
         case .slayer: return (.hero(SlayerHero.buffyClawmers), .villain(SlayerVillain.oldMaster), .hero(SlayerHero.willowRosenclaw), .villain(SlayerVillain.lukewarm))
         }
     }()
@@ -787,7 +824,8 @@ func brawl(_ ctx: CGContext, _ u: Universe, local: Double, t: Double, drop: Bool
         case .doctor: return ("Or step into Doctor Clawd.", "Sonic screwdrivers, a blue box and a lot of shouting about extermination.")
         case .clawdFiles: return ("Or open The Clawd Files.", "Flashlights, black helicopters and a conspiracy behind every bug: 82 characters in 20 places.")
         case .clawdberg: return ("Or roll Stevie Clawdberg.", "Whips, sharks, gremlins and a DeLorean: 117 characters in 23 places.")
-        case .slayer: return ("Or patrol with Clawd Slayer.", "Stakes, spells and a Hellmouth under the library.")
+        case .middleEarth: return (u.isReleased ? "Or pick Clawd of the Rings." : "Coming soon: Clawd of the Rings.", "Swords, staffs and one very precious ring.")
+        case .slayer: return (u.isReleased ? "Or patrol with Clawd Slayer." : "Coming soon: Clawd Slayer.", "Stakes, spells and a Hellmouth under the library.")
         }
     }()
     caption(line, ctx, local: local, start: drop ? 0.3 : 0.15, y: 900)
@@ -1297,6 +1335,7 @@ func pickVerse(_ u: Universe) -> (hero: Cast, villain: Cast, sound: String, pop:
     case .doctor: return (.hero(DoctorHero.doctorTen), .villain(DoctorVillain.dalick), "VWORP!", (0x7CC84A, 0xB8EC88))
     case .clawdFiles: return (.hero(FilesHero.foxClawder), .villain(FilesVillain.grey), "ZZZT!", (0xFF7A1E, 0xFFC27A))
     case .clawdberg: return (.hero(ClawdbergHero.indianaBones), .villain(ClawdbergVillain.reneBellock), "CRACK!", (0xA65AE8, 0xD2A8FF))
+    case .middleEarth: return (.hero(RingsHero.gandalf), .villain(RingsVillain.balrog), "KA-THOOM!", (0x1EB8A8, 0x8AE8DC))
     case .slayer: return (.hero(SlayerHero.buffyClawmers), .villain(SlayerVillain.oldMaster), "THWACK!", (0x2ED8D0, 0xA0F6F0))
     }
 }
@@ -1347,7 +1386,7 @@ func pickFill(_ ctx: CGContext, _ r: CGRect, kind: Int, pair: (UInt32, UInt32), 
 /// The page's panels: one per universe, and the centre one. The layout grows with the universes: two flank the
 /// centre panel, the rest split between a row above and a row below, the gutters leaning alternately.
 let pickLayout: (slots: [CGPath], centre: CGPath) = {
-    let n = Universe.allCases.count, edge = 26.0, gut = 18.0, lean = 27.0, w = Double(W)
+    let n = Universe.offered.count, edge = 26.0, gut = 18.0, lean = 27.0, w = Double(W)
     struct Band { let b0, b1, t0, t1: Double
         func bottom(_ x: Double) -> Double { b0 + (b1 - b0) * x / Double(W) }
         func top(_ x: Double) -> Double { t0 + (t1 - t0) * x / Double(W) } }
@@ -1380,7 +1419,7 @@ let pickLayout: (slots: [CGPath], centre: CGPath) = {
 
 func pickYourUniverse(_ ctx: CGContext, local l: Double, t: Double) {
     ctx.setFillColor(hexCG(0xFDFCF6)); ctx.fill(fullRect)
-    let all = Universe.allCases, step = min(0.45, 2.4 / Double(all.count))
+    let all = Universe.offered, step = min(0.45, 2.4 / Double(all.count))
     let lands = all.indices.map { 0.5 + Double($0) * step }
     // The centre panel first: a turning red sunburst, ONE APP. and PICK YOUR UNIVERSE.
     let cp = pickLayout.centre, cb = cp.boundingBox
@@ -1447,28 +1486,350 @@ func showcaseTitle(_ ctx: CGContext, _ u: Universe, _ line: String, local l: Dou
     sub.draw(at: NSPoint(x: (Double(W) - sub.size().width) / 2, y: 885))
 }
 
+/// The promo's opening, in the style of Doctor Clawd's title sequence: down the time vortex, with the police box and
+/// every universe's legend tumbling up out of it and past us, then CLAWD CLASH flying up out of the eye of it and landing
+/// with a bang in the middle of the screen. They come out in waves of two from opposite sides, the second a beat
+/// later, on its own curve and at its own speed, so a new universe adds to a wave instead of making the intro longer.
+var introTumblers: [Cast?] { [nil] + Universe.offered.map { Theme.of($0).legend } }
+let introPerWave = 2, introWave = 1.25, introFly = 2.7
+
+/// When tumbler `i` sets off and how long it takes to fly past.
+func introTiming(_ i: Int) -> (start: Double, fly: Double) {
+    let wave = i / introPerWave, j = i % introPerWave
+    return (0.3 + Double(wave) * introWave + Double(j) * 0.35, introFly + Double(j) * 0.35)
+}
+var introSlam: Double {
+    let last = introTumblers.indices.map { introTiming($0).start + introTiming($0).fly }.max() ?? 0
+    return last + 0.4
+}
+
+func clashIntro(_ ctx: CGContext, local l: Double, t: Double) {
+    let c = CGPoint(x: Double(fxW) / 2 + sin(l * 0.7) * 14, y: Double(fxH) / 2 + cos(l * 0.5) * 6)
+    let slam = introSlam, since = l - slam, shake = since > 0 && since < 0.3 ? (0.3 - since) * 60 : 0
+    ctx.saveGState(); ctx.translateBy(x: sin(t * 80) * shake, y: cos(t * 70) * shake)
+    if let img = lowRes({ g in
+        vortexTunnel(g, t: l + 2, glow: clamp(l / 0.5), centre: c)
+        if l > 0.1 && l < 0.4 { vortexLightning(g, seed: 11, to: c, alpha: 1 - (l - 0.1) / 0.3) }
+    }) { ctx.saveGState(); ctx.interpolationQuality = .none; ctx.draw(img, in: fullRect.insetBy(dx: -40, dy: -40)); ctx.restoreGState() }
+    let eye = CGPoint(x: c.x * 6, y: c.y * 6), lamp = Int(l * 5) % 2 == 0
+    for (i, who) in introTumblers.enumerated() {
+        let (start, fly) = introTiming(i), f = (l - start) / fly
+        guard f > 0, f < 1 else { continue }
+        let wave = i / introPerWave, j = i % introPerWave
+        // opposite sides of the wave, but not a mirror: its own curl, reach and spin
+        let z = pow(f, 2.4)
+        let a = Double(wave) * 2.1 + 0.6 + Double(j) * (2 * .pi / Double(introPerWave) + 0.35) + z * (j == 0 ? 0.7 : -0.45)
+        let p = CGPoint(x: eye.x + cos(a) * z * (1100 - Double(j) * 120), y: eye.y + sin(a) * z * (700 + Double(j) * 90))
+        let h = 20 + z * (1000 - Double(j) * 140), turn = sin(l * (0.9 + 0.4 * Double(j)) + Double(i)) * (0.6 - 0.25 * Double(j)) + Double(i) * 0.4
+        guard let who else { drawBox(ctx, at: p, height: h, turn: 0.5 * sin(l * 1.5), lamp: lamp, alpha: clamp(f * 8)); continue }
+        let pc = PixelCanvas(Sprite.width, Sprite.height)
+        who.draw(pc, t: l, mode: .working, walking: false, role: .none, asSession: false)   // posed, not practising
+        pc.addOutline(C(AI.claude.hex, 0.92))
+        guard let b = pc.opaqueBounds(), let img = pc.makeImage()?.cropping(to: b) else { continue }
+        let w = h * Double(img.width) / Double(img.height)
+        ctx.saveGState(); ctx.interpolationQuality = .none
+        ctx.translateBy(x: p.x, y: p.y); ctx.rotate(by: CGFloat(turn)); ctx.setAlpha(CGFloat(clamp(f * 8)))
+        ctx.draw(img, in: CGRect(x: -w / 2, y: -h / 2, width: w, height: h))
+        ctx.restoreGState()
+    }
+    // CLAWD CLASH flies up out of the eye, faster and faster, and lands with a bang
+    if l > slam - 1.1 {
+        let fly = easeIn((l - (slam - 1.1)) / 1.1)
+        let s = since < 0 ? CGFloat(0.04 + 0.96 * fly) : CGFloat(1 + 0.12 * sin(min(1, since / 0.35) * .pi) * max(0, 1 - since / 0.35))
+        let pull = since < 0 ? 1 - fly : 0
+        if since > 0 { ctx.setFillColor(CGColor(gray: 0, alpha: 0.18 * clamp(since / 0.2))); ctx.fill(fullRect) }
+        coverWord(ctx, "CLAWD", at: CGPoint(x: lerp(960, eye.x, pull), y: lerp(675, eye.y + 40, pull)), width: 1560, height: 270, angle: 0.05, depth: 14, scale: s)
+        coverWord(ctx, "CLASH", at: CGPoint(x: lerp(960, eye.x, pull), y: lerp(415, eye.y - 40, pull)), width: 1680, height: 290, angle: 0.05, depth: 16, scale: s)
+    }
+    ctx.restoreGState()
+    if since > 0 && since < 0.3 { ctx.setFillColor(CGColor(gray: 1, alpha: 0.85 * (1 - since / 0.3))); ctx.fill(fullRect) }   // the flash
+}
+
+/// How many universes, in words: "SEVEN", or "Seven" with `capital`.
+func universeCount(capital: Bool = false) -> String {
+    let n = Universe.offered.count
+    let w = ["ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT", "NINE", "TEN", "ELEVEN", "TWELVE"]
+    let s = n < w.count ? w[n] : "\(n)"
+    return capital ? s.prefix(1) + s.dropFirst().lowercased() : s
+}
+
+/// Choose your universe, read as a comic: characters from every universe run along the desktop under the title, a
+/// page with a panel per universe slams down over them, and the camera reads it panel by panel, each its universe's big
+/// moment, then pulls back to the whole page. The layout and the reading grow with the universe list.
+var chooseRunners: [Cast] {
+    Universe.offered.flatMap { u -> [Cast] in
+        let lead = Theme.of(u).legend
+        return (0..<3).map { Cast(universe: u, isDark: false, index: $0) }.filter { $0 != lead }.prefix(2).map { $0 }
+    }
+}
+
+/// Each universe's big moment, from its own trailer, and its sound word.
+func setPiece(_ u: Universe) -> (word: String, draw: (CGContext, Double, Double) -> Void) {
+    switch u {
+    case .starWars: return ("VWOOM!", { starClawsShowcase($0, local: 1.6 + $1, t: $2) })
+    case .marvel: return ("KAPOW!", { clawvelShowcase($0, local: 3.2 + $1, t: $2) })
+    case .dc: return ("KRAK!", { detectiveShowcase($0, local: 2.2 + $1, t: $2) })
+    case .doctor: return ("VWORP!", { doctorInvasion($0, local: 3.3 + $1, t: $2) })
+    case .clawdFiles: return ("HMMMM!", { filesWoods($0, local: 3.2 + $1, t: $2) })
+    case .clawdberg: return ("88 MPH!", { clawdbergHillValley($0, local: 3.0 + $1, t: $2) })
+    case .middleEarth: return ("DOOM!", { ringsBridge($0, local: 2.8 + $1, t: $2) })
+    }
+}
+
+/// The pages, in page units (y up), screen-shaped: up to six panels each, the universes shared out evenly between as
+/// many pages as that takes. On each page two rows split by a slanted divider, each row split by slanted gutters that
+/// never line up with the other row's.
+let pageW = 3200.0, pageH = 1800.0
+struct PagePanel { let u: Universe; let corners: [CGPoint]
+    var path: CGPath { let p = CGMutablePath(); p.addLines(between: corners); p.closeSubpath(); return p }
+    var rect: CGRect { path.boundingBoxOfPath }
+}
+
+/// Where two lines (each a point and a direction) cross.
+func crossing(_ p: CGPoint, _ d: CGVector, _ q: CGPoint, _ e: CGVector) -> CGPoint {
+    let den = d.dx * e.dy - d.dy * e.dx
+    let t = ((q.x - p.x) * e.dy - (q.y - p.y) * e.dx) / den
+    return CGPoint(x: p.x + d.dx * t, y: p.y + d.dy * t)
+}
+
+/// One page's panels, for `shown`, its divider rising (`page` even) or falling, so facing pages differ.
+func pageLayout(_ shown: [Universe], page: Int) -> [PagePanel] {
+    let n = shown.count, top = (n + 1) / 2, rows = [top, n - top]
+    let m = 70.0, gap = 46.0
+    let mid = CGPoint(x: pageW / 2, y: pageH / 2), slope = CGVector(dx: 1, dy: page % 2 == 0 ? 0.05 : -0.045)
+    let lean = page % 2 == 0 ? [CGVector(dx: 0.2, dy: 1), CGVector(dx: 0.16, dy: 1)] : [CGVector(dx: -0.17, dy: 1), CGVector(dx: 0.21, dy: 1)]
+    let weights = page % 2 == 0 ? [[1.0, 1.3, 0.9], [1.25, 0.85, 1.15]] : [[1.3, 0.9, 1.1], [0.85, 1.2, 1.0]]
+    var panels: [PagePanel] = [], k = 0
+    for (r, count) in rows.enumerated() where count > 0 {
+        let full = rows[1] == 0                                                     // one row: the whole page
+        let topEdge = r == 0 ? (CGPoint(x: 0, y: pageH - m), CGVector(dx: 1, dy: 0)) : (CGPoint(x: mid.x, y: mid.y - gap / 2), slope)
+        let botEdge = r == 0 && !full ? (CGPoint(x: mid.x, y: mid.y + gap / 2), slope) : (CGPoint(x: 0, y: m), CGVector(dx: 1, dy: 0))
+        let ws = (0..<count).map { weights[r][$0 % weights[r].count] }, sum = ws.reduce(0, +)
+        let rowMid = r == 0 ? (full ? pageH / 2 : (pageH - m + mid.y) / 2) : (mid.y + m) / 2
+        var cuts = [m - gap / 2], x = m
+        for c in 0..<count { x += (pageW - 2 * m) * ws[c] / sum; cuts.append(c == count - 1 ? pageW - m + gap / 2 : x) }
+        for c in 0..<count {
+            let left = c == 0 ? (CGPoint(x: m, y: 0), CGVector(dx: 0, dy: 1)) : (CGPoint(x: cuts[c] + gap / 2, y: rowMid), lean[r])
+            let right = c == count - 1 ? (CGPoint(x: pageW - m, y: 0), CGVector(dx: 0, dy: 1)) : (CGPoint(x: cuts[c + 1] - gap / 2, y: rowMid), lean[r])
+            let corners = [crossing(left.0, left.1, topEdge.0, topEdge.1), crossing(right.0, right.1, topEdge.0, topEdge.1),
+                           crossing(right.0, right.1, botEdge.0, botEdge.1), crossing(left.0, left.1, botEdge.0, botEdge.1)]
+            panels.append(PagePanel(u: shown[k], corners: corners)); k += 1
+        }
+    }
+    return panels
+}
+
+let comicPages: [[PagePanel]] = {
+    let shown = Universe.offered, count = (shown.count + 5) / 6, per = (shown.count + count - 1) / count
+    return stride(from: 0, to: shown.count, by: per).enumerated().map { p, s in pageLayout(Array(shown[s..<min(shown.count, s + per)]), page: p) }
+}()
+
+/// What the camera looks at: a whole page, or one panel on it.
+enum PageView { case whole(Int), panel(Int, Int) }
+/// The camera's stops in order: each held from `from` to `to`; between two stops it moves, or, into a new page, the
+/// page turns.
+struct PageKey { let view: PageView; let from: Double; let to: Double; let turn: Bool }
+let pageDrop = 2.4, pageHold = 0.95, pageMove = 0.4, pageTurn = 0.95
+let pageKeys: [PageKey] = {
+    var keys: [PageKey] = [], t = pageDrop + 0.5
+    for (p, page) in comicPages.enumerated() {
+        let look = p == 0 ? 0.5 : 0.35
+        keys.append(PageKey(view: .whole(p), from: t, to: t + look, turn: p > 0)); t += look + pageMove
+        for j in page.indices { keys.append(PageKey(view: .panel(p, j), from: t, to: t + pageHold, turn: false)); t += pageHold + pageMove }
+        let last = p == comicPages.count - 1
+        keys.append(PageKey(view: .whole(p), from: t, to: t + (last ? 2.6 : 0.3), turn: false)); t += last ? 2.6 : 0.3 + pageTurn
+    }
+    return keys
+}()
+/// When the camera gets to universe `i`'s panel, and when it's back on the last page as a whole.
+func pageArrive(_ i: Int) -> Double {
+    var k = 0
+    for key in pageKeys { if case .panel = key.view { if k == i { return key.from }; k += 1 } }
+    return 0
+}
+var pageBack: Double { pageKeys.last!.from }
+var chooseLength: Double { pageKeys.last!.to }
+/// When the pages turn.
+var pageTurns: [Double] { pageKeys.filter(\.turn).map { $0.from - pageTurn } }
+
+typealias Camera = (c: CGPoint, s: Double, turn: Double)
+func camera(_ v: PageView) -> Camera {
+    switch v {
+    case .whole: return (CGPoint(x: pageW / 2, y: pageH / 2), Double(W) / pageW * 0.97, 0)
+    case .panel(let p, let j):
+        let r = comicPages[p][j].rect
+        return (CGPoint(x: r.midX, y: r.midY), min(Double(W) * 0.9 / r.width, Double(H) * 0.9 / r.height), 0)
+    }
+}
+func blend(_ a: Camera, _ b: Camera, _ f: Double) -> Camera {
+    let e = f * f * (3 - 2 * f)
+    // zooming feels even in log scale; a little pull back and a lean mid-move, like a camera finding the next panel
+    let s = exp(lerp(log(a.s), log(b.s), e)) * (1 - 0.12 * sin(.pi * f))
+    let lean = (b.c.x > a.c.x ? -1.0 : 1.0) * 0.05 * sin(.pi * f)
+    return (CGPoint(x: lerp(a.c.x, b.c.x, e), y: lerp(a.c.y, b.c.y, e)), s, lerp(a.turn, b.turn, e) + lean)
+}
+func page(of v: PageView) -> Int { switch v { case .whole(let p), .panel(let p, _): return p } }
+
+/// One page through the camera: the paper, its border, and every panel playing its universe's big moment.
+func drawPage(_ ctx: CGContext, _ p: Int, cam: Camera, zoom: Double = 1, tilt: Double = 0, l: Double, t: Double) {
+    ctx.saveGState()
+    ctx.translateBy(x: 960, y: 540); ctx.rotate(by: CGFloat(cam.turn + tilt))
+    ctx.scaleBy(x: CGFloat(cam.s * zoom), y: CGFloat(cam.s * zoom)); ctx.translateBy(x: -cam.c.x, y: -cam.c.y)
+    let sheet = CGRect(x: 0, y: 0, width: pageW, height: pageH)
+    ctx.setFillColor(CGColor(gray: 0, alpha: 0.5)); ctx.fill(sheet.offsetBy(dx: 24, dy: -24))
+    ctx.setFillColor(CGColor(gray: 0.96, alpha: 1)); ctx.fill(sheet)
+    ctx.setStrokeColor(inkColor); ctx.setLineWidth(14); ctx.stroke(sheet.insetBy(dx: 30, dy: 30))
+    let first = comicPages.prefix(p).map(\.count).reduce(0, +)
+    let view = CGRect(x: cam.c.x - 960 / (cam.s * zoom), y: cam.c.y - 540 / (cam.s * zoom), width: 1920 / (cam.s * zoom), height: 1080 / (cam.s * zoom))
+    for (j, panel) in comicPages[p].enumerated() {
+        let i = first + j, piece = setPiece(panel.u), r = panel.rect, shape = panel.path
+        ctx.saveGState(); ctx.translateBy(x: 16, y: -16); ctx.addPath(shape); ctx.setFillColor(CGColor(gray: 0, alpha: 1)); ctx.fillPath(); ctx.restoreGState()
+        // only the panels in view get their scene drawn; before the camera gets there it holds a moment of the action
+        if r.insetBy(dx: -300, dy: -300).intersects(view), let full = shotImage({ piece.draw($0, max(0.8, l - pageArrive(i) + 0.6), t) }) {
+            let h = min(Double(H), Double(W) * Double(r.height) / Double(r.width)), w = h * Double(r.width) / Double(r.height)
+            if let img = full.cropping(to: CGRect(x: (Double(W) - w) / 2, y: (Double(H) - h) / 2, width: w, height: h)) {
+                ctx.saveGState(); ctx.addPath(shape); ctx.clip()
+                ctx.interpolationQuality = cam.s * zoom > 0.9 ? .none : .high; ctx.draw(img, in: r)
+                ctx.restoreGState()
+            }
+        }
+        ctx.addPath(shape); ctx.setStrokeColor(inkColor); ctx.setLineWidth(16); ctx.strokePath()
+        let label = NSAttributedString(string: panel.u.title.uppercased(), attributes: [.font: NSFont.systemFont(ofSize: 40, weight: .heavy)]).size().width
+        captionBox(panel.u.title.uppercased(), ctx, center: CGPoint(x: max(panel.corners[0].x, panel.corners[3].x) + 60 + label / 2,
+                                                                     y: min(panel.corners[0].y, panel.corners[1].y) - 50), size: 40)
+        // the sound word pops as the camera gets there
+        let w = l - pageArrive(i) + 0.1
+        if w > 0 && w < pageHold + pageMove {
+            let pop = backOut(w / 0.2), a = 1 - clamp((w - pageHold) / 0.3)
+            ctx.saveGState()
+            ctx.translateBy(x: r.maxX - r.width * 0.24, y: r.minY + r.height * 0.2); ctx.rotate(by: i % 2 == 0 ? 0.12 : -0.12)
+            ctx.scaleBy(x: CGFloat(pop), y: CGFloat(pop))
+            inkLettered(piece.word, .zero, size: CGFloat(min(170, r.height * 0.22)), color: yellow, alpha: a, kern: 6)
+            ctx.restoreGState()
+        }
+    }
+    ctx.restoreGState()
+}
+
+/// The part of polygon `poly` on the side of the line through `a` (direction `u`) where `keepLeft` says.
+func clipPolygon(_ poly: [CGPoint], _ a: CGPoint, _ u: CGVector, keepLeft: Bool) -> [CGPoint] {
+    let side = { (p: CGPoint) -> Double in let s = Double(u.dx * (p.y - a.y) - u.dy * (p.x - a.x)); return keepLeft ? s : -s }
+    var out: [CGPoint] = []
+    for i in poly.indices {
+        let p = poly[i], q = poly[(i + 1) % poly.count], sp = side(p), sq = side(q)
+        if sp >= 0 { out.append(p) }
+        if (sp >= 0) != (sq >= 0) {
+            let f = sp / (sp - sq)
+            out.append(CGPoint(x: p.x + (q.x - p.x) * f, y: p.y + (q.y - p.y) * f))
+        }
+    }
+    return out
+}
+
+/// `p` mirrored across the line through `a` with unit direction `u`.
+func mirrored(_ p: CGPoint, _ a: CGPoint, _ u: CGVector) -> CGPoint {
+    let dx = p.x - a.x, dy = p.y - a.y, d = dx * u.dx + dy * u.dy
+    return CGPoint(x: a.x + 2 * d * u.dx - dx, y: a.y + 2 * d * u.dy - dy)
+}
+
+/// A page turning over, right to left, `k` 0…1, curling back from its right edge: the fold sweeps across at a slant,
+/// the new page shows behind it with the curl's shadow on it, and the curled-over flap is the paper back of the old one.
+func turnPage(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double) {
+    let e = k * k * (3 - 2 * k), lean = 0.28
+    let len = sqrt(1 + lean * lean), u = CGVector(dx: lean / len, dy: 1 / len)          // the fold, leaning right at the top
+    let a = CGPoint(x: lerp(Double(W) + 60, -Double(H) * lean - 120, e), y: 0)
+    let sheet = [CGPoint(x: 0, y: 0), CGPoint(x: W, y: 0), CGPoint(x: W, y: H), CGPoint(x: 0, y: H)]
+    func path(_ pts: [CGPoint]) -> CGPath { let p = CGMutablePath(); if !pts.isEmpty { p.addLines(between: pts); p.closeSubpath() }; return p }
+    ctx.draw(new, in: fullRect)
+    // the old page, what's left of it on this side of the fold
+    let stays = clipPolygon(sheet, a, u, keepLeft: true)
+    if stays.count > 2 { ctx.saveGState(); ctx.addPath(path(stays)); ctx.clip(); ctx.draw(old, in: fullRect); ctx.restoreGState() }
+    // the curl's shadow on the new page, just past the fold
+    let n = CGVector(dx: u.dy, dy: -u.dx)                                                     // pointing right, away from the old page
+    let shadow = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [CGColor(gray: 0, alpha: 0.5), CGColor(gray: 0, alpha: 0)] as CFArray, locations: [0, 1])!
+    let turned = clipPolygon(sheet, a, u, keepLeft: false)
+    if turned.count > 2 {   // (clipping to nothing would clip nothing away)
+        ctx.saveGState(); ctx.addPath(path(turned)); ctx.clip()
+        ctx.drawLinearGradient(shadow, start: a, end: CGPoint(x: a.x + n.dx * 140, y: a.y + n.dy * 140), options: [.drawsBeforeStartLocation])
+        ctx.restoreGState()
+    }
+    // the flap: the turned part, mirrored over the fold, its paper back lit at the fold and shaded at its edge
+    let flap = turned.map { mirrored($0, a, u) }
+    guard flap.count > 2 else { return }
+    ctx.saveGState()
+    ctx.setShadow(offset: CGSize(width: -10, height: -6), blur: 30, color: CGColor(gray: 0, alpha: 0.5))
+    ctx.addPath(path(flap)); ctx.setFillColor(CGColor(gray: 0.86, alpha: 1)); ctx.fillPath()
+    ctx.restoreGState()
+    ctx.saveGState(); ctx.addPath(path(flap)); ctx.clip()
+    let paper = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: [CGColor(gray: 1, alpha: 0.9), CGColor(gray: 0.7, alpha: 0.9)] as CFArray, locations: [0, 1])!
+    ctx.drawLinearGradient(paper, start: a, end: CGPoint(x: a.x - n.dx * 700, y: a.y - n.dy * 700), options: [.drawsAfterEndLocation])
+    ctx.restoreGState()
+    ctx.addPath(path(flap)); ctx.setStrokeColor(CGColor(gray: 0.55, alpha: 1)); ctx.setLineWidth(3); ctx.strokePath()
+}
+
+func chooseUniverse(_ ctx: CGContext, local l: Double, t: Double) {
+    // the runners, along the bottom of the desktop, under the title
+    if l < pageDrop + 0.5 {
+        desktop(ctx, dim: 1)
+        for (i, who) in chooseRunners.enumerated() {
+            let x = -40 + (l - Double(i) * 0.15) * 170
+            guard x > -40, x < 360 else { continue }
+            draw(Actor(cast: who, x: x, mode: .idle, walking: true), ctx, t: t * 1.6 + Double(i) * 0.2)
+        }
+        let f = backOut((l - 0.15) / 0.4)
+        if f > 0 {
+            ctx.saveGState(); ctx.translateBy(x: 960, y: 640); ctx.scaleBy(x: CGFloat(f), y: CGFloat(f)); ctx.rotate(by: 0.035)
+            inkLettered("CHOOSE YOUR", CGPoint(x: 0, y: 110), size: 120, color: yellow, kern: 8)
+            inkLettered("UNIVERSE", CGPoint(x: 0, y: -40), size: 190, color: yellow, kern: 10)
+            ctx.restoreGState()
+        }
+    }
+    guard l > pageDrop else { return }
+    if l > pageDrop + 0.5 { halftone(ctx, fullRect, base: CGColor(red: 0.06, green: 0.06, blue: 0.09, alpha: 1), dot: CGColor(red: 0.13, green: 0.13, blue: 0.18, alpha: 1), step: 22) }
+    let since = l - pageDrop, shake = since > 0.3 && since < 0.55 ? (0.55 - since) * 50 : 0
+    ctx.saveGState(); ctx.translateBy(x: sin(t * 80) * shake, y: cos(t * 70) * shake)
+    // where the camera is: on a stop, moving between two, or turning the page
+    let next = pageKeys.firstIndex { $0.to > l } ?? pageKeys.count - 1, key = pageKeys[next]
+    if l < pageKeys[0].from {                                  // the first page slamming down
+        let drop = backOut(since / 0.4)
+        ctx.setAlpha(CGFloat(clamp(since / 0.12)))
+        drawPage(ctx, 0, cam: camera(.whole(0)), zoom: 1.5 - 0.5 * drop, tilt: (1 - drop) * 0.08, l: l, t: t)
+    } else if l >= key.from {
+        drawPage(ctx, page(of: key.view), cam: camera(key.view), l: l, t: t)
+    } else {
+        let prev = pageKeys[next - 1], f = (l - prev.to) / (key.from - prev.to)
+        if key.turn,
+           let old = shotImage({ drawPage($0, page(of: prev.view), cam: camera(prev.view), l: l, t: t) }),
+           let new = shotImage({ drawPage($0, page(of: key.view), cam: camera(key.view), l: l, t: t) }) {
+            turnPage(ctx, old: old, new: new, k: f)
+        } else {
+            drawPage(ctx, page(of: key.view), cam: blend(camera(prev.view), camera(key.view), f), l: l, t: t)
+        }
+    }
+    ctx.restoreGState()
+    // and the line, once it's back on the last page as a whole
+    let f = backOut((l - pageBack - 0.2) / 0.35)
+    if f > 0 {
+        ctx.saveGState(); ctx.translateBy(x: 960, y: 60); ctx.scaleBy(x: CGFloat(f), y: CGFloat(f)); ctx.translateBy(x: -960, y: -60)
+        captionBox("ONE APP. \(universeCount()) UNIVERSES. PICK YOURS.", ctx, center: CGPoint(x: 960, y: 60), size: 46)
+        ctx.restoreGState()
+    }
+}
+
+/// Where the comic page ends: everything after it moves with the number of universes.
+var afterChoose: Double { 16.5 + chooseLength }
+
 let promoShots: [Shot] = [
-    Shot(name: "meanwhile", start: 0, end: 3.5, into: .cut) { ctx, local, t in
+    Shot(name: "meanwhile", start: 0, end: 3.0, into: .cut) { ctx, local, t in
         ctx.setFillColor(CGColor(gray: 0, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
         let line = "MEANWHILE, IN A TERMINAL NEAR YOU..."
         let n = Int(clamp((local - 0.3) / 1.6) * Double(line.count))
-        let a = 1 - clamp((local - 3.0) / 0.4)
+        let a = 1 - clamp((local - 2.6) / 0.35)
         if n > 0 { captionBox(String(line.prefix(n)), ctx, center: CGPoint(x: Double(W) / 2, y: Double(H) / 2), size: 54, alpha: a) }
     },
-    Shot(name: "worlds", start: 3.5, end: 9.5, into: .cut) { ctx, local, t in
-        let slam = clamp((local - 1.6) / 0.3), shake = local > 1.9 && local < 2.2 ? (2.2 - local) * 60 : 0
-        ctx.saveGState(); ctx.translateBy(x: sin(t * 80) * shake, y: cos(t * 70) * shake)
-        coverPanels(ctx, t: t, dim: 0.15 * slam)
-        if local > 1.6 {
-            let s = CGFloat(1 + 1.6 * pow(1 - backOut(slam), 1))
-            // high in the sky, clear of the fighters on the ground
-            coverWord(ctx, "CLAWD", at: CGPoint(x: 960, y: 900), width: 1560, height: 270, angle: 0.05, depth: 14, scale: s)
-            coverWord(ctx, "CLASH", at: CGPoint(x: 960, y: 640), width: 1680, height: 290, angle: 0.05, depth: 16, scale: s)
-            coverGutters(ctx)
-        }
-        ctx.restoreGState()
-    },
-    Shot(name: "hook", start: 9.5, end: 13.5) { ctx, local, t in
+    // Down the time vortex: a character from every universe tumbles past, and CLAWD CLASH lands with a bang.
+    Shot(name: "worlds", start: 3.0, end: 12.5, into: .cut) { ctx, local, t in clashIntro(ctx, local: local, t: t) },
+    Shot(name: "hook", start: 12.5, end: 16.5) { ctx, local, t in
         let zoom = 1 + 0.03 * local
         ctx.saveGState()
         ctx.translateBy(x: Double(W) / 2, y: Double(H) / 2); ctx.scaleBy(x: zoom, y: zoom)
@@ -1478,41 +1839,55 @@ let promoShots: [Shot] = [
         caption("Three AIs. Nine agents. One very confused human.", ctx, local: local, start: 0.05, y: 860, size: 60)
         caption("Sound familiar?", ctx, local: local, start: 0.7, y: 120, size: 76, color: yellow)
     },
-    Shot(name: "pick", start: 13.5, end: 20.5) { ctx, local, t in pickYourUniverse(ctx, local: local, t: t) },
-    // A showcase for each universe: its big moment, from the single-universe promos, shorter.
-    Shot(name: "showStarClaws", start: 20.5, end: 27.5, into: .starWars(clock: false)) { ctx, local, t in
-        starClawsShowcase(ctx, local: 1.4 + local, t: t)
-        showcaseTitle(ctx, .starWars, "Laser swords, blasters and one very, very big ship.", local: local)
+    // Choose your universe: everyone runs past, a comic page slams down, and the camera reads it panel by panel.
+    Shot(name: "choose", start: 16.5, end: afterChoose) { ctx, local, t in chooseUniverse(ctx, local: local, t: t) },
+    // The features, one each in the newest universes, as their own trailers show them.
+    Shot(name: "status", start: afterChoose, end: afterChoose + 4.5, into: .trip(.files(FilesTrip(kind: .classifiedFile)))) { ctx, local, t in
+        filesShots.first { $0.name == "status" }!.render(ctx, local, t)
     },
-    Shot(name: "showMarvelous Clawds", start: 27.5, end: 34.5, into: .marvel(ComicTrip(kind: .burst, sound: .kapow))) { ctx, local, t in
-        clawvelShowcase(ctx, local: 2.2 + local, t: t)
-        showcaseTitle(ctx, .marvel, "Shields, hammers, webs and a giant space whale.", local: local)
+    Shot(name: "agents", start: afterChoose + 4.5, end: afterChoose + 9.0, into: .trip(.clawdberg(ClawdbergTrip(kind: .mapRoute)))) { ctx, local, t in
+        clawdbergShots.first { $0.name == "agents" }!.render(ctx, local, t)
     },
-    Shot(name: "showDetective", start: 34.5, end: 41.5, into: .dc(DCComicTrip(kind: .batSignal, caption: "MEANWHILE, IN MEGALOPOLIS…"))) { ctx, local, t in
-        detectiveShowcase(ctx, local: 0.4 + local, t: t)
-        showcaseTitle(ctx, .dc, "Capes, power rings and a horned kaiju to deal with.", local: local)
-    },
-    // The features, one universe each.
-    Shot(name: "status", start: 41.5, end: 46.0, into: .marvel(ComicTrip(kind: .halftone))) { ctx, local, t in statusLineup(ctx, local: local, t: t) },
-    Shot(name: "agents", start: 46.0, end: 50.5, into: .dc(DCComicTrip(kind: .grapple))) { ctx, local, t in agentsArrive(ctx, local: local, t: t) },
-    Shot(name: "window", start: 50.5, end: 56.0, into: .starWars(clock: true)) { ctx, local, t in
-        windowShot(ctx, .starWars, local: local, t: t, rise: true, needsAt: 2.6)
-        badge(Universe.starWars.title.uppercased(), ctx, alpha: 1)
-        caption("Prefer a window? Grab the popcorn.", ctx, local: local, start: 0.1, y: 955, size: 56)
-        caption("A live card per session: what it's doing, your last prompt, every agent.", ctx, local: local, start: 0.4, y: 890, size: 32, color: yellow, weight: .bold)
+    Shot(name: "window", start: afterChoose + 9.0, end: afterChoose + 14.5, into: .middleEarth(RingsTrip(kind: .map))) { ctx, local, t in
+        ringsShots.first { $0.name == "window" }!.render(ctx, local, t)
     },
     // Random: the whole window changes universe on its own, each time with that universe's transition.
-    Shot(name: "random1", start: 56.0, end: 58.3) { ctx, local, t in windowShot(ctx, .marvel, local: local + 3, t: t, rise: false) },
-    Shot(name: "random2", start: 58.3, end: 61.0, into: .dc(DCComicTrip(kind: .jokerCard)), inWindow: true) { ctx, local, t in
-        windowShot(ctx, .dc, local: local + 3, t: t, rise: false)
+    Shot(name: "random1", start: afterChoose + 14.5, end: afterChoose + 16.6) { ctx, local, t in windowShot(ctx, .middleEarth, local: local + 3, t: t, rise: false, at: .prancingPony) },
+    Shot(name: "random2", start: afterChoose + 16.6, end: afterChoose + 18.9, into: .trip(.doctor(DoctorTrip(kind: .vortex))), inWindow: true) { ctx, local, t in
+        windowShot(ctx, .doctor, local: local + 3, t: t, rise: false, at: .consoleRoom)
     },
-    Shot(name: "random3", start: 61.0, end: 63.1, into: .starWars(clock: false), inWindow: true) { ctx, local, t in
+    Shot(name: "random3", start: afterChoose + 18.9, end: afterChoose + 21.0, into: .starWars(clock: false), inWindow: true) { ctx, local, t in
         windowShot(ctx, .starWars, local: local + 3, t: t, rise: false)
     },
-    Shot(name: "random4", start: 63.1, end: 65.5, into: .marvel(ComicTrip(kind: .speedLines)), inWindow: true) { ctx, local, t in
-        windowShot(ctx, .marvel, local: local + 3, t: t, rise: false)
+    // Clawd Royale: the emblems collide, then everyone at once, each as themselves.
+    Shot(name: "royale", start: afterChoose + 21.0, end: afterChoose + 24.0, into: .cut) { ctx, local, t in royaleCollide(ctx, local: local, t: t) },
+    Shot(name: "crossover", start: afterChoose + 24.0, end: afterChoose + 28.5, into: .marvel(ComicTrip(kind: .burst, sound: .thwip))) { ctx, local, t in
+        let (fox, dalick) = versus(.hero(FilesHero.foxClawder), 30, .villain(DoctorVillain.dalick), 96)
+        let (bat, vapor) = versus(.hero(DCHero.batman), 150, .villain(SWVillain.vader), 207)
+        let (gandclawd, thanoz) = versus(.hero(RingsHero.gandalf), 250, .villain(MarvelVillain.thanos), 306)
+        let swing = webSwing(local, start: 0.7)
+        royaleScene(ctx, .cantina, t: t, fights: [(fox, dalick), (bat, vapor), (gandclawd, thanoz)], also: swing.map { [$0.actor] } ?? [])
+        let bf = (local - 1.2) / 2.4                                // E.Clawd's bike, flying the other way over everyone
+        if bf > 0 && bf < 1 {
+            let c = PixelCanvas(Ride.width, Ride.moonBike.canvasHeight)
+            drawRide(c, .moonBike, ramp: 0, engines: true, gear: false); c.flipHorizontally(); c.addOutline(C(0xFFFFFF, 0.92))
+            if let img = c.makeImage() {
+                ctx.saveGState(); ctx.interpolationQuality = .none
+                ctx.draw(img, in: CGRect(x: lerp(Double(W) + 60, -Double(Ride.width) * 6 - 60, bf), y: 560 + sin(bf * .pi) * 60,
+                                         width: Double(Ride.width) * 6, height: Double(c.h) * 6))
+                ctx.restoreGState()
+            }
+        }
+        if let s = swing {                                          // his web line, from the raised hand up out of the frame
+            let web = PixelCanvas(fxW, fxH), hand = s.actor.fighter.point(41, 22)
+            web.glowLine(hand.x, hand.y, s.anchor.x, s.anchor.y, core: C(0xF4F4F8, 0.9), glow: C(0xFFFFFF, 0), coreR: 0.35, glowR: 0.4)
+            blit(web, ctx)
+        }
+        badge("CLAWD ROYALE", ctx, alpha: clamp(local / 0.3))
+        caption("Nobody asked who'd win. We're answering anyway.", ctx, local: local, start: 0.8, y: 905, size: 58)
+        caption("Settings → Universe → Clawd Royale. A new place every ten minutes.", ctx, local: local, start: 1.6, y: 840, size: 38, color: yellow, weight: .bold)
     },
-    Shot(name: "endcard", start: 65.5, end: 70.5) { ctx, local, t in
+    Shot(name: "endcard", start: afterChoose + 28.5, end: afterChoose + 33.5) { ctx, local, t in
         coverPanels(ctx, t: t, fighters: false, dim: 0.45)
         let f = backOut((local - 0.2) / 0.5)
         if let icon = appIcon, local > 0.2 {
@@ -1521,14 +1896,19 @@ let promoShots: [Shot] = [
             ctx.draw(icon, in: CGRect(x: 960 - s / 2, y: 660 - s / 2, width: s, height: s))
             ctx.restoreGState()
         }
+        let shown = Universe.offered
+        for (i, u) in shown.enumerated() {
+            let e = backOut((local - 0.5 - Double(i) * 0.08) / 0.35)
+            if e > 0 { emblem(u, ctx, center: CGPoint(x: 960 + (Double(i) - Double(shown.count - 1) / 2) * 170, y: 335), px: 4 * e) }
+        }
         caption("Have fun. Keep track.", ctx, local: local, start: 0.8, y: 190, size: 64)
-        caption("Free for macOS · github.com/rodclemen/clawd-clash", ctx, local: local, start: 1.1, y: 120, size: 36,
+        caption("Pick a universe, or let them collide · free for macOS · github.com/rodclemen/clawd-clash", ctx, local: local, start: 1.1, y: 120, size: 34,
                 color: NSColor(white: 0.88, alpha: 1), weight: .bold)
     },
 ]
 
 let promoOverlays: [Overlay] = [
-    Overlay(start: 56.0, end: 65.5) { ctx, l in
+    Overlay(start: afterChoose + 14.5, end: afterChoose + 21.0) { ctx, l in
         badge("RANDOM · EVERY 5 MIN", ctx, alpha: 1)
         caption("Can't decide? Random switches the whole window", ctx, local: l, start: 0.2, y: 950, size: 50)
         caption("to a new universe every few minutes.", ctx, local: l, start: 0.4, y: 885, size: 40, color: yellow, weight: .bold)
@@ -1557,6 +1937,29 @@ func hammer(_ ctx: CGContext, x: Double, y: Double, k: Double, tilt: Double) {
     ctx.restoreGState()
 }
 
+/// The TARDIS standing at `x` (fx units) with its foot on `ground`, `door` 0…1 open, its lamp lit or not.
+func standingTardis(_ ctx: CGContext, x: Double, ground: Double, alpha: Double, door: Double, lamp: Bool) {
+    guard alpha > 0.01 else { return }
+    let c = PixelCanvas(Ride.width, Ride.tardis.canvasHeight)
+    drawRide(c, .tardis, ramp: door, engines: lamp, gear: true)
+    c.addOutline(C(0xFFFFFF, 0.92))
+    guard let img = c.makeImage() else { return }
+    ctx.saveGState(); ctx.interpolationQuality = .none; ctx.setAlpha(CGFloat(alpha))
+    ctx.draw(img, in: CGRect(x: (x - Double(Ride.width) / 2) * S, y: stageH - ground * S - S, width: Double(Ride.width) * S, height: Double(c.h) * S))
+    ctx.restoreGState()
+}
+
+/// How solid the TARDIS is `k` (0…1) of the way through wheezing into being: in and out, getting stronger.
+func wheezePulse(_ k: Double) -> Double { min(1, max(0, k * (0.75 + 0.25 * sin(k * 7 * .pi)))) }
+
+/// An actor drawn upside down, flipped about the middle of its sprite.
+func drawUpsideDown(_ a: Actor, _ ctx: CGContext, t: Double) {
+    let mid = stageH - (a.top + 22 * a.k) * S
+    ctx.saveGState(); ctx.translateBy(x: 0, y: 2 * mid); ctx.scaleBy(x: 1, y: -1)
+    draw(a, ctx, t: t)
+    ctx.restoreGState()
+}
+
 let blooperShots: [Shot] = [
     // The clapperboard slams in: BLOOPERS.
     Shot(name: "clapper", start: 0, end: 3.0, into: .cut) { ctx, local, t in
@@ -1567,28 +1970,29 @@ let blooperShots: [Shot] = [
         let open = local < 1.0 ? 1.0 : max(0, 1 - (local - 1.0) / 0.12)
         clapper(ctx, center: CGPoint(x: 960, y: 540 + 700 * (1 - drop)), width: 1100, open: open, take: "1", title: "BLOOPERS")
     },
-    // Take 3: the Bulk wanders into the cantina; the band stops.
-    Shot(name: "take3", start: 3.0, end: 8.2, into: .cut) { ctx, l, t in
-        set(ctx, .cantina, t: t, frozen: l > 1.3 ? 1.3 + 3.0 : nil)
-        let f = easeOut(l / 1.2)
-        let bulk = Actor(cast: .hero(MarvelHero.hulk), x: lerp(-40, 130, f), mode: .idle, walking: f < 0.99)
-        draw(bulk, ctx, t: t)
-        if l > 1.6 { balloon("…wrong set?", ctx, center: CGPoint(x: 1000, y: 760), tail: headPoint(bulk), size: 48, alpha: clamp((l - 1.6) / 0.15)) }
-        cutAndSlate(ctx, local: l, at: 3.9, take: "3")
-    },
-    // Take 7: Darth Vapor's big reveal, to the wrong kid.
-    Shot(name: "take7", start: 8.2, end: 15.2, into: .cut) { ctx, l, t in
-        set(ctx, .deathStar, t: t)
-        let turn = l > 0.6
-        let vapor = Actor(cast: .villain(SWVillain.vader), x: 90, facing: turn ? 1 : -1, mode: .idle)
-        let spidey = Actor(cast: .hero(MarvelHero.spiderMan), x: 220, facing: -1, mode: .idle)
-        draw(vapor, ctx, t: t); draw(spidey, ctx, t: t)
-        if l > 0.9 && l < 4.1 { balloon("Spider-Clawd… I am your… landlord.", ctx, center: CGPoint(x: 820, y: 860), tail: headPoint(vapor), size: 44, width: 900) }
-        if l > 3.6 { balloon("Pretty sure it's an aunt thing.", ctx, center: CGPoint(x: 1260, y: 640), tail: headPoint(spidey), size: 42, width: 700) }
-        cutAndSlate(ctx, local: l, at: 5.8, take: "7")
+    // Take 7: the TARDIS lands in the Mos Easy Cantina, in the wrong universe, and then won't take off again.
+    Shot(name: "take7", start: 3.0, end: 12.4, into: .cut) { ctx, l, t in
+        set(ctx, .cantina, t: t)
+        let lamp = Int(l * 5) % 2 == 0
+        var alpha = wheezePulse(clamp(l / 1.6)), lit = l < 1.6 && lamp
+        if l > 5.4 && l < 6.8 { alpha = 0.55 + 0.45 * abs(cos((l - 5.4) / 1.4 * 3 * .pi)); lit = lamp }     // tries to go, and can't
+        let door = min(1, clamp((l - 1.9) / 0.25) * (1 - clamp((l - 5.0) / 0.25)) + clamp((l - 7.0) / 0.25))
+        standingTardis(ctx, x: 66, ground: groundY, alpha: alpha, door: door, lamp: lit)
+        let vapor = Actor(cast: .villain(SWVillain.vader), x: 240, facing: l > 1.2 ? -1 : 1, mode: .idle)
+        draw(vapor, ctx, t: t)
+        // the Doctor: out, back in, and out again
+        let x = l < 4.6 ? lerp(70, 112, easeOut((l - 2.1) / 0.6)) : l < 7.2 ? lerp(112, 70, easeIn((l - 4.6) / 0.5)) : lerp(70, 104, easeOut((l - 7.2) / 0.5))
+        let walking = (l > 2.1 && l < 2.7) || (l > 4.6 && l < 5.1) || (l > 7.2 && l < 7.7)
+        var doc = Actor(cast: .hero(DoctorHero.doctorTen), x: x, facing: l > 4.6 && l < 7.2 ? -1 : 1, mode: .idle, walking: walking)
+        doc.alpha = (l > 2.05 && l < 5.15) || l > 7.15 ? 1 : 0
+        draw(doc, ctx, t: t)
+        if l > 2.9 && l < 4.5 { balloon("Ah. Wrong universe.", ctx, center: CGPoint(x: 700, y: 820), tail: headPoint(doc), size: 46) }
+        if l > 3.6 && l < 5.3 { balloon("…Is that a phone box?", ctx, center: CGPoint(x: 1300, y: 760), tail: headPoint(vapor), size: 44) }
+        if l > 7.7 { balloon("…Handbrake.", ctx, center: CGPoint(x: 700, y: 800), tail: headPoint(doc), size: 46) }
+        cutAndSlate(ctx, local: l, at: 8.2, take: "7")
     },
     // Take 12: the Night Beacon over the Doom Moon; the Stormtroupers open fire and miss every shot.
-    Shot(name: "take12", start: 15.2, end: 20.4, into: .cut) { ctx, l, t in
+    Shot(name: "take12", start: 12.4, end: 17.6, into: .cut) { ctx, l, t in
         set(ctx, .deathStar, t: t)
         let on = clamp(l / 0.25)
         let sig = CGPoint(x: 1300, y: 860)
@@ -1614,7 +2018,7 @@ let blooperShots: [Shot] = [
         cutAndSlate(ctx, local: l, at: 4.0, take: "12")
     },
     // Take 15: the Jester Card flips over and Thanoz is on the back.
-    Shot(name: "take15", start: 20.4, end: 24.6, into: .cut) { ctx, l, t in
+    Shot(name: "take15", start: 17.6, end: 21.8, into: .cut) { ctx, l, t in
         let jester = Actor(cast: .villain(DCVillain.joker), x: 150, mode: .idle)
         func front() -> CGImage? { shotImage { c in set(c, .gotham, t: t); draw(jester, c, t: t) } }
         func back() -> CGImage? {
@@ -1634,7 +2038,7 @@ let blooperShots: [Shot] = [
         cutAndSlate(ctx, local: l, at: 3.4, take: "15")
     },
     // Take 21: Yodle lifts Thorr's hammer. Thorr stares.
-    Shot(name: "take21", start: 24.6, end: 30.8, into: .cut) { ctx, l, t in
+    Shot(name: "take21", start: 21.8, end: 28.0, into: .cut) { ctx, l, t in
         set(ctx, .asgard, t: t)
         let yodle = Actor(cast: .hero(SWHero.yoda), x: 90, mode: .idle)
         let thorr = Actor(cast: .hero(MarvelHero.thor), x: 220, facing: -1, mode: .idle)
@@ -1653,7 +2057,7 @@ let blooperShots: [Shot] = [
         cutAndSlate(ctx, local: l, at: 5.4, take: "21")
     },
     // Take 22: Superb-Man tries to keep up with the jump to hyperspace.
-    Shot(name: "take22", start: 30.8, end: 35.8, into: .cut) { ctx, l, t in
+    Shot(name: "take22", start: 28.0, end: 33.0, into: .cut) { ctx, l, t in
         ctx.setFillColor(CGColor(red: 0.01, green: 0.02, blue: 0.06, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
         let jump = clamp((l - 0.8) / 0.6), centre = CGPoint(x: 1300, y: 600)
         for i in 0..<160 {                                           // stars, stretching into streaks
@@ -1682,31 +2086,57 @@ let blooperShots: [Shot] = [
         cutAndSlate(ctx, local: l, at: 4.0, take: "22")
     },
     // The final take: everyone in one frame, Deadpond in front, and a wrap.
-    Shot(name: "wrap", start: 35.8, end: 43.5, into: .cut) { ctx, l, t in
+    Shot(name: "wrap", start: 33.0, end: 41.9, into: .cut) { ctx, l, t in
         set(ctx, .avengersTower, t: t)
-        let wave = l > 4.4
+        let wave = l > 5.6
         let back: [(Cast, Double)] = [(.villain(SWVillain.vader), 22), (.hero(SWHero.luke), 58), (.villain(MarvelVillain.thanos), 100),
-                                      (.hero(MarvelHero.thor), 146), (.hero(DCHero.superman), 190), (.villain(DCVillain.joker), 232),
-                                      (.hero(SWHero.han), 270), (.hero(MarvelHero.hulk), 306)]
+                                      (.hero(MarvelHero.thor), 146), (.villain(DoctorVillain.dalick), 190), (.villain(DCVillain.joker), 232),
+                                      (.hero(SWHero.han), 270), (.hero(DoctorHero.rose), 306)]
         for (i, (who, x)) in back.enumerated() {
             var a = Actor(cast: who, x: x, facing: i % 2 == 0 ? 1 : -1, mode: .idle, role: wave ? .cheer : .none)
             a.grow = 0.85; a.lift = 18
             draw(a, ctx, t: t + Double(i) * 0.3)
         }
-        let front: [(Cast, Double)] = [(.hero(SWHero.yoda), 40), (.hero(MarvelHero.spiderMan), 92), (.hero(DCHero.batman), 236), (.villain(MarvelVillain.loki), 284)]
+        // the dancers moonwalk until the wrap is called
+        let moon = { (who: Cast, offset: Double) in
+            if !wave && who.persona.fidgets { forcedHabit = HabitPlay(kind: .moonwalk, e: (l + offset).truncatingRemainder(dividingBy: IdleHabit.moonwalk.length)) }
+        }
+        let front: [(Cast, Double)] = [(.hero(MarvelHero.starLord), 36), (.hero(DoctorHero.doctorTen), 88), (.hero(DCHero.batman), 236), (.hero(MarvelHero.howardTheDuck), 288)]
         for (i, (who, x)) in front.enumerated() {
             var a = Actor(cast: who, x: x, facing: x < 160 ? 1 : -1, mode: .idle, role: wave ? .cheer : .none)
             a.grow = 1.05
+            if Cast.moonwalkers.contains(who) { moon(who, Double(i) * 0.9) }
             draw(a, ctx, t: t + Double(i) * 0.5)
+            forcedHabit = nil
         }
         var dp = Actor(cast: .hero(MarvelHero.deadpool), x: 162, mode: .idle, role: wave ? .cheer : .none)
         dp.grow = 1.7; dp.lift = -18
+        moon(dp.cast, 1.8)
         draw(dp, ctx, t: t)
-        if l > 0.6 && l < 4.4 {
+        forcedHabit = nil
+        // Spider-Clawd swings across, upside down, as Superb-Man flies the other way
+        let u = (l - 0.3) / 0.6
+        if u > 0 && u < 4 {
+            let reach = 58.0, i = floor(u), th = -swingAngle * cos(.pi * (u - i)), step = 2 * reach * sin(swingAngle)
+            let anchor = (x: -20 + step * i, y: -10.0), feet = (x: anchor.x + reach * sin(th), y: anchor.y + reach * cos(th))
+            var spidey = Actor(cast: .hero(MarvelHero.spiderMan), x: feet.x, mode: .idle)
+            spidey.lift = groundY - 44 - feet.y
+            drawUpsideDown(spidey, ctx, t: t)
+            let web = PixelCanvas(fxW, fxH)
+            web.glowLine(feet.x, feet.y + 2, anchor.x, anchor.y, core: C(0xF4F4F8, 0.9), glow: C(0xFFFFFF, 0), coreR: 0.35, glowR: 0.4)
+            blit(web, ctx)
+        }
+        let fl = (l - 0.7) / 2.0
+        if fl > 0 && fl < 1 {
+            var sup = Actor(cast: .hero(DCHero.superman), x: lerp(370, -50, fl), facing: -1, mode: .idle)
+            sup.airborne = true; sup.lift = 64 + sin(fl * .pi) * 8
+            draw(sup, ctx, t: t)
+        }
+        if l > 2.7 && l < 5.6 {
             balloon("Separate universes, they said. Totally under control.", ctx, center: CGPoint(x: 960, y: 880), tail: headPoint(dp), size: 44, width: 1100)
         }
-        cutAndSlate(ctx, local: l, at: 4.4, take: "99", wrap: true)
-        let fade = clamp((l - 6.9) / 0.6)
+        cutAndSlate(ctx, local: l, at: 5.6, take: "99", wrap: true)
+        let fade = clamp((l - 8.1) / 0.6)
         if fade > 0 { ctx.setFillColor(CGColor(gray: 0, alpha: fade)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H)) }
     },
 ]
@@ -3975,11 +4405,21 @@ func royaleCollide(_ ctx: CGContext, local l: Double, t: Double) {
         starburst(ctx, center: mid, inner: 300 * f, outer: 540 * f, spikes: 18, color: hexCG(0xFFE04A), spin: l * 0.12)
         starburst(ctx, center: mid, inner: 230 * f, outer: 400 * f, spikes: 14, color: hexCG(0xE8332A), spin: -l * 0.16)
     }
-    // the emblems: in from the left, the top and the right, spinning, then knocked out to a row over the title
-    let from: [(x: Double, y: Double, turn: Double)] = [(-300, 470, -1.2), (960, 1450, 0.9), (2220, 470, 1.4)]
-    let meet: [(x: Double, y: Double)] = [(800, 480), (960, 650), (1120, 480)]
-    let rest: [(x: Double, y: Double)] = [(560, 930), (960, 975), (1360, 930)]
-    for (i, u) in Universe.allCases.enumerated() {
+    // the emblems: in from all round the frame, spinning, then knocked out to a row over the title
+    let shown = Universe.offered, n = Double(shown.count), gap = min(320, 1500 / max(1, n - 1))
+    let from = shown.indices.map { i -> (x: Double, y: Double, turn: Double) in
+        let a = -Double.pi / 2 + 2 * .pi * Double(i) / n
+        return (960 + cos(a) * 1500, 540 + sin(a) * 950, (i % 2 == 0 ? -1 : 1) * (0.8 + Double(i % 3) * 0.3))
+    }
+    let meet = shown.indices.map { i -> (x: Double, y: Double) in
+        let a = -Double.pi / 2 + 2 * .pi * Double(i) / n
+        return (960 + cos(a) * 190, 560 + sin(a) * 150)
+    }
+    let rest = shown.indices.map { i -> (x: Double, y: Double) in
+        let k = Double(i) - (n - 1) / 2
+        return (960 + k * gap, 975 - abs(k) * 14)
+    }
+    for (i, u) in shown.enumerated() {
         if since < 0 {
             let f = easeIn((l - 0.05) / (royaleSlam - 0.05))
             emblem(u, ctx, center: CGPoint(x: lerp(from[i].x, meet[i].x, f), y: lerp(from[i].y, meet[i].y, f)), px: 11,
@@ -3987,7 +4427,7 @@ func royaleCollide(_ ctx: CGContext, local l: Double, t: Double) {
         } else {
             let f = backOut((since - 0.05) / 0.4)
             emblem(u, ctx, center: CGPoint(x: lerp(meet[i].x, rest[i].x, f), y: lerp(meet[i].y, rest[i].y, f)),
-                   px: lerp(11, 5, clamp(f)), angle: sin(since * 9) * 0.25 * max(0, 1 - since / 0.6))
+                   px: lerp(11, n > 5 ? 4.2 : 5, clamp(f)), angle: sin(since * 9) * 0.25 * max(0, 1 - since / 0.6))
         }
     }
     // the sound word, popping on the slam and gone as the title lands
@@ -4008,7 +4448,7 @@ func royaleCollide(_ ctx: CGContext, local l: Double, t: Double) {
         let f = backOut((l - sub) / 0.3), c = CGPoint(x: mid.x, y: 130)
         ctx.saveGState()
         ctx.translateBy(x: c.x, y: c.y); ctx.scaleBy(x: CGFloat(f), y: CGFloat(f)); ctx.translateBy(x: -c.x, y: -c.y)
-        captionBox("ALL THREE UNIVERSES. ONE SCENE.", ctx, center: c, size: 46)
+        captionBox("UNIVERSES COLLIDE.", ctx, center: c, size: 46)
         ctx.restoreGState()
     }
 }
@@ -4052,165 +4492,24 @@ func royaleScene(_ ctx: CGContext, _ loc: Location, t: Double, fights: [(Actor, 
     captionBox(loc.name.uppercased(), ctx, center: CGPoint(x: Double(W) / 2, y: 70), size: 30)
 }
 
-/// The Settings window's Universe choices, as the app lists them, and where Clawd Royale is among them.
-let universeChoices: [String] = Universe.allCases.map(\.title) + ["Clawd Royale", "Random"]
-let royaleChoice = Universe.allCases.count
-
-/// The Settings window as the teaser shows it (General: the Universe pop-up and two checkboxes), 2 screen pixels a
-/// point; its Universe pop-up; and item `i` of the pop-up's menu, opened as AppKit opens it, the choice over the button.
-let settingsFrame = CGRect(x: 480, y: 500, width: 960, height: 336)
-let universePopup = CGRect(x: 480 + 364, y: 500 + 336 - 188, width: 360, height: 44)
-func universeItem(_ i: Int, picked: Int) -> CGRect {
-    CGRect(x: universePopup.minX - 30, y: universePopup.minY - Double(i - picked) * 44, width: universePopup.width + 44, height: 44)
-}
-
-/// The mock Settings window: `picked` shown on the pop-up; `hover` the item under the pointer while its menu is open
-/// (nil: shut); `pressed` while the button is held.
-func settingsMock(_ ctx: CGContext, picked: Int, menuOpen: Bool, hover: Int?, pressed: Bool) {
-    let r = settingsFrame, z = 2.0
-    func say(_ s: String, _ x: Double, _ y: Double, _ size: Double, _ weight: NSFont.Weight = .regular, _ col: NSColor = .white) {
-        NSAttributedString(string: s, attributes: [.font: NSFont.systemFont(ofSize: size * z, weight: weight), .foregroundColor: col])
-            .draw(at: NSPoint(x: x, y: y))
-    }
-    // the window: shadow, body, title bar
-    let body = CGPath(roundedRect: r, cornerWidth: 10 * z, cornerHeight: 10 * z, transform: nil)
-    ctx.saveGState()
-    ctx.setShadow(offset: CGSize(width: 0, height: -16), blur: 50, color: CGColor(gray: 0, alpha: 0.65))
-    ctx.addPath(body); ctx.setFillColor(CGColor(red: 0.165, green: 0.165, blue: 0.18, alpha: 1)); ctx.fillPath()
-    ctx.restoreGState()
-    ctx.addPath(body); ctx.setStrokeColor(CGColor(gray: 1, alpha: 0.14)); ctx.setLineWidth(2); ctx.strokePath()
-    trafficLights(ctx, x: r.minX + 20, y: r.maxY - 40, d: 24)
-    let title = NSAttributedString(string: "Clawd Clash Settings", attributes: [.font: NSFont.systemFont(ofSize: 13 * z, weight: .semibold),
-                                                                                .foregroundColor: NSColor(white: 0.85, alpha: 1)])
-    title.draw(at: NSPoint(x: r.midX - title.size().width / 2, y: r.maxY - 28 - title.size().height / 2))
-    // General: the Universe pop-up and two checkboxes
-    let x0 = r.minX + 24 * z
-    say("General", x0, r.maxY - 56 - 40 - 32, 13, .bold)
-    let p = universePopup
-    say("Universe", x0, p.midY - 16, 13)
-    let button = CGPath(roundedRect: p, cornerWidth: 5 * z, cornerHeight: 5 * z, transform: nil)
-    ctx.addPath(button); ctx.setFillColor(CGColor(gray: pressed ? 0.42 : 0.34, alpha: 1)); ctx.fillPath()
-    say(universeChoices[picked], p.minX + 9 * z, p.midY - 16, 13)
-    let knob = CGRect(x: p.maxX - 19 * z, y: p.minY + 3 * z, width: 16 * z, height: p.height - 6 * z)
-    ctx.addPath(CGPath(roundedRect: knob, cornerWidth: 4 * z, cornerHeight: 4 * z, transform: nil))
-    ctx.setFillColor(hexCG(0x0A84FF)); ctx.fillPath()
-    for dir in [1.0, -1.0] {                                        // the up and down chevrons
-        let cy = knob.midY + dir * 4.5 * z
-        ctx.move(to: CGPoint(x: knob.midX - 3.5 * z, y: cy - dir * 2 * z)); ctx.addLine(to: CGPoint(x: knob.midX, y: cy + dir * 1.5 * z))
-        ctx.addLine(to: CGPoint(x: knob.midX + 3.5 * z, y: cy - dir * 2 * z))
-    }
-    ctx.setStrokeColor(CGColor(gray: 1, alpha: 1)); ctx.setLineWidth(1.6 * z); ctx.setLineCap(.round); ctx.setLineJoin(.round); ctx.strokePath()
-    let boxes: [(String, Bool)] = [("Show Dock icon", true), ("Monochrome menu bar icon", false)]
-    for (i, (label, on)) in boxes.enumerated() {
-        let y = p.minY - 16 - 36 - Double(i) * 52
-        let box = CGRect(x: x0, y: y + 4, width: 28, height: 28)
-        ctx.addPath(CGPath(roundedRect: box, cornerWidth: 6, cornerHeight: 6, transform: nil))
-        ctx.setFillColor(on ? hexCG(0x0A84FF) : CGColor(gray: 0.3, alpha: 1)); ctx.fillPath()
-        if on {
-            ctx.move(to: CGPoint(x: box.minX + 7, y: box.midY)); ctx.addLine(to: CGPoint(x: box.minX + 12, y: box.minY + 8))
-            ctx.addLine(to: CGPoint(x: box.maxX - 6, y: box.maxY - 7))
-            ctx.setStrokeColor(CGColor(gray: 1, alpha: 1)); ctx.setLineWidth(3.4); ctx.strokePath()
-        }
-        say(label, box.maxX + 14, y + 1, 13)
-    }
-    guard menuOpen else { return }
-    // the open menu, over the button: every choice, the current one ticked, the one under the pointer lit up
-    let top = universeItem(0, picked: picked), bottom = universeItem(universeChoices.count - 1, picked: picked)
-    let menu = CGRect(x: top.minX, y: bottom.minY - 10, width: top.width, height: top.maxY - bottom.minY + 20)
-    let shape = CGPath(roundedRect: menu, cornerWidth: 6 * z, cornerHeight: 6 * z, transform: nil)
-    ctx.saveGState()
-    ctx.setShadow(offset: CGSize(width: 0, height: -10), blur: 30, color: CGColor(gray: 0, alpha: 0.6))
-    ctx.addPath(shape); ctx.setFillColor(CGColor(red: 0.19, green: 0.19, blue: 0.21, alpha: 0.98)); ctx.fillPath()
-    ctx.restoreGState()
-    ctx.addPath(shape); ctx.setStrokeColor(CGColor(gray: 1, alpha: 0.18)); ctx.setLineWidth(2); ctx.strokePath()
-    for (i, name) in universeChoices.enumerated() {
-        let it = universeItem(i, picked: picked)
-        if i == hover {
-            ctx.addPath(CGPath(roundedRect: it.insetBy(dx: 5 * z, dy: 0), cornerWidth: 4 * z, cornerHeight: 4 * z, transform: nil))
-            ctx.setFillColor(hexCG(0x0A84FF)); ctx.fillPath()
-        }
-        if i == picked { say("✓", it.minX + 11 * z, it.midY - 16, 13, .bold) }
-        say(name, it.minX + 30 * z, it.midY - 16, 13, i == royaleChoice ? .semibold : .regular)
-    }
-}
-
-/// The macOS arrow pointer, its tip at `p`, `z` screen pixels a point.
-func pointer(_ ctx: CGContext, at p: CGPoint, z: Double = 2) {
-    let pts: [(Double, Double)] = [(0, 0), (0, 17), (4.2, 13.2), (7, 19.5), (9.6, 18.4), (6.9, 12.2), (12.2, 12.2)]
-    let path = CGMutablePath()
-    path.addLines(between: pts.map { (q: (Double, Double)) -> CGPoint in CGPoint(x: p.x + q.0 * z, y: p.y - q.1 * z) })
-    path.closeSubpath()
-    ctx.saveGState()
-    ctx.setShadow(offset: CGSize(width: 0, height: -3), blur: 6, color: CGColor(gray: 0, alpha: 0.5))
-    ctx.addPath(path); ctx.setFillColor(CGColor(gray: 0, alpha: 1)); ctx.fillPath()
-    ctx.restoreGState()
-    ctx.addPath(path); ctx.setStrokeColor(CGColor(gray: 1, alpha: 1)); ctx.setLineWidth(1.3 * z); ctx.setLineJoin(.round); ctx.strokePath()
-}
-
-/// When the pointer opens the Universe pop-up, and when it picks Clawd Royale (shot seconds into the Settings shot).
-let royaleClicks = (open: 1.0, pick: 1.8)
-
-/// Settings → Universe → Clawd Royale: the pointer opens the pop-up and picks it, and the Star Clawds crew on the
-/// desktop below gives way to everyone's.
-func royaleSettings(_ ctx: CGContext, local l: Double, t: Double) {
-    desktop(ctx, dim: 1)
-    let swap = l - royaleClicks.pick - 0.1
-    let cast: [Cast] = swap > 0 ? [.hero(DCHero.batman), .villain(SWVillain.vader), .hero(SWHero.han), .villain(DCVillain.joker)]
-                                : [.villain(SWVillain.vader), .hero(SWHero.luke), .hero(SWHero.han), .villain(SWVillain.trooper)]
-    let (ra, rb) = fightRoles(cast[0].weapon, cast[1].weapon), (rc, rd) = fightRoles(cast[2].weapon, cast[3].weapon)
-    var crew: [Actor] = [Actor(cast: cast[0], x: 58, role: ra, label: "idle-claude"),
-                         Actor(cast: cast[1], x: 115, facing: -1, role: rb, label: "website", ai: .codex),
-                         Actor(cast: cast[2], x: 196, session: false, role: rc, label: "Run the test suite"),
-                         Actor(cast: cast[3], x: 258, facing: -1, session: false, role: rd, label: "Review Overlay.swift", ai: .codex)]
-    if swap > 0 {                                                   // everyone's cast pops in, one after another
-        for i in crew.indices {
-            let f = backOut((swap - Double(i) * 0.07) / 0.3)
-            crew[i].lift = (1 - f) * -8; crew[i].alpha = clamp(f * 1.5)
-        }
-    }
-    for a in crew { draw(a, ctx, t: t) }
-    drawFX([(crew[0], crew[1]), (crew[2], crew[3])], ctx, t: t)
-    if swap > 0 && swap < 0.35 {                                    // a puff where each one lands
-        for a in crew {
-            let g = swap / 0.35, c = CGPoint(x: a.x * S, y: stageH - (groundY - 20 * a.k) * S)
-            ctx.setStrokeColor(CGColor(gray: 1, alpha: 0.8 * (1 - g))); ctx.setLineWidth(10 * (1 - g))
-            ctx.strokeEllipse(in: CGRect(x: c.x - 60 - 140 * g, y: c.y - 60 - 140 * g, width: 120 + 280 * g, height: 120 + 280 * g))
-        }
-    }
-    // the pointer: over to the pop-up, click, down the menu to Clawd Royale, click, and away
-    let open = royaleClicks.open, pick = royaleClicks.pick
-    let from = CGPoint(x: 1560, y: 300), atButton = CGPoint(x: universePopup.midX + 40, y: universePopup.midY - 6)
-    let target = universeItem(royaleChoice, picked: 0), atItem = CGPoint(x: target.midX + 20, y: target.midY - 6)
-    let away = CGPoint(x: atItem.x + 260, y: atItem.y - 120)
-    var tip = from
-    if l < open { let f = easeOut((l - 0.2) / 0.7); tip = CGPoint(x: lerp(from.x, atButton.x, f), y: lerp(from.y, atButton.y, f)) }
-    else if l < pick { let f = easeOut((l - open - 0.12) / 0.5); tip = CGPoint(x: lerp(atButton.x, atItem.x, f), y: lerp(atButton.y, atItem.y, f)) }
-    else { let f = easeOut((l - pick - 0.3) / 0.8); tip = CGPoint(x: lerp(atItem.x, away.x, f), y: lerp(atItem.y, away.y, f)) }
-    let menuOpen = l > open + 0.06 && l < pick + 0.04
-    let hover = universeChoices.indices.first { universeItem($0, picked: 0).contains(CGPoint(x: tip.x, y: tip.y - 4)) }
-    settingsMock(ctx, picked: l > pick ? royaleChoice : 0, menuOpen: menuOpen, hover: hover,
-                 pressed: (l > open && l < open + 0.08) || (l > pick && l < pick + 0.06))
-    pointer(ctx, at: tip)
-    caption("Settings → Universe → Clawd Royale", ctx, local: l, start: 0.25, y: 950, size: 56)
-    caption("The screen saver joins in too.", ctx, local: l, start: pick + 0.35, y: 885, size: 40, color: yellow, weight: .bold)
-}
-
 let royaleShots: [Shot] = [
     Shot(name: "meanwhile", start: 0, end: 3.0, into: .cut) { ctx, local, t in
         ctx.setFillColor(CGColor(gray: 0, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
-        let line = "MEANWHILE, IN EVERY UNIVERSE AT ONCE…"
+        let line = "MEANWHILE, ACROSS THE UNIVERSES…"
         let n = Int(clamp((local - 0.3) / 1.6) * Double(line.count))
         let a = 1 - clamp((local - 2.6) / 0.35)
         if n > 0 { captionBox(String(line.prefix(n)), ctx, center: CGPoint(x: Double(W) / 2, y: Double(H) / 2), size: 54, alpha: a) }
     },
-    // The three menu bar emblems collide: KRA-KOOM!, and CLAWD ROYALE stamps in.
+    // Every universe's menu bar emblem collides: KRA-KOOM!, and CLAWD ROYALE stamps in. Never a count of universes:
+    // which ones take part may become a choice.
     Shot(name: "collide", start: 3.0, end: 6.5, into: .cut) { ctx, local, t in royaleCollide(ctx, local: local, t: t) },
-    // The Mos Easy Cantina: Darth Vapor duels Batclawd, Han Yolo and the Jester shoot it out, Spider-Clawd swings over.
+    // The Mos Easy Cantina, a crew from every universe: Gandclawd duels Darth Vapor, Fox Clawder and a Dalick shoot it
+    // out, Spider-Clawd swings over everyone.
     Shot(name: "crossover", start: 6.5, end: 11.0, into: .marvel(ComicTrip(kind: .burst, sound: .thwip))) { ctx, local, t in
-        let (han, jester) = versus(.hero(SWHero.han), 34, .villain(DCVillain.joker), 104)
-        let (bat, vapor) = versus(.hero(DCHero.batman), 196, .villain(SWVillain.vader), 253)
+        let (fox, dalick) = versus(.hero(FilesHero.foxClawder), 34, .villain(DoctorVillain.dalick), 104)
+        let (gand, vapor) = versus(.hero(RingsHero.gandalf), 196, .villain(SWVillain.vader), 253)
         let swing = webSwing(local, start: 0.9)
-        royaleScene(ctx, .cantina, t: t, fights: [(han, jester), (bat, vapor)], also: swing.map { [$0.actor] } ?? [])
+        royaleScene(ctx, .cantina, t: t, fights: [(fox, dalick), (gand, vapor)], also: swing.map { [$0.actor] } ?? [])
         if let s = swing {                                          // his web line, from the raised hand up out of the frame
             let web = PixelCanvas(fxW, fxH), hand = s.actor.fighter.point(41, 22)
             web.glowLine(hand.x, hand.y, s.anchor.x, s.anchor.y, core: C(0xF4F4F8, 0.9), glow: C(0xFFFFFF, 0), coreR: 0.35, glowR: 0.4)
@@ -4222,29 +4521,29 @@ let royaleShots: [Shot] = [
     Shot(name: "hopMarvel", start: 11.0, end: 13.5, into: .marvel(ComicTrip(kind: .speedLines))) { ctx, local, t in
         let land = clamp((local - 0.4) / 0.5), since = local - 0.9
         if since > 0 && since < 0.3 { let sh = (0.3 - since) * 40; ctx.translateBy(x: sin(t * 90) * sh, y: cos(t * 80) * sh) }   // the landing
-        let (han, jester) = versus(.hero(SWHero.han), 26, .villain(DCVillain.joker), 92)
-        let (bat, vapor) = versus(.hero(DCHero.batman), 150, .villain(SWVillain.vader), 207)
+        let (fox, dalick) = versus(.hero(FilesHero.foxClawder), 26, .villain(DoctorVillain.dalick), 92)
+        let (gand, vapor) = versus(.hero(RingsHero.gandalf), 150, .villain(SWVillain.vader), 207)
         var (spidey, thanoz) = versus(.hero(MarvelHero.spiderMan), 246, .villain(MarvelVillain.thanos), 304)
         thanoz.lift = 150 * (1 - easeIn(land))
         if land < 1 { spidey.role = .none; thanoz.role = .none }
-        royaleScene(ctx, .avengersTower, t: t, fights: land < 1 ? [(han, jester), (bat, vapor)] : [(han, jester), (bat, vapor), (spidey, thanoz)],
+        royaleScene(ctx, .avengersTower, t: t, fights: land < 1 ? [(fox, dalick), (gand, vapor)] : [(fox, dalick), (gand, vapor), (spidey, thanoz)],
                     also: land < 1 ? [spidey, thanoz] : [])
     },
-    // And Gothamburg, by the Night Beacon: new match-ups, Batclawd on Thanoz, Spider-Clawd on Darth Vapor.
+    // And Gothamburg, by the Night Beacon: new match-ups, Han Yolo on the Dalick, Batclawd on Darth Vapor, Indiana Bones
+    // on Thanoz.
     Shot(name: "hopDC", start: 13.5, end: 16.0,
          into: .dc(DCComicTrip(kind: .batSignal, caption: "MEANWHILE, IN \(Location.gotham.name.uppercased())…"))) { ctx, local, t in
-        let (han, jester) = versus(.hero(SWHero.han), 26, .villain(DCVillain.joker), 92)
-        let (bat, thanoz) = versus(.hero(DCHero.batman), 150, .villain(MarvelVillain.thanos), 212)
-        let (spidey, vapor) = versus(.hero(MarvelHero.spiderMan), 246, .villain(SWVillain.vader), 302)
-        royaleScene(ctx, .gotham, t: t, fights: [(han, jester), (bat, thanoz), (spidey, vapor)])
+        let (han, dalick) = versus(.hero(SWHero.han), 26, .villain(DoctorVillain.dalick), 92)
+        let (bat, vapor) = versus(.hero(DCHero.batman), 150, .villain(SWVillain.vader), 207)
+        let (indy, thanoz) = versus(.hero(ClawdbergHero.indianaBones), 246, .villain(MarvelVillain.thanos), 304)
+        royaleScene(ctx, .gotham, t: t, fights: [(han, dalick), (bat, vapor), (indy, thanoz)])
     },
-    Shot(name: "settings", start: 16.0, end: 20.0) { ctx, local, t in royaleSettings(ctx, local: local, t: t) },
-    // The end card: the icon's three panels, the crew lined up, the emblems and CLAWD ROYALE.
-    Shot(name: "endcard", start: 20.0, end: 24.5) { ctx, local, t in
+    // The end card: the icon's three panels, a crew from every universe lined up, the emblems and CLAWD ROYALE.
+    Shot(name: "endcard", start: 16.0, end: 20.5) { ctx, local, t in
         coverPanels(ctx, t: t, fighters: false, dim: 0.45)
-        let crew: [(Cast, FightRole, AI)] = [(.hero(SWHero.han), .cheer, .desktop), (.hero(MarvelHero.spiderMan), .cheer, .qwen),
+        let crew: [(Cast, FightRole, AI)] = [(.hero(ClawdbergHero.indianaBones), .cheer, .desktop), (.hero(RingsHero.gandalf), .cheer, .qwen),
                                              (.hero(DCHero.batman), .duel, .claude), (.villain(SWVillain.vader), .duel, .codex),
-                                             (.villain(MarvelVillain.thanos), .cheer, .copilot), (.villain(DCVillain.joker), .cheer, .gemini)]
+                                             (.villain(DoctorVillain.dalick), .cheer, .copilot), (.villain(MarvelVillain.thanos), .cheer, .gemini)]
         var placed: [Actor] = []
         for (i, (who, role, ai)) in crew.enumerated() {
             var a = Actor(cast: who, x: [28.0, 84, 140, 197, 252, 300][i], facing: i < 3 ? 1 : -1, role: role, ai: ai)
@@ -4254,9 +4553,12 @@ let royaleShots: [Shot] = [
             placed.append(a)
         }
         if local > 0.5 { drawFX([(placed[2], placed[3])], ctx, t: t) }
-        for (i, u) in Universe.allCases.enumerated() {
+        // One emblem per universe, the row centred however many there are (closer together if they'd run off the frame).
+        let offered = Universe.offered, gap = min(200, Double(W - 160) / Double(offered.count))
+        for (i, u) in offered.enumerated() {
             let f = backOut((local - 0.25 - Double(i) * 0.08) / 0.35)
-            if f > 0 { emblem(u, ctx, center: CGPoint(x: 760 + Double(i) * 200, y: 990), px: 4 * f) }
+            let x = Double(W) / 2 + (Double(i) - Double(offered.count - 1) / 2) * gap
+            if f > 0 { emblem(u, ctx, center: CGPoint(x: x, y: 990), px: 4 * f) }
         }
         if local > 0.35 { royaleTitle(ctx, center: CGPoint(x: Double(W) / 2, y: 750), scale: backOut((local - 0.35) / 0.4) * 0.72) }
         caption("New in Clawd Clash", ctx, local: local, start: 0.6, y: 500, size: 56)
@@ -4282,13 +4584,12 @@ let royaleOverlays: [Overlay] = [
 ]
 
 let royaleBeats: [(key: Double, beat: Beat)] = [
-    (1.8, ("MEANWHILE...", "Black screen. A yellow comic caption types itself out over a building drum roll.", "“MEANWHILE, IN EVERY UNIVERSE AT ONCE…”", "typewriter keys, a snare roll")),
-    (4.9, ("THE COLLISION", "Halftone blue. The three menu bar emblems (Vader's helmet, the round shield, the C-shield) fly in from three sides and slam together: KRA-KOOM!, a white flash, a yellow and red burst; they bounce out to a row and CLAWD ROYALE stamps in.", "KRA-KOOM!  ·  CLAWD ROYALE  ·  “ALL THREE UNIVERSES. ONE SCENE.”", "whooshes, the big hit, a fanfare")),
-    (8.4, ("THE CROSSOVER", "A FWIP! web burst into the Mos Easy Cantina: Darth Vapor duels Batclawd, Han Yolo and the Jester shoot it out, Spider-Clawd swings over everyone on his web. Each has its name on its label.", "“Nobody asked who'd win. We're answering anyway.”", "the groove kicks in, sabers, blasters, web thwips")),
+    (1.8, ("MEANWHILE...", "Black screen. A yellow comic caption types itself out over a building drum roll.", "“MEANWHILE, ACROSS THE UNIVERSES…”", "typewriter keys, a snare roll")),
+    (4.9, ("THE COLLISION", "Halftone blue. Every universe's menu bar emblem flies in from round the frame and they slam together: KRA-KOOM!, a white flash, a yellow and red burst; they bounce out to a row and CLAWD ROYALE stamps in.", "KRA-KOOM!  ·  CLAWD ROYALE  ·  “UNIVERSES COLLIDE.”", "whooshes, the big hit, a fanfare")),
+    (8.4, ("THE CROSSOVER", "A FWIP! web burst into the Mos Easy Cantina: Gandclawd duels Darth Vapor, Fox Clawder and a Dalick shoot it out, Spider-Clawd swings over everyone on his web. Each has its name on its label.", "“Nobody asked who'd win. We're answering anyway.”", "the groove kicks in, sabers, blasters, web thwips")),
     (11.9, ("A NEW PLACE", "Speed lines into Clawdvengers Tower: the same crew, and Thanoz drops in on Spider-Clawd.", "CLAWD ROYALE · EVERY 10 MIN  ·  “A new place every ten minutes…”", "a whoosh, a thud, the gauntlet's crackle")),
-    (15.1, ("FROM ANY UNIVERSE", "The Night Beacon transition into Gothamburg: new match-ups, Batclawd against Thanoz, Spider-Clawd against Darth Vapor.", "“…from any universe.”", "the clunk and the boom of the beacon")),
-    (17.6, ("SETTINGS", "Over the desktop, the Settings window: the pointer opens the Universe pop-up (Star Clawds · Marvelous Clawds · Detective Clawds · Clawd Royale · Random) and picks Clawd Royale; the Star Clawds crew below pops into everyone's.", "“Settings → Universe → Clawd Royale”  ·  “The screen saver joins in too.”", "clicks, pops")),
-    (23.0, ("END CARD", "The icon's three panels, dimmed: the mixed crew lines up, Batclawd duelling Darth Vapor, the three emblems pop in and CLAWD ROYALE lands.", "CLAWD ROYALE  ·  “New in Clawd Clash”  ·  “Free for macOS · github.com/rodclemen/clawd-clash”", "the closing chord")),
+    (15.1, ("FROM ANY UNIVERSE", "The Night Beacon transition into Gothamburg: new match-ups, Han Yolo against the Dalick, Batclawd against Darth Vapor, Indiana Bones against Thanoz.", "“…from any universe.”", "the clunk and the boom of the beacon")),
+    (19.0, ("END CARD", "The icon's three panels, dimmed: a crew from every universe lines up, Batclawd duelling Darth Vapor, every universe's emblem pops in and CLAWD ROYALE lands.", "CLAWD ROYALE  ·  “New in Clawd Clash”  ·  “Free for macOS · github.com/rodclemen/clawd-clash”", "the closing chord")),
 ]
 
 /// The Clawd Royale teaser's score and effects.
@@ -4317,7 +4618,7 @@ func royaleSound(_ m: Mix) {
     // the groove, from the web burst to the end card
     groove(m, from: start("crossover") - 0.5, to: start("endcard"), fadeIn: 1.0)
     // the fights: the saber duel and the shoot-out run through all three places, Spider-Clawd's web lines, Thanoz' gauntlet
-    let cr = start("crossover"), hm = start("hopMarvel"), hd = start("hopDC"), se = start("settings")
+    let cr = start("crossover"), hm = start("hopMarvel"), hd = start("hopDC"), se = start("endcard")
     m.hum(cr, hd - cr, vol: 0.022)
     for t in clashTimes(cr, hd) { m.clash(t, vol: 0.1) }
     for t in shotTimes(cr, se, offset: 0) { m.pew(t, vol: 0.07) }
@@ -4326,10 +4627,6 @@ func royaleSound(_ m: Mix) {
     m.boom(hm + 0.9, vol: 0.3)
     m.crackle(hm + 0.9, se - hm - 0.9, vol: 0.035)
     for t in shotTimes(hd, se, offset: 0) { m.thwip(t, vol: 0.06); m.clash(t + boltArrival * blasterPeriod, vol: 0.06) }
-    // Settings: the pop-up's clicks, and a pop as each of the new crew lands
-    m.click(se + royaleClicks.open, vol: 0.16); m.click(se + royaleClicks.pick, vol: 0.16)
-    m.hum(se, royaleClicks.pick, vol: 0.015)
-    for k in 0..<4 { m.pop(se + royaleClicks.pick + 0.1 + Double(k) * 0.07, step: k) }
     for s in shots { transitionSound(m, s) }
     // the end card: the closing chord
     let ec = start("endcard")
@@ -4341,6 +4638,863 @@ func royaleSound(_ m: Mix) {
     m.boom(ec + 0.35, vol: 0.45)
     m.noise(ec + 1.4, 2.5, vol: 0.08, cutoff: 0.9, decay: 0.8, highpass: true, seed: 8)
     for t in clashTimes(ec + 0.5, duration) { m.clash(t, vol: 0.08) }
+}
+
+// MARK: The Clawd of the Rings trailer
+
+/// The end card's line under "Have fun. Keep track.": never a count of universes, and "coming soon" until it ships.
+var ringsTagline: String { Universe.middleEarth.isReleased ? "One of many universes in Clawd Clash · free for macOS" : "Coming soon to Clawd Clash" }
+
+/// A Clawd of the Rings character's name, as the app has it.
+func ringsName(_ h: RingsHero) -> String { Cast.hero(h).name }
+func ringsName(_ v: RingsVillain) -> String { Cast.villain(v).name }
+
+/// The title's face: a tall classical serif, the first of these the Mac has, else its bold system serif.
+func ringsSerif(_ size: CGFloat) -> CTFont {
+    let names: [String] = ["TrajanPro3-Bold", "TrajanPro-Bold", "Baskerville-Bold", "Optima-Bold", "Didot-Bold"]
+    for name in names {
+        let f = CTFontCreateWithName(name as CFString, size, nil)
+        if (CTFontCopyPostScriptName(f) as String) == name { return f }
+    }
+    let base: NSFont = NSFont.boldSystemFont(ofSize: size)
+    let serif: NSFontDescriptor = base.fontDescriptor.withDesign(.serif) ?? base.fontDescriptor
+    return (NSFont(descriptor: serif, size: size) ?? base) as CTFont
+}
+
+/// `s` set in `font`, letter-spaced by `track`, as a path from its baseline's left end; and its advance.
+func ringsWord(_ s: String, _ font: CTFont, track: CGFloat) -> (path: CGPath, width: CGFloat) {
+    let attrs: [NSAttributedString.Key: Any] = [.font: font, .kern: track]
+    let line = CTLineCreateWithAttributedString(NSAttributedString(string: s, attributes: attrs))
+    let path = CGMutablePath()
+    for run in CTLineGetGlyphRuns(line) as! [CTRun] {
+        let count = CTRunGetGlyphCount(run)
+        var glyphs = [CGGlyph](repeating: 0, count: count), at = [CGPoint](repeating: .zero, count: count)
+        CTRunGetGlyphs(run, CFRange(location: 0, length: count), &glyphs)
+        CTRunGetPositions(run, CFRange(location: 0, length: count), &at)
+        for i in 0..<count {
+            let t = CGAffineTransform(translationX: at[i].x, y: at[i].y)
+            if let g = CTFontCreatePathForGlyph(font, glyphs[i], nil) { path.addPath(g, transform: t) }
+        }
+    }
+    let w: CGFloat = CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil)) - track
+    return (path, w)
+}
+
+/// A thin gold rule from `x0` to `x1` at height `y`, its ends drawn out to points.
+func ringsRule(_ p: CGMutablePath, x0: CGFloat, x1: CGFloat, y: CGFloat, h: CGFloat) {
+    let taper: CGFloat = h * 7
+    p.addLines(between: [CGPoint(x: x0, y: y), CGPoint(x: x0 + taper, y: y + h / 2), CGPoint(x: x1 - taper, y: y + h / 2),
+                         CGPoint(x: x1, y: y), CGPoint(x: x1 - taper, y: y - h / 2), CGPoint(x: x0 + taper, y: y - h / 2)])
+    p.closeSubpath()
+}
+
+/// The title laid out as the films lay theirs: big CLAWD, a small OF over THE stacked between, big RINGS, all on one
+/// baseline, a thin rule above and below; set a little tall, centred on the origin (y up).
+let ringsTitlePath: CGPath = {
+    let big = ringsSerif(200), small = ringsSerif(76)
+    let clawd = ringsWord("CLAWD", big, track: 10), rings = ringsWord("RINGS", big, track: 10)
+    let of = ringsWord("OF", small, track: 6), the = ringsWord("THE", small, track: 6)
+    let capBig: CGFloat = CTFontGetCapHeight(big), capSmall: CGFloat = CTFontGetCapHeight(small)
+    let gap: CGFloat = 34
+    let stackW: CGFloat = max(of.width, the.width)
+    let lineGap: CGFloat = capSmall * 0.3
+    let stackBase: CGFloat = (capBig - (capSmall * 2 + lineGap)) / 2          // the stack centred on the capitals
+    let p = CGMutablePath()
+    p.addPath(clawd.path)
+    let sx: CGFloat = clawd.width + gap
+    p.addPath(the.path, transform: CGAffineTransform(translationX: sx + (stackW - the.width) / 2, y: stackBase))
+    p.addPath(of.path, transform: CGAffineTransform(translationX: sx + (stackW - of.width) / 2, y: stackBase + capSmall + lineGap))
+    let rx: CGFloat = sx + stackW + gap
+    p.addPath(rings.path, transform: CGAffineTransform(translationX: rx, y: 0))
+    let end: CGFloat = rx + rings.width
+    ringsRule(p, x0: -30, x1: end + 30, y: capBig + 34, h: 7)
+    ringsRule(p, x0: -30, x1: end + 30, y: -34, h: 7)
+    let b = p.boundingBox
+    var t = CGAffineTransform(translationX: -b.midX, y: -b.midY).concatenating(CGAffineTransform(scaleX: 1, y: 1.14))
+    return p.copy(using: &t)!
+}()
+
+/// The title: CLAWD (OF THE) RINGS in a tall gold serif with a dark bevelled edge, in a soft warm glow.
+func ringsTitle(_ ctx: CGContext, center: CGPoint, scale s: Double, alpha: Double = 1) {
+    guard s > 0.01, alpha > 0 else { return }
+    let k: CGFloat = 1500 / ringsTitlePath.boundingBox.width * CGFloat(s)
+    var tr = CGAffineTransform(scaleX: k, y: k).concatenating(CGAffineTransform(translationX: center.x, y: center.y))
+    guard let path = ringsTitlePath.copy(using: &tr) else { return }
+    let b = path.boundingBox
+    let edge: CGFloat = max(1.5, 5 * k)
+    ctx.saveGState()
+    ctx.setAlpha(CGFloat(alpha))
+    ctx.beginTransparencyLayer(auxiliaryInfo: nil)
+    ctx.setLineJoin(.round)
+    // the warm glow behind, then the dark edge all round
+    ctx.saveGState()
+    ctx.setShadow(offset: .zero, blur: 70 * k, color: hexCG(0xFF8A2A, 0.9))
+    ctx.addPath(path); ctx.setFillColor(hexCG(0x6A3A08)); ctx.fillPath()
+    ctx.setShadow(offset: .zero, blur: 24 * k, color: hexCG(0xFFC060, 0.7))
+    ctx.addPath(path); ctx.setStrokeColor(hexCG(0x3A1E04)); ctx.setLineWidth(edge * 2); ctx.strokePath()
+    ctx.restoreGState()
+    // the gold, bright at the top and deep at the foot, with a band of light across the middle
+    ctx.saveGState()
+    ctx.addPath(path); ctx.clip()
+    let colors: [CGColor] = [hexCG(0xFFF4C0), hexCG(0xF0C860), hexCG(0xB07A22), hexCG(0xF6DC8A), hexCG(0xC8922E), hexCG(0x7A4A0A)]
+    let stops: [CGFloat] = [0.05, 0.3, 0.48, 0.6, 0.8, 1]
+    if let gold = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: colors as CFArray, locations: stops) {
+        ctx.drawLinearGradient(gold, start: CGPoint(x: 0, y: b.maxY), end: CGPoint(x: 0, y: b.minY), options: [])
+    }
+    // the bevel: light on the upper-left inner edge, shadow on the lower-right
+    let off: CGFloat = edge * 0.6
+    ctx.saveGState()
+    ctx.translateBy(x: off, y: -off)
+    ctx.addPath(path); ctx.setStrokeColor(hexCG(0x5A3206, 0.85)); ctx.setLineWidth(edge * 1.4); ctx.strokePath()
+    ctx.restoreGState()
+    ctx.saveGState()
+    ctx.translateBy(x: -off, y: off)
+    ctx.addPath(path); ctx.setStrokeColor(hexCG(0xFFF8D8, 0.75)); ctx.setLineWidth(edge * 1.1); ctx.strokePath()
+    ctx.restoreGState()
+    ctx.restoreGState()
+    ctx.endTransparencyLayer()
+    ctx.restoreGState()
+}
+
+/// Embers drifting up through the dark and, while `burst` runs 0…1, a burst of them flung out from `from`.
+func ringsEmbers(_ ctx: CGContext, t: Double, count: Int, alpha: Double, burst: Double = 0, from: CGPoint = .zero) {
+    let w = Double(W), h = Double(H)
+    for i in 0..<count {
+        let speed: Double = 30 + noise(i * 3 + 2) * 70
+        let x: Double = noise(i * 3) * w + sin(t * 0.8 + Double(i)) * 24
+        let y: Double = (noise(i * 3 + 1) * h + t * speed).truncatingRemainder(dividingBy: h)
+        let flick: Double = 0.5 + 0.5 * sin(t * 7 + Double(i) * 1.7)
+        let s: Double = noise(i * 3 + 7) > 0.8 ? 6 : 4
+        ctx.setFillColor(hexCG(0xFF8A2A, CGFloat(alpha * (0.35 + 0.5 * flick))))
+        ctx.fill(CGRect(x: x, y: y, width: s, height: s))
+    }
+    guard burst > 0, burst < 1 else { return }
+    for i in 0..<90 {
+        let a: Double = noise(i * 5 + 300) * 2 * Double.pi
+        let d: Double = (250 + noise(i * 5 + 301) * 650) * easeOut(burst)
+        let s: Double = noise(i * 5 + 302) > 0.6 ? 8 : 5
+        let col: UInt32 = noise(i * 5 + 303) > 0.5 ? 0xFFD27A : 0xFF6A1A
+        let fx: Double = Double(from.x) + cos(a) * d
+        let fy: Double = Double(from.y) + sin(a) * d - 120 * burst * burst
+        ctx.setFillColor(hexCG(col, CGFloat(1 - burst)))
+        ctx.fill(CGRect(x: fx, y: fy, width: s, height: s))
+    }
+}
+
+/// How far (art pixels, + outside) the point `dx, dy` from the centre is from the ellipse `rx × ry`: a first-order
+/// estimate, good near the curve, which is all the band needs.
+func ringBandDistance(_ dx: Double, _ dy: Double, rx: Double, ry: Double) -> Double {
+    let u: Double = dx / rx, v: Double = dy / ry
+    let e: Double = (u * u + v * v).squareRoot()
+    let grad: Double = (u * u / (rx * rx) + v * v / (ry * ry)).squareRoot()
+    guard grad > 1e-9 else { return -1e9 }
+    return (e - 1) * e / grad
+}
+
+/// The One Ring in pixel art, like the sprites (6 screen pixels to the art pixel): a gold band `r` screen pixels round,
+/// its width squashed by `squash` (a spin seen edge-on), its gold in bands, lit on its upper-left rim and shaded on the
+/// inner one, with a glint; and (`glow` 0…1) fire-letters waking along it, a pixel or three each: not real letters.
+func oneRing(_ ctx: CGContext, center c: CGPoint, radius r: Double, squash: Double, glow: Double, alpha: Double) {
+    let scale: Double = 6
+    let R: Double = r / scale
+    let rx: Double = max(0.5, R * squash), ry: Double = R * 0.94
+    let band: Double = max(3.5, R * 0.26)
+    let n: Int = Int((R * 1.95).rounded(.up)) * 2 + 4
+    let mid: Double = Double(n) / 2
+    let cv = PixelCanvas(n, n)
+    let golds: [UInt32] = [0xFFF4B0, 0xF4D884, 0xE8B040, 0xB88428, 0x8A5A12, 0xB88A30, 0xF0C860, 0xB07E2A, 0x7A4A0A]
+    for y in 0..<n {
+        for x in 0..<n {
+            let dx: Double = Double(x) + 0.5 - mid, dy: Double = Double(y) + 0.5 - mid
+            if glow > 0 {                                     // a warm halo once the letters wake, in steps
+                let dd: Double = (dx * dx + dy * dy).squareRoot()
+                let a: Double = 0.35 * glow * (1 - (dd - R * 0.5) / (R * 1.4))
+                let q: Double = (a / 0.06).rounded(.down) * 0.06
+                if dd > R * 0.5 && q > 0 { cv.px(x, y, C(0xFF6A1A, q)) }
+            }
+            let d: Double = ringBandDistance(dx, dy, rx: rx, ry: ry)
+            guard abs(d) <= band / 2 else { continue }
+            guard abs(dy) <= ry + band / 2 else { continue }        // edge-on it stays the ring's own height
+            let s: Double = clamp((dx / (rx + band) + dy / (ry + band)) / 4 + 0.5)
+            var col: UInt32 = golds[min(golds.count - 1, Int(s * Double(golds.count)))]
+            let across: Double = d / (band / 2)                // -1 the inner rim … +1 the outer
+            let angle: Double = atan2(dy / ry, dx / rx)
+            if across > 0.5 && dx + dy < 0 { col = 0xFFF8D0 }
+            else if across < -0.5 { col = 0x6A3E08 }
+            if abs(angle + 2.2) < 0.3 && abs(across) < 0.35 { col = 0xFFFFF0 }   // the glint
+            cv.px(x, y, C(col))
+        }
+    }
+    if glow > 0 {
+        let count: Int = max(12, Int(2 * Double.pi * R / 3.2))
+        let hot = C(0xFFE08A, glow), fire = C(0xFF7A1A, glow)
+        for i in 0..<count {
+            let a: Double = Double(i) / Double(count) * 2 * Double.pi
+            let ix = Int((mid + cos(a) * rx).rounded(.down)), iy = Int((mid + sin(a) * ry).rounded(.down))
+            let tx = Int((-sin(a)).rounded()), ty = Int(cos(a).rounded())       // along the band
+            let nx = Int(cos(a).rounded()), ny = Int(sin(a).rounded())          // out across it
+            let kind = Int(noise(i * 7 + 90) * 3)
+            cv.px(ix, iy, hot)
+            if kind == 1 { cv.px(ix + tx, iy + ty, fire); cv.px(ix + tx + nx, iy + ty + ny, fire) }
+            if kind == 2 { cv.px(ix - nx, iy - ny, fire); cv.px(ix + tx + nx, iy + ty + ny, fire) }
+        }
+    }
+    guard let img = cv.makeImage() else { return }
+    let x0: Double = ((Double(c.x) - mid * scale) / scale).rounded() * scale
+    let y0: Double = ((Double(c.y) - mid * scale) / scale).rounded() * scale
+    ctx.saveGState()
+    ctx.setAlpha(CGFloat(alpha)); ctx.interpolationQuality = .none
+    ctx.draw(img, in: CGRect(x: x0, y: y0, width: Double(n) * scale, height: Double(n) * scale))
+    ctx.restoreGState()
+}
+
+/// When Gandclawd walks up the lane at Bag Endpoint, shot-local seconds, and from where to where (fx units).
+let ringsGandalfWalk: (from: Double, to: Double, x0: Double, x1: Double) = (0.3, 2.1, -30, 112)
+
+/// The cold open, as the films open in the Shire: Bag Endpoint by day. Gandclawd walks up the lane from the left,
+/// Frodough hops to greet him when he arrives, and Bilbyte, by the round door, holds up his contract and lets it unroll.
+/// The fireworks trip that follows takes it away.
+func ringsBagEnd(_ ctx: CGContext, local l: Double, t: Double) {
+    blit(place(.bagEnd, floorRows: 34, t: t), ctx)
+    let w = ringsGandalfWalk
+    let walk: Double = clamp((l - w.from) / (w.to - w.from))
+    let bilbo = Cast.hero(RingsHero.bilbo), len = bilbo.signatureLength ?? 3.4
+    let crew: [Actor] = [
+        Actor(cast: .hero(RingsHero.gandalf), x: lerp(w.x0, w.x1, walk), mode: .idle, walking: walk > 0 && walk < 1),
+        Actor(cast: .hero(RingsHero.frodo), x: 160, facing: -1, mode: .idle, role: l > w.to - 0.2 ? .cheer : .none),
+        Actor(cast: bilbo, x: 222, facing: -1, mode: .idle),
+    ]
+    for var a in crew {
+        a.lift = 8
+        // Bilbyte's contract from 0.6 s; everyone else just stands, with no habit of their own creeping in.
+        forcedHabit = a.cast == bilbo && l > 0.6 ? HabitPlay(kind: .signature, e: min(l - 0.6, len), length: len)
+                                                 : HabitPlay(kind: .glance, e: 0)
+        draw(a, ctx, t: t)
+        forcedHabit = nil
+    }
+}
+
+/// The opening: a black field with embers; the One Ring falls in slow motion, spinning, lands with a bounce, its
+/// fire-letters wake, and its band opens out into the burning title.
+func ringsOpening(_ ctx: CGContext, local l: Double, t: Double) {
+    ctx.setFillColor(CGColor(gray: 0, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
+    ringsEmbers(ctx, t: t, count: 70, alpha: 0.55)
+    let cx = Double(W) / 2, floorY: Double = 470
+    let fall: Double = clamp(l / 2.0)
+    var cy: Double = lerp(Double(H) + 260, floorY, fall)
+    if l > 2.0 { let b: Double = l - 2.0; cy = floorY + 46 * abs(sin(b * 9)) * exp(-b * 6) }
+    let spinTotal: Double = 6 * Double.pi
+    let spin: Double = spinTotal * easeOut(fall)
+    let squash: Double = max(0.06, abs(cos(spin)))
+    let unroll: Double = clamp((l - 3.0) / 0.8)
+    if l > 1.9 {                                             // the unseen floor's glow under it
+        let pool: [CGColor] = [hexCG(0xFF7A1A, CGFloat(0.18 * clamp((l - 1.9) / 0.4) * (1 - unroll))), hexCG(0xFF7A1A, 0)]
+        let ps: [CGFloat] = [0, 1]
+        if let g = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: pool as CFArray, locations: ps) {
+            ctx.saveGState()
+            ctx.translateBy(x: CGFloat(cx), y: CGFloat(floorY - 150)); ctx.scaleBy(x: 1, y: 0.18)
+            ctx.drawRadialGradient(g, startCenter: .zero, startRadius: 0, endCenter: .zero, endRadius: 420, options: [])
+            ctx.restoreGState()
+        }
+    }
+    if unroll < 1 {
+        oneRing(ctx, center: CGPoint(x: cx, y: cy), radius: 150 * (1 + unroll * 0.8), squash: squash,
+                glow: clamp((l - 2.0) / 0.8), alpha: 1 - unroll)
+    }
+    let titleY: Double = lerp(floorY, Double(H) / 2, easeOut(unroll))
+    if unroll > 0 { ringsTitle(ctx, center: CGPoint(x: cx, y: titleY), scale: lerp(0.2, 1, easeOut(unroll)), alpha: clamp(unroll * 1.6)) }
+    if l > 3.8 { ringsEmbers(ctx, t: t, count: 0, alpha: 0, burst: (l - 3.8) / 0.9, from: CGPoint(x: cx, y: Double(H) / 2)) }
+}
+
+/// Draws `a` darkened towards a near-black silhouette (`dark` 0…1).
+func drawShadowed(_ a: Actor, _ ctx: CGContext, t: Double, dark: Double) {
+    guard dark > 0 else { draw(a, ctx, t: t); return }
+    let box = CGRect(x: (a.x - 40) * S, y: stageH - (a.top + 56) * S, width: 90 * S, height: 62 * S)
+    ctx.saveGState()
+    ctx.clip(to: box)
+    ctx.beginTransparencyLayer(auxiliaryInfo: nil)
+    draw(a, ctx, t: t)
+    ctx.setBlendMode(.sourceAtop)
+    ctx.setFillColor(hexCG(0x0C0A12, CGFloat(dark))); ctx.fill(box)
+    ctx.endTransparencyLayer()
+    ctx.restoreGState()
+}
+
+/// Gandclawd hanging from the broken edge (the deck's top row `deck`), in front of the chasm: one arm (screen-left)
+/// straight up, its hand gripping the deck's top edge, the other down at his side holding his staff, all the rest of
+/// him dangling under the edge, tilted towards the gripping hand, his legs kicking, swaying by `sway` (radians, about
+/// that hand). Only the hand shows above the deck. `fall` 0…1: he has let go and drops through the dark under the deck
+/// from that very pose, tumbling, shrinking and darkening into the glow of the deep.
+func ringsHanging(_ who: Actor, _ ctx: CGContext, x: Double, deck g: Int, sway: Double, fall: Double, t: Double) {
+    let top: Int = g - 11                                     // the hat's tip (its row 12) just under the deck's top
+    let left: Int = Int(x) - Int(Sprite.bodyCenterX)
+    let sprite = PixelCanvas(Sprite.width, Sprite.height)
+    who.cast.draw(sprite, t: t, mode: .working, walking: fall == 0, role: .rest, urgent: false, sitting: false,
+                  asSession: true, airborne: false)
+    sprite.move(columns: 0..<14, rows: 0..<Sprite.height, dy: 1000)         // his staff, at his side, goes:
+    sprite.move(columns: 14..<15, rows: 26..<Sprite.height, dy: 1000)       // it moves to the other hand
+    sprite.move(columns: 14..<15, rows: 13..<19, dy: 1000)
+    let fig = PixelCanvas(fxW, fxH + 20)
+    fig.paste(sprite, x: left, y: top)
+    let sleeve = C(0x8A8C92), sleeveShade = C(0x5E6066), hand = C(0xD97757)
+    let wood = C(0x6A4A2A), woodDark = C(0x4A321C), woodLight = C(0x8A6A44)
+    // the gripping arm: from just under the edge down to his shoulder (row 35), the hand over the edge
+    fig.rect(left + 13, g + 2, 3, 23, sleeve); fig.rect(left + 15, g + 2, 1, 23, sleeveShade)
+    fig.rect(left + 13, g - 1, 3, 3, hand)
+    // the staff in his other hand, its gnarled head a little above his shoulder, hanging down past his feet
+    let sx: Int = left + 43, sy: Int = top + 25
+    fig.pattern(sx - 1, sy, [".WWD.", "DW..W", "W.W.W", "W.WW.", "WW...", ".W..."], ["W": wood, "D": woodDark])
+    fig.px(sx + 2, sy, woodLight); fig.px(sx + 3, sy + 1, woodLight)
+    fig.rect(sx, sy + 6, 1, 17, wood); fig.px(sx, sy + 12, woodLight); fig.px(sx, sy + 18, woodDark)
+    fig.rect(left + 41, top + 34, 1, 2, sleeve)
+    fig.rect(left + 42, top + 33, 3, 3, hand)
+    fig.addOutline(C(who.ai.hex, 0.92))
+    let px: CGFloat = CGFloat((Double(left) + 14.5) * S), py: CGFloat = CGFloat(stageH - Double(g) * S)
+    let tilt: Double = -0.22 + sway                           // hanging from one hand, he leans in under it
+    let f: Double = clamp(fall)
+    let dark: Double = 0.85 * clamp((f - 0.15) / 0.6)
+    ctx.saveGState()
+    ctx.interpolationQuality = .none
+    if f > 0 {
+        let down: Double = 30 * pow(f, 1.4)                    // fx rows his middle sinks
+        let shrink: Double = lerp(1, 0.15, 1 - pow(1 - f, 1.6))
+        let turn: Double = -0.9 * f + 0.15 * sin(f * 9)       // a slow tumble, a wobble in it
+        let cx: Double = (x - 2 * f) * S
+        let cy: Double = stageH - (Double(top) + 28) * S
+        ctx.clip(to: CGRect(x: 0, y: 0, width: stageW, height: stageH - Double(g - 2) * S))   // under the edge only
+        ctx.setAlpha(CGFloat(1 - clamp((f - 0.7) / 0.3)))
+        ctx.translateBy(x: CGFloat(cx), y: CGFloat(cy - down * S))
+        ctx.rotate(by: CGFloat(turn))
+        ctx.scaleBy(x: CGFloat(shrink), y: CGFloat(shrink))
+        ctx.translateBy(x: CGFloat(-x * S), y: CGFloat(-cy))
+    }
+    ctx.translateBy(x: px, y: py); ctx.rotate(by: CGFloat(tilt)); ctx.translateBy(x: -px, y: -py)
+    ctx.beginTransparencyLayer(auxiliaryInfo: nil)
+    blit(fig, ctx)
+    if dark > 0 {
+        ctx.setBlendMode(.sourceAtop)
+        ctx.setFillColor(hexCG(0x0C0A12, CGFloat(dark))); ctx.fill(CGRect(x: -W, y: -H, width: 3 * W, height: 3 * H))
+    }
+    ctx.endTransparencyLayer()
+    ctx.restoreGState()
+}
+
+/// The Mines of Mori-ah: drums in the deep; the Fellowship sets out over the bridge; the Ballrog rises and they flee;
+/// Gandclawd turns and slams his staff (YOU SHALL NOT PASS!), the span breaks, the Ballrog falls, its whip catches
+/// his feet, and he hangs from the edge (Fly, you fools!), lets go and falls into the deep.
+func ringsBridge(_ ctx: CGContext, local l: Double, t: Double) {
+    let g = fxH - 42                                          // the bridge's top row (the camera up a little: room below)
+    let gandalf = Cast.hero(RingsHero.gandalf), balrog = Cast.villain(RingsVillain.balrog)
+    let sigAt: Double = 3.5, sigLength: Double = gandalf.signatureLength ?? 3.0
+    let slamAt: Double = sigAt + sigLength * 0.29             // the staff strikes (his signature's impact)
+    let fallAt: Double = 4.5
+    let cutX = 206, cutEnd = fxW - 24                         // the span that falls, to the far abutment
+    let drop: Double = l > fallAt ? 210 * easeIn((l - fallAt) / 1.3) : 0
+    // the doom-drums shake the frame on every beat until the slam, and the slam shakes it hard
+    var shake: Double = 0
+    if l < slamAt && l.truncatingRemainder(dividingBy: 0.6) < 0.08 { shake = Int(l / 0.6) % 2 == 0 ? 3 : -3 }
+    if l > slamAt && l < slamAt + 0.3 { shake = sin(l * 120) * 9 }
+    ctx.saveGState()
+    ctx.translateBy(x: CGFloat(shake), y: CGFloat(-shake * 0.6))
+    let cave = place(.moria, floorRows: 42, t: t)
+    if drop > 0 {                                             // the span gone: the chasm shows where it was
+        for y in g..<cave.h {
+            let k: Double = Double(y - g) / Double(max(1, cave.h - g))
+            cave.rect(cutX, y, cutEnd - cutX, 1, lerp(C(0x3A1A0A), C(0x9A4214), k))
+        }
+    }
+    if l > slamAt && l < fallAt + 0.2 {                       // the crack running along the deck under the Ballrog
+        let run = Int(clamp((l - slamAt) / 0.3) * Double(cutEnd - cutX - 10))
+        for i in 0..<max(0, run) { cave.px(cutX + i, g + 1 + (i / 3) % 2, C(0x1A1410)) }
+        for y in g..<(g + 3) { cave.px(cutX, y, C(0x1A1410)) }
+    }
+    blit(cave, ctx)
+    if drop > 0 && drop < 200 {                               // the broken span, falling: deck and arch
+        let w = cutEnd - cutX, sh = fxH - g
+        let slab = PixelCanvas(w, sh)
+        let half: Double = Double(fxW - 48) / 2
+        for x in 0..<w {
+            let u: Double = Double(min(x + cutX - 24, cutEnd - (x + cutX))) / half
+            let extra = min(sh - 3, Int(pow(1 - u, 4) * Double(sh)) + (u > 0.15 ? 1 : 2))
+            slab.rect(x, 3, 1, extra, C(0x6A6056)); slab.px(x, 2 + extra, C(0x2E2620))
+        }
+        slab.rect(0, 0, w, 3, C(0x9A8E80)); slab.rect(0, 2, w, 1, C(0x655B52)); slab.rect(0, 0, w, 1, C(0xD8CBB4))
+        blit(slab, ctx, dx: Double(cutX) * 6, dy: (Double(g) + drop) * 6)
+    }
+    onStage(ctx, CGRect(x: 0, y: 0, width: W, height: H), scale: 6, ground: Double(g + 2)) {
+        // the Fellowship: out over the bridge, then (the Ballrog!) back the way they came, running
+        let walkers: [RingsHero] = [.frodo, .sam, .pippin, .aragorn, .legolas, .gimli, .boromir]
+        for (i, who) in walkers.enumerated() {
+            let x0: Double = 100 - Double(i) * 28
+            var a = Actor(cast: .hero(who), x: x0 + min(l, 2.0) * 30, mode: .working, role: .rest, walking: l < 2.0)
+            if l > 2.25 { a.x = x0 + 60 - (l - 2.25) * 150; a.facing = -1; a.walking = true }
+            if a.x > -40 { draw(a, ctx, t: t) }
+        }
+        // Gandclawd: at the head of them, back to mid-bridge, then he turns
+        var gd = Actor(cast: gandalf, x: 132 + min(l, 2.0) * 30, mode: .working, role: .rest, walking: l < 2.0)
+        if l > 2.25 && l < 3.2 { gd.x = 192 - (l - 2.25) * 28; gd.facing = -1; gd.walking = true }
+        if l >= 3.2 { gd.x = 165 }
+        let whipAt: Double = 4.9, pullAt: Double = 5.3, hangAt: Double = 5.9, letGoAt: Double = 6.45
+        let hangX: Double = 206                               // where he hangs: on the broken edge
+        if l > pullAt { gd.x = lerp(165, hangX, easeIn((l - pullAt) / (hangAt - pullAt))) }
+        if l >= sigAt && l < pullAt {
+            gd.mode = .idle; gd.role = .none
+            forcedHabit = HabitPlay(kind: .signature, e: l - sigAt, length: sigLength)
+            draw(gd, ctx, t: t)
+            forcedHabit = nil
+        } else if l < hangAt {
+            draw(gd, ctx, t: t)
+        } else if l < letGoAt + 0.8 {                          // hanging by his hands, then he lets go and falls into the deep
+            let sway: Double = 0.07 * sin((min(l, letGoAt) - hangAt) * 7)   // swinging from his hands, kept as he lets go
+            ringsHanging(gd, ctx, x: hangX, deck: g, sway: sway, fall: l > letGoAt ? (l - letGoAt) / 0.8 : 0, t: t)
+        }
+        // the Ballrog: up out of the chasm behind the bridge, the whip cracked, then down with the span
+        if l > 2.0 {
+            var b = Actor(cast: balrog, x: 252, facing: -1, mode: .idle)
+            b.lift = l < 3.5 ? lerp(-64, 0, easeOut((l - 2.0) / 1.5)) : -drop
+            ctx.saveGState()
+            if l < 3.5 { ctx.clip(to: CGRect(x: 0, y: stageH - Double(g + 3) * S, width: stageW, height: Double(g + 3) * S)) }
+            if l > 3.0 && l < 4.8 { forcedHabit = HabitPlay(kind: .flourish, e: l - 3.0) }
+            if b.lift > -170 { draw(b, ctx, t: t) }
+            forcedHabit = nil
+            ctx.restoreGState()
+            // its whip, snapping back up over the edge to Gandclawd's feet
+            if l > whipAt && l < hangAt + 0.1 {
+                let fx = PixelCanvas(fxW, fxH + 220)
+                let p0: (Double, Double) = (238, Double(g) - 30 + drop), p1: (Double, Double) = (Double(cutX) + 4, Double(g) - 16)
+                let p2: (Double, Double) = (gd.x + 6, Double(g) - 1)
+                let reach: Double = clamp((l - whipAt) / 0.25)
+                var last = p0
+                for k in 1...24 {
+                    let u: Double = Double(k) / 24 * reach
+                    let ax: Double = (1 - u) * (1 - u) * p0.0 + 2 * (1 - u) * u * p1.0 + u * u * p2.0
+                    let ay: Double = (1 - u) * (1 - u) * p0.1 + 2 * (1 - u) * u * p1.1 + u * u * p2.1
+                    fx.glowLine(last.0, last.1, ax, ay, core: C(0xFFE08A), glow: C(0xE0401A), coreR: 0.6, glowR: 2.2)
+                    last = (ax, ay)
+                }
+                blit(fx, ctx)
+            }
+        }
+        if l > slamAt && l < 5.8 {
+            let pop: Double = backOut((l - slamAt) / 0.25)
+            let head = headPoint(Actor(cast: gandalf, x: 165))
+            balloon("YOU SHALL NOT PASS!", ctx, center: CGPoint(x: 760, y: 900), tail: CGPoint(x: head.x - 10, y: head.y + 30),
+                    size: max(4, 60 * CGFloat(pop)), width: 1100)
+        }
+        if l > 6.0 && l < 7.2 {                                // said as he lets go; it stays where he was, fading
+            let pop: Double = backOut((l - 6.0) / 0.25)
+            balloon("Fly, you fools!", ctx, center: CGPoint(x: 1000, y: 640), tail: CGPoint(x: 210 * S, y: stageH - Double(g + 10) * S),
+                    size: max(4, 48 * CGFloat(pop)), width: 900, alpha: 1 - clamp((l - 6.8) / 0.4))
+        }
+    }
+    ctx.restoreGState()
+    // the flames flare as the Ballrog rises, and the white flash of the slam
+    if l > 2.0 && l < 3.8 {
+        let pulse: Double = sin(Double.pi * clamp((l - 2.0) / 1.8)) * (0.75 + 0.25 * sin(l * 23))
+        ctx.setFillColor(hexCG(0xFF5A10, CGFloat(0.22 * pulse))); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
+    }
+    if l > slamAt && l < slamAt + 0.1 { ctx.setFillColor(CGColor(gray: 1, alpha: 0.85)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H)) }
+}
+
+/// The ridge's top row at column `x` (fx units), for the Fellowship's walk at dusk.
+func ringsRidge(_ x: Double) -> Double { 132 - 6 * sin(x / 50 + 0.4) - 2.5 * sin(x / 13) }
+
+/// A ridge at dusk: the walkers march along it single file, dark against the sky, then lit, their names popping up;
+/// Gladriel appears at the far end and raises her light.
+func ringsFellowship(_ ctx: CGContext, local l: Double, t: Double) {
+    let skyColors: [CGColor] = [hexCG(0x2A2A4A), hexCG(0x6A4A6A), hexCG(0xE8905A)]
+    let skyStops: [CGFloat] = [0, 0.6, 1]
+    if let sky = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: skyColors as CFArray, locations: skyStops) {
+        ctx.drawLinearGradient(sky, start: CGPoint(x: 0, y: H), end: CGPoint(x: 0, y: 260), options: [.drawsAfterEndLocation])
+    }
+    for i in 0..<110 {
+        let y: Double = 520 + noise(i * 3 + 1) * Double(H - 520)
+        let tw: Double = 0.6 + 0.4 * sin(t * 2.5 + Double(i))
+        let a: Double = clamp((y - 520) / 400) * (noise(i * 3 + 2) > 0.85 ? 0.9 : 0.5) * tw
+        let s: Double = noise(i * 3 + 2) > 0.85 ? 5 : 3
+        ctx.setFillColor(CGColor(red: 1, green: 1, blue: 1, alpha: CGFloat(a)))
+        ctx.fill(CGRect(x: noise(i * 3) * Double(W), y: y, width: s, height: s))
+    }
+    let land = PixelCanvas(fxW, fxH)
+    for x in 0..<fxW {
+        let fx = Double(x)
+        let far = Int(112 - 10 * sin(fx / 37 + 1.3) - 4 * sin(fx / 11))
+        land.rect(x, far, 1, fxH - far, C(0x3A2A44))
+        let r = Int(ringsRidge(fx))
+        land.rect(x, r, 1, fxH - r, C(0x14101A))
+    }
+    blit(land, ctx)
+    let walkers: [RingsHero] = [.gandalf, .aragorn, .legolas, .gimli, .boromir, .frodo, .sam, .pippin]
+    let dark: Double = 0.92 * (1 - clamp((l - 1.5) / 0.4))
+    // Gladriel at the far end, and the light round her
+    let gf: Double = clamp((l - 3.0) / 0.5)
+    if gf > 0 {
+        let gx: Double = 304
+        let c = CGPoint(x: gx * S, y: stageH - (ringsRidge(gx) - 22) * S)
+        let glow: [CGColor] = [CGColor(gray: 1, alpha: CGFloat(0.10 * gf)), CGColor(gray: 1, alpha: 0)]
+        let gs: [CGFloat] = [0, 1]
+        if let g = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: glow as CFArray, locations: gs) {
+            ctx.drawRadialGradient(g, startCenter: c, startRadius: 0, endCenter: c, endRadius: 520, options: [])
+        }
+        var a = Actor(cast: .hero(RingsHero.galadriel), x: gx, facing: -1, mode: .idle)
+        a.lift = groundY - ringsRidge(gx); a.alpha = gf
+        forcedHabit = HabitPlay(kind: .signature, e: l - 3.0, length: Cast.hero(RingsHero.galadriel).signatureLength)
+        draw(a, ctx, t: t)
+        forcedHabit = nil
+    }
+    var tags: [(String, Double, Double)] = []
+    for (i, who) in walkers.enumerated() {
+        var a = Actor(cast: .hero(who), x: 36 - Double(i) * 30 + l * 48, walking: true)
+        guard a.x > -30 else { continue }
+        a.lift = groundY - ringsRidge(a.x)
+        drawShadowed(a, ctx, t: t, dark: dark)
+        let tagY: Double = stageH - (ringsRidge(a.x) - 50) * S + (i % 2 == 1 ? 60 : 0)
+        if a.x >= 60 && dark == 0 { tags.append((a.cast.name, a.x * S, tagY)) }
+    }
+    // the name tags, every other one a row higher so neighbours don't overlap
+    for (name, x, y) in tags { chip(name, ctx, centerX: x, bottomY: y, size: 22, agent: false) }
+}
+
+/// Four quick comic panels, one signature move each.
+func ringsMoves(_ ctx: CGContext, local l: Double, t: Double) {
+    ctx.setFillColor(CGColor(gray: 0, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
+    let panels: [(Location, Cast, Double, Double)] = [(.bagEnd, .hero(RingsHero.frodo), 0.2, 1), (.prancingPony, .hero(RingsHero.boromir), 0.45, -1),
+                                                      (.moria, .villain(RingsVillain.gollum), 0.7, 1), (.prancingPony, .hero(RingsHero.legolas), 0.95, -1)]
+    let pw = Double(W) / 2, ph = Double(H) / 2
+    for (i, (loc, who, at, facing)) in panels.enumerated() {
+        let r = CGRect(x: Double(i % 2) * pw, y: i < 2 ? ph : 0, width: pw, height: ph)
+        // The backdrop at 240×135, 4 px a pixel (a canvas under the places' "tall" size, so the strip layout); the crew at
+        // 3 px a pixel, so session size for a half-size frame.
+        let ground: Double = loc == .moria ? 147.5 : 152
+        onStage(ctx, r, scale: 3, ground: ground) {
+            blit(place(loc, floorRows: 26, t: t, w: 240, h: 135), ctx, scale: 4, dy: Double(H) - ph)
+            let e: Double = max(0, l - at)
+            let len: Double = who.signatureLength ?? 3.0
+            let a = Actor(cast: who, x: 160, facing: facing, mode: .idle)
+            forcedHabit = HabitPlay(kind: .signature, e: e, length: len)
+            draw(a, ctx, t: t)
+            forcedHabit = nil
+            if who == .hero(RingsHero.boromir) && e / len >= 0.2 {
+                let pop: Double = backOut((e / len - 0.2) * len / 0.25)
+                balloon("One does not simply push to main.", ctx, center: CGPoint(x: 560, y: 420), tail: headPoint(a),
+                        size: max(4, 26 * CGFloat(pop)), width: 380)
+            }
+        }
+    }
+    ctx.setStrokeColor(CGColor(gray: 0, alpha: 1)); ctx.setLineWidth(12)
+    ctx.move(to: CGPoint(x: pw, y: 0)); ctx.addLine(to: CGPoint(x: pw, y: Double(H)))
+    ctx.move(to: CGPoint(x: 0, y: ph)); ctx.addLine(to: CGPoint(x: Double(W), y: ph))
+    ctx.strokePath()
+    ctx.setLineWidth(24); ctx.stroke(CGRect(x: 0, y: 0, width: W, height: H))
+    let mid = CGPoint(x: pw, y: ph)
+    let second: Double = 5.0 * 0.55
+    if l > 0.1 && l < second {
+        captionBox("EVERYONE GETS A SIGNATURE MOVE.", ctx, center: mid, size: max(4, 40 * CGFloat(backOut((l - 0.1) / 0.25))))
+    }
+    if l >= second {
+        captionBox("SOME ARE MORE PRECIOUS THAN OTHERS.", ctx, center: mid, size: max(4, 40 * CGFloat(backOut((l - second) / 0.25))))
+    }
+}
+
+/// Subagents walking in; then the Great Eagle swoops down and carries the leftmost one, Samwise, home.
+func ringsAgents(_ ctx: CGContext, local l: Double, t: Double) {
+    let crew: [Cast] = [.hero(RingsHero.pippin), .hero(RingsHero.gimli), .hero(RingsHero.legolas), .hero(RingsHero.sam)]
+    let pickupAt: Double = 1.4, grabAt: Double = 2.2, goneAt: Double = 3.6
+    let picking = l > pickupAt && l < goneAt
+    agentsOf(ctx, local: l, t: t, guardCast: .hero(RingsHero.gandalf), crew: l > pickupAt ? Array(crew.prefix(3)) : crew,
+             line: "Every subagent joins the Fellowship. Some fly home.", badgeText: Universe.middleEarth.title.uppercased())
+    guard picking else { return }
+    // the talons' path, screen pixels: down from the top right to the agent's shoulders, then away up to the left
+    let stand = Actor(cast: crew[3], x: 40, session: false)
+    let shoulders: Double = stand.top + 30 * stand.k
+    let grabX: Double = 40 * S, grabY: Double = stageH - shoulders * S
+    var tx: Double, ty: Double
+    if l < grabAt {
+        let u: Double = (l - pickupAt) / (grabAt - pickupAt)
+        tx = lerp(Double(W) + 200, grabX, easeOut(u)); ty = lerp(Double(H) + 150, grabY, easeOut(u * 1.2))
+    } else {
+        let v: Double = (l - grabAt) / (goneAt - grabAt)
+        tx = lerp(grabX, -500, easeIn(v)); ty = lerp(grabY, Double(H) + 300, easeIn(v * 0.9))
+    }
+    var a = stand
+    a.label = "Plan the refactor"
+    if l >= grabAt { a.x = tx / S; a.lift = shoulders - (stageH - ty) / S }
+    draw(a, ctx, t: t)
+    let ec = PixelCanvas(Ride.width, Ride.height)
+    drawRide(ec, .eagle, ramp: 0, engines: true, gear: true, t: t)
+    ec.flipHorizontally()
+    ec.addOutline(C(0xFFFFFF, 0.92))
+    if let img = ec.makeImage() {
+        let px: Double = 6.0 * 2 / 3
+        let w: Double = Double(Ride.width) * px, h: Double = Double(Ride.height) * px
+        ctx.saveGState(); ctx.interpolationQuality = .none
+        ctx.draw(img, in: CGRect(x: tx - Double(Ride.width - 34) * px, y: ty - (h - 27 * px), width: w, height: h))
+        ctx.restoreGState()
+    }
+}
+
+/// The end card: Mount Doomscroll under the Eye, the Great Eagle flying across, the crew, the title, the strip.
+func ringsEndcard(_ ctx: CGContext, local: Double, t: Double) {
+    blit(place(.mountDoom, floorRows: 34, t: t), ctx)
+    ctx.setFillColor(CGColor(gray: 0, alpha: 0.3)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
+    let fp: Double = local / 1.2
+    if fp > 0 && fp < 1 {
+        let bc = PixelCanvas(Ride.width, Ride.height)
+        drawRide(bc, .eagle, ramp: 0, engines: true, gear: false, t: t); bc.addOutline(C(0xFFFFFF, 0.92))
+        if let img = bc.makeImage() {
+            let x: Double = lerp(-600, Double(W) + 100, easeIn(fp) * 0.6 + fp * 0.4)
+            ctx.saveGState(); ctx.interpolationQuality = .none
+            ctx.draw(img, in: CGRect(x: x, y: 600 + 200 * fp, width: Double(Ride.width) * 6, height: Double(Ride.height) * 6))
+            ctx.restoreGState()
+        }
+    }
+    let duel = fightRoles(Cast.hero(RingsHero.aragorn).weapon, Cast.villain(RingsVillain.witchKing).weapon)
+    let crew: [(Cast, FightRole, AI)] = [(.hero(RingsHero.gandalf), .cheer, .desktop), (.hero(RingsHero.aragorn), duel.0, .claude),
+                                         (.villain(RingsVillain.witchKing), duel.1, .codex), (.villain(RingsVillain.shelob), .none, .copilot),
+                                         (.villain(RingsVillain.saruman), .cheer, .qwen), (.villain(RingsVillain.gollum), .none, .gemini)]
+    let xs: [Double] = [28, 84, 156, 206, 252, 296]
+    var placed: [Actor] = []
+    for (i, (who, role, ai)) in crew.enumerated() {
+        var a = Actor(cast: who, x: xs[i], facing: i < 2 ? 1 : -1, role: role, ai: ai)
+        a.lift = 8
+        a.alpha = clamp((local - 0.15 - Double(i) * 0.05) / 0.2)
+        // Late in the card Shellob climbs her thread up out of sight, and stays gone (her move held where she's gone; a
+        // signature only plays idle).
+        let len = who.signatureLength ?? 3.6
+        if who == .villain(RingsVillain.shelob), local > 2.8 {
+            a.mode = .idle
+            forcedHabit = HabitPlay(kind: .signature, e: min(local - 2.8, 0.19 * len), length: len)
+        }
+        draw(a, ctx, t: t)
+        forcedHabit = nil
+        placed.append(a)
+    }
+    if local > 0.5 { drawFX([(placed[1], placed[2])], ctx, t: t) }
+    if local > 0.35 { ringsTitle(ctx, center: CGPoint(x: Double(W) / 2, y: 760), scale: backOut((local - 0.35) / 0.4) * 0.8) }
+    caption("Have fun. Keep track.", ctx, local: local, start: 0.6, y: 520, size: 56)
+    caption(ringsTagline, ctx, local: local, start: 0.8, y: 462, size: 34, color: NSColor(white: 0.85, alpha: 1), weight: .bold)
+    let ff: Double = easeOut((local - 0.9) / 0.3)
+    if ff > 0, let icon = appIcon {
+        ctx.setFillColor(CGColor(red: 0.04, green: 0.05, blue: 0.09, alpha: CGFloat(0.8 * ff))); ctx.fill(CGRect(x: 0, y: 0, width: W, height: 170))
+        ctx.saveGState(); ctx.setAlpha(CGFloat(ff)); ctx.interpolationQuality = .high
+        ctx.draw(icon, in: CGRect(x: 580, y: 20, width: 130, height: 130))
+        ctx.restoreGState()
+        text("github.com/rodclemen/clawd-clash", ctx, x: 740, y: 60, size: 44, weight: .bold, alpha: ff)
+    }
+}
+
+let ringsShots: [Shot] = [
+    Shot(name: "meanwhile", start: 0, end: 3.5, into: .cut) { ctx, local, t in
+        ctx.setFillColor(CGColor(gray: 0, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
+        let line = "MEANWHILE, AT \(Location.bagEnd.name.uppercased())..."
+        let n = Int(clamp((local - 0.3) / 1.6) * Double(line.count))
+        let a: Double = 1 - clamp((local - 3.0) / 0.4)
+        if n > 0 { captionBox(String(line.prefix(n)), ctx, center: CGPoint(x: Double(W) / 2, y: Double(H) / 2), size: 54, alpha: a) }
+    },
+    // Bag Endpoint, as the films open in the Shire: Gandclawd arrives, Bilbyte and Frodough by the round door.
+    Shot(name: "bagend", start: 3.5, end: 8.0, into: .cut) { ctx, local, t in ringsBagEnd(ctx, local: local, t: t) },
+    // One of Gandclawd's rockets (the app's fireworks trip) bursts into a dragon, and in its sparks the One Ring falls,
+    // lands, its letters burn, and it opens out into the title.
+    Shot(name: "ring", start: 8.0, end: 13.5, into: .middleEarth(RingsTrip(kind: .fireworks))) { ctx, local, t in ringsOpening(ctx, local: local, t: t) },
+    // The Mines of Mori-ah: the bridge, the Ballrog, YOU SHALL NOT PASS!
+    Shot(name: "bridge", start: 13.5, end: 22.0, into: .cut) { ctx, local, t in ringsBridge(ctx, local: local, t: t) },
+    // The ridge at dusk: the Fellowship walks, Gladriel at the end.
+    Shot(name: "fellowship", start: 22.0, end: 27.0, into: .middleEarth(RingsTrip(kind: .eye))) { ctx, local, t in
+        ringsFellowship(ctx, local: local, t: t)
+    },
+    // Four panels, four signature moves.
+    Shot(name: "moves", start: 27.0, end: 32.0, into: .cut) { ctx, local, t in ringsMoves(ctx, local: local, t: t) },
+    Shot(name: "hook", start: 32.0, end: 36.0) { ctx, local, t in
+        let zoom: Double = 1 + 0.03 * local
+        ctx.saveGState()
+        ctx.translateBy(x: Double(W) / 2, y: Double(H) / 2); ctx.scaleBy(x: zoom, y: zoom); ctx.translateBy(x: -Double(W) / 2, y: -Double(H) / 2)
+        desktop(ctx, dim: 0)
+        ctx.restoreGState()
+        caption("Three AIs. Nine agents. One very confused hobbit.", ctx, local: local, start: 0.05, y: 860, size: 60)
+        caption("Sound familiar?", ctx, local: local, start: 0.7, y: 120, size: 76, color: yellow)
+    },
+    Shot(name: "desktop", start: 36.0, end: 40.6) { ctx, local, t in
+        brawl(ctx, .middleEarth, local: local, t: t, drop: true, chrome: false)
+        badge("DESKTOP MODE", ctx, alpha: clamp((local - 0.2) / 0.3))
+        caption("Now they're a pixel-art \(Universe.middleEarth.title) battle", ctx, local: local, start: 0.35, y: 900)
+        caption("along the bottom of your screen. They fight while they work.", ctx, local: local, start: 0.6, y: 830, size: 40, color: yellow, weight: .bold)
+    },
+    Shot(name: "status", start: 40.6, end: 44.8) { ctx, local, t in
+        let cast: [Cast] = [.hero(RingsHero.frodo), .villain(RingsVillain.gollum), .villain(RingsVillain.saruman), .hero(RingsHero.pippin)]
+        statusOf(ctx, local: local, t: t, cast: cast, badgeText: Universe.middleEarth.title.uppercased(),
+                 aside: "(\(cast[3].name): second breakfast, then a nap.)")
+    },
+    Shot(name: "agents", start: 44.8, end: 48.8) { ctx, local, t in ringsAgents(ctx, local: local, t: t) },
+    Shot(name: "window", start: 48.8, end: 53.6) { ctx, local, t in
+        windowShot(ctx, .middleEarth, local: local, t: t, rise: true, needsAt: 2.5, at: .prancingPony)
+        badge("WINDOW MODE", ctx, alpha: clamp((local - 0.2) / 0.3))
+        caption("Prefer a window? Step into \(Location.prancingPony.name).", ctx, local: local, start: 0.1, y: 955, size: 56)
+        caption("A live card per session: what it's doing, your last prompt, every agent.", ctx, local: local, start: 0.4, y: 890, size: 32, color: yellow, weight: .bold)
+    },
+    Shot(name: "ais", start: 53.6, end: 58.0) { ctx, local, t in
+        let cast: [Cast] = [.hero(RingsHero.gandalf), .hero(RingsHero.aragorn), .villain(RingsVillain.sauron), .villain(RingsVillain.saruman),
+                            .villain(RingsVillain.witchKing), .villain(RingsVillain.shelob), .villain(RingsVillain.orc)]
+        everyAI(ctx, local: local, t: t, cast: cast)
+    },
+    // The end card: Mount Doomscroll, the Great Eagle flies through, the title lands.
+    Shot(name: "endcard", start: 58.0, end: 62.5) { ctx, local, t in ringsEndcard(ctx, local: local, t: t) },
+]
+
+let ringsBeats: [(key: Double, beat: Beat)] = [
+    (2.4, ("MEANWHILE...", "Black screen. A yellow comic caption types itself out.",
+           "“MEANWHILE, AT \(Location.bagEnd.name.uppercased())...”", "typewriter keys, a bell")),
+    (5.7, ("BAG ENDPOINT", "\(Location.bagEnd.name), as the films open in the Shire: \(ringsName(RingsHero.gandalf)) walks up the lane; \(ringsName(RingsHero.frodo)) hops to greet him, \(ringsName(RingsHero.bilbo)) by the round door unrolls his contract.",
+           "(none)", "birdsong, the Shire tune on a whistle, footsteps")),
+    (8.0, ("FIREWORKS", "The app's fireworks trip: the Shire dims to night, one of \(ringsName(RingsHero.gandalf))'s rockets shoots up and bursts into a fiery dragon that sweeps the place away.",
+           "(none)", "a rising whistle, the bang, crackling sparks")),
+    (11.7, ("THE RING", "In the falling sparks, embers in the dark. The One Ring falls in slow motion, spinning, and lands with a chime; fire-letters wake along its band, which opens out into the burning title.",
+           "CLAWD OF THE RINGS", "a low drone, a chime, a fire whoosh, the big hit, the tune begins")),
+    (18.0, ("THE BRIDGE", "\(Location.moria.name), drums in the deep: \(ringsName(RingsVillain.balrog)) rises and the Fellowship runs. \(ringsName(RingsHero.gandalf)) slams his staff, the span falls, the whip drags him to the edge; he hangs, then drops.",
+            "“YOU SHALL NOT PASS!”  ·  “Fly, you fools!”", "doom-drums, a roar, the staff's boom, stone cracking, a falling sweep")),
+    (25.5, ("THE FELLOWSHIP", "Through the Eye: a ridge at dusk. Eight walkers march single file, dark against the sky, then lit, each name popping up as they pass; \(ringsName(RingsHero.galadriel)) appears at the far end and raises her light.",
+            "the walkers' name tags", "a heroic swell, footsteps, the tune again")),
+    (29.1, ("SIGNATURE MOVES", "Four comic panels: \(ringsName(RingsHero.frodo)) vanishes; \(ringsName(RingsHero.boromir)) holds forth; \(ringsName(RingsVillain.gollum)) argues with himself; \(ringsName(RingsHero.legolas)) surfs a shield.",
+            "“Everyone gets a signature move.”  →  “Some are more precious than others.”  ·  “One does not simply push to main.”", "a shimmer, a hiss, a whoosh")),
+    (33.5, ("THE HOOK", "Three busy terminals, slow push-in.", "“Three AIs. Nine agents. One very confused hobbit.”  →  “Sound familiar?”", "keyboard clicks")),
+    (38.3, ("DESKTOP MODE", "\(ringsName(RingsHero.legolas)) against \(ringsName(RingsVillain.orc)), \(ringsName(RingsHero.gimli)) against \(ringsName(RingsVillain.uruk)).",
+            "DESKTOP MODE  ·  “Now they're a pixel-art \(Universe.middleEarth.title) battle along the bottom of your screen. They fight while they work.”", "clangs, arrows")),
+    (42.9, ("AT A GLANCE", "\(ringsName(RingsHero.frodo)) working, \(ringsName(RingsVillain.gollum)) thinking, \(ringsName(RingsVillain.saruman))'s jumping NEEDS YOU, \(ringsName(RingsHero.pippin)) sat down napping.",
+            "“All fun and games, and you still see everything.”  ·  “(\(ringsName(RingsHero.pippin)): second breakfast, then a nap.)”", "blips, alert beeps")),
+    (47.1, ("SUBAGENTS", "\(ringsName(RingsHero.gandalf)) stands guard; \(ringsName(RingsHero.pippin)), \(ringsName(RingsHero.gimli)), \(ringsName(RingsHero.legolas)) and \(ringsName(RingsHero.sam)) arrive with their jobs on their labels; the Great Eagle swoops down and carries \(ringsName(RingsHero.sam)) home.",
+            "“Every subagent joins the Fellowship. Some fly home.”", "footsteps, an eagle's cry")),
+    (51.7, ("WINDOW MODE", "The window in \(Location.prancingPony.name): \(ringsName(RingsHero.aragorn)) against \(ringsName(RingsVillain.witchKing)), live cards tick, then the Codex card flips to NEEDS YOU.",
+            "WINDOW MODE  ·  “Prefer a window? Step into \(Location.prancingPony.name).”", "clashes, a ping")),
+    (56.0, ("EVERY AI", "Seven sessions, one per AI outline: \(ringsName(RingsHero.gandalf)) (Claude Code, a head taller) and \(ringsName(RingsHero.aragorn)) against \(ringsName(RingsVillain.sauron)), \(ringsName(RingsVillain.saruman)), \(ringsName(RingsVillain.witchKing)) and \(ringsName(RingsVillain.shelob)); \(ringsName(RingsVillain.orc)) in pi's pink.",
+            "BRING YOUR OWN AI*  ·  “One AI plays everyone. Run two and they pick sides.”  ·  *README for the full list", "magic crackle")),
+    (61.0, ("END CARD", "\(Location.mountDoom.name) under the Eye: the Great Eagle flies across, the crew lines up, CLAWD OF THE RINGS lands, then the icon and the URL; \(ringsName(RingsVillain.shelob)) climbs her thread up out of sight.",
+            "CLAWD OF THE RINGS  ·  “Have fun. Keep track.”  ·  “\(ringsTagline)”  ·  github.com/rodclemen/clawd-clash", "an eagle's cry, the closing chord")),
+]
+
+/// The Shire tune: an original jig-like line in D major, 3/4, on a tin-whistle triangle, with a light square
+/// countermelody an octave down. `bars` of its 8.
+func shireTune(_ m: Mix, at t0: Double, bars: Int, vol: Double = 0.05) {
+    let beat: Double = 0.2
+    let tune: [[(Int, Double)]] = [[(74, 1), (78, 1), (76, 1)], [(74, 2), (69, 1)], [(71, 1), (74, 1), (76, 1)], [(78, 2), (76, 1)],
+                                   [(79, 1), (78, 1), (76, 1)], [(74, 1), (71, 1), (69, 1)], [(71, 1), (76, 1), (73, 1)], [(74, 3)]]
+    let counter: [Int] = [62, 66, 67, 66, 71, 62, 64, 62]
+    for b in 0..<min(bars, tune.count) {
+        var tt: Double = t0 + Double(b) * 3 * beat
+        m.tone(tt, 3 * beat * 0.95, midi(counter[b]), wave: .square(0.25), vol: vol * 0.4, attack: 0.02, release: 0.06)
+        for (n, d) in tune[b] {
+            m.tone(tt, d * beat * 0.9, midi(n), wave: .triangle, vol: vol, attack: 0.01, release: 0.04, vibrato: 0.008)
+            tt += d * beat
+        }
+    }
+}
+
+// Clawd of the Rings sound effects
+extension Mix {
+    func eagleCry(_ t: Double, vol: Double = 0.12) {               // the Great Eagle: a squeal down, then up
+        tone(t, 0.35, 2400, to: 1600, wave: .square(0.25), vol: vol, attack: 0.02, release: 0.05, vibrato: 0.02)
+        tone(t + 0.35, 0.25, 1600, to: 2000, wave: .square(0.25), vol: vol * 0.8, attack: 0.01, release: 0.12, vibrato: 0.02)
+        noise(t, 0.6, vol: vol * 0.25, cutoff: 0.8, attack: 0.02, release: 0.2, highpass: true, seed: Int(t * 53))
+    }
+    func crack(_ t: Double, vol: Double = 0.2) {                   // stone giving way
+        noise(t, 0.18, vol: vol, cutoff: 0.6, decay: 0.05, seed: Int(t * 71))
+        noise(t + 0.06, 0.12, vol: vol * 0.7, cutoff: 0.9, decay: 0.03, highpass: true, seed: Int(t * 73))
+        boom(t, vol: vol * 0.8)
+    }
+}
+
+/// The Clawd of the Rings trailer's score and effects.
+func ringsSound(_ m: Mix) {
+    let mw = start("meanwhile")
+    let keys = "MEANWHILE, AT \(Location.bagEnd.name.uppercased())...".count
+    for i in 0..<keys { m.type(mw + 0.3 + Double(i) / Double(keys) * 1.6 + noise(i) * 0.02, vol: 0.18 + noise(i + 50) * 0.08) }
+    m.ding(mw + 2.0)
+    m.tone(mw + 0.2, 3.0, midi(33), wave: .sine, vol: 0.05, attack: 1.0, release: 0.8)
+    // Bag Endpoint: birdsong, the Shire tune on a whistle, Gandclawd's footsteps up the lane
+    let be = start("bagend")
+    for i in 0..<9 {
+        let c: Double = be + 0.2 + Double(i) * 0.37 + noise(i + 70) * 0.12
+        m.tone(c, 0.07, 2500 + noise(i) * 700, to: 3300 + noise(i + 9) * 600, wave: .sine, vol: 0.02, release: 0.03)
+        if i % 3 == 0 { m.tone(c + 0.1, 0.06, 3100, to: 2700, wave: .sine, vol: 0.015, release: 0.03) }
+    }
+    shireTune(m, at: be + 0.3, bars: 4, vol: 0.035)
+    for k in 0..<7 { m.step(be + ringsGandalfWalk.from + Double(k) * 0.26, vol: 0.05) }
+    // the ring: a low drone, the chime as it lands, a fire whoosh as the letters burn, the hit on the title
+    let rg = start("ring")
+    m.tone(rg, 5.6, midi(33), wave: .sine, vol: 0.12, attack: 0.8, release: 0.8)
+    m.tone(rg, 5.6, midi(40), wave: .saw, vol: 0.018, attack: 1.5, release: 0.8)
+    m.ding(rg + 2.0, vol: 0.14); m.ding(rg + 2.14, vol: 0.05)
+    m.whoosh(rg + 2.5, 1.0, vol: 0.14)
+    m.boom(rg + 3.4, vol: 0.5); m.noise(rg + 3.4, 1.4, vol: 0.1, cutoff: 0.9, decay: 0.5, highpass: true, seed: 21)
+    for n in [50, 57, 62, 66] { m.tone(rg + 3.4, 1.1, midi(n), wave: .saw, vol: 0.04, release: 0.5, decay: 0.7) }
+    shireTune(m, at: rg + 2.0, bars: 4, vol: 0.04)
+    // the bridge: doom-drums, a low drone, the Ballrog's roar, the staff, the stone giving way, the fall
+    let br = start("bridge")
+    let slam: Double = br + 3.5 + (Cast.hero(RingsHero.gandalf).signatureLength ?? 3.0) * 0.29
+    var d: Double = 0
+    while br + d < slam { m.boom(br + d, vol: 0.3); m.snare(br + d + 0.3, vol: 0.05); d += 0.6 }
+    m.tone(br, 8.6, midi(26), wave: .saw, vol: 0.03, attack: 1.0, release: 1.0)
+    m.tone(br, 8.6, midi(33), wave: .saw, vol: 0.02, attack: 1.0, release: 1.0)
+    m.roar(br + 2.0, 1.8, vol: 0.3)
+    m.crackle(br + 2.0, 2.4, vol: 0.03)
+    m.boom(slam, vol: 0.6); m.noise(slam, 1.2, vol: 0.18, cutoff: 1.0, decay: 0.35, seed: 31)
+    m.crack(br + 4.5, vol: 0.25); m.crack(br + 4.75, vol: 0.15)
+    m.tone(br + 4.6, 1.6, 400, to: 60, wave: .saw, vol: 0.06, release: 0.4)
+    m.roar(br + 4.8, 1.4, vol: 0.16)
+    m.whoosh(br + 5.0, 0.35, vol: 0.12)
+    m.tone(br + 8.0, 0.5, 300, to: 90, wave: .sine, vol: 0.06, release: 0.2)
+    // the Fellowship: a heroic swell of stacked fifths, footsteps, the tune again, Gladriel's light
+    let fs = start("fellowship")
+    let swell: [(Double, [Int])] = [(0.0, [50, 57]), (1.25, [55, 62]), (2.5, [57, 64]), (3.75, [50, 57, 62])]
+    for (s, chord) in swell {
+        for n in chord { m.tone(fs + s, 1.4, midi(n), wave: .saw, vol: 0.03, attack: 0.5, release: 0.4) }
+        m.tone(fs + s, 1.4, midi(chord[0] - 12), wave: .sine, vol: 0.12, attack: 0.3, release: 0.4)
+    }
+    shireTune(m, at: fs + 0.2, bars: 8)
+    var st: Double = 0
+    while st < 5.0 { m.step(fs + st, vol: 0.05); st += 0.26 }
+    m.shimmer(fs + 3.0, 1.8, vol: 0.025)
+    // the moves: the panels slam in, then a shimmer, a hiss and a whoosh
+    let mv = start("moves")
+    m.boom(mv + 0.02, vol: 0.2); m.snare(mv + 0.02, vol: 0.1)
+    m.shimmer(mv + 0.3, 1.5, vol: 0.035)
+    m.noise(mv + 0.8, 0.9, vol: 0.06, cutoff: 0.9, attack: 0.05, release: 0.3, highpass: true, seed: 61)
+    m.whoosh(mv + 1.5, 0.9, vol: 0.16)
+    m.pop(mv + 0.1, step: 0); m.pop(mv + 2.75, step: 2)
+    // the app shots: the shared groove, and each shot's effects
+    groove(m, from: start("hook"), to: end("ais"), fadeIn: 0.5)
+    let hook = start("hook")
+    for i in 0..<26 { m.click(hook + 0.2 + Double(i) * 0.13 + noise(i) * 0.06) }
+    let desk = start("desktop"), deskEnd = end("desktop") + 1.3
+    for (i, dt) in [0.0, 0.12, 0.24, 0.32].enumerated() { m.step(desk + dt + 0.3, vol: 0.1 + Double(i % 2) * 0.03) }
+    for t in clashTimes(desk + 0.45, deskEnd) { m.clang(t, vol: 0.08) }
+    for t in shotTimes(desk + 0.45, deskEnd, offset: 0) { m.thwip(t, vol: 0.05); m.clang(t + boltArrival * blasterPeriod, vol: 0.05) }
+    let sts = start("status")
+    for i in 0..<4 { m.pop(sts + 0.1 + Double(i) * 0.22, step: i) }
+    for k in 0..<5 { m.tone(sts + 1.2 + Double(k) * 0.62, 0.08, 1568, wave: .square(0.5), vol: 0.035, release: 0.03) }
+    let ag = start("agents")
+    for k in 0..<14 { m.step(ag + Double(k) * 0.125, vol: 0.06) }
+    m.whoosh(ag + 1.9, 0.6, vol: 0.1)
+    m.eagleCry(ag + 2.2)
+    let wi = start("window")
+    for t in clashTimes(wi, wi + 2.5) { m.clang(t, vol: 0.06) }
+    for k in [0.9, 1.8] { m.click(wi + k, vol: 0.06) }
+    m.ping(wi + 2.5)
+    let ais = start("ais")
+    for i in 0..<6 { m.pop(ais + 0.15 + Double(i) * 0.1, step: i % 4) }
+    m.crackle(ais + 0.4, end("ais") + 1.3 - ais - 0.4, vol: 0.045)
+    for s in shots { transitionSound(m, s) }
+    // the end card: the Eagle's cry as it flies over, and a closing cadence home to D
+    let ec = start("endcard")
+    m.eagleCry(ec + 0.4, vol: 0.1)
+    let cadence: [(Double, Double, [Int], Int)] = [(0.0, 0.7, [55, 59, 62, 67], 83), (0.7, 0.7, [57, 61, 64, 69], 85), (1.4, 2.8, [50, 54, 57, 62], 86)]
+    for (s, dur, chord, lead) in cadence {
+        let rel: Double = dur > 1 ? 1.0 : 0.1
+        for n in chord { m.tone(ec + s, dur, midi(n), wave: .saw, vol: 0.045, attack: 0.02, release: rel) }
+        m.tone(ec + s, dur, midi(lead), wave: .square(0.5), vol: 0.06, release: rel, vibrato: 0.006)
+        m.tone(ec + s, dur, midi(chord[0] - 12), wave: .sine, vol: 0.2, release: rel)
+    }
+    m.boom(ec + 0.35, vol: 0.45)
+    m.boom(ec + 1.4, vol: 0.3)
+    m.crackle(ec + 0.5, duration - ec - 0.5, vol: 0.02)
 }
 
 // MARK: Which video
@@ -4359,13 +5513,14 @@ let shots: [Shot] = {
     case "files": return filesShots
     case "clawdberg": return clawdbergShots
     case "royale": return royaleShots
+    case "clawdoftherings": return ringsShots
     default: return promoShots
     }
 }()
 let overlays: [Overlay] = reel == "promo" || reel == "full" ? promoOverlays : reel == "royale" ? royaleOverlays : []
 var duration: Double { shots.last!.end }
 /// The soft promo wipe's length: the single-universe trailers keep their slower one.
-var softWipe: Double { ["starclawds", "marvelous", "detective", "doctor", "files", "clawdberg"].contains(reel) ? 2.7 : 2.0 }
+var softWipe: Double { ["starclawds", "marvelous", "detective", "doctor", "files", "clawdberg", "clawdoftherings"].contains(reel) ? 2.7 : 2.0 }
 
 // MARK: Frame
 
@@ -4407,9 +5562,9 @@ func frame(_ t: Double) -> NSBitmapImageRep {
     ctx.interpolationQuality = .none
     if t < 0.5 / fps {                                   // the very first frame is the poster GitHub shows before play
         let poster = reel == "bloopers" ? (shots[0], 2.0)
-            : ["starclawds", "marvelous", "detective", "doctor", "files", "clawdberg"].contains(reel) ? (shots.first { $0.name == "endcard" }!, 2.5)
+            : ["starclawds", "marvelous", "detective", "doctor", "files", "clawdberg", "clawdoftherings"].contains(reel) ? (shots.first { $0.name == "endcard" }!, 2.5)
             : reel == "royale" ? (shots.first { $0.name == "collide" }!, 2.2)
-            : (shots.first { $0.name == "worlds" }!, 4.0)
+            : (shots.first { $0.name == "worlds" }!, 9.0)
         renderShot(poster.0, at: poster.0.start + poster.1, into: ctx)
         NSGraphicsContext.current = nil
         return rep
@@ -4431,7 +5586,7 @@ func frame(_ t: Double) -> NSBitmapImageRep {
             ctx.addPath(Wipe.remaining(k, clock: clock, in: r)); ctx.clip()
             renderShot(prev, at: t, into: ctx)
             ctx.restoreGState()
-        case .marvel, .dc:
+        case .marvel, .dc, .middleEarth, .trip:
             let old = shotImage { renderShot(prev, at: t, into: $0) }, new = shotImage { renderShot(cur, at: t, into: $0) }
             let r = cur.inWindow ? windowRect : fullRect
             if cur.inWindow { renderShot(cur, at: t, into: ctx) }
@@ -4444,6 +5599,8 @@ func frame(_ t: Double) -> NSBitmapImageRep {
                 }
                 if case .marvel(let trip) = cur.into { trip.draw(ctx, old: o, new: n, k: k, in: r) }
                 if case .dc(let trip) = cur.into { trip.draw(ctx, old: o, new: n, k: k, in: r) }
+                if case .middleEarth(let trip) = cur.into { trip.draw(ctx, old: o, new: n, k: k, in: r) }
+                if case .trip(let trip) = cur.into { trip.draw(ctx, old: o, new: n, k: k, in: r) }
                 if cur.inWindow { ctx.restoreGState() }
             }
         case .cut:
@@ -4470,30 +5627,37 @@ func save(_ rep: NSBitmapImageRep, _ path: String) {
 
 typealias Beat = (title: String, action: String, onScreen: String, sound: String)
 
-let promoBeats: [(key: Double, beat: Beat)] = [
+/// "a, b, c and d".
+func listed(_ items: [String]) -> String { items.count < 2 ? items.joined() : items.dropLast().joined(separator: ", ") + " and " + items.last! }
+var legendNames: String { listed(Universe.offered.map { Theme.of($0).legend.name }) }
+
+var promoBeats: [(key: Double, beat: Beat)] { [
     (2.4, ("COLD OPEN", "Black screen. A yellow comic caption types itself out.", "“MEANWHILE, IN A TERMINAL NEAR YOU...”", "typewriter keys, a bell")),
-    (7.0, ("THREE WORLDS", "Hard cut to the icon's three slanted panels, each its universe's place and arch-enemies. CLAWD CLASH slams in across all three, coloured by each panel and cut by the gutters, like the icon.", "CLAWD CLASH", "three fights at once, then the big hit")),
-    (11.5, ("THE HOOK", "Three busy terminals (Claude, Codex, Gemini), slow push-in.", "“Three AIs. Nine agents. One very confused human.”  →  “Sound familiar?”", "keyboard clicks")),
-    (17.0, ("PICK YOUR UNIVERSE", "The pop-art page from the social preview: a red sunburst centre panel, and round it a tilted panel per universe slamming in one after another, each a face-off with its name in a caption box and a sound word (VWOOM!, KRAKOOM!, BLAM!, VWORP!, ZZZT!, CRACK!). The layout grows with every universe.", "ONE APP.  ·  PICK YOUR UNIVERSE", "a slam per panel")),
-    (24.0, ("STAR CLAWDS", "An edge wipe into space: the camera tilts down to the desert planet, a blockade runner flees under laser fire, and the giant wedge ship slides in overhead until its engines fill the top of the frame.", "STAR CLAWDS caption  ·  “Laser swords, blasters and one very, very big ship.”", "a dark pulse, turbolasers, the rumble")),
-    (31.2, ("MARVELOUS CLAWDS", "A KAPOW! burst into the Battle of New York: a space whale noses out of the portal and dives at us, Iron Clawd rockets up firing repulsors.", "MARVELOUS CLAWDS caption  ·  “Shields, hammers, webs and a giant space whale.”", "the portal hum, roars, repulsors")),
-    (38.2, ("DETECTIVE CLAWDS", "The Night Beacon transition into Megalopolis: a horned kaiju stomps in, roars, and Superb-Man hits it with heat vision.", "DETECTIVE CLAWDS caption  ·  “Capes, power rings and a horned kaiju to deal with.”", "stomps, two roars, heat vision")),
-    (44.5, ("AT A GLANCE (MARVELOUS CLAWDS)", "A halftone print-in brings the status line-up: Thorr working, Lokee thinking, Ultraton's jumping NEEDS YOU, Thanoz sat down napping.", "“All fun and games, and you still see everything.”  ·  “(Thanoz sits down when the job's done. Relatable.)”", "blips, alert beeps")),
-    (49.0, ("SUBAGENTS (DETECTIVE CLAWDS)", "A grapnel yanks the panel away: agents arrive with their jobs on their labels.", "“Every subagent reports for duty.”  ·  “Its job is right there on its label. No more guessing.”", "footsteps, a bark")),
-    (54.5, ("WINDOW (STAR CLAWDS)", "A clock wipe opens on the window in the Mos Easy Cantina; live cards tick, then Luke's Codex card flips to NEEDS YOU.", "“Prefer a window? Grab the popcorn.”", "a ping")),
-    (59.6, ("RANDOM", "The window changes universe on its own, three times in a row, each with that universe's transition, inside the window only.", "RANDOM · EVERY 5 MIN  ·  “Can't decide? Random switches the whole window to a new universe every few minutes.”", "the transitions' own sounds")),
-    (68.5, ("END CARD", "The app icon pops up over the three panels.", "“Have fun. Keep track.”  ·  “Free for macOS · github.com/rodclemen/clawd-clash”", "final sting")),
-]
+    (5.6, ("DOWN THE VORTEX", "Lightning, then down Doctor Clawd's time vortex. The police box and every universe's legend tumble out two at a time, from opposite sides, on their own curves and spins: \(legendNames).", "no text", "thunder, the title-sequence tune, whooshes")),
+    (11.0, ("CLAWD CLASH", "CLAWD CLASH flies up out of the eye of the vortex, faster and faster, and lands with a bang in the middle of the screen: a flash, the frame shakes.", "CLAWD CLASH", "a rising sweep, the big hit and the fanfare")),
+    (14.5, ("THE HOOK", "Three busy terminals (Claude, Codex, Gemini), slow push-in.", "“Three AIs. Nine agents. One very confused human.”  →  “Sound familiar?”", "keyboard clicks")),
+    (18.2, ("CHOOSE YOUR UNIVERSE", "Two heroes from every universe run along the bottom of the desktop, and CHOOSE YOUR UNIVERSE pops up over them.", "CHOOSE YOUR UNIVERSE", "running feet, a hit")),
+    (16.5 + pageArrive(0) + 0.5, ("READING THE PAGE", "A comic page slams down over them, its panels split by slanted gutters that never line up. The camera swoops into the first panel and reads them one by one, straightening each up as it fills the screen with that universe's big moment.", "the universe's name on each panel  ·  \(Universe.offered.map { setPiece($0).word }.joined(separator: "  "))", "a whoosh and a hit per panel, a taste of each set piece")),
+    (16.5 + (pageTurns.first ?? pageArrive(3)) + pageTurn * 0.3, ("PANEL BY PANEL", "On through the page in reading order, each with its sound word popping as the camera arrives. Back on the whole page, it curls over like a comic book's onto the next: \(listed(comicPages.map { listed($0.map(\.u.title)) }.map { "(\($0))" })).", "the panel's name and sound word", "each universe's own sound")),
+    (16.5 + pageBack + 1.0, ("PICK YOURS", "The camera pulls back to the whole page, every universe's moment still playing in its panel.", "“ONE APP. \(universeCount()) UNIVERSES. PICK YOURS.”", "a ping")),
+    (afterChoose + 2.5, ("AT A GLANCE (THE CLAWD FILES)", "A case file opens on the status line-up: \(Cast.hero(FilesHero.foxClawder).name) working, a Grey thinking, the Flukeman's jumping NEEDS YOU, \(Cast.hero(FilesHero.skinnard).name) sat down napping.", "“All fun and games, and you still see everything.”", "blips, alert beeps")),
+    (afterChoose + 7.0, ("SUBAGENTS (STEVIE CLAWDBERG)", "The treasure map routes us in: \(Cast.hero(ClawdbergHero.mikeyWaltz).name) stands guard, the Goonies walk in with their jobs on their labels.", "“Every subagent gets to be a Goonie.”", "footsteps")),
+    (afterChoose + 12.3, ("WINDOW (CLAWD OF THE RINGS)", "The map of Middle-earth walks us to the window in \(Location.prancingPony.name): live cards tick, then a Codex card flips to NEEDS YOU.", "“Prefer a window? Step into \(Location.prancingPony.name).”", "a ping")),
+    (afterChoose + 18.2, ("RANDOM", "The window changes universe on its own, twice, each with that universe's transition, inside the window only: down the vortex into Doctor Clawd, then a Star Clawds wipe.", "RANDOM · EVERY 5 MIN  ·  “Can't decide? Random switches the whole window to a new universe every few minutes.”", "the transitions' own sounds")),
+    (afterChoose + 23.0, ("CLAWD ROYALE", "Halftone blue: every universe's menu bar emblem flies in from round the frame and they slam together, KRA-KOOM!, and CLAWD ROYALE stamps in.", "KRA-KOOM!  ·  CLAWD ROYALE  ·  “UNIVERSES COLLIDE.”", "whooshes, the big hit, a fanfare")),
+    (afterChoose + 26.4, ("THE CROSSOVER", "A FWIP! web burst into \(Location.cantina.name): \(Cast.hero(FilesHero.foxClawder).name) against a Dalick, Batclawd duelling Darth Vapor, \(Cast.hero(RingsHero.gandalf).name) holding off Thanoz' gauntlet; Spider-Clawd swings over everyone as E.Clawd's bike flies the other way.", "CLAWD ROYALE  ·  “Nobody asked who'd win. We're answering anyway.”  ·  “Settings → Universe → Clawd Royale. A new place every ten minutes.”", "sabers, blasters, web thwips, a whoosh")),
+    (afterChoose + 31.5, ("END CARD", "The icon lands over its dimmed panels, and every universe's emblem pops in under it.", "“Have fun. Keep track.”  ·  “Pick a universe, or let them collide · free for macOS · github.com/rodclemen/clawd-clash”", "a heroic cadence")),
+] }
+
 
 let blooperBeats: [(key: Double, beat: Beat)] = [
     (1.8, ("BLOOPERS", "A record scratch; a clapperboard slams down over red halftone: BLOOPERS, take 1, and snaps.", "BLOOPERS", "record scratch, slate clack, a goofier tune starts")),
-    (5.0, ("TAKE 3", "The Bulk wanders into the Mos Easy Cantina. The band freezes mid-note. Then CUT! from off screen and the slate snaps: TAKE 3.", "“…wrong set?”", "the band stops dead")),
-    (12.2, ("TAKE 7", "Darth Vapor turns dramatically to Spider-Clawd on the Doom Moon.", "“Spider-Clawd… I am your… landlord.”  ·  “Pretty sure it's an aunt thing.”", "a dramatic sting, then CUT!")),
-    (17.6, ("TAKE 12", "Batclawd lights the Night Beacon over the Doom Moon. Two Stormtroupers open fire on it and miss every shot.", "“You know it's a light, right?”", "blasters, all missing")),
-    (23.4, ("TAKE 15", "The Jester Card transition spins in and flips: Thanoz is on the back, on Titan. The Jester peeks into the shot with a ?.", "no text", "the card flip, a slide whistle")),
-    (28.4, ("TAKE 21", "Yodle calmly floats Thorr's hammer up off the floor. Thorr stares.", "“…”  ·  “Worthy, hmm. Heavy, it is not.”", "a shimmer, then CUT!")),
-    (33.2, ("TAKE 22", "The Millennial Falcon jumps to hyperspace in a blink; Superb-Man is left behind in the star streaks.", "“Hey! Wait up!”", "the jump, a whoosh")),
-    (38.3, ("THAT'S A WRAP", "Everyone crammed into one frame at Clawdvengers Tower, Deadpond leaning into the camera. Then the whole cast waves.", "“Separate universes, they said. Totally under control.”  ·  “CUT! THAT'S A WRAP!”", "a final sting and applause")),
+    (6.9, ("TAKE 7", "The TARDIS wheezes into the Mos Easy Cantina and Doctor Ten steps out, face to face with Darth Vapor. He ducks back in, the box tries to leave, sputters and stays put; he steps out again, sheepish.", "“Ah. Wrong universe.”  ·  “…Is that a phone box?”  ·  “…Handbrake.”", "the wheeze, a sputter and a clunk, then CUT!")),
+    (14.8, ("TAKE 12", "Batclawd lights the Night Beacon over the Doom Moon. Two Stormtroupers open fire on it and miss every shot.", "“You know it's a light, right?”", "blasters, all missing")),
+    (20.6, ("TAKE 15", "The Jester Card transition spins in and flips: Thanoz is on the back, on Titan. The Jester peeks into the shot with a ?.", "no text", "the card flip, a slide whistle")),
+    (25.6, ("TAKE 21", "Yodle calmly floats Thorr's hammer up off the floor. Thorr stares.", "“…”  ·  “Worthy, hmm. Heavy, it is not.”", "a shimmer, then CUT!")),
+    (30.4, ("TAKE 22", "The Millennial Falcon jumps to hyperspace in a blink; Superb-Man is left behind in the star streaks.", "“Hey! Wait up!”", "the jump, a whoosh")),
+    (34.6, ("THAT'S A WRAP", "Everyone crammed into one frame at Clawdvengers Tower, Doctor Ten, Rose Tiler and a Dalick among them. Spider-Clawd swings across upside down as Superb-Man flies the other way; Deadpond, Star-Laird and Harold the Duck moonwalk. Then the whole cast waves.", "“Separate universes, they said. Totally under control.”  ·  “CUT! THAT'S A WRAP!”", "web thwips, a whoosh, a final sting and applause")),
 ]
 
 func storyboard(_ title: String, _ beats: [(key: Double, beat: Beat)], shift: Double = 0) -> NSBitmapImageRep {
@@ -4824,6 +5988,19 @@ func transitionSound(_ m: Mix, _ s: Shot) {
         case .jokerCard: m.flip(t0 + d * 0.2, vol: 0.1); m.slideWhistle(t0 + d * 0.45, up: true)
         default: m.whoosh(s.start, d, vol: 0.08)
         }
+    case .middleEarth(let trip):
+        switch trip.kind {
+        case .fireworks:   // the rocket whistling up, the bang, and the sparks crackling as they fall
+            m.tone(t0 + d * 0.04, d * 0.24, 700, to: 2400, wave: .sine, vol: 0.05, attack: 0.05, release: 0.05)
+            m.noise(t0 + d * 0.04, d * 0.24, vol: 0.04, cutoff: 0.8, attack: 0.05, release: 0.05, highpass: true, seed: 71)
+            m.boom(t0 + d * 0.28, vol: 0.4); m.noise(t0 + d * 0.28, 0.8, vol: 0.12, cutoff: 0.9, decay: 0.3, highpass: true, seed: 72)
+            m.crackle(t0 + d * 0.32, d * 0.6, vol: 0.04)
+        default:
+            m.tone(t0 + d * 0.3, d * 0.5, 55, to: 40, wave: .saw, vol: 0.06, attack: 0.1, release: 0.3); m.boom(t0 + d * 0.55, vol: 0.18)
+        }
+    case .trip(let trip):
+        if case .doctor(let dt) = trip, dt.kind == .dematerialise { m.wheeze(t0 + d * 0.05, cycles: Int(d / 0.62), vol: 0.1) }
+        else { m.whoosh(s.start, d, vol: 0.12) }
     }
 }
 
@@ -4836,15 +6013,15 @@ func promoSound(_ m: Mix) {
     let mw = start("meanwhile")
     for i in 0..<35 { m.type(mw + 0.3 + Double(i) / 35 * 1.6 + noise(i) * 0.02, vol: 0.18 + noise(i + 50) * 0.08) }
     m.ding(mw + 2.0)
-    m.tone(mw + 0.2, 3.0, midi(33), wave: .sine, vol: 0.05, attack: 1.0, release: 0.8)
+    m.tone(mw + 0.2, 2.8, midi(33), wave: .sine, vol: 0.05, attack: 1.0, release: 0.8)
 
-    // three worlds: all three fights at once, then CLAWD CLASH hits with an original fanfare
-    let w = start("worlds"), we = end("worlds")
-    m.hum(w, we - w, vol: 0.025)
-    for t in clashTimes(w, we) { m.clash(t, vol: 0.12) }
-    for t in shotTimes(w, we, offset: 0) { m.pew(t, vol: 0.07); m.clang(t + boltArrival * blasterPeriod, vol: 0.06) }
-    m.crackle(w, we - w, vol: 0.03)
-    let hit = w + 1.6
+    // the vortex: lightning, the title-sequence tune, everyone whooshing past, then CLAWD CLASH hits with an original fanfare
+    let w = start("worlds"), hit = w + introSlam
+    m.noise(w + 0.1, 0.25, vol: 0.22, cutoff: 0.9, decay: 0.06, highpass: true, seed: 10); m.boom(w + 0.15, vol: 0.3)
+    m.noise(w, hit - w, vol: 0.05, cutoff: 0.01, cutoffTo: 0.05, attack: 0.5, release: 0.2, seed: 3)
+    doctorTune(m, from: hit - 8.0, bars: 5)
+    for i in introTumblers.indices { let (s0, fly) = introTiming(i); m.whoosh(w + s0 + fly * 0.85, 0.9, vol: 0.11) }
+    m.tone(hit - 1.1, 1.1, 200, to: 2400, wave: .saw, vol: 0.05, attack: 0.5, release: 0.05)
     m.boom(hit, vol: 0.6); m.noise(hit, 1.8, vol: 0.13, cutoff: 0.9, decay: 0.55, highpass: true, seed: 3)
     for n in [48, 55, 60, 64, 67] { m.tone(hit, 1.4, midi(n), wave: .saw, vol: 0.05, release: 0.6, decay: 0.8) }
     for (s, d, n) in [(0.3, 0.25, 67), (0.6, 0.25, 72), (0.9, 0.6, 76), (1.6, 0.25, 74), (1.9, 0.25, 72), (2.2, 1.2, 79)] as [(Double, Double, Int)] {
@@ -4852,76 +6029,32 @@ func promoSound(_ m: Mix) {
         m.tone(hit + s, d, midi(n), wave: .saw, vol: 0.045, release: 0.08)
     }
 
-    // the groove: under the hook and the comic page, then again from the features to the end card
-    let g0 = start("hook"), beat = 0.5, bar = 2.0
-    let roots = [45, 41, 48, 43], triads = [[69, 72, 76], [65, 69, 72], [67, 72, 76], [67, 71, 74]]
-    let melodyA: [[(Int, Double)]] = [[(76, 1), (81, 1), (84, 0.5), (83, 0.5), (81, 1)], [(84, 1), (81, 1), (77, 0.5), (79, 0.5), (81, 1)],
-                                      [(79, 1), (76, 0.5), (79, 0.5), (84, 1), (83, 1)], [(86, 1), (83, 1), (79, 2)]]
-    let melodyB: [[(Int, Double)]] = [[(81, 0.5), (84, 0.5), (88, 1), (86, 0.5), (84, 0.5), (83, 1)], [(81, 1.5), (84, 0.5), (81, 1), (77, 1)],
-                                      [(79, 0.5), (81, 0.5), (79, 0.5), (76, 0.5), (79, 1), (84, 1)], [(83, 1), (86, 1), (91, 2)]]
-    let quiet = (start("showStarClaws"), start("status"))
-    let outer = m, gm = Mix(seconds: duration)
-    do {
-    let m = gm                                         // the groove goes on its own track, faded round the showcases
-    let bars = Int(((start("endcard") - g0) / bar).rounded())
-    for b in 0..<bars {
-        let t0 = g0 + Double(b) * bar, c = b % 4, full = b >= 2
-        if t0 > quiet.0 + 1.5 && t0 + bar < quiet.1 - 1.0 { continue }
-        for e in 0..<8 {
-            m.tone(t0 + Double(e) * beat / 2, beat / 2 * 0.9, midi(roots[c] - 12 + (e % 2) * 12), wave: .square(0.25), vol: full ? 0.075 : 0.05, release: 0.02)
-            m.hat(t0 + Double(e) * beat / 2, vol: e % 2 == 1 ? 0.04 : 0.025)
-        }
-        m.kick(t0)
-        if full {
-            m.kick(t0 + 2 * beat); m.kick(t0 + 2.5 * beat, vol: 0.18); m.snare(t0 + beat); m.snare(t0 + 3 * beat)
-            for s in 0..<16 { m.tone(t0 + Double(s) * beat / 4, beat / 4 * 0.8, midi(triads[c][s % 3] - 12 + (s / 3 % 2) * 12), wave: .triangle, vol: 0.03, release: 0.02) }
-            var tt = t0
-            for (n, d) in ((b - 2) / 4 % 2 == 0 ? melodyA : melodyB)[c] { m.tone(tt, d * beat * 0.92, midi(n), wave: .square(0.5), vol: 0.055, release: 0.04, vibrato: 0.004); tt += d * beat }
-        }
-        if b == bars - 1 { for k in 0..<8 { m.snare(t0 + 2 * beat + Double(k) * beat / 4, vol: 0.06 + Double(k) * 0.01) } }
-    }
-    }
-    for i in gm.buf.indices {                           // out over the wipe into Star Clawds, back in under the halftone print
-        let t = Double(i) / sampleRate
-        let g = t < quiet.0 ? clamp((quiet.0 + 0.9 - t) / 1.6) : clamp((t - (quiet.1 - 1.0)) / 1.2)
-        if g > 0 { outer.buf[i] += gm.buf[i] * Float(g) }
-    }
-    outer.noise(quiet.0 - 0.2, 2.2, vol: 0.12, cutoff: 0.9, decay: 0.7, highpass: true, seed: 33)   // a crash on the way in
-    outer.boom(quiet.0 - 0.2, vol: 0.2)
+    // the groove, from the hook to the end card
+    groove(m, from: start("hook"), to: start("endcard"), fadeIn: 1.2)
     let hook = start("hook")
     for i in 0..<26 { m.click(hook + 0.2 + Double(i) * 0.13 + noise(i) * 0.06) }
 
-    // the comic page: three panel slams and the picker's clicks
-    let pk = start("pick")
-    for (i, at) in [0.3, 1.2, 2.1].enumerated() { m.boom(pk + at, vol: 0.22); m.snare(pk + at, vol: 0.1); m.pop(pk + at + 0.05, step: i) }
-    for at in [0.3, 1.2, 2.1, 3.1] { m.click(pk + at + 0.15, vol: 0.12) }
-
-    // Star Clawds: a dark pulse, the turbolasers and the rumble as the big ship passes (its scene runs 1.4 s in)
-    let sw = start("showStarClaws"), swe = end("showStarClaws") + 0.6, so = sw - 1.4
-    for i in 0..<Int((swe - sw + 1.0) / 0.25) { m.tone(sw - 1.0 + Double(i) * 0.25, 0.22, midi(i % 8 == 7 ? 37 : 36), wave: .square(0.25), vol: 0.05 + 0.05 * min(1, Double(i) / 20), release: 0.04) }
-    for (at, chord) in [(0.0, [48, 51, 55]), (2.0, [44, 48, 51]), (4.0, [46, 50, 53]), (6.0, [48, 51, 55])] {
-        for n in chord { m.tone(sw + at, 1.8, midi(n), wave: .saw, vol: 0.035, attack: 0.05, release: 0.6) }
+    // choose your universe: running feet, the page slamming down, and for every panel a whoosh as the camera moves, a hit
+    // as it lands and a taste of its big moment, then a ping for the line
+    let chs = start("choose")
+    for k in 0..<26 { m.step(chs + 0.2 + Double(k) * 0.08, vol: 0.05 + noise(k) * 0.03) }
+    m.boom(chs + 0.2, vol: 0.18); m.snare(chs + 0.2, vol: 0.1)
+    m.whoosh(chs + pageDrop + 0.1, 0.4, vol: 0.14); m.boom(chs + pageDrop + 0.35, vol: 0.3); m.snare(chs + pageDrop + 0.35, vol: 0.12)
+    for (i, p) in comicPages.flatMap({ $0 }).enumerated() {
+        let at = chs + pageArrive(i)
+        m.whoosh(at - pageMove / 2, pageMove + 0.1, vol: 0.12); m.boom(at, vol: 0.18); m.pop(at + 0.05, step: i % 4)
+        switch p.u {
+        case .starWars: for k in 0..<5 { m.turbolaser(at + 0.1 + Double(k) * 0.18, pitch: k % 2 == 0 ? 1 : 0.8, vol: 0.05) }
+        case .marvel: m.roar(at + 0.1, 1.0, vol: 0.16)
+        case .dc: m.boom(at + 0.2, vol: 0.2); m.roar(at + 0.4, 0.8, vol: 0.14)
+        case .doctor: m.wheeze(at, cycles: 2, vol: 0.08)
+        case .clawdFiles: m.tone(at, 1.0, 220, to: 330, wave: .sine, vol: 0.05, attack: 0.3, release: 0.3)
+        case .clawdberg: m.tone(at, 0.4, 300, to: 1800, wave: .saw, vol: 0.04, release: 0.05); m.boom(at + 0.45, vol: 0.2)
+        case .middleEarth: for k in 0..<4 { m.kick(at + Double(k) * 0.24, vol: 0.25) }
+        }
     }
-    for i in 0..<40 { let b = so + 1.3 + Double(i) * 0.17; if b > sw && b < swe { m.turbolaser(b, pitch: noise(i * 7) > 0.5 ? 1 : 0.8, vol: 0.06) } }
-    m.boom(so + 3.0, vol: 0.35)
-    m.noise(so + 2.6, 5.0, vol: 0.28, cutoff: 0.004, cutoffTo: 0.03, attack: 2.4, release: 1.5, seed: 5)
-    m.tone(so + 2.6, 5.0, 41, wave: .sine, vol: 0.16, attack: 2.4, release: 1.5)
-
-    // Marvelous Clawds: the portal humming, the space whale's roars, Iron Clawd's thrusters and repulsors (2.2 s in)
-    let mv = start("showMarvelous Clawds"), mo = mv - 2.2
-    m.tone(mv, 7.6, 110, wave: .sine, vol: 0.05, attack: 0.6, release: 1.2, vibrato: 0.03)
-    m.roar(mo + 2.6, 1.6, vol: 0.22); m.roar(mo + 5.6, 2.2, vol: 0.3)
-    m.noise(mo + 3.0, 6.0, vol: 0.28, cutoff: 0.004, cutoffTo: 0.03, attack: 2.5, release: 1.5, seed: 5)
-    m.noise(mo + 4.2, 4.0, vol: 0.1, cutoff: 0.05, cutoffTo: 0.2, attack: 0.6, release: 1.2, seed: 12)
-    for i in 0..<10 { m.repulsor(mo + 4.9 + Double(i) * 0.3, vol: 0.08) }
-
-    // Detective Clawds: the kaiju's footfalls, two roars, Superb-Man's take-off and heat vision (0.4 s in)
-    let dc = start("showDetective"), dco = dc - 0.4
-    var step = 0.8
-    while step < 6.6 { if dco + step > dc { m.boom(dco + step, vol: 0.14 + (step / 6.6) * 0.22) }; step += 0.9 }
-    m.roar(dco + 2.8, 1.6, vol: 0.26); m.roar(dco + 6.0, 1.8, vol: 0.32)
-    m.whoosh(dco + 4.4, 1.4, vol: 0.18)
-    m.crackle(dco + 5.0, 3.0, vol: 0.06)
+    for at in pageTurns { m.flip(chs + at + 0.1, vol: 0.14); m.whoosh(chs + at + pageTurn / 2, pageTurn, vol: 0.1) }
+    m.ping(chs + pageBack + 0.3)
 
     // the features
     let st = start("status")
@@ -4931,10 +6064,32 @@ func promoSound(_ m: Mix) {
     for k in 0..<14 { m.step(ag + Double(k) * 0.125, vol: 0.06) }
     m.bark(ag + 1.4)
     let wi = start("window")
-    m.hum(wi, 2.6, vol: 0.02)
-    for t in clashTimes(wi, wi + 2.6) { m.clash(t, vol: 0.08) }
+    m.hum(wi, 2.5, vol: 0.02)
     for k in [0.9, 1.8] { m.click(wi + k, vol: 0.06) }
-    m.ping(wi + 2.6)
+    m.ping(wi + 2.5)
+
+    // Clawd Royale: the emblems fly in and slam, the title stamps down to a fanfare, then everyone at once
+    let ro = start("royale"), slam = ro + royaleSlam
+    var r = ro
+    while r < slam - 0.03 { m.snare(r, vol: 0.03 + 0.1 * (r - ro) / royaleSlam); r += 1.0 / 20 }
+    for k in Universe.offered.indices { m.whoosh(ro + 0.3 + Double(k) * 0.03, 0.6, vol: 0.09) }
+    m.boom(slam, vol: 0.65); m.noise(slam, 1.8, vol: 0.14, cutoff: 0.9, decay: 0.55, highpass: true, seed: 3)
+    m.snare(slam, vol: 0.2); m.kick(slam, vol: 0.4)
+    for n in [48, 55, 60, 64, 67] { m.tone(slam, 1.4, midi(n), wave: .saw, vol: 0.05, release: 0.6, decay: 0.8) }
+    let stamp = ro + royaleStamp
+    m.clunk(stamp, vol: 0.3); m.boom(stamp, vol: 0.3)
+    for (s, d, n) in [(0.0, 0.22, 67), (0.25, 0.22, 72), (0.5, 0.5, 76), (1.05, 0.22, 74), (1.3, 0.22, 76), (1.55, 0.9, 79)] as [(Double, Double, Int)] {
+        m.tone(stamp + s, d, midi(n + 12), wave: .square(0.5), vol: 0.07, release: 0.08, vibrato: 0.006)
+        m.tone(stamp + s, d, midi(n), wave: .saw, vol: 0.045, release: 0.08)
+    }
+    let cr = start("crossover"), ce = end("crossover")
+    m.hum(cr, ce - cr, vol: 0.022)
+    for t in clashTimes(cr, ce) { m.clash(t, vol: 0.1) }
+    for t in shotTimes(cr, ce, offset: 0) { m.pew(t, vol: 0.07) }
+    for t in shotTimes(cr, ce, offset: blasterPeriod / 2) { m.pew(t, vol: 0.05) }
+    for k in 0..<3 { m.thwip(cr + 0.7 + Double(k) * swingArc, vol: 0.12) }
+    m.crackle(cr + 0.3, ce - cr - 0.3, vol: 0.03)
+    m.whoosh(cr + 2.4, 2.0, vol: 0.1)                                             // the bike going over
     for s in shots { transitionSound(m, s) }
 
     // end card: a heroic cadence and the icon landing
@@ -4945,6 +6100,7 @@ func promoSound(_ m: Mix) {
         m.tone(ec + s, d, midi(chord[0] - 24), wave: .sine, vol: 0.2, release: d > 1 ? 1.8 : 0.1)
     }
     m.boom(ec + 0.3, vol: 0.45)
+    for k in 0..<Universe.offered.count { m.pop(ec + 0.5 + Double(k) * 0.08, step: k % 4) }
 }
 
 /// The blooper reel's goofy tune and gags.
@@ -4952,8 +6108,8 @@ func bloopersSound(_ m: Mix) {
     let cl = start("clapper")
     m.scratch(cl + 0.05)
     m.clack(cl + 1.0, vol: 0.4)
-    // an oom-pah tune in F, kazoo lead: from the slate to the end, quiet under the takes, stopping dead in take 3
-    let beat = 60.0 / 140, t0 = cl + 1.1, stopA = start("take3") + 1.3, stopB = start("take3") + 4.3
+    // an oom-pah tune in F, kazoo lead: from the slate to the end, quiet under the takes
+    let beat = 60.0 / 140, t0 = cl + 1.1, stopA = -1.0, stopB = -1.0
     let roots = [41, 46, 48, 41], chords = [[65, 69, 72], [65, 70, 74], [64, 67, 72], [65, 69, 72]]
     let tune: [(Int, Double)] = [(72, 1), (74, 0.5), (76, 0.5), (77, 1), (72, 1), (74, 0.5), (72, 0.5), (70, 1), (69, 2),
                                  (69, 1), (70, 0.5), (72, 0.5), (74, 1), (70, 1), (72, 0.5), (70, 0.5), (69, 1), (65, 2)]
@@ -4973,17 +6129,20 @@ func bloopersSound(_ m: Mix) {
         if !(lt > stopA && lt < stopB) { m.tone(lt, d * beat * 0.9, midi(n), wave: .saw, vol: 0.035, attack: 0.02, release: 0.05, vibrato: 0.02) }
         lt += d * beat; i += 1
     }
-    m.recordStop(stopA)
     // every take ends on CUT! and a slate
-    for (name, at) in [("take3", 3.9), ("take7", 5.8), ("take12", 4.0), ("take15", 3.4), ("take21", 5.4), ("take22", 4.0)] {
+    for (name, at) in [("take7", 8.2), ("take12", 4.0), ("take15", 3.4), ("take21", 5.4), ("take22", 4.0)] {
         let s = start(name)
         m.tone(s + at, 0.18, 300, to: 220, wave: .square(0.5), vol: 0.08, release: 0.05)   // a honk for the CUT!
         m.clack(s + at + 0.7)
     }
-    m.step(start("take3") + 0.3, vol: 0.12); m.step(start("take3") + 0.7, vol: 0.12); m.step(start("take3") + 1.1, vol: 0.12)
     let t7 = start("take7")
-    for n in [43, 46, 50] { m.tone(t7 + 0.6, 0.9, midi(n), wave: .saw, vol: 0.05, release: 0.4) }               // the dramatic turn
-    m.wahWah(t7 + 3.7)
+    m.wheeze(t7, cycles: 3, vol: 0.14)
+    m.clunk(t7 + 1.9, vol: 0.1); m.clunk(t7 + 5.0, vol: 0.1); m.clunk(t7 + 7.0, vol: 0.1)
+    for k in 0..<4 { m.step(t7 + 2.15 + Double(k) * 0.15, vol: 0.08); m.step(t7 + 4.65 + Double(k) * 0.12, vol: 0.08) }
+    for n in [43, 46, 50] { m.tone(t7 + 1.3, 0.9, midi(n), wave: .saw, vol: 0.05, release: 0.4) }               // Vapor turns
+    m.wheeze(t7 + 5.4, cycles: 2, vol: 0.12)                                                                     // it tries to go…
+    m.tone(t7 + 6.6, 0.3, 160, to: 60, wave: .saw, vol: 0.08, release: 0.1); m.clunk(t7 + 6.8, vol: 0.25)       // …and can't
+    m.wahWah(t7 + 7.7)
     let t12 = start("take12")
     m.clunk(t12)
     for i in 0..<12 { m.pew(t12 + 0.5 + Double(i) * 0.22, vol: 0.07) }
@@ -4993,9 +6152,11 @@ func bloopersSound(_ m: Mix) {
     let t22 = start("take22")
     m.tone(t22 + 0.6, 0.4, 200, to: 2400, wave: .saw, vol: 0.06, release: 0.1); m.boom(t22 + 0.95, vol: 0.3); m.whoosh(t22 + 1.6, 1.2, vol: 0.12)
     let wr = start("wrap")
-    for n in [53, 57, 60, 65, 69] { m.tone(wr + 4.4, 1.8, midi(n), wave: .saw, vol: 0.045, release: 1.0) }
-    m.boom(wr + 4.4, vol: 0.35)
-    m.applause(wr + 4.5, 2.6)
+    for k in 0..<4 { m.thwip(wr + 0.3 + Double(k) * 0.6, vol: 0.1) }
+    m.whoosh(wr + 1.7, 1.6, vol: 0.14)
+    for n in [53, 57, 60, 65, 69] { m.tone(wr + 5.6, 1.8, midi(n), wave: .saw, vol: 0.045, release: 1.0) }
+    m.boom(wr + 5.6, vol: 0.35)
+    m.applause(wr + 5.7, 2.6)
 }
 
 func soundtrack() -> [Float] {
@@ -5008,6 +6169,7 @@ func soundtrack() -> [Float] {
     case "files": filesSound(m)
     case "clawdberg": clawdbergSound(m)
     case "royale": royaleSound(m)
+    case "clawdoftherings": ringsSound(m)
     default:
         if reel != "bloopers" { promoSound(m) }
         if reel != "promo" { bloopersSound(m) }
@@ -5031,7 +6193,21 @@ func write720p(from input: String, to output: String) {
     let out = URL(fileURLWithPath: output); try? FileManager.default.removeItem(at: out)
     try? FileManager.default.createDirectory(at: out.deletingLastPathComponent(), withIntermediateDirectories: true)
     let seconds = asset.duration.seconds
-    let bitrate = Int(min(1_600_000, 9_500_000 * 8 / seconds - 128_000))
+    // long videos overshoot the average a little, so they aim lower; busy ones (halftones, fine pixel detail) can still
+    // overshoot, so a copy over 9.7 MB is made again at a bitrate cut by as much as it went over
+    var bitrate = Int(min(1_600_000, (seconds > 90 ? 8_900_000 : 9_500_000) * 8 / seconds - 128_000))
+    for attempt in 0..<3 {
+        let size = encode720p(asset, to: out, bitrate: bitrate)
+        print(String(format: "wrote %@ (%.1f MB at %d kb/s)", output, Double(size) / 1_000_000, bitrate / 1000))
+        if size <= 9_700_000 || attempt == 2 { return }
+        let audio = 128_000.0 * seconds / 8, target = 9_300_000.0
+        bitrate = Int(Double(bitrate) * pow((target - audio) / (Double(size) - audio), 1.6))   // it shrinks less than the bitrate does
+    }
+}
+
+/// One 1280×720 H.264 encode of `asset` at `bitrate`, with its sound as 128 kb/s AAC; the file's size in bytes.
+func encode720p(_ asset: AVURLAsset, to out: URL, bitrate: Int) -> Int {
+    try? FileManager.default.removeItem(at: out)
     let reader = try! AVAssetReader(asset: asset)
     let vt = asset.tracks(withMediaType: .video)[0], at = asset.tracks(withMediaType: .audio)[0]
     let vOut = AVAssetReaderTrackOutput(track: vt, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA])
@@ -5056,8 +6232,7 @@ func write720p(from input: String, to output: String) {
     group.wait()
     let done = DispatchSemaphore(value: 0); writer.finishWriting { done.signal() }; done.wait()
     if writer.status != .completed { print("720p failed: \(String(describing: writer.error))"); exit(1) }
-    let size = (try? FileManager.default.attributesOfItem(atPath: output)[.size] as? Int) ?? 0
-    print(String(format: "wrote %@ (%.1f MB at %d kb/s)", output, Double(size) / 1_000_000, bitrate / 1000))
+    return (try? FileManager.default.attributesOfItem(atPath: out.path)[.size] as? Int) ?? 0
 }
 
 /// Puts the soundtrack under the silent video: WAV → AAC with afconvert, then a passthrough export.
@@ -5093,9 +6268,12 @@ func writeVideo(to path: String) {
     let url = URL(fileURLWithPath: path)
     try? FileManager.default.removeItem(at: url)
     let writer = try! AVAssetWriter(outputURL: url, fileType: .mp4)
+    // 16 Mb/s, but never so much that the file passes 95 MB: GitHub refuses to take a file over 100 MB, and the
+    // seven-universe promo (68 s) came out at 115 MB.
+    let bitrate = Int(min(16_000_000, 95_000_000 * 8 / duration - 128_000))
     let input = AVAssetWriterInput(mediaType: .video, outputSettings: [
         AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: W, AVVideoHeightKey: H,
-        AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: 16_000_000, AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel],
+        AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: bitrate, AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel],
     ])
     let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: input, sourcePixelBufferAttributes: [
         kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32ARGB, kCVPixelBufferWidthKey as String: W,
@@ -5134,7 +6312,8 @@ let args = CommandLine.arguments
 let cmd = args.count > 1 ? args[1] : "storyboard"
 let out = args.count > 2 ? args[2] : "promo"
 try? FileManager.default.createDirectory(atPath: out, withIntermediateDirectories: true)
-let base = ["promo": "clawd-clash-promo", "bloopers": "clawd-clash-bloopers", "full": "clawd-clash-full", "starclawds": "star-clawds-promo", "marvelous": "marvelous-clawds-promo", "detective": "detective-clawds-promo", "doctor": "doctor-clawd-promo", "files": "the-clawd-files-promo", "clawdberg": "stevie-clawdberg-promo", "royale": "clawd-royale-promo"][reel] ?? "clawd-clash-promo"
+let base = ["promo": "clawd-clash-promo", "bloopers": "clawd-clash-bloopers", "full": "clawd-clash-full", "starclawds": "star-clawds-promo", "marvelous": "marvelous-clawds-promo", "detective": "detective-clawds-promo", "doctor": "doctor-clawd-promo", "files": "the-clawd-files-promo", "clawdberg": "stevie-clawdberg-promo", "royale": "clawd-royale-promo",
+            "clawdoftherings": "clawd-of-the-rings-promo"][reel] ?? "clawd-clash-promo"
 
 switch cmd {
 case "video":
@@ -5151,7 +6330,8 @@ case "check":                                                   // render every 
     print("all \(Int(duration * fps)) frames render")
 case "720p":                                                    // the GitHub-sized copy of a reel already rendered
     let small = ["promo": "Clawd-Clash", "bloopers": "Bloopers", "full": "Clawd-Clash-Full", "starclawds": "Star-Clawds",
-                 "marvelous": "Marvelous-Clawds", "detective": "Detective-Clawds", "doctor": "Doctor-Clawd", "files": "The-Clawd-Files", "clawdberg": "Stevie-Clawdberg", "royale": "Clawd-Royale"][reel] ?? "Clawd-Clash"
+                 "marvelous": "Marvelous-Clawds", "detective": "Detective-Clawds", "doctor": "Doctor-Clawd", "files": "The-Clawd-Files", "clawdberg": "Stevie-Clawdberg", "royale": "Clawd-Royale",
+                 "clawdoftherings": "Clawd-of-the-Rings"][reel] ?? "Clawd-Clash"
     write720p(from: "\(out)/\(base).mp4", to: "\(out)/720p/\(small).mp4")
 case "audio":
     writeWAV(soundtrack(), to: "\(out)/\(base).wav"); print("wrote \(out)/\(base).wav")
@@ -5167,6 +6347,7 @@ default:
     else if reel == "files" { save(storyboard("THE CLAWD FILES", filesBeats), "\(out)/storyboard-the-clawd-files.png") }
     else if reel == "clawdberg" { save(storyboard("STEVIE CLAWDBERG", clawdbergBeats), "\(out)/storyboard-stevie-clawdberg.png") }
     else if reel == "royale" { save(storyboard("CLAWD ROYALE", royaleBeats), "\(out)/storyboard-clawd-royale.png") }
+    else if reel == "clawdoftherings" { save(storyboard(Universe.middleEarth.title.uppercased(), ringsBeats), "\(out)/storyboard-clawd-of-the-rings.png") }
     else { save(storyboard("CLAWD CLASH", promoBeats), "\(out)/storyboard-promo.png") }
     print("wrote the \(reel) storyboard to \(out)")
 }

@@ -9,7 +9,6 @@ struct SaverFeed: Codable {
     var sessions: [Session]
     var events: [Event]
     var universe: Int?             // `Universe.rawValue` the app shows (nil: from before universes, Star Wars)
-    var saverUniverse: String?     // the screen saver's universe: "same", "starWars", "marvel" or "random"
     var mixed: Bool? = nil         // Clawd Royale: everyone as themselves, places from every universe
 
     struct Session: Codable {
@@ -17,7 +16,6 @@ struct SaverFeed: Codable {
         var cast: Int              // `Cast.id`
         var assistant: String      // "claude", "codex"… (its outline colour)
         var project: String
-        var remote: String?        // "GitHub", "Local"…
         var accent: UInt32?        // the project's colour, as in the app
         var mood: String           // "working", "thinking", "waiting", "idle"
         var urgent = false         // waiting and ignored for a while
@@ -42,6 +40,7 @@ struct SaverFeed: Codable {
         var text: String
     }
 
+    /// The app writes the feed about once a second, so a few seconds without one means it isn't running.
     static let staleAfter = 5.0
 
     /// The real home folder: inside the screen saver's sandbox `NSHomeDirectory()` and `$HOME` point at its container.
@@ -68,7 +67,16 @@ struct SaverFeed: Codable {
 
     func save() {
         guard let data = try? JSONEncoder().encode(self) else { return }
-        try? FileManager.default.createDirectory(at: Self.url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        _ = Self.ownerOnlyFolder
         try? data.write(to: Self.url, options: .atomic)
+        chmod(Self.url.path, 0o600)
     }
+
+    /// The feed holds your prompts and projects: its folder is made owner-only once per launch, which tightens
+    /// folders created 0755 by earlier versions too.
+    private static let ownerOnlyFolder: Void = {
+        let dir = url.deletingLastPathComponent()
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        chmod(dir.path, 0o700)
+    }()
 }

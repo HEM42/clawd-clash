@@ -104,11 +104,26 @@ struct Look {
     var legs = true
 }
 
-/// Legs are drawn without the body's breathing offset so a 1px bob never leaves a gap.
-/// `step` alternates which pair of legs is lifted while walking (-1 = standing).
 /// Set while drawing a seated character: legs fold forward onto the ground (the body is drawn 4 px lower).
 var seatedPose = false
+/// How many pixels the pose lifted the whole sprite by in the frame just drawn (a hop, hovering): `Cast.draw` gives
+/// back as much of it as the tallest characters need to keep their heads inside the frame.
+var poseLift = 0
+/// How far the pose moved the whole sprite sideways in that frame (a recoil, footwork), given back the same way.
+var poseShift = 0
 
+/// Legs are drawn without the body's breathing offset so a 1px bob never leaves a gap.
+/// Boots: the bottom `rows` of each leg in `col` (not when sitting, when the legs are folded). `step` as in
+/// `drawLegs`, so a lifted leg's boot lifts with it. Shared by the Marvel and DC casts.
+func drawBoots(_ c: PixelCanvas, _ col: Px, step: Int, rows: Int) {
+    guard !seatedPose else { return }
+    for (i, lx) in [19, 23, 31, 35].enumerated() {
+        let bottom = step >= 0 && i % 2 == step ? 42 : 43
+        c.rect(lx, bottom - rows + 1, 2, rows, col)
+    }
+}
+
+/// `step` alternates which pair of legs is lifted while walking (-1 = standing).
 func drawLegs(_ c: PixelCanvas, _ look: Look, step: Int = -1) {
     guard look.legs else { return }
     if seatedPose {

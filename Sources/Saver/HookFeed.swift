@@ -15,8 +15,9 @@ extension SaverFeed {
             let since = s.record.flatMap { $0.state == s.mood.rawValue ? $0.since : nil } ?? s.record?.updated ?? now
             let held = now - since
             let resting = s.mood == .idle && s.record != nil
+            // Urgent after 60 s, asleep after 300, sitting after 120: the same thresholds as the app's; keep them in step.
             return Session(
-                id: s.id, cast: s.leader, assistant: s.group, project: s.project, remote: nil, accent: accents[s.project],
+                id: s.id, cast: s.leader, assistant: s.group, project: s.project, accent: accents[s.project],
                 mood: s.mood.rawValue, urgent: s.mood == .waiting && held > 60, asleep: resting && held > 300,
                 sitting: resting && held > 120, unknown: false, focused: nil, since: since,
                 activity: s.mood == .idle ? nil : s.record?.activity, prompt: s.record?.prompt,
@@ -25,6 +26,6 @@ extension SaverFeed {
         guard !sessions.isEmpty else { return nil }
         let universe = file.shownUniverse
         return SaverFeed(at: now, location: last?.location ?? Location.all(in: universe)[0].rawValue, sessions: sessions, events: [],
-                         universe: universe.rawValue, saverUniverse: file.saverUniverse, mixed: file.mixed)
+                         universe: universe.rawValue, mixed: file.mixed)
     }
 }

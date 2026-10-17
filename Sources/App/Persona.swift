@@ -3,7 +3,7 @@ import Foundation
 // How every character in every universe is described: what it fights with, how it moves, what its shots and magic
 // look like, and its drawing function. A universe registers one `Persona` per character in its art files.
 
-/// How a character fights. The cases keep Clawd Wars' names; in the Marvel cast they mean:
+/// How a character fights. The cases keep Clawd Wars' names; across the universes they mean:
 /// - `saber`: up close, shields, hammers, claws, fists, swords, staffs. Deflects shots, blocks magic.
 /// - `blaster`: at range, repulsors, webs, arrows, bullets, optic blasts, fire, ice… (`Persona.shot` says which).
 /// - `lightning`: magic and energy streams, sorcery, telekinesis, Thanos' gauntlet (`Persona.magic` says how it looks).
@@ -29,6 +29,16 @@ enum ShotStyle {
     case ice                          // a frosty stream
     case card                         // a glowing playing card (Gambit)
     case thrown(Px)                   // something spinning: knives, pumpkin bombs, shuriken
+}
+
+/// A signature move that climbs a thread (`Persona.climb`): where the thread leaves the body (canvas pixels, facing
+/// right), and at each point `p` (0…1) of the move how far the body has risen (canvas pixels), how visible it is
+/// (0…1), and how much of the thread is out (0…1 of the way from the body to the top of the screen).
+struct Climb {
+    var from: (x: Double, y: Double)
+    var rise: (Double) -> Double
+    var alpha: (Double) -> Double
+    var thread: (Double) -> Double
 }
 
 /// What a magic or energy stream looks like.
@@ -86,6 +96,9 @@ struct Persona {
     /// Its own target-practice rhythm when working alone (seconds between shots, and where in that it starts), on the
     /// shared clock; nil: every `blasterPeriod` on its own clock. Clawd Wars' heroes each had one.
     var soloFire: (period: Double, phase: Double)? = nil
+    /// A signature that climbs a thread up out of sight and back down (Shellob): drawn by whoever places the sprite,
+    /// since the thread runs up to the top of the screen, past the canvas.
+    var climb: Climb? = nil
     /// Draws it facing right on the 72×52 canvas.
     let draw: (PixelCanvas, Pose) -> Void
 

@@ -40,14 +40,14 @@ final class ClawdClashSaverView: ScreenSaverView {
     private static let shiftEvery = 600.0       // ten minutes
     private var started = Date().timeIntervalSince1970
     private var shifted = false
-    /// Every 10 minutes the saver also wipes, Star Wars style, to somewhere new: the home of someone else in the crew
+    /// Every 10 minutes the saver also changes place to somewhere new: the home of someone else in the crew
     /// (anywhere at all with just the one). `visit` is where it went; nil until the first wipe (where the app says).
     private var period = 0
     private var visit: Location?
     private let wipeLayer = CALayer(), wipeMask = CAShapeLayer()
     private var wipe: (start: Double, clock: Bool)?
     private var trips = 0                       // the wipes take turns: a hard edge, then a clock
-    /// In Marvel and DC, a comic-book transition instead (`ComicTransition`): each frame drawn whole, old place and
+    /// In every universe but Star Wars, that universe's own transition instead (`ComicTransition`): each frame drawn whole, old place and
     /// new, into `comicLayer`.
     private let comicLayer = CALayer()
     private var comic: (trip: ComicTransition, start: Double, old: CGImage)?
@@ -76,7 +76,8 @@ final class ClawdClashSaverView: ScreenSaverView {
               let options = try? JSONDecoder().decode([String: String].self, from: data) else { return [:] }
         return options
     }
-    /// "same" (the app's), "starWars", "marvel", "dc", "doctor", "clawdFiles", "clawdberg", "slayer", "clawdRoyale" or "random" (a new pick on each trip).
+    /// "same" (the app's), an offered universe's key (`Universe.offered`, by `Universe.key`: "starWars", "marvel",
+    /// "dc", "doctor", "clawdFiles"…), "clawdRoyale" or "random" (a new pick on each trip).
     static var choice: String { options["universe"] ?? "same" }
     /// The clock top right, on unless turned off.
     static var clockShown: Bool { options["clock"] != "off" }
@@ -84,11 +85,9 @@ final class ClawdClashSaverView: ScreenSaverView {
     private var sheet: NSWindow?
     private let picker = NSPopUpButton(frame: NSRect(x: 20, y: 90, width: 280, height: 26), pullsDown: false)
     private let clockBox = NSButton(checkboxWithTitle: "Show the clock", target: nil, action: nil)
-    private static let choices = [("same", "The same as Clawd Clash"), ("starWars", Universe.starWars.title), ("marvel", Universe.marvel.title), ("dc", Universe.dc.title),
-                                  ("doctor", Universe.doctor.title), ("clawdFiles", Universe.clawdFiles.title),
-                                  ("clawdberg", Universe.clawdberg.title), ("slayer", Universe.slayer.title),
-                                  ("clawdRoyale", "Clawd Royale"),
-                                  ("random", "Random (a new one on each trip)")]
+    /// The Options choices: every offered universe by its key, so a universe appears here once it's released.
+    private static let choices = [("same", "The same as Clawd Clash")] + Universe.offered.map { ($0.key, $0.title) }
+                                 + [("clawdRoyale", "Clawd Royale"), ("random", "Random (a new one on each trip)")]
 
     override var hasConfigureSheet: Bool { true }
     override var configureSheet: NSWindow? {
@@ -206,17 +205,11 @@ final class ClawdClashSaverView: ScreenSaverView {
                 showClock = Self.clockShown
                 let appUniverse = feed?.universe.flatMap(Universe.init(rawValue:)) ?? .starWars
                 switch Self.choice {
-                case "starWars": tripUniverse = .starWars; tripMixed = false
-                case "marvel": tripUniverse = .marvel; tripMixed = false
-                case "dc": tripUniverse = .dc; tripMixed = false
-                case "doctor": tripUniverse = .doctor; tripMixed = false
-                case "clawdFiles": tripUniverse = .clawdFiles; tripMixed = false
-                case "clawdberg": tripUniverse = .clawdberg; tripMixed = false
-                case "slayer": tripUniverse = .slayer; tripMixed = false
+                case let key where Universe.offered(key: key) != nil: tripUniverse = Universe.offered(key: key); tripMixed = false
                 case "clawdRoyale": tripMixed = true
                 case "random":
                     tripMixed = false
-                    if tripUniverse == nil { tripUniverse = Universe.allCases.randomElement() }
+                    if tripUniverse == nil { tripUniverse = Universe.offered.randomElement() }
                 default: tripUniverse = appUniverse; tripMixed = feed?.mixed == true
                 }
                 if tripUniverse == nil { tripUniverse = appUniverse }
@@ -242,7 +235,7 @@ final class ClawdClashSaverView: ScreenSaverView {
         lastTrip = now
         let onStage = (crewed(now) ? feed?.sessions ?? [] : demo).flatMap { [$0.cast] + $0.agents.map(\.cast) }.map { Cast(id: $0) }
         if feedSource == nil, Self.choice == "random" {
-            tripUniverse = Universe.allCases.randomElement()
+            tripUniverse = Universe.offered.randomElement()
             Universe.shown = tripUniverse ?? .starWars
         }
         let here = visit ?? lastLocation
@@ -282,6 +275,13 @@ final class ClawdClashSaverView: ScreenSaverView {
     }
 
     // MARK: Frame
+
+    /// A web thread (`Persona.climb`): one pale pixel, stretched.
+    private static let thread: CGImage? = {
+        let c = PixelCanvas(1, 1)
+        c.px(0, 0, C(0xF4F4F8))
+        return c.makeImage()
+    }()
 
     private struct Item {
         var image: CGImage
@@ -339,7 +339,7 @@ final class ClawdClashSaverView: ScreenSaverView {
             live = nil
         }
         // What moves there.
-        if location.animates(rows: ch) {
+        if location.hasAnimatedLayer {
             if live?.w != cw || live?.h != ch { live = PixelCanvas(cw, ch) } else { live?.clear() }
             if let live {
                 location.drawAnimated(live, floorRows: floorRows, t: now)
@@ -368,7 +368,7 @@ final class ClawdClashSaverView: ScreenSaverView {
             } else if let room, let new = Wipe.flatten([room.image] + (liveLayer.contents.map { [$0 as! CGImage] } ?? [])),
                       let ctx = CGContext(data: nil, width: Int(picture.width), height: Int(picture.height), bitsPerComponent: 8,
                                           bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
-                                          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) {
+                                          bitmapInfo: layerBitmapInfo) {
                 // Drawn a screen point to a pixel: the art scaled up crisp, the lettering sharp enough.
                 w.trip.draw(ctx, old: w.old, new: new, k: k, in: CGRect(x: 0, y: 0, width: ctx.width, height: ctx.height))
                 comicLayer.contents = ctx.makeImage()
@@ -381,15 +381,38 @@ final class ClawdClashSaverView: ScreenSaverView {
         var items: [Item] = [Item(image: shade(), rect: CGRect(x: 0, y: bounds.height * 0.6, width: bounds.width,
                                                                height: bounds.height * 0.4), smooth: true)]
         let feet = CGFloat(floorRows) * P * 0.55
+        var people: [Item]
         if crewed(now), let f = feed {
-            items += crew(f.sessions, now: now, feet: feet)
+            people = crew(atPlace(f.sessions, location), now: now, feet: feet)
         } else {
             if demoPlace != location { demo = cast(for: location, now: now); demoPlace = location }
-            items += crew(demo, now: now, feet: feet, cards: false)
+            people = crew(demo, now: now, feet: feet, cards: false)
         }
+        // A trip that leaves the ground (the Eagle's sky) takes the crew with it.
+        if let w = comic {
+            let shown = CGFloat(w.trip.crewShown((now - w.start) / w.trip.duration))
+            if shown < 1 { people = people.compactMap { var p = $0; p.alpha *= shown; return p.alpha > 0.01 ? p : nil } }
+        }
+        items += people
         items += hud(running ? feed : nil, location: location, now: now, idle: !running)
         show(items, in: root)
         CATransaction.commit()
+    }
+
+    /// `sessions` as they may appear at `place`: the homebound away from home shown as someone else (`Roster.recast`),
+    /// the same someone on every frame.
+    private func atPlace(_ sessions: [SaverFeed.Session], _ place: Location) -> [SaverFeed.Session] {
+        let r = Roster.shown
+        var ids = sessions.map { r.adopt($0.cast) }, seeds = sessions.map(\.id)
+        for s in sessions { ids += s.agents.map { r.adopt($0.cast) }; seeds += s.agents.map(\.id) }
+        let shown = r.recast(ids, seeds: seeds, at: place.rawValue)
+        guard shown != ids else { return sessions }
+        var out = sessions, k = sessions.count
+        for i in out.indices {
+            out[i].cast = shown[i]
+            for j in out[i].agents.indices { out[i].agents[j].cast = shown[k]; k += 1 }
+        }
+        return out
     }
 
     private func show(_ items: [Item], in root: CALayer) {
@@ -493,12 +516,17 @@ final class ClawdClashSaverView: ScreenSaverView {
         var roles: [String: FightRole] = [:]
         var incoming: [String: Double] = [:]
         var fights: [(Placed, Placed)] = []
+        // Each pair on its own beat (`fightPhaseOffset`), so several fights don't all strike at once.
+        var fightPhase: [String: Double] = [:]
+        func ft(_ key: String) -> Double { t + (fightPhase[key] ?? 0) }
         for (a, b) in pairs {
             guard let pa = placed.first(where: { $0.m.key == a.key }), let pb = placed.first(where: { $0.m.key == b.key }) else { continue }
             let (l, r) = pa.x <= pb.x ? (pa, pb) : (pb, pa)
             let (lr, rr) = fightRoles(l.m.weapon, r.m.weapon)
             roles[l.m.key] = lr; roles[r.m.key] = rr
             fights.append((l, r))
+            let phase = fightPhaseOffset(l.m.key, r.m.key)
+            fightPhase[l.m.key] = phase; fightPhase[r.m.key] = phase
             if case .shoot(let lo) = lr, case .shoot(let ro) = rr { incoming[l.m.key] = ro; incoming[r.m.key] = lo }
         }
         for key in cheering { roles[key] = .cheer }
@@ -510,30 +538,43 @@ final class ClawdClashSaverView: ScreenSaverView {
             let s = p.m.isLeader ? ls : cs
             let c = PixelCanvas(Sprite.width, Sprite.height)
             let role = roles[p.m.key]
-            let up = air(p, role: role, t: t)
+            let up = air(p, role: role, t: ft(p.m.key))
             if p.m.isLeader {
                 let sess = p.m.session
-                p.m.cast.draw(c, t: t, mode: role != nil ? .working : mode(sess), walking: false, role: role ?? .none,
+                p.m.cast.draw(c, t: ft(p.m.key), mode: role != nil ? .working : mode(sess), walking: false, role: role ?? .none,
                               urgent: sess.urgent && role == nil, sitting: sess.sitting && role == nil, asSession: true,
                               aloft: up > 0.3)
             } else {
                 let phase = Double(abs(p.m.key.hashValue % 100)) / 37
-                p.m.cast.draw(c, t: role != nil ? t : t + phase, mode: .working, walking: false, role: role ?? .none, asSession: false,
+                p.m.cast.draw(c, t: role != nil ? ft(p.m.key) : t + phase, mode: .working, walking: false, role: role ?? .none, asSession: false,
                               aloft: up > 0.3)
             }
+            // A signature that climbs a thread (`Persona.climb`, Shellob): risen and faded by the move.
+            let climb = drawnSignature.flatMap { k in p.m.cast.persona.climb.map { (move: $0, p: k) } }
             c.addOutline(AIStyle.outline(p.m.session.assistant))
             guard let img = c.makeImage() else { continue }
             let mirrored = p.facing < 0
             let bodyX = (mirrored ? CGFloat(Sprite.width) - CGFloat(Sprite.bodyCenterX) : CGFloat(Sprite.bodyCenterX)) * s
-            let duck = incoming[p.m.key].map { CGFloat(duckAmount(t: t, shooterOffset: $0, armoured: p.m.cast.armoured)) } ?? 0
-            let y = (p.m.isLeader ? base : base + (ls - cs) * 8) + up * flightHeight * s
+            let duck = incoming[p.m.key].map { CGFloat(duckAmount(t: ft(p.m.key), shooterOffset: $0, armoured: p.m.cast.armoured)) } ?? 0
+            let rise = climb.map { CGFloat($0.move.rise($0.p)) * s } ?? 0
+            let y = (p.m.isLeader ? base : base + (ls - cs) * 8) + up * flightHeight * s + rise
+            if let cl = climb, let line = Self.thread {
+                // The thread, from the body up towards the top of the screen.
+                let fx = p.x + p.facing * CGFloat(cl.move.from.x - Sprite.bodyCenterX) * s
+                let fy = y + CGFloat(Double(Sprite.height) - cl.move.from.y) * s
+                let reach = (bounds.height - fy) * CGFloat(cl.move.thread(cl.p))
+                if reach > s {   // the thread fades with her
+                    items.append(Item(image: line, rect: CGRect(x: (fx - s * 0.3).rounded(), y: fy, width: max(1, s * 0.6), height: reach),
+                                      alpha: 0.9 * CGFloat(cl.move.alpha(cl.p))))
+                }
+            }
             items.append(Item(image: img, rect: CGRect(x: (p.x - bodyX).rounded(), y: y, width: CGFloat(Sprite.width) * s,
                                                        height: (CGFloat(Sprite.height) * s * (1 - 0.22 * duck)).rounded()),
-                              mirrored: mirrored))
+                              mirrored: mirrored, alpha: climb.map { CGFloat($0.move.alpha($0.p)) } ?? 1))
         }
         // Bolts, deflections, lightning and sparks.
         for (l, r) in fights {
-            guard fightFXVisible(t: t, l.m.weapon, r.m.weapon) else { continue }
+            guard fightFXVisible(t: ft(l.m.key), l.m.weapon, r.m.weapon) else { continue }
             let margin = 24.0
             let width = Int(Double((r.x - l.x) / ls) + margin * 2)
             guard width > 0, width < 4000 else { continue }
@@ -541,13 +582,13 @@ final class ClawdClashSaverView: ScreenSaverView {
             let headroom = Int(flightHeight) + 8   // rows above a standing leader's canvas, for fighting from the air
             func fighter(_ p: Placed, side: Double) -> Fighter {
                 let sc = p.m.isLeader ? ls : cs
-                let lift = (p.m.isLeader ? 0 : (ls - cs) * 8) + air(p, role: roles[p.m.key], t: t) * flightHeight * sc
+                let lift = (p.m.isLeader ? 0 : (ls - cs) * 8) + air(p, role: roles[p.m.key], t: ft(p.m.key)) * flightHeight * sc
                 return Fighter(weapon: p.m.weapon, x: Double((p.x - left) / ls), k: Double(sc / ls),
                                top: Double((CGFloat(Sprite.height) * (ls - sc) - lift) / ls) + Double(headroom), side: side,
                                muzzle: p.m.cast.muzzle, armoured: p.m.cast.armoured, pivot: p.m.cast.weaponPivot).dressed(as: p.m.cast)
             }
             let c = PixelCanvas(width, Sprite.height + headroom)
-            drawFightFX(c, t: t, left: fighter(l, side: 1), right: fighter(r, side: -1))
+            drawFightFX(c, t: ft(l.m.key), left: fighter(l, side: 1), right: fighter(r, side: -1))
             if let img = c.makeImage() {
                 items.append(Item(image: img, rect: CGRect(x: left.rounded(), y: base, width: CGFloat(width) * ls,
                                                            height: CGFloat(Sprite.height + headroom) * ls)))
@@ -938,7 +979,9 @@ final class ClawdClashSaverView: ScreenSaverView {
     /// among them (whoever calls the place home), up to two of them agents at someone's side.
     private func cast(for place: Location, now: Double) -> [SaverFeed.Session] {
         let r = Roster.shown
-        let armed = (r.darkCast + r.lightCast).filter { Cast(id: $0).weapon != .none && !r.agentOnly.contains($0) }
+        let armed = (r.darkCast + r.lightCast).filter {
+            Cast(id: $0).weapon != .none && !r.agentOnly.contains($0) && r.allowed($0, at: place.rawValue)
+        }
         let locals = armed.filter { Cast(id: $0).home == place }.shuffled().prefix(2)
         var dark = armed.filter { StatusStore.isDark($0) && !locals.contains($0) }.shuffled()
         var light = armed.filter { !StatusStore.isDark($0) && !locals.contains($0) }.shuffled()
@@ -1049,7 +1092,7 @@ final class ClawdClashSaverView: ScreenSaverView {
         let k = scale
         let w = max(1, Int((size.width * k).rounded(.up))), h = max(1, Int((size.height * k).rounded(.up)))
         let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
-                            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+                            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: layerBitmapInfo)!
         ctx.scaleBy(x: k, y: k)
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(cgContext: ctx, flipped: false)

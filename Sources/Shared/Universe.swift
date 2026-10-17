@@ -1,6 +1,7 @@
 import Foundation
 
 /// The universes Clawd Clash can show. One at a time, except in Clawd Royale (`Roster`), where a scene mixes all of them.
+/// A universe can be built before it's released (`isReleased`; every one is today): only the tools see an unreleased one.
 ///
 /// Cast ids are stored in the status file and the screen-saver feed: `universe.base + local`, where local ids are
 /// villains `0..<100` and heroes `100…`. Star Wars keeps Clawd Wars' ids (base 0), so its saved state carries over.
@@ -11,28 +12,33 @@ enum Universe: Int, CaseIterable, Codable {
     case doctor = 3
     case clawdFiles = 4
     case clawdberg = 5
+    case middleEarth = 6
     case slayer = 7
 
     var key: String {
-        switch self { case .starWars: return "starWars"; case .marvel: return "marvel"; case .dc: return "dc"; case .doctor: return "doctor"
-        case .clawdFiles: return "clawdFiles"; case .clawdberg: return "clawdberg"; case .slayer: return "slayer" }
+        switch self {
+        case .starWars: return "starWars"; case .marvel: return "marvel"; case .dc: return "dc"; case .doctor: return "doctor"
+        case .clawdFiles: return "clawdFiles"; case .clawdberg: return "clawdberg"; case .middleEarth: return "middleEarth"; case .slayer: return "slayer"
+        }
     }
     init?(key: String) { self.init(rawValue: Universe.allCases.first { $0.key == key }?.rawValue ?? -1) }
 
     var title: String {
-        switch self { case .starWars: return "Star Clawds"; case .marvel: return "Marvelous Clawds"; case .dc: return "Detective Clawds"; case .doctor: return "Doctor Clawd"
-        case .clawdFiles: return "The Clawd Files"; case .clawdberg: return "Stevie Clawdberg"
-        case .slayer: return "Clawd Slayer" }
+        switch self {
+        case .starWars: return "Star Clawds"; case .marvel: return "Marvelous Clawds"; case .dc: return "Detective Clawds"; case .doctor: return "Doctor Clawd"
+        case .clawdFiles: return "The Clawd Files"; case .clawdberg: return "Stevie Clawdberg"; case .middleEarth: return "Clawd of the Rings"
+        case .slayer: return "Clawd Slayer"
+        }
     }
     var base: Int { rawValue * 1000 }
 
     var villainCount: Int {
         switch self { case .starWars: return 46; case .marvel: return 88; case .dc: return 97; case .doctor: return 42; case .clawdFiles: return 46
-        case .clawdberg: return 54; case .slayer: return 48 }
+        case .clawdberg: return 54; case .middleEarth: return 38; case .slayer: return 48 }
     }
     var heroCount: Int {
         switch self { case .starWars: return 36; case .marvel: return 106; case .dc: return 111; case .doctor: return 56; case .clawdFiles: return 36
-        case .clawdberg: return 64; case .slayer: return 36 }
+        case .clawdberg: return 64; case .middleEarth: return 38; case .slayer: return 36 }
     }
 
     /// HEM: the same rare face in every universe, last of the heroes. He's never in the regular pools (`lightCast`);
@@ -52,6 +58,7 @@ enum Universe: Int, CaseIterable, Codable {
         case .doctor: return Set([39, 40, 41].map { base + $0 })                // Adipoze, Cybermite, Toclafayne
         case .clawdFiles: return Set([43, 44, 45].map { base + $0 })            // killer bee, robo-roach, flukeworm
         case .clawdberg: return Set((49...53).map { base + $0 })                // Compy, mogwai pup, snake, frog, Croc Clock
+        case .middleEarth: return []
         // a fledgling vampire, one of Glory's minions, Gachnar, Amy the rat; Miss Kitty Fanclawstico
         case .slayer: return Set((44...47).map { base + $0 } + [base + StatusStore.heroBase + 34])
         }
@@ -70,8 +77,21 @@ enum Universe: Int, CaseIterable, Codable {
         }
     }
 
-    /// Doctor Clawd: the Doctors in order (One … Fifteen), as global ids. When a session's context is compacted, its
-    /// Doctor regenerates into the next one (`StatusStore`'s PreCompact); nobody else changes.
+    /// One character in two guises, as global ids: never on screen together (the casting and `StatusStore.snapshot`
+    /// keep to it). Clawd of the Rings: Gandclawd the Grey and the White (`RingsHero` 0 and 17), Arrogorn and Stride-r
+    /// (`RingsHero` 4 and 28), Sarumanual and Sharkey (`RingsVillain` 1 and 30), Sourun and the Necro-maintainer
+    /// (`RingsVillain` 0 and 31).
+    var guises: [Set<Int>] {
+        guard self == .middleEarth else { return [] }
+        let hero = base + StatusStore.heroBase
+        return [[hero, hero + 17], [hero + 4, hero + 28], [base + 1, base + 30], [base, base + 31]]
+    }
+
+    /// Characters who only ever appear at home, as global id → place key: anywhere else, and on the desktop (no place),
+    /// they're shown as someone else (`Roster.recast`). Clawd of the Rings: Smaug the Stashed (`RingsVillain` 32) on his
+    /// hoard in the Lonely Mount-point.
+    var homebound: [Int: String] { self == .middleEarth ? [base + 32: "erebor"] : [:] }
+
     /// The Clawd Files: the seven FBI agents (Clawder, Scrawly, Skinnard, Doggedd, Reyez, Einstine, Millar), as global
     /// ids. When one's session is compacted they lose some time: abducted and set back down, the same face
     /// (`StatusStore`'s PreCompact, `MissingTime`).
@@ -85,9 +105,19 @@ enum Universe: Int, CaseIterable, Codable {
         }
     }
 
+    /// Doctor Clawd: the Doctors in order (One … Fifteen), as global ids. When a session's context is compacted, its
+    /// Doctor regenerates into the next one (`StatusStore`'s PreCompact); nobody else changes.
     var regenerations: [Int] {
         self == .doctor ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14].map { base + StatusStore.heroBase + $0 } : []
     }
+
+    /// Whether people can pick it: Settings, Random, Clawd Royale and the screen saver only offer released universes.
+    /// An unreleased one exists for the tools (the workbench, the docs and promo renderers) until it's ready.
+    var isReleased: Bool { true }
+    /// The universes people can pick, in menu order.
+    static var offered: [Universe] { allCases.filter(\.isReleased) }
+    /// A stored key, but only for a universe people can pick: an unreleased one reads as unset.
+    static func offered(key: String) -> Universe? { Universe(key: key).flatMap { $0.isReleased ? $0 : nil } }
 
     var darkCast: [Int] { (0..<villainCount).map { base + $0 } }
     var lightCast: [Int] { (0..<heroCount - 1).map { base + StatusStore.heroBase + $0 } }   // all but HEM
@@ -111,13 +141,36 @@ enum Universe: Int, CaseIterable, Codable {
 struct Roster {
     let universes: [Universe]
 
-    init(_ universe: Universe, mixed: Bool) { universes = mixed ? Universe.allCases : [universe] }
+    init(_ universe: Universe, mixed: Bool) { universes = mixed ? Universe.offered : [universe] }
 
     var mixed: Bool { universes.count > 1 }
     var darkCast: [Int] { universes.flatMap(\.darkCast) }
     var lightCast: [Int] { universes.flatMap(\.lightCast) }
     var agentOnly: Set<Int> { universes.reduce(into: Set<Int>()) { $0.formUnion($1.agentOnly) } }
     var rivals: Set<Int> { universes.reduce(into: Set<Int>()) { $0.formUnion($1.rivals) } }
+    var guises: [Set<Int>] { universes.flatMap(\.guises) }
+    /// Who can't join while `shown` (ids as of this roster) are on screen: the other guises of anyone there.
+    func ruledOut(by shown: Set<Int>) -> Set<Int> {
+        guises.reduce(into: Set<Int>()) { out, g in if !g.isDisjoint(with: shown) { out.formUnion(g.subtracting(shown)) } }
+    }
+    var homebound: [Int: String] { universes.reduce(into: [:]) { $0.merge($1.homebound) { a, _ in a } } }
+    /// Whether `id` may appear at `place` (a place key; nil: no place, the desktop): anyone but the homebound, and
+    /// those only at home.
+    func allowed(_ id: Int, at place: String?) -> Bool { homebound[id].map { $0 == place } ?? true }
+    /// `ids` (as of this roster) as they may appear at `place`: anyone homebound elsewhere is shown as someone else on
+    /// the same side, not on screen already and not the other guise of anyone there, picked by `seeds` (one per id) so
+    /// it's the same someone on every refresh.
+    func recast(_ ids: [Int], seeds: [String], at place: String?) -> [Int] {
+        guard !homebound.isEmpty else { return ids }
+        var out = ids
+        for (i, id) in ids.enumerated() where !allowed(id, at: place) {
+            let taken = Set(out), ruled = ruledOut(by: taken)
+            let pool = (StatusStore.isDark(id) ? darkCast : lightCast)
+                .filter { !taken.contains($0) && !ruled.contains($0) && !agentOnly.contains($0) && allowed($0, at: place) }
+            if !pool.isEmpty { out[i] = pool[Int(StatusStore.stableHash(seeds[i]) % UInt64(pool.count))] }
+        }
+        return out
+    }
     /// With another AI running, Claude Code's side (`Universe.claudeSide`); in Clawd Royale, the heroes.
     var claudeSide: Bool? { mixed ? false : universes[0].claudeSide }
     /// HEM, once for each universe here.

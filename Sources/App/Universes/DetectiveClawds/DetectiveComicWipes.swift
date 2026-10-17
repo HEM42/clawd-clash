@@ -1547,8 +1547,3 @@ struct DCComicTrip {
         ctx.restoreGState()
     }
 }
-
-/// A colour from 0xRRGGBB.
-private func rgb(_ hex: UInt32, _ a: CGFloat = 1) -> CGColor {
-    CGColor(red: CGFloat(hex >> 16 & 0xFF) / 255, green: CGFloat(hex >> 8 & 0xFF) / 255, blue: CGFloat(hex & 0xFF) / 255, alpha: a)
-}

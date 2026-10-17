@@ -24,8 +24,9 @@ struct Location: Hashable, RawRepresentable {
     /// Every place in `universe`, in order.
     static func all(in universe: Universe) -> [Location] { Theme.of(universe).places }
 
-    /// Every place in every universe, in menu order (Clawd Royale picks from all of them).
-    static let everywhere: [Location] = Universe.allCases.flatMap { all(in: $0) }
+    /// Every place in every universe people can pick (`Universe.offered`), in menu order (Clawd Royale picks from all of
+    /// them).
+    static let everywhere: [Location] = Universe.offered.flatMap { all(in: $0) }
 
     var place: Place { places[self] ?? Place(name: rawValue, panel: 0x16181D, still: { _, _ in }) }
 
@@ -46,9 +47,6 @@ struct Location: Hashable, RawRepresentable {
 
     /// Whether `drawAnimated` draws anything here (the rest are still pictures, with no per-frame layer).
     var hasAnimatedLayer: Bool { place.moving != nil }
-
-    /// `hasAnimatedLayer` for a canvas `rows` tall.
-    func animates(rows: Int) -> Bool { hasAnimatedLayer }
 
     /// The moving bits, drawn every frame on a transparent canvas of the same size.
     func drawAnimated(_ c: PixelCanvas, floorRows f: Int, t: Double) {
@@ -71,7 +69,7 @@ struct Place {
 /// Every place in every universe, from the universes' scene files.
 let places: [Location: Place] = marvelPlaces.merging(starWarsPlaces) { a, _ in a }.merging(dcPlaces) { a, _ in a }
     .merging(doctorPlaces) { a, _ in a }.merging(filesPlaces) { a, _ in a }
-    .merging(clawdbergPlaces) { a, _ in a }.merging(slayerPlaces) { a, _ in a }
+    .merging(clawdbergPlaces) { a, _ in a }.merging(middleEarthPlaces) { a, _ in a }.merging(slayerPlaces) { a, _ in a }
 
 
 /// The wipes between places, shared by the window and the screen saver: what's left of the old
@@ -100,7 +98,7 @@ enum Wipe {
         let w = first.width, h = first.height
         guard let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
                                   space: CGColorSpace(name: CGColorSpace.sRGB)!,
-                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+                                  bitmapInfo: layerBitmapInfo) else { return nil }
         for img in images { ctx.draw(img, in: CGRect(x: 0, y: 0, width: w, height: h)) }
         return ctx.makeImage()
     }

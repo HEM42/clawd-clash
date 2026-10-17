@@ -1,0 +1,33 @@
+# Checks every pull request with scripts/pr-guard.py before anyone builds it.
+#
+# pull_request_target runs this file and the guard as they are on main, never the PR's copies, so a PR can't edit
+# the guard to pass itself. The PR's commits are only fetched and read as text: nothing from them is checked out,
+# built or run, which is what makes pull_request_target safe here. No secrets, and a read-only token.
+name: PR guard
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out main (the guard that runs is main's)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Fetch the PR's commits (read as text, never run)
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: git fetch --no-tags origin "+refs/pull/${PR}/head:refs/pr-guard/head"
+      - name: Guard
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: python3 scripts/pr-guard.py "$BASE" refs/pr-guard/head

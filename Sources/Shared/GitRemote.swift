@@ -17,8 +17,9 @@ struct GitRemote {
     static let forget: Double = 10 * 60
 
     /// The remote of the repo containing `cwd` (origin, else the first one), or nil if it has none or isn't a repo.
-    /// Only the first lookup of a folder reads the disk on the caller's thread; after that the cached answer is
-    /// returned at once and re-read in the background when it's older than `recheck`.
+    /// Never reads the disk on the caller's thread: the first lookup of a folder returns nil and reads it in the
+    /// background (the next refresh has the answer); after that the cached answer is returned at once and re-read
+    /// in the background when it's older than `recheck`.
     static func of(_ cwd: String, now: Double = Date().timeIntervalSince1970) -> GitRemote? {
         lock.lock()
         if now - lastPrune > 60 {
@@ -43,12 +44,19 @@ struct GitRemote {
             }
             return hit.remote
         }
+        // Not even the first read happens on the caller's thread: a folder macOS guards (an external drive,
+        // Documents) asks the user for access, and the app would hang behind that prompt before drawing anything.
+        cache[cwd] = Entry(remote: nil, checked: now, used: now, refreshing: true)
         lock.unlock()
-        let remote = read(cwd)
-        lock.lock()
-        cache[cwd] = Entry(remote: remote, checked: now, used: now)
-        lock.unlock()
-        return remote
+        queue.async {
+            let remote = read(cwd)
+            lock.lock()
+            cache[cwd]?.remote = remote
+            cache[cwd]?.checked = Date().timeIntervalSince1970
+            cache[cwd]?.refreshing = false
+            lock.unlock()
+        }
+        return nil
     }
 
     private static func read(_ cwd: String) -> GitRemote? {
@@ -56,9 +64,11 @@ struct GitRemote {
         return parse(resolve(url, config: text, globalConfigs: globalConfigs()))
     }
 
-    /// Only regular files are read: a FIFO or device named `.git` or `config` would block the read.
+    /// Only regular files are read: a FIFO or device named `.git` or `config` would block the read. And only up to
+    /// 1 MB: a real git config is a few KB, and the hook reads this on every event.
     private static func readText(_ path: String) -> String? {
-        guard kind(path) == S_IFREG else { return nil }
+        var st = stat()
+        guard stat(path, &st) == 0, st.st_mode & S_IFMT == S_IFREG, st.st_size <= 1 << 20 else { return nil }
         return try? String(contentsOfFile: path, encoding: .utf8)
     }
 

@@ -16,6 +16,7 @@ final class SpriteLayers {
         let text: NSAttributedString
         let boxed: Bool
         let agentBox: Bool
+        let speech: Bool
         let accent: String
         let width: CGFloat
         let height: CGFloat
@@ -50,17 +51,18 @@ final class SpriteLayers {
             let layer = pool[i]
             var r = item.rect.offsetBy(dx: -o.x, dy: -o.y)
             if let text = item.text {
-                if !item.boxed { r.size = text.size() }   // plain text is drawn at its origin, at its own size
+                if !item.boxed && !item.speech { r.size = text.size() }   // plain text is drawn at its origin, at its own size
                 r = r.insetBy(dx: -Self.textPad, dy: -Self.textPad)
                 // Shown at exactly the image's whole pixels, on the pixel grid: a fraction of a pixel smaller and the
                 // nearest-neighbour filter dropped a whole row, cutting the tops off a name's letters.
                 let k = pixelsPerPoint
                 r = CGRect(x: (r.minX * k).rounded() / k, y: (r.minY * k).rounded() / k,
                            width: (r.width * k).rounded(.up) / k, height: (r.height * k).rounded(.up) / k)
-                layer.contents = textImage(item, size: r.size, scale: pixelsPerPoint)
+                let image = textImage(item, size: r.size, scale: pixelsPerPoint)
+                if (layer.contents as AnyObject?) !== image { layer.contents = image }
                 layer.contentsScale = pixelsPerPoint
-            } else {
-                layer.contents = item.image
+            } else if (layer.contents as AnyObject?) !== item.image {
+                layer.contents = item.image   // a layer already showing this very image is left alone
             }
             layer.bounds = CGRect(origin: .zero, size: r.size)
             layer.position = CGPoint(x: r.midX, y: r.midY)
@@ -78,20 +80,20 @@ final class SpriteLayers {
     /// The text item drawn by `OverlayView.render` into an image (box and all), at full opacity: the layer fades it.
     private func textImage(_ item: OverlayController.DrawItem, size: CGSize, scale: CGFloat) -> CGImage? {
         guard let text = item.text else { return nil }
-        let key = TextKey(text: text, boxed: item.boxed, agentBox: item.agentBox, accent: item.accent?.description ?? "",
+        let key = TextKey(text: text, boxed: item.boxed, agentBox: item.agentBox, speech: item.speech, accent: item.accent?.description ?? "",
                           width: size.width, height: size.height, scale: scale)
         if let hit = textCache[key] { return hit }
         let w = Int((size.width * scale).rounded(.up)), h = Int((size.height * scale).rounded(.up))
         guard w > 0, h > 0, let space = CGColorSpace(name: CGColorSpace.sRGB),
               let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: space,
-                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+                                  bitmapInfo: layerBitmapInfo) else { return nil }
         ctx.scaleBy(x: scale, y: scale)
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(cgContext: ctx, flipped: false)
         let p = Self.textPad
         let inner = CGRect(x: p, y: p, width: size.width - 2 * p, height: size.height - 2 * p)
         let flat = OverlayController.DrawItem(text: text, rect: inner, alpha: 1, boxed: item.boxed,
-                                              agentBox: item.agentBox, accent: item.accent)
+                                              agentBox: item.agentBox, accent: item.accent, speech: item.speech)
         OverlayView.render([flat], origin: .zero, in: ctx)
         NSGraphicsContext.restoreGraphicsState()
         let image = ctx.makeImage()

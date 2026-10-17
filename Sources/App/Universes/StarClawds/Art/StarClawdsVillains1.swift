@@ -610,12 +610,15 @@ private func drawRancor(_ c: PixelCanvas, _ p: Pose) {
     drawClaw(c, angle: swungUp(p, from: 30) ?? 30)                  // resting: arm hangs forward, claws above the floor
 }
 
-/// The rancor's reaching arm: very long, thick, ending in three claws.
+/// The rancor's reaching arm: very long, thick, ending in three claws. Raised overhead it bends at the elbow, up to
+/// 4 pixels shorter straight up, so the claws stay inside the frame.
 private func drawClaw(_ c: PixelCanvas, angle: Double) {
     let (hx, hy) = rancorShoulder
     let r = angle * .pi / 180, ux = cos(r), uy = sin(r)
-    c.glowLine(hx, hy, hx + ux * 20, hy + uy * 20, core: C(0x7A6A54), glow: clear, coreR: 1.8, glowR: 1.9)
-    let tx = hx + ux * 20, ty = hy + uy * 20
+    let len = 20 - 4 * max(0, -uy)
+    c.glowLine(hx, hy, hx + ux * len, hy + uy * len, core: C(0x7A6A54), glow: clear, coreR: 1.8, glowR: 1.9)
+    let tx = hx + ux * len, ty = hy + uy * len
+
     for k in -1...1 {
         let a = r + Double(k) * 0.35
         c.glowLine(tx, ty, tx + cos(a) * 5, ty + sin(a) * 5, core: C(0xE8DCC0), glow: clear, coreR: 0.6, glowR: 0.7)

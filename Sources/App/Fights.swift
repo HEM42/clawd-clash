@@ -19,7 +19,7 @@ enum FightRole {
     case zap                     // lightning (arcs drawn by the FX layer)
     case hit                     // non-saber caught by lightning: shake
     case cheer                   // odd one out: bounce and wave the weapon
-    case rest                    // a hero leading an idle session: saber off, blaster lowered
+    case rest                    // any character leading an idle session: saber off, blaster lowered
     case ready(urgent: Bool)     // a hero whose session needs you: weapon held up (waved, with hops, when urgent)
 }
 
@@ -64,7 +64,7 @@ func duckAmount(t: Double, shooterOffset: Double, armoured: Bool) -> Double {
     return down * (1 - up)
 }
 let boltArrival = 0.4          // fraction of the period a bolt spends in flight
-private let deflectPeak = -15.0
+private let deflectPeak = -15.0   // the top of `deflectAngle`'s swing (-75 + 60): keep the two in step
 
 func frac(_ v: Double) -> Double { v - floor(v) }
 
@@ -347,4 +347,12 @@ func drawBubble(_ c: PixelCanvas, kind: BubbleKind, t: Double, urgent: Bool = fa
 /// Bobbing marker over the Claude whose terminal you're in right now.
 func drawFocusCaret(_ c: PixelCanvas) {
     c.pattern(0, 0, [".Y.", "YYY", ".Y."], ["Y": C(0xFFE14A)])
+}
+
+/// A fighting pair's clock offset, 0…10 s: the same for the same two characters (from their keys), different from
+/// pair to pair, so several fights on screen are out of step with each other while each pair stays in step.
+func fightPhaseOffset(_ a: String, _ b: String) -> Double {
+    var h: UInt64 = 0xCBF2_9CE4_8422_2325   // FNV-1a: stable across launches, unlike hashValue
+    for byte in (min(a, b) + "|" + max(a, b)).utf8 { h = (h ^ UInt64(byte)) &* 0x100_0000_01B3 }
+    return Double(h % 10_000) / 1000
 }

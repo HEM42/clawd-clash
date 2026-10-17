@@ -490,7 +490,7 @@ extension Cast {
     ].merging(filesBespokeDrills) { a, _ in a }.merging(clawdbergBespokeDrills) { a, _ in a }
 }
 
-/// A Dalick's "Elevate!": up 8 px over a second, held with a little bob, and down again; a glow under its skirt.
+/// A Dalick's "Elevate!": up 8 px over 1.2 s, held with a little bob, and down again; a glow under its skirt.
 private func drawElevate(_ c: PixelCanvas, _ who: Cast, _ d: DrillPlay, _ t: Double) {
     let r = setRamp(d, rise: 1.2)
     let lift = Int((8 * r + (r > 0.95 ? sin(d.e * 2.4) : 0)).rounded())
