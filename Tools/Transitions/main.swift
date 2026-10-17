@@ -13,6 +13,7 @@ import AVFoundation
 //   build/transitions build/transitions-clawdberg hillValley1955 moonHill   Stevie Clawdberg's ten
 //   W=1280 H=720 SHOWCASE=build/clawdberg-transitions.mp4 build/transitions   all ten back to back, one video
 //   build/transitions build/transitions-rings bagEnd mountDoom   all nine of its trips
+//   build/transitions build/transitions-slayer slayerLibrary slayerHellmouth   Clawd Slayer's thirteen
 
 let args = Array(CommandLine.arguments.dropFirst())
 let outDir = args.first ?? "build/transitions"
@@ -93,6 +94,14 @@ func shownRings(_ kind: RingsWipe) -> Transition {
     }
 }
 
+/// Clawd Slayer's transitions (`SlayerTrip`), every `SlayerWipe` kind.
+func shownSlayer(_ kind: SlayerWipe) -> Transition {
+    let trip = SlayerTrip(kind: kind, from: from, to: to)
+    return Transition(key: "\(kind.rawValue + 1)-\(kind)", title: "\(kind)", duration: kind.duration) { ctx, old, new, k in
+        trip.draw(ctx, old: old, new: new, k: k, in: full)
+    }
+}
+
 /// The Clawd Files' caption, typed in top left `t` seconds after the trip.
 func caption(_ ctx: CGContext, t: Double) {
     let lines = FilesCaption.typed(to, after: t)
@@ -130,7 +139,8 @@ let forPlace: [Transition] = to.universe == .dc ? DCComicWipe.allCases.map(shown
     : to.universe == .doctor ? DoctorWipe.allCases.map(shownDoctor)
     : to.universe == .clawdFiles ? FilesWipe.allCases.map(shownFiles)
     : to.universe == .clawdberg ? ClawdbergWipe.allCases.map(shownClawdberg)
-    : to.universe == .middleEarth ? RingsWipe.allCases.map(shownRings) : marvel
+    : to.universe == .middleEarth ? RingsWipe.allCases.map(shownRings)
+    : to.universe == .slayer ? SlayerWipe.allCases.map(shownSlayer) : marvel
 let transitions: [Transition] = forPlace.filter { tr in
     only.map { $0.contains { tr.key.hasPrefix("\($0)-") || tr.key.hasSuffix("-\($0)") } } ?? true
 }

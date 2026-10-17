@@ -2,8 +2,8 @@ import CoreGraphics
 
 /// A comic-book trip between two places, in a universe that has them: Marvel's (`ComicTrip`), DC's (`DCComicTrip`),
 /// Doctor Clawd's trips through time and space (`DoctorTrip`), The Clawd Files' (`FilesTrip`), Stevie Clawdberg's
-/// (`ClawdbergTrip`) or Clawd of the Rings' (`RingsTrip`).
-/// Star Wars has none: it keeps its edge and clock wipes (`Wipe`), and so does Clawd Slayer until its own trips come. Shared by the window and the screen saver.
+/// (`ClawdbergTrip`), Clawd of the Rings' (`RingsTrip`) or Clawd Slayer's (`SlayerTrip`).
+/// Star Wars has none: it keeps its edge and clock wipes (`Wipe`). Shared by the window and the screen saver.
 enum ComicTransition {
     case marvel(ComicTrip)
     case dc(DCComicTrip)
@@ -11,6 +11,7 @@ enum ComicTransition {
     case files(FilesTrip)
     case clawdberg(ClawdbergTrip)
     case middleEarth(RingsTrip)
+    case slayer(SlayerTrip)
 
     var duration: Double {
         switch self {
@@ -20,6 +21,7 @@ enum ComicTransition {
         case .files(let t): return t.duration
         case .clawdberg(let t): return t.duration
         case .middleEarth(let t): return t.duration
+        case .slayer(let t): return t.duration
         }
     }
 
@@ -32,6 +34,7 @@ enum ComicTransition {
         case .files(let t): t.draw(ctx, old: old, new: new, k: k, in: r)
         case .clawdberg(let t): t.draw(ctx, old: old, new: new, k: k, in: r)
         case .middleEarth(let t): t.draw(ctx, old: old, new: new, k: k, in: r)
+        case .slayer(let t): t.draw(ctx, old: old, new: new, k: k, in: r)
         }
     }
 
@@ -39,6 +42,7 @@ enum ComicTransition {
     /// Great Eagle's open sky), so nobody is left standing on thin air.
     func crewShown(_ k: Double) -> Double {
         if case .middleEarth(let t) = self { return t.crewShown(k) }
+        if case .slayer(let t) = self { return t.crewShown(k) }
         return 1
     }
 
@@ -46,7 +50,7 @@ enum ComicTransition {
     /// uses plain wipes. `from`, where it's coming from, if it's known.
     static func pick(after last: ComicTransition?, cast: [Cast], from: Location? = nil, to place: Location) -> ComicTransition? {
         switch place.universe {
-        case .starWars, .slayer:
+        case .starWars:
             return nil
         case .clawdberg:
             if case .clawdberg(let l)? = last { return .clawdberg(ClawdbergTrip.pick(after: l.kind, cast: cast, from: from, to: place)) }
@@ -66,6 +70,9 @@ enum ComicTransition {
         case .middleEarth:
             if case .middleEarth(let l)? = last { return .middleEarth(RingsTrip.pick(after: l.kind, cast: cast, from: from, to: place)) }
             return .middleEarth(RingsTrip.pick(after: nil, cast: cast, from: from, to: place))
+        case .slayer:
+            if case .slayer(let l)? = last { return .slayer(SlayerTrip.pick(after: l.kind, cast: cast, from: from, to: place)) }
+            return .slayer(SlayerTrip.pick(after: nil, cast: cast, from: from, to: place))
         }
     }
 }
