@@ -362,6 +362,8 @@ Do these freely (on the branch):
 - adding a cask in `release.sh`: `write_cask <name> <key> "<description>"`, adding it to the `others` list in `write_cask`, and updating the main cask's description;
 - releasing (`./release.sh <version>`), pushing, opening a PR.
 
+**Version numbers:** a new universe, and only a new universe, raises the middle number: 3.6.x → 3.7.0. Everything else (fixes, tweaks, features that don't add a universe) raises only the last: 3.6.0 → 3.6.1 → 3.6.2. So a universe ships as the next `3.N.0`, and its own fixes after that as `3.N.1`, `3.N.2`…
+
 **Sending it as a pull request from a fork:** run `python3 scripts/pr-guard.py main HEAD` and fix what it reports. Leave `llms.txt`, `release.sh` and the other files `CONTRIBUTING.md` lists as red to the maintainer, and say in the PR what they need.
 
 ---
