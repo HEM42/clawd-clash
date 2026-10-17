@@ -800,7 +800,7 @@ private func drawNecroBody(_ c: PixelCanvas, _ p: Pose) {
     }
     c.oy += p.breathe
     // The faint helm under the hood's crown (drawn first: the smoke half covers it).
-    c.pattern(16, 14, Array(sauronHelm.prefix(7)), ["K": C(0x4E4660, 0.95), "H": C(0x8E82A6)])
+    c.pattern(16, 14, Array(sauronHelm.prefix(7)), ["K": C(0x4E4660), "H": C(0x8E82A6)])
     // The smoke, row by row: the hood, the shoulders, then thinning out below the waist and drifting back.
     let widths: [Double] = [2, 4, 5.5, 6.5, 7.5, 8.5, 9.5, 10, 10.5, 11, 11, 11.5, 11.5,     // rows 18…30, the hood
                             12, 12.5, 13, 13, 12.5, 12,                                        // 31…36, the shoulders
@@ -813,21 +813,21 @@ private func drawNecroBody(_ c: PixelCanvas, _ p: Pose) {
         let l = Int((cx - hw).rounded()), r = Int((cx + hw).rounded()) - 1
         guard r >= l else { continue }
         if y >= 40 {
-            // The last rows only a dithered haze.
-            for x in l...r where (x + y + Int(p.lt * 3)) % 2 == 0 { c.px(x, y, smoke.alpha(0.8 - Double(y - 40) * 0.18)) }
+            // The last rows only a faint dithered haze: faint enough that the outline still closes under the hem.
+            for x in l...r where (x + y + Int(p.lt * 3)) % 2 == 0 { c.px(x, y, smoke.alpha(0.22 - Double(y - 40) * 0.04)) }
             continue
         }
         c.rect(l, y, r - l + 1, 1, smoke)
         c.px(l, y, rim); c.px(r, y, deep)
-        // The edges never quite still: a pixel of thinner smoke flickering on either side.
+        // The edges never quite still: a pixel of smoke flickering on either side (solid, so the outline follows it).
         let n = Int(p.lt * 7) + y * 13
-        if noise(n) > 0.4 { c.px(l - 1, y, wisp.alpha(0.5)) }
-        if noise(n + 5) > 0.5 { c.px(r + 1, y, smoke.alpha(0.6)) }
+        if noise(n) > 0.4 { c.px(l - 1, y, wisp) }
+        if noise(n + 5) > 0.5 { c.px(r + 1, y, smoke) }
         if (19...24).contains(y) { c.px(l + 1, y, rim) }                       // light catching the hood
     }
-    // The murk over the crown: a veil drifting across the helm's spikes.
+    // The murk over the crown: a veil drifting across the helm's spikes (faint, so the outline still goes round them).
     for x in 16...39 {
-        let a: Double = 0.15 + 0.25 * noise(x * 7 + Int(p.lt * 4))
+        let a: Double = 0.1 + 0.12 * noise(x * 7 + Int(p.lt * 4))
         c.px(x, 17 + Int(noise(x + Int(p.lt * 3)) * 3), wisp.alpha(a))
     }
     // The hood's opening, black, and the two eyes burning in it.
