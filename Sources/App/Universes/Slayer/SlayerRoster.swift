@@ -161,5 +161,5 @@ extension Location {
 }
 
 /// Every Clawd Slayer place, from the Places/SlayerScenes*.swift files.
-let slayerPlaces: [Location: Place] = [slayerScenes1, slayerScenes2]
+let slayerPlaces: [Location: Place] = [slayerScenes1, slayerScenes2, slayerScenes4]
     .reduce([:]) { $0.merging($1) { a, _ in a } }
