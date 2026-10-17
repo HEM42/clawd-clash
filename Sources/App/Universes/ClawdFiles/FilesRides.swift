@@ -6,7 +6,7 @@ import Foundation
 // of light.
 
 /// The FBI's unmarked sedan: a boxy dark blue-grey four-door saloon (bonnet, cabin, a boot of its own), its rear door the
-/// boarding ramp (`ramp` 0…1 swings it open on the lit inside, its foot about 14 px left of centre), `lights` on:
+/// boarding ramp (`ramp` 0…1 swings it open on the dark cabin and the back seat, its foot about 14 px left of centre), `lights` on:
 /// headlights and a red light flashing on the dash.
 func drawSedan(_ c: PixelCanvas, ramp: Double, lights: Bool) {
     let body = C(0x2E3A4E), light = C(0x4A5A72), dark = C(0x1C2432), glass = C(0x16202C), shine = C(0x8AA0B8)
@@ -47,13 +47,40 @@ func drawSedan(_ c: PixelCanvas, ramp: Double, lights: Bool) {
         c.circle(wx, 24, 5, arch)
         c.circle(wx, 24, 4, tyre); c.circle(wx, 24, 2, hub); c.px(wx, 24, tyre)
     }
-    // The rear door swinging open on the warm light inside.
+    // The rear door, hinged at its front edge (x 32), swinging out toward us: it narrows to an edge-on panel standing
+    // at the hinge, and the doorway behind it shows the dark cabin and the back seat.
     if ramp > 0 {
-        let w = 12, open = Int((Double(w) * ramp).rounded())
-        c.rect(20, 11, w, 13, C(0xFFE8B0, 0.85)); c.rect(20, 11, w, 1, C(0xFFF6D8))
-        c.rect(20, 10, max(1, w - open), 14, body); c.rect(20, 10, max(1, w - open), 1, light)
+        let inside = C(0x0C1016), seat = C(0x857C68), seatLight = C(0xA89E86), seatDark = C(0x5A5446)
+        for y in 11...23 {   // the doorway: the rear window's slant on top, the door's own shape below the waist
+            let from = y < 16 ? max(20, 18 + (16 - y) * 2 / 3) : 20
+            c.rect(from, y, (y < 16 ? 31 : 32) - from, 1, inside)
+        }
+        c.rect(25, 11, 4, 1, C(0x3A4252))                                  // the headliner, under the dim dome light
+        c.rect(21, 11, 2, 2, seat); c.px(21, 11, seatLight)                // the back seat's headrest
+        c.rect(20, 13, 3, 6, seat); c.rect(20, 13, 3, 1, seatLight); c.rect(22, 14, 1, 4, seatDark)
+        c.rect(20, 18, 10, 1, seatLight); c.rect(20, 19, 10, 1, seat); c.rect(20, 20, 10, 1, seatDark)
+        let pw = filesDoorWidth(12, ramp), x0 = 32 - pw, drop = Int((2 * ramp).rounded()), rise = Int((1.5 * ramp).rounded())
+        c.rect(x0, 10, pw, 14, ramp < 0.25 ? body : light)                 // the door's skin, turning to the light
+        if pw > 2 {   // its window, turned to catch the sky
+            c.rect(x0 + 1, 11, pw - 2, 5, ramp < 0.25 ? glass : C(0x3A4C64)); c.px(x0 + 1, 11, shine); c.px(x0 + 1, 12, shine.alpha(0.6))
+        }
+        c.rect(x0, 16, pw, 1, body)
+        c.rect(x0, 20, pw, 1, chrome)
+        c.rect(x0, 23, pw, 1, body)
+        if pw > 2 { c.px(x0 + 1, 18, chrome) }                             // the handle
+        for i in 0..<pw {   // nearer us toward its free edge, it reaches a little past the body, top and bottom
+            let k = Double(pw - 1 - i) / Double(max(1, pw - 1))
+            let down = Int((Double(drop) * k).rounded()), up = Int((Double(rise) * k).rounded())
+            if down > 0 { c.rect(x0 + i, 25, 1, down, dark) }
+            if up > 0 { c.rect(x0 + i, 10 - up, 1, up, light) }
+        }
+        c.rect(x0, 10 - rise, 1, 14 + rise + drop, shine)                  // its free edge, nearest us
+        c.rect(31, 10, 1, 14, dark)                                        // the hinge side, in shade
     }
 }
+
+/// How wide a door `w` px long looks, side on, when it's swung `ramp` 0…1 of the way open (about 63°).
+private func filesDoorWidth(_ w: Int, _ ramp: Double) -> Int { max(2, Int((Double(w) * cos(ramp * 1.1)).rounded())) }
 
 /// The black helicopter: a dark fuselage with a tinted nose bubble, its tail boom off to the left, skids under it and
 /// the rotor on top (a long blur while `engines` turn it, the blades drooping when they don't). The side door slides
