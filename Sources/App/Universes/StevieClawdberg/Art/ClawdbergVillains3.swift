@@ -496,9 +496,9 @@ private func drawMrsDeegle(_ c: PixelCanvas, _ p: Pose) {
     if lifting {
         let k = sig
         if k < 0.18 { up = 0 }
-        else if k < 0.45 { up = (k - 0.18) / 0.27 * 16 }
-        else if k < 0.6 { up = 16 }
-        else if k < 0.78 { up = 16 - (k - 0.6) / 0.18 * 16 }
+        else if k < 0.45 { up = (k - 0.18) / 0.27 * 15 }
+        else if k < 0.6 { up = 15 }
+        else if k < 0.78 { up = 15 - (k - 0.6) / 0.18 * 15 }
 
         else if k < 0.86 { up = sin((k - 0.78) / 0.08 * .pi) * 3 }
         if k > 0.08 {
