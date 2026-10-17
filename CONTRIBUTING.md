@@ -14,7 +14,7 @@ The guard sorts every file a PR changes into one of three groups.
 
 **Green: change freely.**
 - Your universe's own folder, `Sources/App/Universes/<YourUniverse>/`
-- Pictures in `docs/`
+- PNG pictures in `docs/`
 - `README.md` and `CHANGELOG.md`
 
 **Yellow: fine, and the maintainer reads these closely.** This covers the registration files every universe touches, and the rest of the app:
@@ -26,8 +26,9 @@ The guard sorts every file a PR changes into one of three groups.
 
 **Red: the guard fails, so ask the maintainer.** A universe never needs to change these, and they're where harm would be done:
 - **The build and release scripts:** `build.sh`, `release.sh`, `Tools/*/build.sh`, and any other script.
+- **Build and project files:** a `Makefile`, `Package.swift`, or an Xcode project or workspace.
 - **Repo and editor config:** anything starting with a dot (`.github/`, `.claude/`, `.vscode/`, `.gitattributes`…).
-- **Instructions for AI assistants and contributors:** `llms.txt`, `clawdify_guide.md`, `CLAUDE.md`, `AGENTS.md` and this file.
+- **Instructions for AI assistants and contributors:** `llms.txt`, `clawdify_guide.md`, `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` and this file.
 - **The hook and the code compiled into it:** `Sources/Hook/`, plus `StatusStore`, `Processes`, `GitRemote` and `SaverFeed` in `Sources/Shared/`.
 - **The code that holds the app's permissions:** `HookInstaller`, `SaverInstaller`, `Jump` and `main.swift`.
 - **New core files:** a new file directly in `Sources/Shared/`, `Sources/App/`, `Sources/App/Universes/` or `Sources/Saver/`.
@@ -45,6 +46,7 @@ These apply to the lines your PR adds in a universe folder.
 - None of the app's own sensitive types: `StatusStore`, `HookInstaller`, `Jump`…
 - No system calls by bare name: `open(…)`, `exit(…)`, `kill(…)`…
 - A local variable may still be called `open` or `raise`.
+- A few things pass but are flagged for the maintainer to look at: `ProcessInfo` (it reads the environment), locks, and raw memory access.
 
 **Imports.** Only `Foundation`, `CoreGraphics`, `CoreText` and `AppKit`.
 
@@ -56,7 +58,7 @@ These apply to the lines your PR adds in a universe folder.
 
 **Not allowed:**
 - attributes other than `@discardableResult`, `@escaping` and a few like them
-- `#if` and other compiler directives
+- `#if` and other compiler directives (`#available` and `#unavailable` checks are fine)
 - macros and custom operators
 - a file called `main.swift`
 

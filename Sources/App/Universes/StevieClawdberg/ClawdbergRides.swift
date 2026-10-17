@@ -42,12 +42,40 @@ func drawDelorean(_ c: PixelCanvas, ramp: Double, lit: Bool) {
     c.rect(7, 19, 1, 2, C(0xC82A2A))
     // The wheels.
     for wx in [17, 50] { c.circle(wx, 24, 4, tyre); c.circle(wx, 24, 2, hub); c.px(wx, 24, tyre) }
-    // The gull-wing door, lifting.
+    // The gull-wing door, hinged along the roof, swinging up and out toward us: hanging, it shortens as its foot lifts
+    // and tips out; edge-on, it's a sliver at the roof; past that it stands up over the roof, its window showing. The
+    // doorway it leaves shows the dark cabin, the seat and the steering wheel.
     if ramp > 0 {
-        let up = Int((8 * ramp).rounded())
-        c.rect(27, 12, 12, 10, C(0xFFE8B0, 0.8))
-        c.rect(27, 12 - up, 12, 2, steel); c.rect(27, 12 - up, 12, 1, shine)
-        c.rect(37, 12 - up, 2, up, dark)
+        let inside = C(0x121418), seat = C(0x5E626C), seatLight = C(0x8A8E98), seatDark = C(0x3A3C44)
+        for y in 11...21 {   // the doorway: the windscreen's slope in front, the door's own shape below the waist
+            let to = y < 17 ? min(39, 46 - (17 - y) * 2) : 39
+            c.rect(27, y, to - 27, 1, inside)
+        }
+        c.rect(29, 11, 2, 2, seat); c.px(29, 11, seatLight)               // the headrest
+        c.rect(28, 13, 3, 6, seat); c.rect(28, 13, 3, 1, seatLight); c.rect(30, 14, 1, 4, seatDark)   // the seat back
+        c.rect(28, 18, 8, 1, seatLight); c.rect(28, 19, 8, 1, seatDark)   // the cushion
+        c.pattern(35, 13, [".R.", "R.D", "R.D", ".D."], ["R": C(0x8A8E98), "D": C(0x4A4C54)])   // the steering wheel's rim
+        c.px(38, 16, C(0x4A4C54)); c.px(38, 15, C(0x8A5A20))              // its column, and the dash's dim glow
+        let phi = ramp * 2.27, reach = Int((11 * cos(phi)).rounded())    // its foot: below the roof (+) or above (-)
+        let flare = Int((2.5 * sin(phi)).rounded())                      // its free edge, nearer us, looks wider
+        if reach > 0 {   // still hanging: the outside, its window on top, its foot tipping out toward us
+            c.rect(27, 10, 12, reach, steel); c.rect(27, 10, 1, reach, shine)
+            let g = reach * 5 / 11
+            if g > 0 { c.rect(28, 11, 10, g, glass); c.px(28, 11, shine) }
+            if reach > 3 { c.rect(28, 10 + reach - 2, 10, 1, black) }        // the black stripe along its foot
+            c.rect(27 - flare, 10 + reach - 1, 12 + flare * 2, 1, dark)
+        } else {          // edge-on at the roof, or standing up over it
+            let h = max(1, -reach), top = 10 - h
+            let g = h * 5 / 11
+            for y in top...10 {   // widening as it reaches up and out toward us: its window by the hinge, its foot on top
+                let k = 10 - y, out = flare * k / h, x0 = 26 - out, w = 12 + out * 2
+                c.rect(x0, y, w, 1, steel); c.px(x0, y, shine); c.px(x0 + w - 1, y, dark)
+                if k >= 1 && k <= g { c.rect(x0 + 1, y, w - 2, 1, glass) }
+                if h > 3 && k == h - 1 { c.rect(x0 + 1, y, w - 2, 1, black) }   // the black stripe along its foot
+            }
+            if g > 0 { c.px(27 - flare * g / h, 10 - g, shine) }
+            c.rect(26 - flare, top, 12 + flare * 2, 1, shine)
+        }
     }
     if lit {   // blue sparks crackling over the body
         let k = 3
