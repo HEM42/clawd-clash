@@ -43,7 +43,7 @@ enum SlayerVillain: Int, CaseIterable {
     var persona: Persona { slayerVillainPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-let slayerHeroPersonas: [SlayerHero: Persona] = [slayerHeroes1, slayerHeroes2, slayerHeroes3, slayerHeroes5, slayerHeroes6]
+let slayerHeroPersonas: [SlayerHero: Persona] = [slayerHeroes1, slayerHeroes2, slayerHeroes3, slayerHeroes4, slayerHeroes5, slayerHeroes6]
     .reduce([.hem: hemPersona(.slayer)]) { $0.merging($1) { a, _ in a } }
 let slayerVillainPersonas: [SlayerVillain: Persona] = [slayerVillains1, slayerVillains2, slayerVillains3, slayerVillains4, slayerVillains5, slayerVillains7, slayerVillains8, slayerVillains9]
     .reduce([:]) { $0.merging($1) { a, _ in a } }
