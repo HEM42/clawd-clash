@@ -296,21 +296,6 @@ final class PixelCanvas {
         }
     }
 
-    /// The most common solid colour, ignoring `excluding` (and anything within a small distance of them). Colours
-    /// are bucketed coarsely so shading of one material counts together; the bucket's average is returned.
-    func dominantColor(excluding: [Px]) -> (r: Double, g: Double, b: Double)? {
-        var buckets: [Int: (n: Int, r: Int, g: Int, b: Int)] = [:]
-        for i in stride(from: 0, to: buf.count, by: 4) where buf[i + 3] >= 250 {
-            let r = Int(buf[i]), g = Int(buf[i + 1]), b = Int(buf[i + 2])
-            if excluding.contains(where: { abs(Int($0.r) - r) + abs(Int($0.g) - g) + abs(Int($0.b) - b) < 40 }) { continue }
-            let key = (r >> 5) << 6 | (g >> 5) << 3 | (b >> 5)
-            let e = buckets[key] ?? (0, 0, 0, 0)
-            buckets[key] = (e.n + 1, e.r + r, e.g + g, e.b + b)
-        }
-        guard let best = buckets.values.max(by: { $0.n < $1.n }) else { return nil }
-        return (Double(best.r) / Double(best.n) / 255, Double(best.g) / Double(best.n) / 255, Double(best.b) / Double(best.n) / 255)
-    }
-
     /// Wipe to transparent (and drop any translation), so one canvas can be reused frame after frame.
     func clear() {
         buf.withUnsafeMutableBytes { _ = $0.initializeMemory(as: UInt8.self, repeating: 0) }
