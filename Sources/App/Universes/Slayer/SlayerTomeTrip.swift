@@ -98,7 +98,7 @@ extension SlayerTrip {
         // The plate: the new place as a woodcut on the right-hand page, colour soaking into it, then growing to fill
         // the frame.
         if k >= 0.34 + 3 * 0.035 {
-            let plate = book.grid(book.plate.tomeLerp(to: r, grow))
+            let plate = book.grid(Self.tomeLerp(book.plate, r, grow))
             drawTomePlate(ctx, new: new, plate: plate, start: book.plate, k: k, grow: grow, book: book, in: r)
         }
         Self.tomeGrain(ctx, k: k, strength: CGFloat(1 - Self.span(k, 0.82, 1)), px: px, in: r)
@@ -169,6 +169,13 @@ extension SlayerTrip {
                           CGRect(x: i.minX, y: i.minY, width: px, height: i.height), CGRect(x: i.maxX - px, y: i.minY, width: px, height: i.height)])
             }
         }
+    }
+
+    /// `a` moved and stretched `t` (0…1) of the way to `b`.
+    private static func tomeLerp(_ a: CGRect, _ b: CGRect, _ t: Double) -> CGRect {
+        let f = CGFloat(t)
+        return CGRect(x: a.minX + (b.minX - a.minX) * f, y: a.minY + (b.minY - a.minY) * f,
+                      width: a.width + (b.width - a.width) * f, height: a.height + (b.height - a.height) * f)
     }
 
     // MARK: The woodcut
@@ -309,14 +316,6 @@ extension SlayerTrip {
         }
         ctx.setFillColor(rgb(0xFFF4E0, 0.07 * strength)); ctx.fill(light)
         ctx.setFillColor(rgb(0x000000, 0.12 * strength)); ctx.fill(dark)
-    }
-}
-
-private extension CGRect {
-    func tomeLerp(to b: CGRect, _ t: Double) -> CGRect {
-        let f = CGFloat(t)
-        return CGRect(x: minX + (b.minX - minX) * f, y: minY + (b.minY - minY) * f,
-                      width: width + (b.width - width) * f, height: height + (b.height - height) * f)
     }
 }
 
