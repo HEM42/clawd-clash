@@ -2623,8 +2623,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         thanks.font = .systemFont(ofSize: NSFont.systemFontSize, weight: .semibold)
         views.append(thanks)
         for c in Self.collaborators {
-            let line = NSStackView(views: [linkButton(c.name, "https://github.com/\(c.github)"),
-                                           Self.small(c.made, color: .secondaryLabelColor)])
+            // The universes they made, by their current names; a bug fix or a feature is thanked by name alone.
+            var parts: [NSView] = [linkButton(c.name, "https://github.com/\(c.github)")]
+            if !c.universes.isEmpty {
+                parts.append(Self.small(c.universes.map(\.title).joined(separator: ", "), color: .secondaryLabelColor))
+            }
+            let line = NSStackView(views: parts)
             line.spacing = 6
             views.append(line)
         }
@@ -2649,9 +2653,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         return row
     }
 
-    /// Everyone outside the project whose pull requests were merged, for About's "Thanks to" (add them when merging).
-    static let collaborators: [(name: String, github: String, made: String)] = [
-        ("Henrik Andersen", "HEM42", "Clawd Royale and Clawd of the Rings"),
+    /// Everyone outside the project whose pull requests were merged, for About's "Thanks to" (add them when merging),
+    /// with the universes they made, if any.
+    static let collaborators: [(name: String, github: String, universes: [Universe])] = [
+        ("Henrik Andersen", "HEM42", [.middleEarth]),
     ]
 
     /// A borderless link-coloured button that opens `url`.
