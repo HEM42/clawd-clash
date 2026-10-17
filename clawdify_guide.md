@@ -329,6 +329,7 @@ Any exhaustive `switch` on `Universe` turns a missed spot into a compile error. 
   - and the batch sheets, one per Art file.
   
   **Look at the PNGs yourself** before showing the user. Check that each character reads as who it's meant to be, that nobody is confusable with someone else in the cast, and that there are no outline gaps.
+  - `build/preview edges out.txt "<Universe title>"` lists every moment solid art touches the frame's edge (see Look and style); everything it lists should be on purpose.
 - Transitions: `Tools/Transitions/build.sh`, then `build/transitions <outdir> <placeA> <placeB>` between two of the new places.
 - In the app:
   - Settings → Universe → the new one. New sessions get cast from it, and subagents include villains and small fry.
@@ -414,6 +415,63 @@ Use `doctorShots` as the pattern. The trailer runs about 45–50 seconds:
 `promo/` is git-ignored apart from the main trailer and the blooper reel, so rendered videos aren't committed.
 
 ---
+
+## Look and style
+
+Every universe has to sit next to the others in Clawd Royale, so the art follows one house style. Read this before
+drawing anything, and check your work against it at the end of every phase.
+
+### Characters
+
+- **Clawd in costume.** Every character is Clawd's blocky orange body (x 18…37, y 26…37) on four legs (y 38…43),
+  facing right on a 72×52 canvas. The view mirrors it to face left. A costume, hair, a helmet, a prop or a creature
+  body go over and round that; the four legs always show. Giants and creatures can fill the frame, but they still
+  stand on four legs on the ground row.
+- **Pixel art, drawn in code.** Whole pixels, flat colours (`C(0xRRGGBB)`), no gradients or blur on the body. Give
+  each material two or three tones: a base, a darker shade and a lighter highlight (`suit`, `suitDark`, `stripe`).
+  Light comes from the front-left: highlights on top and left edges, shade on the right and underneath.
+- **Don't outline the silhouette yourself.** The app adds a 1-pixel outline round every character in its AI's colour
+  (white for Claude Code), so dark costumes read on a dark desktop. Use the dark `outline` colour only for lines
+  inside the figure: a belt, a visor, the edge of a coat.
+- **Solid or see-through, nothing in between at the edge.** The outline goes round **fully opaque** pixels only.
+  Anything partly see-through counts as a glow and gets no outline. So:
+  - draw the body, costume, hair, props and signs fully opaque;
+  - keep see-through for what should stay soft: glows, magic, smoke, ghosts, phasing, water, speed blur;
+  - where something see-through touches the silhouette, make it either solid or faint (under about 25% opacity).
+    Half-opaque pixels along an edge make the outline dotted. The Necro-maintainer's smoke had exactly this.
+- **Stay inside the frame, with a pixel to spare.** Anything past the canvas edge is cut off, outline and all, and a
+  solid pixel on the edge itself loses its outline on that side. Keep solid art within columns 1…70 and from row 1 down, in
+  **every pose at every moment**: walking, fighting, waiting, cheering, sitting, every idle habit and the whole
+  signature move. Some things eat into that room:
+  - the breathing bob lifts the upper body 1 px;
+  - hovering, hops and the bounce habit lift the whole sprite 2 to 4 px (the engine gives back what it must, but
+    only that lift, not your own raised arms);
+  - raised weapons, arms, wings, tails and signature props swing out further than they rest.
+
+  So a tall character's head should start around row 5 or lower, and long weapons, wings and tails should shorten
+  or tuck in as they swing towards an edge. Set the persona's `headTop` to the head's real top row.
+- **What may leave the frame on purpose:** shots, beams, thrown things, lassos and sound rings flying out; a
+  character running, charging or teleporting off; lightning, birds or ships coming in from above; anything below
+  the feet touching the bottom edge. Nothing of the character's own body or held props.
+- **Check it:** `build/preview edges out.txt "<Universe title>"` draws everyone at 80 moments of every state and 40
+  of every habit and signature move, and lists each state where solid art touches an edge, with a picture of the
+  first such moment next to the report. Everything it lists should be on purpose. `build/preview cast` shows the
+  outline itself: look for gaps.
+
+### Places
+
+- **The same pixel art**, at the same pixel size as the crew. A palette of the franchise's own (The Clawd Files:
+  desaturated greens, cold blue-greys, deep blacks), with grain or halftone where it helps. Nothing painted, glossy or
+  photographic.
+- **The crew has to read on it.** Characters stand on the bottom `floorRows` rows, and their names and speech
+  appear above them. Keep the floor and the band just above it plain and mid-to-dark, so white outlines and labels
+  stand out. Put the busy detail (shelves, machinery, signs, crowds) higher up and at the sides.
+- **The moving layer stays subtle:** a flicker, rain, water, a blinking light. Nothing that flashes across the
+  crew or pulls the eye from them.
+- **Window and screen saver.** The window shows a short strip of the place; the screen saver shows it much taller
+  (`Scenes.isTall`). Check both with `build/preview place`: the strip must read on its own, and the tall version
+  needs something in its upper part, not a big empty sky.
+- **Text in a place** (a sign, a poster) is short and big enough to read at window size, or left out.
 
 ## House style
 

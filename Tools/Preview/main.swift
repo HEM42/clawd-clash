@@ -11,12 +11,14 @@ import AppKit
 //   build/preview place out.png avengersTower ...  locations at window size and at screen-saver size
 //   build/preview magic out.png [names…]           every magic user's stream side by side, at a few moments
 //   build/preview rides out.png                    the ships, landed and flying
+//   build/preview edges out.txt ironMan ...        every moment solid art touches the frame's top or side edges, where
+//                                                  its outline is cut off (shots and exits leaving on purpose show too)
 //
 // SCALE=4 makes cells bigger (default 3).
 
 let args = Array(CommandLine.arguments.dropFirst())
 guard args.count >= 2 else {
-    print("usage: preview cast|fight|drills|magic|place|rides <out.png> [names…]")
+    print("usage: preview cast|fight|drills|magic|place|rides|edges <out.png> [names…]")
     exit(2)
 }
 let mode = args[0], out = args[1], names = Array(args.dropFirst(2))
@@ -124,6 +126,70 @@ func cast(named n: String) -> [Cast] {
 }
 
 switch mode {
+case "edges":
+    // Every moment a character's solid art touches the top, left or right edge of its 72×52 frame, where the white
+    // outline gets cut off: 80 moments each of standing, walking, waiting, cheering, flinching and sitting, and 40 of
+    // every idle habit and its signature move. `out` is a text report (one line per state that touches, with how many
+    // moments); a picture of each state's first such moment goes next to it, as <out>-<name>-<state>.png.
+    let who = names.flatMap(cast(named:))
+    var lines: [String] = []
+    for c in who {
+        var hits: [String: Int] = [:]
+        func probe(_ state: String, _ draw: (PixelCanvas) -> Void) {
+            let n = PixelCanvas(Sprite.width, Sprite.height)
+            draw(n)
+            var edges = Set<String>()
+            for x in 0..<n.w where n.buf[x * 4 + 3] >= 250 { edges.insert("top") }
+            for y in 0..<n.h {
+                if n.buf[(y * n.w) * 4 + 3] >= 250 { edges.insert("left") }
+                if n.buf[(y * n.w + n.w - 1) * 4 + 3] >= 250 { edges.insert("right") }
+            }
+            guard !edges.isEmpty else { return }
+            let key = "\(state), \(edges.sorted().joined(separator: " and "))"
+            if hits[key] == nil {
+                n.addOutline(C(0xFFFFFF, 0.92))
+                let base = (out as NSString).deletingPathExtension
+                if let img = n.makeImage() {
+                    try? NSBitmapImageRep(cgImage: img).representation(using: .png, properties: [:])?
+                        .write(to: URL(fileURLWithPath: "\(base)-\(squashed(c.name))-\(squashed(state)).png"))
+                }
+            }
+            hits[key, default: 0] += 1
+        }
+        for i in 0..<80 {
+            let t = Double(i) * 0.037
+            probe("standing") { c.draw($0, t: t, mode: .idle, walking: false, role: .none, asSession: true) }
+            probe("walking") { c.draw($0, t: t, mode: .working, walking: true, role: .none, asSession: false, airborne: c.motion == .fly) }
+            probe("waiting") { c.draw($0, t: t, mode: .waiting, walking: false, role: .none, urgent: true, asSession: true) }
+            probe("cheering") { c.draw($0, t: t, mode: .working, walking: false, role: .cheer, asSession: false) }
+            probe("hit") { c.draw($0, t: t, mode: .working, walking: false, role: .hit, asSession: false) }
+            probe("sitting") { c.draw($0, t: t, mode: .idle, walking: false, role: .none, sitting: true, asSession: true) }
+        }
+        var kinds: [IdleHabit] = [.glance, .shuffle, .bounce]
+        switch c.weapon {
+        case .saber: kinds.append(.flourish)
+        case .blaster: if c.persona.handGun { kinds.append(.checkWeapon) }
+        case .lightning: kinds.append(.crackle)
+        case .none: break
+        }
+        if c.signatureLength != nil { kinds.append(.signature) }
+        for kind in kinds {
+            let len = kind == .signature ? c.signatureLength ?? kind.length : kind.length
+            for i in 0..<40 {
+                forcedHabit = HabitPlay(kind: kind, e: len * Double(i) / 40, length: len)
+                probe(kind == .signature ? "signature" : "\(kind) habit") {
+                    c.draw($0, t: 0.3 + Double(i) * 0.05, mode: .idle, walking: false, role: .none, asSession: true)
+                }
+                forcedHabit = nil
+            }
+        }
+        for (k, v) in hits.sorted(by: { $0.key < $1.key }) { lines.append("\(c.name): \(k) (\(v) moments)") }
+    }
+    let report = lines.isEmpty ? "Nothing touches the frame's edge." : lines.joined(separator: "\n")
+    try! (report + "\n").write(toFile: out, atomically: true, encoding: .utf8)
+    print(report)
+    print("wrote \(out)")
+
 case "cast":
     let who = names.flatMap(cast(named:))
     // Each pose: a title and how to draw it.
