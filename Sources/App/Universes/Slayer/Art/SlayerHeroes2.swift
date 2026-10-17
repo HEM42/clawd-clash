@@ -281,8 +281,9 @@ private func drawCordeliaChaise(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Ozz
 
 /// Ozz: Clawd with short spiky hair dyed electric blue, a charcoal band T-shirt with a yellow-and-red logo, brown cords,
-/// and a guitar slung on his back, its neck up past his head. He fights with werewolf claws, his arm furred over.
-/// Signature: he wolfs out for a second: grey-tan fur, ears, a long snout with fangs and yellow eyes, then he's back.
+/// and a guitar slung on his back, its neck up past his head. He fights with a stake, as he did on patrol in the show.
+/// Signature: he wolfs out for a second: grey-tan fur, ears, a long snout with fangs and yellow eyes, werewolf claws
+/// in place of the stake, then he's back.
 private func drawOzz(_ c: PixelCanvas, _ p: Pose) {
     let tee = C(0x34343E), teeD = C(0x24242C), logo = C(0xF0C838), logo2 = C(0xD8402E)
     let hair = C(0x3C78D8), hairL = C(0x74A8F4), hairD = C(0x2850A8)
@@ -368,8 +369,12 @@ private func drawOzz(_ c: PixelCanvas, _ p: Pose) {
         }
     }
 
+    // As himself he fights with a stake, as he did on patrol; with the wolf out, with claws.
     if let a = p.melee {
-        slayerClaws(c, angle: a, trail: p.trail, sleeve: fur, nail: C(0xE8E0C8))
+        if wolf > 0 { slayerClaws(c, angle: a, trail: p.trail, sleeve: fur, nail: C(0xE8E0C8)) }
+        else { slayerStake(c, angle: a, trail: p.trail) }
+    } else if wolf == 0 {
+        slayerStakeHeld(c)
     }
 }
 
