@@ -2485,6 +2485,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                         Self.universeEvery = Self.universeIntervals[i]
                         self?.universeSince = Date().timeIntervalSince1970
                     }),
+            .separator,
             .toggle("Show Dock icon", get: { [weak self] in self?.showInDock ?? true },
                     set: { [weak self] _ in self?.toggleDock() }),
             .toggle("Monochrome menu bar icon", get: { [weak self] in self?.monoMenuBarIcon ?? false },
@@ -2492,6 +2493,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             .toggle("Launch at login", get: { SMAppService.mainApp.status == .enabled },
                     set: { [weak self] _ in self?.toggleLogin() }),
         ]
+        general.append(.separator)
         general.append(.button("Forget Idle Sessions", note: "Clears sessions that ended without saying so.",
                                action: { [weak self] in self?.forgetIdle() }))
 
@@ -2500,6 +2502,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     get: { ClawdWindow.closeHides }, set: { ClawdWindow.closeHides = $0 }),
             .toggle("Keep window on top", get: { d.bool(forKey: "windowPinned") },
                     set: { [weak self] on in d.set(on, forKey: "windowPinned"); self?.clawdWindow?.applyPin() }),
+            .separator,
             .toggle("Compact window", note: "The whole window at 75%.", get: { ClawdWindow.small },
                     set: { [weak self] _ in self?.toggleSmallWindow() }),
             .toggle("Show the session list", get: { ClawdWindow.listShown && ClawdWindow.view != .board },
@@ -2508,6 +2511,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     set: { [weak self] _ in self?.toggleBoard() }),
             .toggle("Fit the window's height to the sessions", get: { d.object(forKey: "autoHeight") as? Bool ?? true },
                     set: { [weak self] _ in self?.toggleAutoHeight() }),
+            .separator,
             .toggle("Show project names over the characters", get: { d.object(forKey: "labelsWindow") as? Bool ?? false },
                     set: { on in d.set(on, forKey: "labelsWindow") }),
         ]
@@ -2524,6 +2528,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     }),
             .toggle("Show project names over the characters", get: { d.object(forKey: "labels") as? Bool ?? true },
                     set: { on in d.set(on, forKey: "labels") }),
+            .separator,
             .button("Reset Position", note: "Puts the crew back in the bottom-right corner.",
                     action: { [weak self] in self?.resetPosition() }),
         ]
@@ -2554,13 +2559,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
 
         var sections = [
-            SettingsSection(title: "General", rows: general),
-            SettingsSection(title: "Window Mode", rows: window),
-            SettingsSection(title: "Desktop Mode", rows: desktop),
-            SettingsSection(title: "AIs", note: "Connected AIs report what they're doing through Clawd Clash's hook.", rows: ais),
+            SettingsSection(title: "General", symbol: "gearshape", rows: general),
+            SettingsSection(title: "Window", symbol: "macwindow", rows: window),
+            SettingsSection(title: "Desktop", symbol: "menubar.dock.rectangle", rows: desktop),
+            SettingsSection(title: "AIs", symbol: "sparkles", note: "Connected AIs report what they're doing through Clawd Clash's hook.",
+                            rows: ais),
         ]
         if SaverInstaller.bundled != nil {
-            sections.append(SettingsSection(title: "Screen Saver", rows: [
+            sections.append(SettingsSection(title: "Screen Saver", symbol: "display", rows: [
                 .status("Clawd Clash", detail: { SaverInstaller.isInstalled ? "Installed" : "Not installed" },
                         button: { SaverInstaller.isInstalled ? "Remove" : "Install…" },
                         action: { [weak self] in
@@ -2568,7 +2574,115 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                         }),
             ]))
         }
+        sections.append(SettingsSection(title: "About", symbol: "info.circle",
+                                        rows: [.custom { [weak self] in self?.aboutView() ?? NSView() }]))
         return sections
+    }
+
+    // MARK: About and updates
+
+    private static let repo = "rodclemen/clawd-clash"
+    private var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?" }
+    /// What the last "Check for Updates" found, shown under the button: a line, and where to get a newer version.
+    private var updateCheck: (text: String, download: URL?)?
+
+    /// The About tab: the icon, name and version, a check for a newer release, and where Clawd Clash lives.
+    private func aboutView() -> NSView {
+        let icon = NSImageView(image: NSApp.applicationIconImage ?? NSImage())
+        icon.imageScaling = .scaleProportionallyUpOrDown
+        icon.widthAnchor.constraint(equalToConstant: 96).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 96).isActive = true
+        let name = NSTextField(labelWithString: "Clawd Clash")
+        name.font = .systemFont(ofSize: 20, weight: .bold)
+        let ver = NSTextField(labelWithString: "Version \(version)")
+        ver.textColor = .secondaryLabelColor
+
+        let check = NSButton(title: "Check for Updates", target: self, action: #selector(checkForUpdates))
+        check.bezelStyle = .rounded
+        var views: [NSView] = [icon, name, ver, check]
+        if let found = updateCheck {
+            let line = NSTextField(wrappingLabelWithString: found.text)
+            line.alignment = .center
+            line.preferredMaxLayoutWidth = 380
+            line.textColor = found.download == nil ? .secondaryLabelColor : .labelColor
+            views.append(line)
+            if found.download != nil {
+                let get = NSButton(title: "Download", target: self, action: #selector(openDownload))
+                get.bezelStyle = .rounded
+                get.keyEquivalent = "\r"
+                views.append(get)
+            }
+        }
+        let links = NSStackView(views: [link("GitHub", "https://github.com/\(Self.repo)"),
+                                        link("Release Notes", "https://github.com/\(Self.repo)/releases")])
+        links.spacing = 16
+        let legal = NSTextField(labelWithString: "MIT licensed. A fan parody project for AI coding sessions.")
+        legal.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        legal.textColor = .tertiaryLabelColor
+        views += [links, legal]
+        let stack = NSStackView(views: views)
+        stack.orientation = .vertical
+        stack.alignment = .centerX
+        stack.spacing = 8
+        stack.setCustomSpacing(4, after: name)
+        stack.setCustomSpacing(16, after: ver)
+        if let i = views.firstIndex(of: links), i > 0 { stack.setCustomSpacing(18, after: views[i - 1]) }
+        return stack
+    }
+
+    private func link(_ title: String, _ url: String) -> NSButton {
+        let b = NSButton(title: title, target: self, action: #selector(openLink(_:)))
+        b.isBordered = false
+        b.contentTintColor = .linkColor
+        b.toolTip = url
+        return b
+    }
+
+    @objc private func openLink(_ sender: NSButton) {
+        if let s = sender.toolTip, let url = URL(string: s) { NSWorkspace.shared.open(url) }
+    }
+
+    @objc private func openDownload() {
+        if let url = updateCheck?.download { NSWorkspace.shared.open(url) }
+    }
+
+    /// Asks GitHub for the latest release (only when the button is clicked: Clawd Clash never checks on its own) and
+    /// compares it with this version.
+    @objc private func checkForUpdates() {
+        updateCheck = ("Checking…", nil)
+        settingsWindow?.reload()
+        var request = URLRequest(url: URL(string: "https://api.github.com/repos/\(Self.repo)/releases/latest")!, timeoutInterval: 15)
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
+            let json = data.flatMap { try? JSONSerialization.jsonObject(with: $0) } as? [String: Any]
+            let tag = (json?["tag_name"] as? String).map { $0.hasPrefix("v") ? String($0.dropFirst()) : $0 }
+            let page = (json?["html_url"] as? String).flatMap(URL.init(string:))
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if let tag, let page {
+                    if Self.isNewer(tag, than: self.version) {
+                        let brew = FileManager.default.fileExists(atPath: "/opt/homebrew/Caskroom/clawd-clash")
+                            ? "\nInstalled with Homebrew: brew upgrade --cask clawd-clash" : ""
+                        self.updateCheck = ("Version \(tag) is available (you have \(self.version)).\(brew)", page)
+                    } else {
+                        self.updateCheck = ("You're up to date.", nil)
+                    }
+                } else {
+                    self.updateCheck = ("Couldn't reach GitHub\(error.map { ": \($0.localizedDescription)" } ?? ""). Try again later.", nil)
+                }
+                self.settingsWindow?.reload()
+            }
+        }.resume()
+    }
+
+    /// Whether version `a` ("3.6.0") comes after `b`, number by number.
+    static func isNewer(_ a: String, than b: String) -> Bool {
+        let x = a.split(separator: ".").map { Int($0) ?? 0 }, y = b.split(separator: ".").map { Int($0) ?? 0 }
+        for i in 0..<max(x.count, y.count) {
+            let p = i < x.count ? x[i] : 0, q = i < y.count ? y[i] : 0
+            if p != q { return p > q }
+        }
+        return false
     }
 
     /// Settings → Size: the crew's size on the desktop (the window always fits its crew to the window).

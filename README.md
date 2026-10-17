@@ -169,7 +169,7 @@ It opens in a window by default (switch to the desktop from the menu): the whole
 - **Keep Window on Top** (window mode) or **Keep Characters on Top** (desktop mode): off, the window behaves like any other, and the desktop crew lives on the desktop behind your windows.
 - **Drag** the crew anywhere on either monitor.
 - **Status Symbols** in the menu is this key, drawn with the app's own sprites.
-- **Settings…** (⌘,) opens one window with every option: the universe, the window and the desktop, which AIs are connected, the screen saver, and Forget Idle Sessions.
+- **Settings…** (⌘,) opens a window with a tab for each part: **General** (the universe, the Dock and menu bar icons, launch at login, Forget Idle Sessions), **Window**, **Desktop**, **AIs** (which are connected), **Screen Saver** and **About**, where **Check for Updates** asks GitHub for the latest release (only when you click it).
 - Hold **⌘** in the menu for the **Playground** (put anyone on stage and watch them fight) and Demo Mode.
 
 ## Supported AIs and harnesses

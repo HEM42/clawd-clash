@@ -1,41 +1,54 @@
 import AppKit
 
-/// What the Settings window shows: sections of rows, each reading and changing a setting through closures, so the
-/// window knows nothing about the app (`OverlayController.settingsSections` builds them).
+/// What the Settings window shows: a tab per section, each with rows that read and change a setting through closures,
+/// so the window knows nothing about the app (`OverlayController.settingsSections` builds them).
 struct SettingsSection {
     let title: String
+    /// The tab's SF Symbol.
+    let symbol: String
     var note: String? = nil
     let rows: [SettingsRow]
 }
 
 enum SettingsRow {
-    /// A checkbox.
+    /// A label and a checkbox, with an optional line under it.
     case toggle(String, note: String? = nil, get: () -> Bool, set: (Bool) -> Void)
-    /// A label and a pop-up of choices; when not `shown`, the row is blank but keeps its space, so the window doesn't resize.
+    /// A label and a pop-up of choices, left out while not `shown`.
     case choice(String, options: [String], shown: () -> Bool = { true }, get: () -> Int, set: (Int) -> Void)
     /// A label, what it says now, and a button.
     case status(String, detail: () -> String, button: () -> String, action: () -> Void)
     /// A button on its own, with a line beside it saying what it does.
     case button(String, note: String, action: () -> Void)
+    /// A line between groups of rows.
+    case separator
+    /// Anything else, across the whole width (the About tab).
+    case custom(() -> NSView)
 }
 
-/// Clawd Clash's settings in one window: checkboxes, pop-ups and buttons in a few sections. Rebuilt from
-/// `sections()` whenever something changes, here or elsewhere (it reloads when it comes to the front).
-final class SettingsWindow: NSObject, NSWindowDelegate {
+/// Clawd Clash's settings, a tab per section in the toolbar (as macOS's own Settings windows do): labels on the
+/// left, right-aligned against their controls, groups split by lines. Rebuilt from `sections()` whenever something
+/// changes, here or elsewhere (it reloads when it comes to the front), and remembers which tab was open.
+final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
     private let window: NSWindow
     private let sections: () -> [SettingsSection]
     /// Actions by control, so a control's target can find its closure.
     private var actions: [ObjectIdentifier: (NSControl) -> Void] = [:]
-    private static let width: CGFloat = 480
+    private static let width: CGFloat = 600
+    /// The tabs the toolbar was built with; a different set (the screen saver appears) builds it again.
+    private var tabs: [String] = []
+    private var tab: String {
+        get { UserDefaults.standard.string(forKey: "settingsTab") ?? tabs.first ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "settingsTab") }
+    }
 
     init(sections: @escaping () -> [SettingsSection]) {
         self.sections = sections
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: Self.width, height: 400), styleMask: [.titled, .closable],
                           backing: .buffered, defer: false)
         super.init()
-        window.title = "Clawd Clash Settings"
         window.isReleasedWhenClosed = false
         window.delegate = self
+        window.toolbarStyle = .preference
         reload()
         window.center()
     }
@@ -48,108 +61,149 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
 
     func windowDidBecomeKey(_ notification: Notification) { reload() }
 
-    /// Builds the whole window again from the current settings, keeping its top edge where it is.
+    /// Builds the open tab again from the current settings, keeping the window's top edge where it is.
     func reload() {
         actions.removeAll()
-        let stack = NSStackView()
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 8
-        stack.edgeInsets = NSEdgeInsets(top: 20, left: 24, bottom: 22, right: 24)
-        for (i, section) in sections().enumerated() {
-            if i > 0 {
-                let line = NSBox()
-                line.boxType = .separator
-                stack.addArrangedSubview(line)
-                line.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -48).isActive = true
-                stack.setCustomSpacing(14, after: stack.arrangedSubviews[stack.arrangedSubviews.count - 2])
-                stack.setCustomSpacing(14, after: line)
-            }
-            let title = NSTextField(labelWithString: section.title)
-            title.font = .boldSystemFont(ofSize: 13)
-            stack.addArrangedSubview(title)
-            if let note = section.note { stack.addArrangedSubview(Self.note(note)) }
-            for row in section.rows { stack.addArrangedSubview(view(for: row)) }
+        let all = sections()
+        if all.map(\.title) != tabs {
+            tabs = all.map(\.title)
+            let toolbar = NSToolbar(identifier: "settings")
+            toolbar.delegate = self
+            toolbar.displayMode = .iconAndLabel
+            toolbar.allowsUserCustomization = false
+            window.toolbar = toolbar
         }
+        if !tabs.contains(tab) { tab = tabs.first ?? "" }
+        window.toolbar?.selectedItemIdentifier = NSToolbarItem.Identifier(tab)
+        window.title = tab
+        guard let section = all.first(where: { $0.title == tab }) else { return }
+
+        let grid = NSGridView(numberOfColumns: 2, rows: 0)
+        grid.column(at: 0).xPlacement = .trailing
+        grid.yPlacement = .center
+        grid.columnSpacing = 12
+        grid.rowSpacing = 9
+        if let note = section.note {
+            let r = grid.addRow(with: [Self.note(note, width: Self.width - 80), NSGridCell.emptyContentView])
+            r.mergeCells(in: NSRange(location: 0, length: 2))
+            r.cell(at: 0).xPlacement = .center
+            r.bottomPadding = 6
+        }
+        for row in section.rows { add(row, to: grid) }
+
+        let content = NSView()
+        grid.translatesAutoresizingMaskIntoConstraints = false
+        content.addSubview(grid)
+        NSLayoutConstraint.activate([
+            grid.topAnchor.constraint(equalTo: content.topAnchor, constant: 22),
+            grid.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -24),
+            grid.centerXAnchor.constraint(equalTo: content.centerXAnchor),
+            grid.leadingAnchor.constraint(greaterThanOrEqualTo: content.leadingAnchor, constant: 24),
+        ])
         let top = window.frame.maxY
-        window.contentView = stack
-        let size = stack.fittingSize
-        window.setContentSize(NSSize(width: Self.width, height: size.height))
-        if window.isVisible { window.setFrameTopLeftPoint(NSPoint(x: window.frame.minX, y: top)) }
+        window.contentView = content
+        let height = grid.fittingSize.height + 22 + 24
+        var frame = window.frameRect(forContentRect: NSRect(x: 0, y: 0, width: Self.width, height: height))
+        frame.origin = NSPoint(x: window.frame.minX, y: top - frame.height)
+        window.setFrame(frame, display: true, animate: window.isVisible)
     }
 
-    private func view(for row: SettingsRow) -> NSView {
+    private func add(_ row: SettingsRow, to grid: NSGridView) {
         switch row {
         case let .toggle(title, note, get, set):
-            let box = NSButton(checkboxWithTitle: title, target: nil, action: nil)
+            let box = NSButton(checkboxWithTitle: "", target: nil, action: nil)
             box.state = get() ? .on : .off
+            box.setAccessibilityLabel(title)
             hook(box) { set(($0 as? NSButton)?.state == .on) }
-            guard let note else { return box }
-            let indented = NSStackView(views: [Self.note(note, width: Self.width - 48 - 20)])
-            indented.edgeInsets = NSEdgeInsets(top: 0, left: 20, bottom: 0, right: 0)
-            let v = NSStackView(views: [box, indented])
-            v.orientation = .vertical
-            v.alignment = .leading
-            v.spacing = 2
-            return v
+            grid.addRow(with: [Self.label(title), box])
+            if let note { addNote(note, to: grid) }
         case let .choice(title, options, shown, get, set):
             let popup = NSPopUpButton(frame: .zero, pullsDown: false)
             popup.addItems(withTitles: options)
             popup.selectItem(at: get())
             hook(popup) { set(($0 as? NSPopUpButton)?.indexOfSelectedItem ?? 0) }
-            let row = Self.row(Self.label(title), popup)
-            if !shown() {
-                row.alphaValue = 0
-                popup.isEnabled = false
-                row.setAccessibilityElement(false)
-                row.subviews.forEach { $0.setAccessibilityElement(false) }
-            }
-            return row
+            guard shown() else { return }
+            grid.addRow(with: [Self.label(title), popup])
         case let .status(title, detail, button, action):
             let b = NSButton(title: button(), target: nil, action: nil)
             b.bezelStyle = .rounded
             hook(b) { _ in action() }
-            let text = Self.label(title)
             let d = NSTextField(labelWithString: detail())
             d.textColor = .secondaryLabelColor
-            return Self.row(text, d, b)
+            d.widthAnchor.constraint(greaterThanOrEqualToConstant: 96).isActive = true
+            grid.addRow(with: [Self.label(title), Self.line(d, b)])
         case let .button(title, note, action):
             let b = NSButton(title: title, target: nil, action: nil)
             b.bezelStyle = .rounded
             hook(b) { _ in action() }
-            let n = Self.note(note, width: Self.width - 48 - 180)
-            let v = NSStackView(views: [b, n])
-            v.orientation = .horizontal
-            v.alignment = .centerY
-            v.spacing = 10
-            return v
+            grid.addRow(with: [NSGridCell.emptyContentView, b])
+            addNote(note, to: grid)
+        case .separator:
+            let line = NSBox()
+            line.boxType = .separator
+            let r = grid.addRow(with: [line, NSGridCell.emptyContentView])
+            r.mergeCells(in: NSRange(location: 0, length: 2))
+            r.cell(at: 0).xPlacement = .fill
+            r.topPadding = 3; r.bottomPadding = 3
+            line.widthAnchor.constraint(equalToConstant: Self.width - 48).isActive = true
+        case let .custom(make):
+            let r = grid.addRow(with: [make(), NSGridCell.emptyContentView])
+            r.mergeCells(in: NSRange(location: 0, length: 2))
+            r.cell(at: 0).xPlacement = .center
         }
     }
 
-    /// A row: its label in a fixed column, then the rest.
-    private static func row(_ label: NSView, _ rest: NSView...) -> NSView {
-        label.widthAnchor.constraint(equalToConstant: 150).isActive = true
-        let v = NSStackView(views: [label] + rest)
+    /// Small grey text under the control in the row above.
+    private func addNote(_ s: String, to grid: NSGridView) {
+        let r = grid.addRow(with: [NSGridCell.emptyContentView, Self.note(s, width: 300)])
+        r.topPadding = -5
+    }
+
+    private static func line(_ views: NSView...) -> NSView {
+        let v = NSStackView(views: views)
         v.orientation = .horizontal
-        v.alignment = .firstBaseline
-        v.spacing = 8
+        v.alignment = .centerY
+        v.spacing = 10
         return v
     }
 
     private static func label(_ s: String) -> NSTextField {
         let l = NSTextField(labelWithString: s)
-        l.alignment = .left
+        l.alignment = .right
         return l
     }
 
     /// Small grey text, wrapped to `width`.
-    private static func note(_ s: String, width: CGFloat = SettingsWindow.width - 48) -> NSTextField {
+    private static func note(_ s: String, width: CGFloat) -> NSTextField {
         let n = NSTextField(wrappingLabelWithString: s)
         n.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
         n.textColor = .secondaryLabelColor
         n.preferredMaxLayoutWidth = width
         n.widthAnchor.constraint(lessThanOrEqualToConstant: width).isActive = true
         return n
+    }
+
+    // MARK: The tabs
+
+    func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] { tabs.map { .init($0) } }
+    func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] { tabs.map { .init($0) } }
+    func toolbarSelectableItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] { tabs.map { .init($0) } }
+
+    func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier id: NSToolbarItem.Identifier,
+                 willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
+        let item = NSToolbarItem(itemIdentifier: id)
+        item.label = id.rawValue
+        let symbol = sections().first { $0.title == id.rawValue }?.symbol ?? "gearshape"
+        item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: id.rawValue)
+            ?? NSImage(systemSymbolName: "gearshape", accessibilityDescription: id.rawValue)   // a symbol this macOS lacks
+        item.target = self
+        item.action = #selector(choose(_:))
+        return item
+    }
+
+    @objc private func choose(_ item: NSToolbarItem) {
+        tab = item.itemIdentifier.rawValue
+        reload()
     }
 
     /// Runs `action` when the control is used, then shows what changed.
