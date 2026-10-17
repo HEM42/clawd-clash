@@ -842,14 +842,36 @@ final class CardsView: NSView {
     private var bannerDismiss: (() -> Void)?
     private var bannerClose = NSRect.zero
 
+    /// Each card's signature and where it was last drawn, so a change inside one card (its status ticks on every
+    /// second) redraws only that card, not every card's text.
+    private var cardSignatures: [String] = []
+    private var cardFrames: [NSRect] = []
+    /// What decides where everything sits: when it's unchanged, a card can be redrawn in place.
+    private var layoutKey = ""
+
     func update(cards: [CardModel], banner: String?, dismiss: (() -> Void)? = nil) {
         bannerDismiss = dismiss
         // The cards are tinted with the location's colours, so a new location redraws them too.
-        let now = ([banner ?? "", "\(dismiss != nil)", controller?.location.rawValue ?? ""] + cards.map(\.signature)).joined(separator: "\u{1}")
+        let signatures = cards.map(\.signature)
+        let now = ([banner ?? "", "\(dismiss != nil)", controller?.location.rawValue ?? ""] + signatures).joined(separator: "\u{1}")
         guard now != shown else { return }
         shown = now
+        let layout = ([banner ?? "", "\(dismiss != nil)", controller?.location.rawValue ?? "", "\(frame.width)"] + cards.map {
+            [$0.id, $0.project, $0.remote ?? "", $0.group?.title ?? "", "\($0.tree.map { "\($0.sessions ?? 0)/\($0.last)" } ?? "")",
+             "\(cardHeight($0))"].joined(separator: "\u{2}")
+        }).joined(separator: "\u{1}")
+        let inPlace = layout == layoutKey && signatures.count == cardSignatures.count && cardFrames.count == cards.count
         self.cards = cards
         self.banner = banner
+        if inPlace {
+            for i in signatures.indices where signatures[i] != cardSignatures[i] {
+                setNeedsDisplay(cardFrames[i].insetBy(dx: -3, dy: -3))
+            }
+            cardSignatures = signatures
+            return
+        }
+        layoutKey = layout
+        cardSignatures = signatures
         relayout()
     }
 
@@ -927,7 +949,9 @@ final class CardsView: NSView {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
         ctx.interpolationQuality = .none
         hitRects = []
+        let lastToggles = toggleRects   // kept for the cards this pass doesn't redraw
         toggleRects = []
+        cardFrames = []
         // The location's tone, with a faint texture, so the whole window feels like the place.
         let panel = controller?.location.panel ?? NSColor(srgbRed: 0.17, green: 0.13, blue: 0.10, alpha: 1)
         panel.setFill()
@@ -973,7 +997,7 @@ final class CardsView: NSView {
 
         var treeTop: CGFloat = 0   // where the current project's tree line continues from
         for c in cards {
-            if let g = c.group {
+            if let g = c.group, NSRect(x: x, y: y, width: w, height: Self.groupH).intersects(dirtyRect) {
                 // A small divider naming the AI: "CODEX ─────"
                 let t = NSAttributedString(string: g.title.uppercased(), attributes: [
                     .font: NSFont.systemFont(ofSize: 10.5, weight: .heavy), .kern: 1.2, .foregroundColor: g.color])
@@ -981,17 +1005,19 @@ final class CardsView: NSView {
                 t.draw(at: NSPoint(x: x + 2, y: y + 2))
                 g.color.withAlphaComponent(0.35).setFill()
                 NSRect(x: x + ts.width + 10, y: (y + 2 + ts.height / 2).rounded(), width: w - ts.width - 12, height: 1).fill()
-                y += Self.groupH
             }
+            if c.group != nil { y += Self.groupH }
             if let n = c.tree?.sessions {
                 // The project header: its name in its colour, then where it lives and how many sessions are in it.
-                let title = NSMutableAttributedString(string: c.project, attributes: [
-                    .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: c.accent])
-                title.append(NSAttributedString(string: "   " + [c.remote, "\(n) sessions"].compactMap { $0 }.joined(separator: "  ·  "),
-                                                attributes: [.font: NSFont.systemFont(ofSize: 11, weight: .semibold),
-                                                             .foregroundColor: NSColor(white: 0.62, alpha: 1)]))
-                title.draw(with: NSRect(x: x + 2, y: y + 1, width: w - 4, height: 20),
-                           options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
+                if NSRect(x: x, y: y, width: w, height: Self.projectH).intersects(dirtyRect) {
+                    let title = NSMutableAttributedString(string: c.project, attributes: [
+                        .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: c.accent])
+                    title.append(NSAttributedString(string: "   " + [c.remote, "\(n) sessions"].compactMap { $0 }.joined(separator: "  ·  "),
+                                                    attributes: [.font: NSFont.systemFont(ofSize: 11, weight: .semibold),
+                                                                 .foregroundColor: NSColor(white: 0.62, alpha: 1)]))
+                    title.draw(with: NSRect(x: x + 2, y: y + 1, width: w - 4, height: 20),
+                               options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
+                }
                 y += Self.projectH
                 treeTop = y - 4
             }
@@ -1018,6 +1044,13 @@ final class CardsView: NSView {
                 treeTop = r.maxY + 10
             }
             hitRects.append((r, c.pid))
+            cardFrames.append(r)
+            // Outside the area being redrawn (another card changed): leave this one as it is.
+            guard r.insetBy(dx: -3, dy: -3).intersects(dirtyRect) else {
+                toggleRects += lastToggles.filter { $0.1 == c.id }
+                y += h + 10
+                continue
+            }
             let box = NSBezierPath(roundedRect: r, xRadius: 8, yRadius: 8)
             (controller?.location.panel.blended(withFraction: 0.35, of: .black) ?? NSColor.black).withAlphaComponent(0.94).setFill()
             box.fill()
