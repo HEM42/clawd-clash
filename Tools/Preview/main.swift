@@ -206,9 +206,9 @@ case "cast":
         ("idle", { $0.draw($1, t: 0.3, mode: .idle, walking: false, role: .none, asSession: true) }),
         ("walk 1", { $0.draw($1, t: 0.05, mode: .working, walking: true, role: .none, asSession: false, airborne: $0.motion == .fly) }),
         ("walk 2", { $0.draw($1, t: 0.18, mode: .working, walking: true, role: .none, asSession: false, airborne: $0.motion == .fly) }),
-        ("working", { $0.draw($1, t: 0.3, mode: .working, walking: false, role: .none, asSession: false) }),
-        ("working 2", { $0.draw($1, t: 0.62, mode: .working, walking: false, role: .none, asSession: false) }),
-        ("fight", { who, c in
+        ("working alone", { $0.draw($1, t: 0.3, mode: .working, walking: false, role: .none, asSession: false) }),
+        ("working alone 2", { $0.draw($1, t: 0.62, mode: .working, walking: false, role: .none, asSession: false) }),
+        ("fight (stream not shown)", { who, c in
             let role: FightRole
             switch who.weapon {
             case .saber: role = .duel

@@ -210,7 +210,9 @@ func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walk
             if !on { p.zap = false }                 // between goes: crackling in the hand
         }
         if p.zap == true {
-            drawMagic(c, persona.magic, from: hand, to: (70, hand.1 - (classic ? 2.5 : 2)), t: t)
+            // Practising alone, at nobody: a stream may run off the frame's edge, but whatever lands (a touch's glow,
+            // rings and arcs swelling as they arrive) stops short of it, so it isn't cut in half.
+            drawMagic(c, persona.magic, from: hand, to: (70 - persona.magic.landing, hand.1 - (classic ? 2.5 : 2)), t: t)
         } else if p.zap == false {
             // Crackling between the fingers (the Emperor's, as in Clawd Wars: pale blue and white, a pixel further on).
             let i = Int(t * 20), dx = classic ? 0 : -1
@@ -503,27 +505,59 @@ func drawMagic(_ c: PixelCanvas, _ m: Magic, from a: (Double, Double), to b: (Do
         }
         return
     }
-    // Lightning: forked bolts, re-struck many times a second.
-    let bolts = pick(&v, [2, 1, 3]), n = pick(&v, [6, 4, 8, 5, 7]), spread = pick(&v, [7.0, 5, 9.5])
+    // Lightning: forked bolts, re-struck many times a second. Each bolt after the first is a shade of its own (a
+    // little brighter or darker, the hue nudged one way or the other) and re-strikes on its own beat, so the strands
+    // read as separate and alive rather than one thick line.
+    let bolts = m.bolts ?? pick(&v, [2, 1, 3]), n = pick(&v, [6, 4, 8, 5, 7]), spread = pick(&v, [7.0, 5, 9.5])
     let sprigs = pick(&v, [false, true]), width = pick(&v, [(0.5, 1.8), (0.7, 2.3)])
-    seed = Int(t * pick(&v, [20.0, 12, 30]))
+    let rate = pick(&v, [20.0, 12, 30])
     for bolt in 0..<bolts {
+        seed = Int(t * rate * (1 + 0.23 * Double(bolt)) + Double(bolt) * 0.37) + bolt * 101
+        let core = boltShade(m.core, bolt), glow = boltShade(m.glow, bolt)
         var prev = a
         for i in 1...n {
             let f = Double(i) / Double(n)
             let off = i == n ? 0 : (noise(seed * 31 + bolt * 7 + i) - 0.5) * spread
             let q = (a.0 + dx * f + nx * off, a.1 + dy * f + ny * off)
-            c.glowLine(prev.0, prev.1, q.0, q.1, core: m.core, glow: m.glow, coreR: width.0, glowR: width.1,
+            c.glowLine(prev.0, prev.1, q.0, q.1, core: core, glow: glow, coreR: width.0, glowR: width.1,
                        strength: bolt == 0 ? 1 : bolt == 1 ? 0.6 : 0.45)
             if sprigs, bolt == 0, i < n, noise(seed * 17 + i) > 0.45 {
                 // A little side fork off the kink.
                 let side: Double = noise(seed * 5 + i) > 0.5 ? 1 : -1
                 c.glowLine(q.0, q.1, q.0 + dx / len * 2 + nx * side * 3, q.1 + dy / len * 2 + ny * side * 3,
-                           core: m.core, glow: m.glow, coreR: 0.4, glowR: 1.3, strength: 0.55)
+                           core: core, glow: glow, coreR: 0.4, glowR: 1.3, strength: 0.55)
             }
             prev = q
         }
     }
+}
+
+/// Bolt `k`'s shade of `c`: the first as it is, the others brighter or darker and their hue turned a little, in turn.
+private func boltShade(_ c: Px, _ k: Int) -> Px {
+    guard k > 0 else { return c }
+    var r = Double(c.r) / 255, g = Double(c.g) / 255, b = Double(c.b) / 255
+    let mx = max(r, g, b), mn = min(r, g, b), d = mx - mn
+    var h = 0.0, s = mx == 0 ? 0 : d / mx, val = mx
+    if d > 0 {
+        h = mx == r ? (g - b) / d : mx == g ? 2 + (b - r) / d : 4 + (r - g) / d
+        h = (h / 6).truncatingRemainder(dividingBy: 1); if h < 0 { h += 1 }
+    }
+    let odd = k % 2 == 1
+    h += odd ? 0.035 : -0.04
+    s = min(1, s * (odd ? 0.8 : 1.1))
+    val = odd ? min(1, val * 1.25 + 0.08) : val * 0.78
+    h -= floor(h)
+    let i = Int(h * 6) % 6, f = h * 6 - floor(h * 6)
+    let p = val * (1 - s), q = val * (1 - s * f), u = val * (1 - s * (1 - f))
+    switch i {
+    case 0: (r, g, b) = (val, u, p)
+    case 1: (r, g, b) = (q, val, p)
+    case 2: (r, g, b) = (p, val, u)
+    case 3: (r, g, b) = (p, q, val)
+    case 4: (r, g, b) = (u, p, val)
+    default: (r, g, b) = (val, p, q)
+    }
+    return Px(r: UInt8(r * 255), g: UInt8(g * 255), b: UInt8(b * 255), a: c.a)
 }
 
 // MARK: - A stand-in
