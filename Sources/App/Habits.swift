@@ -102,9 +102,14 @@ func applyHabitTransform(_ c: PixelCanvas, _ play: HabitPlay) {
         // Mirrored about the body's centre; skipped for anyone too wide to turn round inside the canvas.
         if play.p > 0.15 && play.p < 0.85 { c.mirror(aboutX: Sprite.bodyCenterX) }
     case .shuffle:
-        c.shift(dx: Int(play.e / 0.3) % 2 == 0 ? 0 : (Int(play.e / 0.6) % 2 == 0 ? 1 : -1), dy: 0)
+        // Not onto the frame's edge, where the outline would be cut: a long tail or wing just doesn't shuffle that way.
+        var dx = Int(play.e / 0.3) % 2 == 0 ? 0 : (Int(play.e / 0.6) % 2 == 0 ? 1 : -1)
+        if let b = c.solidBounds(), b.minX + dx < 1 || b.maxX + dx > c.w - 2 { dx = 0 }
+        c.shift(dx: dx, dy: 0)
     case .bounce:
-        c.shift(dx: 0, dy: sin(play.p * .pi * 2) > 0.3 ? -2 : 0)
+        // Only as high as the frame leaves room for: the tallest characters bounce less, or not at all.
+        let room = c.solidBounds().map { $0.minY - 1 } ?? 2
+        c.shift(dx: 0, dy: sin(play.p * .pi * 2) > 0.3 ? -max(0, min(2, room)) : 0)
     case .moonwalk:
         moonwalk(c, play)
     default:

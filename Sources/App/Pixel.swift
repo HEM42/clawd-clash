@@ -160,12 +160,15 @@ final class PixelCanvas {
     }
 
     /// Mirror everything drawn so far about the vertical line `x` (canvas units), unless something drawn would end up
-    /// off the canvas. Returns whether it mirrored.
+    /// off the canvas, or something solid on its edge, where its outline would be cut. Returns whether it mirrored.
     @discardableResult
     func mirror(aboutX x: Double) -> Bool {
         let axis = Int((2 * x).rounded()) - 1          // column k lands on axis - k
         for y in 0..<h {
-            for k in 0..<w where buf[(y * w + k) * 4 + 3] > 0 && (axis - k < 0 || axis - k >= w) { return false }
+            for k in 0..<w where buf[(y * w + k) * 4 + 3] > 0 {
+                let to = axis - k
+                if to < 0 || to >= w || ((to == 0 || to == w - 1) && buf[(y * w + k) * 4 + 3] >= 250) { return false }
+            }
         }
         var out = [UInt8](repeating: 0, count: buf.count)
         for y in 0..<h {
@@ -231,6 +234,17 @@ final class PixelCanvas {
     func copyPixel(from a: (x: Int, y: Int), to b: (x: Int, y: Int)) {
         guard isDrawn(a.x, a.y), b.x >= 0, b.y >= 0, b.x < w, b.y < h else { return }
         for n in 0..<4 { buf[(b.y * w + b.x) * 4 + n] = buf[(a.y * w + a.x) * 4 + n] }
+    }
+
+    /// The solid pixels' bounds (the ones `addOutline` outlines), or nil if nothing solid is drawn.
+    func solidBounds() -> (minX: Int, maxX: Int, minY: Int, maxY: Int)? {
+        var b: (minX: Int, maxX: Int, minY: Int, maxY: Int)?
+        for y in 0..<h {
+            for x in 0..<w where buf[(y * w + x) * 4 + 3] >= 250 {
+                if let o = b { b = (min(o.minX, x), max(o.maxX, x), o.minY, y) } else { b = (x, x, y, y) }
+            }
+        }
+        return b
     }
 
     /// Whether anything is drawn at (`x`, `y`) in canvas pixels, ignoring the offsets.

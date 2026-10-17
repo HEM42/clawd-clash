@@ -59,9 +59,16 @@ struct Cast: Hashable {
         let play = idle ? habit(at: t) : nil
         idleHabit = play
         drawnSignature = play.flatMap { $0.kind == .signature ? $0.p : nil }
+        poseLift = 0; poseShift = 0
         defer {
             idleHabit = nil
             if let play { applyHabitTransform(c, play) }
+            // A hop or a hover that took the head onto the frame's top edge (where its outline would be cut) is
+            // given back, as far as it was a lift: the tallest characters hop and float a little lower.
+            if poseLift > 0, let b = c.solidBounds(), b.minY < 1 { c.shift(dx: 0, dy: min(poseLift, 1 - b.minY)) }
+            // The same for a step sideways that took a tail or a wing onto the side edge.
+            if poseShift < 0, let b = c.solidBounds(), b.minX < 1 { c.shift(dx: min(-poseShift, 1 - b.minX), dy: 0) }
+            if poseShift > 0, let b = c.solidBounds(), b.maxX > c.w - 2 { c.shift(dx: -min(poseShift, b.maxX - (c.w - 2)), dy: 0) }
         }
         drawPersona(c, self, t: t, mode: asSession ? mode : .working, walking: walking, role: role,
                     urgent: asSession && urgent, sitting: asSession && sitting, airborne: airborne, aloft: aloft)
