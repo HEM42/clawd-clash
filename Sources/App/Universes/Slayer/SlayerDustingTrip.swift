@@ -2,15 +2,17 @@ import CoreGraphics
 import Foundation
 
 // Dusting (`SlayerWipe.dusting`): a stake strikes and the old place bursts into grey-gold dust that swirls and blows
-// away to show the new place. The most common trip, so it is quick and punchy.
+// away to show the new place. The most common trip, so it is quick and punchy, and its work per frame is capped.
 
 extension SlayerTrip {
-    /// A frame `k` (0…1) of the way from `old` to `new`, over the whole of `r`. A wooden stake thrusts in from the lower
-    /// left and strikes (0–0.09) with a white-gold flash (0.085–0.17), then pulls back out (0.17–0.3). The old
-    /// place, cut into blocks on the art's grid, crumbles from the strike outward: each block glows dust-gold for a
-    /// moment, then goes, and its dust bursts away from the strike, swirls, and is blown off up and to the right
-    /// (0.11–0.97, the last block going at 0.67). The new place waits behind it, in a night-blue shade that lifts as
-    /// the dust clears. The stake, the dust and the flash are pixel art, with a little film grain over the night.
+    /// A frame `k` (0…1) of the way from `old` to `new`, over the whole of `r`. A rough wooden stake thrusts in from
+    /// the lower left and strikes (0–0.09) with a white-gold flash that lights the whole frame for a blink (0.085–0.18),
+    /// then pulls back out (0.17–0.3). The old place, cut into about a thousand square blocks whatever the size,
+    /// crumbles from the strike outward (0.1–0.63): each block glows dust-gold for a moment, then goes in a puff.
+    /// Its dust (a fixed pool of specks, at most `slayerDustSpecks` a frame) bursts out, is caught by a gust and
+    /// carried along four sinuous ribbons that sweep up and to the right, thinning as they go, with a few bright
+    /// glints (gone by 0.95). The new place waits behind in a night-blue shade that lifts as the dust clears. The
+    /// stake, the dust and the flash are pixel art, with a little film grain over the night.
     func drawDusting(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
         guard let canvas = Self.slayerDustCanvas(in: r) else { ctx.draw(k < 0.5 ? old : new, in: r); return }
         let (art, w, h, px) = canvas
@@ -21,57 +23,48 @@ extension SlayerTrip {
         let shade = 0.42 * (1 - Self.ease(Self.span(k, 0.3, 0.95)))
         if shade > 0 { ctx.setFillColor(dustRGB(0x0A0E22, CGFloat(shade))); ctx.fill(r) }
 
-        // The old place in blocks, each going when the crumbling reaches it: nearer the strike first, a little
-        // ragged. A block's dust lives for `life` after it goes.
-        let block = max(2, Int((H / 40).rounded()))
-        let cols = (w + block - 1) / block, rows = (h + block - 1) / block
+        // The old place in square blocks, about a thousand of them at any size, each going when the crumbling
+        // reaches it: nearer the strike first, a little ragged.
+        let grid = Self.slayerDustGrid(in: r, px: px)
+        let cell = grid.cell, cols = grid.cols, rows = grid.rows, C = Double(cell)
         let ix = W * 0.55, iy = H * 0.5
         let far = max(hypot(ix, iy), hypot(W - ix, iy), hypot(ix, H - iy), hypot(W - ix, H - iy))
-        let life = 0.3
-        let B = Double(block)
-        let dust: [UInt32] = [0x8C877C, 0xB3A383, 0xD8B25C, 0xF4E2A4]
+        /// When block (`i`, `j`) goes.
+        func goes(_ i: Int, _ j: Int) -> Double {
+            let d = hypot((Double(i) + 0.5) * C - ix, (Double(j) + 0.5) * C - iy) / far
+            return 0.1 + 0.38 * d + 0.1 * noise(j * 977 + i * 131)
+        }
         var keep: [CGRect] = []
         for j in 0..<rows {
             var runStart = -1
             for i in 0...cols {
                 var standing = false
                 if i < cols {
-                    let seed = j * 977 + i * 131
-                    let cx = (Double(i) + 0.5) * B, cy = (Double(j) + 0.5) * B
-                    let d = hypot(cx - ix, cy - iy) / far
-                    let goes = 0.11 + 0.42 * d + 0.14 * noise(seed)
-                    if k < goes {
+                    let at = goes(i, j)
+                    if k < at {
                         standing = true
                         // Just before it goes, the block glows the colour of dust.
-                        let glow = 1 - (goes - k) / 0.05
+                        let glow = 1 - (at - k) / 0.035
                         if glow > 0 {
-                            art.setFillColor(dustRGB(glow > 0.6 ? 0xE8CC84 : 0xA89C84, CGFloat(0.7 * glow)))
-                            art.fill(CGRect(x: Double(i) * B, y: Double(j) * B, width: B, height: B))
+                            art.setFillColor(dustRGB(glow > 0.6 ? 0xE8CC84 : 0xA89C84, CGFloat(0.45 * glow)))
+                            art.fill(CGRect(x: Double(i) * C, y: Double(j) * C, width: C, height: C))
                         }
-                    } else if k < goes + life {
-                        // Its dust: a burst away from the strike, then swirled and blown off up and to the right.
-                        let a = (k - goes) / life
-                        let burst = 1 - (1 - a) * (1 - a)
-                        let ux = (cx - ix) / max(1, d * far), uy = (cy - iy) / max(1, d * far)
-                        for m in 0..<(noise(seed + 5) < 0.45 ? 2 : 1) {
-                            let s = seed + m * 17
-                            let reach = B * 3 * (0.5 + noise(s + 1)) * burst
-                            let spin = a * 7 + noise(s + 2) * 6.28
-                            let x = cx + (noise(s + 3) - 0.5) * B + ux * reach + W * 0.55 * (0.4 + noise(s + 4)) * pow(a, 1.6)
-                                + cos(spin) * B * 1.4 * a
-                            let y = cy + (noise(s + 6) - 0.5) * B + uy * reach + H * 0.28 * (noise(s + 7) - 0.1) * a * a
-                                + sin(spin) * B * 1.4 * a
-                            let size: Double = a < 0.35 && m == 0 ? 2 : 1
-                            let tone = noise(s + 8)
-                            art.setFillColor(dustRGB(dust[min(3, Int(tone * 4))], CGFloat(pow(1 - a, 1.2))))
-                            art.fill(CGRect(x: x.rounded(), y: y.rounded(), width: size, height: size))
+                    } else if k < at + 0.1 {
+                        // Just after, a puff of dust where it stood: a few clumps spreading as the gust takes them.
+                        let t = (k - at) / 0.1, clump = max(1, (C / 3 * (1 - t * 0.5)).rounded())
+                        for q in 0..<4 {
+                            let seed = j * 31 + i * 7 + q * 3
+                            art.setFillColor(dustRGB(noise(seed) < 0.5 ? 0xB8A27A : 0x9A9080, CGFloat(0.7 * (1 - t))))
+                            let cx = Double(i) * C + noise(seed + 1) * (C - clump) + C * (1.5 + noise(seed + 2) * 2) * t
+                            let cy = Double(j) * C + noise(seed + 3) * (C - clump) + C * (0.4 + noise(seed + 4)) * t
+                            art.fill(CGRect(x: cx.rounded(), y: cy.rounded(), width: clump, height: clump))
                         }
                     }
                 }
                 if standing && runStart < 0 { runStart = i }
                 if !standing && runStart >= 0 {
-                    keep.append(CGRect(x: r.minX + CGFloat(runStart * block) * px, y: r.minY + CGFloat(j * block) * px,
-                                       width: CGFloat((i - runStart) * block) * px, height: CGFloat(block) * px))
+                    keep.append(CGRect(x: r.minX + CGFloat(runStart * cell) * px, y: r.minY + CGFloat(j * cell) * px,
+                                       width: CGFloat((i - runStart) * cell) * px, height: CGFloat(cell) * px))
                     runStart = -1
                 }
             }
@@ -80,30 +73,62 @@ extension SlayerTrip {
             ctx.saveGState(); ctx.clip(to: keep); ctx.draw(old, in: r); ctx.restoreGState()
         }
 
-        // A thin haze of dust over everything while it flies.
-        let haze = Self.span(k, 0.12, 0.3) * (1 - Self.span(k, 0.55, 0.95))
-        if haze > 0 { art.setFillColor(dustRGB(0xB8A78A, CGFloat(0.13 * haze))); art.fill(CGRect(x: 0, y: 0, width: W, height: H)) }
+        // The dust: each speck from a block, born as it goes, bursts out from the strike, then rides its ribbon on
+        // the gust, up and to the right, spreading thin.
+        let life = 0.32, blocks = cols * rows
+        let tones: [UInt32] = [0x7E7A72, 0x9C9482, 0xB8A47E, 0xD4B266]
+        for n in 0..<Self.slayerDustSpecks {
+            let s = n * 7
+            let b = min(blocks - 1, Int(noise(s + 1) * Double(blocks)))
+            let bi = b % cols, bj = b / cols
+            let a = (k - goes(bi, bj) - noise(s + 2) * 0.05) / life
+            guard a > 0 && a < 1 else { continue }
+            let sx = (Double(bi) + noise(s + 3)) * C, sy = (Double(bj) + noise(s + 4)) * C
+            // Its stream, the nearest of four sinuous ribbons that sweep across and up to the right.
+            let stream = min(3, max(0, Int(sy / H * 4)))
+            let u = (sx - ix + W * 0.4) / (W * 1.05) + 0.04 * noise(s + 5) + a * 0.75
+            let px0 = ix - W * 0.4 + u * W * 1.05
+            let py0 = H * (0.18 + 0.2 * Double(stream)) + u * u * H * 0.3 + sin(u * 6 + Double(stream) * 1.7) * H * 0.07
+            // A puff out from the strike, then the pull into the stream; the ribbon spreads thin as it goes.
+            let d = max(1, hypot(sx - ix, sy - iy))
+            let puff = C * 1.2 * (1 - pow(1 - min(1, a * 3), 3))
+            let pull = Self.ease(min(1, a * 3.2))
+            let spread = (noise(s + 6) - 0.5) * C * (0.4 + 1.8 * a)
+            let x = (sx + (sx - ix) / d * puff) * (1 - pull) + px0 * pull
+            let y = (sy + (sy - iy) / d * puff) * (1 - pull) + (py0 + spread) * pull
+            let glint = noise(s + 8) > 0.92
+            let fade = pow(1 - a, 1.3)
+            art.setFillColor(glint ? dustRGB(0xFFF4C8, CGFloat(min(1, fade * 1.3)))
+                                    : dustRGB(tones[min(3, Int(noise(s + 9) * 4))], CGFloat(fade)))
+            // Early on a speck is a clump; on the gust, a short streak along the stream.
+            let streak: Double = pull > 0.5 ? 3 : 2, tall: Double = a < 0.4 && !glint ? 2 : 1
+            art.fill(CGRect(x: x.rounded(), y: y.rounded(), width: max(streak, tall), height: tall))
+        }
 
-        // The strike's flash: a white-gold star and a ring, gone in a blink.
-        let flash = Self.span(k, 0.085, 0.17)
+        // The strike's flash: the whole frame lit for a blink, then a white-gold star with long spokes and a ring.
+        let flash = Self.span(k, 0.085, 0.18)
         if flash > 0 && flash < 1 {
-            let fx = ix.rounded(), fy = iy.rounded(), arm = (B * (3 + 9 * flash)).rounded(), t = max(2, B.rounded())
             let fade = CGFloat(1 - flash)
+            if flash < 0.4 {
+                art.setFillColor(dustRGB(0xFFF4D8, CGFloat(0.35 * (1 - flash / 0.4))))
+                art.fill(CGRect(x: 0, y: 0, width: W, height: H))
+            }
+            let unit = max(2, (H / 40).rounded())
+            let fx = ix.rounded(), fy = iy.rounded(), arm = (unit * (4 + 9 * flash)).rounded(), t = unit
             art.setFillColor(dustRGB(0xFFF4D0, fade))
             art.fill(CGRect(x: fx - arm, y: fy - t / 2, width: arm * 2, height: t))
             art.fill(CGRect(x: fx - t / 2, y: fy - arm, width: t, height: arm * 2))
+            let core = (unit * 2 * (1 - flash * 0.6)).rounded()
+            art.setFillColor(dustRGB(0xFFFFF6, fade)); art.fill(CGRect(x: fx - core, y: fy - core, width: core * 2, height: core * 2))
             art.setFillColor(dustRGB(0xF0C860, fade))
-            for q in 0..<4 {
-                let ang = Double(q) * .pi / 2 + .pi / 4, out = arm * 0.8
-                for step in 0..<Int(max(1, out * 0.5)) {
-                    let rr = out * 0.35 + Double(step)
-                    art.fill(CGRect(x: (fx + cos(ang) * rr).rounded(), y: (fy + sin(ang) * rr).rounded(), width: 1, height: 1))
+            for q in 0..<8 {
+                let ang = Double(q) * .pi / 4 + .pi / 8, out = arm * (q % 2 == 0 ? 1.1 : 0.75)
+                for step in stride(from: out * 0.35, to: out, by: 1) {
+                    art.fill(CGRect(x: (fx + cos(ang) * step).rounded(), y: (fy + sin(ang) * step).rounded(), width: 1, height: 1))
                 }
             }
-            let core = (B * 1.6 * (1 - flash)).rounded()
-            art.setFillColor(dustRGB(0xFFFFF4, fade)); art.fill(CGRect(x: fx - core, y: fy - core, width: core * 2, height: core * 2))
-            let ring = arm * 1.3
-            art.setStrokeColor(dustRGB(0xF4E2A4, fade * 0.7)); art.setLineWidth(1)
+            let ring = arm * 1.35
+            art.setStrokeColor(dustRGB(0xF4E2A4, fade * 0.8)); art.setLineWidth(max(1, (unit / 2).rounded()))
             art.strokeEllipse(in: CGRect(x: fx - ring, y: fy - ring, width: ring * 2, height: ring * 2))
         }
 
@@ -114,33 +139,78 @@ extension SlayerTrip {
             let ang = Double.pi * 0.24
             let len = H * 0.5, back = len * 1.1 * ((1 - thrust) + pull)
             Self.slayerStake(art, tipX: ix - cos(ang) * back, tipY: iy - sin(ang) * back, angle: ang, length: len,
-                             width: max(4, (H * 0.07).rounded()))
+                             width: max(5, (H * 0.075).rounded()))
         }
 
         Self.slayerDustGrain(art, W: W, H: H, seed: Int(k * 1.6 * 15), amount: 1 - 0.8 * k)
         Self.blit(art, onto: ctx, width: w, height: h, px: px, in: r)
     }
 
-    /// A wooden stake pointing along `angle` with its tip at (`tipX`, `tipY`): a dark shaft with a pale top edge and
-    /// grain, whittled to a paler point.
+    /// The most dust specks drawn in a frame.
+    static let slayerDustSpecks = 1500
+
+    /// Dusting's grid of blocks over `r`: square cells `cell` art pixels across, about a thousand of them at any size.
+    static func slayerDustGrid(in r: CGRect, px: CGFloat) -> (cell: Int, cols: Int, rows: Int) {
+        let w = Int((r.width / px).rounded(.up)), h = Int((r.height / px).rounded(.up))
+        let cell = max(2, Int((Double(r.width * r.height).squareRoot() / 31.6 / Double(px)).rounded()))
+        return (cell, (w + cell - 1) / cell, (h + cell - 1) / cell)
+    }
+
+    /// A rough wooden stake pointing along `angle` with its tip at (`tipX`, `tipY`): a split-wood shaft with uneven
+    /// edges and dark grain, a cloth wrap for the grip, and a crude whittled point in pale fresh-cut facets.
     private static func slayerStake(_ art: CGContext, tipX: Double, tipY: Double, angle: Double, length: Double, width: Double) {
         art.saveGState()
         art.translateBy(x: tipX.rounded(), y: tipY.rounded())
         art.rotate(by: angle)
-        let tip = width * 1.6, half = (width / 2).rounded()
-        art.setFillColor(dustRGB(0x5E3C20)); art.fill(CGRect(x: -length, y: -half, width: length - tip, height: half * 2))
-        art.setFillColor(dustRGB(0x8A6038)); art.fill(CGRect(x: -length, y: half - 1, width: length - tip, height: 1))
-        art.setFillColor(dustRGB(0x442C18)); art.fill(CGRect(x: -length, y: -half, width: length - tip, height: 1))
-        art.setFillColor(dustRGB(0x46301A))
-        for g in 0..<4 { art.fill(CGRect(x: -length + 6 + Double(g) * length * 0.2, y: Double(g % 2) - 1, width: length * 0.1, height: 1)) }
-        let point = CGMutablePath()
-        point.move(to: CGPoint(x: -tip, y: -half)); point.addLine(to: CGPoint(x: 0, y: 0))
-        point.addLine(to: CGPoint(x: -tip, y: half)); point.closeSubpath()
-        art.setFillColor(dustRGB(0x9A6E40)); art.addPath(point); art.fillPath()
-        art.setFillColor(dustRGB(0xBC8E58)); art.fill(CGRect(x: -tip, y: half - 1, width: tip * 0.6, height: 1))
-        art.setFillColor(dustRGB(0x5A3A20)); art.fill(CGRect(x: -tip, y: -half, width: tip * 0.5, height: 1))
-        // The butt, rough-cut.
-        art.setFillColor(dustRGB(0x442C18)); art.fill(CGRect(x: -length, y: -half, width: 2, height: half * 2))
+        let tip = (width * 1.9).rounded(), half = (width / 2).rounded()
+        // The shaft, a column of wood at a time, its edges split and uneven.
+        var x = -length
+        var c = 0
+        while x < -tip + 1 {
+            let top = half - (noise(c * 3 + 900) < 0.3 ? 1 : 0), bottom = -half + (noise(c * 3 + 901) < 0.3 ? 1 : 0)
+            art.setFillColor(dustRGB(0x5C3A1E)); art.fill(CGRect(x: x, y: bottom, width: 2, height: top - bottom))
+            art.setFillColor(dustRGB(0x8A6236)); art.fill(CGRect(x: x, y: top - 1, width: 2, height: 1))
+            art.setFillColor(dustRGB(0x3A2412)); art.fill(CGRect(x: x, y: bottom, width: 2, height: 1))
+            x += 2; c += 1
+        }
+        // Dark grain running along it, broken.
+        art.setFillColor(dustRGB(0x3E2814))
+        for g in 0..<Int(half * 2 - 2) where g % 2 == 0 {
+            let y = -half + 1 + Double(g)
+            var gx = -length + 2 + noise(g + 950) * 8
+            while gx < -tip - 2 {
+                let run = 4 + noise(Int(gx) + g * 37) * length * 0.18
+                art.fill(CGRect(x: gx.rounded(), y: y, width: min(run, -tip - 2 - gx).rounded(), height: 1))
+                gx += run + 3 + noise(Int(gx) * 3 + g) * 6
+            }
+        }
+        // The cloth wrap round the grip, bound in diagonal turns.
+        let wrap = (width * 1.3).rounded(), wx = (-length * 0.86).rounded()
+        art.setFillColor(dustRGB(0xA89C84)); art.fill(CGRect(x: wx, y: -half - 1, width: wrap, height: half * 2 + 2))
+        art.setFillColor(dustRGB(0x74695A))
+        for t in stride(from: 0.0, to: wrap, by: 3) {
+            for y in 0..<Int(half * 2 + 2) {
+                let cx = wx + t + Double(y) * 0.5
+                if cx < wx + wrap { art.fill(CGRect(x: cx.rounded(), y: -half - 1 + Double(y), width: 1, height: 1)) }
+            }
+        }
+        art.setFillColor(dustRGB(0xD0C4A8)); art.fill(CGRect(x: wx, y: half, width: wrap, height: 1))
+        // The point: whittled in crude facets, not a neat cone.
+        let facets: [([CGPoint], UInt32)] = [
+            ([CGPoint(x: -tip, y: half), CGPoint(x: -tip * 0.55, y: half * 0.55), CGPoint(x: 0, y: 0),
+              CGPoint(x: -tip * 0.3, y: 1), CGPoint(x: -tip * 0.7, y: 0)], 0xC8A070),
+            ([CGPoint(x: -tip, y: 0), CGPoint(x: -tip * 0.7, y: 0), CGPoint(x: -tip * 0.3, y: 1), CGPoint(x: 0, y: 0),
+              CGPoint(x: -tip * 0.35, y: -half * 0.6), CGPoint(x: -tip * 0.8, y: -half)], 0xA07448),
+            ([CGPoint(x: -tip, y: -half), CGPoint(x: -tip * 0.8, y: -half), CGPoint(x: -tip * 0.35, y: -half * 0.6),
+              CGPoint(x: -tip * 0.62, y: -half * 0.3), CGPoint(x: -tip, y: -half * 0.2)], 0x7E5630),
+        ]
+        for (points, hex) in facets {
+            let p = CGMutablePath(); p.addLines(between: points); p.closeSubpath()
+            art.setFillColor(dustRGB(hex)); art.addPath(p); art.fillPath()
+        }
+        // Knife nicks where the point meets the shaft.
+        art.setFillColor(dustRGB(0x3A2412))
+        art.fill(CGRect(x: -tip - 1, y: half * 0.2, width: 2, height: 1)); art.fill(CGRect(x: -tip + 1, y: -half * 0.6, width: 1, height: 1))
         art.restoreGState()
     }
 
@@ -156,10 +226,10 @@ extension SlayerTrip {
         return (art, w, h, px)
     }
 
-    /// Film grain over the night: specks, pale and dark, that move every frame (`seed`), `amount` 0…1 strong.
+    /// Film grain over the night: up to 600 specks, pale and dark, that move every frame (`seed`), `amount` 0…1 strong.
     static func slayerDustGrain(_ art: CGContext, W: Double, H: Double, seed: Int, amount: Double) {
         guard amount > 0 else { return }
-        let count = Int(W * H / 170)
+        let count = min(600, Int(W * H / 170))
         for i in 0..<count {
             let s = seed * 7919 + i * 3
             art.setFillColor(dustRGB(i % 3 == 0 ? 0xC8D0E8 : 0x000000, CGFloat(amount * (i % 3 == 0 ? 0.22 : 0.3))))

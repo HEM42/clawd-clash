@@ -6,8 +6,8 @@ import Foundation
 
 extension SlayerTrip {
     /// A frame `k` (0…1) of the way from `old` to `new`, over the whole of `r`. The night sky over the old place
-    /// blushes in stepped bands, violet at the top to amber at the horizon (0–0.3); a slanted line of white-gold dawn
-    /// light sweeps from left to right (0.26–0.76), a glow running ahead of it and embers lifting off the old place
+    /// blushes in four soft bands, violet at the top to rose and amber at the horizon (0–0.3); a slanted line of
+    /// white-gold dawn light sweeps from left to right (0.26–0.76), a glow running ahead of it and embers lifting off the old place
     /// along its ragged edge; behind it the old place is gone and the new place lies under a glare that fades back
     /// from the line; then the glare and the blush ebb and the new place settles in as it is (0.6–1). The light, the
     /// blush and the embers are pixel art, and the old place is cut on the art's grid, with grain over the night.
@@ -36,16 +36,16 @@ extension SlayerTrip {
         }
         if !rows.isEmpty { ctx.saveGState(); ctx.clip(to: rows); ctx.draw(old, in: r); ctx.restoreGState() }
 
-        // The blush: stepped bands down the sky to the horizon, warm below it.
+        // The blush: four soft bands down the sky, close in colour, deepening toward the horizon, a warm wash below.
         let ebb = blush * (1 - settle)
         if ebb > 0 {
-            let sky: [UInt32] = [0x2A2050, 0x4A2A60, 0x7A3462, 0xA8445E, 0xD0605A, 0xF08A58, 0xFFB46A, 0xFFD890]
-            let horizon = (H * 0.3).rounded(), band = ((H - horizon) / Double(sky.count)).rounded(.up)
-            for (i, hex) in sky.enumerated() {
-                art.setFillColor(sunRGB(hex, CGFloat(ebb * (0.14 + 0.24 * Double(i) / 7))))
+            let sky: [(UInt32, Double)] = [(0x4A3068, 0.12), (0x7A3C6A, 0.15), (0xB45A64, 0.18), (0xE8905E, 0.21)]
+            let horizon = (H * 0.4).rounded(), band = ((H - horizon) / Double(sky.count)).rounded(.up)
+            for (i, (hex, alpha)) in sky.enumerated() {
+                art.setFillColor(sunRGB(hex, CGFloat(ebb * alpha)))
                 art.fill(CGRect(x: 0, y: H - Double(i + 1) * band, width: W, height: band))
             }
-            art.setFillColor(sunRGB(0xFFB46A, CGFloat(ebb * 0.1)))
+            art.setFillColor(sunRGB(0xF0A060, CGFloat(ebb * 0.1)))
             art.fill(CGRect(x: 0, y: 0, width: W, height: H - Double(sky.count) * band))
         }
 
