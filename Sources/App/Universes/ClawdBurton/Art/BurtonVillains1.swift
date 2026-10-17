@@ -1,12 +1,12 @@
 import Foundation
 
 // Villains: Beetlejuice and Beetlejuice Beetlejuice. Beetlejooce, the ghost with the most, leads the villain side: the
-// films' trickster: a pale, mouldy face in a bursting lime mane, and the black-and-white striped suit. With him: the
+// films' trickster: a pale, mouldy Clawd in a bursting lime mane and the black-and-white striped suit. With him: the
 // Sandwurm of Saturn, rearing out of its hole; Delorez, his stapled-together ex; Otho, who reads from the Handbook;
 // and Jeremee, the ghost boy with the bike.
 
 let burtonVillains1: [BurtonVillain: Persona] = [
-    .beetlejooce: Persona(name: "Beetlejooce", weapon: .saber, pivot: jooceHand, bulk: 7, headTop: 10, signature: 4.0,
+    .beetlejooce: Persona(name: "Beetlejooce", weapon: .saber, pivot: jooceHand, bulk: 7, headTop: 16, signature: 4.0,
                           callout: "It's showtime!", draw: drawBeetlejooce),
     .sandwurm: Persona(name: "The Sandwurm", weapon: .saber, canSit: false, pivot: wurmNeck, bulk: 5, headTop: 10,
                        signature: 3.2, draw: drawSandwurm),
@@ -26,11 +26,12 @@ private func ramp(_ s: Double, _ a: Double, _ b: Double) -> Double { max(0, min(
 
 // MARK: - Beetlejooce
 
-/// Beetlejooce: a tall pale face with mould on it, dark sunken eyes and a huge sharp yellow grin, a wild lime mane
-/// bursting out round it, and the black-and-white striped suit with a white shirt and black tie, trousers and all,
-/// and black boots. He fights the way a poltergeist would: his arm turns into a black-and-white striped snake that
-/// lashes out and snaps. Signature: his name bubbles up over his head three times, and on the third he drops down
-/// into a black-and-white striped ring on the floor, hands gripping its rim, and springs straight back up out of it.
+/// Beetlejooce: Clawd as the ghost with the most: the block a pale, mouldy face with dark sunken eyes and a huge sharp
+/// yellow grin, a wild lime mane bursting out round the top of it, and the black-and-white striped suit with a white
+/// shirt and black tie over the bottom of it, striped trousers and black boots. He fights the way a poltergeist
+/// would: his arm turns into a black-and-white striped snake that lashes out and snaps. Signature: his name bubbles
+/// up over his head three times, and on the third he drops down into a black-and-white striped ring on the floor,
+/// hands gripping its rim, and springs straight back up out of it.
 private func drawBeetlejooce(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
     let bubbles = sig.map { $0 < 0.08 ? 0 : $0 < 0.2 ? 1 : $0 < 0.32 ? 2 : $0 < 0.5 ? 3 : 0 } ?? 0
@@ -76,38 +77,35 @@ private func drawJooceFigure(_ c: PixelCanvas, _ p: Pose) {
         }
     }
     c.oy += p.breathe
-    // The suit: broad stripes, the white shirt in a V and the black tie; striped sleeves.
-    drawBody(c, Look(body: burtonBone, shade: burtonBone, arm: burtonBone, eye: nil))
-    burtonStripes(c, 18, 26, 20, 12, alongX: true)
-    burtonStripes(c, 15, 33, 3, 3, alongX: false, width: 1)
-    c.pattern(23, 32, ["KWWWKKWWWK", ".KWWKKWWK.", "..KWKKWK..", "...KKKK...", "....KK...."], ["W": C(0xF4F2EA), "K": burtonInk])
-    // The wild lime mane bursting out round his face, swaying a little.
-    let cx = 28.0, cy = 22.0
-    c.ellipse(Int(cx), Int(cy), 11, 10, hair[1])
-    for k in 0..<13 {
-        let a = (150.0 + 240.0 * Double(k) / 12 + sin(p.t * 2 + Double(k)) * 3) * .pi / 180
-        let len = 15 + noise(k + 3100) * 3, w = 3.2, r0 = len * 0.4
-        let tip = (cx + cos(a) * len, cy + sin(a) * len)
+    // The wild lime mane bursting out round the top of him, swaying a little.
+    let cx = 28.0, cy = 28.0
+    c.ellipse(Int(cx), 26, 12, 5, hair[1])
+    for k in 0..<11 {
+        let a = (165.0 + 210.0 * Double(k) / 10 + sin(p.t * 2 + Double(k)) * 3) * .pi / 180
+        let len = 11 + noise(k + 3100) * 2.5, w = 2.6, r0 = 4.0
+        let tip = (cx + cos(a) * len * 1.25, cy + sin(a) * len)
         let nx = -sin(a), ny = cos(a)
         burtonTriangle(c, tip, (cx + cos(a) * r0 + nx * w, cy + sin(a) * r0 + ny * w),
                        (cx + cos(a) * r0 - nx * w, cy + sin(a) * r0 - ny * w), hair[k % 3])
     }
-    // The tall pale face, a fringe of spikes over the forehead, and mould on it.
-    for (r, h) in [6, 8, 9, 9, 9, 9, 9, 9, 9, 9, 8, 8, 7].enumerated() {
-        c.rect(28 - h, 19 + r, h * 2, 1, skin); c.px(28 + h - 1, 19 + r, skinD)
+    // The block: his pale mouldy face, a fringe of lime spikes over its top edge.
+    drawBody(c, Look(body: skin, shade: skinD, arm: burtonBone, eye: nil))
+    for (x, len) in [(21, 2), (25, 3), (29, 2), (33, 3)] {
+        burtonTriangle(c, (Double(x) - 1.5, 25.5), (Double(x) + 1.5, 25.5), (Double(x), 25.5 + Double(len)), hair[0])
     }
-    for (x, len) in [(22, 3), (26, 4), (30, 3), (34, 2)] {
-        burtonTriangle(c, (Double(x) - 1.5, 18.5), (Double(x) + 1.5, 18.5), (Double(x), 18.5 + Double(len)), hair[0])
+    for (x, y) in [(19, 31), (36, 29), (30, 27)] { c.px(x, y, mould) }
+    // Dark, sunken eyes: near-black rings round greyish whites and dark green irises, smudged underneath.
+    for ex in [21, 31] {
+        c.pattern(ex - 1, 27, [".RRRR.", "RRWGRR", "RRGKRR", ".RRRR.", "S....S"],
+                  ["S": C(0x8A8690), "R": C(0x24222A), "W": C(0xD4D8CC), "G": C(0x4E8A2A), "K": burtonInk])
     }
-    for (x, y) in [(20, 27), (35, 28), (30, 21)] { c.px(x, y, mould) }
-    // Dark, sunken eyes: thick near-black rings smudged round greyish whites and dark green irises.
-    for ex in [20, 30] {
-        c.pattern(ex - 1, 20, ["..RRRR..", ".RRWWRR.", "RRWGGWRR", "RRWGKWRR", ".RRWWRR.", "S.RRRR.S", ".SSSSSS."],
-                  ["S": C(0x6A6670), "R": C(0x24222A), "W": C(0xD4D8CC), "G": C(0x4E8A2A), "K": burtonInk])
-    }
-    // The huge sharp grin: yellow teeth over a red mouth.
-    c.pattern(20, 28, ["K..............K", "KKTTTTTTTTTTTTKK", ".KRTRTRTRTRTRTK.", "..KKKKKKKKKKKK.."],
+    // The huge sharp grin: yellow teeth over a red mouth, running right across him.
+    c.pattern(19, 31, ["K................K", ".KTTTTTTTTTTTTTTK.", "..KRTRTRTRTRTRTK.."],
               ["K": burtonInk, "T": C(0xF0D860), "R": C(0xB8241E)])
+    // The suit over the bottom of him: broad stripes, the white shirt in a V and the black tie; striped sleeves.
+    burtonStripes(c, 18, 34, 20, 4, alongX: true)
+    c.pattern(24, 34, ["KWWKKWWK", ".KWKKWK.", "..KKKK..", "...KK..."], ["W": C(0xF4F2EA), "K": burtonInk])
+    burtonStripes(c, 15, 33, 3, 3, alongX: false, width: 1)
 
     // The left arm: a striped sleeve and a grubby long-nailed hand.
     c.pattern(13, 34, ["FF", ".F", ".F"], ["F": hand])
