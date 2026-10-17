@@ -252,7 +252,8 @@ func setRamp(_ d: DrillPlay, rise: Double = 0.8) -> Double {
 
 extension Cast {
     /// A few characters' own drills, where one says something about them better than the general ones. The Clawd
-    /// Files' and Stevie Clawdberg's are in their own files (`filesBespokeDrills`, `clawdbergBespokeDrills`).
+    /// Files', Stevie Clawdberg's and Clawd Slayer's are in their own files (`filesBespokeDrills`,
+    /// `clawdbergBespokeDrills`, `slayerBespokeDrills`).
     static let bespokeDrills: [Cast: BespokeDrill] = [
         // Yodle: a little cairn of stones lifted off the ground with the Force, turning slowly.
         .hero(SWHero.yoda): { c, who, d, t in
@@ -488,6 +489,7 @@ extension Cast {
             c.rect(bx, 41, 2, 2, C(0xE83A3A)); c.px(bx, 41, C(0xFF8A8A))
         },
     ].merging(filesBespokeDrills) { a, _ in a }.merging(clawdbergBespokeDrills) { a, _ in a }
+        .merging(slayerBespokeDrills) { a, _ in a }
 }
 
 /// A Dalick's "Elevate!": up 8 px over 1.2 s, held with a little bob, and down again; a glow under its skirt.
