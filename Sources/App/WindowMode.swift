@@ -227,7 +227,12 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
             animateFrame(onScreen(f))
             layout()
             board.animateOneFrame()
-            let t = Timer(timeInterval: 1.0 / 15, repeats: true) { [weak self] _ in self?.board.animateOneFrame() }
+            let t = Timer(timeInterval: 1.0 / 15, repeats: true) { [weak self] _ in
+                // Minimised, fully covered or hidden: nothing would show, so skip the frame (the next visible one
+                // draws the current moment, so nothing is missed).
+                guard let self, self.window.occlusionState.contains(.visible) else { return }
+                self.board.animateOneFrame()
+            }
             RunLoop.main.add(t, forMode: .common)      // on through live resizes too
             boardTimer = t
         } else {

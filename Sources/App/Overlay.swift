@@ -999,6 +999,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
         guard busy || hoverChanged || frameCount % 2 == 0 else { return }
         guard onScreen || shotPath != nil else { return }   // hidden or fully covered: nothing would show
+        // The window's screen-saver view covers the scene strip entirely: no point drawing the crew behind it.
+        guard !(windowMode && ClawdWindow.view == .board) || shotPath != nil else { return }
 
         items = buildItems(now: now)
         if let shotPath, now - lastShot > shotEvery {
