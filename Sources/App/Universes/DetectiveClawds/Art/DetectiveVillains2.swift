@@ -815,7 +815,13 @@ private func drawBatWing(_ c: PixelCanvas, root: (x: Double, y: Double), spread 
     let folded: [Double] = [96, 110, 124], open: [Double] = [262, 212, 168]
     let lens: [Double] = [lerp(10, 13), lerp(11, 13.5), lerp(10, 11)]
     var tips: [(x: Double, y: Double)] = []
-    for i in 0..<3 { tips.append(reach(wrist, side(lerp(folded[i], open[i])), lens[i])) }
+    for i in 0..<3 {
+        let a = side(lerp(folded[i], open[i]))
+        var len = lens[i]
+        let back = -cos(a * .pi / 180)                                  // a finger reaching out to the left stops short
+        if back > 0 { len = min(len, (wrist.x + Double(c.ox) - 2.5) / back) }   // of the frame's edge
+        tips.append(reach(wrist, a, len))
+    }
     let hip = (x: root.x + (far ? -1 : 1), y: root.y + 9)
     // The membrane between the fingers, its trailing edge scalloped.
     func scallop(_ a: (x: Double, y: Double), _ b: (x: Double, y: Double)) -> (x: Double, y: Double) {
