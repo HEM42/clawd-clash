@@ -349,8 +349,9 @@ private func drawDoctorFour(_ c: PixelCanvas, _ p: Pose) {
     if let k = twirl {
         // The long end swung round over his head.
         let base = 225 + 75 * sin(k * 2 * .pi * 2)
-        for i in 0..<20 {
+        for i in 0..<17 {
             let a = (base - Double(i) * 2.2) * .pi / 180
+
             let x = 17 + cos(a) * Double(i), y = 33 + sin(a) * Double(i)
             c.rect(Int(x.rounded()), Int(y.rounded()), 2, 2, scarf(i / 2))
         }

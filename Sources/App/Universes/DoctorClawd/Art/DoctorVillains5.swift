@@ -49,7 +49,8 @@ private func drawWeepingAngle(_ c: PixelCanvas, _ p: Pose) {
     let attacking = !p.resting || p.hit
 
     // The wings: the far one rising behind the head, the near one folded down the back.
-    drawAngleWing(c, x: 13, y: 1, main: C(0x8A8982), edge: stone, feather: dark, line: deep)
+    drawAngleWing(c, x: 13, y: 3, main: C(0x8A8982), edge: stone, feather: dark, line: deep)
+
     drawAngleWing(c, x: 1, y: 6, main: stone, edge: light, feather: dark, line: deep)
 
     // The robe, flaring to the ground (it glides; no legs show).

@@ -236,7 +236,8 @@ private func drawWendigo(_ c: PixelCanvas, _ p: Pose) {
         }
     }
     // The neck and the skull of a head, held forward, or thrown back to howl.
-    let hx = 44, hy = 22 - lift - (howl ? 3 : 0)
+    let hx = 44, hy = 22 - lift - (howl ? 2 : 0)
+
     seg(c, 39, Double(30 - lift), Double(hx), Double(hy + 4), hide, w: 3)
     c.pattern(hx - 1, hy, howl ? [
         ".BBBBB..",

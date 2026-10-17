@@ -188,10 +188,10 @@ private func drawMohawk(_ c: PixelCanvas, _ p: Pose) {
             let fi = Double(i)
             let y0 = 29 + fi * 3
             let kneeX = 17 - (5 + fi * 2) * g, kneeY = y0 - (6 - fi) * g
-            let footX = 17 - (9 + fi * 4) * g, footY = y0 + (14 - fi * 3) * g
+            let footX = 17 - (9 + fi * 3) * g, footY = y0 + (14 - fi * 3) * g
             cbLine(c, 18, y0, kneeX, kneeY, spider, 0.7); cbLine(c, kneeX, kneeY, footX, footY, spider, 0.6)
             c.px(Int(kneeX.rounded()), Int(kneeY.rounded()), spiderL)
-            let rKneeX = 39 + (5 + fi * 2) * g, rFootX = 39 + (9 + fi * 4) * g
+            let rKneeX = 39 + (5 + fi * 2) * g, rFootX = 39 + (9 + fi * 3) * g
             cbLine(c, 38, y0, rKneeX, kneeY, spider, 0.7); cbLine(c, rKneeX, kneeY, rFootX, footY, spider, 0.6)
             c.px(Int(rKneeX.rounded()), Int(kneeY.rounded()), spiderL)
         }
@@ -286,7 +286,8 @@ private func drawBatGremlin(_ c: PixelCanvas, _ p: Pose) {
     let looping = sig.map { $0 > 0.04 && $0 < 0.96 } ?? false
     if let k = sig, looping {
         let th = (k - 0.04) / 0.92 * 2 * .pi
-        c.ox += Int((sin(th) * 5).rounded())
+        // Forward, up and over, and back down into place: the loop swings forward so the wings stay in the frame.
+        c.ox += Int((sin(th) * 3 + (1 - cos(th)) * 3).rounded())
         c.oy += Int((-(1 - cos(th)) * 7).rounded())
     }
     let spread = p.flying || looping
@@ -298,13 +299,13 @@ private func drawBatGremlin(_ c: PixelCanvas, _ p: Pose) {
         let sx = 21.0 + wd * 5, sy = 28.0 + Double(p.breathe)
         let root = (x: sx - 1, y: sy + 6)
         // The arm bone up to the wrist, then three long fingers fanning out from it.
-        let elbowA: Double = spread ? -145 + flap * 25 - wd * 10 : -150 - wd * 12
-        let elbowL: Double = spread ? 11 : 8
+        let elbowA: Double = spread ? -140 + flap * 15 - wd * 10 : -150 - wd * 12
+        let elbowL: Double = spread ? 9 : 8
         let wrist = cbReach((sx, sy), elbowA, elbowL)
-        let fingerA: [Double] = spread ? [-170, 155, 120] : [-178, 145, 112]
-        let fingerL: [Double] = spread ? [13, 14, 11] : [9, 10, 8]
+        let fingerA: [Double] = spread ? [-165, 160, 125] : [-178, 145, 112]
+        let fingerL: [Double] = spread ? [10, 11, 9] : [9, 10, 8]
         var tips: [(x: Double, y: Double)] = []
-        for i in 0..<3 { tips.append(cbReach(wrist, fingerA[i] + (spread ? flap * 15 : 0), fingerL[i])) }
+        for i in 0..<3 { tips.append(cbReach(wrist, fingerA[i] + (spread ? flap * 9 : 0), fingerL[i])) }
         // The membrane, scalloped between the fingertips, down to its root on the body.
         let edge = tips + [root]
         for seg in 0..<3 {
@@ -495,9 +496,10 @@ private func drawMrsDeegle(_ c: PixelCanvas, _ p: Pose) {
     if lifting {
         let k = sig
         if k < 0.18 { up = 0 }
-        else if k < 0.45 { up = (k - 0.18) / 0.27 * 20 }
-        else if k < 0.6 { up = 20 }
-        else if k < 0.78 { up = 20 - (k - 0.6) / 0.18 * 20 }
+        else if k < 0.45 { up = (k - 0.18) / 0.27 * 16 }
+        else if k < 0.6 { up = 16 }
+        else if k < 0.78 { up = 16 - (k - 0.6) / 0.18 * 16 }
+
         else if k < 0.86 { up = sin((k - 0.78) / 0.08 * .pi) * 3 }
         if k > 0.08 {
             // The stair-lift chair, rising up its rail with her.

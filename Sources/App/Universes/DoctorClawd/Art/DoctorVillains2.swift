@@ -362,7 +362,7 @@ private func drawMissy(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
     let open = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
     let float = sig.map { habitArc($0, hold: 0.55) } ?? 0
-    c.oy -= Int((float * 3).rounded())
+    c.oy -= Int((float * 2).rounded())
 
     // The long skirt, swaying as she glides; boots peep from under it.
     let hem = seatedPose ? 39 : 42
@@ -417,15 +417,16 @@ private func drawMissy(_ c: PixelCanvas, _ p: Pose) {
         c.rect(38, 25, 3, 9, coat); c.rect(38, 24, 3, 1, clawdOrange)
         c.rect(39, 13, 1, 11, C(0x2A2A30))
         let spin = Int(p.lt * 10)
-        for dy in 0...5 {
-            let hw = [3, 8, 12, 14, 15, 16][dy]
+        for dy in 0...4 {
+            let hw = [5, 10, 13, 15, 16][dy]
             for x in (39 - hw)...(39 + hw) {
                 let panel = ((x - 39 + 32 + spin) / 4) % 2 == 0
-                c.px(x, 8 + dy, panel ? brolly : brollyLight)
+                c.px(x, 9 + dy, panel ? brolly : brollyLight)
             }
         }
         for x in stride(from: 23, through: 55, by: 4) { c.px(x + spin % 4 - 2, 14, brolly) }   // the scalloped hem
-        c.px(39, 7, C(0x8A8E98))
+        c.px(39, 8, C(0x8A8E98))
+
         return
     }
     // The furled umbrella held out like a rifle: the crook in her fist, the tip forward.
