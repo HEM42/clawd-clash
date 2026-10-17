@@ -679,9 +679,9 @@ private func drawCaveTroll(_ c: PixelCanvas, _ p: Pose) {
     }
     if let s = sig, puzzled, s > 0.16 {
         let bob = Int(s * 3.4 * 4) % 2
-        c.pattern(45, 1 + bob, [".QQQ.", "QQ.QQ", "...QQ", "..QQ.", "..Q..", ".....", "..Q.."], ["Q": ink])
+        c.pattern(45, 2 + bob, [".QQQ.", "QQ.QQ", "...QQ", "..QQ.", "..Q..", ".....", "..Q.."], ["Q": ink])
     }
-    if let s = sig, grin, s > 0.6 { drawSpeech(c, "u mad?", x: 44, y: 0, tail: (x: 44, y: 10)) }
+    if let s = sig, grin, s > 0.6 { drawSpeech(c, "u mad?", x: 44, y: 2, tail: (x: 44, y: 12)) }
     // The club, and the fist over its grip.
     let held = swing(p, rest: 32, seated: 32, heavy: true)
     drawSmear(c, at: caveTrollHand, held.smear, from: 10, to: 20, heavy: true, core: C(0x9A7A54), glow: C(0x5A4430, 0.5),

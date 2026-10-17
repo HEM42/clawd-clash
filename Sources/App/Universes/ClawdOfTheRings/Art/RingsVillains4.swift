@@ -251,9 +251,10 @@ private func drawOliphauntBody(_ c: PixelCanvas, _ p: Pose, trunkUp: Double?) {
     }
     leg(13, far, group: 1); leg(35, far, group: 0)
     c.oy += p.breathe
-    // The tail, with a dark tuft.
-    line(c, 6.5, 25, 3.5, 33, hideDark, 0.5)
-    c.rect(2, 33, 2, 3, woodDark)
+    // The tail, with a dark tuft (tucked in under it as it rears, clear of the canvas edge).
+    let tuck = Int((3 * (trunkUp ?? 0)).rounded())
+    line(c, 6.5, 25, 3.5 + Double(tuck), 33, hideDark, 0.5)
+    c.rect(2 + tuck, 33, 2, 3, woodDark)
     // The body: a great barrel, darker underneath.
     c.ellipse(25, 28, 19, 9, hideDark)
     c.ellipse(25, 27, 19, 9, hide)

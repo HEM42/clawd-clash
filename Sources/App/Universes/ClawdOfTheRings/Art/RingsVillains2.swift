@@ -158,10 +158,10 @@ private func drawBalrogFlames(_ c: PixelCanvas, _ p: Pose, flare: Double = 0) {
 private func drawBalrogWings(_ c: PixelCanvas, _ p: Pose, spread w: Double = 0) {
     let tick = Int(p.t * 6), bone = C(0x34201A)
     func mix(_ a: (Double, Double), _ b: (Double, Double)) -> (Double, Double) { (a.0 + (b.0 - a.0) * w, a.1 + (b.1 - a.1) * w) }
-    let root = mix((22, 17), (35, 15)), tip = mix((11, 3), (64, 0)), foot = mix((14, 24), (57, 20))
+    let root = mix((22, 17), (35, 15)), tip = mix((11, 3), (64, 3)), foot = mix((14, 24), (57, 20))
     triangle(c, root, tip, foot, C(0x2E1A12), fray: tick)
-    triangle(c, (18, 19), mix((2, 4), (0, 0)), mix((7, 34), (0, 28)), C(0x1E0E0A), fray: tick + 3)
-    let b1 = mix((4, 6), (1, 2)), b2 = mix((6, 24), (2, 19))
+    triangle(c, (18, 19), mix((2, 4), (0, 3)), mix((7, 34), (0, 28)), C(0x1E0E0A), fray: tick + 3)
+    let b1 = mix((4, 6), (2, 4)), b2 = mix((6, 24), (2, 19))
     line(c, 17, 20, b1.0, b1.1, bone, 0.4)
     line(c, 17, 22, b2.0, b2.1, bone, 0.4)
     if w > 0 {

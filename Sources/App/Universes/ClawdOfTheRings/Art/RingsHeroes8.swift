@@ -79,7 +79,7 @@ private func drawEomer(_ c: PixelCanvas, _ p: Pose) {
 /// moment), light grey with dark letters like a terminal's reverse video, a block cursor blinking after it.
 private func drawMorePrompt(_ c: PixelCanvas, _ s: Double) {
     let paper = C(0xE4E4DC), letter = C(0x16161A)
-    let x = 7, y = 1 + (s < 0.27 ? -1 : 0)
+    let x = 7, y = 3 + (s < 0.27 ? -1 : 0)
     c.rect(x, y, 34, 9, paper)
     c.rect(x, y + 8, 34, 1, C(0xA8A8A0))
     let glyphs: [[String]] = [
@@ -573,8 +573,7 @@ private func drawQuickbeam(_ c: PixelCanvas, _ p: Pose) {
     c.rect(38, 12, 2, 1, bark); c.px(39, 11, barkDark); c.px(38, 13, barkDark)
     c.px(30, 14, C(0x8A2A1A)); c.rect(31, 15, 3, 1, C(0xC8503A)); c.px(34, 14, C(0x8A2A1A))
     // The crown of bright rowan leaves, swept back off his head, red berries in it.
-    c.pattern(17, 1, [
-        "............L..L.......",
+    c.pattern(17, 2, [
         "........LL.LlL.LL......",
         ".....LLlLLLRLLLLlLL....",
         "..LdLLLLLRRrLLLLdLLLL..",

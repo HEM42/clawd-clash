@@ -669,7 +669,8 @@ private func drawThranduil(_ c: PixelCanvas, _ p: Pose) {
     let smug = twirl?.smug == true
     let lift = twirl?.lift ?? 0
     // The back blade, behind him in his other hand, mirroring the front one.
-    drawCurvedBlade(c, at: (16.0, 34.5 + Double(p.breathe - lift)), angle: 180 - a, trail: twirl?.trail.map { 180 - $0 } ?? [])
+    drawCurvedBlade(c, at: (16.0, 34.5 + Double(p.breathe - lift)), angle: 180 - a, trail: twirl?.trail.map { 180 - $0 } ?? [],
+                    minX: 2)
     drawBackCape(c, t: p.t, speed: p.capeSpeed, color: C(0x6A1018), edge: silver, hem: 42)
     drawLegs(c, Look(leg: robeShade), step: p.step)
     drawBoots(c, p.step, C(0x3A2A2A), rows: 1)
@@ -765,18 +766,22 @@ private func thranduilTwirl(_ s: Double) -> (angle: Double, trail: [Double], lif
 
 /// A curved elven blade in a fist at `hand`, at `angle`: a dark grip, a silver pommel and a short leaf-shaped guard, and
 /// a 14 px blade curving well back toward the tip, with a darker edge; a pale smear along `trail` behind a fast stroke.
-private func drawCurvedBlade(_ c: PixelCanvas, at hand: (x: Double, y: Double), angle: Double, trail: [Double]) {
-    let length = 14.0, steel = C(0xE4EAF2), edge = C(0x9AA6B6), silver = C(0xD4DAE2)
-    for (i, a) in trail.enumerated() {
-        let u = unit(a)
-        c.glowLine(hand.x + u.x * 4, hand.y + u.y * 4, hand.x + u.x * (3 + length), hand.y + u.y * (3 + length),
-                   core: C(0xEEF4FA), glow: C(0xAAB8C8), coreR: 0.5, glowR: 1.6, strength: 0.32 / Double(i + 1))
-    }
+/// Pointing back past column `minX` (the back blade, near the canvas edge), the blade is drawn that much shorter.
+private func drawCurvedBlade(_ c: PixelCanvas, at hand: (x: Double, y: Double), angle: Double, trail: [Double],
+                             minX: Double = -.infinity) {
+    let steel = C(0xE4EAF2), edge = C(0x9AA6B6), silver = C(0xD4DAE2)
     let u = unit(angle), n = (x: -u.y, y: u.x)
+    var length = 14.0
     // A point `d` along the blade, bent back (away from the edge) toward the tip.
     func at(_ d: Double, _ o: Double = 0) -> (x: Double, y: Double) {
         let k = max(0, d - 3) / length, bend: Double = -3.2 * k * k + o
         return (hand.x + u.x * d + n.x * bend, hand.y + u.y * d + n.y * bend)
+    }
+    while length > 8, at(3 + length).x - 0.6 + Double(c.ox) < minX { length -= 0.5 }
+    for (i, a) in trail.enumerated() {
+        let u = unit(a)
+        c.glowLine(hand.x + u.x * 4, hand.y + u.y * 4, hand.x + u.x * (3 + length), hand.y + u.y * (3 + length),
+                   core: C(0xEEF4FA), glow: C(0xAAB8C8), coreR: 0.5, glowR: 1.6, strength: 0.32 / Double(i + 1))
     }
     line(c, hand.x - u.x * 2.5, hand.y - u.y * 2.5, hand.x + u.x * 1.5, hand.y + u.y * 1.5, C(0x3A1418), 0.6)   // the grip
     c.px(Int((hand.x - u.x * 3).rounded(.down)), Int((hand.y - u.y * 3).rounded(.down)), silver)               // the pommel

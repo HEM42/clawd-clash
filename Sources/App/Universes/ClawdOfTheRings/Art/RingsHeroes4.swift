@@ -409,7 +409,7 @@ private func drawTreebeardSprouts(_ c: PixelCanvas, _ s: Double, furrow: Px, lea
     var spots: [(x: Int, y: Int)] = [6.0, 11, 15].map { d in
         (Int(shoulder.x + u.x * d + 1.8), Int(shoulder.y + u.y * d - 0.9))
     }
-    spots += [(16, 25), (21, 3), (14, 30), (36, 2), (19, 17), (43, 6), (28, 1)]
+    spots += [(16, 25), (21, 3), (14, 30), (36, 3), (19, 17), (43, 6), (28, 3)]   // a row clear of the canvas top
     let fall = s > 0.88 ? (s - 0.88) / 0.12 : 0
     let drop = Int((fall * 5).rounded()), a = 1 - fall
     for (i, p) in spots.enumerated() {
@@ -421,7 +421,7 @@ private func drawTreebeardSprouts(_ c: PixelCanvas, _ s: Double, furrow: Px, lea
     }
     // The blossom on his crown, last of all.
     if s > 0.78 {
-        c.pattern(31, 1 + drop, [".f.", "fyf", ".f."], ["f": C(0xF4C8D8, a), "y": C(0xF0D060, a)])
+        c.pattern(31, 2 + drop, [".f.", "fyf", ".f."], ["f": C(0xF4C8D8, a), "y": C(0xF0D060, a)])
     }
 }
 
@@ -546,6 +546,7 @@ private func bombadilJig(_ s: Double) -> BombadilJig {
     j.singing = true
     j.mouth = u < 0.5 ? 2 : 1
     j.feather = (Int((1.5 * sin(u * .pi)).rounded()) * (n % 2 == 0 ? 1 : -1), Int((2 * cos(u * .pi)).rounded()))
+    j.feather.y = max(j.feather.y, j.hop - 2)                                 // its tip kept under the canvas top
     return j
 }
 

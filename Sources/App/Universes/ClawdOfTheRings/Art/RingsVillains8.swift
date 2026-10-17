@@ -58,7 +58,7 @@ private func drawSmaug(_ c: PixelCanvas, _ p: Pose) {
     func mix(_ a: (Double, Double), _ b: (Double, Double)) -> (Double, Double) {
         (a.0 + (b.0 - a.0) * spread, a.1 + (b.1 - a.1) * spread)
     }
-    drawDragonWing(c, wrist: mix((31, 4), (42, -1)), tips: [mix((17, 3), (65, 6)), mix((18, 11), (53, -2)), mix((23, 18), (28, 2))],
+    drawDragonWing(c, wrist: mix((31, 4), (42, 4)), tips: [mix((17, 3), (65, 10)), mix((18, 11), (53, 3)), mix((23, 18), (28, 6))],
                    roots: [(26, 24), (34, 23)], membrane: lerp(membraneFar, C(0xA03018), 0.5 * blaze), bone: bone, arm: far)
     // The body: a crouched barrel, the gold belly plates under it, a spiked ridge along the back.
     c.ellipse(26, 31, 14, 8, scaleDark)
@@ -76,7 +76,7 @@ private func drawSmaug(_ c: PixelCanvas, _ p: Pose) {
         for x in stride(from: 19, through: 35, by: 3) { c.rect(x, 32, 1, 3, hot.alpha(blaze)) }
     }
     // The near wing, half open over his back.
-    drawDragonWing(c, wrist: mix((21, 5), (14, -2)), tips: [mix((4, 6), (0, -3)), mix((6, 14), (0, 8)), mix((10, 21), (2, 19))],
+    drawDragonWing(c, wrist: mix((21, 5), (15, 4)), tips: [mix((4, 6), (2, 3)), mix((6, 14), (2, 11)), mix((10, 21), (3, 20))],
                    roots: [(16, 25), (28, 23)], membrane: lerp(membrane, C(0xD84A1E), 0.5 * blaze), bone: bone, arm: scale)
     // The neck, arching up and forward, gold underneath, the fire showing in the throat.
     let neck: [(x: Double, y: Double)] = [(35, 28), (39, 24), (42, 20), (46, 16)]
