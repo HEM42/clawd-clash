@@ -228,7 +228,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         applyDockPolicy()
         offerHooksOnFirstLaunch()
 
-        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.refreshStatus() }
+        let refresh = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.refreshStatus() }
+        refresh.tolerance = 0.1   // macOS may line it up with other wake-ups; nobody sees a status a tenth late
+        // The frame timer has none: animation is paced by it.
         let frame = Timer(timeInterval: 1.0 / 15, repeats: true) { [weak self] _ in self?.tick() }
         RunLoop.main.add(frame, forMode: .common)
     }
