@@ -66,7 +66,7 @@ private func drawEomer(_ c: PixelCanvas, _ p: Pose) {
         c.glowLine(h.x + u.x * 4, h.y + u.y * 4, h.x + u.x * 26, h.y + u.y * 26, core: C(0xE8EEF4), glow: C(0xA8B4C0),
                    coreR: 0.5, glowR: 1.6, strength: 0.32 / Double(i + 1))
     }
-    let up = Int((6 * (p.signature.map { arc($0, rise: 0.16, fall: 0.86) } ?? 0)).rounded())
+    let up = Int((5 * (p.signature.map { arc($0, rise: 0.16, fall: 0.86) } ?? 0)).rounded())
     c.oy -= up                                                                // raised high in his signature
     drawSpear(c, angle: angle, t: p.t, butt: seatedPose ? 3 : 9)
     c.rect(38, 33, 2, 3 + up, rohanMail); c.rect(40, 33, 2, 3, clawdOrange); c.px(40, 35, clawdShade)   // the fist round the shaft

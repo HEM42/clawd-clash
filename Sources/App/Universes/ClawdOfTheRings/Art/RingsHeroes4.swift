@@ -426,15 +426,17 @@ private func drawTreebeardSprouts(_ c: PixelCanvas, _ s: Double, furrow: Px, lea
 }
 
 /// B-Treebeard's front arm at `angle` from his shoulder: a heavy branch, thick at the shoulder and tapering, a knot
-/// at the elbow, and three twig fingers and a leaf or two at its end.
+/// at the elbow, and three twig fingers and a leaf or two at its end. Raised near upright, the forearm is drawn up to
+/// 2.5 px shorter, so the twigs and leaves keep clear of the canvas top.
 private func drawBranchArm(_ c: PixelCanvas, angle: Double, bark: Px, dark: Px, furrow: Px, leaf: Px, leafLight: Px) {
     let s = treebeardShoulder, u = unit(angle), n = (x: -u.y, y: u.x)
+    let reach = 16 - 2.5 * max(0, (-u.y - 0.7) / 0.3)
     line(c, s.x, s.y, s.x + u.x * 9, s.y + u.y * 9, bark, 2)
-    line(c, s.x + u.x * 9, s.y + u.y * 9, s.x + u.x * 16, s.y + u.y * 16, bark, 1.4)
-    line(c, s.x + u.x * 2 + n.x * 1.2, s.y + u.y * 2 + n.y * 1.2, s.x + u.x * 14 + n.x * 0.8, s.y + u.y * 14 + n.y * 0.8,
-         dark, 0.4)
+    line(c, s.x + u.x * 9, s.y + u.y * 9, s.x + u.x * reach, s.y + u.y * reach, bark, 1.4)
+    line(c, s.x + u.x * 2 + n.x * 1.2, s.y + u.y * 2 + n.y * 1.2, s.x + u.x * (reach - 2) + n.x * 0.8,
+         s.y + u.y * (reach - 2) + n.y * 0.8, dark, 0.4)
     c.px(Int(s.x + u.x * 9), Int(s.y + u.y * 9), furrow)                      // the knot
-    let tip = (x: s.x + u.x * 16, y: s.y + u.y * 16)
+    let tip = (x: s.x + u.x * reach, y: s.y + u.y * reach)
     for spread in [-35.0, 0, 35] {
         let f = unit(angle + spread)
         line(c, tip.x, tip.y, tip.x + f.x * 4.5, tip.y + f.y * 4.5, furrow, 0.5)
