@@ -6,7 +6,7 @@ Clawd Clash has six universes. This plan adds Buffy the Vampire Slayer as a full
 
 - **Name: Clawd Slayer** (chosen on 2026-10-16). The alternatives were Buffy the Vampire Clawder (long, and it echoes Fox Clawder) and Buffy the Clawd Slayer.
 - **Code naming** avoids the franchise name, as the other universes do:
-  - `case slayer = 6` with key `"slayer"`.
+  - `case slayer = 7` with key `"slayer"`.
   - Folder `Sources/App/Universes/Slayer/`, file prefix `Slayer…`.
   - Branch `buffy`.
 - **Raw value:** the next free one when its build starts (Buffy is planned as 6); ids are rawValue*1000 and permanent. Six other universes are being planned at the same time (Star Trek, 007, Transformers, He-Man, Game of Thrones, Tim Burton), so every key, prefix and place key here is flavoured `slayer` so nothing clashes.

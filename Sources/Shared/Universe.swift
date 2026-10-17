@@ -11,7 +11,7 @@ enum Universe: Int, CaseIterable, Codable {
     case doctor = 3
     case clawdFiles = 4
     case clawdberg = 5
-    case slayer = 6
+    case slayer = 7
 
     var key: String {
         switch self { case .starWars: return "starWars"; case .marvel: return "marvel"; case .dc: return "dc"; case .doctor: return "doctor"
