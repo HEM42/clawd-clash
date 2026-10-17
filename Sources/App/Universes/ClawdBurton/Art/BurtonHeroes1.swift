@@ -13,7 +13,7 @@ let burtonHeroes1: [BurtonHero: Persona] = [
     .sallee: Persona(name: "Sallee", weapon: .none, headTop: 10, signature: 3.6, draw: drawSallee),
     .zeero: Persona(name: "Zeero", weapon: .none, motion: .hover, canSit: false, headTop: 14, signature: 3.0, callout: "Arf!",
                     draw: drawZeero),
-    .theMayor: Persona(name: "The Mayor", weapon: .none, bulk: 3, headTop: 1, signature: 3.2, draw: drawMayor),
+    .theMayor: Persona(name: "The Mayor", weapon: .none, bulk: 3, headTop: 0, signature: 3.2, draw: drawMayor),
     .sandyClawz: Persona(name: "Sandy Clawz", weapon: .blaster, shot: .thrown(C(0xC8202A)), muzzle: (46, 28), bulk: 3,
                          headTop: 15, signature: 3.0, callout: "Ho ho ho!", draw: drawSandyClawz),
 ]
@@ -299,13 +299,14 @@ private func drawZeero(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - The Mayor
 
-/// The Mayor: a fat round body in a black tailcoat with a red sash across it and a big gold-and-red rosette, short
-/// legs, and on top his pointy head, widest at the top and tapering steeply to a point at the chin, under a tall black
-/// stovepipe hat with a spider on its band. He carries his megaphone. His head has two faces: the smiling one, pale
-/// with rosy cheeks, and the worried one, pale blue and frowning, which he wears whenever his session needs you.
-/// Signature: his head spins round from one face to the other and back.
+/// The Mayor: a fat grey tailcoat flaring out wide at the bottom like a bell, short pinstriped legs under it, a white
+/// collar with a black spider for a bow tie and a red rosette on his chest; and on top his cone of a head, pointed at
+/// the top and widest at his collar, the hat perched on the point: a little brim and a very tall, thin, slightly
+/// crooked stovepipe. He carries his megaphone. His head has two faces: the happy one, tan, with spiral eyes and a big
+/// toothy grin, and the worried one, pale, with droopy eyes and a zigzag frown, which he wears whenever his session
+/// needs you. Signature: his head spins round from one face to the other and back.
 private func drawMayor(_ c: PixelCanvas, _ p: Pose) {
-    let coat = C(0x1E1E26), coatD = C(0x121218), sash = C(0xC8202A), gold = C(0xE8B830)
+    let coat = C(0x6A6E78), coatD = C(0x4A4E58), coatL = C(0x8A8E98), ink = C(0x16161B), red = C(0xC8202A)
     let sig = p.signature
     let worriedNow = p.ready || p.urgent
     // The spin: the head turns one full round, the other face coming past at the halfway point.
@@ -313,55 +314,57 @@ private func drawMayor(_ c: PixelCanvas, _ p: Pose) {
     let squash = abs(cos(turn)), backFace = cos(turn) < 0
     let worried = backFace != worriedNow
 
-    // Short legs and black shoes.
+    // Short pinstriped legs and little black feet.
     if !seatedPose {
         for (i, lx) in [21, 25, 31, 35].enumerated() {
             let lifted = p.step >= 0 && i % 2 == p.step
-            c.rect(lx, 39, 2, lifted ? 4 : 5, coat); c.rect(lx - 1, lifted ? 42 : 43, 3, 1, C(0x0A0A0E))
+            c.rect(lx, 38, 2, lifted ? 4 : 5, C(0x24242C)); c.px(lx, 39, C(0x8A8E98)); c.px(lx, 41, C(0x8A8E98))
+            c.rect(lx - 1, lifted ? 41 : 42, 3, 1, ink)
         }
     } else {
-        for lx in [21, 25, 31, 35] { c.rect(lx - 1, 39, 4, 2, coat) }
+        for lx in [21, 25, 31, 35] { c.rect(lx - 1, 38, 4, 2, C(0x24242C)) }
     }
     c.oy += p.breathe
-    // The round fat body in the tailcoat, a white shirt front, the sash and the rosette.
-    for y in 24...40 {
-        let k = Double(y - 32) / 9, hw = Int((13 * (1 - k * k * 0.55)).rounded())
-        c.rect(28 - hw, y, hw * 2, 1, coat); c.px(28 + hw - 1, y, coatD)
+    // The coat: narrow at the shoulders, flaring out to a wide bell at the bottom, open at the front.
+    for y in 25...38 {
+        let hw = 9 + (y - 25) * 6 / 13
+        c.rect(28 - hw, y, hw * 2, 1, coat); c.px(28 - hw, y, coatL); c.px(28 + hw - 1, y, coatD)
     }
-    c.pattern(24, 24, ["WW....WW", ".W....W."], ["W": C(0xF0ECE0)])   // the white collar tips either side of his chin
-    for i in 0..<14 { c.rect(18 + i, 26 + i, 2, 1, sash) }
-    c.pattern(30, 28, [".RRR.", "RGGGR", "RGRGR", "RGGGR", ".RRR.", ".R.R."], ["R": sash, "G": gold])
-    // Short arms, and the megaphone in his right hand.
-    c.rect(13, 31, 3, 3, coat); c.px(13, 34, C(0xF0E0D0))
-    c.rect(41, 30, 3, 3, coat)
-    c.pattern(43, 27, ["......M", "....MMM", "..MMMMM", "HMMMMMM", "..MMMMM", "....MMM", "......M"],
-              ["M": C(0xC8C8D0), "H": C(0x6A6A74)])
-    // The pointy head: widest at the top, under the hat, tapering steeply to a point that sits on his collar;
-    // squashed sideways while it spins.
-    let skin = worried ? C(0xA8C8E0) : C(0xF0E8D8), skinD = worried ? C(0x88A8C4) : C(0xD0C4B0)
-    for (r, w) in [16, 16, 16, 15, 14, 13, 12, 10, 9, 7, 6, 4, 3, 2].enumerated() {
+    for y in 32...38 { c.px(28 + (y - 32) / 3, y, coatD) }   // the opening of the coat
+    c.rect(19, 38, 18, 1, coatD)
+    // The white collar, the spider bow tie, and the rosette.
+    c.pattern(23, 25, ["WWWWWWWWWW", ".WWWWWWWW.", "..WWWWWW.."], ["W": C(0xF0ECE0)])
+    c.pattern(25, 25, ["K..K..", ".KKK..", "KKKKK.", ".KKK..", "K..K.."].map { String($0.prefix(5)) }, ["K": ink])
+    c.pattern(19, 28, [".RRR.", "RWWWR", "RWWWR", "RWWWR", ".RRR.", ".R.R.", "R...R"], ["R": red, "W": C(0xF0ECE0)])
+    // Short arms in grey sleeves, and the megaphone in his right hand.
+    c.rect(14, 30, 4, 3, coat); c.px(14, 33, C(0xE8B888))
+    c.rect(38, 29, 4, 3, coat)
+    c.pattern(42, 26, ["......M", "....MMM", "..MMMMM", "HMMMMMM", "..MMMMM", "....MMM", "......M"],
+              ["M": C(0xB8BCC4), "H": C(0x6A6A74)])
+    // The cone of a head: a point at the top, widest at his collar; squashed sideways while it spins.
+    let skin = worried ? C(0xD8E2EA) : C(0xE8B888), skinD = worried ? C(0xA8B8C8) : C(0xC8946A)
+    for r in 0..<13 {
+        let w = 2 + r * 14 / 12
         let hw = max(1, Int((Double(w) / 2 * max(0.2, squash)).rounded()))
-        c.rect(28 - hw, 12 + r, hw * 2, 1, skin); c.px(28 + hw - 1, 12 + r, skinD)
+        c.rect(28 - hw, 13 + r, hw * 2, 1, skin); c.px(28 + hw - 1, 13 + r, skinD)
     }
     if squash > 0.55 {
         func fx(_ dx: Int) -> Int { 28 + Int((Double(dx) * squash).rounded()) }
-        let ink = C(0x1A1A22), brow = C(0x2A2A40)
-        if worried {   // the worried face: brows up in the middle, small eyes, a frown
-            c.px(fx(-5), 14, brow); c.px(fx(-4), 13, brow); c.px(fx(3), 13, brow); c.px(fx(4), 14, brow)
-            c.rect(fx(-4), 16, 1, 2, ink); c.rect(fx(3), 16, 1, 2, ink)
-            c.px(fx(-2), 20, brow); c.px(fx(-1), 19, brow); c.px(fx(0), 19, brow); c.px(fx(1), 20, brow)
-        } else {       // the smiling face: bright eyes, rosy cheeks, a wide grin
-            c.rect(fx(-4), 15, 1, 2, ink); c.rect(fx(3), 15, 1, 2, ink)
-            c.px(fx(-5), 17, C(0xE88A8A)); c.px(fx(4), 17, C(0xE88A8A))
-            c.px(fx(-3), 18, C(0x5A2A2A)); c.px(fx(-2), 19, C(0x5A2A2A)); c.px(fx(-1), 19, C(0x5A2A2A))
-            c.px(fx(0), 19, C(0x5A2A2A)); c.px(fx(1), 19, C(0x5A2A2A)); c.px(fx(2), 18, C(0x5A2A2A))
+        if worried {   // droopy, half-shut eyes and a zigzag frown
+            for ex in [-3, 2] { c.rect(fx(ex), 18, 2, 1, C(0x4A5A6A)); c.rect(fx(ex), 19, 2, 1, ink) }
+            c.rect(fx(-4), 22, 9, 3, ink)
+            c.pattern(fx(-3), 23, ["W.W.W.W", ".W.W.W."], ["W": C(0xF0ECE0)])
+        } else {       // spiral eyes and a big toothy grin
+            for ex in [-4, 2] { c.pattern(fx(ex), 17, ["KKK", "K.K", "KK."], ["K": ink]) }
+            c.px(fx(0), 20, C(0x6A4A2A))
+            c.rect(fx(-5), 22, 11, 3, ink); c.rect(fx(-4), 23, 9, 1, C(0xF0ECE0))
+            c.px(fx(-6), 21, ink); c.px(fx(5), 21, ink)
         }
     }
-    // The tall stovepipe hat on the wide top of his head, its red band and the spider on it.
-    c.rect(20, 11, 16, 1, coat)
-    c.rect(23, 1, 10, 10, coat); c.rect(32, 1, 1, 10, coatD)
-    c.rect(23, 8, 10, 2, sash)
-    c.pattern(26, 7, ["K.K.K", ".KKK.", "K.K.K"], ["K": C(0xF0ECE0)])
+    // The hat on the point: a little brim and a tall, thin, slightly crooked stovepipe with a pale band.
+    c.rect(23, 13, 10, 1, C(0x1E1E26)); c.rect(24, 12, 8, 1, C(0x1E1E26))
+    c.rect(27, 9, 3, 3, C(0x8A8E98))
+    for y in 0..<9 { c.rect(27 + (9 - y) / 5 - (y < 3 ? 1 : 0), y, 3, 1, y % 4 == 0 ? C(0x2A2A34) : C(0x1E1E26)) }
 }
 
 // MARK: - Sandy Clawz
