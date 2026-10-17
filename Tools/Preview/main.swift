@@ -408,16 +408,17 @@ case "place":
 
 case "rides":
     let cellW = CGFloat(Ride.width) * scale + 12, cellH = CGFloat(Ride.tardis.canvasHeight) * scale + 30
-    let states: [(String, Double, Bool, Bool)] = [("landed", 0, false, true), ("ramp down", 1, false, true), ("flying", 0, true, false)]
+    let states: [(String, Double, Bool, Bool)] = [("landed", 0, false, true), ("ramp down / door open", 1, false, true), ("flying", 0, true, false)]
     let rides: [Ride] = [.falcon, .quinjet, .milano, .javelin, .batwing, .tardis, .sedan, .helicopter, .saucer, .delorean, .moonBike, .mothership, .jeep]
     save(sheet(Int(cellW * 3), Int(cellH * CGFloat(rides.count))) { ctx in
         for (i, ride) in rides.enumerated() {
             for (j, st) in states.enumerated() {
-                let c = PixelCanvas(Ride.width, ride.canvasHeight)
+                let c = PixelCanvas(Ride.width, ride.canvasHeight + 1)   // a spare row for the outline, as the app has
                 drawRide(c, ride, ramp: st.1, engines: st.2, gear: st.3)
                 c.addOutline(C(0xFFFFFF, 0.92))
                 let x = CGFloat(j) * cellW, y = cellH * CGFloat(rides.count - 1 - i)
-                ctx.draw(c.makeImage()!, in: CGRect(x: x + 6, y: y + 6, width: CGFloat(Ride.width) * scale, height: CGFloat(ride.canvasHeight) * scale))
+                ctx.draw(c.makeImage()!, in: CGRect(x: x + 6, y: y + 6 - scale, width: CGFloat(Ride.width) * scale,
+                                                    height: CGFloat(ride.canvasHeight + 1) * scale))
                 label("\(ride) · \(st.0)", x + 6, y + cellH - 20)
             }
         }

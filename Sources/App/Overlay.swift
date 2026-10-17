@@ -1611,11 +1611,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             if p < 0.3 { alpha = pulse(p / 0.3); engines = Int(p * 40) % 2 == 0 }
             else if p < 0.72 { ramp = p < 0.36 ? (p - 0.3) / 0.06 : (p < 0.64 ? 1 : max(0, 1 - (p - 0.64) / 0.06)) }
             else { alpha = pulse(1 - (p - 0.72) / 0.28); engines = Int(p * 40) % 2 == 0 }
-            let c = PixelCanvas(Ride.width, ride.canvasHeight)
+            // A spare row under it for the outline round its base, and placed a row lower to match.
+            let c = PixelCanvas(Ride.width, ride.canvasHeight + 1)
             drawRide(c, ride, ramp: ramp, engines: engines, gear: true)
             c.addOutline(C(0xFFFFFF, 0.92))
-            let w = CGFloat(Ride.width) * s, h = CGFloat(ride.canvasHeight) * s
-            return DrawItem(image: c.makeImage(), rect: NSRect(x: (x - w / 2).rounded(), y: (feet - 1 * s).rounded(), width: w, height: h),
+            let w = CGFloat(Ride.width) * s, h = CGFloat(ride.canvasHeight + 1) * s
+            return DrawItem(image: c.makeImage(), rect: NSRect(x: (x - w / 2).rounded(), y: (feet - 2 * s).rounded(), width: w, height: h),
                             mirrored: exit.dir < 0, alpha: alpha)
         }
         let flight: CGFloat = ride.drives ? 0 : 1      // a car comes along the ground
@@ -1633,11 +1634,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             lift = 170 * z * e * flight
             engines = true; gear = p < 0.78
         }
-        let c = PixelCanvas(Ride.width, Ride.height)
+        // A spare row under it, so the outline goes all the way round the wheels or hull, and placed a row lower to
+        // match: what's drawn sits exactly where it did.
+        let c = PixelCanvas(Ride.width, Ride.height + 1)
         drawRide(c, ride, ramp: ramp, engines: engines, gear: gear)
         c.addOutline(C(0xFFFFFF, 0.92))
-        let w = CGFloat(Ride.width) * s, h = CGFloat(Ride.height) * s
-        return DrawItem(image: c.makeImage(), rect: NSRect(x: (x - w / 2).rounded(), y: (feet - 1 * s + lift).rounded(), width: w, height: h),
+        let w = CGFloat(Ride.width) * s, h = CGFloat(Ride.height + 1) * s
+        return DrawItem(image: c.makeImage(), rect: NSRect(x: (x - w / 2).rounded(), y: (feet - 2 * s + lift).rounded(), width: w, height: h),
                         mirrored: exit.dir < 0, alpha: 1)
     }
 
