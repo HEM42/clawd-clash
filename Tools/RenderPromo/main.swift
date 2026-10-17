@@ -5997,9 +5997,12 @@ func writeVideo(to path: String) {
     let url = URL(fileURLWithPath: path)
     try? FileManager.default.removeItem(at: url)
     let writer = try! AVAssetWriter(outputURL: url, fileType: .mp4)
+    // 16 Mb/s, but never so much that the file passes 95 MB: GitHub refuses to take a file over 100 MB, and the
+    // seven-universe promo (68 s) came out at 115 MB.
+    let bitrate = Int(min(16_000_000, 95_000_000 * 8 / duration - 128_000))
     let input = AVAssetWriterInput(mediaType: .video, outputSettings: [
         AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: W, AVVideoHeightKey: H,
-        AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: 16_000_000, AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel],
+        AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: bitrate, AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel],
     ])
     let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: input, sourcePixelBufferAttributes: [
         kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32ARGB, kCVPixelBufferWidthKey as String: W,
