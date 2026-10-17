@@ -564,6 +564,18 @@ final class HeaderView: NSView, NSViewToolTipOwner {
         if hovered != nil { hovered = nil; needsDisplay = true }
     }
 
+    /// How far the place's name reaches from its left edge: in The Clawd Files, the whole caption once it has typed
+    /// itself in, so the bar behind it doesn't grow a letter at a time.
+    private func titleWidth() -> CGFloat {
+        guard let location = controller?.location else { return 0 }
+        if location.universe == .clawdFiles {
+            let all = FilesCaption.typed(location, after: 1e6).joined(separator: "  ·  ")
+            return NSAttributedString(string: all, attributes: [.font: FilesCaption.font(11.5)]).size().width + 6
+        }
+        return NSAttributedString(string: location.name.uppercased(), attributes: [
+            .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold), .kern: 1.2]).size().width
+    }
+
     override func draw(_ dirtyRect: NSRect) {
         let b = bounds
         let base = controller?.location.panel ?? NSColor(white: 0.12, alpha: 1)
@@ -572,9 +584,14 @@ final class HeaderView: NSView, NSViewToolTipOwner {
             (base.blended(withFraction: 0.45, of: .black) ?? base).setFill()
             b.fill()
         } else {
-            // The bar at 15% (85% see-through): the scene shows through, with just a hint of the bar behind the title.
-            (base.blended(withFraction: 0.45, of: .black) ?? base).withAlphaComponent(0.15).setFill()
-            b.fill()
+            // Behind the place's name only, fading out just past it: enough to read the name over a busy scene, and
+            // the rest of the bar leaves the scene clear.
+            let tint = (base.blended(withFraction: 0.45, of: .black) ?? base).withAlphaComponent(0.32)
+            let solid = 14 + titleWidth() + 16, fade: CGFloat = 70
+            tint.setFill()
+            NSRect(x: 0, y: 0, width: solid, height: b.height).fill()
+            NSGradient(colors: [tint, tint.withAlphaComponent(0)])?.draw(in: NSRect(x: solid, y: 0, width: fade, height: b.height),
+                                                                        angle: 0)
         }
         // Title and buttons cast a soft shadow, so they stand off any background.
         let shadow = NSShadow()
