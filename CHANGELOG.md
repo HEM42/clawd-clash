@@ -9,7 +9,7 @@ Its first three universes started as separate apps. Their changelogs from before
 
 Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://github.com/rodclemen/doctor-clawd)), so its whole history is below, from 3.1.0.
 
-## Unreleased
+## 3.6.0 (2026-10-17)
 
 ### Added
 - **A Look and style section in the clawdify guide, and `build/preview edges`.** The guide now says in one place how characters and places are drawn: Clawd in costume on four legs, flat pixel art lit from the front-left with two or three tones per material, no hand-drawn silhouette outline (the app adds it), body and props fully opaque with see-through kept for glows and smoke and never half-opaque along an edge, solid art at least a pixel inside the frame in every pose and moment (with what eats into that room: breathing, hops, hovering, raised weapons), what may leave the frame on purpose, and how places keep the crew readable. The new Preview mode `edges` checks the frame rule: it draws characters at 80 moments of every state and 40 of every habit and signature move, and lists each state where solid art touches the top or a side, with a picture of the first such moment. The guide's verification steps and the README's Check it line mention it.
