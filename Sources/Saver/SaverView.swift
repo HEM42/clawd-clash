@@ -381,12 +381,19 @@ final class ClawdClashSaverView: ScreenSaverView {
         var items: [Item] = [Item(image: shade(), rect: CGRect(x: 0, y: bounds.height * 0.6, width: bounds.width,
                                                                height: bounds.height * 0.4), smooth: true)]
         let feet = CGFloat(floorRows) * P * 0.55
+        var people: [Item]
         if crewed(now), let f = feed {
-            items += crew(atPlace(f.sessions, location), now: now, feet: feet)
+            people = crew(atPlace(f.sessions, location), now: now, feet: feet)
         } else {
             if demoPlace != location { demo = cast(for: location, now: now); demoPlace = location }
-            items += crew(demo, now: now, feet: feet, cards: false)
+            people = crew(demo, now: now, feet: feet, cards: false)
         }
+        // A trip that leaves the ground (the Eagle's sky) takes the crew with it.
+        if let w = comic {
+            let shown = CGFloat(w.trip.crewShown((now - w.start) / w.trip.duration))
+            if shown < 1 { people = people.compactMap { var p = $0; p.alpha *= shown; return p.alpha > 0.01 ? p : nil } }
+        }
+        items += people
         items += hud(running ? feed : nil, location: location, now: now, idle: !running)
         show(items, in: root)
         CATransaction.commit()

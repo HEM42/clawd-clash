@@ -60,6 +60,12 @@ extension RingsTrip {
         Self.eagleBlit(art, onto: ctx, width: w, height: h, px: px, in: r)
     }
 
+    /// The crew goes with the old place: it fades as the wall of cloud sweeps across (0.1–0.24), stays away while
+    /// the view is up in the open sky, and comes back once the new place has risen to fill the frame (0.86–0.97).
+    static func eagleCrewShown(_ k: Double) -> Double {
+        eagleEase(1 - eagleSpan(k, 0.1, 0.24)) + eagleEase(eagleSpan(k, 0.86, 0.97))
+    }
+
     // MARK: The Eagle's flight
 
     /// Where the Eagle is at `k`, in the art's pixels from the top left (`x`, `y`), how big (`size`, 1 close up),

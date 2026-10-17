@@ -12,6 +12,7 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 ## Unreleased
 
 ### Fixed
+- **Nobody stands on thin air during Clawd of the Rings' Great Eagle trip.** The crew is drawn over every change of place, and the Eagle trip is the one that leaves the ground: for about a second the view flies through open sky, and the characters stood in the air beside the Eagle. Now they go with the old place, fading as the wall of cloud sweeps across, and come back once the new place has risen to fill the frame, name tags and lines with them. In the window and the screen saver alike. Transitions say how much of the crew shows (`ComicTransition.crewShown`), so a later one that leaves the ground can do the same; every other trip keeps the crew in full.
 - **An agent no longer shows up as the same character as the AI that sent it.** Characters are stored as the universe they were picked in, and shown as their counterpart in the universe on show. When an agent started, the check for who's already on screen used the stored ids, so after a universe switch a session's character didn't count as taken, and about one agent in eighty came out as its own session's character (or another one on screen). The check now compares characters as they're shown. Agents picked before this fix, or doubled up by a later switch, are shown as someone free on the same side instead, the same someone on every refresh.
 
 ### Changed

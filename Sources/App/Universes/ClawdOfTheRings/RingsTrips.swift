@@ -72,6 +72,8 @@ struct RingsTrip {
     /// Where the crew was and where it's going: the map draws the journey between them.
     var from: Location = .bagEnd, to: Location = .bagEnd
     var duration: Double { kind.duration }
+    /// How much of the crew shows at `k` (`ComicTransition.crewShown`): only the Eagle's flight leaves the ground.
+    func crewShown(_ k: Double) -> Double { kind == .eagles ? Self.eagleCrewShown(k) : 1 }
 
     /// Any trip but the last one's kind, likelier with one of its owners on stage or going to its turf, from `from`
     /// (the Shire, when it isn't known or is in another universe, as in Clawd Royale) to `place`.

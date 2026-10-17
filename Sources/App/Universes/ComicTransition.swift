@@ -35,6 +35,13 @@ enum ComicTransition {
         }
     }
 
+    /// How much of the crew shows at `k` (0…1): 1 while the trip stays on the ground, less while it leaves it (the
+    /// Great Eagle's open sky), so nobody is left standing on thin air.
+    func crewShown(_ k: Double) -> Double {
+        if case .middleEarth(let t) = self { return t.crewShown(k) }
+        return 1
+    }
+
     /// The trip to `place`, never the same kind as `last` when it's in the same universe; nil where the universe
     /// uses plain wipes. `from`, where it's coming from, if it's known.
     static func pick(after last: ComicTransition?, cast: [Cast], from: Location? = nil, to place: Location) -> ComicTransition? {

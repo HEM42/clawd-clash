@@ -772,8 +772,10 @@ final class SceneView: NSView {
             }
         }
         // The old place over the new, less of it each frame; under the crew.
+        var crewShown = 1.0
         if let w = wipe {
             let k = (now - w.start) / (w.comic?.duration ?? Wipe.duration)
+            if k < 1, let comic = w.comic { crewShown = comic.crewShown(k) }
             if k >= 1 {
                 wipe = nil
             } else if let comic = w.comic, let new = room.flatMap({ Wipe.flatten([$0.image] + (liveNow.map { [$0] } ?? [])) }),
@@ -796,7 +798,13 @@ final class SceneView: NSView {
                 }
             }
         }
-        return items + controller.items
+        // A trip that leaves the ground (the Eagle's sky) takes the crew with it.
+        if crewShown >= 1 { return items + controller.items }
+        return items + controller.items.compactMap { item in
+            var item = item
+            item.alpha *= CGFloat(crewShown)
+            return item.alpha > 0.01 ? item : nil
+        }
     }
 
     /// A new frame: handed to Core Animation, which scales and composites it on the GPU.
