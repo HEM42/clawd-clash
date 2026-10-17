@@ -573,7 +573,8 @@ private func drawAbomination(_ c: PixelCanvas, _ p: Pose) {
     c.rect(15, 28, 25, 6, shorts); c.rect(15, 28, 25, 1, shortsDark)
     for x in stride(from: 16, to: 40, by: 4) { c.rect(x, 34, 2, 1, shorts) }                  // a ragged hem
     // the head, thrown back as he roars
-    c.oy -= Int(roar.rounded())
+    let lift = max(0, Int(roar.rounded()) + p.breathe)                    // with a breath, still no more than 1 px up
+    c.oy -= lift
     c.pattern(21, 2, [
         "..GGGGGGGGGGGGGG...",
         ".GGGGLGGGLGGGGGGG..",
@@ -601,7 +602,7 @@ private func drawAbomination(_ c: PixelCanvas, _ p: Pose) {
             for dy in -2 - i...(2 + i) where abs(dy) > 0 || i == 0 { c.px(x - abs(dy) / 2, 11 + dy, col) }
         }
     }
-    c.oy += Int(roar.rounded())
+    c.oy += lift
     // the clawed arm
     let angle = p.melee ?? 78
     smear(c, abominationShoulder, p.trail, len: 20, C(0xD8F0C0))

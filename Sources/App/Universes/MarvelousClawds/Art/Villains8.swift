@@ -426,7 +426,7 @@ private func drawSurtur(_ c: PixelCanvas, _ p: Pose) {
     let angle = p.melee ?? 78
     let r = angle * .pi / 180, u = (x: cos(r), y: sin(r))
     let arm = 6.0
-    let blade = p.melee == nil ? 14.0 : 18.0 - 6 * max(0, -u.y)
+    let blade = p.melee == nil ? 14.0 : 18.0 - 10 * max(0, -u.y)               // shorter held high, inside the frame
     smear(c, surturArm, p.trail, from: arm + 3, len: arm + 3 + blade, hot)
     c.circle(40, 17, 3, rock)
     let h = limb(c, surturArm, angle, len: arm, r: 2.4, rock)
