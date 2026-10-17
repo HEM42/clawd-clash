@@ -495,8 +495,9 @@ enum StatusStore {
     static func nextAgentCast(_ s: StatusFile, session: String, now: Double = Date().timeIntervalSince1970) -> Int {
         var s = s
         s.sessions = castable(s.sessions, now: now)
-        let onScreen = Set(s.agents.compactMap { $0.cast ?? (heroBase + $0.character) } + s.sessions.values.compactMap(\.leader))
         let r = s.roster
+        // As shown: a character cast in another universe (before a switch) stands as its counterpart here.
+        let onScreen = Set((s.agents.compactMap { $0.cast ?? (heroBase + $0.character) } + s.sessions.values.compactMap(\.leader)).map(r.adopt))
         var pool = r.darkCast + r.lightCast
         if let rec = s.sessions[session], let leader = rec.leader, side(for: assistantOf(rec), in: s.sessions, roster: r) != nil {
             pool = isDark(leader) ? r.darkCast : r.lightCast
@@ -785,6 +786,20 @@ enum StatusStore {
                     }
                     shown.insert(roster.adopt(result[i].agents[j].cast ?? heroBase + a.character))
                 }
+            }
+        }
+        // Nobody twice: an agent cast before the universe switched can land on someone already shown. It's shown as
+        // someone free on the same side instead, the same someone on every refresh (repeats only when nobody's free).
+        var seen = Set(result.map(\.leader))
+        for i in result.indices {
+            for j in result[i].agents.indices {
+                let a = result[i].agents[j], id = roster.adopt(a.cast ?? heroBase + a.character)
+                if seen.contains(id) {
+                    let ruled = roster.ruledOut(by: seen)
+                    let pool = (isDark(id) ? roster.darkCast : roster.lightCast).filter { !seen.contains($0) && !ruled.contains($0) }
+                    if !pool.isEmpty { result[i].agents[j].cast = pool[Int(stableHash(a.id) % UInt64(pool.count))] }
+                }
+                seen.insert(roster.adopt(result[i].agents[j].cast ?? heroBase + a.character))
             }
         }
         return result
