@@ -25,6 +25,8 @@ struct SessionRecord: Codable {
     var client: String?    // where Claude Code runs: CLAUDE_CODE_ENTRYPOINT ("cli", "claude-desktop", "claude-vscode"…)
     var regenerated: Double? // a Doctor's last regeneration (its context compacted), for the golden flare
     var abducted: Double?    // an FBI agent's last missing time (its context compacted), for the abduction
+    var context: Double?     // how near its next compaction, 0…1, where the AI's hooks say (Qwen's Stop, our pi extension)
+    var transcript: String?  // its session log, where the hooks name it and the app reads it (Gemini CLI's chat file)
 }
 
 struct AgentRecord: Codable {
@@ -185,6 +187,24 @@ enum StatusStore {
         }
     }
 
+    /// How near a session is to its next automatic compaction (0…1, 1 = compacting), where its hooks say so:
+    /// - Qwen Code's Stop carries `context_usage`, the prompt's tokens over the window; it compacts at 85% of that.
+    /// - Our pi extension sends `ctx.getContextUsage()`, `{tokens, contextWindow}`; pi compacts when fewer than
+    ///   16,384 tokens are left.
+    static func contextNearness(_ json: [String: Any], assistant: String) -> Double? {
+        switch assistant {
+        case "qwen":
+            guard let used = (json["context_usage"] as? NSNumber)?.doubleValue, used >= 0 else { return nil }
+            return min(1, used / 0.85)
+        case "pi":
+            guard let u = json["context_usage"] as? [String: Any], let tokens = (u["tokens"] as? NSNumber)?.doubleValue,
+                  let window = (u["contextWindow"] as? NSNumber)?.doubleValue, window > 16_384 else { return nil }
+            return min(1, max(0, tokens / (window - 16_384)))
+        default:
+            return nil
+        }
+    }
+
     /// Brings other AIs' payloads to the Claude Code shape `apply` reads: Copilot's camelCase fields, Gemini CLI's
     /// event names (BeforeAgent → UserPromptSubmit, AfterTool → PostToolUse…), tool input sent as a JSON string.
     static func normalize(_ input: [String: Any], assistant: String, event: String?) -> [String: Any] {
@@ -255,6 +275,12 @@ enum StatusStore {
                     for id in replaced { s.sessions[id] = nil }
                     s.agents.removeAll { replaced.contains($0.session) }
                     s.pending = s.pending?.filter { !replaced.contains($0.session) }
+                }
+                // How near the next compaction is, where the AI tells its hooks; and Gemini CLI's chat log, which
+                // the app reads for the same (`ContextUsage`).
+                if let used = contextNearness(json, assistant: assistant) { s.sessions[session]?.context = used }
+                if assistant == "gemini", let path = json["transcript_path"] as? String, !path.isEmpty {
+                    s.sessions[session]?.transcript = path
                 }
                 // Claude Code tells its hooks where it was started from (terminal, desktop app, VS Code…).
                 if assistant == "claude", let entry = ProcessInfo.processInfo.environment["CLAUDE_CODE_ENTRYPOINT"], !entry.isEmpty {

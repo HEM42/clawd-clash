@@ -1,27 +1,34 @@
 import Foundation
 
-/// How full a session's context window is, for the pill on its card: 0…1, nil when it can't be told. Read from the
-/// end of the session's own log, and only re-read when that file changes.
+/// How near a session is to its next automatic compaction, for the pill on its card: 0…1 (1 = compacting), nil
+/// when it can't be told. Where an AI says when it compacts, it's the share of the way there; where it doesn't
+/// (Claude Code, Codex), the share of the context window. Logs are only re-read when they change.
 /// - Claude Code: its transcript (`~/.claude/projects/<folder>/<session>.jsonl`) records each reply's token usage;
 ///   what the next request carries is the input plus the cache read and written. The window is 1M tokens for a
 ///   `[1m]` model (as the hooks record it, or as `~/.claude/settings.json` picks it when the hooks didn't say),
 ///   else 200k, and 1M anyway once a session has gone past 200k.
 /// - Codex: its rollout (`~/.codex/sessions/YYYY/MM/DD/rollout-…-<session>.jsonl`) logs a `token_count` after each
 ///   turn with the last turn's tokens and the model's context window.
-/// Other AIs: nil, so their cards show no pill.
+/// - Gemini CLI: its chat log (the hook's `transcript_path`, kept as `SessionRecord.transcript`) records each reply's
+///   `tokens.input`; the window is 1,048,576 tokens (256k for Gemma), and it compacts at half of that.
+/// - Qwen Code and pi: their hooks say it outright (`StatusStore.contextNearness`, kept as `SessionRecord.context`).
+/// Copilot CLI only tells its status line, so its cards show no pill.
 enum ContextUsage {
     private static var files: [String: URL] = [:]
     private static var cache: [String: (modified: Date, value: Double?)] = [:]
 
-    static func fraction(session id: String, assistant: String, model: String?) -> Double? {
+    static func fraction(session id: String, assistant: String, record: SessionRecord?) -> Double? {
+        if assistant == "qwen" || assistant == "pi" { return record?.context }
+        let model = record?.model
         let fm = FileManager.default
-        guard let url = file(for: id, assistant: assistant),
+        guard let url = assistant == "gemini" ? record?.transcript.map({ URL(fileURLWithPath: $0) }) : file(for: id, assistant: assistant),
               let modified = (try? fm.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date else { return nil }
         if let hit = cache[id], hit.modified == modified { return hit.value }
         let value: Double?
         switch assistant {
         case "claude": value = claude(url, model: model)
         case "codex": value = codex(url)
+        case "gemini": value = gemini(url, model: model)
         default: value = nil
         }
         cache[id] = (modified, value)
@@ -99,6 +106,19 @@ enum ContextUsage {
             guard used > 0 else { continue }
             let big = (model ?? "").contains("[1m]") || defaultIs1M || used > 200_000
             return min(1, used / (big ? 1_000_000 : 200_000))
+        }
+        return nil
+    }
+
+    private static func gemini(_ url: URL, model: String?) -> Double? {
+        // The newest reply with its tokens (a reply is written again once its tokens are in: the last copy wins).
+        for obj in lastObjects(url, where: "\"tokens\"") where (obj["type"] as? String) == "gemini" {
+            guard let tokens = obj["tokens"] as? [String: Any] else { continue }
+            let used = number(tokens["input"])
+            guard used > 0 else { continue }
+            let name = (obj["model"] as? String ?? model ?? "").lowercased()
+            let window: Double = name.contains("gemma") ? 256_000 : 1_048_576
+            return min(1, used / (window * 0.5))
         }
         return nil
     }

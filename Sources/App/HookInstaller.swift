@@ -542,6 +542,7 @@ enum HookInstaller {
                     transcript_path: sm?.getSessionFile?.(),
                     cwd: ctx?.cwd ?? process.cwd(),
                     model: ctx?.model?.id,
+                    context_usage: ctx?.getContextUsage?.(),
                     ...extra,
                   };
                   const child = spawn(HOOK, ["--assistant", "pi"], { stdio: ["pipe", "ignore", "ignore"] });

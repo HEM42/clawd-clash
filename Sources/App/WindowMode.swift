@@ -1109,7 +1109,7 @@ final class CardsView: NSView {
                 .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: c.project.isEmpty ? NSColor.white : c.accent])
             if !c.project.isEmpty && !inTree {
                 header.append(NSAttributedString(string: "  ·  " + c.villain, attributes: [
-                    .font: NSFont.systemFont(ofSize: 13, weight: .regular), .foregroundColor: NSColor(white: 0.78, alpha: 1)]))
+                    .font: NSFont.systemFont(ofSize: 13, weight: .regular), .foregroundColor: NSColor(white: 0.6, alpha: 1)]))
             }
             var pills: [(text: String, hue: NSColor, mono: Bool)] = []
             if let remote = c.remote, !c.project.isEmpty && !inTree { pills.append((remote, Self.remoteColor(remote), false)) }
@@ -1132,7 +1132,11 @@ final class CardsView: NSView {
                 px = rp.minX - 6
             }
             if c.focused {
-                header.append(NSAttributedString(string: "   ● you're here", attributes: [
+                // A small dot, raised to sit level with the words.
+                header.append(NSAttributedString(string: "   ●", attributes: [
+                    .font: NSFont.systemFont(ofSize: 7, weight: .semibold), .baselineOffset: 2,
+                    .foregroundColor: Self.focusYellow]))
+                header.append(NSAttributedString(string: " you're here", attributes: [
                     .font: NSFont.systemFont(ofSize: 11, weight: .semibold),
                     .foregroundColor: Self.focusYellow]))
             }

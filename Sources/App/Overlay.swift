@@ -2358,9 +2358,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 pid: s.pid))
             cards[cards.count - 1].id = s.id
             if s.pid != nil { cards[cards.count - 1].remote = s.remote ?? "Local" }
-            if s.live, s.assistant == "claude" || s.assistant == "codex" {
-                cards[cards.count - 1].context = ContextUsage.fraction(session: s.id, assistant: s.assistant, model: s.record?.model)
-            }
+            if s.live { cards[cards.count - 1].context = ContextUsage.fraction(session: s.id, assistant: s.assistant, record: s.record) }
             if severalAIs && s.group != lastAI {
                 cards[cards.count - 1].group = (HookInstaller.displayName(s.group), AIStyle.color(s.group))
             }
