@@ -2439,7 +2439,16 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private var settingsWindow: SettingsWindow?
 
     @objc func openSettings() {
-        if settingsWindow == nil { settingsWindow = SettingsWindow { [weak self] in self?.settingsSections() ?? [] } }
+        if settingsWindow == nil {
+            // One level above the window when it's kept on top, and above the characters when they are, so clicking
+            // them never hides Settings behind them; a normal window otherwise.
+            settingsWindow = SettingsWindow(level: { [weak self] in
+                guard let self else { return .normal }
+                let pinned = self.windowMode ? UserDefaults.standard.bool(forKey: "windowPinned") : Self.charactersOnTop
+                guard pinned else { return .normal }
+                return NSWindow.Level(rawValue: (self.windowMode ? NSWindow.Level.floating : .statusBar).rawValue + 1)
+            }, sections: { [weak self] in self?.settingsSections() ?? [] })
+        }
         settingsWindow?.show()
     }
 

@@ -31,6 +31,8 @@ enum SettingsRow {
 final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
     private let window: NSWindow
     private let sections: () -> [SettingsSection]
+    /// The level to show at: as high as Clawd Clash's own window or characters, so they never cover it.
+    private let level: () -> NSWindow.Level
     /// Actions by control, so a control's target can find its closure.
     private var actions: [ObjectIdentifier: (NSControl) -> Void] = [:]
     private static let width: CGFloat = 600
@@ -41,8 +43,9 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
         set { UserDefaults.standard.set(newValue, forKey: "settingsTab") }
     }
 
-    init(sections: @escaping () -> [SettingsSection]) {
+    init(level: @escaping () -> NSWindow.Level = { .normal }, sections: @escaping () -> [SettingsSection]) {
         self.sections = sections
+        self.level = level
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: Self.width, height: 400), styleMask: [.titled, .closable],
                           backing: .buffered, defer: false)
         super.init()
@@ -64,6 +67,7 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
     /// Builds the open tab again from the current settings, keeping the window's top edge where it is.
     func reload() {
         actions.removeAll()
+        window.level = level()
         let all = sections()
         if all.map(\.title) != tabs {
             tabs = all.map(\.title)
