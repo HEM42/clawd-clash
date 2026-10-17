@@ -17,7 +17,7 @@
   <img src="https://img.shields.io/badge/free-to%20use-brightgreen" alt="Free to use">
 </p>
 
-https://github.com/user-attachments/assets/99a5df8a-eee4-4f55-aa98-7fce24c0d134
+https://github.com/user-attachments/assets/77151f5a-a447-49c4-865e-68bba183a61f
 
 <p align="center"><sub>Full 1080p version: <a href="promo/clawd-clash-promo.mp4">promo/clawd-clash-promo.mp4</a></sub></p>
 
@@ -31,7 +31,7 @@ Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/r
 | **The Clawd Files** | **Stevie Clawdberg** |
 | https://github.com/user-attachments/assets/c3c0f4a1-ac2b-41b5-9b72-bc03c1e123c9 | https://github.com/user-attachments/assets/76bd2d03-f7af-4e76-9ec8-9087f5f4badd |
 | **Clawd of the Rings** | |
-| https://github.com/user-attachments/assets/d733b9d3-9ca9-4781-b05f-7b20deea4dde | |
+| https://github.com/user-attachments/assets/76756ccd-d111-4290-b832-8ca4e9e728e4 | |
 
 <p align="center"><sub>🔊 Click the speaker in a player for sound: GitHub starts videos muted.</sub></p>
 
