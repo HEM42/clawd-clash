@@ -347,18 +347,33 @@ func drawMagic(_ c: PixelCanvas, _ m: Magic, from a: (Double, Double), to b: (Do
         return
     }
     if m.rings {
-        // Mind control: a faint thread of light, with rings rippling out along it and growing as they go.
-        let count = pick(&v, [4, 3, 5]), grow = pick(&v, [3.4, 2.4, 4.4]), dots = pick(&v, [2, 3, 1])
-        let speed = pick(&v, [0.9, 0.65, 1.2])
-        c.glowLine(a.0, a.1, b.0, b.1, core: m.core.alpha(0.35), glow: m.glow.alpha(0.3), coreR: 0.4, glowR: 1.4)
-        for k in 0..<count {
-            let f: Double = frac(t * speed + Double(k) / Double(count))
-            let cx: Double = a.0 + dx * f, cy: Double = a.1 + dy * f, r: Double = 1.2 + f * grow
-            let fade: Double = 1 - f * 0.4
-            for s in 0..<24 {
-                let ang: Double = Double(s) / 24 * 2 * .pi
-                let x = Int((cx + cos(ang) * r).rounded()), y = Int((cy + sin(ang) * r * 0.85).rounded())
-                c.px(x, y, (s % dots == 0 ? m.core : m.glow).alpha(fade))
+        // Mind powers, sent in pulses: a burst of rings leaves the caster, swelling as they go and fading as they land,
+        // then a pause; the thread of light between them throbs with each pulse, and so does the caster's end. The
+        // variant sets the rhythm: rings in a burst, how close they follow each other, the beat, single or double rings.
+        let burst = pick(&v, [2, 3, 1, 4]), gap = pick(&v, [0.15, 0.24, 0.1])
+        let period = pick(&v, [1.1, 0.8, 1.45]), double = pick(&v, [false, true])
+        let grow = pick(&v, [3.4, 2.4, 4.4]), dots = pick(&v, [2, 3, 1])
+        let travel = 0.62 * period + 0.1
+        let beat = frac(t / period), throb = max(0, 1 - beat / 0.35)   // 1 as a pulse leaves, easing off
+        c.glowLine(a.0, a.1, b.0, b.1, core: m.core.alpha(0.12 + 0.3 * throb), glow: m.glow.alpha(0.12 + 0.25 * throb),
+                   coreR: 0.4, glowR: 1.4)
+        c.glowLine(a.0, a.1, a.0 + 0.5, a.1, core: m.core.alpha(0.4 + 0.6 * throb), glow: m.glow.alpha(0.3 + 0.5 * throb),
+                   coreR: 0.6 + 0.6 * throb, glowR: 1.8 + 1.6 * throb)
+        let cycle = floor(t / period)
+        for n in [cycle - 1, cycle] {
+            for i in 0..<burst {
+                let age = t - (n * period + Double(i) * gap)
+                guard age >= 0, age < travel else { continue }
+                let g = age / travel, f = 1 - (1 - g) * (1 - g)    // fast off the caster, slowing as it reaches
+                let cx = a.0 + dx * f, cy = a.1 + dy * f, r = 1.2 + f * grow
+                let fade = min(1, g / 0.12) * min(1, (1 - g) / 0.25)
+                for (rr, dim) in double ? [(r, 1.0), (max(0.8, r - 1.6), 0.6)] : [(r, 1.0)] {
+                    for s in 0..<24 {
+                        let ang = Double(s) / 24 * 2 * .pi
+                        let x = Int((cx + cos(ang) * rr).rounded()), y = Int((cy + sin(ang) * rr * 0.85).rounded())
+                        c.px(x, y, (s % dots == 0 ? m.core : m.glow).alpha(fade * dim))
+                    }
+                }
             }
         }
         return
