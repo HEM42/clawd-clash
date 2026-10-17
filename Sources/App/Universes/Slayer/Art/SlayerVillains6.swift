@@ -480,17 +480,23 @@ private func drawHalfreck(_ c: PixelCanvas, _ p: Pose) {
 /// Veruka: the rocker werewolf from "Wild at Heart", singer of Shy. Long dark hair with loose strands, smoky eyes, a
 /// plum jacket with a shaggy cream fur collar and cuffs over a black top, dark plum trousers and black boots. She
 /// fights with her claws, long dark nails even when she's herself. Signature: she throws her head back and howls,
-/// and for a second she's a dark-brown wolf, snout up to the moon (not Ozz's grey-tan), then she's back.
+/// and for a second she's a dark-brown wolf, snout up to the moon (not Ozz's grey-tan), then she's back. On a
+/// full-moon night (`slayerFullMoon`) she stays the wolf, snout out in front, and her signature is just the howl.
 private func drawVeruka(_ c: PixelCanvas, _ p: Pose) {
     let jacket = C(0x7A2E44), jacketD = C(0x561E30), jacketL = C(0x9A4A60), trim = C(0xDCCDAE), trimD = C(0xB4A486)
     let hair = C(0x2E1E1A), hairL = C(0x523628), hairD = C(0x180E0A), nail = C(0x5A1424)
     let fur = C(0x5A3A24), furD = C(0x3A2414), furL = C(0x8A6040), eye = C(0xF0A020)
     let s = p.melee == nil ? p.signature : nil
-    // 0 herself, 1 halfway (fur and ears), 2 full wolf, howling.
-    let wolf: Int = s.map { s in s < 0.15 || s > 0.8 ? 0 : s < 0.25 || s > 0.7 ? 1 : 2 } ?? 0
+    // 0 herself, 1 halfway (fur and ears), 2 full wolf, howling; 3 the wolf of a full-moon night, snout out in front.
+    let wolf: Int
+    if slayerFullMoon {
+        wolf = s.map { $0 > 0.15 && $0 < 0.8 ? 2 : 3 } ?? 3
+    } else {
+        wolf = s.map { s in s < 0.15 || s > 0.8 ? 0 : s < 0.25 || s > 0.7 ? 1 : 2 } ?? 0
+    }
 
-    drawLegs(c, Look(leg: wolf == 2 ? fur : C(0x6A4A62)), step: p.step)
-    slayerBoots(c, step: p.step, wolf == 2 ? furD : C(0x1A1418), height: 2)
+    drawLegs(c, Look(leg: wolf >= 2 ? fur : C(0x6A4A62)), step: p.step)
+    slayerBoots(c, step: p.step, wolf >= 2 ? furD : C(0x1A1418), height: 2)
     c.oy += p.breathe
     drawBody(c, Look(arm: wolf > 0 ? fur : jacket, eye: nil))
     // The jacket open over a black top, the fur collar.
@@ -573,11 +579,22 @@ private func drawVeruka(_ c: PixelCanvas, _ p: Pose) {
                     c.px(Int((46 + cos(a) * r).rounded()), Int((12 + sin(a) * r).rounded()), white.alpha(0.22 * (1 - f)))
                 }
             }
+        } else if wolf == 3 {
+            // The full-moon wolf: the snout pushed out in front, the black nose on its tip, fangs showing.
+            c.pattern(26, 30, [
+                "......LLLLLLLLLLNN",
+                "....LLLLLLLLLLLLNN",
+                "...LLLLLLLLLLLLLL.",
+                "...MMMMMMMMMMMMMM.",
+                "....LLwLLLLwLLL...",
+            ], ["L": furL, "N": ink, "M": C(0x5A1A1E), "w": white])
+            c.rect(18, 33, 20, 1, fur); c.px(20, 34, furD); c.px(24, 34, fur); c.px(32, 34, fur); c.px(35, 34, furD)
         }
     }
-    // Claws: long dark nails as herself, a wolf's claws with the wolf out.
+    // Claws: long dark nails as herself, a wolf's claws with the wolf out (all night, on a full moon).
     if let a = p.melee {
-        slayerClaws(c, angle: a, trail: p.trail, sleeve: jacket, nail: nail)
+        if wolf == 3 { slayerClaws(c, angle: a, trail: p.trail, sleeve: fur, nail: C(0xE8E0C8)) }
+        else { slayerClaws(c, angle: a, trail: p.trail, sleeve: jacket, nail: nail) }
     } else if wolf > 0 {
         c.rect(39, 34, 2, 2, fur); c.px(41, 34, C(0xE8E0C8)); c.px(41, 36, C(0xE8E0C8))
     } else {

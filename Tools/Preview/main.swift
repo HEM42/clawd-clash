@@ -14,7 +14,9 @@ import AppKit
 //   build/preview edges out.txt ironMan ...        every moment solid art touches the frame's top or side edges, where
 //                                                  its outline is cut off (shots and exits leaving on purpose show too)
 //
-// SCALE=4 makes cells bigger (default 3).
+// SCALE=4 makes cells bigger (default 3). Clawd Slayer: MOON=full (or MOON=new) forces the full moon on or off for
+// Ozz and Veruka; GUISE=0…3 shows the First Evil as one of its guises (the Old Master, the Mayor, Glory, Adam), GUISE_K
+// how far through it (0…1, default 0.5).
 
 let args = Array(CommandLine.arguments.dropFirst())
 guard args.count >= 2 else {
@@ -23,6 +25,10 @@ guard args.count >= 2 else {
 }
 let mode = args[0], out = args[1], names = Array(args.dropFirst(2))
 let scale = CGFloat(Double(ProcessInfo.processInfo.environment["SCALE"] ?? "") ?? 3)
+if let moon = ProcessInfo.processInfo.environment["MOON"] { slayerMoonOverride = moon == "full" }
+if let g = ProcessInfo.processInfo.environment["GUISE"].flatMap(Int.init) {
+    slayerForcedGuise = (g, Double(ProcessInfo.processInfo.environment["GUISE_K"] ?? "") ?? 0.5)
+}
 let bg = CGColor(red: 0.13, green: 0.14, blue: 0.19, alpha: 1)
 
 func sheet(_ w: Int, _ h: Int, _ draw: (CGContext) -> Void) -> NSBitmapImageRep {

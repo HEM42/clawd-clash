@@ -15,6 +15,8 @@ final class ClawdClashSaverView: ScreenSaverView {
     private let host = NSView()
     private let roomLayer = CALayer(), liveLayer = CALayer()
     private var pool: [CALayer] = []
+    /// Who was in a fight (or cheering one), for Mayor Wilclaws' wet wipe after it (`SlayerAfterDuel`).
+    private var afterDuel = SlayerAfterDuel()
     private var room: (size: CGSize, location: Location, image: CGImage)?
     private var live: PixelCanvas?
     private var textCache: [String: CGImage] = [:]
@@ -539,7 +541,13 @@ final class ClawdClashSaverView: ScreenSaverView {
             let c = PixelCanvas(Sprite.width, Sprite.height)
             let role = roles[p.m.key]
             let up = air(p, role: role, t: ft(p.m.key))
-            if p.m.isLeader {
+            // Mayor Wilclaws wipes his hands after every duel (Clawd Slayer): his signature, played right through.
+            let sitting = p.m.isLeader && p.m.session.sitting && role == nil
+            if let w = afterDuel.wipe(p.m.key, p.m.cast, inFight: role != nil, free: !sitting, now: t) {
+                forcedHabit = w
+                p.m.cast.draw(c, t: t, mode: .idle, walking: false, role: .none, asSession: true)
+                forcedHabit = nil
+            } else if p.m.isLeader {
                 let sess = p.m.session
                 p.m.cast.draw(c, t: ft(p.m.key), mode: role != nil ? .working : mode(sess), walking: false, role: role ?? .none,
                               urgent: sess.urgent && role == nil, sitting: sess.sitting && role == nil, asSession: true,

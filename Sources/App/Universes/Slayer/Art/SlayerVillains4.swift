@@ -382,8 +382,29 @@ private func drawBen(_ c: PixelCanvas, _ p: Pose) {
 /// The First Evil in its true form: a huge black horned beast, hunched under a mantle of black hide, great curved
 /// horns, a demon's brow over Clawd's face, burning red eyes and fangs, claws on the ends of its long arms. It never
 /// quite touches the ground. Signature: as in "Lessons", its face flickers through the Big Bads before it, the Old
-/// Master, the Mayor, Glory and Adam, each a moment, and back to itself ("From beneath you, it devours.").
+/// Master, the Mayor, Glory and Adam, each a moment, and back to itself ("From beneath you, it devours."). Its habit,
+/// now and then outside the signature (`slayerFirstEvilGuise`): it becomes one of them whole for a few seconds, their
+/// own self drawn by their own art, flickering in and out of it, still floating, still trailing its dark haze.
 private func drawFirstEvil(_ c: PixelCanvas, _ p: Pose) {
+    guard let guise = slayerFirstEvilGuise(p) else { return drawFirstEvilSelf(c, p) }
+    // In and out with a flicker: the beast showing through for a frame here and there at either end.
+    let edge = guise.k < 0.14 || guise.k > 0.86
+    if edge && noise(Int(p.t * 18) * 7 + 3) < 0.5 { return drawFirstEvilSelf(c, p) }
+    let (ox, oy, baseY) = (c.ox, c.oy, c.baseY)
+    guise.who.persona.draw(c, p)
+    c.ox = ox; c.oy = oy; c.baseY = baseY
+    // The tells: a faint dark haze under the borrowed feet, and a red-orange shimmer at its edges as it settles.
+    for k in 0..<5 {
+        let x = 18 + k * 4 + Int(noise(Int(p.lt * 4) + k) * 3)
+        c.px(x, 45 + k % 2, C(0x3A1020, 0.2))
+    }
+    if edge || Int(p.t * 3) % 4 == 0 {
+        for k in 0..<4 { c.px(18 + k * 6, 22 + (Int(p.t * 24) + k * 5) % 16, C(0xFF6A3A, 0.45)) }
+    }
+}
+
+/// The First Evil as itself (or, in its signature, wearing a borrowed face).
+private func drawFirstEvilSelf(_ c: PixelCanvas, _ p: Pose) {
     let hide = C(0x18141C), hideD = C(0x0A080C), hideL = C(0x34303C), horn = C(0x2E2830), hornL = C(0x5E5462)
     let claw = C(0xC8BEB0), eye = C(0xFF3A1E)
     // Which past face it wears, if any: four in turn, with a flicker of its own between them.

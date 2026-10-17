@@ -283,13 +283,15 @@ private func drawCordeliaChaise(_ c: PixelCanvas, _ p: Pose) {
 /// Ozz: Clawd with short spiky hair dyed electric blue, a charcoal band T-shirt with a yellow-and-red logo, brown cords,
 /// and a guitar slung on his back, its neck up past his head. He fights with a stake, as he did on patrol in the show.
 /// Signature: he wolfs out for a second: grey-tan fur, ears, a long snout with fangs and yellow eyes, werewolf claws
-/// in place of the stake, then he's back.
+/// in place of the stake, then he's back. On a full-moon night (`slayerFullMoon`) he's the wolf all night, and his
+/// signature is a howl instead.
 private func drawOzz(_ c: PixelCanvas, _ p: Pose) {
     let tee = C(0x34343E), teeD = C(0x24242C), logo = C(0xF0C838), logo2 = C(0xD8402E)
     let hair = C(0x3C78D8), hairL = C(0x74A8F4), hairD = C(0x2850A8)
     let fur = C(0x9C8C72), furD = C(0x6E604C), furL = C(0xC8B89A)
+    let moon = slayerFullMoon
     // 0 human, 1 halfway (ears and fur), 2 full wolf.
-    let wolf: Int = p.signature.map { s in
+    let wolf: Int = moon ? 2 : p.signature.map { s in
         s < 0.15 || s > 0.78 ? 0 : s < 0.24 || s > 0.69 ? 1 : 2
     } ?? 0
 
@@ -366,6 +368,16 @@ private func drawOzz(_ c: PixelCanvas, _ p: Pose) {
             ], ["L": furL, "N": ink, "M": C(0x4A2A22), "w": white])
             c.rect(18, 33, 20, 1, fur)   // the fur's ruff at his collar
             c.px(19, 34, furD); c.px(23, 34, fur); c.px(33, 34, fur)
+            if moon, let s = p.signature, s > 0.1, s < 0.9 {
+                // Full moon: his signature is a howl, faint arcs rolling off the end of the snout.
+                let k = frac(p.t * 1.5)
+                for i in 0..<2 {
+                    let f = frac(k + Double(i) * 0.5), r = 2 + f * 5
+                    for a in stride(from: -1.2, through: 0.4, by: 0.4) {
+                        c.px(Int((44 + cos(a) * r).rounded()), Int((30 + sin(a) * r).rounded()), white.alpha(0.22 * (1 - f)))
+                    }
+                }
+            }
         }
     }
 
