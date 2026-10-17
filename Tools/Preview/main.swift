@@ -79,7 +79,7 @@ func cast(named n: String) -> [Cast] {
     let clawdbergVillains = [clawdbergVillains1, clawdbergVillains2, clawdbergVillains3, clawdbergVillains4,
                              clawdbergVillains5, clawdbergVillains6, clawdbergVillains7]
     let slayerHeroes = [slayerHeroes1, slayerHeroes2, slayerHeroes3]
-    let slayerVillains = [slayerVillains1]
+    let slayerVillains = [slayerVillains1, slayerVillains2]
     let filesHeroes = [filesHeroes1, filesHeroes2, filesHeroes3, filesHeroes4, filesHeroes5, filesHeroes6, filesHeroes7]
     let filesVillains = [filesVillains1, filesVillains2, filesVillains3, filesVillains4, filesVillains5, filesVillains6,
                          filesVillains7, filesVillains8]

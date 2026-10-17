@@ -45,7 +45,7 @@ enum SlayerVillain: Int, CaseIterable {
 
 let slayerHeroPersonas: [SlayerHero: Persona] = [slayerHeroes1, slayerHeroes2, slayerHeroes3]
     .reduce([.hem: hemPersona(.slayer)]) { $0.merging($1) { a, _ in a } }
-let slayerVillainPersonas: [SlayerVillain: Persona] = [slayerVillains1]
+let slayerVillainPersonas: [SlayerVillain: Persona] = [slayerVillains1, slayerVillains2]
     .reduce([:]) { $0.merging($1) { a, _ in a } }
 
 /// The witches, the only ones in this universe who float cross-legged in meditation (`Drills`), by hero index.
