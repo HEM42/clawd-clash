@@ -9,6 +9,11 @@ Its first three universes started as separate apps. Their changelogs from before
 
 Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://github.com/rodclemen/doctor-clawd)), so its whole history is below, from 3.1.0.
 
+## Unreleased
+
+### Changed
+- **The clawdify guide says when it was last updated**, in a heading under its title (17 October 2026, Clawd Clash 3.6.0), so a copy elsewhere, such as the one in the clawd-plans repo, shows at a glance whether it's current.
+
 ## 3.6.0 (2026-10-17)
 
 ### Added

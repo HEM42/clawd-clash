@@ -1,5 +1,7 @@
 # Clawdify guide: adding a universe to Clawd Clash
 
+## Last updated: 17 October 2026 (Clawd Clash 3.6.0)
+
 This guide is for an AI assistant (Claude Code or similar) working in this repo. To start, point the assistant at it along with the franchise you want, for example:
 
 > clawdify fraggle rock using clawdify_guide.md
