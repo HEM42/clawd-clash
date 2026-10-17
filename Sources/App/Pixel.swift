@@ -29,6 +29,10 @@ final class PixelCanvas {
         let x = x + ox, y = y + oy + baseY
         guard x >= 0, y >= 0, x < w, y < h, c.a > 0 else { return }
         let i = (y * w + x) * 4
+        if c.a == 255 {   // opaque: what the blend below works out to exactly, without the arithmetic
+            buf[i] = c.r; buf[i + 1] = c.g; buf[i + 2] = c.b; buf[i + 3] = 255
+            return
+        }
         let sa = Double(c.a) / 255
         let inv = 1 - sa
         buf[i]     = UInt8(min(255, Double(c.r) * sa + Double(buf[i]) * inv))
@@ -39,15 +43,43 @@ final class PixelCanvas {
 
     func rect(_ x: Int, _ y: Int, _ w: Int, _ h: Int, _ c: Px) {
         guard w > 0, h > 0 else { return }
-        for yy in y..<(y + h) { for xx in x..<(x + w) { px(xx, yy, c) } }
+        guard c.a == 255 else {
+            for yy in y..<(y + h) { for xx in x..<(x + w) { px(xx, yy, c) } }
+            return
+        }
+        // Opaque: clipped to the canvas once, then filled a whole pixel (4 bytes, little-endian RGBA) at a time.
+        let x0 = max(0, x + ox), x1 = min(self.w, x + ox + w)
+        let y0 = max(0, y + oy + baseY), y1 = min(self.h, y + oy + baseY + h)
+        guard x0 < x1, y0 < y1 else { return }
+        let word = UInt32(c.r) | UInt32(c.g) << 8 | UInt32(c.b) << 16 | 0xFF00_0000
+        let stride = self.w
+        buf.withUnsafeMutableBytes { raw in
+            let p = raw.bindMemory(to: UInt32.self)
+            for yy in y0..<y1 { for xx in x0..<x1 { p[yy * stride + xx] = word } }
+        }
     }
 
     /// Draw string art. Each character maps to a colour in `palette`; anything else is transparent.
+    /// Rows of plain ASCII (nearly all) are read byte by byte through a lookup table; walking a String's Characters
+    /// and hashing each into the dictionary was most of the cost of drawing a sprite.
     func pattern(_ x: Int, _ y: Int, _ rows: [String], _ palette: [Character: Px]) {
+        var table = [Px?](repeating: nil, count: 128)
+        var asciiPalette = true
+        for (k, v) in palette {
+            if let a = k.asciiValue { table[Int(a)] = v } else { asciiPalette = false }
+        }
         for (r, row) in rows.enumerated() {
-            for (c, ch) in row.enumerated() {
-                guard let col = palette[ch] else { continue }
-                px(x + c, y + r, col)
+            if row.utf8.allSatisfy({ $0 < 128 }) && asciiPalette {
+                var c = 0
+                for b in row.utf8 {
+                    if let col = table[Int(b)] { px(x + c, y + r, col) }
+                    c += 1
+                }
+            } else {
+                for (c, ch) in row.enumerated() {
+                    guard let col = palette[ch] else { continue }
+                    px(x + c, y + r, col)
+                }
             }
         }
     }
