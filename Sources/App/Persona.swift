@@ -60,7 +60,7 @@ struct Magic {
     /// Not a stream it can fire into the sky or open as a portal: a gadget, or a touch.
     var gadget: Bool { touch || rcCar }
     /// How far short of the frame's edge a stream practised at nobody must stop, so what lands isn't cut in half.
-    var landing: Double { touch ? 10 : notes ? 11 : rings || waves ? 7 : 0 }
+    var landing: Double { notes ? 11 : rings || waves ? 7 : 0 }
     /// Which family of looks it belongs to; variants are numbered within each.
     var family: Int { touch ? 6 : rcCar ? 5 : notes ? 7 : rings ? 1 : waves ? 2 : spell ? 3 : jagged ? 0 : 4 }
     static let lightning = Magic(core: C(0xF4F8FF), glow: C(0x7FB2FF))

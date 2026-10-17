@@ -210,9 +210,11 @@ func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walk
             if !on { p.zap = false }                 // between goes: crackling in the hand
         }
         if p.zap == true {
-            // Practising alone, at nobody: a stream may run off the frame's edge, but whatever lands (a touch's glow,
-            // rings and arcs swelling as they arrive) stops short of it, so it isn't cut in half.
-            drawMagic(c, persona.magic, from: hand, to: (70 - persona.magic.landing, hand.1 - (classic ? 2.5 : 2)), t: t)
+            // Practising alone, at nobody: a stream may run off the frame's edge, but whatever lands (rings and arcs
+            // swelling as they arrive) stops short of it, so it isn't cut in half. A touch has nothing to land on: its
+            // glow and rising motes gather round the caster's own hand.
+            let to = persona.magic.touch ? hand : (70 - persona.magic.landing, hand.1 - (classic ? 2.5 : 2))
+            drawMagic(c, persona.magic, from: hand, to: to, t: t)
         } else if p.zap == false {
             // Crackling between the fingers (the Emperor's, as in Clawd Wars: pale blue and white, a pixel further on).
             let i = Int(t * 20), dx = classic ? 0 : -1
