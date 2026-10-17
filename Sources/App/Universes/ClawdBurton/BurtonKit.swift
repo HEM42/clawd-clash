@@ -137,6 +137,38 @@ func burtonBeetle(_ c: PixelCanvas, x: Int, y: Int, step: Bool, left: Bool = fal
     c.pattern(x - 3, y - 3, left ? rows.map { String($0.reversed()) } : rows, ["S": shell, "G": shine, "L": burtonInk, "K": burtonInk])
 }
 
+/// Draws `art` on a layer of its own and lays it over `c` with a faint pale glow two pixels deep round it: one of the
+/// Recently Deceased (the Maitlands, Jeremee).
+func burtonGhost(_ c: PixelCanvas, glow: Px = C(0xCFE6FF), _ art: (PixelCanvas) -> Void) {
+    let s = PixelCanvas(c.w, c.h)
+    s.ox = c.ox; s.oy = c.oy; s.baseY = c.baseY
+    art(s)
+    let halo = PixelCanvas(c.w, c.h)
+    for y in 0..<s.h {
+        for x in 0..<s.w where !s.isDrawn(x, y) {
+            var d = 3
+            for dy in -2...2 { for dx in -2...2 where s.isDrawn(x + dx, y + dy) { d = min(d, max(abs(dx), abs(dy))) } }
+            if d <= 2 { halo.px(x, y, glow.alpha(d == 1 ? 0.22 : 0.16)) }
+        }
+    }
+    let (ox, oy, by) = (c.ox, c.oy, c.baseY)
+    c.ox = 0; c.oy = 0; c.baseY = 0
+    defer { c.ox = ox; c.oy = oy; c.baseY = by }
+    c.paste(halo); c.paste(s)
+}
+
+/// The Handbook for the Recently Deceased, 7 wide and 8 tall from (x, y): an oxblood cover with gold lettering;
+/// `open`: spread open, 12 wide, its pages showing.
+func burtonHandbook(_ c: PixelCanvas, x: Int, y: Int, open: Bool = false) {
+    let pal: [Character: Px] = ["B": C(0x6A2A22), "b": C(0x4A1A16), "G": C(0xD8B040), "P": C(0xF0E8D4), "L": C(0xA89A84)]
+    if open {
+        c.pattern(x, y, ["BPPPPP.PPPPPB", "BPLLLPBPLLLPB", "BPPPPPBPPPPPB", "BPLLLPBPLLPPB", "BPPPPPBPPPPPB",
+                         "BBBBBBBBBBBBB"], pal)
+    } else {
+        c.pattern(x, y, ["bBBBBBB", "bBGGGBB", "bBBBBBB", "bBGGGGB", "bBGGBBB", "bBBBBBB", "bBBBBBB", "bPPPPPP"], pal)
+    }
+}
+
 /// Boots or shoes over the bottom of the four standing legs, `height` rows tall; the lifted pair a row higher while
 /// walking. Seated legs fold away, so they get none.
 func burtonBoots(_ c: PixelCanvas, step: Int, _ col: Px, height: Int = 2) {
