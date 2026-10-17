@@ -813,7 +813,7 @@ private func drawBatWing(_ c: PixelCanvas, root: (x: Double, y: Double), spread 
     let armA = side(lerp(165, 228)), armL = lerp(7, 9)
     let wrist = reach(root, armA, armL)
     let folded: [Double] = [96, 110, 124], open: [Double] = [262, 212, 168]
-    let lens: [Double] = [lerp(10, 13), lerp(11, 15), lerp(10, 11)]
+    let lens: [Double] = [lerp(10, 13), lerp(11, 13.5), lerp(10, 11)]
     var tips: [(x: Double, y: Double)] = []
     for i in 0..<3 { tips.append(reach(wrist, side(lerp(folded[i], open[i])), lens[i])) }
     let hip = (x: root.x + (far ? -1 : 1), y: root.y + 9)

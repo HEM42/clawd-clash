@@ -453,7 +453,7 @@ private let doomsdayShoulder = (x: 40.0, y: 19.0)
 
 /// Doomsday: a towering grey brute studded with bone spikes (shoulders, forearms, knuckles, knees and brow), a
 /// shock of white hair, burning red eyes, a mouthful of jagged teeth, and the tattered green remains of his
-/// containment suit. Signature: he roars and every spike bristles out longer.
+/// containment suit. Signature: he roars and every spike but the stubby brow ones bristles out longer.
 private func drawDoomsday(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0x8A8C86), dark = C(0x5E605A), light = C(0xB0B2AA), bone = C(0xEAE4D2), boneShade = C(0xB8B0A0)
     let suit = C(0x2E5A3A), suitDark = C(0x1E3E28), hair = C(0xECECEC), hairShade = C(0xB8BCC4), red = C(0xFF4A2A)
@@ -494,13 +494,10 @@ private func drawDoomsday(_ c: PixelCanvas, _ p: Pose) {
     c.rect(15, 28, 26, 5, suit); c.rect(15, 28, 26, 1, suitDark)
     for x in stride(from: 15, to: 41, by: 3) { c.px(x, 33, suit); c.px(x + 1, 27, suit) }
     spike(36, 13, -60, 5); spike(30, 12, -80, 4)                       // shoulder spikes
-    // The head, thrown back as he roars.
-    c.oy -= Int((roar * 2).rounded())
-    c.pattern(18, 0, [
-        "...hh.hHH.hh.........",
-        ".hHHHHHHHHHHHHh......",
-        "hHHHHHHHHHHHHHHHh....",
-        "HHHHHHHHHHHHHHHHHHh..",
+    // The head.
+    c.pattern(18, 2, [
+        ".hhHHhHHHhHHhHh......",
+        "hHHHHHHHHHHHHHHHHHh..",
         "HHHHSSSSSSSSSSSSSSSH.",
         "HHHSSSSSSSSSSSSSSSSS.",
         "HHHSSDDDDDSSSDDDDDSS.",
@@ -515,7 +512,11 @@ private func drawDoomsday(_ c: PixelCanvas, _ p: Pose) {
     // Hair streaming down his back.
     c.rect(16, 4, 3, 12, hair); c.rect(15, 8, 2, 10, hairShade)
     // Brow spikes and the red eyes under them.
-    spike(25, 5, -110, 3); spike(33, 5, -70, 3); spike(38, 9, -10, 3)
+    for (x, a) in [(25.0, -110.0), (33, -70)] {                        // brow spikes, too short to bristle
+        let e = along(a, 2, from: (x, 5))
+        c.glowLine(x, 5, e.x, e.y, core: bone, glow: clear, coreR: 1.1, glowR: 1.2); c.px(Int(e.x), Int(e.y), bone)
+    }
+    spike(38, 9, -10, 3)
     for x in [24, 32] {
         c.glowLine(Double(x) + 1, 8, Double(x) + 1, 8, core: C(0xFFE0D0), glow: red, coreR: 0.6, glowR: 1.6 + roar, strength: 0.8)
         c.rect(x, 7, 3, 2, red)
@@ -529,8 +530,7 @@ private func drawDoomsday(_ c: PixelCanvas, _ p: Pose) {
             for dy in -2 - i...(2 + i) where abs(dy) > 0 || i == 0 { c.px(x - abs(dy) / 2, 11 + dy, col) }
         }
     }
-    c.oy += Int((roar * 2).rounded())
-    // The spiked arm and fist.
+    // The spiked arm and fist (raised high, the fist stops short of the top of the frame).
     let angle = p.melee ?? 80
     for (i, a) in p.trail.enumerated() {
         let e = along(a, 18, from: doomsdayShoulder)
@@ -538,13 +538,15 @@ private func drawDoomsday(_ c: PixelCanvas, _ p: Pose) {
                    coreR: 0.6, glowR: 2, strength: 0.35 / Double(i + 1))
     }
     c.circle(40, 18, 3, skin)
-    let e = along(angle, 13, from: doomsdayShoulder)
+    let r = angle * .pi / 180
+    var e = along(angle, 13, from: doomsdayShoulder)
+    e.y = max(e.y, Double(3 - c.oy - c.baseY) - min(-3, 4.5 * grow * sin(r) - 1.2 - 1.8 * abs(cos(r))))
     stick(c, doomsdayShoulder.x, doomsdayShoulder.y, e.x, e.y, skin, 2.4)
-    let mid = along(angle, 8, from: doomsdayShoulder)
+    let mid = (x: doomsdayShoulder.x + (e.x - doomsdayShoulder.x) * 8 / 13,
+               y: doomsdayShoulder.y + (e.y - doomsdayShoulder.y) * 8 / 13)
     spike(mid.x, mid.y, angle - 120, 4)                                 // the forearm spike
     c.rect(Int(e.x) - 3, Int(e.y) - 3, 6, 6, skin)
     c.rect(Int(e.x) - 3, Int(e.y) + 2, 6, 1, dark)
-    let r = angle * .pi / 180
     for n in 0..<3 {                                                    // bone knuckle spikes
         let off = Double(n - 1) * 1.8
         spike(e.x + cos(r) * 2 - sin(r) * off, e.y + sin(r) * 2 + cos(r) * off, angle, 2.5)
@@ -895,10 +897,10 @@ private func drawMxyzptlk(_ c: PixelCanvas, _ p: Pose) {
     if let s = sig, s > 0.04, s < 0.62 {
         // The speech bubble, spelling it out.
         let n = min(8, Int((s - 0.04) / 0.42 * 8) + 1)
-        c.rect(11, 3, 35, 9, white.alpha(0.92)); c.rect(12, 2, 33, 11, white.alpha(0.92))
-        c.pattern(30, 13, ["WW", "W."], ["W": white.alpha(0.92)])
-        drawNameBackwards(c, x: 13, y: 5, count: n, ink)
-        if s > 0.46 { c.rect(45, 4, 1, 4, ink); c.px(45, 9, ink) }
+        c.rect(11, 6, 35, 7, white.alpha(0.92)); c.rect(12, 5, 33, 9, white.alpha(0.92))
+        c.pattern(30, 14, ["WW", "W."], ["W": white.alpha(0.92)])
+        drawNameBackwards(c, x: 13, y: 7, count: n, ink)
+        if s > 0.46 { c.rect(45, 6, 1, 4, ink); c.px(45, 11, ink) }
     }
     if let s = sig, s > 0.56, s < 0.86 {
         // Popped. Only the smoke and a few stars where he was.

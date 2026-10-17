@@ -630,7 +630,7 @@ private func gigantaArt(_ c: PixelCanvas, _ p: Pose, grin: Bool) {
     // The left arm hangs at her side.
     c.rect(10, 27, 5, 9, skin); c.rect(10, 27, 1, 9, shade)
     c.rect(10, 33, 5, 1, gold)
-    c.rect(9, 35, 6, 4, skin); c.rect(9, 38, 6, 1, shade)
+    c.rect(10, 35, 6, 4, skin); c.rect(10, 38, 6, 1, shade)
     // The big body.
     c.rect(15, 22, 26, 16, skin)
     c.rect(40, 22, 1, 16, shade)
@@ -749,7 +749,7 @@ private func swanWing(_ c: PixelCanvas, spread k: Double, flap: Double, far: Boo
         let fi = Double(i)
         let folded = 100 + fi * 4, open = (far ? 214 : 204) + fi * 6 + flap * 22
         let a = (folded + (open - folded) * k) * .pi / 180
-        let len = 9 + k * ((far ? 4 : 6) + fi * 1.7)
+        let len = 9 + k * ((far ? 4 : 6) + fi * 1.7) - max(0, flap) * 3     // drawn in a little on the upstroke
         let end = (x: root.x + cos(a) * len, y: root.y + sin(a) * len)
         bar(c, root.x, root.y, end.x, end.y, i % 2 == 0 ? feather : shade, 1.0)
         c.px(Int(end.x.rounded()), Int(end.y.rounded()), tip)

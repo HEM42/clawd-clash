@@ -599,7 +599,7 @@ private func drawRedRobin(_ c: PixelCanvas, _ p: Pose) {
 /// edges. `open` 0…1 spreads them out from folded to a full glide.
 private func drawWings(_ c: PixelCanvas, open: Double, t: Double, black: Px, rib: Px, lining: Px) {
     for side in [-1, 1] {
-        let span = 3 + 15 * open
+        let span = 3 + 13 * open
         let n = Int(span.rounded())
         for d in 0...n {
             let f = Double(d) / max(1, span)

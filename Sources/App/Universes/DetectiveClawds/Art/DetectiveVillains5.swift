@@ -465,12 +465,12 @@ private func drawParallax(_ c: PixelCanvas, _ p: Pose) {
     c.ellipse(21, 20 - buzz, 7, 3, C(0xFFF4C0, 0.3))
     // The tail: segments curling back and down to a stinger.
     let sw = sin(t * 2.2)
-    let segs: [(Double, Double, Int)] = [(15, 33, 4), (10, 36 + sw * 0.5, 3), (6, 39 + sw, 3), (3.5, 42 + sw * 1.5, 2)]
+    let segs: [(Double, Double, Int)] = [(15, 33, 4), (10.5, 36 + sw * 0.5, 3), (7, 39 + sw, 3), (5, 42 + sw * 1.5, 2)]
     for (i, sg) in segs.enumerated().reversed() {
         c.ellipse(Int(sg.0), Int(sg.1), sg.2, sg.2 - (i == 0 ? 1 : 0), i % 2 == 0 ? shellDark : shell)
         c.px(Int(sg.0) - 1, Int(sg.1) - sg.2 + 1, shellLight)
     }
-    stick(c, 3, 42 + sw * 1.5, 0, 45 + sw * 1.5, pale, 0.6)
+    stick(c, 4.5, 42 + sw * 1.5, 2.5, 45 + sw * 1.5, pale, 0.6)
     // Spindly legs hanging under it.
     let legs: [[(Double, Double)]] = [
         [(21, 37), (17, 41), (18, 46)],
@@ -495,8 +495,8 @@ private func drawParallax(_ c: PixelCanvas, _ p: Pose) {
     let hy = 15 - rear
     stick(c, 37, Double(hy) + 2, 30, Double(hy) - 4, shellDark, 0.6)        // antennae swept back
     stick(c, 30, Double(hy) - 4, 23, Double(hy) - 4 + sin(t * 3), shellDark, 0.45)
-    stick(c, 40, Double(hy) + 1, 36, Double(hy) - 7, shellDark, 0.6)
-    stick(c, 36, Double(hy) - 7, 29, Double(hy) - 9 + sin(t * 3 + 1), shellDark, 0.45)
+    stick(c, 40, Double(hy) + 1, 37, Double(hy) - 4, shellDark, 0.6)
+    stick(c, 37, Double(hy) - 4, 30, Double(hy) - 5 + sin(t * 3 + 1) * 0.5, shellDark, 0.45)
     c.rect(33, hy + 9, 6, 26 - (hy + 9), shellDark)                          // the neck
     c.pattern(31, hy, [
         "....dSSSSd.......",
