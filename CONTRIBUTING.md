@@ -92,3 +92,4 @@ It reads your branch as text and builds or runs nothing.
    - It isn't installed or launched, and no AI's hooks are touched.
    - Once you've read the code, open `build/Clawd Clash.app` yourself.
 5. **Know what the guard is.** It's a text check, and a determined attacker could find a way past it. It narrows what a PR can hide, so a review only has to read the parts that matter. The review is still yours.
+6. **After merging, thank them.** Add the author to `collaborators` in `Sources/App/Overlay.swift` (name, GitHub username, what they made), so they're listed under "Thanks to" in Settings → About.

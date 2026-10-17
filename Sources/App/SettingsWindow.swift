@@ -15,8 +15,8 @@ enum SettingsRow {
     case toggle(String, note: String? = nil, get: () -> Bool, set: (Bool) -> Void)
     /// A label and a pop-up of choices, left out while not `shown`.
     case choice(String, options: [String], shown: () -> Bool = { true }, get: () -> Int, set: (Int) -> Void)
-    /// A label, what it says now, and a button.
-    case status(String, detail: () -> String, button: () -> String, action: () -> Void)
+    /// A label, what it says now, and a button (none when `button` gives nil). `dimmed` greys the row out.
+    case status(String, detail: () -> String, button: () -> String?, dimmed: () -> Bool = { false }, action: () -> Void)
     /// A button on its own, with a line beside it saying what it does.
     case button(String, note: String, action: () -> Void)
     /// A line between groups of rows.
@@ -124,14 +124,20 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
             hook(popup) { set(($0 as? NSPopUpButton)?.indexOfSelectedItem ?? 0) }
             guard shown() else { return }
             grid.addRow(with: [Self.label(title), popup])
-        case let .status(title, detail, button, action):
-            let b = NSButton(title: button(), target: nil, action: nil)
-            b.bezelStyle = .rounded
-            hook(b) { _ in action() }
+        case let .status(title, detail, button, dimmed, action):
             let d = NSTextField(labelWithString: detail())
-            d.textColor = .secondaryLabelColor
+            d.textColor = dimmed() ? .tertiaryLabelColor : .secondaryLabelColor
             d.widthAnchor.constraint(greaterThanOrEqualToConstant: 96).isActive = true
-            grid.addRow(with: [Self.label(title), Self.line(d, b)])
+            let l = Self.label(title)
+            if dimmed() { l.textColor = .tertiaryLabelColor }
+            var views: [NSView] = [d]
+            if let name = button() {
+                let b = NSButton(title: name, target: nil, action: nil)
+                b.bezelStyle = .rounded
+                hook(b) { _ in action() }
+                views.append(b)
+            }
+            grid.addRow(with: [l, Self.line(views)])
         case let .button(title, note, action):
             let b = NSButton(title: title, target: nil, action: nil)
             b.bezelStyle = .rounded
@@ -159,7 +165,7 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
         r.topPadding = -5
     }
 
-    private static func line(_ views: NSView...) -> NSView {
+    private static func line(_ views: [NSView]) -> NSView {
         let v = NSStackView(views: views)
         v.orientation = .horizontal
         v.alignment = .centerY

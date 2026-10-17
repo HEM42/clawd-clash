@@ -2533,18 +2533,22 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     action: { [weak self] in self?.resetPosition() }),
         ]
 
-        var ais: [SettingsRow] = []
-        if HookInstaller.claudeAvailable || HookInstaller.isInstalled {
-            ais.append(.status("Claude Code", detail: { HookInstaller.isInstalled ? "Connected" : "Not connected" },
-                               button: { HookInstaller.isInstalled ? "Remove" : "Connect" },
-                               action: { [weak self] in
-                                   if HookInstaller.isInstalled { self?.removeHooks() } else { self?.installHooks() }
-                               }))
-        }
-        for ai in HookInstaller.others where HookInstaller.available(ai) {
+        // Every AI we support, so it's clear what could connect: one that isn't installed is greyed out, without a button.
+        let claudeHere = { HookInstaller.claudeAvailable || HookInstaller.isInstalled }
+        var ais: [SettingsRow] = [
+            .status("Claude Code", detail: { claudeHere() ? (HookInstaller.isInstalled ? "Connected" : "Not connected") : "Not installed" },
+                    button: { claudeHere() ? (HookInstaller.isInstalled ? "Remove" : "Connect") : nil },
+                    dimmed: { !claudeHere() },
+                    action: { [weak self] in
+                        if HookInstaller.isInstalled { self?.removeHooks() } else { self?.installHooks() }
+                    }),
+        ]
+        for ai in HookInstaller.others {
+            let here = { HookInstaller.available(ai) }
             ais.append(.status(HookInstaller.displayName(ai.name),
-                               detail: { HookInstaller.installed(ai) ? "Connected" : "Not connected" },
-                               button: { HookInstaller.installed(ai) ? "Remove" : "Connect" },
+                               detail: { here() ? (HookInstaller.installed(ai) ? "Connected" : "Not connected") : "Not installed" },
+                               button: { here() ? (HookInstaller.installed(ai) ? "Remove" : "Connect") : nil },
+                               dimmed: { !here() },
                                action: { [weak self] in
                                    guard let self else { return }
                                    if HookInstaller.installed(ai) {
@@ -2586,25 +2590,27 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// What the last "Check for Updates" found, shown under the button: a line, and where to get a newer version.
     private var updateCheck: (text: String, download: URL?)?
 
-    /// The About tab: the icon, name and version, a check for a newer release, and where Clawd Clash lives.
+    /// The About tab, laid out as macOS apps' own: the icon on the left; beside it the name, the version, buttons to
+    /// check for a newer release, read what's new and visit the repo, what the check found, and the licence.
     private func aboutView() -> NSView {
         let icon = NSImageView(image: NSApp.applicationIconImage ?? NSImage())
         icon.imageScaling = .scaleProportionallyUpOrDown
-        icon.widthAnchor.constraint(equalToConstant: 96).isActive = true
-        icon.heightAnchor.constraint(equalToConstant: 96).isActive = true
+        icon.widthAnchor.constraint(equalToConstant: 128).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 128).isActive = true
         let name = NSTextField(labelWithString: "Clawd Clash")
-        name.font = .systemFont(ofSize: 20, weight: .bold)
-        let ver = NSTextField(labelWithString: "Version \(version)")
+        name.font = .systemFont(ofSize: 26)
+        let ver = NSTextField(labelWithString: version)
+        ver.font = .systemFont(ofSize: 15)
         ver.textColor = .secondaryLabelColor
 
-        let check = NSButton(title: "Check for Updates", target: self, action: #selector(checkForUpdates))
-        check.bezelStyle = .rounded
-        var views: [NSView] = [icon, name, ver, check]
+        let check = NSButton(title: "Check for Updates…", target: self, action: #selector(checkForUpdates))
+        let buttons = NSStackView(views: [check, button("What's New", "https://github.com/\(Self.repo)/blob/main/CHANGELOG.md"),
+                                          button("Website", "https://github.com/\(Self.repo)")])
+        buttons.spacing = 8
+        var views: [NSView] = [name, ver, buttons]
         if let found = updateCheck {
-            let line = NSTextField(wrappingLabelWithString: found.text)
-            line.alignment = .center
-            line.preferredMaxLayoutWidth = 380
-            line.textColor = found.download == nil ? .secondaryLabelColor : .labelColor
+            let line = Self.small(found.text, color: found.download == nil ? .secondaryLabelColor : .labelColor)
+            line.font = .systemFont(ofSize: NSFont.systemFontSize)
             views.append(line)
             if found.download != nil {
                 let get = NSButton(title: "Download", target: self, action: #selector(openDownload))
@@ -2613,27 +2619,64 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 views.append(get)
             }
         }
-        let links = NSStackView(views: [link("GitHub", "https://github.com/\(Self.repo)"),
-                                        link("Release Notes", "https://github.com/\(Self.repo)/releases")])
-        links.spacing = 16
-        let legal = NSTextField(labelWithString: "MIT licensed. A fan parody project for AI coding sessions.")
-        legal.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
-        legal.textColor = .tertiaryLabelColor
-        views += [links, legal]
-        let stack = NSStackView(views: views)
-        stack.orientation = .vertical
-        stack.alignment = .centerX
-        stack.spacing = 8
-        stack.setCustomSpacing(4, after: name)
-        stack.setCustomSpacing(16, after: ver)
-        if let i = views.firstIndex(of: links), i > 0 { stack.setCustomSpacing(18, after: views[i - 1]) }
-        return stack
+        let thanks = NSTextField(labelWithString: "Thanks to")
+        thanks.font = .systemFont(ofSize: NSFont.systemFontSize, weight: .semibold)
+        views.append(thanks)
+        for c in Self.collaborators {
+            let line = NSStackView(views: [linkButton(c.name, "https://github.com/\(c.github)"),
+                                           Self.small(c.made, color: .secondaryLabelColor)])
+            line.spacing = 6
+            views.append(line)
+        }
+        let copyright = Self.small("© 2026 Rod Clemen", color: .secondaryLabelColor)
+        views += [copyright,
+                  Self.small("Licensed under the MIT License. A fan parody project for AI coding sessions: "
+                             + "free to use, change and share.", color: .secondaryLabelColor),
+                  Self.small("No warranty. See LICENSE for details.", color: .secondaryLabelColor)]
+        let column = NSStackView(views: views)
+        column.orientation = .vertical
+        column.alignment = .leading
+        column.spacing = 8
+        column.setCustomSpacing(2, after: name)
+        column.setCustomSpacing(14, after: ver)
+        column.setCustomSpacing(4, after: thanks)
+        if let i = views.firstIndex(of: thanks), i > 0 { column.setCustomSpacing(18, after: views[i - 1]) }
+        if let i = views.firstIndex(of: copyright), i > 0 { column.setCustomSpacing(18, after: views[i - 1]) }
+
+        let row = NSStackView(views: [icon, column])
+        row.alignment = .top
+        row.spacing = 28
+        return row
     }
 
-    private func link(_ title: String, _ url: String) -> NSButton {
+    /// Everyone outside the project whose pull requests were merged, for About's "Thanks to" (add them when merging).
+    static let collaborators: [(name: String, github: String, made: String)] = [
+        ("Henrik Andersen", "HEM42", "Clawd Royale and Clawd of the Rings"),
+    ]
+
+    /// A borderless link-coloured button that opens `url`.
+    private func linkButton(_ title: String, _ url: String) -> NSButton {
         let b = NSButton(title: title, target: self, action: #selector(openLink(_:)))
         b.isBordered = false
         b.contentTintColor = .linkColor
+        b.toolTip = url
+        return b
+    }
+
+    /// Small wrapped text for the About tab's column.
+    private static func small(_ s: String, color: NSColor) -> NSTextField {
+        let t = NSTextField(wrappingLabelWithString: s)
+        t.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        t.textColor = color
+        t.preferredMaxLayoutWidth = 360
+        t.widthAnchor.constraint(lessThanOrEqualToConstant: 360).isActive = true
+        return t
+    }
+
+    /// A push button that opens `url`.
+    private func button(_ title: String, _ url: String) -> NSButton {
+        let b = NSButton(title: title, target: self, action: #selector(openLink(_:)))
+        b.bezelStyle = .rounded
         b.toolTip = url
         return b
     }
