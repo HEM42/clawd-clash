@@ -1103,6 +1103,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         func taken(_ a: Actor) -> Bool { a.isLeader && a.abducted.map { now - $0 < missingTimeLength } == true }
         var roles: [String: FightRole] = [:]
         var fx: [(Actor, Actor)] = []
+        /// Each fighting pair keeps its own beat: its clock runs this far ahead of the plain one, so with several
+        /// pairs on screen they don't all strike at once. The two in a pair share it, so they still trade blows.
+        var fightPhase: [String: Double] = [:]
+        /// The clock a character's fight moves (and its effects) run on.
+        func ft(_ key: String) -> Double { t + (fightPhase[key] ?? 0) }
         var incoming: [String: Double] = [:]   // blaster-vs-blaster: each defender → its shooter's clock offset
         for fight in fights {
             guard let a = actors.first(where: { $0.key == fight.a && $0.leaving == nil }),
@@ -1112,6 +1117,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let (lRole, rRole) = fightRoles(weapon(l), weapon(r))
             roles[l.key] = lRole; roles[r.key] = rRole
             fx.append((l, r))
+            // Han and Greedo stay on the plain clock: Han shooting first is timed to one of his own shots.
+            let shootsFirst = (l.cast.isHan && r.cast.isGreedo) || (l.cast.isGreedo && r.cast.isHan)
+            let phase = shootsFirst ? 0 : fightPhaseOffset(l.key, r.key)
+            fightPhase[l.key] = phase; fightPhase[r.key] = phase
             if case .shoot(let lo) = lRole, case .shoot(let ro) = rRole { incoming[l.key] = ro; incoming[r.key] = lo }
         }
         for a in actors where cheering.contains(a.key) && a.walkDir == 0 && a.leaving == nil { roles[a.key] = .cheer }
@@ -1200,18 +1209,18 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             // Flyers ride up to `flightHeight` while they travel, and now and then take to the air where they stand
             // (fighting from up there, if they shoot or cast); Spider-Man swings along in arcs on a web line, the Bat-family
             // on grapnel lines.
-            let air = self.air(actor, role: roles[actor.key], walking: walking, t: t)
+            let air = self.air(actor, role: roles[actor.key], walking: walking, t: ft(actor.key))
             switch actor.kind {
             case .leader(let who):
                 let role = roles[actor.key]
-                who.draw(canvas, t: t, mode: role != nil ? .working : actor.mode, walking: walking, role: role ?? .none,
+                who.draw(canvas, t: ft(actor.key), mode: role != nil ? .working : actor.mode, walking: walking, role: role ?? .none,
                          urgent: actor.urgent && role == nil, sitting: actor.sitting, asSession: true,
                          airborne: walking && air > 0.3, aloft: !walking && air > 0.3)
                 if let r = actor.regenerated, now - r < regenerationFlare { drawRegeneration(canvas, k: (now - r) / regenerationFlare, t: t) }
                 scale = ls; y = ground
             case .agent(let who):
                 let role = roles[actor.key]
-                who.draw(canvas, t: role != nil ? t : t + actor.phase, mode: .working, walking: walking,
+                who.draw(canvas, t: role != nil ? ft(actor.key) : t + actor.phase, mode: .working, walking: walking,
                          role: role ?? .none, asSession: false, airborne: walking && air > 0.3, aloft: !walking && air > 0.3)
                 scale = cs; y = ground + (ls - cs) * 8
             }
@@ -1292,7 +1301,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let mirrored = facing < 0
             let bodyX = (mirrored ? CGFloat(canvas.w) - CGFloat(pivotX) : CGFloat(pivotX)) * scale
             // Ducking a bolt in a shoot-out: squat (squashed from the feet up).
-            let duck = incoming[actor.key].map { CGFloat(duckAmount(t: t, shooterOffset: $0, armoured: actor.cast.armoured)) } ?? 0
+            let duck = incoming[actor.key].map { CGFloat(duckAmount(t: ft(actor.key), shooterOffset: $0, armoured: actor.cast.armoured)) } ?? 0
             // Captain Clawk flinches at every tick of the Croc Clock (Stevie Clawdberg), in Pirate Town or with it about.
             let flinch = clawkFlinch(actor, t: t)
             let rect = NSRect(x: (actor.x - bodyX).rounded() + CGFloat(flinch.dx) * scale, y: y + CGFloat(drop) * z + lift + CGFloat(flinch.up) * scale,
@@ -1410,19 +1419,19 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let headroom = Int(Self.flightHeight) + 8
             func fighter(_ a: Actor, side: Double) -> Fighter {
                 let sc = a.isLeader ? ls : cs
-                let lift = (a.isLeader ? 0 : (ls - cs) * 8) + self.air(a, role: roles[a.key], walking: false, t: t) * Self.flightHeight * sc
+                let lift = (a.isLeader ? 0 : (ls - cs) * 8) + self.air(a, role: roles[a.key], walking: false, t: ft(a.key)) * Self.flightHeight * sc
                 return Fighter(weapon: weapon(a), x: Double((a.x - left) / ls), k: Double(sc / ls),
                                top: Double((CGFloat(Sprite.height) * (ls - sc) - lift) / ls) + Double(headroom), side: side,
                                muzzle: a.cast.muzzle, armoured: a.cast.armoured, pivot: a.cast.weaponPivot).dressed(as: a.cast)
             }
             let fl = fighter(l, side: 1), fr = fighter(r, side: -1)
             let shotHere = shot.flatMap { s in Set([l.key, r.key]) == [s.han, s.greedo] ? s : nil }
-            guard shotHere != nil || fightFXVisible(t: t, fl.weapon, fr.weapon) else { continue }   // e.g. a duel between clashes
+            guard shotHere != nil || fightFXVisible(t: ft(l.key), fl.weapon, fr.weapon) else { continue }   // e.g. a duel between clashes
             let c = PixelCanvas(width, Sprite.height + headroom)
             if let s = shotHere {
                 ShootsFirst.drawFX(c, e: s.e, t: t, han: l.key == s.han ? fl : fr, greedo: l.key == s.han ? fr : fl)
             } else {
-                drawFightFX(c, t: t, left: fl, right: fr)
+                drawFightFX(c, t: ft(l.key), left: fl, right: fr)
             }
             if let img = c.makeImage() {
                 overlay.append(DrawItem(image: img, rect: NSRect(x: left.rounded(), y: ground,

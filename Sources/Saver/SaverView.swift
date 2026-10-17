@@ -509,12 +509,17 @@ final class ClawdClashSaverView: ScreenSaverView {
         var roles: [String: FightRole] = [:]
         var incoming: [String: Double] = [:]
         var fights: [(Placed, Placed)] = []
+        // Each pair on its own beat (`fightPhaseOffset`), so several fights don't all strike at once.
+        var fightPhase: [String: Double] = [:]
+        func ft(_ key: String) -> Double { t + (fightPhase[key] ?? 0) }
         for (a, b) in pairs {
             guard let pa = placed.first(where: { $0.m.key == a.key }), let pb = placed.first(where: { $0.m.key == b.key }) else { continue }
             let (l, r) = pa.x <= pb.x ? (pa, pb) : (pb, pa)
             let (lr, rr) = fightRoles(l.m.weapon, r.m.weapon)
             roles[l.m.key] = lr; roles[r.m.key] = rr
             fights.append((l, r))
+            let phase = fightPhaseOffset(l.m.key, r.m.key)
+            fightPhase[l.m.key] = phase; fightPhase[r.m.key] = phase
             if case .shoot(let lo) = lr, case .shoot(let ro) = rr { incoming[l.m.key] = ro; incoming[r.m.key] = lo }
         }
         for key in cheering { roles[key] = .cheer }
@@ -526,15 +531,15 @@ final class ClawdClashSaverView: ScreenSaverView {
             let s = p.m.isLeader ? ls : cs
             let c = PixelCanvas(Sprite.width, Sprite.height)
             let role = roles[p.m.key]
-            let up = air(p, role: role, t: t)
+            let up = air(p, role: role, t: ft(p.m.key))
             if p.m.isLeader {
                 let sess = p.m.session
-                p.m.cast.draw(c, t: t, mode: role != nil ? .working : mode(sess), walking: false, role: role ?? .none,
+                p.m.cast.draw(c, t: ft(p.m.key), mode: role != nil ? .working : mode(sess), walking: false, role: role ?? .none,
                               urgent: sess.urgent && role == nil, sitting: sess.sitting && role == nil, asSession: true,
                               aloft: up > 0.3)
             } else {
                 let phase = Double(abs(p.m.key.hashValue % 100)) / 37
-                p.m.cast.draw(c, t: role != nil ? t : t + phase, mode: .working, walking: false, role: role ?? .none, asSession: false,
+                p.m.cast.draw(c, t: role != nil ? ft(p.m.key) : t + phase, mode: .working, walking: false, role: role ?? .none, asSession: false,
                               aloft: up > 0.3)
             }
             // A signature that climbs a thread (`Persona.climb`, Shellob): risen and faded by the move.
@@ -543,7 +548,7 @@ final class ClawdClashSaverView: ScreenSaverView {
             guard let img = c.makeImage() else { continue }
             let mirrored = p.facing < 0
             let bodyX = (mirrored ? CGFloat(Sprite.width) - CGFloat(Sprite.bodyCenterX) : CGFloat(Sprite.bodyCenterX)) * s
-            let duck = incoming[p.m.key].map { CGFloat(duckAmount(t: t, shooterOffset: $0, armoured: p.m.cast.armoured)) } ?? 0
+            let duck = incoming[p.m.key].map { CGFloat(duckAmount(t: ft(p.m.key), shooterOffset: $0, armoured: p.m.cast.armoured)) } ?? 0
             let rise = climb.map { CGFloat($0.move.rise($0.p)) * s } ?? 0
             let y = (p.m.isLeader ? base : base + (ls - cs) * 8) + up * flightHeight * s + rise
             if let cl = climb, let line = Self.thread {
@@ -562,7 +567,7 @@ final class ClawdClashSaverView: ScreenSaverView {
         }
         // Bolts, deflections, lightning and sparks.
         for (l, r) in fights {
-            guard fightFXVisible(t: t, l.m.weapon, r.m.weapon) else { continue }
+            guard fightFXVisible(t: ft(l.m.key), l.m.weapon, r.m.weapon) else { continue }
             let margin = 24.0
             let width = Int(Double((r.x - l.x) / ls) + margin * 2)
             guard width > 0, width < 4000 else { continue }
@@ -570,13 +575,13 @@ final class ClawdClashSaverView: ScreenSaverView {
             let headroom = Int(flightHeight) + 8   // rows above a standing leader's canvas, for fighting from the air
             func fighter(_ p: Placed, side: Double) -> Fighter {
                 let sc = p.m.isLeader ? ls : cs
-                let lift = (p.m.isLeader ? 0 : (ls - cs) * 8) + air(p, role: roles[p.m.key], t: t) * flightHeight * sc
+                let lift = (p.m.isLeader ? 0 : (ls - cs) * 8) + air(p, role: roles[p.m.key], t: ft(p.m.key)) * flightHeight * sc
                 return Fighter(weapon: p.m.weapon, x: Double((p.x - left) / ls), k: Double(sc / ls),
                                top: Double((CGFloat(Sprite.height) * (ls - sc) - lift) / ls) + Double(headroom), side: side,
                                muzzle: p.m.cast.muzzle, armoured: p.m.cast.armoured, pivot: p.m.cast.weaponPivot).dressed(as: p.m.cast)
             }
             let c = PixelCanvas(width, Sprite.height + headroom)
-            drawFightFX(c, t: t, left: fighter(l, side: 1), right: fighter(r, side: -1))
+            drawFightFX(c, t: ft(l.m.key), left: fighter(l, side: 1), right: fighter(r, side: -1))
             if let img = c.makeImage() {
                 items.append(Item(image: img, rect: CGRect(x: left.rounded(), y: base, width: CGFloat(width) * ls,
                                                            height: CGFloat(Sprite.height + headroom) * ls)))

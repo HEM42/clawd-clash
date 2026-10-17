@@ -348,3 +348,11 @@ func drawBubble(_ c: PixelCanvas, kind: BubbleKind, t: Double, urgent: Bool = fa
 func drawFocusCaret(_ c: PixelCanvas) {
     c.pattern(0, 0, [".Y.", "YYY", ".Y."], ["Y": C(0xFFE14A)])
 }
+
+/// A fighting pair's clock offset, 0…10 s: the same for the same two characters (from their keys), different from
+/// pair to pair, so several fights on screen are out of step with each other while each pair stays in step.
+func fightPhaseOffset(_ a: String, _ b: String) -> Double {
+    var h: UInt64 = 0xCBF2_9CE4_8422_2325   // FNV-1a: stable across launches, unlike hashValue
+    for byte in (min(a, b) + "|" + max(a, b)).utf8 { h = (h ^ UInt64(byte)) &* 0x100_0000_01B3 }
+    return Double(h % 10_000) / 1000
+}
