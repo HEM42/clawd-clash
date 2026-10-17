@@ -183,5 +183,5 @@ extension Location {
 }
 
 /// Every Clawd Burton place, from the Places/BurtonScenes*.swift files.
-let burtonPlaces: [Location: Place] = [burtonScenes1]
+let burtonPlaces: [Location: Place] = [burtonScenes1, burtonScenes2]
     .reduce([:]) { $0.merging($1) { a, _ in a } }

@@ -22,10 +22,10 @@ extension Scenes {
         return ((cx, hw, roof, max(3 * s, spire)), (c.w * 30 / 100, (tall ? 22 : 16) * s), moon)
     }
 
-    private static let htGlow = C(0xFFD84A), htStone = C(0x4A3E80), htStoneLit = C(0x8A7AC8)
+    static let htGlow = C(0xFFD84A), htStone = C(0x4A3E80), htStoneLit = C(0x8A7AC8)
 
     /// A big moon with a soft halo, its two craters in `rim`.
-    private static func htMoon(_ c: PixelCanvas, _ x: Int, _ y: Int, _ r: Int, s: Int) {
+    static func htMoon(_ c: PixelCanvas, _ x: Int, _ y: Int, _ r: Int, s: Int) {
         let core = C(0xFFD266), rim = C(0xF0A030), halo = C(0xFFB040)
         c.circle(x, y, r + 6 * s, halo.alpha(0.08)); c.circle(x, y, r + 3 * s, halo.alpha(0.16))
         c.circle(x, y, r, rim); c.circle(x - max(1, r / 14), y - max(1, r / 14), r - max(1, r / 12), core)
@@ -34,7 +34,7 @@ extension Scenes {
 
     /// A crooked, scary house: walls that bulge and bend as they rise, a witch-hat roof whose tip curls over, and
     /// either a jack-o'-lantern face for windows (`face`) or a few crooked lit windows.
-    private static func htHouse(_ c: PixelCanvas, x: Int, base: Int, w: Int, h: Int, bend: Int, s: Int, wall: Px,
+    static func htHouse(_ c: PixelCanvas, x: Int, base: Int, w: Int, h: Int, bend: Int, s: Int, wall: Px,
                                 edge: Px, roof: Px, face: Bool, seed: Int) {
         let bulge = Double(w) * 0.14 * noise(seed + 1)
         func centre(_ r: Int) -> Double { Double(x) + Double(w) / 2 + Double(bend) * pow(Double(r) / Double(max(1, h)), 2) }
@@ -82,27 +82,28 @@ extension Scenes {
 
     /// A grave on row `base`: a round-topped tombstone (0), a cross (1) or an obelisk (2), leaning by `tilt`, its
     /// moonlit side picked out.
-    private static func htGrave(_ c: PixelCanvas, _ x: Int, _ base: Int, kind: Int, s: Int, tilt: Double) {
+    static func htGrave(_ c: PixelCanvas, _ x: Int, _ base: Int, kind: Int, s: Int, tilt: Double, stone: Px = htStone,
+                        lit: Px = htStoneLit) {
         switch kind {
         case 0:
             let w = 6 * s, h = 8 * s
             for r in 0..<h {
                 let off = Int(tilt * Double(r)), round = r > h - 3 * s ? (r - (h - 3 * s)) : 0
-                c.rect(x + off + round, base - r - 1, w - round * 2, 1, htStone); c.px(x + off + round, base - r - 1, htStoneLit)
+                c.rect(x + off + round, base - r - 1, w - round * 2, 1, stone); c.px(x + off + round, base - r - 1, lit)
             }
         case 1:
             let a = -90 + tilt * 40, foot = (x: Double(x), y: Double(base))
             let top = burtonReach(foot, a, Double(10 * s)), arm = burtonReach(foot, a, Double(7 * s))
-            burtonLine(c, foot.x, foot.y, top.x, top.y, htStone, Double(s))
+            burtonLine(c, foot.x, foot.y, top.x, top.y, stone, Double(s))
             let p = burtonReach(arm, a + 90, Double(3 * s)), q = burtonReach(arm, a - 90, Double(3 * s))
-            burtonLine(c, p.x, p.y, q.x, q.y, htStone, Double(s))
+            burtonLine(c, p.x, p.y, q.x, q.y, stone, Double(s))
         default:
             let h = 16 * s
             for r in 0..<h {
                 let w = max(s, 5 * s - r * 2 * s / h), off = Int(tilt * Double(r))
-                c.rect(x + off - w / 2, base - r - 1, w, 1, htStone); c.px(x + off - w / 2, base - r - 1, htStoneLit)
+                c.rect(x + off - w / 2, base - r - 1, w, 1, stone); c.px(x + off - w / 2, base - r - 1, lit)
             }
-            c.rect(x - 4 * s, base - 2 * s, 8 * s, 2 * s, htStone)
+            c.rect(x - 4 * s, base - 2 * s, 8 * s, 2 * s, stone)
         }
     }
 
@@ -119,7 +120,7 @@ extension Scenes {
 
     /// Small pumpkins scattered along a skyline (`top(x)` gives the ground there), every `gap` pixels or so; some
     /// carved and glowing.
-    private static func htPumpkinRow(_ c: PixelCanvas, from x0: Int, to x1: Int, gap: Int, s: Int, seed: Int,
+    static func htPumpkinRow(_ c: PixelCanvas, from x0: Int, to x1: Int, gap: Int, s: Int, seed: Int,
                                      top: (Int) -> Int) {
         var x = x0, i = 0
         while x < x1 {
