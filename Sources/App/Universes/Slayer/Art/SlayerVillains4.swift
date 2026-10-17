@@ -21,7 +21,7 @@ let slayerVillains4: [SlayerVillain: Persona] = [
     .preacherCalebb: Persona(name: "Preacher Calebb", weapon: .saber, armoured: true, headTop: 21, signature: 3.2,
                              draw: drawPreacherCalebb),
     .darkWillow: Persona(name: "Dark Willow", weapon: .lightning, motion: .hover,
-                         magic: Magic(core: C(0x2A0810), glow: C(0xD8102C)),
+                         magic: Magic(core: C(0x2A0810), glow: C(0xD8102C), bolts: 3),
                          headTop: 20, signature: 3.6, callout: "Bored now.", draw: drawDarkWillow),
 ]
 
