@@ -207,7 +207,7 @@ Show a table with #, name, what happens, and who or where makes it come up more 
 
 ## Step 6: Write the plan
 
-Once all four gates are passed, write the whole plan to `~/.claude/plans/<slug>.md`, or to a private repo if the user asks. Use the latest universe's plan in `~/.claude/plans/` as the template if there is one (for example `stevie-clawdberg.md`); otherwise follow these sections:
+Once all four gates are passed, write the whole plan to `~/.claude/plans/<slug>.md`, or to a private repo if the user asks. That folder is on the user's own machine. If they want to share the plan (in a post proposing the universe, say), also give them a version they can paste: the whole plan as one Markdown block, with local paths, memory notes and anything private left out. Use the latest universe's plan in `~/.claude/plans/` as the template if there is one (for example `stevie-clawdberg.md`); otherwise follow these sections:
 
 1. **Context:** the name, code naming, raw value, size, naming style, tone.
 2. **How a universe plugs in:** the file list and wiring checklist below, re-checked against the code as it is today with line numbers. The code moves, so don't trust this guide's line numbers blindly.

@@ -440,7 +440,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
 
     /// Over the whole window while the universe changes: the window as it was giving way to the window as it is now.
     private let switchView = SwitchView()
-    private var switching: (old: CGImage, start: Double, comic: ComicTransition?, clock: Bool)?
+    private var switching: (old: CGImage, start: Double, comic: ComicTransition?, kind: Wipe.Kind)?
     private var switchTimer: Timer?
     /// When the change of universe is over (or was).
     var switchEnds: Double { switching.map { $0.start + ($0.comic?.duration ?? Wipe.duration) } ?? 0 }
@@ -459,8 +459,8 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     /// Plays a change of universe over the whole window: `old`, the window before, gives way to the window as it is
     /// from now on (kept live, so the crew walking in shows), with the new universe's comic-book transition, or
     /// otherwise Star Wars' wipe (a hard edge, or a clock with `clock`).
-    func playSwitch(from old: CGImage, comic: ComicTransition?, clock: Bool) {
-        switching = (old, Date().timeIntervalSince1970, comic, clock)
+    func playSwitch(from old: CGImage, comic: ComicTransition?, kind: Wipe.Kind) {
+        switching = (old, Date().timeIntervalSince1970, comic, kind)
         switchView.isHidden = false
         switchFrame()
         switchTimer?.invalidate()
@@ -485,7 +485,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
             comic.draw(ctx, old: s.old, new: new, k: k, in: r)
         } else {
             ctx.draw(new, in: r)
-            ctx.addPath(Wipe.remaining(k, clock: s.clock, in: r)); ctx.clip()
+            ctx.addPath(Wipe.remaining(k, s.kind, in: r)); ctx.clip()
             ctx.draw(s.old, in: r)
         }
         switchView.layer?.contents = ctx.makeImage()
@@ -625,7 +625,7 @@ final class HeaderView: NSView, NSViewToolTipOwner {
     /// How far the place's name reaches from its left edge: in The Clawd Files, the whole caption once it has typed
     /// itself in, so the bar behind it doesn't grow a letter at a time.
     private func titleWidth() -> CGFloat {
-        guard let location = controller?.location else { return 0 }
+        guard let location = controller?.location, !location.signed else { return 0 }
         if let caption = location.universe.module.placeCaption {
             let all = caption.typed(location, 1e6).joined(separator: "  ·  ")
             return NSAttributedString(string: all, attributes: [.font: caption.font(11.5)]).size().width + 6
@@ -641,7 +641,7 @@ final class HeaderView: NSView, NSViewToolTipOwner {
             // Over the screen-saver view, which has its own place name and clock: a solid bar keeps them apart.
             (base.blended(withFraction: 0.45, of: .black) ?? base).setFill()
             b.fill()
-        } else {
+        } else if controller?.location.signed != true {
             // Behind the place's name only, fading out just past it: enough to read the name over a busy scene, and
             // the rest of the bar leaves the scene clear.
             let tint = (base.blended(withFraction: 0.45, of: .black) ?? base).withAlphaComponent(0.32)
@@ -679,7 +679,8 @@ final class HeaderView: NSView, NSViewToolTipOwner {
             if !caption.done(location, since) {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in self?.needsDisplay = true }
             }
-        } else if let where_ = controller?.location.name {
+        } else if let location = controller?.location, !location.signed {
+            let where_ = location.name
             let label = NSAttributedString(string: where_.uppercased(), attributes: [
                 .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold), .foregroundColor: NSColor(white: 0.92, alpha: 1),
                 .kern: 1.2])
@@ -780,10 +781,10 @@ final class SceneView: NSView {
     private var lastLive: CGImage?
     /// Changing place: the old picture, frozen, wiped away over the new one (a hard edge and a clock wipe, taking
     /// turns), as the screen saver does; in every universe but Star Wars, that universe's own transition (`ComicTransition`).
-    private var wipe: (old: CGImage, start: Double, clock: Bool, comic: ComicTransition?)?
+    private var wipe: (old: CGImage, start: Double, kind: Wipe.Kind, comic: ComicTransition?)?
     /// When the change of place is over (or was).
     var wipeEnds: Double { wipe.map { $0.start + ($0.comic?.duration ?? Wipe.duration) } ?? 0 }
-    private var clockWipeNext = false
+    private var lastWipe: Wipe.Kind?
     private var lastComic: ComicTransition?
     /// Set while the universe changes: the whole window has its own transition then (`ClawdWindow.playSwitch`).
     var skipWipe = false
@@ -812,10 +813,11 @@ final class SceneView: NSView {
            let frozen = Wipe.flatten([old.image] + (old.location.hasAnimatedLayer ? lastLive.map { [$0] } ?? [] : [])) {
             if let comic = ComicTransition.pick(after: lastComic, cast: controller.onStage, from: old.location, to: location) {
                 lastComic = comic
-                wipe = (frozen, Date().timeIntervalSince1970, false, comic)
+                wipe = (frozen, Date().timeIntervalSince1970, .edgeRight, comic)
             } else {
-                wipe = (frozen, Date().timeIntervalSince1970, clockWipeNext, nil)
-                clockWipeNext.toggle()
+                let kind = Wipe.Kind.next(after: lastWipe)
+                lastWipe = kind
+                wipe = (frozen, Date().timeIntervalSince1970, kind, nil)
             }
         }
         let c = PixelCanvas(g.pw, g.ph)
@@ -863,7 +865,7 @@ final class SceneView: NSView {
                                           space: CGColorSpace(name: CGColorSpace.sRGB)!,
                                           bitmapInfo: layerBitmapInfo) {
                 let r = CGRect(x: 0, y: 0, width: w.old.width, height: w.old.height)
-                ctx.addPath(Wipe.remaining(k, clock: w.clock, in: r)); ctx.clip()
+                ctx.addPath(Wipe.remaining(k, w.kind, in: r)); ctx.clip()
                 ctx.draw(w.old, in: r)
                 if let img = ctx.makeImage() {
                     items.append(OverlayController.DrawItem(image: img, rect: g.drawRect.offsetBy(dx: origin.x, dy: origin.y)))

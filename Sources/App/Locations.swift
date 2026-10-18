@@ -31,6 +31,8 @@ struct Location: Hashable, RawRepresentable {
     var place: Place { places[self] ?? Place(name: rawValue, panel: 0x16181D, still: { _, _ in }) }
 
     var name: String { place.name }
+    /// Whether it shows its own name where the window's top bar would write it (`Place.signed`).
+    var signed: Bool { place.signed }
 
     /// Background tint for the card area, so the whole window feels like the place.
     var panel: NSColor {
@@ -64,6 +66,9 @@ struct Place {
     let still: (PixelCanvas, Int) -> Void
     /// What moves there, drawn every frame on a transparent canvas the same size: canvas, ground row, clock.
     var moving: ((PixelCanvas, Int, Double) -> Void)? = nil
+    /// The place carries its own name in the window's top-left corner (the Bronze's neon sign): the window's top bar
+    /// leaves its name off there, so it doesn't sit over the sign.
+    var signed = false
 }
 
 /// Every place in every universe, from the universes' scene files.
@@ -72,22 +77,56 @@ let places: [Location: Place] = Universe.allCases.reduce(into: [:]) { all, u in
 }
 
 
-/// The wipes between places, shared by the window and the screen saver: what's left of the old
-/// picture `k` of the way through, right of an edge sweeping left to right, or what a clock hand sweeping round from
-/// twelve hasn't reached yet.
+/// The wipes between places where a universe has no trips of its own (Star Clawds), shared by the window and the screen
+/// saver: what's left of the old picture as an edge sweeps across it, straight or slanted, or a clock hand sweeps round.
 enum Wipe {
     static let duration = 1.2
 
-    static func remaining(_ k: Double, clock: Bool, in r: CGRect) -> CGPath {
+    /// The films' wipes: a straight edge sweeping across one way or another, a slanted one corner to corner, or a clock
+    /// hand sweeping round.
+    enum Kind: CaseIterable {
+        case edgeRight, edgeLeft, edgeDown, edgeUp, diagonal, clock, anticlockwise
+
+        /// A different one from `last`, at random.
+        static func next(after last: Kind?) -> Kind { allCases.filter { $0 != last }.randomElement() ?? .edgeRight }
+    }
+
+    /// What's left of the old picture `k` (0…1) of the way through a `kind` wipe over `r`, to clip it to.
+    static func remaining(_ k: Double, _ kind: Kind, in r: CGRect) -> CGPath {
         let path = CGMutablePath()
-        if clock {
-            let c = CGPoint(x: r.midX, y: r.midY), top = CGFloat.pi / 2
+        switch kind {
+        case .clock, .anticlockwise:
+            let c = CGPoint(x: r.midX, y: r.midY), top = CGFloat.pi / 2, turn = 2 * CGFloat.pi * k
             path.move(to: c)
-            path.addArc(center: c, radius: hypot(r.width, r.height), startAngle: top - 2 * .pi * k,
-                        endAngle: top - 2 * .pi, clockwise: true)
+            if kind == .clock {
+                path.addArc(center: c, radius: hypot(r.width, r.height), startAngle: top - turn, endAngle: top - 2 * .pi, clockwise: true)
+            } else {
+                path.addArc(center: c, radius: hypot(r.width, r.height), startAngle: top + turn, endAngle: top + 2 * .pi, clockwise: false)
+            }
             path.closeSubpath()
-        } else {
+        case .edgeRight:
             path.addRect(CGRect(x: r.minX + r.width * k, y: r.minY, width: r.width * (1 - k), height: r.height))
+        case .edgeLeft:
+            path.addRect(CGRect(x: r.minX, y: r.minY, width: r.width * (1 - k), height: r.height))
+        case .edgeDown:
+            path.addRect(CGRect(x: r.minX, y: r.minY, width: r.width, height: r.height * (1 - k)))
+        case .edgeUp:
+            path.addRect(CGRect(x: r.minX, y: r.minY + r.height * k, width: r.width, height: r.height * (1 - k)))
+        case .diagonal:
+            // The part of the frame the slanted edge hasn't reached: where (x across + y down) is still past it.
+            let corners = [CGPoint(x: r.minX, y: r.maxY), CGPoint(x: r.maxX, y: r.maxY), CGPoint(x: r.maxX, y: r.minY),
+                           CGPoint(x: r.minX, y: r.minY)]
+            func past(_ p: CGPoint) -> CGFloat { (p.x - r.minX) / r.width + (r.maxY - p.y) / r.height - 2 * k }
+            var kept: [CGPoint] = []
+            for i in corners.indices {
+                let a = corners[i], b = corners[(i + 1) % corners.count], fa = past(a), fb = past(b)
+                if fa >= 0 { kept.append(a) }
+                if (fa >= 0) != (fb >= 0) {
+                    let t = fa / (fa - fb)
+                    kept.append(CGPoint(x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t))
+                }
+            }
+            if kept.count > 2 { path.addLines(between: kept); path.closeSubpath() }
         }
         return path
     }
