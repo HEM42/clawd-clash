@@ -71,29 +71,31 @@ private let mayorHair = [
 /// The Mayor's head: the hair at (17, 22) and his big, wide, toothy smile.
 private func mayorHead(_ c: PixelCanvas) {
     c.pattern(17, 22, mayorHair, ["H": C(0x4A3426), "l": C(0x6E5038), "p": C(0x2A1C14)])
-    // Eyebrows, raised and friendly.
-    c.pattern(21, 26, [".BB.", "B..B"], ["B": C(0x4A3426)]); c.pattern(31, 26, [".BB.", "B..B"], ["B": C(0x4A3426)])
+    // Eyebrows, high, arched and friendly: bold dark arcs.
+    let brow = [".BBB.", "B...B"]
+    c.pattern(20, 26, brow, ["B": C(0x2E2018)]); c.pattern(31, 26, brow, ["B": C(0x2E2018)])
     c.pattern(23, 32, ["M........M", ".MWWWWWWM.", "..MMMMMM.."], ["M": C(0x7A2A20), "W": white])
 }
 
 // Glory's big blonde curls, also worn by the First Evil.
+// Lit from the front-left, a few big curls marked by their shadows rather than a speckle of light and dark.
 private let gloryHair = [
-    "........hHHhHHhH........",
-    ".....hHHHlHHHHlHHHh.....",
-    "...hHHlHHHHhHHHHlHHHh...",
-    "..HHHHHHhHHlHHHhHHHHHH..",
-    ".hHHlHHHHHHHHHHHHHlHHHh.",
-    ".HHHHHHHhHHHHHhHHHHHHHH.",
-    "hHHHlHHhHHlHHhHHlHHlHHHh",
-    "HHHHHHHhH.hHH.hHHHHHHHHH",
-    "HhHHHhHHhHHlHHhHHhHHHhHH",
-    "HHlH.h.h..h..h..h.h.HlHH",
-    "hHHH................HHHh",
-    "HHhH................HhHH",
-    "HHHl................lHHH",
-    "hHHH................HHHh",
-    "HdHH................HHdH",
-    ".dHd................dHd.",
+    "........HHlllHHH........",
+    ".....HHlllHHHHHHHh......",
+    "...HHllHHHHHHHHHHHHh....",
+    "..HllHHHHhHHHHHhHHHHh...",
+    ".HllHHHhhHHHHHhhHHHHhh..",
+    ".HlHHHhhHHHHHhhHHHHhhHh.",
+    "HHHHHhhHHHHHhhHHHHhhHHhh",
+    "HlHHHHHHH.HHH.HHHHHHHHHh",
+    "HlHHhhHHhhHHhhHHhhHHHhHh",
+    "HHHH.h.h..h..h..h.h.HHhh",
+    "HlHH................HHhh",
+    "HlHh................HHHh",
+    "HHHH................hHHh",
+    "HHhH................HHhh",
+    "HHHh................HhHd",
+    ".hHd................dHh.",
     ".d.d................d.d.",
 ]
 
@@ -117,12 +119,12 @@ private func oldMasterHead(_ c: PixelCanvas) {
 private func adamHead(_ c: PixelCanvas) {
     let steel = C(0x8A9098), steelD = C(0x5A6068), steelL = C(0xC4CAD2), rivet = C(0x3A3E44), stitch = C(0x4A2A24)
     c.rect(18, 26, 20, 2, steel); c.rect(18, 26, 20, 1, steelL); c.rect(37, 26, 1, 2, steelD)
-    for x in stride(from: 20, through: 36, by: 4) { c.px(x, 27, rivet) }
+    for x in [21, 29, 35] { c.px(x, 27, rivet) }
     c.pattern(19, 28, ["SSSSSS", "SS..SS", "SS..SS", "SSSSSS"], ["S": steel])
     c.px(19, 28, steelL); c.px(24, 31, steelD)
     c.rect(22, 29, 2, 2, C(0x6CFF40))                                           // the back eye, a green lens
-    c.pattern(26, 28, [".s.", "sss", ".s.", "sss", ".s."], ["s": stitch])          // a stitched seam down the face
-    c.rect(27, 33, 5, 1, C(0x5A2A20))
+    c.rect(27, 28, 1, 5, stitch); c.rect(26, 29, 3, 1, stitch); c.rect(26, 31, 3, 1, stitch)  // a stitched seam
+    c.rect(29, 33, 4, 1, C(0x5A2A20))
 }
 
 // MARK: - The Judge
@@ -140,12 +142,18 @@ private func drawJudge(_ c: PixelCanvas, _ p: Pose) {
     drawLegs(c, Look(leg: plateD), step: p.step)
     slayerBoots(c, step: p.step, plate, height: 3)
     c.oy += p.breathe
-    // The crest: a dome of blue skull and a row of curved horns sweeping back off it, bone at the tips.
-    let horns: [(Double, Double, Double, Double, Double)] = [(21, 18, 20, 15, 18), (26, 23, 19, 20, 16),
-                                                              (31, 29, 18, 26, 15), (35, 34, 19, 32, 17)]
-    for (bx, mx, my, tx, ty) in horns {
-        slayerLine(c, bx, 24, mx, my, skinD, 1.3)
-        slayerLine(c, mx, my, tx, ty, bone, 0.7)
+    // The crest: a dome of blue skull and two great ridged horns of bone, rising off the brow and sweeping back
+    // like an ibex's, thick at the root and tapering, dark rings round them; the far one smaller, behind.
+    let boneD = C(0x8E8470)
+    let horns: [(pts: [(Double, Double)], r: Double)] = [([(22, 24), (19.5, 20.5), (16, 19), (12.5, 19.5)], 0.85),
+                                                          ([(31, 24), (29, 18), (24.5, 14.5), (19.5, 14.5)], 1.05)]
+    for h in horns {
+        let rs = [h.r + 0.6, h.r + 0.2, h.r - 0.3]
+        for i in 0..<3 {
+            slayerLine(c, h.pts[i].0, h.pts[i].1, h.pts[i + 1].0, h.pts[i + 1].1, i == 0 ? boneD : bone, rs[i])
+        }
+        // The rings: a dark notch across the horn at each joint.
+        for i in 1..<3 { c.px(Int(h.pts[i].0.rounded()), Int(h.pts[i].1.rounded()), boneD) }
     }
     c.rect(20, 24, 16, 2, skin); c.rect(22, 23, 12, 1, skin); c.rect(23, 23, 8, 1, skinL); c.rect(35, 24, 1, 2, skinD)
     drawBody(c, Look(body: skin, shade: skinD, arm: plate, eye: nil), armRight: raise)
@@ -202,18 +210,22 @@ private func drawMayorWilclaws(_ c: PixelCanvas, _ p: Pose) {
     mayorHead(c)
 
     guard wipeK >= 0 else { return }
-    // Both hands together in front of him, the wipe between them, rubbing round and round.
-    let rub = Int((sin(wipeK * 26) * 1.3).rounded())
-    c.rect(38, 32, 4, 3, suit)
-    c.rect(41, 32 + rub, 3, 3, clawdOrange)
-    c.rect(42, 31 - rub, 3, 3, white); c.px(44, 31 - rub, C(0xD8E4EC)); c.px(42, 33 - rub, C(0xD8E4EC))
-    c.rect(43, 33, 3, 2, clawdOrange)
+    // Both hands held up in front of him, the big white wipe between them, rubbing up and down in turn.
+    let rub = Int((sin(wipeK * 26) * 1.5).rounded())
+    let crease = C(0xB8C8D4)
+    c.rect(38, 31, 3, 4, suit); c.px(40, 34, shirt)                              // the sleeve and its cuff
+    c.rect(41, 30 + rub, 3, 4, clawdOrange)                                     // the near hand
+    c.rect(44, 29, 4, 6, white); c.rect(44, 31, 4, 1, crease); c.px(47, 29, crease); c.px(44, 34, crease)
+    c.rect(47, 30 - rub, 3, 4, clawdOrange); c.px(49, 33 - rub, C(0xB05A3C))     // the far hand, over the other side
     if wipeK < 0.15 || wipeK > 0.85 {
         // The little packet, coming out of his pocket and going back.
-        c.rect(44, 35, 4, 2, C(0x6EB4E8)); c.px(45, 35, white)
+        c.rect(43, 35, 5, 3, C(0x6EB4E8)); c.rect(44, 36, 3, 1, white)
     }
     // A sparkle: clean as a whistle.
-    if Int(p.t * 6) % 3 == 0 { c.px(47, 30, white.alpha(0.8)); c.px(46, 29, white.alpha(0.35)); c.px(48, 29, white.alpha(0.35)) }
+    if Int(p.t * 6) % 3 == 0 {
+        c.px(51, 28, white)
+        for (dx, dy) in [(-1, 0), (1, 0), (0, -1), (0, 1)] { c.px(51 + dx, 28 + dy, white.alpha(0.22)) }
+    }
 }
 
 // MARK: - Adamm
@@ -237,12 +249,11 @@ private func drawAdamm(_ c: PixelCanvas, _ p: Pose) {
     slayerBoots(c, step: p.step, steelD, height: 2)
     c.oy += p.breathe
     drawBody(c, Look(arm: steel, eye: ink))
-    // Patches: grey-green hide on the shoulder and the chest, stitched on.
+    // Patches: grey-green hide on the shoulder and the chest, a plain steel plate on the other side, a single
+    // stitched seam where the hide meets Clawd.
     c.rect(18, 32, 6, 6, hide); c.rect(18, 37, 6, 1, hideD)
     c.rect(32, 33, 6, 5, steel); c.rect(32, 33, 6, 1, steelL); c.rect(37, 33, 1, 5, steelD)
-    for y in stride(from: 32, through: 37, by: 2) { c.px(24, y, stitch) }
-    for x in stride(from: 19, through: 23, by: 2) { c.px(x, 31, stitch) }
-    c.px(33, 34, steelD); c.px(36, 36, steelD)
+    c.rect(24, 32, 1, 6, stitch)
     // The chest panel, its two doors parting on the core.
     let gap = Int((open * 3).rounded())
     if open > 0 {
@@ -254,8 +265,8 @@ private func drawAdamm(_ c: PixelCanvas, _ p: Pose) {
     }
     c.rect(26 - gap, 33, 3, 5, steel); c.rect(29 + gap, 33, 3, 5, steel)
     c.px(26 - gap, 33, steelL); c.px(31 + gap, 37, steelD); c.px(27 - gap, 35, steelD); c.px(30 + gap, 35, steelD)
-    // A demon's horned ridge over the skull plate.
-    c.pattern(22, 23, ["..h....h....h..", ".hh...hh...hh..", "hhhhhhhhhhhhhh."], ["h": hideD])
+    // A demon's ridge over the skull plate: three blunt horns on a band of hide.
+    c.pattern(22, 23, [".h.....h.....h.", "hh....hh....hh.", "hhhhhhhhhhhhhh."], ["h": hideD])
     adamHead(c)
     // The arm gun, built in: a riveted barrel with a green glow at the muzzle.
     c.oy += p.gunY
@@ -278,8 +289,10 @@ private func drawProfessorWalshe(_ c: PixelCanvas, _ p: Pose) {
 
     drawLegs(c, Look(leg: C(0x2E3040)), step: p.step)
     slayerBoots(c, step: p.step, C(0x1A1A20), height: 1)
-    // The lab coat's skirts, hanging down to the knees: the legs still show beneath.
-    c.rect(17, 37, 22, seatedPose ? 2 : 4, coat); c.rect(17, seatedPose ? 38 : 40, 22, 1, coatD); c.px(27, 39, coatD)
+    // The lab coat's skirts, split at the front: short over the legs, so all four show at full length, and long at
+    // the sides, its edges hanging down past the knees either side of them.
+    c.rect(17, 37, 22, 2, coat); c.rect(17, 38, 22, 1, coatD); c.rect(27, 37, 1, 2, coatD)
+    if !seatedPose { c.rect(17, 39, 2, 3, coat); c.rect(37, 39, 2, 3, coatD); c.px(18, 41, coatD) }
     c.oy += p.breathe
     drawBody(c, Look(arm: coat))
     c.rect(18, 33, 20, 5, coat); c.rect(37, 33, 1, 5, coatD)
@@ -305,15 +318,18 @@ private func drawProfessorWalshe(_ c: PixelCanvas, _ p: Pose) {
     let board = C(0x9A6A3A), boardD = C(0x6E4824), paper = C(0xF6F4EA), clip = C(0xB0B6C0)
     c.rect(41, 28, 6, 8, board); c.rect(46, 28, 1, 8, boardD)
     c.rect(42, 29, 4, 6, paper); c.rect(42, 27, 4, 1, clip); c.rect(43, 26, 2, 1, clip)
-    let lines = noteK >= 0 ? Int(noteK * 4.99) : 3
+    let lines = noteK >= 0 ? Int(noteK * 3.99) : 3
     for k in 0..<3 { c.rect(42, 30 + k * 2, k < lines ? 3 : 1, 1, C(0x5A6070)) }
-    if noteK >= 0 && lines > 3 { c.px(45, 34, C(0x2A8A40)) }                   // and a tick
     if noteK >= 0 {
-        // The pen, tapping down the page.
-        let tap = Int(p.t * 7) % 2
+        // A green tick by each line she's done with.
+        for k in 0..<min(3, lines) { c.px(45, 30 + k * 2, C(0x2AA048)); c.px(44, 29 + k * 2, C(0x2AA048)) }
+        // The pen in her other hand, reaching over from the right, tapping down the page: a blue barrel, a red cap.
+        let lift = Int(p.t * 7) % 2 * 2
         let row = 30 + min(2, lines) * 2
-        c.rect(45, row - 4 - tap, 1, 4, C(0x2A2A30)); c.px(45, row - tap, C(0xC0C4CC))
-        c.rect(46, row - 2 - tap, 2, 2, clawdOrange)
+        let nx = 44.5, ny = Double(row - lift) + 0.5
+        slayerLine(c, nx, ny, nx + 5, ny - 5, C(0x2A3A8A), 0.6)
+        c.px(Int(nx + 5), Int(ny - 5), C(0xC03030)); c.px(Int(nx), Int(ny), C(0xC0C4CC))
+        c.rect(Int(nx) + 2, Int(ny) - 3, 3, 3, clawdOrange)
     }
     c.rect(38, 33, 4, 3, coat); c.rect(40, 33, 2, 2, clawdOrange)            // her hand on the board
 }
@@ -332,12 +348,17 @@ private func drawGlorificlaws(_ c: PixelCanvas, _ p: Pose) {
     let admire = s.map { keyed($0, [(0.06, 0), (0.18, 1), (0.44, 1), (0.5, 0)]) } ?? 0
 
     if admire > 0, !seatedPose {
-        // The front foot turned out and lifted, the red heel catching the light.
-        let up = Int((admire * 2).rounded())
+        // The front leg kicked up and forward, toe pointed, so she can admire the red heel; it catches the light.
         for lx in [19, 23, 31] { c.rect(lx, 36, 2, 8, clawdOrange); c.rect(lx, 43, 2, 1, shoe) }
-        c.rect(35, 36, 2, 7 - up, clawdOrange)
-        c.rect(35, 42 - up, 3, 1, shoe); c.px(37, 41 - up, shoe)
-        if Int(p.t * 8) % 2 == 0 { c.px(38, 39 - up, white.alpha(0.8)) }
+        let fx = 36 + 6 * admire, fy = 42.5 - 2.5 * admire
+        slayerLine(c, 36, 37, fx, fy, clawdOrange, 0.9)
+        let sx = Int(fx.rounded()), sy = Int(fy.rounded())
+        c.rect(sx - 1, sy - 1, 3, 1, shoe); c.rect(sx - 1, sy, 5, 1, shoe); c.px(sx - 1, sy + 1, shoe)  // shoe, heel
+        c.px(sx, sy - 1, dressL)
+        if admire > 0.9 && Int(p.t * 6) % 2 == 0 {
+            c.px(sx + 4, sy - 3, white)
+            for (dx, dy) in [(-1, 0), (1, 0), (0, -1), (0, 1)] { c.px(sx + 4 + dx, sy - 3 + dy, white.alpha(0.2)) }
+        }
     } else {
         drawLegs(c, Look(), step: p.step)
         slayerBoots(c, step: p.step, shoe, height: 1)
@@ -431,19 +452,32 @@ private func drawFirstEvilSelf(_ c: PixelCanvas, _ p: Pose) {
     }
     c.oy += p.breathe
     drawBody(c, Look(arm: hide, eye: nil))
-    // The mantle of hide over its hunched shoulders and back, ragged at the edge.
-    c.pattern(12, 30, [
-        "....HHHHHH..........................",
-        "..HHHHHHHHl.........................",
-        ".HHHHHHHHHH.........................",
-        "HHHHHHHHHHH.........................",
-        "HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH...",
-        ".HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH.",
-        ".HdHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHdH.",
-        "..H.dHH.HHd.HHHdHHH.HHd.HHHHd.HH.d..",
-        "...........H.....H.....H....H.......",
+    // The mantle of hide hunched over its back and draped round its shoulders, close to the body, hanging in
+    // ragged strands over the tops of its legs.
+    c.pattern(13, 28, [
+        "...HHHH...................",
+        "..HHHlHH..................",
+        ".HHHlHHH..................",
+        ".HHlHHHH..................",
+        "HHHHHHHH..................",
+        "HHHHHHHH..................",
+        "HHHHHHHHHHHHHHHHHHHHHHHHHH",
+        ".HdHHHHHHHHHHHHHHHHHHHHHdH",
+        ".HHdHHHHHHHHHHHHHHHHHHHdHH",
+        "..H.HdHH.HdH.HHdHH.HdH.Hd.",
+        "..d..H....d...H.....H..d..",
     ], ["H": hide, "l": hideL, "d": hideD])
-    c.rect(18, 34, 20, 1, hideL)
+    c.rect(19, 34, 19, 1, hideL)
+
+    // The horns, whatever face it wears: thick at the skull, curving up and out, paler at the tips.
+    for side in [-1.0, 1.0] {
+        let bx = 28 + side * 8
+        let pts: [(Double, Double)] = [(bx, 26), (bx + side * 3, 21), (bx + side * 4, 16), (bx + side * 2, 12)]
+        let r: [Double] = [1.8, 1.4, 0.9]
+        for i in 0..<3 {
+            slayerLine(c, pts[i].0, pts[i].1, pts[i + 1].0, pts[i + 1].1, i == 2 ? hornL : horn, r[i])
+        }
+    }
 
     switch face {
     case 0: oldMasterHead(c)
@@ -451,15 +485,6 @@ private func drawFirstEvilSelf(_ c: PixelCanvas, _ p: Pose) {
     case 2: c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink); gloryHead(c)
     case 3: c.rect(32, 29, 2, 3, ink); adamHead(c)
     default:
-        // The horns: thick at the skull, curving up and out, paler at the tips.
-        for side in [-1.0, 1.0] {
-            let bx = 28 + side * 8
-            let pts: [(Double, Double)] = [(bx, 26), (bx + side * 3, 21), (bx + side * 4, 16), (bx + side * 2, 12)]
-            let r: [Double] = [1.8, 1.4, 0.9]
-            for i in 0..<3 {
-                slayerLine(c, pts[i].0, pts[i].1, pts[i + 1].0, pts[i + 1].1, i == 2 ? hornL : horn, r[i])
-            }
-        }
         c.rect(17, 25, 22, 1, hideD); c.rect(19, 24, 18, 1, hideD)
         // The demon's brow, the burning eyes, the snout and the fangs.
         c.pattern(19, 26, ["BB..............BB", ".BBBB........BBBB.", "...BBB......BBB...",
@@ -513,15 +538,24 @@ private func drawPreacherCalebb(_ c: PixelCanvas, _ p: Pose) {
     c.rect(23, 21, 1, 2, suitL)
 
     if out > 0 {
-        // The arm held out in front, the sleeve rolled back off the forearm, the cuff turning over.
-        let len = Int((out * 4).rounded())
-        let back = Int((roll * 4).rounded())
-        c.rect(38, 33, 2 + len, 3, suit)
-        if back > 0 { c.rect(44 - back, 33, back, 3, clawdOrange) }
-        c.rect(max(38, 43 - back), 33, 1, 3, collar)
-        c.rect(40 + len, 33, 3, 3, clawdOrange); c.px(41 + len, 34, gold)
+        // The forearm raised in front of him, elbow bent, fist up: the black sleeve rolls down off it, the white
+        // shirt cuff turning over in a thick band, and the bare forearm (shaded on its far side) shows above it.
+        let fist = 35 - Int((out * 9).rounded())                               // the top of the fist
+        let skinD = C(0xB05A3C), cuffD = C(0x8E8E8A)
+        c.rect(38, 33, 5, 3, suit)                                              // the upper arm, out to the elbow
+        c.rect(42, fist + 3, 3, 36 - fist - 3, suit); c.rect(44, fist + 3, 1, 36 - fist - 3, suitD)
+        let bare = min(36 - fist - 6, Int((roll * 4).rounded()))
+        if bare > 0 { c.rect(42, fist + 3, 2, bare, clawdOrange); c.rect(44, fist + 3, 1, bare, skinD) }
+        if fist + 3 + bare + 1 < 36 {
+            // The rolled cuff: a band of white shirt, its turned-over fold in grey shadow under it.
+            c.rect(41, fist + 3 + bare, 5, 1, C(0xE6E4DC)); c.rect(41, fist + 4 + bare, 5, 1, cuffD)
+            c.px(45, fist + 3 + bare, cuffD)
+        }
+        // The fist, bigger than the wrist, knuckles forward, the gold ring on them.
+        c.rect(41, fist - 1, 5, 4, clawdOrange); c.rect(45, fist - 1, 1, 4, skinD); c.rect(41, fist + 2, 5, 1, skinD)
+        c.px(44, fist, gold)
         if roll > 0.99, let s, s > 0.6, s < 0.85, Int(s * 40) % 3 == 0 {
-            c.px(44 + len, 32, white.alpha(0.7))                                 // a crack of the knuckles
+            c.px(47, fist - 2, white); c.px(48, fist - 3, white.alpha(0.2))     // a crack of the knuckles
         }
         return
     }
@@ -540,46 +574,47 @@ private func drawPreacherCalebb(_ c: PixelCanvas, _ p: Pose) {
 /// in her hands, and its letters lift off the page and stream up into her arms ("Bored now.").
 private func drawDarkWillow(_ c: PixelCanvas, _ p: Pose) {
     let top = C(0x1E1A22), topD = C(0x0E0C12), topL = C(0x3A3442)
-    let hair = C(0x16121A), hairL = C(0x3A3048), hairD = C(0x08060A), part = C(0x2A2034)
-    let vein = C(0x1E0418), veinHot = C(0x9A0A26)
+    let hair = C(0x1A1420), hairL = C(0x4A3A5C), hairD = C(0x08060A), part = C(0x2E2238)
+    let vein = C(0x9A0A26), veinHot = C(0xE81838)
     let bookK = p.signature.map { $0 > 0.06 && $0 < 0.92 ? ($0 - 0.06) / 0.86 : -1 } ?? -1
 
     drawLegs(c, Look(leg: C(0x1A181E)), step: p.step)
     slayerBoots(c, step: p.step, C(0x0A080C), height: 2)
     c.oy += p.breathe
     drawBody(c, Look(arm: top, eye: nil), armRight: bookK >= 0 ? 1 : p.armRaise)
-    // Black eyes, a red glint in them, and the veins: few and bold.
-    c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink); c.px(23, 29, C(0x8A0A24)); c.px(33, 29, C(0x8A0A24))
+    // Black eyes, a red glint in them, and the veins: few and bold, crimson strokes forking out from the eyes,
+    // burning brighter while she reads.
+    c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink); c.px(23, 29, C(0xD8102C)); c.px(33, 29, C(0xD8102C))
     let hot = bookK >= 0 && Int(p.t * 5) % 2 == 0
     let v = hot ? veinHot : vein
-    c.pattern(20, 27, [
-        "v..............v",
-        ".v............v.",
-        "................",
-        "................",
-        "................",
-        ".v.v........v.v.",
-        "v..v........v..v",
+    c.pattern(19, 27, [
+        "vv..............vv",
+        ".vv............vv.",
+        "..................",
+        "..................",
+        "..................",
+        "..vv..........vv..",
+        ".vv............vv.",
     ], ["v": v])
     // The long black top, high at the neck.
     c.rect(18, 34, 20, 4, top); c.rect(37, 34, 1, 4, topD); c.rect(18, 37, 20, 1, topD); c.rect(25, 34, 6, 1, topL)
-    // The same hair as Willow's, gone black.
+    // The same hair as Willow's, gone black with a plum sheen, falling close at the sides so the face shows.
     c.pattern(16, 20, [
         ".....HHHHHHpHHHHHH......",
-        "....HHHHHHHpHHHHHHH.....",
-        "...HHHlHHHHpHHHHHlHH....",
-        "..HHHHHHHHHpHHHHHHHHH...",
-        "..HHHHHHHHHpHHHHHHHHHH..",
+        "....HHlllHHpHHHHHHH.....",
+        "...HHlHHHHHpHHHHHlHH....",
+        "..HHlHHHHHHpHHHHHHlHH...",
+        "..HlHHHHHHHpHHHHHHHHHH..",
         ".HHHHHHHHHHpHHHHHHHHHHH.",
-        ".HHHHHHHH......HHHHHHHH.",
-        ".HHH................HHH.",
-        ".HHH................HHH.",
-        ".HHl................HHH.",
-        ".HHH................lHH.",
-        ".HHH................HHH.",
-        ".HHH................HHH.",
-        ".HHd................dHH.",
-        ".HHd................dHH.",
+        ".HHHHHHH........HHHHHHH.",
+        ".HH..................HH.",
+        ".HH..................HH.",
+        ".Hl..................HH.",
+        ".Hl..................HH.",
+        ".HH..................lH.",
+        ".HH..................HH.",
+        ".Hd..................dH.",
+        ".Hd..................dH.",
         ".dHd................dHd.",
         ".dd..................dd.",
     ], ["H": hair, "l": hairL, "d": hairD, "p": part])
@@ -588,28 +623,37 @@ private func drawDarkWillow(_ c: PixelCanvas, _ p: Pose) {
         c.rect(39, 34 - p.armRaise, 2, 2, clawdOrange); c.px(39, 34 - p.armRaise, vein)
         return
     }
-    // The open book held out in front of her.
-    let cover = C(0x5A1A1E), page = C(0xEAE0C8), text = C(0x3A3030)
-    c.pattern(39, 32, [
-        "PPPP.PPPP",
-        "PPPPsPPPP",
-        "PPPPsPPPP",
-        "CCCCCCCCC",
-        ".CCCCCCC.",
-    ], ["P": page, "s": C(0x3A1012), "C": cover])
-    let left = bookK > 0.85 ? 1 : 3 - Int(bookK * 3)                             // the text going as the letters leave
-    for k in 0..<left { c.rect(40 + k % 2, 32 + k, 2, 1, text); c.rect(45 + k % 2, 32 + k, 2, 1, text) }
+    // The open book held out in front of her: big pale pages, lines of black text, a blood-red cover.
+    let cover = C(0x6A1A22), coverD = C(0x3E0C12), page = C(0xF0E6CC), pageD = C(0xC8BCA0), text = C(0x2A1A1E)
+    c.pattern(39, 30, [
+        ".PPPPP.PPPPP",
+        "PPPPPPsPPPPD",
+        "PPPPPPsPPPPD",
+        "PPPPPPsPPPPD",
+        "PPPPPPsPPPPD",
+        "CCCCCCCCCCCC",
+        ".cccccccccc.",
+    ], ["P": page, "D": pageD, "s": C(0x8A7A60), "C": cover, "c": coverD])
+    let left = bookK > 0.85 ? 0 : 4 - Int(bookK * 4.2)                          // the text going as the letters leave
+    for k in 0..<max(0, left) {
+        c.rect(40, 31 + k, k % 2 == 0 ? 4 : 3, 1, text); c.rect(46, 31 + k, k % 2 == 0 ? 3 : 4, 1, text)
+    }
     c.rect(38, 34, 2, 2, clawdOrange); c.px(38, 34, vein)
-    // Letters lifting off the page and arcing back into her arms.
+    // Letters lifting off the page in a red glow and arcing back into her arm.
     guard bookK < 0.95 else { return }
-    for k in 0..<5 {
-        let f = frac(p.t * 0.8 + Double(k) / 5)
-        let x = 44 - f * 9, y = 33 - sin(f * .pi) * 9 - f * 1
-        let col = (k % 2 == 0 ? C(0x14080A) : C(0x2A0810)).alpha(f > 0.85 ? (1 - f) / 0.15 * 0.2 : 1)
+    for k in 0..<4 {
+        let f = frac(p.t * 0.8 + Double(k) / 4)
+        let x = 46 - f * 7, y = 29 - sin(f * .pi) * 7 + f * 3
+        let fade = f < 0.12 ? f / 0.12 : f > 0.8 ? (1 - f) / 0.2 : 1
         let xi = Int(x.rounded()), yi = Int(y.rounded())
-        if k % 3 == 0 { c.rect(xi, yi, 2, 1, col); c.px(xi, yi + 1, col) }
-        else if k % 3 == 1 { c.px(xi, yi, col); c.px(xi + 1, yi + 1, col); c.px(xi, yi + 1, col) }
-        else { c.rect(xi, yi, 1, 2, col); c.px(xi + 1, yi, col) }
-        c.px(xi - 1, yi, C(0xD8102C, 0.2))
+        c.glowLine(Double(xi) + 1, Double(yi) + 1.5, Double(xi) + 1, Double(yi) + 1.5, core: C(0xFF3A50, 0),
+                   glow: C(0xD8102C), coreR: 0.1, glowR: 2.4, strength: 0.3 * fade)
+        let col = (k % 2 == 0 ? C(0xFF4A5E) : C(0xF0E6CC)).alpha(fade < 1 ? fade * 0.2 : 1)
+        switch k {
+        case 0: c.pattern(xi, yi, ["LL", "L.", "LL"], ["L": col])
+        case 1: c.pattern(xi, yi, ["L.L", ".L.", "L.L"], ["L": col])
+        case 2: c.pattern(xi, yi, [".L", "LL", ".L"], ["L": col])
+        default: c.pattern(xi, yi, ["LLL", ".L.", ".L."], ["L": col])
+        }
     }
 }
