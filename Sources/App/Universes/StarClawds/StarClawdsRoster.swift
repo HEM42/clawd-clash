@@ -7,20 +7,11 @@ import Foundation
 // Ids are Clawd Wars' own (`Universe.starWars.base` is 0): villains `SWVillain.rawValue`, heroes 100 + `SWHero.rawValue`.
 // Only ever append cases, so running sessions keep their characters across an update.
 
-enum SWVillain: Int, CaseIterable {
-    case vader, kylo, maul, boba, trooper, emperor, rogr, dooku, gamorrean, jabba, ig88, atst, atat, rancor, greedo, royalGuard
-    case sebulba, salacious, grievous, tusken, cadBane, thrawn, hammerhead, mse6, baylan, shinHati, id9, grandInquisitor, secondSister, bantha, bibFortuna
-    case watto, moffGideon, deathTrooper, scoutTrooper, ventress, savageOpress, jangoFett, bossk, dengar, droideka, phasma, krennic, tarkin, fifthBrother, reva
-
+extension SWVillain {
     var persona: Persona { starWarsVillainPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-enum SWHero: Int, CaseIterable {
-    case luke, han, leia, obiwan, r2d2, c3po, quigon, mace, yoda, jawa, chewie, rey, ahsoka, ewok, tauntaun
-    case jarjar, lando, zorii, boKatan, maz, wedge, l337, monMothma, padme, ackbar
-    case grogu, babuFrik, mando, k2so, gonk, cassian, bix, cobbVanth, pitDroid, kuiil
-    case hem   // always last (`Universe.hem`)
-
+extension SWHero {
     var persona: Persona { starWarsHeroPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 

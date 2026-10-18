@@ -9,37 +9,11 @@ import Foundation
 // 100 + `SlayerHero.rawValue`. Only ever append cases (HEM stays last), so running sessions keep their characters
 // across an update.
 
-enum SlayerHero: Int, CaseIterable {
-    // The Scooby Gang
-    case buffyClawmers, willowRosenclaw, xanderHarrows, rupertGyles, cordeliaChaise, ozz, anyaJinkins, taraMaclaw
-    case spyke, dawnClawmers, joyceClawmers
-    // Slayers, Watchers and Potentials
-    case faithLehayne, kendraYung, firstSlayer, jennyClawlendar, robinWoode, kennedie, vy, rhona
-    // Sunnydale friends
-    case rileyFynn, jonathanLevinsun, clemm, whistlr, sidTheDummy
-    // Angel Investigations
-    case angstel, wesleyWindupPryce, charlesGunne, fredBurkel, lorn, doyl, conner, kateLockclaw, groosalug, drogynn
-    // Pets (agent-only)
-    case missKitty
-    case hem   // always last (`Universe.hem`)
-
+extension SlayerHero {
     var persona: Persona { slayerHeroPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-enum SlayerVillain: Int, CaseIterable {
-    // Vampires
-    case oldMaster, lukewarm, darlah, drusillah, mrTricks, harmonyClawdall, kakistoes, sundae, lyleGrouch, draclawla
-    case turokHahn
-    // Big Bads
-    case judge, mayorWilclaws, adamm, professorWalshe, glorificlaws, firstEvil, preacherCalebb, darkWillow
-    // Henchmen, rivals and monsters of the week
-    case bringer, knightOfByzantium, dok, gentlemen, andrewWellz, ethanRaine, sweete, tedd, molok, olaffTheTroll
-    case dHoffrin, halfreck, veruka, gwendolynPoste, quentinTravesty, principalSnide
-    // Wolfram & Hart and Angel's foes
-    case lindseyMcDonclawd, lilahMorgane, hollandMannerly, jazzmine, stoneBeast, holts, sahjhann, illyrya, skipp
-    // Agent-only small fry
-    case fledgling, gloryMinion, gachnar, amyTheRat
-
+extension SlayerVillain {
     var persona: Persona { slayerVillainPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 

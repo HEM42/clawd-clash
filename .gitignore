@@ -19,3 +19,6 @@ CLAUDE-SECURITY-*/
 promo/*
 !promo/clawd-clash-promo.mp4
 !promo/clawd-clash-bloopers.mp4
+
+# Tools/Baseline output (kept out of build/, which ./build.sh deletes)
+.baseline/

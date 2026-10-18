@@ -7,22 +7,11 @@ import Foundation
 // Ids: villains `RingsVillain.rawValue`, heroes 100 + `RingsHero.rawValue`, plus `Universe.middleEarth.base`. Only ever
 // append cases, so running sessions keep their characters across an update.
 
-enum RingsVillain: Int, CaseIterable {
-    case sauron, saruman, witchKing, nazgul, balrog, gollum, uruk, orc, shelob
-    case wormtongue, lurtz, gothmog, mouthOfSauron, watcher, oliphaunt, barrowWight, warg
-    case denethor, ugluk, grishnakh, shagrat, ologHai, caveTroll, kingOfTheDead, corsair, haradrim, easterling, oldManWillow
-    case lotho, billFerny, sharkey, necromancer, smaug, azog, bolg, goblinKing, mirkwoodSpider, masterOfLaketown
-
+extension RingsVillain {
     var persona: Persona { middleEarthVillainPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-enum RingsHero: Int, CaseIterable {
-    case gandalf, frodo, sam, pippin, aragorn, legolas, gimli, boromir, galadriel
-    case merry, bilbo, elrond, arwen, theoden, faramir, treebeard, bombadil, gandalfWhite, eowyn
-    case radagast, glorfindel, haldir, celeborn, eomer, butterbur, rosie, farmerMaggot, quickbeam, strider
-    case thorin, balin, kili, fili, gloin, bard, beorn, thranduil
-    case hem   // always last (`Universe.hem`)
-
+extension RingsHero {
     var persona: Persona { middleEarthHeroPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 

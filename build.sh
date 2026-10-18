@@ -70,7 +70,8 @@ echo "→ compiling app, hook and screen saver"
 # The app carries the screen saver's view too: the window's third view is the screen saver itself.
 compile "$APP/Contents/MacOS/ClawdClash" "${DEV_FLAGS[@]}" -framework ScreenSaver Sources/Shared/*.swift Sources/App/*.swift Sources/App/Universes/**/*.swift Sources/Saver/*.swift &
 APP_JOB=$!
-compile "$APP/Contents/MacOS/clawd-clash-hook" Sources/Shared/*.swift Sources/Hook/main.swift &
+# The hook knows each universe through its facts file alone: no drawing code.
+compile "$APP/Contents/MacOS/clawd-clash-hook" Sources/Shared/*.swift Sources/App/Universes/*/*Facts.swift Sources/Hook/main.swift &
 HOOK_JOB=$!
 compile "$SAVER/Contents/MacOS/ClawdClashSaver" -module-name ClawdClashSaver -emit-library -framework ScreenSaver \
     -Xlinker -install_name -Xlinker @rpath/ClawdClashSaver \

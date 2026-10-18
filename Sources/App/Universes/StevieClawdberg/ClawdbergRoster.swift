@@ -10,54 +10,11 @@ import Foundation
 // 100 + `ClawdbergHero.rawValue`. Only ever append cases (HEM stays last), so running sessions keep their characters
 // across an update.
 
-enum ClawdbergHero: Int, CaseIterable {
-    // Gremlins
-    case billyPeltclawd, kateBeringer, gizmoe, randPeltclawd, lynnPeltclawd, mrWing, futterclaw, grandpaDread
-    // E.T.
-    case eClawd, elliclawd, gurtie
-    // Jaws
-    case chiefBroody, hoopah, squint
-    // The Goonies
-    case mikeyWaltz, brandWaltz, chunk, mouth, data, andyCarmichaw, stefSteinclawd, slawth
-    // Indiana Jones
-    case indianaBones, marion, shortRounds, willieScoot, sallaw, henryBones, marcusBrodie, grailKnight, mutt, helenaShore
-    // Jurassic Park
-    case alanGrand, ellieSaddler, ianMalclawm, johnHammend, muldune, timMurphey, lexMurphey, rayArnie, owenGravy
-    case claireDaring, blue, trike
-    // Close Encounters
-    case royNeery, jillianGeyser, littleBarry, clawdLacombe, tallVisitor
-    // Hook
-    case peterPanning, tinkerbelle, roofio, thudButt, jackBanning, tootles
-    // Back to the Future
-    case martyMcFry, docBrawn, jenniferParka, georgeMcFry, lorraineBaynes, einsteinDog, claraClawton, goldieWilsun
-    case hem   // always last (`Universe.hem`)
-
+extension ClawdbergHero {
     var persona: Persona { clawdbergHeroPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-enum ClawdbergVillain: Int, CaseIterable {
-    // Gremlins
-    case strype, mohawk, theBrain, batGremlin, electricGremlin, greta, daffy, mrsDeegle, drClawtheter
-    // E.T.
-    case keyz, spacesuitMan
-    // Jaws
-    case bruise, mayorVaun
-    // The Goonies
-    case mamaFratelly, jakeFratelly, francisFratelly, troyPerkins, elginPerkins, oneEyedWilly
-    // Indiana Jones
-    case reneBellock, majorTote, cairoSwordsman, mechanic, molaRamm, laoChay, colonelVogle, walterDonnervan
-    case elsaSnyder, irinaSpalco, jurgenVollar, maharajah
-    // Jurassic Park
-    case tWrecks, cleverGirl, spitter, dennisNerdry, indominusRex, gennarrow, drWoo
-    // Close Encounters
-    case majorMildBill, gasMaskTrooper
-    // Hook
-    case captainClawk, mrSmeeh, billJukes
-    // Back to the Future
-    case biffTannin, oldBiff, griffTannin, madDogTannin, mrStricklaw, needles
-    // Agent-only small fry
-    case compy, mogwaiPup, snake, frog, crocClock
-
+extension ClawdbergVillain {
     var persona: Persona { clawdbergVillainPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 

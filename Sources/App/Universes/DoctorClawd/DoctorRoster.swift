@@ -9,45 +9,12 @@ import Foundation
 // 100 + `DoctorHero.rawValue`. Only ever append cases (HEM stays last), so running sessions keep their characters
 // across an update.
 
-enum DoctorHero: Int, CaseIterable {
-    // The Doctors
-    case doctorTen
-    case doctorOne, doctorTwo, doctorThree, doctorFour, doctorFive, doctorSix, doctorSeven, doctorEight, doctorNine
-    case doctorEleven, doctorTwelve, doctorThirteen, doctorFourteen, doctorFifteen
-    case warDoctor, fugitiveDoctor
-    // Companions and allies
-    case susan, ian, barbara, jamie, zoe, brigadier, jo, sarahJane, leelah, kCanine
-    case romanah, nyssa, tegan, pery, mel, ace
-    case rose, jack, martha, donna, wilf
-    case amy, rory, river, clara, vasta, jenny, stracks
-    case bill, nardoll, yaz, graham, ryan, dan
-    case ruby, belinda, kate, osgoode
-    case hem   // always last (`Universe.hem`)
-
+extension DoctorHero {
     var persona: Persona { doctorHeroPersonas[self] ?? Persona.missing(String(describing: self)) }
-
-    /// The Doctors themselves (the sonic screwdriver's owners, and who a regeneration moves between), in order.
-    static let doctors: [DoctorHero] = [.doctorOne, .doctorTwo, .doctorThree, .doctorFour, .doctorFive, .doctorSix,
-                                        .doctorSeven, .doctorEight, .doctorNine, .doctorTen, .doctorEleven,
-                                        .doctorTwelve, .doctorThirteen, .doctorFourteen, .doctorFifteen]
-    var isDoctor: Bool { DoctorHero.doctors.contains(self) || self == .warDoctor || self == .fugitiveDoctor }
 }
 
-enum DoctorVillain: Int, CaseIterable {
-    case dalick
-    // Time Lords and named villains
-    case master, burntMaster, velvetMaster, snakeskinMaster, sexton, missy, spyMaster
-    case davross, ranee, omegah, rascilon, toyfaker, sootekh, grateIntelligence, valeyarn
-    // The monsters
-    case supremeDalick, dalickEmperor, mondasianCyberperson, cyberperson, cyberController, sontaron
-    case weepingAngle, silents, odd, zygone, silurean, seaDevvil, iceWarior, autom, judoom, slitheem, sycorex
-    case vashtaNerado, emptyKid, clockworkDroid, candyman, cassandro, maestro
-    // Agent-only small fry
-    case adipoze, cybermite, toclafayne
-
+extension DoctorVillain {
     var persona: Persona { doctorVillainPersonas[self] ?? Persona.missing(String(describing: self)) }
-
-    var isDalick: Bool { [.dalick, .supremeDalick, .dalickEmperor].contains(self) }
 }
 
 let doctorHeroPersonas: [DoctorHero: Persona] = [doctorHeroes1, doctorHeroes2, doctorHeroes3, doctorHeroes4, doctorHeroes5,

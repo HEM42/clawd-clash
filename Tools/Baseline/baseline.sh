@@ -2,8 +2,9 @@
 # Renders the reference set the universe-modules refactor is checked against: every character, place, ride, magic
 # stream, drill, a fight and the transitions for each universe, the docs pictures, every reel's storyboard, and every
 # saved id and what it means. Same code, same pictures: compare two runs with Tools/Baseline/compare.sh.
-#   Tools/Baseline/baseline.sh build/baseline           everything (the reels' storyboards take a few minutes)
-#   QUICK=1 Tools/Baseline/baseline.sh build/check      without the storyboards
+#   Tools/Baseline/baseline.sh .baseline/main           everything (the reels' storyboards take a few minutes)
+#   QUICK=1 Tools/Baseline/baseline.sh .baseline/check  without the storyboards
+# Keep the output out of build/: ./build.sh deletes that folder. .baseline/ is git-ignored.
 # The full moon is forced off, so Clawd Slayer's werewolves don't change with the date, and BASELINE=1 pins the
 # cantina's band, which is otherwise picked at random.
 set -euo pipefail

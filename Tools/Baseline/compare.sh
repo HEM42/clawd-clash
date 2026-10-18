@@ -1,6 +1,6 @@
 #!/bin/zsh
 # Compares two baseline runs (Tools/Baseline/baseline.sh) file by file: the same pixels give the same PNG bytes.
-#   Tools/Baseline/compare.sh build/baseline build/check
+#   Tools/Baseline/compare.sh .baseline/main .baseline/check
 set -uo pipefail
 A="${1:?usage: compare.sh <baseline> <new>}"; B="${2:?usage: compare.sh <baseline> <new>}"
 diffs=0

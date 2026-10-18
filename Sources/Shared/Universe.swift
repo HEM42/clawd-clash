@@ -32,14 +32,18 @@ enum Universe: Int, CaseIterable, Codable {
     }
     var base: Int { rawValue * 1000 }
 
-    var villainCount: Int {
-        switch self { case .starWars: return 46; case .marvel: return 88; case .dc: return 97; case .doctor: return 42; case .clawdFiles: return 46
-        case .clawdberg: return 54; case .middleEarth: return 38; case .slayer: return 48 }
+    /// What the hook, the app and the screen saver know about it: its `<Prefix>Facts.swift`. Hand-listed for now; the
+    /// universe-modules refactor generates this list from the folders.
+    var facts: UniverseFacts {
+        switch self {
+        case .starWars: return StarClawdsFacts.facts; case .marvel: return MarvelousFacts.facts; case .dc: return DetectiveFacts.facts
+        case .doctor: return DoctorFacts.facts; case .clawdFiles: return FilesFacts.facts; case .clawdberg: return ClawdbergFacts.facts
+        case .middleEarth: return RingsFacts.facts; case .slayer: return SlayerFacts.facts
+        }
     }
-    var heroCount: Int {
-        switch self { case .starWars: return 36; case .marvel: return 106; case .dc: return 111; case .doctor: return 56; case .clawdFiles: return 36
-        case .clawdberg: return 64; case .middleEarth: return 38; case .slayer: return 36 }
-    }
+
+    var villainCount: Int { facts.villainCount }
+    var heroCount: Int { facts.heroCount }
 
     /// HEM: the same rare face in every universe, last of the heroes. He's never in the regular pools (`lightCast`);
     /// a new session or agent turns out to be him now and then (`hemOdds`), and he stays himself across universes.
@@ -49,69 +53,36 @@ enum Universe: Int, CaseIterable, Codable {
     static let hemOdds = (session: 1.0 / 50, agent: 1.0 / 150)
 
     /// Small fry that only ever turn up as agents, never leading a session (global ids).
-    var agentOnly: Set<Int> {
-        switch self {
-        case .starWars: return [23, 26]                                           // MSE-6, ID9 seeker droid
-        case .marvel: return Set([11, 33, 190, 202, 203, 204].map { base + $0 })  // Ultron Sentry, Doombot, Jeff, Zabu, Morris, Dum-E
-        // Joker Goon, Dex-Starr, Mister Mind, Krypto, Ch'p, Ace the Bat-Hound, Streaky, Gleek, Beppo
-        case .dc: return Set([22, 49, 77, 131, 139, 206, 207, 208, 209].map { base + $0 })
-        case .doctor: return Set([39, 40, 41].map { base + $0 })                // Adipoze, Cybermite, Toclafayne
-        case .clawdFiles: return Set([43, 44, 45].map { base + $0 })            // killer bee, robo-roach, flukeworm
-        case .clawdberg: return Set((49...53).map { base + $0 })                // Compy, mogwai pup, snake, frog, Croc Clock
-        case .middleEarth: return []
-        // a fledgling vampire, one of Glory's minions, Gachnar, Amy the rat; Miss Kitty Fanclawstico
-        case .slayer: return Set((44...47).map { base + $0 } + [base + StatusStore.heroBase + 34])
-        }
-    }
+    var agentOnly: Set<Int> { Set(facts.agentOnly.map { base + $0 }) }
 
     /// With another AI running, Claude Code's side: false = heroes, true = villains, nil = whoever came first keeps
     /// the side it mostly has (Star Wars, as Clawd Wars always did).
-    var claudeSide: Bool? { self == .starWars ? nil : false }
+    var claudeSide: Bool? { facts.claudeSide }
 
     /// Characters that never lead two sessions back to back (Vader and Kylo; Angstel and Spyke), as global ids.
-    var rivals: Set<Int> {
-        switch self {
-        case .starWars: return [0, 1]
-        case .slayer: return [base + StatusStore.heroBase + 24, base + StatusStore.heroBase + 8]
-        default: return []
-        }
-    }
+    var rivals: Set<Int> { Set(facts.rivals.map { base + $0 }) }
 
     /// One character in two guises, as global ids: never on screen together (the casting and `StatusStore.snapshot`
-    /// keep to it). Clawd of the Rings: Gandclawd the Grey and the White (`RingsHero` 0 and 17), Arrogorn and Stride-r
-    /// (`RingsHero` 4 and 28), Sarumanual and Sharkey (`RingsVillain` 1 and 30), Sourun and the Necro-maintainer
-    /// (`RingsVillain` 0 and 31).
-    var guises: [Set<Int>] {
-        guard self == .middleEarth else { return [] }
-        let hero = base + StatusStore.heroBase
-        return [[hero, hero + 17], [hero + 4, hero + 28], [base + 1, base + 30], [base, base + 31]]
-    }
+    /// keep to it). Clawd of the Rings has them (`RingsFacts`).
+    var guises: [Set<Int>] { facts.guises.map { Set($0.map { base + $0 }) } }
 
     /// Characters who only ever appear at home, as global id → place key: anywhere else, and on the desktop (no place),
-    /// they're shown as someone else (`Roster.recast`). Clawd of the Rings: Smaug the Stashed (`RingsVillain` 32) on his
-    /// hoard in the Lonely Mount-point.
-    var homebound: [Int: String] { self == .middleEarth ? [base + 32: "erebor"] : [:] }
+    /// they're shown as someone else (`Roster.recast`). Clawd of the Rings' Smaug the Stashed (`RingsFacts`).
+    var homebound: [Int: String] { Dictionary(uniqueKeysWithValues: facts.homebound.map { (base + $0.key, $0.value) }) }
 
-    /// The Clawd Files: the seven FBI agents (Clawder, Scrawly, Skinnard, Doggedd, Reyez, Einstine, Millar), as global
-    /// ids. When one's session is compacted they lose some time: abducted and set back down, the same face
-    /// (`StatusStore`'s PreCompact, `MissingTime`).
-    /// Stevie Clawdberg: Back to the Future's time travellers (Marty, Doc Brawn, Jennifer, Einstein the Dog, and Old
-    /// Biff, who stole the DeLorean). When one's session is compacted they hit 88 mph and come back (`OutaTime`).
-    /// Clawd Slayer: the eight from "Tabula Rasa" (Buffy, Willow, Xander, Giles, Anya, Tara, Spyke, Dawn). When one's
-    /// session is compacted Willow's forgetting spell goes off, then wears off: the same face (`SlayerTabulaRasa`).
+    /// Who's gone for a moment when their session is compacted, the same face when they're back, as global ids
+    /// (`StatusStore`'s PreCompact): The Clawd Files' FBI agents (`MissingTime`), Stevie Clawdberg's time travellers
+    /// (`OutaTime`), Clawd Slayer's eight from "Tabula Rasa" (`SlayerTabulaRasa`).
     var abductees: Set<Int> {
-        switch self {
-        case .clawdFiles: return Set((0...6).map { base + StatusStore.heroBase + $0 })
-        case .clawdberg: return Set([55, 56, 57, 60].map { base + StatusStore.heroBase + $0 } + [base + 44])
-        case .slayer: return Set([0, 1, 2, 3, 6, 7, 8, 9].map { base + StatusStore.heroBase + $0 })
-        default: return []
-        }
+        if case .away(let who)? = facts.compaction { return Set(who.map { base + $0 }) }
+        return []
     }
 
-    /// Doctor Clawd: the Doctors in order (One … Fifteen), as global ids. When a session's context is compacted, its
-    /// Doctor regenerates into the next one (`StatusStore`'s PreCompact); nobody else changes.
+    /// Doctor Clawd: the Doctors in order, as global ids. When a session's context is compacted, its Doctor
+    /// regenerates into the next one (`StatusStore`'s PreCompact); nobody else changes.
     var regenerations: [Int] {
-        self == .doctor ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14].map { base + StatusStore.heroBase + $0 } : []
+        if case .regenerate(let order)? = facts.compaction { return order.map { base + $0 } }
+        return []
     }
 
     /// Whether people can pick it: Settings, Random, Clawd Royale and the screen saver only offer released universes.
