@@ -38,6 +38,8 @@ func placeImage(_ l: Location, t: Double) -> CGImage {
     return ctx.makeImage()!
 }
 
+// The baseline (Tools/Baseline) needs the same pictures every run: the cantina's band is otherwise picked at random.
+if ProcessInfo.processInfo.environment["BASELINE"] != nil { starClawdsBandForced = false }
 let full = CGRect(x: 0, y: 0, width: W, height: H)
 
 struct Transition {

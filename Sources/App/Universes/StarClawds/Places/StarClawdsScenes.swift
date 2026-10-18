@@ -2312,6 +2312,10 @@ private enum StarWarsScenes {
 // white-plaster adobe walls with arched booth alcoves, hanging lamps, the curved bar with its
 // bottle shelf, a packed-earth floor, and Figrin D'an and the Modal Nodes on their little stage.
 
+/// Set by the tools before anything is drawn, so a picture is the same every run (Tools/Baseline): false for the
+/// Modal Nodes, true for the Max Rebo Band. Nil (the app): picked at random.
+var starClawdsBandForced: Bool?
+
 private enum StarWarsCantina {
     // Palette
     static let plaster = C(0xD9CBB0), plasterShade = C(0xB8A88C), plasterDark = C(0x9C8C70)
@@ -2467,7 +2471,7 @@ private enum StarWarsCantina {
     static let bandWidth = 66
 
     /// Which band is playing: the Modal Nodes, or (at random) the Max Rebo Band. Re-rolled on each visit.
-    static var maxReboTonight = Bool.random()
+    static var maxReboTonight = starClawdsBandForced ?? Bool.random()
 
     /// Figrin D'an and the Modal Nodes as seen in the cantina: four Bith bobbing to the beat, Figrin D'an
     /// (kloo horn), Doikk Na'ts (Fizzz), Ickabel G'ont and Tedn Dahai (fanfars).

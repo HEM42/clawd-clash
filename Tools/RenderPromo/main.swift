@@ -6999,6 +6999,8 @@ func writeVideo(to path: String) {
 
 // MARK: Main
 
+// The baseline (Tools/Baseline) needs the same pictures every run: the cantina's band is otherwise picked at random.
+if ProcessInfo.processInfo.environment["BASELINE"] != nil { starClawdsBandForced = false }
 let args = CommandLine.arguments
 let cmd = args.count > 1 ? args[1] : "storyboard"
 let out = args.count > 2 ? args[2] : "promo"

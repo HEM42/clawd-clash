@@ -13,6 +13,9 @@ import AppKit
 //   build/preview rides out.png [rides…]           the ships, landed and flying (all, or only those named, e.g. gtx)
 //   build/preview edges out.txt ironMan ...        every moment solid art touches the frame's top or side edges, where
 //                                                  its outline is cut off (shots and exits leaving on purpose show too)
+//   build/preview ids out.txt                      every saved id and what it means, as text: each universe's facts
+//                                                  (what the hook reads), every character, place, magic variant and
+//                                                  adoption. The universe-modules refactor must leave it identical.
 //
 // SCALE=4 makes cells bigger (default 3). Clawd Slayer: MOON=full (or MOON=new) forces the full moon on or off for
 // Ozz and Veruka; GUISE=0…3 shows the First Evil as one of its guises (the Old Master, the Mayor, Glory, Adam), GUISE_K
@@ -29,6 +32,8 @@ if let moon = ProcessInfo.processInfo.environment["MOON"] { slayerMoonOverride =
 if let g = ProcessInfo.processInfo.environment["GUISE"].flatMap(Int.init) {
     slayerForcedGuise = (g, Double(ProcessInfo.processInfo.environment["GUISE_K"] ?? "") ?? 0.5)
 }
+// The baseline (Tools/Baseline) needs the same pictures every run: the cantina's band is otherwise picked at random.
+if ProcessInfo.processInfo.environment["BASELINE"] != nil { starClawdsBandForced = false }
 let bg = CGColor(red: 0.13, green: 0.14, blue: 0.19, alpha: 1)
 
 func sheet(_ w: Int, _ h: Int, _ draw: (CGContext) -> Void) -> NSBitmapImageRep {
@@ -139,6 +144,26 @@ func cast(named n: String) -> [Cast] {
 }
 
 switch mode {
+case "ids":
+    var lines: [String] = []
+    func ids(_ s: Set<Int>) -> String { s.sorted().map(String.init).joined(separator: ",") }
+    for u in Universe.allCases {
+        lines.append("universe \(u.rawValue) key=\(u.key) title=\(u.title) base=\(u.base) villains=\(u.villainCount) heroes=\(u.heroCount) hem=\(u.hem)")
+        lines.append("  agentOnly=\(ids(u.agentOnly)) claudeSide=\(u.claudeSide.map(String.init) ?? "nil") rivals=\(ids(u.rivals))")
+        lines.append("  guises=\(u.guises.map(ids).joined(separator: " | ")) homebound=\(u.homebound.sorted { $0.key < $1.key }.map { "\($0.key):\($0.value)" })")
+        lines.append("  abductees=\(ids(u.abductees)) regenerations=\(u.regenerations) released=\(u.isReleased)")
+        for c in Theme.of(u).cast {
+            let p = c.persona
+            lines.append("  cast \(c.id) \(c.name) weapon=\(p.weapon) variant=\(p.magic.variant) drills=\(c.drills.map { "\($0)" }.sorted())")
+        }
+        for l in Location.all(in: u) { lines.append("  place \(l.rawValue) \(l.name)") }
+    }
+    // How every id is shown in each universe (`adopt`): what a session saved in one universe looks like in another.
+    let every = Universe.allCases.flatMap { u in (0..<u.villainCount).map { u.base + $0 } + (0..<u.heroCount).map { u.base + StatusStore.heroBase + $0 } }
+    for u in Universe.allCases { lines.append("adopt \(u.key) " + every.map { "\($0)>\(u.adopt($0))" }.joined(separator: " ")) }
+    lines.append("magicVariants " + magicVariants.sorted { $0.key < $1.key }.map { "\($0.key):\($0.value)" }.joined(separator: ","))
+    try! (lines.joined(separator: "\n") + "\n").write(toFile: out, atomically: true, encoding: .utf8)
+    print("wrote \(out)")
 case "edges":
     // Every moment a character's solid art touches the top, left or right edge of its 72×52 frame, where the white
     // outline gets cut off: 80 moments each of standing, walking, waiting, cheering, flinching and sitting, and 40 of

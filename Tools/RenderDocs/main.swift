@@ -7,6 +7,8 @@ import AppKit
 //          Tools/RenderDocs/main.swift -o build/renderdocs && build/renderdocs docs
 
 let out = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "docs"
+// The baseline (Tools/Baseline) needs the same pictures every run: the cantina's band is otherwise picked at random.
+if ProcessInfo.processInfo.environment["BASELINE"] != nil { starClawdsBandForced = false }
 let bg = CGColor(red: 0.07, green: 0.075, blue: 0.11, alpha: 1)
 
 func canvas(_ w: Int, _ h: Int, _ draw: (CGContext) -> Void) -> NSBitmapImageRep {
