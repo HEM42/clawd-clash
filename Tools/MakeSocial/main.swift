@@ -5,7 +5,7 @@ import CoreText
 // one per universe, each with a fight in full swing, drawn with the app's own sprite and fight-effect code: Luke and
 // Vader's sabers locked under the stars, Thor and Loki trading lightning and magic, Batman against the Joker, Doctor
 // Ten's sonic on a Dalick in the time vortex's blue, Fox Clawder against the Grey in the woods at night, Indiana Bones
-// against René Bellock, Gandclawd the Grey against the Ballrog. CLAWD CLASH
+// against René Bellock, Gandclawd the Grey against the Ballrog, Buffy's stake against the Old Master. CLAWD CLASH
 // runs across them all, coloured by the panel each part is in, with a sound effect in each panel and the tagline in a
 // caption box. A new universe adds a panel: a cut, a centre, a sky, a floor, a fight, a sound and a face.
 //   swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
@@ -48,6 +48,8 @@ let allVerses: [Verse] = [
           sound: "CRACK!", burst: 0xFFD27A, face: (0xFFFFFF, 0xFFB43A), sky: (0xB8642A, 0x2A1208), caption: "IN A TEMPLE FAR AWAY…"),
     Verse(name: "CLAWD OF THE RINGS", hero: .hero(RingsHero.gandalf), villain: .villain(RingsVillain.balrog), place: .moria, sound: "KA-THOOM!",
           burst: 0xFF8A3A, face: (0xFFFFFF, 0xFFD27A), sky: (0x6A1E0A, 0x120604), caption: "DEEP IN THE MINES…"),
+    Verse(name: "CLAWD SLAYER", hero: .hero(SlayerHero.buffyClawmers), villain: .villain(SlayerVillain.oldMaster), place: .slayerSunkenChurch,
+          sound: "POOF!", burst: 0xD8E4FF, face: (0xFFFFFF, 0x9AE86A), sky: (0x2A2E6A, 0x08061A), caption: "MEANWHILE, IN SUNNYDALE…"),
 ]
 /// `UNIVERSES=8` repeats the list up to that many, to see how a style holds up with more universes.
 let versesWanted = Int(ProcessInfo.processInfo.environment["UNIVERSES"] ?? "") ?? 0
