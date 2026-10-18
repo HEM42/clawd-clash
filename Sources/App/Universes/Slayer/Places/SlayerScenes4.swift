@@ -27,7 +27,7 @@ private let slayerLetters4: [Character: String] = [
     "H": "101101111101101", "I": "111010010010111", "L": "100100100100111", "M": "101111111101101",
     "N": "110101101101101", "O": "010101101101010", "P": "110101110100100", "R": "110101110101101",
     "S": "011100010001110", "T": "111010010010010", "U": "101101101101111", "W": "101101111111101",
-    "Y": "101101010010010",
+    "Y": "101101010010010", "F": "111100110100100", "&": "010101010110011",
 ]
 
 /// How wide `text` comes out at `p` pixels a dot.
@@ -108,6 +108,50 @@ private func slayerWelcomeBoard4(_ c: PixelCanvas, _ x: Int, _ y: Int, _ p: Int,
     return (w, h)
 }
 
+/// `src` turned by `degrees` (clockwise on screen) about its point (px, py), pasted with that point at (x, y) on `c`.
+/// Done as three shears that each move whole rows or columns, so every pixel lands somewhere and none is doubled:
+/// fine lettering stays crisp, stepped, instead of breaking up the way a plain nearest-neighbour turn does.
+private func slayerShearTurn4(_ c: PixelCanvas, _ src: PixelCanvas, _ degrees: Double, about p: (x: Int, y: Int), at: (x: Int, y: Int)) {
+    let r = degrees * .pi / 180, a = -tan(r / 2), b = sin(r)
+    for y in 0..<src.h {
+        for x in 0..<src.w {
+            let i = (y * src.w + x) * 4, al = src.buf[i + 3]
+            guard al > 0 else { continue }
+            let dx = Double(x - p.x), dy = Double(y - p.y)
+            let x1 = dx + (a * dy).rounded(), y1 = dy + (b * x1).rounded(), x2 = x1 + (a * y1).rounded()
+            let m = 255 / Double(al)
+            c.px(at.x + Int(x2), at.y + Int(y1), Px(r: UInt8(min(255, Double(src.buf[i]) * m)), g: UInt8(min(255, Double(src.buf[i + 1]) * m)),
+                                                   b: UInt8(min(255, Double(src.buf[i + 2]) * m)), a: al))
+        }
+    }
+}
+
+/// The dream desert's campfire scale: two pixels a unit on the screen saver, one and a half in the window's strip.
+private func slayerFireUnit4(_ c: PixelCanvas, _ s: Int) -> Double { Double(s) * (Scenes.isTall(c) ? 2 : 1.5) }
+
+/// A Los Angeles palm seen through a window: a tall trunk, two pixels wide with a lit edge and rings, leaning a little,
+/// and a full crown of drooping fronds, each a curved stroke with a lighter upper side, `r` pixels across.
+private func slayerPalm4(_ c: PixelCanvas, _ x: Int, _ base: Int, _ top: Int, r: Int, _ s: Int) {
+    let lean = Double(r) / 6
+    for y in stride(from: top, to: base, by: s) {
+        let k = Double(base - y) / Double(max(1, base - top)), tx = x + Int(lean * k * k)
+        c.rect(tx, y, 2 * s, s, C(0x6A5432)); c.rect(tx, y, max(1, s / 2) + s / 2, s, C(0x9A7A4A))
+        if (base - y) / s % 4 == 0 { c.rect(tx, y, 2 * s, max(1, s / 2) + s / 2, C(0x4A3A22)) }
+    }
+    let cx = Double(x) + lean + Double(s), cy = Double(top)
+    for k in 0..<8 {
+        let a = -Double.pi + Double(k) / 7 * .pi + (noise(k + x / max(1, s)) - 0.5) * 0.3
+        var px = cx, py = cy
+        for q in 1...4 {   // each frond rises, then droops
+            let d = Double(r) / 4, nx = px + cos(a) * d, ny = py + sin(a) * d * 0.7 + Double(q * q) * Double(s) * 0.3
+            slayerLine(c, px, py, nx, ny, C(0x2E6A34), Double(s) * 0.75)
+            c.px(Int(nx.rounded()), Int(ny.rounded()) - s, C(0x5AA04A))
+            px = nx; py = ny
+        }
+    }
+    c.circle(Int(cx), Int(cy), s, C(0x4A3A22))
+}
+
 /// How big the welcome board comes out.
 private func slayerWelcomeSize4(_ p: Int, small: Int, _ s: Int) -> (w: Int, h: Int) {
     (slayerTextWidth4("SUNNYDALE", p) + 12 * s, 4 * s + 5 * small + 3 * s + 5 * p + 4 * s)
@@ -172,11 +216,25 @@ extension Scenes {
         c.gradient(hz + 9 * s, g, C(0x1E1612), C(0x2E2218), bands: 4)
         // The far road along the hills.
         c.rect(0, f.road, c.w, s, C(0x3A2C22))
-        // Scrub, and a wire fence on short posts.
+        // Scrub, and a wire fence on short posts. Each bush is a few lumps of dusty sage, darker underneath, its top
+        // caught by the lamp's orange or the sky's glow, with dry twigs poking out; the far ones smaller and fainter.
         for k in 0..<(c.w / (9 * s)) {
-            let x = Int(noise(k * 7 + 140) * Double(c.w)), y = hz + 12 * s + Int(noise(k * 7 + 141) * Double(g - hz - 16 * s))
-            let r = (2 + Int(noise(k * 7 + 142) * 3)) * s
-            c.ellipse(x, y, r + s, r / 2 + s, C(0x14100C)); c.rect(x - r / 2, y - r / 2, s, s, C(0x3A3420))
+            let x = Int(noise(k * 7 + 140) * Double(c.w)), depth = noise(k * 7 + 141)
+            let y = hz + 12 * s + Int(depth * Double(g - hz - 16 * s))
+            let r = (2 + Int(noise(k * 7 + 142) * 3) + Int(depth * 2)) * s
+            let lit = abs(x - (f.lamp.x + 10 * s)) < (g - f.lamp.y) / 2
+            let body = lerp(C(0x3A3820), C(0x262414), 1 - depth), mid = lit ? C(0x6A5A2E) : C(0x4A4A2A), top = lit ? C(0xA07A3A) : C(0x66623A)
+            c.ellipse(x, y + s, r + 2 * s, s, C(0x0C0A08))
+            for q in 0..<2 {
+                let tx = x + (q == 0 ? -r / 2 : r / 2)
+                c.rect(tx, y - r - s, max(1, s / 2) + s / 2, r, C(0x3A2E20)); c.px(tx + (q == 0 ? -s : s), y - r - s, C(0x3A2E20))
+            }
+            for q in 0..<3 {
+                let lx = x + (q - 1) * r * 2 / 3, ly = y - (q == 1 ? r / 3 : 0), lr = q == 1 ? r : r * 2 / 3, lry = max(s, lr * 2 / 3)
+                c.ellipse(lx, ly, lr, lry, body)
+                c.ellipse(lx - lr / 4, ly - lry / 3, max(s, lr / 2), max(1, lry / 3), mid)
+                c.px(lx - lr / 3, ly - lry + s, top); c.px(lx + s, ly - lry + s, top)
+            }
         }
         let fy = g - 9 * s
         for x in stride(from: 0, to: c.w, by: 18 * s) { c.rect(x, fy - 6 * s, s, 7 * s, C(0x3A2A1E)) }
@@ -215,22 +273,25 @@ extension Scenes {
     /// moths round the street lamp, and on the screen saver the radio mast's red light blinking.
     static func slayerTownSignLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
         let s = unit(g), f = slayerTownSignFrame(c, g)
-        let k = frac(t / 12)
-        if k < 0.55 {
+        // One car every ten seconds: half the time it's far off along the hill road, the other half its headlights
+        // sweep slowly over the board, easing in and out, so the sweep is there to be seen.
+        let k = frac(t / 10)
+        if k < 0.5 {
             // Far off: a car coming along the hill road, headlights first.
-            let u = k / 0.55, x = Int(u * Double(c.w + 40 * s)) - 20 * s, y = f.road
+            let u = k / 0.5, x = Int(u * Double(c.w + 40 * s)) - 20 * s, y = f.road
             c.rect(x, y - s, 2 * s, s, C(0xFFF4D0)); c.rect(x - 3 * s, y - s, s, s, C(0xFFF4D0, 0.7))
             slayerWedge4(c, x + 10 * s, y - 2 * s, y + s, s, 2 * s, C(0xFFF0C0, 0.07))
             c.rect(x + 2 * s, y - s, 14 * s, s, C(0xFFF0C0, 0.12))
-        } else if k < 0.75 {
-            // Close by: the beam sweeps across the board from left to right.
-            let u = (k - 0.55) / 0.2, b = f.board
-            let bx = b.x - 30 * s + Int(u * Double(b.w + 60 * s))
+        } else {
+            // Close by: the beam sweeps across the board from left to right, brightening as it comes and fading out.
+            let u = (k - 0.5) / 0.5, b = f.board
+            let ease = 0.5 - 0.5 * cos(u * .pi), fade = sin(u * .pi)
+            let bx = b.x - 30 * s + Int(ease * Double(b.w + 60 * s))
             for d in 0..<3 {
-                let w = (14 - d * 4) * s
-                c.rect(bx - w / 2, b.y - 2 * s, w, b.h + 4 * s, C(0xFFFCF0, 0.22 + Double(d) * 0.12))
+                let w = (18 - d * 5) * s
+                c.rect(bx - w / 2, b.y - 2 * s, w, b.h + 4 * s, C(0xFFFCF0, (0.12 + Double(d) * 0.1) * fade))
             }
-            c.rect(bx - 18 * s, g - 3 * s, 36 * s, 3 * s, C(0xFFF8E0, 0.15))
+            c.rect(bx - 18 * s, g - 3 * s, 36 * s, 3 * s, C(0xFFF8E0, 0.15 * fade))
         }
         // Moths round the lamp.
         let head = f.lamp.x + 10 * s, ly = f.lamp.y + 4 * s
@@ -300,9 +361,25 @@ extension Scenes {
         let cx = f.cx, cy = f.cy, rx = f.rx, ry = f.ry
         c.ellipse(cx, cy, rx + 3 * s, ry + s, C(0xD8AE7E))
         c.ellipse(cx, cy + s, rx, ry, C(0x3E2A22))
-        c.ellipse(cx, cy + ry / 4, rx * 9 / 10, ry * 3 / 4, C(0x543A2C))
-        c.ellipse(cx, cy + ry / 2, rx * 3 / 4, ry / 2, C(0x6E5038))
-        c.ellipse(cx, cy + ry * 2 / 3, rx * 11 / 20, ry / 3, C(0x86644A))
+        // The terraces down the inside: each one a slumped, wavering ring, set off-centre, broken here and there
+        // where the wall has slid, and lit on its lip.
+        let rings: [(dy: Double, sx: Double, sy: Double, off: Double, col: UInt32, lip: UInt32)] = [
+            (0.25, 0.9, 0.75, -0.04, 0x543A2C, 0x6A4A36), (0.5, 0.74, 0.5, 0.05, 0x6E5038, 0x8A684A), (0.68, 0.52, 0.32, -0.06, 0x86644A, 0xA07C58)]
+        for (n, rg) in rings.enumerated() {
+            let rcx = cx + Int(rg.off * Double(rx)), rcy = cy + Int(Double(ry) * rg.dy)
+            let rrx = Double(rx) * rg.sx, rry = Double(ry) * rg.sy
+            for x in stride(from: rcx - Int(rrx), to: rcx + Int(rrx), by: s) {
+                let u = Double(x - rcx) / rrx
+                guard abs(u) < 1 else { continue }
+                // A wobble made of two slow waves and a little noise, so no two rings follow the same curve.
+                let wob = 1 + 0.08 * sin(u * 5.3 + Double(n) * 2.1) + 0.05 * sin(u * 11 + Double(n)) + (noise(x / (3 * s) + n * 97 + 340) - 0.5) * 0.06
+                let half = rry * (1 - u * u).squareRoot() * wob
+                let top = rcy - Int(half), bottom = min(cy + ry, rcy + Int(half))
+                guard bottom > top else { continue }
+                c.rect(x, top, s, bottom - top, C(rg.col))
+                if noise(x / (6 * s) + n * 53 + 350) > 0.2 { c.rect(x, top, s, s, C(rg.lip)) }
+            }
+        }
         // Ledges down the far wall.
         for k in 1...3 {
             let yy = cy - ry + k * ry / 4
@@ -312,20 +389,23 @@ extension Scenes {
         }
         // Wreckage on the floor: girders, a sunken roof, the top of a building with its windows, a lamp post at an
         // angle, rubble.
-        let fy = cy + ry * 2 / 3, z = tall ? 2 : 1
-        slayerLine(c, Double(cx - rx / 3), Double(fy), Double(cx - rx / 3 + 12 * s * z), Double(fy - 8 * s * z), C(0x3A2A24), Double(s * z) * 0.8)
-        slayerLine(c, Double(cx - rx / 3 + 6 * s * z), Double(fy + s), Double(cx - rx / 3 + 16 * s * z), Double(fy - 5 * s * z), C(0x3A2A24), Double(s * z) * 0.6)
+        // The wreckage is drawn in units of `z` so it keeps its size: at window size it's half as big again as one
+        // pixel a unit, in pale concrete and rusty iron that stand out against the bowl's dark floor.
+        let fy = cy + ry * 2 / 3, zd = tall ? 2.0 : 1.5
+        func u(_ v: Double) -> Int { Int((v * zd * Double(s)).rounded()) }
+        slayerLine(c, Double(cx - rx / 3), Double(fy), Double(cx - rx / 3 + u(14)), Double(fy - u(9)), C(0x8A4A2A), Double(u(1)) * 0.8)
+        slayerLine(c, Double(cx - rx / 3 + u(6)), Double(fy + s), Double(cx - rx / 3 + u(18)), Double(fy - u(6)), C(0x6A3420), Double(u(1)) * 0.6)
         for k in 0..<6 {   // a roof, sunk at a tilt
-            let x = cx + rx / 8 + k * 3 * s * z
-            c.rect(x, fy - (7 - k) * s * z, 3 * s * z, (7 - k) * s * z + 2 * s, C(0x5A3A30))
-            c.rect(x, fy - (7 - k) * s * z, 3 * s * z, s, C(0x9A6448))
+            let x = cx + rx / 8 + k * u(3)
+            c.rect(x, fy - (7 - k) * u(1), u(3), (7 - k) * u(1) + 2 * s, C(0x6A3A2C))
+            c.rect(x, fy - (7 - k) * u(1), u(3), s, C(0xC07A54))
         }
-        let bx0 = cx - rx * 2 / 3, bh0 = 9 * s * z, bw0 = 16 * s * z   // a building's top storeys, half buried
-        c.rect(bx0, fy - bh0, bw0, bh0, C(0x7A6A5E)); c.rect(bx0, fy - bh0, bw0, s, C(0xA8988A))
-        for q in 0..<3 { for r in 0..<2 { c.rect(bx0 + 2 * s * z + q * 5 * s * z, fy - bh0 + 2 * s * z + r * 4 * s * z, 3 * s * z, 2 * s * z, C(0x2A2420)) } }
-        c.rect(bx0 + bw0 - 4 * s * z, fy - bh0, 4 * s * z, 3 * s * z, C(0x543A2C))
-        slayerLine(c, Double(cx + rx / 2), Double(fy + 2 * s), Double(cx + rx / 2 - 6 * s * z), Double(fy - 10 * s * z), C(0x2A2420), Double(s * z) * 0.6)
-        c.rect(cx + rx / 2 - 8 * s * z, fy - 11 * s * z, 3 * s * z, 2 * s * z, C(0x2A2420))
+        let bx0 = cx - rx * 2 / 3, bh0 = u(10), bw0 = u(18)   // a building's top storeys, half buried
+        c.rect(bx0, fy - bh0, bw0, bh0, C(0xA89888)); c.rect(bx0, fy - bh0, bw0, s, C(0xD0C0AC)); c.rect(bx0 + bw0 - u(3), fy - bh0, u(3), bh0, C(0x847466))
+        for q in 0..<3 { for r in 0..<2 { c.rect(bx0 + u(2) + q * u(5), fy - bh0 + u(2) + r * u(4), u(3), u(2), C(0x2A2420)) } }
+        c.rect(bx0 + bw0 - u(5), fy - bh0, u(5), u(3), C(0x543A2C))
+        slayerLine(c, Double(cx + rx / 2), Double(fy + 2 * s), Double(cx + rx / 2 - u(7)), Double(fy - u(11)), C(0x2A2420), Double(u(1)) * 0.6)
+        c.rect(cx + rx / 2 - u(9), fy - u(12), u(4), u(2), C(0x2A2420)); c.rect(cx + rx / 2 - u(8), fy - u(10), u(2), s, C(0xF0D890))
         for k in 0..<18 {
             let x = cx - rx * 2 / 3 + Int(noise(k * 3 + 300) * Double(rx * 4 / 3))
             let y = fy - 3 * s + Int(noise(k * 3 + 301) * Double(ry / 2))
@@ -350,10 +430,7 @@ extension Scenes {
         // Its feet on the crater's left-hand lip, leaning out over the drop.
         let sx = cx - rx + size.w / 3
         let du = Double(sx - cx) / Double(rx), sy = cy + Int(Double(ry) * (1 - du * du).squareRoot())
-        let pad = 40 * s
-        let turned = sc.rotated(14, about: (Double(sc.w) / 2, Double(sc.h - 4 * s)), into: sc.w + 2 * pad, sc.h + pad,
-                                at: (Double(sc.w / 2 + pad), Double(sc.h + pad / 2)))
-        c.paste(turned, x: sx - sc.w / 2 - pad, y: sy - sc.h - pad / 2)
+        slayerShearTurn4(c, sc, 14, about: (sc.w / 2, sc.h - 4 * s), at: (sx, sy - 4 * s))
         c.ellipse(sx - 2 * s, sy, size.w / 3, 2 * s, C(0xA07A54))   // the ground giving way under it
         for k in 0..<6 { c.rect(sx + Int(noise(k + 330) * Double(size.w / 2)), sy + Int(noise(k + 331) * 6) * s, 2 * s, s, C(0xA07A54)) }
         // The school bus at the edge, on the right.
@@ -435,14 +512,17 @@ extension Scenes {
             // Huge buttes and a natural arch, far off in the haze.
             slayerButte4(c, x: c.w * 26 / 100, w: 120 * s, h: 66 * s, base: hz + 2 * s, C(0xD89A80), C(0xC08470), seed: 3, s)
             slayerButte4(c, x: c.w * 56 / 100, w: 170 * s, h: 110 * s, base: hz + 2 * s, C(0xC8826A), C(0xAE6C58), seed: 5, s)
-            let ax = c.w * 9 / 100, ay = hz - 40 * s, arc = C(0xB86A50)
-            for k in 0...40 {   // the arch's span, thick at its feet
-                let a = Double.pi * Double(k) / 40
-                let r = Int((5 + 3 * abs(cos(a))) * Double(s))
-                c.circle(ax + Int(cos(a) * Double(30 * s)), ay - Int(sin(a) * Double(26 * s)), r, arc)
+            // The arch: drawn once in its shade colour nudged right, then again in the lit colour, so the shade falls
+            // evenly down its right-hand side and under the span instead of as a slab of its own.
+            let ax = c.w * 9 / 100, ay = hz - 40 * s
+            for (dx, arc) in [(3 * s, C(0x9A5440)), (0, C(0xB86A50))] {
+                for k in 0...40 {   // the arch's span, thick at its feet
+                    let a = Double.pi * Double(k) / 40
+                    let r = Int((5 + 3 * abs(cos(a))) * Double(s))
+                    c.circle(ax + dx + Int(cos(a) * Double(30 * s)), ay + (dx > 0 ? s : 0) - Int(sin(a) * Double(26 * s)), r, arc)
+                }
+                c.rect(ax + dx - 37 * s, ay, 14 * s, hz + 2 * s - ay, arc); c.rect(ax + dx + 23 * s, ay, 14 * s, hz + 2 * s - ay, arc)
             }
-            c.rect(ax - 37 * s, ay, 14 * s, hz + 2 * s - ay, arc); c.rect(ax + 23 * s, ay, 14 * s, hz + 2 * s - ay, arc)
-            c.rect(ax + 30 * s, ay - 10 * s, 6 * s, hz + 12 * s - ay, C(0x9A5440))
         }
         // Far mesas, nearer buttes.
         mesa(c, x: c.w * 4 / 100, width: 60 * s, h: (tall ? 16 : 8) * s, base: hz + 2 * s, C(0xD8A088), seed: 11)
@@ -454,14 +534,18 @@ extension Scenes {
         let swell = max(4 * s, (g - hz) / 4)
         c.dunes(base: hz + swell + 2 * s, amp: Double(2 * s), freq: 0.013, phase: 0.4, bottom: g, C(0xCC7A50), shade: C(0xE8A070))
         c.dunes(base: hz + swell * 5 / 2, amp: Double(3 * s), freq: 0.009, phase: 2.6, bottom: g, C(0xC06A42), shade: C(0xE0946A))
-        for k in 0..<(c.w * (g - hz) / (420 * s * s)) {
-            let x = Int(noise(k * 3 + 600) * Double(c.w)), y = hz + 6 * s + Int(noise(k * 3 + 601) * Double(g - hz - 9 * s))
-            let len = (5 + Int(noise(k * 3 + 602) * 10)) * s
-            for i in 0..<3 {
-                let yy = y + i * 2 * s
-                c.rect(x + i * s, yy, len - 2 * i * s, max(1, s / 2), C(0xF0A878, 0.55))
-                c.rect(x + i * s + s, yy + s, len - 2 * i * s - 2 * s, max(1, s / 2), C(0x8A3E22, 0.3))
+        // Wind ripples: long, gently wavering lines across the sand, each lit on its crest and shaded behind, spaced
+        // wider as they come nearer, and broken where the sand has drifted over them.
+        var ry = hz + 6 * s, j = 0
+        while ry < g - 3 * s {
+            let near = Double(ry - hz) / Double(max(1, g - hz))
+            let amp = Double(s) * (0.8 + near * 2), freq = (0.02 + noise(j + 610) * 0.02) / Double(s), ph = noise(j + 611) * 6
+            for x in stride(from: 0, to: c.w, by: s) {
+                guard noise(x / (9 * s) + j * 41 + 620) > 0.4 else { continue }
+                let y = ry + Int((sin(Double(x) * freq + ph) * amp).rounded())
+                c.rect(x, y, s, max(1, s / 2), C(0xF0A878, 0.5)); c.rect(x, y + s, s, max(1, s / 2), C(0x8A3E22, 0.25))
             }
+            ry += Int(Double(6 * s) + near * Double(12 * s) + noise(j + 612) * Double(4 * s)); j += 1
         }
         // The painted rock on the right: a big red outcrop with a ledge, handprints and a spiral in pale ochre.
         let rx = f.rock, rh = tall ? 58 * s : 30 * s, rw = tall ? 120 * s : 70 * s
@@ -494,17 +578,19 @@ extension Scenes {
             c.rect(sp.x + Int(cos(a) * r), sp.y + Int(sin(a) * r), hp, hp, paint.alpha(0.9))
         }
         for k in 0..<4 { c.rect(rx - rw / 6 + k * 3 * hp, g - rh * 7 / 10 + 9 * hp, 2 * hp, hp, paint.alpha(0.8)) }   // tally marks
-        // The campfire: a ring of stones, crossed sticks, embers.
-        let q = isTall(c) ? 2 * s : s, fx = f.fire, fb = g - s
-        c.ellipse(fx, fb, 12 * q, 3 * q, C(0x6A2A18, 0.5))
+        // The campfire: a ring of stones, crossed sticks, embers. At window size it's half as big again as one pixel a
+        // unit, so it reads as a fire and not a spark.
+        let q = slayerFireUnit4(c, s), fx = f.fire, fb = g - s
+        func u(_ v: Double) -> Int { Int((v * q).rounded()) }
+        c.ellipse(fx, fb, u(12), u(3), C(0x6A2A18, 0.5))
         for k in 0..<7 {
             let a = Double(k) / 7 * 2 * .pi
-            let x = fx + Int(cos(a) * Double(8 * q)), y = fb + Int(sin(a) * Double(2 * q))
-            c.ellipse(x, y, 2 * q, s + s / 2, C(0x5A4A40)); c.px(x - s, y - s, C(0x8A786A))
+            let x = fx + Int(cos(a) * q * 8), y = fb + Int(sin(a) * q * 2)
+            c.ellipse(x, y, u(2), max(s, u(1.5)), C(0x5A4A40)); c.px(x - s, y - s, C(0x8A786A))
         }
-        slayerLine(c, Double(fx - 6 * q), Double(fb), Double(fx + 4 * q), Double(fb - 5 * q), C(0x4A2A18), Double(q) * 0.9)
-        slayerLine(c, Double(fx + 6 * q), Double(fb), Double(fx - 4 * q), Double(fb - 5 * q), C(0x5A3420), Double(q) * 0.9)
-        c.rect(fx - 3 * q, fb - 2 * q, 6 * q, 2 * q, C(0xD84A1A))
+        slayerLine(c, Double(fx - u(6)), Double(fb), Double(fx + u(4)), Double(fb - u(5)), C(0x4A2A18), q * 0.9)
+        slayerLine(c, Double(fx + u(6)), Double(fb), Double(fx - u(4)), Double(fb - u(5)), C(0x5A3420), q * 0.9)
+        c.rect(fx - u(3), fb - u(2), u(6), u(2), C(0xD84A1A))
         // Sand at the crew's feet.
         c.ground(g, C(0xA44E30), edge: C(0xD07A50), speck: C(0x8A3E24), seed: 47)
     }
@@ -528,16 +614,16 @@ extension Scenes {
             c.rect(x, y, len, max(1, s / 2), C(0xF0B080, 0.35)); c.rect(x + len / 3, y - s, len / 3, max(1, s / 2), C(0xF0B080, 0.2))
         }
         // The fire.
-        let q = isTall(c) ? 2 * s : s, fx = f.fire, fb = g - 3 * q
+        let qd = slayerFireUnit4(c, s), q = Int(qd.rounded()), fx = f.fire, fb = g - Int(3 * qd)
         let fl = noise(Int(t * 10) * 7)
-        let h = (8 + Int(fl * 4)) * q
-        c.circle(fx, fb - 4 * q, 10 * q, C(0xFFB050, 0.10))
-        slayerWedge4(c, fx + Int((fl - 0.5) * 2) * q, fb - h, fb, 0, 4 * q, C(0xE8501A))
-        slayerWedge4(c, fx, fb - h * 2 / 3, fb, 0, 3 * q, C(0xFF9A2A))
-        slayerWedge4(c, fx, fb - h / 3, fb, 0, 2 * q, C(0xFFE08A))
+        let h = Int((8 + fl * 4) * qd)
+        c.circle(fx, fb - 4 * q, Int(10 * qd), C(0xFFB050, 0.10))
+        slayerWedge4(c, fx + Int((fl - 0.5) * 2 * qd), fb - h, fb, 0, Int(4 * qd), C(0xE8501A))
+        slayerWedge4(c, fx, fb - h * 2 / 3, fb, 0, Int(3 * qd), C(0xFF9A2A))
+        slayerWedge4(c, fx, fb - h / 3, fb, 0, Int(2 * qd), C(0xFFE08A))
         for k in 0..<4 {
             let u = frac(t * 0.7 + Double(k) * 0.25)
-            c.px(fx + Int(sin(t * 3 + Double(k) * 2) * Double(3 * q)), fb - h - Int(u * Double(14 * q)), C(0xFFC060, 1 - u))
+            c.px(fx + Int(sin(t * 3 + Double(k) * 2) * 3 * qd), fb - h - Int(u * 14 * qd), C(0xFFC060, 1 - u))
         }
         if isTall(c) {   // a hawk circling
             let a = t * 0.35, x = f.sun.x - 90 * s + Int(cos(a) * Double(50 * s)), y = hz / 2 + Int(sin(a) * Double(16 * s))
@@ -560,7 +646,7 @@ extension Scenes {
         let landing = tall ? g - 70 * s : g - 40 * s
         let galleries = tall ? [g - 132 * s, g - 194 * s] : []
         let fan = (x: c.w * 56 / 100, y: tall ? landing - 30 * s : 14 * s)
-        return ((c.w * 6 / 100, 26 * s, 38 * s), (c.w * 34 / 100, 76 * s), c.w * 76 / 100, landing, fan, galleries)
+        return ((c.w * 6 / 100, 26 * s, 38 * s), (c.w * 36 / 100, 62 * s), c.w * 76 / 100, landing, fan, galleries)
     }
 
     /// One of the Hyperion's room doors on a gallery: an arched wooden door with a brass number plate.
@@ -607,6 +693,16 @@ extension Scenes {
             }
             c.rect(0, roof, c.w, 6 * s, jadeD); c.rect(0, roof, c.w, s, brass)
             for x in stride(from: 0, to: c.w, by: 6 * s) { c.rect(x + 2 * s, roof + 2 * s, 2 * s, 2 * s, brass) }
+            if let top = f.galleries.last {
+                // The top floor is papered in deep jade with a gold deco diamond trellis, so the two galleries don't
+                // read as copies of each other.
+                c.rect(0, roof + 6 * s, c.w, top - roof - 6 * s, C(0x1E4A40))
+                for y in stride(from: roof + 8 * s, to: top - 9 * s, by: 8 * s) {
+                    for x in stride(from: (y / (8 * s)) % 2 * 6 * s, to: c.w, by: 12 * s) {
+                        c.px(x, y, C(0xA8883A)); c.px(x + s, y + s, C(0x6A5A2A)); c.px(x - s, y + s, C(0x6A5A2A)); c.px(x, y + 2 * s, C(0xA8883A))
+                    }
+                }
+            }
             let ch = roof + 26 * s   // the chandelier
             c.rect(sx, sy, max(1, s), ch - sy - 6 * s, brassD)
             c.ellipse(sx, ch - 4 * s, 10 * s, 2 * s, brass); c.ellipse(sx, ch, 14 * s, 2 * s, brassD)
@@ -619,22 +715,40 @@ extension Scenes {
                 let wy = gy - 34 * s
                 for k in 0..<4 {
                     let wx = c.w * (12 + k * 24) / 100 + (i == 0 ? 0 : 6 * s)
-                    if k % 2 == i % 2 {
+                    if k % 2 == i % 2 && i == 1 {
+                        // Up top, round porthole windows with a sunburst of glazing bars, sky and a palm top in them.
+                        let ox = wx + 7 * s, oy = wy + 12 * s, orr = 10 * s
+                        c.circle(ox, oy, orr + 2 * s, brass); c.circle(ox, oy, orr, C(0xA8D8E8))
+                        c.rect(ox - orr, oy + orr / 2, 2 * orr, orr / 2, C(0xC8E8EC))
+                        slayerPalm4(c, ox - 2 * s, oy + orr, oy - orr / 3, r: 7 * s, s)
+                        for b in 0..<4 {
+                            let a = Double(b) / 4 * .pi
+                            slayerLine(c, Double(ox) - cos(a) * Double(orr), Double(oy) - sin(a) * Double(orr), Double(ox) + cos(a) * Double(orr),
+                                       Double(oy) + sin(a) * Double(orr), brassD, Double(s) * 0.5)
+                        }
+                        c.circle(ox, oy, 3 * s, brass)
+                    } else if k % 2 == i % 2 {
                         c.rect(wx - 2 * s, wy - 2 * s, 18 * s, 32 * s, jadeD)
                         c.rect(wx, wy + 6 * s, 14 * s, 22 * s, C(0xA8D8E8)); c.ellipse(wx + 7 * s, wy + 6 * s, 7 * s, 7 * s, C(0xA8D8E8))
                         c.rect(wx, wy + 22 * s, 14 * s, 6 * s, C(0xC8E8EC))
-                        slayerLine(c, Double(wx + 10 * s), Double(wy + 28 * s), Double(wx + 9 * s), Double(wy + 14 * s), C(0x5A4A2A), Double(s) * 0.6)
-                        for d in [-1.0, 1.0] { slayerLine(c, Double(wx + 9 * s), Double(wy + 14 * s), Double(wx + 9 * s) + d * Double(6 * s), Double(wy + 17 * s), C(0x3A6A3A), Double(s) * 0.6) }
+                        slayerPalm4(c, wx + 6 * s, wy + 28 * s, wy + 12 * s, r: 6 * s, s)
                         c.rect(wx + 7 * s - s / 2, wy, max(1, s), 28 * s, jadeD); c.rect(wx, wy + 16 * s, 14 * s, max(1, s), jadeD)
                     } else {
                         slayerHotelDoor(c, wx + s, gy, s)
                         c.rect(wx + 18 * s, gy - 18 * s, 2 * s, 4 * s, brass); c.circle(wx + 19 * s, gy - 19 * s, 3 * s, C(0xFFE8A0, 0.25))
                     }
                 }
-                // The gallery's floor and its brass railing.
+                // The gallery's floor and its railing: brass balusters below, a wrought-iron run of deco arcs above.
                 c.rect(0, gy, c.w, 5 * s, jadeD); c.rect(0, gy, c.w, s, jadeL); c.rect(0, gy + 4 * s, c.w, s, C(0x10261F))
                 c.rect(0, gy - 9 * s, c.w, s, brass); c.rect(0, gy - 8 * s, c.w, max(1, s / 2), brassD)
-                for x in stride(from: 2 * s, to: c.w, by: 4 * s) { c.rect(x, gy - 8 * s, max(1, s), 8 * s, brassD) }
+                if i == 0 {
+                    for x in stride(from: 2 * s, to: c.w, by: 4 * s) { c.rect(x, gy - 8 * s, max(1, s), 8 * s, brassD) }
+                } else {
+                    for x in stride(from: 0, to: c.w, by: 8 * s) {
+                        for d in 0..<8 { c.px(x + d * s, gy - 2 * s - Int(sin(Double(d) / 8 * .pi) * Double(5 * s)), C(0x1A2420)) }
+                        c.rect(x, gy - 8 * s, max(1, s), 8 * s, C(0x1A2420))
+                    }
+                }
                 for x in stride(from: 0, to: c.w, by: 40 * s) { c.rect(x, gy - 10 * s, 3 * s, 10 * s, brass) }
             }
         }
@@ -660,12 +774,9 @@ extension Scenes {
             c.rect(wx, wt + r, ww, wb - wt - r, C(0xA8D8E8)); c.circle(wx + r, wt + r, r, C(0xA8D8E8))
             c.rect(wx, wt + r, ww, (wb - wt - r) / 2, C(0x98CCE0))
             c.rect(wx, wb - 6 * s, ww, 6 * s, C(0xC8E4DC))
-            let px0 = Double(wx + ww * 2 / 3), pb = Double(wb - 4 * s), ph = Double(wb - wt - r / 2) * 0.8
-            slayerLine(c, px0, pb, px0 - Double(2 * s), pb - ph, C(0x5A4A2A), Double(s) * 0.8)
-            for a in [-2.8, -2.2, -1.6, -1.0, -0.4] {
-                let ex = px0 - Double(2 * s) + cos(a) * Double(9 * s), ey = pb - ph + sin(a) * Double(4 * s) + Double(3 * s)
-                slayerLine(c, px0 - Double(2 * s), pb - ph, ex, ey, C(0x3A7A44), Double(s) * 0.7)
-            }
+            let ph = Int(Double(wb - wt - r / 2) * 0.75)
+            slayerPalm4(c, wx + ww / 2 - 2 * s, wb - 4 * s, wb - 4 * s - ph, r: ww / 2 - 4 * s, s)
+            slayerPalm4(c, wx + ww / 4 - s, wb - 4 * s, wb - 4 * s - ph / 2, r: ww / 4 - 2 * s, s)
             c.rect(wx + r - s / 2, wt, max(1, s), wb - wt, jadeD)
             for y in stride(from: wt + r, to: wb, by: 9 * s) { c.rect(wx, y, ww, max(1, s), jadeD) }
             c.rect(wx - 3 * s, wb, ww + 6 * s, 2 * s, brass)
@@ -700,24 +811,23 @@ extension Scenes {
             if noise(q * 7 + r * 13) > 0.4 { c.rect(x + s, y + s, s, 2 * s, brass) }
             if noise(q * 7 + r * 13 + 1) > 0.8 { c.rect(x + 2 * s, y + s, 2 * s, s, C(0xF0E8D8)) }
         } }
-        // The round desk: a curved, fluted front with a brass top edge, a bell and a lamp on it.
-        let dh = 15 * s, dtop = g - dh, dcx = d.x + d.w / 2, half = d.w / 2
-        // The front curves round: each column of it shorter and darker towards the sides.
+        // The round desk, a drum of fluted mahogany seen from a little above: its polished top is an oval with a brass
+        // rim, and its front bows towards us, lowest in the middle, lit there and falling into shade round the sides.
+        let ry = 5 * s, dh = 13 * s, half = d.w / 2, dcx = d.x + half, yc = g - dh - ry
         for i in 0..<d.w {
-            let u = Double(i - half) / Double(half)
-            let drop = Int((1 - (1 - u * u).squareRoot()) * Double(5 * s))
-            let col = abs(u) > 0.8 ? C(0x3A2010) : abs(u) > 0.5 ? C(0x4A2A16) : C(0x5A321C)
-            c.rect(d.x + i, dtop + drop, 1, dh - drop - 2 * s, col)
-            if (i / max(1, s)) % 5 == 2 { c.rect(d.x + i, dtop + drop + 3 * s, 1, dh - drop - 6 * s, abs(u) > 0.6 ? C(0x2A1608) : C(0x7A4A2A)) }
-            c.px(d.x + i, dtop + drop + 2 * s, brassD)
+            let u = Double(i - half) / Double(half), bow = Int((Double(ry) * (1 - u * u).squareRoot()).rounded())
+            let ft = yc + bow, fb = min(g, ft + dh)
+            let col = abs(u) > 0.85 ? C(0x2E180C) : abs(u) > 0.6 ? C(0x4A2A16) : abs(u) > 0.25 ? C(0x5A321C) : C(0x6A3C22)
+            c.rect(d.x + i, ft, 1, fb - ft, col)
+            if (i / max(1, s)) % 4 == 1 { c.rect(d.x + i, ft + 3 * s, 1, max(0, fb - ft - 5 * s), abs(u) > 0.6 ? C(0x24120A) : C(0x8A5632)) }
+            c.px(d.x + i, ft + 2 * s, brassD); c.px(d.x + i, fb - s, C(0x1E0E06))
         }
-        c.ellipse(dcx, dtop + s, half + s, 4 * s, C(0x7A4A2A)); c.ellipse(dcx, dtop + s, half - 2 * s, 2 * s, C(0x8A5A34))
-        c.ellipse(dcx, dtop - 3 * s + 4 * s, half + s, s, brass)
-        c.rect(d.x + 3 * s, g - 2 * s, d.w - 6 * s, 2 * s, C(0x2A1608))
-        c.rect(d.x + d.w / 2 - 20 * s, dtop - 3 * s, 4 * s, 2 * s, brass); c.rect(d.x + d.w / 2 - 19 * s, dtop - 4 * s, 2 * s, s, brass)
-        c.rect(d.x + d.w - 16 * s, dtop - 8 * s, s, 7 * s, brassD)
-        slayerWedge4(c, d.x + d.w - 16 * s, dtop - 11 * s, dtop - 7 * s, s, 4 * s, C(0x3E8A78))
-        c.rect(d.x + d.w - 14 * s, dtop - 3 * s, 7 * s, 2 * s, C(0xE8DCC0))
+        c.ellipse(dcx, yc, half, ry, brass); c.ellipse(dcx, yc, half - s, ry - s, C(0x7A4A2A))
+        c.ellipse(dcx, yc - s, half - 4 * s, ry - 2 * s, C(0x8A5A34)); c.rect(dcx - half / 2, yc - ry + 2 * s, half / 3, s, C(0xA87448))
+        c.rect(dcx - 18 * s, yc - 2 * s, 4 * s, 2 * s, brass); c.rect(dcx - 17 * s, yc - 3 * s, 2 * s, s, brass)       // the bell
+        c.rect(dcx + 12 * s, yc - 8 * s, s, 7 * s, brassD)                                                          // the lamp
+        slayerWedge4(c, dcx + 12 * s, yc - 11 * s, yc - 7 * s, s, 4 * s, C(0x3E8A78))
+        c.rect(dcx - 4 * s, yc - s, 7 * s, 2 * s, C(0xE8DCC0))                                                       // the register
         // A potted palm between the lift and the desk.
         let px = (l.x + l.w + d.x) / 2 + 2 * s, pb = g - 7 * s
         for (a, len) in [(-2.4, 14.0), (-1.9, 16.0), (-1.3, 15.0), (-0.7, 14.0), (-1.6, 12.0)] {
@@ -861,25 +971,43 @@ extension Scenes {
         c.ellipse(nx + slayerTextWidth4(word, p) / 2, ny + 5 * p / 2, slayerTextWidth4(word, p) * 2 / 3, 6 * p, C(0xFF7A5A, 0.10))
         slayerText4(c, nx + s, ny + s, word, C(0x2A0E0A, 0.6), p)
         slayerText4(c, nx, ny, word, C(0xFF8A6A), p)
-        // Round tables with lamps, demon patrons sat at them.
+        // Round tables with lamps, demon patrons sat at them, turned towards the stage: each in a sharp suit, its
+        // face lit by the table lamps so the skin shows (a green one with little red horns, a lilac one with great
+        // curled ram's horns, a blue fish-man with a crested fin, a red one with three eyes and tusks), and a rim of
+        // coloured light down its back.
         func patron(_ x: Int, _ base: Int, kind: Int, rim: Px) {
-            let ink = C(0x061010)
-            c.rect(x - 4 * s, base - 12 * s, 8 * s, 12 * s, ink); c.circle(x, base - 15 * s, 4 * s, ink)
-            c.rect(x - 4 * s, base - 12 * s, s, 11 * s, rim); c.rect(x - 3 * s, base - 18 * s, s, 3 * s, rim)
+            let skins: [(UInt32, UInt32)] = [(0x5AA04A, 0x3A7032), (0x9A7AAA, 0x6A507A), (0x4A8AB0, 0x2E5E7E), (0xB84A3A, 0x7E2E24)]
+            let skin = C(skins[kind % 4].0), skinD = C(skins[kind % 4].1)
+            let suit = [C(0x1A1A2A), C(0x2A1A1A), C(0x141E24), C(0x221A2A)][kind % 4], hy = base - 17 * s
+            // The body, shoulders rounded, a pale shirt front, an arm reaching for the drink.
+            c.rect(x - 5 * s, base - 12 * s, 10 * s, 12 * s, suit); c.ellipse(x, base - 12 * s, 5 * s, 2 * s, suit)
+            c.rect(x + 2 * s, base - 12 * s, 2 * s, 5 * s, C(0xD8D8D0)); c.rect(x + 3 * s, base - 12 * s, s, 4 * s, C(0xA83A3A))
+            c.rect(x + 2 * s, base - 7 * s, 7 * s, 2 * s, suit); c.rect(x + 8 * s, base - 7 * s, 2 * s, 2 * s, skin)
+            // The head, a jaw in shade, a snout forward, the neck.
+            c.rect(x - s, base - 14 * s, 3 * s, 2 * s, skinD)
+            c.circle(x, hy, 4 * s, skin); c.rect(x - 4 * s, hy + s, 8 * s, 2 * s, skinD); c.rect(x - 3 * s, hy - 3 * s, 4 * s, s, skin.alpha(1))
+            c.rect(x + 3 * s, hy - s, 3 * s, 3 * s, skin); c.rect(x + 3 * s, hy + s, 3 * s, s, skinD)
+            c.rect(x - 4 * s, hy - 2 * s, s, 5 * s, rim); c.rect(x - 5 * s, base - 11 * s, s, 11 * s, rim)
+            let glow = C(0xF8E858)
             switch kind {
-            case 0:   // horns
-                c.rect(x - 4 * s, base - 21 * s, s, 3 * s, ink); c.rect(x - 5 * s, base - 23 * s, s, 2 * s, ink)
-                c.rect(x + 3 * s, base - 21 * s, s, 3 * s, ink); c.rect(x + 4 * s, base - 23 * s, s, 2 * s, ink)
-                c.rect(x - 5 * s, base - 23 * s, s, 2 * s, rim)
-            case 1:   // a fin
-                for k in 0..<5 { c.rect(x - s + k * s / 2, base - 20 * s - k * s, 2 * s, s, ink) }
-                c.rect(x - s, base - 20 * s, s, s, rim)
-            default:  // big pointed ears
-                c.rect(x - 7 * s, base - 17 * s, 3 * s, s, ink); c.rect(x - 8 * s, base - 18 * s, 2 * s, s, ink)
-                c.rect(x + 4 * s, base - 17 * s, 3 * s, s, ink); c.rect(x + 6 * s, base - 18 * s, 2 * s, s, ink)
-                c.rect(x - 8 * s, base - 18 * s, 2 * s, s, rim)
+            case 0:   // little red horns, swept back
+                for (dx, dy) in [(-2, -4), (-3, -5), (-4, -6), (1, -4), (0, -5), (-1, -6)] { c.rect(x + dx * s, hy + dy * s, s, s, C(0xC83A2A)) }
+                c.rect(x + 2 * s, hy - 2 * s, s, s, glow)
+            case 1:   // great curled ram's horns, pale bone, round the ear
+                for k in 0..<14 {
+                    let a = Double(k) / 14 * 1.8 * .pi - 1.6, rr = Double(s) * (3.6 - Double(k) * 0.15)
+                    c.rect(x - 2 * s + Int(cos(a) * rr), hy - s + Int(sin(a) * rr), s + (k < 7 ? s : 0), s + (k < 7 ? s : 0), k % 3 == 0 ? C(0xA8986A) : C(0xE0D0A8))
+                }
+                c.rect(x + 2 * s, hy - 2 * s, s, s, glow)
+            case 2:   // a fish-man: a tall crested fin, gill frills, one big round eye
+                for k in 0..<6 { c.rect(x - 3 * s + k * s, hy - 5 * s - (k < 3 ? k : 5 - k) * s, s, (k < 3 ? k : 5 - k) * s + 2 * s, k % 2 == 0 ? skinD : C(0x7ACAE0)) }
+                c.rect(x - 2 * s, hy + 2 * s, 2 * s, s, C(0x7ACAE0)); c.rect(x - 3 * s, hy + 3 * s, s, s, C(0x7ACAE0))
+                c.rect(x + s, hy - 2 * s, 2 * s, 2 * s, C(0xF0F4E0)); c.rect(x + 2 * s, hy - s, s, s, C(0x0A1A20))
+            default:  // three glowing eyes and two tusks
+                c.rect(x, hy - 2 * s, s, s, glow); c.rect(x + 2 * s, hy - 2 * s, s, s, glow); c.rect(x + s, hy - 3 * s, s, s, glow)
+                c.rect(x + 4 * s, hy + s, s, 2 * s, C(0xF0E8D0)); c.rect(x + 2 * s, hy + 2 * s, s, 2 * s, C(0xF0E8D0))
+                c.rect(x - 3 * s, hy - 5 * s, 4 * s, s, skinD); c.rect(x - 2 * s, hy - 6 * s, 2 * s, s, skinD)   // a bony ridge
             }
-            c.rect(x - 2 * s, base - 16 * s, s, s, C(0xF0E040)); c.rect(x + s, base - 16 * s, s, s, C(0xF0E040))
         }
         func table(_ x: Int) {
             let top = g - 10 * s
@@ -894,15 +1022,30 @@ extension Scenes {
         patron(c.w * 18 / 100, g - 8 * s, kind: 2, rim: C(0x6A9AFF))
         patron(c.w * 32 / 100, g - 8 * s, kind: 1, rim: C(0xFF7A5A))
         table(c.w * 38 / 100)
-        patron(c.w * 44 / 100, g - 8 * s, kind: 0, rim: C(0xE07AFF))
+        patron(c.w * 44 / 100, g - 8 * s, kind: 3, rim: C(0xE07AFF))
         // The stage: tinsel curtain, a gold-edged platform, the mic in its spotlight.
         let ct = tall ? g - 76 * s : 10 * s
         c.rect(st.x - 3 * s, ct - 3 * s, st.w + 6 * s, 4 * s, goldD); c.rect(st.x - 3 * s, ct - 3 * s, st.w + 6 * s, s, gold)
+        // The tinsel: strands hung in loose pleats that catch the light in long glints, warm coral where the
+        // spotlight reaches the middle, cool teal off the velvet at the sides, darker in each pleat's fold.
+        let ch = st.top - ct - s
         for x in stride(from: st.x, to: st.x + st.w, by: s) {
-            let i = (x - st.x) / max(1, s)
-            let col = i % 3 == 0 ? C(0xC8D8E0) : i % 3 == 1 ? C(0x7A8A98) : C(0x2A3640)
+            let i = (x - st.x) / max(1, s), u = Double(x - st.x) / Double(st.w)
+            let pleat = 0.5 + 0.5 * sin(u * .pi * 2 * Double(max(3, st.w / (14 * s))))
+            let warm = max(0, 1 - abs(u - 0.5) * 3)
+            let base = lerp(lerp(C(0x3A5A64), C(0x9A7A80), warm), C(0x1A262E), (1 - pleat) * 0.7)
             let ragged = Int(noise(i + 800) * 3) * s
-            c.rect(x, ct + s, s, st.top - ct - s - ragged, col.alpha(0.85))
+            c.rect(x, ct + s, s, ch - ragged, base.alpha(0.9))
+            // Long glints running down the strand, brighter on the pleat's crest.
+            var y = ct + s + Int(noise(i + 810) * 10) * s
+            while y < st.top - ragged - 2 * s {
+                let len = (5 + Int(noise(i * 7 + y / s) * 10)) * s
+                let glint = noise(i * 13 + y / s + 820) < 0.2 + pleat * 0.3
+                if glint {
+                    c.rect(x, y, s, min(len, st.top - ragged - y), lerp(lerp(C(0x6A9CA4), C(0xC8988C), warm), C(0xD8E4E8), pleat * 0.5).alpha(0.7))
+                }
+                y += len + (4 + Int(noise(i + y / s + 830) * 9)) * s
+            }
         }
         if tall {
             let red = C(0x8A1A22), redL = C(0xB83A3A)
@@ -1014,8 +1157,8 @@ extension Scenes {
     /// tower's full height past a mezzanine with a glass balustrade, and the skyline rises with it to a crowned tower.
     static func slayerWolframHart(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), f = slayerWolframHartFrame(c, g)
-        let stone = C(0xC8CCD0), stoneD = C(0x9AA0A8), steel = C(0x7A848E), steelL = C(0xB8C4CC)
-        c.gradient(0, g, C(0xDDE2E6), stone, bands: 4)
+        let stone = C(0xA8A49E), stoneD = C(0x7E7A74), steel = C(0x7A848E), steelL = C(0xB8C4CC)
+        c.gradient(0, g, C(0xB8B4AC), stone, bands: 4)
         // The glass wall: the night sky and the city through it.
         let gl = f.glass, gw = gl.x1 - gl.x0
         let sky = PixelCanvas(gw, g - gl.top)
@@ -1037,10 +1180,25 @@ extension Scenes {
                 sky.rect(x + w / 2, top - 14 * s, max(1, s), 6 * s, C(0x8A9AAA))
             }
         }
+        if tall {
+            // High over the city on the screen saver: a hazy moon, two searchlights crossing, and low cloud lit
+            // orange-pink from the streets beneath.
+            let mx = gw * 80 / 100, my = hz * 14 / 100
+            sky.circle(mx, my, 22 * s, C(0xD8E0FF, 0.06)); sky.circle(mx, my, 14 * s, C(0xD8E0FF, 0.08))
+            sky.circle(mx, my, 8 * s, C(0xE8ECF4)); sky.circle(mx + 2 * s, my - s, 3 * s, C(0xC8CEDC)); sky.circle(mx - 3 * s, my + 3 * s, 2 * s, C(0xD0D6E2))
+            for (k, lean) in [(0, 0.55), (1, -0.4)] {
+                let bx = gw * (30 + k * 36) / 100
+                slayerWedge4(sky, bx + Int(lean * Double(hz - hz / 6)), hz / 6, hz, 10 * s, s, C(0xE8F0FF, 0.05), lean: -lean)
+            }
+            for k in 0..<9 {
+                let x = Int(noise(k + 1180) * Double(gw)), y = hz * (32 + Int(noise(k + 1181) * 16)) / 100, r = (14 + Int(noise(k + 1182) * 18)) * s
+                sky.ellipse(x, y, r * 2, r / 3, C(0x8A5A7A, 0.35)); sky.ellipse(x, y + r / 6, r * 2 - 4 * s, r / 5, C(0xC8806A, 0.25))
+            }
+        }
         let scale = tall ? 5 : 1
-        for k in 0..<10 {
+        for k in 0..<(tall ? 22 : 10) {
             let w = (8 + Int(noise(k + 1100) * 10)) * s, h = (6 + Int(noise(k + 1101) * 14)) * s * scale
-            tower(Int(noise(k + 1102) * Double(gw)), w, h, C(0x1E2440), lit: 0.25, seed: k)
+            tower(Int(noise(k + 1102) * Double(gw)), w, h, k >= 10 ? C(0x242A48) : C(0x1E2440), lit: 0.25, seed: k)
         }
         // The nearer towers: (x %, width, height in the window, height on the screen saver).
         let near: [(x: Int, w: Int, h: Int, th: Int)] = [(4, 16, 26, 150), (24, 12, 20, 112), (44, 20, 34, 236), (70, 14, 22, 176),
@@ -1078,12 +1236,16 @@ extension Scenes {
         if let mz = f.mezz {
             let ot = mz - 64 * s
             for (x0, x1) in [(0, gl.x0), (gl.x1, c.w)] {
-                c.rect(x0, ot, x1 - x0, mz - ot, C(0x5A646E)); c.rect(x0, ot, x1 - x0, s, steelL)
-                for x in stride(from: x0 + 3 * s, to: x1 - 20 * s, by: 26 * s) {
-                    c.rect(x, ot + 4 * s, 22 * s, mz - ot - 4 * s, C(0xD8F0F4))
-                    c.rect(x, ot + 4 * s, 22 * s, 2 * s, C(0xFFFFFF)); c.rect(x + 3 * s, mz - 14 * s, 12 * s, 2 * s, C(0x8A949C))
-                    c.rect(x + 7 * s, mz - 20 * s, 6 * s, 5 * s, C(0x2A2E34)); c.rect(x + 8 * s, mz - 19 * s, 4 * s, 3 * s, C(0x6AD0F0))
-                    c.rect(x + 21 * s, ot + 4 * s, s, mz - ot - 4 * s, steel)
+                c.rect(x0, ot, x1 - x0, mz - ot, C(0x4A4038)); c.rect(x0, ot, x1 - x0, s, steelL)
+                // As many offices as fit, spread evenly so the row fills the whole wall with no blank block at the end.
+                let n = max(1, (x1 - x0 - 3 * s) / (26 * s)), pitch = (x1 - x0 - 3 * s) / n, ow = pitch - 4 * s
+                for j in 0..<n {
+                    let x = x0 + 3 * s + j * pitch, late = noise(j * 5 + x0 / max(1, s) + 1190) > 0.2
+                    c.rect(x, ot + 4 * s, ow, mz - ot - 4 * s, late ? C(0xE8DCB0) : C(0x3A4450))
+                    c.rect(x, ot + 4 * s, ow, 2 * s, late ? C(0xFFF4D0) : C(0x5A6470))
+                    c.rect(x + 3 * s, mz - 14 * s, ow - 10 * s, 2 * s, C(0x5A3A26))
+                    c.rect(x + ow / 2 - 3 * s, mz - 20 * s, 6 * s, 5 * s, C(0x2A2E34)); c.rect(x + ow / 2 - 2 * s, mz - 19 * s, 4 * s, 3 * s, C(0x6AD0F0))
+                    c.rect(x + ow, ot + 4 * s, 4 * s, mz - ot - 4 * s, C(0x5A3A26)); c.rect(x + ow, ot + 4 * s, s, mz - ot - 4 * s, steel)
                 }
             }
             c.rect(0, mz, c.w, 6 * s, stoneD); c.rect(0, mz, c.w, s, C(0xF0F4F6)); c.rect(0, mz + 5 * s, c.w, s, C(0x6A7078))
@@ -1091,8 +1253,17 @@ extension Scenes {
             for x in stride(from: 0, to: c.w, by: 30 * s) { c.rect(x, mz - 12 * s, max(1, s), 12 * s, steel) }
             for k in 0..<10 { c.rect(c.w * (5 + k * 10) / 100, mz + 6 * s, 6 * s, s, C(0xF8FCFF)) }
         }
+        // Walnut panelling along the lower walls either side of the glass, its grain and a brass strip on top.
+        let wain = g - 30 * s
+        for (x0, x1) in [(0, gl.x0), (gl.x1, c.w)] {
+            c.rect(x0, wain, x1 - x0, g - wain, C(0x4A3020)); c.rect(x0, wain, x1 - x0, s, C(0xC8A04A))
+            for x in stride(from: x0 + 2 * s, to: x1, by: 14 * s) {
+                c.rect(x, wain + 4 * s, 12 * s, g - wain - 7 * s, C(0x5A3A26)); c.rect(x, wain + 4 * s, 12 * s, s, C(0x6A4A30))
+                for gx in stride(from: x + 3 * s, to: x + 11 * s, by: 4 * s) { c.rect(gx, wain + 6 * s, max(1, s / 2), g - wain - 11 * s, C(0x4E3220)) }
+            }
+        }
         // The ceiling and its row of recessed lights.
-        c.rect(0, 0, c.w, gl.top, C(0xE8ECEE)); c.rect(0, gl.top - s, c.w, s, stoneD)
+        c.rect(0, 0, c.w, gl.top, C(0x9A968E)); c.rect(0, gl.top - s, c.w, s, stoneD)
         for x in stride(from: 10 * s, to: c.w, by: 30 * s) {
             c.rect(x, gl.top - 2 * s, 6 * s, s, C(0xFFFFFF))
             if x + 10 * s < gl.x0 || x > gl.x1 { slayerWedge4(c, x + 3 * s, gl.top, gl.top + 10 * s, 3 * s, 8 * s, C(0xFFFFFF, 0.08)) }
@@ -1106,7 +1277,18 @@ extension Scenes {
             slayerLine(c, Double(x0), Double(g), Double(x0 + w.w / 4), Double(w.top), C(0xE8F4FF, 0.035), Double((6 - k * 3) * s))
         }
         c.rect(w.x, w.top, w.w, 3 * s, C(0xE8F4FF, 0.08)); c.rect(w.x, w.top + 3 * s, w.w, 4 * s, C(0xE8F4FF, 0.04))
+        for k in 0..<(w.w * (g - w.top) / (14 * s * s)) {   // flecks in the granite
+            c.px(w.x + Int(noise(k * 3 + 1200) * Double(w.w)), w.top + Int(noise(k * 3 + 1201) * Double(g - w.top)), noise(k * 3 + 1202) > 0.5 ? C(0x4A4C54) : C(0x16181C))
+        }
         for k in 0..<4 { c.rect(w.x + w.w * (1 + k * 2) / 8 - s, w.top, 2 * s, s, C(0xFFFFFF)) }
+        for k in 0..<4 {   // the downlights' fans of light washing the stone
+            slayerWedge4(c, w.x + w.w * (1 + k * 2) / 8, w.top + s, w.top + 22 * s, s, 6 * s, C(0xF0F4FF, 0.07))
+        }
+        // The firm's name in brushed steel letters across it, with a shadow behind each.
+        let name = "WOLFRAM & HART", lp = max(s, min(3 * s, (w.w - 12 * s) / slayerTextWidth4(name, 1) / s * s))
+        let lx = w.x + (w.w - slayerTextWidth4(name, lp)) / 2, ly = w.top + 9 * s
+        slayerText4(c, lx + s, ly + s, name, C(0x0A0A0E), lp)
+        slayerText4(c, lx, ly, name, C(0xB8C4CC), lp)
         // The reception desk: long, white, a cyan strip of light at its foot, a monitor glowing on it.
         let dx = w.x + 6 * s, dw = w.w - 12 * s, dt = g - 13 * s
         c.rect(dx, dt, dw, 13 * s, C(0xEEF2F4)); c.rect(dx, dt, dw, 2 * s, C(0xFFFFFF)); c.rect(dx + dw - 3 * s, dt, 3 * s, 13 * s, C(0xC0C8CE))
