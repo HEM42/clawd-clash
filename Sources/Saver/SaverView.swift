@@ -47,7 +47,8 @@ final class ClawdClashSaverView: ScreenSaverView {
     private var period = 0
     private var visit: Location?
     private let wipeLayer = CALayer(), wipeMask = CAShapeLayer()
-    private var wipe: (start: Double, clock: Bool)?
+    private var wipe: (start: Double, kind: Wipe.Kind)?
+    private var lastWipe: Wipe.Kind?
     private var trips = 0                       // the wipes take turns: a hard edge, then a clock
     /// In every universe but Star Wars, that universe's own transition instead (`ComicTransition`): each frame drawn whole, old place and
     /// new, into `comicLayer`.
@@ -266,10 +267,12 @@ final class ClawdClashSaverView: ScreenSaverView {
                 wipeLayer.contents = frozen
                 wipeLayer.frame = roomLayer.frame
                 wipeMask.frame = wipeLayer.bounds
-                wipeMask.path = Wipe.remaining(0, clock: trips % 2 == 0, in: wipeLayer.bounds)
+                let kind = Wipe.Kind.next(after: lastWipe)
+                lastWipe = kind
+                wipeMask.path = Wipe.remaining(0, kind, in: wipeLayer.bounds)
                 wipeLayer.isHidden = false
                 CATransaction.commit()
-                wipe = (now, trips % 2 == 0)
+                wipe = (now, kind)
                 trips += 1
             }
         }
@@ -358,7 +361,7 @@ final class ClawdClashSaverView: ScreenSaverView {
                 wipeLayer.isHidden = true
                 wipeLayer.contents = nil
             } else {
-                wipeMask.path = Wipe.remaining(k, clock: w.clock, in: wipeLayer.bounds)
+                wipeMask.path = Wipe.remaining(k, w.kind, in: wipeLayer.bounds)
             }
         }
         if let w = comic {

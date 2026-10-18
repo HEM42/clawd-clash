@@ -2982,6 +2982,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private var universeSince = Date().timeIntervalSince1970
     /// The last change's comic-book transition, so the next one is another.
     private var lastSwitchComic: ComicTransition?
+    private var lastSwitchWipe: Wipe.Kind?
 
     /// Random's turn: another universe, every `universeEvery` minutes. Not in the Playground, the demo or test runs.
     private func randomUniverseTick(_ now: Double) {
@@ -3020,7 +3021,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         if let window, let before {
             let comic = ComicTransition.pick(after: lastSwitchComic, cast: onStage, to: location)
             lastSwitchComic = comic
-            window.playSwitch(from: before, comic: comic, clock: Bool.random())
+            lastSwitchWipe = Wipe.Kind.next(after: lastSwitchWipe)
+            window.playSwitch(from: before, comic: comic, kind: lastSwitchWipe!)
         }
     }
 
