@@ -4,6 +4,7 @@ import Foundation
 struct ClawdbergUniverse: UniverseModule {
     var theme: Theme { clawdbergTheme }
     var places: [Location: Place] { clawdbergPlaces }
+    var hem: HemCostume { clawdbergHem }
     var transitions: TransitionSet? {
         TransitionSet { last, cast, from, to in ClawdbergTrip.pick(after: (last as? ClawdbergTrip)?.kind, cast: cast, from: from, to: to) }
     }

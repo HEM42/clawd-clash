@@ -4,6 +4,7 @@ import Foundation
 struct SlayerUniverse: UniverseModule {
     var theme: Theme { slayerTheme }
     var places: [Location: Place] { slayerPlaces }
+    var hem: HemCostume { slayerHem }
     var transitions: TransitionSet? {
         TransitionSet { last, cast, from, to in SlayerTrip.pick(after: (last as? SlayerTrip)?.kind, cast: cast, from: from, to: to) }
     }

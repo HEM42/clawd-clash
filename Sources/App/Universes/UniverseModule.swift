@@ -12,6 +12,8 @@ protocol UniverseModule {
     var transitions: TransitionSet? { get }
     /// What Tools/Preview needs: the batch names for its art files, and its characters by enum case name.
     var preview: PreviewInfo { get }
+    /// HEM's costume here: his face, buns and fist-shaking are the engine's (`HemCostume`).
+    var hem: HemCostume { get }
 
     // Have defaults
     /// Five sample prompts for the Playground's cards.

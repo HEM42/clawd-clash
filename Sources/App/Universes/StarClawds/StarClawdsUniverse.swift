@@ -4,6 +4,7 @@ import Foundation
 struct StarClawdsUniverse: UniverseModule {
     var theme: Theme { starWarsTheme }
     var places: [Location: Place] { starWarsPlaces }
+    var hem: HemCostume { starClawdsHem }
     // No transitions of its own: Clawd Wars' edge and clock wipes.
 
     var preview: PreviewInfo {

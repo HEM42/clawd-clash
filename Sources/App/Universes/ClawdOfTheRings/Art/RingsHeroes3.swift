@@ -2,7 +2,7 @@ import Foundation
 
 // Heroes: the Riders of Rohan and the ranger of Ithilien, Clawd in costume, Clawd's orange face and ink eyes under it.
 // Éowin and King Théodone wear the same Rohan kit as HEM's Éowyn (`drawRohanCloak`, `drawRohanHelmet`,
-// `drawRohanShield`, `drawRohanSword` and the `rohan…` colours in Hem.swift), so they read as one people; Faramirror's
+// `drawRohanShield`, `drawRohanSword` and the `rohan…` colours in RingsHem.swift), so they read as one people; Faramirror's
 // longbow is held and drawn the way Leggolas holds and draws his. All three stand Clawd's full height.
 
 let ringsHeroes3: [RingsHero: Persona] = [

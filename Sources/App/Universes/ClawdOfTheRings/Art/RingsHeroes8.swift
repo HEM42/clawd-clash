@@ -2,7 +2,7 @@ import Foundation
 
 // Heroes: the Marshal of the Mark, the folk of the Wilderland and the hasty young Ent. Éomore and Bard the Bowmanpage
 // are Clawd in costume at Clawd's full height: Éomore in the same Rohan kit as Éowin and King Théodone
-// (`drawRohanCloak`, `drawRohanShield` and the `rohan…` colours in Hem.swift), but with a taller, gold-ridged helmet
+// (`drawRohanCloak`, `drawRohanShield` and the `rohan…` colours in RingsHem.swift), but with a taller, gold-ridged helmet
 // and its long horsetail, a spear and a leather cuirass; Bard's black longbow is held and drawn the way Leggolas holds
 // and draws his. Beorn is a big Clawd, a quarter again a Man's height and half again as broad (his `headTop`, his fist
 // and his `bulk` say so). Quicksort isn't Clawd at all: an Ent, half again a Man's height like B-Treebeard, but a

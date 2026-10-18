@@ -4,6 +4,7 @@ import Foundation
 struct DoctorUniverse: UniverseModule {
     var theme: Theme { doctorTheme }
     var places: [Location: Place] { doctorPlaces }
+    var hem: HemCostume { doctorHem }
     var transitions: TransitionSet? {
         TransitionSet { last, cast, from, to in DoctorTrip.pick(after: (last as? DoctorTrip)?.kind, cast: cast, to: to) }
     }
