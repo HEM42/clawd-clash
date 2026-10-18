@@ -5519,16 +5519,18 @@ let slayerTitleGlyphs: [Character: (w: Double, strokes: [[(Double, Double)]])] =
     "S": (5, [[(5, 7), (3.3, 8.1), (1.0, 7.5), (0.6, 5.3), (2.6, 4.2), (4.5, 3.1), (4.5, 1.0), (2.5, 0), (0, 0.9)]]),
     "Y": (5.4, [[(0, 8.2), (2.7, 4)], [(5.4, 8.2), (2.6, 4)], [(2.7, 4.2), (2.7, 0)]]),
     "E": (4.8, [[(0.6, 8.2), (0.6, 0)], [(0.2, 8), (4.8, 8.2)], [(0.6, 4.2), (3.9, 4.4)], [(0.2, 0), (5.0, 0.2)]]),
-    "R": (5.2, [[(0.6, 0), (0.6, 8.2)], [(0.2, 8), (3.4, 8.1), (4.9, 6.9), (4.8, 5.1), (3.3, 4.2), (0.6, 4.2)], [(2.4, 4.2), (5.3, 0)]]),
+    "R": (5.4, [[(0.6, 0), (0.6, 8.2)], [(0.2, 8), (3.4, 8.1), (4.9, 6.9), (4.8, 5.1), (3.3, 4.2), (0.6, 4.2)], [(1.6, 4.4), (3.6, 2.0), (5.6, -0.2)]]),
 ]
 
-/// The title laid out as the opening titles lay it on a screen: CLAWD smaller over SLAYER, slanted a little, every
-/// stroke a list of points in pixels of a `slayerTitleW`×`slayerTitleH` canvas (y up); SLAYER's L has a stake for a stem.
-let slayerTitleW = 150, slayerTitleH = 86
+/// The title laid out as the opening titles lay it on a screen: CLAWD smaller over SLAYER, slanted a little and tilted
+/// 20° up to the right, every stroke a list of points in pixels of a `slayerTitleW`×`slayerTitleH` canvas (y up);
+/// SLAYER's L has a stake for a stem, laid out upright and drawn through `tilt`.
+let slayerTitleW = 150, slayerTitleH = 100
 struct SlayerTitleLayout {
     var strokes: [(points: [CGPoint], width: Double)] = []
     var footStroke = -1
     var stake: (x: Double, top: Double, bottom: Double, width: Double) = (0, 0, 0, 0)
+    var tilt = CGAffineTransform.identity
     var u = 1.0
 
     init() {
@@ -5539,6 +5541,18 @@ struct SlayerTitleLayout {
         let block = 8.2 * (1 + small) * u + 2.4 * u, yb = (H - block) / 2
         place("CLAWD", x: (W - top * u * small) / 2, y: yb + (8.2 + 2.4) * u, u: u * small, gap: gap, stakeL: false)
         place("SLAYER", x: (W - bottom * u) / 2, y: yb, u: u, gap: gap, stakeL: true)
+        // Tilted 20° up to the right about the middle, and shrunk to fit (as the opening titles do).
+        let a = 20 * Double.pi / 180, mid = CGPoint(x: W / 2, y: H / 2)
+        let turn = CGAffineTransform(translationX: mid.x, y: mid.y).rotated(by: a).translatedBy(x: -mid.x, y: -mid.y)
+        let st = stake
+        let all = (strokes.flatMap { $0.points } + [CGPoint(x: st.x - st.width / 2, y: st.top), CGPoint(x: st.x + st.width / 2, y: st.top),
+                                                     CGPoint(x: st.x, y: st.bottom)]).map { $0.applying(turn) }
+        let x0 = all.map(\.x).min()!, x1 = all.map(\.x).max()!, y0 = all.map(\.y).min()!, y1 = all.map(\.y).max()!
+        let s = min(1, W * 0.9 / Double(x1 - x0), H * 0.9 / Double(y1 - y0))
+        tilt = turn.concatenating(CGAffineTransform(translationX: -(x0 + x1) / 2, y: -(y0 + y1) / 2))
+            .concatenating(CGAffineTransform(scaleX: s, y: s)).concatenating(CGAffineTransform(translationX: mid.x, y: mid.y))
+        strokes = strokes.map { ($0.points.map { $0.applying(tilt) }, $0.width * s) }
+        u *= s
     }
 
     private mutating func place(_ word: String, x: Double, y: Double, u: Double, gap: Double, stakeL: Bool) {
@@ -5604,6 +5618,10 @@ func slayerTitleImage(write: Double, stake: Double) -> CGImage? {
         }
     }
     if stake > 0 {
+        g.saveGState(); defer { g.restoreGState() }
+        g.concatenate(L.tilt)
+        let pivot = CGPoint(x: L.stake.x, y: (L.stake.top + L.stake.bottom) / 2)    // leaning as the letters do
+        g.translateBy(x: pivot.x, y: pivot.y); g.rotate(by: -atan(0.16)); g.translateBy(x: -pivot.x, y: -pivot.y)
         let st = L.stake, fall = (1 - stake * stake) * Double(slayerTitleH) * 1.1
         let x = st.x, top = st.top + fall, bottom = st.bottom + fall, wd = st.width
         func shape(_ dx: Double, _ dy: Double, _ hex: UInt32, inset: Double = 0) {
@@ -5912,7 +5930,7 @@ func slayerRestfield(_ ctx: CGContext, local c: Double, t: Double) {
         for i in vamps.indices { slayerDustPuff(fx, x: vamps[i].x, y: homeGround - 16, k: dusted(i), seed: 900 + i * 101, count: 110, spread: 14) }
         if let img = fx.makeImage() { ctx.saveGState(); ctx.interpolationQuality = .none; ctx.draw(img, in: fullRect); ctx.restoreGState() }
     }
-    caption("In every terminal, a Slayer is chosen.", ctx, local: c, start: homeDust[0] - 0.2, y: 930, size: 60)
+    caption("In every terminal, a Clawd is chosen.", ctx, local: c, start: homeDust[0] - 0.2, y: 930, size: 60)
 }
 
 /// The end card: the library, the crew lined up, the title brushed on and its stake slamming down.
@@ -5979,7 +5997,7 @@ let slayerShots: [Shot] = [
     Shot(name: "agents", start: 31.3, end: 35.3) { ctx, local, t in
         agentsOf(ctx, local: local, t: t, guardCast: .hero(SlayerHero.rupertGyles),
                  crew: [.hero(SlayerHero.xanderHarrows), .hero(SlayerHero.cordeliaChaise), .hero(SlayerHero.ozz), .hero(SlayerHero.anyaJinkins)],
-                 line: "Every subagent gets to be a Scooby.", badgeText: Universe.slayer.title.uppercased())
+                 line: "Every subagent gets to be part of the Scoobies.", badgeText: Universe.slayer.title.uppercased())
     },
     Shot(name: "window", start: 35.3, end: 40.1, into: .trip(.slayer(SlayerTrip(kind: .hellmouth, from: .slayerLibrary, to: .slayerLibrary)))) { ctx, local, t in
         windowShot(ctx, .slayer, local: local, t: t, rise: true, needsAt: 2.5, at: .slayerLibrary)
@@ -6003,7 +6021,7 @@ let slayerBeats: [(key: Double, beat: Beat)] = [
            "no text", "the band crashes in: fast, crunchy punk power chords and pounding drums, our own notes; a cymbal crash on every cut")),
     (5.5, ("THE LEADS", "\(slayerName(SlayerHero.buffyClawmers)) with her stake, \(slayerName(SlayerHero.rupertGyles)) with his crossbow, \(slayerName(SlayerHero.willowRosenclaw)) with a spell glowing green, \(slayerName(SlayerHero.xanderHarrows)) with a rocket launcher: four black silhouettes slamming in against the moon, one after another.",
            "no text", "a hit on each slam")),
-    (7.0, ("THE TITLE", "CLAWD SLAYER brushed on in jagged bone-white strokes over red, a whittled stake slamming down as SLAYER's L; then the black is torn away in ragged strokes onto the Welcome to Sunnydale sign.",
+    (7.5, ("THE TITLE", "CLAWD SLAYER brushed on in jagged bone-white strokes over red, a whittled stake slamming down as SLAYER's L; then the black is torn away in ragged strokes onto the Welcome to Sunnydale sign.",
            "CLAWD SLAYER", "the big hit as the stake lands, a ringing chord, a sweep")),
     (10.0, ("HOME SWEET HOME", "Night at the \(Location.slayerTownSign.name) sign. Spyke's black DeSoto, its windows painted over, tears in with its headlights on and smashes straight through the sign: the board flies off in three pieces, splinters and dust everywhere.",
             "no text", "an engine roaring in, the crash, wood splintering")),
@@ -6012,7 +6030,7 @@ let slayerBeats: [(key: Double, beat: Beat)] = [
     (15.0, ("RESTFIELD", "\(Location.slayerCemetery.name): three fledglings claw up out of their graves. The yellow school bus pulls up and folds its door open; \(slayerName(SlayerHero.buffyClawmers)), \(slayerName(SlayerHero.willowRosenclaw)) and \(slayerName(SlayerHero.rupertGyles)) get off. \(slayerName(SlayerHero.buffyClawmers)) flips her stake.",
             "no text", "earth crumbling, the bus's engine and brakes, the door")),
     (17.0, ("DUST AT DAWN", "The fight: the stake, Willow's spell lighting the graves green, Giles's crossbow. The sky blushes, dawn breaks behind the hills and the fledglings go up in dust, one, two, three.",
-            "“In every terminal, a Slayer is chosen.”", "stake thuds, a spell, a crossbow bolt; a rising dawn chord, three puffs of dust")),
+            "“In every terminal, a Clawd is chosen.”", "stake thuds, a spell, a crossbow bolt; a rising dawn chord, three puffs of dust")),
     (18.3, ("DUSTING", "The app's Dusting trip: a stake strikes and the cemetery bursts into dust that blows away onto the desktop.", "(none)", "a thud, a rush of dust")),
     (20.0, ("THE HOOK", "Three busy terminals, slow push-in.", "“Three AIs. Nine agents. One very confused Watcher.”  →  “Sound familiar?”", "keyboard clicks")),
     (24.8, ("DESKTOP MODE", "\(slayerName(SlayerHero.buffyClawmers)) against \(slayerName(SlayerVillain.oldMaster)); \(slayerName(SlayerHero.willowRosenclaw)) against \(slayerName(SlayerVillain.lukewarm)).",
@@ -6020,7 +6038,7 @@ let slayerBeats: [(key: Double, beat: Beat)] = [
     (29.4, ("AT A GLANCE", "\(slayerName(SlayerHero.buffyClawmers)) working, \(slayerName(SlayerHero.willowRosenclaw)) thinking, \(slayerName(SlayerHero.spyke))'s jumping NEEDS YOU, \(slayerName(SlayerHero.rupertGyles)) sat down napping.",
             "“All fun and games, and you still see everything.”  ·  “(\(slayerName(SlayerHero.spyke)) needs you: “Bloody hell!” \(slayerName(SlayerHero.rupertGyles)) has gone for a lie-down.)”", "blips, alert beeps")),
     (33.5, ("SUBAGENTS", "\(slayerName(SlayerHero.rupertGyles)) stands guard; \(slayerName(SlayerHero.xanderHarrows)), \(slayerName(SlayerHero.cordeliaChaise)), \(slayerName(SlayerHero.ozz)) and \(slayerName(SlayerHero.anyaJinkins)) arrive with their jobs on their labels.",
-            "“Every subagent gets to be a Scooby.”", "footsteps")),
+            "“Every subagent gets to be part of the Scoobies.”", "footsteps")),
     (38.1, ("WINDOW MODE", "In through the app's Hellmouth trip: the window in the \(Location.slayerLibrary.name), \(slayerName(SlayerHero.buffyClawmers)) against \(slayerName(SlayerVillain.oldMaster)), live cards tick, then the Codex card flips to NEEDS YOU.",
             "WINDOW MODE  ·  “Prefer a window? Welcome to the Hellmouth.”", "a rumble, a ping")),
     (42.5, ("EVERY AI", "Seven sessions, one per AI outline: \(slayerName(SlayerHero.buffyClawmers)) (Claude Code, a head taller) and \(slayerName(SlayerHero.faithLehayne)) against \(slayerName(SlayerVillain.oldMaster)), \(slayerName(SlayerVillain.drusillah)), \(slayerName(SlayerVillain.glorificlaws)) and \(slayerName(SlayerVillain.mayorWilclaws)); a fledgling in pi's pink.",

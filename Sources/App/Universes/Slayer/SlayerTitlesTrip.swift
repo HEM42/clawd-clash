@@ -500,8 +500,12 @@ extension SlayerTrip {
         // The stake: a whittled wooden stake falling point first into place.
         let drop = Self.span(k, TitlesLayout.stakeFalls, TitlesLayout.stakeLands)
         guard drop > 0 else { return }
-        let fall = (1 - drop * drop) * L.H * 1.1
+        c.saveGState(); defer { c.restoreGState() }
+        c.concatenate(L.tilt)                                       // tilted with the title, falling along its own length
         let st = L.stake
+        let pivot = CGPoint(x: st.x, y: (st.top + st.bottom) / 2)  // and leaning as the letters' slant does
+        c.translateBy(x: pivot.x, y: pivot.y); c.rotate(by: -atan(TitlesLayout.slant)); c.translateBy(x: -pivot.x, y: -pivot.y)
+        let fall = (1 - drop * drop) * L.H * 1.1
         let x = st.x, top = st.top + fall, bottom = st.bottom + fall, wd = st.width
         func stakeShape(_ dx: Double, _ dy: Double, _ hex: UInt32, inset: Double = 0) {
             c.setFillColor(titlesRGB(hex))
@@ -592,17 +596,21 @@ extension SlayerTrip {
 // MARK: - Layout, timing and the leads
 
 /// Where the title's strokes go, as wide or tall as the frame allows: one line in a short strip, two on a screen
-/// (CLAWD smaller over SLAYER), slanted a little, every stroke a list of points in art pixels.
+/// (CLAWD smaller over SLAYER), slanted a little and the whole of it tilted up to the right, every stroke a list of
+/// points in art pixels.
 private struct TitlesLayout {
     static let slams: [Double] = [0.47, 0.508, 0.546, 0.584]
     static let stakeFalls = 0.695, stakeLands = 0.712, written = 0.8
     static func ground(_ H: Double) -> Double { floor(H * 0.14) }
 
     struct Stroke { let points: [CGPoint]; let width: Double }
-    let W: Double, H: Double, u: Double
+    let W: Double, H: Double
+    var u: Double
     var strokes: [Stroke] = []
     var footStroke = -1
+    /// The stake upright, as laid out before the tilt; `tilt` takes it (and anything drawn with it) to the screen.
     var stake: (x: Double, top: Double, bottom: Double, width: Double) = (0, 0, 0, 0)
+    var tilt = CGAffineTransform.identity
 
     private static let glyphs: [Character: (w: Double, strokes: [[(Double, Double)]])] = [
         "C": (5, [[(5, 6.8), (3.4, 8), (1.4, 7.4), (0.2, 5), (0.2, 3), (1.3, 0.6), (3.3, 0), (5.2, 1)]]),
@@ -613,7 +621,7 @@ private struct TitlesLayout {
         "S": (5, [[(5, 7), (3.3, 8.1), (1.0, 7.5), (0.6, 5.3), (2.6, 4.2), (4.5, 3.1), (4.5, 1.0), (2.5, 0), (0, 0.9)]]),
         "Y": (5.4, [[(0, 8.2), (2.7, 4)], [(5.4, 8.2), (2.6, 4)], [(2.7, 4.2), (2.7, 0)]]),
         "E": (4.8, [[(0.6, 8.2), (0.6, 0)], [(0.2, 8), (4.8, 8.2)], [(0.6, 4.2), (3.9, 4.4)], [(0.2, 0), (5.0, 0.2)]]),
-        "R": (5.2, [[(0.6, 0), (0.6, 8.2)], [(0.2, 8), (3.4, 8.1), (4.9, 6.9), (4.8, 5.1), (3.3, 4.2), (0.6, 4.2)], [(2.4, 4.2), (5.3, 0)]]),
+        "R": (5.4, [[(0.6, 0), (0.6, 8.2)], [(0.2, 8), (3.4, 8.1), (4.9, 6.9), (4.8, 5.1), (3.3, 4.2), (0.6, 4.2)], [(1.6, 4.4), (3.6, 2.0), (5.6, -0.2)]]),
     ]
 
     init(W: Double, H: Double) {
@@ -637,11 +645,35 @@ private struct TitlesLayout {
             place("CLAWD", x: (W - top * u * small) / 2, y: yb + (8.2 + 2.4) * u, u: u * small, gap: gap, stakeL: false)
             place("SLAYER", x: (W - bottom * u) / 2, y: yb, u: u, gap: gap, stakeL: true)
         }
+        tiltUp(degrees: oneLine ? 6 : 20, fit: (W * (oneLine ? 0.9 : 0.86), H * (oneLine ? 0.8 : 0.8)))
     }
+
+    /// The whole title turned `degrees` up to the right about the frame's middle, and shrunk if it no longer fits
+    /// in `fit`. The strokes' points are moved (so the brush's dabs stay square pixels); the stake keeps its upright
+    /// layout and is drawn through `tilt`.
+    private mutating func tiltUp(degrees: Double, fit: (w: Double, h: Double)) {
+        let a = degrees * .pi / 180, mid = CGPoint(x: W / 2, y: H / 2)
+        let turn = CGAffineTransform(translationX: mid.x, y: mid.y).rotated(by: a).translatedBy(x: -mid.x, y: -mid.y)
+        let st = stake
+        let corners = [CGPoint(x: st.x - st.width / 2, y: st.top), CGPoint(x: st.x + st.width / 2, y: st.top),
+                       CGPoint(x: st.x, y: st.bottom)]
+        let all = (strokes.flatMap { $0.points } + corners).map { $0.applying(turn) }
+        guard let x0 = all.map(\.x).min(), let x1 = all.map(\.x).max(), let y0 = all.map(\.y).min(), let y1 = all.map(\.y).max() else { return }
+        let s = min(1, fit.w / Double(x1 - x0), fit.h / Double(y1 - y0))
+        let c = CGPoint(x: (x0 + x1) / 2, y: (y0 + y1) / 2)
+        // Turned, then shrunk about the turned title's own middle and set back in the frame's.
+        tilt = turn.concatenating(CGAffineTransform(translationX: -c.x, y: -c.y))
+            .concatenating(CGAffineTransform(scaleX: s, y: s)).concatenating(CGAffineTransform(translationX: mid.x, y: mid.y))
+        strokes = strokes.map { Stroke(points: $0.points.map { $0.applying(tilt) }, width: $0.width * s) }
+        u *= s
+    }
+
+    /// How far the letters lean: across for each unit up.
+    static let slant = 0.16
 
     private mutating func place(_ word: String, x: Double, y: Double, u: Double, gap: Double, stakeL: Bool) {
         var cx = x
-        let slant = 0.16
+        let slant = Self.slant
         for (n, ch) in word.enumerated() {
             guard let g = Self.glyphs[ch] else { continue }
             let jitter = (noise(n * 19 + word.count) - 0.5) * 0.5
