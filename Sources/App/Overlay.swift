@@ -1183,8 +1183,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         var speeches: [(key: String, item: DrawItem)] = []   // lines said over a head, placed above its name tag
         var asides: [DrawItem] = []                           // lines said beside a head, placed last (see below)
         var bubbles: [(key: String, x: CGFloat, y: CGFloat, kind: BubbleKind, urgent: Bool, preferRight: Bool, alpha: CGFloat)] = []
-        // Hush (Clawd Slayer): while the Gentlemen are on stage nobody has a voice; every line comes up an empty bubble.
-        let hushed = actors.contains { slayerHushes($0.cast) && $0.leaving == nil && now >= $0.born }
+        // While a universe's husher is on stage (Clawd Slayer's Gentlemen) nobody has a voice: every line comes up an empty bubble.
+        let hushed = actors.contains { $0.leaving == nil && now >= $0.born && $0.cast.universe.module.quirks.hushers.contains($0.cast) }
         // Companions first so leaders (and their sabers) draw on top.
         var falconItems: [DrawItem] = []
         for var actor in actors.sorted(by: { !$0.isLeader && $1.isLeader }) {
@@ -1241,7 +1241,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                              urgent: actor.urgent && role == nil, sitting: actor.sitting, asSession: true,
                              airborne: walking && air > 0.3, aloft: !walking && air > 0.3)
                 }
-                if let r = actor.regenerated, now - r < regenerationFlare { drawRegeneration(canvas, k: (now - r) / regenerationFlare, t: t) }
+                if let r = actor.regenerated, let reg = actor.cast.universe.module.regeneration, now - r < reg.length {
+                    reg.draw(canvas, (now - r) / reg.length, t)
+                }
                 scale = ls; y = ground
             case .agent(let who):
                 let role = roles[actor.key]
@@ -1365,7 +1367,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             }
             if let b = bunTalk { line = b.line; overHead = true }
             if let said = flinch.line { line = said; overHead = true }
-            if hushed, let said = line { line = slayerHushed(said) }
+            if hushed, let said = line { line = StageQuirks.hushed(said) }
             if let caption = away?.caption { line = caption; overHead = true }
             if let line {
                 let sc = actor.isLeader ? ls : cs
@@ -1608,8 +1610,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// line after.
     private var greedoShot: (han: String, greedo: String, start: Double, line: String)?
     private var nextShootsFirst: Double?
-    /// Who was in a fight (or cheering one) and when it ended, for Mayor Wilclaws' wet wipe (`SlayerAfterDuel`).
-    private var afterDuel = SlayerAfterDuel()
+    /// Who was in a fight (or cheering one) and when it ended, for Mayor Wilclaws' wet wipe (`AfterDuel`).
+    private var afterDuel = AfterDuel()
 
     /// How far up (0…1 of `flightHeight`) `a` is right now: taking off or landing on a trip along the line, or out on a
     /// sortie (`sortieAir`), never while sitting, waiting for you, cheering or on its way out.

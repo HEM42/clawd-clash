@@ -1,23 +1,15 @@
 import Foundation
 
 // Clawd Slayer's habits, the things that make the universe behave like the show rather than just look like it:
-//  - Hush: while the Gentlemen are on stage nobody has a voice, and every line comes up an empty bubble (the overlay
-//    asks `slayerHushes` and `slayerHushed`);
+//  - Hush: while the Gentlemen are on stage nobody has a voice, and every line comes up an empty bubble
+//    (`StageQuirks.hushers`, in SlayerUniverse.swift);
 //  - the full moon: on the nights the real moon is full, Ozz and Veruka stay wolves (`slayerFullMoon`, read by their
 //    own drawing code);
 //  - the First Evil, now and then, outside its signature, becomes one of the Big Bads before it for a few seconds,
 //    their whole self, as in "Lessons" (`slayerFirstEvilGuise`, read by its drawing code);
-//  - Mayor Wilclaws wipes his hands after every duel he was in or watched (`SlayerAfterDuel`, kept by the overlay and
-//    the screen saver).
+//  - Mayor Wilclaws wipes his hands after every duel he was in or watched (`StageQuirks.afterDuel`, in SlayerUniverse.swift;
+//    the engine's `AfterDuel` keeps track).
 
-// MARK: - Hush
-
-/// Whether `who` being on stage takes everyone's voice away: the Gentlemen, as in "Hush".
-func slayerHushes(_ who: Cast) -> Bool { who == .villain(SlayerVillain.gentlemen) }
-
-/// A line with the words taken out of it: the same bubble, the same width (the font is monospaced), nothing in it.
-/// No-break spaces, so the text keeps its width when it's measured.
-func slayerHushed(_ line: String) -> String { String(repeating: "\u{00A0}", count: max(3, line.count)) }
 
 // MARK: - The full moon
 
@@ -78,38 +70,4 @@ func slayerFirstEvilGuise(_ p: Pose) -> (who: Cast, k: Double)? {
     guard e < slayerGuiseLength, noise(cycle * 17 + 5) < 0.55 else { return nil }
     let pick = min(slayerFirstEvilGuises.count - 1, Int(noise(cycle * 29 + 3) * Double(slayerFirstEvilGuises.count)))
     return (.villain(slayerFirstEvilGuises[pick]), e / slayerGuiseLength)
-}
-
-// MARK: - The Mayor's wet wipe
-
-/// Mayor Wilclaws wipes his hands after every duel, as fussy about germs as he is about manners. He doesn't fight
-/// (he's unarmed), so it's the duels he watches, cheering: once he's no longer part of a fight and has stopped
-/// walking, his signature (the packet of wet wipes) plays right through. The overlay and the screen saver each keep
-/// one of these, and ask it every frame.
-struct SlayerAfterDuel {
-    private var fighting: Set<String> = []          // in a fight, or watching one, last time asked
-    private var pending: [String: Double] = [:]     // the fight just ended (when): waiting for him to stand still
-    private var wiping: [String: Double] = [:]      // wiping since
-
-    /// Whether `who` does this at all.
-    static func wipes(_ who: Cast) -> Bool { who == .villain(SlayerVillain.mayorWilclaws) }
-
-    /// The wipe to play for `key` now, if any. `inFight`: fighting or cheering this frame; `free`: standing still on
-    /// stage, not walking, leaving or sitting.
-    mutating func wipe(_ key: String, _ who: Cast, inFight: Bool, free: Bool, now: Double) -> HabitPlay? {
-        guard Self.wipes(who), let length = who.signatureLength else { return nil }
-        if inFight {
-            fighting.insert(key); pending[key] = nil; wiping[key] = nil
-            return nil
-        }
-        if fighting.remove(key) != nil { pending[key] = now }
-        if let ended = pending[key] {
-            if now - ended > 20 { pending[key] = nil }          // walked about too long: the moment's gone
-            else if free { pending[key] = nil; wiping[key] = now }
-        }
-        guard let start = wiping[key] else { return nil }
-        let e = now - start
-        guard e < length else { wiping[key] = nil; return nil }
-        return HabitPlay(kind: .signature, e: e, length: length)
-    }
 }

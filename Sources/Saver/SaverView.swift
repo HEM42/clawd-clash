@@ -15,8 +15,8 @@ final class ClawdClashSaverView: ScreenSaverView {
     private let host = NSView()
     private let roomLayer = CALayer(), liveLayer = CALayer()
     private var pool: [CALayer] = []
-    /// Who was in a fight (or cheering one), for Mayor Wilclaws' wet wipe after it (`SlayerAfterDuel`).
-    private var afterDuel = SlayerAfterDuel()
+    /// Who was in a fight (or cheering one), for Mayor Wilclaws' wet wipe after it (`AfterDuel`).
+    private var afterDuel = AfterDuel()
     private var room: (size: CGSize, location: Location, image: CGImage)?
     private var live: PixelCanvas?
     private var textCache: [String: CGImage] = [:]

@@ -39,6 +39,9 @@ protocol UniverseModule {
     var rides: [Ride] { get }
     /// Characters' own drills, practised now and then among the general ones.
     var drills: [Cast: BespokeDrill] { get }
+    /// What a regeneration looks like (`UniverseCompaction.regenerate`): drawn over the character, already in its next
+    /// face, `k` (0…1) through `length` seconds.
+    var regeneration: (length: Double, draw: (_ c: PixelCanvas, _ k: Double, _ t: Double) -> Void)? { get }
 }
 
 extension UniverseModule {
@@ -57,6 +60,7 @@ extension UniverseModule {
     var shootOuts: [ShootOut] { [] }
     var rides: [Ride] { [] }
     var drills: [Cast: BespokeDrill] { [:] }
+    var regeneration: (length: Double, draw: (_ c: PixelCanvas, _ k: Double, _ t: Double) -> Void)? { nil }
 }
 
 /// Han shoots first, as an engine feature (`ShootsFirst` draws it): whenever `shooter` and `target` fight, now and
@@ -103,6 +107,14 @@ struct StageQuirks {
     var prop: ((_ who: OnStage, _ ground: CGFloat, _ scale: CGFloat, _ t: Double) -> StageLayer?)? = nil
     /// A word to someone nearby: which way `who` turns to say it, and the line. `zoom`: the stage's zoom.
     var remark: ((_ who: OnStage, _ others: [OnStage], _ zoom: CGFloat, _ t: Double) -> (facing: CGFloat, line: String)?)? = nil
+    /// While one of these is on stage, nobody has a voice: every line comes up an empty bubble (`StageQuirks.hushed`).
+    var hushers: Set<Cast> = []
+    /// These play their signature once a fight they were in, or watched, is over (Mayor Wilclaws' wet wipe; `AfterDuel`).
+    var afterDuel: Set<Cast> = []
+
+    /// A line with the words taken out of it: the same bubble, the same width (the font is monospaced), nothing in it.
+    /// No-break spaces, so the text keeps its width when it's measured.
+    static func hushed(_ line: String) -> String { String(repeating: "\u{00A0}", count: max(3, line.count)) }
 }
 
 /// A moment of a compaction on stage: The Clawd Files' abduction beam, Stevie Clawdberg's 88 mph, Clawd Slayer's

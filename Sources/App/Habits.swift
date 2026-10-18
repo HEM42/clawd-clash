@@ -171,3 +171,35 @@ func drawGlint(_ c: PixelCanvas, p: Double, maxX: Int = 40) {
         }
     }
 }
+
+/// A character who plays its signature once a duel is over (`StageQuirks.afterDuel`): Clawd Slayer's Mayor Wilclaws,
+/// wiping his hands, as fussy about germs as he is about manners. It counts the duels it fought in or watched,
+/// cheering: once it's no longer part of a fight and has stopped walking, its signature plays right through. The
+/// overlay and the screen saver each keep one of these, and ask it every frame.
+struct AfterDuel {
+    private var fighting: Set<String> = []          // in a fight, or watching one, last time asked
+    private var pending: [String: Double] = [:]     // the fight just ended (when): waiting for him to stand still
+    private var wiping: [String: Double] = [:]      // wiping since
+
+    /// Whether `who` does this at all (`StageQuirks.afterDuel`).
+    static func wipes(_ who: Cast) -> Bool { who.universe.module.quirks.afterDuel.contains(who) }
+
+    /// The wipe to play for `key` now, if any. `inFight`: fighting or cheering this frame; `free`: standing still on
+    /// stage, not walking, leaving or sitting.
+    mutating func wipe(_ key: String, _ who: Cast, inFight: Bool, free: Bool, now: Double) -> HabitPlay? {
+        guard Self.wipes(who), let length = who.signatureLength else { return nil }
+        if inFight {
+            fighting.insert(key); pending[key] = nil; wiping[key] = nil
+            return nil
+        }
+        if fighting.remove(key) != nil { pending[key] = now }
+        if let ended = pending[key] {
+            if now - ended > 20 { pending[key] = nil }          // walked about too long: the moment's gone
+            else if free { pending[key] = nil; wiping[key] = now }
+        }
+        guard let start = wiping[key] else { return nil }
+        let e = now - start
+        guard e < length else { wiping[key] = nil; return nil }
+        return HabitPlay(kind: .signature, e: e, length: length)
+    }
+}
