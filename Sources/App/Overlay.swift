@@ -2148,6 +2148,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 if ClawdWindow.closeHides { self?.toggleHidden() } else { NSApp.terminate(nil) }
             }
             w.header.onToggleList = { [weak self] in self?.cycleWindowView() }
+            w.header.onToggleLarge = { [weak self] in self?.toggleLargeWindow() }
             w.board.feedSource = { [weak self] in self?.saverFeed }
             w.board.contextMenu = { [weak self] in self?.menu() }
             w.onGeometryChange = { [weak self] in
@@ -2565,8 +2566,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             .toggle("Keep window on top", get: { d.bool(forKey: "windowPinned") },
                     set: { [weak self] on in d.set(on, forKey: "windowPinned"); self?.clawdWindow?.applyPin() }),
             .separator,
-            .toggle("Compact window", note: "The whole window at 75%.", get: { ClawdWindow.small },
+            .toggle("Compact window", note: "The whole window at 75%.", get: { ClawdWindow.small && !ClawdWindow.large },
                     set: { [weak self] _ in self?.toggleSmallWindow() }),
+            .toggle("Larger window (125%)", note: "The whole window at 125%, the scene and its crew too. The arrows in the window's header switch it as well.",
+                    get: { ClawdWindow.large }, set: { [weak self] _ in self?.toggleLargeWindow() }),
             .toggle("Show the session list", get: { ClawdWindow.listShown && ClawdWindow.view != .board },
                     set: { [weak self] _ in self?.toggleWindowList() }),
             .toggle("Show the screen saver view instead", get: { ClawdWindow.view == .board },
@@ -2576,6 +2579,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             .separator,
             .toggle("Show project names over the characters", get: { d.object(forKey: "labelsWindow") as? Bool ?? false },
                     set: { on in d.set(on, forKey: "labelsWindow") }),
+            .separator,
+            // Each card redraws at once, the pills left closing up to the right.
+            .checks("Card pills", items: [("Status", CardsView.Pill.status), ("Where the repo lives", .remote), ("Context", .context)].map { item in
+                (item.0, get: { CardsView.shows(item.1) },
+                 set: { [weak self] on in d.set(on, forKey: item.1.rawValue); self?.clawdWindow?.cardsView.needsDisplay = true })
+            }),
         ]
 
         let desktop: [SettingsRow] = [
@@ -2827,8 +2836,17 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private static let desktopLevel = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopIconWindow)) + 1)
 
     @objc private func toggleSmallWindow() {
-        ClawdWindow.small.toggle()
+        // Ticked in the Larger window: back down to the Compact Window, not just a flag the Larger one hides.
+        if ClawdWindow.large { ClawdWindow.large = false; ClawdWindow.small = true } else { ClawdWindow.small.toggle() }
         clawdWindow?.applySmall()
+    }
+
+    /// The header's size button, or Settings → Larger window (125%): everything in the window 25% bigger, or back.
+    @objc private func toggleLargeWindow() {
+        let old = ClawdWindow.scale
+        ClawdWindow.large.toggle()
+        clawdWindow?.applyLarge(from: old)
+        settingsWindow?.reload()
     }
 
     /// The header's view button: the scene with the list ↔ just the scene; from the screen-saver view (Settings

@@ -13,6 +13,8 @@ struct SettingsSection {
 enum SettingsRow {
     /// A label and a checkbox, with an optional line under it.
     case toggle(String, note: String? = nil, get: () -> Bool, set: (Bool) -> Void)
+    /// A label and a column of checkboxes under it, each with its own title.
+    case checks(String, items: [(title: String, get: () -> Bool, set: (Bool) -> Void)])
     /// A label and a pop-up of choices, left out while not `shown`.
     case choice(String, options: [String], shown: () -> Bool = { true }, get: () -> Int, set: (Int) -> Void)
     /// A label, what it says now, and a button (none when `button` gives nil). `dimmed` greys the row out.
@@ -121,6 +123,15 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
             hook(box) { set(($0 as? NSButton)?.state == .on) }
             grid.addRow(with: [Self.label(title), box])
             if let note { addNote(note, to: grid) }
+        case let .checks(title, items):
+            for (i, item) in items.enumerated() {
+                let box = NSButton(checkboxWithTitle: item.title, target: nil, action: nil)
+                box.state = item.get() ? .on : .off
+                let set = item.set
+                hook(box) { set(($0 as? NSButton)?.state == .on) }
+                let r = grid.addRow(with: [i == 0 ? Self.label(title) : NSGridCell.emptyContentView, box])
+                if i > 0 { r.topPadding = -3 }
+            }
         case let .choice(title, options, shown, get, set):
             let popup = NSPopUpButton(frame: .zero, pullsDown: false)
             popup.addItems(withTitles: options)
