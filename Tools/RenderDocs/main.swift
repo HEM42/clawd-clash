@@ -154,6 +154,15 @@ let ringsLineup: [[Extra]] = [
     filesPair(.hero(RingsHero.gandalf), true, "", 282, .villain(RingsVillain.balrog), true, "", 342),
     [Extra(who: .hero(RingsHero.sam), leader: false, label: "Run the test suite", x: 396, facing: 1, role: .cheer)],
 ]
+/// Clawd Slayer: the Old Master and Buffy, Willow's spell against Drusillah's, Xander's 2×4 against a fledgling,
+/// Spyke against Draclawla, Rupert Gyles cheering.
+let slayerLineup: [[Extra]] = [
+    filesPair(.villain(SlayerVillain.oldMaster), true, "", 30, .hero(SlayerHero.buffyClawmers), true, "", 98),
+    filesPair(.hero(SlayerHero.willowRosenclaw), false, "Check git history", 132, .villain(SlayerVillain.drusillah), false, "Write changelog", 182),
+    filesPair(.hero(SlayerHero.xanderHarrows), false, "Plan the refactor", 214, .villain(SlayerVillain.fledgling), false, "Review Overlay.swift", 244),
+    filesPair(.hero(SlayerHero.spyke), true, "", 282, .villain(SlayerVillain.draclawla), true, "", 352),
+    [Extra(who: .hero(SlayerHero.rupertGyles), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
+]
 let filesLineup: [[Extra]] = [
     filesPair(.villain(FilesVillain.smokingClawd), true, "", 30, .hero(FilesHero.foxClawder), true, "", 98),
     filesPair(.hero(FilesHero.danaScrawly), false, "Check git history", 132, .villain(FilesVillain.clawcek), false, "Write changelog", 182),
@@ -219,6 +228,7 @@ desktop(doctorLineup, file: "desktop-doctor-clawd.png")
 desktop(filesLineup, file: "desktop-the-clawd-files.png")
 desktop(clawdbergLineup, file: "desktop-stevie-clawdberg.png")
 desktop(ringsLineup, file: "desktop-clawd-of-the-rings.png")
+desktop(slayerLineup, file: "desktop-clawd-slayer.png")
 
 // MARK: Locations (one sheet per universe)
 
@@ -338,4 +348,8 @@ socialPreview(title: "CLAWD OF THE RINGS", subtitle: "Your AI sessions as a pixe
               groups: [[.hero(RingsHero.gandalf), .hero(RingsHero.frodo), .hero(RingsHero.aragorn), .hero(RingsHero.legolas),
                         .villain(RingsVillain.balrog), .villain(RingsVillain.sauron), .villain(RingsVillain.witchKing), .villain(RingsVillain.gollum)]],
               file: "social-preview-clawd-of-the-rings.png")
+socialPreview(title: "CLAWD SLAYER", subtitle: "Your AI sessions as a pixel-art vampire hunt on your desktop",
+              groups: [[.hero(SlayerHero.buffyClawmers), .hero(SlayerHero.willowRosenclaw), .hero(SlayerHero.spyke), .hero(SlayerHero.angstel),
+                        .villain(SlayerVillain.oldMaster), .villain(SlayerVillain.glorificlaws), .villain(SlayerVillain.drusillah), .villain(SlayerVillain.mayorWilclaws)]],
+              file: "social-preview-clawd-slayer.png")
 print("wrote the social previews to \(out)")
