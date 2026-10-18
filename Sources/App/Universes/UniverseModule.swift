@@ -183,15 +183,9 @@ enum PoseStyle {
 }
 
 extension Universe {
-    /// The universe's module.
+    /// The universe's module (`registeredModules`, generated from the folders by Tools/universes.sh).
     var module: UniverseModule { registeredModules[self]! }
 }
-
-/// Every universe's module. Hand-listed for now; the universe-modules refactor generates this list from the folders.
-let registeredModules: [Universe: UniverseModule] = [
-    .starWars: StarClawdsUniverse(), .marvel: MarvelousUniverse(), .dc: DetectiveUniverse(), .doctor: DoctorUniverse(),
-    .clawdFiles: FilesUniverse(), .clawdberg: ClawdbergUniverse(), .middleEarth: RingsUniverse(), .slayer: SlayerUniverse(),
-]
 
 /// A universe's characters as Tools/Preview finds them: by batch (one art file's worth, "slayerHeroes1") and by enum
 /// case name (`buffy`).

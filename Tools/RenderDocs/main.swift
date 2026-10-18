@@ -2,8 +2,8 @@ import AppKit
 
 // Renders the README's roster and locations images with the app's own sprite code.
 // Sessions are labelled with their character's name (as the app does with no project), agents with their task.
-//   swiftc -swift-version 5 Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
-//          Sources/App/Universes/**/*.swift Sources/Shared/*.swift \
+//   source Tools/universes.sh && swiftc -swift-version 5 Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
+//          $UNIVERSE_APP Sources/Shared/*.swift \
 //          Tools/RenderDocs/main.swift -o build/renderdocs && build/renderdocs docs
 
 let out = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "docs"

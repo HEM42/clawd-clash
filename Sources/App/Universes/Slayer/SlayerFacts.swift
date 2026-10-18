@@ -46,10 +46,10 @@ enum SlayerFacts {
     static let facts = UniverseFacts(
         villainCount: SlayerVillain.allCases.count, heroCount: SlayerHero.allCases.count,
         // a fledgling vampire, one of Glory's minions, Gachnar, Amy the rat; Miss Kitty Fanclawstico
-        agentOnly: Set((44...47).map { $0 } + [StatusStore.heroBase + 34]),
-        rivals: [StatusStore.heroBase + 24, StatusStore.heroBase + 8],      // Angstel and Spyke
+        agentOnly: Set((44...47).map { $0 } + [UniverseFacts.heroBase + 34]),
+        rivals: [UniverseFacts.heroBase + 24, UniverseFacts.heroBase + 8],      // Angstel and Spyke
         // The eight from "Tabula Rasa" (Buffy, Willow, Xander, Giles, Anya, Tara, Spyke, Dawn): Willow's forgetting
         // spell goes off, then wears off, the same face (`SlayerTabulaRasa`).
-        compaction: .away(who: Set([0, 1, 2, 3, 6, 7, 8, 9].map { StatusStore.heroBase + $0 }))
+        compaction: .away(who: Set([0, 1, 2, 3, 6, 7, 8, 9].map { UniverseFacts.heroBase + $0 }))
     )
 }

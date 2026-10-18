@@ -19,10 +19,3 @@ struct DetectiveUniverse: UniverseModule {
     var swingLine: Px? { C(0xB8BCC8, 0.95) }
     var rides: [Ride] { [.javelin, .batwing] }
 }
-
-extension Ride {
-    /// The Justice League's Javelin.
-    static let javelin = Ride(key: "javelin") { c, ramp, engines, gear, _ in drawJavelin(c, ramp: ramp, engines: engines, gear: gear) }
-    /// The Bat-family's Batwing.
-    static let batwing = Ride(key: "batwing") { c, ramp, engines, gear, _ in drawBatwing(c, ramp: ramp, engines: engines, gear: gear) }
-}

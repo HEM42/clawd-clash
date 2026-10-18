@@ -54,6 +54,6 @@ enum DoctorFacts {
         villainCount: DoctorVillain.allCases.count, heroCount: DoctorHero.allCases.count,
         agentOnly: [39, 40, 41],             // Adipoze, Cybermite, Toclafayne
         // The Doctors in order (One … Fifteen): a compacted Doctor regenerates into the next.
-        compaction: .regenerate(order: [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14].map { StatusStore.heroBase + $0 })
+        compaction: .regenerate(order: [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14].map { UniverseFacts.heroBase + $0 })
     )
 }

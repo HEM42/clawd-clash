@@ -8,8 +8,8 @@ import CoreText
 // against René Bellock, Gandclawd the Grey against the Ballrog, Buffy's stake against the Old Master. CLAWD CLASH
 // runs across them all, coloured by the panel each part is in, with a sound effect in each panel and the tagline in a
 // caption box. A new universe adds a panel: a cut, a centre, a sky, a floor, a fight, a sound and a face.
-//   swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
-//          Sources/App/Universes/**/*.swift Sources/Shared/*.swift Tools/MakeSocial/main.swift -o build/makesocial \
+//   source Tools/universes.sh && swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
+//          $UNIVERSE_APP Sources/Shared/*.swift Tools/MakeSocial/main.swift -o build/makesocial \
 //          && build/makesocial docs/social-preview.png
 
 let W: CGFloat = 1280, H: CGFloat = 640

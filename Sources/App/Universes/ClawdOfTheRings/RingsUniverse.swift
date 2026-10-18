@@ -23,8 +23,3 @@ struct RingsUniverse: UniverseModule {
     }
     var rides: [Ride] { [.eagle] }
 }
-
-extension Ride {
-    /// The Great Eagle: `ramp` lowers a wing to climb on, `engines` flaps, `gear` puts the talons down.
-    static let eagle = Ride(key: "eagle") { c, ramp, engines, gear, t in drawEagle(c, ramp: ramp, engines: engines, gear: gear, t: t) }
-}

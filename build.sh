@@ -54,6 +54,8 @@ DEV_FLAGS=()
 # (Finder rewriting its .DS_Store mid-delete) would otherwise go on to fail at the link step, far from the cause.
 rm -rf build
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+# The universes, from their folders: the registry (build/gen/) and the source lists below (see Tools/universes.sh).
+source Tools/universes.sh || exit 1
 
 # compile <output> <sources…>: Apple silicon, for installs and releases alike
 compile() {
@@ -68,15 +70,15 @@ SAVER="$APP/Contents/Resources/Clawd Clash.saver"
 mkdir -p "$SAVER/Contents/MacOS"
 echo "→ compiling app, hook and screen saver"
 # The app carries the screen saver's view too: the window's third view is the screen saver itself.
-compile "$APP/Contents/MacOS/ClawdClash" "${DEV_FLAGS[@]}" -framework ScreenSaver Sources/Shared/*.swift Sources/App/*.swift Sources/App/Universes/**/*.swift Sources/Saver/*.swift &
+compile "$APP/Contents/MacOS/ClawdClash" "${DEV_FLAGS[@]}" -framework ScreenSaver Sources/Shared/*.swift Sources/App/*.swift "${UNIVERSE_APP[@]}" Sources/Saver/*.swift &
 APP_JOB=$!
 # The hook knows each universe through its facts file alone: no drawing code.
-compile "$APP/Contents/MacOS/clawd-clash-hook" Sources/Shared/*.swift Sources/App/Universes/*/*Facts.swift Sources/Hook/main.swift &
+compile "$APP/Contents/MacOS/clawd-clash-hook" Sources/Shared/*.swift "${UNIVERSE_FACTS[@]}" Sources/Hook/main.swift &
 HOOK_JOB=$!
 compile "$SAVER/Contents/MacOS/ClawdClashSaver" -module-name ClawdClashSaver -emit-library -framework ScreenSaver \
     -Xlinker -install_name -Xlinker @rpath/ClawdClashSaver \
     Sources/Shared/*.swift Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Accents,Habits,Drills,Icon,Rides}.swift \
-    Sources/App/Universes/**/*.swift Sources/Saver/*.swift &
+    "${UNIVERSE_APP[@]}" Sources/Saver/*.swift &
 SAVER_JOB=$!
 wait $APP_JOB
 wait $HOOK_JOB

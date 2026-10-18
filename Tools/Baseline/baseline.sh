@@ -12,8 +12,9 @@ cd "${0:A:h}/../.."
 OUT="${1:?usage: Tools/Baseline/baseline.sh <out folder>}"
 rm -rf "$OUT"; mkdir -p "$OUT"/{cast,drills,places,fights,transitions,docs,storyboards}
 export MOON=new BASELINE=1
+source Tools/universes.sh || exit 1
 SRC=(Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift
-     Sources/App/Universes/**/*.swift Sources/Shared/*.swift)
+     $UNIVERSE_APP Sources/Shared/*.swift)
 echo "→ building the tools"
 Tools/Preview/build.sh >/dev/null
 Tools/Transitions/build.sh >/dev/null

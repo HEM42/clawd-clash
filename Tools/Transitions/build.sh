@@ -3,7 +3,8 @@
 set -euo pipefail
 cd "${0:A:h}/../.."
 mkdir -p build
+source Tools/universes.sh || exit 1
 swiftc -O -swift-version 5 -target "$(uname -m)-apple-macos13.0" \
     Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
-    Sources/App/Universes/**/*.swift Sources/Shared/*.swift Tools/Transitions/main.swift -o build/transitions
+    "${UNIVERSE_APP[@]}" Sources/Shared/*.swift Tools/Transitions/main.swift -o build/transitions
 echo "✓ build/transitions"

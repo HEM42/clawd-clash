@@ -2,12 +2,24 @@ import Foundation
 
 // Doctor Clawd's ride: the TARDIS. Drawn with the ride kit in Rides.swift.
 
+extension Ride {
+    /// The TARDIS: it fades in and out where it stands, taller than a ship, its door 6 px left of centre.
+    static let tardis = Ride(key: "tardis", arrival: .materialises, canvasHeight: 36, boardingOffset: 6) { c, ramp, engines, _, _ in
+        drawTardis(c, door: ramp, lamp: engines)
+    }
+
+    /// A compacted Doctor regenerates: golden fire over the next face.
+    var regeneration: (length: Double, draw: (_ c: PixelCanvas, _ k: Double, _ t: Double) -> Void)? {
+        (regenerationFlare, { c, k, t in drawRegeneration(c, k: k, t: t) })
+    }
+}
+
 /// The TARDIS: a blue police box standing on the bottom row, left of centre so whoever boards walks up to its doors
 /// (it never flies in: the overlay fades it in and out where it stands, `Ride.materialises`). Taller than the ships'
 /// canvas (`Ride.canvasHeight`), so it stands a head above whoever steps into it. The lamp on the roof, the POLICE BOX
 /// sign, the frosted windows and the panelled doors; `door` 0…1 swings the right-hand door open on the lit interior,
 /// `lamp` lights the roof lamp.
-func drawTardis(_ c: PixelCanvas, door: Double, lamp: Bool) {
+private func drawTardis(_ c: PixelCanvas, door: Double, lamp: Bool) {
     let blue = C(0x1C3F94), dark = C(0x15306E), edge = C(0x2E58B8), sign = C(0x101820), glass = C(0xE8F0FF)
     let x0 = 11, w = 22, top = 4, base = c.h - 2
     // The roof stack and the lamp.

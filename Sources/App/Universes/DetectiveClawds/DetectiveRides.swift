@@ -2,10 +2,17 @@ import Foundation
 
 // Detective Clawds' rides: the Justice League's Javelin and the Bat-family's Batwing. Drawn with the ride kit in Rides.swift.
 
+extension Ride {
+    /// The Justice League's Javelin.
+    static let javelin = Ride(key: "javelin") { c, ramp, engines, gear, _ in drawJavelin(c, ramp: ramp, engines: engines, gear: gear) }
+    /// The Bat-family's Batwing.
+    static let batwing = Ride(key: "batwing") { c, ramp, engines, gear, _ in drawBatwing(c, ramp: ramp, engines: engines, gear: gear) }
+}
+
 /// The Justice League's Javelin (the animated series): a sleek silver-grey and white wedge with a big canopy over the
 /// nose, angular swept wings with red leading edges, a blue stripe down the flank, a tall swept tail fin with the CL
 /// badge, and blue thrusters.
-func drawJavelin(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
+private func drawJavelin(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
     let body = C(0xB8BEC8), light = C(0xF2F4F8), dark = C(0x6A727E), panel = C(0x8E96A2), white = C(0xFFFFFF)
     let red = C(0xC8202A), blue = C(0x2A5CC8), glass = C(0x16243C)
     let top: [(Double, Double)] = [(3, 15), (10, 13), (40, 12), (56, 15), (65, 19)]
@@ -65,7 +72,7 @@ func drawJavelin(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
 
 /// The Batwing: a black jet with a bat-wing silhouette raised over the hull, scalloped along its trailing edge between
 /// the bones, a black cowl mask in a yellow oval on the wing, a slit canopy, and amber jets with a blue core.
-func drawBatwing(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
+private func drawBatwing(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
     let body = C(0x26282F), light = C(0x4A4F5C), dark = C(0x121317), wing = C(0x2C2F38), bone = C(0x464B58)
     let yellow = C(0xF2C230), steel = C(0x7A808C)
     let top: [(Double, Double)] = [(4, 17), (14, 15), (40, 14), (52, 15), (60, 17), (65, 19)]

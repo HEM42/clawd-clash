@@ -31,7 +31,7 @@ enum RingsFacts {
     static let facts = UniverseFacts(
         villainCount: RingsVillain.allCases.count, heroCount: RingsHero.allCases.count,
         // Gandclawd the Grey and the White, Arrogorn and Stride-r, Sarumanual and Sharkey, Sourun and the Necro-maintainer.
-        guises: [[StatusStore.heroBase, StatusStore.heroBase + 17], [StatusStore.heroBase + 4, StatusStore.heroBase + 28], [1, 30], [0, 31]],
+        guises: [[UniverseFacts.heroBase, UniverseFacts.heroBase + 17], [UniverseFacts.heroBase + 4, UniverseFacts.heroBase + 28], [1, 30], [0, 31]],
         // Smaug the Stashed, only ever on his hoard in the Lonely Mount-point.
         homebound: [32: "erebor"]
     )

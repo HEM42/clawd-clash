@@ -7,8 +7,8 @@ import AppKit
 // Frodough slipping the Ring on, Shellob's climb. Clawd Slayer: the school bus picking someone up, Tabula Rasa, the
 // First Evil's guises. (The roster, locations, desktop and social preview come from Tools/RenderDocs, the transitions
 // sheet from Tools/Transitions; the window, screen saver and hover shots are CLAWD_SHOT captures of a Playground run.)
-//   swiftc -swift-version 5 Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
-//          Sources/App/Universes/**/*.swift Sources/Shared/*.swift Tools/RenderShowcase/main.swift -o build/rendershowcase
+//   source Tools/universes.sh && swiftc -swift-version 5 Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
+//          $UNIVERSE_APP $UNIVERSE_PROMO Sources/Shared/*.swift Tools/RenderShowcase/main.swift -o build/rendershowcase
 //   build/rendershowcase docs doctor
 //   build/rendershowcase docs files
 //   build/rendershowcase docs clawdberg

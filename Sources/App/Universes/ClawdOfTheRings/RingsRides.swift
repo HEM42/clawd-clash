@@ -2,6 +2,11 @@ import Foundation
 
 // Clawd of the Rings' ride: the Great Eagle. Drawn with the ride kit in Rides.swift.
 
+extension Ride {
+    /// The Great Eagle: `ramp` lowers a wing to climb on, `engines` flaps, `gear` puts the talons down.
+    static let eagle = Ride(key: "eagle") { c, ramp, engines, gear, t in drawEagle(c, ramp: ramp, engines: engines, gear: gear, t: t) }
+}
+
 /// One of the Eagle's wings, from the shoulder (`hx`, `hy`) out along `angle` (radians, y down) for `len` px: a broad
 /// plank of feathers, pale coverts along its leading edge and dark flight feathers behind, striped along their length
 /// and darkest toward the tip, where (`splay`) the primaries part into fingers. `side` puts the trailing edge
@@ -34,7 +39,7 @@ private let eagleBeats = 1.8
 /// the wings fold along its back and `ramp` lowers the near one to the ground to climb on; flying (`engines`), the
 /// wings spread wide and beat `eagleBeats` times a second on the clock `t`, tips up (the body dipping) then down.
 /// `gear`: talons down.
-func drawEagle(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool, t: Double) {
+private func drawEagle(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool, t: Double) {
     let body = C(0x6A4A2A), bodyLight = C(0x8A6440), bodyDark = C(0x4A321C), head = C(0xC8A060)
     let headLight = C(0xE2C488), headDark = C(0x9A7A44), feather = C(0x543A20), flight = C(0x3E2A16)
     let tipCol = C(0x2E1E10), beak = C(0xE8C860), beakDark = C(0x8A6A2A), talon = C(0xE0B040), claw = C(0x22180E)

@@ -2,9 +2,14 @@ import Foundation
 
 // Star Clawds' ride: the Millennial Falcon. Drawn with the ride kit in Rides.swift.
 
+extension Ride {
+    /// The Millennial Falcon, for Han and his crew.
+    static let falcon = Ride(key: "falcon") { c, ramp, engines, gear, _ in drawFalcon(c, ramp: ramp, engines: engines, gear: gear) }
+}
+
 /// The Millennium Falcon, nose to the right: the disc, the forward mandibles, the offset cockpit, the radar
 /// dish. `ramp` 0…1 lowers the boarding ramp (down and to the left), `engines` lights the blue glow.
-func drawFalcon(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
+private func drawFalcon(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
     // Seen slightly from above, so the round saucer, the central hatch and the split front read clearly.
     let hull = C(0xB8B6AC), hullLight = C(0xD2D0C6), hullDark = C(0x8A8880), panel = C(0x6E6C66)
     if gear {

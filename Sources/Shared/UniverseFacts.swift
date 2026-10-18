@@ -6,6 +6,9 @@ import Foundation
 ///
 /// Ids here are local: villains `0..<100`, heroes `StatusStore.heroBase…` (HEM last). `Universe` adds its `base`.
 struct UniverseFacts {
+    /// Where heroes' local ids start: villains `0..<heroBase`, heroes `heroBase…`.
+    static let heroBase = StatusStore.heroBase
+
     /// From the enums (`allCases.count`), never typed by hand: agent-only characters included.
     let villainCount: Int
     /// From the enums: HEM included, always last.
@@ -34,7 +37,7 @@ enum UniverseCompaction {
 }
 
 /// A universe as the registry lists it: its constant, key and title, and its facts. Each universe's facts file has one
-/// (`<Prefix>Facts.entry`).
+/// (`<Prefix>Facts.entry`); `registeredUniverses` lists them all, generated from the folders by Tools/universes.sh.
 struct UniverseEntry {
     let universe: Universe
     /// Stored in settings and the screen-saver feed: never changes.
@@ -42,9 +45,3 @@ struct UniverseEntry {
     let title: String
     let facts: UniverseFacts
 }
-
-/// Every universe, from its facts file. Hand-listed for now; the universe-modules refactor generates it from the folders.
-let registeredUniverses: [UniverseEntry] = [
-    StarClawdsFacts.entry, MarvelousFacts.entry, DetectiveFacts.entry, DoctorFacts.entry,
-    FilesFacts.entry, ClawdbergFacts.entry, RingsFacts.entry, SlayerFacts.entry,
-]

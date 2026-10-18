@@ -2,9 +2,16 @@ import Foundation
 
 // Marvelous Clawds' rides: the Avengers' Quinjet and the Guardians' Milano. Drawn with the ride kit in Rides.swift.
 
+extension Ride {
+    /// The Avengers' Quinjet.
+    static let quinjet = Ride(key: "quinjet") { c, ramp, engines, gear, _ in drawQuinjet(c, ramp: ramp, engines: engines, gear: gear) }
+    /// The Guardians' Milano.
+    static let milano = Ride(key: "milano") { c, ramp, engines, gear, _ in drawMilano(c, ramp: ramp, engines: engines, gear: gear) }
+}
+
 /// The Avengers' Quinjet (the films): a matt dark-grey stealth wedge with a sloping glass canopy, a swept wing with
 /// its big lift-fan nacelle, twin canted tail fins with the Avengers "A", and blue thrusters at the tail.
-func drawQuinjet(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
+private func drawQuinjet(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
     let body = C(0x3E434E), light = C(0x6A717E), dark = C(0x252830), panel = C(0x30343D), steel = C(0x8A929E)
     if gear { rideGear(c, xs: [12, 50], from: 22, strut: dark, foot: steel) }
     // The far tail fin, behind
@@ -49,7 +56,7 @@ func drawQuinjet(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
 
 /// The Guardians' Milano (the films): a long blue hull with orange stripes, the bubble cockpit up front, a swept
 /// wing rising behind with an engine pod at its tip, a ventral fin, and orange thrusters.
-func drawMilano(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
+private func drawMilano(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
     let body = C(0x2E5AA8), light = C(0x6A96E0), dark = C(0x1C366E), orange = C(0xE8782A), orangeD = C(0xB0561A)
     let steel = C(0x9AA2AE)
     if gear { rideGear(c, xs: [14, 50], from: 22, strut: dark, foot: steel) }

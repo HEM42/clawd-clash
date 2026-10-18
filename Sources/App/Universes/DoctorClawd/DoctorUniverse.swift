@@ -26,15 +26,3 @@ struct DoctorUniverse: UniverseModule {
     var quirks: StageQuirks { StageQuirks(unseenMovers: [.villain(DoctorVillain.weepingAngle)]) }
     var rides: [Ride] { [.tardis] }
 }
-
-extension Ride {
-    /// The TARDIS: it fades in and out where it stands, taller than a ship, its door 6 px left of centre.
-    static let tardis = Ride(key: "tardis", arrival: .materialises, canvasHeight: 36, boardingOffset: 6) { c, ramp, engines, _, _ in
-        drawTardis(c, door: ramp, lamp: engines)
-    }
-
-    /// A compacted Doctor regenerates: golden fire over the next face.
-    var regeneration: (length: Double, draw: (_ c: PixelCanvas, _ k: Double, _ t: Double) -> Void)? {
-        (regenerationFlare, { c, k, t in drawRegeneration(c, k: k, t: t) })
-    }
-}

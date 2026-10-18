@@ -52,6 +52,6 @@ enum FilesFacts {
         agentOnly: [43, 44, 45],             // killer bee, robo-roach, flukeworm
         // The seven FBI agents (Clawder, Scrawly, Skinnard, Doggedd, Reyez, Einstine, Millar): abducted and set back
         // down, the same face (`MissingTime`).
-        compaction: .away(who: Set((0...6).map { StatusStore.heroBase + $0 }))
+        compaction: .away(who: Set((0...6).map { UniverseFacts.heroBase + $0 }))
     )
 }

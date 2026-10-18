@@ -6,8 +6,8 @@ import CoreText
 // each, halftone between them). Drawn with the app's own sprite code. Simple on purpose, so it still reads at the
 // 16 and 32 px Finder and the Dock use, and it doesn't need changing when a universe is added. build.sh turns it into
 // AppIcon.icns.
-//   swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
-//          Sources/App/Universes/**/*.swift Sources/Shared/*.swift Tools/MakeIcon/main.swift -o build/makeicon \
+//   source Tools/universes.sh && swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
+//          $UNIVERSE_APP Sources/Shared/*.swift Tools/MakeIcon/main.swift -o build/makeicon \
 //          && build/makeicon Resources/AppIcon.png
 
 let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 1024, pixelsHigh: 1024, bitsPerSample: 8, samplesPerPixel: 4,

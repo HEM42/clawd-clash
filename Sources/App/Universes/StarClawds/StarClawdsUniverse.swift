@@ -27,8 +27,3 @@ struct StarClawdsUniverse: UniverseModule {
     }
     var rides: [Ride] { [.falcon] }
 }
-
-extension Ride {
-    /// The Millennial Falcon, for Han and his crew.
-    static let falcon = Ride(key: "falcon") { c, ramp, engines, gear, _ in drawFalcon(c, ramp: ramp, engines: engines, gear: gear) }
-}

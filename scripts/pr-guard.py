@@ -39,10 +39,12 @@ RED = [
     (r"^Sources/Shared/(StatusStore|Processes|GitRemote|SaverFeed)\.swift$", "compiled into the hook"),
     (r"^Sources/App/(HookInstaller|SaverInstaller|Jump|main)\.swift$", "holds the app's permissions"),
     (r"^Tools/[^/]+/build\.sh$", "a build script"),
+    (r"^Sources/App/Universes/NUMBERS$", "the universes' permanent numbers, which only the maintainer hands out"),
 ]
 # Pass without comment.
 GREEN = [
     UNIVERSES + r"[^/]+/.+\.swift$",
+    UNIVERSES + r"[^/]+/universe\.conf$",
     r"^docs/.+\.png$",
     r"^(README|CHANGELOG)\.md$",
 ]
@@ -55,7 +57,9 @@ IMPORTS = {"Foundation", "CoreGraphics", "CoreText", "AppKit"}
 ATTRIBUTES = {"discardableResult", "escaping", "autoclosure", "inline", "inlinable", "Sendable", "MainActor"}
 DIRECTIVES = {"available", "unavailable"}
 # Types a universe may extend besides its own. All are structs or enums, so an extension can only add to them.
-EXTENDABLE = {"Scenes", "Location", "Cast"}
+EXTENDABLE = {"Scenes", "Location", "Cast", "Universe", "Ride"}
+# The engine's protocols a universe's own types may conform to in an extension (its trips, its compaction look).
+ENGINE_PROTOCOLS = {"Trip", "CompactionLook", "UniverseModule"}
 
 # Names that reach files, processes, the network, other apps, the system or the app's own sensitive code. Drawing
 # code has no use for any of them. Checked as whole identifiers in code (strings and comments removed).
@@ -345,8 +349,12 @@ def check_swift(rep, base, head, path, src, added, strict, folder=None, prefixes
             rep.fail(at, "custom operators, macros and multi-name declarations aren't allowed at the top level")
             continue
         if kind == "extension":
-            if re.match(r"[A-Za-z_][A-Za-z0-9_.]*\s*(<[^>]*>)?\s*:", rest):
-                rep.fail(at, "`extension %s` adds a conformance; declare it on your own type instead" % name)
+            conf = re.match(r"[A-Za-z_][A-Za-z0-9_.]*\s*(<[^>]*>)?\s*:\s*([^{]*)", rest)
+            if conf:
+                protos = {p.strip() for p in conf.group(2).split(",") if p.strip()}
+                if name not in own_types or not protos <= ENGINE_PROTOCOLS:
+                    rep.fail(at, "`extension %s` adds a conformance; a universe's own types may conform only to %s"
+                             % (name, ", ".join(sorted(ENGINE_PROTOCOLS))))
             elif name not in EXTENDABLE and name not in own_types:
                 rep.fail(at, "`extension %s`: a universe extends only %s, or its own types"
                          % (name, ", ".join(sorted(EXTENDABLE))))
@@ -420,6 +428,9 @@ def classify(rep, status, path, old_mode, new_mode, head):
         if data is not None and b"\0" not in data[:8000] and HIDDEN_CHARS.search(data.decode("utf-8", "replace")):
             rep.fail(path, "has invisible or text-direction Unicode characters, which can make code read differently "
                            "from how it runs")
+    if re.match(UNIVERSES + r"[^/]+/[^/]+Facts\.swift$", path) and status != "D":
+        rep.warn(path, "compiled into the hook, which runs inside every AI session: read it closely (it should hold "
+                       "only the cast's enums and its UniverseFacts)")
     if any(re.search(p, path) for p in GREEN):
         rep.green.append(path)
         return path.startswith(UNIVERSES) and status != "D"

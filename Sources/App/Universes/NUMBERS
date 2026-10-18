@@ -1,0 +1,14 @@
+# Every universe's permanent number: the owner's list, one line per universe, ever. Never reuse a number.
+# A universe's ids are its number × 1000 plus a local id, saved in running sessions and settings, so a number that's
+# been handed out keeps meaning that universe. Add a `reserved` line when someone starts one; it becomes `shipped`
+# with the release that first carries it. Tools/universes.sh checks every folder against this file.
+# number  key          folder            status
+0         starWars     StarClawds        shipped
+1         marvel       MarvelousClawds   shipped
+2         dc           DetectiveClawds   shipped
+3         doctor       DoctorClawd       shipped
+4         clawdFiles   ClawdFiles        shipped
+5         clawdberg    StevieClawdberg   shipped
+6         middleEarth  ClawdOfTheRings   shipped
+7         slayer       Slayer            shipped
+999       template     _Template         template

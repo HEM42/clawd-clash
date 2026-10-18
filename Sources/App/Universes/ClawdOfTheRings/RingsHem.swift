@@ -64,7 +64,7 @@ func drawRohanCloak(_ c: PixelCanvas, t: Double, speed: Double) {
 /// as they tumble out. `pull`: her fist up pulling it off (px above its place by her shoulder), until the shaking starts.
 /// 0–0.2 the helmet rises off the top, the fist lifting with it; from 0.2 the buns tumble out (2 px low, then 1, settled
 /// at 0.3); 0.25–0.92 the fist shakes (`drawHem`); after 0.92 the helmet drops back on and the buns go back in.
-func rohanHelmetOff(_ s: Double?) -> (rise: Int, buns: Int?, pull: Int?) {
+private func rohanHelmetOff(_ s: Double?) -> (rise: Int, buns: Int?, pull: Int?) {
     guard let s = s, s > 0 else { return (0, nil, nil) }
     if s < 0.2 {
         let k: Double = s / 0.2
