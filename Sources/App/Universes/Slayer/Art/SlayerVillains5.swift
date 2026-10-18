@@ -75,10 +75,12 @@ private func drawBringer(_ c: PixelCanvas, _ p: Pose) {
     }
     c.oy += p.breathe
     drawBody(c, Look(arm: robe, eye: nil))
-    // No eyes: two scarred-over hollows, and symbols carved into the brow.
-    c.rect(21, 29, 4, 3, scar); c.rect(31, 29, 4, 3, scar)
-    c.rect(21, 30, 4, 1, scarD); c.rect(31, 30, 4, 1, scarD)
-    c.px(22, 29, scarD); c.px(33, 31, scarD)
+    // No eyes: two sunken hollows, smooth and dark, a pale scar slashed down through each, and symbols carved
+    // into the brow.
+    let hollow = C(0xA4502E)
+    c.rect(21, 29, 4, 3, hollow); c.rect(31, 29, 4, 3, hollow)
+    c.rect(21, 29, 4, 1, scarD); c.rect(31, 29, 4, 1, scarD)
+    c.pattern(22, 28, ["S.", "S.", ".S", ".S", ".S"], ["S": scar]); c.pattern(32, 28, [".S", ".S", "S.", "S.", "S."], ["S": scar])
     c.pattern(25, 27, ["c.c..c", ".c..cc"], ["c": carve])
     c.rect(26, 33, 4, 1, C(0x5A2418))
     // The robe over the body and its rope belt.
@@ -110,10 +112,15 @@ private func drawBringer(_ c: PixelCanvas, _ p: Pose) {
         let tip = slayerReach(slayerHand, a + 12, 8.2)
         c.px(Int(tip.x.rounded()), Int(tip.y.rounded()), bladeD)                 // the curve at the tip
     } else {
-        // The curved dagger held low, point down, in a sleeved fist.
-        c.rect(39, 35, 2, 2, clawdOrange)
-        c.rect(39, 37, 2, 1, grip)
-        c.rect(39, 38, 1, 3, blade); c.rect(40, 38, 1, 3, bladeD); c.px(40, 41, blade)
+        // The curved dagger held low, point down, in a sleeved fist, a brass guard over the blade; seated, the
+        // blade curls forward short of the ground instead of hanging past the folded legs.
+        c.rect(39, 35, 3, 2, clawdOrange)
+        c.rect(38, 37, 4, 1, C(0xA8884A)); c.px(40, 37, grip)
+        if seatedPose {
+            c.rect(39, 38, 1, 2, blade); c.rect(40, 38, 1, 2, bladeD); c.px(41, 39, blade); c.px(42, 39, bladeD)
+        } else {
+            c.rect(39, 38, 1, 4, blade); c.rect(40, 38, 1, 4, bladeD); c.px(40, 42, blade); c.px(41, 42, bladeD)
+        }
     }
 }
 
@@ -252,10 +259,12 @@ private func drawDok(_ c: PixelCanvas, _ p: Pose) {
         "WW.w",
         "Ww..",
     ], ["w": wispD, "W": wisp])
-    // Bushy white brows, small kindly eyes, crow's feet, a mild smile (or the mouth open on the tongue).
-    c.rect(21, 28, 4, 1, wisp); c.rect(31, 28, 4, 1, wisp); c.px(20, 29, wispD); c.px(35, 29, wispD)
-    c.rect(22, 30, 2, 2, ink); c.rect(32, 30, 2, 2, ink)
-    c.px(20, 31, C(0xC8603A)); c.px(35, 31, C(0xC8603A))
+    // Big bushy white brows, drooping kindly at the outer ends; small twinkling eyes, rosy cheeks, a mild smile
+    // (or the mouth open on the tongue).
+    c.pattern(20, 27, [".WWWW", "WWWWw", "W...."], ["W": wisp, "w": wispD])
+    c.pattern(31, 27, ["WWWW.", "wWWWW", "....W"], ["W": wisp, "w": wispD])
+    c.rect(22, 30, 2, 2, ink); c.rect(32, 30, 2, 2, ink); c.px(22, 30, C(0x5A5A66)); c.px(32, 30, C(0x5A5A66))
+    c.rect(19, 31, 2, 1, C(0xE88A70)); c.rect(35, 31, 2, 1, C(0xE88A70))
     if reach > 0 {
         c.rect(27, 32, 4, 2, C(0x3A1418))
     } else {
@@ -263,23 +272,25 @@ private func drawDok(_ c: PixelCanvas, _ p: Pose) {
     }
     // The cardigan, buttoned, the white shirt and bow tie in its V.
     c.rect(18, 34, 20, 4, knit); c.rect(37, 34, 1, 4, knitD); c.rect(18, 37, 20, 1, knitD)
+    for x in [20, 34] { c.rect(x, 34, 1, 3, knitL); c.rect(x + 1, 34, 1, 3, knitD) }   // cable-knit ribs
     c.pattern(24, 34, ["LssbbssL", ".LsbbsL.", "..LssL..", "...LL..."], ["s": shirt, "b": bow, "L": knitL])
-    c.px(28, 36, C(0xD8C890)); c.px(28, 37, C(0xD8C890))
-    for x in stride(from: 19, through: 35, by: 3) { c.px(x, 35, knitL) }    // the knit's texture
-    c.rect(32, 36, 3, 1, knitD)                                              // a pocket
+    c.px(28, 36, C(0xE8D8A0)); c.px(27, 37, C(0xE8D8A0))                   // big buttons
+    c.rect(31, 36, 3, 1, knitD)                                              // a pocket
 
-    if reach > 0 {
-        // The lizard tongue: long, thin, forked at the tip.
-        let x1 = 30 + reach
-        c.rect(30, 32, reach, 1, tongue); c.rect(30, 32, min(reach, 3), 1, tongueL)
-        c.px(x1, 31, tongue); c.px(x1, 33, tongue)
-    }
     if let a = p.melee {
         v5Blade(c, p, angle: a, grip: grip, steel: knifeD, edge: knife, length: 8)
     } else {
-        // The knife held low, blade down, as if he'd just been carving something.
-        c.rect(39, 35, 2, 2, clawdOrange)
-        c.rect(39, 37, 1, 2, grip); c.rect(39, 39, 1, 3, knife); c.rect(40, 39, 1, 2, knifeD)
+        // The big kitchen knife held up, blade to the sky, sweetly, as if showing you what he'd been carving with:
+        // a straight spine, the bright edge running up to the point, the wooden handle in his fist.
+        c.rect(41, 31, 2, 3, grip); c.px(41, 31, C(0x6A4428))
+        c.pattern(41, 23, [".E", "SE", "SE", "SE", "SE", "SE", "SE", "SE"], ["S": knifeD, "E": knife])
+        c.rect(40, 33, 3, 3, clawdOrange); c.px(42, 35, C(0xB05A3C))
+    }
+    if reach > 0 {
+        // The lizard tongue: long, thin, forked at the tip, flicking out past the knife in his hand.
+        let x1 = 30 + reach
+        c.rect(30, 32, reach, 1, tongue); c.rect(30, 32, min(reach, 3), 1, tongueL)
+        c.px(x1, 31, tongue); c.px(x1, 33, tongue)
     }
 }
 
@@ -333,12 +344,16 @@ private func drawGentlemen(_ c: PixelCanvas, _ p: Pose) {
     c.oy += p.breathe
 
     if clapK >= 0 {
-        // Both white gloves in front of the black coat, the back one reaching round to pat the front one, politely.
-        let pat = Int((sin(clapK * .pi * 10) * 1.5 + 1.5).rounded())
-        c.rect(38, 34, 2, 2, coat)
-        c.rect(40, 33, 2, 4, glove); c.px(41, 36, gloveD)
-        c.rect(30, 36, 8 - pat, 1, coatL)
-        c.rect(38 - pat, 33, 2, 4, glove); c.px(38 - pat, 36, gloveD)
+        // Both white gloves out in front of him, past the coat, the back one reaching round to pat the front one,
+        // politely, the gap opening and closing; a faint stir of air each time they meet, and no sound.
+        let gap = Int((sin(clapK * .pi * 10) + 1).rounded())
+        c.rect(38, 33, 6, 3, coat); c.rect(38, 35, 6, 1, coatD)                       // the front sleeve
+        c.rect(44, 31, 3, 5, glove); c.rect(46, 32, 1, 4, gloveD)                     // the front glove
+        c.rect(30, 36, 9, 1, coatL)                                                   // the back arm, across
+        c.rect(41 - gap, 31, 3, 5, glove); c.px(41 - gap, 35, gloveD)                // the back glove
+        if gap == 0 {
+            for dy in [0, 2, 4] { c.px(48, 31 + dy, white.alpha(0.2)) }
+        }
         return
     }
     // The back hand, gloved.
@@ -351,8 +366,10 @@ private func drawGentlemen(_ c: PixelCanvas, _ p: Pose) {
         c.rect(Int(h.x.rounded()) - 1, Int(h.y.rounded()) - 1, 3, 3, glove)
     } else {
         // The scalpel held up delicately between finger and thumb, blade to the sky.
-        c.rect(40, 33, 2, 3, glove); c.px(41, 35, gloveD)
-        c.rect(41, 30, 1, 3, handle); c.rect(41, 28, 1, 2, blade)
+        // A long steel handle and a broad, bright leaf-shaped blade, so it reads at agent size.
+        c.rect(41, 28, 1, 5, handle); c.px(42, 28, C(0x6A727E))
+        c.pattern(41, 24, [".b", "bB", "bB", "bb"], ["b": blade, "B": C(0xFFFFFF)])
+        c.rect(40, 32, 3, 3, glove); c.px(42, 34, gloveD)
     }
 }
 
@@ -434,7 +451,7 @@ private func drawAndrewWellz(_ c: PixelCanvas, _ p: Pose) {
 /// Signature: he holds up the two-faced bust of Janus from "Halloween", and it glows.
 private func drawEthanRaine(_ c: PixelCanvas, _ p: Pose) {
     let jacket = C(0x1E1C22), jacketD = C(0x0E0D12), jacketL = C(0x46424E), shirt = C(0x7A1E34), shirtD = C(0x561424)
-    let hair = C(0x3A2C24), hairL = C(0x5A4636), grey = C(0xA8A49C), mark = C(0x5A0A1E)
+    let hair = C(0x3A2C24), hairL = C(0x8A847C), grey = C(0xBEBAB2), mark = C(0x4A0618)
     let stone = C(0xE2DCCC), stoneD = C(0xA8A090), stoneL = C(0xFAF6EA)
     let bustK = v5Span(p, 0.08, 0.92)
     let lift = Int((v5Hold(bustK, edge: 0.2) * 7).rounded())
@@ -451,37 +468,44 @@ private func drawEthanRaine(_ c: PixelCanvas, _ p: Pose) {
     c.rect(24, 33, 8, 5, shirt); c.rect(24, 37, 8, 1, shirtD); c.rect(31, 33, 1, 5, shirtD)
     c.rect(23, 33, 1, 5, jacketL); c.rect(32, 33, 1, 5, jacketD)
     c.px(22, 33, jacketL); c.px(33, 33, jacketL)
-    // Short swept-back hair, grey at the temples, a strand or two out of place.
+    // Swept-back salt-and-pepper hair: dark on top, silver streaks combed back through it, and broad silver wings
+    // at the temples (Wesley's is dark all over), a widow's peak, a strand out of place.
     c.pattern(17, 21, [
         "......HHHHHHH.H.....",
-        "...HHHHlHHHHHHHHH...",
-        "..HHHHHHlHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHH",
-        ".gHH.............HHg",
-        ".gg...............g.",
-    ], ["H": hair, "l": hairL, "g": grey])
-    c.rect(21, 28, 3, 1, hair); c.rect(32, 28, 3, 1, hair)                    // arched brows
+        "...HHHHsssHHHHHHH...",
+        "..HHHHHHHHsssHHHHHH.",
+        ".HsssHHHHHHHHsssHHg.",
+        ".gHHHHHHHHHHHHHHHggg",
+        ".ggg.....H.......ggg",
+        ".gg...............gg",
+    ], ["H": hair, "s": hairL, "g": grey])
+    // The sly brows: the near one level, the far one cocked up.
+    c.rect(21, 28, 3, 1, hair); c.rect(32, 27, 3, 1, hair); c.px(31, 28, hair)
 
     if bustK >= 0 {
-        // The forearm up, bared, the Mark on it, and the Janus bust held high: two faces back to back.
+        // The forearm up, bared, the Mark on it, and the Janus bust held high on his palm: two bearded faces back
+        // to back, one looking each way, their noses jutting out either side, the near face lit and the far one in
+        // shade, a seam where the two heads meet.
         let top = 33 - lift
-        c.rect(39, top - 2, 2, 3, clawdOrange); c.px(39, top - 1, mark); c.px(40, top, mark)
-        let y = top - 10
+        c.rect(41, top - 2, 3, 6, clawdOrange); c.rect(43, top - 2, 1, 6, C(0xB05A3C))
+        c.pattern(41, top + 1, ["m.m", ".m.", "mmm"], ["m": mark])               // the Mark of Eyghon
+        c.rect(38, top + 1, 4, 3, jacket)                                         // the sleeve, pushed back
+        let y = top - 14
         c.pattern(37, y, [
-            "..hhhhhh..",
-            ".hSSSSSSh.",
-            ".SSSSSSSS.",
-            "eSSSSSSSSe",
-            "nSSSSSSSSn",
-            ".mSSSSSSm.",
-            "..SSSSSS..",
-            "...dSSd...",
-            ".BBBBBBBB.",
-            "BBBBBBBBBB",
-        ], ["S": stone, "h": stoneD, "e": C(0x4A4238), "n": stoneD, "m": C(0x6A6050), "d": stoneD, "B": C(0x8A8274)])
-        c.px(39, y + 2, stoneL); c.px(40, y + 2, stoneL)
-        c.rect(39, top - 2, 2, 1, clawdOrange)
+            "...hhhhh...",
+            "..hLLsSSh..",
+            ".hLLLsSSSh.",
+            ".hkLLsSSkh.",
+            "NLLLLsSSSSN",
+            "NLLLLsSSSSN",
+            ".kkLLsSSkk.",
+            ".bbbLsSbbb.",
+            "..bbbsbbb..",
+            "...bbsbb...",
+            ".BBBBBBBBB.",
+            "BBBBBBBBBBB",
+        ], ["L": stoneL, "S": stone, "s": stoneD, "h": stoneD, "N": C(0x8A8070), "k": C(0x3A342C),
+            "b": C(0xA8A090), "B": C(0x7A6A50)])
         if lift > 5 {
             // Chaos stirring round it: a few magenta and orange sparks.
             let i = Int(p.t * 12)
@@ -495,8 +519,8 @@ private func drawEthanRaine(_ c: PixelCanvas, _ p: Pose) {
     if casting {
         // The casting hand out in front, forearm bared on the Mark, crackling.
         let r = 2 + p.armRaise
-        c.rect(40, 32 - r, 2, 3, clawdOrange); c.px(40, 33 - r, mark)
-        c.rect(42, 31 - r, 2, 2, clawdOrange)
+        c.rect(40, 32 - r, 3, 3, clawdOrange); c.pattern(40, 32 - r, ["m.m", ".m.", "mmm"], ["m": mark])
+        c.rect(43, 31 - r, 2, 2, clawdOrange)
         if p.zap == false {
             let i = Int(p.t * 20)
             for k in 0..<3 {
@@ -506,8 +530,10 @@ private func drawEthanRaine(_ c: PixelCanvas, _ p: Pose) {
         }
         return
     }
-    // The hand at rest, the sleeve pushed back on the Mark.
-    c.rect(40, 33, 2, 3, clawdOrange); c.px(40, 34, mark); c.px(41, 33, mark)
+    // The hand at rest, the sleeve pushed back off a bare forearm with the Mark on it.
+    c.rect(40, 33, 4, 3, clawdOrange); c.rect(40, 35, 4, 1, C(0xB05A3C))
+    c.pattern(40, 33, ["m.m", ".m.", "mmm"], ["m": mark])
+    c.rect(39, 33, 1, 3, jacketL)                                                 // the pushed-back cuff
 }
 
 // MARK: - Sweete
