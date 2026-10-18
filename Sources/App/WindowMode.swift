@@ -485,8 +485,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
             comic.draw(ctx, old: s.old, new: new, k: k, in: r)
         } else {
             ctx.draw(new, in: r)
-            ctx.addPath(Wipe.remaining(k, s.kind, in: r)); ctx.clip()
-            ctx.draw(s.old, in: r)
+            Wipe.drawOld(s.old, k, s.kind, in: ctx, r)
         }
         switchView.layer?.contents = ctx.makeImage()
     }
@@ -865,8 +864,7 @@ final class SceneView: NSView {
                                           space: CGColorSpace(name: CGColorSpace.sRGB)!,
                                           bitmapInfo: layerBitmapInfo) {
                 let r = CGRect(x: 0, y: 0, width: w.old.width, height: w.old.height)
-                ctx.addPath(Wipe.remaining(k, w.kind, in: r)); ctx.clip()
-                ctx.draw(w.old, in: r)
+                Wipe.drawOld(w.old, k, w.kind, in: ctx, r)
                 if let img = ctx.makeImage() {
                     items.append(OverlayController.DrawItem(image: img, rect: g.drawRect.offsetBy(dx: origin.x, dy: origin.y)))
                 }
