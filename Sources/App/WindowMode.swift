@@ -363,16 +363,24 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     }
 
     /// The Larger window turned on or off (`scale` was `old`): the window grows or shrinks by the same factor as
-    /// everything in it, keeping its top left corner, so a click and a click back land where it was. The sizes kept
-    /// for the other views (the screen-saver view's, the window's before it, the list's before it was hidden) follow.
+    /// everything in it. Growing, it keeps fixed the corner nearest the screen's edges, so it grows into the free
+    /// space (a window at the bottom right grows up and to the left); shrinking, it keeps that same corner, so a click
+    /// and a click back land where it was, even if it was moved in between. The sizes kept for the other views (the
+    /// screen-saver view's, the window's before it, the list's before it was hidden) follow.
     func applyLarge(from old: CGFloat) {
         let r = Self.scale / old, d = UserDefaults.standard
         func scaled(_ s: NSSize) -> NSSize { NSSize(width: (s.width * r).rounded(), height: (s.height * r).rounded()) }
         var f = window.frame
-        let top = f.maxY
+        let before = f
+        if r > 1, let vf = (window.screen ?? NSScreen.main)?.visibleFrame {
+            let right = vf.maxX - f.maxX < f.minX - vf.minX, bottom = f.minY - vf.minY < vf.maxY - f.maxY
+            d.set((right ? "right" : "left") + "," + (bottom ? "bottom" : "top"), forKey: "windowLargeAnchor")
+        }
+        let anchor = (d.string(forKey: "windowLargeAnchor") ?? "left,top").split(separator: ",").map(String.init)
         f.size = scaled(f.size)
         if Self.view == .scene { f.size.height = (Self.headerHeight + sceneHeight) * Self.scale }
-        f.origin.y = top - f.height
+        f.origin.x = anchor.first == "right" ? before.maxX - f.width : before.minX
+        f.origin.y = anchor.last == "bottom" ? before.minY : before.maxY - f.height
         window.minSize = NSSize(width: 0, height: 0)          // free to shrink or grow past the old limits
         window.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
         animateFrame(onScreen(f))
