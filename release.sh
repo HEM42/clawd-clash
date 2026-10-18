@@ -106,9 +106,17 @@ if [[ $FORCE == 1 ]]; then
 else
     git tag "$TAG" && git push origin "$TAG"
 fi
+# The universes with a cask of their own (a `cask` line in their universe.conf), from the build's registry.
+CASK_NAMES=() CASK_KEYS=() CASK_TITLES=() CASK_QUOTED=()
+while IFS=$'\t' read -r _n key title _folder _prefix _reel cask; do
+    [[ -n $cask ]] || continue
+    CASK_NAMES+=($cask); CASK_KEYS+=($key); CASK_TITLES+=($title); CASK_QUOTED+=("\`$cask\`")
+done < build/gen/universes.tsv
+# "a, b and c" / "a, b or c"
+join_list() { local last=$1; shift; local -a xs=("$@"); (( ${#xs} > 1 )) && print -rn -- "${(j:, :)xs[1,-2]} $last ${xs[-1]}" || print -rn -- "${xs[1]-}" }
 NOTES="$NOTES
 
-**Install:** \`brew tap rodclemen/tap && brew trust rodclemen/tap && brew install --cask clawd-clash\` (\`brew trust\` only on newer Homebrew), or download the zip, unzip, and move *Clawd Clash.app* to Applications. (\`star-clawds\`, \`marvelous-clawds\` and \`detective-clawds\` install the same app, starting in Star Clawds, Marvelous Clawds or Detective Clawds.)"
+**Install:** \`brew tap rodclemen/tap && brew trust rodclemen/tap && brew install --cask clawd-clash\` (\`brew trust\` only on newer Homebrew), or download the zip, unzip, and move *Clawd Clash.app* to Applications. ($(join_list and $CASK_QUOTED) install the same app, starting in $(join_list or $CASK_TITLES).)"
 if [[ $RELEASE_EXISTS == 1 ]]; then
     # --force on a published release: swap its zip and notes in place, so there's never a moment with no release
     # for the cask's download URL to point at.
@@ -141,11 +149,11 @@ if [[ $NOTARIZED == 0 ]]; then
   end
 '
 fi
-# Four casks, one app: clawd-clash, and one per universe, which starts it there (only if no universe has been chosen
-# yet, so an upgrade never undoes your choice).
+# One app, several casks: clawd-clash, and one for each universe whose manifest names a cask, which starts it there
+# (only if no universe has been chosen yet, so an upgrade never undoes your choice).
 write_cask() {   # write_cask <cask name> <universe key or empty> <description>
     local name=$1 universe=$2 desc=$3 others preset=""
-    others=$(printf '"%s", ' clawd-clash star-clawds marvelous-clawds detective-clawds | sed "s/\"$name\", //; s/, $//")
+    others=$(printf '"%s", ' clawd-clash $CASK_NAMES | sed "s/\"$name\", //; s/, $//")
     if [[ -n $universe ]]; then
         preset="
   # Start in $universe, unless a universe was already picked.
@@ -195,9 +203,9 @@ end
 CASK
 }
 write_cask clawd-clash "" "Your AI coding sessions as a pixel-art battle across many universes, on your desktop"
-write_cask star-clawds starWars "Claude Code sessions as a pixel-art Star Clawds battle on your desktop"
-write_cask marvelous-clawds marvel "Claude Code sessions as a pixel-art Marvelous Clawds battle on your desktop"
-write_cask detective-clawds dc "Claude Code sessions as a pixel-art Detective Clawds battle on your desktop"
+for i in {1..${#CASK_NAMES}}; do
+    write_cask $CASK_NAMES[i] $CASK_KEYS[i] "Claude Code sessions as a pixel-art $CASK_TITLES[i] battle on your desktop"
+done
 # The universe casks used to be named after the old apps: Homebrew moves installs of those over (cask_renames.json).
 rm -f "$TAP/Casks/clawd-wars.rb" "$TAP/Casks/clawdvengers-clawd-wars.rb" "$TAP/Casks/justice-clawds-clawd-wars.rb"
 cat > "$TAP/cask_renames.json" <<'RENAMES'
@@ -209,7 +217,7 @@ cat > "$TAP/cask_renames.json" <<'RENAMES'
 RENAMES
 [[ -f "$TAP/README.md" ]] || printf '# Homebrew tap\n\n```sh\nbrew tap rodclemen/tap\nbrew trust rodclemen/tap      # newer Homebrew asks you to trust a third-party tap once\nbrew install --cask clawd-clash\n```\n' > "$TAP/README.md"
 git -C "$TAP" add -A
-git -C "$TAP" commit -q -m "clawd-clash $VERSION (also star-clawds, marvelous-clawds, detective-clawds)"
+git -C "$TAP" commit -q -m "clawd-clash $VERSION (also ${(j:, :)CASK_NAMES})"
 git -C "$TAP" remote get-url origin >/dev/null 2>&1 || git -C "$TAP" remote add origin "https://github.com/$TAP_REPO.git"
 git -C "$TAP" push -q -u origin main
 
