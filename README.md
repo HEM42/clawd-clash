@@ -5,7 +5,7 @@
 <h1 align="center">Clawd Clash</h1>
 
 <p align="center">
-  <b>Your Claude Code sessions, and those of every other AI you run, as a pixel-art Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd, The Clawd Files, Stevie Clawdberg or Clawd of the Rings battle on your desktop.</b><br>
+  <b>Your Claude Code sessions, and those of every other AI you run, as a pixel-art Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd, The Clawd Files, Stevie Clawdberg, Clawd of the Rings or Clawd Slayer battle on your desktop.</b><br>
   Every session is a hero or a villain, every subagent joins in, and they fight while they work.
 </p>
 
@@ -21,7 +21,7 @@ https://github.com/user-attachments/assets/a64b3b6d-26ff-46ba-b4a1-8e15a8941ea5
 
 <p align="center"><sub>Full 1080p version: <a href="promo/clawd-clash-promo.mp4">promo/clawd-clash-promo.mp4</a></sub></p>
 
-Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars), **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars), **[Doctor Clawd](https://github.com/rodclemen/doctor-clawd)**, **[The Clawd Files](https://github.com/rodclemen/the-clawd-files)**, **[Stevie Clawdberg](https://github.com/rodclemen/stevie-clawdberg)** and **[Clawd of the Rings](https://github.com/rodclemen/clawd-of-the-rings)**. Pick one in Settings, or Clawd Royale for all of them at once. The universes' own pages show each one on its own; this one is the app.
+Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars), **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars), **[Doctor Clawd](https://github.com/rodclemen/doctor-clawd)**, **[The Clawd Files](https://github.com/rodclemen/the-clawd-files)**, **[Stevie Clawdberg](https://github.com/rodclemen/stevie-clawdberg)**, **[Clawd of the Rings](https://github.com/rodclemen/clawd-of-the-rings)** and **Clawd Slayer**. Pick one in Settings, or Clawd Royale for all of them at once. The universes' own pages show each one on its own; this one is the app.
 
 | Star Clawds | Marvelous Clawds |
 |---|---|
@@ -77,14 +77,15 @@ You run Claude Code in three terminals. One is thinking, one is waiting for your
   <img src="docs/desktop-doctor-clawd.png" alt="Doctor Clawd sessions and agents fighting along the bottom of the screen"><br>
   <img src="docs/desktop-the-clawd-files.png" alt="The Clawd Files sessions and agents fighting along the bottom of the screen"><br>
   <img src="docs/desktop-stevie-clawdberg.png" alt="Stevie Clawdberg sessions and agents fighting along the bottom of the screen"><br>
-  <img src="docs/desktop-clawd-of-the-rings.png" alt="Clawd of the Rings sessions and agents fighting along the bottom of the screen">
+  <img src="docs/desktop-clawd-of-the-rings.png" alt="Clawd of the Rings sessions and agents fighting along the bottom of the screen"><br>
+  <img src="docs/desktop-clawd-slayer.png" alt="Clawd Slayer sessions and agents fighting along the bottom of the screen">
 </p>
 
 ## The universes
 
 Pick one in **Settings… → Universe**:
 
-- **One universe:** Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd, The Clawd Files, Stevie Clawdberg or Clawd of the Rings.
+- **One universe:** Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd, The Clawd Files, Stevie Clawdberg, Clawd of the Rings or Clawd Slayer.
 - **Random:** a different universe on its own every 1, 5, 10, 15, 30 or 60 minutes.
 - **Clawd Royale:** every cast in one scene, heroes against villains, each character as itself. The place is a random one from any universe and changes every ten minutes (the Location menu is greyed out meanwhile).
 
@@ -92,7 +93,7 @@ Pick one in **Settings… → Universe**:
 
 - Everyone on screen is recast: each character becomes the one in the same place in the other cast, on the same side.
 - The scene moves to one of the new universe's places. In the window, the whole window changes over with the new universe's own transition.
-- The menu bar icon changes: Darth Vapor's helmet, Captain Americlawd's shield, Superb-Man's C-shield, the police box, a flying saucer, the bike crossing the moon or the One Ring. In Clawd Royale it shows the universe of the place you're in.
+- The menu bar icon changes: Darth Vapor's helmet, Captain Americlawd's shield, Superb-Man's C-shield, the police box, a flying saucer, the bike crossing the moon, the One Ring or a stake in front of a gravestone under a crescent moon. In Clawd Royale it shows the universe of the place you're in.
 
 The screen saver follows your pick with "The same as Clawd Clash", or has a universe of its own in its Options.
 
@@ -220,6 +221,28 @@ The screen saver follows your pick with "The same as Clawd Clash", or has a univ
 <p align="center"><img src="docs/locations-clawd-of-the-rings.png" alt="All Clawd of the Rings places" width="760"></p>
 </details>
 
+### Clawd Slayer
+
+- **Cast:** 48 villains, 35 heroes
+- **Places:** 20, from Sunnydale High Library to Wolfram & Hart
+- **Weapons:** Stakes, crossbows, axes, swords, Xander's 2×4, Olaff's hammer, witches' spells, vampires' fists and fangs
+- **Set pieces:**
+  - Arch-enemies face off first, and Angstel and Spyke never lead two sessions back to back
+  - The school bus, Spyke's DeSoto or Angstel's convertible picks people up
+  - When one of the Tabula Rasa eight's sessions compacts its context, Willow's forgetting spell goes off: a crystal glows, they don't know who they are ("JOAN?"), then it cracks underfoot and it all comes back
+  - While the Gentlemen are on stage, nobody has a voice: every speech bubble comes up empty
+  - On nights when the real moon is full, Ozz and Veruka stay wolves
+  - The First Evil now and then becomes one of the Big Bads before it: the Old Master, the Mayor, Glorificlaws or Adamm
+  - Mayor Wilclaws wipes his hands with a wet wipe after every duel
+  - Only the witches (Willow, Tara and Jenny) float cross-legged in meditation
+- **Sides:** Claude Code plays the heroes when another AI runs
+
+<details>
+<summary><b>The Clawd Slayer cast and places</b></summary>
+<p align="center"><img src="docs/roster-clawd-slayer.png" alt="All Clawd Slayer characters" width="760"></p>
+<p align="center"><img src="docs/locations-clawd-slayer.png" alt="All Clawd Slayer places" width="760"></p>
+</details>
+
 ## Window mode and the screen saver
 
 It opens in a window by default (switch to the desktop from the menu): the whole crew in a scene set where the first session's character belongs, with a card for every session: its project, what it's doing right now, your last prompt, its last reply, and its agents in a little tree.
@@ -241,6 +264,7 @@ Every 10 minutes it moves somewhere new, with a transition from the universe it'
 - **The Clawd Files:** one of ten: the Black Oil, a blinking eye, a classified case file, a TV losing sync, a UFO's beam, flashlights in the dark, cigarette smoke, a spy satellite, a paranormal warp and, now and then, the whole opening titles. Then the new place types itself in at the corner.
 - **Stevie Clawdberg:** one of ten from the films: the bike crossing the full moon, the DeLorean at 88 mph, a red line across the map, the fin, a camera flash, the park gates, the five tones, the rolling boulder, pixie dust and One-Eyed Willy's doubloon.
 - **Clawd of the Rings:** one of nine: the Eye opening, a dotted line walking across the map, the Red Book's page turning, the Great Eagles, the Ring going on, the beacons of Gondor lighting, Gladriel's Mirror, Gandclawd's fireworks dragon and the palantír.
+- **Clawd Slayer:** one of thirteen: the opening titles, a stake dusting the place away, the Watcher's tome, Willow's spell, Dark Willow's "Bored now", the Hellmouth opening, Hush's Gentlemen, the curtains of "Once More, With Feeling", sunrise, the Key's portal, a long black coat swishing past, the lift at Wolfram & Hart and the desert sand of "Restless".
 
 Its **Options…** button in System Settings picks the universe: the same as the app, any one universe, Clawd Royale, or Random (a new pick on each trip).
 
@@ -278,7 +302,7 @@ Every session gets a character, whichever AI runs it. Each AI has its own outlin
 
 | AI or harness | How Clawd Clash connects | Outline | Notes |
 |---|---|---|---|
-| [Claude Code](https://claude.com/claude-code) | hooks in `~/.claude/settings.json` | white | Compacting the context sets off a Doctor's regeneration or an FBI agent's missing time (pi's does too). |
+| [Claude Code](https://claude.com/claude-code) | hooks in `~/.claude/settings.json` | white | Compacting the context sets off a Doctor's regeneration, an FBI agent's missing time or Willow's forgetting spell (pi's does too). |
 | Claude Code in the Claude desktop app | the same hooks | coral | Spotted by where it runs, so it gets its own colour. |
 | [Codex](https://developers.openai.com/codex) | hooks in `~/.codex/hooks.json` | cyan | Codex only runs hooks you've approved: run **`/hooks`** in Codex once after connecting. |
 | [Qwen Code](https://github.com/QwenLM/qwen-code) | hooks in `~/.qwen/settings.json` | lavender | |
@@ -329,9 +353,9 @@ Clawd Clash replaces Clawd Wars, Clawdvengers: Clawd Wars and Justice Clawds: Cl
 
 ## How it works
 
-- A tiny Foundation-only binary, `clawd-clash-hook`, is registered for each connected AI's hook events (session start/end, prompts, tool calls, permission requests, subagents, stop, and context compaction for Claude Code and pi, where a Doctor Clawd Doctor regenerates, a Clawd Files FBI agent loses time or a Stevie Clawdberg time traveller hits 88 mph). pi has no hooks, so its connection is an extension that runs the same binary for each of pi's events. It writes `~/.claude/clawd-clash/state.json` under a file lock and exits silently, so it can never get in Claude's way. It casts new characters from the universe on show.
+- A tiny Foundation-only binary, `clawd-clash-hook`, is registered for each connected AI's hook events (session start/end, prompts, tool calls, permission requests, subagents, stop, and context compaction for Claude Code and pi, where a Doctor Clawd Doctor regenerates, a Clawd Files FBI agent loses time, a Stevie Clawdberg time traveller hits 88 mph or a Clawd Slayer Scooby forgets who they are). pi has no hooks, so its connection is an extension that runs the same binary for each of pi's events. It writes `~/.claude/clawd-clash/state.json` under a file lock and exits silently, so it can never get in Claude's way. It casts new characters from the universe on show.
 - The app reads that twice a second, finds sessions without hooks from the process table, and drops a session the moment its process exits.
-- Everything you see (852 characters, their weapons and effects, 193 places, the ships, the icon) is pixel art drawn in Swift at runtime. The download is about 10 MB (about 20 MB installed); only the characters and the place on screen are ever drawn.
+- Everything you see (935 characters, their weapons and effects, 213 places, the ships, the icon) is pixel art drawn in Swift at runtime. The download is about 10 MB (about 20 MB installed); only the characters and the place on screen are ever drawn.
 
 ## Uninstall
 
@@ -344,7 +368,7 @@ rm -rf "/Applications/Clawd Clash.app" ~/.claude/clawd-clash
 
 ## Contributing
 
-Each universe lives in its own folder under `Sources/App/Universes/`, named after it (`StarClawds`, `MarvelousClawds`, `ClawdOfTheRings`…):
+Each universe lives in its own folder under `Sources/App/Universes/`, named after it (`StarClawds`, `MarvelousClawds`, `ClawdOfTheRings`, `Slayer`…):
 
 - **A character** is a `Persona` (name, weapon, how it moves, what its shots or magic look like, its signature move) registered next to its drawing function in the universe's `Art/*.swift` files. Add its case at the **end** of the universe's hero or villain enum (ids are saved, so never reorder), give it a home in the roster file, and bump the count in `Sources/Shared/Universe.swift`. `Sources/App/Pose.swift` explains what a drawing function gets and must do.
 - **A place** is a `Place` in the universe's `Places/` files: a still picture and an optional moving layer.
