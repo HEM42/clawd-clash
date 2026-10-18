@@ -88,10 +88,11 @@ private func drawConner(_ c: PixelCanvas, _ p: Pose) {
     }
     if behind(p) { stake() }
     drawBody(c, Look(arm: hood))
-    // The hoodie: a pouch pocket across the front, the drawstrings hanging from the neck.
+    // The hoodie: a pouch pocket across the front, the drawstrings hanging from the corners of the hood, well apart
+    // and dark-tipped so they read as cords, not as a pair of fangs under his chin.
     c.rect(18, 33, 20, 5, hood); c.rect(37, 33, 1, 5, hoodD); c.rect(18, 37, 20, 1, hoodD)
     c.rect(22, 35, 12, 2, hoodD); c.rect(22, 35, 12, 1, hoodL)
-    c.rect(25, 33, 1, 3, cord); c.rect(30, 33, 1, 3, cord); c.px(25, 35, hoodD); c.px(30, 35, hoodD)
+    c.rect(20, 33, 1, 3, cord); c.rect(35, 33, 1, 3, cord); c.px(20, 36, hoodD); c.px(35, 36, hoodD)
     // The hood up over his head, a ragged brown fringe under its rim.
     c.pattern(15, 19, [
         ".......BBBBBBBBBBBB.......",
@@ -159,13 +160,17 @@ private func drawKateLockclaw(_ c: PixelCanvas, _ p: Pose) {
     ], ["H": hair, "l": hairL, "d": hairD])
 
     if badgeK >= 0 {
-        // The pistol in its holster on her hip.
-        c.rect(19, 35, 3, 3, C(0x3A2416)); c.rect(19, 34, 3, 1, C(0x2A2A30)); c.px(20, 34, C(0x8A8F9C))
-        // The badge in its black wallet, held up and out, its gold shield catching the light.
-        let x = 39 + Int((show * 1).rounded()), y = 30 - raise - 2
+        // The pistol in its holster on her hip: tan leather with a strap over it, the grip poking out above.
+        let holster = C(0x8A5A32), holsterD = C(0x5E3A1E)
+        c.pattern(18, 33, [".GG.", ".Gg.", "HHHH", "HSSH", "HHHd", ".Hd."],
+                  ["G": C(0x2A2A30), "g": C(0x8A8F9C), "H": holster, "S": C(0xB08050), "d": holsterD])
+        // The badge, held up and out: the wallet flipped open, her ID on the black leather and the gold shield
+        // beside it, two points on top and a white star in the middle.
+        let x = 38 + Int((show * 1).rounded()), y = 30 - raise - 3
         c.rect(38, 33 - raise, 3, 3, suit)
-        c.pattern(x, y, ["KKKKK", "KGGGK", "KGgGK", "KdGdK", "KKKKK"], ["K": wallet, "G": gold, "g": white, "d": goldD])
-        c.rect(38, y + 3, 2, 2, clawdOrange)
+        c.pattern(x, y, ["KKG.G.", "KwGGGG", "KwGsGd", "KKGGGd", "KK.Gd."],
+                  ["K": wallet, "w": C(0xD8D8DC), "G": gold, "s": white, "d": goldD])
+        c.rect(38, y + 4, 2, 2, clawdOrange)
         return
     }
     // The badge clipped to her belt.
@@ -195,19 +200,19 @@ private func drawGroosalug(_ c: PixelCanvas, _ p: Pose) {
     c.oy += p.breathe
     let guardCol = C(0xC89040), grip = C(0x3A2416), pommel = C(0xE2B462)
     let blade0 = {
-        sword(c, slayerHand, angle: p.melee ?? 64, trail: p.trail, length: p.melee == nil ? 11 : 14, wide: 0.9,
+        // At rest its tip is on the ground; sitting, the ground is nearer, so it leans out flatter to meet it.
+        sword(c, slayerHand, angle: p.melee ?? (seatedPose ? 26 : 64), trail: p.trail, length: p.melee == nil ? 11 : 14, wide: 0.9,
               edge: edge, blade: blade, guardCol: guardCol, grip: grip, pommel: pommel, guardW: 3)
     }
     if behind(p) && heroK < 0 { blade0() }
     drawBody(c, Look(arm: leather), armRight: raise)
-    // The breastplate: bronze, ridged across, a leather skirt of straps at the waist.
-    c.rect(18, 33, 20, 5, bronze); c.rect(18, 33, 20, 1, bronzeL); c.rect(18, 35, 20, 1, bronzeD)
-    c.rect(37, 33, 1, 4, bronzeD); c.rect(27, 33, 2, 3, bronzeL)
-    for x in stride(from: 18, through: 36, by: 3) { c.rect(x, 37, 2, 1, leather) }
+    // The breastplate: moulded bronze over a leather tunic that shows at its sides, a ridge down the middle and the
+    // curve of the chest across it, a belt and a skirt of leather straps at the waist.
+    c.rect(18, 33, 20, 5, leather)
+    c.rect(20, 33, 16, 3, bronze); c.rect(20, 33, 16, 1, bronzeL); c.rect(35, 33, 1, 3, bronzeD)
+    c.rect(21, 35, 6, 1, bronzeD); c.rect(29, 35, 6, 1, bronzeD); c.rect(27, 33, 2, 3, bronzeL)
     c.rect(18, 36, 20, 1, leatherD)
-    // Round pauldrons on both shoulders.
-    c.pattern(15, 31, [".LLL", "LBBB", "BBBd"], ["L": bronzeL, "B": bronze, "d": bronzeD])
-    c.pattern(37, 31, ["LLL.", "BBBB", "BBBd"].map { String($0) }, ["L": bronzeL, "B": bronze, "d": bronzeD])
+    for x in stride(from: 18, through: 36, by: 3) { c.rect(x, 37, 2, 1, leather) }
     // Long wavy hair, swept back off his face, falling past his shoulders behind, strands loose.
     c.pattern(15, 19, [
         "...........H..H...........",
@@ -226,6 +231,10 @@ private func drawGroosalug(_ c: PixelCanvas, _ p: Pose) {
         "HH.d......................",
         ".d........................",
     ], ["H": hair, "l": hairL, "d": hairD])
+    // Round pauldrons capping both shoulders, out past the body, each with a dark rim underneath so it stands apart
+    // from the breastplate.
+    c.pattern(14, 31, [".LL.", "LBBB", "BBBd", "dddd"], ["L": bronzeL, "B": bronze, "d": bronzeD])
+    c.pattern(38, 31 - raise, [".LL.", "LBBd", "BBBd", "dddd"], ["L": bronzeL, "B": bronze, "d": bronzeD])
 
     if heroK >= 0 {
         // Sword straight up over his head, and a glint running up the blade.
@@ -306,29 +315,41 @@ private func drawMissKitty(_ c: PixelCanvas, _ p: Pose) {
     let fur = C(0x8E9099), furD = C(0x686A74), furL = C(0xB2B4BC), stripe = C(0x5A5C66), belly = C(0xD6D6DC)
     let pink = C(0xF0A0B2), paw = C(0xEEEEF2), whisker = C(0xE2E2E8)
     // The chase: where the ball is, how low she crouches, how far she has pounced.
-    var ball: Double? = nil, crouch = 0, pounce = 0.0, hopUp = 0, batting = false
+    // The ball never pops in or out of thin air: it bounces out from behind her, over her shoulder, and rolls to a
+    // stop in front of her; at the end she bats it up and back over her head, and it drops away behind her again.
+    // It's drawn before her, so it's hidden wherever it's behind her.
+    var ball: (x: Double, y: Double)? = nil, crouch = 0, pounce = 0.0, hopUp = 0, batting = false
     if let s = p.signature, s > 0.05, s < 0.92 {
-        if s < 0.3 { ball = 60 - ramp(s, 0.05, 0.3) * 13 }
-        else if s < 0.5 { ball = 47; crouch = 1 }
+        if s < 0.3 {
+            let k = ramp(s, 0.05, 0.3)
+            if k < 0.65 {
+                let u = k / 0.65
+                ball = (28 + u * 24, 30 + u * 9 - sin(u * .pi) * 18)
+            } else {
+                let u = (k - 0.65) / 0.35
+                ball = (52 - u * (2 - u) * 5, 39 - (u < 0.5 ? sin(u * 2 * .pi) * 2 : 0))
+            }
+        }
+        else if s < 0.5 { ball = (47, 39); crouch = 1 }
         else if s < 0.64 {
-            ball = 47
+            ball = (47, 39)
             let k = ramp(s, 0.5, 0.64)
             pounce = k * 4; hopUp = Int((sin(k * .pi) * 4).rounded())
         } else if s < 0.84 {
             let k = ramp(s, 0.64, 0.84)
-            ball = 47 + k * 13; pounce = 4; batting = k < 0.4
+            ball = (47 - k * 19, 39 - k * 9 - sin(k * .pi) * 26); pounce = 4; batting = k < 0.3
         } else {
             pounce = 4 * (1 - ramp(s, 0.84, 0.92))
         }
     }
     let wiggle = crouch > 0 && Int(p.t * 10) % 2 == 0
 
-    // The ball of wool, rolling along the ground, a loose strand trailing.
-    if let bx = ball {
-        let x = Int(bx.rounded()), spin = Int(bx) % 2
-        c.pattern(x - 2, 39, [".RRR.", "RLRRR", "RRDRR", "RDRRd", ".RRd."],
+    // The ball of wool, a loose strand trailing behind it while it rolls along the ground.
+    if let b = ball {
+        let x = Int(b.x.rounded()), y = Int(b.y.rounded()), spin = Int(b.x) % 2
+        c.pattern(x - 2, y, [".RRR.", "RLRRR", "RRDRR", "RDRRd", ".RRd."],
                   ["R": C(0xD8405E), "L": C(0xF48AA2), "D": C(0xA82A46), "d": C(0x8E2038)])
-        c.rect(x + 3, 42 + spin, 2, 1, C(0xD8405E))
+        if y >= 38 { c.rect(x + 3, y + 3 + spin, 2, 1, C(0xD8405E)) }
     }
     c.ox += Int(pounce.rounded()); c.oy -= hopUp
     drawLegs(c, Look(leg: fur), step: hopUp > 0 ? 0 : p.step)
