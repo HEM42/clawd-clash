@@ -31,6 +31,8 @@ struct Location: Hashable, RawRepresentable {
     var place: Place { places[self] ?? Place(name: rawValue, panel: 0x16181D, still: { _, _ in }) }
 
     var name: String { place.name }
+    /// Whether it shows its own name where the window's top bar would write it (`Place.signed`).
+    var signed: Bool { place.signed }
 
     /// Background tint for the card area, so the whole window feels like the place.
     var panel: NSColor {
@@ -64,6 +66,9 @@ struct Place {
     let still: (PixelCanvas, Int) -> Void
     /// What moves there, drawn every frame on a transparent canvas the same size: canvas, ground row, clock.
     var moving: ((PixelCanvas, Int, Double) -> Void)? = nil
+    /// The place carries its own name in the window's top-left corner (the Bronze's neon sign): the window's top bar
+    /// leaves its name off there, so it doesn't sit over the sign.
+    var signed = false
 }
 
 /// Every place in every universe, from the universes' scene files.

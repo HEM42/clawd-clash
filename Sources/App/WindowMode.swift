@@ -625,7 +625,7 @@ final class HeaderView: NSView, NSViewToolTipOwner {
     /// How far the place's name reaches from its left edge: in The Clawd Files, the whole caption once it has typed
     /// itself in, so the bar behind it doesn't grow a letter at a time.
     private func titleWidth() -> CGFloat {
-        guard let location = controller?.location else { return 0 }
+        guard let location = controller?.location, !location.signed else { return 0 }
         if location.universe == .clawdFiles {
             let all = FilesCaption.typed(location, after: 1e6).joined(separator: "  ·  ")
             return NSAttributedString(string: all, attributes: [.font: FilesCaption.font(11.5)]).size().width + 6
@@ -641,7 +641,7 @@ final class HeaderView: NSView, NSViewToolTipOwner {
             // Over the screen-saver view, which has its own place name and clock: a solid bar keeps them apart.
             (base.blended(withFraction: 0.45, of: .black) ?? base).setFill()
             b.fill()
-        } else {
+        } else if controller?.location.signed != true {
             // Behind the place's name only, fading out just past it: enough to read the name over a busy scene, and
             // the rest of the bar leaves the scene clear.
             let tint = (base.blended(withFraction: 0.45, of: .black) ?? base).withAlphaComponent(0.32)
@@ -679,7 +679,8 @@ final class HeaderView: NSView, NSViewToolTipOwner {
             if !FilesCaption.done(location, after: since) {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in self?.needsDisplay = true }
             }
-        } else if let where_ = controller?.location.name {
+        } else if let location = controller?.location, !location.signed {
+            let where_ = location.name
             let label = NSAttributedString(string: where_.uppercased(), attributes: [
                 .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold), .foregroundColor: NSColor(white: 0.92, alpha: 1),
                 .kern: 1.2])

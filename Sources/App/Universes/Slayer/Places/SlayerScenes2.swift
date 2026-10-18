@@ -6,7 +6,7 @@ import Foundation
 // Box's warm amber, the crypt's grey stone lit by a blue TV, the church's olive gloom and gold candles, and the
 // Hellmouth's red.
 let slayerScenes2: [Location: Place] = [
-    .slayerBronze: Place(name: "The Bronze", panel: 0x170D1E, still: Scenes.slayerBronze, moving: Scenes.slayerBronzeLife),
+    .slayerBronze: Place(name: "The Bronze", panel: 0x170D1E, still: Scenes.slayerBronze, moving: Scenes.slayerBronzeLife, signed: true),
     .slayerCemetery: Place(name: "Restfield Cemetery", panel: 0x0C1614, still: Scenes.slayerCemetery,
                            moving: Scenes.slayerCemeteryLife),
     .slayerRevello: Place(name: "1630 Revello Drive", panel: 0x1C1424, still: Scenes.slayerRevello,
