@@ -7,4 +7,11 @@ struct RingsUniverse: UniverseModule {
     var transitions: TransitionSet? {
         TransitionSet { last, cast, from, to in RingsTrip.pick(after: (last as? RingsTrip)?.kind, cast: cast, from: from, to: to) }
     }
+
+    var preview: PreviewInfo {
+        .of(.middleEarth, heroes: "ringsHeroes", [ringsHeroes1, ringsHeroes2, ringsHeroes3, ringsHeroes4, ringsHeroes5, ringsHeroes6, ringsHeroes7, ringsHeroes8],
+            villains: "ringsVillains", [ringsVillains1, ringsVillains2, ringsVillains3, ringsVillains4, ringsVillains5, ringsVillains6, ringsVillains7, ringsVillains8],
+            // "hem" and "HEM" find the first universe's HEM; this batch is Clawd of the Rings' own
+            extra: [("ringsHem", [.hero(RingsHero.hem)])])
+    }
 }

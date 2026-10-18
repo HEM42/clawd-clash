@@ -10,6 +10,8 @@ protocol UniverseModule {
     var places: [Location: Place] { get }
     /// Its trips between places; nil: plain edge and clock wipes (`Wipe`), as Star Clawds keeps.
     var transitions: TransitionSet? { get }
+    /// What Tools/Preview needs: the batch names for its art files, and its characters by enum case name.
+    var preview: PreviewInfo { get }
 }
 
 extension UniverseModule {
@@ -29,6 +31,28 @@ extension Universe {
         case .middleEarth: return RingsUniverse()
         case .slayer: return SlayerUniverse()
         }
+    }
+}
+
+/// A universe's characters as Tools/Preview finds them: by batch (one art file's worth, "slayerHeroes1") and by enum
+/// case name (`buffy`).
+struct PreviewInfo {
+    var batches: [(name: String, cast: [Cast])] = []
+    var caseName: (String) -> Cast? = { _ in nil }
+
+    /// The usual shape: hero files `<heroes>1…`, villain files `<villains>1…` (each a `[Enum: Persona]`, as the art
+    /// files define them), plus any `extra` batches, and the case names of both enums.
+    static func of<H, V>(_ u: Universe, heroes: String, _ heroFiles: [[H: Persona]], villains: String, _ villainFiles: [[V: Persona]],
+                         extra: [(name: String, cast: [Cast])] = []) -> PreviewInfo
+    where H: CaseIterable & RawRepresentable & Hashable, V: CaseIterable & RawRepresentable & Hashable, H.RawValue == Int, V.RawValue == Int {
+        func hero(_ h: H) -> Cast { Cast(universe: u, isDark: false, index: h.rawValue) }
+        func villain(_ v: V) -> Cast { Cast(universe: u, isDark: true, index: v.rawValue) }
+        var out = PreviewInfo()
+        for (i, b) in heroFiles.enumerated() { out.batches.append(("\(heroes)\(i + 1)", b.keys.sorted { $0.rawValue < $1.rawValue }.map(hero))) }
+        for (i, b) in villainFiles.enumerated() { out.batches.append(("\(villains)\(i + 1)", b.keys.sorted { $0.rawValue < $1.rawValue }.map(villain))) }
+        out.batches += extra
+        out.caseName = { n in H.allCases.first { "\($0)" == n }.map(hero) ?? V.allCases.first { "\($0)" == n }.map(villain) }
+        return out
     }
 }
 
