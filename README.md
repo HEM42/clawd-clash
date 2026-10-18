@@ -384,4 +384,4 @@ Each universe lives in its own folder under `Sources/App/Universes/`, named afte
 
 ---
 
-<p align="center"><sub>An independent parody fan project, not affiliated with or endorsed by Lucasfilm, Disney, Marvel, DC Comics or Warner Bros. Claude and Clawd belong to Anthropic.</sub></p>
+<p align="center"><sub>An independent parody fan project. Not affiliated with, endorsed by, or (as far as we know) even noticed by any of the studios, networks, publishers, estates or creators whose universes it pokes fun at. The heroes, villains and places it parodies belong to them; the puns are all ours. Claude and Clawd belong to Anthropic.</sub></p>
