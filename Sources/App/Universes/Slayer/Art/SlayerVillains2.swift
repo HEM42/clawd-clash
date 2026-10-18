@@ -21,7 +21,7 @@ let slayerVillains2: [SlayerVillain: Persona] = [
 
 /// Fighting, or squaring up to it: when a vampire's game face comes out.
 private func slFighting(_ p: Pose) -> Bool {
-    p.melee != nil || p.fire != nil || p.zap == true || p.hit || p.ready
+    p.melee != nil || p.fire != nil || p.zap != nil || p.hit || p.ready
 }
 
 /// The game face over Clawd's own: the ridged brow, yellow eyes with a dark pupil, the bumpy nose and the two fangs.
@@ -59,7 +59,9 @@ private func drawLukewarm(_ c: PixelCanvas, _ p: Pose) {
     let preachK = p.signature.map { $0 > 0.08 && $0 < 0.92 ? ($0 - 0.08) / 0.84 : -1 } ?? -1
     let spread = preachK >= 0 ? min(1, min(preachK, 1 - preachK) * 5) : 0
 
-    drawLegs(c, Look(leg: C(0x24222A)), step: p.step)
+    // Mid-grey trousers, lit down their left side, so the legs read as legs once outlined, not as white stripes.
+    drawLegs(c, Look(leg: C(0x4A4652)), step: p.step)
+    if !seatedPose { for lx in [19, 23, 31, 35] { c.rect(lx, 38, 1, 4, C(0x625C6C)) } }
     slayerBoots(c, step: p.step, C(0x0E0C10), height: 2)
     c.oy += p.breathe
     // The long coat's skirts over the legs, split up the middle.
@@ -133,24 +135,27 @@ private func drawDarlah(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 34, 20, 4, dress); c.rect(37, 34, 1, 4, dressD); c.rect(18, 37, 20, 1, dressD)
     c.rect(24, 34, 8, 1, dressD); c.rect(19, 35, 1, 2, dressL)
     if face { slGameFace(c) }
-    // Long golden waves, a middle parting, down past her shoulders and ending in curls.
-    c.pattern(16, 20, [
-        "......HHHHHHHHHHH.......",
-        "....HHHlHHHHHHlHHHH.....",
-        "...HHHHHHHHHHHHHHHHHH...",
-        "..HHHlHHHHHHHHHHHlHHHH..",
-        ".HHHHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHH.......HHHHHHHH.",
-        "HHHHH..............HHHH.",
-        "HHHl................HHH.",
-        ".HHH................lHH.",
-        "HHHd................HHH.",
-        "HlH.................dHH.",
-        ".HHd................HHH.",
-        "HHd..................HHd",
-        ".dHd................dHd.",
-        "..d..................d..",
+    // Long golden waves from a middle parting, spilling out past her shoulders and ending in curls: narrow at the
+    // crown and widening as it falls, its edge bulging in and out with each wave, the light along each strand.
+    c.pattern(14, 20, [
+        "..........HHHHHHH...........",
+        "........HHHHHdHHlHH.........",
+        "......HHlHHHHdHHHlHHH.......",
+        ".....HHlHHHHHdHHHHlHHH......",
+        "....HHlHHHlHHHHHHHHlHHH.....",
+        "....HlHHHlHHHHHHHHHHlHHH....",
+        "...HlHHHH..........HHlHH....",
+        "..HlHHHH............HHlHH...",
+        "..HHlHH..............HHlH...",
+        ".HHlHH...............HHHlH..",
+        ".HlHHd................HlHH..",
+        "HHHlH.................HHlHH.",
+        ".HHlHd................dHHlH.",
+        "HHlHHd................dHHlHH",
+        ".HHHlH................HHlHH.",
+        "HHdHHd................dHHdHH",
+        ".dHd.d................d.dHd.",
+        "..d......................d..",
     ], ["H": hair, "l": hairL, "d": hairD])
 
     if twirlK >= 0 {
@@ -160,11 +165,12 @@ private func drawDarlah(_ c: PixelCanvas, _ p: Pose) {
         for (hx, hy, dir) in [(43.0, 26.0, 1.0), (13.0, 26.0, -1.0)] {
             let spin = dir > 0 ? a : 180 - a
             for k in 1...3 {
-                let g = slayerReach((hx, hy), spin + dir * Double(k) * 35, 4.5)
+                let g = slayerReach((hx, hy), spin + dir * Double(k) * 35, 5.5)
                 c.px(Int(g.x.rounded()), Int(g.y.rounded()), steel.alpha(0.2 / Double(k)))
             }
-            slayerBar(c, (hx, hy), spin + dir * 100, from: 0.5, to: 3, grip, r: 0.7)
-            slayerBar(c, (hx, hy), spin, from: -1, to: 5, steel, r: 0.7)
+            slayerBar(c, (hx, hy), spin + dir * 100, from: 0.5, to: 4, grip, r: 0.9)
+            slayerBar(c, (hx, hy), spin, from: -1.5, to: 6.5, steelD, r: 1.0)
+            slayerBar(c, (hx, hy), spin, from: -1, to: 6, steel, r: 0.6)
             c.rect(Int(hx.rounded()) - 1, Int(hy.rounded()) - 1, 2, 2, clawdOrange)
         }
         return
@@ -189,17 +195,21 @@ private func drawDrusillah(_ c: PixelCanvas, _ p: Pose) {
     let dollK = p.signature.map { $0 > 0.06 && $0 < 0.94 ? ($0 - 0.06) / 0.88 : -1 } ?? -1
     let face = slFighting(p)
 
-    drawLegs(c, Look(leg: C(0xD0C8BC)), step: p.step)
-    slayerBoots(c, step: p.step, C(0x2A2028), height: 1)
-    // The long skirt, to the ankles, with a lace hem.
-    c.rect(16, 38, 24, seatedPose ? 1 : 4, dress); c.rect(39, 38, 1, seatedPose ? 1 : 4, dressD)
-    if !seatedPose {
-        c.rect(16, 41, 24, 1, dressD)
-        for x in stride(from: 17, to: 40, by: 2) { c.px(x, 41, lace) }
+    // Dark stockings and little black button boots: four dark legs under the pale gown, so they read at a glance.
+    drawLegs(c, Look(leg: C(0x5A4458)), step: p.step)
+    if !seatedPose { for lx in [19, 23, 31, 35] { c.rect(lx, 38, 1, 4, C(0x765E74)) } }
+    slayerBoots(c, step: p.step, C(0x241A22), height: 2)
+    // The long skirt, falling in soft folds to the shins, a plain band of lace along its hem.
+    if seatedPose {
+        c.rect(17, 38, 22, 1, dress); c.rect(38, 38, 1, 1, dressD)
+    } else {
+        c.rect(17, 38, 22, 2, dress); c.rect(16, 39, 1, 2, dress); c.rect(39, 39, 1, 2, dressD); c.rect(17, 40, 22, 1, lace)
+        for x in [21, 26, 31, 35] { c.rect(x, 38, 1, 2, dressD); c.px(x, 40, dressD) }
+        for x in [20, 25, 30] { c.rect(x, 38, 1, 2, lace) }
     }
     c.oy += p.breathe
     // Swaying from the waist up while she holds up the doll.
-    let sway = dollK >= 0 ? Int((sin(dollK * 4 * .pi) * 1.4).rounded()) : 0
+    let sway = dollK >= 0 ? Int((sin(dollK * 3 * .pi) * 2.4).rounded()) : 0
     c.ox += sway
     // Hair down her back, behind her.
     c.pattern(13, 26, ["HHHH", "HHHH", ".HHH", "HHdH", ".HHH", "HHHd", ".HHH", "..Hd"], ["H": hair, "d": hairD])
@@ -278,19 +288,25 @@ private func drawMrTricks(_ c: PixelCanvas, _ p: Pose) {
     let tieK = p.signature.map { $0 > 0.12 && $0 < 0.88 ? ($0 - 0.12) / 0.76 : -1 } ?? -1
     let face = slFighting(p)
 
-    drawLegs(c, Look(leg: C(0x3A3A48)), step: p.step)
+    // Charcoal trousers a shade lighter than the jacket, lit down their left side: legs, not white stripes, once outlined.
+    drawLegs(c, Look(leg: C(0x50505E)), step: p.step)
+    if !seatedPose { for lx in [19, 23, 31, 35] { c.rect(lx, 36, 1, 6, C(0x6A6A7C)) } }
     slayerBoots(c, step: p.step, C(0x0E0E12), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit, eye: face ? nil : ink))
-    // The jacket, slim and buttoned, wide lapels over the shirt and tie, a red square in the breast pocket.
+    // The jacket, slim and pinstriped, buttoned low, wide lapels round a deep V of white shirt.
     c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, suitD); c.rect(18, 37, 20, 1, suitD)
-    c.rect(25, 33, 6, 3, shirt); c.pattern(23, 33, ["LL......LL", ".LL....LL.", "..LL..LL..", "...LLLL..."], ["L": suitL])
-    c.px(28, 37, tie)
-    c.rect(20, 34, 2, 1, square); c.px(20, 33, square)
-    // The tie: crooked first, straightened in the signature.
+    for x in [19, 22, 34] { c.rect(x, 34, 1, 3, suitL) }
+    c.pattern(24, 33, ["SSSSSSSS", ".SSSSSS.", "..SSSS..", "...SS..."], ["S": shirt])
+    c.pattern(22, 33, ["LL........LL", ".LL......LL.", "..LL....LL..", "...LL..LL...", "....LLLL...."], ["L": suitL])
+    c.px(24, 33, C(0xC8C4BC)); c.px(31, 33, C(0xC8C4BC))   // the collar points
+    // A red silk square, its points up out of the breast pocket.
+    c.pattern(19, 33, ["S.S", "SSS"], ["S": square]); c.rect(19, 35, 3, 1, suitD)
+    // The tie, gold and broad: crooked first, straightened in the signature.
     let crooked = tieK >= 0 && tieK < 0.45
-    let tx = crooked ? 28 : 27
-    c.rect(27, 33, 2, 1, tieD); c.rect(tx, 34, 2, 2, tie); c.px(tx + 1, 35, tieD)
+    c.rect(27, 33, 2, 1, tieD)
+    c.rect(27, 34, 2, 1, tie); c.rect(crooked ? 28 : 27, 35, 2, 2, tie); c.px(crooked ? 29 : 28, 36, tieD)
+    c.px(crooked ? 28 : 27, 37, tieD)
     if face { slGameFace(c, ridge: C(0x8A4228)) }
     // The goatee, neat, under the mouth.
     c.rect(27, 32, 2, 1, hair)
@@ -305,12 +321,16 @@ private func drawMrTricks(_ c: PixelCanvas, _ p: Pose) {
     ], ["H": hair, "h": C(0x2E2A30)])
 
     if tieK >= 0 {
-        // A hand at the knot: a tug down, then a slide back up, and a glint off the gold.
-        let y = tieK < 0.45 ? 34 : 33
-        c.rect(30, y, 3, 3, suit); c.rect(29, y, 2, 2, clawdOrange)
+        // His hand across his chest to the knot, a white cuff showing: a tug down, a slide back up, and a glint off the gold.
+        let y = tieK < 0.45 ? 35 : 34
+        slayerLine(c, 39, 34.5, 33, Double(y) + 1, suit, 1.3)
+        c.rect(33, y, 4, 1, suitL)   // the light along the top of his sleeve, so the arm shows against the jacket
+        c.rect(31, y, 2, 3, shirt); c.px(32, y + 1, C(0xD8A830))
+        c.rect(28, y, 3, 3, clawdOrange); c.rect(28, y + 2, 3, 1, clawdShade)
         if tieK > 0.6 && tieK < 0.85 {
-            let g = C(0xFFF4C0)
-            c.px(28, 35, g); c.px(28, 33, g.alpha(0.6)); c.px(29, 35, g.alpha(0.6)); c.px(27, 35, g.alpha(0.6))
+            let g = C(0xFFF8D0)
+            c.px(27, 36, white); c.px(26, 36, g); c.px(27, 35, g); c.px(27, 37, g)
+            c.px(25, 36, g.alpha(0.5)); c.px(26, 35, g.alpha(0.4)); c.px(26, 37, g.alpha(0.4))
         }
         return
     }
