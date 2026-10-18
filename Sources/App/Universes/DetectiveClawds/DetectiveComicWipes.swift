@@ -1547,3 +1547,5 @@ struct DCComicTrip {
         ctx.restoreGState()
     }
 }
+
+extension DCComicTrip: Trip {}

@@ -1387,3 +1387,5 @@ private func lerp(_ a: UInt32, _ b: UInt32, _ t: Double) -> UInt32 {
     }
     return ch(16) | ch(8) | ch(0)
 }
+
+extension FilesTrip: Trip {}

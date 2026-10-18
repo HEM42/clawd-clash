@@ -647,3 +647,5 @@ struct ComicTrip {
         return p
     }
 }
+
+extension ComicTrip: Trip {}

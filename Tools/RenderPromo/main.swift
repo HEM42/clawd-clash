@@ -1845,10 +1845,10 @@ let promoShots: [Shot] = [
     // Choose your universe: everyone runs past, a comic page slams down, and the camera reads it panel by panel.
     Shot(name: "choose", start: 16.5, end: afterChoose) { ctx, local, t in chooseUniverse(ctx, local: local, t: t) },
     // The features, one each in the newest universes, as their own trailers show them.
-    Shot(name: "status", start: afterChoose, end: afterChoose + 4.5, into: .trip(.files(FilesTrip(kind: .classifiedFile)))) { ctx, local, t in
+    Shot(name: "status", start: afterChoose, end: afterChoose + 4.5, into: .trip(ComicTransition(FilesTrip(kind: .classifiedFile)))) { ctx, local, t in
         filesShots.first { $0.name == "status" }!.render(ctx, local, t)
     },
-    Shot(name: "agents", start: afterChoose + 4.5, end: afterChoose + 9.0, into: .trip(.clawdberg(ClawdbergTrip(kind: .mapRoute)))) { ctx, local, t in
+    Shot(name: "agents", start: afterChoose + 4.5, end: afterChoose + 9.0, into: .trip(ComicTransition(ClawdbergTrip(kind: .mapRoute)))) { ctx, local, t in
         clawdbergShots.first { $0.name == "agents" }!.render(ctx, local, t)
     },
     Shot(name: "window", start: afterChoose + 9.0, end: afterChoose + 14.5, into: .middleEarth(RingsTrip(kind: .map))) { ctx, local, t in
@@ -1856,7 +1856,7 @@ let promoShots: [Shot] = [
     },
     // Random: the whole window changes universe on its own, each time with that universe's transition.
     Shot(name: "random1", start: afterChoose + 14.5, end: afterChoose + 16.6) { ctx, local, t in windowShot(ctx, .middleEarth, local: local + 3, t: t, rise: false, at: .prancingPony) },
-    Shot(name: "random2", start: afterChoose + 16.6, end: afterChoose + 18.9, into: .trip(.doctor(DoctorTrip(kind: .vortex))), inWindow: true) { ctx, local, t in
+    Shot(name: "random2", start: afterChoose + 16.6, end: afterChoose + 18.9, into: .trip(ComicTransition(DoctorTrip(kind: .vortex))), inWindow: true) { ctx, local, t in
         windowShot(ctx, .doctor, local: local + 3, t: t, rise: false, at: .consoleRoom)
     },
     Shot(name: "random3", start: afterChoose + 18.9, end: afterChoose + 21.0, into: .starWars(clock: false), inWindow: true) { ctx, local, t in
@@ -5973,7 +5973,7 @@ let slayerShots: [Shot] = [
     Shot(name: "intro", start: 0, end: 9.0, into: .cut) { ctx, local, t in slayerIntro(ctx, local: local, t: t) },
     // "Home sweet home": the DeSoto through the sign, the fledglings rising, the bus, the gang, dust at dawn.
     Shot(name: "homecoming", start: 9.0, end: 18.5, into: .cut) { ctx, local, t in slayerHomecoming(ctx, local: local, t: t) },
-    Shot(name: "hook", start: 18.5, end: 22.5, into: .trip(.slayer(SlayerTrip(kind: .dusting, from: .slayerCemetery, to: .slayerLibrary)))) { ctx, local, t in
+    Shot(name: "hook", start: 18.5, end: 22.5, into: .trip(ComicTransition(SlayerTrip(kind: .dusting, from: .slayerCemetery, to: .slayerLibrary)))) { ctx, local, t in
         let zoom = 1 + 0.03 * local
         ctx.saveGState()
         ctx.translateBy(x: Double(W) / 2, y: Double(H) / 2); ctx.scaleBy(x: zoom, y: zoom); ctx.translateBy(x: -Double(W) / 2, y: -Double(H) / 2)
@@ -5999,7 +5999,7 @@ let slayerShots: [Shot] = [
                  crew: [.hero(SlayerHero.xanderHarrows), .hero(SlayerHero.cordeliaChaise), .hero(SlayerHero.ozz), .hero(SlayerHero.anyaJinkins)],
                  line: "Every subagent gets to be part of the Scoobies.", badgeText: Universe.slayer.title.uppercased())
     },
-    Shot(name: "window", start: 35.3, end: 40.1, into: .trip(.slayer(SlayerTrip(kind: .hellmouth, from: .slayerLibrary, to: .slayerLibrary)))) { ctx, local, t in
+    Shot(name: "window", start: 35.3, end: 40.1, into: .trip(ComicTransition(SlayerTrip(kind: .hellmouth, from: .slayerLibrary, to: .slayerLibrary)))) { ctx, local, t in
         windowShot(ctx, .slayer, local: local, t: t, rise: true, needsAt: 2.5, at: .slayerLibrary)
         badge("WINDOW MODE", ctx, alpha: clamp((local - 0.2) / 0.3))
         caption("Prefer a window? Welcome to the Hellmouth.", ctx, local: local, start: 0.1, y: 955, size: 56)
@@ -6688,7 +6688,7 @@ func transitionSound(_ m: Mix, _ s: Shot) {
             m.tone(t0 + d * 0.3, d * 0.5, 55, to: 40, wave: .saw, vol: 0.06, attack: 0.1, release: 0.3); m.boom(t0 + d * 0.55, vol: 0.18)
         }
     case .trip(let trip):
-        if case .doctor(let dt) = trip, dt.kind == .dematerialise { m.wheeze(t0 + d * 0.05, cycles: Int(d / 0.62), vol: 0.1) }
+        if let dt = trip.trip as? DoctorTrip, dt.kind == .dematerialise { m.wheeze(t0 + d * 0.05, cycles: Int(d / 0.62), vol: 0.1) }
         else { m.whoosh(s.start, d, vol: 0.12) }
     }
 }

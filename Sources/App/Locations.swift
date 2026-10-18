@@ -67,9 +67,9 @@ struct Place {
 }
 
 /// Every place in every universe, from the universes' scene files.
-let places: [Location: Place] = marvelPlaces.merging(starWarsPlaces) { a, _ in a }.merging(dcPlaces) { a, _ in a }
-    .merging(doctorPlaces) { a, _ in a }.merging(filesPlaces) { a, _ in a }
-    .merging(clawdbergPlaces) { a, _ in a }.merging(middleEarthPlaces) { a, _ in a }.merging(slayerPlaces) { a, _ in a }
+let places: [Location: Place] = Universe.allCases.reduce(into: [:]) { all, u in
+    all.merge(u.module.places) { a, _ in assertionFailure("a place key used twice: \(a.name)"); return a }
+}
 
 
 /// The wipes between places, shared by the window and the screen saver: what's left of the old

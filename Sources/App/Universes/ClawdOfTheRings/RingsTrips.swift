@@ -347,3 +347,5 @@ struct RingsTrip {
         return path
     }
 }
+
+extension RingsTrip: Trip {}

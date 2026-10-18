@@ -37,18 +37,7 @@ struct Theme {
 
     func isNemesis(_ a: Cast, _ b: Cast) -> Bool { nemeses.contains { ($0.0 == a && $0.1 == b) || ($0.0 == b && $0.1 == a) } }
 
-    static func of(_ u: Universe) -> Theme {
-        switch u {
-        case .starWars: return starWarsTheme
-        case .marvel: return marvelTheme
-        case .dc: return dcTheme
-        case .doctor: return doctorTheme
-        case .clawdFiles: return filesTheme
-        case .clawdberg: return clawdbergTheme
-        case .middleEarth: return middleEarthTheme
-        case .slayer: return slayerTheme
-        }
-    }
+    static func of(_ u: Universe) -> Theme { u.module.theme }
 }
 
 /// Each magic user's `Magic.variant`, by cast id: numbered in order through every universe within each family of looks

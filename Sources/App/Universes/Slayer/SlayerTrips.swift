@@ -159,3 +159,5 @@ struct SlayerTrip {
         ctx.setAlpha(1)
     }
 }
+
+extension SlayerTrip: Trip {}

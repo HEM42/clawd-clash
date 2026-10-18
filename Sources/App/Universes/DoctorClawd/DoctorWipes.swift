@@ -534,3 +534,5 @@ struct DoctorTrip {
         }
     }
 }
+
+extension DoctorTrip: Trip {}
