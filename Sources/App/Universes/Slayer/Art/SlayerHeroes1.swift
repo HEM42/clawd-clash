@@ -31,24 +31,26 @@ private func drawBuffyClawmers(_ c: PixelCanvas, _ p: Pose) {
     c.rect(23, 34, 1, 3, jacketL); c.rect(32, 34, 1, 3, jacketL)
     // The cross at her throat.
     c.pattern(27, 33, [".X", "XXX", ".X", ".X"], ["X": silver])
-    // Long blonde hair, swept off her face, falling past her shoulders.
+    // Long blonde hair, swept off her face, falling past her shoulders: bright streaks combed back through it, a wisp
+    // loose over her forehead, and a few strands breaking free at the top and sides.
     c.pattern(16, 20, [
-        "......HHHHHHHHHHHH......",
-        "....HHHHHHlHHHHHHHHH....",
-        "...HHHHHlHHHHHHHlHHHH...",
-        "..HHHHHHHHHHHHHHHHHHHH..",
-        "..HHHHHHHHHHHHHHHHHHHH..",
+        ".......HHHHHHHHHHH.H....",
+        ".....HHHlHHHHlHHHHHH....",
+        "...HHHHlHHHHlHHHHlHHH...",
+        "..HHHHlHHHHlHHHHlHHHHH..",
+        "..HHHHHHHHHlHHHHHHHHHH..",
         ".HHHHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHH...........HHHHHH.",
-        ".HHHH..............HHHH.",
+        ".HHHHHH.HH.......HHHHHH.",
+        ".HHHH....H.........HHHH.",
+        "HHHH................HHH.",
         ".HHH................HHH.",
+        ".HHl................lHHH",
         ".HHH................HHH.",
-        ".HHl................lHH.",
-        ".HHH................HHH.",
-        ".HHd................dHH.",
+        "HHHd................dHH.",
         ".HHd................dHH.",
         ".dHd................dHd.",
         "..dd................dd..",
+        "...d................d...",
     ], ["H": hair, "l": hairL, "d": hairD])
 
     if flipK >= 0 {
@@ -61,8 +63,14 @@ private func drawBuffyClawmers(_ c: PixelCanvas, _ p: Pose) {
     if let a = p.melee {
         slayerStake(c, angle: a, trail: p.trail)
     } else {
-        slayerStakeHeld(c)
+        heldStake(c)
     }
+}
+
+/// The stake at rest, point down in her hand; shorter when she sits, so its point stays above the ground.
+private func heldStake(_ c: PixelCanvas) {
+    guard seatedPose else { slayerStakeHeld(c); return }
+    c.rect(39, 36, 2, 2, slayerStakeWood); c.rect(40, 36, 1, 2, slayerStakeDark); c.px(39, 38, slayerStakePoint)
 }
 
 // MARK: - Willow Rosenclaw
