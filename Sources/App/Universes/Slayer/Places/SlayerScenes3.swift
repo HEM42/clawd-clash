@@ -65,14 +65,26 @@ extension Scenes {
         let s = unit(g), tall = isTall(c), f = slayerCampusFrame(c, g), tw = f.tower
         let brick = C(0x9A4A34), brickD = C(0x7A3626), brickL = C(0xB25E42)
         let stone = C(0xE2CC98), stoneD = C(0xB89E6A), tile = C(0xB04A2A), tileD = C(0x82331E)
-        c.gradient(0, g, C(0x7EB6E2), C(0xF2DCAA), bands: 7)
+        c.gradient(0, g, tall ? C(0x5A96D2) : C(0x7EB6E2), C(0xF2DCAA), bands: tall ? 10 : 7)
         if tall {
-            // Far hills, blue with distance, and a few clouds.
+            // High up, a big fair-weather cumulus bank drifting over, shaded underneath, and a jet's contrail.
+            let bank = f.eave / 4
+            for k in 0..<7 {
+                let x = c.w * (4 + k * 16) / 100 + Int(noise(k + 320) * Double(30 * s)), y = bank + Int(noise(k + 330) * Double(bank))
+                let r = (9 + Int(noise(k + 340) * 7)) * s
+                c.ellipse(x, y + r * 2 / 3, r * 3, r / 2 + s, C(0xB8CCE0))
+                cloud(c, x, y, r, seed: k + 60, top: C(0xF8FAFC), base: C(0xD0DEEC))
+                c.ellipse(x - r, y - r / 2, r, r * 2 / 3, C(0xFFFFFF))
+            }
+            c.rect(c.w * 8 / 100, bank / 2, c.w * 40 / 100, s, C(0xF4F8FC, 0.8))
+            c.rect(c.w * 8 / 100 + 10 * s, bank / 2 + s, c.w * 40 / 100 - 10 * s, s, C(0xF4F8FC, 0.35))
+            // Far mountains, blue with distance, then the nearer hills, and a few small clouds lower down.
+            c.dunes(base: f.eave - 70 * s, amp: Double(26 * s), freq: 0.008 / Double(s), phase: 0.3, bottom: g, C(0xA4B4CC), shade: C(0xC4D0E0))
             c.dunes(base: f.eave - 22 * s, amp: Double(16 * s), freq: 0.011 / Double(s), phase: 1.2, bottom: g, C(0x8C9EB8))
             c.dunes(base: f.eave - 8 * s, amp: Double(10 * s), freq: 0.019 / Double(s), phase: 3.1, bottom: g, C(0x7A8C9C))
-            for k in 0..<4 {
-                let x = c.w * (12 + k * 26) / 100, y = (24 + Int(noise(k + 300) * 60)) * s
-                cloud(c, x, y, (5 + k % 2 * 2) * s, seed: k + 40)
+            for k in 0..<3 {
+                let x = c.w * (20 + k * 30) / 100, y = f.eave - (90 + Int(noise(k + 300) * 30)) * s
+                cloud(c, x, y, (4 + k % 2 * 2) * s, seed: k + 40)
             }
         }
         // On the screen saver, the domed library hall rises behind the left-hand building.
@@ -123,6 +135,29 @@ extension Scenes {
                         c.rect(x + ww / 2, wy, max(1, s / 2), wh, stoneD)
                     }
                     c.rect(x, wy + 2 * s, s, wh - 2 * s, C(0x6A86A6))   // sky caught in the glass
+                    // Each room's own window: a blind pulled part way down, a curtain, a lamp on, or bare glass.
+                    let n = noise(x / s * 7 + fl * 53 + (pale ? 900 : 0))
+                    if n < 0.22 {
+                        c.rect(x, wy, ww, wh * (1 + Int(n * 9) % 3) / 4, C(0xE8DCC0)); c.rect(x, wy + wh * (1 + Int(n * 9) % 3) / 4, ww, s, C(0xB8A880))
+                    } else if n < 0.38 {
+                        c.rect(x, wy, 2 * s, wh, C(0xA83A2A)); c.rect(x + ww - 2 * s, wy, 2 * s, wh, C(0xA83A2A))
+                    } else if n < 0.48 {
+                        c.rect(x + s, wy + wh / 2, ww - 2 * s, wh / 2, C(0xE8C878)); c.rect(x + ww / 2 - s, wy + wh / 2 - s, 2 * s, s, C(0xF8E8B0))
+                    }
+                }
+            }
+            if !pale {
+                // Ivy climbing the old brick at the corner by the tower, a dense mat thinning out as it spreads.
+                let iw = (tall ? 54 : 34) * s, ih = g - top - 2 * s
+                for cx in stride(from: 0, to: iw, by: 2 * s) {
+                    let u = Double(cx) / Double(iw), reach = Int(Double(ih) * pow(1 - u, 0.6))
+                    for cy in stride(from: 0, to: reach, by: 2 * s) {
+                        let n = noise(cx / s * 131 + cy / s * 17 + 1400), edge = cy > reach - 6 * s
+                        guard n < (edge ? 0.45 : 0.8) else { continue }
+                        let x = x1 - 2 * s - cx, y = g - 2 * s - cy
+                        c.rect(x, y, 2 * s, 2 * s, n < 0.3 ? C(0x2E5222) : n < 0.6 ? C(0x3E6A2A) : C(0x5A8A34))
+                        if n < 0.12 { c.px(x, y, C(0x8AB848)) }
+                    }
                 }
             }
             let ay = g - fh + s
@@ -209,10 +244,16 @@ extension Scenes {
             c.rect(nx + 2 * s + (k % 3) * 6 * s + Int(noise(k + 500) * 2) * s, ny + 2 * s + (k / 3) * 5 * s, 5 * s, 4 * s, col)
         }
         c.rect(nx + 2 * s, ny + 13 * s, 2 * s, 9 * s, C(0x4A2E1A)); c.rect(nx + 18 * s, ny + 13 * s, 2 * s, 9 * s, C(0x4A2E1A))
-        // A bench and a lamp along the walk.
-        let bx = c.w * 72 / 100
-        c.rect(bx, g - 6 * s, 16 * s, 2 * s, C(0x6A4428)); c.rect(bx, g - 10 * s, 16 * s, 2 * s, C(0x6A4428))
-        c.rect(bx + s, g - 4 * s, s, 4 * s, C(0x2A2A2A)); c.rect(bx + 14 * s, g - 4 * s, s, 4 * s, C(0x2A2A2A))
+        // A bench and a lamp along the walk. The bench is pale weathered oak on black iron ends, so it stands out
+        // against the porch's shade behind it.
+        let bx = c.w * 72 / 100, oak = C(0xD0A468), oakL = C(0xF0CC8C), oakD = C(0x9A7040), iron = C(0x1E1E20)
+        c.rect(bx - s, g - 2 * s, 20 * s, 2 * s, C(0x2A1E14, 0.5))                                             // its shadow
+        c.rect(bx, g - 12 * s, 18 * s, 2 * s, oak); c.rect(bx, g - 12 * s, 18 * s, s, oakL)                    // the back rail
+        c.rect(bx, g - 9 * s, 18 * s, s, oakD)
+        c.rect(bx - s, g - 6 * s, 20 * s, 2 * s, oak); c.rect(bx - s, g - 6 * s, 20 * s, s, oakL)              // the seat
+        for ex in [bx + s, bx + 15 * s] {                                                                      // iron ends
+            c.rect(ex, g - 13 * s, 2 * s, 13 * s, iron); c.rect(ex - s, g - 7 * s, 4 * s, s, iron); c.rect(ex - s, g - s, 4 * s, s, iron)
+        }
         let lx = c.w * 42 / 100
         c.rect(lx, g - 26 * s, s, 26 * s, C(0x2A2E2A)); c.rect(lx - s, g - 2 * s, 3 * s, 2 * s, C(0x2A2E2A))
         c.rect(lx - s, g - 30 * s, 3 * s, 4 * s, C(0xF4E4B0)); c.rect(lx - 2 * s, g - 31 * s, 5 * s, s, C(0x2A2E2A))
@@ -275,11 +316,13 @@ extension Scenes {
     /// climbs through the rock, and at the top is Lowell House, the frat house the lift comes up in.
     static func slayerInitiative(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), f = slayerInitiativeFrame(c, g)
-        let panel = C(0xA2AEB8), panelL = C(0xBCC8D0), seam = C(0x7A8894), band = C(0x3E5A72), kick = C(0x4A5662)
-        // The walls: white panels with seams, a blue band, a dark kick plate.
+        let panel = C(0x7E8C98), panelL = C(0x9AA8B2), seam = C(0x5C6A76), band = C(0x34506A), kick = C(0x3E4A56)
+        // The walls: clinical panels in a cool mid grey (dark enough that the crew's white outlines stand out on them)
+        // with seams, a blue band, a dark kick plate; below the band the panels go a shade darker still.
         c.rect(0, f.ceil, c.w, g - f.ceil, panel)
         for x in stride(from: 0, to: c.w, by: 24 * s) { c.rect(x, f.ceil, s, g - f.ceil, seam); c.rect(x + s, f.ceil, s, g - f.ceil, panelL) }
         let by = g - 20 * s
+        c.rect(0, by + 4 * s, c.w, g - by - 4 * s, C(0x6A7884))
         c.rect(0, by, c.w, 4 * s, band); c.rect(0, by, c.w, s, C(0x5A7A94))
         c.rect(0, g - 6 * s, c.w, 6 * s, kick); c.rect(0, g - 6 * s, c.w, s, C(0x6A7682))
         if let gal = f.gallery, let rock = f.rock, let house = f.house {
@@ -296,12 +339,35 @@ extension Scenes {
             // The lift's hidden door in the panelling.
             c.rect(f.shaft.x - f.shaft.w / 2, house - 26 * s, f.shaft.w, 23 * s, C(0x4A2E1C))
             c.rect(f.shaft.x, house - 26 * s, s, 23 * s, C(0x2E1C12))
-            // The rock between: rubble and stones in a dark matrix, conduits running down through it.
-            c.rect(0, house, c.w, rock - house, C(0x3A322C))
-            for k in 0..<(c.w * (rock - house) / (160 * s * s)) {
-                let x = Int(noise(k + 700) * Double(c.w)), y = house + Int(noise(k + 710) * Double(rock - house))
-                let r = (2 + Int(noise(k + 720) * 5)) * s
-                c.ellipse(x, y, r + r / 2, r, [C(0x463C34), C(0x30282A), C(0x4E443A)][k % 3]); c.rect(x - r, y - r + s, r, s, C(0x5A5046))
+            // The rock between: bedrock in tilted strata, each layer its own shade with a lit upper edge, cracked into
+            // angular blocks, with a few hard stones bedded in it and conduits running down through it.
+            let rh = rock - house, layers = max(3, rh / (7 * s))
+            let strata = [C(0x4A4038), C(0x3A322C), C(0x544A40), C(0x30292A), C(0x463E36)]
+            // Where layer k starts at column x: the boundaries tilt gently and step in blocks, so it reads as broken rock.
+            func seam(_ x: Int, _ k: Int) -> Int {
+                guard k > 0 else { return house }
+                guard k < layers else { return rock }
+                let tilt = Int(Double(x % (c.w / 2 + 1)) / Double(c.w / 2 + 1) * Double(5 * s))
+                return house + k * rh / layers + tilt + Int(noise(x / (12 * s) + k * 31 + 730) * 3) * s - 2 * s
+            }
+            for x in stride(from: 0, to: c.w, by: s) {
+                for k in 0..<layers {
+                    let top = max(house, seam(x, k)), bottom = min(rock, seam(x, k + 1))
+                    guard bottom > top else { continue }
+                    c.rect(x, top, s, bottom - top, strata[k % strata.count])
+                    if k > 0 { c.rect(x, top, s, s, C(0x625648)) }
+                }
+            }
+            for k in 0..<(c.w * rh / (600 * s * s)) {   // cracks across the layers
+                let x = Int(noise(k + 740) * Double(c.w)), y = house + Int(noise(k + 741) * Double(rh - 6 * s))
+                let len = (3 + Int(noise(k + 742) * 5)) * s
+                c.rect(x, y, s, len, C(0x221C1C)); c.rect(x + s, y + len, s, 2 * s, C(0x221C1C))
+            }
+            for k in 0..<(c.w * rh / (700 * s * s)) {   // hard stones: angular, lit top-left, shaded under
+                let x = Int(noise(k + 700) * Double(c.w)), y = house + 2 * s + Int(noise(k + 710) * Double(max(1, rh - 8 * s)))
+                let w = (3 + Int(noise(k + 720) * 5)) * s, h = (2 + Int(noise(k + 721) * 3)) * s
+                c.rect(x + s, y, w - s, h, C(0x5E5448)); c.rect(x, y + s, s, h - s, C(0x5E5448))
+                c.rect(x + s, y, w - 2 * s, s, C(0x7A6E5E)); c.rect(x + s, y + h - s, w - s, s, C(0x2A2422))
             }
             for x in [c.w * 30 / 100, c.w * 66 / 100] {
                 c.rect(x, house, 3 * s, rock - house, C(0x6A7076)); c.rect(x, house, s, rock - house, C(0x8A9096))
@@ -457,7 +523,7 @@ extension Scenes {
                                                                    flag: Int, dome: Bool) {
         let s = unit(g), tall = isTall(c)
         let cornice = tall ? g - 134 * s : 4 * s
-        let fan = (x: c.w * 43 / 100, y: tall ? g - 52 * s : 9 * s, r: (tall ? 26 : 18) * s)
+        let fan = (x: c.w * 43 / 100, y: tall ? g - 52 * s : 11 * s, r: (tall ? 26 : 16) * s)
         let wy = tall ? cornice + 16 * s : 11 * s
         let window = (x: c.w * 78 / 100, y: wy, w: 46 * s, h: g - 24 * s - wy)
         return (cornice, fan, window, c.w * 50 / 100, c.w * 31 / 100, tall)
@@ -477,11 +543,19 @@ extension Scenes {
         if f.dome {
             // A coffered dome seen from the floor: bands of coffers round it, ribs running up to the oculus.
             let base = f.cornice, cx = c.w / 2, ry = base - 6 * s, rx = c.w * 54 / 100
-            c.rect(0, 0, c.w, base, C(0x6A5A40))
+            c.rect(0, 0, c.w, base, C(0x4A3E2C))
+            // The shell: warm plaster lit from the oculus, so it glows near the top and falls into shadow down the
+            // sides and towards the rim, in alternating bands.
+            let lit = C(0xEAD6A2), shade = C(0x7A6440), litB = C(0xD8C08A), shadeB = C(0x6A5634)
             for y in (base - ry)..<base {
                 let k = Double(base - y) / Double(ry), half = Int(Double(rx) * (1 - k * k).squareRoot())
                 let band = Int(k * 7)
-                c.rect(cx - half, y, half * 2, 1, band % 2 == 0 ? C(0xD8C89C) : C(0xC4B286))
+                for x in stride(from: cx - half, to: cx + half, by: s) {
+                    let u = Double(x - cx) / Double(max(1, half))
+                    let dark = min(1, max(0, (u * u) * 0.8 + (1 - k) * 0.45 - 0.1))
+                    let q = (dark * 4).rounded() / 4   // in a few flat steps, like paint
+                    c.rect(x, y, s, 1, band % 2 == 0 ? lerp(lit, shade, q) : lerp(litB, shadeB, q))
+                }
             }
             for band in 0..<6 {
                 let th = (Double(band) + 0.5) / 7 * .pi / 2
@@ -491,8 +565,12 @@ extension Scenes {
                     let ph = -1.35 + 2.7 * (Double(j) + 0.5) / Double(n)
                     let x = cx + Int(sin(ph) * ringR), cw = max(2 * s, Int(Double(12 * s) * cos(ph) * cos(th) + Double(s)))
                     let chh = max(3 * s, Int(Double(8 * s) * cos(th)))
-                    c.rect(x - cw / 2, y - chh / 2, cw, chh, C(0x8A7A52)); c.rect(x - cw / 2 + s, y - chh / 2 + s, max(1, cw - 2 * s), max(1, chh - 2 * s), C(0xA8966A))
-                    c.rect(x - cw / 2 + s, y - chh / 2 + s, max(1, cw - 2 * s), s, C(0x6A5A3A))
+                    // Each coffer a deep recess: dark where the rim overhangs it, a gilded rosette at its heart.
+                    let side = abs(sin(ph))
+                    c.rect(x - cw / 2, y - chh / 2, cw, chh, lerp(C(0x6A5432), C(0x3E301E), side))
+                    c.rect(x - cw / 2 + s, y - chh / 2 + s, max(1, cw - 2 * s), max(1, chh - 2 * s), lerp(C(0x9A8256), C(0x5A4628), side))
+                    c.rect(x - cw / 2 + s, y - chh / 2 + s, max(1, cw - 2 * s), s, lerp(C(0x4A3A22), C(0x2E2416), side))
+                    if cw >= 4 * s { c.rect(x - s / 2, y, max(1, s), max(1, s), C(0xD8B050)) }
                 }
             }
             for j in 0..<9 {
@@ -501,7 +579,7 @@ extension Scenes {
                 for q in 0...10 {
                     let th = Double(q) / 10 * 1.35
                     let pt = (Double(cx) + sin(ph) * cos(th) * Double(rx), Double(base) - sin(th) * Double(ry))
-                    if let l = last { slayerLine(c, l.0, l.1, pt.0, pt.1, C(0xE8DCB8), Double(s) * 0.5) }
+                    if let l = last { slayerLine(c, l.0, l.1, pt.0, pt.1, C(0xC8A04A), Double(s) * 0.5) }
                     last = pt
                 }
             }
@@ -529,20 +607,36 @@ extension Scenes {
             c.rect(0, f.cornice, c.w, 5 * s, cream); c.rect(0, f.cornice + 5 * s, c.w, s, C(0xB4A276))
             for x in stride(from: 0, to: c.w, by: 4 * s) { c.rect(x, f.cornice + 2 * s, 2 * s, 2 * s, C(0xC8BA94)) }
             // The portrait wall: the Mayors of Sunnydale down the years, every one of them the same pink, smiling man.
-            for (r, py) in [f.cornice + 14 * s, f.cornice + 46 * s].enumerated() {
-                for k in 0..<12 {
-                    let px = 10 * s + k * 28 * s + r * 14 * s
-                    guard px + 20 * s < f.window.x - 12 * s else { continue }
-                    let i = r * 12 + k
-                    c.rect(px, py, 20 * s, 26 * s, brass); c.rect(px + s, py + s, 18 * s, 24 * s, [C(0x3A2A20), C(0x2A3A3A), C(0x4A3A2A)][i % 3])
-                    c.rect(px + 4 * s, py + 17 * s, 12 * s, 8 * s, [C(0x1A1A22), C(0x3A2A1A), C(0x2A2A3A)][i % 3])
-                    c.rect(px + 8 * s, py + 17 * s, 4 * s, 2 * s, C(0xF0ECE0))
-                    c.circle(px + 10 * s, py + 11 * s, 4 * s, C(0xE8B49A))
-                    c.rect(px + 6 * s, py + 6 * s, 8 * s, 2 * s, [C(0x6A4A2A), C(0xC8C8C8), C(0x3A2A1A), C(0x8A6A3A)][i % 4])
-                    if i % 3 == 1 { c.rect(px + 8 * s, py + 14 * s, 4 * s, 2 * s, C(0x8A6A3A)) }   // the whiskers of 1903
-                    if i % 4 == 2 { c.rect(px + 5 * s, py + 5 * s, 10 * s, 2 * s, C(0x1A1A1A)); c.rect(px + 7 * s, py + s, 6 * s, 4 * s, C(0x1A1A1A)) }   // a top hat
-                    c.rect(px + 8 * s, py + 13 * s, 4 * s, s, C(0x9A4A3A))
+            // Hung salon style: frames of different sizes and finishes (gilt, dark oak, an oval or two), each hung a
+            // little higher or lower than its neighbour, the oldest sepia, the newest in colour.
+            var px = 8 * s, i = 0
+            while true {
+                let n = noise(i * 7 + 1500), fw = (17 + Int(n * 7)) * s, fh = (22 + Int(noise(i * 7 + 1501) * 9)) * s
+                guard px + fw < f.window.x - 14 * s else { break }
+                let row = i % 2, oval = noise(i * 7 + 1502) > 0.78
+                let py = f.cornice + (row == 0 ? 12 : 46) * s + Int((noise(i * 7 + 1503) - 0.5) * 8) * s
+                let oak = noise(i * 7 + 1504) > 0.6, frame = oak ? C(0x4A2A1A) : brass
+                let sepia = i < 5
+                let bg = sepia ? C(0x5A4430) : [C(0x3A2A20), C(0x2A3A3A), C(0x4A3A2A), C(0x2A2A3E)][i % 4]
+                let cx = px + fw / 2, cy = py + fh / 2
+                if oval {
+                    c.ellipse(cx, py + fh / 2, fw / 2, fh / 2, frame); c.ellipse(cx, py + fh / 2, fw / 2 - s, fh / 2 - s, bg)
+                } else {
+                    c.rect(px - s, py - s, fw + 2 * s, fh + 2 * s, oak ? C(0x2A160E) : C(0x8A6A2A))
+                    c.rect(px, py, fw, fh, frame); c.rect(px + s, py + s, fw - 2 * s, fh - 2 * s, bg)
                 }
+                // The same man every time: a dark suit and white collar, the pink face, his hair, his smile.
+                let skin = sepia ? C(0xC8A078) : C(0xE8B49A)
+                c.rect(cx - 5 * s, cy + 3 * s, 10 * s, py + fh - 2 * s - cy - 3 * s, sepia ? C(0x2A2018) : [C(0x1A1A22), C(0x3A2A1A), C(0x2A2A3A)][i % 3])
+                c.rect(cx - 2 * s, cy + 3 * s, 4 * s, 2 * s, sepia ? C(0xD8C8A8) : C(0xF0ECE0))
+                c.circle(cx, cy, 4 * s, skin)
+                c.rect(cx - 4 * s, cy - 5 * s, 8 * s, 2 * s, sepia ? C(0x3A2A1A) : [C(0x6A4A2A), C(0xC8C8C8), C(0x3A2A1A), C(0x8A6A3A)][i % 4])
+                if i % 3 == 1 { c.rect(cx - 2 * s, cy + 2 * s, 4 * s, 2 * s, C(0x8A6A3A)) }   // the whiskers of 1903
+                if i % 4 == 2 { c.rect(cx - 5 * s, cy - 6 * s, 10 * s, 2 * s, C(0x1A1A1A)); c.rect(cx - 3 * s, cy - 10 * s, 6 * s, 4 * s, C(0x1A1A1A)) }   // a top hat
+                c.rect(cx - 2 * s, cy + 2 * s, 4 * s, s, C(0x9A4A3A))
+                if !oval { c.rect(cx - 3 * s, py + fh, 6 * s, 2 * s, brass) }   // the little name plate under it
+                px += fw / 2 + (5 + Int(noise(i * 7 + 1505) * 6)) * s
+                i += 1
             }
         } else {
             c.rect(0, f.cornice, c.w, s, C(0xB4A276))
@@ -604,13 +698,21 @@ extension Scenes {
     /// The Mayor's office's life: the ceiling fan turning slowly, its shadow sweeping, and dust in the window light.
     static func slayerCityHallLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
         let s = unit(g), f = slayerCityHallFrame(c, g), fn = f.fan
-        let wood = C(0x4A2018), woodL = C(0x7A3A2C)
-        for k in 0..<4 {
-            let a = t * 1.4 + Double(k) * .pi / 2
-            let dx = Int((cos(a) * Double(fn.r)).rounded()), dy = Int((sin(a) * Double(fn.r) * 0.18).rounded())
-            slayerLine(c, Double(fn.x), Double(fn.y + s), Double(fn.x + dx), Double(fn.y + s + dy), sin(a) > 0 ? woodL : wood, Double(s) * 0.9)
+        // Four paddle blades seen from just below: each a flat board, widening to a squared tip, the far ones drawn
+        // first and darker, the near ones over the hub in a lighter wood. Under the hub, a frosted glass bowl.
+        let wood = C(0x5A2A1C), woodL = C(0x9A5A3A), woodD = C(0x3A1A12)
+        let blades = (0..<4).map { t * 1.4 + Double($0) * .pi / 2 }.sorted { sin($0) < sin($1) }
+        for a in blades {
+            let near = sin(a) > 0
+            for q in 3...Int(Double(fn.r) / Double(s)) {
+                let d = Double(q * s), x = fn.x + Int((cos(a) * d).rounded()), y = fn.y + s + Int((sin(a) * d * 0.2).rounded())
+                let half = q * s > fn.r / 3 ? s : 0
+                c.rect(x, y - half, max(1, s), 2 * half + s, near ? woodL : wood)
+                c.rect(x, y + half + s, max(1, s), max(1, s / 2) + s / 2, woodD)
+            }
         }
-        c.rect(fn.x - s, fn.y, 3 * s, 2 * s, C(0xC8A04A))
+        c.rect(fn.x - 2 * s, fn.y - s, 5 * s, 3 * s, C(0xC8A04A)); c.rect(fn.x - 2 * s, fn.y - s, 5 * s, s, C(0xE8C86A))
+        c.ellipse(fn.x, fn.y + 3 * s, 2 * s, s + s / 2, C(0xF4ECD0))
         let w = f.window
         for k in 0..<10 {
             let ph = frac(t * 0.03 + noise(k + 840))
@@ -627,18 +729,19 @@ extension Scenes {
     /// Where things stand at Glory's tower: its centre, its width at the foot and at the top, the platform at the top
     /// (off the top of the window's strip), the levels of planking, and the portal over the platform.
     static func slayerTowerFrame(_ c: PixelCanvas, _ g: Int) -> (x: Int, base: Int, top: Int, plat: Int, levels: [Int],
-                                                               portal: (x: Int, y: Int, rx: Int, ry: Int)?) {
+                                                               portal: (x: Int, y: Int, rx: Int, ry: Int)) {
         let s = unit(g), tall = isTall(c), x = c.w * 50 / 100
         let plat = tall ? max(64 * s, g - 214 * s) : -40 * s
         var levels: [Int] = [], y = g - 15 * s
         while y > plat + 8 * s { levels.append(y); y -= (13 + Int(noise(y / s + 870) * 7)) * s }
         levels.append(plat)
-        let portal = tall ? (x: x, y: plat - 30 * s, rx: 9 * s, ry: 26 * s) : nil
+        // In the window's strip the platform is off the top, but the lower tip of the portal hangs down into view.
+        let portal = tall ? (x: x, y: plat - 30 * s, rx: 9 * s, ry: 26 * s) : (x: x, y: -4 * s, rx: 7 * s, ry: 20 * s)
         return (x, (tall ? 150 : 140) * s, 48 * s, plat, levels, portal)
     }
 
     /// How wide the tower is at row `y`.
-    static func slayerTowerWidth(_ f: (x: Int, base: Int, top: Int, plat: Int, levels: [Int], portal: (x: Int, y: Int, rx: Int, ry: Int)?),
+    static func slayerTowerWidth(_ f: (x: Int, base: Int, top: Int, plat: Int, levels: [Int], portal: (x: Int, y: Int, rx: Int, ry: Int)),
                                  _ g: Int, _ y: Int) -> Int {
         let k = max(0, min(1, Double(g - y) / Double(max(1, g - f.plat))))
         return f.base + Int(Double(f.top - f.base) * k)
@@ -653,7 +756,7 @@ extension Scenes {
         let s = unit(g), tall = isTall(c), f = slayerTowerFrame(c, g)
         c.gradient(0, g, C(0x26302A), C(0x10141A), bands: 7)
         // The storm clouds, lit from the portal: heavy banks, brighter towards the light.
-        let cy = f.portal?.y ?? -30 * s
+        let cy = tall ? f.portal.y : -30 * s
         for k in 0..<(tall ? 26 : 12) {
             let ang = noise(k + 900) * 2 * .pi, d = (0.25 + 0.75 * noise(k + 910)) * Double(c.w) * 0.55
             let x = f.x + Int(cos(ang) * d), y = cy + Int(sin(ang) * d * 0.35) + (tall ? 0 : 20 * s)
@@ -727,7 +830,8 @@ extension Scenes {
             // Rope lashings at the joints.
             for q in fr { c.rect(f.x + Int(q * Double(w)) - s, y - s, 3 * s, s, C(0x9A8A5A)) }
         }
-        if tall, let p = f.portal {
+        let p = f.portal
+        if tall {
             // The platform, its railing, and Dawn at the edge of it.
             let w = slayerTowerWidth(f, g, f.plat)
             c.rect(f.x - w / 2 - 6 * s, f.plat - s, w + 12 * s, 3 * s, plank)
@@ -736,14 +840,20 @@ extension Scenes {
             let dx = f.x + 5 * s
             c.rect(dx - 2 * s, f.plat - 11 * s, 4 * s, 10 * s, C(0x6A4A6A)); c.circle(dx, f.plat - 13 * s, 2 * s, C(0xE8C0A0))
             c.rect(dx - 2 * s, f.plat - 15 * s, 4 * s, 2 * s, C(0x5A3A22)); c.rect(dx + 2 * s, f.plat - 14 * s, s, 5 * s, C(0x5A3A22))
-            // The portal: a tall tear of light, white at the heart, green at the edges.
-            c.ellipse(p.x, p.y, p.rx * 3, p.ry + 8 * s, C(0xA8FF8A, 0.12))
-            c.ellipse(p.x, p.y, p.rx * 2, p.ry + 4 * s, C(0xA8FF8A, 0.2))
-            for y in (p.y - p.ry)...(p.y + p.ry) {
-                let k = 1 - pow(Double(y - p.y) / Double(p.ry), 2)
-                let half = Int(Double(p.rx) * k)
-                c.rect(p.x - half, y, 2 * half + 1, 1, C(0x9AF07A)); c.rect(p.x - half / 2, y, half + 1, 1, C(0xF0FFE8))
-            }
+        } else {
+            // In the strip: the portal's light pouring down over the top of the tower.
+            c.ellipse(p.x, 0, 60 * s, 34 * s, C(0xC8FF9A, 0.10))
+            c.ellipse(p.x, 0, 30 * s, 22 * s, C(0xD8FFB8, 0.12))
+        }
+        // The portal: a tall tear of light, white at the heart, green at the edges, a jagged dark rim where it tears
+        // the sky.
+        c.ellipse(p.x, p.y, p.rx * 3, p.ry + 8 * s, C(0xA8FF8A, 0.12))
+        c.ellipse(p.x, p.y, p.rx * 2, p.ry + 4 * s, C(0xA8FF8A, 0.2))
+        for y in max(0, p.y - p.ry)...(p.y + p.ry) {
+            let k = 1 - pow(Double(y - p.y) / Double(p.ry), 2)
+            let half = Int(Double(p.rx) * k), jag = Int(noise(y / max(1, s) + 960) * 2) * s
+            c.rect(p.x - half - s - jag, y, 2 * half + 2 * s + 2 * jag + 1, 1, C(0x2E5A24))
+            c.rect(p.x - half, y, 2 * half + 1, 1, C(0x9AF07A)); c.rect(p.x - half / 2, y, half + 1, 1, C(0xF0FFE8))
         }
         // The lot: oil drums, the broken fence, gravel.
         for (k, dx) in [c.w * 12 / 100, c.w * 15 / 100, c.w * 80 / 100].enumerated() {
@@ -791,7 +901,8 @@ extension Scenes {
             }
         }
         // The portal crackles.
-        if let p = f.portal {
+        do {
+            let p = f.portal
             for k in 0..<5 {
                 let seed = Int(t * 10) * 11 + k * 37
                 let a0 = noise(seed) * 2 * .pi
@@ -866,11 +977,22 @@ extension Scenes {
                     let h = (bay - k) * (roof - 6 * s) / bay
                     c.rect(x0 + k, roof - h, 1, h, C(0x1A100C))
                 }
-                // The glazing on the steep face, panes missing.
-                for y in stride(from: 6 * s, to: roof - 2 * s, by: 5 * s) {
-                    for q in 0..<3 where noise(x0 + y + q * 7) > 0.3 {
-                        c.rect(x0 + q * 3 * s + s, y, 2 * s, 4 * s, C(0x3A4A6A))
+                // The glazing runs down each slope in a band of panes between iron glazing bars, lit cold by the moon,
+                // brighter at the top; some panes are gone, black holes with a shard left hanging.
+                let band = min(14 * s, (roof - 6 * s) / 2), pane = 6 * s
+                for k in stride(from: 0, to: bay - 2 * s, by: s) {
+                    let h = (bay - k) * (roof - 6 * s) / bay, top = roof - h + s
+                    let col = k / pane, broken = noise(x0 / s * 3 + col * 17 + 1180) > 0.72
+                    for d in stride(from: 0, to: band, by: s) {
+                        let row = d * 2 / band, edge = k % pane == 0 || d == band / 2 || d == 0
+                        let glass = broken ? (d < band / 3 && k % pane == 2 * s ? C(0x5A6E94) : C(0x060404))
+                            : lerp(C(0x7A90B8), C(0x34425E), Double(d) / Double(band) + (row == 1 ? 0.15 : 0))
+                        c.rect(x0 + k, top + d, 1, max(1, s), edge ? iron : glass)
                     }
+                }
+                // Purlins down the slope under the glass.
+                for q in stride(from: band + 4 * s, to: roof - 8 * s, by: 8 * s) {
+                    slayerLine(c, Double(x0), Double(6 * s + q), Double(x0 + bay * q / (roof - 6 * s)), Double(roof), C(0x2A1C16), Double(s) * 0.5)
                 }
                 c.rect(x0, 6 * s, s, roof - 6 * s, iron)
             }
@@ -889,6 +1011,41 @@ extension Scenes {
             c.rect(c.w * 22 / 100, gy + 6 * s, 10 * s, 6 * s, C(0xA88A2A)); c.rect(c.w * 22 / 100, gy + 6 * s, 10 * s, s, C(0xC8A84A))
             slayerChain(c, Double(c.w * 22 / 100 + 5 * s), Double(gy + 12 * s), Double(c.w * 22 / 100 + 5 * s), Double(f.walks[1] - 20 * s), s,
                         light: C(0x6A5A4A), dark: C(0x3A302A))
+            // The high wall under the roof: a pair of big round ventilation fans in iron housings, dead lamps hanging
+            // in their enamel shades, a run of ductwork with its brackets, and the factory's name painted long ago
+            // in letters now flaking off the brick-red.
+            let hw = gy + 6 * s, hb = f.walks[2] - 9 * s
+            if hb - hw > 24 * s {
+                let dy0 = hw + 4 * s
+                c.rect(0, dy0, c.w, 6 * s, C(0x3A322C)); c.rect(0, dy0, c.w, s, C(0x5A4E44)); c.rect(0, dy0 + 5 * s, c.w, s, C(0x1A1410))
+                for x in stride(from: 16 * s, to: c.w, by: 48 * s) { c.rect(x, dy0 - s, 3 * s, 8 * s, iron); c.rect(x, dy0 + 7 * s, s, 4 * s, iron) }
+                let word = "SUNNYDALE STEEL", p = max(s, min(3 * s, (hb - dy0 - 12 * s) / 8))
+                let ww = slayerP3SignWidth(word, p), wx = c.w * 36 / 100 - ww / 2, wy = dy0 + 10 * s
+                if wx > 0 {
+                    c.rect(wx - 3 * p, wy - 2 * p, ww + 6 * p, 9 * p, C(0x4A2414, 0.45))
+                    slayerP3Sign(c, wx, wy, word, C(0xB8A078, 0.4), p)
+                    for k in 0..<40 {   // flaked-off patches
+                        let x = wx + Int(noise(k + 1190) * Double(ww)), y = wy + Int(noise(k + 1191) * Double(5 * p))
+                        c.rect(x, y, (1 + Int(noise(k + 1192) * 3)) * s, s, C(0x2A160E, 0.7))
+                    }
+                }
+                for (k, fx) in [c.w * 74 / 100, c.w * 88 / 100].enumerated() {
+                    let r = min(13 * s, (hb - dy0 - 8 * s) / 2), fy = dy0 + 8 * s + r
+                    c.rect(fx - r - 2 * s, fy - r - 2 * s, 2 * r + 4 * s, 2 * r + 4 * s, iron)
+                    c.circle(fx, fy, r, C(0x0E0A08))
+                    for b in 0..<5 {
+                        let a = Double(b) / 5 * 2 * .pi + Double(k) * 0.4
+                        slayerLine(c, Double(fx), Double(fy), Double(fx) + cos(a) * Double(r - s), Double(fy) + sin(a) * Double(r - s) * 0.9, C(0x4A403A), Double(s) * 1.2)
+                    }
+                    c.circle(fx, fy, 2 * s, ironL)
+                    for y in stride(from: fy - r, to: fy + r, by: 3 * s) { c.rect(fx - r, y, 2 * r, max(1, s / 2), C(0x2A2624, 0.8)) }   // its grille
+                }
+                for lx in [c.w * 12 / 100, c.w * 56 / 100] {
+                    c.rect(lx, gy + 6 * s, max(1, s), 10 * s, iron)
+                    c.rect(lx - 4 * s, gy + 16 * s, 9 * s, 2 * s, C(0x3A4A40)); c.rect(lx - 3 * s, gy + 15 * s, 7 * s, s, C(0x3A4A40))
+                    c.rect(lx - 4 * s, gy + 18 * s, 9 * s, s, C(0x1A2420))
+                }
+            }
             // Big factory windows between the upper catwalks, grimy and broken.
             for x in stride(from: 30 * s, to: c.w - 40 * s, by: 90 * s) {
                 let wy = f.walks[2] + 10 * s, wh = f.walks[1] - f.walks[2] - 22 * s
@@ -948,19 +1105,24 @@ extension Scenes {
             c.rect(x, y, w * s, h, [C(0x5A3E24), C(0x4A3420), C(0x624428)][k]); c.rect(x, y, w * s, s, C(0x7A5A34))
             slayerLine(c, Double(x + s), Double(y + s), Double(x + w * s - s), Double(y + h - s), C(0x3A2814), Double(s) * 0.5)
         }
-        let wx = c.w * 63 / 100, wheel = C(0x8A8A90), frame = C(0x3A3A42), seat = C(0x5A1A1E)
-        c.rect(wx + 2 * s, g - 24 * s, 3 * s, 12 * s, seat); c.rect(wx + 2 * s, g - 25 * s, 3 * s, s, frame)   // the back
-        c.rect(wx + 1 * s, g - 25 * s, s, 15 * s, frame); c.rect(wx - s, g - 26 * s, 3 * s, s, wheel)          // a push handle
-        c.rect(wx + 2 * s, g - 13 * s, 12 * s, 3 * s, seat); c.rect(wx + 2 * s, g - 13 * s, 12 * s, s, C(0x7A2A2E))
-        slayerLine(c, Double(wx + 13 * s), Double(g - 11 * s), Double(wx + 17 * s), Double(g - 3 * s), frame, Double(s) * 0.6)
-        c.rect(wx + 15 * s, g - 3 * s, 5 * s, s, frame)                                                          // the footrest
-        c.circle(wx + 6 * s, g - 8 * s, 8 * s, wheel); c.circle(wx + 6 * s, g - 8 * s, 7 * s, C(0x1E1814))
-        for k in 0..<4 {
-            let a = Double(k) / 4 * .pi
-            slayerLine(c, Double(wx + 6 * s) - cos(a) * Double(7 * s), Double(g - 8 * s) - sin(a) * Double(7 * s),
-                       Double(wx + 6 * s) + cos(a) * Double(7 * s), Double(g - 8 * s) + sin(a) * Double(7 * s), C(0x5A5A60), Double(s) * 0.35)
+        // Spike's wheelchair, big enough to read at window size: a chrome frame, the red seat and back, a big spoked
+        // wheel with its hand rim, a small caster in front and the footrest.
+        let wx = c.w * 62 / 100, wheel = C(0xB0B0B8), wheelD = C(0x6A6A72), frame = C(0x4A4A54), seat = C(0x8A1E24), seatL = C(0xB03038)
+        let wr = 11 * s, wcx = wx + 9 * s, wcy = g - wr - s
+        c.rect(wx + 3 * s, g - 34 * s, 4 * s, 18 * s, seat); c.rect(wx + 3 * s, g - 34 * s, s, 18 * s, seatL)   // the back
+        c.rect(wx + 2 * s, g - 35 * s, s, 22 * s, frame); c.rect(wx - s, g - 36 * s, 4 * s, 2 * s, wheel)      // a push handle
+        c.rect(wx + 3 * s, g - 18 * s, 17 * s, 4 * s, seat); c.rect(wx + 3 * s, g - 18 * s, 17 * s, s, seatL)
+        c.rect(wx + 6 * s, g - 24 * s, 12 * s, 2 * s, frame); c.rect(wx + 17 * s, g - 24 * s, 2 * s, 7 * s, frame)   // the armrest
+        slayerLine(c, Double(wx + 19 * s), Double(g - 15 * s), Double(wx + 24 * s), Double(g - 4 * s), frame, Double(s) * 0.8)
+        c.rect(wx + 21 * s, g - 4 * s, 7 * s, 2 * s, frame)                                                       // the footrest
+        c.circle(wcx, wcy, wr, wheel); c.circle(wcx, wcy, wr - s, wheelD); c.circle(wcx, wcy, wr - 2 * s, C(0x1E1814))
+        for k in 0..<6 {
+            let a = Double(k) / 6 * .pi
+            slayerLine(c, Double(wcx) - cos(a) * Double(wr - 2 * s), Double(wcy) - sin(a) * Double(wr - 2 * s),
+                       Double(wcx) + cos(a) * Double(wr - 2 * s), Double(wcy) + sin(a) * Double(wr - 2 * s), C(0x8A8A92), Double(s) * 0.35)
         }
-        c.circle(wx + 6 * s, g - 8 * s, s, wheel); c.circle(wx + 17 * s, g - 2 * s, 2 * s, wheel)
+        c.circle(wcx, wcy, 2 * s, wheel); c.px(wcx - wr + 2 * s, wcy - 3 * s, C(0xF0F0F8))
+        c.circle(wx + 23 * s, g - 3 * s, 3 * s, frame); c.circle(wx + 23 * s, g - 3 * s, s, wheel)                // the caster
         // The brazier: an iron bowl on three legs, heaped with glowing coals.
         c.ellipse(bx, g - 1 * s, 26 * s, 3 * s, C(0xFF8A2A, 0.18))
         slayerLine(c, Double(bx - 9 * s), Double(g), Double(bx - 5 * s), Double(g - 14 * s), iron, Double(s) * 1.0)
@@ -1128,6 +1290,44 @@ extension Scenes {
                     c.rect(fx + 4 * s, fy + 2 * s, 6 * s, 2 * s, [C(0xE8D070), C(0x3A2A1A), C(0x8A4A2A)][k])
                 }
                 for k in 0..<5 { c.rect(ckx - 2 * s + (k % 3 - 1) * s * (k / 3 == 0 ? 2 : 1), cky + 10 * s + k / 3 * s, s, s, C(0xF0C030)) }
+            }
+            // Over the staff door: a big poster of the Medley meal with its giant soda, the staff noticeboard thick
+            // with rotas, and an air vent up by the ceiling.
+            let rx0 = m.x + m.w + 8 * s, rx1 = c.w - 4 * s
+            if rx1 - rx0 > 40 * s {
+                let pw = min(46 * s, rx1 - rx0 - 6 * s), px = rx0 + (rx1 - rx0 - pw) / 2, py = by + 6 * s, ph = pw * 3 / 2
+                c.rect(px - s, py - s, pw + 2 * s, ph + 2 * s, C(0x6A4A1A)); c.rect(px, py, pw, ph, C(0xF4E8C8))
+                c.rect(px, py, pw, ph / 3, C(0xC82A20)); c.rect(px, py + ph / 3, pw, s, C(0xF0C030))
+                let cw = pw / 3, cx = px + pw / 2 - cw / 2 + 6 * s, cy = py + ph / 3 + 6 * s
+                c.rect(cx, cy, cw, ph * 2 / 3 - 10 * s, C(0xE84A3A)); c.rect(cx + 2 * s, cy + 6 * s, cw - 4 * s, 4 * s, C(0xF8F4E8))
+                c.rect(cx - s, cy - 2 * s, cw + 2 * s, 2 * s, C(0xF0F0F0)); c.rect(cx + cw / 2, cy - 10 * s, 2 * s, 8 * s, C(0xF0C030))
+                c.rect(cx, cy, s, ph * 2 / 3 - 10 * s, C(0xF87A6A))
+                let bx2 = px + 4 * s, by2 = py + ph - 14 * s
+                c.ellipse(bx2 + 8 * s, by2, 8 * s, 4 * s, C(0xD89A3A)); c.rect(bx2, by2 + 2 * s, 16 * s, 2 * s, C(0x5A2A16))
+                c.rect(bx2, by2 + 4 * s, 16 * s, s, C(0x6ABA3A)); c.rect(bx2, by2 + 5 * s, 16 * s, 2 * s, C(0x5A2A16)); c.rect(bx2 + s, by2 + 7 * s, 14 * s, 2 * s, C(0xC88A30))
+                for k in 0..<4 { c.rect(px + 4 * s + k * 8 * s, py + 4 * s, 5 * s, 3 * s, C(0xF8E8A0)) }   // the slogan, too small to read
+                for k in 0..<3 { c.rect(px + 6 * s + k * 10 * s, py + 9 * s, 7 * s, 2 * s, C(0xF8E8A0, 0.8)) }
+                // The noticeboard sits midway down the free wall, and the spare hats hang on a row of pegs above the
+                // staff door.
+                let room = g - 56 * s - (py + ph), nw = pw - 4 * s, nh = min(40 * s, room - 8 * s)
+                let nb = py + ph + (room - nh) / 2
+                for k in 0..<3 {
+                    let hx2 = c.w * 88 / 100 + k * 8 * s, hy2 = g - 50 * s
+                    c.rect(hx2 + 2 * s, hy2 + 8 * s, s, 2 * s, C(0x3A3A3A))
+                    c.rect(hx2, hy2 + 3 * s, 6 * s, 5 * s, C(0xC82A20)); c.rect(hx2, hy2 + 6 * s, 6 * s, s, C(0xF0C030))
+                    c.rect(hx2 + s, hy2 + s, 4 * s, 2 * s, C(0xF0C030)); c.rect(hx2 + 2 * s, hy2, 2 * s, s, C(0xD89A3A))
+                }
+                if nh > 12 * s {
+                    c.rect(px + 2 * s, nb, nw, nh, C(0x6A4A2A)); c.rect(px + 3 * s, nb + s, nw - 2 * s, nh - 2 * s, C(0xB89060))
+                    for k in 0..<5 {
+                        let sx = px + 5 * s + (k % 3) * (nw - 8 * s) / 3, sy = nb + 3 * s + (k / 3) * (nh / 2 - s)
+                        c.rect(sx, sy, (nw - 8 * s) / 3 - 2 * s, nh / 2 - 4 * s, k == 1 ? C(0xF0D04A) : C(0xF4F0E0))
+                        for l in stride(from: sy + 2 * s, to: sy + nh / 2 - 5 * s, by: 2 * s) { c.rect(sx + s, l, (nw - 8 * s) / 3 - 4 * s, max(1, s / 2), C(0x8A8A8A)) }
+                        c.rect(sx + 2 * s, sy, s, s, C(0xC82A20))
+                    }
+                }
+                c.rect(rx1 - 18 * s, f.ceil + 3 * s, 14 * s, 8 * s, C(0x9A9488)); c.rect(rx1 - 18 * s, f.ceil + 3 * s, 14 * s, s, C(0xC8C2B4))
+                for k in 0..<3 { c.rect(rx1 - 17 * s, f.ceil + 5 * s + k * 2 * s, 12 * s, s, C(0x5A564E)) }
             }
         }
         // Behind the counter: a steel splashback, the heat lamps, the fryer.
