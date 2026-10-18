@@ -32,22 +32,67 @@ extension Scenes {
         let s = unit(g), f = slayerLibraryFrame(c, g)
         let wall = C(0x3A2416), wood = C(0x5C3A22), woodL = C(0x7A5232), woodD = C(0x2A1A0E)
         c.gradient(0, g, C(0x24160C), wall, bands: 6)
-        // Shelves of books: above the balcony and below it, row after row.
+        // Shelves of books: above the balcony and below it. Each bay between the uprights is its own case, with its
+        // own shelf spacing and its own leather, so the rows don't line up into one grid: a matched set with gilt
+        // bands here, folios lying flat in a pile there, a gap where books were taken out and the last one leans
+        // over. Every third upright is a heavier carved post with a brass bay plate at the top.
+        let tones = [C(0x6A2A1E), C(0x2E3E2A), C(0x5A4A2A), C(0x3A2A40), C(0x7A5A2E), C(0x4A1E1A), C(0x2A3446)]
+        let gilt = C(0x9A7A34), bay = 46 * s
         func shelves(_ y0: Int, _ y1: Int, seed: Int) {
             guard y1 - y0 > 6 * s else { return }
-            for y in stride(from: y0, to: y1 - 6 * s, by: 9 * s) {
-                c.rect(0, y + 7 * s, c.w, s, woodL); c.rect(0, y + 8 * s, c.w, s, woodD)
-                var x = 0, i = seed + y
-                while x < c.w {
-                    let bw = (2 + Int(noise(i) * 3)) * s, bh = (5 + Int(noise(i + 1) * 2)) * s
-                    let tones = [C(0x6A2A1E), C(0x2E3E2A), C(0x5A4A2A), C(0x3A2A40), C(0x7A5A2E), C(0x4A1E1A), C(0x2A3446)]
-                    let col = tones[Int(noise(i + 2) * Double(tones.count)) % tones.count]
-                    if noise(i + 3) > 0.08 { c.rect(x, y + 7 * s - bh, bw, bh, col); c.rect(x, y + 7 * s - bh, max(1, s), bh, col.alpha(0.7)) }
-                    x += bw + (noise(i + 4) > 0.85 ? s : 0)
-                    i += 5
+            for (b, bx) in stride(from: 0, to: c.w, by: bay).enumerated() {
+                let pitch = (8 + Int(noise(seed + b * 7) * 2.99)) * s
+                let first = y0 + Int(noise(seed + b * 7 + 1) * Double(pitch / s)) * s - pitch
+                let favour = Int(noise(seed + b * 7 + 2) * Double(tones.count))   // the bay's own leather
+                let x1 = min(c.w, bx + bay)
+                for (row, y) in stride(from: first, to: y1 - 6 * s, by: pitch).enumerated() {
+                    let base = y + pitch - 2 * s
+                    guard base - (pitch - 3 * s) >= y0, base <= y1 else { continue }
+                    var x = bx + 2 * s, i = seed * 31 + b * 977 + row * 53
+                    func tone(_ k: Int) -> Px {
+                        noise(k) < 0.45 ? tones[favour] : tones[Int(noise(k + 1) * Double(tones.count)) % tones.count]
+                    }
+                    while x < x1 {
+                        let pick = noise(i + 5), room = x1 - x
+                        if pick < 0.035 && room > 10 * s {   // a matched set, a gilt band on every spine
+                            let col = tone(i + 2), bh = min(6 * s, pitch - 3 * s)
+                            for _ in 0..<min(room / (2 * s), 4 + Int(noise(i + 6) * 4)) {
+                                c.rect(x, base - bh, 2 * s, bh, col); c.rect(x, base - bh, max(1, s / 2), bh, col.alpha(0.7))
+                                c.rect(x + max(1, s / 2), base - bh + s, s, max(1, s / 2), gilt); c.rect(x + max(1, s / 2), base - 2 * s, s, max(1, s / 2), gilt)
+                                x += 2 * s
+                            }
+                        } else if pick < 0.08 && room > 10 * s {   // folios lying flat, stacked
+                            let n = 2 + Int(noise(i + 6) * 1.99), fw = min(room, (7 + Int(noise(i + 7) * 3)) * s)
+                            for k in 0..<n {
+                                let col = tone(i + 8 + k), off = Int(noise(i + 11 + k) * 2) * s
+                                c.rect(x + off, base - (k + 1) * 2 * s, fw - s - off, 2 * s, col)
+                                c.rect(x + off, base - (k + 1) * 2 * s, fw - s - off, max(1, s / 2), col.alpha(0.6))
+                            }
+                            x += fw + s
+                        } else if pick < 0.11 {   // a gap, the last book leaning into it
+                            let bh = min(6 * s, pitch - 3 * s), col = tone(i + 2)
+                            for r in 0..<bh { c.rect(x + (bh - r) / 2, base - r - 1, 2 * s, 1, col) }
+                            x += (5 + Int(noise(i + 6) * 5)) * s
+                        } else {
+                            let bw = min(room, (2 + Int(noise(i) * 2.6)) * s), bh = min(pitch - 3 * s, (4 + Int(noise(i + 1) * 3.4)) * s)
+                            let col = tone(i + 2)
+                            c.rect(x, base - bh, bw, bh, col); c.rect(x, base - bh, max(1, s), bh, col.alpha(0.7))
+                            if noise(i + 3) > 0.94 { c.rect(x, base - bh + s, bw, max(1, s / 2), gilt.alpha(0.8)) }
+                            x += bw + (noise(i + 4) > 0.85 ? s : 0)
+                        }
+                        i += 13
+                    }
+                    c.rect(bx, base, x1 - bx, s, woodL); c.rect(bx, base + s, x1 - bx, s, woodD)
                 }
             }
-            for x in stride(from: 0, to: c.w, by: 46 * s) { c.rect(x, y0, 2 * s, y1 - y0, wood) }   // the uprights
+            for (k, x) in stride(from: 0, to: c.w, by: bay).enumerated() {   // the uprights
+                if k % 3 == 0 {
+                    c.rect(x - s, y0, 4 * s, y1 - y0, wood); c.rect(x - s, y0, s, y1 - y0, woodL); c.rect(x + 2 * s, y0, s, y1 - y0, woodD)
+                    if y1 - y0 > 30 * s { c.rect(x + 19 * s, y0, 8 * s, 3 * s, C(0x8A6A2E)); c.rect(x + 20 * s, y0 + s, 6 * s, s, C(0xC8A04A)) }
+                } else {
+                    c.rect(x, y0, 2 * s, y1 - y0, wood)
+                }
+            }
         }
         // On the screen saver, a coffered ceiling of dark beams over the stacks.
         let ceiling = isTall(c) ? 10 * s : 0
@@ -57,13 +102,30 @@ extension Scenes {
         }
         shelves(ceiling, f.walk - 2 * s, seed: 11)
         // The windows, high up on the screen saver: arched, mullioned, pale daylight.
+        // The frame and the glass are concentric round arches, the same on both sides of the centre mullion.
         for w in f.windows {
-            c.rect(w.x - 2 * s, w.y - 2 * s, w.w + 4 * s, w.h + 4 * s, woodD)
-            c.rect(w.x, w.y + w.w / 2, w.w, w.h - w.w / 2, C(0xC8D8E0))
-            c.ellipse(w.x + w.w / 2, w.y + w.w / 2, w.w / 2, w.w / 2, C(0xC8D8E0))
-            c.rect(w.x, w.y + w.w / 2, w.w, w.w / 2, C(0xC8D8E0))
-            c.rect(w.x + w.w / 2 - s / 2, w.y, max(1, s), w.h, woodD)
+            slayerLibraryArch(c, w.x - 3 * s, w.y - 3 * s, w.w + 6 * s, w.h + 5 * s, woodD)
+            slayerLibraryArch(c, w.x - 2 * s, w.y - 2 * s, w.w + 4 * s, w.h + 3 * s, wood)
+            slayerLibraryArch(c, w.x, w.y, w.w, w.h, C(0xC8D8E0))
+            slayerLibraryArch(c, w.x, w.y, w.w, w.w / 2 + 4 * s, C(0xDCE8EE))
+            c.rect(w.x + w.w / 2 - s, w.y, 2 * s, w.h, woodD)
             for y in stride(from: w.y + w.w / 2, to: w.y + w.h, by: 9 * s) { c.rect(w.x, y, w.w, max(1, s), woodD) }
+            c.rect(w.x - 4 * s, w.y + w.h + 2 * s, w.w + 8 * s, 2 * s, woodL)   // the sill
+        }
+        // A rolling ladder leaning on the upper stacks, its rail along the top.
+        if !f.windows.isEmpty {
+            let rail = ceiling + 3 * s, lx = c.w * 62 / 100, foot = f.walk - 7 * s
+            c.rect(0, rail, c.w, s, C(0x8A6A2E))
+            let lean = Double(18 * s)
+            for y in stride(from: rail + 8 * s, to: foot, by: 8 * s) {
+                let k = Double(y - rail) / Double(foot - rail), x = lx + Int(k * lean)
+                c.rect(x, y + s, 11 * s, s, woodD); c.rect(x, y, 11 * s, s, C(0xA87A4A))
+            }
+            for side in [0.0, Double(10 * s)] {
+                slayerLine(c, Double(lx) + side + Double(s), Double(rail), Double(lx) + side + lean + Double(s), Double(foot), woodD, Double(s) * 0.8)
+                slayerLine(c, Double(lx) + side, Double(rail), Double(lx) + side + lean, Double(foot), C(0xA87A4A), Double(s) * 0.7)
+            }
+            c.rect(lx - s, rail - s, 3 * s, 3 * s, C(0xC8A04A)); c.rect(lx + 9 * s, rail - s, 3 * s, 3 * s, C(0xC8A04A))   // the hooks
         }
         shelves(f.walk + 4 * s, g - 12 * s, seed: 57)
         // The balcony's walkway and its railing.
@@ -144,5 +206,19 @@ extension Scenes {
             }
             c.rect(cx - 20 * s, g, 40 * s, max(1, s / 2), C(0xFF6A3A, a * 0.6))
         }
+    }
+}
+
+/// A round-topped arch `w` wide and `h` tall from its top-left corner, filled with `col`: a semicircle on a rectangle,
+/// worked out row by row about the true centre so its two sides mirror each other exactly.
+private func slayerLibraryArch(_ c: PixelCanvas, _ x: Int, _ y: Int, _ w: Int, _ h: Int, _ col: Px) {
+    let r = Double(w) / 2
+    for row in 0..<h {
+        var inset = 0
+        if Double(row) < r {
+            let dy = r - Double(row) - 0.5
+            inset = Int((r - (r * r - dy * dy).squareRoot()).rounded())
+        }
+        if w - 2 * inset > 0 { c.rect(x + inset, y + row, w - 2 * inset, 1, col) }
     }
 }
