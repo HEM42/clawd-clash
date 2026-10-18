@@ -954,7 +954,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             // A Weeping Angle only moves while nobody's looking at it, and then quickly. Held still too long, it gets
             // its chance anyway: somebody blinked.
             var pace: CGFloat = 1
-            if actors[i].cast == .villain(DoctorVillain.weepingAngle), !dragging, abs(d) >= 0.5 {
+            if actors[i].cast.universe.module.quirks.unseenMovers.contains(actors[i].cast), !dragging, abs(d) >= 0.5 {
                 let me = actors[i]
                 let seen = actors.contains { o in
                     o.key != me.key && o.leaving == nil && now >= o.born && (o.walkDir != 0 ? o.walkDir : o.facing) * (me.x - o.x) > 0
@@ -1189,7 +1189,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         for var actor in actors.sorted(by: { !$0.isLeader && $1.isLeader }) {
             var walking = actor.walkDir != 0
             var facing = walking ? actor.walkDir : actor.facing
-            let bunTalk = walking || roles[actor.key] != nil ? nil : hemBunTalk(actor, t: t, z: z)
+            let quirks = actor.cast.universe.module.quirks, me = stageView(actor)
+            let others = quirks.remark == nil && quirks.jitter == nil ? [] : actors.filter { $0.key != actor.key }.map(stageView)
+            let bunTalk = walking || roles[actor.key] != nil ? nil : quirks.remark?(me, others, z, t)
             if let b = bunTalk { facing = b.facing }
             var aboard = false
             if let exit = actor.exit, let left = actor.leaving {
@@ -1313,7 +1315,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             // Ducking a bolt in a shoot-out: squat (squashed from the feet up).
             let duck = incoming[actor.key].map { CGFloat(duckAmount(t: ft(actor.key), shooterOffset: $0, armoured: actor.cast.armoured)) } ?? 0
             // Captain Clawk flinches at every tick of the Croc Clock (Stevie Clawdberg), in Pirate Town or with it about.
-            let flinch = clawkFlinch(actor, t: t)
+            let flinch: (dx: Int, up: Int, line: String?) = quirks.jitter?(me, others, location, t) ?? (0, 0, nil)
             let rect = NSRect(x: (actor.x - bodyX).rounded() + CGFloat(flinch.dx) * scale, y: y + CGFloat(drop) * z + lift + CGFloat(flinch.up) * scale,
                               width: CGFloat(canvas.w) * scale, height: (CGFloat(canvas.h) * scale * (1 - 0.22 * duck)).rounded())
             if windowMode, actor.key == listHoverKey, let glow = Self.hoverGlow {
@@ -1325,10 +1327,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 listHoverHead = (actor.key, actor.x, y + lift + top)
             }
             out.append(DrawItem(image: img, rect: rect, mirrored: mirrored, alpha: CGFloat(alpha)))
-            // T. Wrecks's footsteps ripple a glass of water standing on the ground in front of him.
-            if actor.cast == .villain(ClawdbergVillain.tWrecks), actor.leaving == nil,
-               let glass = waterGlassItem(x: actor.x + facing * 34 * scale, ground: y, scale: scale, t: t, walking: walking) {
-                out.append(glass)
+            // A prop beside them (T. Wrecks's glass of water).
+            if let p = quirks.prop?(OnStage(cast: me.cast, x: me.x, facing: facing, walking: walking, leaving: me.leaving, phase: me.phase), y, scale, t) {
+                out.append(DrawItem(image: p.image, rect: p.rect, mirrored: p.mirrored, alpha: 1))
             }
 
             // Speech bubble on whichever side of the head fits on screen (Claudes only).
@@ -1822,49 +1823,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
     }
 
-    /// Captain Clawk at the Croc Clock's tick (in Pirate Town, or with the Croc Clock about as an agent): every three
-    /// seconds a jump and a shiver, sprite pixels; now and then he mutters about it.
-    private func clawkFlinch(_ a: Actor, t: Double) -> (dx: Int, up: Int, line: String?) {
-        guard a.cast == .villain(ClawdbergVillain.captainClawk), a.leaving == nil, a.walkDir == 0 else { return (0, 0, nil) }
-        let croc = Cast.villain(ClawdbergVillain.crocClock)
-        guard actors.contains(where: { $0.cast == croc && $0.leaving == nil }) || location == .pirateTown else { return (0, 0, nil) }
-        let tick = frac(t / 3 + a.phase)
-        let line = frac(t / 18 + a.phase) < 0.12 ? "Tick… tock…" : nil
-        guard tick < 0.1 else { return (0, 0, line) }
-        return (Int(t * 30) % 2 == 0 ? 1 : -1, 2, line)
-    }
-
-    /// A glass of water on the ground at `x`, its surface rippling in rings with each of T. Wrecks's footsteps
-    /// (every half second walking, a heavy thud every two standing still).
-    private func waterGlassItem(x: CGFloat, ground y: CGFloat, scale: CGFloat, t: Double, walking: Bool) -> DrawItem? {
-        let c = PixelCanvas(11, Sprite.height)
-        let beat = frac(t / (walking ? 0.5 : 2))
-        let glass = C(0xDCEAF2, 0.55), rim = C(0xF4FAFF, 0.9), water = C(0x6AA8D8, 0.6)
-        c.rect(3, 36, 5, 8, glass); c.rect(3, 36, 1, 8, rim); c.rect(7, 36, 1, 8, rim); c.rect(3, 43, 5, 1, rim)
-        c.rect(4, 38, 3, 5, water)
-        // The surface: flat, then rings running out and fading after each step.
-        let ring = max(0, 1 - beat * 3)
-        c.rect(4, 38, 3, 1, C(0xC8E8FF, 0.6 + 0.4 * ring))
-        if ring > 0 {
-            let r = Int((beat * 3 * 3).rounded())
-            c.px(5 - min(1, r), 37, C(0xFFFFFF, ring)); c.px(5 + min(1, r), 37, C(0xFFFFFF, ring))
-            c.px(5, 38, C(0x3A78B8, ring))
-        }
-        c.addOutline(C(0xFFFFFF, 0.5))
-        guard let img = c.makeImage() else { return nil }
-        return DrawItem(image: img, rect: NSRect(x: (x - 5.5 * scale).rounded(), y: y, width: 11 * scale, height: CGFloat(c.h) * scale),
-                        mirrored: false, alpha: 1)
-    }
-
-    /// HEM standing next to Princess Laya, both out of the fight: for five seconds in every twenty he turns to her and
-    /// has a word about buns (a different one each time).
-    private func hemBunTalk(_ a: Actor, t: Double, z: CGFloat) -> (facing: CGFloat, line: String)? {
-        guard a.cast.universe == .starWars, a.cast.universe.isHem(a.cast.id), a.leaving == nil else { return nil }
-        guard let laya = actors.first(where: { $0.cast == .hero(SWHero.leia) && $0.walkDir == 0 && $0.leaving == nil
-                                               && abs($0.x - a.x) < 90 * z }) else { return nil }
-        let cycle = t / 20 + a.phase
-        guard frac(cycle) < 0.25 else { return nil }
-        return (laya.x > a.x ? 1 : -1, hemBunLines[Int(floor(cycle)) % hemBunLines.count])
+    /// An actor as a universe's stage quirks see it (`OnStage`).
+    private func stageView(_ a: Actor) -> OnStage {
+        OnStage(cast: a.cast, x: a.x, facing: a.walkDir != 0 ? a.walkDir : a.facing, walking: a.walkDir != 0,
+                leaving: a.leaving != nil, phase: a.phase)
     }
 
     // MARK: Chaos test

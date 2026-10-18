@@ -19,4 +19,7 @@ struct DoctorUniverse: UniverseModule {
     }
     /// A sonic screwdriver is no reason to float cross-legged.
     var meditation: Meditation { Meditation(who: .never) }
+
+    /// A Weeping Angle only moves while nobody's looking at it.
+    var quirks: StageQuirks { StageQuirks(unseenMovers: [.villain(DoctorVillain.weepingAngle)]) }
 }

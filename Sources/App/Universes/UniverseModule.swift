@@ -29,6 +29,8 @@ protocol UniverseModule {
     /// What a compacted session's leader looks like while it's away and back (`UniverseCompaction.away`), `k` (0…1)
     /// through it; nil: nothing to see.
     func compactionLook(k: Double, cast: Cast) -> CompactionLook?
+    /// Little things certain characters do on stage: the Weeping Angle, Captain Clawk's flinch, T. Wrecks's glass…
+    var quirks: StageQuirks { get }
 }
 
 extension UniverseModule {
@@ -43,6 +45,31 @@ extension UniverseModule {
     var swingLine: Px? { nil }
     var placeCaption: PlaceCaption? { nil }
     func compactionLook(k: Double, cast: Cast) -> CompactionLook? { nil }
+    var quirks: StageQuirks { StageQuirks() }
+}
+
+/// Someone on the stage, as a universe's quirks see them.
+struct OnStage {
+    let cast: Cast
+    let x: CGFloat
+    /// -1 facing left, 1 facing right.
+    let facing: CGFloat
+    let walking: Bool
+    let leaving: Bool
+    /// Its own offset (0…1), so two of them don't do the same thing at the same moment.
+    let phase: Double
+}
+
+/// A universe's stage quirks: things certain characters do, whoever else is about.
+struct StageQuirks {
+    /// Only move while nobody's looking at them, and then quickly (the Weeping Angle).
+    var unseenMovers: Set<Cast> = []
+    /// A jump and a shiver, in sprite pixels, and maybe a muttered line: `who` among `others`, at `place`.
+    var jitter: ((_ who: OnStage, _ others: [OnStage], _ place: Location?, _ t: Double) -> (dx: Int, up: Int, line: String?))? = nil
+    /// Something drawn beside `who`, standing on `ground`, `scale` points to an art pixel.
+    var prop: ((_ who: OnStage, _ ground: CGFloat, _ scale: CGFloat, _ t: Double) -> StageLayer?)? = nil
+    /// A word to someone nearby: which way `who` turns to say it, and the line. `zoom`: the stage's zoom.
+    var remark: ((_ who: OnStage, _ others: [OnStage], _ zoom: CGFloat, _ t: Double) -> (facing: CGFloat, line: String)?)? = nil
 }
 
 /// A moment of a compaction on stage: The Clawd Files' abduction beam, Stevie Clawdberg's 88 mph, Clawd Slayer's

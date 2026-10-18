@@ -14,4 +14,7 @@ struct StarClawdsUniverse: UniverseModule {
     /// Jedi and Sith alike float cross-legged, with bits of rock lifted round them.
     var meditation: Meditation { Meditation(who: .castersAndSabers, stones: true) }
     var poseStyle: PoseStyle { .classic }
+
+    /// HEM has a word with Princess Laya about buns.
+    var quirks: StageQuirks { StageQuirks(remark: starClawdsBunTalk) }
 }

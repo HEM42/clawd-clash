@@ -23,4 +23,7 @@ struct ClawdbergUniverse: UniverseModule {
 
     /// A compacted time traveller hits 88 mph: gone in a flash, back with three booms.
     func compactionLook(k: Double, cast: Cast) -> CompactionLook? { OutaTime(k: k) }
+
+    /// Captain Clawk flinches at the Croc Clock's tick; T. Wrecks's footsteps ripple a glass of water.
+    var quirks: StageQuirks { StageQuirks(jitter: clawdbergClawkFlinch, prop: clawdbergWaterGlass) }
 }

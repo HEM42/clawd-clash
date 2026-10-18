@@ -35,8 +35,6 @@ func hemPersona(_ u: Universe) -> Persona {
     }
 }
 
-/// What he says to Princess Laya when he ends up next to her.
-let hemBunLines = ["Cute buns. Amateur.", "Nice buns. Mine are bigger.", "Bun for bun, I win."]
 
 private let hemShade = C(0xB85F40)
 private let hairMain = C(0x4A2E18), hairDark = C(0x2E1C0E), hairPart = C(0x6E4A2C)
