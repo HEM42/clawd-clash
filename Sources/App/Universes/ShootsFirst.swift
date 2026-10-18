@@ -1,7 +1,8 @@
 import CoreGraphics
 import Foundation
 
-/// Han shoots first. Han Solo and Greedo always face off when both are on stage, and now and then Greedo doesn't
+/// Han shoots first, the engine's half of it (each universe's pairs are its `ShootOut`s: Han and Greedo, Indy and the
+/// Cairo Swordsman). The two always face off when both are on stage, and now and then Greedo doesn't
 /// duck in time: Han's bolt knocks him into a backward somersault and he lands on his back, legs in the air, for three
 /// seconds (dizzy stars, a wisp of smoke) while Han apologises for the mess. Then he rolls back onto his feet, says his
 /// piece and walks back to his spot. (A Clawd is wider than it is tall, so lying on its side would look like standing.)
