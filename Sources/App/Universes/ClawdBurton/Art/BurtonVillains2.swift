@@ -18,7 +18,7 @@ let burtonVillains2: [BurtonVillain: Persona] = [
     .tearAwayClown: Persona(name: "The Tear-Away Clown", weapon: .none, canSit: false, headTop: 17, signature: 3.2,
                             draw: drawTearAwayClown),
     .halloweenWitch: Persona(name: "The Halloween Witch", weapon: .lightning, motion: .fly,
-                             magic: Magic(core: C(0xFFE0B0), glow: C(0xFF7A1A)), pivot: witchHand, headTop: 11,
+                             magic: Magic(core: C(0xFFE0B0), glow: C(0xFF7A1A)), pivot: witchHand, headTop: 14,
                              signature: 3.2, callout: "Hee hee hee!", draw: drawHalloweenWitch),
 ]
 
@@ -107,7 +107,7 @@ private func drawOoogieBoogie(_ c: PixelCanvas, _ p: Pose) {
         let sx = left ? 17 : 39, sy = 26 + (n * 7) % 10
         let x: Int, y: Int
         if k < 0.15 { x = sx; y = sy + Int(k / 0.15 * Double(43 - sy)) }
-        else { x = sx + (left ? -1 : 1) * Int((k - 0.15) / 0.85 * 22); y = 43 }
+        else { x = sx + (left ? -1 : 1) * Int((k - 0.15) / 0.85 * (left ? 12 : 22)); y = 43 }
         burtonBeetle(c, x: x, y: y, step: Int(p.t * 16) % 2 == 0, left: left, shell: col.0, shine: col.1)
     }
 }
@@ -396,13 +396,13 @@ private func drawHalloweenWitch(_ c: PixelCanvas, _ p: Pose) {
     let riding = p.flying || looping
     if looping, let s = sig {
         let a = ramp(s, 0.1, 0.9) * 2 * .pi
-        c.ox += Int((sin(a) * 8).rounded()); c.oy += Int(((cos(a) - 1) * 6).rounded())
+        c.ox += Int((sin(a) * 5).rounded()); c.oy += Int(((cos(a) - 1) * 3).rounded())
     }
     if riding {
         // On the broom: its handle along under her, the bristles out behind.
         c.oy -= 2
-        burtonLine(c, 8, 40, 48, 38, C(0x8A6A3A), 0.7)
-        c.pattern(3, 36, ["BB.....", "BBBBBBB", "BBBBBBB", "BBBBBBB", "BB....."], ["B": C(0xC8A04A)])
+        burtonLine(c, 12, 40, 48, 38, C(0x8A6A3A), 0.7)
+        c.pattern(7, 36, ["BB.....", "BBBBBBB", "BBBBBBB", "BBBBBBB", "BB....."], ["B": C(0xC8A04A)])
         c.rect(20, 38, 3, 4, dress); c.rect(32, 38, 3, 4, dress); c.rect(20, 42, 4, 1, C(0x0A0A0E)); c.rect(32, 42, 4, 1, C(0x0A0A0E))
     } else {
         drawLegs(c, Look(leg: C(0x2A2A30)), step: p.step)
@@ -419,10 +419,7 @@ private func drawHalloweenWitch(_ c: PixelCanvas, _ p: Pose) {
     if looping || p.zap == true { c.rect(25, 32, 6, 1, ink) }
     // Stringy dark hair down her sides, and the tall crooked hat with its buckle.
     c.pattern(16, 25, ["HHH", "HH.", "HH.", "H..", "H..", "H.."], ["H": C(0x2A2A30)])
-    c.pattern(15, 11, [
-        "...............HH...",
-        ".............HHHH...",
-        "............HHHH....",
+    c.pattern(15, 14, [
         "...........HHHHH....",
         "..........HHHHHH....",
         ".........HHHHHHH....",

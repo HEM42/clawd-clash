@@ -248,9 +248,9 @@ private func drawSandwurm(_ c: PixelCanvas, _ p: Pose) {
     }
     c.oy += p.breathe + (p.walking ? (p.step == 0 ? 1 : 0) : 0)
     // Where the head is: swung along `p.melee` while it bites, reared up in its signature, swaying at rest.
-    let raw = p.melee ?? (-58 - rear * 22 + sin(p.lt * 1.6) * 5)
+    let raw = p.melee ?? (-58 - rear * 12 + sin(p.lt * 1.6) * 5)
     let angle = max(-100, min(-15, raw))
-    let reach = 13 + rear * 9 + (p.melee != nil ? 2 : 0)
+    let reach = 13 + rear * 5 + (p.melee != nil ? 2 : 0)
     let head = burtonReach(wurmNeck, angle, reach)
     for (i, a) in p.trail.enumerated() {
         let e = burtonReach(wurmNeck, max(-100, min(-15, a)), reach)
@@ -296,7 +296,7 @@ private func drawSandwurm(_ c: PixelCanvas, _ p: Pose) {
     }
     if open {
         // The inner mouth: a smaller pink head on a stalk, shooting out of the big one and snapping, its own teeth.
-        let out = 1 + snap * 7
+        let out = 1 + snap * 4
         let i0 = (x: head.x, y: head.y), i1 = (x: head.x + ux * (1 + out), y: head.y + uy * (1 + out))
         burtonLine(c, i0.x, i0.y, i1.x, i1.y, inner, 1.0)
         let jaw = 1.2 + snap * 1.2
@@ -469,7 +469,7 @@ private func drawOtho(_ c: PixelCanvas, _ p: Pose) {
 
 /// Jeremee: a ghost boy with a faint pale glow and a too-charming smile: a pale, ghost-blue Clawd with a brown quiff,
 /// a maroon varsity sweater with cream bands and a big cream J, jeans and white sneakers. He doesn't fight. Signature:
-/// his bicycle rolls in beside him; he leans on its handlebars, winks, and his smile twinkles.
+/// his bicycle appears beside him; he leans on its handlebars, winks, and his smile twinkles.
 private func drawJeremee(_ c: PixelCanvas, _ p: Pose) { burtonGhost(c) { drawJeremeeFigure($0, p) } }
 
 private func drawJeremeeFigure(_ c: PixelCanvas, _ p: Pose) {
@@ -482,25 +482,28 @@ private func drawJeremeeFigure(_ c: PixelCanvas, _ p: Pose) {
     let twinkle = sig.map { $0 >= 0.55 && $0 < 0.75 ? sin(ramp($0, 0.55, 0.75) * .pi) : 0 } ?? 0
 
     if bike > 0 {
-        // The bike: two wheels, a red frame, the handlebars by his left hand.
-        let bx = -Int(((1 - bike) * 20).rounded())
-        c.ox += bx
+        // The bike, fading in beside him: two wheels, a red frame, the handlebars by his left hand.
+        let b = PixelCanvas(c.w, c.h)
+        b.ox = c.ox + 3; b.oy = c.oy; b.baseY = c.baseY
         let tyre = C(0x2A2A30), frame = C(0xC8202A)
         for wx in [3, 15] {   // tyres as rings, a hub in the middle
             for y in 34...44 {
                 for x in (wx - 5)...(wx + 5) {
                     let d = hypot(Double(x) + 0.5 - Double(wx) - 0.5, Double(y) + 0.5 - 39.5)
-                    if d > 3.3 && d <= 4.6 { c.px(x, y, tyre) }
+                    if d > 3.3 && d <= 4.6 { b.px(x, y, tyre) }
                 }
             }
-            c.px(wx, 39, C(0x9A9AA8))
+            b.px(wx, 39, C(0x9A9AA8))
         }
-        for (a, b) in [((3.5, 39.5), (9.5, 39.5)), ((9.5, 39.5), (7.5, 32.5)), ((7.5, 33.0), (13.5, 33.0)),
-                       ((9.5, 39.5), (13.5, 33.0)), ((3.5, 39.5), (7.5, 33.0)), ((13.5, 33.0), (15.5, 39.5))] {
-            burtonLine(c, a.0, a.1, b.0, b.1, frame, 0.6)
+        for (p0, p1) in [((3.5, 39.5), (9.5, 39.5)), ((9.5, 39.5), (7.5, 32.5)), ((7.5, 33.0), (13.5, 33.0)),
+                         ((9.5, 39.5), (13.5, 33.0)), ((3.5, 39.5), (7.5, 33.0)), ((13.5, 33.0), (15.5, 39.5))] {
+            burtonLine(b, p0.0, p0.1, p1.0, p1.1, frame, 0.6)
         }
-        burtonLine(c, 13.5, 33, 14.5, 29, C(0x9A9AA8), 0.45); c.rect(13, 28, 4, 1, tyre); c.rect(5, 31, 4, 1, tyre)
-        c.ox -= bx
+        burtonLine(b, 13.5, 33, 14.5, 29, C(0x9A9AA8), 0.45); b.rect(13, 28, 4, 1, tyre); b.rect(5, 31, 4, 1, tyre)
+        let (ox, oy, by) = (c.ox, c.oy, c.baseY)
+        c.ox = 0; c.oy = 0; c.baseY = 0
+        c.paste(b, alpha: bike)
+        c.ox = ox; c.oy = oy; c.baseY = by
     }
     drawLegs(c, Look(leg: C(0x3A4A6A)), step: p.step)
     burtonBoots(c, step: p.step, C(0xF0F0F0), height: 2)
@@ -527,5 +530,5 @@ private func drawJeremeeFigure(_ c: PixelCanvas, _ p: Pose) {
         ".HH................HH.",
     ], ["H": hair, "h": hairL])
     // His left hand on the handlebars while he leans.
-    if leaning { burtonLine(c, 16.5, 34, 16, 29.5, sweater, 1.1); c.rect(15, 28, 2, 2, skin) }
+    if leaning { burtonLine(c, 16.5, 34, 17.5, 29.5, sweater, 1.1); c.rect(17, 27, 2, 2, skin) }
 }
