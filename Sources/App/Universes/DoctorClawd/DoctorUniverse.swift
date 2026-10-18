@@ -7,7 +7,8 @@ struct DoctorUniverse: UniverseModule {
     var hem: HemCostume { doctorHem }
     var drills: [Cast: BespokeDrill] { doctorBespokeDrills }
     var transitions: TransitionSet? {
-        TransitionSet { last, cast, from, to in DoctorTrip.pick(after: (last as? DoctorTrip)?.kind, cast: cast, to: to) }
+        TransitionSet(pick: { last, cast, from, to in DoctorTrip.pick(after: (last as? DoctorTrip)?.kind, cast: cast, to: to) },
+                      every: { from, to in ShownTrip.all(DoctorWipe.allCases) { DoctorTrip(kind: $0) } })
     }
 
     var preview: PreviewInfo {

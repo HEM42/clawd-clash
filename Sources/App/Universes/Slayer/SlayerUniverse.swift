@@ -7,7 +7,8 @@ struct SlayerUniverse: UniverseModule {
     var hem: HemCostume { slayerHem }
     var drills: [Cast: BespokeDrill] { slayerBespokeDrills }
     var transitions: TransitionSet? {
-        TransitionSet { last, cast, from, to in SlayerTrip.pick(after: (last as? SlayerTrip)?.kind, cast: cast, from: from, to: to) }
+        TransitionSet(pick: { last, cast, from, to in SlayerTrip.pick(after: (last as? SlayerTrip)?.kind, cast: cast, from: from, to: to) },
+                      every: { from, to in ShownTrip.all(SlayerWipe.allCases) { SlayerTrip(kind: $0, from: from, to: to) } })
     }
 
     var preview: PreviewInfo {

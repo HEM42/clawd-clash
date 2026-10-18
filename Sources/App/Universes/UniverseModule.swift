@@ -228,4 +228,18 @@ struct TransitionSet {
     /// The trip to `to`, coming `from` (if known). `last` is the previous trip if it was this universe's, so it can pick
     /// a different kind.
     let pick: (_ last: Trip?, _ cast: [Cast], _ from: Location?, _ to: Location) -> Trip
+    /// One of every kind, from `from` to `to`, for Tools/Transitions' sheets and clips.
+    let every: (_ from: Location, _ to: Location) -> [ShownTrip]
+}
+
+/// A trip as Tools/Transitions shows it: its file key ("3-burst"), its title, the trip.
+struct ShownTrip {
+    let key: String
+    let title: String
+    let trip: Trip
+
+    /// Every kind of a universe's trips, numbered from 1 in the kinds' order.
+    static func all<W: CaseIterable & RawRepresentable>(_ kinds: W.AllCases, _ make: (W) -> Trip) -> [ShownTrip] where W.RawValue == Int {
+        kinds.map { ShownTrip(key: "\($0.rawValue + 1)-\($0)", title: "\($0)", trip: make($0)) }
+    }
 }

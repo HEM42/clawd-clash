@@ -1,7 +1,8 @@
 import AppKit
 import AVFoundation
 
-// The comic-book transitions between places, rendered as short clips and a sheet of key frames: Marvel's (`ComicWipe`)
+// The transitions between places, rendered as short clips and a sheet of key frames (Star Clawds' plain wipes, or a
+// universe's own trips): Marvel's (`ComicWipe`)
 // or, between two DC places, DC's (`DCComicWipe`), or between two Doctor Clawd places, its trips (`DoctorWipe`), or
 // between two Clawd Files places, its own (`FilesWipe`), each clip ending on the typed caption, or between two Stevie
 // Clawdberg places, its film moments (`ClawdbergWipe`), or, to a Clawd of the Rings place, its nine trips (`RingsWipe`):
@@ -47,71 +48,14 @@ struct Transition {
     let draw: (CGContext, CGImage, CGImage, Double) -> Void     // ctx, old, new, k 0…1
 }
 
-/// The app's own transitions (`ComicTrip`): every sound effect, and Deadpool's.
-func shown(_ kind: ComicWipe, _ key: String, _ title: String, sound: ComicSound = .kapow, caption: String? = nil,
-           quip: String = "Psst. Yes, you. Hold on, I'll change the set.") -> Transition {
-    let trip = ComicTrip(kind: kind, sound: sound, caption: caption ?? "MEANWHILE, IN \(to.name.uppercased())…", quip: quip)
-    return Transition(key: key, title: title, duration: kind.duration) { ctx, old, new, k in
-        trip.draw(ctx, old: old, new: new, k: k, in: full)
-    }
-}
-
-/// DC's transitions (`DCComicTrip`), every one of them.
-func shownDC(_ kind: DCComicWipe) -> Transition {
-    let trip = DCComicTrip(kind: kind, caption: "MEANWHILE, IN \(to.name.uppercased())…")
-    return Transition(key: "\(kind.rawValue + 1)-\(kind)", title: "\(kind)", duration: kind.duration) { ctx, old, new, k in
-        trip.draw(ctx, old: old, new: new, k: k, in: full)
-    }
-}
-
-/// Doctor Clawd's trips (`DoctorTrip`), every one of them.
-func shownDoctor(_ kind: DoctorWipe) -> Transition {
-    let trip = DoctorTrip(kind: kind)
-    return Transition(key: "\(kind.rawValue + 1)-\(kind)", title: "\(kind)", duration: kind.duration) { ctx, old, new, k in
-        trip.draw(ctx, old: old, new: new, k: k, in: full)
-    }
-}
-
-/// The Clawd Files' trips (`FilesTrip`), every one of them.
-func shownFiles(_ kind: FilesWipe) -> Transition {
-    let trip = FilesTrip(kind: kind, from: from, to: to)
-    return Transition(key: "\(kind.rawValue + 1)-\(kind)", title: "\(kind)", duration: kind.duration) { ctx, old, new, k in
-        trip.draw(ctx, old: old, new: new, k: k, in: full)
-    }
-}
-
-/// Stevie Clawdberg's trips (`ClawdbergTrip`), every one of them.
-func shownClawdberg(_ kind: ClawdbergWipe) -> Transition {
-    let trip = ClawdbergTrip(kind: kind, from: from, to: to)
-    return Transition(key: "\(kind.rawValue + 1)-\(kind)", title: "\(kind)", duration: kind.duration) { ctx, old, new, k in
-        trip.draw(ctx, old: old, new: new, k: k, in: full)
-    }
-}
-
-/// Clawd of the Rings' transitions (`RingsTrip`), every `RingsWipe` kind; the map journey runs from `from` to `to`.
-func shownRings(_ kind: RingsWipe) -> Transition {
-    let trip = RingsTrip(kind: kind, from: from, to: to)
-    return Transition(key: "\(kind.rawValue + 1)-\(kind)", title: "\(kind)", duration: kind.duration) { ctx, old, new, k in
-        trip.draw(ctx, old: old, new: new, k: k, in: full)
-    }
-}
-
-/// Clawd Slayer's transitions (`SlayerTrip`), every `SlayerWipe` kind.
-func shownSlayer(_ kind: SlayerWipe) -> Transition {
-    let trip = SlayerTrip(kind: kind, from: from, to: to)
-    return Transition(key: "\(kind.rawValue + 1)-\(kind)", title: "\(kind)", duration: kind.duration) { ctx, old, new, k in
-        trip.draw(ctx, old: old, new: new, k: k, in: full)
-    }
-}
-
-/// The Clawd Files' caption, typed in top left `t` seconds after the trip.
-func caption(_ ctx: CGContext, t: Double) {
-    let lines = FilesCaption.typed(to, after: t)
+/// The place's typed caption (`UniverseModule.placeCaption`: The Clawd Files'), in top left `t` seconds after the trip.
+func caption(_ ctx: CGContext, _ cap: PlaceCaption, t: Double) {
+    let lines = cap.typed(to, t)
     let gc = NSGraphicsContext(cgContext: ctx, flipped: false)
     NSGraphicsContext.saveGraphicsState(); NSGraphicsContext.current = gc
     var y = CGFloat(H) - 40
     for (i, line) in lines.enumerated() {
-        let str = NSAttributedString(string: line, attributes: [.font: FilesCaption.font(i == 0 ? 26 : 17),
+        let str = NSAttributedString(string: line, attributes: [.font: cap.font(i == 0 ? 26 : 17),
                                                                  .foregroundColor: NSColor(white: 0.92, alpha: 1)])
         y -= str.size().height
         str.draw(at: NSPoint(x: 40, y: y))
@@ -120,29 +64,23 @@ func caption(_ ctx: CGContext, t: Double) {
     NSGraphicsContext.restoreGraphicsState()
 }
 
-let marvel: [Transition] = [
-    shown(.halftone, "1-halftone", "Halftone dots"),
-    shown(.burst, "2-burst-kapow", "KAPOW! (nobody in particular)"),
-    shown(.burst, "2-burst-snikt", "SNIKT! (Wolverine, X-23)", sound: .snikt),
-    shown(.burst, "2-burst-bamf", "BAMF! (Nightcrawler)", sound: .bamf),
-    shown(.burst, "2-burst-krakatoom", "KRAKATOOM! (Thor)", sound: .krakatoom),
-    shown(.burst, "2-burst-thwip", "THWIP! (Spider-Man, Miles, Spider-Gwen)", sound: .thwip),
-    shown(.burst, "2-burst-baroom", "BAROOM! (Hulk, the Thing)", sound: .baroom),
-    shown(.panels, "3-panels", "Panels slam in"),
-    shown(.speedLines, "4-speedlines", "Speed-line zoom"),
-    shown(.meanwhile, "5-meanwhile", "Iris and caption"),
-    shown(.fourthWall, "6-deadpool-fourth-wall", "Deadpool peels the page"),
-    shown(.chimichanga, "7-deadpool-chimichanga", "Deadpool's chimichanga"),
-]
 
 /// ONLY="1,4,12" renders just those (by number or name).
 let only = ProcessInfo.processInfo.environment["ONLY"]?.split(separator: ",").map(String.init)
-let forPlace: [Transition] = to.universe == .dc ? DCComicWipe.allCases.map(shownDC)
-    : to.universe == .doctor ? DoctorWipe.allCases.map(shownDoctor)
-    : to.universe == .clawdFiles ? FilesWipe.allCases.map(shownFiles)
-    : to.universe == .clawdberg ? ClawdbergWipe.allCases.map(shownClawdberg)
-    : to.universe == .middleEarth ? RingsWipe.allCases.map(shownRings)
-    : to.universe == .slayer ? SlayerWipe.allCases.map(shownSlayer) : marvel
+/// Every one of the destination's universe's trips; for a universe without any (Star Clawds), every plain wipe it
+/// changes places with, as the window and the screen saver draw them (`Wipe`).
+let forPlace: [Transition] = to.universe.module.transitions.map { set in
+    set.every(from, to).map { shown in
+        Transition(key: shown.key, title: shown.title, duration: shown.trip.duration) { ctx, old, new, k in
+            shown.trip.draw(ctx, old: old, new: new, k: k, in: full)
+        }
+    }
+} ?? Wipe.Kind.allCases.enumerated().map { i, kind in
+    Transition(key: "\(i + 1)-\(kind)", title: "\(kind)", duration: Wipe.duration) { ctx, old, new, k in
+        ctx.draw(new, in: full)
+        Wipe.drawOld(old, k, kind, in: ctx, full)
+    }
+}
 let transitions: [Transition] = forPlace.filter { tr in
     only.map { $0.contains { tr.key.hasPrefix("\($0)-") || tr.key.hasSuffix("-\($0)") } } ?? true
 }
@@ -199,7 +137,8 @@ final class Movie {
 /// Files).
 func clip(_ tr: Transition) {
     let movie = Movie("\(outDir)/\(tr.key).mp4")
-    let lead = 0.6, tail = to.universe == .clawdFiles ? 2.6 : 0.8
+    let placeCaption = to.universe.module.placeCaption
+    let lead = 0.6, tail = placeCaption == nil ? 0.8 : 2.6
     let total = lead + tr.duration + tail
     let frames = Int(total * fps)
     for f in 0..<frames {
@@ -210,7 +149,7 @@ func clip(_ tr: Transition) {
         if t < lead { ctx.draw(old, in: full) }
         else if t > lead + tr.duration {
             ctx.draw(new, in: full)
-            if to.universe == .clawdFiles { caption(ctx, t: t - lead - tr.duration) }
+            if let cap = placeCaption { caption(ctx, cap, t: t - lead - tr.duration) }
         }
         else { tr.draw(ctx, old, new, (t - lead) / tr.duration) }
         movie.append(ctx.makeImage()!)

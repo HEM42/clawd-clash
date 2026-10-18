@@ -7,7 +7,8 @@ struct ClawdbergUniverse: UniverseModule {
     var hem: HemCostume { clawdbergHem }
     var drills: [Cast: BespokeDrill] { clawdbergBespokeDrills }
     var transitions: TransitionSet? {
-        TransitionSet { last, cast, from, to in ClawdbergTrip.pick(after: (last as? ClawdbergTrip)?.kind, cast: cast, from: from, to: to) }
+        TransitionSet(pick: { last, cast, from, to in ClawdbergTrip.pick(after: (last as? ClawdbergTrip)?.kind, cast: cast, from: from, to: to) },
+                      every: { from, to in ShownTrip.all(ClawdbergWipe.allCases) { ClawdbergTrip(kind: $0, from: from, to: to) } })
     }
 
     var preview: PreviewInfo {

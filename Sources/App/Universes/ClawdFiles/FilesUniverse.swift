@@ -7,7 +7,8 @@ struct FilesUniverse: UniverseModule {
     var hem: HemCostume { filesHem }
     var drills: [Cast: BespokeDrill] { filesBespokeDrills }
     var transitions: TransitionSet? {
-        TransitionSet { last, cast, from, to in FilesTrip.pick(after: (last as? FilesTrip)?.kind, cast: cast, from: from, to: to) }
+        TransitionSet(pick: { last, cast, from, to in FilesTrip.pick(after: (last as? FilesTrip)?.kind, cast: cast, from: from, to: to) },
+                      every: { from, to in ShownTrip.all(FilesWipe.allCases) { FilesTrip(kind: $0, from: from, to: to) } })
     }
 
     var preview: PreviewInfo {

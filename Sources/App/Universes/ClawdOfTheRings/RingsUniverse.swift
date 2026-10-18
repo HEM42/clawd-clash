@@ -6,7 +6,8 @@ struct RingsUniverse: UniverseModule {
     var places: [Location: Place] { middleEarthPlaces }
     var hem: HemCostume { ringsHem }
     var transitions: TransitionSet? {
-        TransitionSet { last, cast, from, to in RingsTrip.pick(after: (last as? RingsTrip)?.kind, cast: cast, from: from, to: to) }
+        TransitionSet(pick: { last, cast, from, to in RingsTrip.pick(after: (last as? RingsTrip)?.kind, cast: cast, from: from, to: to) },
+                      every: { from, to in ShownTrip.all(RingsWipe.allCases) { RingsTrip(kind: $0, from: from, to: to) } })
     }
 
     var preview: PreviewInfo {

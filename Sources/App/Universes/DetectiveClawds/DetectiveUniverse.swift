@@ -7,7 +7,8 @@ struct DetectiveUniverse: UniverseModule {
     var hem: HemCostume { detectiveHem }
     var drills: [Cast: BespokeDrill] { detectiveBespokeDrills }
     var transitions: TransitionSet? {
-        TransitionSet { last, cast, from, to in DCComicTrip.pick(after: (last as? DCComicTrip)?.kind, cast: cast, to: to) }
+        TransitionSet(pick: { last, cast, from, to in DCComicTrip.pick(after: (last as? DCComicTrip)?.kind, cast: cast, to: to) },
+                      every: { from, to in ShownTrip.all(DCComicWipe.allCases) { DCComicTrip(kind: $0, caption: "MEANWHILE, IN \(to.name.uppercased())…") } })
     }
 
     var preview: PreviewInfo {
