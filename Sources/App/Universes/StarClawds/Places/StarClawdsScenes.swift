@@ -262,24 +262,123 @@ private enum StarWarsScenes {
         }
     }
 
-    // Kylo, Snoke's throne room on the Supremacy: red curtains and a black mirrored floor.
+    // Kylo, Snoke's throne room on the Supremacy: red curtains hung in deep folds, Snoke's black throne on its stepped
+    // dais, the Praetorian Guard standing in a line either side, and the black mirrored floor giving all of it back.
     static func supremacy(_ c: PixelCanvas, _ g: Int) {
-        c.rect(0, 0, c.w, g, C(0xA8111A))
-        for x in stride(from: 0, to: c.w, by: 7) {
-            c.rect(x, 0, 2, g, C(0x7E0C13))
-            c.rect(x + 3, 0, 1, g, C(0xC21C26))
-        }
-        if Scenes.isTall(c) { supremacyHigh(c, g) }
-        // the throne and two Praetorian guards
+        let tall = Scenes.isTall(c), s = Scenes.unit(g)
+        supremacyCurtains(c, g)
+        if tall { supremacyHigh(c, g) }
         let tx = c.w / 2
-        c.rect(tx - 6, g - 18, 12, 18, C(0x111114)); c.rect(tx - 8, g - 4, 16, 4, C(0x1A1A1F))
-        for gx in [tx - 40, tx + 34] {
-            c.rect(gx, g - 16, 6, 16, C(0xC8202A)); c.rect(gx + 1, g - 19, 4, 3, C(0xC8202A))
-            c.rect(gx + 6, g - 22, 1, 20, C(0x8A8F9C))
+        let guards = tall ? [-46, -88, -130, -172, 46, 88, 130, 172] : [-46, -88, -130, 46, 88, 130]
+        for (i, d) in guards.enumerated() {
+            let gx = tx + d * s - (d < 0 ? 12 * s : 0)
+            c.ellipse(gx + 6 * s, g - 12 * s, 9 * s, 12 * s, C(0xFF5A48, 0.06))      // the light falling on the curtain behind
+            praetorian(c, x: gx, feet: g, s: s, kind: i % 3, flip: d > 0)
         }
-        c.rect(0, g, c.w, c.h - g, C(0x0C0B0D))
-        c.rect(0, g, c.w, 1, C(0x3A0A0E))
-        for x in stride(from: 0, to: c.w, by: 7) { c.rect(x + 3, g + 1, 1, c.h - g - 1, C(0x5A0C12, 0.6)) }   // reflections
+        snokeThrone(c, x: tx, base: g, k: tall ? 2 * s : s)
+        // the mirrored floor: the curtain's folds, the guards and the dais given back, darker and broken by the sheen
+        c.rect(0, g, c.w, c.h - g, C(0x0A090B))
+        c.rect(0, g, c.w, 1, C(0x4A0C12))
+        var x = 0, i = 0
+        while x < c.w {
+            let fw = (6 + Int(noise(i * 5 + 900) * 5)) * s
+            c.rect(x + fw / 2, g + 1, s, c.h - g - 1, C(0x6A0C14, 0.25))
+            x += fw; i += 1
+        }
+        for (i, d) in guards.enumerated() {
+            let gx = tx + d * s - (d < 0 ? 12 * s : 0)
+            for k in 0..<min(c.h - g - 1, 9 * s) { c.rect(gx + 2 * s, g + 1 + k, 7 * s, 1, C(0xA0141E, 0.4 * Double(9 * s - k) / Double(9 * s))) }
+            if i % 3 == 0 { c.rect(gx + 10 * s, g + 1, s, min(c.h - g - 1, 6 * s), C(0xFF7050, 0.35)) }
+        }
+        for k in 0..<min(c.h - g - 1, 8 * s) { c.rect(tx - (22 - k) * s, g + 1 + k, (44 - 2 * k) * s, 1, C(0x26262C, 0.5)) }
+        for y in stride(from: g + 3 * s, to: c.h, by: 4 * s) { c.rect(0, y, c.w, 1, C(0xFFFFFF, 0.025)) }
+    }
+
+    /// The red curtain walls: folds of uneven width, each shaded from a dark crease to a lit crown and back, with a
+    /// darker hem at the floor.
+    static func supremacyCurtains(_ c: PixelCanvas, _ g: Int) {
+        let s = Scenes.unit(g)
+        let shades = [C(0x5A0810), C(0x7E0C13), C(0x9A1019), C(0xAE141D), C(0xC21C26)]
+        var x = 0, i = 0
+        while x < c.w {
+            let fw = (6 + Int(noise(i * 5 + 900) * 5)) * s
+            for u in 0..<fw {
+                let k = sin(Double(u) / Double(fw) * .pi)
+                c.rect(x + u, 0, 1, g, shades[min(4, Int(k * 4.6))])
+            }
+            c.rect(x + fw * 3 / 5, 0, s, g, C(0xD8343C))                          // the crown's sheen
+            x += fw; i += 1
+        }
+        for k in 0..<(6 * s) { c.rect(0, g - 6 * s + k, c.w, 1, C(0x1A0205, 0.06 * Double(k + 1))) }
+        if !Scenes.isTall(c) { for k in 0..<(10 * s) { c.rect(0, k, c.w, 1, C(0x100204, 0.5 * Double(10 * s - k) / Double(10 * s))) } }
+    }
+
+    /// One of Snoke's Praetorian Guards: the red armour plated down its body, the flat-topped helmet with its black
+    /// slit, the pleated skirt, and one of their weapons (a bladed staff, a double blade, or a heavy axe-headed voulge).
+    static func praetorian(_ c: PixelCanvas, x: Int, feet: Int, s: Int, kind: Int, flip: Bool) {
+        var rows = [
+            "           ",
+            "           ",
+            "  aaaaa    ",
+            "  aAAAa    ",
+            "  aAAAa    ",
+            "  akkka    ",
+            "  aAAAa    ",
+            "   aAa     ",
+            "aAAAaAAAa  ",
+            "aAAAAAAAAa ",
+            "aAaAAAAaAah",
+            " aaAAAAaa  ",
+            " aAAAAAAa  ",
+            " ddddddd   ",
+            " aAAaAAaA  ",
+            " aAAaAAaA  ",
+            "aAAaAAaAAa ",
+            "aAaAAaAAaA ",
+            "aAaAAaAAaA ",
+            "  aA  aA   ",
+            "  aA  aA   ",
+            " aaA  aAa  ",
+        ]
+        // the weapon, held upright in the right hand at column 10
+        func set(_ j: Int, _ ch: Character) {
+            var r = Array(rows[j]); r[10] = ch; rows[j] = String(r)
+        }
+        for j in 0..<rows.count where j != 10 { set(j, "w") }
+        switch kind {
+        case 0: for j in 0..<4 { set(j, "W") }
+        case 1: for j in 0..<3 { set(j, "W") }; for j in 19..<22 { set(j, "W") }
+        default:
+            for j in 0..<5 { var r = Array(rows[j]); r[9] = j < 4 ? "V" : " "; rows[j] = String(r) }
+            set(0, "V")
+        }
+        for j in 20..<rows.count where kind != 1 { set(j, " ") }
+        let pal: [Character: Px] = ["A": C(0xD02630), "a": C(0x8A121B), "d": C(0x4A0810), "k": C(0x0A0A0C), "h": C(0x8A121B),
+                                    "w": C(0x5A5E68), "W": C(0xFF6A4A), "V": C(0xB8BCC8)]
+        swSprite(c, x, feet - rows.count * s, s: s, flip: flip, rows, pal, outline: C(0x22050A))
+    }
+
+    /// Snoke's throne: a black seat with a tall back flaring at the top, armrests, on a three-step dais, all of it
+    /// edged in the red the curtains throw on it. `k` is its scale.
+    static func snokeThrone(_ c: PixelCanvas, x tx: Int, base g: Int, k: Int) {
+        let edge = C(0x5A1A20), black = C(0x111114), panel = C(0x18181D)
+        for i in 0..<3 {
+            let w = (44 - i * 10) * k, y = g - (i + 1) * 2 * k
+            c.rect(tx - w / 2, y, w, 2 * k, C(0x141317)); c.rect(tx - w / 2, y, w, max(1, k / 2), edge)
+        }
+        let seat = g - 6 * k
+        for j in 0..<(18 * k) {                                       // the back, wider toward its top
+            let w = 12 * k + (j < 6 * k ? (6 * k - j) * 2 / 3 : 0), y = seat - 4 * k - j
+            c.rect(tx - w / 2, y, w, 1, black)
+            c.px(tx - w / 2, y, edge); c.px(tx + w / 2 - 1, y, C(0x1E1A1E))
+        }
+        c.rect(tx - 4 * k, seat - 19 * k, 8 * k, 13 * k, panel)
+        c.rect(tx - 5 * k, seat - 22 * k, 10 * k, max(1, k / 2), edge)
+        c.rect(tx - 8 * k, seat - 4 * k, 16 * k, 4 * k, black); c.rect(tx - 8 * k, seat - 4 * k, 16 * k, max(1, k / 2), edge)
+        for side in [-1, 1] {
+            let ax = side < 0 ? tx - 10 * k : tx + 7 * k
+            c.rect(ax, seat - 7 * k, 3 * k, 7 * k, black); c.rect(ax, seat - 7 * k, 3 * k, max(1, k / 2), edge)
+        }
     }
 
     // Maul, the Theed generator complex: a catwalk with no railings over a bottomless shaft. Steel-blue haze above, the
@@ -588,11 +687,16 @@ private enum StarWarsScenes {
         }
     }
 
-    // The Emperor, the Death Star II throne room: the great round window onto Endor and the fleet.
+    // The Emperor, the Death Star II throne room: the great round window onto Endor and the fleet, between lit pillars,
+    // in a wall of dark metal panels. Royal Guards stand in lit alcoves, the turbolift is on the left and a bank of
+    // consoles on the right (full screen: the stairs instead, with guards on them); the throne on its stepped dais, and
+    // a polished floor.
     static func emperorThrone(_ c: PixelCanvas, _ g: Int) {
-        c.rect(0, 0, c.w, g, C(0x1E2026))
-        if Scenes.isTall(c) { emperorWalls(c, g) }
+        let tall = Scenes.isTall(c), s = Scenes.unit(g)
+        emperorPanels(c, g)
+        if tall { emperorWalls(c, g) }
         let cx = c.w / 2, cy = g / 2 + 2, r = max(12, min(g / 2 - 2, c.w / 5))
+        emperorWindowSurround(c, g, cx: cx, cy: cy, r: r)
         c.circle(cx, cy, r + 2, C(0x3A3D46))
         c.circle(cx, cy, r, C(0x04050A))
         c.stars(cy - r, cy + r, density: 18, seed: 6, x0: cx - r, x1: cx + r) { x, y in   // only through the round window
@@ -605,11 +709,44 @@ private enum StarWarsScenes {
                        core: C(0x3A3D46), glow: C(0, 0), coreR: 0.6, glowR: 0.7)
         }
         c.circle(cx, cy, 3, C(0x3A3D46))
-        if Scenes.isTall(c) { emperorStairs(c, g) }
-        // steps and the throne
-        for i in 0..<3 { c.rect(cx - 30 + i * 6, g - 3 - i * 2, 60 - i * 12, 2, C(0x2E3138)) }
+        if tall {
+            emperorStairs(c, g)
+            for side in [-1, 1] {                     // guards on the stairs, two to a side, and one at each foot
+                for f in [0.45, 0.8] {
+                    let gx = side < 0 ? 6 + Int(Double(cx - r - 14) * f) : c.w - 17 - Int(Double(cx - r - 14) * f)
+                    royalGuard(c, x: gx, feet: emperorStairTop(c, g, x: gx + 5), s: 1, flip: side > 0)
+                }
+                royalGuard(c, x: side < 0 ? 14 : c.w - 25, feet: g, s: 1, flip: side > 0)
+                throneConsole(c, g, x: side < 0 ? cx - r + 4 * s : cx + 40 * s, w: r - 44 * s, s: s, seed: side + 5)
+            }
+        } else {
+            for side in [-1, 1] {
+                guardAlcove(c, g, x: side < 0 ? cx - r - 40 * s : cx + r + 23 * s, s: s, flip: side > 0)
+                guardAlcove(c, g, x: side < 0 ? cx - r - 158 * s : cx + r + 141 * s, s: s, flip: side > 0)
+            }
+            turbolift(c, g, x: cx - r - 110 * s, s: s)
+            throneConsole(c, g, x: cx + r + 58 * s, w: 64 * s, s: s, seed: 3)
+        }
+        // the dais: three steps with lit nosings, and the throne seen from behind, turned to the window
+        for i in 0..<3 {
+            let x = cx - 30 + i * 6, w = 60 - i * 12, y = g - 3 - i * 2
+            c.rect(x, y, w, g - y, C(0x2E3138)); c.rect(x, y, w, 1, C(0x5A606C))
+            for k in stride(from: 2, to: w - 1, by: 5) { c.px(x + k, y + 1, C(0x6A86B0, 0.8)) }
+        }
         c.rect(cx - 5, g - 16, 10, 10, C(0x15161A))
-        c.ground(g, C(0x15161A), edge: C(0x4A4E57), speck: C(0x1E2026), seed: 6)
+        c.rect(cx - 5, g - 16, 10, 1, C(0x2E3138)); c.rect(cx - 5, g - 16, 1, 10, C(0x2A2D35)); c.rect(cx, g - 15, 1, 8, C(0x0C0D10))
+        c.rect(cx - 8, g - 10, 3, 3, C(0x1E2026)); c.rect(cx + 5, g - 10, 3, 3, C(0x1E2026))
+        c.px(cx - 7, g - 10, C(0xE0303A)); c.px(cx + 6, g - 10, C(0x3BD15A))
+        // the polished floor: plate seams fanning out from the throne, and the window's cold light on it
+        c.ground(g, C(0x15161A), edge: C(0x4A4E57), speck: C(0x1A1B20), seed: 6)
+        for k in -14...14 where k != 0 {
+            c.glowLine(Double(cx + k * 22 * s), Double(g + 1), Double(cx + k * 34 * s), Double(c.h),
+                       core: C(0x0E0F12), glow: C(0, 0), coreR: 0.5, glowR: 0.6)
+        }
+        for y in (g + 1)..<c.h {
+            let hw = r + (y - g) * 2
+            c.rect(cx - hw, y, hw * 2, 1, C(0x8EA8D0, 0.05)); c.rect(cx - hw / 2, y, hw, 1, C(0x8EA8D0, 0.04))
+        }
     }
 
     static func spaceBattle(_ c: PixelCanvas, _ g: Int, t: Double) {
@@ -1864,13 +2001,13 @@ private enum StarWarsScenes {
         c.rect(0, bottom + 8 * s, c.w, 1, C(0x2A1C12, 0.7))
     }
 
-    // Snoke's throne room: the drapes vanishing into the dark overhead under a black rail, soft spotlights down them,
-    // the throne's high back, and more Praetorian guards along the room.
+    // Snoke's throne room: the drapes vanishing into the dark overhead under a black rail, and soft spotlights
+    // down them.
     static func supremacyHigh(_ c: PixelCanvas, _ g: Int) {
         let s = Scenes.unit(g), fade = g * 2 / 5
         for fx in [0.17, 0.39, 0.61, 0.83] {
             let x = Int(Double(c.w) * fx)
-            for y in (g / 14)..<g { let sp = 3 * s + y / 7; c.rect(x - sp, y, sp * 2, 1, C(0xFF6A58, 0.05)) }
+            for y in (g / 14)..<g { let sp = 3 * s + y / 7; c.rect(x - sp, y, sp * 2, 1, C(0xFF8A70, 0.07)) }
         }
         for y in 0..<fade {
             let k = (Double(fade - y) / Double(fade) * 6).rounded(.up) / 6
@@ -1881,12 +2018,6 @@ private enum StarWarsScenes {
         for x in stride(from: 0, to: c.w, by: 14) {
             for k in 0..<14 { let y = rail + Int(sin(Double(k) / 14 * .pi) * 3); c.px(x + k, y, C(0x2A0408)); c.px(x + k, y - 1, C(0x1A0205)) }
             c.rect(x, rail - 1, 2, 2, C(0x3A3A40))
-        }
-        let tx = c.w / 2
-        c.rect(tx - 9, g - 52, 18, 36, C(0x111114)); c.rect(tx - 9, g - 52, 18, 1, C(0x2E2E36)); c.rect(tx - 9, g - 52, 1, 36, C(0x24242A))
-        for gx in [tx - 76, tx - 112, tx + 70, tx + 106] where gx > 4 && gx < c.w - 10 {
-            c.rect(gx, g - 16, 6, 16, C(0xC8202A)); c.rect(gx + 1, g - 19, 4, 3, C(0xC8202A))
-            c.rect(gx + 6, g - 22, 1, 20, C(0x8A8F9C))
         }
     }
 
@@ -1938,31 +2069,199 @@ private enum StarWarsScenes {
         }
     }
 
-    // The Death Star II throne room: panelled walls, and a ceiling band.
+    // The Death Star II throne room, full screen: a ceiling with its light bars, and a deep ledge across the upper wall
+    // with a row of lit ports under it.
     static func emperorWalls(_ c: PixelCanvas, _ g: Int) {
-        let s = Scenes.unit(g)
-        for x in stride(from: 0, to: c.w, by: 18 * s) { c.rect(x, 0, 1, g, C(0x272A31)) }
-        for y in stride(from: g / 14, to: g, by: 14 * s) { c.rect(0, y, c.w, 1, C(0x272A31)) }
-        c.rect(0, 0, c.w, g / 14, C(0x15161A)); c.rect(0, g / 14, c.w, 1, C(0x3A3D46))
+        let s = Scenes.unit(g), ceil = g / 14
+        c.rect(0, 0, c.w, ceil, C(0x111216)); c.rect(0, ceil, c.w, s, C(0x3A3D46)); c.rect(0, ceil + s, c.w, 2 * s, C(0x0C0D10))
+        for x in stride(from: 4 * s, to: c.w, by: 22 * s) { c.rect(x, 0, s, ceil, C(0x1A1B20)) }   // ceiling ribs
+        for x in stride(from: 12 * s, to: c.w, by: 44 * s) {
+            c.rect(x, ceil - 4 * s, 18 * s, 2 * s, C(0x8E98A8)); c.rect(x + s, ceil - 4 * s, 16 * s, s, C(0xDCE4F0))
+            for k in 0..<(12 * s) { c.rect(x - k / 2, ceil + 3 * s + k, 18 * s + k, 1, C(0xB8C4D8, 0.05 * Double(12 * s - k) / Double(12 * s))) }
+        }
+        let ly = g * 2 / 9, lh = 7 * s
+        c.rect(0, ly, c.w, lh, C(0x26292F)); c.rect(0, ly, c.w, s, C(0x4A4E57)); c.rect(0, ly + lh, c.w, 2 * s, C(0x0E0F12))
+        for x in stride(from: 0, to: c.w, by: 11 * s) { c.rect(x, ly + 2 * s, s, lh - 3 * s, C(0x1A1C21)) }
+        for (i, x) in stride(from: 6 * s, to: c.w, by: 26 * s).enumerated() {
+            let lit = noise(i * 17 + 640) > 0.3
+            c.rect(x, ly + lh + 5 * s, 8 * s, 4 * s, C(0x111216)); c.rect(x, ly + lh + 5 * s, 8 * s, s, C(0x3A3D46))
+            c.rect(x + s, ly + lh + 6 * s, 6 * s, 2 * s, lit ? C(0x5C7AA6) : C(0x23262C))
+            if lit { c.rect(x + 2 * s, ly + lh + 6 * s, 2 * s, s, C(0xA8C4EC)) }
+        }
     }
 
-    /// The two staircases climbing from the edges of the room toward the throne platform.
+    /// The two staircases climbing from the edges of the room toward the throne platform: solid stepped blocks, a light
+    /// pip on every step's riser, panel seams on their faces, and a rail with posts.
     static func emperorStairs(_ c: PixelCanvas, _ g: Int) {
         let cx = c.w / 2, r = max(12, min(g / 2 - 2, c.w / 5))
         let rise = g / 4, x0 = 6, x1 = cx - r - 8, step = 3
         guard x1 - x0 > 40 else { return }
         let run = x1 - x0
         for side in [-1, 1] {
+            var last = g
             for i in 0...(run + 14) {
                 let x = side < 0 ? x0 + i : c.w - 1 - x0 - i
                 let lift = min(rise, i * rise / run)
                 let top = g - lift / step * step - step
-                c.rect(x, top, 1, g - top, C(0x18191E)); c.px(x, top, C(0x3A3D46))
+                c.rect(x, top, 1, g - top, C(0x18191E)); c.px(x, top, C(0x4A4E57))
+                if top < last { c.px(x, top + 1, C(0x6A86B0)) }                  // a riser's light, at each new step
+                last = top
+                if i % 20 == 0, g - top > 8 { c.rect(x, top + 4, 1, g - top - 4, C(0x111216)) }
+                if g - top > 10, i % 4 == 0 { c.px(x, top + 6, C(0x22252B)) }
                 let rail = g - lift - step - 10
-                c.px(x, rail, C(0x3A3D46))
+                c.px(x, rail, C(0x4A4E57)); c.px(x, rail + 1, C(0x22252B))
                 if i % 9 == 0 { c.rect(x, rail, 1, top - rail, C(0x2E3138)) }
             }
         }
+    }
+
+    /// Where a staircase's tread is, at column `x` (the row a figure standing there puts its feet on).
+    static func emperorStairTop(_ c: PixelCanvas, _ g: Int, x: Int) -> Int {
+        let cx = c.w / 2, r = max(12, min(g / 2 - 2, c.w / 5))
+        let rise = g / 4, x0 = 6, x1 = cx - r - 8, run = max(1, x1 - x0)
+        let i = x < cx ? x - x0 : c.w - 1 - x0 - x
+        let lift = min(rise, max(0, i) * rise / run)
+        return g - lift / 3 * 3 - 3
+    }
+
+    /// The throne room's wall: dark metal panels with bevelled seams, grooves running across, lit slots on some panels
+    /// and a band of small cool lights along the wall.
+    static func emperorPanels(_ c: PixelCanvas, _ g: Int) {
+        let s = Scenes.unit(g), pw = 22 * s, band = 22 * s
+        c.rect(0, 0, c.w, g, C(0x1E2026))
+        for x in stride(from: 0, to: c.w, by: pw) {
+            c.rect(x, 0, s, g, C(0x15161A)); c.rect(x + s, 0, s, g, C(0x272A31))
+            c.rect(x + pw / 2, 0, s, g, C(0x1B1D22))
+        }
+        var y = g - band, k = 0
+        while y > 2 * s {
+            c.rect(0, y, c.w, s, C(0x121317)); c.rect(0, y + s, c.w, s, C(0x2C2F37))
+            if k == 1 {                                             // the light band
+                c.rect(0, y + 2 * s, c.w, 2 * s, C(0x17181D))
+                for x in stride(from: 3 * s, to: c.w, by: 9 * s) { c.rect(x, y + 2 * s, 4 * s, s, C(0x6A7A92)) }
+            }
+            for (i, x) in stride(from: 0, to: c.w, by: pw).enumerated() {
+                let n = noise(i * 13 + k * 7 + 600)
+                if n < 0.18 {                                       // a recessed service hatch
+                    c.rect(x + 4 * s, y - band + 5 * s, pw - 8 * s, band - 9 * s, C(0x18191E))
+                    c.rect(x + 4 * s, y - band + 5 * s, pw - 8 * s, s, C(0x111216))
+                    c.rect(x + 4 * s, y - 4 * s - s, pw - 8 * s, s, C(0x2C2F37))
+                }
+                guard n > (Scenes.isTall(c) ? 0.72 : 0.62) else { continue }
+                let sy = y - 7 * s, lw = (6 + Int(noise(i * 13 + k * 7 + 601) * 6)) * s
+                guard sy > 12 * s || x > 80 else { continue }       // never under the window's title bar
+                c.rect(x + 5 * s, sy, lw + 2 * s, 3 * s, C(0x16171B)); c.rect(x + 6 * s, sy + s, lw, s, C(0x5A6478))
+                c.rect(x + 7 * s, sy + s, 3 * s, s, C(0x9EAAC0))
+            }
+            y -= band; k += 1
+        }
+    }
+
+    /// Pillars either side of the round window, and a recessed collar round its rim with a ring of small lights. All of
+    /// it outside the window's own frame, which stays as it was.
+    static func emperorWindowSurround(_ c: PixelCanvas, _ g: Int, cx: Int, cy: Int, r: Int) {
+        let s = Scenes.unit(g)
+        for side in [-1, 1] {
+            let pw = 7 * s, x = side < 0 ? cx - r - 9 * s - pw : cx + r + 9 * s
+            c.rect(x, 0, pw, g, C(0x2A2D35)); c.rect(x, 0, s, g, C(0x3E424C)); c.rect(x + pw - s, 0, s, g, C(0x111216))
+            c.rect(x + 3 * s, 0, s, g, C(0x15161A))
+            for yy in stride(from: 5 * s, to: g - 4 * s, by: 7 * s) { c.rect(x + 3 * s, yy, s, 2 * s, C(0x6A86B0)) }
+        }
+        c.circle(cx, cy, r + 6 * s, C(0x2A2D35)); c.circle(cx, cy, r + 5 * s, C(0x111216))
+        for k in 0..<32 {
+            let a = Double(k) * .pi / 16, rr = Double(r) + 3.5 * Double(s)
+            c.rect(cx + Int((cos(a) * rr).rounded()), cy + Int((sin(a) * rr).rounded()), s, s, k % 2 == 0 ? C(0x7A8AA4) : C(0x3A3D46))
+        }
+    }
+
+    /// One of the Emperor's Royal Guards: red robe to the floor, the tall rounded helmet with its black slit, and a pike.
+    static func royalGuard(_ c: PixelCanvas, x: Int, feet: Int, s: Int, flip: Bool = false) {
+        let rows = [
+            "   hhh    p",
+            "  hHHHh   p",
+            "  hHHHh   p",
+            "  hvvvh   p",
+            "  hHHHh   p",
+            "  hhHhh   p",
+            " rRRRRRr  p",
+            "rRRRRRRRr p",
+            "rRRRRRRRrhp",
+            "rRRrRRRRrhp",
+            "rRRrRRRRr p",
+            "rRRrRRRRr p",
+            "rRRrRRRRr p",
+            "rRRrRRRRr p",
+            "rRRrRRRRRrp",
+            "rRRrRRRRRrp",
+            "rRRrRRRRRrp",
+            "rRRrRRRRRrp",
+            "rRRrRRRRRrp",
+            "rrRrRRRRRrr",
+            "rrrrrrrrrrr",
+        ]
+        let pal: [Character: Px] = ["H": C(0xB8202A), "h": C(0x7E0E16), "v": C(0x0A0A0C), "R": C(0xA0141E), "r": C(0x640A11),
+                                    "p": C(0x8A8F9C)]
+        swSprite(c, x, feet - rows.count * s, s: s, flip: flip, rows, pal)
+    }
+
+    /// String art drawn in blocks of `s` pixels, mirrored left to right when `flip`.
+    static func swSprite(_ c: PixelCanvas, _ x: Int, _ y: Int, s: Int, flip: Bool = false, _ rows: [String], _ pal: [Character: Px],
+                         outline: Px? = nil) {
+        let wide = rows.map(\.count).max() ?? 0
+        if let outline {                                     // a dark edge all round, so it reads against a busy wall
+            for (j, row) in rows.enumerated() {
+                for (i, ch) in row.enumerated() where pal[ch] != nil {
+                    let u = x + (flip ? wide - 1 - i : i) * s, v = y + j * s
+                    for (dx, dy) in [(-1, 0), (1, 0), (0, -1)] { c.rect(u + dx * s, v + dy * s, s, s, outline) }
+                }
+            }
+        }
+        for (j, row) in rows.enumerated() {
+            for (i, ch) in row.enumerated() {
+                guard let p = pal[ch] else { continue }
+                c.rect(x + (flip ? wide - 1 - i : i) * s, y + j * s, s, s, p)
+            }
+        }
+    }
+
+    /// An alcove in the wall, lit from above, with a Royal Guard standing in it.
+    static func guardAlcove(_ c: PixelCanvas, _ g: Int, x: Int, s: Int, flip: Bool) {
+        let w = 17 * s, h = 29 * s, top = g - h
+        c.rect(x - s, top - s, w + 2 * s, h + s, C(0x353943)); c.rect(x, top, w, h, C(0x0D0E11))
+        c.rect(x + w, top, s, h, C(0x2A2D35))
+        c.rect(x + 2 * s, top, w - 4 * s, s, C(0xC8D0DC))
+        for k in 0..<(h - 2 * s) { c.rect(x + s, top + s + k, w - 2 * s, 1, C(0x9EAAC0, 0.13 * Double(h - k) / Double(h))) }
+        royalGuard(c, x: x + 3 * s, feet: g, s: s, flip: flip)
+    }
+
+    /// The turbolift: a framed pair of door leaves, a lit header and a call light.
+    static func turbolift(_ c: PixelCanvas, _ g: Int, x: Int, s: Int) {
+        let w = 28 * s, h = 36 * s, top = g - h
+        c.rect(x - 2 * s, top - 4 * s, w + 4 * s, h + 4 * s, C(0x2E3138)); c.rect(x - 2 * s, top - 4 * s, w + 4 * s, s, C(0x4A4E57))
+        c.rect(x + 3 * s, top - 3 * s, w - 6 * s, 2 * s, C(0x111216)); c.rect(x + 4 * s, top - 3 * s, w - 8 * s, s, C(0x8E98A8))
+        c.rect(x, top, w, h, C(0x3A3E47))
+        c.rect(x + w / 2 - s, top, 2 * s, h, C(0x111216))
+        for side in [0, 1] {
+            let lx = x + side * (w / 2 + s)
+            c.rect(lx + 2 * s, top + 3 * s, w / 2 - 5 * s, h / 2 - 5 * s, C(0x30343C))
+            c.rect(lx + 2 * s, top + h / 2 + 2 * s, w / 2 - 5 * s, h / 2 - 5 * s, C(0x30343C))
+            c.rect(lx + 2 * s, top + h / 2 - s, w / 2 - 5 * s, s, C(0x4A4E57))
+        }
+        c.rect(x + w + 4 * s, top + h / 2, 3 * s, 5 * s, C(0x15161A)); c.rect(x + w + 5 * s, top + h / 2 + s, s, s, C(0xE0303A))
+        c.rect(x + w + 5 * s, top + h / 2 + 3 * s, s, s, C(0x3BD15A))
+    }
+
+    /// A low bank of consoles: slanted tops with small screens and rows of lit keys.
+    static func throneConsole(_ c: PixelCanvas, _ g: Int, x: Int, w: Int, s: Int, seed: Int) {
+        let h = 11 * s, top = g - h
+        c.rect(x, top + 3 * s, w, h - 3 * s, C(0x22252B)); c.rect(x, top + 3 * s, w, s, C(0x353943))
+        c.rect(x + s, top, w - 2 * s, 3 * s, C(0x2E3138)); c.rect(x + s, top, w - 2 * s, s, C(0x4A4E57))
+        for (i, sx) in stride(from: x + 3 * s, to: x + w - 9 * s, by: 12 * s).enumerated() {
+            c.rect(sx, top + 5 * s, 8 * s, 3 * s, C(0x0E1A24)); c.rect(sx + s, top + 6 * s, 5 * s, s, C(0x4AA8E0))
+            let cols = [C(0xE0303A), C(0x3BD15A), C(0xFFD23D), C(0x3A7BEA)]
+            for k in 0..<4 where noise(seed * 31 + i * 5 + k) > 0.35 { c.rect(sx + k * 2 * s, top + s, s, s, cols[(i + k) % 4]) }
+        }
+        for sx in stride(from: x + 4 * s, to: x + w - 2 * s, by: 6 * s) { c.rect(sx, g - 2 * s, 3 * s, s, C(0x15161A)) }
     }
 
     // Geonosis: the planet's ring arching over the sky, droid core ships landed in the haze, and far spires.
