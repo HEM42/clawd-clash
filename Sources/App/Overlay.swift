@@ -1393,9 +1393,20 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 ])
                 let ts = callout.size()
                 let size = NSSize(width: (ts.width + 10 * z).rounded(.up), height: (ts.height + 4 * z).rounded(.up))
-                // On the side away from the speech bubble, level with the head.
+                // On the side away from the speech bubble, level with the head; but never over a neighbour (in a fight
+                // they stand close, and the line read as theirs): the other side if that one's clear, else over the head.
                 let onLeft = bubbleSpan.map { $0.minX > actor.x } ?? (facing > 0)
-                var cx = onLeft ? actor.x - 16 * sc - size.width : actor.x + 16 * sc
+                let leftX = actor.x - 16 * sc - size.width, rightX = actor.x + 16 * sc
+                let bodies = actors.filter { $0.key != actor.key && $0.leaving == nil }
+                    .map { ($0.x, 15 * ($0.isLeader ? ls : cs)) }
+                func clear(_ x0: CGFloat) -> Bool {
+                    x0 >= screenFrame.minX && x0 + size.width <= screenFrame.maxX
+                        && !bodies.contains { $0.0 + $0.1 > x0 && $0.0 - $0.1 < x0 + size.width }
+                }
+                var cx = onLeft ? leftX : rightX
+                if !clear(cx) {
+                    if clear(onLeft ? rightX : leftX) { cx = onLeft ? rightX : leftX } else { overHead = true }
+                }
                 var cy = y + 33 * sc + lift
                 if overHead {
                     // Over the head; once the name tags are placed, it moves up above this one's (see below).

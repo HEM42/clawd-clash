@@ -9,6 +9,11 @@ Its first three universes started as separate apps. Their changelogs from before
 
 Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://github.com/rodclemen/doctor-clawd)), so its whole history is below, from 3.1.0.
 
+## Unreleased
+
+### Fixed
+- **A character's now-and-then line no longer sits on a neighbour.** The line (Harmony's "Blondie Bear!", Cordelia's "Hel-lo?") went beside the head on the side away from the speech bubble, or behind the character, whoever stood there. In a fight the two stand close, so in the window Harmony's line landed over Faith and read as hers. Now it takes the other side if that one is clear of every character, and goes over the head (stacked above the name tag, like Han's and Greedo's lines) when neither is.
+
 ## 3.7.0 (2026-10-18)
 
 ### Added
