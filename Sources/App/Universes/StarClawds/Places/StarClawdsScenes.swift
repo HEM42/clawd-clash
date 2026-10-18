@@ -24,7 +24,7 @@ let starWarsPlaces: [Location: Place] = [
                          moving: { c, g, t in StarWarsScenes.jabbaLamps(c, g, t: t); StarWarsScenes.maxReboBand(c, g, t: t) }),
     .supremacy: Place(name: "Supremacy Throne Room", panel: 0x2A0A0D, still: StarWarsScenes.supremacy),
     .theed: Place(name: "Tweed Generator Complex", panel: 0x141A22, still: StarWarsScenes.theed,
-                  moving: StarWarsScenes.laserGates),
+                  moving: StarWarsScenes.theedLife),
     .emperorThrone: Place(name: "Doom Moon II Throne Room", panel: 0x16181D, still: StarWarsScenes.emperorThrone,
                           moving: StarWarsScenes.spaceBattle),
     .geonosis: Place(name: "Geonoses", panel: 0x2E1712, still: StarWarsScenes.geonosis),
@@ -282,35 +282,309 @@ private enum StarWarsScenes {
         for x in stride(from: 0, to: c.w, by: 7) { c.rect(x + 3, g + 1, 1, c.h - g - 1, C(0x5A0C12, 0.6)) }   // reflections
     }
 
-    // Maul, the Theed generator complex: catwalks, pipes, and the laser gates.
+    // Maul, the Theed generator complex: a catwalk with no railings over a bottomless shaft. Steel-blue haze above, the
+    // melting pit's red glow welling up from far below, the great riveted generator pylons, cross catwalks fading into
+    // the depth, shafts of light from high above, and the laser-gate corridor opening onto the catwalk, its red walls
+    // cycling in the moving layer.
     static func theed(_ c: PixelCanvas, _ g: Int) {
-        c.gradient(0, g, C(0x1A2230), C(0x2E3A4C), bands: 5)
-        if Scenes.isTall(c) { theedDepth(c, g) }
-        for y in [g / 3, g * 2 / 3] {
-            c.rect(0, y, c.w, 3, C(0x48546A)); c.rect(0, y, c.w, 1, C(0x7A889E))
-            for x in stride(from: 4, to: c.w, by: 10) { c.rect(x, y + 3, 1, 5, C(0x3A4456)) }
+        let s = Scenes.unit(g), tall = Scenes.isTall(c)
+        for y in 0..<g { c.rect(0, y, c.w, 1, theedAir(c, g, y)) }
+        // the shaft's far wall: ribs, barely there through the haze
+        for x in stride(from: 9 * s, to: c.w, by: 26 * s) {
+            for y in 0..<g { c.rect(x, y, 2 * s, 1, theedFog(c, g, C(0x0E141E), y, 0.82)) }
         }
-        for x in stride(from: 12, to: c.w, by: 40) {
-            c.rect(x, 0, 4, g, C(0x3A4456)); c.rect(x + 1, 0, 1, g, C(0x5A6A82))
-        }
-        if Scenes.isTall(c) { theedUpperGates(c, g) }
-        // the laser corridor at the back, with its round frames
-        let lx = c.w * 3 / 5
-        for i in 0..<4 { c.rect(lx + i * 12, g - 26, 3, 26, C(0x56647C)) }
-        c.ground(g, C(0x262C38), edge: C(0x8A98B0), speck: C(0x2E3644), seed: 4)
+        let p = theedPylons(c, g)
+        // back to front: the far pylons and catwalks, the light, then the near ones
+        for q in p where q.depth > 0.5 { theedPylon(c, g, q.x, q.w, depth: q.depth) }
+        for wk in theedFarWalks(c, g) { theedWalk(c, g, wk.x0, wk.x1, wk.y, th: wk.th, depth: wk.depth) }
+        if tall { theedHigh(c, g) }
+        theedShafts(c, g)
+        for q in p where q.depth <= 0.5 { theedPylon(c, g, q.x, q.w, depth: q.depth) }
+        for cor in theedCorridors(c, g) { theedCorridor(c, g, cor) }
+        theedDeck(c, g)
     }
 
-    static func laserGates(_ c: PixelCanvas, _ g: Int, t: Double) {
-        let lx = c.w * 3 / 5
-        let on = (t.truncatingRemainder(dividingBy: 4)) < 2.6
-        for i in 0..<3 where on {
-            c.glowLine(Double(lx + i * 12 + 7), Double(g - 25), Double(lx + i * 12 + 7), Double(g - 1),
-                       core: C(0xFFD6D6), glow: C(0xFF2A2A), coreR: 0.4, glowR: 1.6, strength: 0.85)
+    /// The air of the shaft at row y: pale haze high up (tall screens), steel blue, then near black, and the pit's red
+    /// glow at the bottom, where we look past the catwalk's edge and down. Banded, like old pixel art.
+    static func theedAir(_ c: PixelCanvas, _ g: Int, _ y: Int) -> Px {
+        let tall = Scenes.isTall(c)
+        let stops: [(Double, UInt32)] = tall
+            ? [(0, 0x6A88A6), (0.22, 0x38506C), (0.55, 0x1A273A), (0.86, 0x0F1522), (1, 0x7E2C18)]
+            : [(0, 0x2E425C), (0.5, 0x19253A), (0.72, 0x111826), (1, 0x7A2A1A)]
+        let bands = Double(tall ? 36 : 13)
+        let u = (Double(y) / Double(max(1, g)) * bands).rounded(.down) / bands
+        for (i, (a, b)) in zip(stops, stops.dropFirst()).enumerated() where u <= b.0 {
+            var k = (u - a.0) / (b.0 - a.0)
+            if i == stops.count - 2 { k = k * k }   // the glow wells up late, out of the dark
+            return lerp(C(a.1), C(b.1), k)
         }
-        let up = Scenes.isTall(c) && ((t + 1.3).truncatingRemainder(dividingBy: 4)) < 2.6   // the high catwalk's gates, out of step
-        for i in 0..<3 where up {
-            c.glowLine(Double(lx + i * 12 + 7), Double(g / 3 - 25), Double(lx + i * 12 + 7), Double(g / 3 - 1),
-                       core: C(0xFFD6D6), glow: C(0xFF2A2A), coreR: 0.4, glowR: 1.6, strength: 0.6)
+        return C(stops[stops.count - 1].1)
+    }
+
+    /// A colour seen through `depth` of the shaft's air at row y (0 near, 1 lost in it).
+    static func theedFog(_ c: PixelCanvas, _ g: Int, _ col: Px, _ y: Int, _ depth: Double) -> Px {
+        lerp(col, theedAir(c, g, y), depth)
+    }
+
+    /// The generator pylons: two great near ones framing the catwalk, thinner ones further off in the haze.
+    static func theedPylons(_ c: PixelCanvas, _ g: Int) -> [(x: Int, w: Int, depth: Double)] {
+        let s = Scenes.unit(g), tall = Scenes.isTall(c), w = Double(c.w)
+        let near = (tall ? 46 : 30) * s, far = (tall ? 20 : 13) * s
+        return [(Int(w * 0.44), far * 2 / 3, 0.74), (Int(w * 0.27), far, 0.6), (Int(w * 0.7), far, 0.58),
+                (Int(w * 0.04), near, 0.08), (Int(w * 0.83), near, 0.08)]
+    }
+
+    /// How far apart the pylons' rings are.
+    static func theedRingPitch(_ c: PixelCanvas, _ g: Int) -> Int { (Scenes.isTall(c) ? 30 : 18) * Scenes.unit(g) }
+
+    /// One generator pylon rising out of the pit and on past the top: a steel cylinder lit from the upper left, riveted
+    /// rings round it and a cool conduit of light up its face, red from the pit at its foot and lost in haze up high.
+    static func theedPylon(_ c: PixelCanvas, _ g: Int, _ x: Int, _ w: Int, depth: Double) {
+        let s = Scenes.unit(g), tall = Scenes.isTall(c)
+        let lit = C(0x7C92AC), base = C(0x526480), shade = C(0x36435A), dark = C(0x212938), spec = C(0xA8BED6)
+        let bands: [(Double, Px)] = [(0.12, base), (0.24, lit), (0.3, spec), (0.4, lit), (0.62, base), (0.84, shade), (1.01, dark)]
+        func haze(_ y: Int) -> Double {
+            let up = tall ? pow(1 - Double(y) / Double(g), 2) * 0.55 : 0
+            return min(0.92, depth + up)
+        }
+        // the cylinder, a band of tone at a time
+        var from = 0
+        for (edge, col) in bands {
+            let to = min(w, Int((Double(w) * edge).rounded()))
+            if to > from { for y in 0..<g { c.rect(x + from, y, to - from, 1, theedFog(c, g, col, y, haze(y))) } }
+            from = max(from, to)
+        }
+        // the conduit: a slot of cool light up the face
+        let sx = x + w * 55 / 100, sw = max(s, w / 12)
+        for y in 0..<g {
+            c.rect(sx, y, sw, 1, theedFog(c, g, C(0x1A2230), y, haze(y)))
+            c.rect(sx + sw / 3, y, max(1, sw / 3), 1, theedFog(c, g, C(0x8ADCFF), y, haze(y)))
+        }
+        // riveted rings
+        let pitch = theedRingPitch(c, g), band = max(2 * s, w / 10)
+        for y in stride(from: g - pitch / 2, to: -pitch, by: -pitch) {
+            let a = haze(max(0, y))
+            c.rect(x, y - s, w, s, theedFog(c, g, lit, y, a))
+            c.rect(x, y, w, band, theedFog(c, g, shade, y, a))
+            c.rect(x + w * 86 / 100, y, w - w * 86 / 100, band, theedFog(c, g, dark, y, a))
+            c.rect(x, y + band, w, s, theedFog(c, g, dark, y, a))
+            if w >= 16 * s {
+                for rx in stride(from: x + 3 * s, to: x + w * 84 / 100, by: 5 * s) { c.rect(rx, y + band / 2, s, s, theedFog(c, g, lit, y, a)) }
+            }
+        }
+        // the pit's light on its foot
+        let glow = tall ? g / 7 : g / 4
+        for k in 0..<glow {
+            let y = g - glow + k, f = Double(k) / Double(glow)
+            c.rect(x, y, w * 2 / 3, 1, C(0xFF5A2A, 0.22 * f * f * (1 - depth)))
+            c.rect(x + w * 2 / 3, y, w - w * 2 / 3, 1, C(0xFF5A2A, 0.12 * f * f * (1 - depth)))
+        }
+    }
+
+    /// Where the lamps sit on the near pylons (lit in the moving layer).
+    static func theedLamps(_ c: PixelCanvas, _ g: Int) -> [(x: Int, y: Int)] {
+        let s = Scenes.unit(g), pitch = theedRingPitch(c, g)
+        var out: [(x: Int, y: Int)] = []
+        for q in theedPylons(c, g) where q.depth <= 0.5 {
+            for (k, y) in stride(from: g - pitch / 2 - pitch, to: 0, by: -pitch * 2).enumerated() where k < 4 {
+                out.append((q.x + q.w * 72 / 100, y + s))
+            }
+        }
+        return out
+    }
+
+    /// The cross catwalks further off, crossing the shaft in pieces, thinner and hazier the further they are.
+    static func theedFarWalks(_ c: PixelCanvas, _ g: Int) -> [(x0: Int, x1: Int, y: Int, th: Int, depth: Double)] {
+        let s = Scenes.unit(g), w = Double(c.w)
+        if Scenes.isTall(c) {
+            return [(Int(w * 0.5), Int(w * 1.02), g * 12 / 100, 2 * s, 0.76), (Int(w * 0.3), Int(w * 0.9), g * 53 / 100, 2 * s, 0.72),
+                    (Int(w * 0.6), Int(w * 1.02), g * 84 / 100, 3 * s, 0.64)]
+        }
+        return [(Int(w * 0.12), Int(w * 0.4), g * 50 / 100, 2, 0.7), (Int(w * 0.62), Int(w * 0.95), g * 58 / 100, 2, 0.72),
+                (-4, Int(w * 0.47), g * 24 / 100, 3, 0.45), (Int(w * 0.6), c.w + 4, g * 24 / 100, 3, 0.45)]
+    }
+
+    /// One catwalk with no railings: a deck lit along its top edge, a truss of struts under it, and the pit's red on
+    /// its underside. Its ends stop dead over the drop.
+    static func theedWalk(_ c: PixelCanvas, _ g: Int, _ x0: Int, _ x1: Int, _ y: Int, th: Int, depth: Double) {
+        let s = Scenes.unit(g), w = x1 - x0
+        guard w > 0 else { return }
+        c.rect(x0, y, w, s, theedFog(c, g, C(0xA6BCD2), y, depth))
+        c.rect(x0, y + s, w, th, theedFog(c, g, C(0x4E5C72), y, depth))
+        c.rect(x0, y + s + th, w, s, theedFog(c, g, C(0x222A36), y, depth))
+        let truss = th + 2 * s, strut = theedFog(c, g, C(0x343F50), y + truss, depth)
+        for x in stride(from: x0, to: x1, by: truss * 2) {
+            for k in stride(from: 0, to: truss, by: s) {
+                c.rect(x + k, y + 2 * s + th + k, s, s, strut)
+                c.rect(x + truss * 2 - k - s, y + 2 * s + th + k, s, s, strut)
+            }
+        }
+        c.rect(x0, y + 2 * s + th + truss, w, s, strut)
+        c.rect(x0, y + 3 * s + th + truss, w, s, C(0xFF5A2A, 0.25 * (1 - depth)))
+        for x in stride(from: x0 + 3 * s, to: x1, by: 9 * s) { c.rect(x, y + s + th / 2, s, s, theedFog(c, g, C(0x8296AE), y, depth)) }
+    }
+
+    /// Shafts of light falling from high above, slanting down across the shaft.
+    static func theedShafts(_ c: PixelCanvas, _ g: Int) {
+        let s = Scenes.unit(g), tall = Scenes.isTall(c)
+        let shafts: [(x: Double, w: Int)] = tall ? [(0.12, 22), (0.36, 12), (0.5, 30), (0.74, 16)] : [(0.16, 16), (0.52, 22)]
+        for sh in shafts {
+            let x0 = Int(Double(c.w) * sh.x), wd = sh.w * s
+            for y in 0..<g {
+                let f = 1 - Double(y) / Double(g)
+                let a = (f * 3).rounded(.up) / 3 * (tall ? 0.09 : 0.07)
+                let x = x0 + y * 2 / 5
+                c.rect(x, y, wd, 1, C(0xC8DCF0, a))
+                c.rect(x + wd / 4, y, wd / 2, 1, C(0xE0ECF8, a * 0.6))
+            }
+        }
+    }
+
+    typealias TheedCorridor = (cx: Int, floor: Int, w: Int, h: Int, depth: Double, phase: Double)
+
+    /// The laser-gate corridors: the big one opening onto our catwalk, and on tall screens a second one up on a high
+    /// catwalk, out of step with it.
+    static func theedCorridors(_ c: PixelCanvas, _ g: Int) -> [TheedCorridor] {
+        let s = Scenes.unit(g)
+        if Scenes.isTall(c) {
+            return [(c.w * 56 / 100, g, 46 * s, 60 * s, 0, 0), (c.w * 28 / 100, g * 64 / 100, 28 * s, 36 * s, 0.25, 1.7)]
+        }
+        return [(c.w * 56 / 100, g, 32, 44, 0, 0)]
+    }
+
+    /// Gate k of a corridor, seen end on: an octagonal frame shrinking towards the far end (0 is the mouth).
+    static func theedGate(_ cor: TheedCorridor, _ k: Int) -> (l: Int, t: Int, r: Int, b: Int, ch: Int) {
+        let f = pow(0.7, Double(k)), vy = Double(cor.floor) - Double(cor.h) * 0.5, hw = Double(cor.w) / 2
+        let l = Int((Double(cor.cx) - hw * f).rounded()), r = Int((Double(cor.cx) + hw * f).rounded())
+        let t = Int((vy - Double(cor.h) * 0.5 * f).rounded()), b = Int((vy + Double(cor.h) * 0.5 * f).rounded())
+        return (l, t, r, b, max(1, Int(Double(cor.w) / 4.5 * f)))
+    }
+
+    /// An octagon, filled, inset by i.
+    static func theedOcta(_ c: PixelCanvas, _ o: (l: Int, t: Int, r: Int, b: Int, ch: Int), inset i: Int = 0, _ col: Px) {
+        let l = o.l + i, t = o.t + i, r = o.r - i, b = o.b - i, ch = max(0, o.ch - i / 2)
+        guard r > l, b > t else { return }
+        for y in t..<b {
+            let n = max(0, ch - (y - t), ch - (b - 1 - y))
+            c.rect(l + n, y, r - l - n * 2, 1, col)
+        }
+    }
+
+    /// How thick gate k's frame is.
+    static func theedRing(_ k: Int, _ s: Int) -> Int { k < 2 ? 2 * s : s }
+
+    /// A laser-gate corridor's mouth: a riveted steel housing on the catwalk, and inside it the frames of the gates
+    /// running away to the melting pit's red at the far end.
+    static func theedCorridor(_ c: PixelCanvas, _ g: Int, _ cor: TheedCorridor) {
+        let s = Scenes.unit(g), d = cor.depth
+        func fog(_ col: UInt32, _ y: Int) -> Px { theedFog(c, g, C(col), y, d) }
+        let hx0 = cor.cx - cor.w / 2 - 11 * s, hx1 = cor.cx + cor.w / 2 + 11 * s, top = cor.floor - cor.h - 8 * s
+        let hw = hx1 - hx0
+        // the housing
+        c.rect(hx0, top, hw, cor.floor - top, fog(0x3E4A5E, top))
+        c.rect(hx0, top, hw, s, fog(0xA6BCD2, top))
+        c.rect(hx0, top + s, hw, 3 * s, fog(0x5A6880, top))
+        c.rect(hx0, top + 4 * s, hw, s, fog(0x222A36, top))
+        c.rect(hx0, top, s, cor.floor - top, fog(0x6A7A92, top))
+        c.rect(hx1 - 2 * s, top, 2 * s, cor.floor - top, fog(0x283040, top))
+        for x in [hx0 + 4 * s, hx1 - 6 * s] { c.rect(x, top + 5 * s, s, cor.floor - top - 5 * s, fog(0x2C3646, top)) }
+        for x in stride(from: hx0 + 3 * s, to: hx1 - 2 * s, by: 5 * s) { c.rect(x, top + 2 * s, s, s, fog(0xA6BCD2, top)) }
+        // warning lamps over the mouth (lit in the moving layer)
+        let m = theedGate(cor, 0)
+        for x in [m.l - s, m.r - s] { c.rect(x, m.t - 4 * s, 2 * s, 2 * s, fog(0x3A1614, top)) }
+        // the frames running away from us
+        for k in 0...5 {
+            let o = theedGate(cor, k), f = Double(k) / 5, ring = theedRing(k, s)
+            theedOcta(c, o, theedFog(c, g, lerp(C(0x8496AE), C(0x101620), f), o.t, d))
+            theedOcta(c, o, inset: ring, theedFog(c, g, lerp(C(0x1E2636), C(0x090C14), f), o.t, d))
+            // the floor inside, between this frame and the next, a shade lighter
+            if k < 5 {
+                let n = theedGate(cor, k + 1), fl = theedFog(c, g, lerp(C(0x2A3446), C(0x10141C), f), o.b, d)
+                for y in n.b..<max(n.b, o.b - ring) {
+                    let u = Double(y - n.b) / Double(max(1, o.b - n.b))
+                    let half = Int(Double(n.r - n.l) / 2 + Double((o.r - o.l) - (n.r - n.l)) / 2 * u) - ring
+                    c.rect(cor.cx - half, y, half * 2, 1, fl)
+                }
+            }
+            // the emitters down both sides of each gate
+            if k >= 1 && k <= 4 {
+                let eh = (o.b - o.t) / 3, ey = o.t + eh
+                c.rect(o.l + ring, ey, s, eh, fog(0x5A1A16, ey))
+                c.rect(o.r - ring - s, ey, s, eh, fog(0x5A1A16, ey))
+            }
+        }
+        theedOcta(c, theedGate(cor, 6), fog(0x8A3020, cor.floor))   // the pit room at the far end, red-lit
+        theedOcta(c, theedGate(cor, 7), fog(0xC8502A, cor.floor))
+    }
+
+    /// Our catwalk: plain dark steel plates with a lit edge, quiet so the crew reads on it.
+    static func theedDeck(_ c: PixelCanvas, _ g: Int) {
+        let s = Scenes.unit(g), rows = c.h - g
+        c.rect(0, g, c.w, rows, C(0x262E3A))
+        c.rect(0, g, c.w, s, C(0x9AAEC6))
+        c.rect(0, g + s, c.w, s, C(0x3C4858))
+        for x in stride(from: 0, to: c.w, by: 40 * s) { c.rect(x, g + 2 * s, s, rows - 2 * s, C(0x1A2029)) }
+        for x in stride(from: 6 * s, to: c.w, by: 5 * s) { c.rect(x, g + 4 * s, s, s, C(0x2E3846)) }
+        if rows > 8 * s { for x in stride(from: 3 * s, to: c.w, by: 5 * s) { c.rect(x, g + 7 * s, s, s, C(0x2E3846)) } }
+        // the corridor's red on the plates in front of it
+        let o = theedGate(theedCorridors(c, g)[0], 0)
+        c.rect(o.l, g + s, o.r - o.l, s, C(0x7A3A30))
+    }
+
+    // Tall screens: the shaft climbing into the haze with catwalks stacked up it (the second laser corridor stands on
+    // the lowest of them).
+    static func theedHigh(_ c: PixelCanvas, _ g: Int) {
+        let s = Scenes.unit(g), w = Double(c.w)
+        let levels: [(y: Int, th: Int, depth: Double, spans: [(Double, Double)])] = [
+            (g * 24 / 100, 3 * s, 0.5, [(-0.02, 0.34)]),
+            (g * 40 / 100, 4 * s, 0.34, [(0.26, 1.02)]),
+            (g * 64 / 100, 4 * s, 0.22, [(-0.02, 0.5), (0.66, 1.02)]),
+        ]
+        for lv in levels {
+            for sp in lv.spans { theedWalk(c, g, Int(w * sp.0), Int(w * sp.1), lv.y, th: lv.th, depth: lv.depth) }
+        }
+    }
+
+    // The gates cycling on and off in a rolling wave down the corridor, the lamps on the pylons and over the mouth
+    // blinking, and a few sparks rising out of the pit.
+    static func theedLife(_ c: PixelCanvas, _ g: Int, t: Double) {
+        let s = Scenes.unit(g), tall = Scenes.isTall(c)
+        for (i, cor) in theedCorridors(c, g).enumerated() {
+            let fade = 1 - cor.depth * 0.6
+            var front = 0.0
+            for k in 1...4 {
+                let ph = (t + cor.phase + Double(k) * 0.35).truncatingRemainder(dividingBy: 5)
+                guard ph < 3.2 else { continue }
+                let lv = (ph < 0.15 || ph > 3.05 ? 0.5 : 1) * fade
+                if k == 1 { front = lv }
+                let o = theedGate(cor, k), r = theedRing(k, s)
+                theedOcta(c, o, inset: r, C(0xFF3A1E, 0.2 * lv))
+                for y in stride(from: o.t + r + s, to: o.b - r, by: 3 * s) {
+                    c.rect(o.l + r + o.ch / 2, y, o.r - o.l - 2 * r - o.ch, s, C(0xFF6A3A, 0.14 * lv))
+                }
+                let eh = (o.b - o.t) / 3, ey = o.t + eh
+                c.rect(o.l + r, ey, s, eh, C(0xFFC090, lv))
+                c.rect(o.r - r - s, ey, s, eh, C(0xFFC090, lv))
+            }
+            let m = theedGate(cor, 0)
+            if front > 0 { c.rect(m.l, cor.floor - s, m.r - m.l, s, C(0xFF4A20, 0.25 * front)) }
+            if Int(t * 1.5 + Double(i)) % 2 == 0 {
+                for x in [m.l - s, m.r - s] { c.rect(x, m.t - 4 * s, 2 * s, 2 * s, C(0xFF4030, fade)) }
+            }
+        }
+        for (i, l) in theedLamps(c, g).enumerated() {
+            let period = 1.6 + noise(i * 5 + 300) * 1.8
+            guard (t + noise(i * 5 + 301) * period).truncatingRemainder(dividingBy: period) < period * 0.55 else { continue }
+            c.rect(l.x, l.y, 2 * s, s, i % 3 == 0 ? C(0xFF5040) : C(0xFFB040))
+        }
+        // sparks rising out of the pit, fading as they climb
+        let band = tall ? g / 5 : g / 3
+        for i in 0..<(tall ? 10 : 5) {
+            let speed = 8 + noise(i * 7 + 400) * 10
+            let u = (t * speed / Double(band) + noise(i * 7 + 401)).truncatingRemainder(dividingBy: 1)
+            let x = Int(noise(i * 7 + 402) * Double(c.w)) + Int(sin(t * 1.3 + Double(i)) * 3) * s
+            let y = g - 2 * s - Int(u * Double(band))
+            c.rect(x, y, s, s, C(0xFFB060, 0.9 * (1 - u)))
         }
     }
 
@@ -1614,28 +1888,6 @@ private enum StarWarsScenes {
             c.rect(gx, g - 16, 6, 16, C(0xC8202A)); c.rect(gx + 1, g - 19, 4, 3, C(0xC8202A))
             c.rect(gx + 6, g - 22, 1, 20, C(0x8A8F9C))
         }
-    }
-
-    // The Theed generator: generator pods in the far wall and dimmer catwalks between the near ones.
-    static func theedDepth(_ c: PixelCanvas, _ g: Int) {
-        let s = Scenes.unit(g)
-        for fx in [0.17, 0.47, 0.8] {
-            let cx = Int(Double(c.w) * fx), r = 11 * s
-            for dx in -r...r { c.rect(cx + dx, 0, 1, g, lerp(C(0x324058), C(0x1C2432), pow(abs(Double(dx)) / Double(r), 2))) }
-            for y in stride(from: 6, to: g, by: 16 * s) { c.rect(cx - r, y, r * 2 + 1, s, C(0x18202C)) }
-            c.rect(cx, 0, s, g, C(0x7AC8FF, 0.16))
-        }
-        for y in stride(from: g / 6, to: g - 12, by: max(8, g / 6)) where abs(y - g / 3) > 6 && abs(y - g * 2 / 3) > 6 {
-            c.rect(0, y, c.w, 2 * s, C(0x3A465C)); c.rect(0, y - 4 * s, c.w, 1, C(0x323C50))
-            for x in stride(from: 2, to: c.w, by: 7 * s) { c.rect(x, y - 4 * s, 1, 4 * s, C(0x323C50)) }
-        }
-    }
-
-    /// A second run of laser gates up on the high catwalk.
-    static func theedUpperGates(_ c: PixelCanvas, _ g: Int) {
-        let lx = c.w * 3 / 5, y = g / 3
-        for i in 0..<4 { c.rect(lx + i * 12, y - 26, 3, 26, C(0x4E5A72)) }
-        c.rect(lx - 2, y - 28, 43, 2, C(0x4E5A72))
     }
 
     // The Death Star corridor: a ceiling with its light slots, a conduit along the wall and a blast door.
