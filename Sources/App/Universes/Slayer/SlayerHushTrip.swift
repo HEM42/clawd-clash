@@ -9,10 +9,13 @@ extension SlayerTrip {
     /// to a cold grey (0–0.2) and a small wooden box fades in on the floor, its lid open (0.1–0.2); three Gentlemen
     /// float across from left to right in black silhouette, their pale heads and grins just showing, bobbing politely
     /// (0.08–0.8); little glowing voices rise out of the scene and drift in arcs down into the box (0.18–0.58); the lid
-    /// snaps shut with a jolt (0.6–0.63) and everything goes dark and still round it: silence (0.63–0.78); then the lid
-    /// lifts, light spills out (0.78–0.84) and the new place opens out of the box to fill the frame in full colour, the
-    /// voices flying free again (0.82–0.98). The old place is greyed with a saturation blend, not pixel by pixel; the
-    /// box, the voices and the Gentlemen (their own sprite, as silhouettes) are pixel art, drawn into a bitmap about 180
+    /// snaps shut with a jolt (0.6–0.63) and everything goes dark and still round it: silence (0.63–0.74). Then, like a
+    /// jack-in-the-box, the lid flips open and light bursts out (0.74–0.77); the new place, a small framed picture,
+    /// springs up out of the box on an arc, stretching as it shoots up and wobbling, the voices bursting out with it
+    /// (0.75–0.85); and from the top of the arc it lunges at you, growing fast past the frame to about 108% and settling
+    /// back to fill it exactly, with a little shake as it lands, while the grey old place and the box drop away behind
+    /// it (0.85–1). The old place is greyed with a saturation blend, not pixel by pixel; the box, the voices, the picture
+    /// while it tilts and the Gentlemen (their own sprite, as silhouettes) are pixel art, drawn into a bitmap about 180
     /// pixels tall and scaled up without smoothing, with a little grain.
     func drawHush(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
         guard k > 0 else { ctx.draw(old, in: r); return }
@@ -26,36 +29,31 @@ extension SlayerTrip {
         art.interpolationQuality = .none
         let W = r.width / px, H = r.height / px
         let drain = CGFloat(Self.ease(Self.span(k, 0, 0.2)))
-        let shut = k >= 0.6 && k < 0.8
-        let lid: CGFloat = k < 0.6 ? 1 : (k < 0.63 ? 1 - CGFloat(Self.span(k, 0.6, 0.63)) : CGFloat(Self.ease(Self.span(k, 0.78, 0.84))))
-        let silence = CGFloat(Self.ease(Self.span(k, 0.6, 0.68))) * (1 - CGFloat(Self.span(k, 0.8, 0.9)))
-        let bloom = CGFloat(Self.ease(Self.span(k, 0.82, 0.98)))     // the new place opening out of the box
+        let shut = k >= 0.6 && k < 0.74
+        let flip = CGFloat(1 - pow(1 - Self.span(k, 0.74, 0.765), 3))   // the lid flying open, fast
+        let lid: CGFloat = k < 0.6 ? 1 : (k < 0.63 ? 1 - CGFloat(Self.span(k, 0.6, 0.63)) : flip)
+        let silence = CGFloat(Self.ease(Self.span(k, 0.6, 0.68)))
+        let burst = CGFloat(Self.span(k, 0.74, 0.77)) * (1 - CGFloat(Self.span(k, 0.85, 0.9)))
+        let drop = CGFloat(pow(Self.span(k, 0.85, 0.97), 2))          // the old place and the box falling away
+        let fall = (drop * H * 1.2).rounded()
 
         // The box: small and square on the floor in the middle, in wood and brass.
         let u = max(1, (H / 64).rounded())
         let bw = 16 * u, bh = 9 * u
-        let jolt: CGFloat = k >= 0.62 && k < 0.66 ? u : 0
-        let box = CGRect(x: (W / 2 - bw / 2).rounded(), y: (H * 0.06).rounded() + jolt, width: bw, height: bh)
+        let jolt: CGFloat = (k >= 0.62 && k < 0.66) || (k >= 0.74 && k < 0.76) ? u : 0
+        let box = CGRect(x: (W / 2 - bw / 2).rounded(), y: (H * 0.06).rounded() + jolt - fall, width: bw, height: bh)
         let mouth = CGRect(x: box.minX + u, y: box.maxY - u, width: bw - 2 * u, height: u)
 
-        // The old place, its colour draining to a cold grey and going dark in the silence; then the new one opening
-        // out of the box's mouth.
-        ctx.draw(old, in: r)
+        // The old place, its colour draining to a cold grey and going dark in the silence, dropping away at the end.
+        if drop > 0 { ctx.setFillColor(rgb(0x05070C)); ctx.fill(r) }
+        let oldRect = r.offsetBy(dx: 0, dy: -fall * px)
         ctx.saveGState()
-        ctx.setBlendMode(.saturation); ctx.setFillColor(rgb(0x808080, drain)); ctx.fill(r)
+        ctx.clip(to: r)
+        ctx.draw(old, in: oldRect)
+        ctx.setBlendMode(.saturation); ctx.setFillColor(rgb(0x808080, drain)); ctx.fill(oldRect)
         ctx.setBlendMode(.normal)
-        ctx.setFillColor(rgb(0x0C1220, 0.3 * drain + 0.55 * silence)); ctx.fill(r)
+        ctx.setFillColor(rgb(0x0C1220, 0.3 * drain + 0.55 * silence)); ctx.fill(oldRect)
         ctx.restoreGState()
-        if bloom > 0 {
-            let full = CGRect(x: 0, y: 0, width: W, height: H)
-            let o = CGRect(x: mouth.minX + (full.minX - mouth.minX) * bloom, y: mouth.maxY + (full.minY - mouth.maxY) * bloom,
-                           width: mouth.width + (full.width - mouth.width) * bloom, height: (full.height) * bloom)
-            ctx.saveGState()
-            ctx.clip(to: CGRect(x: r.minX + o.minX.rounded() * px, y: r.minY + o.minY.rounded() * px,
-                                width: o.width.rounded() * px, height: o.height.rounded() * px))
-            ctx.draw(new, in: r)
-            ctx.restoreGState()
-        }
 
         // The Gentlemen, floating across in silhouette, one after another.
         if let sprites = hushGentlemen, k > 0.06, k < 0.86 {
@@ -73,14 +71,13 @@ extension SlayerTrip {
             }
         }
 
-        // The box, fading in, its lid open, snapping shut, lifting again; gone as the new place opens out of it.
-        let boxIn = CGFloat(Self.span(k, 0.1, 0.2)) * (1 - CGFloat(Self.span(k, 0.86, 0.96)))
-        if boxIn > 0 {
+        // The box, fading in, its lid open, snapping shut, flying open again; falling away with the old place.
+        let boxIn = CGFloat(Self.span(k, 0.1, 0.2))
+        if boxIn > 0 && box.maxY + 12 * u > 0 {
             art.saveGState()
             art.setAlpha(boxIn)
             art.beginTransparencyLayer(auxiliaryInfo: nil)
-            hushBox(art, box, u: u, lid: lid, glow: shut ? 0.5 + 0.5 * CGFloat(noise(Int(k * 12))) : 0,
-                    light: CGFloat(Self.span(k, 0.78, 0.84)))
+            hushBox(art, box, u: u, lid: lid, glow: shut ? 0.5 + 0.5 * CGFloat(noise(Int(k * 12))) : 0, light: burst)
             art.endTransparencyLayer()
             art.restoreGState()
         }
@@ -97,18 +94,81 @@ extension SlayerTrip {
             let y = from.y + (target.y - from.y) * go + CGFloat(sin(Double(go) * .pi)) * H * 0.12
             hushVoice(art, x: x, y: y, u: u, warm: i % 2 == 0, alpha: appear * (go > 0.85 ? (1 - go) / 0.15 : 1))
         }
-        let free = CGFloat(Self.span(k, 0.82, 0.98))
+        let free = CGFloat(1 - pow(1 - Self.span(k, 0.75, 0.9), 2))
         if free > 0 && free < 1 {
-            for i in 0..<9 {
-                let a = 0.4 + 2.3 * Double(i) / 8
-                let dist = (H * 0.15 + H * 0.7 * CGFloat(noise(i * 5 + 60))) * free
-                hushVoice(art, x: target.x + CGFloat(cos(a)) * dist * 1.4, y: target.y + CGFloat(sin(a)) * dist,
-                          u: u, warm: i % 2 == 1, alpha: 1 - free)
+            let home = CGPoint(x: W / 2, y: (H * 0.06).rounded() + bh)
+            for i in 0..<11 {
+                let a = 0.25 + 2.65 * Double(i) / 10
+                let dist = (H * 0.2 + H * 0.8 * CGFloat(noise(i * 5 + 60))) * free
+                hushVoice(art, x: home.x + CGFloat(cos(a)) * dist * 1.5, y: home.y + CGFloat(sin(a)) * dist,
+                          u: u, warm: i % 2 == 1, alpha: 1 - CGFloat(Self.span(k, 0.8, 0.9)))
             }
         }
-        hushGrain(art, k: k, W: W, H: H, amount: 1 - bloom)
+
+        // The new place, a framed picture: springing up out of the box on an arc, then lunging at you.
+        let spring = Self.span(k, 0.75, 0.85), lunge = Self.span(k, 0.85, 1)
+        var card: (x: CGFloat, y: CGFloat, scale: CGFloat, sx: CGFloat, sy: CGFloat, tilt: CGFloat, shake: CGPoint)? = nil
+        if spring > 0 {
+            let s0 = max(bw * 1.3, W * 0.17) / W                         // its size at the top of the arc
+            let mouthY = (H * 0.06).rounded() + bh, topY = H * 0.6
+            // Shooting up, past the top and back (an overshoot), stretched tall while it's fast, wobbling.
+            let y0 = mouthY + (topY - mouthY) * hushBackOut(spring, 2.2)
+            let x0 = W / 2 + W * 0.02 * CGFloat(sin(.pi * spring))
+            let stretch = 1 + 0.4 * CGFloat(sin(.pi * min(1, spring * 1.4))) * CGFloat(1 - spring)
+            let wobble = { (s: Double) in 0.22 * CGFloat(sin(s * 2 * .pi * 1.25)) * CGFloat(1 - 0.4 * s) }
+            if lunge <= 0 {
+                let grow = CGFloat(1 - pow(1 - spring, 2))
+                card = (x0, y0, s0 * (0.35 + 0.65 * grow), 1 / stretch, stretch, wobble(spring), .zero)
+            } else {
+                // The leap: fast, past the frame and back, settling exactly on it; a shake as it lands.
+                let move = CGFloat(Self.ease(min(1, lunge * 1.5)))
+                let land = Self.span(lunge, 0.4, 0.75)
+                let amp = land > 0 && land < 1 ? 2 * u * CGFloat(1 - land) : 0
+                let f = Int(k * 60)
+                card = (x0 + (W / 2 - x0) * move, topY + (H / 2 - topY) * move, s0 + (1 - s0) * hushBackOut(lunge, 1.7), 1, 1,
+                        wobble(1) * CGFloat(pow(1 - Self.span(lunge, 0, 0.55), 2)),
+                        CGPoint(x: ((CGFloat(noise(f * 3)) * 2 - 1) * amp).rounded(), y: ((CGFloat(noise(f * 3 + 1)) * 2 - 1) * amp).rounded()))
+            }
+        }
+        // While it tilts it's drawn in the art, on the grid, framed; once it's square, as it is, over everything.
+        let squared = lunge >= 0.55
+        if let c = card, !squared {
+            let halo = burst * CGFloat(1 - Self.span(lunge, 0, 0.25))
+            if halo > 0 {
+                let hw = W * c.scale * 0.75 + 4 * u, hh = H * c.scale * 0.9 + 4 * u
+                art.setFillColor(rgb(0xFFE8A0, 0.22 * halo))
+                art.fillEllipse(in: CGRect(x: (c.x - hw).rounded(), y: (c.y - hh).rounded(), width: (hw * 2).rounded(),
+                                           height: (hh * 2).rounded()))
+            }
+            art.saveGState()
+            art.translateBy(x: c.x + c.shake.x, y: c.y + c.shake.y)
+            art.rotate(by: c.tilt)
+            art.scaleBy(x: c.scale * c.sx, y: c.scale * c.sy)
+            let edge = u / (c.scale * min(c.sx, c.sy))                  // one unit of the frame, whatever its size
+            let pic = CGRect(x: -W / 2, y: -H / 2, width: W, height: H)
+            art.setFillColor(rgb(0x1A1410)); art.fill(pic.insetBy(dx: -3 * edge, dy: -3 * edge))
+            art.setFillColor(rgb(0xEDE6D2)); art.fill(pic.insetBy(dx: -2 * edge, dy: -2 * edge))
+            art.draw(new, in: pic)
+            art.restoreGState()
+        }
+        hushGrain(art, k: k, W: W, H: H, amount: 1 - CGFloat(Self.span(k, 0.85, 0.95)))
         Self.blit(art, onto: ctx, width: w, height: h, px: px, in: r)
+        if let c = card, squared {
+            ctx.saveGState()
+            ctx.clip(to: r)
+            ctx.translateBy(x: r.minX + (c.x + c.shake.x) * px, y: r.minY + (c.y + c.shake.y) * px)
+            ctx.scaleBy(x: c.scale, y: c.scale)
+            ctx.interpolationQuality = .none
+            ctx.draw(new, in: CGRect(x: -r.width / 2, y: -r.height / 2, width: r.width, height: r.height))
+            ctx.restoreGState()
+        }
     }
+}
+
+/// An ease out that shoots past 1 and comes back (`c` sets how far past), ending exactly on 1.
+private func hushBackOut(_ t: Double, _ c: Double) -> CGFloat {
+    let q = t - 1
+    return CGFloat(1 + (c + 1) * q * q * q + c * q * q)
 }
 
 /// The Gentlemen's own sprite, standing: as it is, and all one black, for drawing them in silhouette.
