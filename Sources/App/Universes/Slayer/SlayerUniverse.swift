@@ -23,4 +23,16 @@ struct SlayerUniverse: UniverseModule {
 
     /// A compacted "Tabula Rasa" eight: Willow's forgetting spell, cast and broken.
     func compactionLook(k: Double, cast: Cast) -> CompactionLook? { SlayerTabulaRasa(k: k, cast: cast) }
+    var rides: [Ride] { [.schoolBus, .deSoto, .gtx] }
+}
+
+extension Ride {
+    /// The school bus from the "Chosen" escape: it drives in, its door up front by the bonnet, 11 right of centre.
+    static let schoolBus = Ride(key: "schoolBus", arrival: .drives, boardingOffset: -11) { c, ramp, engines, _, _ in
+        slayerSchoolBus(c, ramp: ramp, lit: engines)
+    }
+    /// Spyke's DeSoto, its windows painted over: it drives in.
+    static let deSoto = Ride(key: "deSoto", arrival: .drives) { c, ramp, engines, _, _ in slayerDeSoto(c, ramp: ramp, lit: engines) }
+    /// Angstel's convertible: it drives in.
+    static let gtx = Ride(key: "gtx", arrival: .drives) { c, ramp, engines, _, _ in slayerGTX(c, ramp: ramp, lit: engines) }
 }

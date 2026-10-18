@@ -76,17 +76,27 @@ extension Cast {
 }
 
 /// The ships that come to pick someone up (`Theme.ride`).
-enum Ride {
-    case falcon, quinjet, milano, javelin, batwing, tardis, sedan, helicopter, saucer, delorean, moonBike, mothership, jeep, eagle
-    case schoolBus, deSoto, gtx
+/// Something that comes to pick a character up when its agent is done (`Theme.ride`): a ship, a car, the TARDIS, the
+/// Great Eagle. Each universe declares its own (`static let` in its folder) and lists them (`UniverseModule.rides`).
+/// Drawn nose to the right on a `Ride.width`×`canvasHeight` canvas, sitting on its bottom row when landed.
+struct Ride: Hashable {
+    enum Arrival { case flies, drives, materialises }
+    /// Its name, which is what makes two the same.
+    let key: String
+    /// Flies in and away; drives in along the ground and away again; or fades in and out where it stands (the TARDIS).
+    var arrival: Arrival = .flies
+    /// The height of its canvas: `Ride.height`, taller for something that stands rather than flies.
+    var canvasHeight = Ride.height
+    /// How far left of centre (canvas pixels) whoever boards walks to: a ship's ramp comes down about 14 px left of the
+    /// middle.
+    var boardingOffset: CGFloat = 14
+    /// `ramp` 0…1 lowers the boarding ramp (or opens the door), `engines` lights it, `gear` puts the landing gear down;
+    /// `t`: the clock, for what beats in time (the Eagle's wings).
+    let draw: (_ c: PixelCanvas, _ ramp: Double, _ engines: Bool, _ gear: Bool, _ t: Double) -> Void
 
-    /// Drives in along the ground and away again instead of flying: the Files' sedan, Clawdberg's DeLorean and jeep,
-    /// and Clawd Slayer's school bus, Spike's DeSoto and Angel's convertible.
-    var drives: Bool { [.sedan, .delorean, .jeep, .schoolBus, .deSoto, .gtx].contains(self) }
-    /// How far left of centre (canvas pixels) whoever boards walks to: the ships' ramps 14, the TARDIS's door 6, the
-    /// saucer's beam, the mothership's light and the moon bike right under their middles, and the school bus's door,
-    /// up front by the bonnet, 11 right of centre.
-    var boardingOffset: CGFloat {
-        switch self { case .tardis: return 6; case .saucer, .mothership, .moonBike: return 0; case .schoolBus: return -11; default: return 14 }
-    }
+    var drives: Bool { arrival == .drives }
+    var materialises: Bool { arrival == .materialises }
+
+    static func == (a: Ride, b: Ride) -> Bool { a.key == b.key }
+    func hash(into h: inout Hasher) { h.combine(key) }
 }

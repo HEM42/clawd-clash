@@ -393,10 +393,10 @@ case "place":
     })
 
 case "rides":
-    let cellW = CGFloat(Ride.width) * scale + 12, cellH = CGFloat(Ride.tardis.canvasHeight) * scale + 30
+    let every = Universe.allCases.flatMap { $0.module.rides }
+    let cellW = CGFloat(Ride.width) * scale + 12, cellH = CGFloat(every.map(\.canvasHeight).max() ?? Ride.height) * scale + 30
     let states: [(String, Double, Bool, Bool)] = [("landed", 0, false, true), ("ramp down / door open", 1, false, true), ("flying", 0, true, false)]
-    let every: [Ride] = [.falcon, .quinjet, .milano, .javelin, .batwing, .tardis, .sedan, .helicopter, .saucer, .delorean, .moonBike, .mothership, .jeep, .schoolBus, .deSoto, .gtx]
-    let rides = names.isEmpty ? every : every.filter { names.contains("\($0)") }
+    let rides = names.isEmpty ? every : every.filter { names.contains($0.key) }
     save(sheet(Int(cellW * 3), Int(cellH * CGFloat(rides.count))) { ctx in
         for (i, ride) in rides.enumerated() {
             for (j, st) in states.enumerated() {
@@ -406,7 +406,7 @@ case "rides":
                 let x = CGFloat(j) * cellW, y = cellH * CGFloat(rides.count - 1 - i)
                 ctx.draw(c.makeImage()!, in: CGRect(x: x + 6, y: y + 6 - scale, width: CGFloat(Ride.width) * scale,
                                                     height: CGFloat(ride.canvasHeight + 1) * scale))
-                label("\(ride) · \(st.0)", x + 6, y + cellH - 20)
+                label("\(ride.key) · \(st.0)", x + 6, y + cellH - 20)
             }
         }
     })

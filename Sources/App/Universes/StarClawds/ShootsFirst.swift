@@ -14,13 +14,6 @@ enum ShootsFirst {
     static let done = standing + 2.4               // says his piece and walks back
     static let hanLine = (from: landed + 0.3, to: getUp)
 
-    static let hanSays = "Sorry about the mess."
-    static let greedoSays = ["That hurt!", "Ow! Maclunkey…", "Han shot first!", "Not the vest!", "I'm OK!", "Every time…"]
-    /// Indy's version (Stevie Clawdberg): what he says over the Cairo Swordsman, and what the swordsman says getting up.
-    static let indySays = "I don't have time for this."
-    static let swordsmanSays = ["But my twirl!", "I practised for weeks!", "Not fair!", "I'm OK!", "Every time…"]
-    static func says(_ who: Cast) -> String { who.universe == .clawdberg ? indySays : hanSays }
-    static func comebacks(_ who: Cast) -> [String] { who.universe == .clawdberg ? swordsmanSays : greedoSays }
 
     /// How long until Han tries it again: soon after they first face off, then every minute or so.
     static func delay(first: Bool) -> Double {

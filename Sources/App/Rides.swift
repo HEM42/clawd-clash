@@ -17,25 +17,7 @@ extension Ride {
 /// `ramp` 0…1 lowers the boarding ramp, `engines` lights the thrusters, `gear`: landing gear down. `t`: the clock in
 /// seconds, for what beats in time (the Eagle's wings); nil: the system clock (the app), a value: a render's own clock.
 func drawRide(_ c: PixelCanvas, _ ride: Ride, ramp: Double, engines: Bool, gear: Bool, t: Double? = nil) {
-    switch ride {
-    case .falcon: drawFalcon(c, ramp: ramp, engines: engines, gear: gear)
-    case .quinjet: drawQuinjet(c, ramp: ramp, engines: engines, gear: gear)
-    case .milano: drawMilano(c, ramp: ramp, engines: engines, gear: gear)
-    case .javelin: drawJavelin(c, ramp: ramp, engines: engines, gear: gear)
-    case .batwing: drawBatwing(c, ramp: ramp, engines: engines, gear: gear)
-    case .tardis: drawTardis(c, door: ramp, lamp: engines)
-    case .sedan: drawSedan(c, ramp: ramp, lights: engines)
-    case .helicopter: drawHelicopter(c, ramp: ramp, engines: engines, gear: gear)
-    case .saucer: drawSaucer(c, ramp: ramp, engines: engines)
-    case .delorean: drawDelorean(c, ramp: ramp, lit: engines)
-    case .moonBike: drawMoonBike(c, ramp: ramp, lit: engines)
-    case .mothership: drawMothership(c, ramp: ramp, lit: engines)
-    case .jeep: drawParkJeep(c, ramp: ramp, lit: engines)
-    case .schoolBus: slayerSchoolBus(c, ramp: ramp, lit: engines)
-    case .deSoto: slayerDeSoto(c, ramp: ramp, lit: engines)
-    case .gtx: slayerGTX(c, ramp: ramp, lit: engines)
-    case .eagle: drawEagle(c, ramp: ramp, engines: engines, gear: gear, t: t ?? ProcessInfo.processInfo.systemUptime)
-    }
+    ride.draw(c, ramp, engines, gear, t ?? ProcessInfo.processInfo.systemUptime)
 }
 
 /// The hull's outline at column `x`, read off a polyline of (x, y) points (straight between them).
@@ -85,7 +67,7 @@ private func drawGear(_ c: PixelCanvas, xs: [Int], from y: Int, strut: Px, foot:
 
 /// The Avengers' Quinjet (the films): a matt dark-grey stealth wedge with a sloping glass canopy, a swept wing with
 /// its big lift-fan nacelle, twin canted tail fins with the Avengers "A", and blue thrusters at the tail.
-private func drawQuinjet(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
+func drawQuinjet(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
     let body = C(0x3E434E), light = C(0x6A717E), dark = C(0x252830), panel = C(0x30343D), steel = C(0x8A929E)
     if gear { drawGear(c, xs: [12, 50], from: 22, strut: dark, foot: steel) }
     // The far tail fin, behind
@@ -130,7 +112,7 @@ private func drawQuinjet(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bo
 
 /// The Guardians' Milano (the films): a long blue hull with orange stripes, the bubble cockpit up front, a swept
 /// wing rising behind with an engine pod at its tip, a ventral fin, and orange thrusters.
-private func drawMilano(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
+func drawMilano(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
     let body = C(0x2E5AA8), light = C(0x6A96E0), dark = C(0x1C366E), orange = C(0xE8782A), orangeD = C(0xB0561A)
     let steel = C(0x9AA2AE)
     if gear { drawGear(c, xs: [14, 50], from: 22, strut: dark, foot: steel) }
@@ -183,7 +165,7 @@ private func drawMilano(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Boo
 
 /// The Millennium Falcon, nose to the right: the disc, the forward mandibles, the offset cockpit, the radar
 /// dish. `ramp` 0…1 lowers the boarding ramp (down and to the left), `engines` lights the blue glow.
-private func drawFalcon(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
+func drawFalcon(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
     // Seen slightly from above, so the round saucer, the central hatch and the split front read clearly.
     let hull = C(0xB8B6AC), hullLight = C(0xD2D0C6), hullDark = C(0x8A8880), panel = C(0x6E6C66)
     if gear {
@@ -213,7 +195,7 @@ private func drawFalcon(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Boo
 /// The Justice League's Javelin (the animated series): a sleek silver-grey and white wedge with a big canopy over the
 /// nose, angular swept wings with red leading edges, a blue stripe down the flank, a tall swept tail fin with the CL
 /// badge, and blue thrusters.
-private func drawJavelin(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
+func drawJavelin(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
     let body = C(0xB8BEC8), light = C(0xF2F4F8), dark = C(0x6A727E), panel = C(0x8E96A2), white = C(0xFFFFFF)
     let red = C(0xC8202A), blue = C(0x2A5CC8), glass = C(0x16243C)
     let top: [(Double, Double)] = [(3, 15), (10, 13), (40, 12), (56, 15), (65, 19)]
@@ -273,7 +255,7 @@ private func drawJavelin(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bo
 
 /// The Batwing: a black jet with a bat-wing silhouette raised over the hull, scalloped along its trailing edge between
 /// the bones, a black cowl mask in a yellow oval on the wing, a slit canopy, and amber jets with a blue core.
-private func drawBatwing(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
+func drawBatwing(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
     let body = C(0x26282F), light = C(0x4A4F5C), dark = C(0x121317), wing = C(0x2C2F38), bone = C(0x464B58)
     let yellow = C(0xF2C230), steel = C(0x7A808C)
     let top: [(Double, Double)] = [(4, 17), (14, 15), (40, 14), (52, 15), (60, 17), (65, 19)]
@@ -332,7 +314,7 @@ private func drawBatwing(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bo
 /// canvas (`Ride.canvasHeight`), so it stands a head above whoever steps into it. The lamp on the roof, the POLICE BOX
 /// sign, the frosted windows and the panelled doors; `door` 0…1 swings the right-hand door open on the lit interior,
 /// `lamp` lights the roof lamp.
-private func drawTardis(_ c: PixelCanvas, door: Double, lamp: Bool) {
+func drawTardis(_ c: PixelCanvas, door: Double, lamp: Bool) {
     let blue = C(0x1C3F94), dark = C(0x15306E), edge = C(0x2E58B8), sign = C(0x101820), glass = C(0xE8F0FF)
     let x0 = 11, w = 22, top = 4, base = c.h - 2
     // The roof stack and the lamp.
@@ -369,12 +351,6 @@ private func drawTardis(_ c: PixelCanvas, door: Double, lamp: Bool) {
     c.rect(x0 - 1, base, w + 2, 2, blue); c.rect(x0 - 1, base + 1, w + 2, 1, dark)
 }
 
-extension Ride {
-    /// Fades in and out where it stands instead of flying in and away.
-    var materialises: Bool { self == .tardis }
-    /// The height of its canvas: the ships' `Ride.height`, taller for the TARDIS (which stands rather than flies).
-    var canvasHeight: Int { self == .tardis ? 36 : Ride.height }
-}
 
 /// One of the Eagle's wings, from the shoulder (`hx`, `hy`) out along `angle` (radians, y down) for `len` px: a broad
 /// plank of feathers, pale coverts along its leading edge and dark flight feathers behind, striped along their length
@@ -408,7 +384,7 @@ private let eagleBeats = 1.8
 /// the wings fold along its back and `ramp` lowers the near one to the ground to climb on; flying (`engines`), the
 /// wings spread wide and beat `eagleBeats` times a second on the clock `t`, tips up (the body dipping) then down.
 /// `gear`: talons down.
-private func drawEagle(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool, t: Double) {
+func drawEagle(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool, t: Double) {
     let body = C(0x6A4A2A), bodyLight = C(0x8A6440), bodyDark = C(0x4A321C), head = C(0xC8A060)
     let headLight = C(0xE2C488), headDark = C(0x9A7A44), feather = C(0x543A20), flight = C(0x3E2A16)
     let tipCol = C(0x2E1E10), beak = C(0xE8C860), beakDark = C(0x8A6A2A), talon = C(0xE0B040), claw = C(0x22180E)

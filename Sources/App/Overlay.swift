@@ -1126,7 +1126,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             roles[l.key] = lRole; roles[r.key] = rRole
             fx.append((l, r))
             // Han and Greedo stay on the plain clock: Han shooting first is timed to one of his own shots.
-            let shootsFirst = (l.cast.isHan && r.cast.isGreedo) || (l.cast.isGreedo && r.cast.isHan)
+            let shootsFirst = ShootOut.between(l.cast, r.cast) != nil
             let phase = shootsFirst ? 0 : fightPhaseOffset(l.key, r.key)
             fightPhase[l.key] = phase; fightPhase[r.key] = phase
             if case .shoot(let lo) = lRole, case .shoot(let ro) = rRole { incoming[l.key] = ro; incoming[r.key] = lo }
@@ -1135,22 +1135,23 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
         // Han shoots first: while the two stand facing off, now and then his bolt gets through. It starts on one of
         // Han's own shots, so the bolt leaves his blaster; anyone walking off or leaving calls it off.
-        var shot: (han: String, greedo: String, e: Double, line: String)?
-        if let pair = fx.first(where: { ($0.0.cast.isHan && $0.1.cast.isGreedo) || ($0.0.cast.isGreedo && $0.1.cast.isHan) }) {
-            let han = pair.0.cast.isHan ? pair.0 : pair.1, greedo = pair.0.cast.isHan ? pair.1 : pair.0
+        var shot: (han: String, greedo: String, e: Double, line: String, says: String)?
+        if let pair = fx.first(where: { ShootOut.between($0.0.cast, $0.1.cast) != nil }),
+           let (out, leftShoots) = ShootOut.between(pair.0.cast, pair.1.cast) {
+            let han = leftShoots ? pair.0 : pair.1, greedo = leftShoots ? pair.1 : pair.0
             if let s = greedoShot, s.han != han.key || s.greedo != greedo.key { greedoShot = nil }
             if let s = greedoShot, now - s.start > ShootsFirst.done {
                 greedoShot = nil
                 nextShootsFirst = now + ShootsFirst.delay(first: false)
             }
             // Indy fights with his whip: as his moment comes he puts it away and draws his revolver instead.
-            if han.cast.universe == .clawdberg, greedoShot != nil || nextShootsFirst.map({ now >= $0 - 1.2 }) == true {
+            if out.drawsGun, greedoShot != nil || nextShootsFirst.map({ now >= $0 - 1.2 }) == true {
                 roles[han.key] = .shoot(offset: 0)
             }
             if greedoShot == nil {
                 if let next = nextShootsFirst, now >= next, case .shoot(let offset)? = roles[han.key] {
                     let fire = (floor((t + offset) / blasterPeriod) + 1) * blasterPeriod - offset
-                    greedoShot = (han.key, greedo.key, start + fire, ShootsFirst.comebacks(greedo.cast).randomElement() ?? "That hurt!")
+                    greedoShot = (han.key, greedo.key, start + fire, out.comebacks.randomElement() ?? "That hurt!")
                     nextShootsFirst = nil
                 } else if nextShootsFirst == nil {
                     nextShootsFirst = now + ShootsFirst.delay(first: true)
@@ -1158,7 +1159,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             }
             if let s = greedoShot, now >= s.start {
                 let e = now - s.start
-                shot = (s.han, s.greedo, e, s.line)
+                shot = (s.han, s.greedo, e, s.line, out.says)
                 incoming[s.han] = nil; incoming[s.greedo] = nil   // nobody ducks: Greedo doesn't see it coming
                 if e > ShootsFirst.hit + 0.3 { roles[s.han] = .rest }   // blaster down, job done
             }
@@ -1359,7 +1360,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 line = said
             }
             if let s = shot {
-                if actor.key == s.han, s.e >= ShootsFirst.hanLine.from, s.e < ShootsFirst.hanLine.to { line = ShootsFirst.says(actor.cast); overHead = true }
+                if actor.key == s.han, s.e >= ShootsFirst.hanLine.from, s.e < ShootsFirst.hanLine.to { line = s.says; overHead = true }
                 if actor.key == s.greedo, s.e >= ShootsFirst.standing { line = s.line; overHead = true }
             }
             if let b = bunTalk { line = b.line; overHead = true }

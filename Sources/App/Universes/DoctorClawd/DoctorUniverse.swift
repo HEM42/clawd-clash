@@ -22,4 +22,12 @@ struct DoctorUniverse: UniverseModule {
 
     /// A Weeping Angle only moves while nobody's looking at it.
     var quirks: StageQuirks { StageQuirks(unseenMovers: [.villain(DoctorVillain.weepingAngle)]) }
+    var rides: [Ride] { [.tardis] }
+}
+
+extension Ride {
+    /// The TARDIS: it fades in and out where it stands, taller than a ship, its door 6 px left of centre.
+    static let tardis = Ride(key: "tardis", arrival: .materialises, canvasHeight: 36, boardingOffset: 6) { c, ramp, engines, _, _ in
+        drawTardis(c, door: ramp, lamp: engines)
+    }
 }

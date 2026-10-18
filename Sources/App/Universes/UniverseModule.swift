@@ -31,6 +31,10 @@ protocol UniverseModule {
     func compactionLook(k: Double, cast: Cast) -> CompactionLook?
     /// Little things certain characters do on stage: the Weeping Angle, Captain Clawk's flinch, T. Wrecks's glass…
     var quirks: StageQuirks { get }
+    /// Pairs who face off and now and then end with one bolt getting through (Han shoots first).
+    var shootOuts: [ShootOut] { get }
+    /// Its rides, every one (for Preview's sheet; who takes which is `theme.ride`).
+    var rides: [Ride] { get }
 }
 
 extension UniverseModule {
@@ -46,6 +50,30 @@ extension UniverseModule {
     var placeCaption: PlaceCaption? { nil }
     func compactionLook(k: Double, cast: Cast) -> CompactionLook? { nil }
     var quirks: StageQuirks { StageQuirks() }
+    var shootOuts: [ShootOut] { [] }
+    var rides: [Ride] { [] }
+}
+
+/// Han shoots first, as an engine feature (`ShootsFirst` draws it): whenever `shooter` and `target` fight, now and
+/// then the shooter's bolt gets through and knocks the target onto its back.
+struct ShootOut {
+    let shooter: Cast
+    let target: Cast
+    /// What the shooter says over the fallen target.
+    let says: String
+    /// What the target says getting back up, one at random.
+    let comebacks: [String]
+    /// The shooter fights with something else and draws a gun for this (Indy puts his whip away).
+    var drawsGun = false
+
+    /// The shoot-out between `a` and `b`, if their universes have one, with which of them shoots.
+    static func between(_ a: Cast, _ b: Cast) -> (ShootOut, aShoots: Bool)? {
+        for s in a.universe.module.shootOuts + (a.universe == b.universe ? [] : b.universe.module.shootOuts) {
+            if s.shooter == a && s.target == b { return (s, true) }
+            if s.shooter == b && s.target == a { return (s, false) }
+        }
+        return nil
+    }
 }
 
 /// Someone on the stage, as a universe's quirks see them.

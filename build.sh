@@ -75,7 +75,7 @@ compile "$APP/Contents/MacOS/clawd-clash-hook" Sources/Shared/*.swift Sources/Ap
 HOOK_JOB=$!
 compile "$SAVER/Contents/MacOS/ClawdClashSaver" -module-name ClawdClashSaver -emit-library -framework ScreenSaver \
     -Xlinker -install_name -Xlinker @rpath/ClawdClashSaver \
-    Sources/Shared/*.swift Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Accents,Habits,Drills,Icon}.swift \
+    Sources/Shared/*.swift Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Accents,Habits,Drills,Icon,Rides}.swift \
     Sources/App/Universes/**/*.swift Sources/Saver/*.swift &
 SAVER_JOB=$!
 wait $APP_JOB

@@ -17,4 +17,16 @@ struct StarClawdsUniverse: UniverseModule {
 
     /// HEM has a word with Princess Laya about buns.
     var quirks: StageQuirks { StageQuirks(remark: starClawdsBunTalk) }
+
+    /// Han shoots first.
+    var shootOuts: [ShootOut] {
+        [ShootOut(shooter: .hero(SWHero.han), target: .villain(SWVillain.greedo), says: "Sorry about the mess.",
+                  comebacks: ["That hurt!", "Ow! Maclunkey…", "Han shot first!", "Not the vest!", "I'm OK!", "Every time…"])]
+    }
+    var rides: [Ride] { [.falcon] }
+}
+
+extension Ride {
+    /// The Millennial Falcon, for Han and his crew.
+    static let falcon = Ride(key: "falcon") { c, ramp, engines, gear, _ in drawFalcon(c, ramp: ramp, engines: engines, gear: gear) }
 }

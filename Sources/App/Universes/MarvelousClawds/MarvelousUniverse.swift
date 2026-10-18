@@ -15,4 +15,12 @@ struct MarvelousUniverse: UniverseModule {
 
     /// Who moonwalks when idle: dancers, with legs free to show it (four plain legs, nothing hanging over them).
     var moonwalkers: Set<Cast> { [.hero(MarvelHero.starLord), .hero(MarvelHero.deadpool), .hero(MarvelHero.howardTheDuck)] }
+    var rides: [Ride] { [.quinjet, .milano] }
+}
+
+extension Ride {
+    /// The Avengers' Quinjet.
+    static let quinjet = Ride(key: "quinjet") { c, ramp, engines, gear, _ in drawQuinjet(c, ramp: ramp, engines: engines, gear: gear) }
+    /// The Guardians' Milano.
+    static let milano = Ride(key: "milano") { c, ramp, engines, gear, _ in drawMilano(c, ramp: ramp, engines: engines, gear: gear) }
 }
