@@ -3,6 +3,7 @@ import AppKit
 /// Everything one card in the window shows about a Claude session.
 struct CardModel {
     struct Agent {
+        let id: String
         let name: String
         let task: String
         let detail: String
@@ -921,6 +922,8 @@ final class CardsView: NSView {
     private var hitRects: [(NSRect, Int32?)] = []
     /// The "▸ 25 more agents" / "▾ Show fewer" rows, by the session they fold.
     private var toggleRects: [(NSRect, String)] = []
+    /// Each agent's row, with its card's session and the agent's own id: hovering one picks the agent out in the scene.
+    private var agentRects: [(rect: NSRect, card: String, agent: String)] = []
     /// Sessions whose agents are all shown. Not remembered across launches.
     private var unfolded: Set<String> = []
     var onHeightChange: (() -> Void)?
@@ -1054,8 +1057,8 @@ final class CardsView: NSView {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
         ctx.interpolationQuality = .none
         hitRects = []
-        let lastToggles = toggleRects   // kept for the cards this pass doesn't redraw
-        toggleRects = []
+        let lastToggles = toggleRects, lastAgents = agentRects   // kept for the cards this pass doesn't redraw
+        toggleRects = []; agentRects = []
         cardFrames = []
         // The location's tone, with a faint texture, so the whole window feels like the place.
         let panel = controller?.location.panel ?? NSColor(srgbRed: 0.17, green: 0.13, blue: 0.10, alpha: 1)
@@ -1153,6 +1156,7 @@ final class CardsView: NSView {
             // Outside the area being redrawn (another card changed): leave this one as it is.
             guard r.insetBy(dx: -3, dy: -3).intersects(dirtyRect) else {
                 toggleRects += lastToggles.filter { $0.1 == c.id }
+                agentRects += lastAgents.filter { $0.card == c.id }
                 y += h + 10
                 continue
             }
@@ -1267,6 +1271,7 @@ final class CardsView: NSView {
                 branch.stroke()
                 for a in shown {
                     let tx = tx + indent, tw = tw - indent
+                    agentRects.append((NSRect(x: tx - 4, y: ty - 2, width: tw + 4, height: Self.agentH), c.id, a.id))
                     if let img = a.portrait {
                         draw(img, fitting: NSRect(x: tx - 4, y: ty, width: 36, height: 30), in: ctx, maxScale: 1)
                     }
@@ -1354,6 +1359,24 @@ final class CardsView: NSView {
         guard let hit = hitRects.first(where: { $0.0.contains(p) }) else { return }
         if let pid = hit.1 { Jump.toSession(pid: pid) } else { NSSound.beep() }
     }
+
+    // Hovering a card picks its session's character out in the scene; hovering an agent's row, that agent.
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        addTrackingArea(NSTrackingArea(rect: bounds, options: [.mouseMoved, .mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+                                       owner: self))
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        let p = convert(event.locationInWindow, from: nil)
+        var key: String?
+        if let a = agentRects.first(where: { $0.rect.contains(p) }) { key = "A:" + a.agent }
+        else if let i = cardFrames.firstIndex(where: { $0.contains(p) }), i < cards.count { key = "L:" + cards[i].id }
+        controller?.listHoverKey = key
+    }
+
+    override func mouseExited(with event: NSEvent) { controller?.listHoverKey = nil }
 
     override func resetCursorRects() {
         for (r, pid) in hitRects where pid != nil { addCursorRect(r, cursor: .pointingHand) }

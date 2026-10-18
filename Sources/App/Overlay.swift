@@ -106,6 +106,22 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private var lastCheck = 0.0
     private var hasLaidOut = false          // after the first layout, newcomers walk in instead of appearing
     private var hoveredKey: String?
+    /// The character whose card row (a session, or one of its agents) the mouse is over in the window's list: it's
+    /// picked out in the scene, a glow at its feet and the caret over its head. Set by `CardsView`.
+    var listHoverKey: String?
+    private var drawnListHover: String?
+    /// A soft violet glow, the shape of a shadow, for under the feet of the character picked out from the list.
+    private static let hoverGlow: CGImage? = {
+        let w = 60, h = 16
+        guard let g = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4, space: CGColorSpaceCreateDeviceRGB(),
+                                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        let colors = [CGColor(srgbRed: 0.72, green: 0.61, blue: 1, alpha: 0.75), CGColor(srgbRed: 0.72, green: 0.61, blue: 1, alpha: 0)] as CFArray
+        guard let grad = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: colors, locations: [0, 1]) else { return nil }
+        g.scaleBy(x: 1, y: CGFloat(h) / CGFloat(w))
+        g.drawRadialGradient(grad, startCenter: CGPoint(x: w / 2, y: w / 2), startRadius: 0, endCenter: CGPoint(x: w / 2, y: w / 2),
+                             endRadius: CGFloat(w) / 2, options: [])
+        return g.makeImage()
+    }()
     private var busySince: [Int32: Double] = [:]
     private var offlineReason: String?
     private var lastHookCheck = 0.0
@@ -152,6 +168,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         get { UserDefaults.standard.object(forKey: windowMode ? "labelsWindow" : "labels") as? Bool ?? !windowMode }
         set { UserDefaults.standard.set(newValue, forKey: windowMode ? "labelsWindow" : "labels") }
     }
+    /// Agents' tasks over the agents: always on the desktop; in the window, off unless turned on in Settings
+    /// (Settings → Window), since each agent's card row already names its task.
+    private var showAgentLabels: Bool { !windowMode || UserDefaults.standard.bool(forKey: "agentLabelsWindow") }
 
     // Layout constants in points at zoom 1.
     private static let leaderScale: CGFloat = 3
@@ -993,7 +1012,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         if let forced = Self.forcedHover {   // debug: pretend to hover a character
             hovered = actors.first { $0.key.contains(forced) }?.key
         }
-        let hoverChanged = hovered != hoveredKey
+        let hoverChanged = hovered != hoveredKey || listHoverKey != drawnListHover
+        drawnListHover = listHoverKey
         hoveredKey = hovered
 
         // Idle scenes only breathe, so 7.5 fps is plenty; 15 fps when anything is moving (chunky pixel art needs no more).
@@ -1176,6 +1196,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
         let screenFrame = stage, ground = anchor.y
         var labels: [(item: DrawItem, leader: Bool, focused: Bool, key: String)] = []
+        var listHoverHead: (key: String, x: CGFloat, top: CGFloat)?   // the character picked out from the list
         // Speech bubbles are placed after the names (see below), so they're kept here till then.
         var speeches: [(key: String, item: DrawItem)] = []   // lines said over a head, placed above its name tag
         var asides: [DrawItem] = []                           // lines said beside a head, placed last (see below)
@@ -1342,6 +1363,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let flinch = clawkFlinch(actor, t: t)
             let rect = NSRect(x: (actor.x - bodyX).rounded() + CGFloat(flinch.dx) * scale, y: y + CGFloat(drop) * z + lift + CGFloat(flinch.up) * scale,
                               width: CGFloat(canvas.w) * scale, height: (CGFloat(canvas.h) * scale * (1 - 0.22 * duck)).rounded())
+            if windowMode, actor.key == listHoverKey, let glow = Self.hoverGlow {
+                let gw = 30 * scale, gh = 8 * scale
+                out.append(DrawItem(image: glow, rect: NSRect(x: (actor.x - gw / 2).rounded(), y: y + lift - gh / 2, width: gw, height: gh),
+                                    alpha: CGFloat(alpha)))
+                var top = CGFloat(Sprite.height - actor.cast.drawnTop()) * scale
+                if case .leader = actor.kind { top += 8 * z } else { top += 5 * z }
+                listHoverHead = (actor.key, actor.x, y + lift + top)
+            }
             out.append(DrawItem(image: img, rect: rect, mirrored: mirrored, alpha: CGFloat(alpha)))
             // T. Wrecks's footsteps ripple a glass of water standing on the ground in front of him.
             if actor.cast == .villain(ClawdbergVillain.tWrecks), actor.leaving == nil,
@@ -1421,7 +1450,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             }
 
             // Project name (Claudes) or task (agents) just above the head, centred on it. Speech bubbles make way for it.
-            if (showLabels || !actor.isLeader) && !actor.label.isEmpty {
+            if (actor.isLeader ? showLabels : showAgentLabels) && !actor.label.isEmpty {
                 // The project you're in (its terminal in front) gets its name 15% larger.
                 let big: CGFloat = actor.isLeader && actor.focused ? 1.15 : 1
                 let font = actor.isLeader ? NSFont.monospacedSystemFont(ofSize: max(9, 10 * z) * big, weight: .bold)
@@ -1544,6 +1573,17 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     overlay.append(DrawItem(image: img, rect: NSRect(x: (r.midX - cw / 2).rounded(), y: r.maxY + 3 * z + bob,
                                                                      width: cw, height: cw)))
                 }
+            }
+        }
+        // The character whose card row the mouse is over: a violet arrow bobbing over its head (over its name tag
+        // when it has one), pointing down at it.
+        if let h = listHoverHead {
+            let above = named.first { $0.key == h.key }.map { $0.item.rect.maxY + ($0.focused ? 14 * z : 3 * z) } ?? h.top
+            let arrow = PixelCanvas(5, 4)
+            arrow.pattern(0, 0, ["VVVVV", ".VVV.", "..V..", "....."], ["V": C(0xB89CFF)])
+            if let img = arrow.makeImage() {
+                let aw = 5 * 2.5 * z, ah = 4 * 2.5 * z, bob = (sin(t * 4) * 1.5 * z).rounded()
+                overlay.append(DrawItem(image: img, rect: NSRect(x: (h.x - aw / 2).rounded(), y: above + 2 * z + bob, width: aw, height: ah)))
             }
         }
         // Lines never cover each other: one that would overlap a line already showing moves up a row at a time, only
@@ -2392,7 +2432,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 var detail = [a.activity ?? "Starting…", Self.duration(now - a.started)]
                 if let n = a.tools { detail.append("\(n) tool call\(n == 1 ? "" : "s")") }
                 if a.type != "general-purpose" && a.type != "playground" && a.type != "demo" { detail.append(a.type) }
-                return CardModel.Agent(name: who.name, task: a.label.isEmpty ? "Agent" : a.label,
+                return CardModel.Agent(id: a.id, name: who.name, task: a.label.isEmpty ? "Agent" : a.label,
                                        detail: detail.joined(separator: "  ·  "),
                                        portrait: portrait("a\(who.id)", assistant: s.group) { who.draw($0, t: 0.3, mode: .idle, walking: false, role: .rest, asSession: true, habits: false) })
             }
@@ -2590,6 +2630,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             .separator,
             .toggle("Show project names over the characters", get: { d.object(forKey: "labelsWindow") as? Bool ?? false },
                     set: { on in d.set(on, forKey: "labelsWindow") }),
+            .toggle("Show agents' tasks over the agents", get: { d.bool(forKey: "agentLabelsWindow") },
+                    set: { on in d.set(on, forKey: "agentLabelsWindow") }),
             .separator,
             // Each card redraws at once, the pills left closing up to the right.
             .checks("Card pills", items: [("Status", CardsView.Pill.status), ("Where the repo lives", .remote), ("Context", .context)].map { item in

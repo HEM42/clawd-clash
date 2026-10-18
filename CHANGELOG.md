@@ -12,6 +12,8 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 ## Unreleased
 
 ### Added
+- **Hover a card to find its character.** In the window, moving the mouse over a session's card picks its character out in the scene: a soft violet glow at its feet and a violet arrow bobbing over its head (over its name tag when it has one). Over one of the card's agent rows, it's that agent instead.
+- **Agents' tasks over the agents are a choice in the window** (Settings → Window → "Show agents' tasks over the agents"), off unless turned on: each agent's card row already names its task, and with a few agents the tags crowded the scene. On the desktop they always show, as before.
 - **A way to say thanks.** Clawd Clash stays free; a Ko-fi button under the README's badges, and GitHub's Sponsor button on the repo (`.github/FUNDING.yml`, once Sponsorships is ticked in the repo's settings), lead to ko-fi.com/rodclemen.
 
 ### Changed
