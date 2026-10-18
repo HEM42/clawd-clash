@@ -456,16 +456,25 @@ private func drawKrennic(_ c: PixelCanvas, _ p: Pose) {
 private func drawTarkin(_ c: PixelCanvas, _ p: Pose) {
     let uniform = C(0x6A6E5E), dark = C(0x4E5244)
     drawLegs(c, Look(leg: C(0x3A3A34)), step: p.step)
+    drawBoots(c, ink, step: p.step, rows: 3)                     // tall black jackboots
     c.oy += p.breathe
     drawBody(c, Look(arm: uniform))
-    c.pattern(18, 22, ["....HHHHHHHHHHHH....", ".HHHHHHHHHHHHHHHHHH.", "HHHHHHHHHHHHHHHHHHHH", "HH................HH"],
-              ["H": C(0xA8A8A0)])
+    c.rect(15, 35, 3, 1, dark); c.rect(38, 35, 3, 1, dark)     // the tunic's cuffs
+    c.pattern(18, 22, ["....HHHHHHHHHHHH....", ".HHHHlllHHHHHHHHHH.", "HHHlHHHHHHHHHHHHHHHH", "HH................HH"],
+              ["H": C(0xA8A8A0), "l": C(0xD0D0C8)])                   // slicked back, the comb lines catching the light
     c.rect(21, 32, 1, 1, clawdShade); c.rect(34, 32, 1, 1, clawdShade)   // hollow cheeks
+    // The tunic: the high collar, the double-breasted flap across the chest, a fold down the side.
     c.rect(18, 33, 20, 5, uniform)
     c.rect(18, 33, 20, 1, dark)
+    c.rect(25, 33, 6, 1, C(0x3A3E32))
+    c.rect(31, 34, 1, 3, dark); c.rect(37, 34, 1, 4, dark)
     for (i, col) in [C(0xD84A2A), C(0x3A6ED8), C(0xD84A2A), C(0xE0B84A)].enumerated() {
         c.px(21 + i, 35, col); c.px(21 + i, 36, i % 2 == 0 ? C(0x3A6ED8) : C(0xD84A2A))
     }
+    c.rect(21, 34, 4, 1, C(0x8E9296))                            // the plaque's silver rim
+    // The black belt and its silver disc buckle.
+    c.rect(18, 37, 20, 1, ink)
+    c.rect(27, 37, 2, 1, C(0xB8BCC4))
 }
 
 // MARK: - Fifth Brother

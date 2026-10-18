@@ -122,10 +122,20 @@ private func drawJetpack(_ c: PixelCanvas, t: Double, burning: Bool) {
 private func drawVader(_ c: PixelCanvas, _ p: Pose) {
     drawCape(c, t: p.t, speed: p.capeSpeed, color: C(0x0E0E12), edge: C(0x2C2C36))
     drawLegs(c, Look(leg: C(0x2E2F36)), step: p.step)
+    // Polished boots: black, a glint of light down the front of each.
+    drawBoots(c, ink, step: p.step, rows: 3)
+    if !seatedPose {
+        for (i, lx) in [19, 23, 31, 35].enumerated() {
+            c.px(lx, p.step >= 0 && i % 2 == p.step ? 40 : 41, C(0x5C6070))
+        }
+    }
     c.oy += p.breathe
     drawBody(c, Look())
     c.rect(15, 33, 1, 3, ink)
     c.rect(40, 33, 1, 3, ink)
+    // The armoured shoulder bells and the collar's rim, dark grey with a highlight.
+    c.rect(18, 32, 3, 1, C(0x2A2B31)); c.rect(35, 32, 3, 1, C(0x2A2B31))
+    c.px(19, 32, C(0x5C6070)); c.px(36, 32, C(0x5C6070))
     c.pattern(15, 14, [
         ".........KKKKKKKK.........",
         ".......KKKKKKKKKKKK.......",
@@ -161,8 +171,11 @@ private func drawVader(_ c: PixelCanvas, _ p: Pose) {
         c.pattern(31, 34, ["GGGGG", "GRgBG", "GGGGG"],
                   ["G": C(0x3A3D46), "R": C(0xE0303A), "g": C(0x3BD15A), "B": C(0x3A7BEA)])
     }
+    // The belt: the buckle plate, and the two control boxes either side of it with their little lights.
     c.rect(18, 37, 20, 1, C(0x2A2B31))
-    c.rect(26, 37, 4, 1, C(0x9AA0AE))
+    c.rect(26, 37, 4, 1, C(0x9AA0AE)); c.px(26, 37, C(0xC8CCD6))
+    c.rect(21, 36, 3, 2, C(0x9AA0AE)); c.px(22, 36, C(0xE0303A))
+    c.rect(32, 36, 3, 2, C(0x9AA0AE)); c.px(33, 36, C(0x3A7BEA))
     drawRedSaber(c, p)
 }
 
@@ -305,12 +318,23 @@ private func drawTrooper(_ c: PixelCanvas, _ p: Pose) {
         ".oWWWWWWWWWWWWWWWWWWWWWWo.",
         ".oWWWWWWWWWWWWWWWWWWWWWWo.",
     ], ["W": armor, "g": C(0x9AA0AE), "o": edge])
+    let plate = C(0xDDE1E7)
+    // The helmet: a soft shadow under the dome's rim, the eye lenses with a glint, the cheek tubes, the frown.
+    c.rect(17, 24, 22, 1, plate)
     c.rect(21, 28, 4, 3, ink)
     c.rect(31, 28, 4, 3, ink)
+    c.px(22, 28, C(0x3A4250)); c.px(32, 28, C(0x3A4250))
+    c.px(24, 31, C(0x9AA0AE)); c.px(31, 31, C(0x9AA0AE))       // the cheek tubes, down to the grille
     c.rect(25, 32, 6, 2, C(0x9AA0AE))
     c.px(26, 32, ink); c.px(28, 32, ink); c.px(30, 32, ink)
+    // The chest plate's edges and the ab plates under it.
+    c.rect(18, 34, 20, 1, plate); c.rect(22, 35, 1, 1, edge); c.rect(33, 35, 1, 1, edge)
+    c.px(27, 35, edge); c.px(28, 35, edge)
+    // The belt, black with its rows of white canisters, and the thermal detonator at the back.
     c.rect(18, 36, 20, 1, ink)
     c.rect(27, 36, 2, 1, armor)
+    for x in [20, 22, 32, 34] { c.px(x, 36, plate) }
+    c.rect(18, 37, 2, 1, C(0x5A606C))
     if let s = bump, s > 0.15, s < 0.92 {
         for i in 0..<3 {                                   // stars circling the helmet
             let a = s * 14 + Double(i) * 2.1

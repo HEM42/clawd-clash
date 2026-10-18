@@ -113,18 +113,33 @@ private func drawLando(_ c: PixelCanvas, _ p: Pose) {
     c.oy += p.breathe - shift; c.baseY += shift
     drawCape(c, t: p.t, speed: 1.4, color: C(0x24305A), edge: C(0xE0B84A))
     c.oy -= p.breathe - shift; c.baseY -= shift
+    let shirtShade = C(0x6E92B8), gold = C(0xE0B84A), goldDark = C(0xA8852E)
     let look = Look(leg: C(0x2A2E44), arm: shirt)
-    heroLegs(c, p, look)
+    let grounded = p.cheering && !p.walking
+    if grounded { c.oy -= p.hop }
+    drawLegs(c, look, step: p.step)
+    drawBoots(c, C(0x14161E), step: p.step, rows: 2)   // tall black boots
+    if grounded { c.oy += p.hop }
+    c.oy += p.breathe
     drawBody(c, look)
+    c.rect(15, 35, 3, 1, shirtShade); c.rect(38, 35, 3, 1, shirtShade)   // the sleeves' cuffs
     c.pattern(18, 22, [
         "...HHHHHHHHHHHHHH...",
-        ".HHHHHHHHHHHHHHHHHH.",
+        ".HHHHhHHHHHHHhHHHHH.",
         "HHHHHHHHHHHHHHHHHHHH",
         "HH................HH",
-    ], ["H": hair])
+    ], ["H": hair, "h": C(0x3E3028)])
     c.rect(24, 32, 8, 1, hair)                  // the moustache
+    // The shirt, with its high gold-trimmed collar and the trim running down the front, folds shaded.
     c.rect(18, 34, 20, 4, shirt)
+    c.rect(37, 34, 1, 4, shirtShade); c.px(21, 35, shirtShade); c.px(33, 35, shirtShade)
+    c.rect(18, 33, 20, 1, gold); c.rect(24, 33, 8, 1, goldDark)
+    c.rect(29, 34, 1, 2, gold)
+    // The cape's gold clasps on the shoulders.
+    c.px(18, 33, C(0xF6DC88)); c.px(37, 33, C(0xF6DC88))
+    // The belt and its buckle.
     c.rect(18, 36, 20, 1, C(0x3A2A1C))
+    c.rect(27, 36, 3, 1, gold); c.px(28, 36, goldDark)
     heroPistol(c, p)
 }
 
@@ -251,24 +266,41 @@ private func drawL337(_ c: PixelCanvas, _ p: Pose) {
     ], ["T": C(0xE8DCC4), "B": C(0x3A3A44), "b": C(0x6FC8FF)])
 }
 
-/// Mon Mothma: white robes to the floor, short auburn hair, a silver medallion.
+/// Mon Mothma: white robes to the shins, short auburn hair, a silver medallion.
 private func drawMonMothma(_ c: PixelCanvas, _ p: Pose) {
-    let robe = C(0xF0EEE6), robeShade = C(0xD2D0C8)
+    let robe = C(0xF0EEE6), robeShade = C(0xD2D0C8), fold = C(0xE2E0D8), silver = C(0xC8CCD4)
+    // Pale slippers on the four legs, under the robe's hem.
+    drawLegs(c, Look(leg: C(0xDCDAD2)), step: p.step)
+    drawBoots(c, C(0xB8B6AE), step: p.step, rows: 1)
     c.oy += p.breathe
-    drawSkirt(c, robe, robeShade)
+    // The robe, to the shins: long folds falling down it, a hem shaded underneath.
+    for y in 38...40 {
+        let k = (y - 37) / 2
+        c.rect(18 - k, y, 20 + k * 2, 1, robe)
+        c.px(18 - k, y, robeShade); c.px(37 + k, y, robeShade)
+    }
+    for x in [22, 27, 32] { c.rect(x, 38, 1, 2, fold) }
+    c.rect(17, 40, 22, 1, robeShade)
     var look = Look(arm: robe)
     look.legs = false
     drawBody(c, look)
+    c.rect(15, 35, 3, 1, robeShade); c.rect(38, 35, 3, 1, robeShade)   // the wide sleeves' folds
     c.pattern(18, 22, [
         "...HHHHHHHHHHHHHH...",
-        ".HHHHHHHHHHHHHHHHHH.",
+        ".HHHHlHHHHHHHlHHHHH.",
         "HHHHHHHHHHHHHHHHHHHH",
         "HHH..............HHH",
         "HH................HH",
-    ], ["H": C(0x9A5A30)])
+    ], ["H": C(0x9A5A30), "l": C(0xC07A44)])
+    // The cowl-necked robe: the collar draped round the neck, a fold down each side.
     c.rect(18, 33, 20, 5, robe)
     c.rect(37, 33, 1, 5, robeShade)
-    c.rect(26, 34, 4, 2, C(0xC8CCD4))
+    c.rect(19, 33, 18, 1, fold); c.px(18, 33, robeShade)
+    c.rect(20, 35, 1, 3, fold); c.rect(35, 35, 1, 3, fold)
+    // The silver medallion on its chain, a glint in the corner.
+    c.px(24, 33, C(0x9EA4AE)); c.px(31, 33, C(0x9EA4AE)); c.px(25, 34, C(0x9EA4AE)); c.px(30, 34, C(0x9EA4AE))
+    c.rect(26, 34, 4, 2, silver)
+    c.rect(26, 35, 4, 1, C(0x9EA4AE)); c.px(26, 34, C(0xF2F4F8))
 }
 
 /// Padmé Amidala, as at Geonosis: white suit, dark hair in a bun, a pistol.
