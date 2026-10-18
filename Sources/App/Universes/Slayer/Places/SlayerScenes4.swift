@@ -1,4 +1,6 @@
 import Foundation
+import CoreGraphics
+import CoreText
 
 // The edges of the map: the "Welcome to Sunnydale" sign by night, the crater it falls into at the end, the First
 // Slayer's dream desert, and Los Angeles (the Hyperion, Caritas, Wolfram & Hart). Each has its own key colour, none of
@@ -108,6 +110,62 @@ private func slayerWelcomeBoard4(_ c: PixelCanvas, _ x: Int, _ y: Int, _ p: Int,
         slayerText4(c, x + (w - slayerTextWidth4(big, p)) / 2, y + 4 * s + 5 * small + 3 * s, big, ink, p)
     }
     return (w, h)
+}
+
+/// The "WELCOME TO SUNNYDALE" sign on its two posts, turned `degrees` clockwise about its feet and set down with
+/// them at `feet`. It's drawn with Core Graphics, antialiased, in a real typeface: pixel lettering turned by a
+/// few degrees either breaks up or steps along the slope, and at window size it couldn't be read.
+private func slayerTiltedSign4(_ c: PixelCanvas, feet: (x: Int, y: Int), degrees: Double, post: Int, _ s: Int) {
+    let bw = Double(84 * s), bh = Double(30 * s), border = Double(2 * s), postH = Double(post)
+    let span = Int(bw + bh + postH) + 8 * s, side = span * 2
+    guard let g = CGContext(data: nil, width: side, height: side, bitsPerComponent: 8, bytesPerRow: side * 4,
+                            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return }
+    g.setShouldAntialias(true); g.setAllowsFontSmoothing(false)
+    // Core Graphics is y-up: the feet at the middle of the square, the sign standing up from them, turned clockwise.
+    g.translateBy(x: Double(span), y: Double(span))
+    g.rotate(by: -degrees * .pi / 180)
+    func fill(_ r: CGRect, _ hex: UInt32) { g.setFillColor(rgb(hex)); g.fill(r) }
+    let left = -bw / 2, bottom = postH
+    for px in [left + bw / 6, left + bw * 5 / 6 - Double(3 * s)] {                  // the posts
+        fill(CGRect(x: px, y: 0, width: Double(3 * s), height: postH + border), 0x9A6A40)
+        fill(CGRect(x: px, y: 0, width: Double(s), height: postH + border), 0xC8945A)
+    }
+    fill(CGRect(x: left - border, y: bottom - border, width: bw + 2 * border, height: bh + 2 * border), 0x3A2416)
+    fill(CGRect(x: left, y: bottom, width: bw, height: bh), 0xEEE2C4)
+    fill(CGRect(x: left + bw - Double(s), y: bottom, width: Double(s), height: bh), 0xB8A880)
+    g.setFillColor(rgb(0x2A4A30, 0.35))
+    g.fill(CGRect(x: left + border, y: bottom + bh - border - Double(s), width: bw - 2 * border, height: Double(s) * 0.7))
+    g.fill(CGRect(x: left + border, y: bottom + border, width: bw - 2 * border, height: Double(s) * 0.7))
+    // The lettering: WELCOME TO small above, SUNNYDALE large, each sized to the board's width.
+    func word(_ text: String, cap: Double, maxW: Double, baseline: Double, _ hex: UInt32, bold: Bool) {
+        let name = bold ? "Futura-CondensedExtraBold" : "Futura-Bold"
+        var size = cap / 0.7
+        var font = CTFontCreateWithName(name as CFString, size, nil)
+        func line() -> CTLine {
+            CTLineCreateWithAttributedString(NSAttributedString(string: text, attributes: [
+                NSAttributedString.Key(kCTFontAttributeName as String): font,
+                NSAttributedString.Key(kCTForegroundColorAttributeName as String): rgb(hex),
+                NSAttributedString.Key(kCTKernAttributeName as String): size * 0.06]))
+        }
+        var l = line(), w = CTLineGetTypographicBounds(l, nil, nil, nil)
+        if w > maxW { size *= maxW / w; font = CTFontCreateWithName(name as CFString, size, nil); l = line(); w = CTLineGetTypographicBounds(l, nil, nil, nil) }
+        g.textPosition = CGPoint(x: -w / 2, y: baseline)
+        CTLineDraw(l, g)
+    }
+    word("WELCOME TO", cap: Double(5 * s), maxW: bw * 0.6, baseline: bottom + bh - border - Double(8 * s), 0x6A4A2A, bold: false)
+    word("SUNNYDALE", cap: Double(12 * s), maxW: bw - Double(10 * s), baseline: bottom + border + Double(4 * s), 0x2A4A30, bold: true)
+    guard let data = g.data else { return }
+    let px = data.bindMemory(to: UInt8.self, capacity: side * side * 4)
+    // Row 0 of the bitmap is the top of the square; its middle lands on the feet.
+    for y in 0..<side {
+        for x in 0..<side {
+            let i = (y * side + x) * 4, a = px[i + 3]
+            guard a > 0 else { continue }
+            let m = 255 / Double(a)
+            c.px(feet.x - span + x, feet.y - span + y, Px(r: UInt8(min(255, Double(px[i]) * m)), g: UInt8(min(255, Double(px[i + 1]) * m)),
+                                                       b: UInt8(min(255, Double(px[i + 2]) * m)), a: a))
+        }
+    }
 }
 
 /// The dream desert's campfire scale: two pixels a unit on the screen saver, one and a half in the window's strip.
@@ -395,27 +453,58 @@ extension Scenes {
             let y = fy - 3 * s + Int(noise(k * 3 + 301) * Double(ry / 2))
             c.rect(x, y, (1 + Int(noise(k * 3 + 302) * 3)) * s, s, k % 2 == 0 ? C(0x4A3428) : C(0xA07A58))
         }
+        // More of the town: a car on its roof, a church steeple fallen on its side with its cross, a water tower on
+        // its back, a row of leaning telephone poles with a wire sagging between them, and heaps of rubble.
+        let car = (x: cx + rx / 6, y: cy + ry / 3)
+        c.rect(car.x, car.y - u(4), u(16), u(4), C(0x3A5A7A)); c.rect(car.x + u(3), car.y, u(10), u(3), C(0x2A4258))
+        c.rect(car.x + u(4), car.y + u(1), u(3), u(1), C(0x9AB8C8)); c.rect(car.x + u(9), car.y + u(1), u(3), u(1), C(0x9AB8C8))
+        c.rect(car.x, car.y - u(4), u(16), s, C(0x6A8AA8))
+        for wx in [car.x + u(3), car.x + u(13)] { c.circle(wx, car.y - u(5), u(2), C(0x1A1614)); c.circle(wx, car.y - u(5), s, C(0x6A625A)) }
+        let st = (x: cx - rx / 6, y: cy + ry / 6)                          // the steeple, lying along the terrace
+        for k in 0..<12 { c.rect(st.x + k * u(2), st.y - u(5) + k * u(0.25), u(2), u(5) - k * u(0.33), C(0xD8CCB8)) }
+        c.rect(st.x, st.y - u(5), u(24), s, C(0xF0E4D0)); c.rect(st.x + u(4), st.y - u(3), u(2), u(2), C(0x2A2420))
+        c.rect(st.x + u(24), st.y - u(3), u(5), s, C(0x8A6A3A)); c.rect(st.x + u(27), st.y - u(5), s, u(4), C(0x8A6A3A))
+        let wt = (x: cx + rx * 2 / 3 - u(10), y: cy + ry / 2)              // the water tower, legs in the air
+        c.ellipse(wt.x, wt.y, u(7), u(4), C(0x9AA4A8)); c.ellipse(wt.x, wt.y - u(1), u(7), u(2), C(0xC0C8CC))
+        slayerLine(c, Double(wt.x - u(4)), Double(wt.y - u(2)), Double(wt.x - u(9)), Double(wt.y - u(12)), C(0x5A5048), Double(u(1)) * 0.5)
+        slayerLine(c, Double(wt.x + u(4)), Double(wt.y - u(2)), Double(wt.x + u(7)), Double(wt.y - u(12)), C(0x5A5048), Double(u(1)) * 0.5)
+        var poles: [(Double, Double)] = []                                  // telephone poles down the far wall
+        for k in 0..<4 {
+            let px = Double(cx - rx / 2 + k * rx / 4), py = Double(cy - ry / 3 + k % 2 * u(3)), lean = Double(k - 2) * Double(u(2))
+            slayerLine(c, px, py, px + lean, py - Double(u(13)), C(0x4A3426), Double(u(1)) * 0.5)
+            c.rect(Int(px + lean) - u(3), Int(py) - u(12), u(6), s, C(0x4A3426))
+            poles.append((px + lean, py - Double(u(12))))
+        }
+        for k in 0..<(poles.count - 1) {
+            let a = poles[k], b = poles[k + 1]
+            for q in 0...12 {
+                let t = Double(q) / 12, x = a.0 + (b.0 - a.0) * t, y = a.1 + (b.1 - a.1) * t + sin(t * .pi) * Double(u(3))
+                c.px(Int(x), Int(y), C(0x2A2420))
+            }
+        }
+        let chunks: [UInt32] = [0x8A7A6A, 0xA89888, 0x6A5A4C, 0x9A5A3A, 0xC0B4A0, 0x5A4A3E]
+        for k in 0..<7 {                                                    // heaps of rubble: broken concrete and brick
+            let x = cx - rx * 3 / 4 + Int(noise(k * 5 + 600) * Double(rx * 3 / 2)), y = cy + Int(noise(k * 5 + 601) * Double(ry * 2 / 3))
+            let w = u(6 + noise(k * 5 + 602) * 6), h = w / 2
+            for q in 0..<(w / max(1, s) * 2) {                               // chunks piled into a rough mound
+                let fx = noise(k * 31 + q * 3 + 610) * 2 - 1, up = (1 - abs(fx)) * Double(h) * noise(k * 31 + q * 3 + 611)
+                let cw = (1 + Int(noise(k * 31 + q * 3 + 612) * 3)) * s
+                c.rect(x + Int(fx * Double(w) / 2), y - Int(up), cw, max(s, cw * 2 / 3), C(chunks[(q + k) % chunks.count]))
+            }
+            if k % 2 == 0 { slayerLine(c, Double(x - w / 3), Double(y - h / 3), Double(x + w / 3), Double(y - h), C(0x7A4A2A), Double(s) * 0.5) }   // a bent rod
+        }
         c.ellipse(cx, fy, rx * 2 / 3, ry / 5, C(0xE8C8A0, 0.12))   // dust hanging low in the bowl
         // Broken ground at the near lip.
         for x in stride(from: cx - rx, to: cx + rx, by: 3 * s) {
             let dy = Int(noise(x / s + 500) * 3) * s
             c.rect(x, g - 2 * s - dy, 3 * s, 2 * s + dy, C(0x8A6444))
         }
-        // The sign, still standing on the crater's far rim on the left: level, so its lettering stays crisp, and up
-        // above the crew's heads. (On the near lip, tilted, its letters stepped ragged and whoever stood in front of
-        // it covered SUNNYDALE.)
-        let p = 2 * s, small = s
-        let size = slayerWelcomeSize4(p, small: small, s)
-        let post = tall ? 10 * s : 5 * s
-        let sx = cx - rx + size.w * 2 / 3
-        let du = Double(sx - cx) / Double(rx), sy = cy - Int(Double(ry) * (1 - du * du).squareRoot())
-        let left = sx - size.w / 2, boardY = sy - post - size.h
-        for px in [left + size.w / 6, left + size.w * 5 / 6 - 3 * s] {
-            c.rect(px, boardY + size.h, 3 * s, post, C(0x9A6A40)); c.rect(px, boardY + size.h, s, post, C(0xC8945A))
-            c.rect(px + 2 * s, boardY + size.h, s, post, C(0x5A3A22))
-        }
-        slayerWelcomeBoard4(c, left, boardY, p, small: small, s, lettered: true)
-        c.ellipse(sx, sy, size.w / 2, s, C(0x8A6444))   // its footing on the rim
+        // The sign, tipping over the lip on the left, its feet on the crater's edge.
+        let sx = cx - rx + 30 * s
+        let du = Double(sx - cx) / Double(rx), sy = cy + Int(Double(ry) * (1 - du * du).squareRoot())
+        slayerTiltedSign4(c, feet: (sx, sy), degrees: 10, post: tall ? 14 * s : 6 * s, s)
+        c.ellipse(sx - 2 * s, sy, 26 * s, 2 * s, C(0xA07A54))   // the ground giving way under it
+        for k in 0..<6 { c.rect(sx + Int(noise(k + 330) * Double(40 * s)), sy + Int(noise(k + 331) * 6) * s, 2 * s, s, C(0xA07A54)) }
         // The school bus at the edge, on the right.
         let bw = tall ? 70 * s : 50 * s, bh = tall ? 24 * s : 17 * s, bx = f.bus - bw / 2, by = g - bh - 3 * s
         let yellow = C(0xE8B830), yd = C(0xB88A20)
