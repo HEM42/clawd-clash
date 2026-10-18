@@ -602,8 +602,8 @@ final class HeaderView: NSView, NSViewToolTipOwner {
     func view(_ view: NSView, stringForToolTip tag: NSView.ToolTipTag, point: NSPoint, userData data: UnsafeMutableRawPointer?) -> String {
         guard button(at: point) != .close else { return ClawdWindow.closeHides ? "Hide Clawd Clash" : "Quit Clawd Clash" }
         if button(at: point) == .larger {
-            if !ClawdWindow.large { return "Larger window (125%)" }
-            return ClawdWindow.small ? "Back to the compact window" : "Back to the normal size"
+            if !ClawdWindow.large { return "Larger window" }
+            return ClawdWindow.small ? "Back to the smaller window" : "Back to the normal size"
         }
         switch ClawdWindow.view {
         case .list: return "Hide the session list"
