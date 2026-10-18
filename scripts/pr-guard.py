@@ -431,9 +431,16 @@ def classify(rep, status, path, old_mode, new_mode, head):
     if re.match(UNIVERSES + r"[^/]+/[^/]+Facts\.swift$", path) and status != "D":
         rep.warn(path, "compiled into the hook, which runs inside every AI session: read it closely (it should hold "
                        "only the cast's enums and its UniverseFacts)")
+    if path.endswith("/universe.conf") and status != "D":
+        # A manifest is plain `key = value` lines, read by Tools/universes.sh: nothing else in it.
+        for n, line in enumerate((show(head, path) or b"").decode("utf-8", "replace").split("\n"), 1):
+            if line.strip() and not line.lstrip().startswith("#") and not re.fullmatch(
+                    r"\s*(number|key|title|prefix|entry|reel|cask)\s*=\s*[A-Za-z0-9 ,.'&:!-]*(#.*)?", line):
+                rep.fail("%s:%d" % (path, n), "a manifest line is `key = value` with a plain value (number, key, title, "
+                                               "prefix, entry, reel, cask)")
     if any(re.search(p, path) for p in GREEN):
         rep.green.append(path)
-        return path.startswith(UNIVERSES) and status != "D"
+        return path.startswith(UNIVERSES) and path.endswith(".swift") and status != "D"
     rep.yellow.append(path)
     return False
 
