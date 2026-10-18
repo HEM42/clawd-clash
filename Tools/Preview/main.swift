@@ -401,7 +401,7 @@ case "rides":
         for (i, ride) in rides.enumerated() {
             for (j, st) in states.enumerated() {
                 let c = PixelCanvas(Ride.width, ride.canvasHeight + 1)   // a spare row for the outline, as the app has
-                drawRide(c, ride, ramp: st.1, engines: st.2, gear: st.3)
+                drawRide(c, ride, ramp: st.1, engines: st.2, gear: st.3, t: 1.3)   // a fixed clock: the same sheet every time
                 c.addOutline(C(0xFFFFFF, 0.92))
                 let x = CGFloat(j) * cellW, y = cellH * CGFloat(rides.count - 1 - i)
                 ctx.draw(c.makeImage()!, in: CGRect(x: x + 6, y: y + 6 - scale, width: CGFloat(Ride.width) * scale,
