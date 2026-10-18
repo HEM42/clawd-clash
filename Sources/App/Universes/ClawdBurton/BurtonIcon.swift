@@ -3,7 +3,7 @@ import Foundation
 /// Spiral Hill under a big moon, on a 28×26 canvas, for the menu bar: the pale full moon and, in silhouette across
 /// its lower half, the hill curling up into its spiral. `mono`: the moon in one colour with the hill cut out of it, so
 /// it reads as a hole, for a template image macOS tints.
-func drawSpiralHillIcon(_ c: PixelCanvas, mono: Bool = false) {
+func burtonMenuIcon(_ c: PixelCanvas, mono: Bool = false) {
     let hill = PixelCanvas(28, 26)
     burtonSpiralHill(hill, x: 1, base: 26, w: 25, h: 19, burtonInk)
     let (cx, cy, r) = (14.0, 12.5, 12.5)
