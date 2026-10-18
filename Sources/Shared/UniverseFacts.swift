@@ -32,3 +32,19 @@ enum UniverseCompaction {
     /// The Clawd Files, Stevie Clawdberg, Clawd Slayer: `who` are gone for a moment and come back the same.
     case away(who: Set<Int>)
 }
+
+/// A universe as the registry lists it: its constant, key and title, and its facts. Each universe's facts file has one
+/// (`<Prefix>Facts.entry`).
+struct UniverseEntry {
+    let universe: Universe
+    /// Stored in settings and the screen-saver feed: never changes.
+    let key: String
+    let title: String
+    let facts: UniverseFacts
+}
+
+/// Every universe, from its facts file. Hand-listed for now; the universe-modules refactor generates it from the folders.
+let registeredUniverses: [UniverseEntry] = [
+    StarClawdsFacts.entry, MarvelousFacts.entry, DetectiveFacts.entry, DoctorFacts.entry,
+    FilesFacts.entry, ClawdbergFacts.entry, RingsFacts.entry, SlayerFacts.entry,
+]

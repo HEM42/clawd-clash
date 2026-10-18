@@ -53,7 +53,13 @@ enum ClawdbergVillain: Int, CaseIterable {
 
 }
 
+extension Universe {
+    /// Stevie Clawdberg: number 5, for good (its ids are 5000 and up).
+    static let clawdberg = Universe(number: 5)
+}
+
 enum ClawdbergFacts {
+    static let entry = UniverseEntry(universe: .clawdberg, key: "clawdberg", title: "Stevie Clawdberg", facts: facts)
     static let facts = UniverseFacts(
         villainCount: ClawdbergVillain.allCases.count, heroCount: ClawdbergHero.allCases.count,
         agentOnly: Set(49...53),             // Compy, mogwai pup, snake, frog, Croc Clock

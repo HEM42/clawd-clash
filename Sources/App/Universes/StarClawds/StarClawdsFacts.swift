@@ -19,7 +19,13 @@ enum SWHero: Int, CaseIterable {
 
 }
 
+extension Universe {
+    /// Star Clawds: number 0, for good (its ids are 0000 and up).
+    static let starWars = Universe(number: 0)
+}
+
 enum StarClawdsFacts {
+    static let entry = UniverseEntry(universe: .starWars, key: "starWars", title: "Star Clawds", facts: facts)
     static let facts = UniverseFacts(
         villainCount: SWVillain.allCases.count, heroCount: SWHero.allCases.count,
         agentOnly: [23, 26],                 // MSE-6, ID9 seeker droid

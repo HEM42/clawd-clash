@@ -477,6 +477,7 @@ func windowSpec(_ u: Universe, needsAt: Double = 99, at override: Location? = ni
         case .slayer: return (.slayerLibrary, .hero(SlayerHero.buffyClawmers), .villain(SlayerVillain.oldMaster),
                               .hero(SlayerHero.willowRosenclaw), .hero(SlayerHero.rupertGyles), .villain(SlayerVillain.lukewarm),
                               "You: “stake the memory leak”", "You: “reopen the Hellmouth”")
+        default: preconditionFailure("no promo data for \(u.title) here yet: the universe-modules plan moves it into its folder")
         }
     }()
     let duel = fightIsCloseQuarters(claude.weapon, other.weapon)
@@ -803,6 +804,7 @@ func brawl(_ ctx: CGContext, _ u: Universe, local: Double, t: Double, drop: Bool
         case .clawdberg: return (.hero(ClawdbergHero.indianaBones), .villain(ClawdbergVillain.reneBellock), .hero(ClawdbergHero.martyMcFry), .villain(ClawdbergVillain.biffTannin))
         case .middleEarth: return (.hero(RingsHero.legolas), .villain(RingsVillain.orc), .hero(RingsHero.gimli), .villain(RingsVillain.uruk))
         case .slayer: return (.hero(SlayerHero.buffyClawmers), .villain(SlayerVillain.oldMaster), .hero(SlayerHero.willowRosenclaw), .villain(SlayerVillain.lukewarm))
+        default: preconditionFailure("no promo data for \(u.title) here yet: the universe-modules plan moves it into its folder")
         }
     }()
     let (ra, rb) = fightRoles(a.weapon, b.weapon), close = fightIsCloseQuarters(a.weapon, b.weapon)
@@ -828,6 +830,7 @@ func brawl(_ ctx: CGContext, _ u: Universe, local: Double, t: Double, drop: Bool
         case .clawdberg: return ("Or roll Stevie Clawdberg.", "Whips, sharks, gremlins and a DeLorean: 117 characters in 23 places.")
         case .middleEarth: return (u.isReleased ? "Or pick Clawd of the Rings." : "Coming soon: Clawd of the Rings.", "Swords, staffs and one very precious ring.")
         case .slayer: return (u.isReleased ? "Or patrol with Clawd Slayer." : "Coming soon: Clawd Slayer.", "Stakes, spells and a Hellmouth under the library.")
+        default: preconditionFailure("no promo data for \(u.title) here yet: the universe-modules plan moves it into its folder")
         }
     }()
     caption(line, ctx, local: local, start: drop ? 0.3 : 0.15, y: 900)
@@ -1339,6 +1342,7 @@ func pickVerse(_ u: Universe) -> (hero: Cast, villain: Cast, sound: String, pop:
     case .clawdberg: return (.hero(ClawdbergHero.indianaBones), .villain(ClawdbergVillain.reneBellock), "CRACK!", (0xA65AE8, 0xD2A8FF))
     case .middleEarth: return (.hero(RingsHero.gandalf), .villain(RingsVillain.balrog), "KA-THOOM!", (0x1EB8A8, 0x8AE8DC))
     case .slayer: return (.hero(SlayerHero.buffyClawmers), .villain(SlayerVillain.oldMaster), "THWACK!", (0x2ED8D0, 0xA0F6F0))
+    default: preconditionFailure("no promo data for \(u.title) here yet: the universe-modules plan moves it into its folder")
     }
 }
 
@@ -1576,6 +1580,7 @@ func setPiece(_ u: Universe) -> (word: String, draw: (CGContext, Double, Double)
     case .clawdberg: return ("88 MPH!", { clawdbergHillValley($0, local: 3.0 + $1, t: $2) })
     case .middleEarth: return ("DOOM!", { ringsBridge($0, local: 2.8 + $1, t: $2) })
     case .slayer: return ("THWACK!", { slayerHomecoming($0, local: homeCut + homeFight - 0.6 + $1, t: $2) })
+    default: preconditionFailure("no promo data for \(u.title) here yet: the universe-modules plan moves it into its folder")
     }
 }
 
@@ -6741,6 +6746,7 @@ func promoSound(_ m: Mix) {
         case .clawdberg: m.tone(at, 0.4, 300, to: 1800, wave: .saw, vol: 0.04, release: 0.05); m.boom(at + 0.45, vol: 0.2)
         case .middleEarth: for k in 0..<4 { m.kick(at + Double(k) * 0.24, vol: 0.25) }
         case .slayer: m.chug(at, root: 38, len: 0.5, mute: false); m.crash(at, vol: 0.08)
+        default: break   // no sound of its own
         }
     }
     for at in pageTurns { m.flip(chs + at + 0.1, vol: 0.14); m.whoosh(chs + at + pageTurn / 2, pageTurn, vol: 0.1) }

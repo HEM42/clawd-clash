@@ -36,7 +36,13 @@ enum SlayerVillain: Int, CaseIterable {
 
 }
 
+extension Universe {
+    /// Clawd Slayer: number 7, for good (its ids are 7000 and up).
+    static let slayer = Universe(number: 7)
+}
+
 enum SlayerFacts {
+    static let entry = UniverseEntry(universe: .slayer, key: "slayer", title: "Clawd Slayer", facts: facts)
     static let facts = UniverseFacts(
         villainCount: SlayerVillain.allCases.count, heroCount: SlayerHero.allCases.count,
         // a fledgling vampire, one of Glory's minions, Gachnar, Amy the rat; Miss Kitty Fanclawstico

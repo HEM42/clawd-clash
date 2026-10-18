@@ -1,46 +1,51 @@
 import Foundation
 
-/// The universes Clawd Clash can show. One at a time, except in Clawd Royale (`Roster`), where a scene mixes all of them.
+/// A universe Clawd Clash can show. One at a time, except in Clawd Royale (`Roster`), where a scene mixes all of them.
 /// A universe can be built before it's released (`isReleased`; every one is today): only the tools see an unreleased one.
 ///
 /// Cast ids are stored in the status file and the screen-saver feed: `universe.base + local`, where local ids are
 /// villains `0..<100` and heroes `100…`. Star Wars keeps Clawd Wars' ids (base 0), so its saved state carries over.
-enum Universe: Int, CaseIterable, Codable {
-    case starWars = 0
-    case marvel = 1
-    case dc = 2
-    case doctor = 3
-    case clawdFiles = 4
-    case clawdberg = 5
-    case middleEarth = 6
-    case slayer = 7
+struct Universe: Hashable, Comparable, CaseIterable, Codable, RawRepresentable {
+    /// Its permanent number: every id it ever gave out is `number × 1000 + local id`. Never reused.
+    let rawValue: Int
 
-    var key: String {
-        switch self {
-        case .starWars: return "starWars"; case .marvel: return "marvel"; case .dc: return "dc"; case .doctor: return "doctor"
-        case .clawdFiles: return "clawdFiles"; case .clawdberg: return "clawdberg"; case .middleEarth: return "middleEarth"; case .slayer: return "slayer"
-        }
+    /// Only universes that are registered (`registeredUniverses`).
+    init?(rawValue: Int) {
+        guard Universe.entries[rawValue] != nil else { return nil }
+        self.rawValue = rawValue
     }
-    init?(key: String) { self.init(rawValue: Universe.allCases.first { $0.key == key }?.rawValue ?? -1) }
+    /// For a universe's own constant (`static let slayer = Universe(number: 7)`, in its facts file).
+    init(number: Int) { rawValue = number }
+    init?(key: String) { guard let e = registeredUniverses.first(where: { $0.key == key }) else { return nil }; self = e.universe }
 
-    var title: String {
-        switch self {
-        case .starWars: return "Star Clawds"; case .marvel: return "Marvelous Clawds"; case .dc: return "Detective Clawds"; case .doctor: return "Doctor Clawd"
-        case .clawdFiles: return "The Clawd Files"; case .clawdberg: return "Stevie Clawdberg"; case .middleEarth: return "Clawd of the Rings"
-        case .slayer: return "Clawd Slayer"
+    /// Every registered universe, in number order.
+    static let allCases: [Universe] = registeredUniverses.map(\.universe).sorted()
+    /// The lowest-numbered universe, for when none is known (Star Clawds).
+    static var fallback: Universe { allCases[0] }
+    private static let entries: [Int: UniverseEntry] = Dictionary(uniqueKeysWithValues: registeredUniverses.map { ($0.universe.rawValue, $0) })
+    private var entry: UniverseEntry { Universe.entries[rawValue]! }
+
+    static func < (a: Universe, b: Universe) -> Bool { a.rawValue < b.rawValue }
+
+    /// Stored as its number alone, as it always was.
+    init(from decoder: Decoder) throws {
+        let n = try decoder.singleValueContainer().decode(Int.self)
+        guard let u = Universe(rawValue: n) else {
+            throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath, debugDescription: "no universe \(n)"))
         }
+        self = u
     }
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        try c.encode(rawValue)
+    }
+
+    var key: String { entry.key }
+    var title: String { entry.title }
     var base: Int { rawValue * 1000 }
 
-    /// What the hook, the app and the screen saver know about it: its `<Prefix>Facts.swift`. Hand-listed for now; the
-    /// universe-modules refactor generates this list from the folders.
-    var facts: UniverseFacts {
-        switch self {
-        case .starWars: return StarClawdsFacts.facts; case .marvel: return MarvelousFacts.facts; case .dc: return DetectiveFacts.facts
-        case .doctor: return DoctorFacts.facts; case .clawdFiles: return FilesFacts.facts; case .clawdberg: return ClawdbergFacts.facts
-        case .middleEarth: return RingsFacts.facts; case .slayer: return SlayerFacts.facts
-        }
-    }
+    /// What the hook, the app and the screen saver know about it: its `<Prefix>Facts.swift`.
+    var facts: UniverseFacts { entry.facts }
 
     var villainCount: Int { facts.villainCount }
     var heroCount: Int { facts.heroCount }
@@ -97,7 +102,7 @@ enum Universe: Int, CaseIterable, Codable {
     var lightCast: [Int] { (0..<heroCount - 1).map { base + StatusStore.heroBase + $0 } }   // all but HEM
 
     /// Which universe a cast id belongs to.
-    static func of(_ id: Int) -> Universe { Universe(rawValue: id / 1000) ?? .starWars }
+    static func of(_ id: Int) -> Universe { Universe(rawValue: id / 1000) ?? .fallback }
     static func isDark(_ id: Int) -> Bool { id % 1000 < StatusStore.heroBase }
 
     /// `id` as a member of this universe: itself if it already is one, otherwise the character in the same place on

@@ -21,7 +21,13 @@ enum RingsHero: Int, CaseIterable {
 
 }
 
+extension Universe {
+    /// Clawd of the Rings: number 6, for good (its ids are 6000 and up).
+    static let middleEarth = Universe(number: 6)
+}
+
 enum RingsFacts {
+    static let entry = UniverseEntry(universe: .middleEarth, key: "middleEarth", title: "Clawd of the Rings", facts: facts)
     static let facts = UniverseFacts(
         villainCount: RingsVillain.allCases.count, heroCount: RingsHero.allCases.count,
         // Gandclawd the Grey and the White, Arrogorn and Stride-r, Sarumanual and Sharkey, Sourun and the Necro-maintainer.

@@ -19,7 +19,7 @@ struct Location: Hashable, RawRepresentable {
     }
 
     /// The universe it's in.
-    var universe: Universe { Universe.allCases.first { Theme.of($0).places.contains(self) } ?? .starWars }
+    var universe: Universe { Universe.allCases.first { Theme.of($0).places.contains(self) } ?? .fallback }
 
     /// Every place in `universe`, in order.
     static func all(in universe: Universe) -> [Location] { Theme.of(universe).places }

@@ -69,7 +69,7 @@ struct StatusFile: Codable {
     /// Clawd Royale: the hook casts from every universe (`Roster`), and nobody is recast. Nil: one universe.
     var mixed: Bool?
 
-    var shownUniverse: Universe { universe.flatMap(Universe.init(rawValue:)) ?? .starWars }
+    var shownUniverse: Universe { universe.flatMap(Universe.init(rawValue:)) ?? .fallback }
     var roster: Roster { Roster(shownUniverse, mixed: mixed == true) }
 }
 

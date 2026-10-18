@@ -22,7 +22,7 @@ final class ClawdClashSaverView: ScreenSaverView {
     private var textCache: [String: CGImage] = [:]
     private var feed: SaverFeed?
     private var lastRead = 0.0
-    private var lastLocation = Location.all(in: .starWars)[0]
+    private var lastLocation = Location.all(in: .fallback)[0]
     /// The universe on show on this trip: the app's, or (Random, as the screen saver) one picked on each trip.
     /// `Universe.shown` is one per process, and the screen-saver host runs a view for every display (and one for
     /// System Settings' preview) in the same one, each picking its own at random: so each view sets it to its own
@@ -205,7 +205,7 @@ final class ClawdClashSaverView: ScreenSaverView {
             // its Options say (the app's by default); Random picks afresh on each trip somewhere new (see `travel`).
             if feedSource == nil {
                 showClock = Self.clockShown
-                let appUniverse = feed?.universe.flatMap(Universe.init(rawValue:)) ?? .starWars
+                let appUniverse = feed?.universe.flatMap(Universe.init(rawValue:)) ?? .fallback
                 switch Self.choice {
                 case let key where Universe.offered(key: key) != nil: tripUniverse = Universe.offered(key: key); tripMixed = false
                 case "clawdRoyale": tripMixed = true
@@ -238,7 +238,7 @@ final class ClawdClashSaverView: ScreenSaverView {
         let onStage = (crewed(now) ? feed?.sessions ?? [] : demo).flatMap { [$0.cast] + $0.agents.map(\.cast) }.map { Cast(id: $0) }
         if feedSource == nil, Self.choice == "random" {
             tripUniverse = Universe.offered.randomElement()
-            Universe.shown = tripUniverse ?? .starWars
+            Universe.shown = tripUniverse ?? .fallback
         }
         let here = visit ?? lastLocation
         let crew = (running(now) ? feed?.sessions ?? [] : []).flatMap { [$0.cast] + $0.agents.map(\.cast) }.map { Cast(id: $0) }

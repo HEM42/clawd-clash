@@ -56,7 +56,13 @@ enum MarvelVillain: Int, CaseIterable {
 
 }
 
+extension Universe {
+    /// Marvelous Clawds: number 1, for good (its ids are 1000 and up).
+    static let marvel = Universe(number: 1)
+}
+
 enum MarvelousFacts {
+    static let entry = UniverseEntry(universe: .marvel, key: "marvel", title: "Marvelous Clawds", facts: facts)
     static let facts = UniverseFacts(
         villainCount: MarvelVillain.allCases.count, heroCount: MarvelHero.allCases.count,
         agentOnly: [11, 33, 190, 202, 203, 204]   // Ultron Sentry, Doombot, Jeff, Zabu, Morris, Dum-E

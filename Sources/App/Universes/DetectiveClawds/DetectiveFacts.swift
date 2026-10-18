@@ -64,7 +64,13 @@ enum DCVillain: Int, CaseIterable {
 
 }
 
+extension Universe {
+    /// Detective Clawds: number 2, for good (its ids are 2000 and up).
+    static let dc = Universe(number: 2)
+}
+
 enum DetectiveFacts {
+    static let entry = UniverseEntry(universe: .dc, key: "dc", title: "Detective Clawds", facts: facts)
     static let facts = UniverseFacts(
         villainCount: DCVillain.allCases.count, heroCount: DCHero.allCases.count,
         // Joker Goon, Dex-Starr, Mister Mind, Krypto, Ch'p, Ace the Bat-Hound, Streaky, Gleek, Beppo

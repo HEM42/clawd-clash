@@ -43,7 +43,13 @@ enum DoctorVillain: Int, CaseIterable {
     var isDalick: Bool { [.dalick, .supremeDalick, .dalickEmperor].contains(self) }
 }
 
+extension Universe {
+    /// Doctor Clawd: number 3, for good (its ids are 3000 and up).
+    static let doctor = Universe(number: 3)
+}
+
 enum DoctorFacts {
+    static let entry = UniverseEntry(universe: .doctor, key: "doctor", title: "Doctor Clawd", facts: facts)
     static let facts = UniverseFacts(
         villainCount: DoctorVillain.allCases.count, heroCount: DoctorHero.allCases.count,
         agentOnly: [39, 40, 41],             // Adipoze, Cybermite, Toclafayne

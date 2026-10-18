@@ -40,7 +40,13 @@ enum FilesVillain: Int, CaseIterable {
 
 }
 
+extension Universe {
+    /// The Clawd Files: number 4, for good (its ids are 4000 and up).
+    static let clawdFiles = Universe(number: 4)
+}
+
 enum FilesFacts {
+    static let entry = UniverseEntry(universe: .clawdFiles, key: "clawdFiles", title: "The Clawd Files", facts: facts)
     static let facts = UniverseFacts(
         villainCount: FilesVillain.allCases.count, heroCount: FilesHero.allCases.count,
         agentOnly: [43, 44, 45],             // killer bee, robo-roach, flukeworm

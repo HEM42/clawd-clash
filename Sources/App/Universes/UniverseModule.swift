@@ -183,20 +183,15 @@ enum PoseStyle {
 }
 
 extension Universe {
-    /// The universe's module. Hand-listed for now; the universe-modules refactor generates this list from the folders.
-    var module: UniverseModule {
-        switch self {
-        case .starWars: return StarClawdsUniverse()
-        case .marvel: return MarvelousUniverse()
-        case .dc: return DetectiveUniverse()
-        case .doctor: return DoctorUniverse()
-        case .clawdFiles: return FilesUniverse()
-        case .clawdberg: return ClawdbergUniverse()
-        case .middleEarth: return RingsUniverse()
-        case .slayer: return SlayerUniverse()
-        }
-    }
+    /// The universe's module.
+    var module: UniverseModule { registeredModules[self]! }
 }
+
+/// Every universe's module. Hand-listed for now; the universe-modules refactor generates this list from the folders.
+let registeredModules: [Universe: UniverseModule] = [
+    .starWars: StarClawdsUniverse(), .marvel: MarvelousUniverse(), .dc: DetectiveUniverse(), .doctor: DoctorUniverse(),
+    .clawdFiles: FilesUniverse(), .clawdberg: ClawdbergUniverse(), .middleEarth: RingsUniverse(), .slayer: SlayerUniverse(),
+]
 
 /// A universe's characters as Tools/Preview finds them: by batch (one art file's worth, "slayerHeroes1") and by enum
 /// case name (`buffy`).
