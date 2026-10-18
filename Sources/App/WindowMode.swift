@@ -54,9 +54,20 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     private var boardTimer: Timer?
     private var boardOn = false
     static let headerHeight: CGFloat = 30
-    /// Settings → Compact Window: the whole window (header, scene, characters, cards) drawn at 75%. Every view keeps
-    /// its normal (logical) size in its bounds and is shown in a frame `scale` times as big.
-    static var scale: CGFloat { small ? 0.75 : 1 }
+    /// Settings → Compact Window: the whole window (header, scene, characters, cards) drawn at 75%; the Larger window,
+    /// at 125%, wins over it while on. Every view keeps its normal (logical) size in its bounds and is shown in a frame
+    /// `scale` times as big.
+    static var scale: CGFloat { large ? 1.25 : small ? 0.75 : 1 }
+    /// The cards' own scale: the Compact Window keeps their text full size (they get more compact instead), the
+    /// Larger window draws them at 125% like the rest.
+    static var cardScale: CGFloat { large ? 1.25 : 1 }
+    /// The header's enlarge button, or Settings → Larger window: everything in the window 25% bigger, the scene's art
+    /// at 2.5 points a pixel (5 on Retina, still crisp). Off until turned on; turning it off goes back to the Compact
+    /// Window if that was on.
+    static var large: Bool {
+        get { UserDefaults.standard.bool(forKey: "windowLarge") }
+        set { UserDefaults.standard.set(newValue, forKey: "windowLarge") }
+    }
     /// On until turned off in Settings.
     static var small: Bool {
         get { UserDefaults.standard.object(forKey: "windowSmall") as? Bool ?? true }
@@ -151,8 +162,9 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
               !window.inLiveResize, let screen = window.screen ?? NSScreen.main else { return }
         let vf = screen.visibleFrame
         // Up to three sessions fit; more scroll, with a sliver of the next card showing so it's clear there are more.
-        let list = min(cardsView.contentHeight, cardsView.height(showingCards: Self.cardsShown), cardsView.maxListHeight)
-        let wanted = Self.listShown ? min(max(top + list, top + 60), vf.height) : top
+        // The cards measure themselves at their own scale.
+        let list = min(cardsView.contentHeight, cardsView.height(showingCards: Self.cardsShown), cardsView.maxListHeight) * Self.cardScale
+        let wanted = Self.listShown ? min(max(top + list, top + 60 * Self.cardScale), vf.height) : top
         let delta = wanted - window.frame.height
         guard abs(delta) > 1 else { return }
         var f = window.frame
@@ -283,7 +295,8 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
         sceneView.setBoundsSize(NSSize(width: sceneView.frame.width / k, height: Self.headerHeight + sceneHeight))
         roomView.setBoundsSize(sceneView.bounds.size)
         cardsView.frame.size.width = scroll.contentView.bounds.width
-        cardsView.relayout()   // always: the Compact Window changes the cards' heights, not just their width
+        cardsView.zoom = Self.cardScale
+        cardsView.relayout()   // always: the Compact and Larger windows change the cards' heights, not just their width
         header.needsDisplay = true; sceneView.showFrame()
     }
 
@@ -342,6 +355,35 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
             let back = presetSize(Self.listShown ? .list : .scene)
             UserDefaults.standard.set(NSStringFromRect(NSRect(origin: f.origin, size: back)), forKey: "windowFrameBeforeBoard")
         }
+        applyLimits()
+        layout()
+        header.updateTrackingAreas()
+        onGeometryChange?()
+        fitToContent()
+    }
+
+    /// The Larger window turned on or off (`scale` was `old`): the window grows or shrinks by the same factor as
+    /// everything in it, keeping its top left corner, so a click and a click back land where it was. The sizes kept
+    /// for the other views (the screen-saver view's, the window's before it, the list's before it was hidden) follow.
+    func applyLarge(from old: CGFloat) {
+        let r = Self.scale / old, d = UserDefaults.standard
+        func scaled(_ s: NSSize) -> NSSize { NSSize(width: (s.width * r).rounded(), height: (s.height * r).rounded()) }
+        var f = window.frame
+        let top = f.maxY
+        f.size = scaled(f.size)
+        if Self.view == .scene { f.size.height = (Self.headerHeight + sceneHeight) * Self.scale }
+        f.origin.y = top - f.height
+        window.minSize = NSSize(width: 0, height: 0)          // free to shrink or grow past the old limits
+        window.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
+        animateFrame(onScreen(f))
+        if let size = d.string(forKey: "windowBoardSize").map(NSSizeFromString), size.width > 0, Self.view != .board {
+            d.set(NSStringFromSize(scaled(size)), forKey: "windowBoardSize")
+        }
+        if let before = d.string(forKey: "windowFrameBeforeBoard").map(NSRectFromString), before.width > 0, Self.view == .board {
+            d.set(NSStringFromRect(NSRect(origin: before.origin, size: scaled(before.size))), forKey: "windowFrameBeforeBoard")
+        }
+        let h = d.double(forKey: "windowListHeight")
+        if h > 0 { d.set((h * r).rounded(), forKey: "windowListHeight") }
         applyLimits()
         layout()
         header.updateTrackingAreas()
@@ -471,7 +513,7 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
 
     func windowDidMove(_ notification: Notification) { onGeometryChange?() }
     func windowDidEndLiveResize(_ notification: Notification) {
-        if Self.small && !resizingInCode { leaveSmallAfterResize() }
+        if Self.small && !Self.large && !resizingInCode { leaveSmallAfterResize() }
         fitToContent()
     }
     func windowDidResize(_ notification: Notification) {
@@ -508,6 +550,7 @@ final class HeaderView: NSView, NSViewToolTipOwner {
     weak var controller: OverlayController?
     var onClose: (() -> Void)?
     var onToggleList: (() -> Void)?
+    var onToggleLarge: (() -> Void)?
     /// When the scene's current transition ends: The Clawd Files types its place in after it.
     var arrival: (() -> Double)?
     /// The Clawd Files' typed caption: the place, and when it starts typing.
@@ -515,21 +558,22 @@ final class HeaderView: NSView, NSViewToolTipOwner {
 
     static let yellow = NSColor(srgbRed: 1, green: 0.91, blue: 0.12, alpha: 1)   // the opening-crawl yellow
 
-    private enum Button { case minimize, close }
+    private enum Button: CaseIterable { case larger, minimize, close }
     private var hovered: Button?
     private static let buttonSize: CGFloat = 20
 
     private var midY: CGFloat { bounds.height / 2 }
 
-    /// Our own buttons on the right (the system traffic lights are hidden): minimize, then close.
+    /// Our own buttons on the right (the system traffic lights are hidden): larger, minimize, then close.
     private func rect(_ b: Button) -> NSRect {
         let s = Self.buttonSize, y = (midY - s / 2).rounded()
         let closeX = bounds.width - 8 - s
-        return NSRect(x: b == .close ? closeX : closeX - 4 - s, y: y, width: s, height: s)
+        let steps: CGFloat = b == .close ? 0 : b == .minimize ? 1 : 2
+        return NSRect(x: closeX - steps * (4 + s), y: y, width: s, height: s)
     }
 
     private func button(at p: NSPoint) -> Button? {
-        [Button.minimize, .close].first { rect($0).contains(p) }
+        Button.allCases.first { rect($0).contains(p) }
     }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
@@ -544,10 +588,15 @@ final class HeaderView: NSView, NSViewToolTipOwner {
         // as the owner was freed, so showing its tip crashed.
         addToolTip(rect(.close), owner: self, userData: nil)
         addToolTip(rect(.minimize), owner: self, userData: nil)
+        addToolTip(rect(.larger), owner: self, userData: nil)
     }
 
     func view(_ view: NSView, stringForToolTip tag: NSView.ToolTipTag, point: NSPoint, userData data: UnsafeMutableRawPointer?) -> String {
         guard button(at: point) != .close else { return ClawdWindow.closeHides ? "Hide Clawd Clash" : "Quit Clawd Clash" }
+        if button(at: point) == .larger {
+            if !ClawdWindow.large { return "Larger window (125%)" }
+            return ClawdWindow.small ? "Back to the compact window" : "Back to the normal size"
+        }
         switch ClawdWindow.view {
         case .list: return "Hide the session list"
         case .scene: return "Show the session list"
@@ -628,10 +677,11 @@ final class HeaderView: NSView, NSViewToolTipOwner {
             label.draw(at: NSPoint(x: 14, y: (midY - label.size().height / 2).rounded()))
         }
 
-        // The view button shows what a click does next: collapse to just the scene (arrows in), or back to the full
-        // view (arrows out); then close. Both drawn by hand, centred exactly on the bar and the same size: the
-        // symbols sat off-centre, and the expand one came out small.
-        for button in [Button.minimize, .close] {
+        // The size button and the view button show what a click does next: the size button, two diagonal arrows out
+        // (larger) or in (back down); the view button, collapse to just the scene (arrows in) or back to the full view
+        // (arrows out); then close. All drawn by hand, centred exactly on the bar and the same size: the symbols sat
+        // off-centre, and the expand one came out small.
+        for button in Button.allCases {
             let r = rect(button)
             if hovered == button {
                 (button == .close ? NSColor(srgbRed: 0.85, green: 0.25, blue: 0.25, alpha: 0.9) : NSColor(white: 1, alpha: 0.14)).setFill()
@@ -642,6 +692,18 @@ final class HeaderView: NSView, NSViewToolTipOwner {
             if button == .close {
                 path.move(to: NSPoint(x: c.x - d, y: c.y - d)); path.line(to: NSPoint(x: c.x + d, y: c.y + d))
                 path.move(to: NSPoint(x: c.x - d, y: c.y + d)); path.line(to: NSPoint(x: c.x + d, y: c.y - d))
+            } else if button == .larger {
+                // Two arrows on the diagonal, up-right and down-left: heads at the corners (larger), or at the middle
+                // (back down), each head two short strokes along the box's edges.
+                let out = !ClawdWindow.large
+                let near: CGFloat = 1, far: CGFloat = 5, arm: CGFloat = 3.2
+                for side: CGFloat in [1, -1] {
+                    let tip = out ? far : near, tail = out ? near : far, back = out ? -side * arm : side * arm
+                    let t = NSPoint(x: c.x + side * tip, y: c.y + side * tip)
+                    path.move(to: NSPoint(x: c.x + side * tail, y: c.y + side * tail)); path.line(to: t)
+                    path.move(to: NSPoint(x: t.x + back, y: t.y)); path.line(to: t)
+                    path.line(to: NSPoint(x: t.x, y: t.y + back))
+                }
             } else {
                 // A line across the middle, with a chevron above and below: pointing at it (collapse) or away (expand).
                 let inward = ClawdWindow.view == .list
@@ -665,6 +727,7 @@ final class HeaderView: NSView, NSViewToolTipOwner {
         switch button(at: convert(event.locationInWindow, from: nil)) {
         case .close?: onClose?()
         case .minimize?: onToggleList?(); needsDisplay = true
+        case .larger?: onToggleLarge?(); needsDisplay = true
         case nil: window?.performDrag(with: event)
         }
     }
@@ -853,7 +916,9 @@ final class CardsView: NSView {
     /// Sessions whose agents are all shown. Not remembered across launches.
     private var unfolded: Set<String> = []
     var onHeightChange: (() -> Void)?
-    /// Height the cards actually need (the window sizes itself to this).
+    /// How many points on screen to each point of the layout: 1.25 in the Larger window (`ClawdWindow.cardScale`).
+    var zoom: CGFloat = 1
+    /// Height the cards actually need, at their normal size (the window sizes itself to this, times `zoom`).
     private(set) var contentHeight: CGFloat = 0
 
     override var isFlipped: Bool { true }
@@ -964,9 +1029,11 @@ final class CardsView: NSView {
     func relayout() {
         let h = height(showingCards: .max)
         contentHeight = h
-        // The cards keep normal-size text even in the Compact Window (they get more compact instead).
-        let minH = enclosingScrollView?.bounds.height ?? 0
-        setFrameSize(NSSize(width: frame.width, height: max(h, minH)))
+        // The cards keep normal-size text even in the Compact Window (they get more compact instead); the Larger
+        // window shows them `zoom` times as big, laid out at their normal size in the bounds, as the scene is.
+        let minH = enclosingScrollView?.contentView.bounds.height ?? 0
+        setFrameSize(NSSize(width: frame.width, height: max(h * zoom, minH)))
+        setBoundsSize(NSSize(width: frame.width / zoom, height: frame.height / zoom))
         needsDisplay = true
     }
 
@@ -1229,11 +1296,15 @@ final class CardsView: NSView {
     }
 
     /// Draw a pixel-art portrait as large as fits in `box` (never above `maxScale`), centred at the
-    /// bottom of the box, upright in this flipped view. Whole-number scales keep the pixels crisp.
+    /// bottom of the box, upright in this flipped view. Whole numbers of Retina pixels keep the pixels crisp.
     private func draw(_ img: CGImage, fitting box: NSRect, in ctx: CGContext, maxScale: CGFloat) {
         let iw = CGFloat(img.width), ih = CGFloat(img.height)
-        var k = min(box.width / iw, box.height / ih, maxScale)
-        if k >= 1 { k = (k * 2).rounded(.down) / 2 }   // whole or half steps (1.5× in the Compact Window)
+        let fit = min(box.width / iw, box.height / ih)
+        var k = min(fit, maxScale)
+        // Steps of one Retina pixel: half a point (1.5× in the Compact Window), or 0.4 in the Larger window, where 1×
+        // would be two and a half pixels and comes out at 1.2 (three) instead. Never past the box.
+        let u = 2 * zoom
+        if k >= 1 { k = (k * u).rounded() / u; if k > fit { k = (fit * u).rounded(.down) / u } }
         let w = iw * k, h = ih * k
         ctx.saveGState()
         ctx.interpolationQuality = .none
