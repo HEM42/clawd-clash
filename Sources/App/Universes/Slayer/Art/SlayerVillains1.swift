@@ -19,12 +19,47 @@ private func drawOldMaster(_ c: PixelCanvas, _ p: Pose) {
     let ridge = C(0x9A4A30), eye = C(0xF2D040)
     let mimeK = p.signature.map { $0 > 0.1 && $0 < 0.9 ? ($0 - 0.1) / 0.8 : -1 } ?? -1
 
-    drawLegs(c, Look(leg: C(0x2A2430)), step: p.step)
+    // Trousers a mid grey-violet, lit down their left side, so the legs under the robe read as legs, not as gaps.
+    drawLegs(c, Look(leg: C(0x4A4254)), step: p.step)
+    if !seatedPose { for lx in [19, 23, 31, 35] { c.rect(lx, 41, 1, 3, C(0x645A70)) } }
     c.oy += p.breathe
-    // The tall collar standing up behind his head.
-    c.rect(15, 22, 3, 12, robeD); c.rect(38, 22, 3, 12, robeD); c.rect(16, 21, 2, 1, robeD); c.rect(38, 21, 2, 1, robeD)
-    c.rect(16, 23, 1, 10, robeL); c.rect(39, 23, 1, 10, robeL)
+    // The tall stiff collar standing up behind his head, curving gently outward from the shoulders to a rounded top.
+    c.rect(15, 23, 3, 10, robeD); c.rect(38, 23, 3, 10, robeD)   // its inner face, dark, closing the gap to his head
+    c.pattern(12, 21, [
+        ".KKK..",
+        "KLLK..",
+        "KLK...",
+        "KLK...",
+        "KLK...",
+        ".KLK..",
+        ".KLK..",
+        ".KLK..",
+        "..KLK.",
+        "..KLK.",
+        "...KLK",
+        "...KKK",
+        "....KK",
+    ], ["K": robeD, "L": robeL])
+    c.pattern(38, 21, [
+        "..KKK.",
+        "..KLLK",
+        "...KLK",
+        "...KLK",
+        "...KLK",
+        "..KLK.",
+        "..KLK.",
+        "..KLK.",
+        ".KLK..",
+        ".KLK..",
+        "KLK...",
+        "KKK...",
+        "KK....",
+    ], ["K": robeD, "L": robeL])
     drawBody(c, Look(arm: robe, eye: nil), armLeft: mimeK >= 0 ? 4 : 0, armRight: mimeK >= 0 ? 5 : 0)
+    // The bald dome: the head rounded up above Clawd's block, a shine on its crown and two old furrows across it.
+    c.rect(20, 24, 16, 1, clawdOrange); c.rect(19, 25, 18, 1, clawdOrange); c.px(36, 25, clawdShade); c.px(35, 24, clawdShade)
+    c.rect(22, 24, 3, 1, C(0xF4A68A)); c.rect(21, 25, 2, 1, C(0xF4A68A)); c.px(20, 26, C(0xF4A68A))
+    c.rect(26, 25, 5, 1, C(0xB85A3E)); c.rect(27, 26, 3, 1, C(0xC86A4C))
     // The robe from the shoulders down, hanging over the legs to the shins: four feet still show below its hem.
     c.rect(18, 34, 20, 4, robe); c.rect(37, 34, 1, 4, robeD); c.rect(22, 34, 1, 4, robeL); c.rect(33, 34, 1, 4, robeL)
     c.rect(17, 38, 22, seatedPose ? 1 : 3, robe); c.rect(17, seatedPose ? 38 : 40, 22, 1, robeD)
@@ -41,16 +76,24 @@ private func drawOldMaster(_ c: PixelCanvas, _ p: Pose) {
         c.rect(15, 29, 3, 3, clawdOrange); c.rect(40, 28, 3, 3, clawdOrange)
         for k in 0..<3 { c.px(43, 28 + k, nail) }
         let wall = 44
-        for y in 14...44 {
-            let near = abs(Double(y) - 29.5) / 16
-            let a = max(0.15, 1 - near) * (0.7 + 0.3 * sin(p.t * 8 + Double(y) * 0.7))
-            c.px(wall, y, C(0xBFDCFF).alpha(a)); c.px(wall + 1, y, C(0x7FB2FF).alpha(a * 0.45))
+        // The barrier: a pale pane of light, brightest where his hands press on it, its face faintly filled.
+        for y in 12...44 {
+            let near = abs(Double(y) - 29.5) / 17
+            let a = max(0.3, 1 - near) * (0.8 + 0.2 * sin(p.t * 8 + Double(y) * 0.7))
+            c.px(wall, y, C(0xE4F0FF).alpha(a)); c.px(wall + 1, y, C(0x8CC0FF).alpha(a * 0.55))
+            c.px(wall + 2, y, C(0x8CC0FF).alpha(a * 0.2)); c.px(wall + 3, y, C(0x8CC0FF).alpha(a * 0.1))
         }
-        // Ripples spreading up and down the barrier from his hand.
-        let ring = Int(p.t * 8) % 6
-        for d in [ring, ring + 6] where d < 12 {
-            c.px(wall - 1, 29 - d, C(0xFFFFFF, 0.8 - Double(d) * 0.06)); c.px(wall - 1, 30 + d, C(0xFFFFFF, 0.8 - Double(d) * 0.06))
+        // Ripples ringing out across the pane from his hand, curved like a pebble's rings seen edge on.
+        for k in 0..<2 {
+            let d = frac(p.t * 1.6 + Double(k) * 0.5) * 13 + 2, fade = 0.85 * (1 - d / 15)
+            var th = -Double.pi / 2
+            while th <= Double.pi / 2 {
+                c.px(wall + 1 + Int((cos(th) * d * 0.3).rounded()), 29 + Int((sin(th) * d).rounded()), C(0xFFFFFF, fade))
+                th += 0.12
+            }
         }
+        // The glow where his palm meets it.
+        c.rect(wall, 28, 1, 4, white); c.px(wall + 1, 29, C(0xFFFFFF, 0.8)); c.px(wall + 1, 30, C(0xFFFFFF, 0.8))
         return
     }
     if let a = p.melee {
