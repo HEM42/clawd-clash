@@ -14,4 +14,10 @@ struct RingsUniverse: UniverseModule {
             // "hem" and "HEM" find the first universe's HEM; this batch is Clawd of the Rings' own
             extra: [("ringsHem", [.hero(RingsHero.hem)])])
     }
+
+    var playgroundPrompts: [String] {
+        ["make the Eagle wait for the last subagent", "make the window resize to fit the Claudes",
+         "why won't the Ballrog cross the bridge?", "write a nice README with screenshots",
+         "fix the portrait crop for Shellob's legs"]
+    }
 }

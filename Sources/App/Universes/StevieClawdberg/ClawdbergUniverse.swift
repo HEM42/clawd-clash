@@ -12,4 +12,12 @@ struct ClawdbergUniverse: UniverseModule {
         .of(.clawdberg, heroes: "clawdbergHeroes", [clawdbergHeroes1, clawdbergHeroes2, clawdbergHeroes3, clawdbergHeroes4, clawdbergHeroes5, clawdbergHeroes6, clawdbergHeroes7],
             villains: "clawdbergVillains", [clawdbergVillains1, clawdbergVillains2, clawdbergVillains3, clawdbergVillains4, clawdbergVillains5, clawdbergVillains6, clawdbergVillains7])
     }
+
+    var playgroundPrompts: [String] {
+        ["get the DeLorean up to 88 mph", "make the window resize to fit the Claudes",
+         "why does the water glass keep rippling?", "write a nice README with screenshots",
+         "fix the portrait crop for T. Wrecks's tiny arms"]
+    }
+    /// A bullwhip is no reason to float cross-legged.
+    var meditation: Meditation { Meditation(who: .never) }
 }

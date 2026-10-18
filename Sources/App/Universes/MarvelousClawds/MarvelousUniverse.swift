@@ -12,4 +12,7 @@ struct MarvelousUniverse: UniverseModule {
         .of(.marvel, heroes: "heroes", [heroes1, heroes2, heroes3, heroes4, heroes5, heroes6, heroes7, heroes8, heroes9, heroes10],
             villains: "villains", [villains1, villains2, villains3, villains4, villains5, villains6, villains7, villains8, villains9])
     }
+
+    /// Who moonwalks when idle: dancers, with legs free to show it (four plain legs, nothing hanging over them).
+    var moonwalkers: Set<Cast> { [.hero(MarvelHero.starLord), .hero(MarvelHero.deadpool), .hero(MarvelHero.howardTheDuck)] }
 }

@@ -215,7 +215,7 @@ case "cast":
             case .none: habit(.bounce, 0.2)(who, c)
             }
         }),
-        ("moonwalk", { who, c in Cast.moonwalkers.contains(who) ? habit(.moonwalk, 0.3)(who, c) : () }),
+        ("moonwalk", { who, c in who.universe.module.moonwalkers.contains(who) ? habit(.moonwalk, 0.3)(who, c) : () }),
         ("signature ¼", habit(.signature, 0.25)),
         ("signature ½", habit(.signature, 0.5)),
         ("signature ¾", habit(.signature, 0.75)),

@@ -12,4 +12,11 @@ struct DoctorUniverse: UniverseModule {
         .of(.doctor, heroes: "doctorHeroes", [doctorHeroes1, doctorHeroes2, doctorHeroes3, doctorHeroes4, doctorHeroes5, doctorHeroes6, doctorHeroes7],
             villains: "doctorVillains", [doctorVillains1, doctorVillains2, doctorVillains3, doctorVillains4, doctorVillains5])
     }
+
+    var playgroundPrompts: [String] {
+        ["make the rotor pump faster", "make the window resize to fit the Claudes", "why won't the Angle move?",
+         "write a nice README with screenshots", "fix the portrait crop for the Dalick Emperor"]
+    }
+    /// A sonic screwdriver is no reason to float cross-legged.
+    var meditation: Meditation { Meditation(who: .never) }
 }

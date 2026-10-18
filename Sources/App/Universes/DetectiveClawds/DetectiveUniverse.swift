@@ -12,4 +12,7 @@ struct DetectiveUniverse: UniverseModule {
         .of(.dc, heroes: "dcHeroes", [dcHeroes1, dcHeroes2, dcHeroes3, dcHeroes4, dcHeroes5, dcHeroes6, dcHeroes7, dcHeroes8, dcHeroes9, dcHeroes10],
             villains: "dcVillains", [dcVillains1, dcVillains2, dcVillains3, dcVillains4, dcVillains5, dcVillains6, dcVillains7, dcVillains8, dcVillains9])
     }
+
+    /// The web line is grey here.
+    var swingLine: Px? { C(0xB8BCC8, 0.95) }
 }

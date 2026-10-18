@@ -10,4 +10,8 @@ struct StarClawdsUniverse: UniverseModule {
         .of(.starWars, heroes: "starWarsHeroes", [starWarsHeroes1, starWarsHeroes2, starWarsHeroes3],
             villains: "starWarsVillains", [starWarsVillains1, starWarsVillains2, starWarsVillains3])
     }
+
+    /// Jedi and Sith alike float cross-legged, with bits of rock lifted round them.
+    var meditation: Meditation { Meditation(who: .castersAndSabers, stones: true) }
+    var poseStyle: PoseStyle { .classic }
 }

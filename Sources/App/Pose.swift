@@ -74,7 +74,7 @@ func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walk
     let lt = t + Double(who.id) * 0.77
     // Star Wars draws guns as Clawd Wars did: never raised while waiting or cheering, the flash at the resting
     // muzzle, and heroes don't raise theirs to check them either (the smoke shows what they're doing).
-    let classic = who.universe == .starWars
+    let classic = who.universe.module.poseStyle == .classic
     var p = Pose(who: who, t: t, lt: lt, mode: mode, role: role, walking: walking)
     p.flying = airborne || (walking && persona.motion == .fly)
     p.urgent = urgent

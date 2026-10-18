@@ -12,10 +12,51 @@ protocol UniverseModule {
     var transitions: TransitionSet? { get }
     /// What Tools/Preview needs: the batch names for its art files, and its characters by enum case name.
     var preview: PreviewInfo { get }
+
+    // Have defaults
+    /// Five sample prompts for the Playground's cards.
+    var playgroundPrompts: [String] { get }
+    /// Who floats cross-legged in meditation, and what floats round them.
+    var meditation: Meditation { get }
+    /// How guns are drawn: `.classic` is Clawd Wars' way (Star Clawds only).
+    var poseStyle: PoseStyle { get }
+    /// Who has the moonwalk among their habits.
+    var moonwalkers: Set<Cast> { get }
+    /// The web line's colour for characters who swing; nil: the usual near-white.
+    var swingLine: Px? { get }
 }
 
 extension UniverseModule {
     var transitions: TransitionSet? { nil }
+    var playgroundPrompts: [String] {
+        ["add a snowtaunt", "make the window resize to fit the Claudes", "why does the duel not start?",
+         "write a nice README with screenshots", "fix the portrait crop for wide characters"]
+    }
+    var meditation: Meditation { Meditation() }
+    var poseStyle: PoseStyle { .modern }
+    var moonwalkers: Set<Cast> { [] }
+    var swingLine: Px? { nil }
+}
+
+/// Who meditates in a universe (floating cross-legged, among their drills), if their persona can sit at all.
+struct Meditation {
+    enum Who {
+        case never                      // a sonic screwdriver, a flashlight or a bullwhip is no reason to float
+        case casters                    // magic users
+        case castersAndSabers           // magic users and everyone with a saber: Jedi and Sith alike
+        case heroes(Set<Int>)           // just these heroes, by local index (Clawd Slayer's witches)
+    }
+    var who: Who = .casters
+    /// Bits of rock float round them (Star Clawds); otherwise motes of their own magic.
+    var stones = false
+}
+
+/// How a universe draws guns.
+enum PoseStyle {
+    case modern
+    /// As Clawd Wars did: never raised while waiting or cheering, the flash at the resting muzzle, and heroes don't
+    /// raise theirs to check them either.
+    case classic
 }
 
 extension Universe {

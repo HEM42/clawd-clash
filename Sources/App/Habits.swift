@@ -13,7 +13,7 @@ enum IdleHabit {
     case checkWeapon   // gun raised to eye level, then the smoke blown off the barrel
     case crackle       // magic flickering between the fingers, hand raised
     case signature     // its own thing, drawn by its own drawing code (`Cast.hasSignature`)
-    case moonwalk      // glides backwards, legs sliding in turn, a pose up on its toes, and back (`Cast.moonwalkers`)
+    case moonwalk      // glides backwards, legs sliding in turn, a pose up on its toes, and back (`UniverseModule.moonwalkers`)
 
     var length: Double {
         switch self {
@@ -64,7 +64,7 @@ extension Cast {
         var list: [IdleHabit] = [.glance, .shuffle]
         list += weaponHabit.map { [$0, $0] } ?? [.bounce]
         if hasSignature { list += [.signature, .signature] }
-        if Self.moonwalkers.contains(self) { list += [.moonwalk] }
+        if universe.module.moonwalkers.contains(self) { list += [.moonwalk] }
         return list
     }
 
@@ -117,10 +117,6 @@ func applyHabitTransform(_ c: PixelCanvas, _ play: HabitPlay) {
     }
 }
 
-extension Cast {
-    /// Who moonwalks when idle: dancers, with legs free to show it (four plain legs, nothing hanging over them).
-    static let moonwalkers: Set<Cast> = [.hero(MarvelHero.starLord), .hero(MarvelHero.deadpool), .hero(MarvelHero.howardTheDuck)]
-}
 
 /// The moonwalk, done to the character as drawn: it glides back while its legs take turns, one pair flat and sliding,
 /// the other up on the toes; then a pose up on its toes, and a few quick steps back to its spot. Works on the legs'

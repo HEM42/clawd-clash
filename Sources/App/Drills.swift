@@ -47,14 +47,16 @@ var drillPose: ((inout Pose) -> Void)?
 var forcedDrill: DrillPlay?
 
 extension Cast {
-    /// Force users in Star Wars (Jedi and Sith alike), sorcerers and other mystics elsewhere.
+    /// Who floats cross-legged, as its universe says (`UniverseModule.meditation`): force users in Star Clawds (Jedi
+    /// and Sith alike), sorcerers and other mystics elsewhere.
     private var meditates: Bool {
         guard persona.canSit else { return false }
-        // A sonic screwdriver, a flashlight or a bullwhip is no reason to float cross-legged.
-        guard universe != .doctor, universe != .clawdFiles, universe != .clawdberg else { return false }
-        // In Clawd Slayer only the witches do (Willow floats cross-legged in "Lessons" and "Chosen").
-        if universe == .slayer { return !isDark && slayerWitches.contains(index) }
-        return weapon == .lightning || (universe == .starWars && weapon == .saber)
+        switch universe.module.meditation.who {
+        case .never: return false
+        case .casters: return weapon == .lightning
+        case .castersAndSabers: return weapon == .lightning || weapon == .saber
+        case .heroes(let only): return !isDark && only.contains(index)
+        }
     }
 
     /// What this character practises, with its favourites in more than once.
@@ -143,7 +145,7 @@ extension Cast {
         let (ox, oy, by) = (c.ox, c.oy, c.baseY)
         c.ox = 0; c.oy = 0; c.baseY = 0
         defer { c.ox = ox; c.oy = oy; c.baseY = by }
-        let rock = universe == .starWars
+        let rock = universe.module.meditation.stones
         for k in 0..<3 {
             let a = t * 0.9 + Double(k) * 2.1
             let x = Sprite.bodyCenterX + cos(a) * 17, y = 36 - Double(lift) + sin(a * 1.3) * 4 - Double(k)

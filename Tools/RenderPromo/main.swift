@@ -2108,7 +2108,7 @@ let blooperShots: [Shot] = [
         for (i, (who, x)) in front.enumerated() {
             var a = Actor(cast: who, x: x, facing: x < 160 ? 1 : -1, mode: .idle, role: wave ? .cheer : .none)
             a.grow = 1.05
-            if Cast.moonwalkers.contains(who) { moon(who, Double(i) * 0.9) }
+            if who.universe.module.moonwalkers.contains(who) { moon(who, Double(i) * 0.9) }
             draw(a, ctx, t: t + Double(i) * 0.5)
             forcedHabit = nil
         }

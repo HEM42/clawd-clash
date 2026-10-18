@@ -884,26 +884,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             return [SessionSnapshot(id: "home", leader: Universe.shown.base, project: "", mood: .idle, agents: crew)]
         }
         // Sample details so the Playground's cards look like live ones.
-        let prompts: [String] = {
-            switch Universe.shown {
-            case .doctor: return ["make the rotor pump faster", "make the window resize to fit the Claudes", "why won't the Angle move?",
-                                  "write a nice README with screenshots", "fix the portrait crop for the Dalick Emperor"]
-            case .clawdFiles: return ["redact the case file before Skinnard sees it", "make the window resize to fit the Claudes",
-                                      "why does the slide projector keep flickering?", "write a nice README with screenshots",
-                                      "fix the portrait crop for the Smoking Clawd's smoke"]
-            case .clawdberg: return ["get the DeLorean up to 88 mph", "make the window resize to fit the Claudes",
-                                     "why does the water glass keep rippling?", "write a nice README with screenshots",
-                                     "fix the portrait crop for T. Wrecks's tiny arms"]
-            case .middleEarth: return ["make the Eagle wait for the last subagent", "make the window resize to fit the Claudes",
-                                       "why won't the Ballrog cross the bridge?", "write a nice README with screenshots",
-                                       "fix the portrait crop for Shellob's legs"]
-            case .slayer: return ["stake the bug in the Hellmouth loop", "make the window resize to fit the Claudes",
-                                  "why does the library's book cage keep swinging?", "write a nice README with screenshots",
-                                  "fix the portrait crop for Glorificlaws's hair"]
-            default: return ["add a snowtaunt", "make the window resize to fit the Claudes", "why does the duel not start?",
-                             "write a nice README with screenshots", "fix the portrait crop for wide characters"]
-            }
-        }()
+        let prompts = Universe.shown.module.playgroundPrompts
         let nowActs = ["Edit WindowMode.swift", "Bash: swift build", "Read Locations.swift", "Grep opaqueBounds", "Agent: Review the diff"]
         // Agents join the first villain. Empty project → the label shows the villain's name.
         return villains.enumerated().map { i, l in
@@ -1678,7 +1659,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         // Canvas rows run top down, screen y bottom up.
         let ax = Double((a.x - minX) / scale) + 1, ay = Double(h) - 1 - Double((a.y - minY) / scale)
         let bx = Double((b.x - minX) / scale) + 1, by = Double(h) - 1 - Double((b.y - minY) / scale)
-        let line = universe == .dc ? C(0xB8BCC8, 0.95) : C(0xF4F4F8, 0.9)
+        let line = universe.module.swingLine ?? C(0xF4F4F8, 0.9)
         c.glowLine(ax, ay, bx, by, core: line, glow: C(0xFFFFFF, 0), coreR: 0.35, glowR: 0.4)
         return DrawItem(image: c.makeImage(), rect: NSRect(x: (minX - scale).rounded(), y: (minY - scale).rounded(),
                                                            width: CGFloat(w) * scale, height: CGFloat(h) * scale))
