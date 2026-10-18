@@ -92,31 +92,14 @@ private func slayerButte4(_ c: PixelCanvas, x: Int, w: Int, h: Int, base: Int, _
     }
 }
 
-/// The "Welcome to Sunnydale" sign's board, `p` pixels a dot for the town's name, its top-left at (x, y). Returns its
-/// size.
-@discardableResult
-private func slayerWelcomeBoard4(_ c: PixelCanvas, _ x: Int, _ y: Int, _ p: Int, small: Int, _ s: Int,
-                                 lit: Bool = true, lettered: Bool = true) -> (w: Int, h: Int) {
-    let big = "SUNNYDALE", top = "WELCOME TO"
-    let w = slayerTextWidth4(big, p) + 12 * s, h = 4 * s + 5 * small + 3 * s + 5 * p + 4 * s
-    let frame = C(0x3A2416), face = lit ? C(0xEEE2C4) : C(0xC8B898), ink = C(0x2A4A30), fine = C(0x6A4A2A)
-    c.rect(x - 2 * s, y - 2 * s, w + 4 * s, h + 4 * s, frame)
-    c.rect(x - 2 * s, y - 2 * s, w + 4 * s, s, C(0x5A3A22))
-    c.rect(x, y, w, h, face)
-    c.rect(x, y + h - s, w, s, face.alpha(0.8)); c.rect(x + w - s, y, s, h, C(0xB8A880))
-    c.rect(x + 2 * s, y + 2 * s, w - 4 * s, s, ink.alpha(0.35)); c.rect(x + 2 * s, y + h - 3 * s, w - 4 * s, s, ink.alpha(0.35))
-    if lettered {
-        slayerText4(c, x + (w - slayerTextWidth4(top, small)) / 2, y + 4 * s, top, fine, small)
-        slayerText4(c, x + (w - slayerTextWidth4(big, p)) / 2, y + 4 * s + 5 * small + 3 * s, big, ink, p)
-    }
-    return (w, h)
-}
 
-/// The "WELCOME TO SUNNYDALE" sign on its two posts, turned `degrees` clockwise about its feet and set down with
-/// them at `feet`. It's drawn with Core Graphics, antialiased, in a real typeface: pixel lettering turned by a
-/// few degrees either breaks up or steps along the slope, and at window size it couldn't be read.
-private func slayerTiltedSign4(_ c: PixelCanvas, feet: (x: Int, y: Int), degrees: Double, post: Int, _ s: Int) {
-    let bw = Double(84 * s), bh = Double(30 * s), border = Double(2 * s), postH = Double(post)
+/// The "WELCOME TO SUNNYDALE" board, `board` pixels across and high, on two posts `post` high (none at 0), turned
+/// `degrees` clockwise about the posts' feet and set down with them at `feet`. It's drawn with Core Graphics,
+/// antialiased, in a real typeface: pixel lettering couldn't be read at window size, and turned by a few degrees
+/// it broke up or stepped along the slope. The town sign and the crater share it, so the sign looks the same.
+private func slayerSign4(_ c: PixelCanvas, feet: (x: Int, y: Int), degrees: Double = 0, board: (w: Int, h: Int), post: Int,
+                         _ s: Int) {
+    let bw = Double(board.w), bh = Double(board.h), border = Double(2 * s), postH = Double(post), k = bh / Double(30 * s)
     let span = Int(bw + bh + postH) + 8 * s, side = span * 2
     guard let g = CGContext(data: nil, width: side, height: side, bitsPerComponent: 8, bytesPerRow: side * 4,
                             space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return }
@@ -126,7 +109,7 @@ private func slayerTiltedSign4(_ c: PixelCanvas, feet: (x: Int, y: Int), degrees
     g.rotate(by: -degrees * .pi / 180)
     func fill(_ r: CGRect, _ hex: UInt32) { g.setFillColor(rgb(hex)); g.fill(r) }
     let left = -bw / 2, bottom = postH
-    for px in [left + bw / 6, left + bw * 5 / 6 - Double(3 * s)] {                  // the posts
+    for px in [left + bw / 6, left + bw * 5 / 6 - Double(3 * s)] where post > 0 {   // the posts
         fill(CGRect(x: px, y: 0, width: Double(3 * s), height: postH + border), 0x9A6A40)
         fill(CGRect(x: px, y: 0, width: Double(s), height: postH + border), 0xC8945A)
     }
@@ -152,8 +135,8 @@ private func slayerTiltedSign4(_ c: PixelCanvas, feet: (x: Int, y: Int), degrees
         g.textPosition = CGPoint(x: -w / 2, y: baseline)
         CTLineDraw(l, g)
     }
-    word("WELCOME TO", cap: Double(5 * s), maxW: bw * 0.6, baseline: bottom + bh - border - Double(8 * s), 0x6A4A2A, bold: false)
-    word("SUNNYDALE", cap: Double(12 * s), maxW: bw - Double(10 * s), baseline: bottom + border + Double(4 * s), 0x2A4A30, bold: true)
+    word("WELCOME TO", cap: Double(5 * s) * k, maxW: bw * 0.6, baseline: bottom + bh - border - Double(8 * s) * k, 0x6A4A2A, bold: false)
+    word("SUNNYDALE", cap: Double(12 * s) * k, maxW: bw - Double(10 * s), baseline: bottom + border + Double(4 * s) * k, 0x2A4A30, bold: true)
     guard let data = g.data else { return }
     let px = data.bindMemory(to: UInt8.self, capacity: side * side * 4)
     // Row 0 of the bitmap is the top of the square; its middle lands on the feet.
@@ -297,7 +280,7 @@ extension Scenes {
             c.rect(px, b.y + b.h, 4 * s, g - b.y - b.h, C(0x4A3020)); c.rect(px, b.y + b.h, s, g - b.y - b.h, C(0x6A4A30))
             c.rect(px + 3 * s, b.y + b.h, s, g - b.y - b.h, C(0x2A1A10))
         }
-        slayerWelcomeBoard4(c, b.x, b.y, b.p, small: b.small, s)
+        slayerSign4(c, feet: (b.x + b.w / 2, b.y + b.h), board: (b.w, b.h), post: 0, s)
         c.rect(b.x, b.y, b.w * 2 / 5, b.h, C(0xFFA040, 0.12))   // lamplight falls on its left side
         for k in 0..<9 {
             let x = b.x + Int(noise(k + 160) * Double(b.w)), r = (2 + Int(noise(k + 161) * 2)) * s
@@ -502,7 +485,7 @@ extension Scenes {
         // The sign, tipping over the lip on the left, its feet on the crater's edge.
         let sx = cx - rx + 30 * s
         let du = Double(sx - cx) / Double(rx), sy = cy + Int(Double(ry) * (1 - du * du).squareRoot())
-        slayerTiltedSign4(c, feet: (sx, sy), degrees: 10, post: tall ? 14 * s : 6 * s, s)
+        slayerSign4(c, feet: (sx, sy), degrees: 10, board: (84 * s, 30 * s), post: tall ? 14 * s : 6 * s, s)
         c.ellipse(sx - 2 * s, sy, 26 * s, 2 * s, C(0xA07A54))   // the ground giving way under it
         for k in 0..<6 { c.rect(sx + Int(noise(k + 330) * Double(40 * s)), sy + Int(noise(k + 331) * 6) * s, 2 * s, s, C(0xA07A54)) }
         // The school bus at the edge, on the right.
