@@ -35,6 +35,19 @@ private func v8Front(_ a: Double, lo: Double = -115, hi: Double = 80) -> Double 
     return min(hi, max(lo, x))
 }
 
+/// Like `v8Front`, but continuous: an angle past either end folds back into the front arc instead of snapping to the
+/// other end, so a flourish's full turn sweeps down, out and up in front of the body rather than jumping across his
+/// back. Inside `lo`…`hi` it's the angle itself.
+private func v8Fold(_ a: Double, lo: Double, hi: Double) -> Double {
+    var x = a.truncatingRemainder(dividingBy: 360)
+    if x > 180 { x -= 360 }
+    if x <= -180 { x += 360 }
+    let mid = (lo + hi) / 2
+    if x > hi { return hi + (mid - hi) * (x - hi) / (180 - hi) }
+    if x < lo { return mid + (lo - mid) * (x + 180) / (lo + 180) }
+    return x
+}
+
 /// A heavy punch along `angle` from the shoulder `s`: the arm thrown out `reach` pixels, a smear where a fast swing
 /// just was, and `fist` drawing whatever is on the end, centred on the point it's given.
 private func v8Punch(_ c: PixelCanvas, from s: (x: Double, y: Double), angle: Double, trail: [Double], reach: Double,
@@ -76,11 +89,14 @@ private func drawStoneBeast(_ c: PixelCanvas, _ p: Pose) {
         stoneBeastFist(c, 11, 35, rock, rockL, rockD, crack)
     }
     c.oy -= p.breathe
-    // Four thick stone legs on clawed feet.
-    for (i, lx) in [17, 22, 32, 37].enumerated() {
+    // Four thick stone legs on clawed feet, each four pixels wide so only a hairline of outline shows between a pair
+    // (still four legs), the black claws on the front of each foot.
+    for (i, lx) in [17, 22, 31, 36].enumerated() {
         let bottom = p.step >= 0 && i % 2 == p.step ? 42 : 43
-        c.rect(lx, 36, 3, bottom - 35, rock); c.rect(lx + 2, 36, 1, bottom - 35, rockD); c.px(lx, 36, rockL)
-        c.px(lx + 1, bottom - 3, crack); c.px(lx + 3, bottom, horn)
+        c.rect(lx, 36, 4, bottom - 35, rock); c.rect(lx + 3, 36, 1, bottom - 35, rockD); c.px(lx, 36, rockL)
+        c.rect(lx, 36, 1, bottom - 37, rockL)
+        c.px(lx + 1, bottom - 3, crack); c.px(lx + 2, bottom - 2, crack)
+        c.px(lx + 1, bottom, horn); c.px(lx + 3, bottom, horn)
     }
     c.oy += p.breathe
     // The body: a barrel of rock, broad in the chest and narrower at the hips, the shoulders hunched up in humps.
@@ -154,15 +170,23 @@ private func drawStoneBeast(_ c: PixelCanvas, _ p: Pose) {
         "..DDDDD......DDDDD..",
     ], ["R": rock, "D": rockDD])
     c.px(19, 22, rockL); c.px(20, 22, rockL); c.px(21, 22, rockL)
+    // Ember eyes set deep in dark sockets under the brow (not cut-out holes lit from inside).
     let glow = raise > 0.3
-    c.rect(21, 25, 3, 2, ember); c.rect(32, 25, 3, 2, ember)
-    c.px(21, 25, emberL); c.px(32, 25, emberL)
-    if glow { c.px(22, 25, emberL); c.px(33, 25, emberL) }
-    // A rough rock nose, and the wide mouth with stubby stone teeth.
-    c.pattern(26, 25, [".RR.", "RRRR", "D..D"], ["R": rock, "D": rockDD])
-    c.rect(22, 29, 12, 1, C(0x2A1410))
-    if glow { c.rect(23, 30, 10, 1, C(0x6A2A10)); c.rect(22, 29, 12, 1, C(0x1A0A08)) }
-    c.px(23, 28, hornT); c.px(32, 28, hornT); c.px(26, 30, hornT); c.px(29, 30, hornT)
+    c.rect(20, 24, 5, 3, rockDD); c.rect(31, 24, 5, 3, rockDD)
+    c.rect(21, 25, 3, 1, ember); c.rect(32, 25, 3, 1, ember)
+    c.px(22, 25, emberL); c.px(33, 25, emberL)
+    if glow { c.px(21, 25, emberL); c.px(34, 25, emberL) }
+    // A heavy rock muzzle over the lower face: a broad snout with flared nostrils, and a jaw of stone with two tusks
+    // jutting up from it, the mouth a dark seam between. A beast's face, not a carved pumpkin.
+    c.pattern(21, 26, [
+        "......RR......",
+        "....RRRRRR....",
+        "..lRRdRRdRRR..",
+        ".TRRRRRRRRRRT.",
+        "RTMMMMMMMMMMTD",
+        "RTRRRRRRRRRRTD",
+    ], ["R": rock, "l": rockL, "d": rockDD, "D": rockD, "M": glow ? C(0x6A2A10) : C(0x1A0A08), "T": hornT])
+    c.rect(19, 31, 2, 1, rock); c.rect(35, 31, 2, 1, rock)
 
     // The front arm: thick rock out to a fist, raised to the sky in the signature.
     let fist = { (x: Int, y: Int) in stoneBeastFist(c, x, y, rock, rockL, rockD, crack) }
@@ -188,13 +212,22 @@ private func stoneBeastFist(_ c: PixelCanvas, _ x: Int, _ y: Int, _ rock: Px, _ 
 private func stoneBeastSky(_ c: PixelCanvas, _ p: Pose, _ k: Double) {
     let pall = PixelCanvas(Sprite.width, Sprite.height)
     let drift = p.t * 1.5
-    for i in 0..<9 {
+    // One low ceiling of cloud across the whole top, its underside lumpy.
+    pall.rect(0, 0, Sprite.width, 3, C(0x1E0A18))
+    for i in 0..<13 {
         let fi = Double(i)
-        let x = 8 + fi * 7 + sin(drift + fi) * 1.5
-        let y = 5 + Double(i % 3) * 2
-        pall.circle(Int(x.rounded()), Int(y.rounded()), 3 + i % 2, C(0x120A16))
+        let x = 2 + fi * 5.5 + sin(drift + fi) * 1.5
+        let y = 2 + Double(i % 2)
+        pall.circle(Int(x.rounded()), Int(y.rounded()), 2 + i % 2, C(0x1E0A18))
     }
-    c.paste(pall, alpha: 0.22 * k)
+    // An ember glow on the underside of the cloud, the fire to come.
+    for i in stride(from: 1, to: 13, by: 2) {
+        let x = 2 + Double(i) * 5.5 + sin(drift + Double(i)) * 1.5
+        pall.rect(Int(x.rounded()) - 1, 5, 3, 1, C(0x5A1A10))
+    }
+    // Kept to the top rows, two clear rows above the horn tips and the raised fists, so it can be dark enough to see
+    // without ever dotting their outline.
+    c.paste(pall, alpha: 0.6 * k)
     guard k > 0.5 else { return }
     for i in 0..<5 {
         let fi = Double(i)
@@ -237,15 +270,19 @@ private func drawHolts(_ c: PixelCanvas, _ p: Pose) {
     c.rect(27, 34, 1, hem - 34, coatD)
     for y in [35, 37] { c.px(29, y, brass) }
     if !seatedPose { c.px(29, 39, brass) }
-    // The shoulder cape over it, a little wider than him, and the high collar standing up behind his jaw.
+    // The shoulder cape over it, a little wider than him, its hem draping lower over the shoulders than at the
+    // front, and the high collar standing up behind his jaw.
     c.rect(16, 32, 24, 3, coat); c.rect(16, 32, 24, 1, coatL); c.rect(16, 34, 24, 1, coatD)
+    c.rect(16, 35, 4, 1, coat); c.rect(36, 35, 4, 1, coat); c.rect(16, 36, 3, 1, coatD); c.rect(37, 36, 3, 1, coatD)
+    c.px(16, 35, coatL)
     c.rect(19, 30, 3, 2, coat); c.rect(34, 30, 3, 2, coat); c.px(19, 30, coatL)
-    // The white stock tied at his throat.
-    c.rect(25, 32, 6, 2, stock); c.rect(27, 34, 2, 2, stock); c.px(28, 35, stockD); c.px(30, 33, stockD)
-    // Heavy brows and a stubbled jaw.
+    // The white stock: a small knot at the throat below the cape's dark collar line, its ends tucked into the
+    // coat, so it reads as a neckcloth and not a beard under his jaw.
+    c.rect(24, 32, 8, 1, coatD)
+    c.rect(26, 33, 4, 1, stock); c.rect(27, 34, 2, 2, stock); c.px(29, 33, stockD); c.px(28, 35, stockD)
+    // Heavy brows and a shadow of stubble along the jaw.
     c.rect(21, 27, 4, 1, hairD); c.rect(31, 27, 4, 1, hairD)
-    for x in stride(from: 21, through: 34, by: 2) { c.px(x, 32, stubble) }
-    c.px(20, 31, stubble); c.px(35, 31, stubble)
+    for x in [20, 22, 33, 35] { c.px(x, 31, stubble) }
     // Dark hair swept back off the brow, grey at the temples, a few strands loose.
     c.pattern(17, 21, [
         "......H..H.H.......",
@@ -266,9 +303,11 @@ private func drawHolts(_ c: PixelCanvas, _ p: Pose) {
 /// Holts' crossbow, gripped at the hand: a heavy dark wooden stock, an iron bow across its nose, a bolt on top when
 /// `cocked`.
 private func holtsCrossbow(_ c: PixelCanvas, cocked: Bool) {
-    let wood = C(0x6A4628), woodD = C(0x442C18), iron = C(0x6A6E7A), ironD = C(0x464A54), string = C(0xE8E4DC)
+    // The bow is blackened iron, dark against the light outline round it, a glint of steel at the tips.
+    let wood = C(0x6A4628), woodD = C(0x442C18), iron = C(0x3A3C46), ironD = C(0x24252C), string = C(0xE8E4DC)
     c.rect(37, 33, 12, 2, wood); c.rect(37, 34, 12, 1, woodD); c.rect(38, 35, 2, 2, woodD)
     slayerLine(c, 47.5, 33.5, 45.5, 28.5, iron, 0.9); slayerLine(c, 47.5, 33.5, 45.5, 38.5, ironD, 0.9)
+    c.px(45, 28, C(0x9AA2B0)); c.px(45, 38, C(0x7A8290))
     let back = cocked ? 42.5 : 45.5
     slayerLine(c, 45.5, 28.5, back, 33.5, string, 0.35); slayerLine(c, 45.5, 38.5, back, 33.5, string, 0.35)
     if cocked {
@@ -304,8 +343,10 @@ private func drawSahjhann(_ c: PixelCanvas, _ p: Pose) {
 
 /// Sahjhann himself (drawn into a canvas of its own and faded for his signature).
 private func drawSahjhannBody(_ c: PixelCanvas, _ p: Pose) {
-    let skin = C(0xC2402E), skinD = C(0x962C22), scar = C(0x761A14), scarL = C(0xE0806A)
+    // A deep crimson, well away from Clawd's orange, so the skin alone says demon.
+    let skin = C(0xA81E2C), skinD = C(0x7C1420), scar = C(0x560A12), scarL = C(0xE8706A)
     let suit = C(0x24222A), suitD = C(0x121116), suitL = C(0x403C48), shirt = C(0x7A1A22), slate = C(0x5C5C6C)
+    let sleeve = C(0x34303C)
 
     drawLegs(c, Look(leg: slate), step: p.step)
     if !seatedPose {
@@ -316,10 +357,15 @@ private func drawSahjhannBody(_ c: PixelCanvas, _ p: Pose) {
     }
     slayerBoots(c, step: p.step, C(0x0E0D10), height: 2)
     c.oy += p.breathe
-    drawBody(c, Look(body: skin, shade: skinD, arm: suit, eye: ink))
+    drawBody(c, Look(body: skin, shade: skinD, arm: sleeve, eye: ink))
+    // The sleeves a shade lighter than the jacket, lit along the top, a crease where they meet his sides, and a red
+    // hand at the end of each: arms, not a wide dark yoke.
+    c.rect(15, 33, 3, 1, suitL); c.rect(38, 33, 3, 1, suitL)
+    c.rect(17, 34, 1, 2, suitD); c.rect(38, 34, 1, 2, suitD)
+    c.rect(15, 36, 2, 1, skin)
     // The bald dome rising above the block.
     c.rect(20, 24, 16, 2, skin); c.rect(22, 23, 12, 1, skin); c.rect(35, 24, 1, 2, skinD)
-    c.rect(22, 23, 5, 1, C(0xD85A44))
+    c.rect(22, 23, 5, 1, C(0xC83A44))
     // The black suit: jacket over the dark red shirt, lapels lit along their edge.
     c.rect(18, 34, 20, 4, suit); c.rect(37, 34, 1, 4, suitD); c.rect(18, 37, 20, 1, suitD)
     c.rect(25, 33, 6, 5, shirt); c.px(27, 33, skin); c.px(28, 33, skin)
@@ -339,11 +385,11 @@ private func drawSahjhannBody(_ c: PixelCanvas, _ p: Pose) {
     c.rect(25, 32, 6, 1, C(0x4A0E0C))
 
     if let a = p.melee {
-        v8Punch(c, from: (39.5, 34), angle: a, trail: p.trail, reach: 6, arm: suit, thick: 1.2, smear: C(0xF0A090)) { x, y in
+        v8Punch(c, from: (39.5, 34), angle: a, trail: p.trail, reach: 6, arm: sleeve, thick: 1.2, smear: C(0xF0A090)) { x, y in
             c.rect(x - 1, y - 1, 3, 3, skin); c.px(x + 1, y + 1, skinD)
         }
     } else {
-        c.rect(38, 36, 2, 1, skin)   // his hand out of the sleeve
+        c.rect(39, 36, 2, 1, skin)   // his hand out of the sleeve
     }
 }
 
@@ -355,9 +401,10 @@ private func drawSahjhannBody(_ c: PixelCanvas, _ p: Pose) {
 /// leggings into black boots. She fights hand to hand. Signature: she slows time round her, a palm held out, a
 /// silvery shimmer rippling slowly out from her while specks of dust hang still in the air, and lets it go.
 private func drawIllyrya(_ c: PixelCanvas, _ p: Pose) {
-    let skin = C(0xE8E4EA), skinD = C(0xBEB8C6), black = C(0x1A1418), blackL = C(0x3A2E36)
+    // Skin a cool pale lilac-grey with real shading, not paper white, so it reads as a face rather than a mask.
+    let skin = C(0xD4C8DA), skinD = C(0xA898B4), black = C(0x1A1418), blackL = C(0x3A2E36)
     let red = C(0xA01C2A), redD = C(0x6A101A), redL = C(0xD03A44)
-    let hair = C(0x2E1A22), blue = C(0x2C78E0), blueL = C(0x6AB4FF)
+    let hair = C(0x2E1A22), blue = C(0x3A8EFF), blueL = C(0x9AD4FF)
     let slow = p.signature.map { v8Arc($0, 0.08, 0.92, edge: 0.15) } ?? 0
 
     if slow > 0, let s = p.signature { illyryaShimmer(c, s, slow) }
@@ -381,9 +428,11 @@ private func drawIllyrya(_ c: PixelCanvas, _ p: Pose) {
     c.rect(40, 32, 1, 2, redD)
     // The high black collar.
     c.rect(24, 32, 8, 1, black); c.px(24, 31, blackL); c.px(31, 31, blackL)
-    // A flat stare and a thin, unsmiling mouth.
+    // A flat stare from cold blue eyes, faint blue marks at her temples, a thin, unsmiling mouth.
     c.rect(22, 28, 2, 1, skinD); c.rect(32, 28, 2, 1, skinD)
-    c.rect(26, 32, 4, 1, C(0x9A8A98))
+    c.rect(22, 29, 2, 3, C(0x123A7A)); c.rect(32, 29, 2, 3, C(0x123A7A)); c.px(22, 30, ink); c.px(32, 30, ink)
+    c.px(21, 27, C(0x7AA8E0)); c.px(20, 28, C(0x7AA8E0)); c.px(34, 27, C(0x7AA8E0)); c.px(35, 28, C(0x7AA8E0))
+    c.rect(26, 32, 4, 1, C(0x7A6478))
     if palm { c.px(23, 29, white); c.px(33, 29, white) }
     // The choppy bob: dark roots, bright blue streaks, jagged ends at her jaw and strands breaking loose on top.
     c.pattern(16, 19, [
@@ -416,19 +465,21 @@ private func drawIllyrya(_ c: PixelCanvas, _ p: Pose) {
     }
 }
 
-/// Time slowing round Illyrya, `s` through her signature, `k` how strong: faint silver rings rippling slowly outwards
-/// from her raised palm, and specks of dust hanging still in the air.
+/// Time slowing round Illyrya, `s` through her signature, `k` how strong: silver rings rippling slowly outwards
+/// from her raised palm, and specks of dust hanging still in the air. The rings are bright out in the open air and
+/// drop to a faint trace where they pass close to her, so they never dot her outline.
 private func illyryaShimmer(_ c: PixelCanvas, _ s: Double, _ k: Double) {
-    let silver = C(0xE8ECF4)
+    let silver = C(0xE0ECFF)
     let centre = (x: 32.0, y: 30.0)
     for i in 0..<3 {
         let r = frac(s * 1.4 + Double(i) / 3)
         let rx = 6 + r * 22, ry = 4 + r * 13
-        let a = 0.22 * (1 - r) * k
+        let a = 0.6 * (1 - r) * k
         var t = 0.0
         while t < 2 * .pi {
             let x = Int((centre.x + cos(t) * rx).rounded()), y = Int((centre.y + sin(t) * ry).rounded())
-            if x >= 2 && x <= 69 && y >= 2 && y <= 44 { c.px(x, y, silver.alpha(a)) }
+            let near = x >= 12 && x <= 46 && y >= 17
+            if x >= 2 && x <= 69 && y >= 2 && y <= 44 { c.px(x, y, silver.alpha(near ? min(a, 0.18) : a)) }
             t += .pi / 48
         }
     }
@@ -468,16 +519,17 @@ private func drawSkipp(_ c: PixelCanvas, _ p: Pose) {
     // The body: big, plum, a little narrower at the hips.
     c.rect(17, 20, 22, 2, hide); c.rect(15, 22, 26, 15, hide); c.rect(17, 37, 22, 1, hideD)
     c.rect(40, 22, 1, 15, hideD); c.rect(15, 22, 1, 14, hideL)
-    // His ribs in bone: a breastbone down the middle, short curved ribs off it either side.
+    // His ribs in bone: a breastbone down the middle, and two pairs of ribs curving out and down off it, plum hide
+    // showing between them, so it reads as a rib cage and not a row of stripes.
     c.rect(27, 32, 2, 5, bone); c.px(27, 32, boneL)
-    c.pattern(19, 32, [
-        "RRRRRRRR..RRRRRRRR",
-        "R................R",
-        ".RRRRRRR..RRRRRRR.",
-        ".R..............R.",
-        "..RRRRRR..RRRRRR..",
-    ], ["R": bone])
-    c.px(19, 32, boneL); c.px(35, 34, boneD); c.px(34, 36, boneD)
+    c.pattern(18, 32, [
+        "...RRRRRR..RRRRRD...",
+        "..R..............D..",
+        "..R..............D..",
+        ".....RRRR..RRRD.....",
+        "....R..........D....",
+    ], ["R": bone, "D": boneD])
+    c.px(21, 32, boneL)
     // The crest: bone spikes rising off the head and swept back.
     c.pattern(16, 12, [
         "BB............",
@@ -501,8 +553,9 @@ private func drawSkipp(_ c: PixelCanvas, _ p: Pose) {
     ], ["B": bone, "L": boneL, "D": boneD])
     c.rect(22, 26, 2, 3, ink); c.rect(32, 26, 2, 3, ink); c.px(22, 26, white); c.px(32, 26, white)
     c.rect(24, 30, 8, 1, C(0x5A2418)); c.px(23, 29, C(0x5A2418)); c.px(32, 29, C(0x5A2418))
-    c.pattern(18, 28, ["B.................B", "BB...............BB", "BBB.............BBD", "BBBB...........BBDD"],
-              ["B": bone, "D": boneD])
+    // Cheekbones: short bone spurs under the eyes rather than plates down the whole side, so the bone doesn't box his
+    // face in.
+    c.pattern(18, 28, ["BB................B", ".BB..............BD", "..B..............D."], ["B": bone, "D": boneD])
     // Domed bone plates on the shoulders, each with a short spike.
     c.pattern(11, 20, [".....B", "..BBBB", ".BLLBBB", "BLBBBBB", "BBBBBBD", "BBBBBDD", ".DDDDD."],
               ["B": bone, "L": boneL, "D": boneD])
@@ -513,8 +566,8 @@ private func drawSkipp(_ c: PixelCanvas, _ p: Pose) {
     // The front arm and its blade.
     let shoulder = (x: 40.5, y: 28.0)
     if let m = p.melee {
-        let a = v8Front(m, lo: -110, hi: 75)
-        slayerSmear(c, shoulder, p.trail.map { v8Front($0, lo: -110, hi: 75) }, from: 6, to: 16, C(0xFFF6E4))
+        let a = v8Fold(m, lo: -110, hi: 75)
+        slayerSmear(c, shoulder, p.trail.map { v8Fold($0, lo: -110, hi: 75) }, from: 6, to: 16, C(0xFFF6E4))
         let hand = slayerReach(shoulder, a, 4.5)
         slayerLine(c, shoulder.x, shoulder.y, hand.x, hand.y, hide, 1.4)
         skippBlade(c, hand, a, bone: bone, boneD: boneD, boneL: boneL, boneDD: boneDD)
