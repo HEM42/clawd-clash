@@ -15,9 +15,12 @@ extension SlayerTrip {
         guard k < 1 else { ctx.draw(new, in: r); return }
         let px: CGFloat = max(1, (r.height / 180).rounded())    // screen pixels per pixel of the veins' art
         let w = Int((r.width / px).rounded(.up)), h = Int((r.height / px).rounded(.up))
-        guard let art = Self.artCanvas(width: w, height: h, px: px, in: r) else { return }
+        guard let art = Self.artCanvas(width: w, height: h, px: px, in: r),
+              let stain = Self.artCanvas(width: w, height: h, px: px, in: r) else { return }
         let swap = k >= 0.5
         ctx.draw(swap ? new : old, in: r)
+        // A web of its own each time, from where it leaves and where it goes.
+        let trip = (from.rawValue + ">" + to.rawValue).unicodeScalars.reduce(7) { ($0 &* 31 &+ Int($1.value)) % 100_003 }
 
         // How far the veins have reached: creeping in, a held beat of dark, then drawing back.
         let g = swap ? 1 - Self.ease(Self.span(k, 0.56, 1)) : pow(Self.span(k, 0, 0.46), 1.3)
@@ -40,7 +43,10 @@ extension SlayerTrip {
         let black = CGFloat(Self.span(g, 0.88, 0.99))
         if black > 0 { art.setFillColor(rgb(0x07030A, black)); art.fill(r) }
 
-        Self.boredVeins(art, reach: g, dark: pall, pulse: pulse, px: px, in: r)
+        Self.boredVeins(art, stainOn: stain, reach: g, dark: pall, pulse: pulse, trip: trip, px: px, in: r)
+        ctx.saveGState(); ctx.setBlendMode(.multiply)
+        Self.blit(stain, onto: ctx, width: w, height: h, px: px, in: r)
+        ctx.restoreGState()
         Self.boredGrain(art, k: k, strength: CGFloat(0.4 + 0.6 * g) * CGFloat(1 - Self.span(k, 0.9, 1)), px: px, in: r)
         Self.blit(art, onto: ctx, width: w, height: h, px: px, in: r)
     }
@@ -51,9 +57,10 @@ extension SlayerTrip {
     /// The veins at `reach` (0 none … 1 met in the middle): roots spaced round the edges, each a wandering trunk
     /// heading for the middle and forking as it goes. Under each, a wide stain of dark; then a crimson rim; then the
     /// black vein; and down the trunks a thin crimson thread that brightens with `pulse`.
-    private static func boredVeins(_ c: CGContext, reach: Double, dark: CGFloat, pulse: CGFloat, px: CGFloat, in r: CGRect) {
+    private static func boredVeins(_ c: CGContext, stainOn sc: CGContext, reach: Double, dark: CGFloat, pulse: CGFloat,
+                                   trip: Int, px: CGFloat, in r: CGRect) {
         guard reach > 0 else { return }
-        let segs = boredGrow(in: r, px: px)
+        let segs = boredGrow(in: r, px: px, trip: trip)
         let s = r.height / 200
         var stain: [(CGPoint, CGPoint, CGFloat)] = [], rim: [(CGPoint, CGPoint, CGFloat)] = []
         var vein: [(CGPoint, CGPoint, CGFloat)] = [], thread: [(CGPoint, CGPoint, CGFloat)] = []
@@ -67,33 +74,39 @@ extension SlayerTrip {
             let heart = dark > 0.3 && wd > px * 2 ? max(px, (wd * 0.34 / px).rounded() * px) : px
             if wd >= px * 3 || dark > 0.3 { thread.append((seg.a, end, heart)) }
         }
-        func stroke(_ list: [(CGPoint, CGPoint, CGFloat)], _ hex: UInt32, _ alpha: CGFloat) {
+        func stroke(_ list: [(CGPoint, CGPoint, CGFloat)], _ hex: UInt32, _ alpha: CGFloat, on layer: CGContext? = nil, widen: CGFloat = 1) {
+            let c = layer ?? c
             c.setStrokeColor(rgb(hex, alpha)); c.setLineCap(.square)
             for (a, b, wd) in list {
-                c.setLineWidth(wd); c.move(to: a); c.addLine(to: b); c.strokePath()
+                c.setLineWidth(((wd * widen) / px).rounded() * px); c.move(to: a); c.addLine(to: b); c.strokePath()
             }
         }
-        stroke(stain, 0x07030A, 0.2)
+        // The stain, in two steps, goes on its own layer, which darkens the picture under it (multiplied) rather than
+        // laying grey over it: a bright window goes a deep wine colour, not a dull grey.
+        stroke(stain, 0x3A0614, 0.35, on: sc)
+        stroke(stain, 0x3A0614, 0.35, on: sc, widen: 0.6)
         stroke(rim, 0x5A0612, 0.25 + 0.45 * dark + 0.3 * pulse)
         stroke(vein, 0x0A0306, 1)
         stroke(thread, 0xB00E28, 0.2 + 0.5 * dark + 0.3 * pulse)
     }
 
-    /// The veins' shape, the same every frame: in `r`'s units, on the art's grid. Roots are spaced along all four
-    /// edges about two fifths of the frame's height apart; each trunk wanders towards the middle (reaching it at
-    /// 1), thinning, and forks now and then into branches that stop short of it.
-    private static func boredGrow(in r: CGRect, px: CGFloat) -> [BoredSeg] {
+    /// The veins' shape, the same every frame of a trip but different from one trip to the next (`trip`): in `r`'s
+    /// units, on the art's grid. Roots are spaced along all four edges about two fifths of the frame's height apart;
+    /// each trunk wanders towards the middle (reaching it at 1), thinning, and forks now and then into branches that
+    /// stop short of it.
+    private static func boredGrow(in r: CGRect, px: CGFloat, trip: Int) -> [BoredSeg] {
+        func n(_ i: Int) -> Double { noise(i + trip * 7919) }
         let s = r.height / 200
         let centre = CGPoint(x: r.midX, y: r.midY)
         let gap = r.height * 0.32
         var roots: [CGPoint] = []
         let across = max(2, min(8, Int(r.width / gap))), down = max(1, min(4, Int(r.height / gap)))
         for i in 0..<across {
-            let x = r.minX + r.width * (CGFloat(i) + 0.5 + CGFloat(noise(i * 3 + 1) - 0.5) * 0.6) / CGFloat(across)
+            let x = r.minX + r.width * (CGFloat(i) + 0.5 + CGFloat(n(i * 3 + 1) - 0.5) * 0.6) / CGFloat(across)
             roots.append(CGPoint(x: x, y: r.maxY)); roots.append(CGPoint(x: x + gap * 0.3, y: r.minY))
         }
         for i in 0..<down {
-            let y = r.minY + r.height * (CGFloat(i) + 0.5 + CGFloat(noise(i * 3 + 50) - 0.5) * 0.5) / CGFloat(down)
+            let y = r.minY + r.height * (CGFloat(i) + 0.5 + CGFloat(n(i * 3 + 50) - 0.5) * 0.5) / CGFloat(down)
             roots.append(CGPoint(x: r.minX, y: y)); roots.append(CGPoint(x: r.maxX, y: y - gap * 0.2))
         }
         // Roots far from the middle (along a wide frame) start sooner, so all of them meet it together.
@@ -112,17 +125,17 @@ extension SlayerTrip {
                 var turn = toward - angle
                 while turn > .pi { turn -= 2 * .pi }
                 while turn < -.pi { turn += 2 * .pi }
-                angle += turn * (depth == 0 ? 0.3 : 0.08) + (noise(seed * 97 + j * 7) - 0.5) * 1.3
+                angle += turn * (depth == 0 ? 0.3 : 0.08) + (n(seed * 97 + j * 7) - 0.5) * 1.3
                 let len = length / CGFloat(steps)
                 let next = CGPoint(x: at.x + len * CGFloat(cos(angle)), y: at.y + len * CGFloat(sin(angle)))
                 let ta = t0 + (t1 - t0) * Double(j) / Double(steps), tb = t0 + (t1 - t0) * Double(j + 1) / Double(steps)
                 let wd = width * (1 - 0.8 * CGFloat(j) / CGFloat(steps))
                 segs.append(BoredSeg(a: snap(at), b: snap(next), t0: ta, t1: tb, width: (wd / px).rounded() * px, depth: depth))
-                if depth < 3 && j > 0 && j < steps - 2 && noise(seed * 31 + j * 13) < (depth == 0 ? 0.3 : depth == 1 ? 0.22 : 0.12) {
-                    let side = noise(seed * 31 + j * 13 + 5) < 0.5 ? -1.0 : 1.0
-                    let fork = angle + side * (0.6 + 0.6 * noise(seed * 31 + j * 13 + 6))
+                if depth < 3 && j > 0 && j < steps - 2 && n(seed * 31 + j * 13) < (depth == 0 ? 0.3 : depth == 1 ? 0.22 : 0.12) {
+                    let side = n(seed * 31 + j * 13 + 5) < 0.5 ? -1.0 : 1.0
+                    let fork = angle + side * (0.6 + 0.6 * n(seed * 31 + j * 13 + 6))
                     let reachLeft = length * CGFloat(steps - j) / CGFloat(steps)
-                    let blen = reachLeft * CGFloat(0.35 + 0.35 * noise(seed * 31 + j * 13 + 7))
+                    let blen = reachLeft * CGFloat(0.35 + 0.35 * n(seed * 31 + j * 13 + 7))
                     let aim = CGPoint(x: next.x + blen * 2 * CGFloat(cos(fork)), y: next.y + blen * 2 * CGFloat(sin(fork)))
                     branch(from: next, towards: aim, length: blen, step: step, width: wd * 0.6, t0: tb, t1: min(1, tb + (t1 - tb) * 0.8),
                            depth: depth + 1, seed: seed * 7 + j + 1)
@@ -132,9 +145,9 @@ extension SlayerTrip {
         }
         for (i, root) in roots.enumerated() {
             let dist = hypot(root.x - centre.x, root.y - centre.y)
-            let start = 0.25 * Double(1 - dist / far) + 0.06 * noise(i * 17 + 9)
-            let aim = CGPoint(x: centre.x + (CGFloat(noise(i * 17 + 2)) - 0.5) * r.height * 0.3,
-                              y: centre.y + (CGFloat(noise(i * 17 + 3)) - 0.5) * r.height * 0.3)
+            let start = 0.25 * Double(1 - dist / far) + 0.06 * n(i * 17 + 9)
+            let aim = CGPoint(x: centre.x + (CGFloat(n(i * 17 + 2)) - 0.5) * r.height * 0.3,
+                              y: centre.y + (CGFloat(n(i * 17 + 3)) - 0.5) * r.height * 0.3)
             branch(from: root, towards: aim, length: dist * 1.05, step: max(px * 3, s * 4, dist / 22), width: max(px * 3, s * 4.5), t0: start, t1: 1,
                    depth: 0, seed: i + 1)
         }

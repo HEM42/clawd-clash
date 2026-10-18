@@ -20,7 +20,7 @@ extension SlayerTrip {
         let w = Int((r.width / px).rounded(.up)), h = Int((r.height / px).rounded(.up))
         guard let art = Self.artCanvas(width: w, height: h, px: px, in: r) else { return }
         let centre = CGPoint(x: r.midX, y: r.midY)
-        let s = r.height / 200
+        let s = max(r.height, r.width * 0.32) / 200          // the candles and the ribbon a little bigger in a short strip
         let swap = k >= 0.5
 
         // How far the middle of the circle is turned: winding up to the swap, then unwinding the same way round.
@@ -75,11 +75,12 @@ extension SlayerTrip {
         Self.blit(art, onto: ctx, width: w, height: h, px: px, in: r)
     }
 
-    /// `image` over `r`, turned inside the oval inscribed in `r` in rings, each by `twist` times (1 − its distance out)²:
-    /// the middle turns most, the rim not at all, and anything outside the oval stays put. The turn is made in the
-    /// oval's own shape, so each ring keeps to itself and nothing outside the picture comes into view.
+    /// `image` over `r`, turned inside an oval round its middle (`r`'s height, and no wider than a circle seen at an
+    /// angle) in rings, each by `twist` times (1 − its distance out)²: the middle turns most, the rim not at all, and
+    /// anything outside the oval stays put. The turn is made in the oval's own shape, so each ring keeps to itself and
+    /// nothing outside the picture comes into view.
     private static func spellTwist(_ c: CGContext, _ image: CGImage, twist: Double, centre: CGPoint, in r: CGRect) {
-        let a = r.width / 2, b = r.height / 2
+        let a = min(r.width / 2, r.height * 1.2), b = r.height / 2     // a circle seen at an angle, even in a short strip
         let n = 26
         c.draw(image, in: r)
         for i in 0..<n {
@@ -122,9 +123,13 @@ extension SlayerTrip {
                                     px: CGFloat, in r: CGRect) {
         guard shown > 0 else { return }
         func snap(_ v: CGFloat, _ o: CGFloat) -> CGFloat { ((v - o) / px).rounded() * px + o }
-        let tall = max(px * 8, snap(s * 20, 0)), wide = max(px * 4, snap(s * 6, 0))
-        let x = snap(p.x - wide / 2, r.minX), y = snap(p.y - tall / 2, r.minY)
-        let a = CGFloat(shown)
+        // Solid wax all the way: it rises out of the floor at the start and melts down into it at the end (`shown`),
+        // rather than fading to a see-through ghost.
+        let full = max(px * 8, snap(s * 20, 0)), wide = max(px * 4, snap(s * 6, 0))
+        let tall = snap(full * CGFloat(shown), 0)
+        guard tall >= px * 2 else { return }
+        let x = snap(p.x - wide / 2, r.minX), y = snap(p.y - full / 2, r.minY)
+        let a: CGFloat = 1
         let lit = span(k, 0.05 + Double(i) * 0.013, 0.07 + Double(i) * 0.013) * (1 - span(k, 0.84 + Double(i % 3) * 0.02, 0.88 + Double(i % 3) * 0.02))
         let frame = Int(k * 40)
         // The light it throws.
@@ -165,14 +170,14 @@ extension SlayerTrip {
     }
 
     /// Willow's ribbon: a spiral of sparkles in the circle's shape. Its head winds in from outside to the middle
-    /// (0.12–0.5) and back out again (0.5–0.86), trailing a tapering band that twists like a ribbon (pale leaf green
-    /// edged with emerald, a bright core) with sparkles winking round it; then what's left drifts and fades.
+    /// (0.12–0.5) and back out again (0.5–0.86), trailing a loose, tapering trail of sparkles (leaf green, emerald and
+    /// white over a faint green haze), thick at its head and thinning out behind; then what's left drifts and fades.
     private static func spellRibbon(_ c: CGContext, centre: CGPoint, k: Double, s: CGFloat, px: CGFloat, in r: CGRect) {
         let inward = span(k, 0.12, 0.5), outward = span(k, 0.5, 0.86)
         guard k > 0.12 else { return }
         let fade = CGFloat(1 - span(k, 0.74, 0.94))
         guard fade > 0 else { return }
-        let a = r.width * 0.5, b = r.height * 0.5
+        let a = min(r.width * 0.5, r.height * 1.2), b = r.height * 0.5
         // The head's distance out (0 middle, 1 the rim) and how long the band behind it is, in the same units.
         let head = k < 0.5 ? 1.35 - 1.35 * ease(inward) : 1.45 * ease(outward)
         let length = k < 0.5 ? 0.9 : 0.9 - 0.4 * outward
@@ -208,21 +213,41 @@ extension SlayerTrip {
                 }
             }
         }
+        // Only a faint green haze along the band; the ribbon itself is its sparkles, thick at the head and thinning
+        // out along the tail, in leaf green, emerald and white, the head a bright knot of them.
         c.setLineCap(.round)
-        for (hex, scale, add, alpha) in [(0x0E6A3A as UInt32, 1.0 as CGFloat, px * 2, 0.3 as CGFloat), (0x1FA05A, 1, 0, 0.9),
-                                         (0x9CE88A, 0.55, 0, 0.95), (0xE6FFD8, 0, px, 0.9)] {
-            for j in 0..<(points.count - 1) {
-                let (p0, h0) = points[j], (p1, h1) = points[j + 1]
-                guard h0 >= 0, h1 >= 0 else { continue }
-                // Fainter towards the tail, and glittering: some stretches brighter than others.
-                let along = CGFloat(j) / CGFloat(points.count)
-                let glitter: CGFloat = noise(j / 3 * 11 + frame * 7) > 0.75 ? 1 : 0.7
-                c.setStrokeColor(rgb(hex, alpha * fade * (1 - along * 0.8) * glitter))
-                c.setLineWidth(max(px, (h0 + h1) * scale + add))
-                c.move(to: p0); c.addLine(to: p1); c.strokePath()
+        for j in 0..<(points.count - 1) {
+            let (p0, h0) = points[j], (p1, h1) = points[j + 1]
+            guard h0 >= 0, h1 >= 0 else { continue }
+            let along = CGFloat(j) / CGFloat(points.count)
+            c.setStrokeColor(rgb(0x1FA05A, 0.2 * fade * (1 - along * 0.8)))
+            c.setLineWidth(max(px, (h0 + h1) * 1.1))
+            c.move(to: p0); c.addLine(to: p1); c.strokePath()
+        }
+        var bright: [CGRect] = [], leaf: [CGRect] = [], emerald: [CGRect] = []
+        func grid(_ x: CGFloat, _ y: CGFloat) -> CGRect {
+            CGRect(x: ((x - r.minX) / px).rounded() * px + r.minX, y: ((y - r.minY) / px).rounded() * px + r.minY, width: px, height: px)
+        }
+        for (j, (p, half)) in points.enumerated() where half >= 0 {
+            let d = Double(j) / Double(points.count)
+            for q in 0..<3 {
+                let seed = j * 13 + q * 5 + frame * 97
+                guard noise(seed) < 0.75 - 0.6 * d else { continue }
+                let loose = half + s * (1.5 + 3 * d)            // looser towards the tail
+                let ox = CGFloat(noise(seed + 1) - 0.5) * 2 * loose, oy = CGFloat(noise(seed + 2) - 0.5) * 2 * loose
+                let dot = grid(p.x + ox, p.y + oy)
+                let tone = noise(seed + 3)
+                if tone > 0.7 || d < 0.04 {
+                    bright.append(dot)
+                    if noise(seed + 4) > 0.6 {    // a twinkle: a little cross
+                        bright += [dot.offsetBy(dx: px, dy: 0), dot.offsetBy(dx: -px, dy: 0), dot.offsetBy(dx: 0, dy: px), dot.offsetBy(dx: 0, dy: -px)]
+                    }
+                } else if tone > 0.25 { leaf.append(dot) } else { emerald.append(dot) }
             }
         }
-        c.setFillColor(rgb(0xF4FFF0, fade)); c.fill(spark)
+        c.setFillColor(rgb(0x1FA05A, fade)); c.fill(emerald)
+        c.setFillColor(rgb(0x9CE88A, fade)); c.fill(leaf)
+        c.setFillColor(rgb(0xF4FFF0, fade)); c.fill(bright + spark)
 
         // The sparkles it leaves behind as it unwinds, drifting outward and winking out.
         if k > 0.5 {

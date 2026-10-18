@@ -35,7 +35,9 @@ extension SlayerTrip {
         }
 
         // The house lights: dim, a spotlight that slides in from the left and finds the hat, then blackout.
-        let hatH = max(16, h * 2 / 9), hatX = w / 2
+        // Bigger in a short strip, where the stage is wide and low, so the hat still reads.
+        let strip = Double(w) / Double(h) > 2.4
+        let hatH = max(16, strip ? h * 42 / 100 : h * 2 / 9), hatX = w / 2
         let showHat = k > 0.3 && k < 0.68
         let hop = Self.span(k, 0.57, 0.63)
         let lift = Int((sin(hop * .pi) * Double(hatH) * 0.18).rounded())
@@ -43,10 +45,12 @@ extension SlayerTrip {
         let dim = Self.span(k, 0.3, 0.36) * (1 - Self.span(k, 0.7, 0.76))
         let black = Self.span(k, 0.63, 0.67) * (1 - Self.span(k, 0.69, 0.73))
         let spotIn = Self.span(k, 0.34, 0.38), spotOut = Self.span(k, 0.62, 0.66)
-        let spotR = Double(hatH) * 1.3 * spotIn * (1 - spotOut)
+        let spotR = min(Double(hatH) * 1.3, Double(h) * 0.45) * spotIn * (1 - spotOut)
         let travel = Self.ease(Self.span(k, 0.36, 0.54))
         let wobble = sin(travel * .pi * 2) * Double(hatH) * 0.3 * (1 - travel)
-        let sx = Double(w) * 0.12 + (Double(hatX) - Double(w) * 0.12) * travel + wobble
+        // It starts a little way off to the left, not out in the far wing of a wide stage.
+        let start = Double(hatX) - min(Double(w) * 0.38, Double(hatH) * 2.5)
+        let sx = start + (Double(hatX) - start) * travel + wobble
         let sy = Double(hatBase) - Double(hatH) * 0.55
         let spot = pen.rect(sx - spotR, sy - spotR * 1.1, spotR * 2, spotR * 2.2)
         let whole = pen.rect(0, 0, Double(w), Double(h))
@@ -59,7 +63,13 @@ extension SlayerTrip {
             beam.addLine(to: CGPoint(x: spot.maxX, y: spot.midY)); beam.addLine(to: CGPoint(x: spot.minX, y: spot.midY))
             beam.closeSubpath()
             art.addPath(beam); art.setFillColor(MusicalInk.beam.copy(alpha: 0.1 * CGFloat(dim)) ?? MusicalInk.beam); art.fillPath()
+            // On the velvet the light is a warm amber that brightens the red rather than washing it pink; only on the
+            // boards does it fall pale and creamy.
+            art.setFillColor(MusicalInk.poolCloth); art.fillEllipse(in: spot)
+            art.saveGState()
+            art.clip(to: pen.rect(0, Double(floorTop), Double(w), Double(h - floorTop)))
             art.setFillColor(MusicalInk.pool); art.fillEllipse(in: spot)
+            art.restoreGState()
         }
         // Sweete's top hat and cane, centre stage, while the curtains are shut.
         if showHat { musicalHat(pen, cx: hatX, base: hatBase - lift, height: hatH) }
@@ -228,6 +238,7 @@ private enum MusicalInk {
     static let foot = rgb(0x2A1A10), footGlow = rgb(0xFFD070)
     static let hatBlack = rgb(0x121014), hatSheen = rgb(0x4A4652), hatBand = rgb(0xB01824), hatBandLight = rgb(0xE04450)
     static let dark = rgb(0x06040C)
-    static let beam = rgb(0xFFF0C8, 0.10), pool = rgb(0xFFF0C8, 0.16), poolEdge = rgb(0xFFE0A0, 0.35)
+    static let beam = rgb(0xFFF0C8, 0.10), pool = rgb(0xFFF0C8, 0.16), poolCloth = rgb(0xFF9A3A, 0.14)
+    static let poolEdge = rgb(0xFFB860, 0.3)
     static let twinkle = rgb(0xFFFBE8)
 }

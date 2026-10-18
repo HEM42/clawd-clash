@@ -332,12 +332,23 @@ extension SlayerTrip {
             let gx2 = Double(i) * 3 + noise(i + 600) * 2
             c.fill(CGRect(x: floor(gx2), y: floor(gy + 1), width: 1, height: floor(1 + noise(i + 700) * 4)))
         }
-        for i in 0..<5 {
-            let fy = gy - H * 0.04 + Double(i) * H * 0.045
-            let fx = -W * 0.3 + (t * 0.5 + noise(i + 900)) * W * 0.6
-            c.setFillColor(titlesRGB(0x9FB0D0, 0.13 + 0.05 * CGFloat(i % 2)))
-            c.fill(CGRect(x: floor(fx), y: floor(fy), width: floor(W * 0.9), height: max(2, floor(H * 0.035))))
-            c.fill(CGRect(x: floor(fx + W * 0.95), y: floor(fy + 1), width: floor(W * 0.6), height: max(2, floor(H * 0.03))))
+        // Fog rolling past the stone's foot: banks of overlapping puffs at three depths, each drifting at its own
+        // speed, thin enough that the stone shows through.
+        for layer in 0..<3 {
+            let n = 5 + layer * 2
+            let base = gy + Double(layer) * H * 0.05
+            let speed = 0.25 + 0.2 * Double(layer)
+            for i in 0..<n {
+                let s = layer * 101 + i * 7
+                let rad = H * (0.07 + 0.05 * noise(s + 1))
+                let span = W + rad * 8
+                let fx = ((Double(i) + noise(s + 2) * 0.8) / Double(n) * span + t * speed * W * 0.3)
+                    .truncatingRemainder(dividingBy: span) - rad * 4
+                let fy = base + (noise(s + 3) - 0.5) * H * 0.04
+                c.setFillColor(titlesRGB(0xA8B8D8, 0.08 + 0.03 * CGFloat(layer)))
+                c.fillEllipse(in: CGRect(x: floor(fx - rad * 4), y: floor(fy - rad * 0.6), width: floor(rad * 8), height: floor(rad * 1.2)))
+                c.fillEllipse(in: CGRect(x: floor(fx - rad * 1.8), y: floor(fy - rad * 0.3), width: floor(rad * 3.6), height: floor(rad * 1.3)))
+            }
         }
     }
 
@@ -351,19 +362,28 @@ extension SlayerTrip {
         let bw = min(W * 0.26, H * 0.5), bh = bw * 1.3
         let sx = floor(W / 2), by = floor(H * 0.5 - bh * 0.42)
 
-        // The rays: wedges fanning up from the spine, growing as it opens.
+        // The flare: a white-hot burst behind the book, and rays of gold light fanning up and out from the spine,
+        // white at their cores, brightening and lengthening as it opens.
         if flare > 0 {
-            let reach = max(W, H) * (0.3 + 0.9 * flare)
-            let n = 14
+            let ox = sx, oy = by + bh * 0.62
+            let reach = max(W, H) * (0.35 + 0.95 * flare)
+            for (rad, hex, a) in [(1.25, 0xFFB040 as UInt32, 0.22), (0.9, 0xFFD27A, 0.3), (0.6, 0xFFF0C0, 0.45)] {
+                let rr = bw * rad * (0.6 + 0.6 * flare)
+                c.setFillColor(titlesRGB(hex, CGFloat(a * flare)))
+                c.fillEllipse(in: CGRect(x: floor(ox - rr * 1.3), y: floor(oy - rr), width: floor(rr * 2.6), height: floor(rr * 2)))
+            }
+            let n = 16
             for i in 0..<n {
-                let a = .pi * (0.08 + 0.84 * Double(i) / Double(n - 1)) + sin(Double(frame) * 0.7 + Double(i)) * 0.02
-                let wdt = 0.035 + 0.03 * noise(i + 70)
-                let col: UInt32 = i % 3 == 0 ? 0xFFD27A : (i % 3 == 1 ? 0xF0902A : 0xB85A18)
-                c.setFillColor(titlesRGB(col, CGFloat(0.35 + 0.35 * flare)))
-                c.beginPath(); c.move(to: CGPoint(x: sx, y: by + bh * 0.5))
-                c.addLine(to: CGPoint(x: sx + cos(a - wdt) * reach, y: by + bh * 0.5 + sin(a - wdt) * reach))
-                c.addLine(to: CGPoint(x: sx + cos(a + wdt) * reach, y: by + bh * 0.5 + sin(a + wdt) * reach))
-                c.closePath(); c.fillPath()
+                let a = .pi * (-0.06 + 1.12 * Double(i) / Double(n - 1)) + sin(Double(frame) * 0.7 + Double(i)) * 0.02
+                let wdt = 0.03 + 0.035 * noise(i + 70)
+                let len = reach * (0.7 + 0.3 * noise(i + 71))
+                for (m, hex, al) in [(1.0, i % 2 == 0 ? 0xFFC250 : 0xFFA838 as UInt32, 0.45), (0.45, 0xFFF4D6, 0.75)] {
+                    c.setFillColor(titlesRGB(hex, CGFloat(al * (0.4 + 0.6 * flare))))
+                    c.beginPath(); c.move(to: CGPoint(x: ox, y: oy))
+                    c.addLine(to: CGPoint(x: ox + cos(a - wdt * m) * len, y: oy + sin(a - wdt * m) * len))
+                    c.addLine(to: CGPoint(x: ox + cos(a + wdt * m) * len, y: oy + sin(a + wdt * m) * len))
+                    c.closePath(); c.fillPath()
+                }
             }
         }
         // The back cover and the right-hand pages, always there.
@@ -396,7 +416,7 @@ extension SlayerTrip {
         c.setFillColor(titlesRGB(0x1E0E06)); c.fill(CGRect(x: sx - 1, y: by - 2, width: 2, height: floor(bh + 4)))
         // The glow on the pages, and sparks thrown up.
         if flare > 0 {
-            c.setFillColor(titlesRGB(0xFFF2C8, CGFloat(0.5 * flare)))
+            c.setFillColor(titlesRGB(0xFFF8E0, CGFloat(0.65 * flare)))
             c.fillEllipse(in: CGRect(x: floor(sx - bw * 0.7), y: floor(by + bh * 0.2), width: floor(bw * 1.4), height: floor(bh * 0.7)))
             for i in 0..<30 {
                 let a = .pi * (0.1 + 0.8 * noise(i + 80))
@@ -425,8 +445,10 @@ extension SlayerTrip {
 
     /// The four leads, slamming in one after another as black silhouettes, each with what they fight with.
     private func titlesLeads(_ ctx: CGContext, k: Double, r: CGRect, px: CGFloat, ground: CGFloat, shake: CGPoint) {
-        let spriteH = 30.0, spriteW = 27.0                  // a sprite's height and the spacing, in its own pixels
-        let raw = min(Double(r.height) * 0.58 / spriteH, Double(r.width) * 0.2 / spriteW)
+        // A sprite's height and the spacing, in its own pixels: far enough apart that each one's outline and weapon
+        // stand clear of the next, and the row of four (with Xander's launcher) fits across the frame.
+        let spriteH = 32.0, spriteW = 40.0, row = 3 * spriteW + 52
+        let raw = min(Double(r.height) * 0.58 / spriteH, Double(r.width) * 0.94 / row)
         let sp = max(1, CGFloat(raw).rounded(.down))        // screen pixels per pixel of the sprites
         let gap = CGFloat(spriteW) * sp
         ctx.saveGState()
@@ -436,15 +458,15 @@ extension SlayerTrip {
             guard k >= at, let img = lead.image else { continue }
             let f = Self.span(k, at, at + 0.014)
             let scale = sp * CGFloat(1 + 1.4 * (1 - f) * (1 - f))
-            let cx = r.midX + (CGFloat(i) - 1.5) * gap + shake.x
+            let cx = r.midX + (CGFloat(i) - 1.5) * gap - 4 * sp + shake.x
             // The body's centre and its feet (sprite row 44) land on the ground.
             let dw = CGFloat(Sprite.width) * scale, dh = CGFloat(Sprite.height) * scale
             let x = (cx - CGFloat(Sprite.bodyCenterX + 3) * scale).rounded()
             let y = (r.minY + ground - (CGFloat(Sprite.height) - 44) * scale + shake.y).rounded()
             if lead == .willow {
                 // Her spell lights the ground and the sky round her hand.
-                let hx = x + CGFloat(Sprite.hand.x + 2) * scale, hy = y + (CGFloat(Sprite.height) - CGFloat(Sprite.hand.y)) * scale
-                for (rad, a) in [(9.0, 0.18), (6.0, 0.3), (3.5, 0.5)] {
+                let hx = x + 45.5 * scale, hy = y + (CGFloat(Sprite.height) - 15.5) * scale     // the raised hand
+                for (rad, a) in [(11.0, 0.16), (7.0, 0.28), (4.0, 0.5)] {
                     let rr = CGFloat(rad) * scale
                     ctx.setFillColor(titlesRGB(0x5CFF7A, CGFloat(a)))
                     ctx.fillEllipse(in: CGRect(x: hx - rr, y: hy - rr, width: rr * 2, height: rr * 2))
@@ -467,7 +489,9 @@ extension SlayerTrip {
             let off = pass == 0 ? L.u * 0.22 : 0
             let col = titlesRGB(pass == 0 ? 0x9E1424 : 0xEDE8DC)
             for (i, s) in L.strokes.enumerated() {
-                let p = Self.clamp(write * Double(total) * 1.15 - Double(i))
+                var p = Self.clamp(write * Double(total) * 1.15 - Double(i))
+                // SLAYER's L: its foot is brushed on only once the stake has landed as its stem, never on its own.
+                if i == L.footStroke { p = min(p, Self.span(k, TitlesLayout.stakeLands, TitlesLayout.stakeLands + 0.012)) }
                 guard p > 0 else { continue }
                 titlesBrush(c, s.points.map { CGPoint(x: $0.x + off, y: $0.y - off) }, width: s.width, upTo: p,
                             seed: i * 37 + 5, color: col)
@@ -571,12 +595,13 @@ extension SlayerTrip {
 /// (CLAWD smaller over SLAYER), slanted a little, every stroke a list of points in art pixels.
 private struct TitlesLayout {
     static let slams: [Double] = [0.47, 0.508, 0.546, 0.584]
-    static let stakeFalls = 0.70, stakeLands = 0.72, written = 0.8
+    static let stakeFalls = 0.695, stakeLands = 0.712, written = 0.8
     static func ground(_ H: Double) -> Double { floor(H * 0.14) }
 
     struct Stroke { let points: [CGPoint]; let width: Double }
     let W: Double, H: Double, u: Double
     var strokes: [Stroke] = []
+    var footStroke = -1
     var stake: (x: Double, top: Double, bottom: Double, width: Double) = (0, 0, 0, 0)
 
     private static let glyphs: [Character: (w: Double, strokes: [[(Double, Double)]])] = [
@@ -623,6 +648,7 @@ private struct TitlesLayout {
             for (si, s) in g.strokes.enumerated() {
                 if stakeL && ch == "L" && si == 0 {
                     stake = (x: cx + (0.6 + 4.1 * slant) * u, top: y + 9.6 * u, bottom: y - 1.6 * u, width: u * 1.6)
+                    footStroke = strokes.count
                     continue
                 }
                 let pts = s.map { p in CGPoint(x: cx + (p.0 + p.1 * slant) * u, y: y + (p.1 + jitter * (p.0 / max(1, g.w))) * u) }
@@ -671,21 +697,26 @@ private enum TitlesLead: CaseIterable {
         switch self {
         case .buffy:
             Cast.hero(.buffyClawmers).draw(c, t: 0, mode: .idle, walking: false, role: .none, asSession: true)
-            // The stake raised high overhead, point up.
-            c.rect(38, 27, 3, 8, solid); c.rect(39, 24, 4, 4, solid)
-            c.rect(40, 12, 3, 12, solid); c.px(41, 10, solid); c.rect(41, 11, 1, 1, solid); c.px(40, 11, solid)
+            // The arm thrown up and a big stake raised overhead, point up: a broad shaft tapering to its point, so it
+            // reads as a stake and not a pole.
+            c.rect(37, 27, 3, 6, solid); c.rect(39, 23, 3, 5, solid); c.rect(39, 20, 5, 4, solid)
+            c.rect(40, 9, 4, 12, solid); c.rect(41, 7, 3, 2, solid); c.rect(41, 5, 2, 2, solid); c.px(42, 4, solid)
         case .giles:
             Cast.hero(.rupertGyles).draw(c, t: 0, mode: .idle, walking: false, role: .none, asSession: true)
-            // A crossbow levelled: stock, the bow across its front, the string.
-            c.rect(36, 31, 20, 3, solid); c.rect(38, 34, 3, 3, solid)
-            for (i, y) in (22...43).enumerated() {
-                let bend = abs(i - 10) / 4
-                c.rect(53 - bend, y, 2, 1, solid)
+            // A crossbow levelled from the shoulder: a long stock, the bow a deep curve across its front, the string
+            // drawn back to the latch, and the bolt's head past the bow.
+            c.rect(34, 28, 24, 3, solid); c.rect(37, 31, 3, 4, solid); c.rect(33, 27, 4, 5, solid)
+            for y in 16...42 {
+                let bend = (y - 29) * (y - 29) / 34
+                c.rect(57 - bend, y, 2, 1, solid)
             }
-            c.rect(56, 32, 2, 1, solid)
+            c.glowLine(53, 16.5, 44, 29, core: solid, glow: C(0, 0), coreR: 0.5, glowR: 0.6)
+            c.glowLine(53, 42.5, 44, 30, core: solid, glow: C(0, 0), coreR: 0.5, glowR: 0.6)
+            c.rect(58, 29, 4, 1, solid); c.rect(62, 28, 2, 3, solid)
         case .willow:
             Cast.hero(.willowRosenclaw).draw(c, t: 0, mode: .idle, walking: false, role: .none, asSession: true)
-            c.rect(38, 30, 5, 2, solid)                             // the arm out, the palm up
+            // Her arm raised high, the palm up under the spell.
+            c.rect(37, 28, 3, 4, solid); c.rect(39, 24, 3, 5, solid); c.rect(41, 20, 3, 5, solid); c.rect(43, 18, 4, 3, solid)
         case .xander:
             Cast.hero(.xanderHarrows).draw(c, t: 0, mode: .idle, walking: false, role: .none, asSession: true)
             // A rocket launcher on his shoulder: the tube, its flared back, the sight and the grip.
@@ -704,7 +735,7 @@ private enum TitlesLead: CaseIterable {
             }
         }
         if self == .willow {
-            out.glowLine(43, 27, 43, 27.5, core: C(0xE8FFE8), glow: C(0x5CFF7A), coreR: 1.4, glowR: 4.2)
+            out.glowLine(45, 15, 45, 15.5, core: C(0xE8FFE8), glow: C(0x5CFF7A), coreR: 1.8, glowR: 5)
         }
         let img = out.makeImage()
         Self.cache[self] = img

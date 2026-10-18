@@ -22,7 +22,7 @@ extension SlayerTrip {
         let w = Int((r.width / px).rounded(.up)), h = Int((r.height / px).rounded(.up))
         guard let art = Self.artCanvas(width: w, height: h, px: px, in: r) else { return }
         let pen = LiftPen(c: art, px: px, r: r, h: h)
-        let hb = max(20, h / 7)
+        let hb = max(20, Double(w) / Double(h) > 2.4 ? h * 22 / 100 : h / 7)     // taller in a short strip, so the numbers read
         let headerBottom = Int((Double(hb) * drop).rounded())
 
         // The ride: which floors, which way, and where it is.
@@ -75,9 +75,25 @@ extension SlayerTrip {
             clipFill(px0, py0, 1, py1 - py0, LiftInk.line)
             clipFill(px0, py1, px1 - px0 + 1, 1, LiftInk.pale)
             clipFill(px1, py0, 1, py1 - py0, LiftInk.pale)
-            // A slim gold rail across the panel.
-            clipFill(px0 + 2, py0 + (py1 - py0) / 3, px1 - px0 - 3, 1, LiftInk.goldDark)
+            // A gold rail across the panel, and above it a sunburst etched into the steel, in the deco style of the
+            // firm's lobby: rays fanning up from the rail's middle to the panel's top.
+            let rail = py0 + (py1 - py0) / 3
+            clipFill(px0 + 2, rail, px1 - px0 - 3, 1, LiftInk.gold)
+            clipFill(px0 + 2, rail + 1, px1 - px0 - 3, 1, LiftInk.goldDark)
+            let cx = (px0 + px1) / 2, reach = rail - py0 - 3
+            if reach > 4 {
+                for ray in 0..<9 {
+                    let ang = Double.pi * (0.12 + 0.76 * Double(ray) / 8)
+                    let len = Double(reach) * (ray % 2 == 0 ? 1 : 0.7)
+                    for d in stride(from: Double(reach) * 0.22, to: len, by: 1) {
+                        clipFill(cx + Int((cos(ang) * d * 1.3).rounded()), rail - 1 - Int((sin(ang) * d).rounded()), 1, 1, LiftInk.etch)
+                    }
+                }
+                clipFill(cx - 1, rail - 2, 3, 2, LiftInk.goldDark)
+            }
         }
+        // Gold pinstripes down the meeting edge.
+        pen.fill(leftSide ? x + dw - 4 : x + 3, top, 1, tall, LiftInk.goldDark)
         // The meeting edge: a dark seam with a bright bevel beside it.
         let edge = leftSide ? x + dw - 1 : x
         pen.fill(edge, top, 1, tall, LiftInk.seam)
@@ -180,6 +196,7 @@ private enum LiftInk {
     }
     static let steel = [rgb(0x8E98A2), rgb(0x949EA8), rgb(0x9CA6B0)]
     static let steelDark = rgb(0x6A747E), line = rgb(0x5A626C), pale = rgb(0xC8D2DA), seam = rgb(0x1A1E24)
+    static let etch = rgb(0x646E7A)
     static let gold = rgb(0xD8B050), goldDark = rgb(0x8A6A28)
     static let sheen = rgb(0xE8F6FF, 0.12), sheenCore = rgb(0xF4FBFF, 0.3), pass = rgb(0xFFF2D0, 0.12)
     static let glass = rgb(0x0A0E16), glassLine = rgb(0x2A3A4C), recess = rgb(0x040608)

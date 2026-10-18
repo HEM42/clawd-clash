@@ -98,7 +98,12 @@ extension SlayerTrip {
         // The plate: the new place as a woodcut on the right-hand page, colour soaking into it, then growing to fill
         // the frame.
         if k >= 0.34 + 3 * 0.035 {
-            let plate = book.grid(Self.tomeLerp(book.plate, r, grow))
+            // It lifts off the page and comes forward: its middle swings to the frame's middle in the first part of
+            // the growth, so it grows from the centre rather than sitting off to the right.
+            let size = Self.tomeLerp(book.plate, r, grow), centre = CGFloat(Self.ease(min(1, grow * 2.2)))
+            let plate = book.grid(CGRect(x: book.plate.midX + (r.midX - book.plate.midX) * centre - size.width / 2,
+                                         y: book.plate.midY + (r.midY - book.plate.midY) * centre - size.height / 2,
+                                         width: size.width, height: size.height))
             drawTomePlate(ctx, new: new, plate: plate, start: book.plate, k: k, grow: grow, book: book, in: r)
         }
         Self.tomeGrain(ctx, k: k, strength: CGFloat(1 - Self.span(k, 0.82, 1)), px: px, in: r)
@@ -330,7 +335,8 @@ private struct TomeLayout {
     init(_ r: CGRect, px: CGFloat) {
         self.r = r; self.px = px
         u = r.height / 200
-        pageH = (r.height * 0.74 / px).rounded() * px
+        // As tall as it can be in a short window strip, where the height is all there is to go on.
+        pageH = (r.height * (r.width / r.height > 2.4 ? 0.82 : 0.74) / px).rounded() * px
         pageW = (min(pageH * 0.8, r.width * 0.34) / px).rounded() * px
         spine = ((r.midX - r.minX) / px).rounded() * px + r.minX
         midY = ((r.midY - r.height * 0.02 - r.minY) / px).rounded() * px + r.minY
@@ -357,8 +363,8 @@ private struct TomeLayout {
 
     /// The plate on the right-hand page, its first place: a landscape picture in the upper part of the page.
     var plate: CGRect {
-        let pw = pageW * 0.8
-        let ph = min(pw / 1.3, pageH * 0.6)
+        let pw = pageW * 0.88
+        let ph = min(pw / 1.25, pageH * 0.64)
         return grid(CGRect(x: right.midX - pw / 2, y: right.maxY - pageH * 0.1 - ph, width: pw, height: ph))
     }
 

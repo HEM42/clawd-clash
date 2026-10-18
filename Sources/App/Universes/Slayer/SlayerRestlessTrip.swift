@@ -38,11 +38,15 @@ extension SlayerTrip {
         let face = Self.ease(Self.span(k, 0.24, 0.42)) * (1 - Self.ease(Self.span(k, 0.6, 0.8)))
         if face > 0 {
             let loom = 0.82 + 0.18 * Self.ease(Self.span(k, 0.22, 0.8))
-            let fit = min(H * 0.94 / Self.slayerFaceSize.h, W * 0.92 / Self.slayerFaceSize.w)
+            // In a short strip the face itself (the head, 28 units) fills the height and the dreadlocks run off the
+            // top and bottom, so she isn't a small medallion in the middle of the sand.
+            let strip = W / H > 2.4
+            let fit = strip ? H * 0.98 / 30 : min(H * 0.94 / Self.slayerFaceSize.h, W * 0.92 / Self.slayerFaceSize.w)
+            let lift = strip ? 2 * fit * loom : 0                     // the head's middle, not the hair's, in the middle
             art.saveGState()
             art.setAlpha(CGFloat(min(1, face * 1.3) * 0.94))
             art.beginTransparencyLayer(auxiliaryInfo: nil)
-            Self.slayerFirstSlayerFace(art, cx: W / 2, cy: H / 2, scale: fit * loom, reveal: face)
+            Self.slayerFirstSlayerFace(art, cx: W / 2, cy: H / 2 + lift, scale: fit * loom, reveal: face)
             art.endTransparencyLayer()
             art.restoreGState()
         }
@@ -99,13 +103,24 @@ extension SlayerTrip {
         }
         /// A rope of hair along `pts`: a 2-unit square at each step, a paler strand down one side every other step,
         /// and a bead near the end if `bead` is given.
+        // Each rope a shade of its own, with a dark edge along its lower right, so overlapping locks stay apart.
+        var ropes = 0
+        let tones: [(UInt32, UInt32)] = [(dread, dreadL), (0x3E2A1A, 0x6A5034), (0x241610, 0x4A3626)]
         func rope(_ pts: [(Double, Double)], bead: UInt32?) {
-            for (n, p) in pts.enumerated() {
+            let (base, lit) = tones[ropes % tones.count]
+            ropes += 1
+            let size = (2 * s).rounded(), edge = max(1, (s * 0.5).rounded())
+            let at = pts.map { p -> CGPoint in
                 let x = min(fw - 2, max(0, p.0)), y = min(fh - 2, max(0, p.1))
-                let x0 = (ox + x * s).rounded(), y0 = (oy + (fh - y - 2) * s).rounded(), size = (2 * s).rounded()
-                art.setFillColor(sandRGB(dread)); art.fill(CGRect(x: x0, y: y0, width: size, height: size))
+                return CGPoint(x: (ox + x * s).rounded(), y: (oy + (fh - y - 2) * s).rounded())
+            }
+            art.setFillColor(sandRGB(0x120A06))
+            art.fill(at.map { CGRect(x: $0.x + edge, y: $0.y - edge, width: size, height: size) })
+            for (n, q) in at.enumerated() {
+                let x0 = q.x, y0 = q.y
+                art.setFillColor(sandRGB(base)); art.fill(CGRect(x: x0, y: y0, width: size, height: size))
                 if n % 4 < 2 {
-                    art.setFillColor(sandRGB(dreadL))
+                    art.setFillColor(sandRGB(lit))
                     art.fill(CGRect(x: x0, y: y0, width: max(1, (s * 0.6).rounded()), height: size))
                 }
             }
@@ -118,7 +133,18 @@ extension SlayerTrip {
         let hx = 24.0, hy = 25.0, rx = 12.5, ry = 14.0
         // The dreadlocks behind: a mass about the crown, then ropes standing out from the top of the head and
         // falling back under their own weight, and more hanging down the sides past the jaw.
-        oval(hx, hy - 7, 15.5, 10, dread)
+        // The mass is in shadow, and locks lie across it from the parting, each one lit down its side, so the crown
+        // reads as rope after rope of hair rather than one dark blot.
+        oval(hx, hy - 7, 15.5, 10, 0x1C120C)
+        for i in 0..<11 {
+            let a = -.pi * (0.08 + 0.84 * Double(i) / 10)
+            let x0 = hx + (Double(i) - 5) * 0.6, y0 = hy - 15.5
+            let len = 7 + (noise(i + 460) * 3).rounded()
+            let pts = stride(from: 0.0, to: len, by: 0.5).map { t -> (Double, Double) in
+                (x0 + cos(a) * t * 1.35 - 1, y0 - sin(a) * t * 0.55 + 0.04 * t * t)
+            }
+            rope(pts, bead: noise(i + 470) < 0.3 ? (i % 2 == 0 ? 0xC8783A : 0xE6DEC8) : nil)
+        }
         for i in 0..<15 {
             let phi = -.pi + 0.15 + (.pi - 0.3) * (Double(i) + 0.5) / 15 + (noise(i + 300) - 0.5) * 0.15
             let side = abs(cos(phi))

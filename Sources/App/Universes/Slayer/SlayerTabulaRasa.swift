@@ -20,8 +20,11 @@ struct SlayerTabulaRasa {
     let mark: Double
     let shimmer: Double
     let caption: String?
+    /// The middle column of the forgetter's head, measured off their sprite, where the "?" goes.
+    let headX: Int
 
     init(k: Double, cast: Cast) {
+        headX = Self.headMiddle(cast)
         func ramp(_ x: Double, _ a: Double, _ b: Double) -> Double { max(0, min(1, (x - a) / (b - a))) }
         // The crystal glows up, pulses through the spell and goes dark when it cracks; the broken bits fade at the end.
         glow = k < 0.7 ? ramp(k, 0, 0.1) : 0
@@ -50,6 +53,23 @@ struct SlayerTabulaRasa {
 
     /// How many sprite pixels the name tag (and the caption over it) moves up to make room for the "?".
     var markRoom: Double { 17 * min(1, mark * 1.5) }
+
+    private static var headMiddles: [Cast: Int] = [:]
+    /// The middle of the top few rows of `cast`'s standing sprite (their head and hair, not the body's middle), measured
+    /// once and kept.
+    private static func headMiddle(_ cast: Cast) -> Int {
+        if let hit = headMiddles[cast] { return hit }
+        let c = PixelCanvas(Sprite.width, Sprite.height)
+        cast.draw(c, t: 0, mode: .idle, walking: false, role: .none, asSession: true)
+        let top = cast.drawnTop()
+        var lo = Int.max, hi = Int.min
+        for y in max(0, top)..<min(c.h, top + 6) {
+            for x in 0..<c.w where c.buf[(y * c.w + x) * 4 + 3] > 40 { lo = min(lo, x); hi = max(hi, x) }
+        }
+        let mid = lo <= hi ? (lo + hi + 1) / 2 : Int(Sprite.bodyCenterX)
+        headMiddles[cast] = mid
+        return mid
+    }
 }
 
 /// Rows `slayerDrawTabulaRasa`'s canvas reaches above the sprite's top, for the "?".
@@ -69,14 +89,14 @@ private let tabulaCream = C(0xFAF0D6), tabulaInk = C(0x2A1C14)   // the speech c
 func slayerDrawTabulaRasa(_ c: PixelCanvas, _ s: SlayerTabulaRasa, headTop: Int, t: Double) {
     let top = slayerTabulaTop
     let mid = Int(Sprite.bodyCenterX), ground = top + 43   // the row the feet stand on
-    let cx = mid + 15                                      // the crystal, just in front of the front feet
+    let cx = mid + 21                                      // the crystal, out in front, clear of anything held
 
     // The glow: a pool of pink light on the floor round the crystal, pulsing.
     if s.glow > 0 {
         let g = s.glow * (0.75 + 0.25 * sin(t * 9))
-        c.ellipse(cx, ground, 10, 3, pinkLight.alpha(0.22 * g))
-        c.ellipse(cx, ground, 6, 2, pinkPale.alpha(0.35 * g))
-        c.ellipse(cx, ground - 4, 5, 6, pinkLight.alpha(0.25 * g))
+        c.ellipse(cx, ground, 12, 3, pinkLight.alpha(0.22 * g))
+        c.ellipse(cx, ground, 7, 2, pinkPale.alpha(0.35 * g))
+        c.ellipse(cx, ground - 6, 7, 8, pinkLight.alpha(0.25 * g))
     }
 
     // The smoke: soft round puffs born at the crystal, billowing up and round the forgetter, growing as they go.
@@ -105,40 +125,47 @@ func slayerDrawTabulaRasa(_ c: PixelCanvas, _ s: SlayerTabulaRasa, headTop: Int,
             "D": pinkDark.alpha(a),
         ]
         if !s.cracked {
-            c.pattern(cx - 3, ground - 8, [
-                "...o...",
-                "..oWo..",
-                ".oWLMo.",
-                ".oWLMo.",
-                ".oLLMo.",
-                ".oLMDo.",
-                ".oLMDo.",
-                "..oDo..",
-                "..ooo..",
+            c.pattern(cx - 4, ground - 12, [
+                "....o....",
+                "...oWo...",
+                "..oWWMo..",
+                "..oWLMo..",
+                ".oWLLMDo.",
+                ".oWLLMDo.",
+                ".oLLMMDo.",
+                ".oLLMDDo.",
+                ".oLMMDDo.",
+                "..oLMDo..",
+                "..oMDDo..",
+                "...oDo...",
+                "...ooo...",
             ], p)
         } else {
             // Cracked underfoot: the two halves fallen apart, with a chip between them.
-            c.pattern(cx - 5, ground - 5, [
-                "..o.....",
-                ".oLo....",
-                "oLLMo...",
-                "oLMDo..o",
-                ".oDo..oL",
-                "..oo..oo",
+            c.pattern(cx - 6, ground - 6, [
+                "..o....",
+                ".oWo...",
+                "oWLMo..",
+                "oLLMo..",
+                "oLMDo..",
+                ".oMDo..",
+                "..oo...",
             ], p)
-            c.pattern(cx + 3, ground - 4, [
-                ".oo.",
-                "oMDo",
-                "oLMo",
-                ".oo.",
+            c.pattern(cx + 2, ground - 4, [
+                "..oo.",
+                ".oMDo",
+                "oLMDo",
+                "oLMo.",
+                ".oo..",
             ], p)
+            c.pattern(cx - 1, ground - 1, ["oo", "oD"], p)
         }
         // The crack: a burst of pink-white splinters flying out from it.
         if s.crack > 0 {
-            let d = Int((1 - s.crack) * 6) + 2
+            let d = Int((1 - s.crack) * 7) + 2
             let spark = pinkPale.alpha(min(1, s.crack * 1.6))
             for (dx, dy) in [(-1, 0), (1, 0), (0, -1), (-1, -1), (1, -1)] {
-                for r in max(1, d - 2)...d { c.px(cx + dx * r, ground - 3 + dy * r, spark) }
+                for r in max(1, d - 2)...d { c.px(cx + dx * r, ground - 5 + dy * r, spark) }
             }
         }
     }
@@ -149,7 +176,7 @@ func slayerDrawTabulaRasa(_ c: PixelCanvas, _ s: SlayerTabulaRasa, headTop: Int,
         let bob = Int((sin(t * 5) * 1.2).rounded())
         let bottom = top + headTop - 3 + rise + bob
         let p: [Character: Px] = ["o": tabulaInk.alpha(s.mark), "F": tabulaCream.alpha(s.mark), "P": pinkLight.alpha(s.mark)]
-        c.pattern(mid - 4, bottom - 14, [
+        c.pattern(s.headX - 4, bottom - 14, [
             "..ooooo..",
             ".oFFFFFo.",
             "oFFPooFFo",

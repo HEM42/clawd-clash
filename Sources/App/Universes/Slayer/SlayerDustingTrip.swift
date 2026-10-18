@@ -8,7 +8,8 @@ extension SlayerTrip {
     /// A frame `k` (0…1) of the way from `old` to `new`, over the whole of `r`. A rough wooden stake thrusts in from
     /// the lower left and strikes (0–0.09) with a white-gold flash that lights the whole frame for a blink (0.085–0.18),
     /// then pulls back out (0.17–0.3). The old place, cut into about a thousand square blocks whatever the size,
-    /// crumbles from the strike outward (0.1–0.63): each block glows dust-gold for a moment, then goes in a puff.
+    /// crumbles from the strike outward (0.1–0.63), each block breaking into smaller bits along the crumbling edge:
+    /// each glows dust-gold for a moment, then goes in a puff.
     /// Its dust (a fixed pool of specks, at most `slayerDustSpecks` a frame) bursts out, is caught by a gust and
     /// carried along four sinuous ribbons that sweep up and to the right, thinning as they go, with a few bright
     /// glints (gone by 0.95). The new place waits behind in a night-blue shade that lifts as the dust clears. The
@@ -34,6 +35,11 @@ extension SlayerTrip {
             let d = hypot((Double(i) + 0.5) * C - ix, (Double(j) + 0.5) * C - iy) / far
             return 0.1 + 0.38 * d + 0.1 * noise(j * 977 + i * 131)
         }
+        // Along the crumbling edge itself a block breaks up into smaller bits (2 to 4 art pixels), each going at its
+        // own moment, so the edge reads as crumbling grit rather than big squares. Only the blocks on the edge are
+        // split, so the work stays about the same.
+        let sub = cell % 4 == 0 && cell >= 8 ? 4 : (cell % 3 == 0 && cell >= 6 ? 3 : (cell >= 4 ? 2 : 1))
+        let bit = cell / sub
         var keep: [CGRect] = []
         for j in 0..<rows {
             var runStart = -1
@@ -41,7 +47,24 @@ extension SlayerTrip {
                 var standing = false
                 if i < cols {
                     let at = goes(i, j)
-                    if k < at {
+                    let crumbling = sub > 1 && abs(k - at) < 0.035
+                    if crumbling {
+                        for q in 0..<(sub * sub) {
+                            let si = q % sub, sj = q / sub
+                            let bx = i * cell + si * bit, by = j * cell + sj * bit
+                            let bw = si == sub - 1 ? cell - bit * (sub - 1) : bit, bh = sj == sub - 1 ? cell - bit * (sub - 1) : bit
+                            let atBit = at + (noise(j * 4093 + i * 263 + q * 17) - 0.5) * 0.06
+                            guard k < atBit else { continue }
+                            keep.append(CGRect(x: r.minX + CGFloat(bx) * px, y: r.minY + CGFloat(by) * px,
+                                               width: CGFloat(bw) * px, height: CGFloat(bh) * px))
+                            let glow = 1 - (atBit - k) / 0.035
+                            if glow > 0 {
+                                art.setFillColor(dustRGB(glow > 0.6 ? 0xE8CC84 : 0xA89C84, CGFloat(0.45 * glow)))
+                                art.fill(CGRect(x: bx, y: by, width: bw, height: bh))
+                            }
+                        }
+                    }
+                    if k < at && !crumbling {
                         standing = true
                         // Just before it goes, the block glows the colour of dust.
                         let glow = 1 - (at - k) / 0.035
@@ -49,9 +72,9 @@ extension SlayerTrip {
                             art.setFillColor(dustRGB(glow > 0.6 ? 0xE8CC84 : 0xA89C84, CGFloat(0.45 * glow)))
                             art.fill(CGRect(x: Double(i) * C, y: Double(j) * C, width: C, height: C))
                         }
-                    } else if k < at + 0.1 {
+                    } else if k >= at && k < at + 0.1 {
                         // Just after, a puff of dust where it stood: a few clumps spreading as the gust takes them.
-                        let t = (k - at) / 0.1, clump = max(1, (C / 3 * (1 - t * 0.5)).rounded())
+                        let t = (k - at) / 0.1, clump = max(1, (C / 4 * (1 - t * 0.5)).rounded())
                         for q in 0..<4 {
                             let seed = j * 31 + i * 7 + q * 3
                             art.setFillColor(dustRGB(noise(seed) < 0.5 ? 0xB8A27A : 0x9A9080, CGFloat(0.7 * (1 - t))))
@@ -92,8 +115,8 @@ extension SlayerTrip {
             // A puff out from the strike, then the pull into the stream; the ribbon spreads thin as it goes.
             let d = max(1, hypot(sx - ix, sy - iy))
             let puff = C * 1.2 * (1 - pow(1 - min(1, a * 3), 3))
-            let pull = Self.ease(min(1, a * 3.2))
-            let spread = (noise(s + 6) - 0.5) * C * (0.4 + 1.8 * a)
+            let pull = Self.ease(min(1, a * 5))          // into its ribbon soon, so the ribbons read from the start
+            let spread = (noise(s + 6) - 0.5) * C * (0.25 + 1.3 * a)
             let x = (sx + (sx - ix) / d * puff) * (1 - pull) + px0 * pull
             let y = (sy + (sy - iy) / d * puff) * (1 - pull) + (py0 + spread) * pull
             let glint = noise(s + 8) > 0.92
@@ -101,7 +124,7 @@ extension SlayerTrip {
             art.setFillColor(glint ? dustRGB(0xFFF4C8, CGFloat(min(1, fade * 1.3)))
                                     : dustRGB(tones[min(3, Int(noise(s + 9) * 4))], CGFloat(fade)))
             // Early on a speck is a clump; on the gust, a short streak along the stream.
-            let streak: Double = pull > 0.5 ? 3 : 2, tall: Double = a < 0.4 && !glint ? 2 : 1
+            let streak: Double = pull > 0.5 ? 4 : 2, tall: Double = a < 0.4 && !glint ? 2 : 1
             art.fill(CGRect(x: x.rounded(), y: y.rounded(), width: max(streak, tall), height: tall))
         }
 

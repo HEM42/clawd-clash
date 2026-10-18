@@ -29,7 +29,7 @@ extension SlayerTrip {
         let crackY = (H * 0.06).rounded()                            // the crack runs along the middle of the floor
         let spread = CGFloat(Self.ease(Self.span(k, 0.02, 0.16)))    // how far along the floor it has run
         let climb = CGFloat(Self.span(k, 0.1, 0.18))                 // how far up the picture the cracks have climbed
-        let glow = CGFloat(Self.span(k, 0.06, 0.24) * (1 - Self.span(k, 0.8, 0.98)))
+        let glow = CGFloat(Self.span(k, 0.06, 0.24) * (1 - Self.span(k, 0.78, 0.92)))
         let rise = CGFloat(Self.ease(Self.span(k, 0.5, 0.84)))
         let seal = CGFloat(Self.ease(Self.span(k, 0.8, 0.95)))
         let falling = k >= 0.18
@@ -58,11 +58,58 @@ extension SlayerTrip {
             let bands: [(UInt32, CGFloat)] = [(0x220508, 1.5), (0x3A080A, 1.15), (0x5E0E0C, 0.88), (0x8C1A0E, 0.64),
                                               (0xC0300E, 0.44), (0xF0601A, 0.27), (0xFFB050, 0.13)]
             let flicker = 1 + 0.04 * CGFloat(noise(Int(k * 30) + 400))
-            for (hex, rr) in bands {
-                let ry = H * rr * flicker, rx = max(ry * 1.4, W * rr * 0.7)
-                back.setFillColor(rgb(hex))
-                back.fillEllipse(in: CGRect(x: (W / 2 - rx).rounded(), y: (-H * 0.12 - ry).rounded(),
-                                            width: (rx * 2).rounded(), height: (ry * 2).rounded()))
+            // Each layer of rock round the fire is a ragged ledge, not a smooth ring: drawn a column at a time, its
+            // top broken by lumps and notches, so the cavern reads as rock lit from below.
+            let col = max(1, (H / 90).rounded())
+            for (b, (hex, rr)) in bands.enumerated() {
+                let ry = H * rr * flicker, rx = max(ry * 1.4, W * rr * 0.7), cy = -H * 0.12
+                var rects: [CGRect] = []
+                var x = (W / 2 - rx).rounded(.down)
+                while x < W / 2 + rx {
+                    let dx = (x + col / 2 - W / 2) / rx
+                    if abs(dx) < 1 {
+                        let i = Int(x / col)
+                        let lump = (CGFloat(noise(b * 997 + i / 3)) - 0.5) * ry * 0.09
+                        let notch = (CGFloat(noise(b * 991 + i)) - 0.5) * ry * 0.035
+                        let top = cy + ry * (1 - dx * dx).squareRoot() + lump + notch
+                        if top > 0 { rects.append(CGRect(x: x, y: 0, width: col, height: top.rounded())) }
+                    }
+                    x += col
+                }
+                back.setFillColor(rgb(hex)); back.fill(rects)
+            }
+            // Spires of rock standing in the glow, black with their inner edges lit red, and teeth of rock hanging
+            // from the roof: they give the cavern its depth.
+            let unit = max(1, (H / 90).rounded())
+            for (i, at) in [0.17, 0.33, 0.6, 0.71, 0.86].enumerated() {
+                let x = W * CGFloat(at) + (CGFloat(noise(i * 41 + 3)) - 0.5) * W * 0.04
+                let tall = H * (0.1 + 0.3 * CGFloat(noise(i * 41 + 4))), base = H * (0.04 + 0.05 * CGFloat(noise(i * 41 + 5)))
+                let lean = (CGFloat(noise(i * 41 + 6)) - 0.5) * 0.5
+                let lit: CGFloat = x < W / 2 ? 1 : -1
+                var y: CGFloat = 0
+                while y < tall {
+                    // A broken crag, not a cone: it narrows only so far, leans, bulges in lumps and ends blunt.
+                    let lump = (CGFloat(noise(i * 53 + Int(y / (unit * 6)))) - 0.5) * base * 0.5
+                    let half = (base * (1 - 0.7 * y / tall) + lump + unit).rounded()
+                    let wob = (lean * y + (CGFloat(noise(i * 59 + Int(y / unit))) - 0.5) * unit).rounded()
+                    back.setFillColor(rgb(0x160406)); back.fill(CGRect(x: (x - half + wob).rounded(), y: y, width: half * 2, height: unit * 2))
+                    back.setFillColor(rgb(0x7A1C0C))
+                    back.fill(CGRect(x: lit > 0 ? (x + half + wob).rounded() - unit : (x - half + wob).rounded(), y: y,
+                                     width: unit, height: unit * 2))
+                    y += unit * 2
+                }
+            }
+            back.setFillColor(rgb(0x0A0204))
+            let teeth = max(6, Int(W / (H * 0.09)))
+            for i in 0..<teeth {
+                let x = W * (CGFloat(i) + CGFloat(noise(i * 29 + 1)) * 0.6) / CGFloat(teeth)
+                let len = H * (0.05 + 0.14 * CGFloat(noise(i * 29 + 2))), half = H * (0.015 + 0.02 * CGFloat(noise(i * 29 + 3)))
+                var y: CGFloat = 0
+                while y < len {
+                    let hw = (half * (1 - y / len) + 0.5).rounded()
+                    back.fill(CGRect(x: (x - hw).rounded(), y: (H - y - unit).rounded(), width: max(1, hw * 2), height: unit))
+                    y += unit
+                }
             }
             // Jagged rock walls either side, black against the glow.
             back.setFillColor(rgb(0x0A0204))
@@ -79,24 +126,8 @@ extension SlayerTrip {
             }
             hellmouthEmbers(back, k: k, W: W, H: H, count: 24, strength: 0.6, seed: 900)
         }
-        if let img = back.makeImage(), falling, rise < 1 {
-            ctx.saveGState(); ctx.clip(to: r); ctx.draw(img, in: CGRect(x: r.minX, y: r.minY, width: CGFloat(w) * px, height: CGFloat(h) * px))
-            ctx.restoreGState()
-        }
-
-        // The places: the old one shaking until it splits, the new one rising out of the light.
-        ctx.saveGState(); ctx.clip(to: r)
-        if !falling {
-            ctx.setFillColor(rgb(0x0E0306)); ctx.fill(r)
-            ctx.draw(old, in: r.offsetBy(dx: shakeOn.x * px, dy: shakeOn.y * px))
-        }
-        if rise > 0 {
-            let jolt = seal > 0 ? shakeOn : .zero
-            ctx.draw(new, in: r.offsetBy(dx: jolt.x * px, dy: ((rise - 1) * H).rounded() * px + jolt.y * px))
-        }
-        ctx.restoreGState()
-
-        // The slabs dropping away, the middle ones first, tumbling outward and shrinking into the deep.
+        // The slabs dropping away, the middle ones first, tumbling outward and shrinking into the deep: drawn behind the
+        // places, so the new place rises in front of the last of them rather than under them.
         if falling {
             // The old place brought down to the art's grid once, rather than once a slab.
             var small = old
@@ -122,24 +153,41 @@ extension SlayerTrip {
                 let dir: CGFloat = CGFloat(i) < mid ? -1 : (CGFloat(i) > mid ? 1 : (noise(i) < 0.5 ? -1 : 1))
                 let drop = fall * fall * H * 1.25
                 let scale = 1 - 0.35 * fall
-                front.saveGState()
-                front.translateBy(x: pivot.x + (fall > 0 ? 0 : shakeOn.x) + (W / 2 - pivot.x) * 0.25 * fall,
+                back.saveGState()
+                back.translateBy(x: pivot.x + (fall > 0 ? 0 : shakeOn.x) + (W / 2 - pivot.x) * 0.25 * fall,
                                   y: pivot.y - drop + (fall > 0 ? 0 : shakeOn.y))
-                front.rotate(by: dir * -0.55 * fall * fall)
-                front.scaleBy(x: scale, y: scale)
-                front.translateBy(x: -pivot.x, y: -pivot.y)
-                front.saveGState()
-                front.addPath(path); front.clip()
-                front.draw(small, in: smallRect)
+                back.rotate(by: dir * -0.55 * fall * fall)
+                back.scaleBy(x: scale, y: scale)
+                back.translateBy(x: -pivot.x, y: -pivot.y)
+                back.saveGState()
+                back.addPath(path); back.clip()
+                back.draw(small, in: smallRect)
                 // Going red as it falls into the light.
-                front.setFillColor(rgb(0x8A1408, 0.55 * fall + 0.12 * glow)); front.fill(CGRect(x: 0, y: 0, width: W, height: H))
-                front.restoreGState()
+                back.setFillColor(rgb(0x8A1408, 0.55 * fall + 0.12 * glow)); back.fill(CGRect(x: 0, y: 0, width: W, height: H))
+                back.restoreGState()
                 if fall > 0 {
-                    front.addPath(path); front.setLineWidth(2); front.setStrokeColor(rgb(0x1A0606)); front.strokePath()
+                    back.addPath(path); back.setLineWidth(2); back.setStrokeColor(rgb(0x1A0606)); back.strokePath()
                 }
-                front.restoreGState()
+                back.restoreGState()
             }
         }
+
+        if let img = back.makeImage(), falling, rise < 1 {
+            ctx.saveGState(); ctx.clip(to: r); ctx.draw(img, in: CGRect(x: r.minX, y: r.minY, width: CGFloat(w) * px, height: CGFloat(h) * px))
+            ctx.restoreGState()
+        }
+
+        // The places: the old one shaking until it splits, the new one rising out of the light.
+        ctx.saveGState(); ctx.clip(to: r)
+        if !falling {
+            ctx.setFillColor(rgb(0x0E0306)); ctx.fill(r)
+            ctx.draw(old, in: r.offsetBy(dx: shakeOn.x * px, dy: shakeOn.y * px))
+        }
+        if rise > 0 {
+            let jolt = seal > 0 ? shakeOn : .zero
+            ctx.draw(new, in: r.offsetBy(dx: jolt.x * px, dy: ((rise - 1) * H).rounded() * px + jolt.y * px))
+        }
+        ctx.restoreGState()
 
         // The cracks: up the picture between the slabs while they're still standing, and along the floor.
         if !falling && climb > 0 {
@@ -154,7 +202,7 @@ extension SlayerTrip {
         }
 
         // Red light pouring up: shafts from the crack, the new place lit red from below, embers on the updraught.
-        let shafts = glow * (1 - rise * 0.6)
+        let shafts = glow * (1 - rise * 0.85)
         if shafts > 0.01 {
             let base: CGFloat = falling && rise < 0.5 ? -2 : crackY
             for i in 0..<7 {
@@ -170,7 +218,7 @@ extension SlayerTrip {
                 }
             }
         }
-        let tint = glow * (falling ? 1 : 0.5)
+        let tint = glow * (falling ? 1 - rise : 0.5)     // gone once the new place is up
         if tint > 0.01 {
             for (j, a) in [0.3, 0.2, 0.12, 0.06].enumerated() {
                 front.setFillColor(rgb(0xD0280C, CGFloat(a) * tint))

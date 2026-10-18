@@ -32,8 +32,12 @@ extension SlayerTrip {
         let through = k >= 0.8                                       // the tear is past the edges: all new place
 
         // The tear: a slit splitting into a pointed lens, then widening past the frame. Its edge is ragged, flickering.
-        let rx = H * 0.004 + H * 0.11 * open + (W * 0.95) * widen
-        let ry = H * 0.03 * CGFloat(Self.span(k, 0.24, 0.3)) + H * 0.33 * open + H * 1.5 * widen
+        // Widening, the lens keeps its tall pointed shape and grows as a whole, just far enough that its sides clear
+        // the frame's edges, so in a short strip it doesn't squash into a wide oval.
+        let a = W / 2 / (H * 0.114) + 1, b = max(cy, H - cy) / (H * 0.36)
+        let grow = 1 + ((a + (a * a + 4 * b * b).squareRoot()) / 2 * 1.08 - 1) * widen
+        let rx = (H * 0.004 + H * 0.11 * open) * grow
+        let ry = (H * 0.03 * CGFloat(Self.span(k, 0.24, 0.3)) + H * 0.33 * open) * grow
         var rows: [(y: CGFloat, x0: CGFloat, x1: CGFloat)] = []
         if !through && ry > 0.5 {
             let f = Int(k * 24) * 131
@@ -156,12 +160,14 @@ extension SlayerTrip {
             art.setFillColor(rgb(0xE8FFE0, 0.12)); art.fill(CGRect(x: 0, y: 0, width: W + 1, height: H + 1))
         }
 
-        // Through: the last of the portal, a slit of green-white light, snaps shut with a flash.
+        // Through: the last of the portal, a slit of green-white light hanging high in the air over the new place, like
+        // the one over Glory's tower and clear of the crew's heads, snaps shut with a flash.
         if through {
+            let cy = (H * 0.8).rounded()
             let shut = CGFloat(Self.ease(Self.span(k, 0.8, 0.94)))
             let flash = CGFloat(1 - Self.span(k, 0.8, 0.9))
             art.setFillColor(rgb(0xE8FFD8, 0.5 * flash * flash)); art.fill(CGRect(x: 0, y: 0, width: W + 1, height: H + 1))
-            let sh = H * 0.42 * (1 - shut), sw = max(unit, (H * 0.05 * (1 - shut) * (1 - shut)).rounded())
+            let sh = H * 0.3 * (1 - shut), sw = max(unit, (H * 0.05 * (1 - shut) * (1 - shut)).rounded())
             if sh > 1 {
                 for (m, hex, a) in [(5 as CGFloat, 0x9AF07A as UInt32, 0.25 as CGFloat), (2.5, 0xA8FF8A, 0.5), (1, 0xF0FFE8, 1)] {
                     art.setFillColor(rgb(hex, a))

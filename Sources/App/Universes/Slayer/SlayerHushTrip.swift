@@ -37,7 +37,7 @@ extension SlayerTrip {
         let drop = CGFloat(pow(Self.span(k, 0.85, 0.97), 2))          // the old place and the box falling away
         let fall = (drop * H * 1.2).rounded()
 
-        // The box: small and square on the floor in the middle, in wood and brass.
+        // The box: small and square on the floor in the middle, in plain wood.
         let u = max(1, (H / 64).rounded())
         let bw = 16 * u, bh = 9 * u
         let jolt: CGFloat = (k >= 0.62 && k < 0.66) || (k >= 0.74 && k < 0.76) ? u : 0
@@ -187,34 +187,41 @@ private let hushGentlemen: (real: CGImage, shadow: CGImage)? = {
     return (real, shadow)
 }()
 
-/// The wooden box at `box` (its body; the lid sits on top), `u` art pixels to a unit: planks, brass corners and a
-/// clasp; the lid open (`lid` 1, its inside showing, tipped up behind) or shut (0); the voices' `glow` leaking from the
-/// seam while it's shut, and `light` pouring from its mouth as it opens on the new place.
+/// The plain wooden box at `box` (its body; the lid sits on top), `u` art pixels to a unit: boards and a wooden latch;
+/// the lid open (`lid` 1, its inside showing, tipped up behind) or shut (0); the voices' `glow` leaking from the seam
+/// while it's shut, and `light` pouring from its mouth as it opens on the new place.
 private func hushBox(_ art: CGContext, _ box: CGRect, u: CGFloat, lid: CGFloat, glow: CGFloat, light: CGFloat) {
-    let wood = rgb(0x6A4428), woodD = rgb(0x4A2C18), woodL = rgb(0x8A5C34), brass = rgb(0xC8A04A), brassD = rgb(0x8A6A2A)
+    let wood = rgb(0x6A4428), woodD = rgb(0x4A2C18), woodL = rgb(0x8A5C34)
     let ink = rgb(0x1A0E08)
-    // The lid, tipped open behind the box: its inside showing, taller the wider it's open.
+    // The lid, tipped open behind the box: its inside showing, taller the wider it's open. Bare wood like the rest:
+    // a frame round a sunken panel, its grain running across, lit along the top edge, in shadow near the hinge.
     let open = (8 * u * lid).rounded()
     if open > 0 {
         let inside = CGRect(x: box.minX + u, y: box.maxY, width: box.width - 2 * u, height: open + u)
         art.setFillColor(ink); art.fill(inside.insetBy(dx: -u, dy: 0))
         art.setFillColor(woodD); art.fill(inside.insetBy(dx: 0, dy: u / 2).offsetBy(dx: 0, dy: u / 2))
-        art.setFillColor(rgb(0x3A1A26)); art.fill(CGRect(x: inside.minX + u, y: inside.minY + u, width: inside.width - 2 * u, height: max(0, inside.height - 2 * u)))
+        let panel = CGRect(x: inside.minX + u, y: inside.minY + u, width: inside.width - 2 * u, height: max(0, inside.height - 2 * u))
+        if panel.height > 0 {
+            art.setFillColor(rgb(0x5A3820)); art.fill(panel)
+            art.setFillColor(rgb(0x3E2614))
+            var gy = panel.minY + u
+            while gy < panel.maxY - u / 2 {
+                art.fill(CGRect(x: panel.minX + u, y: gy, width: panel.width - 2 * u, height: max(1, u / 2))); gy += 2 * u
+            }
+            art.setFillColor(rgb(0x2A180C)); art.fill(CGRect(x: panel.minX, y: panel.minY, width: panel.width, height: u))
+        }
+        art.setFillColor(woodL); art.fill(CGRect(x: inside.minX, y: inside.maxY - u / 2, width: inside.width, height: u / 2))
     }
-    // The body.
+    // The body: plain boards, the grain between them, the end boards at the corners and a little wooden latch.
     art.setFillColor(ink); art.fill(box.insetBy(dx: -u, dy: -u))
     art.setFillColor(wood); art.fill(box)
     art.setFillColor(woodL); art.fill(CGRect(x: box.minX, y: box.maxY - u, width: box.width, height: u))
     art.setFillColor(woodD)
     for j in 1..<3 { art.fill(CGRect(x: box.minX, y: box.minY + CGFloat(j) * box.height / 3, width: box.width, height: max(1, u / 2))) }
     art.fill(CGRect(x: box.minX, y: box.minY, width: box.width, height: u))
-    // Brass corners and the clasp.
-    art.setFillColor(brass)
-    for (x, y) in [(box.minX, box.minY), (box.maxX - 2 * u, box.minY), (box.minX, box.maxY - 2 * u), (box.maxX - 2 * u, box.maxY - 2 * u)] {
-        art.fill(CGRect(x: x, y: y, width: 2 * u, height: 2 * u))
-    }
-    art.fill(CGRect(x: box.midX - u, y: box.maxY - 4 * u, width: 2 * u, height: 3 * u))
-    art.setFillColor(brassD); art.fill(CGRect(x: box.midX - u / 2, y: box.maxY - 3 * u, width: max(1, u / 2), height: u))
+    art.fill(CGRect(x: box.minX + 2 * u, y: box.minY, width: max(1, u / 2), height: box.height - u))
+    art.fill(CGRect(x: box.maxX - 2 * u - max(1, u / 2), y: box.minY, width: max(1, u / 2), height: box.height - u))
+    art.fill(CGRect(x: box.midX - u / 2, y: box.maxY - 3 * u, width: u, height: 2 * u))
     if open > 0 {
         // The mouth: dark inside, or full of light as it opens on the new place.
         art.setFillColor(light > 0 ? rgb(0xFFF4D0, 0.4 + 0.6 * light) : ink)
@@ -229,9 +236,7 @@ private func hushBox(_ art: CGContext, _ box: CGRect, u: CGFloat, lid: CGFloat, 
         // Shut: the lid's front edge on top, the voices' glow leaking from the seam.
         art.setFillColor(ink); art.fill(CGRect(x: box.minX - u, y: box.maxY, width: box.width + 2 * u, height: 3 * u + u))
         art.setFillColor(woodL); art.fill(CGRect(x: box.minX, y: box.maxY + u, width: box.width, height: 2 * u))
-        art.setFillColor(brass)
-        art.fill(CGRect(x: box.minX, y: box.maxY + u, width: 2 * u, height: 2 * u))
-        art.fill(CGRect(x: box.maxX - 2 * u, y: box.maxY + u, width: 2 * u, height: 2 * u))
+        art.setFillColor(woodD); art.fill(CGRect(x: box.minX, y: box.maxY + u, width: box.width, height: max(1, u / 2)))
         if glow > 0 {
             art.setFillColor(rgb(0xFFE6A0, 0.7 * glow))
             art.fill(CGRect(x: box.minX + 3 * u, y: box.maxY, width: box.width - 6 * u, height: max(1, u / 2)))
