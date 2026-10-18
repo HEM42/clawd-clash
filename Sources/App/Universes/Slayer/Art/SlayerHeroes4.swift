@@ -9,9 +9,9 @@ let slayerHeroes4: [SlayerHero: Persona] = [
     .robinWoode: Persona(name: "Principal Robin Woode", weapon: .saber, headTop: 24, signature: 3.0, draw: drawRobinWoode),
     .kennedie: Persona(name: "Kennedie", weapon: .saber, headTop: 20, signature: 3.4, draw: drawKennedie),
     .vy: Persona(name: "Vy", weapon: .saber, headTop: 19, signature: 3.0, draw: drawVy),
-    .rhona: Persona(name: "Rhona", weapon: .saber, headTop: 20, signature: 3.0, draw: drawRhona),
+    .rhona: Persona(name: "Rhona", weapon: .saber, headTop: 14, signature: 3.0, draw: drawRhona),
     .rileyFynn: Persona(name: "Riley Fynn", weapon: .blaster, shot: .energy(core: C(0xE4F2FF), glow: C(0x2E7CFF)),
-                        muzzle: (52, 31), headTop: 19, signature: 3.2, callout: "Ma'am.", draw: drawRileyFynn),
+                        muzzle: (58, 32), headTop: 23, signature: 3.2, callout: "Ma'am.", draw: drawRileyFynn),
     .jonathanLevinsun: Persona(name: "Jonathan Levinsun", headTop: 21, signature: 3.4, draw: drawJonathanLevinsun),
 ]
 
@@ -77,31 +77,18 @@ private func drawFirstSlayer(_ c: PixelCanvas, _ p: Pose) {
     let crouchK = h4Span(p, 0.06, 0.94)
     let low = Int((h4Hold(crouchK, edge: 0.18) * 3).rounded())
 
-    // Sand swirling round her, faint, on a flat ellipse about her middle.
-    if crouchK >= 0 {
-        let k = h4Hold(crouchK, edge: 0.25)
-        let sand = C(0xE0C088)
-        for i in 0..<26 {
-            let g = Double(i) / 26 * 2 * .pi + p.t * 3.2
-            let rx = 21.0 + noise(i) * 4, ry = 7.0 + noise(i + 40) * 3
-            let x = 28 + cos(g) * rx, y = 36 - Double(i % 5) * 3 + sin(g) * ry * 0.5
-            c.px(Int(x.rounded()), Int(y.rounded()), sand.alpha(0.22 * k))
-            let x2 = 28 + cos(g - 0.12) * rx
-            c.px(Int(x2.rounded()), Int(y.rounded()), sand.alpha(0.12 * k))
-        }
-    }
-
     drawLegs(c, Look(), step: p.step)
     slayerBoots(c, step: p.step, hideD, height: 2)
     if !seatedPose { for lx in [19, 23, 31, 35] { c.px(lx, low > 0 ? 42 : 41, hideL) } }
     c.oy += p.breathe + low
     let shaft = C(0x6A4626), shaftL = C(0x9A6E40), bone = C(0xE6DEC8), boneD = C(0xB0A68C), lash = C(0x3A2416)
-    let behind = crouchK < 0 && h4Behind(p.melee)
+    // The spear stays in front of her: a swing back over her shoulder stops just past upright, beside her hair, as
+    // drawn behind her the dreadlocks hid it all and only a fist showed.
     let spear = {
-        drawSpear(c, from: slayerHand, angle: p.melee ?? 0, shaft: shaft, shaftL: shaftL, bone: bone, boneD: boneD,
-                  lash: lash, trail: p.trail)
+        let a = h4FrontAngle(p.melee ?? 0)
+        drawSpear(c, from: slayerHand, angle: a, shaft: shaft, shaftL: shaftL, bone: bone, boneD: boneD,
+                  lash: lash, trail: p.trail.map(h4FrontAngle).filter { abs($0 - a) > 4 })
     }
-    if behind { spear() }
     drawBody(c, Look(arm: clawdOrange))
     // The hide wrap: tied over one shoulder, down past her hips to a ragged fringe.
     c.rect(18, 33, 20, 5, hide); c.rect(37, 33, 1, 5, hideD); c.rect(18, 33, 20, 1, hideL)
@@ -143,10 +130,12 @@ private func drawFirstSlayer(_ c: PixelCanvas, _ p: Pose) {
         // Crouched, the spear levelled at whatever is out there.
         drawSpear(c, from: slayerHand, angle: -8 - 4 * sin(p.t * 2), shaft: shaft, shaftL: shaftL, bone: bone,
                   boneD: boneD, lash: lash, trail: [])
+        c.oy -= p.breathe + low
+        drawSand(c, p.t, h4Hold(crouchK, edge: 0.25))
         return
     }
     if p.melee != nil {
-        if !behind { spear() }
+        spear()
     } else {
         // At rest: the spear upright in her fist, its butt on the ground.
         let bottom = seatedPose ? 39 : 42, top = seatedPose ? 18 : 14
@@ -154,6 +143,42 @@ private func drawFirstSlayer(_ c: PixelCanvas, _ p: Pose) {
         c.pattern(40, top, [".BB.", ".BB.", "BBbB", "BBbB"], ["B": bone, "b": boneD])
         c.rect(41, top + 4, 2, 1, lash)
         c.rect(40, 33, 3, 3, clawdOrange)
+    }
+}
+
+/// A swung weapon's angle kept in front of the face: past upright on the backswing it stops beside the head (and past
+/// straight down, beside the legs), rather than sweeping across the face or hiding behind the hair.
+private func h4FrontAngle(_ a: Double) -> Double {
+    var n = a.truncatingRemainder(dividingBy: 360)
+    if n > 180 { n -= 360 } else if n <= -180 { n += 360 }
+    return max(-97, min(110, n))
+}
+
+/// The First Slayer's sand, whirling round her on a flat ellipse in streaks, `k` 0…1 how strong. Drawn last, and
+/// how solid each grain is depends on where it lands: over her it shows clearly, out in the air it's half there, and
+/// right against her silhouette it stays faint, so her outline never goes dotted.
+private func drawSand(_ c: PixelCanvas, _ t: Double, _ k: Double) {
+    guard k > 0 else { return }
+    let sand = C(0xEAD098), sandL = C(0xF8ECC4)
+    func alphaAt(_ x: Int, _ y: Int) -> UInt8 {
+        let xx = x + c.ox, yy = y + c.oy + c.baseY
+        guard xx >= 0, yy >= 0, xx < c.w, yy < c.h else { return 0 }
+        return c.buf[(yy * c.w + xx) * 4 + 3]
+    }
+    for i in 0..<30 {
+        let g = Double(i) / 30 * 2 * .pi + t * 3.2
+        let rx = 21.0 + noise(i) * 5, ry = 7.0 + noise(i + 40) * 3
+        let y = Int((37 - Double(i % 5) * 3 + sin(g) * ry * 0.5).rounded())
+        for s in 0..<3 {   // a streak: the grain and the two it trails
+            let x = Int((28 + cos(g - Double(s) * 0.07) * rx).rounded())
+            guard x >= 1, x <= 70, y >= 1 else { continue }
+            let here = alphaAt(x, y)
+            let a: Double
+            if here == 255 { a = 0.6 }
+            else if [alphaAt(x - 1, y), alphaAt(x + 1, y), alphaAt(x, y - 1), alphaAt(x, y + 1)].contains(255) { a = 0.18 }
+            else { a = 0.65 }
+            c.px(x, y, (s == 0 ? sandL : sand).alpha(a * k / Double(s + 1)))
+        }
     }
 }
 
@@ -204,11 +229,19 @@ private func drawRobinWoode(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, coat); c.rect(24, 33, 8, 5, shirt); c.rect(27, 33, 2, 5, tie); c.px(27, 33, C(0x161E3A))
     c.rect(37, 33, 1, 5, coatD); c.rect(18, 37, 6, 1, coatD); c.rect(32, 37, 6, 1, coatD)
     c.pattern(21, 32, ["LLL........LLL", ".LLL......LLL.", "..LL......LL..", "...L......L..."], ["L": coatL])
-    // The shaved head: a shine on top, dark brows, a shadow of stubble round the back.
-    let stubble = C(0xA8553C)
-    c.rect(18, 26, 20, 1, stubble); c.rect(18, 26, 1, 4, stubble); c.rect(37, 26, 1, 4, stubble)
-    c.rect(20, 26, 4, 1, scalp); c.px(19, 27, scalp); c.px(25, 26, scalp)
-    c.rect(21, 28, 3, 1, brow); c.rect(32, 28, 3, 1, brow)
+    // The shaved head: a dark, close-buzzed dome rising above the block, a hard hairline, a bright shine on top and
+    // heavy dark brows. (Shading the plain block alone left him reading as Clawd with nothing on.)
+    let buzz = C(0x8A4630), dot = C(0x5E2E1E), stubble = C(0xA8553C)
+    c.pattern(18, 24, [
+        "...BBBdBBBBBdBBBB...",
+        ".BBLLLBBBdBBBBBBdBB.",
+        "BBLLLLBBBBBBBdBBBBBB",
+        "BdBBBBBBdBBBBBBBBdBB",
+        "BB................dB",
+        "B..................B",
+    ], ["B": buzz, "L": scalp, "d": dot])
+    c.px(18, 30, stubble); c.px(37, 30, stubble)
+    c.rect(21, 28, 4, 1, brow); c.rect(31, 28, 4, 1, brow)
     // A neat moustache.
     c.rect(25, 32, 6, 1, brow); c.px(25, 31, brow); c.px(30, 31, brow)
 
@@ -347,7 +380,7 @@ private func drawVy(_ c: PixelCanvas, _ p: Pose) {
     let hat = C(0x2E8A8E), hatD = C(0x1E6266), hatL = C(0x4CAAAE), bobble = C(0xE8E4D8)
     let hair = C(0x9A4A26), rim = C(0x1E1A1E)
     let shyK = h4Span(p, 0.08, 0.92)
-    let down = Int((h4Hold(shyK, edge: 0.25) * 4).rounded())
+    let down = Int((h4Hold(shyK, edge: 0.25) * 3).rounded())   // no further: her shut eyes and blush still show
 
     drawLegs(c, Look(leg: C(0x5A6E9E)), step: p.step)
     slayerBoots(c, step: p.step, C(0x6A3A2A), height: 1)
@@ -393,8 +426,12 @@ private func drawVy(_ c: PixelCanvas, _ p: Pose) {
     c.oy -= down
 
     if shyK >= 0 {
-        // Her hand up at the brim, tugging it down.
-        c.rect(36, 25 + down, 4, 3, jumper); c.rect(36, 27 + down, 2, 1, clawdOrange)
+        // Her hand up at the brim, tugging it down: the baggy sleeve up from her shoulder, its rolled cuff, and her
+        // fingers curled over the brim's edge.
+        let by = 27 + down
+        c.rect(38, by - 2, 3, 30 - by + 3, jumper); c.rect(38, by - 2, 3, 1, jumperL); c.px(40, by, jumperD)
+        c.rect(35, by - 1, 3, 2, clawdOrange); c.px(36, by, clawdShade); c.px(35, by - 1, clawdShade)
+        if down >= 3 { c.rect(19, 32, 2, 1, C(0xF08A80)); c.rect(35, 32, 2, 1, C(0xF08A80)) }
         return
     }
     if let a = p.melee {
@@ -446,27 +483,26 @@ private func drawRhona(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, top); c.rect(37, 33, 1, 5, topD); c.rect(18, 37, 20, 1, topD)
     c.rect(27, 33, 1, 5, C(0x6E92EC)); c.rect(25, 33, 2, 1, topD); c.rect(28, 33, 2, 1, topD)
     c.rect(18, 33, 2, 1, stripe); c.rect(36, 33, 2, 1, stripe)
-    // Braids pulled back over her head under a headband, gathered in a thick bunch hanging behind.
-    c.pattern(12, 21, [
-        ".bHb.",
-        "bHbHb",
-        "HbHbH",
-        "bHbHb",
-        "HbHb.",
-        "bHbH.",
-        ".bHb.",
-        ".HbH.",
-        "..b..",
-    ], ["H": hair, "b": braid])
+    // Braids pulled back over her head under a white headband, and wound up into a big round bun on her crown, tied
+    // in blue: a round top-knot, where Kennedie's sleek ponytail streams out behind.
     c.pattern(16, 20, [
-        ".....HbHbHbHbHbHb.......",
-        "...bHbHbHbHbHbHbHbH.....",
-        "..HbHbHbHbHbHbHbHbHbH...",
-        "..WWWWWWWWWWWWWWWWWWWH..",
-        ".bHbHbHbHbHbHbHbHbHbHb..",
+        "......HHbHHHbHHHbH......",
+        "...HHbHHbHHHbHHHbHHb....",
+        "..HHbHHHbHHHbHHHbHHHbH..",
+        "..WWWWWWWWWWWWWWWWWWWW..",
+        ".HHbHHHbHHHbHHHbHHHbHH..",
         ".HbH..............HbH...",
         "..bH...............b....",
     ], ["H": hair, "b": braid, "W": band])
+    c.pattern(17, 14, [
+        "...HHHHH...",
+        "..HbbHbbH..",
+        ".HbHHbHHbH.",
+        ".HbHbbbHbH.",
+        ".HbHHbHHbH.",
+        "..HbbHbbH..",
+        "...TTTTT...",
+    ], ["H": hair, "b": braid, "T": top])
 
     if rollK >= 0 {
         // Eyes rolled up, arms thrown out, palms up; the axe still in her fist.
@@ -474,11 +510,14 @@ private func drawRhona(_ c: PixelCanvas, _ p: Pose) {
         c.rect(22, 29, 2, 1, ink); c.rect(32, 29, 2, 1, ink)
         c.rect(25, 32, 6, 1, C(0x9A4A36))
         if arms > 1 {
-            // Sleeves thrown out to the sides, palms up.
-            c.rect(12, 33 - arms, 3, 3, top); c.rect(41, 33 - arms, 2, 3, top)
-            c.rect(10, 32 - arms, 3, 2, clawdOrange); c.rect(41, 31 - arms, 3, 2, clawdOrange)
+            // Arms flung wide, elbows up and out, palms turned up to the sky: a big "so unfair".
+            let wide = arms - 1, y = 33 - arms
+            c.rect(14 - wide, y, 4 + wide, 3, top); c.rect(14 - wide, y, 4 + wide, 1, stripe)
+            c.rect(38, y, 3 + wide, 3, top); c.rect(38, y, 3 + wide, 1, stripe)
+            c.rect(11 - wide, y - 1, 3, 2, clawdOrange); c.px(11 - wide, y - 2, clawdOrange)
+            c.rect(41 + wide, y - 1, 3, 2, clawdOrange); c.px(43 + wide, y - 2, clawdOrange)
             // The axe dangling from her hand, head down.
-            let hx = 42, hy = 34 - arms
+            let hx = 42 + wide, hy = 34 - arms
             c.rect(hx, hy, 1, 7, haft); c.rect(hx + 1, hy, 1, 7, haftD)
             c.rect(hx + 2, hy + 5, 3, 3, steel); c.rect(hx + 4, hy + 5, 1, 3, edge)
         }
@@ -510,8 +549,11 @@ private func drawRileyFynn(_ c: PixelCanvas, _ p: Pose) {
 
     drawLegs(c, Look(leg: camo), step: p.step)
     if !seatedPose {
-        for (x, y) in [(19, 37), (24, 39), (31, 38), (36, 40), (20, 40), (35, 37)] { c.px(x, y, camoD) }
-        for (x, y) in [(23, 37), (32, 40)] { c.px(x, y, camoL) }
+        // Camouflage in blotches across the whole width of each leg: single dots down one side read as stripes.
+        for (i, lx) in [19, 23, 31, 35].enumerated() {
+            c.rect(lx, 37 + i % 2 * 2, 2, 1, camoD); c.px(lx + (i + 1) % 2, 38 + i % 2 * 2, camoD)
+            c.px(lx + i % 2, 40 - i % 2 * 3, camoL)
+        }
     }
     slayerBoots(c, step: p.step, C(0x141416), height: 3)
     c.oy += p.breathe
@@ -523,15 +565,14 @@ private func drawRileyFynn(_ c: PixelCanvas, _ p: Pose) {
     c.rect(21, 35, 3, 2, vestL); c.rect(25, 35, 3, 2, vestL); c.rect(32, 35, 3, 2, vestL)
     c.rect(18, 37, 20, 1, C(0x1A1A1C))
     c.px(16, 33, C(0x3A7ACC)); c.px(16, 34, C(0x3A7ACC))   // the patch on his sleeve
-    // A short sandy crew cut, a few tufts up on top.
-    c.pattern(17, 21, [
-        "...H.H..H..H.H..H...",
-        "..HHHHHHHHHHHHHHHH..",
-        ".HHlHHHlHHHHlHHHlHH.",
-        ".HHHHHHHHHHHHHHHHHHH",
-        ".HHHHHHHHHHHHHHHHHHH",
-        ".dH..............Hd.",
-        ".d................d.",
+    // A short sandy crew cut: bristles standing up off a thin layer close to his scalp, a ragged top edge and the
+    // hairline cut short and high at the temples, so it reads as hair and not a cap.
+    c.pattern(18, 23, [
+        "..l.H.l.H.lH.H.l.H..",
+        ".HlHHlHHlHHlHHlHHlH.",
+        "HHHHHHHHHHHHHHHHHHHH",
+        "HHd..............dHH",
+        "Hd................dH",
     ], ["H": hair, "l": hairL, "d": hairD])
 
     if saluteK >= 0 {
@@ -540,24 +581,28 @@ private func drawRileyFynn(_ c: PixelCanvas, _ p: Pose) {
         c.rect(12, 24, 2, 19, gun); c.rect(13, 24, 1, 19, gunD); c.rect(11, 30, 1, 4, C(0x3A8CFF))
         c.rect(14, 32, 2, 3, clawdOrange)
         if salute {
-            // The salute: his hand flat at his brow, eyes front, chin up.
-            c.rect(38, 27, 3, 3, camo)
-            c.rect(36, 24, 5, 3, clawdOrange); c.px(36, 26, clawdShade)
+            // The salute: his arm bent up from the shoulder, the forearm angled in, and the hand a flat blade at his
+            // brow, fingers to the hairline; eyes front, chin up.
+            c.rect(38, 27, 3, 4, camo); c.rect(37, 25, 3, 2, camo); c.px(40, 27, camoD)
+            c.rect(32, 24, 6, 2, clawdOrange); c.rect(32, 25, 6, 1, clawdShade); c.px(31, 24, clawdOrange)
         }
         return
     }
     c.oy += p.gunY
-    // The taser rifle, held level at the hip: a grey stock, the blue-lit coil, a twin-pronged muzzle.
+    // The taser rifle, held level at the hip: a long grey stock, a raised sight rail, the blue-lit coil in its housing
+    // and a twin-pronged muzzle.
     let lit = p.fire.map { frac($0.t / p.firePeriod) < 0.3 } ?? false
     c.rect(38, 33, 3, 3, camo)
-    c.pattern(34, 30, [
-        "......KKKKKKK.....",
-        "SSSSSKKbBbBbKKKKKN",
-        "SSSSSKKKKKKKKKKKKN",
-        ".SS...KK..........",
-    ], ["K": C(0x34383E), "S": C(0x4A4E56), "b": lit ? C(0xBEE0FF) : C(0x2E6CC8),
+    c.pattern(34, 29, [
+        "..........KKKK..........",
+        "........KKKKKKKKKKK.....",
+        "SSSSSS.KKbBbBbBbKKKKKKKN",
+        "SSSSSSKKKKKKKKKKKKKKKKK.",
+        "LSSSS..KKK..KK.........N",
+        ".SS......K..............",
+    ], ["K": C(0x34383E), "S": C(0x4A4E56), "L": C(0x5E636C), "b": lit ? C(0xBEE0FF) : C(0x2E6CC8),
         "B": lit ? white : C(0x8ABEFF), "N": C(0x9AA4B0)])
-    c.px(40, 34, clawdOrange)
+    c.rect(40, 32, 2, 3, clawdOrange)
 }
 
 // MARK: - Jonathan Levinsun
@@ -574,9 +619,11 @@ private func drawJonathanLevinsun(_ c: PixelCanvas, _ p: Pose) {
 
     drawLegs(c, Look(leg: C(0x4C4C62)), step: p.step)
     if !seatedPose {
-        for (i, lx) in [19, 23, 31, 35].enumerated() {
-            let lifted = p.step >= 0 && i % 2 == p.step
-            c.rect(lx, 37, 1, lifted ? 5 : 6, C(0x66667E))
+        // The satin stripe down the outside seam of each trouser leg only (the outer leg of each pair), not one down
+        // every leg, which striped the four legs like a zebra.
+        for (i, lx) in [19, 36].enumerated() {
+            let lifted = p.step >= 0 && (i == 0 ? 0 : 1) == p.step
+            c.rect(lx, lifted ? 36 : 37, 1, 5, C(0x66667E))
         }
     }
     slayerBoots(c, step: p.step, C(0x0C0C10), height: 1)
