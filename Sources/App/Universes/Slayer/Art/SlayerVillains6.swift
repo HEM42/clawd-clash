@@ -151,23 +151,30 @@ private func drawMolok(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(20, 28, ["DDDD........DDDD"], ["D": steelD])
     c.rect(18, 28, 2, 6, steel); c.rect(36, 28, 2, 6, steelD)
     c.rect(22, 29, 2, 2, ink); c.rect(32, 29, 2, 2, ink); c.px(23, 29, C(0xFF4A2A)); c.px(33, 29, C(0xFF4A2A))
-    c.rect(23, 32, 10, 2, steelD); for x in stride(from: 23, through: 32, by: 2) { c.px(x, 32, steelL) }
-    // The chest: steel plates round the screen.
+    // The steel teeth: pale fangs in two rows that meet, upper and lower, in a jaw no wider than the face.
+    c.pattern(23, 31, ["DTDTDTDTDD", "TDTDTDTDTD"], ["T": C(0xD4DAE2), "D": rivet])
+    // The chest: a steel plate between jaw and chest, then plates round the screen.
+    c.rect(18, 33, 20, 1, steelD)
     c.rect(18, 34, 20, 4, steel); c.rect(18, 34, 20, 1, steelL); c.rect(37, 34, 1, 4, steelD); c.rect(18, 37, 20, 1, steelD)
     c.px(19, 35, rivet); c.px(36, 35, rivet); c.px(19, 36, steelD)
-    c.rect(22, 35, 12, 3, rivet); c.rect(23, 35, 10, 2, screen)
+    // The screen: a bright bezel round a green-lit glass, so it reads as a monitor and not a second mouth.
+    c.rect(21, 34, 14, 4, steelL); c.rect(34, 34, 1, 4, steelD); c.rect(21, 37, 14, 1, steelD)
+    c.rect(22, 35, 12, 2, screen)
     if scroll > 0 {
-        // Lines of green text sliding along, two rows of it.
+        // Text scrolling across, in chunky green glyphs two pixels tall so it reads at desktop size.
         let speed = 6 + 10 * scroll
-        for row in 0..<2 {
-            let shift = Int(p.t * speed) + row * 5
-            for x in 0..<10 where noise((x + shift) * 3 + row * 41) > 0.42 {
-                c.px(23 + x, 35 + row, noise((x + shift) * 7 + row) > 0.7 ? green : greenD)
-            }
+        let shift = Int(p.t * speed)
+        for x in 0..<12 {
+            let g = (x + shift) / 3, col = (x + shift) % 3
+            guard col < 2, noise(g * 13) > 0.25 else { continue }
+            let tall = noise(g * 29) > 0.45
+            c.px(22 + x, 36, noise(g * 7) > 0.6 ? C(0xB8FFC8) : green)
+            c.px(22 + x, 35, tall ? green : greenD)
         }
-        c.glowLine(28, 36, 28, 36, core: C(0x9CFFB8, 0.1), glow: green, coreR: 0.4, glowR: 3, strength: 0.3 * scroll)
-    } else if Int(p.lt * 2) % 2 == 0 {
-        c.px(24, 36, green)                                                   // a blinking cursor
+        c.glowLine(28, 35.5, 28, 35.5, core: C(0x9CFFB8, 0.1), glow: green, coreR: 0.4, glowR: 3, strength: 0.3 * scroll)
+    } else {
+        c.rect(22, 35, 12, 2, C(0x163A22))
+        if Int(p.lt * 2) % 2 == 0 { c.rect(23, 35, 2, 2, green) }             // a blinking cursor
     }
     // Steel claws.
     if let a = p.melee {
@@ -290,10 +297,11 @@ private func drawOlaffTheTroll(_ c: PixelCanvas, _ p: Pose) {
     // The front arm and the hammer: resting on its head in front of him, swung in a fight, or raised overhead.
     if let a = p.melee {
         // Too heavy to fence with: it's either hoisted high or slammed down in front of him, and never swung back
-        // over his own head or level through his opponent's face (only for a blur on the way between).
+        // over his own head or level through his opponent's face (only for a blur on the way between). Slammed, the
+        // haft tips forward and draws in so the head lands flat on the ground row instead of sinking through it.
         let swing = { (a: Double) -> (angle: Double, len: Double) in
             let k = v6Smooth(((a > 180 ? a - 360 : a) + 70) / 40)
-            return (-78 + 133 * k, 13 - 6 * k)
+            return (-78 + 113 * k, 13 - 7 * k)
         }
         let now = swing(a)
         slayerSmear(c, v6OlaffFist, p.trail.map { swing($0).angle }, from: 6, to: 13, C(0xC8C0B0))
@@ -341,14 +349,14 @@ private func drawDHoffrin(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(15, 25, ["GG................GG...", "GRR..............RRG...", "GRR..............RRG..."],
               ["G": gold, "R": robeD])
     drawBody(c, Look(arm: robe, eye: nil))
-    // The bald dome, ridged with fleshy folds.
+    // The bald dome, three broad fleshy ridges fanning back over it, with plain skin between so it reads at a glance.
     c.rect(20, 22, 16, 4, clawdOrange); c.rect(22, 21, 12, 1, clawdOrange); c.rect(35, 22, 1, 4, clawdShade)
     c.pattern(20, 21, [
-        "...Lf.Lf.Lf.Lf..",
-        "..Lf.Lf..Lf..Lf.",
-        ".Lf..Lf..Lf...Lf",
-        ".Lf..Lf..Lf...Lf",
-        "Lf...Lf..Lf....f",
+        "...L....L....L..",
+        "..Lf...Lf...Lf..",
+        "..Lf...Lf....Lf.",
+        ".Lf....Lf....Lf.",
+        ".f.....f......f.",
     ], ["f": fold, "L": foldL])
     // The wrinkled face: deep lines on the brow, small eyes in pouches, folds down the cheeks.
     c.pattern(19, 26, [
@@ -376,11 +384,13 @@ private func drawDHoffrin(_ c: PixelCanvas, _ p: Pose) {
         let hx = 41 + out, hy = 32 - up
         c.rect(hx, hy, 3, 3, clawdOrange)
         let swing = sin(p.t * 4.5) * 1.6 * offer
+        // A gold disc five pixels across, the red stone set in the middle of it, big enough to read at desktop size.
         let bx = Double(hx) + 1.5 + swing, by = Double(hy) + 7
-        slayerLine(c, Double(hx) + 1.5, Double(hy) + 2.5, bx, by - 1.5, goldD, 0.4)
-        let ix = Int(bx.rounded()) - 1, iy = Int(by.rounded()) - 1
-        c.pattern(ix, iy, [".G.", "GrG", ".g."], ["G": gold, "g": goldD, "r": C(0xD81E2A)])
-        if Int(p.t * 6) % 4 == 0 { c.px(ix + 3, iy - 1, white.alpha(0.8)) }
+        slayerLine(c, Double(hx) + 1.5, Double(hy) + 2.5, bx, by - 2.5, goldD, 0.4)
+        let ix = Int(bx.rounded()) - 2, iy = Int(by.rounded()) - 2
+        c.pattern(ix, iy, [".LGG.", "LGrGg", "GrRrg", "GGrgg", ".ggg."],
+                  ["L": C(0xF4D47A), "G": gold, "g": goldD, "r": C(0xC0141E), "R": C(0xFF5A4A)])
+        if Int(p.t * 6) % 4 == 0 { c.px(ix + 5, iy - 1, white.alpha(0.8)) }
         return
     }
     c.rect(41, 33, 2, 2, clawdOrange)
@@ -417,16 +427,20 @@ private func drawHalfreck(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: dress, eye: nil), armRight: sig > 0 ? Int((sig * 4).rounded()) : p.armRaise)
     c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink)
     if demon {
-        // The vengeance face: dark veined ridges spreading round the eyes, the eyes gone pale.
-        let vein = C(0x6A2440), veinL = C(0x9A3A5E)
-        c.pattern(19, 27, [
-            "v.vvvv....vvvv.v",
-            ".vV..........Vv.",
-            "vV............Vv",
-            ".v............v.",
-            "v.vV........Vv.v",
-            "...v........v...",
+        // The vengeance face: heavy ridges gathered at the bridge of the nose, scowling down over the eyes and
+        // fanning out under them, the eyes gone pale. Bold strokes rather than fine veins, so it reads at desktop size.
+        let vein = C(0x5A1A36), veinL = C(0xA8466E)
+        c.pattern(19, 26, [
+            ".VV............VV.",
+            ".vvVV........VVvv.",
+            "...vvVV....VVvv...",
+            ".....vvVvvVvv.....",
+            "v.......vv.......v",
+            "vv......vv......vv",
+            ".vv...vv..vv...vv.",
+            "..vvvv......vvvv..",
         ], ["v": vein, "V": veinL])
+        c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink)
         c.px(22, 29, C(0xF4E4F0)); c.px(33, 29, C(0xF4E4F0))
         c.rect(26, 33, 4, 1, C(0x5A1A2A))
     } else {
@@ -555,21 +569,17 @@ private func drawVeruka(_ c: PixelCanvas, _ p: Pose) {
             // The snout thrown up at the moon, jaws open, howling.
             // Head thrown back: the eyes shut, the snout raised off the top of the face, clear of it.
             c.rect(22, 29, 2, 2, fur); c.rect(32, 29, 2, 2, fur); c.rect(22, 30, 2, 1, furD); c.rect(32, 30, 2, 1, furD)
-            c.pattern(33, 13, [
-                "..........NNN",
-                ".........LLNN",
-                "........LLLLw",
-                ".......LLLLLM",
-                "......LLLLLMw",
-                ".....LLLLLMM.",
-                "....FLLLLMMw.",
-                "...FFLLLMM...",
-                "..FFFLLMMw...",
-                ".FFFFLMM.....",
-                "FFFFFMM......",
-                "FFFFM........",
-                "FFF..........",
-            ],["L": furL, "F": fur, "N": ink, "M": C(0x5A1A1E), "w": white])
+            // A broad wolf's muzzle, wide where it leaves the head and tapering to the black nose, the jaws open
+            // on a dark mouth with the lower jaw hanging below it: a head thrown back, not a stick or a horn.
+            let mouth = C(0x5A1A1E)
+            slayerLine(c, 29, 23, 40.5, 13.5, fur, 3.2)                      // the upper jaw, thick at the base
+            slayerLine(c, 30, 21.5, 41, 12.5, furL, 1.4)                     // lit along its top
+            slayerLine(c, 34, 24, 43, 16.5, mouth, 1.3)                      // the open mouth, a wedge
+            slayerLine(c, 34, 24.5, 43, 19.5, mouth, 1.1)
+            slayerLine(c, 35, 26.5, 43.5, 22, fur, 1.1)                      // the lower jaw, dropped open
+            slayerLine(c, 35.5, 26, 43, 22, furL, 0.45)
+            c.rect(42, 12, 2, 2, ink); c.px(44, 13, ink)                       // the nose
+            c.px(42, 15, white); c.px(39, 18, white); c.px(42, 20, white)      // fangs
             c.rect(18, 33, 20, 1, fur); c.px(20, 34, furD); c.px(24, 34, fur); c.px(32, 34, fur); c.px(35, 34, furD)
             // The howl: faint arcs rising off the snout.
             let k = frac(p.t * 1.5)
@@ -625,7 +635,9 @@ private func drawGwendolynPoste(_ c: PixelCanvas, _ p: Pose) {
         c.rect(17, 37, 22, 3, suit); c.rect(17, 39, 22, 1, suitD); c.rect(38, 37, 1, 2, suitD); c.px(27, 38, suitD)
     }
     c.oy += p.breathe
-    drawBody(c, Look(arm: suit, eye: nil), armRight: raise)
+    // Raised high, the forearm stands up from the elbow at her shoulder instead of floating beside her head.
+    let upright = raise >= 4
+    drawBody(c, Look(arm: suit, eye: nil), armRight: upright ? 0 : raise)
     // Narrow, appraising eyes, a thin prim mouth.
     c.rect(22, 30, 2, 2, ink); c.rect(32, 30, 2, 2, ink)
     c.rect(21, 29, 3, 1, hairD); c.rect(32, 29, 3, 1, hairD)
@@ -648,30 +660,43 @@ private func drawGwendolynPoste(_ c: PixelCanvas, _ p: Pose) {
         "....HH...............HH..",
         "....d................d...",
     ], ["H": hair, "l": hairL, "d": hairD, "B": hair])
-    // The Glove of Myhnegon over the front arm, from the elbow, a silver band at the cuff and the teal stone.
+    // The Glove of Myhnegon over the front arm, from the elbow: long and black, a silver band at the cuff, the teal stone on
+    // the back of the hand.
     let ay = 33 - raise
     let tug = sig > 0.3 && sig < 0.99 ? (Int(p.t * 5) % 2) : 0
-    c.rect(38, ay, 4, 3, glove); c.rect(38, ay, 4, 1, gloveL)
-    c.rect(37 + tug, ay, 1, 3, silver)
-    c.px(40, ay + 1, gem)
-    // The fingers: flexing in the signature.
     let flex = sig > 0.3 && Int(p.t * 6) % 2 == 0
-    if flex {
-        c.px(42, ay - 1, glove); c.px(43, ay - 1, glove); c.px(42, ay, glove); c.px(42, ay + 2, glove)
+    let gem0: (x: Int, y: Int)
+    if upright {
+        // The forearm straight up from the elbow, the cuff band low, the fingers on top.
+        c.rect(38, 33, 3, 3, suit); c.rect(40, 33, 1, 3, suitD)
+        c.rect(39, ay, 3, 33 - ay, glove); c.rect(39, ay, 1, 33 - ay, gloveL)
+        c.rect(39, 32 - tug, 3, 1, silver)
+        gem0 = (40, ay + 1)
+        if flex { c.px(39, ay - 1, glove); c.px(41, ay - 1, glove); c.px(42, ay, glove) }
+        else { c.rect(39, ay - 1, 3, 1, glove); c.px(39, ay - 1, gloveL) }
     } else {
-        c.rect(42, ay, 1, 3, glove); c.px(42, ay, gloveL)
+        // The arm out in front, gloved past the elbow so it reads long even at desktop size.
+        c.rect(37, ay, 6, 3, glove); c.rect(37, ay, 6, 1, gloveL)
+        c.rect(37 + tug, ay, 1, 3, silver)
+        gem0 = (42, ay + 1)
+        if flex {
+            c.px(43, ay - 1, glove); c.px(44, ay - 1, glove); c.px(43, ay, glove); c.px(43, ay + 2, glove)
+        } else {
+            c.rect(43, ay, 1, 3, glove); c.px(43, ay, gloveL)
+        }
     }
+    c.px(gem0.x, gem0.y, gem)
+    let gx = Double(gem0.x) + 0.5, gy = Double(gem0.y) + 0.5
     if p.zap != nil || sig > 0.4 {
         // The stone glowing.
         let k = sig > 0.4 ? sig : 0.6
-        c.glowLine(40.5, Double(ay) + 1.5, 40.5, Double(ay) + 1.5, core: C(0xEAFBFF, 0.2), glow: C(0x1E9CB4), coreR: 0.4,
-                   glowR: 2.2, strength: 0.4 * k)
+        c.glowLine(gx, gy, gx, gy, core: C(0xEAFBFF, 0.2), glow: C(0x1E9CB4), coreR: 0.4, glowR: 2.2, strength: 0.4 * k)
     }
     guard sig > 0.4 else { return }
     // Teal crackle jumping between the fingers.
     let i = Int(p.t * 20)
     for k in 0..<3 {
-        let x0 = 39.5 + noise(i + k * 5) * 4, y0 = Double(ay) - 1 + noise(i * 3 + k) * 4
+        let x0 = gx - 1.5 + noise(i + k * 5) * 4, y0 = Double(ay) - 2 + noise(i * 3 + k) * 4
         let x1 = x0 + (noise(i * 7 + k) - 0.5) * 6, y1 = y0 - 1 - noise(i * 11 + k) * 3
         c.glowLine(x0, y0, x1, y1, core: C(0xEAFBFF), glow: C(0x1E9CB4), coreR: 0.4, glowR: 1.4, strength: 0.8 * sig)
     }
