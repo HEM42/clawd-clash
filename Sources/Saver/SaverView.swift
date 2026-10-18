@@ -46,7 +46,7 @@ final class ClawdClashSaverView: ScreenSaverView {
     /// (anywhere at all with just the one). `visit` is where it went; nil until the first wipe (where the app says).
     private var period = 0
     private var visit: Location?
-    private let wipeLayer = CALayer(), wipeMask = CAShapeLayer()
+    private let wipeLayer = CALayer(), wipeMask = CALayer()
     private var wipe: (start: Double, kind: Wipe.Kind)?
     private var lastWipe: Wipe.Kind?
     private var trips = 0                       // the wipes take turns: a hard edge, then a clock
@@ -148,7 +148,7 @@ final class ClawdClashSaverView: ScreenSaverView {
         wipeLayer.magnificationFilter = .nearest
         wipeLayer.actions = Self.noAnimations
         wipeLayer.isHidden = true
-        wipeMask.actions = ["path": NSNull()]
+        wipeMask.actions = Self.noAnimations
         wipeLayer.mask = wipeMask
         root.addSublayer(wipeLayer)
         comicLayer.anchorPoint = .zero
@@ -269,7 +269,7 @@ final class ClawdClashSaverView: ScreenSaverView {
                 wipeMask.frame = wipeLayer.bounds
                 let kind = Wipe.Kind.next(after: lastWipe)
                 lastWipe = kind
-                wipeMask.path = Wipe.remaining(0, kind, in: wipeLayer.bounds)
+                wipeMask.contents = Wipe.mask(0, kind, aspect: Double(wipeLayer.bounds.width / max(1, wipeLayer.bounds.height)), alpha: true)
                 wipeLayer.isHidden = false
                 CATransaction.commit()
                 wipe = (now, kind)
@@ -361,7 +361,7 @@ final class ClawdClashSaverView: ScreenSaverView {
                 wipeLayer.isHidden = true
                 wipeLayer.contents = nil
             } else {
-                wipeMask.path = Wipe.remaining(k, w.kind, in: wipeLayer.bounds)
+                wipeMask.contents = Wipe.mask(k, w.kind, aspect: Double(wipeLayer.bounds.width / max(1, wipeLayer.bounds.height)), alpha: true)
             }
         }
         if let w = comic {

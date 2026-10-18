@@ -6272,7 +6272,7 @@ func frame(_ t: Double) -> NSBitmapImageRep {
             let r = cur.inWindow ? windowRect : fullRect
             renderShot(cur, at: t, into: ctx)
             ctx.saveGState()
-            ctx.addPath(Wipe.remaining(k, clock: clock, in: r)); ctx.clip()
+            if let m = Wipe.mask(k, clock ? .clock : .edgeRight, aspect: Double(r.width / r.height)) { ctx.clip(to: r, mask: m) }
             renderShot(prev, at: t, into: ctx)
             ctx.restoreGState()
         case .marvel, .dc, .middleEarth, .trip:

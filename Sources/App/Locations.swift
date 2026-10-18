@@ -91,44 +91,58 @@ enum Wipe {
         static func next(after last: Kind?) -> Kind { allCases.filter { $0 != last }.randomElement() ?? .edgeRight }
     }
 
-    /// What's left of the old picture `k` (0…1) of the way through a `kind` wipe over `r`, to clip it to.
-    static func remaining(_ k: Double, _ kind: Kind, in r: CGRect) -> CGPath {
-        let path = CGMutablePath()
-        switch kind {
-        case .clock, .anticlockwise:
-            let c = CGPoint(x: r.midX, y: r.midY), top = CGFloat.pi / 2, turn = 2 * CGFloat.pi * k
-            path.move(to: c)
-            if kind == .clock {
-                path.addArc(center: c, radius: hypot(r.width, r.height), startAngle: top - turn, endAngle: top - 2 * .pi, clockwise: true)
-            } else {
-                path.addArc(center: c, radius: hypot(r.width, r.height), startAngle: top + turn, endAngle: top + 2 * .pi, clockwise: false)
-            }
-            path.closeSubpath()
-        case .edgeRight:
-            path.addRect(CGRect(x: r.minX + r.width * k, y: r.minY, width: r.width * (1 - k), height: r.height))
-        case .edgeLeft:
-            path.addRect(CGRect(x: r.minX, y: r.minY, width: r.width * (1 - k), height: r.height))
-        case .edgeDown:
-            path.addRect(CGRect(x: r.minX, y: r.minY, width: r.width, height: r.height * (1 - k)))
-        case .edgeUp:
-            path.addRect(CGRect(x: r.minX, y: r.minY + r.height * k, width: r.width, height: r.height * (1 - k)))
-        case .diagonal:
-            // The part of the frame the slanted edge hasn't reached: where (x across + y down) is still past it.
-            let corners = [CGPoint(x: r.minX, y: r.maxY), CGPoint(x: r.maxX, y: r.maxY), CGPoint(x: r.maxX, y: r.minY),
-                           CGPoint(x: r.minX, y: r.minY)]
-            func past(_ p: CGPoint) -> CGFloat { (p.x - r.minX) / r.width + (r.maxY - p.y) / r.height - 2 * k }
-            var kept: [CGPoint] = []
-            for i in corners.indices {
-                let a = corners[i], b = corners[(i + 1) % corners.count], fa = past(a), fb = past(b)
-                if fa >= 0 { kept.append(a) }
-                if (fa >= 0) != (fb >= 0) {
-                    let t = fa / (fa - fb)
-                    kept.append(CGPoint(x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t))
+    /// How much of the old picture still shows at each point, `k` (0…1) of the way through a `kind` wipe, as a small mask
+    /// to stretch over the frame (`aspect`: its width over its height). Soft along the edge, as the films' wipes are: the
+    /// old picture fades into the new across a band, a tenth or so of the way across (behind the clock hand, a slice of
+    /// its turn). The edge starts just outside the frame and finishes just past it, so the first and last frames are
+    /// clean. `alpha`: as an alpha mask (a Core Animation layer's), else in grey (`CGContext.clip(to:mask:)`).
+    static func mask(_ k: Double, _ kind: Kind, aspect: Double, alpha: Bool = false) -> CGImage? {
+        let w = 160, h = max(1, Int((160 / max(0.1, aspect)).rounded()))
+        let round = kind == .clock || kind == .anticlockwise
+        let band = round ? 0.05 : 0.12
+        let edge = -band / 2 + k * (1 + band)
+        var cover = [UInt8](repeating: 0, count: w * h)
+        for y in 0..<h {
+            let v = (Double(y) + 0.5) / Double(h)                          // 0 at the top
+            for x in 0..<w {
+                let u = (Double(x) + 0.5) / Double(w)
+                // How far along the wipe this point is: the edge reaches it at s = edge.
+                let s: Double
+                switch kind {
+                case .edgeRight: s = u
+                case .edgeLeft: s = 1 - u
+                case .edgeDown: s = v
+                case .edgeUp: s = 1 - v
+                case .diagonal: s = (u + v) / 2
+                case .clock, .anticlockwise:
+                    let turn = atan2((u - 0.5) * aspect, 0.5 - v) / (2 * .pi)   // clockwise from twelve, -½…½
+                    let t = turn < 0 ? turn + 1 : turn
+                    s = kind == .clock ? t : 1 - t
                 }
+                let f = max(0, min(1, (s - (edge - band / 2)) / band))
+                cover[y * w + x] = UInt8((f * f * (3 - 2 * f) * 255).rounded())
             }
-            if kept.count > 2 { path.addLines(between: kept); path.closeSubpath() }
         }
-        return path
+        if alpha {
+            var rgba = [UInt8](repeating: 0, count: w * h * 4)
+            for i in 0..<(w * h) { rgba[i * 4] = cover[i]; rgba[i * 4 + 1] = cover[i]; rgba[i * 4 + 2] = cover[i]; rgba[i * 4 + 3] = cover[i] }
+            guard let ctx = CGContext(data: &rgba, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+                                      space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+            else { return nil }
+            return ctx.makeImage()
+        }
+        guard let ctx = CGContext(data: &cover, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w,
+                                  space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue)
+        else { return nil }
+        return ctx.makeImage()
+    }
+
+    /// Draws the old picture over `r` as much as it still shows, `k` through a `kind` wipe (the new one is already there).
+    static func drawOld(_ old: CGImage, _ k: Double, _ kind: Kind, in ctx: CGContext, _ r: CGRect) {
+        guard let m = mask(k, kind, aspect: Double(r.width / max(1, r.height))) else { return }
+        ctx.saveGState(); ctx.clip(to: r, mask: m)
+        ctx.draw(old, in: r)
+        ctx.restoreGState()
     }
 
     /// One picture from several stacked (the place and what moves there), to freeze for a wipe.
