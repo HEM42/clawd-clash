@@ -2543,6 +2543,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             .separator,
             .toggle("Show project names over the characters", get: { d.object(forKey: "labelsWindow") as? Bool ?? false },
                     set: { on in d.set(on, forKey: "labelsWindow") }),
+            .separator,
+            // Each card redraws at once, the pills left closing up to the right.
+            .checks("Card pills", items: [("Status", CardsView.Pill.status), ("Where the repo lives", .remote), ("Context", .context)].map { item in
+                (item.0, get: { CardsView.shows(item.1) },
+                 set: { [weak self] on in d.set(on, forKey: item.1.rawValue); self?.clawdWindow?.cardsView.needsDisplay = true })
+            }),
         ]
 
         let desktop: [SettingsRow] = [

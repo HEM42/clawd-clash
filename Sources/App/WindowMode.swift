@@ -925,6 +925,11 @@ final class CardsView: NSView {
 
     static let focusYellow = NSColor(srgbRed: 1, green: 0.88, blue: 0.29, alpha: 1)
 
+    /// Settings → Window → Card pills: the status, where the repo lives and the context pill, each shown until
+    /// turned off, for a cleaner card.
+    enum Pill: String { case status = "pillStatus", remote = "pillRemote", context = "pillContext" }
+    static func shows(_ pill: Pill) -> Bool { UserDefaults.standard.object(forKey: pill.rawValue) as? Bool ?? true }
+
     /// Everything the cards show, so an update that changes nothing (most of them) doesn't redraw.
     private var shown = ""
 
@@ -1162,16 +1167,20 @@ final class CardsView: NSView {
             // on the right. Under it, right-aligned: where the repo lives, then how near the next compaction is (green,
             // amber from 60%, red from 80%). No project? Then the character is the title. In a project's tree the
             // header above names the project and where it lives, so the card is titled with the character instead, in
-            // the project's colour, with only the context pill.
+            // the project's colour, with only the context pill. Any pill can be turned off in Settings: the others
+            // close up to the right, and without the status the title runs the card's whole width.
             let inTree = c.tree != nil
             var namePill: NSRect?
             let status = NSAttributedString(string: c.status, attributes: [
                 .font: NSFont.monospacedSystemFont(ofSize: 11, weight: .bold), .foregroundColor: c.statusColor])
             let sw = status.size().width
             let chip = NSRect(x: r.maxX - 12 - sw - 14, y: ty - 1, width: sw + 14, height: 19)
-            c.statusColor.withAlphaComponent(0.16).setFill()
-            NSBezierPath(roundedRect: chip, xRadius: 9.5, yRadius: 9.5).fill()
-            status.draw(at: NSPoint(x: chip.minX + 7, y: chip.minY + 2))
+            let titleEnd = Self.shows(.status) ? chip.minX - 8 : r.maxX - 12
+            if Self.shows(.status) {
+                c.statusColor.withAlphaComponent(0.16).setFill()
+                NSBezierPath(roundedRect: chip, xRadius: 9.5, yRadius: 9.5).fill()
+                status.draw(at: NSPoint(x: chip.minX + 7, y: chip.minY + 2))
+            }
             let header = NSMutableAttributedString(string: inTree || c.project.isEmpty ? c.villain : c.project, attributes: [
                 .font: NSFont.systemFont(ofSize: 14, weight: .bold), .foregroundColor: c.project.isEmpty ? NSColor.white : c.accent])
             if !c.project.isEmpty && !inTree {
@@ -1179,8 +1188,10 @@ final class CardsView: NSView {
                     .font: NSFont.systemFont(ofSize: 13, weight: .regular), .foregroundColor: NSColor(white: 0.48, alpha: 1)]))
             }
             var pills: [(text: String, hue: NSColor, mono: Bool)] = []
-            if let remote = c.remote, !c.project.isEmpty && !inTree { pills.append((remote, Self.remoteColor(remote), false)) }
-            if let used = c.context {
+            if let remote = c.remote, !c.project.isEmpty && !inTree && Self.shows(.remote) {
+                pills.append((remote, Self.remoteColor(remote), false))
+            }
+            if let used = c.context, Self.shows(.context) {
                 let hue = used >= 0.8 ? NSColor.systemRed : used >= 0.6 ? NSColor.systemOrange : NSColor.systemGreen
                 pills.append(("ctx \(Int((used * 100).rounded()))%", hue, true))
             }
@@ -1199,11 +1210,11 @@ final class CardsView: NSView {
             }
             // The card you're in: a faint violet bar behind its title, reaching a little past it.
             if c.focused {
-                let w = min(header.size().width, chip.minX - tx - 8)
+                let w = min(header.size().width, titleEnd - tx)
                 NSColor(srgbRed: 0.62, green: 0.46, blue: 1, alpha: 0.16).setFill()
                 NSBezierPath(roundedRect: NSRect(x: tx - 6, y: ty - 1, width: w + 20, height: 20), xRadius: 5, yRadius: 5).fill()
             }
-            header.draw(with: NSRect(x: tx, y: ty, width: chip.minX - tx - 8, height: 20),
+            header.draw(with: NSRect(x: tx, y: ty, width: titleEnd - tx, height: 20),
                         options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
             ty += 22
 
