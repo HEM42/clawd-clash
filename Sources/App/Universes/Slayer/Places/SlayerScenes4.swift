@@ -110,46 +110,6 @@ private func slayerWelcomeBoard4(_ c: PixelCanvas, _ x: Int, _ y: Int, _ p: Int,
     return (w, h)
 }
 
-/// The welcome board's lettering for a board turned by `degrees` about (px, py) and pasted with that point at (x, y)
-/// (as `slayerShearTurn4` turns it): each letter stays upright, set where its corner lands on the tilted board, so
-/// they step along the slope instead of being sheared ragged. `bx`, `by`: the board's top-left in its own canvas.
-private func slayerTiltedLettering4(_ c: PixelCanvas, board bx: Int, _ by: Int, _ p: Int, small: Int, _ s: Int,
-                                    _ degrees: Double, about piv: (x: Int, y: Int), at: (x: Int, y: Int)) {
-    let big = "SUNNYDALE", top = "WELCOME TO", w = slayerTextWidth4(big, p) + 12 * s
-    let r = degrees * .pi / 180
-    func place(_ text: String, _ x0: Int, _ y0: Int, _ col: Px, _ q: Int) {
-        var lx = x0
-        for ch in text {
-            if ch != " " {
-                let dx = Double(lx - piv.x), dy = Double(y0 - piv.y)
-                let x = Int((dx * cos(r) - dy * sin(r)).rounded()), y = Int((dx * sin(r) + dy * cos(r)).rounded())
-                slayerText4(c, at.x + x, at.y + y, String(ch), col, q)
-            }
-            lx += (ch == " " ? 3 : 4) * q
-        }
-    }
-    place(top, bx + (w - slayerTextWidth4(top, small)) / 2, by + 4 * s, C(0x6A4A2A), small)
-    place(big, bx + (w - slayerTextWidth4(big, p)) / 2, by + 4 * s + 5 * small + 3 * s, C(0x2A4A30), p)
-}
-
-/// `src` turned by `degrees` (clockwise on screen) about its point (px, py), pasted with that point at (x, y) on `c`.
-/// Done as three shears that each move whole rows or columns, so every pixel lands somewhere and none is doubled:
-/// fine lettering stays crisp, stepped, instead of breaking up the way a plain nearest-neighbour turn does.
-private func slayerShearTurn4(_ c: PixelCanvas, _ src: PixelCanvas, _ degrees: Double, about p: (x: Int, y: Int), at: (x: Int, y: Int)) {
-    let r = degrees * .pi / 180, a = -tan(r / 2), b = sin(r)
-    for y in 0..<src.h {
-        for x in 0..<src.w {
-            let i = (y * src.w + x) * 4, al = src.buf[i + 3]
-            guard al > 0 else { continue }
-            let dx = Double(x - p.x), dy = Double(y - p.y)
-            let x1 = dx + (a * dy).rounded(), y1 = dy + (b * x1).rounded(), x2 = x1 + (a * y1).rounded()
-            let m = 255 / Double(al)
-            c.px(at.x + Int(x2), at.y + Int(y1), Px(r: UInt8(min(255, Double(src.buf[i]) * m)), g: UInt8(min(255, Double(src.buf[i + 1]) * m)),
-                                                   b: UInt8(min(255, Double(src.buf[i + 2]) * m)), a: al))
-        }
-    }
-}
-
 /// The dream desert's campfire scale: two pixels a unit on the screen saver, one and a half in the window's strip.
 private func slayerFireUnit4(_ c: PixelCanvas, _ s: Int) -> Double { Double(s) * (Scenes.isTall(c) ? 2 : 1.5) }
 
@@ -441,24 +401,21 @@ extension Scenes {
             let dy = Int(noise(x / s + 500) * 3) * s
             c.rect(x, g - 2 * s - dy, 3 * s, 2 * s + dy, C(0x8A6444))
         }
-        // The sign, tipping over the lip on the left: the board turned, its lettering set upright on it afterwards so
-        // it stays readable.
-        let p = 2 * s, small = s, tilt = 10.0
+        // The sign, still standing on the crater's far rim on the left: level, so its lettering stays crisp, and up
+        // above the crew's heads. (On the near lip, tilted, its letters stepped ragged and whoever stood in front of
+        // it covered SUNNYDALE.)
+        let p = 2 * s, small = s
         let size = slayerWelcomeSize4(p, small: small, s)
-        let post = tall ? 14 * s : 6 * s
-        let sc = PixelCanvas(size.w + 8 * s, size.h + post + 8 * s)
-        for px in [size.w / 6 + 4 * s, size.w * 5 / 6] {
-            sc.rect(px, size.h + 4 * s, 3 * s, post, C(0x9A6A40)); sc.rect(px, size.h + 4 * s, s, post, C(0xC8945A))
-            sc.rect(px + 2 * s, size.h + 4 * s, s, post, C(0x5A3A22))
+        let post = tall ? 10 * s : 5 * s
+        let sx = cx - rx + size.w * 2 / 3
+        let du = Double(sx - cx) / Double(rx), sy = cy - Int(Double(ry) * (1 - du * du).squareRoot())
+        let left = sx - size.w / 2, boardY = sy - post - size.h
+        for px in [left + size.w / 6, left + size.w * 5 / 6 - 3 * s] {
+            c.rect(px, boardY + size.h, 3 * s, post, C(0x9A6A40)); c.rect(px, boardY + size.h, s, post, C(0xC8945A))
+            c.rect(px + 2 * s, boardY + size.h, s, post, C(0x5A3A22))
         }
-        slayerWelcomeBoard4(sc, 4 * s, 4 * s, p, small: small, s, lettered: false)
-        // Its feet on the crater's left-hand lip, leaning out over the drop.
-        let sx = cx - rx + size.w / 3
-        let du = Double(sx - cx) / Double(rx), sy = cy + Int(Double(ry) * (1 - du * du).squareRoot())
-        slayerShearTurn4(c, sc, tilt, about: (sc.w / 2, sc.h - 4 * s), at: (sx, sy - 4 * s))
-        slayerTiltedLettering4(c, board: 4 * s, 4 * s, p, small: small, s, tilt, about: (sc.w / 2, sc.h - 4 * s), at: (sx, sy - 4 * s))
-        c.ellipse(sx - 2 * s, sy, size.w / 3, 2 * s, C(0xA07A54))   // the ground giving way under it
-        for k in 0..<6 { c.rect(sx + Int(noise(k + 330) * Double(size.w / 2)), sy + Int(noise(k + 331) * 6) * s, 2 * s, s, C(0xA07A54)) }
+        slayerWelcomeBoard4(c, left, boardY, p, small: small, s, lettered: true)
+        c.ellipse(sx, sy, size.w / 2, s, C(0x8A6444))   // its footing on the rim
         // The school bus at the edge, on the right.
         let bw = tall ? 70 * s : 50 * s, bh = tall ? 24 * s : 17 * s, bx = f.bus - bw / 2, by = g - bh - 3 * s
         let yellow = C(0xE8B830), yd = C(0xB88A20)
