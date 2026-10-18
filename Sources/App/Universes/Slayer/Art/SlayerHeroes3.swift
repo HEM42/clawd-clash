@@ -29,9 +29,20 @@ private func slayerSpan(_ p: Pose, _ from: Double, _ to: Double) -> Double {
     return (s - from) / (to - from)
 }
 
+/// A swung weapon's angle kept in front of the face: once a swing goes back over the head (or down behind), it
+/// stops just past upright (or just past straight down), so it never sweeps across the face or vanishes behind
+/// the hair.
+private func slayerFrontAngle(_ a: Double) -> Double {
+    var n = a.truncatingRemainder(dividingBy: 360)
+    if n > 180 { n -= 360 } else if n <= -180 { n += 360 }
+    return max(-102, min(110, n))
+}
+
 /// An unarmed hero's free arm: up and waving while cheering or calling you urgently, otherwise drawBody's own.
-private func slayerWave(_ c: PixelCanvas, _ p: Pose, sleeve: Px) {
+/// `now and then`: only in short bursts, the arm down in between.
+private func slayerWave(_ c: PixelCanvas, _ p: Pose, sleeve: Px, nowAndThen: Bool = false) {
     guard p.cheering || (p.ready && p.urgent) else { return }
+    if nowAndThen && (p.t / 2.6 - floor(p.t / 2.6)) > 0.3 { return }
     let up = sin(p.t * 10) > 0 ? 1 : 0
     c.rect(38, 26 - up, 3, 7 + up, sleeve); c.rect(38, 24 - up, 3, 2, clawdOrange)
 }
@@ -57,7 +68,7 @@ private func drawDawnClawmers(_ c: PixelCanvas, _ p: Pose) {
     // her, her hair and face catch its green.
     let strength = keyK >= 0 ? sin(keyK * .pi) * (0.7 + 0.3 * sin(p.t * 23)) : 0
     let green = C(0x9CFFB0)
-    if strength > 0 { c.rect(18, 26, 20, 12, green.alpha(0.45 * strength)) }
+    if strength > 0 { c.rect(18, 26, 20, 12, green.alpha(0.22 * strength)) }
     let glowHair = strength > 0.5
     c.pattern(16, 20, [
         "......HHHHHHHHHHHH......",
@@ -78,8 +89,8 @@ private func drawDawnClawmers(_ c: PixelCanvas, _ p: Pose) {
         ".HHd................dHH.",
         ".dHd................dHd.",
         ".dd..................dd.",
-    ], glowHair ? ["H": C(0x5E7A4A), "l": C(0x9CD890), "d": C(0x3E5A30)] : ["H": hair, "l": hairL, "d": hairD])
-    slayerWave(c, p, sleeve: jumper)
+    ], glowHair ? ["H": C(0x625A36), "l": C(0x9CC484), "d": C(0x423C22)] : ["H": hair, "l": hairL, "d": hairD])
+    slayerWave(c, p, sleeve: jumper, nowAndThen: true)
 
     guard keyK >= 0 else { return }
     if strength > 0.6 { c.rect(22, 29, 2, 3, C(0xE8FFE8)); c.rect(32, 29, 2, 3, C(0xE8FFE8)) }   // her eyes light up
@@ -132,12 +143,15 @@ private func drawJoyceClawmers(_ c: PixelCanvas, _ p: Pose) {
         return
     }
     slayerWave(c, p, sleeve: blouse)
-    guard let a = p.melee else { return }
-    // The fire axe: a long wooden haft and a red head with a bright edge.
-    let h = slayerHand
-    slayerSmear(c, h, p.trail, from: 6, to: 12, C(0xF4E8D0))
-    slayerBar(c, h, a, from: -3, to: 11, C(0x7A5230), r: 0.9)
-    let head0 = slayerReach(h, a, 8), head1 = slayerReach(h, a, 11)
+    guard let swing = p.melee else { return }
+    // The fire axe: a long wooden haft and a red head with a bright edge, never swung back across her face.
+    // (Low, it swings no further back than down-and-forward, its head clear of her legs.)
+    let h = slayerHand, a = min(70, slayerFrontAngle(swing))
+    let trail = p.trail.map { min(70, slayerFrontAngle($0)) }.filter { abs($0 - a) > 4 }
+    slayerSmear(c, h, trail, from: 6, to: 12, C(0xF4E8D0))
+    let down = sin(a * .pi / 180), len = down > 0.2 ? max(6, min(11, 6.5 / down)) : 11   // shorter when hanging low
+    slayerBar(c, h, a, from: -3, to: len, C(0x7A5230), r: 0.9)
+    let head0 = slayerReach(h, a, len - 3), head1 = slayerReach(h, a, len)
     let side = a + 90
     let e0 = slayerReach(head0, side, 4), e1 = slayerReach(head1, side, 4)
     slayerLine(c, head0.x, head0.y, e0.x, e0.y, C(0xC0302A), 1)
@@ -157,7 +171,8 @@ private func drawFaithLehayne(_ c: PixelCanvas, _ p: Pose) {
     let twirlK = slayerSpan(p, 0.1, 0.85)
 
     drawLegs(c, Look(leg: leather), step: p.step)
-    if !seatedPose { for lx in [19, 23, 31, 35] { c.rect(lx, 37, 1, 4, shine) } }
+    // Just a glint of shine at each knee: a stripe the whole way down made the legs look zebra-striped.
+    if !seatedPose { for lx in [19, 23, 31, 35] { c.px(lx, 38, shine) } }
     slayerBoots(c, step: p.step, C(0x121014), height: 3)
     c.oy += p.breathe
     drawBody(c, Look(), armRight: twirlK >= 0 ? 2 : 0)
@@ -219,7 +234,7 @@ private func drawFaithLehayne(_ c: PixelCanvas, _ p: Pose) {
 /// proudly, high over her head, and it glints.
 private func drawKendraYung(_ c: PixelCanvas, _ p: Pose) {
     let top = C(0xA8502E), topD = C(0x803A20), topL = C(0xC66A44), belt = C(0x3A2A1E)
-    let hair = C(0x1C1412), braid = C(0x3E2E26), tie = C(0xC8A040)
+    let hair = C(0x1C1412), braid = C(0x56402E), tie = C(0xC8A040)
     let pointK = slayerSpan(p, 0.08, 0.9)
 
     drawLegs(c, Look(leg: C(0x5C603C)), step: p.step)
@@ -229,24 +244,25 @@ private func drawKendraYung(_ c: PixelCanvas, _ p: Pose) {
     // The top, a belt at the waist.
     c.rect(18, 33, 20, 5, top); c.rect(37, 33, 1, 5, topD); c.rect(18, 36, 20, 1, belt); c.px(27, 36, tie)
     c.rect(18, 33, 1, 3, topL); c.rect(25, 33, 6, 1, topD)
-    // Braids: rows of them pulled back over the top of her head, gathered and hanging long behind both shoulders.
+    // Braids: a few bold rows pulled straight back over her head, then two thick braids hanging long behind each
+    // shoulder, tied off in gold. (Fewer, bolder lines than a fine weave, which read as a chequered band when small.)
     c.pattern(16, 20, [
-        "......HbHbHbHbHbHb......",
-        "....bHbHbHbHbHbHbHbH....",
-        "...HbHbHbHbHbHbHbHbHb...",
-        "..bHbHbHbHbHbHbHbHbHbH..",
-        "..HHHHHHHHHHHHHHHHHHHH..",
-        ".HbHHHHHHHHHHHHHHHHHHbH.",
+        "......HHbHHHbHHHbH......",
+        "....HbHHbHHHbHHHbHHb....",
+        "...HHbHHbHHHbHHHbHHbH...",
+        "..HHbHHHbHHHbHHHbHHHbH..",
+        "..HHbHHHbHHHbHHHbHHHbH..",
+        ".HHHHHHHHHHHHHHHHHHHHHH.",
         ".bHb................bHb.",
-        ".HbH................HbH.",
         ".bHb................bHb.",
-        ".HbH................HbH.",
         ".bHb................bHb.",
-        ".HbH................HbH.",
         ".bHb................bHb.",
-        ".HbH................HbH.",
         ".bHb................bHb.",
-        ".HbH................HbH.",
+        ".bHb................bHb.",
+        ".bHb................bHb.",
+        ".bHb................bHb.",
+        ".bHb................bHb.",
+        ".bHb................bHb.",
         ".b.b................b.b.",
         ".t.t................t.t.",
     ], ["H": hair, "b": braid, "t": tie])
@@ -311,8 +327,12 @@ private func drawJennyClawlendar(_ c: PixelCanvas, _ p: Pose) {
         ".HHd................dHH.",
         "..dd................dd..",
     ], ["H": hair, "l": hairL, "d": hairD])
-    // The laptop, shut, tucked under her left arm.
-    c.rect(13, 31, 2, 7, C(0x5A5E66)); c.rect(13, 31, 1, 7, C(0x7E828C)); c.px(14, 37, C(0x3A3E46))
+    // The laptop, shut, tucked under her left arm: a chunky nineties machine, charcoal, its lid's light edge and the
+    // seam between lid and base showing, a green power light on its front, her hand round it.
+    let lap = C(0x3A3D45), lapL = C(0x7A7F8A), lapD = C(0x22242A)
+    c.rect(11, 30, 4, 9, lap); c.rect(11, 30, 1, 9, lapL); c.rect(11, 30, 4, 1, lapL)
+    c.rect(13, 31, 1, 8, lapD); c.rect(14, 38, 1, 1, lapD); c.px(12, 37, C(0x6CE08A))
+    c.rect(14, 33, 2, 3, cardi)
 
     // The Orb of Thessulah on her palm: clear glass at rest, lit from within, pale gold, when she casts.
     let lit = orbK >= 0 ? max(0, min(1, (orbK - 0.25) * 3)) * min(1, (1 - orbK) * 6) : casting ? 1 : 0
@@ -342,16 +362,21 @@ private func drawAngstel(_ c: PixelCanvas, _ p: Pose) {
     let shy = s >= 0.66 && s < 0.95
     let felt = C(0xE6A272), feltD = C(0xC48456)
 
-    drawLegs(c, Look(leg: C(0x24242A)), step: p.step)
+    // The long coat's skirts hang behind the legs, down past the knees: all four legs (charcoal trousers, a shade
+    // lighter than the coat) stay in front of it, so they read as legs rather than a dark doorway between two panels.
+    if !seatedPose {
+        c.rect(17, 38, 8, 3, coat); c.rect(31, 38, 8, 3, coat)
+        c.rect(17, 40, 8, 1, coatD); c.rect(31, 40, 8, 1, coatD); c.rect(17, 38, 1, 2, coatL)
+    }
+    drawLegs(c, Look(leg: C(0x484852)), step: p.step)
     slayerBoots(c, step: p.step, C(0x0E0E10), height: 2)
     c.oy += p.breathe
     drawBody(c, Look(body: puppet ? felt : clawdOrange, shade: puppet ? feltD : clawdShade, arm: coat,
                      eye: puppet ? nil : ink))
-    // The long coat: open over the dark shirt, down past the knees, with the four legs below its hem.
+    // The long coat: open over the dark shirt, its skirts (above) hanging on down past the knees.
     c.rect(18, 33, 20, 5, coat); c.rect(24, 33, 8, 5, shirt)
     c.rect(23, 33, 1, 5, coatL); c.rect(32, 33, 1, 5, coatD); c.rect(37, 33, 1, 5, coatD)
-    c.rect(17, 38, 7, seatedPose ? 1 : 3, coat); c.rect(32, 38, 7, seatedPose ? 1 : 3, coat)
-    if !seatedPose { c.rect(17, 40, 7, 1, coatD); c.rect(32, 40, 7, 1, coatD); c.rect(23, 38, 1, 2, coatL) }
+    if seatedPose { c.rect(17, 38, 7, 1, coat); c.rect(32, 38, 7, 1, coat) }
     // The turned-up collar.
     c.rect(17, 31, 2, 3, coat); c.rect(37, 31, 2, 3, coat); c.px(17, 31, coatL)
 
@@ -424,8 +449,12 @@ private func drawWesleyWindupPryce(_ c: PixelCanvas, _ p: Pose) {
     c.rect(23, 33, 1, 5, jacketL); c.rect(32, 33, 1, 5, jacketD); c.rect(37, 33, 1, 5, jacketD)
     c.rect(18, 37, 20, 1, jacketD); c.rect(24, 37, 8, 1, shirt)
     c.rect(22, 33, 2, 1, jacketL); c.rect(32, 33, 2, 1, jacketL)   // collar points
-    // Stubble round his chin.
-    for x in stride(from: 21, through: 35, by: 2) { c.px(x, 32, stubble) }
+    // Stubble: a shadow along his jaw that climbs his cheeks into sideburns, rather than a dotted row (which read as a
+    // mouth).
+    let shadow = C(0xB8603E)
+    c.rect(18, 32, 20, 1, shadow); c.rect(18, 28, 2, 4, shadow); c.rect(36, 28, 2, 4, shadow)
+    for x in [19, 21, 24, 27, 30, 33, 35] { c.px(x, 32, stubble) }
+    c.px(18, 30, stubble); c.px(19, 31, stubble); c.px(36, 31, stubble); c.px(37, 30, stubble)
     // Short, slightly untidy dark hair.
     c.pattern(16, 21, [
         "......HHHHHHHHHHH.......",
@@ -441,9 +470,13 @@ private func drawWesleyWindupPryce(_ c: PixelCanvas, _ p: Pose) {
     c.rect(19, 35, 3, 3, C(0x3A2416)); c.rect(19, 35, 3, 1, C(0x2A2A30))
     if flipped {
         // The jacket's left side swept back behind him, the holster bared.
+        // It flares out wide, the hem flung furthest, and swings in again.
         let sweep = min(1, flickK * 5) * min(1, (1 - flickK) * 5)
-        let back = Int((sweep * 3).rounded())
-        c.rect(18 - back, 33, 4, 5, jacket); c.rect(18 - back, 37, 4, 1, jacketD)
+        for (i, y) in (33...37).enumerated() {
+            let back = Int((sweep * [4, 5, 5, 6, 6][i]).rounded())
+            c.rect(18 - back, y, 4 + min(back, 2), 1, y == 37 ? jacketD : jacket)
+            if back > 1 { c.px(18 - back, y, jacketL) }
+        }
         c.rect(19, 35, 3, 3, C(0x3A2416)); c.rect(19, 35, 3, 1, C(0x2A2A30)); c.px(21, 36, C(0x8A8F9C))
         // The pistol in his right hand, pointed at the sky.
         c.rect(38, 30, 3, 3, jacket); c.rect(39, 28, 2, 2, clawdOrange)
