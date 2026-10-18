@@ -48,7 +48,8 @@ private func drawFledgling(_ c: PixelCanvas, _ p: Pose) {
     // The suit jacket, open and rumpled, one side of the shirt hanging out, the tie askew.
     c.rect(18, 33, 20, 5, suit); c.rect(24, 33, 7, 5, shirt); c.rect(29, 37, 3, 2, shirt)
     c.rect(23, 33, 1, 5, suitL); c.rect(31, 33, 1, 5, suitD); c.rect(37, 33, 1, 5, suitD); c.rect(18, 37, 20, 1, suitD)
-    c.pattern(26, 33, ["TT.", ".T.", ".TT", "..T"], ["T": tie])
+    // The tie, knotted at his collar and hanging askew: a knot, a narrow neck, and the blade swinging off to one side.
+    c.pattern(25, 33, ["cTTc", "..T..", "..TT.", "..TTT", "...T."], ["T": tie, "c": C(0xB8B4A8)])
     // Earth caked on him: on his shoulders and down the jacket.
     for (x, y) in [(18, 33), (19, 34), (35, 33), (36, 34), (21, 36), (34, 36), (20, 33)] { c.px(x, y, dirt) }
     c.px(33, 35, dirtD); c.px(19, 36, dirtD)
@@ -128,10 +129,14 @@ private func drawGloryMinion(_ c: PixelCanvas, _ p: Pose) {
     c.rect(22, 29, 2, 2, ink); c.rect(32, 29, 2, 2, ink)
     c.rect(23, 32, 10, 1, C(0x4A1E16))
     for x in stride(from: 24, through: 31, by: 2) { c.px(x, 32, C(0xF0E8C8)) }
-    // Scaly hands, wringing.
+    // Scaly hands, wringing in front of his belly: the wide sleeves come in from both sides and the two hands
+    // knead round each other, first one on top, then the other.
     let wring = Int(p.lt * 4) % 2
     c.rect(37, 33, 3, 3, robe)
-    c.rect(38 + wring, 34, 2, 2, skin); c.rect(40 - wring, 35, 2, 1, skinD)
+    c.rect(22, 34, 3, 2, robe); c.rect(22, 35, 3, 1, robeD); c.rect(31, 34, 3, 2, robe); c.rect(31, 35, 3, 1, robeD)
+    let (back, front) = wring == 0 ? (skinD, skin) : (skin, skinD)
+    c.rect(25, 34 + wring, 3, 2, back); c.rect(28, 35 - wring, 3, 2, back)
+    c.rect(26 + wring, 34, 4, 2, front); c.px(26 + wring, 34, C(0xA2B288))   // knuckles catching the light
 }
 
 // MARK: - Gachnar
@@ -158,10 +163,12 @@ private func drawGachnar(_ c: PixelCanvas, _ p: Pose) {
     if behind(p), let a = p.melee { slayerClaws(c, angle: a, trail: p.trail, sleeve: hide, nail: horn, reach: 6) }
     drawBody(c, Look(body: hide, shade: hideD, arm: hide, eye: nil))
     c.rect(22, 34, 12, 3, belly); c.rect(22, 36, 12, 1, C(0xB07A48))
-    // The crest of black spikes from his brow back over his head and down his back.
-    c.pattern(23, 22, ["S...S...S", "SS.SS.SSS"], ["S": spike])
-    c.pattern(14, 25, ["..SS", "SSSS", "..SS", "...S", "..SS", "SSSS", "..SS", "...S", "..SS", "SSSS", "..SS"],
-              ["S": spike])
+    // The crest of black spikes from his brow back over his head and down his back: a few big swept-back thorns
+    // rather than a fine comb, so they read at desktop size.
+    c.pattern(23, 20, ["S...S...S", "SS..SS..SS", "SSS.SSS.SSS"], ["S": spike])
+    for y in [24, 29] {
+        c.pattern(12, y, ["S.....", ".SS...", "..SSSS", "...SSS"], ["S": spike])
+    }
     c.rect(17, 24, 1, 9, hideD)
     // The horns, curling up and out.
     c.pattern(16, 17, [
@@ -179,7 +186,8 @@ private func drawGachnar(_ c: PixelCanvas, _ p: Pose) {
     c.rect(22, 29, 2, 2, ink); c.rect(32, 29, 2, 2, ink)
     c.pattern(21, 27, ["KK.........KK.", "..K.......K..."].map { String($0) }, ["K": ink])
     c.rect(20, 32, 16, 2, C(0x3A0E0A))
-    c.pattern(20, 32, ["W.W.W.W.W.W.W.W.", ".W.W.W.W.W.W.W.W"], ["W": C(0xF4F0DC)])
+    // Five big fangs, chunky enough to count.
+    c.pattern(20, 32, [".WW.WW.WW.WW.WW.", "..W..W..W..W..W."], ["W": C(0xF4F0DC)])
 
     if let a = p.melee {
         guard !behind(p) else { return }
@@ -201,23 +209,33 @@ private func drawAmyTheRat(_ c: PixelCanvas, _ p: Pose) {
 
     drawLegs(c, Look(leg: fur), step: p.step)
     slayerBoots(c, step: p.step, pink, height: 1)
-    // The long bare tail, curving back along the ground and up at the tip.
-    slayerLine(c, 17.5, 36.5, 12.5, 40.5, pink, 0.8)
-    slayerLine(c, 12.5, 40.5, 6.5, 41.5, pink, 0.6)
-    slayerLine(c, 6.5, 41.5, 3.5, 38.5, pinkD, 0.5)
+    // The long bare tail, curving back along the ground and up at the tip (lying flatter when she sits, so it stays
+    // on the ground with her).
+    if seatedPose {
+        slayerLine(c, 17.5, 35.5, 12.5, 38.5, pink, 0.8)
+        slayerLine(c, 12.5, 38.5, 6.5, 39, pink, 0.6)
+        slayerLine(c, 6.5, 39, 3.5, 36.5, pinkD, 0.5)
+    } else {
+        slayerLine(c, 17.5, 36.5, 12.5, 40.5, pink, 0.8)
+        slayerLine(c, 12.5, 40.5, 6.5, 41.5, pink, 0.6)
+        slayerLine(c, 6.5, 41.5, 3.5, 38.5, pinkD, 0.5)
+    }
     c.oy += p.breathe
     drawBody(c, Look(body: fur, shade: furD, arm: fur, eye: nil))
     c.rect(18, 26, 20, 1, furL); c.rect(18, 26, 1, 10, furL)
     // Round ears, pink inside.
     c.pattern(17, 20, [".FFFF.", "FPPPPF", "FPPPPF", "FPPPPF", ".FPPF.", "..FF.."], ["F": fur, "P": pink])
     c.pattern(31, 20, [".FFFF.", "FPPPPF", "FPPPPF", "FPPPPF", ".FPPF.", "..FF.."], ["F": fur, "P": pink])
-    // Clawd's face, with beady eyes.
-    c.rect(20, 28, 15, 5, clawdOrange)
+    // Clawd's face, with beady eyes, running on into a long tapering orange muzzle out to the right, so face and
+    // snout make one rat's head in the white suit (and not an orange mask on a white one). Its corners are rounded off
+    // into the fur.
+    c.rect(20, 28, 16, 5, clawdOrange)
+    c.px(20, 28, fur); c.px(20, 32, fur)
     c.rect(22, 29, 2, 2, ink); c.rect(31, 29, 2, 2, ink); c.px(22, 29, white); c.px(31, 29, white)
-    // The snout jutting out to the right, the pink nose on the end, whiskers either side of it.
-    c.pattern(35, 29, ["FFF...", "FFFFF.", "FFFFFN", "ddd..."].map { String($0) },
-              ["F": fur, "N": pink, "d": furD])
-    c.px(41, 30 - twitch, pink); c.px(40 + twitch, 31, pink)
-    c.rect(37, 28 - twitch, 4, 1, furD); c.rect(38, 33 + twitch, 4, 1, furD)
+    c.pattern(36, 28, ["OO.....", "OOOO...", "OOOOOO.", "OOOOss.", "sss...."],
+              ["O": clawdOrange, "s": clawdShade])
+    c.rect(41 + twitch, 29, 2, 2, pink); c.px(42 + twitch, 30, pinkD)
+    // Whiskers fanning out past the nose.
+    c.rect(39, 28 - twitch, 5, 1, furL); c.rect(39, 32 + twitch, 5, 1, furL)
     c.rect(22, 34, 12, 3, furL)
 }
