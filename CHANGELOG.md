@@ -17,6 +17,7 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 - **A way to say thanks.** Clawd Clash stays free; a Ko-fi button under the README's badges, and GitHub's Sponsor button on the repo (`.github/FUNDING.yml`, once Sponsorships is ticked in the repo's settings), lead to ko-fi.com/rodclemen.
 
 ### Changed
+- **The clawdify guide offers a plan you can paste.** Step 6 saves the plan to `~/.claude/plans/` on the contributor's own machine; it now also tells the assistant to hand over a paste-ready copy when the plan is to be shared (in a post proposing the universe, say), without local paths, memory notes or anything private.
 - **The README's disclaimer covers every universe, now and later.** It named only Lucasfilm, Disney, Marvel, DC Comics and Warner Bros., from when there were three universes, and missed the BBC, the Tolkien Estate and everyone since. It now says the app isn't affiliated with or endorsed by any of the studios, networks, publishers, estates or creators whose universes it parodies, that the characters and places belong to them and the puns to us, so it stays true with each new universe. The showcase pages keep their own lists, each naming its one universe's owners.
 
 ### Fixed
