@@ -80,3 +80,15 @@ func drawOutaTime(_ c: PixelCanvas, _ o: OutaTime, t: Double) {
         c.ellipse(x0, 30, 12, 12, C(0xFFFFFF, 0.8 * o.flash))
     }
 }
+
+extension OutaTime: CompactionLook {
+    /// The sparks, the flash and the fire trails, from the traveller's feet back the way it faces.
+    func layers(cast: Cast, x: CGFloat, y: CGFloat, lift: CGFloat, scale: CGFloat, facing: CGFloat, t: Double) -> [StageLayer] {
+        let fx = PixelCanvas(outaTimeWidth, Sprite.height)
+        drawOutaTime(fx, self, t: t)
+        guard let img = fx.makeImage() else { return [] }
+        let w = CGFloat(fx.w) * scale, h = CGFloat(fx.h) * scale
+        let left = facing < 0 ? x - (CGFloat(fx.w - outaTimeAnchor)) * scale : x - CGFloat(outaTimeAnchor) * scale
+        return [StageLayer(image: img, rect: CGRect(x: left.rounded(), y: y, width: w, height: h), mirrored: facing < 0)]
+    }
+}

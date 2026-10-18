@@ -26,6 +26,9 @@ protocol UniverseModule {
     var swingLine: Px? { get }
     /// A caption that types the place in when the scene changes, in place of the usual place name (The Clawd Files').
     var placeCaption: PlaceCaption? { get }
+    /// What a compacted session's leader looks like while it's away and back (`UniverseCompaction.away`), `k` (0…1)
+    /// through it; nil: nothing to see.
+    func compactionLook(k: Double, cast: Cast) -> CompactionLook?
 }
 
 extension UniverseModule {
@@ -39,6 +42,40 @@ extension UniverseModule {
     var moonwalkers: Set<Cast> { [] }
     var swingLine: Px? { nil }
     var placeCaption: PlaceCaption? { nil }
+    func compactionLook(k: Double, cast: Cast) -> CompactionLook? { nil }
+}
+
+/// A moment of a compaction on stage: The Clawd Files' abduction beam, Stevie Clawdberg's 88 mph, Clawd Slayer's
+/// forgetting spell. The overlay asks for it every frame while it plays.
+protocol CompactionLook {
+    /// A line over the character's head ("WHERE DID THE TIME GO?").
+    var caption: String? { get }
+    /// How much of the character shows (fading into a beam or a flash).
+    var alpha: Double { get }
+    /// How far it's lifted, in art pixels.
+    var lift: Double { get }
+    /// Art pixels kept clear over its head for a mark (the forgetting spell's "?"), so its name tag sits above.
+    var markRoom: Double { get }
+    /// What's drawn round it, placed for a character at `x` (screen points, its middle) standing on `y`, already lifted
+    /// `lift` points, drawn `scale` points to an art pixel and facing `facing` (-1 left, 1 right).
+    func layers(cast: Cast, x: CGFloat, y: CGFloat, lift: CGFloat, scale: CGFloat, facing: CGFloat, t: Double) -> [StageLayer]
+    /// Anything done to the character's own picture (a shimmer).
+    func touch(_ sprite: PixelCanvas, t: Double)
+}
+
+extension CompactionLook {
+    var caption: String? { nil }
+    var alpha: Double { 1 }
+    var lift: Double { 0 }
+    var markRoom: Double { 0 }
+    func touch(_ sprite: PixelCanvas, t: Double) {}
+}
+
+/// A picture drawn on the stage, in screen points.
+struct StageLayer {
+    let image: CGImage
+    let rect: CGRect
+    var mirrored = false
 }
 
 /// The place's name, typed in a letter at a time when the scene changes, shown by the window and the screen saver in

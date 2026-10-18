@@ -215,3 +215,18 @@ func slayerTabulaShimmer(_ c: PixelCanvas, _ s: SlayerTabulaRasa, t: Double) {
         }
     }
 }
+
+extension SlayerTabulaRasa: CompactionLook {
+    /// The crystal, the smoke and the "?" round the character's head; its own picture shimmers.
+    func layers(cast: Cast, x: CGFloat, y: CGFloat, lift: CGFloat, scale: CGFloat, facing: CGFloat, t: Double) -> [StageLayer] {
+        let fx = PixelCanvas(slayerTabulaWidth, slayerTabulaTop + Sprite.height)
+        slayerDrawTabulaRasa(fx, self, headTop: cast.drawnTop(), t: t)
+        guard let img = fx.makeImage() else { return [] }
+        let w = CGFloat(fx.w) * scale, h = CGFloat(fx.h) * scale
+        let mid = CGFloat(Sprite.bodyCenterX)
+        let left = facing < 0 ? x - (CGFloat(fx.w) - mid) * scale : x - mid * scale
+        return [StageLayer(image: img, rect: CGRect(x: left.rounded(), y: y + lift, width: w, height: h), mirrored: facing < 0)]
+    }
+
+    func touch(_ sprite: PixelCanvas, t: Double) { slayerTabulaShimmer(sprite, self, t: t) }
+}

@@ -23,4 +23,7 @@ struct FilesUniverse: UniverseModule {
 
     /// Every scene opens with the place typed in, as in the show (`FilesCaption`).
     var placeCaption: PlaceCaption? { PlaceCaption(typed: FilesCaption.typed, done: FilesCaption.done, font: FilesCaption.font) }
+
+    /// A compacted FBI agent loses some time: lifted away in a beam of light and set back down.
+    func compactionLook(k: Double, cast: Cast) -> CompactionLook? { MissingTime(k: k) }
 }

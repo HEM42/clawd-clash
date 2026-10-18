@@ -20,4 +20,7 @@ struct ClawdbergUniverse: UniverseModule {
     }
     /// A bullwhip is no reason to float cross-legged.
     var meditation: Meditation { Meditation(who: .never) }
+
+    /// A compacted time traveller hits 88 mph: gone in a flash, back with three booms.
+    func compactionLook(k: Double, cast: Cast) -> CompactionLook? { OutaTime(k: k) }
 }

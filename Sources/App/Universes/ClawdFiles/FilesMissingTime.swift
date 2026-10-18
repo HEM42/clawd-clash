@@ -63,3 +63,14 @@ func drawAbductionBeam(_ c: PixelCanvas, strength: Double, t: Double) {
         c.px(cx + dx, c.h - 1 - dy, C(0xF0FFF6, strength * (1 - f) * 0.8))
     }
 }
+
+extension MissingTime: CompactionLook {
+    /// The beam of light, behind the agent.
+    func layers(cast: Cast, x: CGFloat, y: CGFloat, lift: CGFloat, scale: CGFloat, facing: CGFloat, t: Double) -> [StageLayer] {
+        let beam = PixelCanvas(24, Sprite.height + 90)
+        drawAbductionBeam(beam, strength: self.beam, t: t)
+        guard let img = beam.makeImage() else { return [] }
+        let w = CGFloat(beam.w) * scale, h = CGFloat(beam.h) * scale
+        return [StageLayer(image: img, rect: CGRect(x: (x - w / 2).rounded(), y: y, width: w, height: h))]
+    }
+}

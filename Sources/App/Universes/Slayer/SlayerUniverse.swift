@@ -20,4 +20,7 @@ struct SlayerUniverse: UniverseModule {
     }
     /// Only the witches float cross-legged (Willow does in "Lessons" and "Chosen").
     var meditation: Meditation { Meditation(who: .heroes(slayerWitches)) }
+
+    /// A compacted "Tabula Rasa" eight: Willow's forgetting spell, cast and broken.
+    func compactionLook(k: Double, cast: Cast) -> CompactionLook? { SlayerTabulaRasa(k: k, cast: cast) }
 }
