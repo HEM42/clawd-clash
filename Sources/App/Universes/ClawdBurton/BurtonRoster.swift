@@ -151,7 +151,7 @@ let burtonTheme = Theme(
     },
     nemeses: burtonNemeses.map { (.hero($0.0), .villain($0.1)) },
     ride: { _ in nil },
-    menuIcon: drawSpiralHillIcon,
+    menuIcon: burtonMenuIcon,
     legend: .hero(.jackSkullington))
 
 // MARK: - Places
