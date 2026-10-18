@@ -20,4 +20,7 @@ struct FilesUniverse: UniverseModule {
     }
     /// A flashlight is no reason to float cross-legged.
     var meditation: Meditation { Meditation(who: .never) }
+
+    /// Every scene opens with the place typed in, as in the show (`FilesCaption`).
+    var placeCaption: PlaceCaption? { PlaceCaption(typed: FilesCaption.typed, done: FilesCaption.done, font: FilesCaption.font) }
 }

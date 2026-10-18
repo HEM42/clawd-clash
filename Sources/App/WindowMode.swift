@@ -626,9 +626,9 @@ final class HeaderView: NSView, NSViewToolTipOwner {
     /// itself in, so the bar behind it doesn't grow a letter at a time.
     private func titleWidth() -> CGFloat {
         guard let location = controller?.location else { return 0 }
-        if location.universe == .clawdFiles {
-            let all = FilesCaption.typed(location, after: 1e6).joined(separator: "  ·  ")
-            return NSAttributedString(string: all, attributes: [.font: FilesCaption.font(11.5)]).size().width + 6
+        if let caption = location.universe.module.placeCaption {
+            let all = caption.typed(location, 1e6).joined(separator: "  ·  ")
+            return NSAttributedString(string: all, attributes: [.font: caption.font(11.5)]).size().width + 6
         }
         return NSAttributedString(string: location.name.uppercased(), attributes: [
             .font: NSFont.systemFont(ofSize: 10.5, weight: .semibold), .kern: 1.2]).size().width
@@ -661,13 +661,13 @@ final class HeaderView: NSView, NSViewToolTipOwner {
         defer { NSGraphicsContext.restoreGraphicsState() }
 
         // Where the crew is, on the left; in The Clawd Files, typed in once the scene has changed, as in the show.
-        if let location = controller?.location, location.universe == .clawdFiles {
+        if let location = controller?.location, let caption = location.universe.module.placeCaption {
             let now = Date().timeIntervalSince1970
             if typing?.location != location { typing = (location, now + 0.15) }
             if var t = typing, now < t.start { t.start = max(t.start, arrival?() ?? 0); typing = t }
             let since = now - (typing?.start ?? now)
-            let label = NSAttributedString(string: FilesCaption.typed(location, after: max(0, since)).joined(separator: "  ·  "),
-                                           attributes: [.font: FilesCaption.font(11.5), .foregroundColor: NSColor(white: 0.92, alpha: 1)])
+            let label = NSAttributedString(string: caption.typed(location, max(0, since)).joined(separator: "  ·  "),
+                                           attributes: [.font: caption.font(11.5), .foregroundColor: NSColor(white: 0.92, alpha: 1)])
             let at = NSPoint(x: 14, y: (midY - label.size().height / 2).rounded())
             // A dark box behind it, like subtitles, so it reads over a busy ceiling.
             if label.length > 0 {
@@ -676,7 +676,7 @@ final class HeaderView: NSView, NSViewToolTipOwner {
                              xRadius: 4, yRadius: 4).fill()
             }
             label.draw(at: at)
-            if !FilesCaption.done(location, after: since) {
+            if !caption.done(location, since) {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in self?.needsDisplay = true }
             }
         } else if let where_ = controller?.location.name {

@@ -921,25 +921,27 @@ final class ClawdClashSaverView: ScreenSaverView {
         var counts = ["\(sessions.count) SESSION\(sessions.count == 1 ? "" : "S")"]
         if agents > 0 { counts.append("\(agents) AGENT\(agents == 1 ? "" : "S")") }
         if waiting > 0 { counts.append("\(waiting) NEED\(waiting == 1 ? "S" : "") YOU") }
-        // In The Clawd Files the place types itself in, with where it is under it, as every scene opens in the show.
+        // A universe with a place caption (The Clawd Files) types the place in, with where it is under it, as every
+        // scene opens in the show.
         var name: [(String, CGFloat, NSFont.Weight, NSColor, CGFloat)] = [
             (location.name.uppercased(), inWindow ? 27 : 18, .heavy, NSColor(white: 0.88, alpha: 1), inWindow ? 6 : 4)]
-        if location.universe == .clawdFiles {
+        let caption = location.universe.module.placeCaption
+        if let caption {
             let arrives = max(now, comic.map { $0.start + $0.trip.duration } ?? 0, wipe.map { $0.start + Wipe.duration } ?? 0)
-            if caption?.location != location { caption = (location, arrives) }
-            let typed = FilesCaption.typed(location, after: now - (caption?.start ?? now))
+            if self.caption?.location != location { self.caption = (location, arrives) }
+            let typed = caption.typed(location, now - (self.caption?.start ?? now))
             name = [(typed.first ?? " ", inWindow ? 27 : 18, .heavy, NSColor(white: 0.9, alpha: 1), inWindow ? 3 : 2),
                     (typed.count > 1 ? typed[1] : " ", inWindow ? 17 : 12, .heavy, NSColor(white: 0.8, alpha: 1), inWindow ? 2 : 1)]
         }
         let place = text(name + [
                           (idle ? "NO AI SESSIONS RUNNING  ·  THE LOCALS ARE HOLDING THE FORT"
                                 : feed == nil ? "" : counts.joined(separator: "  ·  "), 14, .semibold, NSColor(white: 0.65, alpha: 1), 2)],
-                         right: shifted, typed: location.universe == .clawdFiles ? 2 : 0)
+                         right: shifted, typed: caption == nil ? 0 : 2, typedFont: caption?.font)
         let ps = sized(place)
         if !isPreview {
             let rect = rectFor(place, x: shifted ? bounds.width - m - ps.width : m, top: bounds.height - m * 0.9)
             // The Clawd Files' typed caption gets a dark box behind it, like subtitles, so it reads over a busy ceiling.
-            if location.universe == .clawdFiles {
+            if caption != nil {
                 let pad = 10 * u
                 let box = rect.insetBy(dx: -pad, dy: -pad * 0.7)
                 let shade = image(box.size) { ctx, size in
@@ -1059,14 +1061,15 @@ final class ClawdClashSaverView: ScreenSaverView {
 
     /// Lines of text stacked top to bottom: (string, size, weight, colour, kern).
     private func text(_ lines: [(String, CGFloat, NSFont.Weight, NSColor, CGFloat)], font: NSFont? = nil,
-                      second: (String, CGFloat, NSFont.Weight, NSColor, CGFloat)? = nil, right: Bool = false, typed: Int = 0) -> CGImage {
+                      second: (String, CGFloat, NSFont.Weight, NSColor, CGFloat)? = nil, right: Bool = false, typed: Int = 0,
+                      typedFont: ((CGFloat) -> NSFont)? = nil) -> CGImage {
         let all = lines + (second.map { [$0] } ?? [])
         let key = "text" + all.map { $0.0 }.joined(separator: "\u{1}") + "\(u)\(scale)\(right)\(typed)"
         if let hit = textCache[key] { return hit }
-        // The first `typed` lines in The Clawd Files' typewriter face.
+        // The first `typed` lines in the place caption's face (The Clawd Files' typewriter).
         let texts = all.enumerated().filter { !$0.element.0.isEmpty }.map { i, l in
             NSAttributedString(string: l.0, attributes: [
-                .font: i == 0 && font != nil ? font! : i < typed ? FilesCaption.font(l.1 * u)
+                .font: i == 0 && font != nil ? font! : i < typed ? (typedFont ?? { .monospacedSystemFont(ofSize: $0, weight: l.2) })(l.1 * u)
                     : NSFont.monospacedSystemFont(ofSize: l.1 * u, weight: l.2),
                 .foregroundColor: l.3, .kern: l.4 * u])
         }

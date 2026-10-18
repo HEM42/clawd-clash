@@ -1,4 +1,4 @@
-import CoreGraphics
+import AppKit
 
 /// One universe, as the app sees it: everything the engine asks a universe for. Each universe's folder has exactly one
 /// type conforming to this, in its `<Prefix>Universe.swift`. Members without a default must be written; the rest have
@@ -24,6 +24,8 @@ protocol UniverseModule {
     var moonwalkers: Set<Cast> { get }
     /// The web line's colour for characters who swing; nil: the usual near-white.
     var swingLine: Px? { get }
+    /// A caption that types the place in when the scene changes, in place of the usual place name (The Clawd Files').
+    var placeCaption: PlaceCaption? { get }
 }
 
 extension UniverseModule {
@@ -36,6 +38,18 @@ extension UniverseModule {
     var poseStyle: PoseStyle { .modern }
     var moonwalkers: Set<Cast> { [] }
     var swingLine: Px? { nil }
+    var placeCaption: PlaceCaption? { nil }
+}
+
+/// The place's name, typed in a letter at a time when the scene changes, shown by the window and the screen saver in
+/// place of the usual place name.
+struct PlaceCaption {
+    /// What's been typed `t` seconds after it started, line by line (the place, then where it is).
+    let typed: (_ place: Location, _ t: Double) -> [String]
+    /// Whether it's done typing (and blinking) `t` seconds after it started.
+    let done: (_ place: Location, _ t: Double) -> Bool
+    /// The typeface, at a size.
+    let font: (CGFloat) -> NSFont
 }
 
 /// Who meditates in a universe (floating cross-legged, among their drills), if their persona can sit at all.
