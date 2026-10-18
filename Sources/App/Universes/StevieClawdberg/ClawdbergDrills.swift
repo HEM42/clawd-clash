@@ -1,6 +1,6 @@
 import Foundation
 
-// Stevie Clawdberg's own solo practice (`Cast.bespokeDrills`): Indy cracking his whip at a bottle on a post, Squint
+// Stevie Clawdberg's own solo practice (`UniverseModule.drills`): Indy cracking his whip at a bottle on a post, Squint
 // harpooning a yellow barrel bobbing on the swell, Data testing a spring-loaded gadget, Roofio fencing the air with a
 // lunge and a recovery, and Marty running through his guitar solo. Nobody in this universe floats cross-legged in
 // meditation (`Cast.meditates`).

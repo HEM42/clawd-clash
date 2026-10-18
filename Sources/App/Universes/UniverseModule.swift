@@ -37,6 +37,8 @@ protocol UniverseModule {
     var shootOuts: [ShootOut] { get }
     /// Its rides, every one (for Preview's sheet; who takes which is `theme.ride`).
     var rides: [Ride] { get }
+    /// Characters' own drills, practised now and then among the general ones.
+    var drills: [Cast: BespokeDrill] { get }
 }
 
 extension UniverseModule {
@@ -54,6 +56,7 @@ extension UniverseModule {
     var quirks: StageQuirks { StageQuirks() }
     var shootOuts: [ShootOut] { [] }
     var rides: [Ride] { [] }
+    var drills: [Cast: BespokeDrill] { [:] }
 }
 
 /// Han shoots first, as an engine feature (`ShootsFirst` draws it): whenever `shooter` and `target` fight, now and

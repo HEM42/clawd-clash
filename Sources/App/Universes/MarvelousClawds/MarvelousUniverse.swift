@@ -5,6 +5,7 @@ struct MarvelousUniverse: UniverseModule {
     var theme: Theme { marvelTheme }
     var places: [Location: Place] { marvelPlaces }
     var hem: HemCostume { marvelousHem }
+    var drills: [Cast: BespokeDrill] { marvelousBespokeDrills }
     var transitions: TransitionSet? {
         TransitionSet { last, cast, from, to in ComicTrip.pick(after: (last as? ComicTrip)?.kind, cast: cast, to: to) }
     }

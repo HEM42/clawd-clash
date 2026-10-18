@@ -5,6 +5,7 @@ struct FilesUniverse: UniverseModule {
     var theme: Theme { filesTheme }
     var places: [Location: Place] { filesPlaces }
     var hem: HemCostume { filesHem }
+    var drills: [Cast: BespokeDrill] { filesBespokeDrills }
     var transitions: TransitionSet? {
         TransitionSet { last, cast, from, to in FilesTrip.pick(after: (last as? FilesTrip)?.kind, cast: cast, from: from, to: to) }
     }

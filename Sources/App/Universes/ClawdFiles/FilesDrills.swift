@@ -1,6 +1,6 @@
 import Foundation
 
-// The Clawd Files' own solo practice (`Cast.bespokeDrills`): the agents at the FBI's firing range, Scrawly reading a
+// The Clawd Files' own solo practice (`UniverseModule.drills`): the agents at the FBI's firing range, Scrawly reading a
 // case file, the Lone Gunclawds hacking, Skinnard's jumping jacks and Queequeg chasing his tail.
 
 let filesBespokeDrills: [Cast: BespokeDrill] = {

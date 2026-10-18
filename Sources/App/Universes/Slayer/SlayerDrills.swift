@@ -1,6 +1,6 @@
 import Foundation
 
-// Clawd Slayer's own solo practice (`Cast.bespokeDrills`): Buffy kicking a punch bag that swings back at her, Willow
+// Clawd Slayer's own solo practice (`UniverseModule.drills`): Buffy kicking a punch bag that swings back at her, Willow
 // floating a pencil off a stack of books ("emotional control"), Giles reading a dusty tome and then polishing his
 // glasses, Xander hammering nails into a plank, Anya counting the takings at the Magic Box counter, the Potentials
 // staking a training dummy and Lorn singing karaoke into a mic on a stand. Only the witches (Willow, Tara and Jenny,

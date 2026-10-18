@@ -19,7 +19,7 @@ enum Drill: CaseIterable {
     case stretch       // leaning slowly over to one side, then the other
     case hops          // those that can't sit: hopping on the spot
     case signature     // its own move, over and over
-    case bespoke       // something only it does (`Cast.bespokeDrills`)
+    case bespoke       // something only it does (`UniverseModule.drills`)
 
     /// Feet on the ground: a flyer doesn't take off on a sortie in the middle of it.
     var grounded: Bool {
@@ -74,7 +74,7 @@ extension Cast {
             list += p.canSit ? [.squats, .stretch] : [.hops, .stretch]
         }
         if meditates { list += [.meditate, .meditate] }
-        if Self.bespokeDrills[self] != nil { list += [.bespoke, .bespoke, .bespoke] }
+        if Self.bespokeDrill(for: self) != nil { list += [.bespoke, .bespoke, .bespoke] }
         return list
     }
 
@@ -102,7 +102,7 @@ extension Cast {
         let ramp = min(1, d.e / 0.8, (d.length - d.e) / 0.8)   // easing in and out of a set
         switch d.kind {
         case .bespoke:
-            Self.bespokeDrills[self]?(c, self, d, t)
+            Self.bespokeDrill(for: self)?(c, self, d, t)
         case .kata, .skyShots, .skyCast, .portal:
             drawPersona(c, self, t: t, mode: .working, walking: false, role: .none)
         case .flourish, .checkWeapon, .crackle, .signature:
@@ -253,279 +253,10 @@ func setRamp(_ d: DrillPlay, rise: Double = 0.8) -> Double {
 }
 
 extension Cast {
-    /// A few characters' own drills, where one says something about them better than the general ones. The Clawd
-    /// Files', Stevie Clawdberg's and Clawd Slayer's are in their own files (`filesBespokeDrills`,
-    /// `clawdbergBespokeDrills`, `slayerBespokeDrills`).
-    static let bespokeDrills: [Cast: BespokeDrill] = [
-        // Yodle: a little cairn of stones lifted off the ground with the Force, turning slowly.
-        .hero(SWHero.yoda): { c, who, d, t in
-            standing(c, who, t: t)
-            drawLiftedStones(c, d: d, t: t)
-        },
-        // Darth Vapor: an Imperial crate held up in the air, shaking with the strain.
-        .villain(SWVillain.vader): { c, who, d, t in
-            standing(c, who, t: t)
-            let lift = 11 * setRamp(d, rise: 1.2)
-            let shake = lift > 8 ? (noise(Int(t * 24)) > 0.5 ? 1 : 0) : 0
-            let x = 53 + shake, y = Int((38 - lift).rounded())
-            c.rect(x, y, 9, 7, C(0x4A4E58))
-            c.rect(x, y, 9, 1, C(0x7A808C)); c.rect(x, y + 3, 9, 1, C(0x30333A))
-            c.rect(x + 1, y + 1, 2, 2, C(0xC8A030)); c.rect(x + 6, y + 4, 2, 2, C(0x9AA0AC))
-            if lift < 3 { c.rect(x - 1, 44, 11, 1, C(0x8A7E6E, 0.6)) }
-        },
-        // Spider-Clawd: a web yo-yo, down to the ground and back up into the hand.
-        .hero(MarvelHero.spiderMan): { c, who, d, t in
-            standing(c, who, t: t)
-            let hand = (who.muzzle.x + 1, who.muzzle.y)
-            let k = 0.5 - 0.5 * cos(d.e * 2 * .pi / 1.2)
-            let end = (hand.0 + 4, hand.1 + 2 + 7 * k * setRamp(d))
-            c.glowLine(hand.0, hand.1, end.0, end.1, core: C(0xF4F4F8, 0.9), glow: C(0xFFFFFF, 0), coreR: 0.35, glowR: 0.4)
-            c.rect(Int(end.0) - 1, Int(end.1), 3, 3, C(0xF4F4F8))
-            c.px(Int(end.0), Int(end.1) + 1, C(0xB8BCC8))
-        },
-        // Hawk-I: target practice at a straw boss on a stand, the arrows staying in it.
-        .hero(MarvelHero.hawkeye): { c, who, d, t in
-            let period = 1.6
-            standing(c, who, t: t) { $0.fire = (d.e, false); $0.firePeriod = period }
-            let tx = 64
-            c.rect(tx + 2, 36, 1, 8, C(0x6A4A2A)); c.rect(tx + 4, 36, 1, 8, C(0x6A4A2A))      // the stand
-            c.rect(tx, 25, 7, 13, C(0xE8DCC0))
-            c.rect(tx + 1, 27, 5, 9, C(0xD83A2A)); c.rect(tx + 2, 29, 3, 5, C(0xE8DCC0)); c.rect(tx + 3, 30, 1, 3, C(0xD83A2A))
-            let shots = Int(d.e / period), f = frac(d.e / period)
-            for n in 0..<min(4, shots) {
-                let y = 28 + Int(noise(d.seed &+ n * 7) * 7)
-                for k in 1...4 { c.px(tx - k, y, k == 4 ? C(0xC83A2A) : C(0x6A4A2A)) }
-            }
-            if f < 0.3, shots < 4 {
-                let y = 28 + noise(d.seed &+ shots * 7) * 7
-                let from = (who.muzzle.x + 2, who.muzzle.y)
-                let k = f / 0.3
-                drawProjectile(c, .arrow, from: from, head: (from.0 + k * (Double(tx) - from.0), from.1 + k * (y - from.1)), t: t)
-            }
-        },
-        // The Flare: running on the spot, very, very fast.
-        .hero(DCHero.flash): { c, who, d, t in
-            let r = setRamp(d)
-            standing(c, who, t: t) { p in
-                if r > 0.2 { p.step = Int(t * 16) % 2; p.breathe = 0; p.dx = Int(t * 16) % 2 }
-            }
-            guard r > 0.5 else { return }
-            for i in 0..<4 {
-                let y = 24 + Int(noise(Int(t * 12) + i * 5) * 18), len = 4 + Int(noise(Int(t * 12) + i) * 7)
-                c.rect(15 - len - Int(noise(i * 3 + Int(t * 12)) * 4), y, len, 1, (i % 2 == 0 ? C(0xFFD21E) : C(0xFF3A2A)).alpha(0.8))
-            }
-            if noise(Int(t * 20)) > 0.6 {
-                let x = 18 + Int(noise(Int(t * 20) + 3) * 20), y = 22 + Int(noise(Int(t * 20) + 5) * 20)
-                c.px(x, y, C(0xFFF4A0)); c.px(x + 1, y - 1, C(0xFFD21E)); c.px(x + 2, y, C(0xFFF4A0))
-            }
-        },
-        // Wondrous Woman: the golden lasso twirled in a loop over her head.
-        .hero(DCHero.wonderWoman): { c, who, d, t in
-            standing(c, who, t: t)
-            let r = setRamp(d)
-            guard r > 0.1 else { return }
-            let hand = Sprite.hand, centre = (Sprite.bodyCenterX + 4, 13.0), spin = t * 10
-            let near = (centre.0 + cos(spin) * 11 * r, centre.1 + sin(spin) * 3 * r)
-            c.glowLine(hand.x, hand.y - 1, near.0, near.1, core: C(0xFFD24A), glow: C(0xFFB000, 0.3), coreR: 0.4, glowR: 1)
-            for i in 0..<18 {
-                let a = Double(i) / 18 * 2 * .pi + spin
-                c.px(Int((centre.0 + cos(a) * 11 * r).rounded()), Int((centre.1 + sin(a) * 3 * r).rounded()),
-                     i % 3 == 0 ? C(0xFFF0A0) : C(0xFFC21E))
-            }
-        },
-        // Green Lamplighter: willpower made solid, a glowing box, then a spring, then gone.
-        .hero(DCHero.greenLantern): { c, who, d, t in
-            standing(c, who, t: t) { $0.armRaise = 3 }
-            let period = 2.8, n = Int(d.e / period), f = frac(d.e / period)
-            guard f < 0.8 else { return }
-            let grow = min(1, f / 0.25), fade = f > 0.65 ? (0.8 - f) / 0.15 : 1
-            let core = C(0xB8FFB0).alpha(fade), glow = C(0x3AE84A).alpha(0.8 * fade)
-            let hand = (Sprite.hand.x, Sprite.hand.y - 3)
-            c.glowLine(hand.0, hand.1, hand.0 + 8 * grow, hand.1, core: core, glow: glow, coreR: 0.3, glowR: 1)
-            if n % 2 == 0 {
-                let s = Int(10 * grow), x = 52, y = 44 - s
-                c.rect(x, y, s, 1, core); c.rect(x, 43, s, 1, core); c.rect(x, y, 1, s, core); c.rect(x + s - 1, y, 1, s, core)
-                if s > 2 { c.rect(x + 1, y + 1, s - 2, s - 2, glow.alpha(0.25 * fade)) }
-            } else {
-                for i in 0..<5 {
-                    let y = 43 - Double(i) * 3 * grow
-                    c.glowLine(52, y, 60, y - 1.5 * grow, core: core, glow: glow, coreR: 0.4, glowR: 1)
-                }
-                c.rect(51, Int(43 - 15 * grow), 10, 2, core)
-            }
-        },
-        // Thanoz: the gems glowing one by one round the gauntlet, then the snap.
-        .villain(MarvelVillain.thanos): { c, who, d, t in
-            standing(c, who, t: t) { $0.armRaise = 3 }
-            let period = 3.2, f = frac(d.e / period)
-            let hand = (who.weaponPivot.x, who.weaponPivot.y - 3)
-            let gems = [C(0xFFE04A), C(0xFF3A3A), C(0x4A8AFF), C(0xB04AFF), C(0x3AE87A), C(0xFF9A2A)]
-            if f < 0.7 {
-                for (i, g) in gems.enumerated() where f > Double(i) * 0.1 {
-                    let a = Double(i) / 6 * 2 * .pi + t * 2
-                    c.rect(Int((hand.0 + cos(a) * 6).rounded()), Int((hand.1 + sin(a) * 6).rounded()), 2, 2, g)
-                }
-            } else if f < 0.78 {
-                let r = (f - 0.7) / 0.08 * 10
-                for i in 0..<16 {
-                    let a = Double(i) / 16 * 2 * .pi
-                    c.px(Int(hand.0 + cos(a) * r), Int(hand.1 + sin(a) * r), white)
-                    c.px(Int(hand.0 + cos(a) * r * 0.6), Int(hand.1 + sin(a) * r * 0.6), C(0xF4E0FF, 0.7))
-                }
-            } else {
-                let k = (f - 0.78) / 0.22
-                for i in 0..<8 {
-                    let x = hand.0 + 2 + k * 14 + noise(i * 3) * 4, y = hand.1 - 2 - k * 6 + noise(i * 5) * 6
-                    c.px(Int(x), Int(y), C(0x8A7A6A).alpha(1 - k))
-                }
-            }
-        },
-        // Lokee: an illusion of himself beside him, flickering in and out.
-        .villain(MarvelVillain.loki): { c, who, d, t in
-            let period = 2.6, f = frac(d.e / period)
-            if f > 0.15, f < 0.85, setRamp(d) > 0.9, noise(Int(t * 14)) > 0.12 {
-                let ghost = PixelCanvas(c.w, c.h)
-                standing(ghost, who, t: t + 0.9)
-                c.paste(ghost, x: 17, alpha: 0.4)
-                for i in 0..<3 {
-                    let y = 20 + Int(noise(Int(t * 10) + i) * 24)
-                    c.px(17 + 20 + Int(noise(Int(t * 10) + i * 4) * 20), y, C(0x3AD06A, 0.7))
-                }
-            }
-            standing(c, who, t: t)
-        },
-        // The Bulk: leaps a little and smashes the ground, dust and cracks flying.
-        .hero(MarvelHero.hulk): { c, who, d, t in
-            let period = 2.2, f = frac(d.e / period)
-            standing(c, who, t: t) { p in if f > 0.45, f < 0.6 { p.melee = 40 } }
-            guard setRamp(d) > 0.9 else { return }
-            if f > 0.2, f < 0.45 { c.shift(dx: 0, dy: -Int((sin((f - 0.2) / 0.25 * .pi) * 5).rounded())) }
-            if f > 0.45, f < 0.55 { c.shift(dx: noise(Int(t * 30)) > 0.5 ? 1 : -1, dy: 0) }
-            if f > 0.45 {
-                let k = (f - 0.45) / 0.55
-                for i in 0..<6 {
-                    let side = i % 2 == 0 ? 1.0 : -1.0
-                    let x = Sprite.bodyCenterX + side * (12 + k * 14 + Double(i) * 1.5), y = 43 - k * 5 - Double(i % 3)
-                    c.rect(Int(x), Int(y), 3, 2, C(0xA89880).alpha(0.8 * (1 - k)))
-                }
-                let crack = C(0x2A2420).alpha(1 - k)
-                c.px(44, 44, crack); c.px(45, 45, crack); c.px(47, 45, crack); c.px(48, 44, crack); c.px(12, 45, crack); c.px(14, 44, crack)
-            }
-        },
-        // Iron Clawd: testing the boot thrusters, wobbling a few pixels off the ground.
-        .hero(MarvelHero.ironMan): { c, who, d, t in
-            standing(c, who, t: t)
-            let r = setRamp(d)
-            let lift = Int((r * (4 + 2 * sin(d.e * 2.3))).rounded())
-            let wobble = r > 0.8 && sin(d.e * 5.3) > 0.85 ? (sin(d.e * 11) > 0 ? 1 : -1) : 0
-            c.shift(dx: wobble, dy: -lift)
-            guard r > 0.15 else { return }
-            for x in [20, 33] {
-                let len = 2 + Int(noise(Int(t * 30) + x) * 3) + lift / 2
-                let top = 44 - lift
-                c.rect(x + wobble, top, 3, len, C(0x6FD8FF, 0.7))
-                c.rect(x + 1 + wobble, top, 1, max(1, len - 1), C(0xF4FCFF))
-            }
-        },
-        // Ahh2-De2: playing a hologram message, a little flickering blue figure in a beam of light.
-        .hero(SWHero.r2d2): { c, who, d, t in
-            standing(c, who, t: t)
-            let r = setRamp(d, rise: 0.5)
-            guard r > 0.5, noise(Int(t * 16)) > 0.1 else { return }
-            let beam = C(0x7FC8FF, 0.18), fig = C(0x8AD0FF, 0.55), lit = C(0xCFEFFF, 0.7)
-            let proj = (38.0, 21.0)
-            c.glowLine(proj.0, proj.1, 51, 41, core: beam, glow: C(0, 0), coreR: 0.4, glowR: 0.5)
-            c.glowLine(proj.0, proj.1, 59, 41, core: beam, glow: C(0, 0), coreR: 0.4, glowR: 0.5)
-            // A small robed figure, every other row missing.
-            let jitter = noise(Int(t * 8)) > 0.85 ? 1 : 0
-            for y in stride(from: 26 + Int(t * 10) % 2, through: 41, by: 2) {
-                let w = y < 30 ? 3 : (y < 33 ? 5 : 4 + (y - 33) / 3)
-                c.rect(55 - w / 2 + jitter, y, w, 1, y < 30 ? lit : fig)
-            }
-            c.px(53 + jitter, 27, fig); c.px(57 + jitter, 27, fig)           // the buns
-        },
-        // Dalicks: "Elevate!" Up off the ground a step's height, held, and back down, the thrusters glowing under it.
-        .villain(DoctorVillain.dalick): drawElevate,
-        .villain(DoctorVillain.supremeDalick): drawElevate,
-        // Cyberpersons: marching on the spot, stamping in step on the shared clock.
-        .villain(DoctorVillain.cyberperson): drawMarch,
-        .villain(DoctorVillain.mondasianCyberperson): drawMarch,
-        // Sontaron: drill, marching on the spot, a hop on every fourth beat ("Sontar-ha!").
-        .villain(DoctorVillain.sontaron): { c, who, d, t in
-            drawPersona(c, who, t: t, mode: .idle, walking: true, role: .none)
-            let beat = d.e / 0.5
-            if Int(beat) % 4 == 3 { c.shift(dx: 0, dy: -Int((3 * sin(frac(beat) * .pi)).rounded())) }
-        },
-        // Doctor Four: tossing a jelly baby up and catching it, a different colour each time.
-        .hero(DoctorHero.doctorFour): { c, who, d, t in
-            standing(c, who, t: t)
-            let period = 1.1, n = Int(floor(d.e / period)), k = frac(d.e / period)
-            guard setRamp(d) > 0.5 else { return }
-            let hand = who.persona.pivot
-            let x = Int((hand.x + 1 + 2 * sin(k * .pi)).rounded()), y = Int((hand.y - 1 - 14 * sin(k * .pi)).rounded())
-            let col = [C(0xE83A3A), C(0x3AC85A), C(0xF0C83A), C(0xE87AC8), C(0xF08A3A)][n % 5]
-            c.rect(x, y, 2, 3, col); c.px(x, y, col.alpha(0.6))
-        },
-        // Doctor Twelve: the guitar riff, over and over, the notes drifting up off it.
-        .hero(DoctorHero.doctorTwelve): { c, who, d, t in
-            let length = who.signatureLength ?? 2.6
-            idleHabit = HabitPlay(kind: .signature, e: min(length * 0.5, d.e.truncatingRemainder(dividingBy: length)), length: length)
-            standing(c, who, t: t)
-            idleHabit = nil
-            for i in 0..<3 {
-                let f = frac(d.e / 1.8 + Double(i) / 3)
-                let x = Int((42 + f * 10 + sin(f * 9) * 2).rounded()), y = Int((32 - f * 20).rounded())
-                let col = C(0xF4F4F8).alpha(1 - f)
-                c.rect(x, y, 1, 3, col); c.px(x - 1, y + 2, col); c.px(x + 1, y, col)
-            }
-        },
-        // K-Canine: fetch. A ball bowls out ahead, he glides after it, and brings it back.
-        .hero(DoctorHero.kCanine): { c, who, d, t in
-            let period = 3.2, k = frac(d.e / period), r = setRamp(d)
-            let out = k < 0.35 ? k / 0.35 : (k < 0.5 ? 1 : max(0, 1 - (k - 0.5) / 0.4))
-            let chase = k < 0.2 ? 0 : (k < 0.5 ? (k - 0.2) / 0.3 : out)
-            let dx = Int((10 * chase * r).rounded())
-            drawPersona(c, who, t: t, mode: .idle, walking: chase > 0 && chase < 1 && k < 0.5 || (k > 0.5 && out > 0), role: .none)
-            c.shift(dx: dx, dy: 0)
-            let bx = k < 0.5 ? 44 + Int((20 * out * r).rounded()) : 44 + dx
-            c.rect(bx, 41, 2, 2, C(0xE83A3A)); c.px(bx, 41, C(0xFF8A8A))
-        },
-    ].merging(filesBespokeDrills) { a, _ in a }.merging(clawdbergBespokeDrills) { a, _ in a }
-        .merging(slayerBespokeDrills) { a, _ in a }
+    /// A character's own drills, from its universe (`UniverseModule.drills`): where one says something about it better
+    /// than the general ones.
+    static func bespokeDrill(for who: Cast) -> BespokeDrill? { who.universe.module.drills[who] }
 }
 
-/// A Dalick's "Elevate!": up 8 px over 1.2 s, held with a little bob, and down again; a glow under its skirt.
-private func drawElevate(_ c: PixelCanvas, _ who: Cast, _ d: DrillPlay, _ t: Double) {
-    let r = setRamp(d, rise: 1.2)
-    let lift = Int((8 * r + (r > 0.95 ? sin(d.e * 2.4) : 0)).rounded())
-    c.baseY = -lift
-    standing(c, who, t: t)
-    c.baseY = 0
-    guard lift > 1 else { return }
-    let glow = C(0xFFB84A, 0.35 + 0.2 * noise(Int(t * 20)))
-    c.rect(18, 44 - lift, 21, 1, glow)
-    c.rect(22, 45 - lift, 13, 1, glow.alpha(0.5))
-}
 
-/// Cyber marching: walking on the spot, everyone on the same beat.
-private func drawMarch(_ c: PixelCanvas, _ who: Cast, _ d: DrillPlay, _ t: Double) {
-    drawPersona(c, who, t: t, mode: .idle, walking: true, role: .none)
-}
 
-/// Three stones, biggest at the bottom, lifted together and turning, for Yodle.
-private func drawLiftedStones(_ c: PixelCanvas, d: DrillPlay, t: Double) {
-    let lift = 12 * setRamp(d, rise: 1.4)
-    let stones: [(w: Int, h: Int, off: Double)] = [(7, 4, 0), (5, 3, 1.2), (3, 3, 2.1)]
-    var y = 44 - lift
-    for (i, s) in stones.enumerated() {
-        let bob = lift > 6 ? sin(t * 2.2 + s.off) * 1.2 : 0
-        let x = 55 + Int((sin(t * 1.4 + s.off) * Double(i) * 0.8).rounded()) - s.w / 2
-        let top = Int((y - Double(s.h) + bob).rounded())
-        c.rect(x, top, s.w, s.h, C(0x7A6E5E))
-        c.rect(x, top, s.w, 1, C(0xA89A84)); c.rect(x + s.w - 1, top, 1, s.h, C(0x5A5044))
-        y -= Double(s.h) + (lift > 6 ? 1.5 : 0)
-    }
-    if lift > 2 {
-        for k in 0..<2 { c.px(52 + k * 6 + Int(noise(Int(t * 6) + k) * 2), 43 - Int(noise(Int(t * 6) + k + 4) * 3), C(0xA89A84, 0.6)) }
-    }
-}
