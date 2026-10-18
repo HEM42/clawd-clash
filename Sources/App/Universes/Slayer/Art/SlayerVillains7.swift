@@ -51,6 +51,18 @@ private func v7Wave(_ c: PixelCanvas, _ p: Pose, sleeve: Px) -> Bool {
     return true
 }
 
+/// Suit trousers over the four legs: each leg a pixel wider than Clawd's, with a crease of shade down its right side
+/// and a dark shoe at the foot, so the pairs read as trouser legs and not as stripes between the white outline. From
+/// row `top` down (a skirt covers the rest). Seated legs fold away under the body and keep their own look.
+private func v7Trousers(_ c: PixelCanvas, step: Int, _ leg: Px, _ crease: Px, shoe: Px, top: Int = 36) {
+    guard !seatedPose else { return }
+    for (i, lx) in [19, 23, 31, 35].enumerated() {
+        let bottom = step >= 0 && i % 2 == step ? 42 : 43
+        c.rect(lx, top, 3, bottom - top + 1, leg); c.rect(lx + 2, top, 1, bottom - top + 1, crease)
+        c.rect(lx, bottom, 3, 1, shoe)
+    }
+}
+
 /// A suit jacket over the body, buttoned, with its shade down the right and along the hem.
 private func v7Jacket(_ c: PixelCanvas, _ suit: Px, _ dark: Px) {
     c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, dark); c.rect(18, 37, 20, 1, dark)
@@ -63,7 +75,7 @@ private func v7Jacket(_ c: PixelCanvas, _ suit: Px, _ dark: Px) {
 /// across the waistcoat. He never fights. A rolled ruling, sealed in red wax, is always in his hand. Signature: he
 /// holds it up, lets it unroll and reads it out, then rolls it back up.
 private func drawQuentinTravesty(_ c: PixelCanvas, _ p: Pose) {
-    let suit = C(0x6A645C), suitD = C(0x4A4640), suitL = C(0x8C867C), waist = C(0x3E3A36), shirt = C(0xF0EEE6)
+    let suit = C(0x6A645C), suitD = C(0x4A4640), suitL = C(0x8C867C), waist = C(0x524C46), shirt = C(0xF0EEE6)
     let tie = C(0x6A1E2A), stripe = C(0xD0A848), hair = C(0xE4E2DC), hairD = C(0xB0ACA4)
     let paper = C(0xF0E6C8), paperD = C(0xC8B890), wax = C(0xB0202A)
     let s = p.signature ?? -1
@@ -72,15 +84,15 @@ private func drawQuentinTravesty(_ c: PixelCanvas, _ p: Pose) {
     let raise = Int((up * 6).rounded())
 
     drawLegs(c, Look(leg: C(0x7A746A)), step: p.step)
-    slayerBoots(c, step: p.step, C(0x1E1A18), height: 1)
+    v7Trousers(c, step: p.step, C(0x7A746A), C(0x5A554E), shoe: C(0x1E1A18))
     c.oy += p.breathe
     drawBody(c, Look(arm: suit), armRight: raise)
     v7Jacket(c, suit, suitD)
-    // The waistcoat in the V of the lapels, the shirt and the striped Council tie, a gold watch chain.
-    c.pattern(24, 33, ["LSSTTSSL", "LWWTTWWL", ".LWTTWL.", "..WWWW..", "...WW..."],
-              ["S": shirt, "T": tie, "W": waist, "L": suitL])
-    c.px(27, 35, stripe); c.px(28, 35, stripe)                                 // the Council stripe
-    c.px(25, 34, stripe); c.px(26, 35, stripe)                                 // the watch chain
+    // The waistcoat in the V of the lapels, the shirt collar and the Council tie with its one gold stripe: a few
+    // calm shapes under his mouth, the watch chain a single gold glint at the waistcoat's edge.
+    c.pattern(24, 33, ["LSSTTSSL", ".LWTTWL.", "..LWWL.."], ["S": shirt, "T": tie, "W": waist, "L": suitL])
+    c.rect(27, 34, 2, 1, stripe)                                               // the Council stripe
+    c.px(26, 35, stripe)                                                       // the watch chain
     // Bald on top: Clawd's own crown, a fringe of white hair over the ears, a wisp or two, and bushy white brows.
     c.pattern(16, 25, [
         "..hH................Hh..",
@@ -99,10 +111,12 @@ private func drawQuentinTravesty(_ c: PixelCanvas, _ p: Pose) {
     let hy = 33 - raise
     c.rect(39, hy + 1, 2, 2, clawdOrange)   // his hand round it
     if open <= 0.05 {
-        // Rolled up: held upright in his fist, the red seal on its ribbon hanging under it.
-        c.rect(39, hy - 4, 2, 5, paper); c.px(40, hy - 4, paperD); c.px(40, hy - 2, paperD)
-        c.rect(39, hy + 3, 2, 3, paper); c.px(40, hy + 4, paperD)
-        c.px(41, hy + 4, wax); c.rect(41, hy + 5, 2, 2, wax)
+        // Rolled up: a fat roll held upright in his fist, the end of the sheet curling round it, a ribbon round the
+        // middle and the red seal hanging off it.
+        c.rect(39, hy - 4, 3, 10, paper); c.rect(41, hy - 4, 1, 10, paperD); c.rect(39, hy - 4, 3, 1, paperD)
+        c.px(39, hy - 3, C(0xFFF8E4)); c.px(40, hy - 4, C(0xFFF8E4))
+        c.rect(39, hy + 1, 2, 2, clawdOrange)                                   // his fist, round the middle
+        c.rect(39, hy + 4, 3, 1, wax); c.rect(42, hy + 4, 2, 2, wax); c.px(43, hy + 6, wax)
         return
     }
     // Unrolled: the top roller in his hand, the sheet hanging down with its lines of text, the seal at the foot.
@@ -128,7 +142,7 @@ private func drawPrincipalSnide(_ c: PixelCanvas, _ p: Pose) {
     let wagK = v7Span(p, 0.06, 0.6), eyesK = v7Span(p, 0.6, 0.94)
 
     drawLegs(c, Look(leg: C(0x8A6848)), step: p.step)
-    slayerBoots(c, step: p.step, C(0x2A1C14), height: 1)
+    v7Trousers(c, step: p.step, C(0x8A6848), C(0x6A4E34), shoe: C(0x2A1C14))
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
     v7Jacket(c, suit, suitD)
@@ -150,11 +164,13 @@ private func drawPrincipalSnide(_ c: PixelCanvas, _ p: Pose) {
 
     if v7Wave(c, p, sleeve: suit) { return }
     if wagK >= 0 {
-        // The finger, wagging side to side over his raised fist.
+        // The finger, wagging side to side over his raised fist: the arm held well out from his head, a shirt cuff
+        // at the wrist, so the hand reads as a hand and not a third ear.
         let wag = Int((sin(wagK * .pi * 8) * 1.4).rounded())
-        slayerLine(c, 39, 31, 43, 27, suit, 1.2)
-        c.rect(43, 25, 3, 3, clawdOrange)
-        c.rect(44 + wag, 21, 1, 4, clawdOrange); c.px(44 + wag, 21, clawdShade)
+        slayerLine(c, 39, 32, 45, 28.5, suit, 1.2)
+        c.rect(45, 27, 2, 2, shirt)
+        c.rect(46, 25, 3, 3, clawdOrange); c.rect(48, 25, 1, 3, clawdShade)
+        c.rect(47 + wag, 21, 1, 4, clawdOrange); c.px(47 + wag, 21, C(0xF4C0A0))
     } else if eyesK >= 0 {
         // Then the finger levelled at you, his eyes narrowed.
         c.rect(38, 31, 4, 3, suit); c.rect(42, 31, 3, 3, clawdOrange); c.rect(45, 31, 3, 1, clawdOrange)
@@ -167,18 +183,19 @@ private func drawPrincipalSnide(_ c: PixelCanvas, _ p: Pose) {
 private let lindseyWood = C(0xD49A50), lindseyWoodD = C(0xA06A30), lindseyWoodL = C(0xF0C47E)
 private let lindseyNeck = C(0x5A3A1E), lindseyHole = C(0x2A1A10)
 
-/// Lindsey's acoustic guitar body: honey-coloured, a dark sound hole, from (x, y). `big`: held in front, played.
+/// Lindsey's acoustic guitar body: honey-coloured, a dark sound hole, from (x, y). `big`: held in front, played, lying
+/// on its side with the big lower bout on the left, the waist, and the upper bout by the neck on the right.
 private func lindseyGuitarBody(_ c: PixelCanvas, _ x: Int, _ y: Int, big: Bool = false) {
     let rows = big ? [
-        "..lGGG...",
-        ".lGGGGGD.",
-        "lGGGGGGGD",
-        ".GGGOGGD.",
-        "..GOOOD..",
-        ".GGGOGGD.",
-        "GGGGGGGGD",
-        "GGGGGGGGD",
-        ".GGGGGGD.",
+        "..lllGG..ll.",
+        ".lGGGGGGlGGG",
+        "lGGGGGGGGGGG",
+        "GGGGGGGGOOGG",
+        "GGBBGGGOOOOG",
+        "GGGGGGGGOOGD",
+        "DGGGGGGGGGGD",
+        ".DGGGGGD.DD.",
+        "..DDDDD.....",
     ] : [
         ".lGGG..",
         "lGGGGG.",
@@ -188,7 +205,7 @@ private func lindseyGuitarBody(_ c: PixelCanvas, _ x: Int, _ y: Int, big: Bool =
         "GGGGGGD",
         ".GGGGD.",
     ]
-    c.pattern(x, y, rows, ["G": lindseyWood, "D": lindseyWoodD, "l": lindseyWoodL, "O": lindseyHole])
+    c.pattern(x, y, rows, ["G": lindseyWood, "D": lindseyWoodD, "l": lindseyWoodL, "O": lindseyHole, "B": lindseyNeck])
 }
 
 /// Lindsey McDonclawd: Wolfram & Hart's young high-flier, shaggy light-brown hair falling over his brow, a navy suit
@@ -207,7 +224,7 @@ private func drawLindseyMcDonclawd(_ c: PixelCanvas, _ p: Pose) {
         lindseyGuitarBody(c, 10, 29)
     }
     drawLegs(c, Look(leg: C(0x46588A)), step: p.step)
-    slayerBoots(c, step: p.step, C(0x2A1E18), height: 1)
+    v7Trousers(c, step: p.step, C(0x46588A), C(0x34466E), shoe: C(0x2A1E18))
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
     v7Jacket(c, suit, suitD)
@@ -246,11 +263,17 @@ private func drawLindseyMcDonclawd(_ c: PixelCanvas, _ p: Pose) {
         lindseyGuitarBody(c, 15, 30)
         return
     }
-    slayerLine(c, 28, 34.5, 45, 30, lindseyNeck, 0.8)
-    c.rect(45, 28, 2, 3, lindseyHole)
-    lindseyGuitarBody(c, 20, 30, big: true)
-    c.rect(38, 31, 3, 3, suit); c.rect(40, 31, 2, 2, clawdOrange)                    // fretting hand
-    c.rect(24, 34 + Int(p.t * 6) % 2, 3, 2, clawdOrange)                               // picking hand
+    // The neck: pale wood with a dark fretboard along it, out to a headstock with its pegs, so it reads as a
+    // guitar neck and not as a stick in his hand.
+    // Slung low across his hips, clear of his face.
+    slayerLine(c, 28, 37.5, 44, 32.5, C(0x9A6A3A), 1.0)
+    slayerLine(c, 28, 37, 44, 32, lindseyNeck, 0.5)
+    c.rect(44, 30, 3, 3, lindseyNeck); c.px(44, 30, C(0x7A4E28))
+    c.px(45, 29, C(0xE8E0C8)); c.px(47, 31, C(0xE8E0C8))
+    lindseyGuitarBody(c, 17, 33, big: true)
+    // The fretting hand gripping the neck, out at the end of his arm.
+    c.rect(40, 32, 3, 3, clawdOrange); c.px(42, 34, clawdShade)
+    c.rect(23, 36 + Int(p.t * 6) % 2, 2, 2, clawdOrange)                               // picking hand
     for i in 0..<2 {
         let f = frac(playK * 3 + Double(i) * 0.5)
         let x = 47 + i * 4 + Int(sin(f * 5) * 1.5), y = 28 - Int(f * 10)
@@ -274,7 +297,7 @@ private func drawLilahMorgane(_ c: PixelCanvas, _ p: Pose) {
     let snap = s > 0.66 && s < 0.76
 
     drawLegs(c, Look(), step: p.step)
-    slayerBoots(c, step: p.step, C(0x141216), height: 1)
+    v7Trousers(c, step: p.step, clawdOrange, clawdShade, shoe: C(0x141216))
     // The pencil skirt, to the knee: the four legs show below it.
     if seatedPose { c.rect(17, 37, 22, 2, suit) } else {
         c.rect(18, 37, 20, 4, suit); c.rect(18, 40, 20, 1, suitD); c.rect(37, 37, 1, 4, suitD)
@@ -283,7 +306,9 @@ private func drawLilahMorgane(_ c: PixelCanvas, _ p: Pose) {
     let raise = Int((lift * 3).rounded())
     drawBody(c, Look(arm: suit), armRight: raise)
     v7Jacket(c, suit, suitD)
-    c.pattern(24, 33, ["LL.BB.LL", ".LLBBLL.", "..LLLL.."], ["B": blouse, "L": suitL])
+    // The plum silk blouse in a deep V between the lapels, a sheen down one side.
+    c.pattern(23, 33, ["LBBBBBBBBL", ".LBbBBBBL.", "..LBbBBL..", "...LBBL...", "....LL...."],
+              ["B": blouse, "b": C(0x9A5A80), "L": suitL])
     c.rect(26, 32, 4, 1, C(0xE02A3A))                                          // red lips
     // Long dark hair, side-parted, falling past her shoulders, a strand or two loose.
     c.pattern(16, 19, [
@@ -353,7 +378,7 @@ private func drawHollandMannerly(_ c: PixelCanvas, _ p: Pose) {
     if reach > 0.5 { c.ox += 1 }
 
     drawLegs(c, Look(leg: C(0x8E846E)), step: p.step)
-    slayerBoots(c, step: p.step, C(0x4A3020), height: 1)
+    v7Trousers(c, step: p.step, C(0x8E846E), C(0x6E6654), shoe: C(0x4A3020))
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
     v7Jacket(c, suit, suitD)
@@ -389,11 +414,13 @@ private func drawHollandMannerly(_ c: PixelCanvas, _ p: Pose) {
 
     if v7Wave(c, p, sleeve: suit) { return }
     guard reach > 0 else { return }
-    // His hand out: the sleeve forward, a white cuff, the hand open, thumb up.
+    // His hand out: the sleeve forward, narrowing from the shoulder to the wrist, a white cuff, and the hand held
+    // upright for a handshake, fingers forward and the thumb standing up off it.
     let len = Int((reach * 5).rounded())
-    c.rect(38, 33, 3 + len, 3, suit); c.rect(38, 35, 3 + len, 1, suitD)
-    c.rect(41 + len - 1, 33, 1, 3, shirt)
-    c.rect(41 + len, 34, 3, 2, clawdOrange); c.px(41 + len, 33, clawdOrange); c.px(43 + len, 35, clawdShade)
+    c.rect(38, 34, 3 + len, 2, suit); c.rect(38, 35, 3 + len, 1, suitD)
+    c.rect(41 + len, 33, 1, 3, shirt)
+    c.rect(42 + len, 33, 3, 3, clawdOrange); c.rect(42 + len, 35, 3, 1, clawdShade)
+    c.rect(42 + len, 31, 1, 2, clawdOrange); c.px(42 + len, 31, C(0xF4B090))
 }
 
 // MARK: - Jazzmine
@@ -433,6 +460,8 @@ private func drawJazzmine(_ c: PixelCanvas, _ p: Pose) {
     // The gold neckline and a fold or two in the white.
     c.pattern(23, 33, ["G........G", ".GG....GG.", "...GGGG..."], ["G": gold])
     c.px(21, 35, gownD); c.px(34, 36, gownD)
+    // Casting: her hand out at the end of the white sleeve, reaching for whoever she touches.
+    if wide == 0 && (p.zap != nil || raise > 0) { c.rect(41, 33 - raise, 2, 3, clawdOrange); c.px(42, 35 - raise, clawdShade) }
     // Open arms: hands out at the ends of her sleeves.
     if wide > 0 {
         // Both arms flung up and out, the white sleeves falling from them.
@@ -470,14 +499,15 @@ private func drawJazzmine(_ c: PixelCanvas, _ p: Pose) {
     c.rect(20, 21, 2, 1, goldD); c.rect(22, 20, 10, 1, gold); c.rect(32, 21, 2, 1, goldD)
 
     guard wide > 0 else { return }
-    // The light pours off her in rays, and motes of gold float down round her like a blessing.
-    let pulse = 0.7 + 0.3 * sin(p.t * 6)
+    // The light pours off her in rays, and motes of gold float down round her like a blessing. The rays are bright
+    // gold cores in a warm glow, nearly solid so they hold up on a dark desktop, but still light: no outline.
+    let pulse = 0.85 + 0.15 * sin(p.t * 6)
     for k in 0..<7 {
         let a = -150.0 + Double(k) * 20
-        let r0 = 15.0, r1 = 15 + 4 * wide
+        let r0 = 15.0, r1 = 15 + 5 * wide
         let p0 = slayerReach((28, 28), a, r0), p1 = slayerReach((28, 28), a, r1)
-        c.glowLine(p0.x, p0.y, p1.x, p1.y, core: C(0xFFF4D0).alpha(0.7 * wide * pulse), glow: glowC.alpha(0.3 * wide),
-                   coreR: 0.5, glowR: 1.2)
+        c.glowLine(p0.x, p0.y, p1.x, p1.y, core: C(0xFFE27A).alpha(0.9 * wide * pulse), glow: glowC.alpha(0.5 * wide),
+                   coreR: 0.7, glowR: 1.6)
     }
     for i in 0..<4 {
         let f = frac(p.t * 0.5 + Double(i) * 0.25)
