@@ -27,3 +27,23 @@ struct StarClawdsUniverse: UniverseModule {
     }
     var rides: [Ride] { [.falcon] }
 }
+
+extension StarClawdsUniverse {
+    /// The README's desktop line-up and social preview.
+    var docs: DocsInfo {
+        DocsInfo(lineup: [
+            [LineupSlot(who: .villain(SWVillain.boba), leader: true, label: "", x: 30, facing: 1, role: .shoot(offset: 0)),
+             LineupSlot(who: .hero(SWHero.han), leader: false, label: "Review Overlay.swift", x: 92, facing: -1, role: .shoot(offset: blasterPeriod / 2))],
+            [LineupSlot(who: .hero(SWHero.leia), leader: false, label: "Run the test suite", x: 132, facing: 1, role: .shoot(offset: 0)),
+             LineupSlot(who: .villain(SWVillain.trooper), leader: false, label: "Write changelog", x: 182, facing: -1, role: .shoot(offset: blasterPeriod / 2))],
+            [LineupSlot(who: .hero(SWHero.luke), leader: false, label: "Find hook events", x: 214, facing: 1, role: .duel),
+             LineupSlot(who: .villain(SWVillain.maul), leader: false, label: "Audit permissions", x: 244, facing: -1, role: .duel)],
+            [LineupSlot(who: .hero(SWHero.obiwan), leader: true, label: "", x: 290, facing: 1, role: .duel),
+             LineupSlot(who: .villain(SWVillain.vader), leader: true, label: "", x: 347, facing: -1, role: .duel)],
+            [LineupSlot(who: .hero(SWHero.r2d2), leader: false, label: "Plan the refactor", x: 388, facing: 1, role: .cheer)],
+        ], social: (title: "CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Star Clawds battle on your desktop",
+                       cast: [.hero(SWHero.luke), .hero(SWHero.han), .hero(SWHero.leia), .hero(SWHero.yoda),
+                              .villain(SWVillain.vader), .villain(SWVillain.boba), .villain(SWVillain.kylo),
+                              .villain(SWVillain.trooper)]))
+    }
+}

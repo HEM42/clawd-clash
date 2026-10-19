@@ -40,3 +40,20 @@ extension Ride {
     /// The saucer: whoever's taken stands right under its beam.
     static let saucer = Ride(key: "saucer", boardingOffset: 0) { c, ramp, engines, _, _ in drawSaucer(c, ramp: ramp, engines: engines) }
 }
+
+extension FilesUniverse {
+    /// The README's desktop line-up and social preview.
+    var docs: DocsInfo {
+        DocsInfo(lineup: [
+            LineupSlot.pair(.villain(FilesVillain.smokingClawd), true, "", 30, .hero(FilesHero.foxClawder), true, "", 98),
+            LineupSlot.pair(.hero(FilesHero.danaScrawly), false, "Check git history", 132, .villain(FilesVillain.clawcek), false, "Write changelog", 182),
+            LineupSlot.pair(.hero(FilesHero.frohack), false, "Plan the refactor", 214, .villain(FilesVillain.grey), false, "Review Overlay.swift", 244),
+            LineupSlot.pair(.hero(FilesHero.doggedd), true, "", 282, .villain(FilesVillain.knowleRohrer), true, "", 352),
+            [LineupSlot(who: .hero(FilesHero.queequeg), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
+        ], social: (title: "THE CLAWD FILES", subtitle: "Your AI sessions as a pixel-art paranormal investigation on your desktop",
+                       cast: [.hero(FilesHero.foxClawder), .hero(FilesHero.danaScrawly), .hero(FilesHero.skinnard),
+                              .hero(FilesHero.lanky), .villain(FilesVillain.smokingClawd),
+                              .villain(FilesVillain.grey), .villain(FilesVillain.flukeman),
+                              .villain(FilesVillain.bountyHunter)]))
+    }
+}

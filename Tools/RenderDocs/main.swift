@@ -83,99 +83,13 @@ for u in Universe.allCases { roster(u) }
 
 // What it looks like along the bottom of your screen: sessions (name tags) and their agents (task labels) fighting,
 // heroes against villains, Iron Man fighting from the air. The app's own sizes: a session is drawn 3 points per sprite
-// pixel, an agent 2; this sheet is twice that, as on a Retina screen.
-struct Extra { let who: Cast; let leader: Bool; let label: String; let x: Double; let facing: Double; let role: FightRole
-               var up = 0.0 }
+// pixel, an agent 2; this sheet is twice that, as on a Retina screen. Each universe's line-up is its module's `docs`.
 let S: CGFloat = 6, gy: CGFloat = 46, momentT = 0.25
 let ak = 2.0 / 3
-let marvelLineup: [[Extra]] = [
-    [Extra(who: .villain(.thanos), leader: true, label: "Thanos", x: 30, facing: 1, role: .zap),
-     Extra(who: .hero(.ironMan), leader: true, label: "Iron Man", x: 98, facing: -1, role: .hit, up: 10)],
-    [Extra(who: .hero(.spiderMan), leader: false, label: "Check git history", x: 132, facing: 1, role: .shoot(offset: 0)),
-     Extra(who: .villain(.greenGoblin), leader: false, label: "Write changelog", x: 182, facing: -1, role: .shoot(offset: blasterPeriod / 2))],
-    [Extra(who: .hero(.wolverine), leader: false, label: "Plan the refactor", x: 214, facing: 1, role: .duel),
-     Extra(who: .villain(.sabretooth), leader: false, label: "Review Overlay.swift", x: 244, facing: -1, role: .duel)],
-    [Extra(who: .hero(.captainAmerica), leader: true, label: "Captain America", x: 282, facing: 1, role: .deflect),
-     Extra(who: .villain(.redSkull), leader: true, label: "Red Skull", x: 352, facing: -1, role: .shoot(offset: 0))],
-    [Extra(who: .hero(.groot), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
-]
-let starWarsLineup: [[Extra]] = [
-    [Extra(who: .villain(SWVillain.boba), leader: true, label: "", x: 30, facing: 1, role: .shoot(offset: 0)),
-     Extra(who: .hero(SWHero.han), leader: false, label: "Review Overlay.swift", x: 92, facing: -1, role: .shoot(offset: blasterPeriod / 2))],
-    [Extra(who: .hero(SWHero.leia), leader: false, label: "Run the test suite", x: 132, facing: 1, role: .shoot(offset: 0)),
-     Extra(who: .villain(SWVillain.trooper), leader: false, label: "Write changelog", x: 182, facing: -1, role: .shoot(offset: blasterPeriod / 2))],
-    [Extra(who: .hero(SWHero.luke), leader: false, label: "Find hook events", x: 214, facing: 1, role: .duel),
-     Extra(who: .villain(SWVillain.maul), leader: false, label: "Audit permissions", x: 244, facing: -1, role: .duel)],
-    [Extra(who: .hero(SWHero.obiwan), leader: true, label: "", x: 290, facing: 1, role: .duel),
-     Extra(who: .villain(SWVillain.vader), leader: true, label: "", x: 347, facing: -1, role: .duel)],
-    [Extra(who: .hero(SWHero.r2d2), leader: false, label: "Plan the refactor", x: 388, facing: 1, role: .cheer)],
-]
-let dcLineup: [[Extra]] = [
-    [Extra(who: .villain(DCVillain.darkseid), leader: true, label: "Darkseid", x: 30, facing: 1, role: .zap),
-     Extra(who: .hero(DCHero.superman), leader: true, label: "Superman", x: 98, facing: -1, role: .hit, up: 10)],
-    [Extra(who: .hero(DCHero.greenArrow), leader: false, label: "Check git history", x: 132, facing: 1, role: .shoot(offset: 0)),
-     Extra(who: .villain(DCVillain.deadshot), leader: false, label: "Write changelog", x: 182, facing: -1, role: .shoot(offset: blasterPeriod / 2))],
-    [Extra(who: .hero(DCHero.batman), leader: false, label: "Plan the refactor", x: 214, facing: 1, role: .duel),
-     Extra(who: .villain(DCVillain.bane), leader: false, label: "Review Overlay.swift", x: 244, facing: -1, role: .duel)],
-    [Extra(who: .hero(DCHero.wonderWoman), leader: true, label: "Wonder Woman", x: 282, facing: 1, role: .deflect),
-     Extra(who: .villain(DCVillain.joker), leader: true, label: "The Joker", x: 352, facing: -1, role: .shoot(offset: 0))],
-    [Extra(who: .hero(DCHero.flash), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
-]
-let doctorLineup: [[Extra]] = [
-    [Extra(who: .villain(DoctorVillain.davross), leader: true, label: "Davross", x: 30, facing: 1, role: .zap),
-     Extra(who: .hero(DoctorHero.doctorTen), leader: true, label: "Doctor Ten", x: 98, facing: -1, role: .hit)],
-    [Extra(who: .hero(DoctorHero.jack), leader: false, label: "Check git history", x: 132, facing: 1, role: .shoot(offset: 0)),
-     Extra(who: .villain(DoctorVillain.cyberperson), leader: false, label: "Write changelog", x: 182, facing: -1, role: .shoot(offset: blasterPeriod / 2))],
-    [Extra(who: .hero(DoctorHero.rory), leader: false, label: "Plan the refactor", x: 214, facing: 1, role: .duel),
-     Extra(who: .villain(DoctorVillain.clockworkDroid), leader: false, label: "Review Overlay.swift", x: 244, facing: -1, role: .duel)],
-    [Extra(who: .hero(DoctorHero.vasta), leader: true, label: "Madame Vasta", x: 282, facing: 1, role: .deflect),
-     Extra(who: .villain(DoctorVillain.dalick), leader: true, label: "Dalick", x: 352, facing: -1, role: .shoot(offset: 0))],
-    [Extra(who: .hero(DoctorHero.kCanine), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
-]
-/// The Clawd Files: each pair's roles from their own weapons, as the app pairs them.
-func filesPair(_ a: Cast, _ aLead: Bool, _ aLabel: String, _ ax: Double,
-               _ b: Cast, _ bLead: Bool, _ bLabel: String, _ bx: Double) -> [Extra] {
-    let (ra, rb) = fightRoles(a.weapon, b.weapon)
-    return [Extra(who: a, leader: aLead, label: aLabel, x: ax, facing: 1, role: ra),
-            Extra(who: b, leader: bLead, label: bLabel, x: bx, facing: -1, role: rb)]
-}
-/// Stevie Clawdberg: Indy and René Bellock, Marty and Biff, Bruise the Shark circling, a raptor and a gremlin.
-let clawdbergLineup: [[Extra]] = [
-    filesPair(.villain(ClawdbergVillain.reneBellock), true, "", 30, .hero(ClawdbergHero.indianaBones), true, "", 98),
-    filesPair(.hero(ClawdbergHero.martyMcFry), false, "Check git history", 132, .villain(ClawdbergVillain.biffTannin), false, "Write changelog", 182),
-    filesPair(.hero(ClawdbergHero.gizmoe), false, "Plan the refactor", 214, .villain(ClawdbergVillain.strype), false, "Review Overlay.swift", 244),
-    filesPair(.hero(ClawdbergHero.chiefBroody), true, "", 282, .villain(ClawdbergVillain.bruise), true, "", 352),
-    [Extra(who: .hero(ClawdbergHero.eClawd), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
-]
-/// Clawd of the Rings: the Witch-king and Arrogorn, Leggolas against an orc, Gimli against an Uruk, Gandclawd and the
-/// Ballrog, Samwise cheering.
-let ringsLineup: [[Extra]] = [
-    filesPair(.villain(RingsVillain.witchKing), true, "", 30, .hero(RingsHero.aragorn), true, "", 98),
-    filesPair(.hero(RingsHero.legolas), false, "Check git history", 132, .villain(RingsVillain.orc), false, "Write changelog", 182),
-    filesPair(.hero(RingsHero.gimli), false, "Plan the refactor", 214, .villain(RingsVillain.uruk), false, "Review Overlay.swift", 244),
-    filesPair(.hero(RingsHero.gandalf), true, "", 282, .villain(RingsVillain.balrog), true, "", 342),
-    [Extra(who: .hero(RingsHero.sam), leader: false, label: "Run the test suite", x: 396, facing: 1, role: .cheer)],
-]
-/// Clawd Slayer: the Old Master and Buffy, Willow's spell against Drusillah's, Xander's 2×4 against a fledgling,
-/// Spyke against Draclawla, Rupert Gyles cheering.
-let slayerLineup: [[Extra]] = [
-    filesPair(.villain(SlayerVillain.oldMaster), true, "", 30, .hero(SlayerHero.buffyClawmers), true, "", 98),
-    filesPair(.hero(SlayerHero.willowRosenclaw), false, "Check git history", 132, .villain(SlayerVillain.drusillah), false, "Write changelog", 182),
-    filesPair(.hero(SlayerHero.xanderHarrows), false, "Plan the refactor", 214, .villain(SlayerVillain.fledgling), false, "Review Overlay.swift", 244),
-    filesPair(.hero(SlayerHero.spyke), true, "", 282, .villain(SlayerVillain.draclawla), true, "", 352),
-    [Extra(who: .hero(SlayerHero.rupertGyles), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
-]
-let filesLineup: [[Extra]] = [
-    filesPair(.villain(FilesVillain.smokingClawd), true, "", 30, .hero(FilesHero.foxClawder), true, "", 98),
-    filesPair(.hero(FilesHero.danaScrawly), false, "Check git history", 132, .villain(FilesVillain.clawcek), false, "Write changelog", 182),
-    filesPair(.hero(FilesHero.frohack), false, "Plan the refactor", 214, .villain(FilesVillain.grey), false, "Review Overlay.swift", 244),
-    filesPair(.hero(FilesHero.doggedd), true, "", 282, .villain(FilesVillain.knowleRohrer), true, "", 352),
-    [Extra(who: .hero(FilesHero.queequeg), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
-]
-func desktop(_ lineup: [[Extra]], file: String) {
+func desktop(_ lineup: [[LineupSlot]], file: String) {
 let desktop = canvas(2600, 400) { ctx in
     var tags: [CGRect] = []   // labels already placed: one that would overlap moves up a row, as in the app
-    func sprite(_ e: Extra) {
+    func sprite(_ e: LineupSlot) {
         let c = PixelCanvas(Sprite.width, Sprite.height)
         e.who.draw(c, t: momentT, mode: .working, walking: false, role: e.role, asSession: e.leader, aloft: e.up > 4)
         if e.facing < 0 { c.flipHorizontally() }
@@ -209,7 +123,7 @@ let desktop = canvas(2600, 400) { ctx in
         // The fight between them, from the app's effects code.
         let l = group[0], r = group[1], margin = 24.0, headroom = 24
         let left = l.x - margin, width = Int(r.x - l.x + margin * 2)
-        func fighter(_ e: Extra, side: Double) -> Fighter {
+        func fighter(_ e: LineupSlot, side: Double) -> Fighter {
             let k = e.leader ? 1 : ak
             return Fighter(weapon: e.who.weapon, x: e.x - left, k: k, top: 44 * (1 - k) - e.up * k + Double(headroom), side: side,
                            muzzle: e.who.muzzle, armoured: e.who.armoured, pivot: e.who.weaponPivot).dressed(as: e.who)
@@ -223,14 +137,7 @@ let desktop = canvas(2600, 400) { ctx in
 save(desktop, file)
 print("wrote \(out)/\(file)")
 }
-desktop(starWarsLineup, file: "desktop-star-clawds.png")
-desktop(marvelLineup, file: "desktop-marvelous-clawds.png")
-desktop(dcLineup, file: "desktop-detective-clawds.png")
-desktop(doctorLineup, file: "desktop-doctor-clawd.png")
-desktop(filesLineup, file: "desktop-the-clawd-files.png")
-desktop(clawdbergLineup, file: "desktop-stevie-clawdberg.png")
-desktop(ringsLineup, file: "desktop-clawd-of-the-rings.png")
-desktop(slayerLineup, file: "desktop-clawd-slayer.png")
+for u in Universe.allCases where !u.module.docs.lineup.isEmpty { desktop(u.module.docs.lineup, file: "desktop-\(u.slug).png") }
 
 // MARK: Locations (one sheet per universe)
 
@@ -322,36 +229,8 @@ let social = canvas(1280, 640) { ctx in
 save(social, file)
 }
 // Clawd Clash's own (social-preview.png) is a comic cover of its own: Tools/MakeSocial.
-socialPreview(title: "CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Star Clawds battle on your desktop",
-              groups: [[.hero(SWHero.luke), .hero(SWHero.han), .hero(SWHero.leia), .hero(SWHero.yoda),
-                        .villain(SWVillain.vader), .villain(SWVillain.boba), .villain(SWVillain.kylo), .villain(SWVillain.trooper)]],
-              file: "social-preview-star-clawds.png")
-socialPreview(title: "CLAWDVENGERS: CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Marvelous Clawds battle on your desktop",
-              groups: [[.hero(MarvelHero.thor), .hero(MarvelHero.spiderMan), .hero(MarvelHero.captainAmerica), .hero(MarvelHero.ironMan),
-                        .villain(MarvelVillain.thanos), .villain(MarvelVillain.loki), .villain(MarvelVillain.greenGoblin), .villain(MarvelVillain.venom)]],
-              file: "social-preview-marvelous-clawds.png")
-socialPreview(title: "JUSTICE CLAWDS: CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Detective Clawds battle on your desktop",
-              groups: [[.hero(DCHero.superman), .hero(DCHero.batman), .hero(DCHero.wonderWoman), .hero(DCHero.flash),
-                        .villain(DCVillain.joker), .villain(DCVillain.lexLuthor), .villain(DCVillain.darkseid), .villain(DCVillain.harleyQuinn)]],
-              file: "social-preview-detective-clawds.png")
-socialPreview(title: "DOCTOR CLAWD", subtitle: "Your Claude Code sessions as a pixel-art time-travel battle on your desktop",
-              groups: [[.hero(DoctorHero.doctorTen), .hero(DoctorHero.doctorFour), .hero(DoctorHero.rose), .hero(DoctorHero.doctorEleven),
-                        .villain(DoctorVillain.dalick), .villain(DoctorVillain.master), .villain(DoctorVillain.cyberperson), .villain(DoctorVillain.weepingAngle)]],
-              file: "social-preview-doctor-clawd.png")
-socialPreview(title: "THE CLAWD FILES", subtitle: "Your AI sessions as a pixel-art paranormal investigation on your desktop",
-              groups: [[.hero(FilesHero.foxClawder), .hero(FilesHero.danaScrawly), .hero(FilesHero.skinnard), .hero(FilesHero.lanky),
-                        .villain(FilesVillain.smokingClawd), .villain(FilesVillain.grey), .villain(FilesVillain.flukeman), .villain(FilesVillain.bountyHunter)]],
-              file: "social-preview-the-clawd-files.png")
-socialPreview(title: "STEVIE CLAWDBERG", subtitle: "Your AI sessions as a pixel-art blockbuster on your desktop",
-              groups: [[.hero(ClawdbergHero.indianaBones), .hero(ClawdbergHero.martyMcFry), .hero(ClawdbergHero.eClawd), .hero(ClawdbergHero.gizmoe),
-                        .villain(ClawdbergVillain.tWrecks), .villain(ClawdbergVillain.bruise), .villain(ClawdbergVillain.captainClawk), .villain(ClawdbergVillain.biffTannin)]],
-              file: "social-preview-stevie-clawdberg.png")
-socialPreview(title: "CLAWD OF THE RINGS", subtitle: "Your AI sessions as a pixel-art quest on your desktop",
-              groups: [[.hero(RingsHero.gandalf), .hero(RingsHero.frodo), .hero(RingsHero.aragorn), .hero(RingsHero.legolas),
-                        .villain(RingsVillain.balrog), .villain(RingsVillain.sauron), .villain(RingsVillain.witchKing), .villain(RingsVillain.gollum)]],
-              file: "social-preview-clawd-of-the-rings.png")
-socialPreview(title: "CLAWD SLAYER", subtitle: "Your AI sessions as a pixel-art vampire hunt on your desktop",
-              groups: [[.hero(SlayerHero.buffyClawmers), .hero(SlayerHero.willowRosenclaw), .hero(SlayerHero.spyke), .hero(SlayerHero.angstel),
-                        .villain(SlayerVillain.oldMaster), .villain(SlayerVillain.glorificlaws), .villain(SlayerVillain.drusillah), .villain(SlayerVillain.mayorWilclaws)]],
-              file: "social-preview-clawd-slayer.png")
+for u in Universe.allCases {
+    guard let social = u.module.docs.social else { continue }
+    socialPreview(title: social.title, subtitle: social.subtitle, groups: [social.cast], file: "social-preview-\(u.slug).png")
+}
 print("wrote the social previews to \(out)")

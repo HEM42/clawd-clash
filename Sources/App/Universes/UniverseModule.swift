@@ -42,6 +42,9 @@ protocol UniverseModule {
     /// What a regeneration looks like (`UniverseCompaction.regenerate`): drawn over the character, already in its next
     /// face, `k` (0…1) through `length` seconds.
     var regeneration: (length: Double, draw: (_ c: PixelCanvas, _ k: Double, _ t: Double) -> Void)? { get }
+    /// What Tools/RenderDocs draws for the README besides the roster and places: the desktop line-up and the social
+    /// preview. Empty: neither is drawn.
+    var docs: DocsInfo { get }
 }
 
 extension UniverseModule {
@@ -61,6 +64,35 @@ extension UniverseModule {
     var rides: [Ride] { [] }
     var drills: [Cast: BespokeDrill] { [:] }
     var regeneration: (length: Double, draw: (_ c: PixelCanvas, _ k: Double, _ t: Double) -> Void)? { nil }
+    var docs: DocsInfo { DocsInfo() }
+}
+
+/// A universe's README pictures beyond its roster and places (Tools/RenderDocs).
+struct DocsInfo {
+    /// The desktop line-up: groups of one or two, left to right, a pair fighting each other.
+    var lineup: [[LineupSlot]] = []
+    /// The social preview: its title, the line under it, and who stands on the horizon (heroes first, then villains).
+    var social: (title: String, subtitle: String, cast: [Cast])? = nil
+}
+
+/// Someone in a desktop line-up: a session (`leader`, its name tag) or an agent (its task as `label`), at `x` in the
+/// line-up's points, facing right (1) or left (-1), `up` art pixels off the ground.
+struct LineupSlot {
+    let who: Cast
+    let leader: Bool
+    let label: String
+    let x: Double
+    let facing: Double
+    let role: FightRole
+    var up = 0.0
+
+    /// Two who fight, `a` facing right and `b` left, their roles from their own weapons as the app pairs them.
+    static func pair(_ a: Cast, _ aLead: Bool, _ aLabel: String, _ ax: Double,
+                     _ b: Cast, _ bLead: Bool, _ bLabel: String, _ bx: Double) -> [LineupSlot] {
+        let (ra, rb) = fightRoles(a.weapon, b.weapon)
+        return [LineupSlot(who: a, leader: aLead, label: aLabel, x: ax, facing: 1, role: ra),
+                LineupSlot(who: b, leader: bLead, label: bLabel, x: bx, facing: -1, role: rb)]
+    }
 }
 
 /// Han shoots first, as an engine feature (`ShootsFirst` draws it): whenever `shooter` and `target` fight, now and

@@ -49,3 +49,21 @@ extension Ride {
     /// The park jeep: it drives in.
     static let jeep = Ride(key: "jeep", arrival: .drives) { c, ramp, engines, _, _ in drawParkJeep(c, ramp: ramp, lit: engines) }
 }
+
+extension ClawdbergUniverse {
+    /// The README's desktop line-up (Indy and René Bellock, Marty and Biff, Bruise the Shark circling, a raptor and a
+    /// gremlin) and social preview.
+    var docs: DocsInfo {
+        DocsInfo(lineup: [
+            LineupSlot.pair(.villain(ClawdbergVillain.reneBellock), true, "", 30, .hero(ClawdbergHero.indianaBones), true, "", 98),
+            LineupSlot.pair(.hero(ClawdbergHero.martyMcFry), false, "Check git history", 132, .villain(ClawdbergVillain.biffTannin), false, "Write changelog", 182),
+            LineupSlot.pair(.hero(ClawdbergHero.gizmoe), false, "Plan the refactor", 214, .villain(ClawdbergVillain.strype), false, "Review Overlay.swift", 244),
+            LineupSlot.pair(.hero(ClawdbergHero.chiefBroody), true, "", 282, .villain(ClawdbergVillain.bruise), true, "", 352),
+            [LineupSlot(who: .hero(ClawdbergHero.eClawd), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
+        ], social: (title: "STEVIE CLAWDBERG", subtitle: "Your AI sessions as a pixel-art blockbuster on your desktop",
+                       cast: [.hero(ClawdbergHero.indianaBones), .hero(ClawdbergHero.martyMcFry),
+                              .hero(ClawdbergHero.eClawd), .hero(ClawdbergHero.gizmoe),
+                              .villain(ClawdbergVillain.tWrecks), .villain(ClawdbergVillain.bruise),
+                              .villain(ClawdbergVillain.captainClawk), .villain(ClawdbergVillain.biffTannin)]))
+    }
+}

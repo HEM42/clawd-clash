@@ -27,3 +27,24 @@ struct DoctorUniverse: UniverseModule {
     var quirks: StageQuirks { StageQuirks(unseenMovers: [.villain(DoctorVillain.weepingAngle)]) }
     var rides: [Ride] { [.tardis] }
 }
+
+extension DoctorUniverse {
+    /// The README's desktop line-up and social preview.
+    var docs: DocsInfo {
+        DocsInfo(lineup: [
+            [LineupSlot(who: .villain(DoctorVillain.davross), leader: true, label: "Davross", x: 30, facing: 1, role: .zap),
+             LineupSlot(who: .hero(DoctorHero.doctorTen), leader: true, label: "Doctor Ten", x: 98, facing: -1, role: .hit)],
+            [LineupSlot(who: .hero(DoctorHero.jack), leader: false, label: "Check git history", x: 132, facing: 1, role: .shoot(offset: 0)),
+             LineupSlot(who: .villain(DoctorVillain.cyberperson), leader: false, label: "Write changelog", x: 182, facing: -1, role: .shoot(offset: blasterPeriod / 2))],
+            [LineupSlot(who: .hero(DoctorHero.rory), leader: false, label: "Plan the refactor", x: 214, facing: 1, role: .duel),
+             LineupSlot(who: .villain(DoctorVillain.clockworkDroid), leader: false, label: "Review Overlay.swift", x: 244, facing: -1, role: .duel)],
+            [LineupSlot(who: .hero(DoctorHero.vasta), leader: true, label: "Madame Vasta", x: 282, facing: 1, role: .deflect),
+             LineupSlot(who: .villain(DoctorVillain.dalick), leader: true, label: "Dalick", x: 352, facing: -1, role: .shoot(offset: 0))],
+            [LineupSlot(who: .hero(DoctorHero.kCanine), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
+        ], social: (title: "DOCTOR CLAWD", subtitle: "Your Claude Code sessions as a pixel-art time-travel battle on your desktop",
+                       cast: [.hero(DoctorHero.doctorTen), .hero(DoctorHero.doctorFour), .hero(DoctorHero.rose),
+                              .hero(DoctorHero.doctorEleven), .villain(DoctorVillain.dalick),
+                              .villain(DoctorVillain.master), .villain(DoctorVillain.cyberperson),
+                              .villain(DoctorVillain.weepingAngle)]))
+    }
+}

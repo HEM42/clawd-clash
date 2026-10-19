@@ -41,3 +41,24 @@ private func marvelousEveryTrip(from: Location, to: Location) -> [ShownTrip] {
         shown(.chimichanga, "7-deadpool-chimichanga", "Deadpool's chimichanga"),
     ]
 }
+
+extension MarvelousUniverse {
+    /// The README's desktop line-up and social preview.
+    var docs: DocsInfo {
+        DocsInfo(lineup: [
+            [LineupSlot(who: .villain(.thanos), leader: true, label: "Thanos", x: 30, facing: 1, role: .zap),
+             LineupSlot(who: .hero(.ironMan), leader: true, label: "Iron Man", x: 98, facing: -1, role: .hit, up: 10)],
+            [LineupSlot(who: .hero(.spiderMan), leader: false, label: "Check git history", x: 132, facing: 1, role: .shoot(offset: 0)),
+             LineupSlot(who: .villain(.greenGoblin), leader: false, label: "Write changelog", x: 182, facing: -1, role: .shoot(offset: blasterPeriod / 2))],
+            [LineupSlot(who: .hero(.wolverine), leader: false, label: "Plan the refactor", x: 214, facing: 1, role: .duel),
+             LineupSlot(who: .villain(.sabretooth), leader: false, label: "Review Overlay.swift", x: 244, facing: -1, role: .duel)],
+            [LineupSlot(who: .hero(.captainAmerica), leader: true, label: "Captain America", x: 282, facing: 1, role: .deflect),
+             LineupSlot(who: .villain(.redSkull), leader: true, label: "Red Skull", x: 352, facing: -1, role: .shoot(offset: 0))],
+            [LineupSlot(who: .hero(.groot), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
+        ], social: (title: "CLAWDVENGERS: CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Marvelous Clawds battle on your desktop",
+                       cast: [.hero(MarvelHero.thor), .hero(MarvelHero.spiderMan), .hero(MarvelHero.captainAmerica),
+                              .hero(MarvelHero.ironMan), .villain(MarvelVillain.thanos),
+                              .villain(MarvelVillain.loki), .villain(MarvelVillain.greenGoblin),
+                              .villain(MarvelVillain.venom)]))
+    }
+}

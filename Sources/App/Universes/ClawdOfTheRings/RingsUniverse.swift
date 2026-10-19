@@ -24,3 +24,20 @@ struct RingsUniverse: UniverseModule {
     }
     var rides: [Ride] { [.eagle] }
 }
+
+extension RingsUniverse {
+    /// The README's desktop line-up (the Witch-king and Arrogorn, Leggolas against an orc, Gimli against an Uruk,
+    /// Gandclawd and the Ballrog, Samwise cheering) and social preview.
+    var docs: DocsInfo {
+        DocsInfo(lineup: [
+            LineupSlot.pair(.villain(RingsVillain.witchKing), true, "", 30, .hero(RingsHero.aragorn), true, "", 98),
+            LineupSlot.pair(.hero(RingsHero.legolas), false, "Check git history", 132, .villain(RingsVillain.orc), false, "Write changelog", 182),
+            LineupSlot.pair(.hero(RingsHero.gimli), false, "Plan the refactor", 214, .villain(RingsVillain.uruk), false, "Review Overlay.swift", 244),
+            LineupSlot.pair(.hero(RingsHero.gandalf), true, "", 282, .villain(RingsVillain.balrog), true, "", 342),
+            [LineupSlot(who: .hero(RingsHero.sam), leader: false, label: "Run the test suite", x: 396, facing: 1, role: .cheer)],
+        ], social: (title: "CLAWD OF THE RINGS", subtitle: "Your AI sessions as a pixel-art quest on your desktop",
+                       cast: [.hero(RingsHero.gandalf), .hero(RingsHero.frodo), .hero(RingsHero.aragorn),
+                              .hero(RingsHero.legolas), .villain(RingsVillain.balrog), .villain(RingsVillain.sauron),
+                              .villain(RingsVillain.witchKing), .villain(RingsVillain.gollum)]))
+    }
+}

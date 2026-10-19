@@ -42,3 +42,21 @@ extension Ride {
     /// Hush: while the Gentlemen are on stage, nobody has a voice. Mayor Wilclaws wipes his hands after every duel.
     var quirks: StageQuirks { StageQuirks(hushers: [.villain(SlayerVillain.gentlemen)], afterDuel: [.villain(SlayerVillain.mayorWilclaws)]) }
 }
+
+extension SlayerUniverse {
+    /// The README's desktop line-up (the Old Master and Buffy, Willow's spell against Drusillah's, Xander's 2×4 against
+    /// a fledgling, Spyke against Draclawla, Rupert Gyles cheering) and social preview.
+    var docs: DocsInfo {
+        DocsInfo(lineup: [
+            LineupSlot.pair(.villain(SlayerVillain.oldMaster), true, "", 30, .hero(SlayerHero.buffyClawmers), true, "", 98),
+            LineupSlot.pair(.hero(SlayerHero.willowRosenclaw), false, "Check git history", 132, .villain(SlayerVillain.drusillah), false, "Write changelog", 182),
+            LineupSlot.pair(.hero(SlayerHero.xanderHarrows), false, "Plan the refactor", 214, .villain(SlayerVillain.fledgling), false, "Review Overlay.swift", 244),
+            LineupSlot.pair(.hero(SlayerHero.spyke), true, "", 282, .villain(SlayerVillain.draclawla), true, "", 352),
+            [LineupSlot(who: .hero(SlayerHero.rupertGyles), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
+        ], social: (title: "CLAWD SLAYER", subtitle: "Your AI sessions as a pixel-art vampire hunt on your desktop",
+                       cast: [.hero(SlayerHero.buffyClawmers), .hero(SlayerHero.willowRosenclaw),
+                              .hero(SlayerHero.spyke), .hero(SlayerHero.angstel), .villain(SlayerVillain.oldMaster),
+                              .villain(SlayerVillain.glorificlaws), .villain(SlayerVillain.drusillah),
+                              .villain(SlayerVillain.mayorWilclaws)]))
+    }
+}
