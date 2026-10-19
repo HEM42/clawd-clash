@@ -174,11 +174,15 @@ private func drawLexLuthor(_ c: PixelCanvas, _ p: Pose) {
         } else {
             drawLegs(c, Look(leg: purple), step: p.step)
             drawBoots(c, green, step: p.step, rows: 3)
+            // The boots' lit fronts.
+            if !seatedPose {
+                for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx, p.step >= 0 && i % 2 == p.step ? 41 : 42, greenLight) }
+            }
         }
         c.oy += p.breathe
         // The tall collar behind his head.
         c.rect(16, 27, 2, 7, purple); c.rect(38, 27, 2, 7, purpleDark)
-        c.px(16, 27, purpleLight)
+        c.rect(16, 27, 1, 4, purpleLight); c.rect(17, 27, 1, 1, purpleLight)
         drawBody(c, Look(body: clawdOrange, shade: clawdShade, arm: green, eye: nil))
         // Bald and pleased with himself: the shine, the brows, the smirk.
         c.rect(21, 26, 4, 1, shine); c.rect(20, 27, 2, 1, shine)
@@ -190,11 +194,11 @@ private func drawLexLuthor(_ c: PixelCanvas, _ p: Pose) {
         // The warsuit's chest.
         c.pattern(18, 33, [
             "PPPPPPPPPPPPPPPPPPPP",
+            "LLLGGGGgGLLGgLLGGGGg",
             "GGGGGGGgGLLGgGGGGGGg",
-            "GGGGGGGgGLLGgGGGGGGg",
-            "ggggggPPPPPPPPgggggg",
+            "ggggggPpPPPPPPgggggg",
             "GGGGGGGGGGGGGGGGGGGg",
-        ], ["P": purple, "G": green, "g": greenDark, "L": greenLight])
+        ], ["P": purple, "p": purpleLight, "G": green, "g": greenDark, "L": greenLight])
         c.glowLine(28, 35, 28, 35, core: core, glow: glow, coreR: 0.8, glowR: 2)
         c.rect(18, 37, 20, 1, greenDark)
         // Pauldrons and the off-hand gauntlet.
