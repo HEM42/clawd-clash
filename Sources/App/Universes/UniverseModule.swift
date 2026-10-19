@@ -45,6 +45,9 @@ protocol UniverseModule {
     /// What Tools/RenderDocs draws for the README besides the roster and places: the desktop line-up and the social
     /// preview. Empty: neither is drawn.
     var docs: DocsInfo { get }
+    /// Only the template says true (`Sources/App/Universes/_Template/`), and it's never shown in the app: the registry
+    /// refuses it in any build but a `TEMPLATE=1` one.
+    var isTemplate: Bool { get }
 }
 
 extension UniverseModule {
@@ -65,6 +68,7 @@ extension UniverseModule {
     var drills: [Cast: BespokeDrill] { [:] }
     var regeneration: (length: Double, draw: (_ c: PixelCanvas, _ k: Double, _ t: Double) -> Void)? { nil }
     var docs: DocsInfo { DocsInfo() }
+    var isTemplate: Bool { false }
 }
 
 /// A universe's README pictures beyond its roster and places (Tools/RenderDocs).

@@ -1,0 +1,98 @@
+#if CLAWD_TEMPLATE   // only in TEMPLATE=1 builds; Tools/new-universe.sh takes this line and the file's last one out
+import Foundation
+
+// The universe's roster: who the characters are (their personas, from the Art files), where each one lives, who fights
+// whom first, who gets picked up by what, and the `Theme` that puts it all together. Then the place keys, and every
+// place's drawing merged from the Places files.
+//
+// Names: every top-level name in the folder starts with the prefix (`template…`, `Template…`) or is `private`. Preview
+// compiles every universe together, so two universes' `drawHat`s would clash, and a plain name could shadow one the
+// app relies on (scripts/pr-guard.py refuses it). Helpers one file uses stay `private` to it; helpers several files
+// share go in a `<Prefix>Kit.swift` with prefixed names.
+
+extension TemplateHero {
+    var persona: Persona { templateHeroPersonas[self] ?? Persona.missing(String(describing: self)) }
+}
+
+extension TemplateVillain {
+    var persona: Persona { templateVillainPersonas[self] ?? Persona.missing(String(describing: self)) }
+}
+
+/// Every hero's persona, from the Art/TemplateHeroes*.swift files (8 to 10 a file), and HEM's, who the engine draws
+/// in this universe's costume (TemplateHem.swift). Add each new art file to the list.
+let templateHeroPersonas: [TemplateHero: Persona] = [templateHeroes1]
+    .reduce([.hem: hemPersona(.template)]) { $0.merging($1) { a, _ in a } }
+/// Every villain's persona, from the Art/TemplateVillains*.swift files.
+let templateVillainPersonas: [TemplateVillain: Persona] = [templateVillains1]
+    .reduce([:]) { $0.merging($1) { a, _ in a } }
+
+// MARK: - Homes
+
+extension Location {
+    /// Where each villain belongs: the crew gathers there when one leads the first session (window mode, Automatic).
+    /// Every character's home is one of this universe's places, and a `switch` with no `default` makes the compiler
+    /// ask for each new case.
+    static func templateHome(of villain: TemplateVillain) -> Location {
+        switch villain {
+        case .sampleVillain: return .sampleMeadow
+        }
+    }
+
+    static func templateHome(of hero: TemplateHero) -> Location {
+        switch hero {
+        case .sampleHero, .hem: return .sampleMeadow
+        }
+    }
+}
+
+// MARK: - The theme
+
+/// A character as a `Cast`. Everywhere else, name the enum too (`.hero(TemplateHero.sampleHero)`): every universe has
+/// a `.hero(_:)` and a `.hem`, so a bare `.hero(.hem)` is ambiguous once they're all compiled together.
+extension Cast {
+    static func hero(_ h: TemplateHero) -> Cast { Cast(universe: .template, isDark: false, index: h.rawValue) }
+    static func villain(_ v: TemplateVillain) -> Cast { Cast(universe: .template, isDark: true, index: v.rawValue) }
+}
+
+/// Arch-enemies: whenever both are fighting, they're paired with each other first, wherever they are in the line. Each
+/// pair is a hero and a villain from this universe; a character can be in more than one pair.
+private let templateNemeses: [(TemplateHero, TemplateVillain)] = [
+    (.sampleHero, .sampleVillain),
+]
+
+let templateTheme = Theme(
+    universe: .template,
+    villains: TemplateVillain.allCases.map(\.persona),
+    heroes: TemplateHero.allCases.map(\.persona),
+    // Every place, in menu order. The first is the default: where the crew stands when nobody's home is known. A full
+    // universe has about 20.
+    places: [.sampleMeadow],
+    home: { c in
+        c.isDark ? .templateHome(of: TemplateVillain(rawValue: c.index) ?? .sampleVillain)
+                 : .templateHome(of: TemplateHero(rawValue: c.index) ?? .sampleHero)
+    },
+    nemeses: templateNemeses.map { (.hero($0.0), .villain($0.1)) },
+    // Who gets picked up when their agent is done, and by what: nil walks off on foot, as everyone does here. A ride is
+    // a `Ride` of this universe's own (`static let` in an extension of `Ride`, listed in the module's `rides`), drawn
+    // nose to the right; see Slayer/SlayerUniverse.swift and SlayerRides.swift for a bus and two cars that drive in.
+    ride: { c in
+        guard c.universe == .template else { return nil }
+        return nil
+    },
+    menuIcon: templateMenuIcon,
+    // Who stands in for a session in Status Symbols: usually the universe's lead hero.
+    legend: .hero(TemplateHero.sampleHero))
+
+// MARK: - Places
+
+// The place keys. They're saved in settings and the screen-saver feed, and unique across every universe, so each starts
+// with the prefix (Tools/new-universe.sh renames the `sample…` ones here).
+extension Location {
+    static let sampleMeadow = Location("sampleMeadow")
+}
+
+/// Every place's drawing, from the Places/TemplateScenes*.swift files (a few places a file). Add each new file to the
+/// list.
+let templatePlaces: [Location: Place] = [templateScenes1]
+    .reduce([:]) { $0.merging($1) { a, _ in a } }
+#endif   // CLAWD_TEMPLATE
