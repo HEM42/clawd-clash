@@ -96,7 +96,7 @@ private func slayerPunch(_ c: PixelCanvas, angle: Double, trail: [Double], sleev
 /// back, swings it over onto his shoulder, squints down the sight, then puts it all back the way it came.
 private func drawXanderHarrows(_ c: PixelCanvas, _ p: Pose) {
     let shirt = C(0x2A8C9C), shirtD = C(0x1C6874), petal = C(0xF2C838), petal2 = C(0xE2503A), leaf = C(0x86D068)
-    let tee = C(0xEEEAE0), hair = C(0x3A2618), hairL = C(0x5C3E28), hairD = C(0x24160E)
+    let tee = C(0xEEEAE0), hair = C(0x3A2618), hairL = C(0x5C3E28), hairD = C(0x24160E), shirtL = C(0x4AAAB8)
     func ease(_ k: Double) -> Double { let k = min(1, max(0, k)); return k * k * (3 - 2 * k) }
     // The launcher's journey, as three numbers: how far it has risen behind him (0 hidden, 1 its muzzle over his
     // head), how far it has swung over towards his shoulder (0 upright, 1 level on it), and how far the 2×4 has
@@ -123,6 +123,8 @@ private func drawXanderHarrows(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: shirt), armRight: lift)
     // The Hawaiian shirt, open at the neck over the white T-shirt, its flowers scattered over it.
     c.rect(18, 34, 20, 4, shirt); c.rect(37, 34, 1, 4, shirtD); c.rect(18, 37, 20, 1, shirtD)
+    c.rect(18, 34, 4, 1, shirtL); c.rect(31, 34, 4, 1, shirtL)   // light along the shoulders
+    c.rect(32, 35, 1, 2, shirtD); c.rect(15, 35, 3, 1, shirtD)   // a fold, and the cuff
     c.rect(26, 34, 4, 2, tee); c.px(27, 36, tee); c.px(28, 36, tee)
     c.px(25, 34, shirtD); c.px(30, 34, shirtD)
     for (x, y, col) in [(19, 35, petal), (20, 34, leaf), (22, 36, petal2), (23, 35, leaf), (33, 35, petal),
@@ -130,16 +132,17 @@ private func drawXanderHarrows(_ c: PixelCanvas, _ p: Pose) {
         c.px(x, y, col)
     }
     c.px(15, 34, petal); c.px(39, 33 - lift, petal2)   // the sleeves too
-    // Short messy dark hair, a tuft or two sticking up, and sideburns.
+    // Short messy dark hair, a tuft or two sticking up, and sideburns: the light in short runs over the top, the far
+    // side in shade.
     c.pattern(17, 20, [
         "...H...H.....H........",
-        "...HH.HHHHHHHHH.H.....",
-        "..HHHHHHlHHHHHHHHHH...",
-        ".HHHHHlHHHHHHHlHHHHH..",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHHH",
-        ".HHH.HHHH..HHHH..HHHHH",
-        ".HH.................HH",
+        "...HH.HHHlllHHH.H.....",
+        "..HHHlllHHHHlllHHHH...",
+        ".HHHlHHHHHHHHHHHHHdH..",
+        ".HHHHHHHHHHHHHHHHHHdH.",
+        ".HHHHHHHHHHHHHHHHHHHdH",
+        ".HHH.HHHH..HHHH..HHHdH",
+        ".HH.................dH",
         ".Hd.................dH",
     ], ["H": hair, "l": hairL, "d": hairD])
 
@@ -226,7 +229,7 @@ private func drawRocketLauncher(_ c: PixelCanvas, x: Int, y: Int) {
 /// oatmeal, a white shirt and a dark red tie. He shoots a wooden crossbow. Signature: he takes off his glasses and
 /// polishes them with his handkerchief, squinting, then puts them back on.
 private func drawRupertGyles(_ c: PixelCanvas, _ p: Pose) {
-    let tweed = C(0x7A6648), tweedD = C(0x58482E), tweedL = C(0x9A8462), fleck = C(0xC0AE84)
+    let tweed = C(0x7A6648), tweedD = C(0x58482E), tweedL = C(0x9A8462), fleck = C(0xB09E78)
     let shirt = C(0xEEEAE0), tie = C(0x7A2A30), wire = C(0xD4D8E0)
     let hair = C(0x8A7660), hairL = C(0xB0A28E), hairD = C(0x665440)
     let polishK = p.signature.map { $0 > 0.1 && $0 < 0.88 ? ($0 - 0.1) / 0.78 : -1 } ?? -1
@@ -235,13 +238,16 @@ private func drawRupertGyles(_ c: PixelCanvas, _ p: Pose) {
     slayerBoots(c, step: p.step, C(0x3A2A1E), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: tweed), armRight: polishK >= 0 ? 5 : 0)
-    // The tweed jacket, its lapels open on the shirt and tie, flecked all over.
+    // The tweed jacket, its lapels open on the shirt and tie: light along the shoulders, the weave in short strokes,
+    // a fold either side and a cuff.
     c.rect(18, 34, 20, 4, tweed); c.rect(37, 34, 1, 4, tweedD); c.rect(18, 37, 20, 1, tweedD)
+    c.rect(18, 34, 5, 1, tweedL); c.rect(31, 34, 5, 1, tweedL)
     c.rect(26, 34, 4, 3, shirt); c.rect(27, 34, 2, 4, tie); c.px(27, 34, C(0x5A1A20))
     c.px(25, 34, tweedL); c.px(25, 35, tweedL); c.px(30, 34, tweedD); c.px(30, 35, tweedD)
-    for (x, y) in [(19, 35), (21, 36), (23, 34), (33, 36), (35, 34), (34, 37), (20, 37), (16, 34), (39, 34 - (polishK >= 0 ? 5 : 0))] {
-        c.px(x, y, fleck)
-    }
+    for (x, y) in [(19, 35), (21, 36), (32, 35), (34, 36)] { c.rect(x, y, 2, 1, fleck) }
+    c.rect(23, 35, 1, 2, tweedD); c.rect(31, 36, 1, 1, tweedD)
+    c.rect(15, 34, 2, 1, fleck); c.rect(15, 35, 3, 1, tweedD)   // the sleeve, its cuff
+    c.rect(39, 34 - (polishK >= 0 ? 5 : 0), 2, 1, fleck)
     // Short neat hair, parted on the left and combed across in a soft wave, an uneven fringe, greying at the sides.
     c.pattern(17, 21, [
         "....HHHH.HHHHHH.......",
@@ -378,7 +384,7 @@ private func drawCordeliaChaise(_ c: PixelCanvas, _ p: Pose) {
 /// in place of the stake, then he's back. On a full-moon night (`slayerFullMoon`) he's the wolf all night, and his
 /// signature is a howl instead.
 private func drawOzz(_ c: PixelCanvas, _ p: Pose) {
-    let tee = C(0x34343E), teeD = C(0x24242C), logo = C(0xF0C838), logo2 = C(0xD8402E)
+    let tee = C(0x34343E), teeD = C(0x24242C), teeL = C(0x4A4A56), logo = C(0xF0C838), logo2 = C(0xD8402E)
     let hair = C(0x3C78D8), hairL = C(0x74A8F4), hairD = C(0x2850A8)
     let fur = C(0x9C8C72), furD = C(0x6E604C), furL = C(0xC8B89A)
     let moon = slayerFullMoon
@@ -411,21 +417,22 @@ private func drawOzz(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: wolf > 0 ? fur : tee))
     // The band T-shirt, with the strap of the guitar across it.
     c.rect(18, 34, 20, 4, tee); c.rect(37, 34, 1, 4, teeD); c.rect(18, 37, 20, 1, teeD)
+    c.rect(31, 34, 5, 1, teeL); c.rect(33, 35, 1, 2, teeD); c.rect(15, 35, 3, 1, teeD)   // lit shoulder, a fold, the cuff
     c.pattern(25, 34, [".YYYY.", "YRRYRY", ".YYYY."], ["Y": logo, "R": logo2])
     for i in 0..<6 { c.px(19 + i, 33 + i / 2, C(0x5A3A22)) }
 
     if wolf == 0 {
-        // Short spiky hair, dyed blue.
+        // Short spiky hair, dyed blue: each spike lit in a short run down from its tip, the far side in shade.
         c.pattern(16, 17, [
             "....H....H....H...H.....",
-            "....HH..HHH..HH..HH..H..",
-            "...HHHHHHHHHHHHHHHHHHH..",
-            "..HHHlHHHHlHHHHlHHHHHH..",
-            "..HHHHHHHHHHHHHHHHHHHHH.",
-            ".HHHHHHHHHHHHHHHHHHHHHH.",
-            ".HHHHHHHHHHHHHHHHHHHHHH.",
-            "..HHHHHHHHHHHHHHHHHHHH..",
-            "..HHHHHHHHHHHHHHHHHHHH..",
+            "....lH..lHH..lH..lH..H..",
+            "...HlHHHlHHHHlHHHlHHHH..",
+            "..HHllHHHllHHHllHHHHdH..",
+            "..HHHHHHHHHHHHHHHHHHHdH.",
+            ".HHHHHHHHHHHHHHHHHHHHdH.",
+            ".HHHHHHHHHHHHHHHHHHHHdH.",
+            "..HHHHHHHHHHHHHHHHHHdH..",
+            "..HHHHHHHHHHHHHHHHHHdH..",
             "..HdH.HHdH..HdH..HdHHH..",
         ], ["H": hair, "l": hairL, "d": hairD])
     } else {
@@ -529,6 +536,7 @@ private func drawAnyaJinkins(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: cardi), armRight: countK >= 0 ? 2 : 0)
     // The cardigan, and the apron's bib over it, with its pocket.
     c.rect(18, 34, 20, 4, cardi); c.rect(37, 34, 1, 4, cardiD); c.rect(18, 37, 20, 1, cardiD)
+    c.rect(18, 34, 4, 1, C(0xF8B4CC)); c.rect(35, 34, 2, 1, C(0xF8B4CC)); c.rect(15, 35, 3, 1, cardiD)   // shoulders, cuff
     c.rect(22, 34, 13, 4, apron); c.rect(34, 34, 1, 4, apronD); c.rect(22, 34, 13, 1, apronL)
     c.rect(25, 36, 7, 2, apronD); c.rect(25, 36, 7, 1, apronL)
     c.px(22, 33, apron); c.px(34, 33, apron)   // the neck strap
@@ -536,15 +544,15 @@ private func drawAnyaJinkins(_ c: PixelCanvas, _ p: Pose) {
     // they curl under, well clear of her shoulders (Tara's hair is darker, honey-brown, and long).
     c.pattern(16, 20, [
         "......HHHHHHHHHHHH......",
-        "....HHHHHHlHHHHHHHHH....",
-        "...HHHHlHHHHHHHHlHHHH...",
-        "..HHHHHHHHHHHHHHHHHHHH..",
-        "..HHHHHHHHHHHHHHHHHHHH..",
-        ".HHHHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHHHH.",
+        "....HHHHlllHHHHHHHHH....",
+        "...HHHllHHHHHHlllHHHH...",
+        "..HHlHHHHHHHHHHHHHHHdH..",
+        "..HHHHHHHHHHHHHHHHHHdH..",
+        ".HHHHHHHHHHHHHHHHHHHHdH.",
+        ".HHHHHHHHHHHHHHHHHHHHdH.",
         ".HHHdHdHHdHHHdHHdHHdHHH.",
-        ".HHH................HHH.",
-        ".HHH................HHH.",
+        ".HlH................HdH.",
+        ".HlH................HdH.",
         ".HHl................lHH.",
         "HHHHH..............HHHHH",
         ".ddHd..............dHdd.",
@@ -609,6 +617,7 @@ private func drawTaraMaclaw(_ c: PixelCanvas, _ p: Pose) {
         c.rect(16, 38, 24, 2, skirt); c.px(20, 38, bloom); c.px(29, 39, bloom2); c.px(36, 38, bloom)
     } else {
         c.rect(17, 38, 22, 4, skirt); c.rect(16, 40, 24, 2, skirt); c.rect(16, 41, 24, 1, skirtD); c.rect(38, 38, 1, 3, skirtD)
+        for x in [22, 27, 34] { c.rect(x, 39, 1, 2, skirtD) }   // soft folds down to the hem
         for (x, y, col) in [(19, 39, bloom), (24, 38, bloom2), (28, 40, bloom), (33, 39, bloom2), (36, 41, bloom),
                             (21, 41, bloom2), (31, 38, bloom)] {
             c.px(x, y, col)
@@ -619,19 +628,21 @@ private func drawTaraMaclaw(_ c: PixelCanvas, _ p: Pose) {
     // The cardigan open over a cream top.
     c.rect(18, 34, 20, 4, cardi); c.rect(37, 34, 1, 4, cardiD); c.rect(18, 37, 20, 1, cardiD)
     c.rect(25, 34, 6, 4, cream); c.rect(24, 34, 1, 4, cardiL); c.rect(31, 34, 1, 4, cardiD)
+    c.rect(20, 34, 3, 1, cardiL); c.rect(33, 34, 2, 1, cardiL); c.rect(22, 35, 1, 2, cardiD)   // lit shoulders, a fold
+    c.rect(15, 35, 3, 1, cardiD)   // the cuff
     // Long wavy hair, a side parting and a fringe swept across.
     c.pattern(16, 20, [
         ".....HHHHHHHHHHHHH......",
-        "....HHHHHHHHlHHHHHHH....",
-        "...HHHlHHHHHHHHHHHlHH...",
-        "..HHHHHHHHHHHHHHHHHHHH..",
-        "..HHHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHH.....HHHH.",
-        ".HHHHHHH...........HHHH.",
-        "HHHH................HHHH",
-        ".HHH................HHH.",
-        "HHHl.................HHH",
+        "....HHHHHHHlllHHHHHH....",
+        "...HHllHHHHHHHHHlllHH...",
+        "..HHlHHHHHHHHHHHHHHHdH..",
+        "..HHHHHHHHHHHHHHHHHHHdH.",
+        ".HHHHHHHHHHHHHHHHHHHHdH.",
+        ".HHHHHHHHHHHHH.....HHdH.",
+        ".HlHHHHH...........HHdH.",
+        "HHlH................HdHH",
+        ".HlH................HdH.",
+        "HHHl.................HdH",
         ".HHH................lHH.",
         "HHHH.................HHH",
         ".HHd................dHH.",

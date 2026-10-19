@@ -310,6 +310,8 @@ private func drawKennedie(_ c: PixelCanvas, _ p: Pose) {
     // The fitted top, a belt at the waist.
     c.rect(18, 33, 20, 5, top); c.rect(37, 33, 1, 5, topD); c.rect(18, 33, 1, 4, topL)
     c.rect(18, 37, 20, 1, C(0x2A2420)); c.px(27, 37, C(0xB0A890))
+    c.rect(19, 33, 3, 1, topL); c.rect(33, 33, 2, 1, topL); c.rect(23, 34, 1, 2, topD)   // lit shoulders, a fold
+    if drillK < 0 { c.rect(15, 35, 3, 1, topD) }   // the cuff
     // Sleek dark hair, pulled back tight, and the high ponytail swinging out behind.
     c.pattern(11, 19 + swing, [
         "....PP....",
@@ -324,12 +326,12 @@ private func drawKennedie(_ c: PixelCanvas, _ p: Pose) {
     ], ["P": hair, "l": hairL, "d": hairD])
     c.pattern(16, 20, [
         "......HHHHHHHHHHH.......",
-        "....HHHHHHHHHlHHHHH.....",
-        "...HHHlHHHHHHHHHHHHHH...",
-        "..HHHHHHHHHHHHHHHHHHHH..",
-        "..HHHHHHHHHHHHHHHHHHHH..",
-        "..HHHHHHHHHHHHHHHHHHHH..",
-        ".dHHHH.............HHH..",
+        "....HHHHHHHHlllHHHH.....",
+        "...HHllllHHHHHHHHHHHH...",
+        "..HHHHHHHllllHHHHHHHdH..",
+        "..HHHHHHHHHHHHHHHHHHdH..",
+        "..HHHHHHHHHHHHHHHHHHdH..",
+        ".dHHHH.............HdH..",
         ".HHH................HH..",
         "..HH................dH..",
         "..dH....................",

@@ -53,7 +53,7 @@ private func slayerWave(_ c: PixelCanvas, _ p: Pose, sleeve: Px, nowAndThen: Boo
 /// jeans and white trainers. She doesn't fight. Signature: the Key's green energy flickers through her, faint green
 /// light running over her in bands, a few motes rising off her hair, then gone.
 private func drawDawnClawmers(_ c: PixelCanvas, _ p: Pose) {
-    let jumper = C(0x7EA6D2), jumperD = C(0x5A82B0), stripe = C(0xEEF2F8)
+    let jumper = C(0x7EA6D2), jumperD = C(0x5A82B0), jumperL = C(0xA2C2E6), stripe = C(0xEEF2F8)
     let hair = C(0x5E3C22), hairL = C(0x80583A), hairD = C(0x3E2614)
     let keyK = slayerSpan(p, 0.08, 0.92)
 
@@ -64,6 +64,8 @@ private func drawDawnClawmers(_ c: PixelCanvas, _ p: Pose) {
     // The jumper, a white stripe across the chest, a round neck.
     c.rect(18, 33, 20, 5, jumper); c.rect(37, 33, 1, 5, jumperD); c.rect(18, 37, 20, 1, jumperD)
     c.rect(18, 35, 20, 1, stripe); c.rect(25, 33, 6, 1, jumperD)
+    c.rect(20, 33, 3, 1, jumperL); c.rect(33, 33, 2, 1, jumperL)   // light along the shoulders
+    c.rect(23, 36, 1, 1, jumperD); c.rect(32, 36, 1, 1, jumperD); c.rect(15, 35, 3, 1, jumperD)   // folds, the cuff
     // Very long straight hair, a side parting, down past her shoulders to her waist; while the Key flickers through
     // her, her hair and face catch its green.
     let strength = keyK >= 0 ? sin(keyK * .pi) * (0.7 + 0.3 * sin(p.t * 23)) : 0
@@ -72,16 +74,16 @@ private func drawDawnClawmers(_ c: PixelCanvas, _ p: Pose) {
     let glowHair = strength > 0.5
     c.pattern(16, 20, [
         "......HHHHHHHHHHHH......",
-        "....HHHHHHHHHlHHHHHH....",
-        "...HHHlHHHHHHHHHHlHHH...",
-        "..HHHHHHHHHHHHHHHHHHHH..",
-        "..HHHHHHHHHHHHHHHHHHHH..",
-        ".HHHHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHH..........HHHHHH.",
-        ".HHH................HHH.",
-        ".HHH................HHH.",
-        ".HHl................HHH.",
-        ".HHH................lHH.",
+        "....HHHHHHHHlllHHHHH....",
+        "...HHllHHHHHHHHHHlllH...",
+        "..HHlHHHHHHHHHHHHHHHdH..",
+        "..HHHHHHHHHHHHHHHHHHdH..",
+        ".HHHHHHHHHHHHHHHHHHHHdH.",
+        ".HHHHHH..........HHHHdH.",
+        ".HlH................HdH.",
+        ".HlH................HdH.",
+        ".HlH................HdH.",
+        ".HHH................HdH.",
         ".HHH................HHH.",
         ".HHH................HHH.",
         ".HHd................dHH.",
@@ -108,7 +110,7 @@ private func drawDawnClawmers(_ c: PixelCanvas, _ p: Pose) {
 /// shoes. She fights with the fire axe from "School Hard", which she only takes up when she has to. Signature: she
 /// folds her arms, her brows come down, and she gives you a mum's look, tapping one foot.
 private func drawJoyceClawmers(_ c: PixelCanvas, _ p: Pose) {
-    let blouse = C(0xC4848E), blouseD = C(0x9E6470), collar = C(0xF2ECE4)
+    let blouse = C(0xC4848E), blouseD = C(0x9E6470), blouseL = C(0xDCA2AC), collar = C(0xF2ECE4)
     let hair = C(0xD6BE8A), hairL = C(0xEEDCB0), hairD = C(0xA88E5C)
     let lookK = slayerSpan(p, 0.08, 0.94)
     let tap = lookK >= 0 && lookK > 0.3 && Int(p.t * 6) % 2 == 0
@@ -120,15 +122,18 @@ private func drawJoyceClawmers(_ c: PixelCanvas, _ p: Pose) {
     // The blouse, a neat white collar at the neck and a row of buttons.
     c.rect(18, 33, 20, 5, blouse); c.rect(37, 33, 1, 5, blouseD); c.rect(18, 37, 20, 1, blouseD)
     c.pattern(24, 33, ["CC....CC"], ["C": collar])
+    c.rect(20, 33, 3, 1, blouseL); c.rect(33, 33, 2, 1, blouseL)   // light along the shoulders
+    c.rect(22, 35, 1, 2, blouseD); c.rect(33, 35, 1, 2, blouseD)   // soft folds
+    c.rect(15, 35, 3, 1, blouseD)                                   // the cuff
     // Short, soft blonde hair, curled under just above her shoulders.
     c.pattern(16, 21, [
         ".....HHHHHHHHHHHH.......",
-        "...HHHHlHHHHHHlHHHHH....",
-        "..HHHHHHHHHHHHHHHHHHH...",
-        ".HHHHHHHHHHHHHHHHHHHHH..",
-        ".HHHHHlHHHHHHHHHHHHlHHH.",
-        ".HHHH..............HHHH.",
-        ".HHH................HHH.",
+        "...HHHlllHHHHlllHHHH....",
+        "..HHllHHHHHHllHHHHHdH...",
+        ".HHlHHHHHHHHHHHHHHHHdH..",
+        ".HHHHHllHHHHHHHHHlHHHdH.",
+        ".HHHH..............HHdH.",
+        ".HHH................HdH.",
         ".HHl................lHH.",
         ".dHH................HHd.",
         "..dd................dd..",
@@ -180,18 +185,19 @@ private func drawFaithLehayne(_ c: PixelCanvas, _ p: Pose) {
     c.rect(19, 34, 18, 4, vest); c.rect(36, 34, 1, 4, vestD); c.rect(19, 37, 18, 1, vestD)
     c.rect(21, 33, 2, 1, vest); c.rect(33, 33, 2, 1, vest)
     c.pattern(25, 34, ["l......l"], ["l": C(0x3A3640)])
+    c.rect(21, 34, 3, 1, C(0x2E2A34)); c.rect(23, 35, 1, 2, vestD); c.rect(32, 35, 1, 2, vestD)   // a sheen, folds
     c.rect(18, 36, 1, 2, leather); c.rect(37, 36, 1, 2, leather)   // the trousers' waistband
     // Dark wavy hair with volume, a few kinks breaking the outline.
     c.pattern(15, 20, [
         ".......HHHHHHHHHHH.......",
-        ".....HHHHHlHHHHHHHHH.....",
-        "...HHHHHHHHHHHHHlHHHHH...",
-        "..HHHHHHHHHHHHHHHHHHHHH..",
-        "..HHHHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHHHHH.",
-        "HHHHHH...........HHHHHHH.",
-        ".HHHH..............HHHHHH",
-        "..HHH...............HHHH.",
+        ".....HHHHlllHHHHHHHH.....",
+        "...HHHllHHHHHHHlllHHHH...",
+        "..HHlHHHHHHHHHHHHHHHHdH..",
+        "..HHlHHHHHHHHHHHHHHHHHdH.",
+        ".HHHHHHHHHHHHHHHHHHHHHdH.",
+        "HHHlHH...........HHHHHdH.",
+        ".HHlH..............HHHdHH",
+        "..HlH...............HdHH.",
         ".HHHl...............lHHH.",
         "HHHH.................HHHH",
         ".HHd.................dHH.",
@@ -316,13 +322,13 @@ private func drawJennyClawlendar(_ c: PixelCanvas, _ p: Pose) {
     // Dark hair, chin-length with a straight fringe.
     c.pattern(16, 21, [
         ".....HHHHHHHHHHHHH......",
-        "...HHHHHlHHHHHHHHHHH....",
-        "..HHHHHHHHHHHHHHHlHHH...",
-        ".HHHHHHHHHHHHHHHHHHHHH..",
-        ".HHHHHHHHHHHHHHHHHHHHHH.",
-        ".HHHH..............HHHH.",
-        ".HHH................HHH.",
-        ".HHH................HHH.",
+        "...HHHHlllHHHHHHHHHH....",
+        "..HHHllHHHHHHHHlllHHH...",
+        ".HHlHHHHHHHHHHHHHHHHdH..",
+        ".HHHHHHHHHHHHHHHHHHHHdH.",
+        ".HHHH..............HHdH.",
+        ".HlH................HdH.",
+        ".HlH................HdH.",
         ".HHl................lHH.",
         ".HHd................dHH.",
         "..dd................dd..",
@@ -332,7 +338,7 @@ private func drawJennyClawlendar(_ c: PixelCanvas, _ p: Pose) {
     let lap = C(0x3A3D45), lapL = C(0x7A7F8A), lapD = C(0x22242A)
     c.rect(11, 30, 4, 9, lap); c.rect(11, 30, 1, 9, lapL); c.rect(11, 30, 4, 1, lapL)
     c.rect(13, 31, 1, 8, lapD); c.rect(14, 38, 1, 1, lapD); c.px(12, 37, C(0x6CE08A))
-    c.rect(14, 33, 2, 3, cardi)
+    c.rect(14, 33, 2, 3, cardi); c.rect(14, 35, 2, 1, cardiD)   // her sleeve round it, its cuff
 
     // The Orb of Thessulah on her palm: clear glass at rest, lit from within, pale gold, when she casts.
     let lit = orbK >= 0 ? max(0, min(1, (orbK - 0.25) * 3)) * min(1, (1 - orbK) * 6) : casting ? 1 : 0
@@ -376,6 +382,7 @@ private func drawAngstel(_ c: PixelCanvas, _ p: Pose) {
     // The long coat: open over the dark shirt, its skirts (above) hanging on down past the knees.
     c.rect(18, 33, 20, 5, coat); c.rect(24, 33, 8, 5, shirt)
     c.rect(23, 33, 1, 5, coatL); c.rect(32, 33, 1, 5, coatD); c.rect(37, 33, 1, 5, coatD)
+    c.rect(19, 33, 3, 1, coatL); c.rect(15, 35, 3, 1, coatD)   // a lit shoulder, the cuff
     if seatedPose { c.rect(17, 38, 7, 1, coat); c.rect(32, 38, 7, 1, coat) }
     // The turned-up collar.
     c.rect(17, 31, 2, 3, coat); c.rect(37, 31, 2, 3, coat); c.px(17, 31, coatL)
@@ -400,12 +407,12 @@ private func drawAngstel(_ c: PixelCanvas, _ p: Pose) {
     // Spiky dark hair, gelled up.
     c.pattern(16, 17, [
         "......H...H..H...H......",
-        ".....HH..HH.HH..HH.H....",
-        "....HHHHHHHHHHHHHHHH....",
-        "...HHHHlHHHHHlHHHHHHH...",
-        "..HHHHHHHHHHHHHHHHHHHH..",
-        "..HHHHHHHHHHHHHHHHHHHH..",
-        "..HHHHHHHHHHHHHHHHHHHH..",
+        ".....lH..lH.lH..lH.H....",
+        "....HlHHHlHHlHHHlHHH....",
+        "...HHllHHHllHHHllHHHH...",
+        "..HHHHHHHHHHHHHHHHHHdH..",
+        "..HHHHHHHHHHHHHHHHHHdH..",
+        "..HHHHHHHHHHHHHHHHHHdH..",
         "..dHHHHHHHHHHHHHHHHHHd..",
         "..dHHHHHHHHHHHHHHHHHHd..",
         "..dH..H.........H...Hd..",
@@ -449,6 +456,8 @@ private func drawWesleyWindupPryce(_ c: PixelCanvas, _ p: Pose) {
     c.rect(23, 33, 1, 5, jacketL); c.rect(32, 33, 1, 5, jacketD); c.rect(37, 33, 1, 5, jacketD)
     c.rect(18, 37, 20, 1, jacketD); c.rect(24, 37, 8, 1, shirt)
     c.rect(22, 33, 2, 1, jacketL); c.rect(32, 33, 2, 1, jacketL)   // collar points
+    c.rect(18, 33, 3, 1, jacketL); c.rect(34, 33, 2, 1, jacketL); c.rect(35, 35, 1, 2, jacketD)   // shoulders, a crease
+    c.rect(15, flickK >= 0 ? 34 : 35, 3, 1, jacketD)   // the cuff
     // Stubble: a shadow along his jaw that climbs his cheeks into sideburns, rather than a dotted row (which read as a
     // mouth).
     let shadow = C(0xB8603E)
@@ -458,11 +467,11 @@ private func drawWesleyWindupPryce(_ c: PixelCanvas, _ p: Pose) {
     // Short, slightly untidy dark hair.
     c.pattern(16, 21, [
         "......HHHHHHHHHHH.......",
-        "....HHHHlHHHHHHHHH.H....",
-        "...HHHHHHHHHlHHHHHHHH...",
-        "..HHHHHHHHHHHHHHHHHHHH..",
-        "..HHHHHHHHHHHHHHHHHHHH..",
-        "..HHH..............HHH..",
+        "....HHHlllHHHHHHHH.H....",
+        "...HHllHHHHHHlllHHHHH...",
+        "..HHHHHHHHHHHHHHHHHHdH..",
+        "..HHHHHHHHHHHHHHHHHHdH..",
+        "..HHH..............HdH..",
         "..dH................Hd..",
     ], ["H": hair, "l": hairL, "d": hairD])
     // The holster on his left hip, with the second pistol in it.
