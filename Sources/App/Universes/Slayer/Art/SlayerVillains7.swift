@@ -64,8 +64,10 @@ private func v7Trousers(_ c: PixelCanvas, step: Int, _ leg: Px, _ crease: Px, sh
 }
 
 /// A suit jacket over the body, buttoned, with its shade down the right and along the hem.
-private func v7Jacket(_ c: PixelCanvas, _ suit: Px, _ dark: Px) {
+private func v7Jacket(_ c: PixelCanvas, _ suit: Px, _ dark: Px, _ lit: Px) {
     c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, dark); c.rect(18, 37, 20, 1, dark)
+    c.rect(18, 34, 1, 3, lit)                                                  // lit down the near side
+    c.rect(21, 35, 1, 2, dark); c.rect(34, 35, 1, 2, dark)                    // folds
 }
 
 // MARK: - Quentin Travesty
@@ -87,7 +89,7 @@ private func drawQuentinTravesty(_ c: PixelCanvas, _ p: Pose) {
     v7Trousers(c, step: p.step, C(0x7A746A), C(0x5A554E), shoe: C(0x1E1A18))
     c.oy += p.breathe
     drawBody(c, Look(arm: suit), armRight: raise)
-    v7Jacket(c, suit, suitD)
+    v7Jacket(c, suit, suitD, suitL)
     // The waistcoat in the V of the lapels, the shirt collar and the Council tie with its one gold stripe: a few
     // calm shapes under his mouth, the watch chain a single gold glint at the waistcoat's edge.
     c.pattern(24, 33, ["LSSTTSSL", ".LWTTWL.", "..LWWL.."], ["S": shirt, "T": tie, "W": waist, "L": suitL])
@@ -145,7 +147,7 @@ private func drawPrincipalSnide(_ c: PixelCanvas, _ p: Pose) {
     v7Trousers(c, step: p.step, C(0x8A6848), C(0x6A4E34), shoe: C(0x2A1C14))
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
-    v7Jacket(c, suit, suitD)
+    v7Jacket(c, suit, suitD, suitL)
     c.pattern(24, 33, ["LSSTTSSL", ".LSTTSL.", "..LTTL..", "...TT...", "...TT..."],
               ["S": shirt, "T": tie, "L": suitL])
     // Short dark hair, receding at the temples, and the ears sticking out either side.
@@ -227,7 +229,7 @@ private func drawLindseyMcDonclawd(_ c: PixelCanvas, _ p: Pose) {
     v7Trousers(c, step: p.step, C(0x46588A), C(0x34466E), shoe: C(0x2A1E18))
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
-    v7Jacket(c, suit, suitD)
+    v7Jacket(c, suit, suitD, suitL)
     // The shirt open at the neck: no tie.
     c.pattern(24, 33, ["LSSSSSSL", ".LSSSSL.", "..LSSL..", "...LL..."], ["S": shirt, "L": suitL])
     c.px(27, 33, C(0xE8C8A8)); c.px(28, 33, C(0xE8C8A8))
@@ -236,7 +238,7 @@ private func drawLindseyMcDonclawd(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(16, 20, [
         "......h....h............",
         "....HHHHHHHHHHHHh.......",
-        "...HHlHHHHHlHHHHHHH.....",
+        "...HHllHHHHllHHHHHH.....",
         "..HHHHHHHHHHHHHHHHHHH...",
         "..HHHHHHHHHHHHHHHHHHHH..",
         ".HHHHHHHHHHHHHHHH.HHHH..",
@@ -305,7 +307,7 @@ private func drawLilahMorgane(_ c: PixelCanvas, _ p: Pose) {
     c.oy += p.breathe
     let raise = Int((lift * 3).rounded())
     drawBody(c, Look(arm: suit), armRight: raise)
-    v7Jacket(c, suit, suitD)
+    v7Jacket(c, suit, suitD, suitL)
     // The plum silk blouse in a deep V between the lapels, a sheen down one side.
     c.pattern(23, 33, ["LBBBBBBBBL", ".LBbBBBBL.", "..LBbBBL..", "...LBBL...", "....LL...."],
               ["B": blouse, "b": C(0x9A5A80), "L": suitL])
@@ -314,14 +316,14 @@ private func drawLilahMorgane(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(16, 19, [
         "........h.......h.......",
         "......HHHHHHHHHHHHH.....",
-        "....HHHHHHHlHHHHHHHH....",
-        "...HHHHHHHHHHlHHHHHHH...",
+        "....HHHlllHHHHHHHHHH....",
+        "...HHlHHHHHHHHHHHHHHH...",
         "..HHHHHHHHHHHHHHHHHHHH..",
         "..HHHHHHHHHHHHHHHHHHHHH.",
         ".HHHHHH.....HHHHHHHHHHH.",
         ".HHHH..............HHHH.",
         ".HHH................HHH.",
-        ".HHH................HHH.",
+        ".HHl................HHH.",
         "HHHl................HHH.",
         ".HHH................lHH.",
         ".HHH................HHH.",
@@ -381,7 +383,7 @@ private func drawHollandMannerly(_ c: PixelCanvas, _ p: Pose) {
     v7Trousers(c, step: p.step, C(0x8E846E), C(0x6E6654), shoe: C(0x4A3020))
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
-    v7Jacket(c, suit, suitD)
+    v7Jacket(c, suit, suitD, suitL)
     c.pattern(24, 33, ["LSSTTSSL", ".LSTTSL.", "..LTTL..", "...TT...", "...TT..."],
               ["S": shirt, "T": tie, "L": suitL])
     c.rect(33, 34, 2, 1, shirt); c.px(34, 33, shirt)                              // the pocket square
