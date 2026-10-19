@@ -33,13 +33,21 @@ let starWarsHeroes2: [SWHero: Persona] = [
 // MARK: - Shared
 
 /// Legs, then the origin raised for the upper body. Cheering, the legs stay on the ground and only the body hops,
-/// as in Clawd Wars.
-private func heroLegs(_ c: PixelCanvas, _ p: Pose, _ look: Look) {
+/// as in Clawd Wars. `boots` (if any) go on the legs `rows` high, with a glint of `shine` down their fronts.
+private func heroLegs(_ c: PixelCanvas, _ p: Pose, _ look: Look, boots: Px? = nil, rows: Int = 2, shine: Px? = nil) {
     let grounded = p.cheering && !p.walking
     if grounded { c.oy -= p.hop }
     drawLegs(c, look, step: p.step)
+    if let boots { drawBoots(c, boots, step: p.step, rows: rows) }
+    if let shine { drawBootShine(c, step: p.step, shine) }
     if grounded { c.oy += p.hop }
     c.oy += p.breathe
+}
+
+/// A glint of light on the toe of each two-row boot (not when sitting), lifting with the leg as it steps.
+private func drawBootShine(_ c: PixelCanvas, step: Int, _ col: Px) {
+    guard !seatedPose else { return }
+    for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx, step >= 0 && i % 2 == step ? 41 : 42, col) }
 }
 
 /// A gown or robe from `top` to the floor, widening to the hem (drawn instead of legs).
@@ -186,14 +194,35 @@ private func drawZorii(_ c: PixelCanvas, _ p: Pose) {
 
 /// Bo-Katan Kryze: blue Mandalorian armour, the Nite Owl helmet, a blaster in hand.
 private func drawBoKatan(_ c: PixelCanvas, _ p: Pose) {
-    let blue = C(0x4A6EA8), suit = C(0x3A3E48)
+    let blue = C(0x4A6EA8), suit = C(0x3A3E48), blueHi = C(0x7A9AD0), blueDark = C(0x34507E)
     let look = Look(body: suit, shade: C(0x2C2F38), leg: C(0x2C2F38), arm: blue, eye: nil)
-    heroLegs(c, p, look)
+    let grounded = p.cheering && !p.walking
+    if grounded { c.oy -= p.hop }
+    drawLegs(c, look, step: p.step)
+    if !seatedPose {                                                // blue knee plates, lit on top
+        for (i, lx) in [19, 23, 31, 35].enumerated() {
+            let y = p.step >= 0 && i % 2 == p.step ? 38 : 39
+            c.rect(lx, y, 2, 2, blue); c.px(lx, y, blueHi)
+        }
+    }
+    drawBoots(c, blueDark, step: p.step, rows: 2)                   // armoured blue boots
+    drawBootShine(c, step: p.step, C(0x5A7AB0))
+    if grounded { c.oy += p.hop }
+    c.oy += p.breathe
     drawBody(c, look)
+    c.rect(15, 33, 3, 1, blueHi); c.rect(38, 33, 3, 1, blueHi)     // the pauldrons lit on top
+    c.rect(15, 35, 3, 1, suit); c.rect(38, 35, 3, 1, suit)          // dark gloves
     drawMandoHelmet(c, C(0x5A7AB0), C(0x9AB4E0), marks: C(0x24345A))
-    c.rect(19, 33, 18, 3, blue)                 // chest plate
-    c.rect(19, 33, 18, 1, C(0x7A9AD0))
+    c.rect(37, 24, 1, 7, C(0x4A68A0)); c.rect(21, 32, 15, 1, C(0x4A68A0))   // the helmet's far side and rim in shadow
+    c.rect(20, 20, 3, 1, C(0x9AB4E0))                               // the light along the dome
+    // The chest plates, lit along the top, a seam down the middle and a rivet either side.
+    c.rect(19, 33, 18, 3, blue)
+    c.rect(19, 33, 18, 1, blueHi)
+    c.rect(28, 34, 1, 2, blueDark); c.px(21, 34, blueDark); c.px(34, 34, blueDark); c.rect(36, 34, 1, 2, blueDark)
+    // The belt: a silver buckle, pouches at the hip.
     c.rect(18, 36, 20, 1, C(0x5A4A3A))
+    c.rect(27, 36, 2, 1, C(0xB8BCC4)); c.px(27, 36, C(0xE4E8EE))
+    c.rect(20, 36, 2, 2, C(0x3E3024)); c.rect(33, 36, 2, 2, C(0x3E3024))
     heroPistol(c, p)
 }
 
@@ -202,13 +231,18 @@ private func drawMaz(_ c: PixelCanvas, _ p: Pose) {
     let t = p.t
     let skin = C(0xD98E4A), skinDark = C(0xB06E34)
     let look = Look(body: skin, shade: skinDark, leg: C(0x5A4430), arm: skin, eye: nil)
-    heroLegs(c, p, look)
+    heroLegs(c, p, look, boots: C(0x3A2A1E), shine: C(0x6A5440))  // soft dark boots
     drawBody(c, look)
+    c.px(15, 34, C(0xD8B040)); c.px(39, 34, C(0xD8B040))            // a bangle on each wrist
+    // The wrap round her head: a band across it, the light running along the folds.
     c.pattern(18, 22, [
-        "...WWWWWWWWWWWWWW...",
+        "...WWWwwwWWWWwwWW...",
         ".WWWWwWWWWWWWWwWWWW.",
-        "WWWWWWWWWWWWWWWWWWWW",
-    ], ["W": C(0x6A4A32), "w": C(0x8A6A4A)])
+        "bbbbbbbbbbbbbbbbbbbb",
+    ], ["W": C(0x6A4A32), "w": C(0x8A6A4A), "b": C(0x4E3422)])
+    c.px(20, 24, C(0xD8B040)); c.px(35, 24, C(0xD8B040))            // beads on the band
+    // A thousand years of wrinkles: lines under the goggles and at the mouth.
+    c.rect(19, 32, 2, 1, skinDark); c.rect(35, 32, 2, 1, skinDark); c.rect(26, 32, 4, 1, skinDark)
     // The goggles: brass rims, dark lenses, eyes swimming behind them (they focus now and then).
     // Signature: she reaches up and twists the rims, and her eyes swim up huge behind the lenses: she sees you.
     let adjust = p.signature.flatMap { $0 > 0.1 && $0 < 0.9 ? ($0 - 0.1) / 0.8 : nil }
@@ -230,8 +264,14 @@ private func drawMaz(_ c: PixelCanvas, _ p: Pose) {
         c.px(33 + Int((cos(a) * (zoom ? 4 : 3)).rounded()), 30 + Int((sin(a) * (zoom ? 4 : 3)).rounded()), C(0xF0D080))
         c.rect(37, 32, 3, 4, skin); c.rect(36, 31, 2, 2, skin)       // her fingers on the rim
     }
+    // The layered tunic: a darker vest over it, folds shaded, the beads strung across with a dark bead every so
+    // often, a sash at the waist.
     c.rect(18, 34, 20, 4, C(0x8A6A4A))
+    c.rect(18, 34, 3, 4, C(0x6A4A32)); c.rect(35, 34, 3, 4, C(0x6A4A32))
+    c.rect(37, 34, 1, 4, C(0x4E3422)); c.px(25, 36, C(0x74563A)); c.px(30, 37, C(0x74563A))
     c.rect(22, 34, 12, 1, C(0xD8B040))           // beads
+    for x in [24, 28, 32] { c.px(x, 34, C(0x8A4A2A)) }
+    c.rect(18, 37, 20, 1, C(0x5A3E28)); c.px(27, 37, C(0xD8B040))
 }
 
 /// Wedge Antilles: an X-wing pilot, orange flight suit and white helmet with red flashes.
@@ -368,26 +408,36 @@ private func drawPadme(_ c: PixelCanvas, _ p: Pose) {
 private func drawAckbar(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0xC9724A), shade = C(0xA0583A), uniform = C(0xEDECE6)
     let look = Look(body: skin, shade: shade, leg: C(0xD8D6CE), arm: uniform, eye: nil)
-    heroLegs(c, p, look)
+    heroLegs(c, p, look, boots: C(0xB8B6AE))                        // pale grey boots
     drawBody(c, look)
+    c.rect(15, 35, 3, 1, C(0xC8C6BE)); c.rect(38, 35, 3, 1, C(0xC8C6BE))   // the sleeves' cuffs
+    // The dome: the light running back over it, mottled in short darker strokes, shaded down the far side.
     c.pattern(17, 17, [
-        ".......SSSSSSSS.......",
-        ".....SSSSSSSSSSSS.....",
-        "....SSSSSSSSSSSSSS....",
-        "...SSSSsSSSSSSSSSSS...",
-        "...SSSSSSSSSSSSSSSS...",
-        "..SSSSSSSSSSSSSSSSSS..",
-        "..SSSSSSSSSSSSSSSSSS..",
-        ".SSSSSSSSSSSSSSSSSSSS.",
-        ".SSSSSSSSSSSSSSSSSSSS.",
-    ], ["S": skin, "s": C(0xE0946A)])
+        ".......SSSllSSS.......",
+        ".....SSSlllSSSSSS.....",
+        "....SSllSSSSSSSmmS....",
+        "...SSlSsSSSSSSSSSSd...",
+        "...SSSSSSSSmmSSSSSd...",
+        "..SSmmSSSSSSSSSSSSSd..",
+        "..SSSSSSSSSSSSmmSSSd..",
+        ".SSSSSSmmSSSSSSSSSSdd.",
+        ".SSSSSSSSSSSSSSSSSSdd.",
+    ], ["S": skin, "s": C(0xE0946A), "l": C(0xE0946A), "d": shade, "m": C(0xB4623F)])
     let look2 = sin(p.t * 1.3) > 0.7 ? 1 : 2                   // the eyes swivel
     for ex in [15, 36] {
-        c.pattern(ex, 25, [".EEE.", "EEEEE", "EEEEE", "EEEEE", ".EEE."], ["E": C(0xE0962E)])
+        // The big side eyes: lit along the top, shaded underneath, a glint by the pupil.
+        c.pattern(ex, 25, [".lll.", "EEEEE", "EEEEE", "EEEEE", ".eee."], ["E": C(0xE0962E), "l": C(0xF0B45A), "e": C(0xB8742A)])
         c.px(ex + look2 + 1, 27, C(0x2A1A10))
     }
-    c.rect(24, 31, 8, 1, shade)                 // whiskers
+    // The whiskers hanging from his chin, in short tendrils.
+    c.rect(24, 31, 8, 1, shade)
+    c.px(24, 32, shade); c.px(27, 32, shade); c.px(31, 32, shade)
+    // The admiral's uniform: the high collar, the vest's edges, folds shaded down the side, a belt and buckle,
+    // and the rank plaque in its silver rim.
     c.rect(18, 33, 20, 5, uniform)
     c.rect(18, 33, 20, 1, C(0xC8C6BE))
+    c.rect(26, 34, 1, 3, C(0xD8D6CE)); c.rect(37, 33, 1, 5, C(0xD8D6CE)); c.px(33, 35, C(0xD8D6CE))
+    c.rect(20, 34, 5, 1, C(0x9EA4AE))
     c.px(21, 35, C(0xD84A2A)); c.px(22, 35, C(0x3A6ED8)); c.px(23, 35, C(0xE0B84A))
+    c.rect(18, 37, 20, 1, C(0xB8B6AE)); c.rect(27, 37, 2, 1, C(0xC8CCD4)); c.px(27, 37, C(0xF2F4F8))
 }
