@@ -59,19 +59,26 @@ let starWarsPlaces: [Location: Place] = [
 // MARK: - The scenes
 
 private enum StarWarsScenes {
-    // Vader, a Death Star corridor: grey panels, light strips, and a viewport onto space.
+    // Vader, a Death Star corridor: grey panels with bevelled seams, recessed trench panels, vents and small lights,
+    // glowing light strips, a bank of lit controls on the wall, and a viewport onto space.
     static func deathStar(_ c: PixelCanvas, _ g: Int) {
         c.gradient(0, g, C(0x4A4E57), C(0x2C2F36), bands: 4)
         c.rect(0, 0, c.w, 5, C(0x1E2025))
         for y in stride(from: 9, to: g - 4, by: 9) { c.rect(0, y, c.w, 1, C(0x23262C)) }
         for x in stride(from: 0, to: c.w, by: 24) { c.rect(x, 5, 1, g - 5, C(0x23262C)) }
-        // wall light panels
+        deathStarWall(c, g)
+        // wall light panels, each with a faint glow on the metal round it
         for x in stride(from: 6, to: c.w, by: 24) {
             for y in stride(from: 12, to: g - 10, by: 18) {
+                c.rect(x - 2, y - 2, 14, 7, C(0xC8D4E8, 0.05)); c.rect(x - 1, y - 1, 12, 5, C(0xC8D4E8, 0.07))
                 c.rect(x, y, 10, 3, C(0x9EA6B2)); c.rect(x + 1, y + 1, 8, 1, C(0xE8F0FF))
             }
         }
+        // a recessed skirting along the foot of the wall, with a dim strip of light in it
+        c.rect(0, g - 3, c.w, 3, C(0x1E2025)); c.rect(0, g - 3, c.w, 1, C(0x15171B))
+        for x in stride(from: 3, to: c.w, by: 12) { c.rect(x, g - 2, 6, 1, C(0x8A9AB4, 0.45)) }
         if Scenes.isTall(c) { deathStarHigh(c, g) }
+        deathStarControls(c, g, x: c.w * 2 / 3 + min(70, c.w / 3) + 20)
         // The viewport: stars, and a planet's curve rising along its bottom edge (a Star Destroyer drifts past now and
         // then, in the animated layer). All of it cut off at the frame, so it reads as outside.
         let v = deathStarViewport(c, g), vx = v.minX, vw = v.width, vh = v.height
@@ -86,8 +93,63 @@ private enum StarWarsScenes {
             }
         }
         for x in stride(from: vx + vw / 3, to: vx + vw, by: max(1, vw / 3)) { c.rect(x, 10, 1, vh, C(0x15171B)) }
+        // the viewport's frame: a lit bevel round it, a small light at each lower corner, and a sill under it
+        c.rect(vx - 3, 7, vw + 6, 1, C(0x6E7480)); c.rect(vx - 3, 7, 1, vh + 6, C(0x5A606C))
+        c.rect(vx + vw + 2, 8, 1, vh + 5, C(0x23262C))
+        c.px(vx - 1, 10 + vh, C(0xE0303A)); c.px(vx + vw, 10 + vh, C(0x3BD15A))
+        c.rect(vx - 4, 12 + vh, vw + 8, 2, C(0x5A606C)); c.rect(vx - 4, 12 + vh, vw + 8, 1, C(0x8A909C))
+        c.rect(vx - 4, 14 + vh, vw + 8, 1, C(0x15171B))
         c.ground(g, C(0x1C1E23), edge: C(0x6E7480), speck: C(0x2A2D33), seed: 1)
         for x in stride(from: 0, to: c.w, by: 12) { c.rect(x, g + 2, 6, 1, C(0x30343B)) }
+        // faint plate seams in the deck, kept dark so the crew reads on it
+        for x in stride(from: 18, to: c.w, by: 48) { c.rect(x, g + 4, 1, c.h - g - 4, C(0x2A2D33, 0.8)) }
+        if c.h - g > 8 { c.rect(0, g + 4 + (c.h - g - 4) / 2, c.w, 1, C(0x2A2D33, 0.6)) }
+    }
+
+    /// The Death Star's wall panels: each seam bevelled (a lit edge under it and right of it), and in some of the bays
+    /// between the light strips a recessed trench panel, a vent grille or a plate of small lit indicators, picked with
+    /// noise so it's the same every time. Full screen they're sparser, so the tall wall stays calm.
+    static func deathStarWall(_ c: PixelCanvas, _ g: Int) {
+        let tall = Scenes.isTall(c), v = deathStarViewport(c, g)
+        for y in stride(from: 9, to: g - 4, by: 9) { c.rect(0, y + 1, c.w, 1, C(0xFFFFFF, 0.06)) }
+        for x in stride(from: 0, to: c.w, by: 24) { c.rect(x + 1, 5, 1, g - 5, C(0xFFFFFF, 0.04)) }
+        let lights = [C(0xE0303A), C(0x3BD15A), C(0xFFC040), C(0x5AB4FF)]
+        for (j, y) in stride(from: 18, to: g - 12, by: 18).enumerated() {             // the bays without a light strip
+            for (i, x) in stride(from: 0, to: c.w, by: 24).enumerated() {
+                guard x + 24 < v.minX - 3 || x > v.minX + v.width + 3, x > 24 || y > 30 else { continue }   // calm top-left
+                if tall, y < g / 14 + 4 || abs(y + 4 - g * 3 / 10 - 4 * Scenes.unit(g)) < 10 * Scenes.unit(g) { continue }  // clear of the ceiling and conduit
+                if tall, abs(x + 12 - c.w / 6) < 34 * Scenes.unit(g), y + 9 > g - g * 2 / 5 - 6 * Scenes.unit(g) { continue }       // and the blast door
+                let n = noise(i * 17 + j * 31 + 820) / (tall ? 0.6 : 1)
+                if n < 0.14 {                                                     // a recessed trench panel
+                    c.rect(x + 3, y + 2, 19, 6, C(0x23262C)); c.rect(x + 3, y + 2, 19, 1, C(0x15171B))
+                    c.rect(x + 3, y + 2, 1, 6, C(0x15171B)); c.rect(x + 3, y + 7, 19, 1, C(0x5A606C))
+                    for k in stride(from: 6, to: 21, by: 5) { c.rect(x + k, y + 3, 2, 4, C(0x30343B)) }
+                } else if n < 0.24 {                                              // a vent grille
+                    c.rect(x + 7, y + 2, 11, 6, C(0x2A2D33))
+                    for r in stride(from: 3, to: 8, by: 2) { c.rect(x + 8, y + r, 9, 1, C(0x1A1C21)) }
+                } else if n < 0.34 {                                              // a plate of lit indicators
+                    c.rect(x + 8, y + 3, 9, 4, C(0x1A1C21)); c.rect(x + 8, y + 3, 9, 1, C(0x3A3E46))
+                    for k in 0..<3 { c.px(x + 10 + k * 2, y + 5, lights[Int(noise(i * 7 + j * 3 + k + 860) * 4) % 4]) }
+                }
+            }
+        }
+    }
+
+    /// A bank of controls on the Death Star's wall, as by its doors: a black panel in a grey housing, set with rows of
+    /// small coloured lights and buttons, and a little screen. A fixed size, its foot well above the floor.
+    static func deathStarControls(_ c: PixelCanvas, _ g: Int, x: Int) {
+        let s = Scenes.unit(g), w = 20 * s, h = 14 * s, y = g - 34 * s
+        guard x + w < c.w - 2 else { return }
+        c.rect(x - s, y - s, w + 2 * s, h + 2 * s, C(0x6E7480)); c.rect(x - s, y + h, w + 2 * s, s, C(0x23262C))
+        c.rect(x, y, w, h, C(0x101114))
+        let lights = [C(0xE0303A), C(0x3BD15A), C(0xFFC040), C(0x5AB4FF), C(0xE8F0FF)]
+        for r in 0..<3 {
+            for k in 0..<8 where noise(r * 11 + k + 900) > 0.25 {
+                c.rect(x + (2 + k * 2) * s, y + (2 + r * 2) * s, s, s, lights[Int(noise(r * 13 + k * 5 + 910) * 5) % 5])
+            }
+        }
+        c.rect(x + 2 * s, y + 9 * s, 7 * s, 3 * s, C(0x1C2A30)); c.rect(x + 3 * s, y + 10 * s, 5 * s, s, C(0x6AC8E8))
+        for k in 0..<3 { c.rect(x + (11 + k * 3) * s, y + 10 * s, 2 * s, 2 * s, k == 1 ? C(0xE0303A) : C(0x5A606C)) }
     }
 
     /// The Death Star corridor's viewport, in canvas pixels (row 0 at the top).
@@ -2251,15 +2313,24 @@ private enum StarWarsScenes {
         }
     }
 
-    // The Death Star corridor: a ceiling with its light slots, a conduit along the wall and a blast door.
+    // The Death Star corridor: a ceiling with its grid of light slots, a conduit along the wall with small lights, and
+    // a blast door with a lit bevel and its control box.
     static func deathStarHigh(_ c: PixelCanvas, _ g: Int) {
         let s = Scenes.unit(g), ceil = g / 14
         c.rect(0, 0, c.w, ceil, C(0x1E2025)); c.rect(0, ceil, c.w, 2, C(0x15171B))
+        for x in stride(from: 0, to: c.w, by: 24) { c.rect(x + 3, 0, 1, ceil, C(0x15171B)); c.rect(x + 4, 0, 1, ceil, C(0x2A2D33)) }   // ribs
+        if ceil > 14 { for x in stride(from: 10, to: c.w, by: 24) { c.rect(x, ceil - 11, 6, 1, C(0x6E7480)) } }   // the grid's far row
         for x in stride(from: 8, to: c.w, by: 24) { c.rect(x, ceil - 5, 10, 2, C(0x9EA6B2)); c.rect(x + 1, ceil - 5, 8, 1, C(0xE8F0FF)) }
+        for x in stride(from: 8, to: c.w, by: 24) {                                     // their glow spilling down the wall
+            for k in 0..<(8 * s) { c.rect(x - k / 3, ceil + 2 + k, 10 + k * 2 / 3, 1, C(0xC8D4E8, 0.06 * Double(8 * s - k) / Double(8 * s))) }
+        }
         let y = g * 3 / 10
         c.rect(0, y, c.w, 9 * s, C(0x24272D)); c.rect(0, y, c.w, 1, C(0x5A606C)); c.rect(0, y + 9 * s, c.w, 1, C(0x15171B))
         for k in 0..<3 { c.rect(0, y + (2 + k * 2) * s, c.w, 1, C(0x30343B)) }
-        for x in stride(from: 20, to: c.w, by: 48) { c.rect(x, y - s, 4 * s, 11 * s, C(0x1E2025)) }
+        for x in stride(from: 20, to: c.w, by: 48) {
+            c.rect(x, y - s, 4 * s, 11 * s, C(0x1E2025)); c.rect(x, y - s, s, 11 * s, C(0x3A3E46))
+            c.rect(x + s, y + 4 * s, 2 * s, s, [C(0xE0303A), C(0x3BD15A), C(0x5AB4FF)][(x / 48) % 3])   // a light on each clamp
+        }
         let dw = 36 * s, dx = c.w / 6, top = g - g * 2 / 5, cham = 8 * s
         for yy in top..<g {
             let inset = max(0, cham - (yy - top))
@@ -2271,6 +2342,11 @@ private enum StarWarsScenes {
         }
         c.rect(dx, top + 3 * s, 1, g - top, C(0x15171B))
         c.rect(dx - 4 * s, top - 4 * s, 2 * s, s, C(0xE0303A)); c.rect(dx + 2 * s, top - 4 * s, 2 * s, s, C(0x3BD15A))
+        // light caught on the frame's left edge, and the door's control box beside it
+        for yy in (top + cham)..<g { c.px(dx - dw / 2 - 3 * s, yy, C(0x5A606C)) }
+        let bx = dx + dw / 2 + 6 * s, by = g - 30 * s
+        c.rect(bx, by, 6 * s, 10 * s, C(0x6E7480)); c.rect(bx + s, by + s, 4 * s, 8 * s, C(0x101114))
+        for (k, col) in [C(0xE0303A), C(0xFFC040), C(0x3BD15A)].enumerated() { c.rect(bx + 2 * s, by + (2 + k * 2) * s, 2 * s, s, col) }
     }
 
     /// TIE fighters crossing the Death Star's viewport, or in a flight of three past the Executor's windows.
