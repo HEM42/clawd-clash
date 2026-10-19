@@ -785,6 +785,32 @@ extension Scenes {
         let wt = c.w * 86 / 100
         c.rect(wt - 6 * s, roof - 30 * s, 12 * s, 8 * s, C(0x141A1C)); c.rect(wt - 5 * s, roof - 22 * s, s, 12 * s, C(0x141A1C))
         c.rect(wt + 4 * s, roof - 22 * s, s, 12 * s, C(0x141A1C)); c.ellipse(wt, roof - 30 * s, 6 * s, 2 * s, C(0x141A1C))
+        // A tower crane left standing over a building site behind the lot: a lattice mast, its jib reaching off to
+        // the right, the counterweight on the short arm, the side towards the portal picking up its green, and a red
+        // warning lamp on top. A fixed size, so on the screen saver it stands well clear of the rooftops.
+        do {
+            let mx = c.w * 76 / 100, mw = 6 * s, mt = roof - (tall ? 110 : 36) * s
+            let sil = C(0x141A1C), edge = C(0x34443A)
+            c.rect(mx, mt, s, roof - mt, edge); c.rect(mx + mw - s, mt, s, roof - mt, sil)
+            var y = roof, left = true
+            while y - 6 * s > mt {
+                slayerLine(c, Double(left ? mx : mx + mw - s), Double(y), Double(left ? mx + mw - s : mx), Double(y - 6 * s), sil, Double(s) * 0.5)
+                c.rect(mx, y - 6 * s, mw, max(1, s / 2), sil)
+                y -= 6 * s; left.toggle()
+            }
+            let jy = mt - 4 * s, jl = 64 * s, cl = 20 * s, j0 = mx + mw
+            c.rect(mx - 2 * s, jy - 8 * s, mw + 4 * s, 12 * s, sil); c.rect(mx - 2 * s, jy - 8 * s, s, 12 * s, edge)   // the cab
+            c.rect(mx + 2 * s, jy - 4 * s, 3 * s, 2 * s, C(0x3A4A3A))
+            c.rect(mx - cl, jy - 8 * s, jl + mw + cl, s, sil); c.rect(j0, jy - 4 * s, jl, s, sil)
+            for x in stride(from: j0, to: j0 + jl, by: 5 * s) { slayerLine(c, Double(x), Double(jy - 8 * s), Double(x + 5 * s), Double(jy - 4 * s), sil, Double(s) * 0.4) }
+            c.rect(mx - cl, jy - 7 * s, 7 * s, 6 * s, sil); c.rect(mx - cl, jy - 7 * s, s, 6 * s, edge)   // the counterweight
+            c.rect(mx + 3 * s, jy - 16 * s, s, 8 * s, sil)   // the peak, guy lines out to both arms
+            slayerLine(c, Double(mx + 3 * s), Double(jy - 16 * s), Double(j0 + jl * 2 / 3), Double(jy - 8 * s), sil, Double(s) * 0.4)
+            slayerLine(c, Double(mx + 3 * s), Double(jy - 16 * s), Double(mx - cl + 2 * s), Double(jy - 8 * s), sil, Double(s) * 0.4)
+            let hx = j0 + jl * 2 / 5, drop = (tall ? 30 : 10) * s   // the hook hanging off the jib
+            c.rect(hx, jy - 3 * s, max(1, s / 2), drop, sil); c.rect(hx - s, jy - 3 * s + drop, 3 * s, 2 * s, sil)
+            c.rect(mx + 2 * s, jy - 18 * s, 2 * s, 2 * s, C(0xE84A3A)); c.circle(mx + 3 * s, jy - 17 * s, 3 * s, C(0xE84A3A, 0.2))
+        }
         // The tower: poles, planks, crossed braces, lashings.
         let pole = C(0x4A4232), poleL = C(0x8AA070), plank = C(0x5A5038), dark = C(0x2A2620)
         let fr = [-0.5, -0.17, 0.17, 0.5]
@@ -866,6 +892,37 @@ extension Scenes {
             for y in stride(from: g - 17 * s, to: g, by: 2 * s) {
                 for x in stride(from: x0 + (y / (2 * s)) % 2 * s, to: x1, by: 2 * s) { c.px(x, y, C(0x6A7276, 0.6)) }
             }
+        }
+        // The building site's leftovers, either side of the tower: a stack of lumber and a sawhorse on the left, a
+        // generator feeding a work lamp on a stand and a pallet of breeze blocks on the right.
+        do {
+            let lx = c.w * 19 / 100, wood = C(0x6A5A3A), woodL = C(0x9A8A5A), woodD = C(0x3A3224)
+            for k in 0..<4 {   // the lumber, each board a little longer or shorter
+                let off = Int(noise(k + 1410) * 4) * s, y = g - (k + 1) * 2 * s
+                c.rect(lx + off, y, 22 * s - off, 2 * s, wood); c.rect(lx + off, y, 22 * s - off, max(1, s / 2), woodL)
+                c.rect(lx + off, y, s, 2 * s, woodD)
+            }
+            c.rect(lx + 3 * s, g - 9 * s, s, s, woodD); c.rect(lx + 17 * s, g - 9 * s, s, s, woodD)   // the spacers
+            let hx = c.w * 27 / 100   // the sawhorse
+            c.rect(hx, g - 7 * s, 12 * s, 2 * s, wood); c.rect(hx, g - 7 * s, 12 * s, max(1, s / 2), woodL)
+            for (a, b) in [(1, -1), (2, 1), (10, -1), (11, 1)] { slayerLine(c, Double(hx + a * s), Double(g - 5 * s), Double(hx + a * s + b * 2 * s), Double(g), woodD, Double(s) * 0.5) }
+            let gx = c.w * 69 / 100   // the generator, and the work lamp it runs
+            c.rect(gx, g - 7 * s, 11 * s, 6 * s, C(0xA88A2A)); c.rect(gx, g - 7 * s, 11 * s, s, C(0xD8B84A)); c.rect(gx + 10 * s, g - 7 * s, s, 6 * s, C(0x6A5A1E))
+            c.rect(gx + 2 * s, g - 5 * s, 4 * s, 3 * s, C(0x2A2A2A)); c.rect(gx + 7 * s, g - 5 * s, 2 * s, s, C(0x3A3A3A))
+            c.rect(gx + s, g - s, 2 * s, s, C(0x1A1A1A)); c.rect(gx + 8 * s, g - s, 2 * s, s, C(0x1A1A1A))
+            let lampX = gx + 18 * s, lampY = g - 24 * s
+            c.rect(lampX, lampY, s, 24 * s, C(0x3A3E40))
+            slayerLine(c, Double(lampX), Double(g - 8 * s), Double(lampX - 3 * s), Double(g), C(0x3A3E40), Double(s) * 0.5)
+            slayerLine(c, Double(lampX), Double(g - 8 * s), Double(lampX + 3 * s), Double(g), C(0x3A3E40), Double(s) * 0.5)
+            c.rect(lampX - 4 * s, lampY - 2 * s, 5 * s, 4 * s, C(0x2A2E30)); c.rect(lampX - 4 * s, lampY - 2 * s, s, 4 * s, C(0xF8F0C8))
+            c.ellipse(lampX - 5 * s, lampY, 6 * s, 5 * s, C(0xF8F0C8, 0.12))
+            slayerLine(c, Double(gx + 11 * s), Double(g - 3 * s), Double(lampX), Double(g - 2 * s), C(0x1A1A1A), Double(s) * 0.4)   // the cable
+            let bx = c.w * 75 / 100   // the breeze blocks on their pallet
+            c.rect(bx, g - 2 * s, 16 * s, 2 * s, C(0x5A4A32)); c.rect(bx + s, g - s, 2 * s, s, C(0x2A2218)); c.rect(bx + 13 * s, g - s, 2 * s, s, C(0x2A2218))
+            for r in 0..<2 { for q in 0..<(3 - r) {
+                let x = bx + r * 2 * s + q * 5 * s, y = g - 2 * s - (r + 1) * 3 * s
+                c.rect(x, y, 5 * s, 3 * s, C(0x6A6A62)); c.rect(x, y, 5 * s, max(1, s / 2), C(0x8A8A80)); c.rect(x + 4 * s, y, s, 3 * s, C(0x4A4A44))
+            } }
         }
         c.ground(g, C(0x24261E), edge: C(0x4A5236), speck: C(0x34362A), seed: 33)
     }
