@@ -12,6 +12,18 @@ struct MarvelousReel: PromoReel {
     let geminiTask = "gemini ▸ polish the shield"
     var shots: [Shot] { marvelousShots }
     var beats: [(key: Double, beat: Beat)] { marvelousBeats }
+    var universe: Universe { .marvel }
+    var brawl: BrawlCast {
+        BrawlCast(claude: .hero(MarvelHero.captainAmerica), other: .villain(MarvelVillain.redSkull),
+                  agent: .hero(MarvelHero.spiderMan), otherAgent: .villain(MarvelVillain.greenGoblin),
+                  line: "Switch to Marvelous Clawds in Settings.",
+                  sub: "Shields, hammers and webs: 193 characters in 43 places.")
+    }
+    var window: WindowCast {
+        WindowCast(place: .avengersTower, claude: .hero(MarvelHero.captainAmerica), other: .villain(MarvelVillain.redSkull),
+                   agentA: .hero(MarvelHero.spiderMan), agentB: .hero(MarvelHero.blackWidow), extra: .villain(MarvelVillain.hydraAgent),
+                   prompt: "You: “make the shield bounce twice”", otherPrompt: "You: “make the hero section pop”")
+    }
     func sound(_ m: Mix) { marvelousSound(m) }
 }
 

@@ -12,6 +12,18 @@ struct FilesReel: PromoReel {
     let geminiTask = "gemini ▸ declassify the logs"
     var shots: [Shot] { filesShots }
     var beats: [(key: Double, beat: Beat)] { filesBeats }
+    var universe: Universe { .clawdFiles }
+    var brawl: BrawlCast {
+        BrawlCast(claude: .hero(FilesHero.foxClawder), other: .villain(FilesVillain.smokingClawd),
+                  agent: .hero(FilesHero.danaScrawly), otherAgent: .villain(FilesVillain.bountyHunter),
+                  line: "Or open The Clawd Files.",
+                  sub: "Flashlights, black helicopters and a conspiracy behind every bug: 82 characters in 20 places.")
+    }
+    var window: WindowCast {
+        WindowCast(place: .xFilesOffice, claude: .hero(FilesHero.foxClawder), other: .villain(FilesVillain.smokingClawd),
+                   agentA: .hero(FilesHero.danaScrawly), agentB: .hero(FilesHero.skinnard), extra: .villain(FilesVillain.grey),
+                   prompt: "You: “find out who deleted the logs”", otherPrompt: "You: “redact the error messages”")
+    }
     func sound(_ m: Mix) { filesSound(m) }
 }
 

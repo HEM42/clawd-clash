@@ -12,6 +12,18 @@ struct DetectiveReel: PromoReel {
     let geminiTask = "gemini ▸ fix the clawdarang"
     var shots: [Shot] { detectiveShots }
     var beats: [(key: Double, beat: Beat)] { detectiveBeats }
+    var universe: Universe { .dc }
+    var brawl: BrawlCast {
+        BrawlCast(claude: .hero(DCHero.batman), other: .villain(DCVillain.joker),
+                  agent: .hero(DCHero.greenArrow), otherAgent: .villain(DCVillain.captainCold),
+                  line: "Or pick Detective Clawds.",
+                  sub: "Capes, power rings and one very serious bat: 207 characters in 43 places.")
+    }
+    var window: WindowCast {
+        WindowCast(place: .gotham, claude: .hero(DCHero.batman), other: .villain(DCVillain.joker),
+                   agentA: .hero(DCHero.robin), agentB: .hero(DCHero.nightwing), extra: .villain(DCVillain.jokerGoon),
+                   prompt: "You: “make the clawdarang come back”", otherPrompt: "You: “put a smile on that error page”")
+    }
     func sound(_ m: Mix) { detectiveSound(m) }
 }
 

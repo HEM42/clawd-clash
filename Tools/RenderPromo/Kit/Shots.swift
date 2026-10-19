@@ -48,19 +48,8 @@ struct Overlay { let start: Double; let end: Double; let draw: (CGContext, Doubl
 func brawl(_ ctx: CGContext, _ u: Universe, local: Double, t: Double, drop: Bool, chrome: Bool = true) {
     desktop(ctx, dim: drop ? easeOut(local / 0.4) : 1)
     let fall = { (d: Double) -> Double in drop ? max(0, 40 * (1 - easeIn((local - d) / 0.3))) : 0 }
-    let (a, b, c, d): (Cast, Cast, Cast, Cast) = {
-        switch u {
-        case .starWars: return (.villain(SWVillain.vader), .hero(SWHero.luke), .hero(SWHero.han), .villain(SWVillain.trooper))
-        case .marvel: return (.hero(MarvelHero.captainAmerica), .villain(MarvelVillain.redSkull), .hero(MarvelHero.spiderMan), .villain(MarvelVillain.greenGoblin))
-        case .dc: return (.hero(DCHero.batman), .villain(DCVillain.joker), .hero(DCHero.greenArrow), .villain(DCVillain.captainCold))
-        case .doctor: return (.hero(DoctorHero.doctorTen), .villain(DoctorVillain.dalick), .hero(DoctorHero.river), .villain(DoctorVillain.sontaron))
-        case .clawdFiles: return (.hero(FilesHero.foxClawder), .villain(FilesVillain.smokingClawd), .hero(FilesHero.danaScrawly), .villain(FilesVillain.bountyHunter))
-        case .clawdberg: return (.hero(ClawdbergHero.indianaBones), .villain(ClawdbergVillain.reneBellock), .hero(ClawdbergHero.martyMcFry), .villain(ClawdbergVillain.biffTannin))
-        case .middleEarth: return (.hero(RingsHero.legolas), .villain(RingsVillain.orc), .hero(RingsHero.gimli), .villain(RingsVillain.uruk))
-        case .slayer: return (.hero(SlayerHero.buffyClawmers), .villain(SlayerVillain.oldMaster), .hero(SlayerHero.willowRosenclaw), .villain(SlayerVillain.lukewarm))
-        default: preconditionFailure("no promo data for \(u.title) here yet: the universe-modules plan moves it into its folder")
-        }
-    }()
+    let cast = promoReel(u).brawl
+    let (a, b, c, d) = (cast.claude, cast.other, cast.agent, cast.otherAgent)
     let (ra, rb) = fightRoles(a.weapon, b.weapon), close = fightIsCloseQuarters(a.weapon, b.weapon)
     var s1 = Actor(cast: a, x: 58, role: ra, label: "idle-claude")
     var s2 = Actor(cast: b, x: close ? 115 : 130, facing: -1, role: rb, label: "website", ai: .codex)
@@ -74,19 +63,7 @@ func brawl(_ ctx: CGContext, _ u: Universe, local: Double, t: Double, drop: Bool
     guard chrome else { return }
     badge(u.title.uppercased(), ctx, alpha: 1)
     // each universe its own caption
-    let (line, sub): (String, String) = {
-        switch u {
-        case .starWars: return ("One app. Three universes.", "Star Clawds: laser swords, blasters, 81 characters in 22 places.")
-        case .marvel: return ("Switch to Marvelous Clawds in Settings.", "Shields, hammers and webs: 193 characters in 43 places.")
-        case .dc: return ("Or pick Detective Clawds.", "Capes, power rings and one very serious bat: 207 characters in 43 places.")
-        case .doctor: return ("Or step into Doctor Clawd.", "Sonic screwdrivers, a blue box and a lot of shouting about extermination.")
-        case .clawdFiles: return ("Or open The Clawd Files.", "Flashlights, black helicopters and a conspiracy behind every bug: 82 characters in 20 places.")
-        case .clawdberg: return ("Or roll Stevie Clawdberg.", "Whips, sharks, gremlins and a DeLorean: 117 characters in 23 places.")
-        case .middleEarth: return (u.isReleased ? "Or pick Clawd of the Rings." : "Coming soon: Clawd of the Rings.", "Swords, staffs and one very precious ring.")
-        case .slayer: return (u.isReleased ? "Or patrol with Clawd Slayer." : "Coming soon: Clawd Slayer.", "Stakes, spells and a Hellmouth under the library.")
-        default: preconditionFailure("no promo data for \(u.title) here yet: the universe-modules plan moves it into its folder")
-        }
-    }()
+    let (line, sub) = (cast.line, cast.sub)
     caption(line, ctx, local: local, start: drop ? 0.3 : 0.15, y: 900)
     caption(sub, ctx, local: local, start: drop ? 0.6 : 0.4, y: 830, size: 40, color: yellow, weight: .bold)
 }

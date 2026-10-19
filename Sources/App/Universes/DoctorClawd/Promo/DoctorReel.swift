@@ -12,6 +12,18 @@ struct DoctorReel: PromoReel {
     let geminiTask = "gemini ▸ reverse the polarity"
     var shots: [Shot] { doctorShots }
     var beats: [(key: Double, beat: Beat)] { doctorBeats }
+    var universe: Universe { .doctor }
+    var brawl: BrawlCast {
+        BrawlCast(claude: .hero(DoctorHero.doctorTen), other: .villain(DoctorVillain.dalick),
+                  agent: .hero(DoctorHero.river), otherAgent: .villain(DoctorVillain.sontaron),
+                  line: "Or step into Doctor Clawd.",
+                  sub: "Sonic screwdrivers, a blue box and a lot of shouting about extermination.")
+    }
+    var window: WindowCast {
+        WindowCast(place: .consoleRoom, claude: .hero(DoctorHero.doctorTen), other: .villain(DoctorVillain.dalick),
+                   agentA: .hero(DoctorHero.rose), agentB: .hero(DoctorHero.donna), extra: .villain(DoctorVillain.cyberperson),
+                   prompt: "You: “make the rotor pump faster”", otherPrompt: "You: “exterminate the dead code”")
+    }
     func sound(_ m: Mix) { doctorSound(m) }
 }
 

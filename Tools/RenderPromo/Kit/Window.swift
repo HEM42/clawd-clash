@@ -136,33 +136,9 @@ let green = NSColor(srgbRed: 0.45, green: 0.85, blue: 0.45, alpha: 1), red = NSC
 /// A window in `u`: a Claude session fighting another AI's, two Claude agents cheering, and its cards. After `needsAt`
 /// the other AI's session stops and asks for you.
 func windowSpec(_ u: Universe, needsAt: Double = 99, at override: Location? = nil) -> WindowSpec {
-    let (place, claude, other, agentA, agentB, extra, prompt, otherPrompt): (Location, Cast, Cast, Cast, Cast, Cast, String, String) = {
-        switch u {
-        case .starWars: return (.cantina, .villain(SWVillain.vader), .hero(SWHero.luke), .hero(SWHero.han), .hero(SWHero.chewie),
-                                .hero(SWHero.r2d2), "You: “make the cape swish more”", "You: “make the hero section pop”")
-        case .marvel: return (.avengersTower, .hero(MarvelHero.captainAmerica), .villain(MarvelVillain.redSkull),
-                              .hero(MarvelHero.spiderMan), .hero(MarvelHero.blackWidow), .villain(MarvelVillain.hydraAgent),
-                              "You: “make the shield bounce twice”", "You: “make the hero section pop”")
-        case .dc: return (.gotham, .hero(DCHero.batman), .villain(DCVillain.joker), .hero(DCHero.robin), .hero(DCHero.nightwing),
-                          .villain(DCVillain.jokerGoon), "You: “make the clawdarang come back”", "You: “put a smile on that error page”")
-        case .doctor: return (.consoleRoom, .hero(DoctorHero.doctorTen), .villain(DoctorVillain.dalick), .hero(DoctorHero.rose),
-                              .hero(DoctorHero.donna), .villain(DoctorVillain.cyberperson), "You: “make the rotor pump faster”",
-                              "You: “exterminate the dead code”")
-        case .clawdFiles: return (.xFilesOffice, .hero(FilesHero.foxClawder), .villain(FilesVillain.smokingClawd),
-                                  .hero(FilesHero.danaScrawly), .hero(FilesHero.skinnard), .villain(FilesVillain.grey),
-                                  "You: “find out who deleted the logs”", "You: “redact the error messages”")
-        case .clawdberg: return (.hillValley1955, .hero(ClawdbergHero.indianaBones), .villain(ClawdbergVillain.reneBellock),
-                                 .hero(ClawdbergHero.martyMcFry), .hero(ClawdbergHero.docBrawn), .villain(ClawdbergVillain.strype),
-                                 "You: “get the DeLorean up to 88 mph”", "You: “put it back in the museum”")
-        case .middleEarth: return (.prancingPony, .hero(RingsHero.aragorn), .villain(RingsVillain.witchKing), .hero(RingsHero.legolas),
-                                   .hero(RingsHero.gimli), .villain(RingsVillain.orc), "You: “make the sword glow when orcs are near”",
-                                   "You: “make the Eye watch every request”")
-        case .slayer: return (.slayerLibrary, .hero(SlayerHero.buffyClawmers), .villain(SlayerVillain.oldMaster),
-                              .hero(SlayerHero.willowRosenclaw), .hero(SlayerHero.rupertGyles), .villain(SlayerVillain.lukewarm),
-                              "You: “stake the memory leak”", "You: “reopen the Hellmouth”")
-        default: preconditionFailure("no promo data for \(u.title) here yet: the universe-modules plan moves it into its folder")
-        }
-    }()
+    let w = promoReel(u).window
+    let (place, claude, other, agentA, agentB, extra, prompt, otherPrompt) =
+        (w.place, w.claude, w.other, w.agentA, w.agentB, w.extra, w.prompt, w.otherPrompt)
     let duel = fightIsCloseQuarters(claude.weapon, other.weapon)
     return WindowSpec(place: override ?? place, crew: { local, t in
         let needs = local > needsAt

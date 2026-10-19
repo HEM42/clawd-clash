@@ -12,6 +12,18 @@ struct ClawdbergReel: PromoReel {
     let geminiTask = "gemini ▸ get it up to 88 mph"
     var shots: [Shot] { clawdbergShots }
     var beats: [(key: Double, beat: Beat)] { clawdbergBeats }
+    var universe: Universe { .clawdberg }
+    var brawl: BrawlCast {
+        BrawlCast(claude: .hero(ClawdbergHero.indianaBones), other: .villain(ClawdbergVillain.reneBellock),
+                  agent: .hero(ClawdbergHero.martyMcFry), otherAgent: .villain(ClawdbergVillain.biffTannin),
+                  line: "Or roll Stevie Clawdberg.",
+                  sub: "Whips, sharks, gremlins and a DeLorean: 117 characters in 23 places.")
+    }
+    var window: WindowCast {
+        WindowCast(place: .hillValley1955, claude: .hero(ClawdbergHero.indianaBones), other: .villain(ClawdbergVillain.reneBellock),
+                   agentA: .hero(ClawdbergHero.martyMcFry), agentB: .hero(ClawdbergHero.docBrawn), extra: .villain(ClawdbergVillain.strype),
+                   prompt: "You: “get the DeLorean up to 88 mph”", otherPrompt: "You: “put it back in the museum”")
+    }
     func sound(_ m: Mix) { clawdbergSound(m) }
 }
 

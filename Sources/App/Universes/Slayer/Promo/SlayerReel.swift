@@ -12,6 +12,18 @@ struct SlayerReel: PromoReel {
     let geminiTask = "gemini ▸ stake the flaky test"
     var shots: [Shot] { slayerShots }
     var beats: [(key: Double, beat: Beat)] { slayerBeats }
+    var universe: Universe { .slayer }
+    var brawl: BrawlCast {
+        BrawlCast(claude: .hero(SlayerHero.buffyClawmers), other: .villain(SlayerVillain.oldMaster),
+                  agent: .hero(SlayerHero.willowRosenclaw), otherAgent: .villain(SlayerVillain.lukewarm),
+                  line: universe.isReleased ? "Or patrol with Clawd Slayer." : "Coming soon: Clawd Slayer.",
+                  sub: "Stakes, spells and a Hellmouth under the library.")
+    }
+    var window: WindowCast {
+        WindowCast(place: .slayerLibrary, claude: .hero(SlayerHero.buffyClawmers), other: .villain(SlayerVillain.oldMaster),
+                   agentA: .hero(SlayerHero.willowRosenclaw), agentB: .hero(SlayerHero.rupertGyles), extra: .villain(SlayerVillain.lukewarm),
+                   prompt: "You: “stake the memory leak”", otherPrompt: "You: “reopen the Hellmouth”")
+    }
     func sound(_ m: Mix) { slayerSound(m) }
 }
 

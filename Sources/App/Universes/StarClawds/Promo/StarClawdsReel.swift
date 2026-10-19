@@ -12,6 +12,18 @@ struct StarClawdsReel: PromoReel {
     var geminiTask: String { "gemini ▸ add a \(Cast.hero(SWHero.tauntaun).name.lowercased())" }
     var shots: [Shot] { starClawdsShots }
     var beats: [(key: Double, beat: Beat)] { starClawdsBeats }
+    var universe: Universe { .starWars }
+    var brawl: BrawlCast {
+        BrawlCast(claude: .villain(SWVillain.vader), other: .hero(SWHero.luke),
+                  agent: .hero(SWHero.han), otherAgent: .villain(SWVillain.trooper),
+                  line: "One app. Three universes.",
+                  sub: "Star Clawds: laser swords, blasters, 81 characters in 22 places.")
+    }
+    var window: WindowCast {
+        WindowCast(place: .cantina, claude: .villain(SWVillain.vader), other: .hero(SWHero.luke),
+                   agentA: .hero(SWHero.han), agentB: .hero(SWHero.chewie), extra: .hero(SWHero.r2d2),
+                   prompt: "You: “make the cape swish more”", otherPrompt: "You: “make the hero section pop”")
+    }
     func sound(_ m: Mix) { starClawdsSound(m) }
 }
 

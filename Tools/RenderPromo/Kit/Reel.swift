@@ -29,6 +29,28 @@ protocol PromoReel {
     var poster: (shot: String, at: Double) { get }
     /// Writes the reel's score and effects into `m`.
     func sound(_ m: Mix)
+    /// The universe it's the trailer of.
+    var universe: Universe { get }
+    /// Who's in its desktop brawl, and its caption (the shared shot `brawl`, which the promo plays too).
+    var brawl: BrawlCast { get }
+    /// Who's in its window, and what you asked them (the shared shot `windowShot`, which the promo plays too).
+    var window: WindowCast { get }
+}
+
+/// A universe's desktop brawl: Claude's session against the other AI's, an agent of each trading shots, and the
+/// caption under the universe's pill (a line, and a yellow one under it).
+struct BrawlCast { let claude, other, agent, otherAgent: Cast; let line, sub: String }
+
+/// A universe's window: its place, Claude's session fighting the other AI's, two of Claude's agents cheering, one of
+/// the other AI's at the right, and the prompts on the two sessions' cards.
+struct WindowCast { let place: Location; let claude, other, agentA, agentB, extra: Cast; let prompt, otherPrompt: String }
+
+/// The trailer of `u`, for the shared shots that ask it who's in them.
+func promoReel(_ u: Universe) -> PromoReel {
+    guard let r = registeredReels.first(where: { $0.universe == u }) else {
+        preconditionFailure("\(u.title) has no trailer yet: the shared shots ask its Promo/<Prefix>Reel.swift who's in them")
+    }
+    return r
 }
 
 extension PromoReel {

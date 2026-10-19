@@ -12,6 +12,18 @@ struct RingsReel: PromoReel {
     let geminiTask = "gemini ▸ hide the ring from the logs"
     var shots: [Shot] { ringsShots }
     var beats: [(key: Double, beat: Beat)] { ringsBeats }
+    var universe: Universe { .middleEarth }
+    var brawl: BrawlCast {
+        BrawlCast(claude: .hero(RingsHero.legolas), other: .villain(RingsVillain.orc),
+                  agent: .hero(RingsHero.gimli), otherAgent: .villain(RingsVillain.uruk),
+                  line: universe.isReleased ? "Or pick Clawd of the Rings." : "Coming soon: Clawd of the Rings.",
+                  sub: "Swords, staffs and one very precious ring.")
+    }
+    var window: WindowCast {
+        WindowCast(place: .prancingPony, claude: .hero(RingsHero.aragorn), other: .villain(RingsVillain.witchKing),
+                   agentA: .hero(RingsHero.legolas), agentB: .hero(RingsHero.gimli), extra: .villain(RingsVillain.orc),
+                   prompt: "You: “make the sword glow when orcs are near”", otherPrompt: "You: “make the Eye watch every request”")
+    }
     func sound(_ m: Mix) { ringsSound(m) }
 }
 
