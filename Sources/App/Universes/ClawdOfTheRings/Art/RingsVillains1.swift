@@ -148,6 +148,19 @@ private func drawSauron(_ c: PixelCanvas, _ p: Pose) {
     c.rect(27, 34, 2, 3, shine)
     c.rect(18, 36, 20, 1, deep)
     c.rect(26, 36, 4, 1, C(0x5A5A64))
+    // The plate's finer detail: the helm's dome lit along the top, a ridge down its middle and its far side in shadow,
+    // the crown's spikes lit on their near faces, a lit brow band with a rivet either end, and the breastplate's
+    // plates lit along the top with a seam either side.
+    let mid = C(0x3A3A44)
+    c.rect(20, 19, 7, 1, shine); c.rect(19, 20, 2, 1, mid)
+    c.rect(27, 20, 1, 6, mid); c.rect(28, 21, 1, 5, deep)
+    c.rect(38, 21, 1, 5, deep); c.rect(37, 23, 1, 3, deep)
+    for (x, y) in [(21, 15), (21, 16), (27, 14), (27, 15), (18, 17), (34, 15)] { c.px(x, y, shine) }
+    c.rect(18, 26, 20, 1, mid)
+    c.px(17, 27, shine); c.px(38, 27, shine)
+    c.rect(19, 34, 7, 1, mid); c.rect(30, 34, 6, 1, mid)
+    c.rect(22, 34, 1, 2, deep); c.rect(33, 34, 1, 2, deep)
+    c.px(15, 30, shine); c.px(14, 31, mid); c.px(40, 30, mid)
     c.px(16, 34 - lift, C(0xE8B33A))                                           // the One Ring
     if ringFlare > 0 {
         // The Ring flaring on the raised fist: a gold blaze, glinting.

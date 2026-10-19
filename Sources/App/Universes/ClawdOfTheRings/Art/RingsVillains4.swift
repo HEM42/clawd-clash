@@ -498,7 +498,9 @@ private func drawWargRider(_ c: PixelCanvas, _ p: Pose) {
     c.ellipse(17, 32, 5, 5, fur)
     c.ellipse(37, 32, 4, 5, fur)
     for x in stride(from: 16, through: 36, by: 3) { c.px(x, 38, furDark); c.px(x + 1, 37, furDark) }
-    for (x, y) in [(12, 30), (20, 30), (24, 33), (30, 31), (14, 34), (33, 34)] { c.px(x, y, furLight) }
+    // Lit along the back, the shag in short strokes swept back along the flank.
+    c.rect(14, 28, 4, 1, furLight); c.rect(34, 28, 3, 1, furLight)
+    for (x, y) in [(12, 30), (20, 31), (25, 33), (30, 31), (14, 34), (33, 34)] { c.px(x, y, furLight); c.px(x - 1, y + 1, furLight) }
     for x in stride(from: 14, through: 40, by: 2) {
         let top = 27 - (x > 32 ? (x - 32) / 3 : 0)
         c.px(x, top, furDark); if x % 4 == 0 { c.px(x, top - 1, furDark) }
@@ -543,7 +545,7 @@ private func drawWargRider(_ c: PixelCanvas, _ p: Pose) {
     c.rect(26, 31, 3, 4, leather); c.rect(26, 35, 4, 2, leatherDark)
     c.rect(18, 20, 16, 11, skin)
     c.rect(33, 20, 1, 11, skinDark)
-    for (x, y) in [(20, 22), (31, 21), (25, 23)] { c.px(x, y, skinLight) }
+    c.rect(19, 21, 3, 1, skinLight); c.rect(30, 21, 2, 1, skinLight); c.px(25, 23, skinLight)
     c.pattern(15, 21, ["SS..", ".SSS", "..SS"], ["S": skin]); c.px(15, 21, skinDark)
     c.rect(22, 23, 2, 2, ink); c.rect(29, 23, 2, 2, ink)
     c.px(22, 23, C(0xC8A03A)); c.px(29, 23, C(0xC8A03A))
