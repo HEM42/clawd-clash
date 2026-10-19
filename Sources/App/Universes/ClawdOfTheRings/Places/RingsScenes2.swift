@@ -58,8 +58,10 @@ extension Scenes {
     /// side of it. Beyond and below is the chasm, lit a faint orange from the depths, and past it the huge carved
     /// pillars of the hall rise from the far rim and fade into the dark. On tall screens the hall opens up: a second
     /// rank of pillars, their capitals and vaults, and the chasm gaping under the far rim with rock spires and a far
-    /// bridge down in its glow. In the window's strip the glow is stronger, so the hall still reads: it climbs up
-    /// between the pillars from the rim, warms their feet, and catches the underside of the bridge.
+    /// bridge down in its glow, with ledges, openings and stairs hewn down the chasm's far side. In the window's
+    /// strip the glow is stronger, so the hall still reads: it climbs up between the pillars from the rim, warms
+    /// their feet, and catches the underside of the bridge. Either way the far wall has its doorways between the
+    /// pillars, fallen stone lies on the rim, and a shaft of daylight slants down from a hole in the roof.
     static func moria(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), rim = moriaRim(c, g), b = moriaBridge(c, g)
         let dark = C(0x0C0D10), glow = tall ? C(0x3A1A0A) : C(0x5C2810)
@@ -71,13 +73,14 @@ extension Scenes {
             c.rect(x, y, len, s, C(0x15161B, 0.4 + 0.5 * Double(y) / Double(max(1, rim))))
         }
         if tall { moriaVaults(c, g) } else { moriaUpglow(c, g) }
+        moriaDoorways(c, g)
         for p in moriaPillars(c, g) where p.far { moriaPillar(c, g, p.x, p.w, far: true) }
         for p in moriaPillars(c, g) where !p.far { moriaPillar(c, g, p.x, p.w, far: false) }
         // the far rim and the chasm below it, brightening towards the depths
         c.rect(0, rim, c.w, 2 * s, C(0x1A1B20)); c.rect(0, rim, c.w, s, C(0x2C2A2C))
         let chasmTop = rim + 2 * s
         c.gradient(chasmTop, g, tall ? C(0x0E0C0D) : C(0x1C100C), glow, bands: tall ? 10 : 5)
-        if tall { moriaDeep(c, g) }
+        if tall { moriaGalleries(c, g); moriaDeep(c, g) }
         // the far rim's ragged lip, hanging over the chasm, and a few cracks running down from it into the glow
         for x in 0..<c.w {
             c.rect(x, chasmTop, 1, s + Int(noise(x / (3 * s) + 650) * Double(3 * s)), C(0x111115))
@@ -90,7 +93,147 @@ extension Scenes {
                 c.px(x + Int(sin(Double(y) * 0.3 + Double(i)) * 1.2), y, C(0x08080A, 0.5 * (1 - k)))
             }
         }
+        moriaRubble(c, g)
+        moriaShaft(c, g)
         moriaBridgeDraw(c, g, b)
+    }
+
+    /// The doorways in the far wall, one between each pair of near pillars where there's room: a fixed size whatever
+    /// the canvas, standing on the rim. Their left edge, and whether a torch still burns somewhere inside (one in three).
+    private static func moriaDoorwaySpots(_ c: PixelCanvas, _ g: Int) -> [(x: Int, lit: Bool)] {
+        let s = unit(g), w = 14 * s
+        let near = moriaPillars(c, g).filter { !$0.far }, far = moriaPillars(c, g).filter { $0.far }
+        var out: [(x: Int, lit: Bool)] = []
+        for (i, (a, b)) in zip(near, near.dropFirst()).enumerated() {
+            let gap0 = a.x + a.w + 4 * s, gap1 = b.x - 4 * s
+            guard gap1 - gap0 >= w, noise(i * 3 + 760) > 0.2 else { continue }
+            var x = (gap0 + gap1) / 2 - w / 2
+            // step aside from a far pillar standing in front of it, if there's room
+            if let f = far.first(where: { $0.x < x + w && $0.x + $0.w > x }) {
+                let left = f.x - 2 * s - w, right = f.x + f.w + 2 * s
+                if left >= gap0 { x = left } else if right + w <= gap1 { x = right } else { continue }
+            }
+            out.append((x, out.count % 3 == 1))
+        }
+        return out
+    }
+
+    /// The dwarves' doorways leading off the hall: a round-headed opening of black under a carved frame of dressed
+    /// stone, a keystone at its head and a step at its foot, warmed low down by the glow from the chasm like the
+    /// pillars. Here and there a torch still burns somewhere far down the passage behind.
+    private static func moriaDoorways(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), tall = isTall(c), rim = moriaRim(c, g)
+        let ow = 10 * s, side = 13 * s, r = ow / 2, fr = 2 * s
+        let lit = tall ? C(0x6A3418) : C(0x7E3C16), glowLen = Double((tall ? 70 : 30) * s)
+        func tone(_ p: Px, _ y: Int) -> Px { lerp(p, lit, rings2Clamp(1 - Double(rim - y) / glowLen) * 0.45) }
+        let foot = rim - 3 * s, spring = foot - side
+        guard spring - r - fr > 0 else { return }
+        for d in moriaDoorwaySpots(c, g) {
+            let cx = d.x + fr + r
+            // the frame: the rounded head, then the jambs down to the step
+            for y in (spring - r - fr)..<foot {
+                let dy = Double(max(0, spring - y))
+                let out = y >= spring ? r + fr : Int((Double((r + fr) * (r + fr)) - dy * dy).squareRoot().rounded())
+                let inn = y >= spring ? r : (dy <= Double(r) ? Int((Double(r * r) - dy * dy).squareRoot().rounded()) : -1)
+                c.rect(cx - out, y, out * 2, 1, tone(C(0x24262C), y))
+                c.px(cx - out, y, tone(C(0x34363E), y))
+                c.px(cx + out - 1, y, tone(C(0x18191E), y))
+                if inn > 0 {
+                    // the passage: black, or with a torch's warmth far down it, deepest at the foot
+                    let k = rings2Clamp(Double(y - (spring - r)) / Double(side + r))
+                    let hole = d.lit ? lerp(C(0x08080A), C(0x3A1C0C), k * k) : C(0x060608)
+                    c.rect(cx - inn, y, inn * 2, 1, hole)
+                }
+            }
+            // the keystone, and the step
+            c.rect(cx - s, spring - r - fr - s, 2 * s, 2 * s, tone(C(0x2E3036), spring))
+            c.rect(cx - r - fr - s, foot, (r + fr + s) * 2, 2 * s, tone(C(0x2A2C32), foot))
+            c.rect(cx - r - fr - s, foot, (r + fr + s) * 2, s, tone(C(0x3A3C44), foot))
+            if d.lit { c.rect(cx - s, foot - 4 * s, 2 * s, 2 * s, C(0xC8702A, 0.55)) }
+        }
+    }
+
+    /// Fallen stone lying on the rim at the feet of some of the pillars: a broken drum, blocks and chips, lit along
+    /// their tops by the glow.
+    private static func moriaRubble(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), tall = isTall(c), rim = moriaRim(c, g)
+        let body = tall ? C(0x3A2A24) : C(0x4A2E20), top = tall ? C(0x6A3C24) : C(0x8A4A22), shade = C(0x16171B)
+        for (i, p) in moriaPillars(c, g).filter({ !$0.far }).enumerated() where noise(i * 3 + 770) > 0.45 {
+            let right = noise(i * 3 + 771) > 0.5, x0 = right ? p.x + p.w + 3 * s : p.x - 3 * s
+            // a broken drum of a pillar, lying on its side
+            let dw = (7 + Int(noise(i * 3 + 772) * 4.0)) * s, dh = 4 * s, dx = right ? x0 : x0 - dw
+            c.rect(dx, rim - dh, dw, dh, body)
+            c.rect(dx, rim - dh, dw, s, top)
+            c.rect(right ? dx + dw - s : dx, rim - dh, s, dh, shade)
+            for fx in stride(from: dx + 2 * s, to: dx + dw - s, by: 3 * s) { c.rect(fx, rim - dh + 2 * s, s, s, shade) }
+            // and chips of stone beyond it
+            for j in 0..<3 {
+                let w = (1 + j % 2) * s, cx = right ? dx + dw + (2 + j * 3) * s : dx - (3 + j * 3) * s
+                c.rect(cx, rim - w, w + s, w, body); c.rect(cx, rim - w, w + s, s, top)
+            }
+        }
+    }
+
+    /// Down the chasm's far side on tall screens, where the dwarves hewed it: ledges running across the rock with
+    /// rows of small dark openings along them, and stairs cut zigzag between them, fading into the glow below.
+    private static func moriaGalleries(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), top = moriaRim(c, g) + 2 * s, depth = g - top
+        let lit = C(0x6A3418)
+        var y = top + 16 * s, row = 0
+        while y < top + depth * 55 / 100 {
+            let bg = moriaChasmTone(c, g, y)
+            let ledge = lerp(bg, C(0x050506), 0.45), edge = lerp(bg, lit, 0.35), hole = lerp(C(0x040405), bg, 0.2)
+            // the ledge, broken here and there where it has fallen away
+            var x = 0, seg = 0
+            while x < c.w {
+                let len = (60 + Int(noise(row * 31 + seg * 2 + 780) * 120.0)) * s
+                c.rect(x, y, len, 2 * s, ledge)
+                c.rect(x, y + 2 * s, len, s, edge)
+                // the openings along it
+                for ox in stride(from: x + 8 * s, to: x + len - 8 * s, by: 22 * s) where noise(ox / s + row * 13 + 790) > 0.3 {
+                    c.rect(ox, y - 7 * s, 5 * s, 7 * s, hole)
+                    c.rect(ox + s, y - 8 * s, 3 * s, s, hole)
+                }
+                x += len + (10 + Int(noise(row * 31 + seg * 2 + 781) * 30.0)) * s
+                seg += 1
+            }
+            // a stair down to the next ledge
+            let next = y + 34 * s
+            if next < top + depth * 55 / 100 {
+                for k in 0..<2 {
+                    let sx = Int(noise(row * 7 + k + 800) * Double(c.w)), dir = (row + k) % 2 == 0 ? 1 : -1
+                    for st in 0..<((next - y) / (2 * s)) {
+                        c.rect(sx + dir * st * 2 * s, y + 3 * s + st * 2 * s, 3 * s, s, ledge)
+                        c.rect(sx + dir * st * 2 * s, y + 3 * s + st * 2 * s, 3 * s, 1, edge)
+                    }
+                }
+            }
+            y = next; row += 1
+        }
+    }
+
+    /// A shaft of pale daylight falling slantwise from a hole high in the roof, through the dark between the pillars
+    /// to the rim, where it leaves a pale pool; dust hangs in it.
+    private static func moriaShaft(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), tall = isTall(c), rim = moriaRim(c, g)
+        let near = moriaPillars(c, g).filter { !$0.far }
+        // land it in the gap between pillars nearest the middle
+        let gaps = zip(near, near.dropFirst()).map { ($0.x + $0.w + $1.x) / 2 }
+        let bx = gaps.min(by: { abs($0 - c.w * 45 / 100) < abs($1 - c.w * 45 / 100) }) ?? c.w / 2
+        let tx = bx + (tall ? 60 : 24) * s, w0 = (tall ? 6 : 4) * s, w1 = (tall ? 16 : 10) * s
+        let light = C(0xC8D4DC)
+        for y in 0..<rim {
+            let k = Double(y) / Double(max(1, rim)), cx = tx + Int(Double(bx - tx) * k)
+            let w = w0 + Int(Double(w1 - w0) * k)
+            c.rect(cx - w / 2, y, w, 1, light.alpha(tall ? 0.07 : 0.06))
+            c.rect(cx - w / 4, y, w / 2, 1, light.alpha(0.04))
+        }
+        c.ellipse(bx, rim - s, w1, 2 * s, light.alpha(0.14))
+        for i in 0..<(tall ? 14 : 5) {
+            let k = noise(i * 3 + 810), y = Int(k * Double(rim - 4 * s))
+            let cx = tx + Int(Double(bx - tx) * k) + Int((noise(i * 3 + 811) - 0.5) * Double(w1))
+            c.rect(cx, y, s, s, light.alpha(0.35))
+        }
     }
 
     /// One great pillar standing on the far rim: fluted, banded with carved diamonds, lit orange low down where the
