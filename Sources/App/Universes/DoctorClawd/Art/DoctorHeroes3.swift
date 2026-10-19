@@ -77,19 +77,19 @@ private func drawNote(_ c: PixelCanvas, _ x: Int, _ y: Int, _ col: Px) {
 }
 
 /// Doctor Ten's hair, as Doctor Fourteen wears it again: tall brown spikes and long sideburns.
-private func drawSpikyHair(_ c: PixelCanvas, hair: Px, light: Px) {
+private func drawSpikyHair(_ c: PixelCanvas, hair: Px, light: Px, shade: Px) {
     c.pattern(17, 18, [
         "...........H.H........",
         "........HHHHHHHH......",
-        ".....HHHHHHlHHHHHH....",
-        "...HHHHHlHHHHHHlHHHH..",
-        "..HHHHHHHHHHHHHHHHHHH.",
-        ".HHHHlHHHHHHHHHHHlHHHH",
-        ".HHHH...........HHHHHH",
-        ".HHH...............HHH",
+        ".....HHHHHllHHHHHH....",
+        "...HHHHllHHHHHllHHHH..",
+        "..HHHHHHHHHHHHHHHHHhH.",
+        ".HHHllHHHHHHHHHHHHhHHH",
+        ".HHlH...........HHHhHH",
+        ".HlH...............HhH",
         ".HH.................HH",
         ".H...................H",
-    ], ["H": hair, "l": light])
+    ], ["H": hair, "l": light, "h": shade])
 }
 
 // MARK: - Doctor Nine
@@ -124,8 +124,8 @@ private func drawDoctorNine(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 37, 20, 1, crease); c.rect(37, 33, 1, 5, crease)
     // The crop: short all over, barely there at the temples.
     c.pattern(18, 23, [
-        "..HHHHHHlHHHHHHHHH..",
-        ".HHHHlHHHHHHHHlHHHH.",
+        "..HHHHHllHHHHHHHHH..",
+        ".HHHllHHHHHHHHHllHH.",
         "HHHHHHHHHHHHHHHHHHHH",
         "Hl................lH",
     ], ["H": hair, "l": hairLight])
@@ -148,7 +148,7 @@ private func drawDoctorNine(_ c: PixelCanvas, _ p: Pose) {
 private func drawDoctorEleven(_ c: PixelCanvas, _ p: Pose) {
     let tweed = C(0x7A5638), tweedDark = C(0x5A3E26), fleck = C(0x9A7650)
     let shirt = C(0xEDE6D8), bow = C(0xB01E2E), bowDark = C(0x781420), braces = C(0xA82030)
-    let hair = C(0x5A3A22), hairLight = C(0x7A5232)
+    let hair = C(0x5A3A22), hairLight = C(0x7A5232), hairShade = C(0x40281A)
     let fez = C(0xB4202C), fezDark = C(0x821620)
     let sig = p.signature
     let fezInHand = sig.map { $0 > 0.06 && $0 < 0.3 } ?? false
@@ -161,8 +161,10 @@ private func drawDoctorEleven(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: tweed))
     // The tweed jacket, open on the shirt and braces, the bow tie at the collar.
     c.rect(18, 33, 20, 5, tweed)
-    for (x, y) in [(19, 34), (21, 36), (20, 33), (34, 35), (36, 33), (35, 37), (19, 37), (22, 34)] { c.px(x, y, fleck) }
+    for (x, y) in [(19, 35), (20, 37), (34, 34), (35, 36)] { c.rect(x, y, 2, 1, fleck) }   // the tweed's weave, in short strokes
+    c.rect(18, 33, 4, 1, fleck); c.rect(34, 33, 3, 1, fleck)         // lit shoulders
     c.rect(37, 33, 1, 5, tweedDark)
+    c.rect(15, 33, 3, 3, tweed); c.rect(15, 35, 3, 1, tweedDark)     // the sleeve's cuff
     c.rect(24, 33, 8, 5, shirt)
     c.rect(24, 34, 1, 4, braces); c.rect(31, 34, 1, 4, braces)
     c.rect(23, 33, 1, 4, tweedDark); c.rect(32, 33, 1, 4, tweedDark)   // the lapels
@@ -171,16 +173,16 @@ private func drawDoctorEleven(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(16, 19, [
         "......HHHHHHHHHH........",
         "....HHHHHHHHHHHHHH......",
-        "..HHHHHHlHHHHHHHHHHH....",
-        ".HHHHHlHHHHHHHHlHHHHH...",
+        "..HHHHHllHHHHHHHHHHH....",
+        ".HHHHllHHHHHHHllHHHHH...",
         ".HHHHHHHHHHHHHHHHHHHHH..",
         "HHHHHHHHHHHHHHHHHHHHHHH.",
-        "HHHHHHHlHHHHHHHHHHlHHHH.",
+        "HHHHHHllHHHHHHHHHHhhHHH.",
         "HHHHHHHHHHHHHH...HHHHHH.",
-        "HHlHHHHHH........HHHHH..",
+        "HllHHHHHH........HHhHH..",
         ".HHHHH..............HHH.",
         ".HHH................HH..",
-    ], ["H": hair, "l": hairLight])
+    ], ["H": hair, "l": hairLight, "h": hairShade])
 
     if fezOn {
         c.rect(26, 14, 6, 2, fez); c.rect(25, 16, 8, 2, fez); c.rect(25, 18, 8, 1, fezDark)
@@ -208,7 +210,7 @@ private func drawDoctorEleven(_ c: PixelCanvas, _ p: Pose) {
 /// long dark navy coat with a red lining over a grey hoodie, black trousers and boots. His sonic is the sunglasses: he
 /// touches the frame and the ray (green) leaves from the lens. Signature: an electric guitar riff, notes flying.
 private func drawDoctorTwelve(_ c: PixelCanvas, _ p: Pose) {
-    let coat = C(0x1E2232), coatDark = C(0x13151F), lining = C(0x8A1E24)
+    let coat = C(0x1E2232), coatDark = C(0x13151F), coatLight = C(0x30364C), lining = C(0x8A1E24)
     let hoodie = C(0x4A4A52), hoodieDark = C(0x38383E)
     let hair = C(0xC8C8CE), hairDark = C(0x9A9AA4), brow = C(0x7E7E88)
     let green = C(0x7CFF6A)
@@ -228,7 +230,10 @@ private func drawDoctorTwelve(_ c: PixelCanvas, _ p: Pose) {
     c.rect(26, 34, 1, 3, white.alpha(0.85)); c.rect(29, 34, 1, 3, white.alpha(0.85))   // hood strings
     c.rect(18, 33, 4, 5, coat); c.rect(34, 33, 4, 5, coat); c.rect(37, 33, 1, 5, coatDark)
     c.rect(22, 33, 1, 3, lining); c.rect(33, 33, 1, 3, lining)
-    c.rect(15, 33, 3, 3, coat)
+    c.rect(18, 33, 4, 1, coatLight); c.rect(34, 33, 3, 1, coatLight)   // lit shoulders
+    c.rect(19, 35, 1, 3, coatDark); c.rect(35, 35, 1, 3, coatDark)     // the coat's folds
+
+    if !riff { c.rect(15, 33, 3, 3, coat); c.rect(15, 35, 3, 1, coatDark) }   // the sleeve's cuff
     // The hair: swept back and up, wild at the top.
     c.pattern(16, 17, [
         "..h..hH..h.............",
@@ -296,9 +301,9 @@ private func drawDoctorTwelve(_ c: PixelCanvas, _ p: Pose) {
 /// a purple lining. The sonic glows amber-gold. Signature: she builds a new sonic out of bits and sparks, then holds
 /// it up: "Brilliant!"
 private func drawDoctorThirteen(_ c: PixelCanvas, _ p: Pose) {
-    let coat = C(0x62748C), coatDark = C(0x4A5A70), lining = C(0x5E3E80)
+    let coat = C(0x62748C), coatDark = C(0x4A5A70), coatLight = C(0x7A8CA4), lining = C(0x5E3E80)
     let navy = C(0x262E4C), braces = C(0xD8A838)
-    let hair = C(0xE8CC78), hairDark = C(0xC4A452)
+    let hair = C(0xE8CC78), hairDark = C(0xC4A452), hairLight = C(0xF6E2A4)
     let gold = C(0xFFB040)
     let sig = p.signature
     let building = sig.map { $0 > 0.05 && $0 < 0.6 } ?? false
@@ -324,13 +329,15 @@ private func drawDoctorThirteen(_ c: PixelCanvas, _ p: Pose) {
     c.rect(24, 33, 1, 5, braces); c.rect(31, 33, 1, 5, braces)
     c.rect(18, 33, 3, 5, coat); c.rect(35, 33, 3, 5, coat); c.rect(37, 33, 1, 5, coatDark)
     c.rect(20, 33, 1, 4, lining); c.rect(35, 33, 1, 4, lining)
-    c.rect(15, 33, 3, 3, coat)
-    // The bob: a short choppy fringe and the sides down to the jaw.
+    c.rect(18, 33, 2, 1, coatLight); c.rect(36, 33, 1, 1, coatLight)   // lit shoulders
+    c.rect(19, 35, 1, 3, coatDark)                                     // a fold
+    c.rect(15, 33, 3, 3, coat); c.rect(15, 35, 3, 1, coatDark)         // the sleeve's cuff
+    // The bob: a short choppy fringe and the sides down to the jaw, lit in a run along the crown.
     c.pattern(17, 20, [
         "......HHHHHHHHHH......",
-        "....HHHHHHHHHHHHHH....",
-        "...HHHHHHhHHHHHHHHH...",
-        "..HHHHHHHHHHHHHHhHHH..",
+        "....HHllllHHHHHHHH....",
+        "...HHHHHhhHHHHHHHHH...",
+        "..HHHHHHHHHHHHHhhHHH..",
         "..HHHHHHHHHHHHHHHHHH..",
         ".HHHHHHHHHHHHHHHHHHHH.",
         ".HHHHHHHHHHHHHHHHHHHH.",
@@ -340,7 +347,7 @@ private func drawDoctorThirteen(_ c: PixelCanvas, _ p: Pose) {
         ".HHh..............hHH.",
         ".HHh..............hHH.",
         "..Hh..............hH..",
-    ], ["H": hair, "h": hairDark])
+    ], ["H": hair, "h": hairDark, "l": hairLight])
 
     if building, let s = sig {
         // Both hands busy in front of her, bits of copper and wire coming together, sparks off them.
@@ -375,8 +382,8 @@ private func drawDoctorThirteen(_ c: PixelCanvas, _ p: Pose) {
 /// brown waistcoat and a white open-necked shirt, dark blue trousers and white trainers. The sonic glows blue.
 /// Signature: "Oh!": hands in his coat pockets, leaning back on his heels, mouth an O.
 private func drawDoctorFourteen(_ c: PixelCanvas, _ p: Pose) {
-    let coat = C(0x5C6E8E), coatDark = C(0x45546E), waistcoat = C(0x7A5A3A), weave = C(0x9A7A52)
-    let shirt = C(0xF2F0EA), hair = C(0x4A2E1A), hairLight = C(0x6A4428)
+    let coat = C(0x5C6E8E), coatDark = C(0x45546E), coatLight = C(0x7286A6), waistcoat = C(0x7A5A3A), weave = C(0x9A7A52)
+    let shirt = C(0xF2F0EA), hair = C(0x4A2E1A), hairLight = C(0x6A4428), hairShade = C(0x34200F)
     let sig = p.signature
     let lean = sig.map { $0 > 0.1 && $0 < 0.9 } ?? false
     let oh = sig.map { $0 > 0.25 && $0 < 0.8 } ?? false
@@ -394,13 +401,16 @@ private func drawDoctorFourteen(_ c: PixelCanvas, _ p: Pose) {
     c.px(28, 36, C(0x3A2818)); c.px(28, 37, C(0x3A2818))   // buttons
     c.rect(18, 33, 3, 5, coat); c.rect(35, 33, 3, 5, coat); c.rect(37, 33, 1, 5, coatDark)
     c.rect(21, 33, 1, 3, coatDark); c.rect(34, 33, 1, 3, coatDark)
+    c.rect(18, 33, 3, 1, coatLight); c.rect(35, 33, 2, 1, coatLight)   // lit shoulders
+    c.rect(35, 36, 2, 1, coatDark)                                     // a pocket flap
+    if !lean { c.rect(15, 35, 3, 1, coatDark) }                        // the sleeve's cuff
     if lean {
         // Hands in his pockets: the sleeves go down into the coat.
         c.rect(15, 35, 3, 3, coat); c.rect(38, 35, 3, 3, coat)
         c.rect(15, 37, 3, 1, coatDark); c.rect(38, 37, 3, 1, coatDark)
         c.ox -= 1
     }
-    drawSpikyHair(c, hair: hair, light: hairLight)
+    drawSpikyHair(c, hair: hair, light: hairLight, shade: hairShade)
     if lean { c.ox += 1 }
     if oh { c.rect(27, 31, 2, 2, ink) }
     if lean { return }
@@ -423,7 +433,7 @@ private func tartan(_ x: Int, _ y: Int) -> Px {
 /// trousers and brown boots. The sonic glows violet. Signature: a dance break, arms pointing up and down in turn,
 /// hopping on the beat.
 private func drawDoctorFifteen(_ c: PixelCanvas, _ p: Pose) {
-    let coat = C(0xB08050), coatDark = C(0x86603A), shirt = C(0x2A6A6E), shirtDark = C(0x1E4E52)
+    let coat = C(0xB08050), coatDark = C(0x86603A), coatLight = C(0xC89A68), shirt = C(0x2A6A6E), shirtDark = C(0x1E4E52)
     let hair = C(0x1E140E), hairLight = C(0x3E2C20)
     let violet = C(0xC07CFF)
     let sig = p.signature
@@ -453,14 +463,17 @@ private func drawDoctorFifteen(_ c: PixelCanvas, _ p: Pose) {
     c.rect(25, 33, 6, 1, shirtDark); c.px(27, 34, shirtDark); c.px(28, 34, shirtDark)
     c.rect(18, 33, 4, 5, coat); c.rect(34, 33, 4, 5, coat); c.rect(37, 33, 1, 5, coatDark)
     c.rect(22, 33, 1, 3, coatDark); c.rect(33, 33, 1, 3, coatDark)
-    // Short dark curls, a little height on top.
+    c.rect(18, 33, 4, 1, coatLight); c.rect(34, 33, 3, 1, coatLight)   // lit shoulders
+    c.rect(19, 35, 1, 3, coatDark); c.px(28, 36, shirtDark)            // a fold, a shirt button
+    if up != 0 { c.rect(15, 35, 3, 1, coatDark) }                      // the sleeve's cuff
+    // Short dark curls, a little height on top, lit in short curling strokes.
     c.pattern(18, 20, [
-        "....hHhHHhHHhHh.....",
-        "..HhHHHHhHHHHhHHH...",
-        ".HHHHhHHHHHHhHHHHHH.",
-        ".HHHHHHHhHHHHHHHhHHH",
-        "HHhHHHHHHHHHHhHHHHHH",
-        "HHHHHHhHHHHHHHHHHhHH",
+        "....hhHHHhhHHhhH....",
+        "..HhhHHHHHhhHHHHH...",
+        ".HHHHHhhHHHHHHhhHHH.",
+        ".HhhHHHHHHHhhHHHHHHH",
+        "HHHHHhhHHHHHHHHHhhHH",
+        "HHhhHHHHHHHhhHHHHHHH",
         "HHh...............HH",
         "Hh.................H",
     ], ["H": hair, "h": hairLight])
@@ -515,8 +528,10 @@ private func drawWarDoctor(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: leather))
     // The coat, worn through in patches, the scarf at the neck and the bandolier across.
     c.rect(18, 33, 20, 5, leather)
-    for (x, y) in [(19, 35), (20, 34), (35, 36), (34, 34), (22, 37), (36, 33)] { c.px(x, y, scuff) }
+    for (x, y) in [(19, 35), (34, 34), (35, 36)] { c.rect(x, y, 2, 1, scuff) }   // worn patches, in short strokes
+    c.rect(18, 33, 3, 1, scuff); c.rect(35, 33, 2, 1, scuff)           // the leather lit along the shoulders
     c.rect(37, 33, 1, 5, leatherDark); c.rect(18, 37, 20, 1, leatherDark)
+    c.rect(15, 33, 3, 3, leather); c.rect(15, 35, 3, 1, leatherDark)   // the sleeve's cuff
     c.rect(24, 33, 8, 2, scarf); c.rect(29, 35, 2, 2, scarf)
     for i in 0..<5 {
         let x = 33 - i * 3, y = 33 + i
@@ -526,8 +541,8 @@ private func drawWarDoctor(_ c: PixelCanvas, _ p: Pose) {
     // The hair, swept back, and the eyebrows.
     c.pattern(18, 22, [
         "....hHHHHHHHHHh.....",
-        "..HHHHHHHhHHHHHHHH..",
-        ".HHHHhHHHHHHHHHhHHH.",
+        "..HHHHHHhhHHHHHHHH..",
+        ".HHHhhHHHHHHHHhhHHH.",
         "HHHHHHHHHHHHHHHHHHHH",
         "HHh..............hHH",
         "Hh................hH",
@@ -537,7 +552,7 @@ private func drawWarDoctor(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(21, 31, [
         ".hHHHHHHHHHh.",
         "HHHHHHHHHHHHH",
-        ".HHHHhHhHHHH.",
+        ".HHHhhHHhhHH.",
         "...HHHHHHH...",
     ], ["H": hair, "h": hairShade])
     c.rect(26, 32, 4, 1, C(0x8A5A48))
@@ -580,7 +595,7 @@ private func drawWarDoctor(_ c: PixelCanvas, _ p: Pose) {
 /// up, a dark top, dark trousers and boots, a holster on her hip and a black pistol. Signature: she draws, spins the
 /// pistol round her finger and holsters it again.
 private func drawFugitiveDoctor(_ c: PixelCanvas, _ p: Pose) {
-    let coat = C(0x9A8458), coatDark = C(0x74603C), pocket = C(0x84703F), top = C(0x2A2A30)
+    let coat = C(0x9A8458), coatDark = C(0x74603C), coatLight = C(0xB09C70), pocket = C(0x84703F), top = C(0x2A2A30)
     let hair = C(0x1A1210), hairLight = C(0x3A2A22), holster = C(0x4A3020)
     let gun = C(0x1E1E24), trim = C(0xC8A040)
     let sig = p.signature
@@ -606,17 +621,19 @@ private func drawFugitiveDoctor(_ c: PixelCanvas, _ p: Pose) {
     c.rect(33, 35, 3, 2, pocket); c.rect(33, 35, 3, 1, coatDark)
     c.rect(23, 33, 1, 5, coatDark); c.rect(32, 33, 1, 5, coatDark); c.rect(37, 33, 1, 5, coatDark)
     c.rect(20, 32, 3, 2, coat); c.rect(33, 32, 3, 2, coat)   // the collar
-    // Belt and holster on the right hip.
-    c.rect(18, 37, 20, 1, C(0x2A1E14))
+    c.rect(20, 32, 3, 1, coatLight); c.rect(33, 32, 3, 1, coatLight); c.rect(18, 33, 2, 1, coatLight)   // lit along the top
+    c.rect(15, 33, 3, 3, coat); c.rect(15, 35, 3, 1, coatDark)   // the sleeve's cuff
+    // Belt, buckle and holster on the right hip.
+    c.rect(18, 37, 20, 1, C(0x2A1E14)); c.rect(27, 37, 2, 1, C(0xA89060))
     c.rect(35, 36, 3, 4, holster)
     if phase == 0 { c.rect(35, 35, 3, 1, gun); c.px(36, 34, gun) }
     // Short dark curls.
     c.pattern(18, 21, [
-        "....hHhHHhHHhH......",
-        "..HHHHHHhHHHHHHHH...",
-        ".HHHHHhHHHHHHhHHHH..",
-        ".HHhHHHHHHHHHHHHHHH.",
-        "HHHHHHHHhHHHHHHhHHHH",
+        "....hhHHHhhHHH......",
+        "..HHHHHhhHHHHHHHH...",
+        ".HHhhHHHHHHHhhHHHH..",
+        ".HHHHHHHhhHHHHHHHHH.",
+        "HHhhHHHHHHHHHHhhHHHH",
         "Hh................hH",
     ], ["H": hair, "h": hairLight])
 

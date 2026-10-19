@@ -98,14 +98,15 @@ private func drawSusan(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 37, 20, 1, jumperDark)
     for x in stride(from: 19, to: 37, by: 2) { c.px(x, 37, jumper) }
     c.pattern(23, 33, ["WWW..WWW", ".WWWWWW.", "..W..W.."], ["W": collar])
+    c.rect(19, 34, 1, 3, jumperDark); c.rect(35, 34, 1, 3, jumperDark)   // the pullover's folds
     c.rect(15, 33, 3, 3, jumper); c.rect(15, 35, 3, 1, clawdOrange)
-    // The crop.
+    // The crop, its sheen in short runs.
     c.pattern(17, 21, [
         "....HHHHHHHHHHHHH.....",
-        "..HHHHHHHHHHHHHHHHH...",
-        ".HHHHhHHHHHHHHHHhHHH..",
+        "..HHHhhhHHHHHHHHHHH...",
+        ".HHHHHHHHHhhHHHHHHHH..",
         ".HHHHHHHHHHHHHHHHHHHH.",
-        "HHHHHHHHHHhHHHHHHHHHHH",
+        "HHHhhHHHHHHHHHHHhhHHHH",
         "HHHHHH.HHH.HHH..HHHHHH",
         "HHH..H...H.........HHH",
         "HH..................HH",
@@ -135,7 +136,8 @@ private func drawIan(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: tweed, eye: nil))
     // The jacket: flecked tweed, open over the shirt and tie.
     c.rect(18, 33, 20, 5, tweed)
-    for k in 0..<9 { c.px(19 + Int(noise(k * 3 + 1) * 18), 33 + Int(noise(k * 5 + 2) * 5), fleck) }
+    for (x, y) in [(19, 35), (33, 35), (20, 36)] { c.rect(x, y, 2, 1, fleck) }   // the tweed's weave, in short strokes
+    c.rect(18, 33, 4, 1, fleck); c.rect(34, 33, 3, 1, fleck)                   // lit shoulders
     c.rect(37, 33, 1, 5, tweedDark); c.rect(18, 37, 20, 1, tweedDark)
     c.pattern(24, 33, ["SSSSSSSS", ".SSTTSS.", "..STTS..", "...TT..."], ["S": shirt, "T": tie])
     c.rect(23, 33, 1, 3, tweedDark); c.rect(32, 33, 1, 3, tweedDark)          // the lapels
@@ -144,9 +146,9 @@ private func drawIan(_ c: PixelCanvas, _ p: Pose) {
     // Short back and sides, parted on the left.
     c.pattern(18, 22, [
         "...HHHHHHHHHHHHH....",
-        ".HHHHpHHHHhHHHHHHH..",
-        "HHHHHpHHHHHHHHHHHHHH",
-        "HHhHHHHHHHHHHHHHHHHH",
+        ".HHHHpHHHhhHHHHHHH..",
+        "HHHHHpHHHHHhhHHHHHHH",
+        "HHhhHHHHHHHHHHHHHHHH",
         "HH...............HHH",
         "H..................H",
     ], ["H": hair, "h": hairLight, "p": hairLight])
@@ -189,20 +191,22 @@ private func drawBarbara(_ c: PixelCanvas, _ p: Pose) {
     for x in stride(from: 24, through: 31, by: 2) { c.px(x, 34, pearl) }
     c.rect(18, 36, 20, seatedPose ? 2 : 3, skirt); c.rect(37, 36, 1, seatedPose ? 2 : 3, skirtDark)
     c.rect(18, 36, 20, 1, skirtDark)
+    c.rect(19, 34, 1, 2, twinDark); c.rect(35, 34, 1, 2, twinDark)          // the twin-set's folds
+    c.rect(22, 37, 1, seatedPose ? 1 : 2, skirtDark); c.rect(33, 37, 1, seatedPose ? 1 : 2, skirtDark)   // the skirt's darts
     c.rect(15, 33, 3, 3, twin); c.rect(15, 35, 3, 1, clawdOrange)
-    // The beehive.
+    // The beehive, its swirl lit in short runs.
     c.pattern(17, 15, [
         ".......HHHHHHHH.......",
-        ".....HHHHHHHHHHHH.....",
-        "....HHHHHhHHHHHHHH....",
-        "....HHHHHHHHHHhHHH....",
-        "...HHHhHHHHHHHHHHHH...",
-        "...HHHHHHHHHHHHHhHH...",
+        ".....HHhhhHHHHHHH.....",
+        "....HHHHhhHHHHHHHH....",
+        "....HHHHHHHHHhhHHH....",
+        "...HHhhHHHHHHHHHHHH...",
+        "...HHHHHHHHHHHHhhHH...",
         "..HHHHHHHHHHHHHHHHHH..",
         ".BBBBBBBBBBBBBBBBBBBB.",
         "HHHHHHHHHHHHHHHHHHHHHH",
-        "HHHhHHHHHHHHHHHHHHHHHH",
-        "HHHHHHHHHHHHHHHHHhHHHH",
+        "HHhhHHHHHHHHHHHHHHHHHH",
+        "HHHHHHHHHHHHHHHHhhHHHH",
         "HHHHHH..........HHHHHH",
         "HHHH..............HHHH",
         "HHH................HHH",
@@ -253,6 +257,7 @@ private func drawJamie(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: shirt, eye: nil))
     // The shirt, open at the neck, and the belt.
     c.rect(18, 33, 20, 2, shirt); c.rect(37, 33, 1, 2, shirtDark)
+    c.rect(20, 33, 1, 2, shirtDark); c.rect(33, 33, 1, 2, shirtDark)        // the loose shirt's folds
     c.pattern(26, 33, ["O..O", ".OO."], ["O": clawdOrange])
     c.rect(15, 33, 3, 3, shirt); c.rect(15, 35, 3, 1, clawdOrange)
     // The kilt: red tartan, a pleated swing at the back, the sporran in front.
@@ -269,9 +274,9 @@ private func drawJamie(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(17, 20, [
         "....HHHHHHHHHHHH......",
         "..HHHHHHHHHHHHHHHH....",
-        ".HHHHHhHHHHHHhHHHHH...",
+        ".HHHHhhHHHHHHhhHHHH...",
         "HHHHHHHHHHHHHHHHHHHH..",
-        "HHHHHHHHHhHHHHHHHHHHH.",
+        "HHHHHHHHhhHHHHHHHHHHH.",
         "HHHHHHHHHHHHHHHHHHHHHH",
         "HHHH.HH.HHH.HH....HHHH",
         "HHH..H...H.........HHH",
@@ -434,7 +439,7 @@ private func drawBrigadier(_ c: PixelCanvas, _ p: Pose) {
 /// Jo Grunt: the mod girl at the base, long straight honey-blonde hair parted in the middle, a purple mini dress with a
 /// big white collar and a wide white belt, and white go-go boots.
 private func drawJo(_ c: PixelCanvas, _ p: Pose) {
-    let hair = C(0xD0A060), hairDark = C(0xA87A3E), dress = C(0x8A3AA8), dressDark = C(0x642A7E), dressLight = C(0xB060D0)
+    let hair = C(0xD0A060), hairDark = C(0xA87A3E), hairLight = C(0xE8BC7C), dress = C(0x8A3AA8), dressDark = C(0x642A7E), dressLight = C(0xB060D0)
     let collar = C(0xF6F2EC), boot = C(0xF2F0EC), bootShade = C(0xC8C4C0)
     // Hair down her back, behind everything.
     c.oy += p.breathe
@@ -462,18 +467,18 @@ private func drawJo(_ c: PixelCanvas, _ p: Pose) {
     // The hair: parted down the middle, falling straight.
     c.pattern(17, 21, [
         "....HHHHHHHHHHHHHH....",
-        "..HHHHHHHHHdHHHHHHHH..",
-        ".HHHHHHHHHHdHHHHHHHHH.",
+        "..HHllHHHHHdHHHHllHH..",
+        ".HHHllHHHHHdHHHHHllHH.",
         "HHHHHHHHHHddHHHHHHHHHH",
         "HHHHHHHHddddddHHHHHHHH",
         "HHHHHH..........HHHHHH",
         "HHHH..............HHHH",
-        "HHH................HHH",
-        "HHH................HHH",
-        "HHH................HHH",
+        "HlH................HdH",
+        "HlH................HdH",
+        "HlH................HdH",
         "HH.................HH.",
         "HH.................HH.",
-    ], ["H": hair, "d": hairDark])
+    ], ["H": hair, "d": hairDark, "l": hairLight])
     drawEyes(c, p)
     drawArm(c, p, arm, sleeve: dress)
 }
@@ -503,9 +508,9 @@ private func drawSarahJane(_ c: PixelCanvas, _ p: Pose) {
     // The feathered bob, the ends flicked out.
     c.pattern(17, 21, [
         "....HHHHHHHHHHHHH.....",
-        "..HHHHHhHHHHHHhHHHH...",
+        "..HHHHhhHHHHHhhHHHH...",
         ".HHHHHHHHHHHHHHHHHHH..",
-        "HHHHHHHHhHHHHHHHHHHHH.",
+        "HHHHHHHhhHHHHHHHHHHHH.",
         "HHHHHHHHHHHHHHHHHHHHHH",
         "HHHHH.hHHHH.HHH...HHHH",
         "HHH....h...........HHH",
@@ -562,9 +567,9 @@ private func drawLeelah(_ c: PixelCanvas, _ p: Pose) {
     // The hair, with a strand forward over the shoulder.
     c.pattern(17, 20, [
         ".....HHHHHHHHHHHH.....",
-        "...HHHHHHHHHhHHHHHH...",
-        "..HHHHhHHHHHHHHHHHHH..",
-        ".HHHHHHHHHHHHHHHhHHHH.",
+        "...HHHHHHHHhhHHHHHH...",
+        "..HHHhhHHHHHHHHHHHHH..",
+        ".HHHHHHHHHHHHHHhhHHHH.",
         "HHHHHHHHHHHHHHHHHHHHHH",
         "HHHHHHH.HHHHH.HHHHHHHH",
         "HHHH.H.....H......HHHH",
