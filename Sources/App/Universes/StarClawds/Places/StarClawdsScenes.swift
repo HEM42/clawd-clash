@@ -197,17 +197,14 @@ private enum StarWarsScenes {
     // Boba, the Great Pit of Carkoon: dunes, Jabba's sail barge, and the sarlacc.
     static func sarlaccPit(_ c: PixelCanvas, _ g: Int) {
         c.gradient(0, g, C(0x9FC3E0), C(0xF2DCB0), bands: 5)
-        if Scenes.isTall(c) { carkoonSky(c, g) }
+        if Scenes.isTall(c) { carkoonSky(c, g) } else { carkoonStrip(c, g) }
         c.dunes(base: g - 10, amp: 3, freq: 0.05, phase: 1, bottom: g, C(0xD8B47A), shade: C(0xE8C892))
         // the sail barge (Khetanna), hovering in the distance
         let bx = c.w / 5, by = max(14, g / 3)
         if Scenes.isTall(c) {
             sailBarge(c, bx, by, g)                                 // full screen: the barge at full size
         } else {
-            c.rect(bx, by, 46, 5, C(0x8A6A48)); c.rect(bx + 4, by + 5, 38, 2, C(0x6E5236))
-            c.rect(bx - 3, by + 1, 3, 3, C(0x8A6A48))
-            for sx in [bx + 12, bx + 26] { c.rect(sx, by - 12, 1, 12, C(0x5A4636)); c.rect(sx + 1, by - 11, 8, 9, C(0xE6D6B4)) }
-            c.rect(bx + 4, by + 9, 40, 1, C(0xC9A87A, 0.4))           // shadow on the sand
+            sailBargeSmall(c, bx, max(27, by), g)                   // the window: a smaller barge, its masts clear of the top
         }
         // the pit
         let px = c.w * 3 / 4
@@ -215,7 +212,15 @@ private enum StarWarsScenes {
         c.ellipse(px, g - 3, 18, 3, C(0x8A6A40))
         c.ellipse(px, g - 3, 8, 2, C(0x3A2416))
         for i in 0..<6 { c.px(px - 6 + i * 2, g - 4, C(0xF4EEDC)) }  // beak teeth
-        if Scenes.isTall(c) { skiffs(c, g) }
+        if Scenes.isTall(c) { skiffs(c, g) } else {
+            // the window: the rim of teeth round the throat, sand sliding in, and the skiff with its plank out
+            for i in 0..<9 {
+                let a = Double(i) / 8 * .pi, tx = px + Int(cos(a) * 15), ty = g - 3 + Int(sin(a) * 2.5)
+                c.px(tx, ty, C(0xF4EEDC)); c.px(tx, ty - 1, C(0xD8CCB0, 0.8))
+            }
+            for i in 0..<5 { c.px(px - 22 + i * 11 + Int(noise(i + 3300) * 3), g - 5 - i % 2, C(0xB08A58)) }
+            skiffs(c, g, only: 1)
+        }
         c.ground(g, C(0xDCB97E), edge: C(0xEACB94), speck: C(0xC9A468), seed: 2)
     }
 
@@ -2416,10 +2421,48 @@ private enum StarWarsScenes {
         p.rect(70, -52, 6, 2, C(0xA83A2A))                                                        // a pennant
     }
 
-    /// Two desert skiffs hovering by the pit, one with the plank run out over the sarlacc.
-    static func skiffs(_ c: PixelCanvas, _ g: Int) {
+    /// The window's strip of the Dune Sea: the twin suns low on the right, far rocks and dunes on the horizon and a
+    /// thin wisp of high cloud.
+    static func carkoonStrip(_ c: PixelCanvas, _ g: Int) {
+        let sx = c.w * 9 / 10, sy = max(8, g / 7)
+        for (dx, dy, r) in [(0, 0, 3), (11, 5, 2)] {
+            c.circle(sx + dx, sy + dy, r * 3, C(0xFFF6DC, 0.14)); c.circle(sx + dx, sy + dy, r, C(0xFFFBEA))
+        }
+        Scenes.wisp(c, c.w * 11 / 20, max(5, g / 8), 70, C(0xFFFFFF, 0.35), s: 1)
+        Scenes.mesa(c, x: c.w / 30, width: 40, h: 6, base: g - 8, C(0xDDC39A), seed: 1)
+        Scenes.mesa(c, x: c.w * 11 / 20, width: 26, h: 4, base: g - 8, C(0xDDC39A), seed: 2)
+        c.dunes(base: g - 13, amp: 2, freq: 0.03, phase: 2.4, bottom: g, C(0xE6CC9E), shade: C(0xEED8B0))
+    }
+
+    /// The Khetanna for the window's strip: the same barge, smaller (about half), with its rail, cabin, awning, the
+    /// court on deck, both sails and the pennant, so it reads whole above the dunes. (x, y) is the top of the hull.
+    static func sailBargeSmall(_ c: PixelCanvas, _ x: Int, _ y: Int, _ g: Int) {
+        let hull = C(0x8A6A48), hullLit = C(0xA0805A), hullDark = C(0x6E5236), wood = C(0x5A4636), sail = C(0xE6D6B4), sailShade = C(0xCDBB98)
+        c.rect(x - 3, y, 3, 2, hull); c.rect(x - 1, y + 2, 1, 2, hullDark)                                  // the prow
+        c.rect(x, y, 52, 2, hullLit); c.rect(x + 1, y + 2, 50, 3, hull); c.rect(x + 4, y + 5, 44, 2, hullDark)
+        for k in stride(from: 4, to: 48, by: 4) { c.px(x + k, y + 3, C(0x3A2A1E)) }                         // ports
+        c.rect(x + 52, y - 2, 2, 7, hull)                                                                    // the stern
+        c.rect(x, y - 2, 52, 1, wood); for k in stride(from: 0, to: 52, by: 4) { c.px(x + k, y - 1, wood) }  // the rail
+        c.rect(x + 28, y - 7, 20, 5, C(0x7A5C3E)); c.rect(x + 27, y - 8, 22, 1, hullLit)                     // the cabin
+        for k in stride(from: 30, to: 46, by: 4) { c.px(x + k, y - 5, C(0x2A1C12)) }
+        c.rect(x + 4, y - 5, 17, 1, sailShade)                                                               // the awning
+        for (k, col) in [(6, C(0x3A3028)), (9, C(0x6A5A44)), (12, C(0x3A3028)), (17, C(0x5A4A3A))] {
+            c.rect(x + k, y - 4, 1, 2, col); c.px(x + k, y - 4, C(0xC8A888))                                // the court
+        }
+        c.rect(x + 15, y - 19, 1, 17, wood); c.rect(x + 16, y - 18, 9, 11, sail); c.rect(x + 24, y - 18, 1, 11, sailShade)
+        c.rect(x + 16, y - 14, 9, 1, sailShade)
+        c.rect(x + 35, y - 23, 1, 15, wood); c.rect(x + 36, y - 22, 8, 13, sail); c.rect(x + 43, y - 22, 1, 13, sailShade)
+        c.rect(x + 36, y - 17, 8, 1, sailShade)
+        c.rect(x + 35, y - 24, 3, 1, C(0xA83A2A))                                                            // the pennant
+        c.rect(x + 4, g - 9, 46, 1, C(0xC9A87A, 0.4))                                                        // shadow on the sand
+    }
+
+    /// Two desert skiffs hovering by the pit, one with the plank run out over the sarlacc (`only: 1` draws just that
+    /// one, low over the sand, for the window's strip).
+    static func skiffs(_ c: PixelCanvas, _ g: Int, only: Int = 2) {
         let pit = c.w * 3 / 4, s = Scenes.unit(g)
-        for (x, y, plank) in [(pit + 6 * s, g - g / 5, true), (pit - 110 * s, g - g / 4 - 8 * s, false)] {
+        let all = [(pit + 6 * s, only == 1 ? g - 14 : g - g / 5, true), (pit - 110 * s, g - g / 4 - 8 * s, false)]
+        for (x, y, plank) in all.prefix(only) {
             let p = Scenes.Pen(c, x, y, g)
             p.rect(-2, 1, 2, 2, C(0xB4A27E)); p.rect(0, 0, 32, 3, C(0xB4A27E)); p.rect(0, 0, 32, 1, C(0xD0BE98))
             p.rect(3, 3, 26, 2, C(0x7E6E56))
