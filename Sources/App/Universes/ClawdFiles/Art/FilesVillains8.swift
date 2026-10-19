@@ -87,7 +87,7 @@ private func drawRonnie(_ c: PixelCanvas, _ p: Pose) {
     let grin = sig.map { $0 > 0.5 && $0 < 0.85 } ?? false
 
     drawLegs(c, Look(leg: khaki), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x2A2A2E))
+    filesDrawDressShoes(c, step: p.step, color: C(0x2A2A2E))
     c.oy += p.breathe
     drawBody(c, Look(arm: red))
     // The polo shirt, its collar and the name badge.
@@ -165,7 +165,7 @@ private func drawGuyMann(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(7, 36 + wag, ["..TT.......", ".TTTTT.....", "TTTTTTTTTT.", ".....TTTTTT"], ["T": scale])
     c.px(8, 37 + wag, scaleD)
     drawLegs(c, Look(leg: C(0x5A4A3A)), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x2E241A))
+    filesDrawDressShoes(c, step: p.step, color: C(0x2E241A))
     c.oy += p.breathe
     drawBody(c, Look(body: scale, shade: scaleD, arm: jacket, eye: nil))
     // Scales: short lit arcs over the head, and a shaded run down the far side.
@@ -503,7 +503,7 @@ private func drawTeliko(_ c: PixelCanvas, _ p: Pose) {
     let blowing = sig.map { $0 > 0.15 && $0 < 0.85 } ?? false
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    drawDressShoes(c, step: p.step, color: suitD)
+    filesDrawDressShoes(c, step: p.step, color: suitD)
     c.oy += p.breathe
     // Taller than Clawd: the chalk-white head rises six rows higher.
     c.rect(19, 18, 18, 8, chalk); c.rect(36, 18, 1, 8, chalkD); c.rect(20, 17, 16, 1, chalk)

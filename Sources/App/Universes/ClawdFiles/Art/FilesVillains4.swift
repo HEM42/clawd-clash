@@ -113,7 +113,7 @@ private func toomsFigure(_ c: PixelCanvas, _ p: Pose, legs: Bool = true) {
     let shirtL = C(0xA69A6A), hairL = C(0x42362A), belt = C(0x2E2418)
     if legs {
         drawLegs(c, Look(leg: trousers), step: p.step)
-        drawDressShoes(c, step: p.step, color: C(0x2A2018))
+        filesDrawDressShoes(c, step: p.step, color: C(0x2A2018))
     }
     c.oy += p.breathe
     drawBody(c, Look(arm: shirt, eye: nil))
@@ -244,7 +244,7 @@ private func drawPusher(_ c: PixelCanvas, _ p: Pose) {
     let pushing = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: jeans), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x3A2A1E))
+    filesDrawDressShoes(c, step: p.step, color: C(0x3A2A1E))
     c.oy += p.breathe
     drawBody(c, Look(arm: jacket, eye: pushing ? nil : ink))
     // The windbreaker open over the T-shirt, its zip and collar.

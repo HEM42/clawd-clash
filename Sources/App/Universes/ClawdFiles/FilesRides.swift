@@ -8,7 +8,7 @@ import Foundation
 /// The FBI's unmarked sedan: a boxy dark blue-grey four-door saloon (bonnet, cabin, a boot of its own), its rear door the
 /// boarding ramp (`ramp` 0…1 swings it open on the dark cabin and the back seat, its foot about 14 px left of centre), `lights` on:
 /// headlights and a red light flashing on the dash.
-func drawSedan(_ c: PixelCanvas, ramp: Double, lights: Bool) {
+func filesDrawSedan(_ c: PixelCanvas, ramp: Double, lights: Bool) {
     let body = C(0x2E3A4E), light = C(0x4A5A72), dark = C(0x1C2432), glass = C(0x16202C), shine = C(0x8AA0B8)
     let chrome = C(0xB8C0C8), tyre = C(0x101114), hub = C(0x8A9098), arch = C(0x0C1018)
     // The lower body, the boot lid behind and the bonnet in front, a step down from the cabin each side.
@@ -85,7 +85,7 @@ private func filesDoorWidth(_ w: Int, _ ramp: Double) -> Int { max(2, Int((Doubl
 /// The black helicopter: a dark fuselage with a tinted nose bubble, its tail boom off to the left, skids under it and
 /// the rotor on top (a long blur while `engines` turn it, the blades drooping when they don't). The side door slides
 /// back for boarding (`ramp` 0…1), showing the red-lit cabin.
-func drawHelicopter(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
+func filesDrawHelicopter(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
     let hull = C(0x1C1E22), sheen = C(0x3A3E46), dark = C(0x0E0F12), glass = C(0x2A3A44), glint = C(0x8AA8B8)
     // The tail boom, the fin and the tail rotor.
     for x in 2..<20 {
@@ -128,7 +128,7 @@ func drawHelicopter(_ c: PixelCanvas, ramp: Double, engines: Bool, gear: Bool) {
 /// The saucer: a wide grey disc with a lit dome on top and a ring of lights round its rim (all lit while `engines`
 /// run), a glow underneath. Its boarding "ramp" is the beam (`ramp` 0…1): a cone of pale green light down to the ground
 /// under its middle, which whoever's taken walks into.
-func drawSaucer(_ c: PixelCanvas, ramp: Double, engines: Bool) {
+func filesDrawSaucer(_ c: PixelCanvas, ramp: Double, engines: Bool) {
     let metal = C(0xA8B0B8), light = C(0xD4DAE0), dark = C(0x5E6670), dome = C(0x9AF0C8)
     let cx = 33
     // The beam, first, so the disc sits over its top.

@@ -3,7 +3,7 @@ import Foundation
 /// A flying saucer on a 28×26 canvas, for the menu bar: the dome on top, the rim with its lights, and the beam it
 /// throws down. `mono`: one colour with the lights and the dome's window left out, so they read as holes in it, and the
 /// beam as a few bars, for a template image macOS tints.
-func drawSaucerIcon(_ c: PixelCanvas, mono: Bool = false) {
+func filesDrawSaucerIcon(_ c: PixelCanvas, mono: Bool = false) {
     let rows: [String] = [
         "............................",
         "...........DDDDDD...........",

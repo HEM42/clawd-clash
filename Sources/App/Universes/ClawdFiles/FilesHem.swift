@@ -11,7 +11,7 @@ let filesHem = HemCostume(
     },
     legs: { c, p in   // the trench coat's tails over grey trousers and black shoes
         drawLegs(c, Look(leg: C(0x4A4A54)), step: p.step)
-        drawDressShoes(c, step: p.step)
+        filesDrawDressShoes(c, step: p.step)
         c.rect(17, 38, 22, seatedPose ? 1 : 3, trench); c.rect(28, 38, 1, seatedPose ? 1 : 3, trenchDark)
     },
     top: (trench, trenchDark, trench, trench),

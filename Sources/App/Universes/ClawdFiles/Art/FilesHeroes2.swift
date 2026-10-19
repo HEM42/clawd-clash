@@ -67,7 +67,7 @@ private func drawSkinnard(_ c: PixelCanvas, _ p: Pose) {
     let rubbing = sig.map { $0 > 0.25 && $0 < 0.75 } ?? false
 
     drawLegs(c, Look(leg: trousers), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: shirt))
     // The bald crown's shine and the stubble low round the sides.
@@ -120,7 +120,7 @@ private func drawDoggedd(_ c: PixelCanvas, _ p: Pose) {
     if guarding && Int(p.t * 5) % 2 == 0 { c.oy -= 1 }
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
     // The crew cut: short and flat across the top, close at the sides.
@@ -136,7 +136,7 @@ private func drawDoggedd(_ c: PixelCanvas, _ p: Pose) {
     // The suit, shirt and tie.
     c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, suitD); c.rect(18, 37, 20, 1, suitD)
     c.pattern(24, 33, ["lSTTSl", ".lTTl.", "..TT..", "..TT.."], ["l": suitL, "S": shirt, "T": tie])
-    drawJacketDetail(c, dark: suitD, light: suitL)
+    filesDrawJacketDetail(c, dark: suitD, light: suitL)
     c.px(30, 36, suitL)   // a button
 
     if guarding {
@@ -145,7 +145,7 @@ private func drawDoggedd(_ c: PixelCanvas, _ p: Pose) {
         c.rect(38, 30, 3, 4, suit); c.rect(38, 27, 3, 3, clawdOrange); c.px(40, 27, clawdShade)
         return
     }
-    c.rect(15, 33, 3, 3, suit); drawCuffs(c, suitD, right: false)
+    c.rect(15, 33, 3, 3, suit); filesDrawCuffs(c, suitD, right: false)
     if let a = p.cheering ? -95 : p.melee {
         drawPunch(c, angle: a, trail: p.trail, sleeve: suit)
     } else {
@@ -164,14 +164,14 @@ private func drawReyez(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
 
     drawLegs(c, Look(leg: C(0x2A2A32)), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: jacket))
     // The jacket open over the dark top, its collar, the pendant.
     c.rect(18, 33, 20, 5, jacket); c.rect(37, 33, 1, 5, jacketD); c.rect(18, 37, 20, 1, jacketD)
     c.rect(24, 33, 8, 5, top); c.px(27, 35, C(0xC8CCD4)); c.px(28, 35, C(0xC8CCD4))
     c.rect(22, 33, 2, 2, jacketL); c.rect(32, 33, 2, 2, jacketL)
-    drawJacketDetail(c, dark: jacketD, light: jacketL)
+    filesDrawJacketDetail(c, dark: jacketD, light: jacketL)
     c.rect(24, 36, 8, 1, C(0x1E181C))   // the top tucked into her waistband
     // The long hair: a middle parting, down past her shoulders on both sides.
     c.pattern(16, 21, [
@@ -211,14 +211,14 @@ private func drawReyez(_ c: PixelCanvas, _ p: Pose) {
                 c.px(28 + Int(cos(a) * 15), 31 + Int(sin(a) * 9), C(0xD8C8FF, 0.8 * sin(k * .pi)))
             }
         }
-        c.rect(15, 33, 3, 3, jacket); drawCuffs(c, jacketD, right: false)
+        c.rect(15, 33, 3, 3, jacket); filesDrawCuffs(c, jacketD, right: false)
         c.rect(38, 33, 3, 3, jacket); c.rect(38, 35, 3, 1, clawdOrange); c.rect(38, 34, 3, 1, jacketD)
         return
     }
-    c.rect(15, 33, 3, 3, jacket); drawCuffs(c, jacketD, right: false)
+    c.rect(15, 33, 3, 3, jacket); filesDrawCuffs(c, jacketD, right: false)
     c.oy += p.gunY
-    drawSidearm(c, sleeve: jacket, searching: p.ready || p.fire != nil)
-    drawCuffs(c, jacketD, left: false)
+    filesDrawSidearm(c, sleeve: jacket, searching: p.ready || p.fire != nil)
+    filesDrawCuffs(c, jacketD, left: false)
 }
 
 // MARK: - Agent Einstine
@@ -238,7 +238,7 @@ private func drawEinstine(_ c: PixelCanvas, _ p: Pose) {
         let up = Int(p.t * 6) % 2 == 0
         for (i, lx) in [19, 23, 31, 35].enumerated() { c.rect(lx, i == 3 && up ? 41 : 42, 2, 2, C(0x18181C)) }
     } else {
-        drawDressShoes(c, step: p.step)
+        filesDrawDressShoes(c, step: p.step)
     }
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
@@ -247,7 +247,7 @@ private func drawEinstine(_ c: PixelCanvas, _ p: Pose) {
     // The suit and the blouse's collar.
     c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, suitD); c.rect(18, 37, 20, 1, suitD)
     c.pattern(24, 33, ["lBBBBl", ".lBBl.", "..BB..", "......"], ["l": suitL, "B": blouse])
-    drawJacketDetail(c, dark: suitD, light: suitL)
+    filesDrawJacketDetail(c, dark: suitD, light: suitL)
     c.px(28, 36, suitD)   // the jacket's single button
     // The hair: swept back off the forehead, sleek to the jaw.
     c.pattern(16, 21, [
@@ -275,10 +275,10 @@ private func drawEinstine(_ c: PixelCanvas, _ p: Pose) {
         c.px(23, 33, suitD); c.px(32, 35, suitD)                          // the cuffs
         return
     }
-    c.rect(15, 33, 3, 3, suit); drawCuffs(c, suitD, right: false)
+    c.rect(15, 33, 3, 3, suit); filesDrawCuffs(c, suitD, right: false)
     c.oy += p.gunY
-    drawSidearm(c, sleeve: suit, searching: p.ready || p.fire != nil)
-    drawCuffs(c, suitD, left: false)
+    filesDrawSidearm(c, sleeve: suit, searching: p.ready || p.fire != nil)
+    filesDrawCuffs(c, suitD, left: false)
 }
 
 // MARK: - Agent Millar
@@ -293,13 +293,13 @@ private func drawMillar(_ c: PixelCanvas, _ p: Pose) {
     let laptop = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
     // The suit, shirt and tie.
     c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, suitD); c.rect(18, 37, 20, 1, suitD)
     c.pattern(24, 33, ["lSTTSl", ".lTTl.", "..TT..", "..TT.."], ["l": suitL, "S": shirt, "T": tie])
-    drawJacketDetail(c, dark: suitD, light: suitL)
+    filesDrawJacketDetail(c, dark: suitD, light: suitL)
     c.px(31, 35, C(0xC8CCD4))   // a tie clip
     // The hair: neat, a side parting, a little quiff up at the front.
     c.pattern(17, 20, [
@@ -327,8 +327,8 @@ private func drawMillar(_ c: PixelCanvas, _ p: Pose) {
         }
         return
     }
-    c.rect(15, 33, 3, 3, suit); drawCuffs(c, suitD, right: false)
+    c.rect(15, 33, 3, 3, suit); filesDrawCuffs(c, suitD, right: false)
     c.oy += p.gunY
-    drawSidearm(c, sleeve: suit, searching: p.ready || p.fire != nil)
-    drawCuffs(c, suitD, left: false)
+    filesDrawSidearm(c, sleeve: suit, searching: p.ready || p.fire != nil)
+    filesDrawCuffs(c, suitD, left: false)
 }

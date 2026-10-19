@@ -32,7 +32,7 @@ private func drawBytes(_ c: PixelCanvas, _ p: Pose) {
     let reading = sig.map { $0 >= 0.35 && $0 < 0.95 } ?? false
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
     // The suit, shirt and tie.
@@ -74,7 +74,7 @@ private func drawBytes(_ c: PixelCanvas, _ p: Pose) {
         c.rect(41, 26 + nod, 3, 1, C(0x5A5A54)); c.rect(41, 28 + nod, 4, 1, C(0x8A8676)); c.rect(41, 30 + nod, 4, 1, C(0x8A8676))
         return
     }
-    c.rect(15, 33, 3, 3, suit); c.rect(38, 33, 3, 3, suit); drawCuffs(c, suitD)
+    c.rect(15, 33, 3, 3, suit); c.rect(38, 33, 3, 3, suit); filesDrawCuffs(c, suitD)
 }
 
 // MARK: - Frohack
@@ -90,7 +90,7 @@ private func drawFrohack(_ c: PixelCanvas, _ p: Pose) {
     let snap = sig.map { $0 > 0.55 && $0 < 0.72 } ?? false
 
     drawLegs(c, Look(leg: C(0x2E3440)), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x3A2A1E))
+    filesDrawDressShoes(c, step: p.step, color: C(0x3A2A1E))
     c.oy += p.breathe
     let using = framing || p.zap != nil || p.ready || p.cheering || (!p.resting && !p.walking)
     let raise = using && !framing ? p.armRaise : 0
@@ -99,7 +99,7 @@ private func drawFrohack(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, leather); c.rect(24, 33, 8, 5, tee)
     c.rect(22, 33, 2, 4, leatherL); c.rect(32, 33, 2, 4, leatherL)   // the collar
     c.rect(23, 34, 1, 4, C(0x8A8A90)); c.rect(18, 37, 20, 1, C(0x161412))
-    drawJacketDetail(c, dark: C(0x161412), light: leatherL, pocket: false)
+    filesDrawJacketDetail(c, dark: C(0x161412), light: leatherL, pocket: false)
     c.rect(25, 36, 6, 1, C(0x2E2E34))   // the T-shirt's folds over his belly
     // Greying hair, swept back and long at the back.
     c.pattern(16, 21, [
@@ -117,9 +117,9 @@ private func drawFrohack(_ c: PixelCanvas, _ p: Pose) {
     for x in 19..<37 where (x + 31) % 2 == 0 { c.px(x, 31, stubble.alpha(0.75)) }
     for x in 19..<37 where (x + 32) % 2 == 0 { c.px(x, 32, stubble) }
 
-    c.rect(15, 33, 3, 3, leather); drawCuffs(c, C(0x161412), right: false)
+    c.rect(15, 33, 3, 3, leather); filesDrawCuffs(c, C(0x161412), right: false)
     guard using else {
-        drawCuffs(c, C(0x161412), left: false)
+        filesDrawCuffs(c, C(0x161412), left: false)
         // The camera hanging on its strap at his chest.
         c.rect(30, 30, 1, 3, C(0x161412))
         c.rect(27, 32, 6, 4, C(0x1E1E22)); c.rect(28, 33, 2, 2, C(0x6A8AB0)); c.rect(31, 32, 2, 1, C(0xB8BCC4))
@@ -153,7 +153,7 @@ private func drawLanky(_ c: PixelCanvas, _ p: Pose) {
     let typing = sig.map { $0 > 0.08 && $0 < 0.95 } ?? false
 
     drawLegs(c, Look(leg: jeans), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0xEDEDE8))
+    filesDrawDressShoes(c, step: p.step, color: C(0xEDEDE8))
     c.oy += p.breathe
     drawBody(c, Look(arm: tee))
     // The band T-shirt and its logo: a grey alien's head, big black eyes, in white.
@@ -213,7 +213,7 @@ private func drawDeepClawt(_ c: PixelCanvas, _ p: Pose) {
     let offering = sig.map { $0 > 0.2 && $0 < 0.8 } ?? false
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     // The coat's tails, over the tops of the legs.
     if !seatedPose {
@@ -225,7 +225,7 @@ private func drawDeepClawt(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, coat); c.rect(23, 33, 10, 5, suit)
     c.pattern(25, 33, ["SSTTSS", ".STTS.", "..TT..", "..TT..", "..TT.."], ["S": shirt, "T": tie])
     c.rect(22, 33, 1, 4, coatL); c.rect(33, 33, 1, 4, coatL); c.rect(18, 37, 20, 1, coatD); c.rect(37, 33, 1, 5, coatD)
-    drawJacketDetail(c, dark: coatD, light: coatL, pocket: false)
+    filesDrawJacketDetail(c, dark: coatD, light: coatL, pocket: false)
     c.rect(18, 36, 4, 1, coatD); c.rect(34, 36, 3, 1, coatD)   // the coat's belt, loose at the sides
     // Thinning silver hair, a high forehead, grey at the sides.
     c.pattern(17, 21, [
@@ -250,8 +250,8 @@ private func drawDeepClawt(_ c: PixelCanvas, _ p: Pose) {
         c.rect(38, 31, 3, 3, coat)
         c.rect(41, 29, 7, 5, C(0xF2EEDC)); c.rect(41, 33, 7, 1, C(0xC8C2AA))
         c.pattern(41, 29, ["E.....E", ".E...E.", "..EEE.."], ["E": C(0xB8B2A0)])
-        c.rect(15, 33, 3, 3, coat); drawCuffs(c, coatD, right: false)
+        c.rect(15, 33, 3, 3, coat); filesDrawCuffs(c, coatD, right: false)
         return
     }
-    c.rect(15, 33, 3, 3, coat); c.rect(38, 33, 3, 3, coat); drawCuffs(c, coatD)
+    c.rect(15, 33, 3, 3, coat); c.rect(38, 33, 3, 3, coat); filesDrawCuffs(c, coatD)
 }

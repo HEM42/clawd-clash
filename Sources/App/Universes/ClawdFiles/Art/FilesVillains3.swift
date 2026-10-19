@@ -116,7 +116,7 @@ private func drawBountyHunter(_ c: PixelCanvas, _ p: Pose) {
 }
 
 /// Copies `top` above row `split` and `bottom` from it down onto `c` (both drawn on blank canvases the size of `c`).
-func v23Compose(_ c: PixelCanvas, top: PixelCanvas, bottom: PixelCanvas, split: Int) {
+private func v23Compose(_ c: PixelCanvas, top: PixelCanvas, bottom: PixelCanvas, split: Int) {
     for y in 0..<c.h {
         let src = y < split ? top : bottom
         for x in 0..<c.w {
@@ -132,7 +132,7 @@ func v23Compose(_ c: PixelCanvas, top: PixelCanvas, bottom: PixelCanvas, split: 
 }
 
 /// Dana Scrawly's look, as the Bounty Hunter takes it: the auburn bob, the camel coat over a dark suit.
-func v23DrawScrawlyLook(_ c: PixelCanvas, _ p: Pose) {
+private func v23DrawScrawlyLook(_ c: PixelCanvas, _ p: Pose) {
     let coat = C(0xB08A5A), coatD = C(0x86683F), coatL = C(0xCCA672), suit = C(0x2E3442), shirt = C(0xE6E2DA)
     let hair = C(0xB4492E), hairL = C(0xD4643E), hairD = C(0x86321E)
     drawLegs(c, Look(leg: suit), step: p.step)

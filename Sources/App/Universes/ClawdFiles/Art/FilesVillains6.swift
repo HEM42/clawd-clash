@@ -65,7 +65,7 @@ private func drawLeonardBetts(_ c: PixelCanvas, _ p: Pose) {
     let blink = sig.map { $0 > 0.15 && $0 < 0.82 } ?? false   // eyes shut while it grows
 
     drawLegs(c, Look(leg: shirtD), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: shirt, eye: nil))
     // The uniform: the shirt, its reflective band and the patch.
@@ -125,7 +125,7 @@ private func drawGreatMutato(_ c: PixelCanvas, _ p: Pose) {
     let sway = singing ? Int((sin(p.t * 4) * 1).rounded()) : 0
 
     drawLegs(c, Look(leg: cloakD), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x2E2018))
+    filesDrawDressShoes(c, step: p.step, color: C(0x2E2018))
     c.oy += p.breathe
     // The cloak, wider than the body, hanging in folds.
     c.rect(16, 30, 24, 8, cloak); c.rect(39, 30, 1, 8, cloakD); c.rect(16, 37, 24, 1, cloakD)
@@ -305,7 +305,7 @@ private func drawChuckleteeth(_ c: PixelCanvas, _ p: Pose) {
     let glint = sig.map { $0 > 0.45 && $0 < 0.75 } ?? false
 
     drawLegs(c, Look(leg: overall), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x2A2A24))
+    filesDrawDressShoes(c, step: p.step, color: C(0x2A2A24))
     c.oy += p.breathe
     drawBody(c, Look(arm: overall, eye: nil))
     // The coveralls: zip, pocket, buttoned straps.
@@ -366,7 +366,7 @@ private func eveFigure(_ c: PixelCanvas, _ p: Pose, talking: Bool, holdingOut: B
     let dress = C(0xD4DCD4), dressD = C(0xA8B4A8), hair = C(0xC8A866), hairD = C(0x9A7E44), poison = C(0x6AE87A)
     let dressL = C(0xEAF0EA)
     drawLegs(c, Look(leg: clawdOrange), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0xE8E8E2))
+    filesDrawDressShoes(c, step: p.step, color: C(0xE8E8E2))
     c.oy += p.breathe
     drawBody(c, Look(arm: dress))
     // The plain dress and its name tag.
@@ -422,7 +422,7 @@ private func drawVirgilIncanto(_ c: PixelCanvas, _ p: Pose) {
     let offering = sig.map { $0 > 0.08 && $0 < 0.92 } ?? false
 
     drawLegs(c, Look(leg: coat), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x0A0A0C))
+    filesDrawDressShoes(c, step: p.step, color: C(0x0A0A0C))
     c.oy += p.breathe
     // The coat's tails, over the tops of the legs.
     if !seatedPose { c.rect(17, 38, 22, 3, coat); c.rect(28, 38, 1, 3, coatL) }

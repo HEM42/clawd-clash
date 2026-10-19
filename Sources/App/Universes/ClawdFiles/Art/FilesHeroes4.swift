@@ -60,7 +60,7 @@ private func drawMisterX(_ c: PixelCanvas, _ p: Pose) {
     }
     // The coat's long tails over black trousers.
     drawLegs(c, Look(leg: C(0x18181C)), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     let tails = seatedPose ? 1 : 3
     c.rect(17, 38, 22, tails, coat); c.rect(17, 37 + tails, 22, 1, coatD); c.rect(28, 38, 1, tails, coatD)
@@ -81,7 +81,7 @@ private func drawMisterX(_ c: PixelCanvas, _ p: Pose) {
     c.px(22, 34, coatL); c.px(22, 36, coatL)
     c.rect(18, 36, 5, 1, coatD); c.rect(33, 36, 5, 1, coatD)
     c.rect(18, 37, 20, 1, coatD)
-    c.rect(15, 33, 3, 3, coat); drawCuffs(c, coatD, right: false)
+    c.rect(15, 33, 3, 3, coat); filesDrawCuffs(c, coatD, right: false)
     if taping {
         // His arm up at the pane, pressing the tape down.
         let s = sig!, k = s < 0.48 ? (s - 0.18) / 0.25 : (s - 0.48) / 0.25
@@ -91,8 +91,8 @@ private func drawMisterX(_ c: PixelCanvas, _ p: Pose) {
         return
     }
     c.oy += p.gunY
-    drawSidearm(c, sleeve: coat, searching: false)
-    drawCuffs(c, coatD, left: false)
+    filesDrawSidearm(c, sleeve: coat, searching: false)
+    filesDrawCuffs(c, coatD, left: false)
 }
 
 // MARK: - Marita Covarrubyass
@@ -109,7 +109,7 @@ private func drawMarita(_ c: PixelCanvas, _ p: Pose) {
 
     // Legs below the skirt, dark heels.
     drawLegs(c, Look(leg: C(0xD8A890)), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x2A2028))
+    filesDrawDressShoes(c, step: p.step, color: C(0x2A2028))
     c.oy += p.breathe
     c.rect(17, 38, 22, seatedPose ? 1 : 2, suit); c.rect(17, seatedPose ? 38 : 39, 22, 1, suitD)
     if !seatedPose { c.px(22, 38, suitD); c.px(28, 38, suitD); c.px(34, 38, suitD) }   // the skirt's pleats
@@ -140,10 +140,10 @@ private func drawMarita(_ c: PixelCanvas, _ p: Pose) {
         "..Hd................dH..",
         "..d..................d..",
     ], ["H": hair, "L": hairL, "l": hairL, "d": hairD])
-    c.rect(15, 33, 3, 3, suit); drawCuffs(c, suitD, right: false)
+    c.rect(15, 33, 3, 3, suit); filesDrawCuffs(c, suitD, right: false)
     c.oy += p.gunY
-    drawSidearm(c, sleeve: suit, searching: false)
-    drawCuffs(c, suitD, left: false)
+    filesDrawSidearm(c, sleeve: suit, searching: false)
+    filesDrawCuffs(c, suitD, left: false)
 }
 
 // MARK: - Gibson Prays

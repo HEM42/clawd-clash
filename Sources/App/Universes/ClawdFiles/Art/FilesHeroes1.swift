@@ -16,7 +16,7 @@ let filesHeroes1: [FilesHero: Persona] = [
 // MARK: - Shared bits
 
 /// Black dress shoes on the four feet; the lifted pair a row higher while walking.
-func drawDressShoes(_ c: PixelCanvas, step: Int, color: Px = C(0x18181C)) {
+func filesDrawDressShoes(_ c: PixelCanvas, step: Int, color: Px = C(0x18181C)) {
     guard !seatedPose else { return }
     for (i, lx) in [19, 23, 31, 35].enumerated() {
         c.rect(lx, step >= 0 && i % 2 == step ? 41 : 42, 2, 2, color)
@@ -26,7 +26,7 @@ func drawDressShoes(_ c: PixelCanvas, step: Int, color: Px = C(0x18181C)) {
 
 /// The FBI sidearm in the right hand (its muzzle at (47, 32)) and, when `searching`, the flashlight held under it with
 /// its pale beam spreading ahead into the dark.
-func drawSidearm(_ c: PixelCanvas, sleeve: Px, searching: Bool) {
+func filesDrawSidearm(_ c: PixelCanvas, sleeve: Px, searching: Bool) {
     c.rect(38, 33, 3, 3, sleeve)
     c.pattern(40, 31, ["KKKKKKK", "KKGKK..", "KK.....", "KK....."], ["K": C(0x24242A), "G": C(0x5E626C)])
     guard searching else { return }
@@ -40,14 +40,14 @@ func drawSidearm(_ c: PixelCanvas, sleeve: Px, searching: Bool) {
 
 /// The small detail on a jacket over Clawd's front (its block at x 18...37, rows 33...37): light along the shoulders,
 /// a fold, the far side in shade and, with `pocket`, a pocket flap low on the far side.
-func drawJacketDetail(_ c: PixelCanvas, dark: Px, light: Px, pocket: Bool = true) {
+func filesDrawJacketDetail(_ c: PixelCanvas, dark: Px, light: Px, pocket: Bool = true) {
     c.rect(18, 33, 3, 1, light); c.rect(34, 33, 2, 1, light)
     c.rect(20, 35, 1, 2, dark); c.rect(36, 34, 1, 3, dark)
     if pocket { c.rect(32, 36, 2, 1, dark) }
 }
 
 /// Cuffs a shade apart at the ends of the sleeves hanging at Clawd's sides.
-func drawCuffs(_ c: PixelCanvas, _ col: Px, left: Bool = true, right: Bool = true) {
+func filesDrawCuffs(_ c: PixelCanvas, _ col: Px, left: Bool = true, right: Bool = true) {
     if left { c.rect(15, 35, 3, 1, col) }
     if right { c.rect(38, 35, 3, 1, col) }
 }
@@ -73,7 +73,7 @@ private func drawFoxClawder(_ c: PixelCanvas, _ p: Pose) {
     let pointing = sig.map { $0 > 0.5 && $0 < 0.95 } ?? false
 
     drawLegs(c, Look(leg: C(0x3A3C44)), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawCoatTails(c, coat: coat, dark: coatD, length: 3)
     if !seatedPose { c.rect(22, 38, 1, 2, coatD); c.rect(34, 38, 1, 2, coatD) }   // folds in the tails
@@ -123,7 +123,7 @@ private func drawFoxClawder(_ c: PixelCanvas, _ p: Pose) {
     }
     c.rect(15, 33, 3, 3, coat); c.rect(15, 35, 3, 1, coatD)   // the sleeve and its cuff
     c.oy += p.gunY
-    drawSidearm(c, sleeve: coat, searching: p.ready || p.fire != nil)
+    filesDrawSidearm(c, sleeve: coat, searching: p.ready || p.fire != nil)
     c.rect(38, 35, 3, 1, coatD)
 }
 
@@ -140,7 +140,7 @@ private func drawDanaScrawly(_ c: PixelCanvas, _ p: Pose) {
     let badge = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawCoatTails(c, coat: coat, dark: coatD, length: 3)
     if !seatedPose { c.rect(22, 38, 1, 2, coatD); c.rect(34, 38, 1, 2, coatD) }   // folds in the tails
@@ -182,6 +182,6 @@ private func drawDanaScrawly(_ c: PixelCanvas, _ p: Pose) {
     }
     c.rect(15, 33, 3, 3, coat); c.rect(15, 35, 3, 1, coatD)   // the sleeve and its cuff
     c.oy += p.gunY
-    drawSidearm(c, sleeve: coat, searching: p.ready || p.fire != nil)
+    filesDrawSidearm(c, sleeve: coat, searching: p.ready || p.fire != nil)
     c.rect(38, 35, 3, 1, coatD)
 }

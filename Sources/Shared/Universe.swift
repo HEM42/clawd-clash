@@ -84,7 +84,7 @@ struct Universe: Hashable, Comparable, CaseIterable, Codable, RawRepresentable {
     var homebound: [Int: String] { Dictionary(uniqueKeysWithValues: facts.homebound.map { (base + $0.key, $0.value) }) }
 
     /// Who's gone for a moment when their session is compacted, the same face when they're back, as global ids
-    /// (`StatusStore`'s PreCompact): The Clawd Files' FBI agents (`MissingTime`), Stevie Clawdberg's time travellers
+    /// (`StatusStore`'s PreCompact): The Clawd Files' FBI agents (`FilesMissingTime`), Stevie Clawdberg's time travellers
     /// (`OutaTime`), Clawd Slayer's eight from "Tabula Rasa" (`SlayerTabulaRasa`).
     var abductees: Set<Int> {
         if case .away(let who)? = facts.compaction { return Set(who.map { base + $0 }) }

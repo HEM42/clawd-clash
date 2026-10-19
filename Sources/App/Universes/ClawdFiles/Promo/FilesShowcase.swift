@@ -20,16 +20,16 @@ private func ride(_ ctx: CGContext, _ o: CGPoint, _ kind: Ride, x: Double, lift:
 }
 
 /// The abduction beam, from `top` down to the floor, centred on `x`.
-func beam(_ ctx: CGContext, _ o: CGPoint, x: Double, top: Double, strength: Double) {
+private func beam(_ ctx: CGContext, _ o: CGPoint, x: Double, top: Double, strength: Double) {
     let h = Int(Double(ph - 8) - top)
     guard h > 0 else { return }
     let c = PixelCanvas(26, h)
-    drawAbductionBeam(c, strength: strength, t: 1.1)
+    filesDrawAbductionBeam(c, strength: strength, t: 1.1)
     put(c, ctx, x: x - 13, y: top, unit: unit, frameH: ph, origin: o)
 }
 
 /// MISSING TIME over a character, typed in the typewriter face.
-func typed(_ s: String, _ ctx: CGContext, centerX: CGFloat, bottom: CGFloat) {
+private func typed(_ s: String, _ ctx: CGContext, centerX: CGFloat, bottom: CGFloat) {
     let text = NSAttributedString(string: s, attributes: [.font: FilesCaption.font(17), .foregroundColor: NSColor(srgbRed: 0.8, green: 1, blue: 0.85, alpha: 1)])
     NSGraphicsContext.saveGraphicsState()
     text.draw(at: NSPoint(x: centerX - text.size().width / 2, y: bottom))
@@ -134,7 +134,7 @@ func filesShowcase() {
         ctx.setFillColor(hexRGB(0x3A5A48)); ctx.fill(CGRect(x: box.minX, y: box.minY + 222, width: box.width, height: 6))
         // The saucer and its beam, over the middle.
         let ship = PixelCanvas(Ride.width, Ride.height)
-        drawSaucer(ship, ramp: 0, engines: true)
+        filesDrawSaucer(ship, ramp: 0, engines: true)
         ship.addOutline(C(0xFFFFFF, 0.92))
         let sc: CGFloat = 7.5
         let shipRect = CGRect(x: box.midX - 33 * sc, y: box.maxY - 70 - 29 * sc, width: 66 * sc, height: 29 * sc)

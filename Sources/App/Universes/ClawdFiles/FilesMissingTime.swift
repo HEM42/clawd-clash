@@ -7,7 +7,7 @@ import Foundation
 
 /// Where an abduction is, `k` 0…1 through it: how high the agent is lifted (sprite pixels), how visible they are,
 /// how strong the beam is, and the caption typed so far.
-struct MissingTime {
+struct FilesMissingTime {
     let lift: Double
     let alpha: Double
     let beam: Double
@@ -41,7 +41,7 @@ struct MissingTime {
 
 /// The abduction beam on its own canvas, `w`×`h` pixels: a pale green column, brighter at its heart, widening a
 /// little towards the ground, with motes rising in it. `strength` 0…1.
-func drawAbductionBeam(_ c: PixelCanvas, strength: Double, t: Double) {
+func filesDrawAbductionBeam(_ c: PixelCanvas, strength: Double, t: Double) {
     guard strength > 0 else { return }
     let cx: Int = c.w / 2
     let width = Double(c.w), rows = Double(max(1, c.h - 1))
@@ -61,11 +61,11 @@ func drawAbductionBeam(_ c: PixelCanvas, strength: Double, t: Double) {
     }
 }
 
-extension MissingTime: CompactionLook {
+extension FilesMissingTime: CompactionLook {
     /// The beam of light, behind the agent.
     func layers(cast: Cast, x: CGFloat, y: CGFloat, lift: CGFloat, scale: CGFloat, facing: CGFloat, t: Double) -> [StageLayer] {
         let beam = PixelCanvas(24, Sprite.height + 90)
-        drawAbductionBeam(beam, strength: self.beam, t: t)
+        filesDrawAbductionBeam(beam, strength: self.beam, t: t)
         guard let img = beam.makeImage() else { return [] }
         let w = CGFloat(beam.w) * scale, h = CGFloat(beam.h) * scale
         return [StageLayer(image: img, rect: CGRect(x: (x - w / 2).rounded(), y: y, width: w, height: h))]

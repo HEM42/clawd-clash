@@ -201,7 +201,7 @@ private func drawTithonus(_ c: PixelCanvas, _ p: Pose) {
     let pop = (sig.map { $0 > 0.28 && $0 < 0.38 } ?? false) || fired
     let print = sig.map { $0 >= 0.45 && $0 < 0.95 } ?? false
     drawLegs(c, Look(leg: trousers), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x3A2416))
+    filesDrawDressShoes(c, step: p.step, color: C(0x3A2416))
     c.oy += p.breathe
     drawBody(c, Look(arm: cardigan))
     c.rect(18, 34, 20, 4, cardigan); c.rect(37, 34, 1, 4, cardiganD); c.rect(18, 37, 20, 1, cardiganD)
@@ -255,7 +255,7 @@ private func drawCecilLively(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
     let ablaze = sig.map { s -> Double in s < 0.15 ? s / 0.15 : s > 0.8 ? (1 - s) / 0.2 : 1 } ?? 0
     drawLegs(c, Look(leg: trousers), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: vest))
     // The undershirt, up to the collarbone, and the red braces down it.
@@ -360,7 +360,7 @@ private func drawEddieVanBlundht(_ c: PixelCanvas, _ p: Pose) {
     let curl = Int(p.lt * 3) % 2
     c.pattern(13, 33 + curl, [".TT", "T..", "T.T", ".T."], ["T": C(0xC8866A)])
     drawLegs(c, Look(leg: asClawder ? C(0x3A3C44) : jeans), step: p.step)
-    drawDressShoes(c, step: p.step, color: asClawder ? C(0x18181C) : C(0x6A4A30))
+    filesDrawDressShoes(c, step: p.step, color: asClawder ? C(0x18181C) : C(0x6A4A30))
     c.oy += p.breathe
     if asClawder {
         // Clawder: the grey suit, the loud tie and the dark fringe.

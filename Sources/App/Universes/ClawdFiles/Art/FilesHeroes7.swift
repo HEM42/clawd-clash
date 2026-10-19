@@ -52,14 +52,14 @@ private func drawTadOClawley(_ c: PixelCanvas, _ p: Pose) {
     let live = (sig.map { $0 > 0.06 && $0 < 0.94 } ?? false) || p.cheering
 
     drawLegs(c, Look(leg: C(0x3A3E48)), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x3A2416))
+    filesDrawDressShoes(c, step: p.step, color: C(0x3A2416))
     c.oy += p.breathe
     drawBody(c, Look(arm: blazer))
     // The blazer, open over the shirt (no tie, collar open).
     c.rect(18, 33, 20, 5, blazer); c.rect(37, 33, 1, 5, blazerD); c.rect(18, 37, 20, 1, blazerD)
     c.pattern(24, 33, ["SS..SS", "SSSSSS", ".SSSS.", "..SS.."], ["S": shirt])
     c.rect(22, 33, 1, 4, blazerL); c.rect(33, 33, 1, 4, blazerL)
-    drawJacketDetail(c, dark: blazerD, light: blazerL)
+    filesDrawJacketDetail(c, dark: blazerD, light: blazerL)
     c.px(20, 34, C(0xC8A04A))   // a pin on the lapel
     // The hair: a glossy wave swept up off the forehead.
     c.pattern(17, 19, [
@@ -74,7 +74,7 @@ private func drawTadOClawley(_ c: PixelCanvas, _ p: Pose) {
     ], ["H": hair, "l": hairL, "d": C(0x1A100A)])
     c.px(18, 29, C(0xD8DCE4)); c.px(18, 30, C(0x2A2A30))   // the earpiece
 
-    c.rect(15, 33, 3, 3, blazer); drawCuffs(c, blazerD, right: false)
+    c.rect(15, 33, 3, 3, blazer); filesDrawCuffs(c, blazerD, right: false)
     if live {
         // The mic up at his mouth, his voice rolling out, the LIVE light blinking.
         c.rect(36, 30, 3, 3, blazer); c.rect(35, 32, 2, 1, clawdOrange)
@@ -121,7 +121,7 @@ private func drawDrBlockclaw(_ c: PixelCanvas, _ p: Pose) {
 
     drawLegs(c, Look(leg: trousers), step: p.step)
     if !seatedPose { for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx, p.step >= 0 && i % 2 == p.step ? 38 : 39, stripe) } }
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     if bow { c.oy += 2 }
     c.oy += p.breathe
     drawBody(c, Look(arm: clawdOrange))
@@ -243,7 +243,7 @@ private func drawSheriffHartwell(_ c: PixelCanvas, _ p: Pose) {
     let tipping = sig.map { $0 > 0.1 && $0 < 0.85 } ?? false
 
     drawLegs(c, Look(leg: trousers), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x3A2416))
+    filesDrawDressShoes(c, step: p.step, color: C(0x3A2416))
     c.oy += p.breathe
     drawBody(c, Look(arm: shirt))
     // The shirt, its pockets, the star and the tie.
@@ -273,12 +273,12 @@ private func drawSheriffHartwell(_ c: PixelCanvas, _ p: Pose) {
     if lift > 0 { c.rect(18, 26 - lift, 20, lift, clawdOrange) }   // the gap under a lifted hat shows his forehead
     if tipping {
         c.rect(38, 22 - lift, 3, 11, shirt); c.rect(38, 21 - lift, 3, 2, clawdOrange)
-        c.rect(15, 33, 3, 3, shirt); drawCuffs(c, shirtD, right: false)
+        c.rect(15, 33, 3, 3, shirt); filesDrawCuffs(c, shirtD, right: false)
         return
     }
-    c.rect(15, 33, 3, 3, shirt); drawCuffs(c, shirtD, right: false)
+    c.rect(15, 33, 3, 3, shirt); filesDrawCuffs(c, shirtD, right: false)
     c.oy += p.gunY
-    c.rect(38, 33, 3, 3, shirt); drawCuffs(c, shirtD, left: false)
+    c.rect(38, 33, 3, 3, shirt); filesDrawCuffs(c, shirtD, left: false)
     c.pattern(40, 31, ["KKKKKKK", "KKCCKK.", "KW.....", "KW....."], ["K": C(0x2A2A30), "C": C(0x6A6E78), "W": C(0x6A4428)])
 }
 

@@ -83,7 +83,7 @@ private func drawStrughold(_ c: PixelCanvas, _ p: Pose) {
     let nod = sig.map { $0 >= 0.72 && $0 < 0.86 } ?? false
 
     drawLegs(c, Look(leg: C(0x2A2A30)), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     // The coat's skirts, over the tops of the legs.
     if !seatedPose { c.rect(17, 38, 22, 3, loden); c.rect(17, 40, 22, 1, lodenD); c.rect(28, 38, 1, 3, lodenD) }
@@ -120,7 +120,7 @@ private func drawStrughold(_ c: PixelCanvas, _ p: Pose) {
     // Black gloves; the pistol.
     c.rect(15, 33, 3, 3, loden); c.rect(15, 35, 3, 1, C(0x1A1A1E))
     c.oy += p.gunY
-    drawSidearm(c, sleeve: loden, searching: false)
+    filesDrawSidearm(c, sleeve: loden, searching: false)
     c.rect(38, 35, 3, 1, C(0x1A1A1E))
 }
 
@@ -138,7 +138,7 @@ private func drawFollmer(_ c: PixelCanvas, _ p: Pose) {
     let wide = sig.map { $0 >= 0.74 && $0 < 0.96 } ?? false
 
     drawLegs(c, Look(leg: navy), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x0C0C10))
+    filesDrawDressShoes(c, step: p.step, color: C(0x0C0C10))
     c.oy += p.breathe
     drawBody(c, Look(arm: navy))
     suit(c, navy, navyD, shirt: shirt, tie: tie)
@@ -165,7 +165,7 @@ private func drawFollmer(_ c: PixelCanvas, _ p: Pose) {
     }
     c.rect(15, 33, 3, 3, navy)
     c.oy += p.gunY
-    drawSidearm(c, sleeve: navy, searching: false)
+    filesDrawSidearm(c, sleeve: navy, searching: false)
 }
 
 // MARK: - Bill Clawder
@@ -182,7 +182,7 @@ private func drawBillClawder(_ c: PixelCanvas, _ p: Pose) {
     let brow = sig.map { $0 > 0.35 && $0 < 0.85 } ?? false
 
     drawLegs(c, Look(leg: C(0x4A4440)), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x2A1E16))
+    filesDrawDressShoes(c, step: p.step, color: C(0x2A1E16))
     c.oy += p.breathe
     drawBody(c, Look(arm: tweed, eye: nil))
     // The eyes: on you, or slid away to the side and down.
@@ -217,7 +217,7 @@ private func drawBillClawder(_ c: PixelCanvas, _ p: Pose) {
     }
     c.rect(15, 33, 3, 3, tweed); c.rect(15, 35, 3, 1, tweedD)   // the sleeve's cuff
     c.oy += p.gunY
-    drawSidearm(c, sleeve: tweed, searching: false)
+    filesDrawSidearm(c, sleeve: tweed, searching: false)
 }
 
 // MARK: - The Crew-Cut Man
@@ -232,7 +232,7 @@ private func drawCrewCutMan(_ c: PixelCanvas, _ p: Pose) {
     let look: Int = sig.map { s in s < 0.55 || s > 0.94 ? 0 : s < 0.75 ? -1 : 1 } ?? 0
 
     drawLegs(c, Look(leg: C(0x2E2E34)), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     if !seatedPose { c.rect(17, 38, 22, 2, coat); c.rect(17, 39, 22, 1, coatD); c.rect(28, 38, 1, 2, coatD) }
     drawBody(c, Look(arm: coat, eye: nil))
@@ -276,7 +276,7 @@ private func drawCrewCutMan(_ c: PixelCanvas, _ p: Pose) {
     c.rect(15, 33, 3, 3, coat); c.rect(15, 33, 3, 1, coatL); c.rect(15, 35, 3, 1, coatD)   // the sleeve's cuff
     c.rect(21, 34, 1, 2, coatD); c.rect(34, 34, 1, 2, coatD)                                // folds
     c.oy += p.gunY
-    drawSidearm(c, sleeve: coat, searching: false)
+    filesDrawSidearm(c, sleeve: coat, searching: false)
     c.rect(47, 31, 4, 1, C(0x4A4C54)); c.rect(47, 32, 4, 1, C(0x34363C))   // the silencer
 }
 

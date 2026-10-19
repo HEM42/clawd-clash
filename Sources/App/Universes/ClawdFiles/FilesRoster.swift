@@ -117,7 +117,7 @@ let filesTheme = Theme(
             return nil
         }
     },
-    menuIcon: drawSaucerIcon,
+    menuIcon: filesDrawSaucerIcon,
     legend: .hero(.foxClawder))
 
 // MARK: - Places

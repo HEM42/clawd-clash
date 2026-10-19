@@ -28,17 +28,17 @@ struct FilesUniverse: UniverseModule {
     var placeCaption: PlaceCaption? { PlaceCaption(typed: FilesCaption.typed, done: FilesCaption.done, font: FilesCaption.font) }
 
     /// A compacted FBI agent loses some time: lifted away in a beam of light and set back down.
-    func compactionLook(k: Double, cast: Cast) -> CompactionLook? { MissingTime(k: k) }
+    func compactionLook(k: Double, cast: Cast) -> CompactionLook? { FilesMissingTime(k: k) }
     var rides: [Ride] { [.sedan, .helicopter, .saucer] }
 }
 
 extension Ride {
     /// The unmarked sedan: it drives in.
-    static let sedan = Ride(key: "sedan", arrival: .drives) { c, ramp, engines, _, _ in drawSedan(c, ramp: ramp, lights: engines) }
+    static let sedan = Ride(key: "sedan", arrival: .drives) { c, ramp, engines, _, _ in filesDrawSedan(c, ramp: ramp, lights: engines) }
     /// The black helicopter.
-    static let helicopter = Ride(key: "helicopter") { c, ramp, engines, gear, _ in drawHelicopter(c, ramp: ramp, engines: engines, gear: gear) }
+    static let helicopter = Ride(key: "helicopter") { c, ramp, engines, gear, _ in filesDrawHelicopter(c, ramp: ramp, engines: engines, gear: gear) }
     /// The saucer: whoever's taken stands right under its beam.
-    static let saucer = Ride(key: "saucer", boardingOffset: 0) { c, ramp, engines, _, _ in drawSaucer(c, ramp: ramp, engines: engines) }
+    static let saucer = Ride(key: "saucer", boardingOffset: 0) { c, ramp, engines, _, _ in filesDrawSaucer(c, ramp: ramp, engines: engines) }
 }
 
 extension FilesUniverse {

@@ -92,10 +92,10 @@ func filesIntro(_ ctx: CGContext, local l: Double, t: Double) {
 }
 
 /// The set piece's timings (shot-local seconds).
-let woodsGround = 160.0, foxX = 132.0, saucerIn = 3.0, takenAt = 4.0, takenFor = 4.2, smokerIn = 7.3
+private let woodsGround = 160.0, foxX = 132.0, saucerIn = 3.0, takenAt = 4.0, takenFor = 4.2, smokerIn = 7.3
 
 /// A flashlight's beam on the fx canvas: from `a` towards `b`, widening, faint.
-func flashlightBeam(_ fx: PixelCanvas, from a: (x: Double, y: Double), to b: (x: Double, y: Double), alpha: Double) {
+private func flashlightBeam(_ fx: PixelCanvas, from a: (x: Double, y: Double), to b: (x: Double, y: Double), alpha: Double) {
     let steps = 60
     for i in 0...steps {
         let f: Double = Double(i) / Double(steps)
@@ -114,7 +114,7 @@ func flashlightBeam(_ fx: PixelCanvas, from a: (x: Double, y: Double), to b: (x:
 func filesWoods(_ ctx: CGContext, local l: Double, t: Double) {
     blit(place(.bellefleurWoods, floorRows: 30, t: t), ctx)
     ctx.setFillColor(hexColor(0x020608, 0.2)); ctx.fill(fullRect)
-    let missing = l > takenAt ? MissingTime(k: min(1, (l - takenAt) / takenFor)) : nil
+    let missing = l > takenAt ? FilesMissingTime(k: min(1, (l - takenAt) / takenFor)) : nil
     var foxTop = 0.0
     onStage(ctx, fullRect, scale: 6, ground: woodsGround) {
         let fx = PixelCanvas(fxW, fxH)
@@ -137,11 +137,11 @@ func filesWoods(_ ctx: CGContext, local l: Double, t: Double) {
         if l > saucerIn && leave < 1 {
             if let m = missing, m.beam > 0 {
                 let beam = PixelCanvas(30, Int(woodsGround - sy - 14))
-                drawAbductionBeam(beam, strength: m.beam, t: t)
+                filesDrawAbductionBeam(beam, strength: m.beam, t: t)
                 fx.paste(beam, x: Int(foxX) - 15, y: Int(sy) + 14)
             }
             let ship = PixelCanvas(66, 29)
-            drawSaucer(ship, ramp: 0, engines: true)
+            filesDrawSaucer(ship, ramp: 0, engines: true)
             ship.addOutline(C(0xFFFFFF, 0.92))
             fx.paste(ship, x: Int(sx) - 33, y: Int(sy) - 6)
         }

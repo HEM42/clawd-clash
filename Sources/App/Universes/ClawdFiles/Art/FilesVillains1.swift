@@ -22,7 +22,7 @@ private func drawSmokingClawd(_ c: PixelCanvas, _ p: Pose) {
     let drawing = sig.map { $0 >= 0.3 && $0 < 0.5 } ?? false
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
     // The suit, the white shirt and the narrow dark tie.
@@ -75,5 +75,5 @@ private func drawSmokingClawd(_ c: PixelCanvas, _ p: Pose) {
     }
     c.rect(15, 33, 3, 3, suit); c.rect(15, 35, 3, 1, shirt)   // the sleeve and its shirt cuff
     c.oy += p.gunY
-    drawSidearm(c, sleeve: suit, searching: false)
+    filesDrawSidearm(c, sleeve: suit, searching: false)
 }

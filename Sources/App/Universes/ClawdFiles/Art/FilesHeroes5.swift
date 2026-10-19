@@ -141,7 +141,7 @@ private func drawYvesHarlowe(_ c: PixelCanvas, _ p: Pose) {
 
     // The coat to below the knees, black boots.
     drawLegs(c, Look(leg: C(0x16161C)), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     if !seatedPose {
         c.rect(17, 38, 22, 3, coat); c.rect(17, 40, 22, 1, coatL); c.rect(28, 38, 1, 3, coatL)
@@ -179,7 +179,7 @@ private func drawYvesHarlowe(_ c: PixelCanvas, _ p: Pose) {
     ], ["s": hairL, "S": shine])
     c.rect(15, 33, 3, 3, coat)
     c.oy += p.gunY
-    drawSidearm(c, sleeve: coat, searching: false)
+    filesDrawSidearm(c, sleeve: coat, searching: false)
     c.rect(38, 33, 3, 3, C(0x0E0E12))   // gloved hand
 }
 
@@ -198,7 +198,7 @@ private func drawMelissaScrawly(_ c: PixelCanvas, _ p: Pose) {
     c.rect(15, 30, 3, 9, hair); c.rect(38, 30, 3, 9, hair); c.px(15, 38, hairD); c.px(40, 38, hairD)
     c.rect(16, 31, 1, 3, hairL); c.rect(15, 35, 1, 2, hairL); c.rect(39, 32, 1, 3, hairD); c.rect(40, 35, 1, 2, hairD)
     drawLegs(c, Look(leg: C(0x8A6A4E)), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x6A4A2E))
+    filesDrawDressShoes(c, step: p.step, color: C(0x6A4A2E))
     c.oy += p.breathe
     if !seatedPose {   // the tunic's hem, to the knee, falling in folds
         c.rect(17, 38, 22, 3, tunic); c.rect(17, 40, 22, 1, tunicD)
@@ -252,7 +252,7 @@ private func drawMargaretScrawly(_ c: PixelCanvas, _ p: Pose) {
     let hugging = sig.map { $0 > 0.12 && $0 < 0.88 } ?? false
 
     drawLegs(c, Look(leg: C(0x5A5048)), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x4A3A2E))
+    filesDrawDressShoes(c, step: p.step, color: C(0x4A3A2E))
     c.oy += p.breathe
     if !seatedPose {   // a skirt to the knee, a pleat or two
         c.rect(17, 38, 22, 2, C(0x6A5E54)); c.px(22, 39, C(0x54493F)); c.px(28, 38, C(0x54493F)); c.px(34, 39, C(0x54493F))
@@ -309,7 +309,7 @@ private func drawTeenaClawder(_ c: PixelCanvas, _ p: Pose) {
     let guarded = sig.map { $0 > 0.1 && $0 < 0.92 } ?? false
 
     drawLegs(c, Look(leg: C(0x6A6A70)), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     if !seatedPose {   // the grey skirt, a pleat or two
         c.rect(17, 38, 22, 2, C(0x5A5A62)); c.px(22, 39, C(0x46464E)); c.px(28, 38, C(0x46464E)); c.px(34, 39, C(0x46464E))
@@ -366,12 +366,12 @@ private func drawJeffreySpendr(_ c: PixelCanvas, _ p: Pose) {
     let shredding = sig.map { $0 > 0.08 && $0 < 0.8 } ?? false
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
     c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, suitD); c.rect(18, 37, 20, 1, suitD)
     c.pattern(24, 33, ["lSSTSSl", ".lSTSl.", "..STS..", "...T..."], ["l": suitD, "S": shirt, "T": tie])
-    drawJacketDetail(c, dark: suitD, light: suitL)
+    filesDrawJacketDetail(c, dark: suitD, light: suitL)
     c.px(27, 36, suitD)   // the jacket's button
     // Gelled hair, a hard side parting, combed over.
     c.pattern(17, 20, [
@@ -406,13 +406,13 @@ private func drawJeffreySpendr(_ c: PixelCanvas, _ p: Pose) {
             let drop: Int = Int((k * 9 + Double(i) * 1.7).truncatingRemainder(dividingBy: 3))
             c.rect(44 + i * 2, 34 + drop, 1, 2, i % 2 == 0 ? paper : paperD)
         }
-        c.rect(15, 33, 3, 3, suit); drawCuffs(c, suitD, right: false)
+        c.rect(15, 33, 3, 3, suit); filesDrawCuffs(c, suitD, right: false)
         return
     }
-    c.rect(15, 33, 3, 3, suit); drawCuffs(c, suitD, right: false)
+    c.rect(15, 33, 3, 3, suit); filesDrawCuffs(c, suitD, right: false)
     c.oy += p.gunY
-    drawSidearm(c, sleeve: suit, searching: p.ready || p.fire != nil)
-    drawCuffs(c, suitD, left: false)
+    filesDrawSidearm(c, sleeve: suit, searching: p.ready || p.fire != nil)
+    filesDrawCuffs(c, suitD, left: false)
 }
 
 // MARK: - Shannon McMahawk
@@ -426,12 +426,12 @@ private func drawShannonMcMahawk(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
 
     drawLegs(c, Look(leg: C(0x2A3446)), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x1A1412))
+    filesDrawDressShoes(c, step: p.step, color: C(0x1A1412))
     c.oy += p.breathe
     drawBody(c, Look(arm: jacket))
     c.rect(18, 33, 20, 5, jacket); c.rect(24, 33, 8, 5, tee); c.rect(18, 37, 20, 1, C(0x161210))
     c.rect(22, 33, 2, 4, jacketL); c.rect(32, 33, 2, 4, jacketL)
-    drawJacketDetail(c, dark: C(0x161210), light: jacketL, pocket: false)
+    filesDrawJacketDetail(c, dark: C(0x161210), light: jacketL, pocket: false)
     c.rect(24, 36, 8, 1, C(0x4A5530)); c.px(23, 35, C(0x8A8A90))   // the T-shirt's fold; the zip's pull
     // Short at the back, the fringe swept long over one eye.
     c.pattern(17, 20, [
@@ -457,7 +457,7 @@ private func drawShannonMcMahawk(_ c: PixelCanvas, _ p: Pose) {
         }
         return
     }
-    c.rect(15, 33, 3, 3, jacket); drawCuffs(c, C(0x161210), right: false)
+    c.rect(15, 33, 3, 3, jacket); filesDrawCuffs(c, C(0x161210), right: false)
     if let a = p.cheering ? -95 : p.melee {
         drawPunch(c, angle: a, trail: p.trail, sleeve: jacket)
     } else {

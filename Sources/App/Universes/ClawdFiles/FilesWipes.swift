@@ -708,7 +708,7 @@ struct FilesTrip {
     /// The saucer, its beam down `beam` of the way.
     private static func saucer(lit: Bool, beam: Double) -> CGImage? {
         let c = PixelCanvas(Self.saucerW, Self.saucerH)
-        drawSaucer(c, ramp: beam, engines: lit)
+        filesDrawSaucer(c, ramp: beam, engines: lit)
         return c.makeImage()
     }
 

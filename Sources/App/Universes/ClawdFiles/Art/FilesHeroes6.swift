@@ -74,7 +74,7 @@ private func drawMaxFenig(_ c: PixelCanvas, _ p: Pose) {
     let filming = p.signature.map { $0 > 0.08 && $0 < 0.92 } ?? false
 
     drawLegs(c, Look(leg: C(0x3A4A6A)), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x4A3826))
+    filesDrawDressShoes(c, step: p.step, color: C(0x4A3826))
     c.oy += p.breathe
     drawBody(c, Look(arm: jacket))
     // The jacket open over the T-shirt, its pockets.
@@ -125,7 +125,7 @@ private func drawPendrill(_ c: PixelCanvas, _ p: Pose) {
 
     drawTails(c, coat, coatD, length: 4)
     drawLegs(c, Look(leg: C(0x4A4E58)), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: coat))
     // The lab coat, its lapels open on the shirt and tie, a pen in the breast pocket.
@@ -168,7 +168,7 @@ private func drawArthurDales(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
 
     drawLegs(c, Look(leg: C(0x6A5440)), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x3A2416))
+    filesDrawDressShoes(c, step: p.step, color: C(0x3A2416))
     c.oy += p.breathe
     drawBody(c, Look(arm: cardigan))
     // The cardigan, its buttons and the shirt collar.
@@ -200,17 +200,17 @@ private func drawArthurDales(_ c: PixelCanvas, _ p: Pose) {
             let f = (s - 0.42) / 0.53
             c.rect(46 + Int(f * 24), 30 - Int(f * 26), 2, 2, white)
         }
-        c.rect(15, 33, 3, 3, cardigan); drawCuffs(c, cardiganD, right: false)
+        c.rect(15, 33, 3, 3, cardigan); filesDrawCuffs(c, cardiganD, right: false)
         return
     }
-    c.rect(15, 33, 3, 3, cardigan); drawCuffs(c, cardiganD, right: false)
+    c.rect(15, 33, 3, 3, cardigan); filesDrawCuffs(c, cardiganD, right: false)
     if let a = p.melee {
         for (i, ta) in p.trail.enumerated() { drawBat(c, angle: ta, alpha: 0.35 / Double(i + 1)) }
         drawBat(c, angle: a)
     } else {
         drawBat(c, angle: p.cheering ? -95 : -120)   // resting on his shoulder
     }
-    c.rect(38, 33, 3, 3, cardigan); drawCuffs(c, cardiganD, left: false)
+    c.rect(38, 33, 3, 3, cardigan); filesDrawCuffs(c, cardiganD, left: false)
 }
 
 /// A wooden baseball bat from the hand at `angle` degrees (0 forward, -90 up), thicker towards the barrel.
@@ -239,7 +239,7 @@ private func drawClydeBruckclaw(_ c: PixelCanvas, _ p: Pose) {
     if shudder { c.ox += Int(p.t * 30) % 2 == 0 ? 1 : 0 }
 
     drawLegs(c, Look(leg: suitD), step: p.step)
-    drawDressShoes(c, step: p.step, color: C(0x3A2A1E))
+    filesDrawDressShoes(c, step: p.step, color: C(0x3A2A1E))
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
     // The rumpled suit (creases), the crooked tie.
@@ -294,14 +294,14 @@ private func drawJoseChung(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
 
     drawLegs(c, Look(leg: C(0x5A5A62)), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: blazer))
     // The blazer, shirt and bow tie.
     c.rect(18, 33, 20, 5, blazer); c.rect(37, 33, 1, 5, blazerD); c.rect(18, 37, 20, 1, blazerD)
     c.rect(24, 33, 8, 5, shirt); c.rect(22, 33, 2, 3, blazerD); c.rect(32, 33, 2, 3, blazerD)
     c.pattern(25, 33, ["BB..BB", "BBBBBB", "BB..BB"], ["B": bow])
-    drawJacketDetail(c, dark: blazerD, light: C(0x38466A), pocket: false)
+    filesDrawJacketDetail(c, dark: blazerD, light: C(0x38466A), pocket: false)
     c.rect(34, 34, 2, 1, shirt); c.px(29, 36, blazerD)   // a pocket square; a button on the shirt
     // The grey fringe round the sides of a bald head.
     c.pattern(16, 25, ["GGG...................GGG", "GGG...................GGG", ".GG...................GG.", ".G.....................G."],
@@ -314,7 +314,7 @@ private func drawJoseChung(_ c: PixelCanvas, _ p: Pose) {
         c.pattern(37, 33, ["..PPPPP..", "KKKKKKKKK", "KkKkKkKkK", "KKKKKKKKK"],
                   ["P": C(0xF4F2EA), "K": C(0x3A3A40), "k": C(0x8A8A92)])
         c.rect(37 + tap, 32, 9, 1, C(0x5A5A62))
-        c.rect(38, 31, 3, 2, blazer); c.rect(15, 33, 3, 3, blazer); drawCuffs(c, blazerD, right: false)
+        c.rect(38, 31, 3, 2, blazer); c.rect(15, 33, 3, 3, blazer); filesDrawCuffs(c, blazerD, right: false)
         for i in 0..<3 {
             let f = (s * 3 + Double(i) / 3).truncatingRemainder(dividingBy: 1)
             guard f > 0.1 else { continue }
@@ -338,12 +338,12 @@ private func drawLeylaHarriclaw(_ c: PixelCanvas, _ p: Pose) {
     let bob = p.step >= 0 ? p.step : 0
 
     drawLegs(c, Look(leg: blazerD), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: blazer))
     c.rect(18, 33, 20, 5, blazer); c.rect(37, 33, 1, 5, blazerD); c.rect(18, 37, 20, 1, blazerD)
     c.pattern(24, 33, ["dBBBBBBd", ".dBBBBd.", "..dBBd.."], ["d": blazerD, "B": blouse])
-    drawJacketDetail(c, dark: blazerD, light: C(0x3E4E74))
+    filesDrawJacketDetail(c, dark: blazerD, light: C(0x3E4E74))
     c.px(28, 36, C(0xC8B060))   // the blazer's brass button
     // The hair pulled back, the ponytail out behind her (on the left), swinging a pixel as she walks.
     c.pattern(17, 20, [
@@ -367,13 +367,13 @@ private func drawLeylaHarriclaw(_ c: PixelCanvas, _ p: Pose) {
             let x = 26 + Int(cos(a) * 20), y = 11 + Int(sin(a) * 4)
             c.rect(x, y, 4, 3, C(0xD8B878)); c.rect(x, y, 2, 1, C(0xC09A58))
         }
-        c.rect(15, 33, 3, 3, blazer); drawCuffs(c, blazerD, right: false)
+        c.rect(15, 33, 3, 3, blazer); filesDrawCuffs(c, blazerD, right: false)
         return
     }
-    c.rect(15, 33, 3, 3, blazer); drawCuffs(c, blazerD, right: false)
+    c.rect(15, 33, 3, 3, blazer); filesDrawCuffs(c, blazerD, right: false)
     c.oy += p.gunY
-    drawSidearm(c, sleeve: blazer, searching: p.ready || p.fire != nil)
-    drawCuffs(c, blazerD, left: false)
+    filesDrawSidearm(c, sleeve: blazer, searching: p.ready || p.fire != nil)
+    filesDrawCuffs(c, blazerD, left: false)
 }
 
 // MARK: - Frank Blackclaw
@@ -402,7 +402,7 @@ private func drawFrankBlackclaw(_ c: PixelCanvas, _ p: Pose) {
     }
     drawTails(c, coat, coatD, length: 3)
     drawLegs(c, Look(leg: C(0x2E2E34)), step: p.step)
-    drawDressShoes(c, step: p.step)
+    filesDrawDressShoes(c, step: p.step)
     c.oy += p.breathe
     drawBody(c, Look(arm: coat))
     // The heavy coat, collar up, over a dark shirt.
@@ -428,11 +428,11 @@ private func drawFrankBlackclaw(_ c: PixelCanvas, _ p: Pose) {
         // His hand at his temple, his eyes squeezed shut.
         c.rect(38, 26, 3, 7, coat); c.rect(36, 26, 2, 2, clawdOrange)
         c.rect(22, 30, 2, 1, ink); c.rect(32, 30, 2, 1, ink)
-        c.rect(15, 33, 3, 3, coat); drawCuffs(c, coatD, right: false)
+        c.rect(15, 33, 3, 3, coat); filesDrawCuffs(c, coatD, right: false)
         return
     }
-    c.rect(15, 33, 3, 3, coat); drawCuffs(c, coatD, right: false)
+    c.rect(15, 33, 3, 3, coat); filesDrawCuffs(c, coatD, right: false)
     c.oy += p.gunY
-    drawSidearm(c, sleeve: coat, searching: p.ready || p.fire != nil)
-    drawCuffs(c, coatD, left: false)
+    filesDrawSidearm(c, sleeve: coat, searching: p.ready || p.fire != nil)
+    filesDrawCuffs(c, coatD, left: false)
 }
