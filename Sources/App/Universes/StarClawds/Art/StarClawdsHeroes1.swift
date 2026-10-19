@@ -275,18 +275,20 @@ private func drawLeia(_ c: PixelCanvas, _ pose: Pose) {
     let bob = pose.walking ? (Int(t * 8) % 2 == 0 ? -1 : 0) : (sin(t * 4 + 1) > 0.6 ? -1 : 0)
     heroOrigin(c, pose)
     let gown = C(0xF4F4F0), gownShade = C(0xD9DADF), pleat = C(0xE6E7EA)
-    // Her white boots: the four legs show under the gown's hem.
+    // Her white boots: only their toes peep out under the gown's hem, one pair lifting as she walks.
     drawLegs(c, Look(leg: C(0xE2E3E8)), step: pose.step)
     drawBoots(c, C(0xC9CBD2), step: pose.step, rows: 1)
     c.oy += bob
-    // The gown, to the shins, flaring a little, with soft pleats falling down it and a shaded hem.
-    for y in 38...40 {
-        let k = (y - 37) / 2
+    // The gown, to the floor, flaring as it falls: pleats run its length, a shadow either side of each leg as the
+    // fabric falls over it, and a shaded hem.
+    for y in 38...42 {
+        let k = (y - 38) / 2
         c.rect(18 - k, y, 20 + k * 2, 1, gown)
         c.px(18 - k, y, gownShade); c.px(37 + k, y, gownShade)
     }
-    for x in [21, 25, 30, 34] { c.rect(x, 38, 1, 2, pleat) }
-    c.rect(17, 40, 22, 1, gownShade)
+    for x in [21, 25, 30, 34] { c.rect(x, 38, 1, 4, pleat) }
+    for x in [22, 26, 29, 33] { c.rect(x, 40, 1, 2, gownShade) }
+    c.rect(16, 42, 24, 1, gownShade)
     var look = Look(arm: gown)
     look.legs = false
     drawBody(c, look)

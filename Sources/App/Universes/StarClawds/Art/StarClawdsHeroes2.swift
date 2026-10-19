@@ -266,21 +266,23 @@ private func drawL337(_ c: PixelCanvas, _ p: Pose) {
     ], ["T": C(0xE8DCC4), "B": C(0x3A3A44), "b": C(0x6FC8FF)])
 }
 
-/// Mon Mothma: white robes to the shins, short auburn hair, a silver medallion.
+/// Mon Mothma: white robes to the floor, short auburn hair, a silver medallion.
 private func drawMonMothma(_ c: PixelCanvas, _ p: Pose) {
     let robe = C(0xF0EEE6), robeShade = C(0xD2D0C8), fold = C(0xE2E0D8), silver = C(0xC8CCD4)
-    // Pale slippers on the four legs, under the robe's hem.
+    // Pale slippers: only their toes peep out under the robe's hem, one pair lifting as she walks.
     drawLegs(c, Look(leg: C(0xDCDAD2)), step: p.step)
     drawBoots(c, C(0xB8B6AE), step: p.step, rows: 1)
     c.oy += p.breathe
-    // The robe, to the shins: long folds falling down it, a hem shaded underneath.
-    for y in 38...40 {
-        let k = (y - 37) / 2
+    // The robe, to the floor: long folds falling its length, a shadow either side of each leg as the cloth falls
+    // over it, and a hem shaded underneath.
+    for y in 38...42 {
+        let k = (y - 38) / 2
         c.rect(18 - k, y, 20 + k * 2, 1, robe)
         c.px(18 - k, y, robeShade); c.px(37 + k, y, robeShade)
     }
-    for x in [22, 27, 32] { c.rect(x, 38, 1, 2, fold) }
-    c.rect(17, 40, 22, 1, robeShade)
+    for x in [22, 27, 32] { c.rect(x, 38, 1, 4, fold) }
+    for x in [21, 25, 30, 34] { c.rect(x, 40, 1, 2, robeShade) }
+    c.rect(16, 42, 24, 1, robeShade)
     var look = Look(arm: robe)
     look.legs = false
     drawBody(c, look)
