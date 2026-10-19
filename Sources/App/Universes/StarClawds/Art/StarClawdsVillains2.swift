@@ -48,6 +48,12 @@ private func flourish(_ p: Pose) -> HabitPlay? {
 /// check: it isn't raised while waiting or cheering.
 private func gunOffset(_ p: Pose) -> Int { -p.recoil - (p.mode == .idle ? p.gunLift : 0) }
 
+/// A glint of light down the front of each boot (not when sitting), lifting with the leg as it steps.
+private func drawBootShine(_ c: PixelCanvas, step: Int, _ col: Px) {
+    guard !seatedPose else { return }
+    for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx, step >= 0 && i % 2 == step ? 40 : 41, col) }
+}
+
 /// The hilt of a saber that isn't lit, at the belt.
 private func drawHilt(_ c: PixelCanvas) {
     c.rect(36, 37, 2, 5, C(0xB9BEC8)); c.rect(36, 39, 2, 1, C(0x2A2A2F))
@@ -287,16 +293,31 @@ private func drawCadBane(_ c: PixelCanvas, _ p: Pose) {
 
 /// Grand Admiral Thrawn: blue skin, glowing red eyes, slicked black hair, the white uniform; a blaster pistol.
 private func drawThrawn(_ c: PixelCanvas, _ p: Pose) {
-    let uniform = C(0xF2F2EC), shade = C(0xC8C8C0)
+    let uniform = C(0xF2F2EC), shade = C(0xC8C8C0), gold = C(0xE0B84A), goldDark = C(0xA8842A)
     drawLegs(c, Look(leg: C(0xE0E0D8)), step: p.step)
+    drawBoots(c, ink, step: p.step, rows: 3)                        // tall black boots, polished
+    drawBootShine(c, step: p.step, C(0x5C6070))
     c.oy += p.breathe
     drawBody(c, Look(body: C(0x4A6AC0), shade: C(0x3A56A0), arm: uniform, eye: C(0xFF3A3A)))
-    c.pattern(18, 22, ["...KKKKKKKKKKKKKK...", ".KKKKKKKKKKKKKKKKKK.", "KKKKKKKKKKKKKKKKKKKK", "KK................KK"], ["K": C(0x14141C)])
+    c.rect(15, 35, 3, 1, shade); c.rect(38, 35, 3, 1, shade)        // the tunic's cuffs
+    // Slicked-back blue-black hair, the light running along it.
+    c.pattern(18, 22, ["...KKKKKllllKKKKK...", ".KKKllllKKKKKKKKKKK.", "KKKKKKKKKKKKKKKKKKKK", "KK................KK"],
+              ["K": C(0x14141C), "l": C(0x34426C)])
+    // The white tunic: the high collar, the double-breasted flap, folds shaded down the side.
     c.rect(18, 33, 20, 5, uniform)
     c.rect(18, 33, 20, 1, shade)
-    c.rect(37, 33, 1, 5, shade)
-    c.px(21, 35, C(0xD84A2A)); c.px(22, 35, C(0x3A6ED8)); c.px(23, 35, C(0xE0B84A))   // rank plaque
-    c.rect(15, 32, 3, 1, C(0xE0B84A)); c.rect(38, 32, 3, 1, C(0xE0B84A))               // epaulettes
+    c.rect(25, 33, 6, 1, C(0xB0B0A8))
+    c.rect(31, 34, 1, 3, shade); c.rect(37, 33, 1, 5, shade)
+    c.px(33, 34, C(0xB0B0A8)); c.px(33, 36, C(0xB0B0A8))           // the flap's buttons
+    // The rank plaque in its silver rim, with its code cylinders above.
+    c.rect(21, 34, 4, 1, C(0x8E9296))
+    c.px(21, 35, C(0xD84A2A)); c.px(22, 35, C(0x3A6ED8)); c.px(23, 35, gold); c.px(24, 35, C(0xD84A2A))
+    // The gold epaulettes, shaded underneath.
+    c.rect(15, 32, 3, 1, gold); c.rect(38, 32, 3, 1, gold)
+    c.px(15, 33, goldDark); c.px(17, 33, goldDark); c.px(38, 33, goldDark); c.px(40, 33, goldDark)
+    // A white belt with its gold buckle.
+    c.rect(18, 37, 20, 1, shade)
+    c.rect(27, 37, 2, 1, gold)
     c.oy += gunOffset(p)
     drawPistol(c, x: 40, y: 31)
 }
@@ -477,6 +498,8 @@ private func drawRingSaber(_ c: PixelCanvas, _ p: Pose) {
 private func drawGrandInquisitor(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0xC8C4BE), skinDark = C(0xA09C96), armour = C(0x1E1E24), red = C(0xB02A2A)
     drawLegs(c, Look(leg: C(0x1A1A20)), step: p.step)
+    drawBoots(c, ink, step: p.step, rows: 2)
+    drawBootShine(c, step: p.step, C(0x5C6070))
     c.oy += p.breathe
     drawBody(c, Look(body: skin, shade: skinDark, arm: armour, eye: nil))
     c.pattern(19, 17, [
@@ -496,10 +519,20 @@ private func drawGrandInquisitor(_ c: PixelCanvas, _ p: Pose) {
     c.rect(20, 27, 1, 5, red); c.rect(36, 27, 1, 5, red)            // the red lines down the face
     c.rect(28, 25, 1, 3, red)
     c.rect(24, 32, 8, 1, C(0x5A5650))                               // the thin grin
+    // The black armour: the collar's rim, ribbed plates down the chest, folds shaded at the side.
     c.rect(18, 33, 20, 5, armour)
     c.rect(18, 33, 20, 1, C(0x4A4A54))
+    for x in [20, 23, 32, 35] { c.rect(x, 34, 1, 2, C(0x34343E)) }
+    c.rect(37, 34, 1, 4, C(0x121216))
+    // The belt, its silver buckle with a red light in it.
+    c.rect(18, 36, 20, 1, C(0x2E2E36))
     c.rect(26, 35, 4, 1, C(0x8A8F99))
-    c.rect(14, 32, 4, 2, C(0x3A3A44)); c.rect(38, 32, 4, 2, C(0x3A3A44))   // pauldrons
+    c.rect(26, 36, 4, 1, C(0x8A8F99)); c.px(27, 36, C(0xD03030))
+    // The pauldrons, lit along the top, a rivet in each.
+    c.rect(14, 32, 4, 2, C(0x3A3A44)); c.rect(38, 32, 4, 2, C(0x3A3A44))
+    c.rect(14, 32, 4, 1, C(0x5A5A66)); c.rect(38, 32, 4, 1, C(0x5A5A66))
+    c.px(15, 33, C(0x8A8F99)); c.px(40, 33, C(0x8A8F99))
+    c.rect(15, 35, 3, 1, C(0x121216)); c.rect(38, 35, 3, 1, C(0x121216))   // the gloves' cuffs
     drawRingSaber(c, p)
 }
 
@@ -507,6 +540,8 @@ private func drawGrandInquisitor(_ c: PixelCanvas, _ p: Pose) {
 private func drawSecondSister(_ c: PixelCanvas, _ p: Pose) {
     let black = C(0x1E1E26), blackDark = C(0x121218)
     drawLegs(c, Look(leg: C(0x1A1A20)), step: p.step)
+    drawBoots(c, ink, step: p.step, rows: 2)
+    drawBootShine(c, step: p.step, C(0x5C6070))
     c.oy += p.breathe
     drawBody(c, Look(body: black, shade: blackDark, arm: black, eye: nil))
     c.pattern(17, 18, [
@@ -516,19 +551,28 @@ private func drawSecondSister(_ c: PixelCanvas, _ p: Pose) {
         ".HHhHHHHHHHHHHHHHHHHH.",
         ".HHHHHHHHHHHHHHHHHHHH.",
         "HHHHHHHHHHHHHHHHHHHHHH",
-        "HHHFFFFFFFFFFFFFFFFHHH",
-        "HHFVVVVVVFFFFVVVVVVFHH",
-        "HHFFVVVVFFFFFFVVVVFFHH",
-        "HHFFFFFFFFFFFFFFFFFFHH",
-        "HHHFFFFFFFRRFFFFFFFHHH",
-        "HHHHFFFFFFFFFFFFFFHHHH",
-        ".HHHHFFFFFFFFFFFFHHHH.",
+        "HHHfffffffffffffffFHHH",
+        "HHfVVVVVVFFFFVVVVVVFHH",
+        "HHfFVVVVFFlFFFVVVVFFHH",
+        "HHfFFFFFFFlFFFFFFFFFHH",
+        "HHHfFFFFFFRRFFFFFFFHHH",
+        "HHHHfFFFFFFFFFFFFFHHHH",
+        ".HHHHfFFFFFFFFFFFHHHH.",
         "..HHHHHHHHHHHHHHHHHH..",
         "...HHHHHHHHHHHHHHHH...",
-    ], ["H": C(0x16161C), "h": C(0x4A4A58), "F": C(0x6A6C76), "V": C(0x0A0A0E), "R": C(0xC02A2A)])
+    ], ["H": C(0x16161C), "h": C(0x4A4A58), "F": C(0x6A6C76), "V": C(0x0A0A0E), "R": C(0xC02A2A),
+        "f": C(0x50525C), "l": C(0x8A8C96)])
+    c.rect(15, 35, 3, 1, blackDark); c.rect(38, 35, 3, 1, blackDark)   // the gloves' cuffs
+    c.rect(15, 33, 3, 1, C(0x34343E)); c.rect(38, 33, 3, 1, C(0x34343E))   // the shoulder plates, lit on top
+    // The armoured suit: plates down the chest with seams between, folds shaded at the side.
     c.rect(18, 33, 20, 5, C(0x24242C))
+    c.rect(18, 33, 20, 1, C(0x30303A))
+    c.rect(22, 34, 1, 2, blackDark); c.rect(33, 34, 1, 2, blackDark); c.rect(37, 33, 1, 5, blackDark)
+    // The silver belt and its buckle, the red badge over it.
     c.rect(18, 36, 20, 1, C(0x8A8F99))
-    c.rect(26, 34, 4, 1, C(0xA02020))
+    c.rect(27, 36, 2, 1, C(0xC8CCD6)); c.px(28, 36, C(0x5C6070))
+    c.rect(26, 34, 4, 1, C(0xA02020)); c.px(26, 34, C(0xD84848))
+    c.rect(18, 37, 20, 1, blackDark)
     drawRingSaber(c, p)
 }
 

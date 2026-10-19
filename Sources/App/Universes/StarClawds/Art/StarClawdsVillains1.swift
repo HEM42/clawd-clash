@@ -56,6 +56,12 @@ private func swungUp(_ p: Pose, from: Double) -> Double? {
 /// Where a held gun sits: the villains only raise it to check it (idle), not while waiting or cheering.
 private func gunY(_ p: Pose) -> Int { -p.recoil - (p.mode == .idle ? p.gunLift : 0) }
 
+/// A glint of light down the front of each boot (not when sitting), lifting with the leg as it steps.
+private func drawBootShine(_ c: PixelCanvas, step: Int, _ col: Px) {
+    guard !seatedPose else { return }
+    for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx, step >= 0 && i % 2 == step ? 40 : 41, col) }
+}
+
 /// A plain red saber, or its hilt at the belt when it's off.
 private func drawRedSaber(_ c: PixelCanvas, _ p: Pose) {
     if let a = p.melee {
@@ -192,32 +198,41 @@ private func drawKylo(_ c: PixelCanvas, _ p: Pose) {
         breathe = 0
     }
     drawCape(c, t: p.t, speed: p.capeSpeed, color: C(0x0E0E12), edge: C(0x2C2C36))
-    let black = C(0x1E1E24), silver = C(0xA9AEB8)
+    let black = C(0x1E1E24), silver = C(0xA9AEB8), quilt = C(0x2E2E36), fold = C(0x121216)
     drawLegs(c, Look(leg: black), step: p.step)
+    drawBoots(c, ink, step: p.step, rows: 2)                        // black boots, a glint down the front
+    drawBootShine(c, step: p.step, C(0x4A4C56))
     c.oy += breathe
     drawBody(c, Look(arm: black))
+    c.rect(15, 35, 3, 1, ink); c.rect(38, 35, 3, 1, ink)            // the gloves
+    // The hood over the helmet: a sheen down one side, the dome's silver trim catching the light.
     c.pattern(16, 15, [
         "......KKKKKKKKKKKK......",
-        "....KKKKKKKKKKKKKKKK....",
-        "...KKKKKKKKKKKKKKKKKK...",
+        "....KKKhhhKKKKKKKKKK....",
+        "...KKhhKKKKKKKKKKKKKK...",
+        "..KKhKKKKKKKKKKKKKKKKK..",
+        "..KKhKKKKKKKKKKKKKKKKK..",
         "..KKKKKKKKKKKKKKKKKKKK..",
-        "..KKKKKKKKKKKKKKKKKKKK..",
-        "..KKKKKKKKKKKKKKKKKKKK..",
-        "..KKSSSSSSSSSSSSSSSSKK..",
-        "..KKKKKKKKKSSKKKKKKKKK..",
-        "..KKKKKKKKKSSKKKKKKKKK..",
-        ".KKKKKKKKKKSSKKKKKKKKKK.",
-        ".KKKKKKKKKKSSKKKKKKKKKK.",
+        "..KKSlSSSSSSSSSSSSSSKK..",
+        "..KhKKKKKKKSSKKKKKKKKK..",
+        "..KhKKKKKKKSSKKKKKKKKK..",
+        ".KKhKKKKKKKSSKKKKKKKKKK.",
+        ".KKhKKKKKKKSSKKKKKKKKKK.",
         ".KKK.......SS.......KKK.",
         "KKKK................KKKK",
         "KKK..................KKK",
         "KK....................KK",
-    ], ["K": C(0x16161B), "S": silver])
+    ], ["K": C(0x16161B), "S": silver, "h": C(0x34343E), "l": C(0xDDE0E6)])
     c.rect(27, 27, 2, 4, silver)
     c.rect(21, 28, 4, 1, silver)
     c.rect(31, 28, 4, 1, silver)
+    // The quilted tunic, its folds shaded, under a wide belt with its buckle.
     c.rect(18, 33, 20, 5, black)
+    c.rect(25, 33, 6, 1, fold)                                      // the cowl's neck
+    for x in [20, 23, 32, 35] { c.rect(x, 33, 1, 2, quilt) }
+    c.rect(37, 33, 1, 5, fold); c.px(22, 37, fold); c.px(33, 37, fold)
     c.rect(18, 35, 20, 1, C(0x3A3A42))
+    c.rect(27, 35, 2, 1, C(0x8A8F99)); c.px(27, 35, C(0xB8BCC6))
     if let a = melee {
         drawSaber(c, t: p.t, angle: a, core: C(0xFFD6D6), glow: C(0xFF2A1A), lit: true, trail: trail,
                   crossguard: true, unstable: true)
@@ -358,21 +373,36 @@ private func drawTrooper(_ c: PixelCanvas, _ p: Pose) {
 /// The Emperor: hooded robe, no legs showing, lightning from his raised hand.
 private func drawEmperor(_ c: PixelCanvas, _ p: Pose) {
     drawCape(c, t: p.t, speed: p.capeSpeed * 0.6, color: C(0x111116), edge: C(0x2A2A33), extra: 1.5)
-    let robe = C(0x1A1A20), robeEdge = C(0x2E2E38)
+    let robe = C(0x1A1A20), robeEdge = C(0x2E2E38), robeDeep = C(0x0C0C10), skinShade = C(0xA86A50)
+    // The robe, to the floor: folds catching the light down its length, a shadow either side of each of the four
+    // legs as the cloth falls over them, and a frayed hem.
     for y in 36...43 {
         let k = (y - 36) / 2
         c.rect(17 - k, y, 22 + k * 2, 1, robe)
         c.px(17 - k, y, robeEdge); c.px(38 + k, y, robeEdge)
     }
+    for x in [21, 25, 30, 34] { c.rect(x, 38, 1, 5, robeEdge) }
+    for x in [18, 22, 33, 37] { c.rect(x, 40, 1, 3, robeDeep) }
+    c.rect(16, 43, 24, 1, robeDeep)
+    for x in [19, 24, 28, 32, 36] { c.px(x, 43, robeEdge) }
     c.oy += p.breathe
-    var look = Look(body: C(0xD08A6C), shade: C(0xA86A50), arm: robe, eye: C(0xF5D547))
+    var look = Look(body: C(0xD08A6C), shade: skinShade, arm: robe, eye: C(0xF5D547))
     look.legs = false
     // Waiting for you, the lightning crackles in his hand without his raising it.
     let raise = p.mode == .waiting && !p.walking ? 0 : p.armRaise
     drawBody(c, look, armRight: raise)
+    c.rect(15, 35, 3, 1, robeEdge); c.rect(38, 35 - raise, 3, 1, robeEdge)   // the wide sleeves' turned cuffs
     drawHood(c, robe, robeEdge)
+    // The hood's deep shadow round his face, a fold down its crown.
+    c.rect(18, 26, 1, 7, robeDeep); c.rect(37, 26, 1, 7, robeDeep)
+    c.rect(27, 20, 2, 1, robeEdge); c.px(28, 21, robeEdge)
+    // His face: the bags under the yellow eyes.
+    c.rect(22, 32, 2, 1, skinShade); c.rect(32, 32, 2, 1, skinShade)
+    // The robe over his chest: its overlapping front edge and a cord belt.
     c.rect(18, 33, 20, 5, robe)
-    c.rect(26, 33, 4, 1, C(0xA86A50))
+    c.rect(26, 33, 4, 1, skinShade)
+    c.rect(29, 34, 1, 4, robeEdge); c.rect(30, 34, 1, 4, robeDeep)
+    c.rect(18, 36, 20, 1, C(0x26262E)); c.rect(23, 37, 1, 1, C(0x26262E))
 }
 
 // MARK: - R0-GR
@@ -409,17 +439,30 @@ private func drawRogr(_ c: PixelCanvas, _ p: Pose) {
 /// Count Dooku: brown cape, white hair and pointed beard, a red saber.
 private func drawDooku(_ c: PixelCanvas, _ p: Pose) {
     drawCape(c, t: p.t, speed: p.capeSpeed, color: C(0x2A1A14), edge: C(0x4A3024))
-    let robe = C(0x2A1A14)
+    let robe = C(0x2A1A14), robeHi = C(0x4A3024), robeDeep = C(0x180E0A)
     drawLegs(c, Look(leg: C(0x1E1410)), step: p.step)
+    drawBoots(c, ink, step: p.step, rows: 3)                        // tall black riding boots, polished
+    drawBootShine(c, step: p.step, C(0x5A5048))
     c.oy += p.breathe
     drawBody(c, Look(arm: robe))
-    let W = C(0xDCDCDC), w = C(0xB4B4B4)
-    c.pattern(18, 22, ["....WWWWWWWWWWWW....", "..WWwWWWWWWWWWWwWW..", ".WW..............WW.", "WW................WW"], ["W": W, "w": w])
-    c.pattern(24, 32, ["WW....WW", ".WWWWWW.", "..WWWW..", "...WW..."], ["W": W])   // pointed beard
+    c.rect(15, 35, 3, 1, robeDeep); c.rect(38, 35, 3, 1, robeDeep)   // the sleeves' cuffs
+    // Swept-back white hair, the light running along it and grey at the temples.
+    let W = C(0xDCDCDC), w = C(0xB4B4B4), l = C(0xF6F6F6)
+    c.pattern(18, 22, ["....WWWlllWWWWWW....", "..WWwWWWWWWlllWwWW..", ".Ww..............wW.", "Ww................wW"],
+              ["W": W, "w": w, "l": l])
+    let beard: [Character: Px] = ["W": W, "w": w, "l": l]
+    c.pattern(24, 32, ["WW....WW", ".WlWWWw.", "..WlWw..", "...Ww..."], beard)   // pointed beard
+    // The dark tunic: the high collar, a lit edge down the front and folds shaded.
     c.rect(18, 33, 20, 5, robe)
-    c.pattern(24, 32, ["WW....WW", ".WWWWWW.", "..WWWW..", "...WW..."], ["W": W])
+    c.rect(19, 33, 4, 1, robeHi); c.rect(33, 33, 4, 1, robeHi)
+    c.rect(23, 34, 1, 4, robeHi); c.rect(37, 33, 1, 5, robeDeep)
+    c.px(20, 35, robeDeep); c.px(34, 34, robeDeep); c.px(21, 37, robeDeep); c.px(33, 37, robeDeep)
+    c.pattern(24, 32, ["WW....WW", ".WlWWWw.", "..WlWw..", "...Ww..."], beard)
+    // The belt with its curved buckle, and the cape's clasp chain, its ends catching the light.
     c.rect(18, 36, 20, 1, C(0x8A6A3A))
+    c.rect(27, 36, 3, 1, C(0xC9A44A)); c.px(28, 36, C(0x5A4220))
     c.rect(26, 35, 4, 1, C(0xC9A44A))   // cape clasp chain
+    c.px(25, 35, C(0xF0D47A)); c.px(30, 35, C(0xF0D47A))
     drawRedSaber(c, p)
 }
 
