@@ -74,6 +74,8 @@ private func drawMissMinutes(_ c: PixelCanvas, _ p: Pose) {
     c.rect(cx - 1, 16, 3, 2, rim); c.rect(cx - 2, 15, 5, 1, orange)
     c.circle(cx, cy, 11, rim)
     c.circle(cx, cy, 10, orange)
+    for (x, y) in [(20, 25), (21, 23), (22, 22), (24, 21)] { c.px(x, y, C(0xFFAA4A)) }   // the case lit on top…
+    for (x, y) in [(37, 32), (36, 34), (35, 35), (33, 37)] { c.px(x, y, C(0xD06A12)) }   // …and shaded underneath
     c.circle(cx, cy, 8, dial)
     c.rect(cx - 6, cy - 7, 3, 1, C(0xFFE0A0)); c.rect(cx - 7, cy - 6, 1, 2, C(0xFFE0A0))     // shine on the dial
     for (x, y, w, h) in [(cx, cy - 8, 1, 2), (cx + 7, cy, 2, 1), (cx, cy + 7, 1, 2), (cx - 8, cy, 2, 1)] as [(Int, Int, Int, Int)] {
@@ -136,6 +138,8 @@ private func drawCallisto(_ c: PixelCanvas, _ p: Pose) {
     for x in stride(from: 20, through: 36, by: 4) { c.px(x, 35, stud) }
     c.rect(18, 36, 20, 1, C(0x5A3A26)); c.rect(27, 36, 2, 1, stud)
     c.rect(37, 34, 1, 4, C(0x18161A))
+    c.px(27, 36, C(0xC8C8D0))                                                // the buckle lit
+    c.rect(38, 33, 3, 1, leatherLight)                                       // a cuff at the wrist
     // Eyes: one fierce eye, the front one under the patch.
     if tilt != 0 { c.rect(19, 25, 18, 1, hair) }                            // no gap under the mane as her head lifts
     c.oy += tilt
@@ -165,6 +169,7 @@ private func drawCallisto(_ c: PixelCanvas, _ p: Pose) {
         "..HH......................",
         "..H.......................",
     ], ["H": hair, "h": hairLight])
+    c.rect(19, 20, 4, 1, hairLight); c.rect(27, 21, 4, 1, hairLight); c.rect(15, 24, 2, 1, hairLight)   // lit strands
     c.oy -= tilt
     if sniffing, let s = sig {
         // Scent drifting in to her nose.
@@ -272,6 +277,8 @@ private func drawExodus(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(23, 32, ["G........G", ".G......G.", "..GG..GG..", "....GG...."], ["G": gold])
     c.rect(18, 36, 20, 1, goldDark)
     c.rect(15, 32, 3, 3, gold); c.rect(15, 34, 3, 1, goldDark)                    // shoulder plates over the arms
+    c.rect(15, 32, 3, 1, C(0xFFD860)); c.rect(16, 25, 1, 3, C(0xFFD860))         // lit along the top, and the collar's near wing
+    c.rect(20, 35, 3, 1, maroonDark); c.rect(33, 35, 3, 1, maroonDark)            // plate seams
     c.rect(38, 32 - p.armRaise, 3, 2, gold)
     // Signature: the psionic halo blooms over his head, sparks drifting up off it.
     if halo > 0.02 {
@@ -357,6 +364,7 @@ private func drawSoulEater(_ c: PixelCanvas, _ p: Pose) {
     for x in [24, 29, 34] { c.rect(x, 20, 1, 9, ridge) }                         // ribbing over the head
     c.rect(19, 21, 3, 1, C(0x5A5270)); c.rect(18, 22, 2, 1, C(0x5A5270))          // a dull sheen
     c.rect(30, 30, 7, 1, shade); c.rect(31, 31, 6, 1, shade)                      // the seam where its maw splits
+    c.rect(18, 28, 1, 4, C(0x3A3644)); c.rect(20, 33, 3, 1, ridge)                 // the hide lit on the near side, a ridge
     // Signature: the front splits into a maw and souls stream in.
     if let s = sig, unfold > 0.15 {
         let open: Double = min(1, unfold * 1.4)
@@ -415,6 +423,7 @@ private func drawRedRoomWidow(_ c: PixelCanvas, _ p: Pose) {
         ".HHHHHHHHHHHHHHHHHHHHHH.",
     ], ["H": suit])
     c.rect(18, 22, 3, 1, suitLight); c.rect(17, 23, 2, 2, suitLight)
+    c.rect(37, 23, 1, 2, C(0x101014))                                           // the hood shaded on the far side
     c.pattern(14, 21, [".AA.", "AAAA", "AaAA", ".AA."], ["A": C(0xB8542A), "a": C(0x8A3A1A)])   // auburn bun out the back
     c.rect(19, 25, 18, 1, red)                                                  // red trim on the hood
     c.rect(19, 28, 18, 4, skin)                                                  // the eye band
@@ -440,6 +449,8 @@ private func drawRedRoomWidow(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(26, 35, ["RRR", ".R.", "RRR"], ["R": red])
     c.rect(15, 33, 3, 3, suit); c.rect(17, 33, 1, 3, red)
     c.rect(38, 33, 3, 3, suit); c.rect(38, 33, 1, 3, red)
+    c.rect(39, 33, 2, 1, suitLight)                                             // the gauntlet lit along its top
+    c.rect(18, 35, 1, 1, suitLight); c.rect(22, 35, 1, 1, C(0x101014)); c.rect(33, 35, 1, 1, C(0x101014))   // near side lit, folds
     // Signature: red dust swirling across her face.
     if dust > 0.02 {
         for k in 0..<22 {

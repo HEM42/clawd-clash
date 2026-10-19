@@ -169,6 +169,8 @@ private func drawBrood(_ c: PixelCanvas, _ p: Pose) {
     if hiss > 0.05 { c.oy -= Int((hiss * 1).rounded()) }                    // rears up
     drawBody(c, Look(body: shell, shade: dark, arm: shell, eye: nil))
     for y in [34, 36] { c.rect(21, y, 14, 1, belly) }                      // belly plates
+    c.rect(22, 35, 12, 1, dark)                                             // shaded between them
+    c.rect(18, 27, 1, 5, sheen)                                             // the carapace lit down the near side
     // the long crest swept back off the skull
     c.pattern(8, 19, [
         ".............SSSSSSSSSSS........",
@@ -233,6 +235,10 @@ private func drawCassandraNova(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, suit)
     c.rect(18, 37, 20, 1, suitDark); c.rect(37, 33, 1, 5, suitDark)
     c.pattern(18, 33, ["..BBBBBBBBBBBBBBBB..", "....BBB......BBB....", ".........BB........."], ["B": black])
+    c.rect(18, 34, 1, 3, C(0x4AB862))                                       // the suit lit down the near side
+    c.rect(23, 35, 1, 2, suitDark); c.rect(32, 35, 1, 2, suitDark)          // folds
+    c.rect(38, 35 - p.armRaise, 3, 1, black)                                // a black cuff at the wrist
+    c.rect(36, 23, 1, 2, skinShade)                                         // the dome shaded on the far side
     // cold, shadowed eyes under thin arched brows
     c.rect(21, 28, 4, 1, shadow); c.rect(31, 28, 4, 1, shadow)
     c.px(21, 27, skinShade); c.px(34, 27, skinShade)
@@ -293,6 +299,9 @@ private func drawGraviton(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 4, 2, purple); c.rect(34, 33, 4, 2, purple)              // purple shoulders
     c.rect(18, 33, 20, 1, purpleDark)
     ring(c, 28, 35, r: 1.6, purple, width: 0.5); c.px(28, 35, purpleDark)   // the gravity-well emblem
+    c.rect(18, 35, 1, 2, C(0x3A62D8))                                       // the suit lit down the near side
+    c.rect(22, 35, 1, 2, blueDark); c.rect(33, 35, 1, 2, blueDark)          // folds
+    c.rect(38, 33 - max(up, p.armRaise), 1, 3, purpleDark)                  // the glove's cuff
     // slicked dark hair with a widow's peak
     c.pattern(18, 22, [
         "...HHHHHHHHHHHHHH...",
@@ -303,6 +312,7 @@ private func drawGraviton(_ c: PixelCanvas, _ p: Pose) {
         "HH.......HH......HHH",
         "H.................HH",
     ], ["H": hair, "h": C(0x5A4A3E)])
+    c.rect(23, 23, 4, 1, C(0x5A4A3E)); c.rect(30, 24, 3, 1, C(0x5A4A3E))    // lit strands slicked back
     c.rect(21, 28, 4, 1, hair); c.rect(31, 28, 4, 1, hair)
     c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink)
     c.rect(25, 32, 6, 1, C(0x9A5A40))
@@ -377,6 +387,8 @@ private func absorbingMan(_ c: PixelCanvas, _ p: Pose, _ m: Matter) {
     drawBody(c, Look(body: skin, shade: shade, arm: skin, eye: nil))
     for y in 33...37 { c.rect(18, y, 20, 1, y % 2 == 0 ? stripeLight : stripeDark) }   // the prison shirt
     c.rect(37, 34, 1, 3, C(0x8A8A86))
+    c.rect(27, 34, 1, 4, C(0x8A8A86))                                        // the shirt's button placket
+    c.rect(36, 23, 1, 2, shade)                                              // the dome shaded on the far side
     // heavy brow, small eyes, stubble, a grin
     c.rect(20, 27, 16, 2, shade)
     c.rect(22, 29, 2, 2, ink); c.rect(32, 29, 2, 2, ink)
@@ -436,6 +448,9 @@ private func drawCrimsonDynamo(_ c: PixelCanvas, _ p: Pose) {
     for y in [26, 28, 30] { c.rect(23, y, 10, 1, steel) }
     c.rect(27, 26, 2, 5, redDark); c.rect(27, 27, 2, 3, gold.alpha(venting ? 1 : 0.75))
     c.rect(14, 33, 28, 3, steelDark); c.rect(26, 33, 4, 3, steel)            // belt
+    c.rect(16, 29, 5, 1, redDark); c.rect(35, 29, 5, 1, redDark)             // plate seams either side of the grille
+    c.px(17, 31, redLight); c.px(38, 31, redDark)                            // a rivet under each
+    c.rect(26, 35, 4, 1, steelDark)                                          // the buckle shaded under
     // pauldrons
     let pad = ["..PPPPP..", ".PPPPPPP.", "PPPPPPPPP", "PPPPPPPPP", "DDDDDDDDD"]
     c.pattern(9, 19, pad, ["P": red, "D": redDark]); c.rect(11, 20, 3, 1, redLight)
@@ -507,6 +522,9 @@ private func drawWrecker(_ c: PixelCanvas, _ p: Pose) {
     c.rect(21, 24, 3, 1, greenLight)
     drawBody(c, Look(body: green, shade: greenDark, arm: purple, eye: nil), armRight: p.armRaise)
     c.rect(16, 32, 2, 4, green)                                              // broad shoulders
+    c.rect(35, 24, 2, 1, greenDark)                                          // the mask shaded on the far side
+    c.rect(18, 28, 1, 4, greenLight)                                         // and lit down the near side
+    c.rect(38, 33 - p.armRaise, 3, 1, purpleDark)                            // the glove's cuff
     // eye holes, the scowl and the bare jaw
     c.rect(21, 28, 4, 4, skin); c.rect(31, 28, 4, 4, skin)
     c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink)
@@ -579,6 +597,9 @@ private func drawBaronMordo(_ c: PixelCanvas, _ p: Pose) {
     c.rect(27, 33, 2, hem - 33, gold)                                        // the trimmed front
     c.rect(18, 35, 20, 1, goldDark)                                          // the sash
     c.rect(18, 33, 20, 1, robeDark)
+    c.rect(21, 37, 1, hem - 37, robeDark); c.rect(34, 37, 1, hem - 37, robeDark)   // folds falling to the hem
+    c.rect(18, 36, 1, 2, C(0x3E8A46))                                        // the robe lit on the near side
+    c.rect(15, 20, 1, 3, C(0x24502A))                                        // the collar's lining lit on the near wing
     // hair: widow's peak and pointed sideburns
     c.pattern(18, 22, [
         "...HHHHHHHHHHHHHH...",
@@ -591,6 +612,7 @@ private func drawBaronMordo(_ c: PixelCanvas, _ p: Pose) {
         "H..................H",
         "H..................H",
     ], ["H": hair])
+    c.rect(22, 23, 4, 1, C(0x3A3434)); c.rect(30, 23, 3, 1, C(0x3A3434))    // lit strands
     c.pattern(21, 27, ["HHH.......HHH", "..H.......H.."], ["H": hair])      // arched brows
     c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink)
     c.pattern(24, 31, ["HHHHHHHH", "H..HH..H", "...HH..."], ["H": hair])   // moustache and pointed goatee
@@ -661,6 +683,9 @@ private func drawEnchantress(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 37, 20, 1, greenDark); c.rect(37, 33, 1, 5, greenDark)
     c.pattern(18, 33, ["GG................GG", "..GGGGGGGGGGGGGGGG.."], ["G": gold])  // gold neckline…
     c.rect(18, 36, 20, 1, gold); c.rect(27, 36, 2, 1, goldDark)              // …and belt
+    c.px(27, 36, C(0xFFE88A))                                                // the buckle lit
+    c.rect(18, 35, 1, 1, C(0x4AC06A)); c.rect(23, 35, 1, 1, greenDark); c.rect(32, 35, 1, 1, greenDark)   // near side lit, folds
+    if toLips <= 0.05 { c.rect(38, 33 - p.armRaise, 1, 3, gold) }           // a gold bracelet
     // hair on top, falling to the shoulders
     c.pattern(16, 21, [
         "......HHHHHHHHHH......",
@@ -676,6 +701,8 @@ private func drawEnchantress(_ c: PixelCanvas, _ p: Pose) {
         "HH....................",
         ".H....................",
     ], ["H": hair, "h": hairDark])
+    c.rect(22, 23, 5, 1, C(0xFFEC8A)); c.rect(18, 24, 3, 1, C(0xFFEC8A))   // lit strands
+    c.rect(33, 26, 3, 1, hairDark)                                          // shaded under on the far side
     // the horned headdress
     c.pattern(18, 18, ["Y..................Y", "YG................GY", ".GG..............GG.", "..GGGGGGGGGGGGGGGG..",
                        "...DDDDDDYYDDDDDDD.."], ["G": green, "D": greenDark, "Y": gold])
@@ -737,12 +764,15 @@ private func drawArnimZola(_ c: PixelCanvas, _ p: Pose) {
         "DDDDDDDDDDDDDDDD",
     ], ["B": body, "D": dark])
     c.rect(21, 16, 3, 1, light); c.rect(20, 18, 1, 3, light)
+    c.rect(32, 21, 4, 1, dark)                                               // the box shaded under the panel
+    c.px(22, 20, dark); c.px(25, 20, dark)                                   // a couple of rivets
     c.rect(27, 17, 9, 4, frame)                                              // the sensor panel
     for (k, x) in [28, 31, 34].enumerated() {
         let on = !glitch || noise(seed + k * 7) > 0.4
         c.px(x, 18, on ? lens : greenDark); c.px(x, 19, greenDark)
     }
     c.rect(18, 23, 20, 3, green); c.rect(18, 25, 20, 1, greenDark)          // collar ring
+    c.rect(18, 23, 19, 1, C(0x7ABA5A))                                       // lit along its top
     // the chest screen
     c.rect(20, 27, 16, 9, frame)
     c.rect(21, 28, 14, 7, screen)
@@ -777,6 +807,6 @@ private func drawArnimZola(_ c: PixelCanvas, _ p: Pose) {
         c.rect(38, 33, 7, 3, body); c.rect(38, 33, 7, 1, light)
         c.rect(45, 32, 2, 5, green); c.px(46, 34, lens)
     } else {
-        c.rect(38, 34, 3, 2, green)
+        c.rect(38, 34, 3, 2, green); c.rect(38, 34, 3, 1, greenDark)        // the glove, its cuff shaded
     }
 }
