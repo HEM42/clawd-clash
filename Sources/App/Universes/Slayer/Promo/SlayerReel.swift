@@ -207,30 +207,32 @@ func slayerIntro(_ ctx: CGContext, local l: Double, t: Double) {
 }
 
 /// The set piece's timings (shot-local seconds): the DeSoto at the sign, then Restfield.
-let homeCarIn = 0.4, homeCarStop = 1.75, homeDoor = 1.85, homeSpyke = 2.0, homeCut = 4.0
-let homeGround = 150.0, homeCarScale = 2.0, homeCarFrom = -150.0, homeCarTo = 172.0
+private let homeCarIn = 0.4, homeCarStop = 1.75, homeDoor = 1.85, homeSpyke = 2.0
+let slayerHomeCut = 4.0
+private let homeGround = 150.0, homeCarScale = 2.0, homeCarFrom = -150.0, homeCarTo = 172.0
 /// In the cemetery (seconds after the cut): the fledglings rise, the bus pulls up, the gang gets off and fights,
 /// dawn breaks and the vampires go up in dust.
-let homeRise: [Double] = [0.1, 0.3, 0.5], homeRiseLength = 0.8
-let homeBusIn = 0.6, homeBusStop = 1.4, homeBusDoor = 1.5, homeOff: [Double] = [1.6, 1.75, 1.9]
-let homeFlip = 2.2, homeFight = 2.85, homeDawn = 3.2, homeDust: [Double] = [3.5, 3.7, 3.9]
-let homeFledglingXs: [Double] = [217, 256, 296], homeHeroXs: [Double] = [150, 118, 86]
-let homeBusLeft = -50.0
+private let homeRise: [Double] = [0.1, 0.3, 0.5], homeRiseLength = 0.8
+private let homeBusIn = 0.6, homeBusStop = 1.4, homeBusDoor = 1.5, homeOff: [Double] = [1.6, 1.75, 1.9]
+private let homeFlip = 2.2, homeDawn = 3.2, homeDust: [Double] = [3.5, 3.7, 3.9]
+let slayerHomeFight = 2.85
+private let homeFledglingXs: [Double] = [217, 256, 296], homeHeroXs: [Double] = [150, 118, 86]
+private let homeBusLeft = -50.0
 
 /// The DeSoto's left edge (fx columns) at shot time `l`, and how fast it's going (0…1).
-func deSotoAt(_ l: Double) -> (x: Double, speed: Double) {
+private func deSotoAt(_ l: Double) -> (x: Double, speed: Double) {
     guard l > homeCarIn else { return (homeCarFrom, 1) }
     let f = clamp((l - homeCarIn) / (homeCarStop - homeCarIn))
     return (lerp(homeCarFrom, homeCarTo, easeOut(f)), 1 - f)
 }
 
 /// The sign's board and posts in the town sign's frame-sized canvas, and the moment the car's nose reaches the first post.
-let homeSignFrame = Scenes.slayerTownSignFrame(PixelCanvas(fxW, fxH), fxH - 30)
-let homeSignBox: (x: Int, y: Int, w: Int, h: Int) = {
+private let homeSignFrame = Scenes.slayerTownSignFrame(PixelCanvas(fxW, fxH), fxH - 30)
+private let homeSignBox: (x: Int, y: Int, w: Int, h: Int) = {
     let b = homeSignFrame.board
     return (b.x - 2, b.y - 2, b.w + 4, fxH - 30 - b.y + 2)
 }()
-let homeCrash: Double = {
+private let homeCrash: Double = {
     let post = Double(homeSignFrame.board.x + homeSignFrame.board.w / 6)
     var l = homeCarIn
     while l < homeCarStop && deSotoAt(l).x + 62 * homeCarScale < post { l += 0.005 }
@@ -239,14 +241,14 @@ let homeCrash: Double = {
 
 /// The town sign with the sign itself painted out: the same place drawn four times as wide (so the board and the
 /// lamp are far off to the right), its pixels under the board copied over the board.
-let homeSignGone: PixelCanvas = {
+private let homeSignGone: PixelCanvas = {
     let wide = PixelCanvas(fxW * 4, fxH)
     Location.slayerTownSign.drawStatic(wide, floorRows: 30)
     return wide
 }()
 /// The board and its posts, cut out of the place to be smashed off it: just the pixels that differ from the place
 /// without them.
-let homeBoard: CGImage? = {
+private let homeBoard: CGImage? = {
     let c = PixelCanvas(fxW, fxH); Location.slayerTownSign.drawStatic(c, floorRows: 30)
     let b = homeSignBox, out = PixelCanvas(b.w, b.h), gone = homeSignGone
     for y in 0..<b.h {
@@ -276,7 +278,7 @@ func slayerDustPuff(_ c: PixelCanvas, x: Double, y: Double, k: Double, seed: Int
 /// pulls up, Buffy flips her stake, Willow's green spell lights the graves, Giles fires his crossbow, and as dawn
 /// breaks the vampires go up in dust.
 func slayerHomecoming(_ ctx: CGContext, local l: Double, t: Double) {
-    if l < homeCut { slayerSignCrash(ctx, local: l, t: t) } else { slayerRestfield(ctx, local: l - homeCut, t: t) }
+    if l < slayerHomeCut { slayerSignCrash(ctx, local: l, t: t) } else { slayerRestfield(ctx, local: l - slayerHomeCut, t: t) }
 }
 
 func slayerSignCrash(_ ctx: CGContext, local l: Double, t: Double) {
@@ -383,7 +385,7 @@ func slayerRestfield(_ ctx: CGContext, local c: Double, t: Double) {
             let r = clamp((c - at) / homeRiseLength)
             guard r > 0 else { continue }
             if r < 1 { for k in 0..<5 { fx.px(Int(x) - 6 + Int(noise(k + i * 9 + Int(t * 14)) * 12), Int(homeGround) - 3 - Int(noise(k + i * 5 + Int(t * 10)) * 6), C(0x4A3624)) } }
-            let chase = easeOut((c - homeFight + 0.5) / 0.6)
+            let chase = easeOut((c - slayerHomeFight + 0.5) / 0.6)
             var v = Actor(cast: .villain(SlayerVillain.fledgling), x: x - (i == 0 ? 10 * chase : 0), facing: -1, mode: .idle)
             v.lift = -(1 - easeOut(r)) * 46
             vamps.append(v)
@@ -416,7 +418,7 @@ func slayerRestfield(_ ctx: CGContext, local c: Double, t: Double) {
         func dusted(_ i: Int) -> Double { clamp((c - homeDust[i]) / 0.7) }
         // The fight: Buffy's stake on the first, Willow's spell on the second, Giles's crossbow on the third.
         var pairs: [(Actor, Actor)] = []
-        if c > homeFight {
+        if c > slayerHomeFight {
             for i in 0..<min(heroes.count, vamps.count) {
                 if dusted(i) > 0.3 { heroes[i].role = .cheer; continue }     // theirs is dust: a little cheer
                 guard dusted(i) == 0 else { continue }
@@ -426,8 +428,8 @@ func slayerRestfield(_ ctx: CGContext, local c: Double, t: Double) {
             }
         }
         // Willow's green light on the graves.
-        if heroes.count > 1, c > homeFight - 0.2, c < homeDust[1] + 0.3 {
-            let w = heroes[1], glow = clamp((c - homeFight + 0.2) / 0.3) * (1 - clamp((c - homeDust[1]) / 0.3))
+        if heroes.count > 1, c > slayerHomeFight - 0.2, c < homeDust[1] + 0.3 {
+            let w = heroes[1], glow = clamp((c - slayerHomeFight + 0.2) / 0.3) * (1 - clamp((c - homeDust[1]) / 0.3))
             fx.rect(0, 0, fxW, fxH, C(0x3CFF6A, 0.06 * glow))
             fx.ellipse(Int(w.x) + 50, Int(homeGround) - 2, 90, 7, C(0x5CFF7A, 0.2 * glow))
             fx.circle(Int(w.x) + 8, Int(homeGround) - 26, 26, C(0x5CFF7A, 0.1 * glow))
@@ -444,9 +446,9 @@ func slayerRestfield(_ ctx: CGContext, local c: Double, t: Double) {
         }
         ctx.restoreGState()
         for (i, h) in heroes.enumerated() {
-            if i == 0 && c > homeFlip && c < homeFight {      // Buffy flips her stake
+            if i == 0 && c > homeFlip && c < slayerHomeFight {      // Buffy flips her stake
                 let len = h.cast.signatureLength ?? 2.0
-                forcedHabit = HabitPlay(kind: .signature, e: (c - homeFlip) / (homeFight - homeFlip) * len, length: len)
+                forcedHabit = HabitPlay(kind: .signature, e: (c - homeFlip) / (slayerHomeFight - homeFlip) * len, length: len)
                 draw(h, ctx, t: t)
                 forcedHabit = nil
             } else {
@@ -662,7 +664,7 @@ func slayerSound(_ m: Mix) {
     m.clunk(hc + homeDoor, vol: 0.1)
     for k in 0..<4 { m.step(hc + homeSpyke + Double(k) * 0.16, vol: 0.08) }
     // Restfield: a low drone, earth crumbling, the bus's engine and brakes, the door, the fight, the dawn, the dust
-    let rf = hc + homeCut
+    let rf = hc + slayerHomeCut
     m.tone(rf, 6.0, midi(26), wave: .saw, vol: 0.035, attack: 0.5, release: 1.0)
     m.tone(rf, 6.0, midi(33), wave: .saw, vol: 0.02, attack: 0.5, release: 1.0)
     for k in 0..<Int(4.2 / beat) where k % 2 == 0 { m.kick(rf + Double(k) * beat, vol: 0.18) }
@@ -672,10 +674,10 @@ func slayerSound(_ m: Mix) {
     m.clunk(rf + homeBusDoor, vol: 0.08)
     for i in homeOff.indices { for k in 0..<3 { m.step(rf + homeOff[i] + Double(k) * 0.15, vol: 0.06) } }
     m.whoosh(rf + homeFlip + 0.3, 0.4, vol: 0.08)
-    m.ding(rf + homeFight - 0.05, vol: 0.05)
-    slayerBand(m, from: rf + homeFight, bars: 1, beat: beat)
-    m.shimmer(rf + homeFight - 0.2, homeDust[1] - homeFight + 0.4, vol: 0.03)
-    for k in 0..<3 { m.thwip(rf + homeFight + 0.2 + Double(k) * 0.35, vol: 0.06); m.snare(rf + homeFight + 0.1 + Double(k) * 0.3, vol: 0.06) }
+    m.ding(rf + slayerHomeFight - 0.05, vol: 0.05)
+    slayerBand(m, from: rf + slayerHomeFight, bars: 1, beat: beat)
+    m.shimmer(rf + slayerHomeFight - 0.2, homeDust[1] - slayerHomeFight + 0.4, vol: 0.03)
+    for k in 0..<3 { m.thwip(rf + slayerHomeFight + 0.2 + Double(k) * 0.35, vol: 0.06); m.snare(rf + slayerHomeFight + 0.1 + Double(k) * 0.3, vol: 0.06) }
     m.organ(rf + homeDawn, 2.0, [50, 57, 62, 66], vol: 0.03)
     for d in homeDust { m.dust(rf + d, vol: 0.1) }
     // the app shots: the shared groove, and each shot's effects

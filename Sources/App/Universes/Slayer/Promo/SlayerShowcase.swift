@@ -14,7 +14,7 @@ struct SlayerShowcase: Showcase {
 /// Tabula Rasa round a forgetter standing at `bodyX`, `k` (0…1) through it: the spell's own canvas (glow, smoke,
 /// crystal, the "?") behind them, then the forgetter with the remembering shimmer on their sprite, as the overlay
 /// draws it.
-func tabulaRasa(_ who: Cast, k: Double, _ ctx: CGContext, _ o: CGPoint, bodyX: Double) {
+private func tabulaRasa(_ who: Cast, k: Double, _ ctx: CGContext, _ o: CGPoint, bodyX: Double) {
     let tr = SlayerTabulaRasa(k: k, cast: who)
     let fx = PixelCanvas(slayerTabulaWidth, slayerTabulaTop + Sprite.height)
     slayerDrawTabulaRasa(fx, tr, headTop: who.drawnTop(), t: 1.1)
@@ -27,7 +27,7 @@ func tabulaRasa(_ who: Cast, k: Double, _ ctx: CGContext, _ o: CGPoint, bodyX: D
 }
 
 /// What a forgetter says, in a cream speech box over their head, as the overlay's bubble shows it.
-func said(_ s: String, _ ctx: CGContext, centerX: CGFloat, bottom: CGFloat) {
+private func said(_ s: String, _ ctx: CGContext, centerX: CGFloat, bottom: CGFloat) {
     let text = NSAttributedString(string: s, attributes: [.font: NSFont.monospacedSystemFont(ofSize: 15, weight: .heavy),
                                                           .foregroundColor: NSColor(srgbRed: 0.16, green: 0.11, blue: 0.08, alpha: 1)])
     let ts = text.size()

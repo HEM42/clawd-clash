@@ -463,7 +463,7 @@ func setPiece(_ u: Universe) -> (word: String, draw: (CGContext, Double, Double)
     case .clawdFiles: return ("HMMMM!", { filesWoods($0, local: 3.2 + $1, t: $2) })
     case .clawdberg: return ("88 MPH!", { clawdbergHillValley($0, local: 3.0 + $1, t: $2) })
     case .middleEarth: return ("DOOM!", { ringsBridge($0, local: 2.8 + $1, t: $2) })
-    case .slayer: return ("THWACK!", { slayerHomecoming($0, local: homeCut + homeFight - 0.6 + $1, t: $2) })
+    case .slayer: return ("THWACK!", { slayerHomecoming($0, local: slayerHomeCut + slayerHomeFight - 0.6 + $1, t: $2) })
     default: preconditionFailure("no promo data for \(u.title) here yet: the universe-modules plan moves it into its folder")
     }
 }
