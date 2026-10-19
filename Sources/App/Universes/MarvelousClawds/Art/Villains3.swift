@@ -108,14 +108,19 @@ private func drawMagneto(_ c: PixelCanvas, _ p: Pose) {
     drawCape(c, t: p.t, speed: p.capeSpeed, color: cape, edge: capeEdge)
     drawLegs(c, Look(leg: red), step: p.step)
     for (i, lx) in [19, 23, 31, 35].enumerated() {                      // purple boots
-        c.rect(lx, p.step >= 0 && i % 2 == p.step ? 39 : 40, 2, 3, purple)
+        let top = p.step >= 0 && i % 2 == p.step ? 39 : 40
+        c.rect(lx, top, 2, 3, purple)
+        c.px(lx, top, C(0xC070E8)); c.px(lx + 1, top + 2, C(0x6A2490))   // lit at the top, shaded on the far side
     }
     c.oy += p.breathe
     drawBody(c, Look(arm: purple), armRight: p.armRaise)
+    c.rect(15, 33, 3, 1, C(0x6A2490)); c.rect(38, 33 - p.armRaise, 3, 1, C(0x6A2490))   // the gloves' cuffs
     c.rect(18, 34, 20, 4, red)
     c.rect(18, 37, 20, 1, redDark)
     c.rect(37, 34, 1, 3, redDark)
+    c.px(22, 36, redDark); c.px(33, 36, redDark); c.rect(20, 35, 2, 1, redLight)   // folds, the light on his chest
     c.rect(18, 34, 20, 1, cape)                                           // the cape's collar across the shoulders
+    c.rect(20, 34, 4, 1, C(0x6A3498)); c.rect(32, 34, 4, 1, C(0x6A3498))  // lit where it lies over them
     c.pattern(16, 17, [
         "........RRRRRRRR........",
         "......RRRRRRRRRRRR......",
