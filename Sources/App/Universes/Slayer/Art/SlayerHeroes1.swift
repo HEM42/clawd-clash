@@ -90,23 +90,26 @@ private func drawWillowRosenclaw(_ c: PixelCanvas, _ p: Pose) {
     c.rect(17, 38, 22, seatedPose ? 1 : 2, skirt); c.rect(17, seatedPose ? 38 : 39, 22, 1, skirtD)
     c.oy += p.breathe
     drawBody(c, Look(arm: jumper), armRight: spinK >= 0 ? 3 : p.armRaise)
-    // The jumper, its fuzz picked out in pale flecks, a round neck.
+    // The jumper, its fuzz caught in short pale strokes, light along the shoulders, a round neck.
     c.rect(18, 34, 20, 4, jumper); c.rect(37, 34, 1, 4, jumperD); c.rect(18, 37, 20, 1, jumperD)
-    for (x, y) in [(19, 35), (22, 36), (25, 35), (30, 36), (33, 35), (35, 37), (20, 37), (28, 37)] { c.px(x, y, fuzz) }
+    c.rect(20, 34, 4, 1, fuzz); c.rect(32, 34, 3, 1, fuzz)
+    c.rect(21, 36, 2, 1, fuzz); c.rect(27, 36, 2, 1, fuzz); c.rect(33, 36, 2, 1, fuzz)
     c.rect(25, 34, 6, 1, jumperD)
-    // Long straight red hair, parted in the middle, down past her shoulders.
+    c.rect(15, 35, 3, 1, jumperD)   // the cuff
+    // Long straight red hair, parted in the middle, down past her shoulders: lit in short runs either side of the
+    // parting and down the near side, the far side in shade.
     c.pattern(16, 20, [
         ".....HHHHHHpHHHHHH......",
-        "....HHHHHHHpHHHHHHH.....",
-        "...HHHlHHHHpHHHHHlHH....",
-        "..HHHHHHHHHpHHHHHHHHH...",
-        "..HHHHHHHHHpHHHHHHHHHH..",
-        ".HHHHHHHHHHpHHHHHHHHHHH.",
-        ".HHHHHHHH......HHHHHHHH.",
-        ".HHH................HHH.",
-        ".HHH................HHH.",
-        ".HHl................HHH.",
-        ".HHH................lHH.",
+        "....HHHlllHpHlllHHH.....",
+        "...HHllHHHHpHHHHllHH....",
+        "..HHlHHHHHHpHHHHHHHdH...",
+        "..HHHHHHHHHpHHHHHHHHdH..",
+        ".HHHHHHHHHHpHHHHHHHHHdH.",
+        ".HHHHHHHH......HHHHHHdH.",
+        ".HlH................HdH.",
+        ".HlH................HdH.",
+        ".HlH................HdH.",
+        ".HHH................HdH.",
         ".HHH................HHH.",
         ".HHH................HHH.",
         ".HHd................dHH.",
