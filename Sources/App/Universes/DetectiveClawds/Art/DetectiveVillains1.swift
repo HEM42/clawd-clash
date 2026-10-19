@@ -965,20 +965,25 @@ private func drawRasAlGhul(_ c: PixelCanvas, _ p: Pose) {
         c.rect(18, 38, 20, 2, robe)
         c.rect(18, 40, 20, 1, gold)
         c.rect(27, 38, 1, 3, robeDark)
+        c.rect(37, 38, 1, 2, robeDark); c.rect(22, 38, 1, 2, robeDark)  // the skirt's far side and a fold
     }
+    // The light along the shoulders, a fold either side of the V, the sash's clasp.
+    c.rect(18, 34, 3, 1, C(0x3E8A50)); c.rect(33, 34, 3, 1, C(0x3E8A50))
+    c.rect(21, 35, 1, 2, robeDark); c.rect(34, 35, 1, 2, robeDark)
+    c.rect(27, 37, 2, 1, C(0xF4D47A))
     // Swept-back hair, grey at the temples (black again in the Pit's light).
-    let temple = k > 0.5 ? hair : grey
+    let temple = k > 0.5 ? hair : grey, templeShade = k > 0.5 ? hair : C(0x8A8A94)
     c.pattern(17, 21, [
         "......HHHHHHHHHH......",
         "...HHHhhHHHHHHHHHHH...",
         ".HHHHHHHhhHHHHHHHHHHH.",
         "HHHHHHHHHHhhHHHHHHHHHH",
-        "TTHHHHHHHHHHHhhHHHHHTT",
-        "TTTHHHHHH...HHHHHHHTTT",
-        "TTTT.......H.......TTT",
-        "TT...................T",
-    ], ["H": hair, "h": C(0x4A4A56), "T": temple])
-    c.rect(15, 33, 3, 3, robe)
+        "TTHHHHHHHHHHHhhHHHHHTt",
+        "TTTHHHHHH...HHHHHHHTTt",
+        "TTTT.......H.......TTt",
+        "TT...................t",
+    ], ["H": hair, "h": C(0x4A4A56), "T": temple, "t": templeShade])
+    c.rect(15, 33, 3, 3, robe); c.rect(15, 35, 3, 1, robeDark)    // the cuff
 
     if let a = p.melee {
         for (i, ta) in p.trail.enumerated() { drawScimitar(c, angle: ta, alpha: 0.35 / Double(i + 1)) }
@@ -987,7 +992,7 @@ private func drawRasAlGhul(_ c: PixelCanvas, _ p: Pose) {
         stick(c, 18, 37, 9, 41, C(0x3A2A1E), 1.0)
         c.rect(18, 35, 2, 3, gold); c.px(20, 36, gold)
     }
-    c.rect(38, 33, 3, 3, robe)
+    c.rect(38, 33, 3, 3, robe); c.rect(38, 35, 3, 1, robeDark)
     if k > 0.3 { shimmer(c, lazarus, amount: 0.05 * k, seed: Int(p.t * 12)) }
 }
 
