@@ -118,29 +118,38 @@ private func twinkle(_ c: PixelCanvas, _ x: Int, _ y: Int, _ col: Px) {
 private func drawWolverine(_ c: PixelCanvas, _ p: Pose) {
     let yellow = C(0xF2C230), yShade = C(0xC89A1A), blue = C(0x2A4FB0), blueDark = C(0x1C3478), black = C(0x16161B)
     drawSuitLegs(c, p, yellow, boot: blue, bootRows: 4)
+    if !p.flying && !seatedPose {                                   // the boots' black-edged flared tops
+        for (i, lx) in [19, 23, 31, 35].enumerated() {
+            c.rect(lx, p.step >= 0 && i % 2 == p.step ? 39 : 40, 2, 1, blueDark)
+        }
+    }
     c.oy += p.breathe
     drawBody(c, Look(body: yellow, shade: yShade, arm: blue, eye: nil))
     c.pattern(16, 16, [
         "K......................K",
         "BK....................KB",
         "BBK..................KBB",
-        ".BBK................KBB.",
-        ".BBBK..............KBBB.",
-        "..BBBK............KBBB..",
-        "..BBBBKBBBBBBBBBBKBBBB..",
-        "..BBBBBBBBBBBBBBBBBBBB..",
-        "..BBBBBBBBBBBBBBBBBBBB..",
+        ".lBK................KBB.",
+        ".BlBK..............KBBb.",
+        "..BlBK............KBBb..",
+        "..BBlBKBlllBBBBBBKBBbB..",
+        "..BBBBllBBBBBBBBBBBBbB..",
+        "..BBBBBBBBBBBBBBBBBBbB..",
         "..BBKKKKKBBBBBBKKKKKbB..",
         "..BKKKKKKKYYYYKKKKKKKB..",
         "..KKKKWWKKYYYYKKKWWKKK..",
         "..YKKKWWKKYYYYKKKWWKKY..",
         "..YYKKKKYYYYYYYKKKKYYY..",
-    ], ["B": blue, "b": blueDark, "K": black, "W": white, "Y": yellow])
+    ], ["B": blue, "b": blueDark, "K": black, "W": white, "Y": yellow, "l": C(0x4A70D0)])
     c.rect(18, 31, 3, 6, blue)                                       // blue flanks, black tiger stripes
     c.rect(35, 31, 3, 6, blue)
+    c.rect(37, 31, 1, 6, blueDark)
     for y in [32, 34] { c.rect(20, y, 2, 1, black); c.rect(34, y, 2, 1, black) }
-    c.rect(18, 36, 20, 1, C(0xB8862A))                               // belt
-    c.rect(26, 36, 4, 1, C(0xC8202A))
+    c.rect(22, 35, 12, 1, yShade)                                    // shade over the belt
+    // The belt, the red buckle with its lit corner, the gloves' cuffs.
+    c.rect(18, 36, 20, 1, C(0xB8862A))
+    c.rect(26, 36, 4, 1, C(0xC8202A)); c.px(26, 36, C(0xF05A5A))
+    c.rect(15, 33, 3, 1, blueDark)
     // Claws: out when he's fighting; SNIKT for the signature.
     if let s = p.signature, p.melee == nil {
         let out = habitArc(min(1, max(0, (s - 0.1) / 0.8)), hold: 0.55)
