@@ -239,27 +239,39 @@ private func drawTusken(_ c: PixelCanvas, _ p: Pose) {
         lift = 0
     }
     let wrap = C(0xC8B48A), wrapDark = C(0xA08A64), robe = C(0x7A5A3A), metal = C(0x7A7E88)
+    let wrapHi = C(0xDECCA2), robeHi = C(0x94704A), robeDeep = C(0x5A4028), metalHi = C(0xA8ACB6)
     drawLegs(c, Look(leg: wrapDark), step: p.step)
+    if !seatedPose { for lx in [19, 23, 31, 35] { c.rect(lx, 38, 2, 1, wrap); c.px(lx + 1, 40, wrap) } }   // leg wraps
+    drawBoots(c, C(0x5A4230), step: p.step, rows: 1)                // wrapped hide boots
     c.oy += lift
     drawBody(c, Look(body: wrap, shade: wrapDark, arm: wrap, eye: nil))
+    c.rect(15, 34, 3, 1, wrapDark); c.rect(38, 34, 3, 1, wrapDark)  // the arms wound in strips
+    // The head wound in cloth: the turns catching the light along their tops, their edges in shadow.
     c.pattern(17, 19, [
-        ".....WWWWWWWWWWWW.....",
-        "...WWWWwWWWWWWwWWWW...",
-        "..WWWWWWWWWWWWWWWWWW..",
-        ".WWwWWWWWWWWWWWWWwWWW.",
+        ".....WWWlllWWWWWW.....",
+        "...WWllWwwWWWWwwWWW...",
+        "..WlWWWWWWWWWWWWWWWW..",
+        ".WWwwWWWWllWWWWWwwWWW.",
         ".WWWWWWWWWWWWWWWWWWWW.",
-        "WWWWWwWWWWWWWWWwWWWWWW",
+        "WWWWWwwWWWWllWWWWwWWWW",
         "WWWWWWWWWWWWWWWWWWWWWW",
-    ], ["W": wrap, "w": wrapDark])
-    for x in [19, 24, 33] { c.rect(x, 27, 1, 5, wrapDark) }         // the wrappings
-    for ex in [22, 31] {                                              // goggle tubes
+    ], ["W": wrap, "w": wrapDark, "l": wrapHi])
+    for x in [19, 24, 33] { c.rect(x, 27, 1, 5, wrapDark); c.px(x + 1, 27, wrapHi) }   // the wrappings
+    for ex in [22, 31] {                                              // goggle tubes, lit along the rim
         c.rect(ex, 28, 4, 3, metal)
+        c.rect(ex, 28, 4, 1, metalHi)
         c.rect(ex + 1, 29, 2, 1, ink)
     }
-    c.rect(26, 32, 4, 2, metal)                                       // breath mask
+    c.rect(26, 32, 4, 2, metal)                                       // breath mask, its grille
     c.px(25, 33, metal); c.px(30, 33, metal)
+    c.rect(26, 32, 2, 1, metalHi); c.px(27, 33, C(0x4A4E58)); c.px(29, 33, C(0x4A4E58))
+    // The robe: lit at the neck, folds shaded, the strap across with a brass buckle and a pouch.
     c.rect(18, 34, 20, 4, robe)
+    c.rect(18, 34, 20, 1, robeHi); c.rect(37, 34, 1, 4, robeDeep)
+    c.px(21, 36, robeDeep); c.px(34, 37, robeDeep); c.px(29, 37, robeDeep)
     for i in 0..<9 { c.px(19 + i * 2, 34 + i / 3, C(0x4A3420)) }     // a strap across
+    c.px(27, 35, C(0xB08D57))
+    c.rect(31, 36, 2, 2, C(0x4A3420)); c.px(31, 36, robeHi)
     drawGaffi(c, angle: angle ?? -75)
 }
 
@@ -348,7 +360,13 @@ private func drawThrawn(_ c: PixelCanvas, _ p: Pose) {
 /// Hammerhead (Momaw Nadon, of the cantina): an Ithorian, the long T-shaped head on a tall neck, in robes.
 private func drawHammerhead(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0x8A6A4A), skinDark = C(0x6A4E34), robe = C(0x8A3A2A), robeDark = C(0x6A2A1E)
+    let skinHi = C(0xA6865E), robeHi = C(0xA44A36), robeDeep = C(0x501E14)
     drawSkirt(c, from: 36, robe, robeDark)
+    // The robe falls to the floor: folds catching the light down it, a shadow either side of each of the four legs
+    // under the cloth, and a hem in shadow.
+    for x in [21, 25, 30, 34] { c.rect(x, 38, 1, 5, robeHi) }
+    for x in [18, 22, 33, 37] { c.rect(x, 40, 1, 3, robeDeep) }
+    c.rect(16, 43, 24, 1, robeDeep)
     c.oy += p.breathe
     var look = Look(body: robe, shade: robeDark, arm: skin, eye: nil)
     look.legs = false
@@ -372,7 +390,17 @@ private func drawHammerhead(_ c: PixelCanvas, _ p: Pose) {
         "............SSSSSSSSSs............",
         "...........SSSSSSSSSSSS...........",
     ], ["S": skin, "s": skinDark, "E": ink, "W": C(0xF0E2B0), "M": skinDark])
+    // His hide: the light along the top of the head and down the neck, wrinkles in short strokes.
+    c.rect(16, 11, 26, 1, skinHi); c.rect(24, 17, 1, 9, skinHi)
+    c.rect(19, 13, 2, 1, skinDark); c.rect(27, 12, 3, 1, skinDark); c.rect(36, 13, 2, 1, skinDark)
+    c.rect(26, 19, 2, 1, skinDark); c.rect(29, 21, 2, 1, skinDark); c.rect(26, 24, 2, 1, skinDark)
+    // The robe: lit over the shoulders, its front edge and folds, a dark belt with a bronze clasp, the sleeves.
+    c.rect(18, 26, 5, 1, robeHi); c.rect(35, 26, 2, 1, robeHi)
+    c.rect(29, 27, 1, 6, robeDark); c.px(30, 27, robeHi)
+    c.px(21, 29, robeDark); c.px(34, 30, robeDark); c.px(23, 35, robeDark)
     c.rect(18, 33, 20, 1, robeDark)
+    c.rect(27, 33, 2, 1, C(0xB08D57)); c.px(27, 33, C(0xE0C080))
+    c.rect(15, 33, 3, 1, robe); c.rect(38, 33, 3, 1, robe)          // the sleeves over his hands
 }
 
 // MARK: - MSE-6
@@ -670,7 +698,13 @@ private func drawBantha(_ c: PixelCanvas, _ p: Pose) {
 /// eyes, pointed teeth, dark robes to the floor.
 private func drawBibFortuna(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0xE6D8C8), skinDark = C(0xBFAE9C), robe = C(0x2E2420), robeEdge = C(0x4A3A30)
+    let robeDeep = C(0x1C1612), gold = C(0xC9A44A)
     drawSkirt(c, from: 36, robe, robeEdge)
+    // The robes fall to the floor: folds catching the light down them, a shadow either side of each of the four legs
+    // under the cloth, and a hem in shadow.
+    for x in [21, 25, 30, 34] { c.rect(x, 38, 1, 5, robeEdge) }
+    for x in [18, 22, 33, 37] { c.rect(x, 40, 1, 3, robeDeep) }
+    c.rect(16, 43, 24, 1, robeDeep)
     c.oy += p.breathe
     let sway = sin(p.lt * 1.2)
     for (r, col) in [(1.9, skinDark), (1.1, skin)] {               // the long lekku down his back
@@ -680,19 +714,29 @@ private func drawBibFortuna(_ c: PixelCanvas, _ p: Pose) {
     var look = Look(body: skin, shade: skinDark, arm: robe, eye: nil)
     look.legs = false
     drawBody(c, look)
+    // His head: the light along the crown, the far side in shadow, furrows across the brow.
     c.pattern(19, 21, [
-        "....SSSSSSSSSS....",
-        "..SSSSSSSSSSSSSS..",
-        ".SSSSsSSSSSSSSSSS.",
-        "SSSSSSSSSSSSSSSSSS",
-        "SSSSSSSSSSSSSSSSSS",
-    ], ["S": skin, "s": C(0xF4EAE0)])
+        "....SSSsssSSSS....",
+        "..SSssSSSSSSSSSS..",
+        ".SSsSsSSSSSSSSSdS.",
+        "SSSSSSSSSSSSSSSSdS",
+        "SSSSSSSSSSSSSSSSdS",
+    ], ["S": skin, "s": C(0xF4EAE0), "d": skinDark])
+    c.rect(24, 25, 3, 1, skinDark); c.rect(30, 25, 2, 1, skinDark); c.rect(26, 26, 4, 1, skinDark)
     c.rect(21, 28, 4, 1, skinDark); c.rect(31, 28, 4, 1, skinDark)
     c.rect(22, 29, 2, 2, C(0xA82A2A)); c.rect(32, 29, 2, 2, C(0xA82A2A))
+    c.px(22, 29, C(0xE06A5A)); c.px(32, 29, C(0xE06A5A))
+    c.rect(22, 31, 2, 1, skinDark); c.rect(32, 31, 2, 1, skinDark)  // the shadows under his eyes
     c.pattern(24, 32, ["KKKKKKKK", "KWKWKWKK"], ["K": ink, "W": white])   // the grin
+    // The dark robes: the front's overlapping edge, folds shaded, the collar lit along its rim with a gold clasp.
     c.rect(18, 34, 20, 4, robe)
     c.rect(37, 34, 1, 4, robeEdge)
+    c.rect(29, 35, 1, 3, robeEdge); c.rect(30, 35, 1, 3, robeDeep)
+    c.px(21, 36, robeDeep); c.px(25, 37, robeDeep); c.px(34, 36, robeDeep)
     c.rect(22, 34, 12, 1, C(0x9A8A6A))                              // the collar
+    c.rect(23, 34, 4, 1, C(0xBCAC88)); c.px(22, 34, C(0x7A6A50)); c.px(33, 34, C(0x7A6A50))
+    c.rect(28, 34, 2, 1, gold); c.px(28, 34, C(0xF0D47A))
+    c.rect(15, 35, 3, 1, robeEdge); c.rect(38, 35, 3, 1, robeEdge)  // the sleeves' cuffs
     for (r, col) in [(1.5, skinDark), (0.8, skin)] {               // the other lekku, over his shoulder
         c.glowLine(35, 25, 36, 36, core: col, glow: C(0, 0), coreR: r, glowR: r + 0.1)
     }

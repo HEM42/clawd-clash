@@ -501,18 +501,32 @@ private func drawDooku(_ c: PixelCanvas, _ p: Pose) {
 
 /// A Gamorrean guard: green, horned leather cap, snout and tusks, and a vibro-axe shouldered at rest.
 private func drawGamorrean(_ c: PixelCanvas, _ p: Pose) {
-    let green = C(0x6E8B3D), greenDark = C(0x55702C), leather = C(0x5A3A22)
+    let green = C(0x6E8B3D), greenDark = C(0x55702C), leather = C(0x5A3A22), greenHi = C(0x88A452)
+    let leatherDark = C(0x3E2814), fur = C(0x6A4A2A)
     drawLegs(c, Look(leg: greenDark), step: p.step)
+    drawBoots(c, C(0x3A2A1C), step: p.step, rows: 2)                // crude hide boots, scuffed at the toe
+    drawBootShine(c, step: p.step, C(0x6A5040))
     c.oy += p.breathe
     drawBody(c, Look(body: green, shade: greenDark, arm: green, eye: nil))
-    c.pattern(17, 18, ["H..................H", "HH..LLLLLLLLLLLL..HH", ".HLLLLLLLLLLLLLLLLH.", "..LLLLLLLLLLLLLLLL..",
-                       ".LLLLLLLLLLLLLLLLLL.", "LLLLLLLLLLLLLLLLLLLL", "LL................LL"],
-              ["L": leather, "H": C(0xE8DCC0)])                 // leather cap with horns
+    c.rect(15, 35, 3, 1, leather); c.rect(38, 35, 3, 1, leather)    // leather bracers
+    // The leather cap: its crown lit, the far side in shadow, studs round the band; the horns darker at the root.
+    c.pattern(17, 18, ["H..................H", "HH..LLLlllLLLLLL..HH", ".hLLllLLLLLLLLLLLLh.", "..LLLLLLLLLLLLLLLd..",
+                       ".LLLLLLLLLLLLLLLLLd.", "LLsLLLLsLLLLsLLLLsLd", "LL................Ld"],
+              ["L": leather, "H": C(0xE8DCC0), "h": C(0xC8BC9E), "l": C(0x7A5434), "d": leatherDark, "s": C(0x9A9EA4)])
+    // His hide: a heavy brow over the piggy eyes, warts and creases in short strokes.
+    c.rect(22, 27, 3, 1, greenDark); c.rect(31, 27, 3, 1, greenDark)
     c.rect(23, 28, 2, 2, C(0x1A1A10)); c.rect(32, 28, 2, 2, C(0x1A1A10))   // small piggy eyes
-    c.pattern(25, 30, [".PPPPP.", "PPkPkPP", ".PPPPP."], ["P": C(0x9AB070), "k": C(0x2A2A18)])   // snout
+    c.rect(20, 30, 1, 2, greenDark); c.px(20, 29, greenHi); c.rect(35, 31, 2, 1, greenDark); c.px(19, 26, greenHi)
+    c.pattern(25, 30, [".PlPPP.", "PPkPkPP", ".PPPPP."], ["P": C(0x9AB070), "k": C(0x2A2A18), "l": C(0xBCD094)])   // snout
     c.px(23, 34, C(0xF4EEDC)); c.px(33, 34, C(0xF4EEDC))      // tusks
-    c.rect(18, 35, 20, 3, C(0x6A4A2A))                          // fur loincloth
+    c.px(23, 33, greenDark); c.px(33, 33, greenDark)
+    // The belt with its iron buckle, the fur loincloth under it in short strokes.
+    c.rect(18, 35, 20, 3, fur)
+    c.rect(18, 35, 20, 1, leatherDark)
+    c.rect(27, 35, 2, 1, C(0x8A8F99)); c.px(27, 35, C(0xB8BCC6))
+    for x in stride(from: 20, to: 37, by: 3) { c.px(x, 36, C(0x86603A)) }
     for x in stride(from: 19, to: 38, by: 3) { c.px(x, 37, C(0x4A3020)) }
+    c.rect(37, 36, 1, 2, C(0x4A3020))
     drawAxe(c, angle: swungUp(p, from: -78) ?? -75)            // resting: axe shouldered, not through the floor
 }
 
@@ -728,24 +742,34 @@ private func drawClaw(_ c: PixelCanvas, angle: Double) {
 /// Greedo: a green Rodian Clawd: huge glossy black eyes, a tapir snout, spines on top, a vest and a pistol.
 private func drawGreedo(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0x5E9A4A), skinShade = C(0x467A36), skinLight = C(0x7AB860)
+    let vest = C(0x3A3A2E), vestHi = C(0x56564A), tunic = C(0xC8BCA0), tunicShade = C(0xA89C80)
     drawLegs(c, Look(leg: C(0x4A4A52)), step: p.step)
+    drawBoots(c, C(0x2A2A30), step: p.step, rows: 2)                // dark boots, a glint down the front
+    drawBootShine(c, step: p.step, C(0x5A5E68))
     c.oy += p.breathe
     drawBody(c, Look(body: skin, shade: skinShade, arm: skin, eye: nil))
-    // head spines and the little ear fans
-    c.pattern(19, 21, ["...S..S..S...S..S...", "..SSS.SS.SS..SS.SSS.", ".SSSSSSSSSSSSSSSSSS."], ["S": skinShade])
-    c.pattern(14, 27, ["EE", "EEE", "EE"], ["E": skinLight]); c.pattern(39, 27, [".EE", "EEE", ".EE"], ["E": skinLight])
-    for (x, y) in [(20, 27), (35, 26), (24, 35), (31, 34)] { c.px(x, y, skinLight) }
+    // head spines, their tips lit, and the little ear fans with their ridges
+    c.pattern(19, 21, ["...l..l..S...S..S...", "..SSS.SS.SS..SS.SSS.", ".SSSSSSSSSSSSSSSSSS."], ["S": skinShade, "l": skinLight])
+    c.pattern(14, 27, ["EE", "EEe", "EE"], ["E": skinLight, "e": skinShade]); c.pattern(39, 27, [".EE", "eEE", ".EE"], ["E": skinLight, "e": skinShade])
+    // his skin: short lit strokes, the far side shaded
+    for (x, y) in [(19, 26), (34, 26), (25, 35)] { c.rect(x, y, 2, 1, skinLight) }
+    c.px(31, 34, skinLight); c.rect(36, 27, 1, 6, skinShade)
     // the big multifaceted eyes
     for ex in [20, 31] {
         c.rect(ex, 27, 5, 5, C(0x0A0C10)); c.rect(ex + 1, 26, 3, 7, C(0x0A0C10))
         c.px(ex + 1, 28, C(0x6A8AB0)); c.px(ex + 2, 27, C(0xBFD8F0))
     }
-    // tapir snout
+    // tapir snout, lit along the top
     c.rect(26, 31, 4, 3, skinShade); c.rect(27, 34, 2, 2, skinShade); c.px(27, 35, C(0x2A3A20))
-    // vest over a pale tunic
-    c.rect(18, 33, 20, 5, C(0xC8BCA0))
-    c.rect(18, 33, 5, 5, C(0x3A3A2E)); c.rect(33, 33, 5, 5, C(0x3A3A2E))
+    c.rect(26, 31, 4, 1, skinLight)
+    // The vest over a pale tunic: the tunic's neck and folds, the vest's lit edges and pockets, a belt and buckle.
+    c.rect(18, 33, 20, 5, tunic)
+    c.rect(25, 33, 6, 1, tunicShade); c.px(24, 35, tunicShade); c.px(30, 36, tunicShade)
+    c.rect(18, 33, 5, 5, vest); c.rect(33, 33, 5, 5, vest)
+    c.rect(22, 33, 1, 4, vestHi); c.rect(33, 33, 1, 4, vestHi); c.rect(18, 33, 4, 1, vestHi); c.rect(34, 33, 4, 1, vestHi)
+    c.rect(19, 35, 2, 1, C(0x26261E)); c.rect(35, 35, 2, 1, C(0x26261E)); c.rect(37, 34, 1, 3, C(0x26261E))
     c.rect(18, 37, 20, 1, C(0x5A4A32))
+    c.rect(27, 37, 2, 1, C(0xB08D57)); c.px(27, 37, C(0xE0C080))
     c.oy += gunY(p)
     c.pattern(40, 31, [".KKKKK", "KKKKSK", "KK....", "KK...."], ["K": C(0x2A2A30), "S": C(0x8A8F9C)])
 }
@@ -756,13 +780,17 @@ private func drawGreedo(_ c: PixelCanvas, _ p: Pose) {
 /// black T-shaped visor slit, and a force pike held upright.
 private func drawRoyalGuard(_ c: PixelCanvas, _ p: Pose) {
     drawCape(c, t: p.t, speed: p.capeSpeed * 0.5, color: C(0x6E0C10), edge: C(0x8E1418), extra: 0.5)
-    let red = C(0xB3161B), dark = C(0x7E0E12), shine = C(0xE0484C)
+    let red = C(0xB3161B), dark = C(0x7E0E12), shine = C(0xE0484C), lit = C(0xC8262B), deep = C(0x5E0A0E)
+    // The robe, to the floor: folds catching the light down its length, a shadow either side of each of the four
+    // legs as the cloth falls over them, and a hem in shadow.
     for y in 36...43 {
         let k = (y - 36) / 2
         c.rect(17 - k, y, 22 + k * 2, 1, red)
         c.px(17 - k, y, dark); c.px(38 + k, y, dark)
-        if y > 38 { c.px(23, y, dark); c.px(32, y, dark) }       // folds
     }
+    for x in [21, 25, 30, 34] { c.rect(x, 38, 1, 5, lit) }
+    for x in [18, 22, 33, 37] { c.rect(x, 40, 1, 3, dark) }
+    c.rect(15, 43, 26, 1, deep)
     c.oy += p.breathe
     var look = Look(body: red, shade: dark, arm: red, eye: nil)
     look.legs = false
@@ -783,9 +811,15 @@ private func drawRoyalGuard(_ c: PixelCanvas, _ p: Pose) {
         ".RRRRRRRRRRRRRRRRRRRRRRD",
         "DDDDDDDDDDDDDDDDDDDDDDDD",
     ], ["R": red, "S": shine, "D": dark])
+    // The helmet's flare lit along its top, the faceplate lit down one side and shaded down the other.
+    c.rect(18, 24, 6, 1, lit); c.rect(19, 27, 1, 7, lit); c.rect(36, 27, 1, 7, dark)
     c.rect(21, 29, 14, 1, ink)          // the visor: a narrow slit across…
     c.rect(27, 29, 2, 4, ink)           // …and down the middle
-    c.rect(18, 35, 20, 1, dark)         // where the robe falls from the shoulders
+    c.rect(21, 30, 6, 1, dark); c.rect(29, 30, 6, 1, dark)          // the slit's lower lip in shadow
+    // Where the robe falls from the shoulders: its front edges meet down the middle, the sleeves' cuffs.
+    c.rect(18, 35, 20, 1, dark)
+    c.rect(28, 36, 1, 7, dark); c.px(27, 36, lit)
+    c.rect(15, 35, 3, 1, dark); c.rect(38, 35, 3, 1, dark)
     drawPike(c, angle: swungUp(p, from: -78) ?? -84)   // resting: held upright at its side, as they stand guard
 }
 

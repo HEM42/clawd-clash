@@ -116,24 +116,40 @@ private func drawWatto(_ c: PixelCanvas, _ p: Pose) {
     let base = c.oy
     c.rect(20, 43, 16, 1, C(0x000000).alpha(0.22))                  // his shadow
     c.oy = base + Int((sin(t * 3) * 1.5).rounded()) - 2
-    let skin = C(0x6E8CA8), skinDark = C(0x52708A), vest = C(0x8A6A3A)
+    let skin = C(0x6E8CA8), skinDark = C(0x52708A), vest = C(0x8A6A3A), skinHi = C(0x8EAAC4)
+    let vestHi = C(0xA88450), vestDark = C(0x6A4E2A)
     let up = Int(t * 20) % 2 == 0
     c.ellipse(15, up ? 15 : 22, 7, up ? 4 : 2, C(0xC8D8E8).alpha(0.55))   // the wings, buzzing
     c.ellipse(19, up ? 14 : 21, 6, up ? 3 : 2, C(0xE0ECF8).alpha(0.7))
     c.rect(25, 38, 2, 4, skinDark); c.rect(30, 38, 2, 4, skinDark)  // dangling legs
     c.rect(24, 42, 3, 1, skinDark); c.rect(30, 42, 3, 1, skinDark)
+    c.px(25, 39, skin); c.px(30, 39, skin)                          // knobbly knees catching the light
     c.ellipse(28, 32, 9, 7, skin)                                   // the belly
     c.ellipse(29, 34, 5, 3, C(0x86A2BC))
+    c.rect(25, 29, 2, 1, skinDark); c.rect(30, 30, 2, 1, skinDark)  // creases in the belly
+    // The vest: lit along the top, its far edge in shadow, a pocket either side.
     c.rect(20, 27, 3, 9, vest); c.rect(34, 27, 3, 9, vest)
+    c.rect(20, 27, 3, 1, vestHi); c.rect(34, 27, 3, 1, vestHi); c.px(20, 28, vestHi)
+    c.rect(36, 28, 1, 8, vestDark); c.rect(22, 29, 1, 7, vestDark)
+    c.rect(20, 32, 2, 1, vestDark); c.rect(34, 31, 2, 1, vestDark)
+    // The belt, its brass buckle and a pouch for the takings.
     c.rect(19, 36, 18, 1, C(0x4A3420))
+    c.rect(27, 36, 2, 1, C(0xB08D57)); c.px(27, 36, C(0xE0C080))
+    c.rect(20, 37, 3, 2, C(0x5A4028)); c.rect(20, 37, 3, 1, C(0x6E5236)); c.px(21, 38, C(0xB08D57))
     c.rect(16, 30, 3, 3, skin)
     let haggle = sin(t * 2) > 0.2
     c.rect(37, haggle ? 25 : 30, 3, 3, skin)                       // a hand out: how much?
     c.ellipse(29, 20, 7, 5, skin)                                   // the head
     c.rect(25, 13, 9, 3, C(0x6A5030)); c.rect(24, 15, 11, 1, C(0x4A3820))   // cap
+    c.rect(26, 13, 4, 1, C(0x8A6A42)); c.rect(25, 14, 9, 1, C(0x5A4228)); c.px(32, 13, C(0x5A4228))   // its crown lit, a band
+    // His head: the light along the top, brows over the eyes, creases in short strokes.
+    c.rect(24, 16, 4, 1, skinHi); c.px(23, 17, skinHi); c.px(22, 19, skinHi)
+    c.rect(28, 17, 3, 1, skinDark); c.rect(32, 17, 3, 1, skinDark)
+    c.rect(24, 20, 2, 1, skinDark); c.rect(25, 22, 2, 1, skinDark)
     c.rect(29, 18, 2, 2, C(0xF0E0A0)); c.rect(33, 18, 2, 2, C(0xF0E0A0))
     c.px(30, 18, ink); c.px(34, 18, ink)
     c.rect(34, 20, 3, 3, skinDark); c.rect(36, 22, 2, 5, skinDark)  // the trunk
+    c.px(35, 20, skin); c.px(36, 23, skin); c.px(36, 25, skin)      // its wrinkled rings
     c.px(33, 23, white)                                             // a tusk
     for (x, y) in [(26, 23), (28, 24), (30, 24), (32, 24)] { c.px(x, y, skinDark) }   // stubble
     c.oy = base
@@ -178,28 +194,45 @@ private func drawMoffGideon(_ c: PixelCanvas, _ p: Pose) {
 
 /// A death trooper: black armour, the black helmet with its dark green-glinting visor, an E-11.
 private func drawDeathTrooper(_ c: PixelCanvas, _ p: Pose) {
-    let black = C(0x1C1C22)
+    let black = C(0x1C1C22), plate = C(0x24242C), plateHi = C(0x3A3C46), deep = C(0x0E0E12)
     drawLegs(c, Look(leg: C(0x1A1A20)), step: p.step)
+    if !seatedPose {                                                // knee plates, lit on top
+        for (i, lx) in [19, 23, 31, 35].enumerated() {
+            let y = p.step >= 0 && i % 2 == p.step ? 38 : 39
+            c.rect(lx, y, 2, 2, plate); c.px(lx, y, plateHi)
+        }
+    }
+    drawBoots(c, deep, step: p.step, rows: 2)                       // black boots, a glint down the front
+    drawBootShine(c, step: p.step, C(0x4A4C58))
     c.oy += p.breathe
     drawBody(c, Look(body: black, shade: C(0x101014), arm: black, eye: nil))
+    c.rect(15, 35, 3, 1, deep); c.rect(38, 35, 3, 1, deep)          // the gloves
+    // The helmet: the light along its dome, the far side in shadow, rims under the visor and the grille's slots.
     c.pattern(17, 19, [
-        ".....HHHHHHHHHHHH.....",
-        "...HHHHHHHHHHHHHHHH...",
-        "..HHhhHHHHHHHHHHHHHH..",
-        ".HHhHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        "HHHHHHHHHHHHHHHHHHHHHH",
-        "HHVVVVVHHHHHHHHVVVVVHH",
-        "HHHVVgVHHHHHHHHVVgVHHH",
-        "HHHHHHHHHHHHHHHHHHHHHH",
+        ".....HHHhhhhHHHHH.....",
+        "...HHHhhHHHHHHHHHHH...",
+        "..HHhhHHHHHHHHHHHHdH..",
+        ".HHhHHHHHHHHHHHHHHHdH.",
+        ".HHHHHHHHHHHHHHHHHHdH.",
+        "HHHHHHHHHHHHHHHHHHHHdH",
+        "HHVVVVVHHHHHHHHVVVVVdH",
+        "HHHVVgVHHHHHHHHVVgVHdH",
+        "HHrrrrrHHHHHHHHrrrrrHH",
         "HHHHHHHHGGGGGGHHHHHHHH",
-        "HHHHHHHHGsGsGGHHHHHHHH",
+        "HHHHHHHHGsGsGsHHHHHHHH",
         ".HHHHHHHGGGGGGHHHHHHH.",
         "..HHHHHHHHHHHHHHHHHH..",
-    ], ["H": C(0x16161C), "h": C(0x4A4C58), "V": C(0x22332C), "g": C(0x7AE0A0), "G": C(0x2E2E36), "s": C(0x6A6E78)])
-    c.rect(18, 33, 20, 4, C(0x24242C))
-    c.rect(18, 36, 20, 1, C(0x3A3A44))
+    ], ["H": C(0x16161C), "h": C(0x4A4C58), "V": C(0x22332C), "g": C(0x7AE0A0), "G": C(0x2E2E36), "s": C(0x6A6E78),
+        "d": deep, "r": C(0x2A2A32)])
+    // The chest armour: plates lit along their tops, a seam down the middle with rivets, folds shaded.
+    c.rect(18, 33, 20, 4, plate)
+    c.rect(19, 33, 8, 1, plateHi); c.rect(29, 33, 8, 1, plateHi); c.rect(27, 33, 2, 3, deep)
     c.rect(22, 34, 3, 1, C(0x4A4C58)); c.rect(31, 34, 3, 1, C(0x4A4C58))
+    c.px(20, 35, C(0x5A5E68)); c.px(35, 35, C(0x5A5E68)); c.rect(37, 33, 1, 4, deep)
+    // The belt: pouches either side and a dull buckle.
+    c.rect(18, 36, 20, 1, C(0x3A3A44))
+    c.rect(20, 36, 3, 2, C(0x2A2A32)); c.rect(32, 36, 3, 2, C(0x2A2A32))
+    c.rect(27, 36, 2, 1, C(0x6A6E78)); c.px(27, 36, C(0x9A9EA8))
     c.oy += p.gunY
     drawE11(c, x: 37, y: 30)
 }
@@ -228,11 +261,25 @@ private func drawScoutTrooper(_ c: PixelCanvas, _ p: Pose) {
         ".HHHHHHHHHHHHHHHHHHHHHHH.....",
         "...dddddddddddddddddd........",
     ], ["H": hull, "L": hullLight, "d": dark])
+    // The bike: panel seams with rivets, the engine's intake slots, a small red running light.
+    let seam = C(0x5E5E52)
+    for x in [19, 28, 36] { c.rect(x, 31, 1, 3, seam); c.px(x + 1, 32, hullLight) }
+    c.rect(15, 33, 8, 1, seam)
+    c.rect(9, 30, 4, 1, C(0x26261F)); c.rect(9, 32, 4, 1, C(0x26261F)); c.rect(9, 34, 4, 1, C(0x26261F))
+    c.px(13, 30, C(0x5A5A52)); c.px(38, 31, C(0xE0402A))
     c.oy += p.breathe
-    c.rect(26, 27, 8, 3, white); c.rect(32, 30, 3, 3, ink)          // leg and boot
+    let shade = C(0xC8C8C2)
+    // His leg along the bike: a knee plate shaded underneath, the black boot with a glint.
+    c.rect(26, 27, 8, 3, white); c.rect(32, 30, 3, 3, ink)
+    c.rect(26, 29, 6, 1, shade); c.px(30, 28, C(0x2A2A30)); c.px(33, 30, C(0x5A5E68))
+    // The armour: a seam down the chest plate, its far side shaded, the black belt with a buckle and a pouch.
     c.rect(22, 19, 12, 9, white)
+    c.rect(27, 20, 1, 4, shade); c.rect(33, 19, 1, 6, shade); c.rect(22, 24, 11, 1, shade)
     c.rect(22, 25, 12, 1, ink)
-    c.rect(33, 22, 6, 2, white); c.rect(38, 23, 2, 2, ink)          // arms forward to the handlebars
+    c.px(27, 25, C(0x8A8F99)); c.rect(23, 26, 2, 1, C(0x2A2A30))
+    // Arms forward to the handlebars: the black suit at the elbow, a shadow under the arm, black gloves.
+    c.rect(33, 22, 6, 2, white); c.rect(38, 23, 2, 2, ink)
+    c.rect(33, 23, 5, 1, shade); c.px(35, 22, C(0x2A2A30))
     c.pattern(21, 11, [
         "....WWWWWW....",
         "..WWWWWWWWWW..",
@@ -243,6 +290,8 @@ private func drawScoutTrooper(_ c: PixelCanvas, _ p: Pose) {
         "WWWWWWWWWKKKKW",
         ".WWWWWWWWWKKK.",
     ], ["W": white, "K": ink])
+    // The helmet: a ridge over the dome, the brow shaded over the visor, the lower dome in shadow.
+    c.rect(27, 11, 1, 2, shade); c.rect(23, 14, 10, 1, shade); c.rect(22, 18, 8, 1, shade)
     c.oy = base
 }
 
@@ -379,19 +428,38 @@ private func drawJangoFett(_ c: PixelCanvas, _ p: Pose) {
 
 /// Bossk: a Trandoshan bounty hunter, green and scaly, slit eyes, a toothy jaw, his yellow flight suit, an E-11.
 private func drawBossk(_ c: PixelCanvas, _ p: Pose) {
-    let scales = C(0x6A8A4A), scalesDark = C(0x4E6A36), suit = C(0xD8C060)
+    let scales = C(0x6A8A4A), scalesDark = C(0x4E6A36), suit = C(0xD8C060), scalesHi = C(0x88A862)
+    let suitHi = C(0xF0DC84), suitShade = C(0xB8A040), suitDeep = C(0x9A8434)
     drawLegs(c, Look(leg: suit), step: p.step)
+    if !seatedPose { for lx in [19, 23, 31, 35] { c.rect(lx + 1, 38, 1, 3, suitShade) } }   // the suit's creases
+    drawBoots(c, scalesDark, step: p.step, rows: 1)                 // bare clawed feet
     c.oy += p.breathe
     drawBody(c, Look(body: scales, shade: scalesDark, arm: suit, eye: nil))
-    c.pattern(19, 21, ["...SSSSSSSSSSSS...", ".SSSSsSSSSSsSSSSS.", "SSSSSSSSSSSSSSSSSS", "SSsSSSSSSsSSSSSsSS"],
-              ["S": scales, "s": scalesDark])
-    for (x, y) in [(20, 27), (26, 28), (35, 27), (29, 31), (19, 31)] { c.px(x, y, scalesDark) }
+    c.rect(15, 34, 3, 1, suitShade); c.rect(38, 34, 3, 1, suitShade)   // the sleeves' cuffs…
+    c.rect(15, 35, 3, 1, scales); c.rect(38, 35, 3, 1, scales)         // …and his clawed hands
+    // His scaly head: the light along the crown, the far side in shadow, scales in short lit strokes.
+    c.pattern(19, 21, ["...SSlllSSSSSSS...", ".SllSsSSSSSsSSSSd.", "SSSSSSSSSSSSSSSSSd", "SSsSSSSSSsSSSSSsSd"],
+              ["S": scales, "s": scalesDark, "l": scalesHi, "d": scalesDark])
+    for (x, y) in [(20, 27), (26, 27), (34, 27), (29, 31), (19, 31), (34, 32)] {
+        c.rect(x, y, 2, 1, scalesDark); c.px(x, y - 1, scalesHi)
+    }
+    // The heavy brow over his slit eyes, a glint in each.
+    c.rect(21, 28, 4, 1, scalesDark); c.rect(31, 28, 4, 1, scalesDark)
     c.rect(22, 29, 3, 2, C(0xE07A2A)); c.rect(32, 29, 3, 2, C(0xE07A2A))
     c.rect(23, 29, 1, 2, ink); c.rect(33, 29, 1, 2, ink)
+    c.px(22, 29, C(0xFFB46A)); c.px(32, 29, C(0xFFB46A))
     c.pattern(24, 32, ["KWKWKWKW"], ["K": ink, "W": white])
+    // The flight suit: the neck of its collar, a zip with its pull, folds shaded down the side.
     c.rect(18, 33, 20, 5, suit)
-    c.rect(18, 33, 20, 1, C(0xB8A040))
+    c.rect(18, 33, 20, 1, suitShade)
+    c.rect(25, 33, 6, 1, suitDeep); c.px(24, 33, suitHi); c.px(31, 33, suitHi)
+    c.rect(28, 34, 1, 2, suitShade); c.px(28, 34, C(0xB9BEC8))
+    c.rect(37, 33, 1, 5, suitDeep); c.px(21, 35, suitShade); c.px(33, 37, suitShade)
+    c.rect(19, 34, 1, 2, suitHi)
+    // The belt: a pouch either side, a buckle.
     c.rect(18, 36, 20, 1, C(0x5A4A3A))
+    c.rect(20, 36, 3, 2, C(0x4A3A2E)); c.rect(32, 36, 3, 2, C(0x4A3A2E)); c.px(21, 36, C(0xB08D57)); c.px(33, 36, C(0xB08D57))
+    c.rect(27, 36, 2, 1, C(0x8A8F99)); c.px(27, 36, C(0xB8BCC6))
     c.oy += p.gunY
     drawE11(c, x: 37, y: 30)
 }
