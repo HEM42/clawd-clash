@@ -206,6 +206,6 @@ extension Location {
     static let starkWorkshop = Location("starkWorkshop"), redRoom = Location("redRoom"), taLo = Location("taLo")
 }
 
-/// Every Marvel place, from the Places/Scenes*.swift files.
+/// Every Marvel place, from the Places/MarvelousScenes*.swift files.
 let marvelPlaces: [Location: Place] = scenes1.merging(scenes2) { a, _ in a }.merging(scenes3) { a, _ in a }
     .merging(scenes4) { a, _ in a }.merging(scenes5) { a, _ in a }.merging(scenes6) { a, _ in a }.merging(scenes7) { a, _ in a }
