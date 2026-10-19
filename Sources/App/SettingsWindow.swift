@@ -15,6 +15,8 @@ enum SettingsRow {
     case toggle(String, note: String? = nil, get: () -> Bool, set: (Bool) -> Void)
     /// A label and a column of checkboxes under it, each with its own title, with an optional line under them.
     case checks(String, note: String? = nil, items: [(title: String, get: () -> Bool, set: (Bool) -> Void)])
+    /// A bold heading across the whole width, and under it checkboxes in `columns` columns, read across.
+    case checkGrid(String, columns: Int, items: [(title: String, get: () -> Bool, set: (Bool) -> Void)])
     /// A label and a pop-up of choices, left out while not `shown`.
     case choice(String, options: [String], shown: () -> Bool = { true }, get: () -> Int, set: (Int) -> Void)
     /// A label, what it says now, and a button (none when `button` gives nil). `dimmed` greys the row out.
@@ -133,6 +135,32 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
                 if i > 0 { r.topPadding = -3 }
             }
             if let note { addNote(note, to: grid) }
+        case let .checkGrid(title, columns, items):
+            let heading = NSTextField(labelWithString: title)
+            heading.font = .boldSystemFont(ofSize: NSFont.systemFontSize + 1)
+            let boxes = NSGridView(numberOfColumns: columns, rows: 0)
+            boxes.columnSpacing = 28
+            boxes.rowSpacing = 8
+            for start in stride(from: 0, to: items.count, by: columns) {
+                let row: [NSView] = (0..<columns).map { k in
+                    guard start + k < items.count else { return NSGridCell.emptyContentView }
+                    let item = items[start + k]
+                    let box = NSButton(checkboxWithTitle: item.title, target: nil, action: nil)
+                    box.state = item.get() ? .on : .off
+                    let set = item.set
+                    hook(box) { set(($0 as? NSButton)?.state == .on) }
+                    return box
+                }
+                boxes.addRow(with: row)
+            }
+            let block = NSStackView(views: [heading, boxes])
+            block.orientation = .vertical
+            block.alignment = .leading
+            block.spacing = 10
+            let r = grid.addRow(with: [block, NSGridCell.emptyContentView])
+            r.mergeCells(in: NSRange(location: 0, length: 2))
+            r.cell(at: 0).xPlacement = .leading
+            r.topPadding = 4
         case let .choice(title, options, shown, get, set):
             let popup = NSPopUpButton(frame: .zero, pullsDown: false)
             popup.addItems(withTitles: options)

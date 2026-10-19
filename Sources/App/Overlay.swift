@@ -2619,7 +2619,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
         let released = Universe.allCases.filter(\.isReleased)
         let universeRows: [SettingsRow] = [
-            .checks("Universes", items: released.map { u in
+            .checkGrid("Universes", columns: 2, items: released.map { u in
                 (title: u.title, get: { !Universe.removed.contains(u) },
                  set: { [weak self] kept in self?.keepUniverse(u, kept) })
             }),
