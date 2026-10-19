@@ -88,6 +88,13 @@ let hawkinsTheme = Theme(
 // with the prefix.
 extension Location {
     static let hawkinsBasement = Location("hawkinsBasement")
+    static let hawkinsByers = Location("hawkinsByers")
+    static let hawkinsLab = Location("hawkinsLab")
+    static let hawkinsUpsideDown = Location("hawkinsUpsideDown")
+    static let hawkinsStarcourt = Location("hawkinsStarcourt")
+    static let hawkinsCabin = Location("hawkinsCabin")
+    static let hawkinsCreel = Location("hawkinsCreel")
+    static let hawkinsMind = Location("hawkinsMind")
 }
 
 /// Every place's drawing, from the Places/HawkinsScenes*.swift files (a few places a file). Add each new file to the
