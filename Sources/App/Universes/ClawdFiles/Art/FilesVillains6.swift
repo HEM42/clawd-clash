@@ -58,7 +58,7 @@ private func note(_ c: PixelCanvas, _ x: Int, _ y: Int, _ col: Px) {
 /// grows in underneath, smooth and shiny, eyes shut, then blinks open as if nothing happened.
 private func drawLeonardBetts(_ c: PixelCanvas, _ p: Pose) {
     let shirt = C(0x2A3550), shirtD = C(0x1C2438), band = C(0xDDE4EE), patch = C(0x3A7AD8)
-    let hair = C(0xB8622E), hairL = C(0xD4803E)
+    let hair = C(0xB8622E), hairL = C(0xD4803E), hairD = C(0x8E4A22), shirtL = C(0x3C4A6A)
     let sig = p.signature
     let shed = sig.map { ramp($0, 0.15, 0.6) } ?? 0          // the old head lifting off and fading
     let grow = sig.map { ramp($0, 0.2, 0.75) } ?? 1           // the new one coming in
@@ -72,6 +72,9 @@ private func drawLeonardBetts(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 34, 20, 4, shirt); c.rect(37, 34, 1, 4, shirtD); c.rect(18, 37, 20, 1, shirtD)
     c.rect(18, 35, 20, 1, band)
     c.pattern(21, 33, [".P.", "PPP", ".P."], ["P": patch])
+    c.rect(25, 34, 6, 1, shirtD); c.rect(27, 34, 2, 1, C(0xC8D0DC))   // the open collar
+    c.rect(33, 34, 3, 1, shirtL); c.rect(19, 36, 1, 1, shirtD); c.rect(34, 36, 1, 1, shirtD)   // a lit shoulder, creases
+    c.rect(18, 37, 19, 1, C(0x14141A)); c.px(27, 37, C(0xA8ACB4))   // the belt and its buckle
 
     // The face: the new head comes in shiny and pink-tinged; eyes shut until it's done.
     if sig != nil && grow < 1 {
@@ -81,22 +84,23 @@ private func drawLeonardBetts(_ c: PixelCanvas, _ p: Pose) {
     if blink { c.rect(22, 30, 2, 1, ink); c.rect(32, 30, 2, 1, ink) } else { c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink) }
     // The hair (the new head's comes back in as it grows).
     let hairRows = [
-        "......HHhHHHHhHH......",
-        "....HHHHHHhHHHHHHH....",
-        "..HHHHHHHHHHHHHHHHHH..",
-        ".HHHHH..........HHHHH.",
-        ".HHH..............HHH.",
+        "......HHhhHHhhHH......",
+        "....HHhhHHHHHHhhHH....",
+        "..HHHHHHHHhhHHHHHHdH..",
+        ".HHHHH..........HHHdH.",
+        ".HHH..............HdH.",
     ]
-    c.pattern(17, 22, hairRows, ["H": hair.alpha(sig == nil ? 1 : grow), "h": hairL.alpha(sig == nil ? 1 : grow)])
+    let hairA = sig == nil ? 1 : grow
+    c.pattern(17, 22, hairRows, ["H": hair.alpha(hairA), "h": hairL.alpha(hairA), "d": hairD.alpha(hairA)])
     // The old head, lifting off: hair and a shell of face, rising and fading.
     if shed > 0 && shed < 1 {
         let lift = Int((shed * 12).rounded()), fade = 1 - shed
-        c.pattern(17, 22 - lift, hairRows, ["H": hair.alpha(fade), "h": hairL.alpha(fade)])
+        c.pattern(17, 22 - lift, hairRows, ["H": hair.alpha(fade), "h": hairL.alpha(fade), "d": hairD.alpha(fade)])
         c.rect(18, 26 - lift, 20, 6, clawdOrange.alpha(0.8 * fade))
         c.rect(22, 29 - lift, 2, 3, ink.alpha(fade)); c.rect(32, 29 - lift, 2, 3, ink.alpha(fade))
     }
 
-    c.rect(15, 33, 3, 3, shirt)
+    c.rect(15, 33, 3, 3, shirt); c.rect(15, 35, 3, 1, shirtD)   // the sleeve's cuff
     if let a = p.melee {
         for (i, ta) in p.trail.enumerated() {
             swingArm(c, angle: ta, sleeve: shirt, fist: clawdOrange, alpha: 0.35 / Double(i + 1))
@@ -360,6 +364,7 @@ private func drawEve6(_ c: PixelCanvas, _ p: Pose) {
 
 private func eveFigure(_ c: PixelCanvas, _ p: Pose, talking: Bool, holdingOut: Bool) {
     let dress = C(0xD4DCD4), dressD = C(0xA8B4A8), hair = C(0xC8A866), hairD = C(0x9A7E44), poison = C(0x6AE87A)
+    let dressL = C(0xEAF0EA)
     drawLegs(c, Look(leg: clawdOrange), step: p.step)
     drawDressShoes(c, step: p.step, color: C(0xE8E8E2))
     c.oy += p.breathe
@@ -367,13 +372,16 @@ private func eveFigure(_ c: PixelCanvas, _ p: Pose, talking: Bool, holdingOut: B
     // The plain dress and its name tag.
     c.rect(18, 33, 20, 6, dress); c.rect(37, 33, 1, 6, dressD); c.rect(18, 38, 20, 1, dressD)
     c.rect(21, 34, 4, 2, C(0xFFFFFF)); c.rect(22, 35, 2, 1, C(0x5A6A5A))
+    c.rect(25, 33, 6, 1, dressD); c.rect(26, 33, 4, 1, clawdOrange)   // the round neckline
+    c.rect(32, 33, 4, 1, dressL)                                       // a lit shoulder
+    c.rect(27, 35, 1, 3, dressD); c.rect(33, 35, 1, 3, dressD)         // the plain cloth's folds
     // Long straight hair, parted in the middle, down past her shoulders.
     // Long straight hair, parted in the middle: curtains swept off the forehead, falling behind her shoulders, the
     // ends uneven, a strand over each cheek.
     c.pattern(16, 20, [
         "......HHHHHdHHHHHH......",
-        "....HHHlHHHdHHHlHHHH....",
-        "...HHlHHHHHdHHHHHlHHH...",
+        "....HHllHHHdHHHllHHH....",
+        "...HllHHHHHdHHHHHllHH...",
         "..HHHHHHHHHdHHHHHHHHHH..",
         ".HHHHHHHHHdHHdHHHHHHHHH.",
         ".HHHHHHHHdHHHHdHHHHHHHH.",
@@ -391,7 +399,7 @@ private func eveFigure(_ c: PixelCanvas, _ p: Pose, talking: Bool, holdingOut: B
         ".d.....................d",
     ], ["H": hair, "l": C(0xE0C888), "d": hairD])
     if talking { c.rect(26, 33, 3, 1, C(0x5A2A20)) }
-    c.rect(15, 33, 3, 3, dress)
+    c.rect(15, 33, 3, 3, dress); c.rect(15, 35, 3, 1, dressD)   // the sleeve's hem
     if holdingOut {
         let raise = p.armRaise
         c.rect(38, 31 - raise, 3, 3, dress); c.rect(41, 31 - raise, 3, 2, clawdOrange)
@@ -408,6 +416,7 @@ private func eveFigure(_ c: PixelCanvas, _ p: Pose, talking: Bool, holdingOut: B
 /// what he swings. Signature: he offers you the rose with a slow, smouldering look, and a little heart floats up.
 private func drawVirgilIncanto(_ c: PixelCanvas, _ p: Pose) {
     let coat = C(0x1A1A20), coatL = C(0x34343E), turtle = C(0x101014), hair = C(0x16121A), hairL = C(0x3A2E44)
+    let turtleL = C(0x26262C)
     let stem = C(0x2E7A3A), rose = C(0xD01E3A), roseD = C(0x8A1024)
     let sig = p.signature
     let offering = sig.map { $0 > 0.08 && $0 < 0.92 } ?? false
@@ -421,11 +430,14 @@ private func drawVirgilIncanto(_ c: PixelCanvas, _ p: Pose) {
     // The turtleneck up to the chin, the coat open over it.
     c.rect(18, 33, 20, 5, coat); c.rect(24, 33, 8, 5, turtle); c.rect(18, 37, 20, 1, coatL)
     c.rect(23, 33, 1, 4, coatL); c.rect(32, 33, 1, 4, coatL)
-    // Hair slicked back to a widow's peak, down to the top of the face.
+    c.rect(18, 33, 3, 1, coatL); c.rect(34, 33, 2, 1, coatL)          // lit shoulders
+    c.rect(24, 33, 8, 1, turtleL); c.rect(27, 35, 1, 2, turtleL)      // the turtleneck's roll and a fold
+    c.rect(20, 35, 1, 2, C(0x0E0E12)); c.rect(35, 35, 1, 2, C(0x0E0E12))   // the coat's folds
+    // Hair slicked back to a widow's peak, down to the top of the face, its shine in short runs.
     c.pattern(17, 21, [
         "......HHHHHHHHHH......",
-        "....HHHHhHHHHhHHHH....",
-        "..HHHHHHHHHHHHHHHHHH..",
+        "....HHhhhHHHHhhhHH....",
+        "..HHHHHHHHhhhHHHHHHH..",
         ".HHHHHHHHHHHHHHHHHHHH.",
         ".HHHHHHHHHHHHHHHHHHHH.",
         ".HH.......HH.......HH.",
@@ -438,7 +450,7 @@ private func drawVirgilIncanto(_ c: PixelCanvas, _ p: Pose) {
     }
     c.pattern(26, 32, ["HHHH", ".HH."], ["H": hair])
 
-    c.rect(15, 33, 3, 3, coat)
+    c.rect(15, 33, 3, 3, coat); c.rect(15, 33, 3, 1, coatL)   // the sleeve, lit along the top
     let roseAt: (Double, Double, Double) -> Void = { x, y, r in
         let tx = x + cos(r) * 9, ty = y + sin(r) * 9
         seg(c, x, y, tx, ty, stem)

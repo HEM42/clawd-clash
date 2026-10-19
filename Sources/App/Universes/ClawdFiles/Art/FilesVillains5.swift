@@ -176,7 +176,7 @@ private func drawFollmer(_ c: PixelCanvas, _ p: Pose) {
 /// goes up to his brow.
 private func drawBillClawder(_ c: PixelCanvas, _ p: Pose) {
     let tweed = C(0x6A4E34), tweedD = C(0x4A3624), fleck = C(0x8A6A4A), vest = C(0xB8A07A), shirt = C(0xEAE6DA)
-    let tie = C(0x3A2A2A), hair = C(0x4A3A2E), grey = C(0x9A9A9E)
+    let tie = C(0x3A2A2A), hair = C(0x4A3A2E), grey = C(0x9A9A9E), hairL = C(0x66503E), greyL = C(0xC0C0C4)
     let sig = p.signature
     let away = sig.map { $0 > 0.08 && $0 < 0.94 } ?? false
     let brow = sig.map { $0 > 0.35 && $0 < 0.85 } ?? false
@@ -194,26 +194,28 @@ private func drawBillClawder(_ c: PixelCanvas, _ p: Pose) {
     }
     // The tweed jacket open over the sweater-vest and tie.
     c.rect(18, 34, 20, 4, tweed); c.rect(37, 34, 1, 4, tweedD); c.rect(18, 37, 20, 1, tweedD)
-    for (x, y) in [(19, 35), (22, 36), (35, 35), (33, 37), (20, 37)] { c.px(x, y, fleck) }
+    // The tweed's weave in short strokes, the shoulders lit.
+    for (x, y) in [(19, 35), (34, 35), (21, 36)] { c.rect(x, y, 2, 1, fleck) }
+    c.rect(18, 34, 3, 1, fleck); c.rect(33, 34, 3, 1, fleck)
     c.pattern(23, 34, ["lVSTTSVl", ".lVTTVl.", "..VTTV..", "..VVVV.."], ["l": tweedD, "V": vest, "S": shirt, "T": tie])
     // The hair: Fox's fringe, thinner, greying at the sides.
     c.pattern(17, 20, [
         "........HHHHHH........",
-        ".....HHHHHHHHHHHH.....",
-        "...gHHHHHHHHHHHHHHg...",
-        "..ggHHHHHHHHHHHHHHgg..",
-        "..ggHHHHHHHHHHHHHHgg..",
-        ".gggHHHHHHHHHHHHHHggg.",
+        ".....HHHllHHHHHHH.....",
+        "...gHHllHHHHHllHHHg...",
+        "..GgHHHHHHllHHHHHHgg..",
+        "..ggHHHllHHHHHHHHHgg..",
+        ".GggHHHHHHHHHHHHHHggg.",
         ".ggg...HHHH.......ggg.",
         ".gg................gg.",
-    ], ["H": hair, "g": grey])
+    ], ["H": hair, "g": grey, "l": hairL, "G": greyL])
     if away { c.oy += 1 }   // the shoulders sag
     if brow {
         c.rect(15, 33, 3, 3, tweed); c.rect(18, 28, 3, 3, clawdOrange); c.rect(17, 30, 2, 3, tweed)
         c.rect(38, 33, 3, 3, tweed); c.rect(38, 35, 3, 1, clawdOrange)
         return
     }
-    c.rect(15, 33, 3, 3, tweed)
+    c.rect(15, 33, 3, 3, tweed); c.rect(15, 35, 3, 1, tweedD)   // the sleeve's cuff
     c.oy += p.gunY
     drawSidearm(c, sleeve: tweed, searching: false)
 }
@@ -261,6 +263,8 @@ private func drawCrewCutMan(_ c: PixelCanvas, _ p: Pose) {
         ".HH................HH.",
     ], ["H": hair])
     for x in stride(from: 20, to: 37, by: 2) { c.px(x, 19, C(0x7A6A58)) }
+    c.rect(19, 20, 6, 1, C(0x6E5E4C)); c.rect(28, 20, 5, 1, C(0x6E5E4C))   // the flat top caught by the light
+    c.rect(36, 20, 1, 7, C(0x46392C)); c.rect(37, 24, 1, 2, C(0x46392C))     // the far side in shadow
     if screwing {
         // The pistol held up, the silencer in his other hand, turning onto the barrel.
         let turn = Int(p.t * 8) % 2
@@ -269,7 +273,8 @@ private func drawCrewCutMan(_ c: PixelCanvas, _ p: Pose) {
         c.rect(45, 29, 4, 1, turn == 0 ? C(0x4A4C54) : C(0x6A6C74)); c.rect(45, 28, 1, 1, C(0x8A8C94))
         return
     }
-    c.rect(15, 33, 3, 3, coat)
+    c.rect(15, 33, 3, 3, coat); c.rect(15, 33, 3, 1, coatL); c.rect(15, 35, 3, 1, coatD)   // the sleeve's cuff
+    c.rect(21, 34, 1, 2, coatD); c.rect(34, 34, 1, 2, coatD)                                // folds
     c.oy += p.gunY
     drawSidearm(c, sleeve: coat, searching: false)
     c.rect(47, 31, 4, 1, C(0x4A4C54)); c.rect(47, 32, 4, 1, C(0x34363C))   // the silencer
@@ -314,15 +319,15 @@ private func drawColonist(_ c: PixelCanvas, _ p: Pose) {
             c.px(x, y, C(0xE8FFF0, 0.45))
         }
     }
-    // Short, flat, colourless hair.
+    // Short, flat, colourless hair, a dull sheen in short runs across it, the far side shaded.
     c.pattern(17, 21, [
-        "....HHHHHHHHHHHHHH....",
-        "..HHHHHHHHHHHHHHHHHH..",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HH................HH.",
-    ], ["H": C(0x6E7468)])
+        "....HHHHLLLHHHHHHH....",
+        "..HHHLLHHHHHHLLLHHHH..",
+        ".HHHHHHHHHHHHHHHHHHdH.",
+        ".HHHHHHHHHHHHHHHHHHdH.",
+        ".HHHHHHHHHHHHHHHHHHdH.",
+        ".HH................dH.",
+    ], ["H": C(0x6E7468), "L": C(0x8A9084), "d": C(0x545A50)])
     c.ox -= lean
 }
 
@@ -334,7 +339,7 @@ private func drawColonist(_ c: PixelCanvas, _ p: Pose) {
 /// and his cap knocked the other way, steel showing at the breaks, then he clicks back together and shrugs.
 private func drawDuffyHaskell(_ c: PixelCanvas, _ p: Pose) {
     let denim = C(0x4A6A9A), denimD = C(0x34507A), hood = C(0x8A8C92), hoodD = C(0x6A6C72), jeans = C(0x2E3C58)
-    let cap = C(0x2E4A3A), capL = C(0x46685A), hair = C(0xC86A2E)
+    let cap = C(0x2E4A3A), capL = C(0x46685A), hair = C(0xC86A2E), denimL = C(0x6A8AB8), capD = C(0x203428)
     let sig = p.signature
     // How far apart he is: 0 whole, up to 4.
     let apart: Int = sig.map { s in
@@ -358,6 +363,8 @@ private func drawDuffyHaskell(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 26, 20, 8, clawdOrange); c.rect(37, 26, 1, 8, clawdShade)
     c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink)
     c.rect(18, 32, 20, 2, denim); c.rect(26, 32, 4, 2, hood); c.px(26, 32, hoodD); c.px(29, 32, hoodD)
+    c.rect(18, 32, 3, 1, denimL); c.rect(33, 32, 3, 1, denimL)                    // lit shoulders
+    c.rect(21, 33, 3, 1, denimD); c.rect(32, 33, 3, 1, denimD)                    // the chest pockets' flaps
     // The knit cap pulled low, ginger hair showing under it; knocked the other way when he's apart.
     c.ox += apart * 2
     c.pattern(17, 19, [
@@ -366,10 +373,10 @@ private func drawDuffyHaskell(_ c: PixelCanvas, _ p: Pose) {
         "..HHHHHHHHHHHHHHHHHH..",
         ".HHHHHHHHHHHHHHHHHHHH.",
         ".HHHHHHHHHHHHHHHHHHHH.",
-        ".RRRRRRRRRRRRRRRRRRRR.",
-        ".RRRRRRRRRRRRRRRRRRRR.",
+        ".RrRRrRRrRRrRRrRRrRRr.",
+        ".RrRRrRRrRRrRRrRRrRRr.",
         ".g..................g.",
-    ], ["H": cap, "R": capL, "g": hair])
+    ], ["H": cap, "R": capL, "r": capD, "g": hair])
     c.ox -= apart; c.oy -= apart / 2
     if apart > 0 {
         // Steel at the breaks, glinting; the arms hanging loose.
