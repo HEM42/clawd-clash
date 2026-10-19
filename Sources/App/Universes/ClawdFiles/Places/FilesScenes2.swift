@@ -445,14 +445,28 @@ extension Scenes {
 
     /// Apartment 42, Clawder's place, late at night: a dim room with only the TV and the fish tank for light. The
     /// window has a tape X stuck across it (the signal for Mister X), a worn leather couch he sleeps on more than his
-    /// bed, a small TV on a stand, the fish tank bubbling on its cabinet, and the door with its brass 42. On the screen
-    /// saver, shelves of videotapes and books go up the wall to a ceiling lamp.
+    /// bed, a small TV on a stand, the fish tank bubbling on its cabinet, and the door with its brass 42, his trench
+    /// coat on the hook beside it. Two photos hang over the couch and a radiator sits under the window. On the screen
+    /// saver, shelves of videotapes and books go up the wall to a ceiling lamp, under a cornice and a picture rail hung
+    /// with frames, a heating pipe climbing the corner.
     static func apartment42(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), f = aptFrame(c, g)
         c.gradient(0, g, C(0x161A22), C(0x2C323C), bands: 6)
         if f.ceiling > 0 { c.rect(0, 0, c.w, f.ceiling, C(0x22262E)); c.rect(0, f.ceiling - s, c.w, s, C(0x383E48)) }
         // A skirting board.
         c.rect(0, g - 3 * s, c.w, 3 * s, C(0x3A3E46))
+        if tall { aptUpperWall(c, g, s: s, ceiling: f.ceiling) }
+        // Two photos over the couch: a girl in a school photo, and a blurred light in a night sky.
+        for (k, px) in [f.couch.x + 14 * s, f.couch.x + 44 * s].enumerated() where g - 40 * s > f.ceiling + 2 * s {
+            let py = g - 40 * s
+            c.rect(px - s, py - s, 12 * s, 10 * s, C(0x5A4430)); c.rect(px, py, 10 * s, 8 * s, k == 0 ? C(0x8A9AAA) : C(0x14182A))
+            if k == 0 {
+                c.rect(px + 4 * s, py + 2 * s, 3 * s, 3 * s, C(0xD8A888)); c.rect(px + 3 * s, py + 2 * s, 5 * s, s, C(0x3A2A1E))
+                c.rect(px + 3 * s, py + 5 * s, 5 * s, 3 * s, C(0x6A3A3A))
+            } else {
+                c.rect(px + 4 * s, py + 3 * s, 2 * s, s, C(0xE8F0D8)); c.rect(px + 3 * s, py + 4 * s, 4 * s, max(1, s / 2), C(0xC8D8C0, 0.6))
+            }
+        }
         if tall {
             // The ceiling lamp, and shelves of tapes and books.
             c.rect(c.w / 2, f.ceiling, s, 10 * s, C(0x3A3A3A)); c.ellipse(c.w / 2, f.ceiling + 12 * s, 7 * s, 3 * s, C(0x8A7A5A))
@@ -479,6 +493,13 @@ extension Scenes {
         filesLine(c, w.x + 2 * s, w.y + 2 * s, w.x + w.w - 4 * s, w.y + w.h - 4 * s, 2 * s, C(0xE8DCB0))
         filesLine(c, w.x + w.w - 4 * s, w.y + 2 * s, w.x + 2 * s, w.y + w.h - 4 * s, 2 * s, C(0xE8DCB0))
         c.rect(w.x - 3 * s, w.y + w.h + 2 * s, w.w + 6 * s, s, C(0x6A6C68))
+        // The radiator under it, painted over many times, standing on the floor.
+        let rw = w.w - 6 * s, rx = w.x + 3 * s
+        if g - (w.y + w.h) > 18 * s {
+            c.rect(rx, g - 13 * s, rw, 10 * s, C(0x5A5E5A))
+            for x in stride(from: rx + s, to: rx + rw - s, by: 3 * s) { c.rect(x, g - 12 * s, 2 * s, 9 * s, C(0x6E726C)); c.rect(x, g - 12 * s, s, 9 * s, C(0x7E827C)) }
+            c.rect(rx, g - 13 * s, rw, s, C(0x7E827C)); c.rect(rx + rw, g - 7 * s, 3 * s, s, C(0x4A4E4A))
+        }
         // The couch: worn black-brown leather.
         let cx = f.couch.x, cw = f.couch.w, back = g - 21 * s
         c.rect(cx, back, cw, 12 * s, C(0x2E1C14)); c.rect(cx, back, cw, s, C(0x4E3022))
@@ -520,9 +541,58 @@ extension Scenes {
         c.rect(dx + 2 * s, g - dh + 3 * s, 14 * s, dh / 2 - 4 * s, C(0x3E2A1E)); c.rect(dx + 2 * s, g - dh / 2 + 2 * s, 14 * s, dh / 2 - 5 * s, C(0x3E2A1E))
         c.rect(dx + 14 * s, g - dh / 2, 2 * s, 2 * s, C(0xC8A04A))
         if dh > 20 * s { filesNumber(c, "42", x: dx + 5 * s, y: g - dh + 5 * s, s: max(1, s), col: C(0xD8B85A)) }
+        // His trench coat on the hook beside the door: the collar, the belt hanging loose, a fold down the back.
+        let hx = dx - 9 * s, hy = g - min(34 * s, dh - 2 * s)
+        c.rect(hx + 3 * s, hy - s, 2 * s, 2 * s, C(0xC8A04A))
+        c.rect(hx + s, hy, 6 * s, 3 * s, C(0x7A6A4A)); c.rect(hx, hy + 3 * s, 8 * s, 18 * s, C(0x8A7A56))
+        c.rect(hx, hy + 3 * s, s, 18 * s, C(0x6A5A3E)); c.rect(hx + 4 * s, hy + 4 * s, max(1, s / 2), 17 * s, C(0x6A5A3E))
+        c.rect(hx - s, hy + 10 * s, 10 * s, s, C(0x6A5A3E)); c.rect(hx + 7 * s, hy + 11 * s, s, 5 * s, C(0x6A5A3E))
         // The floor: worn boards.
         c.ground(g, C(0x3A2C22), edge: C(0x5A4434), speck: C(0x2E221A), seed: 71)
         for x in stride(from: 0, to: c.w, by: 14 * s) { c.rect(x, g + 1, max(1, s / 2), c.h - g - 1, C(0x2A1E16)) }
+    }
+
+    /// The apartment's upper wall on the screen saver: a cornice under the ceiling, a heating pipe up the corner, and a
+    /// picture rail with frames hung from it on their wires (a map, a seascape, an old photo, a print of the moon).
+    private static func aptUpperWall(_ c: PixelCanvas, _ g: Int, s: Int, ceiling: Int) {
+        c.rect(0, ceiling, c.w, 3 * s, C(0x2A2E36)); c.rect(0, ceiling + 3 * s, c.w, s, C(0x3A404A))
+        c.rect(c.w * 2 / 100, ceiling + 4 * s, 3 * s, g - ceiling - 7 * s, C(0x4A4E52)); c.rect(c.w * 2 / 100, ceiling + 4 * s, s, g - ceiling - 7 * s, C(0x5E6266))
+        for y in stride(from: ceiling + 30 * s, to: g - 10 * s, by: 60 * s) { c.rect(c.w * 2 / 100 - s, y, 5 * s, 2 * s, C(0x34383E)) }
+        let rail = g - 140 * s
+        guard rail > ceiling + 30 * s else { return }
+        // Old wallpaper above the rail: faint stripes, a small figure between them, a water stain from the flat above.
+        for x in stride(from: 0, to: c.w, by: 12 * s) {
+            c.rect(x, ceiling + 4 * s, s, rail - ceiling - 4 * s, C(0x3A4250, 0.22))
+            for y in stride(from: ceiling + 10 * s + (x / (12 * s)) % 2 * 9 * s, to: rail - 4 * s, by: 18 * s) {
+                c.rect(x + 5 * s, y, 2 * s, 2 * s, C(0x3A4250, 0.45)); c.rect(x + 6 * s, y - s, max(1, s / 2), 4 * s, C(0x3A4250, 0.3))
+            }
+        }
+        c.ellipse(c.w * 70 / 100, ceiling + 10 * s, 26 * s, 9 * s, C(0x4A4030, 0.18)); c.ellipse(c.w * 70 / 100, ceiling + 9 * s, 18 * s, 6 * s, C(0x5A4C36, 0.14))
+        c.rect(0, rail, c.w, 2 * s, C(0x3A3026)); c.rect(0, rail, c.w, max(1, s / 2), C(0x5A4A3A))
+        let frames: [(x: Int, w: Int, h: Int, drop: Int)] = [(c.w * 20 / 100, 22 * s, 16 * s, 6 * s), (c.w * 44 / 100, 16 * s, 12 * s, 8 * s),
+                                                               (c.w * 58 / 100, 26 * s, 18 * s, 5 * s), (c.w * 80 / 100, 14 * s, 14 * s, 9 * s)]
+        for (k, fr) in frames.enumerated() {
+            let top = rail + 2 * s + fr.drop
+            filesLine(c, fr.x + fr.w / 2, rail + 2 * s, fr.x + 2 * s, top, max(1, s / 2), C(0x6A6A6A))
+            filesLine(c, fr.x + fr.w / 2, rail + 2 * s, fr.x + fr.w - 2 * s, top, max(1, s / 2), C(0x6A6A6A))
+            c.rect(fr.x - s, top - s, fr.w + 2 * s, fr.h + 2 * s, C(0x4A3828))
+            let ix = fr.x + s, iy = top + s, iw = fr.w - 2 * s, ih = fr.h - 2 * s
+            switch k {
+            case 0:   // a map, pale with roads
+                c.rect(ix, iy, iw, ih, C(0xC8C4A8)); c.rect(ix, iy + ih / 2, iw, s, C(0x9A6A4A)); c.rect(ix + iw / 3, iy, s, ih, C(0x9A6A4A))
+                c.ellipse(ix + iw * 2 / 3, iy + ih / 3, iw / 6, ih / 6, C(0x8AA8B8))
+            case 1:   // a seascape at dusk
+                filesBox(c, ix, iy, iw, ih / 2, C(0x5A4A6A), C(0xC88A5A)); c.rect(ix, iy + ih / 2, iw, ih - ih / 2, C(0x2A3A5A))
+            case 2:   // an old photo of the family, sepia
+                c.rect(ix, iy, iw, ih, C(0xA8946A))
+                for (u, h) in [(4, 9), (9, 11), (14, 8), (19, 7)] where u * s + 3 * s < iw {
+                    c.rect(ix + u * s, iy + ih - h * s, 3 * s, h * s, C(0x5A4A32)); c.rect(ix + u * s, iy + ih - h * s - 2 * s, 3 * s, 2 * s, C(0x7A6446))
+                }
+            default:  // a print of the moon
+                c.rect(ix, iy, iw, ih, C(0x0E1018)); c.circle(ix + iw / 2, iy + ih / 2, min(iw, ih) / 3, C(0xD8D8CC))
+                c.circle(ix + iw / 2 + s, iy + ih / 2 - s, max(1, min(iw, ih) / 10), C(0xA8A89C))
+            }
+        }
     }
 
     /// What moves in Apartment 42: the TV's flickering blue light washing over the couch, the fish swimming back and
