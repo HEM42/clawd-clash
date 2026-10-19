@@ -12,14 +12,14 @@ import Foundation
 // Group the cases with a comment line per group, as the other universes do. A full universe has 80 to 110 characters.
 
 enum HawkinsHero: Int, CaseIterable {
-    // Heroes
-    case sampleHero
+    // The Party
+    case eleven, mikeWheeler, dustinHenderson
     case hem   // always last (`Universe.hem`)
 }
 
 enum HawkinsVillain: Int, CaseIterable {
-    // Villains
-    case sampleVillain
+    // The Upside Down and the people who hunt the kids
+    case vecna
 }
 
 extension Universe {
@@ -33,6 +33,9 @@ enum HawkinsFacts {
     static let facts = UniverseFacts(
         // The counts come from the enums, never typed by hand.
         villainCount: HawkinsVillain.allCases.count, heroCount: HawkinsHero.allCases.count
+        // Nothing else yet: no small fry until the Demodog, Dart, the Demobat and the flayed rat are drawn, Vecna and
+        // One become rivals once One is, and the compaction (taken to the Upside Down) comes with the mechanics.
+        //
         // Everything below is optional: uncomment what your universe needs. Ids here are local: a villain's is its
         // rawValue, a hero's `UniverseFacts.heroBase + rawValue`.
         //

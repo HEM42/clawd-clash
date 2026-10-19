@@ -31,22 +31,24 @@ extension Location {
     /// Where each villain belongs: the crew gathers there when one leads the first session (window mode, Automatic).
     /// Every character's home is one of this universe's places, and a `switch` with no `default` makes the compiler
     /// ask for each new case.
+    /// The basement is the only place so far, so everyone lives there for now. Eleven moves to Hopper's cabin,
+    /// Dustin to the Snow Ball and Vecna to his mind as those places are drawn.
     static func hawkinsHome(of villain: HawkinsVillain) -> Location {
         switch villain {
-        case .sampleVillain: return .hawkinsMeadow
+        case .vecna: return .hawkinsBasement
         }
     }
 
     static func hawkinsHome(of hero: HawkinsHero) -> Location {
         switch hero {
-        case .sampleHero, .hem: return .hawkinsMeadow
+        case .eleven, .mikeWheeler, .dustinHenderson, .hem: return .hawkinsBasement
         }
     }
 }
 
 // MARK: - The theme
 
-/// A character as a `Cast`. Everywhere else, name the enum too (`.hero(HawkinsHero.sampleHero)`): every universe has
+/// A character as a `Cast`. Everywhere else, name the enum too (`.hero(HawkinsHero.eleven)`): every universe has
 /// a `.hero(_:)` and a `.hem`, so a bare `.hero(.hem)` is ambiguous once they're all compiled together.
 extension Cast {
     static func hero(_ h: HawkinsHero) -> Cast { Cast(universe: .hawkins, isDark: false, index: h.rawValue) }
@@ -54,10 +56,9 @@ extension Cast {
 }
 
 /// Arch-enemies: whenever both are fighting, they're paired with each other first, wherever they are in the line. Each
-/// pair is a hero and a villain from this universe; a character can be in more than one pair.
-private let hawkinsNemeses: [(HawkinsHero, HawkinsVillain)] = [
-    (.sampleHero, .sampleVillain),
-]
+/// pair is a hero and a villain from this universe; a character can be in more than one pair. None yet: Eleven's is
+/// Brenner and Vecna's is Max, and neither is drawn so far.
+private let hawkinsNemeses: [(HawkinsHero, HawkinsVillain)] = []
 
 let hawkinsTheme = Theme(
     universe: .hawkins,
@@ -65,29 +66,28 @@ let hawkinsTheme = Theme(
     heroes: HawkinsHero.allCases.map(\.persona),
     // Every place, in menu order. The first is the default: where the crew stands when nobody's home is known. A full
     // universe has about 20.
-    places: [.hawkinsMeadow],
+    places: [.hawkinsBasement],
     home: { c in
-        c.isDark ? .hawkinsHome(of: HawkinsVillain(rawValue: c.index) ?? .sampleVillain)
-                 : .hawkinsHome(of: HawkinsHero(rawValue: c.index) ?? .sampleHero)
+        c.isDark ? .hawkinsHome(of: HawkinsVillain(rawValue: c.index) ?? .vecna)
+                 : .hawkinsHome(of: HawkinsHero(rawValue: c.index) ?? .mikeWheeler)
     },
     nemeses: hawkinsNemeses.map { (.hero($0.0), .villain($0.1)) },
-    // Who gets picked up when their agent is done, and by what: nil walks off on foot, as everyone does here. A ride is
-    // a `Ride` of this universe's own (`static let` in an extension of `Ride`, listed in the module's `rides`), drawn
-    // nose to the right; see Slayer/SlayerUniverse.swift and SlayerRides.swift for a bus and two cars that drive in.
+    // Who gets picked up when their agent is done, and by what: nil walks off on foot, as everyone does for now. The
+    // Party's BMX bikes come with the mechanics.
     ride: { c in
         guard c.universe == .hawkins else { return nil }
         return nil
     },
     menuIcon: hawkinsMenuIcon,
     // Who stands in for a session in Status Symbols: usually the universe's lead hero.
-    legend: .hero(HawkinsHero.sampleHero))
+    legend: .hero(HawkinsHero.eleven))
 
 // MARK: - Places
 
 // The place keys. They're saved in settings and the screen-saver feed, and unique across every universe, so each starts
-// with the prefix (Tools/new-universe.sh renames the `sample…` ones here).
+// with the prefix.
 extension Location {
-    static let hawkinsMeadow = Location("hawkinsMeadow")
+    static let hawkinsBasement = Location("hawkinsBasement")
 }
 
 /// Every place's drawing, from the Places/HawkinsScenes*.swift files (a few places a file). Add each new file to the

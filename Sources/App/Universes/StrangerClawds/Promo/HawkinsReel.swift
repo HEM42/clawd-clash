@@ -19,21 +19,21 @@ struct HawkinsReel: PromoReel {
     let name = "hawkins", base = "stranger-clawds-promo", small = "Stranger-Clawds"
     var title: String { universe.title.uppercased() }
     /// What Gemini's terminal is busy with on the desktop, in the universe's voice.
-    let geminiTask = "gemini ▸ prune the dead branches"
+    let geminiTask = "gemini ▸ check the walkie-talkie batteries"
     var shots: [Shot] { hawkinsShots }
     var beats: [(key: Double, beat: Beat)] { hawkinsBeats }
     var universe: Universe { .hawkins }
     /// Who's in its desktop brawl, and the caption under the universe's pill (the promo plays this shot too).
     var brawl: BrawlCast {
-        BrawlCast(claude: .hero(HawkinsHero.sampleHero), other: .villain(HawkinsVillain.sampleVillain), agent: .hero(HawkinsHero.hem), otherAgent: .villain(HawkinsVillain.sampleVillain),
+        BrawlCast(claude: .hero(HawkinsHero.eleven), other: .villain(HawkinsVillain.vecna), agent: .hero(HawkinsHero.dustinHenderson), otherAgent: .villain(HawkinsVillain.vecna),
                   line: universe.isReleased ? "Or wander into \(universe.title)." : "Coming soon: \(universe.title).",
-                  sub: "Seed pistols, thistle magic and a windmill that never stops.")
+                  sub: "Walkie-talkies, Eggos and something in the walls.")
     }
     /// Who's in its window, and what you asked them (the promo plays this shot too).
     var window: WindowCast {
-        WindowCast(place: .hawkinsMeadow, claude: .hero(HawkinsHero.sampleHero), other: .villain(HawkinsVillain.sampleVillain),
-                   agentA: .hero(HawkinsHero.hem), agentB: .hero(HawkinsHero.sampleHero), extra: .villain(HawkinsVillain.sampleVillain),
-                   prompt: "You: “water the flaky tests”", otherPrompt: "You: “let the weeds in”")
+        WindowCast(place: .hawkinsBasement, claude: .hero(HawkinsHero.eleven), other: .villain(HawkinsVillain.vecna),
+                   agentA: .hero(HawkinsHero.mikeWheeler), agentB: .hero(HawkinsHero.dustinHenderson), extra: .villain(HawkinsVillain.vecna),
+                   prompt: "You: “roll a d20 for the flaky test”", otherPrompt: "You: “open the gate”")
     }
     func sound(_ m: Mix) { hawkinsSound(m) }
 }
@@ -48,7 +48,7 @@ let hawkinsShots: [Shot] = [
         ctx.translateBy(x: Double(W) / 2, y: Double(H) / 2); ctx.scaleBy(x: zoom, y: zoom); ctx.translateBy(x: -Double(W) / 2, y: -Double(H) / 2)
         desktop(ctx, dim: 0)
         ctx.restoreGState()
-        caption("Three AIs. Nine agents. One very confused gardener.", ctx, local: local, start: 0.05, y: 860, size: 60)
+        caption("Three AIs. Nine agents. One very confused human.", ctx, local: local, start: 0.05, y: 860, size: 60)
         caption("Sound familiar?", ctx, local: local, start: 0.7, y: 120, size: 76, color: yellow)
     },
     Shot(name: "desktop", start: 4.0, end: 8.6) { ctx, local, t in
@@ -59,36 +59,35 @@ let hawkinsShots: [Shot] = [
                 color: yellow, weight: .bold)
     },
     Shot(name: "status", start: 8.6, end: 12.8) { ctx, local, t in
-        let cast: [Cast] = [.hero(HawkinsHero.sampleHero), .villain(HawkinsVillain.sampleVillain), .hero(HawkinsHero.hem), .hero(HawkinsHero.sampleHero)]
+        let cast: [Cast] = [.hero(HawkinsHero.eleven), .villain(HawkinsVillain.vecna), .hero(HawkinsHero.mikeWheeler), .hero(HawkinsHero.dustinHenderson)]
         statusOf(ctx, local: local, t: t, cast: cast, badgeText: Universe.hawkins.title.uppercased(),
-                 aside: "(\(cast[1].name) needs you. \(cast[2].name) has gone for a lie-down in the grass.)")
+                 aside: "(\(cast[1].name) needs you. \(cast[2].name) is down in the basement until dinner.)")
     },
     Shot(name: "agents", start: 12.8, end: 16.8) { ctx, local, t in
-        agentsOf(ctx, local: local, t: t, guardCast: .hero(HawkinsHero.hem), crew: [.hero(HawkinsHero.sampleHero), .villain(HawkinsVillain.sampleVillain)],
-                 line: "Every subagent gets a place in the meadow.", badgeText: Universe.hawkins.title.uppercased())
+        agentsOf(ctx, local: local, t: t, guardCast: .hero(HawkinsHero.mikeWheeler), crew: [.hero(HawkinsHero.dustinHenderson), .hero(HawkinsHero.eleven)],
+                 line: "Every subagent gets to join the Party.", badgeText: Universe.hawkins.title.uppercased())
     },
-    // The window comes in on the universe's own trip.
-    Shot(name: "window", start: 16.8, end: 21.6, into: .trip(ComicTransition(HawkinsTrip(kind: .petals)))) { ctx, local, t in
-        windowShot(ctx, .hawkins, local: local, t: t, rise: true, needsAt: 2.5, at: .hawkinsMeadow)
+    Shot(name: "window", start: 16.8, end: 21.6) { ctx, local, t in
+        windowShot(ctx, .hawkins, local: local, t: t, rise: true, needsAt: 2.5, at: .hawkinsBasement)
         badge("WINDOW MODE", ctx, alpha: clamp((local - 0.2) / 0.3))
-        caption("Prefer a window? Mind the windmill.", ctx, local: local, start: 0.1, y: 955, size: 56)
+        caption("Prefer a window? Mind the basement.", ctx, local: local, start: 0.1, y: 955, size: 56)
         caption("A live card per session: what it's doing, your last prompt, every agent.", ctx, local: local, start: 0.4, y: 890,
                 size: 32, color: yellow, weight: .bold)
     },
     Shot(name: "ais", start: 21.6, end: 26.0) { ctx, local, t in
-        everyAI(ctx, local: local, t: t, cast: [.hero(HawkinsHero.sampleHero), .hero(HawkinsHero.hem), .villain(HawkinsVillain.sampleVillain), .villain(HawkinsVillain.sampleVillain),
-                                                .hero(HawkinsHero.sampleHero), .villain(HawkinsVillain.sampleVillain), .hero(HawkinsHero.hem)])
+        everyAI(ctx, local: local, t: t, cast: [.hero(HawkinsHero.eleven), .hero(HawkinsHero.mikeWheeler), .villain(HawkinsVillain.vecna), .hero(HawkinsHero.dustinHenderson),
+                                                .hero(HawkinsHero.hem), .villain(HawkinsVillain.vecna), .hero(HawkinsHero.eleven)])
     },
-    // The end card: the meadow, the crew lines up, the title lands, then the app's icon and where to get it.
+    // The end card: the basement, the crew lines up, the title lands, then the app's icon and where to get it.
     Shot(name: "endcard", start: 26.0, end: 30.2) { ctx, local, t in hawkinsEndcard(ctx, local: local, t: t) },
 ]
 
 /// The end card, its line under "Have fun. Keep track." never a count of universes.
 func hawkinsEndcard(_ ctx: CGContext, local: Double, t: Double) {
-    blit(place(.hawkinsMeadow, floorRows: 34, t: t), ctx)
+    blit(place(.hawkinsBasement, floorRows: 34, t: t), ctx)
     ctx.setFillColor(CGColor(gray: 0, alpha: 0.3)); ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
-    let crew: [(Cast, FightRole, AI)] = [(.hero(HawkinsHero.hem), .cheer, .desktop), (.hero(HawkinsHero.sampleHero), .zap, .claude),
-                                         (.villain(HawkinsVillain.sampleVillain), .zap, .codex)]
+    let crew: [(Cast, FightRole, AI)] = [(.hero(HawkinsHero.mikeWheeler), .cheer, .desktop), (.hero(HawkinsHero.eleven), .zap, .claude),
+                                         (.villain(HawkinsVillain.vecna), .zap, .codex)]
     var placed: [Actor] = []
     for (i, (who, role, ai)) in crew.enumerated() {
         var a = Actor(cast: who, x: [60.0, 130, 200][i], facing: i < 2 ? 1 : -1, role: role, ai: ai)
@@ -117,14 +116,14 @@ func hawkinsEndcard(_ ctx: CGContext, local: Double, t: Double) {
 /// The storyboard's beats: a time in the reel, and its title, what happens, what's on screen and what's heard.
 let hawkinsBeats: [(key: Double, beat: Beat)] = [
     (1.5, ("THE HOOK", "The desktop, busy with terminals, zooming in slowly.",
-           "“Three AIs. Nine agents. One very confused gardener.” “Sound familiar?”", "keys clicking, the groove fading in")),
-    (6.0, ("THE DESKTOP", "\(Cast.hero(HawkinsHero.sampleHero).name) and \(Cast.villain(HawkinsVillain.sampleVillain).name) drop onto the desktop and fight along the bottom of the screen.",
+           "“Three AIs. Nine agents. One very confused human.” “Sound familiar?”", "keys clicking, the groove fading in")),
+    (6.0, ("THE DESKTOP", "\(Cast.hero(HawkinsHero.eleven).name) and \(Cast.villain(HawkinsVillain.vecna).name) drop onto the desktop and fight along the bottom of the screen.",
            "DESKTOP MODE", "footsteps, bolts and a crackle of magic")),
     (10.5, ("THE STATUS", "The crew in a line-up, one needing you.", "the universe's name", "pops, a little tune")),
-    (14.5, ("THE AGENTS", "HEM keeps watch while the subagents run in.", "“Every subagent gets a place in the meadow.”", "running feet")),
-    (19.0, ("THE WINDOW", "A gust of petals blows the window in: the Sample Meadow, the cards under it.", "WINDOW MODE", "a whoosh, then a ping")),
+    (14.5, ("THE AGENTS", "Mike keeps watch while the subagents run in.", "“Every subagent gets to join the Party.”", "running feet")),
+    (19.0, ("THE WINDOW", "The window wipes in: the Wheelers' basement, the cards under it.", "WINDOW MODE", "a whoosh, then a ping")),
     (23.5, ("EVERY AI", "Every AI's sessions, each in its own colour.", "the AIs' names", "pops")),
-    (28.0, ("THE END CARD", "The meadow, the crew lined up, the title.", "\(Universe.hawkins.title.uppercased()), “Have fun. Keep track.”", "the last chord")),
+    (28.0, ("THE END CARD", "The basement, the crew lined up, the title.", "\(Universe.hawkins.title.uppercased()), “Have fun. Keep track.”", "the last chord")),
 ]
 
 // MARK: The sound

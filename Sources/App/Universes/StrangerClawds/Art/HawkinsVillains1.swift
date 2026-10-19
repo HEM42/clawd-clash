@@ -1,97 +1,132 @@
 import Foundation
 
-// Villains, 8 to 10 a file, drawn the same way as the heroes (HawkinsHeroes1.swift has the Persona fields and the
-// order every drawing goes in).
-//
-// Magic (`weapon: .lightning`): `magic:` says how the stream looks, and the engine draws it from `pivot` (the casting
-// hand, raised `p.armRaise` pixels: draw the arm raised as much). Its families:
-//   Magic(core:glow:)                      forked lightning (the default)
-//   jagged: false                          a steady, wavering ray (a sonic screwdriver, a flashlight beam)
-//   jagged: false, spell: true             a twinkling ribbon of sparkles (sorcery)
-//   jagged: false, rings: true             rings rippling out along a faint ray (mind powers)
-//   jagged: false, waves: true             arcs pulsing out (sound, force)
-//   notes: true, touch: true, rcCar: true  music, a glowing fingertip, a remote-controlled car
-// Don't set `magic.variant` yourself: the engine numbers every magic user in order through all the universes
-// (`magicVariants`), so no two anywhere look exactly alike, and a new universe only adds to the end.
+// Villains: the Upside Down and the people who hunt the kids. Drawn eerie, never gory: Clawd in costume like the rest,
+// on Clawd's four legs.
 
 let hawkinsVillains1: [HawkinsVillain: Persona] = [
-    .sampleVillain: Persona(name: "Sample Villain", weapon: .lightning,
-                            magic: Magic(core: C(0xF6E2FF), glow: C(0x9A3ADC), jagged: false, spell: true),
-                            headTop: 18, signature: 3.2, callout: "Weeds always win.", draw: drawSampleVillain),
+    .vecna: Persona(name: "Vecna", weapon: .lightning,
+                    magic: Magic(core: C(0xFFD0C8), glow: C(0xD0202A), jagged: false, rings: true),
+                    pivot: (48, 32), bulk: 4, headTop: 12, signature: 3.6, draw: drawVecna),
 ]
 
-// MARK: - Sample Villain
+// MARK: - Vecna
 
-/// Sample Villain: a thistle witch. Clawd in a plum hood with a pointed tip and a long plum robe to the ground, a
-/// thistle-green sash, a purple amulet, and the toes of her black shoes under the hem. Her magic is a ribbon of violet
-/// sparkles. Signature: she lifts both hands and a ring of thistle-down sparks gathers and whirls over her hood, then
-/// fizzles out.
-private func drawSampleVillain(_ c: PixelCanvas, _ p: Pose) {
-    let robe = C(0x5A2E5E), robeD = C(0x3E1E42), robeL = C(0x7A4680)
-    let sash = C(0x5E8A3A), sashD = C(0x42662A), amulet = C(0xC67AF0), shoe = C(0x1E161E)
-    // The signature, 0…1 while the sparks are up: from a tenth of the way in to nine tenths, back to normal after.
-    let spell = p.signature.map { $0 > 0.1 && $0 < 0.9 ? ($0 - 0.1) / 0.8 : -1 } ?? -1
+/// Vecna: tall and gaunt, a high bald head on a thin neck over Clawd's body with its shoulders sloping, his reddish-grey
+/// skin knotted all over with dark vines, his ribs showing, pale milky eyes in deep sockets and a thin, lipless mouth. One long arm hangs at his back; the other reaches
+/// forward with long pale claws, the vines twisting round his four legs to clawed toes. His mind power is red rings
+/// rippling out of his hand. Signature: he raises his hand, claws spread, and the vines all over him writhe, three
+/// tendrils rising off his shoulders and head, then settling.
+private func drawVecna(_ c: PixelCanvas, _ p: Pose) {
+    let skin = C(0x8A5A50), skinD = C(0x5E3A36), skinL = C(0xA87468)
+    let vine = C(0x3A161A), vineL = C(0x6E2E2C), vein = C(0xB04A3E)
+    let claw = C(0xE2D4BC), clawD = C(0xA8987E)
+    let rise = p.signature.map { $0 > 0.08 && $0 < 0.9 ? ($0 - 0.08) / 0.82 : -1 } ?? -1
+    let writhe = rise >= 0 ? sin(rise * .pi) : 0
+    let wt = p.t * 7
 
-    // 1. The legs, under the robe: drawn first all the same, for sitting and walking; the robe goes over them after
-    //    the breath. Then the shoes' toes on the ground row, under where the hem will stop.
-    drawLegs(c, Look(leg: robeD), step: p.step)
+    // The legs, the vines wound round them, long pale toes on the ground.
+    drawLegs(c, Look(leg: skinD), step: p.step)
     if !seatedPose {
         for (i, lx) in [19, 23, 31, 35].enumerated() {
-            let lifted = p.step >= 0 && i % 2 == p.step
-            c.rect(lx, lifted ? 42 : 43, 2, 1, shoe)
+            let bottom = p.step >= 0 && i % 2 == p.step ? 42 : 43
+            c.px(lx, bottom - 6, vine); c.px(lx + 1, bottom - 5, vine); c.px(lx, bottom - 3, vine); c.px(lx + 1, bottom - 2, vineL)
+            c.px(lx, bottom - 6, vineL)
+            c.px(lx + 2, bottom, clawD)
         }
     }
 
-    // 2. The breath.
     c.oy += p.breathe
+    // The body: Clawd's block with its shoulders sloping, a thin neck, and the tall bald head on top, lit along the
+    // top and the left, shaded on the right and underneath, the cheeks hollow.
+    c.pattern(17, 26, [
+        "....SSSSSSSSSSSSSS....",
+        "..SSSSSSSSSSSSSSSSSS..",
+        ".SSSSSSSSSSSSSSSSSSSS.",
+    ], ["S": skin])
+    c.rect(17, 29, 22, 9, skin)
+    c.rect(25, 24, 6, 2, skinD)
+    c.pattern(21, 12, [
+        "....SSSSSS....",
+        "..SSSSSSSSSS..",
+        ".SSSSSSSSSSSS.",
+        "SSSSSSSSSSSSSS",
+        "SSSSSSSSSSSSSS",
+        "SSSSSSSSSSSSSS",
+        "SSSSSSSSSSSSSS",
+        "SSSSSSSSSSSSSS",
+        "SSSSSSSSSSSSSS",
+        ".SSSSSSSSSSSS.",
+        ".SSSSSSSSSSSS.",
+        "..SSSSSSSSSS..",
+        "...SSSSSSSS...",
+    ], ["S": skin])
+    c.rect(25, 12, 4, 1, skinL); c.rect(23, 13, 3, 1, skinL); c.rect(22, 14, 1, 2, skinL); c.rect(21, 15, 1, 6, skinL)
+    c.rect(34, 15, 1, 6, skinD); c.rect(33, 21, 1, 3, skinD); c.rect(22, 21, 1, 2, skinD); c.rect(23, 23, 8, 1, skinD)
+    c.rect(19, 27, 4, 1, skinL); c.rect(18, 28, 1, 2, skinL); c.rect(17, 29, 1, 8, skinL)
+    c.rect(38, 29, 1, 9, skinD); c.rect(36, 27, 2, 1, skinD); c.rect(17, 37, 22, 1, skinD)
 
-    // 3. Clawd's body. Her casting hand (the near one) rises `p.armRaise` pixels, which is where the engine starts
-    //    the stream from; both hands go up for the signature.
-    let raise = spell >= 0 ? 4 : p.armRaise
-    drawBody(c, Look(arm: robe), armLeft: spell >= 0 ? 4 : 0, armRight: raise)
-
-    // 4. The robe, long to the ground, as a robe should stay: never shortened to show the legs. It falls from the
-    //    shoulders and flares a little; a soft shadow either side of each leg hints at the four legs under the cloth,
-    //    and the hem stops a row above the ground so the toes peep out. It's the far side and the hem that are in
-    //    shade, the left edge that's lit.
-    c.rect(18, 33, 20, 5, robe)
-    for y in 38...42 where y + c.oy <= 42 {
-        let flare = (y - 38) / 2
-        c.rect(17 - flare, y, 22 + 2 * flare, 1, robe)
-        c.px(17 - flare, y, robeL); c.px(38 + flare, y, robeD)
-        if y >= 39 { for x in [22, 26, 30, 34] { c.px(x, y, robeD) } }   // between the legs
-    }
-    c.rect(37, 33, 1, 5, robeD)
-    c.rect(18, 33, 1, 5, robeL)
-    // The sash, tied on the left with its ends hanging, and the amulet at her throat.
-    c.rect(18, 36, 20, 1, sash); c.rect(18, 37, 20, 1, sashD)
-    c.rect(20, 37, 1, 3, sash); c.rect(21, 37, 1, 2, sashD)
-    c.pattern(27, 33, [".A.", "AaA", ".A."], ["A": amulet, "a": C(0xF4D8FF)])
-    c.rect(25, 33, 2, 1, C(0x9A9AA6)); c.rect(30, 33, 2, 1, C(0x9A9AA6))   // its chain
-
-    // 5. The hood: the engine's `drawHood` shape round her face, then its pointed tip leaning back, a lit run along the
-    //    top and a seam down the middle, so it isn't a flat block of colour.
-    drawHood(c, robe, robeD)
-    c.rect(19, 25, 18, 1, robeD)   // the hood's shadow over her brow, so no see-through row is left above her face
-    c.pattern(18, 15, [
-        "......RRR..........",
-        ".......RRRR........",
-        "........RRRRR......",
-        "..........RRR......",
-    ], ["R": robe])
-    c.rect(21, 20, 6, 1, robeL); c.rect(19, 21, 3, 1, robeL); c.px(17, 23, robeL)
-    c.rect(28, 19, 1, 3, robeD)
-    // Her brows, knitted.
-    c.pattern(21, 27, ["dd.......dd", "..d.....d.."], ["d": C(0x2A1A2A)])
-
-    // 6. The signature: a ring of thistle-down sparks over her hood, whirling, brightest in the middle of it. It stays
-    //    above row 3 and inside the frame's sides, and it's see-through (a glow), so it gets no outline.
-    if spell >= 0 {
-        let strength = sin(spell * .pi)
-        for k in 0..<8 {
-            let a = Double(k) / 8 * 2 * .pi + spell * 9
-            let x = 28 + Int((cos(a) * 9).rounded()), y = 10 + Int((sin(a) * 3).rounded())
-            c.px(x, y, C(0xE8C8FF, strength)); c.px(x + 1, y, C(0x9A3ADC, strength * 0.6))
+    // The vines knotted over him: dark strands lit on their left, over his head and down his body, twisting as he
+    // breathes and writhing in his signature.
+    let strands: [(x: Double, top: Int, bottom: Int, lo: Int, hi: Int, ph: Double)] = [
+        (24, 13, 22, 22, 33, 0.5), (31, 14, 23, 22, 33, 2.6),
+        (20, 27, 37, 18, 37, 0), (26, 27, 37, 18, 37, 2.1), (32, 27, 37, 18, 37, 4.2), (36, 29, 36, 18, 37, 3.1),
+    ]
+    for v in strands {
+        for y in v.top...v.bottom {
+            let wob = sin(Double(y) * 0.55 + v.ph) * 1.2 + writhe * sin(wt + Double(y) * 0.8 + v.ph) * 1.6
+            let x = Int((v.x + wob).rounded())
+            guard x >= v.lo, x <= v.hi else { continue }
+            c.px(x, y, vine); if x > v.lo { c.px(x - 1, y, vineL) }
         }
     }
+    // A few raw red veins between them, and the ribs' shadows across his chest.
+    for (x, y) in [(19, 31), (20, 32), (29, 29), (30, 30), (34, 34), (35, 35), (23, 35)] { c.px(x, y, vein) }
+    for y in [30, 32] { c.rect(22, y, 3, 1, skinD); c.rect(28, y, 3, 1, skinD) }
+
+    // The face: deep sockets, pale milky eyes, and the thin mouth with its row of small teeth.
+    c.rect(23, 17, 4, 4, skinD); c.rect(29, 17, 4, 4, skinD)
+    c.rect(24, 18, 2, 2, C(0xD4DCD4)); c.px(24, 18, C(0xF4F8F0)); c.rect(30, 18, 2, 2, C(0xD4DCD4)); c.px(30, 18, C(0xF4F8F0))
+    c.rect(24, 22, 8, 1, C(0x2A0E10))
+    for x in [25, 27, 29, 31] { c.px(x, 22, C(0xC8B8A0)) }
+
+    // The far arm, long and hanging at his back, its claws pointing down.
+    c.rect(14, 28, 3, 8, skin); c.rect(14, 28, 1, 8, skinL); c.px(15, 30, vine); c.px(16, 31, vine)
+    for x in [14, 16] { c.rect(x, 36, 1, 3, claw); c.px(x, 38, clawD) }
+
+    if rise >= 0 {
+        // The hand raised high, its long claws spread, and tendrils rising off his shoulders and head, waving.
+        let lift = Int((min(1, rise * 4) * 10).rounded())
+        c.rect(39, 30 - lift, 3, 4 + lift, skin); c.rect(41, 30 - lift, 1, 4 + lift, skinD); c.px(39, 32 - lift / 2, vine)
+        let hy = 28 - lift
+        c.rect(39, hy, 4, 2, skin)
+        // Three claws fanned out, two pixels apart so they stay three.
+        for (k, len) in [5, 6, 5].enumerated() {
+            for d in 0..<len { c.px(38 + k * 2 + (k - 1) * d / 2, hy - 1 - d, d == len - 1 ? clawD : claw) }
+        }
+        for (k, base) in [(x: 18, y: 27), (x: 27, y: 12), (x: 37, y: 27)].enumerated() {
+            let len = Int((writhe * Double(k == 1 ? 7 : 9)).rounded())
+            guard len > 0 else { continue }
+            for d in 0..<len {
+                let x = base.x + Int((sin(wt * 0.8 + Double(d) * 0.6 + Double(k) * 2) * 1.5).rounded()) + (k - 1) * d / 3
+                c.px(x, base.y - 1 - d, vine); c.px(x - 1, base.y - 1 - d, vineL)
+            }
+        }
+        return
+    }
+
+    // The near arm, reaching forward, its three long pale claws out straight, raised as far as he casts.
+    let r = p.armRaise
+    c.rect(39, 31 - r, 5, 3, skin); c.rect(39, 33 - r, 5, 1, skinD); c.px(41, 31 - r, vine); c.px(42, 32 - r, vine)
+    c.rect(44, 30 - r, 1, 5, skin)
+    c.pattern(45, 28 - r, [
+        "....Cc",
+        "..CC..",
+        "CC....",
+        "......",
+        "CCCCCc",
+        "......",
+        "CC....",
+        "..CC..",
+        "....Cc",
+    ], ["C": claw, "c": clawD])
 }
