@@ -69,6 +69,13 @@ if [[ $NO_NOTARIZE == 0 ]]; then
     [[ -n $PROFILE ]] || { echo "no notarytool profile 'clawd-clash' or 'clawd-wars' (see the top of release.sh), or pass --no-notarize" >&2; exit 1; }
 fi
 
+# The template is never compiled into the app, so an engine change could break it unseen: it has to build and draw its
+# sheets (a tool build into build/check/template/, never the app) before anything ships.
+echo "→ the template still builds"
+mkdir -p build
+Tools/CheckUniverse/check.sh --template >build/template-check.log 2>&1 \
+    || { cat build/template-check.log >&2; echo "error: the template doesn't build or draw any more (above)" >&2; exit 1; }
+
 ./build.sh --release "$VERSION"
 APP="build/Clawd Clash.app"
 

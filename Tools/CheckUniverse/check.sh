@@ -4,6 +4,9 @@
 #   Tools/CheckUniverse/check.sh --all                 every registered universe
 #   BASE=universe-modules Tools/CheckUniverse/check.sh Slayer    the hand-off scope against another branch than main
 #   QUICK=1 Tools/CheckUniverse/check.sh --all         no builds of the app, saver, Preview or Transitions, no sheets
+#   Tools/CheckUniverse/check.sh --template            the template (_Template/), which no normal build compiles: Preview
+#                                                      and the checker built with TEMPLATE=1 into build/check/template/,
+#                                                      its sheets drawn there, and its checklist (release.sh runs this)
 # It prints a list per universe: ✓ passes, ✗ fails, ! is worth a look, · is a note. It exits 1 if anything fails.
 #
 # This part does the files and git: the manifest against NUMBERS, the template's leftovers, what the branch changed,
@@ -25,7 +28,7 @@ BASE=${BASE:-main}
 mkdir -p $OUT/logs
 
 if [[ $# -eq 0 ]]; then
-    print "usage: Tools/CheckUniverse/check.sh <Folder> … | --all"; exit 2
+    print "usage: Tools/CheckUniverse/check.sh <Folder> … | --all | --template"; exit 2
 fi
 
 # MARK: NUMBERS and the manifests
@@ -51,6 +54,53 @@ for conf in $UROOT/*/universe.conf(N); do
         esac
     done < $conf
 done
+
+# MARK: The template
+
+# Never compiled by a normal build, so an engine change could break it without anyone noticing: built here with
+# TEMPLATE=1, tools only (never the app), into build/check/template/, where its sheets are drawn too. The template's
+# generated files go to build/gen-template/, so this never disturbs a normal build running alongside.
+if [[ $1 == --template ]]; then
+    tpl=(${(k)conf_template[(R)yes]})
+    (( ${#tpl} == 1 )) || { print "no template folder (a universe.conf with \`template = yes\`) in $UROOT/"; exit 2 }
+    tf=$tpl[1] tdir=$OUT/template
+    rm -rf $tdir; mkdir -p $tdir
+    print "The template (${conf_key[$tf]-}, ${conf_number[$tf]-}): $UROOT/$tf/, built with TEMPLATE=1 into $tdir/"
+    failed=0
+    tsay() { print -r -- "  $1 $2"; [[ $1 == ✗ ]] && failed=1; return 0 }
+    ( TEMPLATE=1 Tools/Preview/build.sh $tdir/preview ) >$OUT/logs/template-preview.log 2>&1 &
+    pv=$!
+    ( export TEMPLATE=1; source Tools/universes.sh || exit 1
+      swiftc -swift-version 5 -target "$(uname -m)-apple-macos13.0" -j "$(sysctl -n hw.ncpu)" \
+          Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
+          $UNIVERSE_APP Sources/Shared/*.swift Tools/CheckUniverse/main.swift -o $tdir/check-universe
+    ) >$OUT/logs/template-checker.log 2>&1 &
+    ck=$!
+    wait $pv; pv=$?
+    wait $ck; ck=$?
+    if (( pv == 0 )); then
+        tsay ✓ "builds: Preview with the template (log: $OUT/logs/template-preview.log)"
+        k=${conf_key[$tf]-} ok=1
+        { $tdir/preview cast $tdir/cast.png $k && $tdir/preview drills $tdir/drills.png $k \
+            && $tdir/preview place $tdir/places.png $k && $tdir/preview edges $tdir/edges.txt $k; } >/dev/null 2>$tdir/errors.log || ok=0
+        if (( ok )); then
+            [[ -s $tdir/errors.log ]] || rm -f $tdir/errors.log
+            tsay ✓ "sheets written to $tdir/ (cast, drills, places, edges)"
+        else
+            tsay ✗ "sheets: some didn't render (see $tdir/errors.log)"
+        fi
+    else
+        tsay ✗ "builds: Preview with the template doesn't build any more (see $OUT/logs/template-preview.log)"
+    fi
+    if (( ck == 0 )); then
+        # Its checklist, as for any universe; it's tiny on purpose, so the size note is expected.
+        while IFS= read -r l; do tsay ${l%% *} "${l#* }"; done \
+            < <($tdir/check-universe check ${conf_key[$tf]-} 2>&1 || print "✗ check-universe stopped: see above")
+    else
+        tsay ✗ "builds: the checker with the template doesn't build (see $OUT/logs/template-checker.log)"
+    fi
+    exit $failed
+fi
 
 folders=()
 if [[ $1 == --all ]]; then
