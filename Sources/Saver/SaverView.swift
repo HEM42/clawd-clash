@@ -88,9 +88,14 @@ final class ClawdClashSaverView: ScreenSaverView {
     private var sheet: NSWindow?
     private let picker = NSPopUpButton(frame: NSRect(x: 20, y: 90, width: 280, height: 26), pullsDown: false)
     private let clockBox = NSButton(checkboxWithTitle: "Show the clock", target: nil, action: nil)
-    /// The Options choices: every offered universe by its key, so a universe appears here once it's released.
-    private static let choices = [("same", "The same as Clawd Clash")] + Universe.offered.map { ($0.key, $0.title) }
-                                 + [("clawdRoyale", "Clawd Royale"), ("random", "Random (a new one on each trip)")]
+    /// The Options choices: every offered universe by its key, so a universe appears here once it's released, and not
+    /// one unchecked in the app's Settings (the feed says which; the Options can open before the saver has read it).
+    private var choices: [(String, String)] = []
+    private static func makeChoices() -> [(String, String)] {
+        let removed = Set((SaverFeed.load()?.removed ?? []).compactMap(Universe.init(rawValue:)))
+        return [("same", "The same as Clawd Clash")] + Universe.offered(without: removed).map { ($0.key, $0.title) }
+            + [("clawdRoyale", "Clawd Royale"), ("random", "Random (a new one on each trip)")]
+    }
 
     override var hasConfigureSheet: Bool { true }
     override var configureSheet: NSWindow? {
@@ -98,8 +103,9 @@ final class ClawdClashSaverView: ScreenSaverView {
         let label = NSTextField(labelWithString: "Universe to show:")
         label.frame = NSRect(x: 20, y: 122, width: 280, height: 20)
         picker.removeAllItems()
-        for (_, title) in Self.choices { picker.addItem(withTitle: title) }
-        picker.selectItem(at: Self.choices.firstIndex { $0.0 == Self.choice } ?? 0)
+        choices = Self.makeChoices()
+        for (_, title) in choices { picker.addItem(withTitle: title) }
+        picker.selectItem(at: choices.firstIndex { $0.0 == Self.choice } ?? 0)
         clockBox.frame = NSRect(x: 20, y: 56, width: 280, height: 22)
         clockBox.state = Self.clockShown ? .on : .off
         let ok = NSButton(title: "OK", target: self, action: #selector(closeOptions))
@@ -111,7 +117,7 @@ final class ClawdClashSaverView: ScreenSaverView {
     }
 
     @objc private func closeOptions() {
-        save(["universe": Self.choices[max(0, picker.indexOfSelectedItem)].0, "clock": clockBox.state == .on ? "on" : "off"])
+        save(["universe": choices[max(0, picker.indexOfSelectedItem)].0, "clock": clockBox.state == .on ? "on" : "off"])
         if let sheet { sheet.sheetParent?.endSheet(sheet) }
         tripUniverse = nil
         showClock = Self.clockShown
@@ -205,6 +211,7 @@ final class ClawdClashSaverView: ScreenSaverView {
             // The app's window shows the app's universe (already `Universe.shown` there). As the screen saver: what
             // its Options say (the app's by default); Random picks afresh on each trip somewhere new (see `travel`).
             if feedSource == nil {
+                Universe.removed = Set((feed?.removed ?? []).compactMap(Universe.init(rawValue:)))
                 showClock = Self.clockShown
                 let appUniverse = feed?.universe.flatMap(Universe.init(rawValue:)) ?? .fallback
                 switch Self.choice {

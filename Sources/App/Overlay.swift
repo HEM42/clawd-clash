@@ -234,6 +234,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         panel.ignoresMouseEvents = true
         panel.contentView = view
 
+        Universe.removed = Self.universesRemoved
         Universe.shown = Self.universe
         Universe.mixed = Self.clawdRoyale
         publishUniverse()   // the hook casts from it
@@ -397,7 +398,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             var shownFile = file ?? StatusFile()
             shownFile.universe = Universe.shown.rawValue
             shownFile.mixed = Universe.mixed ? true : nil
-            if let file, (file.mixed == true) != Universe.mixed || file.universe != Universe.shown.rawValue { publishUniverse() }
+            shownFile.removed = Universe.removed.isEmpty ? nil : Universe.removed.map(\.rawValue).sorted()
+            if let file, (file.mixed == true) != Universe.mixed || file.universe != Universe.shown.rawValue
+                || file.removed != shownFile.removed { publishUniverse() }
             sessions = StatusStore.snapshot(shownFile, now: now, processes: processes)
             // A session that quits drops its record at SessionEnd, but the process lingers a moment while it shuts down.
             // Don't let it come back as a new character (a fresh villain walking in only to fade out): it has left.
@@ -561,7 +564,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         feedAgents = agentsNow
         feedEvents = Array(feedEvents.suffix(12))
         let feed = SaverFeed(at: now, location: location.rawValue, sessions: out, events: feedEvents,
-                             universe: Universe.shown.rawValue, mixed: Universe.mixed ? true : nil)
+                             universe: Universe.shown.rawValue, mixed: Universe.mixed ? true : nil,
+                             removed: Universe.removed.isEmpty ? nil : Universe.removed.map(\.rawValue).sorted())
         saverFeed = feed
         if real && saverInstalled { feed.save() }
     }
@@ -2604,8 +2608,19 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                                }))
         }
 
+        let released = Universe.allCases.filter(\.isReleased)
+        let universeRows: [SettingsRow] = [
+            .checks("Universes", items: released.map { u in
+                (title: u.title, get: { !Universe.removed.contains(u) },
+                 set: { [weak self] kept in self?.keepUniverse(u, kept) })
+            }),
+        ]
         var sections = [
             SettingsSection(title: "General", symbol: "gearshape", rows: general),
+            SettingsSection(title: "Universes", symbol: "square.stack.3d.up",
+                            note: "Unchecked universes leave the Universe menu, Random, Clawd Royale and the screen saver. "
+                                + "Check one again and it's back just as it was. At least one universe stays in.",
+                            rows: universeRows),
             SettingsSection(title: "Window", symbol: "macwindow", rows: window),
             SettingsSection(title: "Desktop", symbol: "menubar.dock.rectangle", rows: desktop),
             SettingsSection(title: "AIs", symbol: "sparkles", note: "Connected AIs report what they're doing through Clawd Clash's hook.",
@@ -2863,11 +2878,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let d = UserDefaults.standard
             if let key = d.string(forKey: "universe"), let u = Universe.offered(key: key) { return u }
             let used = { (id: String) in UserDefaults(suiteName: id)?.object(forKey: "windowMode") != nil }
+            var first = Universe.starWars
             if !used("com.rodclemen.vaderclaude") {
-                if used("com.rodclemen.justiceleagueclawdwars") { return .dc }
-                if used("com.rodclemen.avengersclawdwars") { return .marvel }
+                if used("com.rodclemen.justiceleagueclawdwars") { first = .dc }
+                else if used("com.rodclemen.avengersclawdwars") { first = .marvel }
             }
-            return .starWars
+            // Unchecked in Settings → Universes (the saved one too): the first universe still in.
+            return Universe.offered.contains(first) ? first : Universe.offered[0]
         }
         set { UserDefaults.standard.set(newValue.key, forKey: "universe") }
     }
@@ -2884,10 +2901,40 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private static let testRun = CommandLine.arguments.dropFirst().contains { $0.hasPrefix("--") }
         || ProcessInfo.processInfo.environment["CLAWD_SHOT"] != nil
 
-    /// Tell the hook (and the screen saver, with the app closed) what's on show.
+    /// Tell the hook (and the screen saver, with the app closed) what's on show, and which universes are unchecked.
     private func publishUniverse() {
         guard !Self.testRun else { return }
         StatusStore.setUniverse(Universe.shown, mixed: Universe.mixed)
+        StatusStore.setRemoved(Universe.removed)
+    }
+
+    /// Universes unchecked in Settings → Universes. Saved by key as what's removed, not what's kept, so a universe that
+    /// comes with an update shows up checked.
+    static var universesRemoved: Set<Universe> {
+        get { Set((UserDefaults.standard.stringArray(forKey: "universesRemoved") ?? []).compactMap(Universe.init(key:))) }
+        set { UserDefaults.standard.set(newValue.map(\.key).sorted(), forKey: "universesRemoved") }
+    }
+
+    /// Settings → Universes: check `u` back in, or uncheck it. It leaves (or rejoins) the Universe menu, Random,
+    /// Clawd Royale's cast and places, and the screen saver's choices; the hook stops (or starts) casting from it.
+    /// The last one checked stays in. If the universe on show goes, the app moves to the first one still in, as if
+    /// picked from the menu; in Clawd Royale, a place from it gives way to another (sessions already cast keep their
+    /// characters till they end).
+    private func keepUniverse(_ u: Universe, _ kept: Bool) {
+        var removed = Self.universesRemoved
+        if kept { removed.remove(u) } else { removed.insert(u) }
+        guard Universe.allCases.contains(where: { $0.isReleased && !removed.contains($0) }) else { return }
+        Self.universesRemoved = removed
+        Universe.removed = removed
+        if removed.contains(Self.universe) { Self.universe = Universe.offered[0] }
+        if !Universe.mixed, removed.contains(.shown) {
+            switchScene(to: Universe.offered[0], mixed: false)
+        } else if Universe.mixed, removed.contains(location.universe) {
+            switchScene(to: Self.universe, mixed: true)
+        } else {
+            publishUniverse()
+            if Universe.mixed { followPlace() }
+        }
     }
 
     /// Random: a different universe every this many minutes (Settings → Universe → Random); nil: it stays on the one picked.

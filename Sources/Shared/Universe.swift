@@ -93,10 +93,19 @@ struct Universe: Hashable, Comparable, CaseIterable, Codable, RawRepresentable {
     /// Whether people can pick it: Settings, Random, Clawd Royale and the screen saver only offer released universes.
     /// An unreleased one exists for the tools (the workbench, the docs and promo renderers) until it's ready.
     var isReleased: Bool { true }
+    /// Universes unchecked in Settings → Universes: left out of everything people pick from and of the hook's casting.
+    /// Each process learns it its own way: the app from its defaults, the hook from the status file (`removed`), the
+    /// screen saver from its feed.
+    static var removed: Set<Universe> = []
     /// The universes people can pick, in menu order.
-    static var offered: [Universe] { allCases.filter(\.isReleased) }
-    /// A stored key, but only for a universe people can pick: an unreleased one reads as unset.
-    static func offered(key: String) -> Universe? { Universe(key: key).flatMap { $0.isReleased ? $0 : nil } }
+    static var offered: [Universe] { offered(without: removed) }
+    /// The released universes but `removed`; never none (the app keeps at least one checked, so this is only a guard).
+    static func offered(without removed: Set<Universe>) -> [Universe] {
+        let released = allCases.filter(\.isReleased), kept = released.filter { !removed.contains($0) }
+        return kept.isEmpty ? released : kept
+    }
+    /// A stored key, but only for a universe people can pick: an unreleased or removed one reads as unset.
+    static func offered(key: String) -> Universe? { Universe(key: key).flatMap { offered.contains($0) ? $0 : nil } }
 
     var darkCast: [Int] { (0..<villainCount).map { base + $0 } }
     var lightCast: [Int] { (0..<heroCount - 1).map { base + StatusStore.heroBase + $0 } }   // all but HEM
@@ -120,7 +129,9 @@ struct Universe: Hashable, Comparable, CaseIterable, Codable, RawRepresentable {
 struct Roster {
     let universes: [Universe]
 
-    init(_ universe: Universe, mixed: Bool) { universes = mixed ? Universe.offered : [universe] }
+    init(_ universe: Universe, mixed: Bool, removed: Set<Universe> = Universe.removed) {
+        universes = mixed ? Universe.offered(without: removed) : [universe]
+    }
 
     var mixed: Bool { universes.count > 1 }
     var darkCast: [Int] { universes.flatMap(\.darkCast) }

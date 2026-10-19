@@ -68,9 +68,13 @@ struct StatusFile: Codable {
     var universe: Int?
     /// Clawd Royale: the hook casts from every universe (`Roster`), and nobody is recast. Nil: one universe.
     var mixed: Bool?
+    /// Universes unchecked in Settings → Universes (`Universe.rawValue`s), set by the app: Clawd Royale casts nobody
+    /// new from them. Nil: none.
+    var removed: [Int]?
 
     var shownUniverse: Universe { universe.flatMap(Universe.init(rawValue:)) ?? .fallback }
-    var roster: Roster { Roster(shownUniverse, mixed: mixed == true) }
+    var removedUniverses: Set<Universe> { Set((removed ?? []).compactMap(Universe.init(rawValue:))) }
+    var roster: Roster { Roster(shownUniverse, mixed: mixed == true, removed: removedUniverses) }
 }
 
 /// Decodes to nil instead of failing, so one bad record doesn't cost every other one.
@@ -87,6 +91,7 @@ extension StatusFile {
         pending = (try? c.decode([Lenient<PendingAgent>].self, forKey: .pending))?.compactMap(\.value) ?? []
         universe = try? c.decode(Int.self, forKey: .universe)
         mixed = try? c.decode(Bool.self, forKey: .mixed)
+        removed = try? c.decode([Int].self, forKey: .removed)
     }
 }
 
@@ -611,6 +616,11 @@ enum StatusStore {
     /// Clawd Royale.
     static func setUniverse(_ universe: Universe, mixed: Bool = false) {
         withLock { s in s.universe = universe.rawValue; s.mixed = mixed ? true : nil }
+    }
+
+    /// Tell the hook which universes are unchecked in Settings, so Clawd Royale casts nobody new from them.
+    static func setRemoved(_ removed: Set<Universe>) {
+        withLock { s in s.removed = removed.isEmpty ? nil : removed.map(\.rawValue).sorted() }
     }
 
     /// Drop idle sessions with no agents (e.g. terminals closed without a clean exit). They return on their next event.

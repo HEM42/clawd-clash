@@ -10,6 +10,7 @@ struct SaverFeed: Codable {
     var events: [Event]
     var universe: Int?             // `Universe.rawValue` the app shows (nil: from before universes, Star Wars)
     var mixed: Bool? = nil         // Clawd Royale: everyone as themselves, places from every universe
+    var removed: [Int]? = nil      // universes unchecked in the app's Settings: the saver offers them nowhere
 
     struct Session: Codable {
         var id: String

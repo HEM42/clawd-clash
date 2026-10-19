@@ -26,7 +26,7 @@ struct Location: Hashable, RawRepresentable {
 
     /// Every place in every universe people can pick (`Universe.offered`), in menu order (Clawd Royale picks from all of
     /// them).
-    static let everywhere: [Location] = Universe.offered.flatMap { all(in: $0) }
+    static var everywhere: [Location] { Universe.offered.flatMap { all(in: $0) } }
 
     var place: Place { places[self] ?? Place(name: rawValue, panel: 0x16181D, still: { _, _ in }) }
 
