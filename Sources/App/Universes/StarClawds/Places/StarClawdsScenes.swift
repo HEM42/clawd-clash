@@ -1289,7 +1289,9 @@ private enum StarWarsScenes {
         }
     }
 
-    // Leia / C-3PO, the Tantive IV: white ribbed corridor.
+    // Leia / C-3PO, the Tantive IV: white ribbed corridor, the ribs shaded as arches, panelled bays with hatches,
+    // grilles and small lit indicators, a pipe along the upper wall, a lit control panel, the round hatch in its rim,
+    // and a deck of plates with a grating along the foot of the wall.
     static func tantive(_ c: PixelCanvas, _ g: Int) {
         c.gradient(0, g, C(0xF2F4F6), C(0xC8CED6), bands: 4)
         for x in stride(from: 0, to: c.w, by: 16) {
@@ -1297,9 +1299,99 @@ private enum StarWarsScenes {
         }
         c.rect(0, 0, c.w, 4, C(0xA8B0BA))
         for x in stride(from: 6, to: c.w, by: 32) { c.rect(x, 4, 8, 2, C(0xFFFFFF)) }
+        tantiveWall(c, g)
         if Scenes.isTall(c) { tantiveHigh(c, g) }
-        c.ellipse(c.w * 3 / 4, g / 2, 10, g / 3, C(0xA8B0BA)); c.ellipse(c.w * 3 / 4, g / 2, 8, g / 3 - 2, C(0x8A939E))
+        // The round hatch is a door: the same size whatever the canvas, its rim standing just above the deck.
+        let u = Scenes.unit(g), hx = c.w * 3 / 4, r = 28 * u, hy = g - r - 5 * u
+        c.ellipse(hx, hy, 13 * u, r + 3 * u, C(0xB8C0CA)); c.ellipse(hx, hy, 12 * u, r + 2 * u, C(0xF4F6F8))   // the hatch's rim
+        c.ellipse(hx, hy, 10 * u, r, C(0xA8B0BA)); c.ellipse(hx, hy, 8 * u, r - 2 * u, C(0x8A939E))
+        c.ellipse(hx + u, hy, 5 * u, r - 5 * u, C(0x7E8792))                                  // its recessed leaf
+        c.rect(hx + u, hy - r + 6 * u, u, 2 * r - 12 * u, C(0x6A727C))                          // and the seam down it
+        let ry = r - 2 * u
+        for dy in (3 * u - ry)...(ry - 3 * u) {                                            // light caught on its left edge
+            let half = Int((Double(8 * u) * (1 - Double(dy * dy) / Double(ry * ry)).squareRoot()).rounded())
+            c.rect(hx - half + 1, hy + dy, u, 1, C(0xA4ACB6))
+        }
+        c.rect(hx + 15 * u, hy - 4 * u, 4 * u, 9 * u, C(0x3A4048)); c.rect(hx + 15 * u, hy - 4 * u, 4 * u, u, C(0x8A939E))
+        c.rect(hx + 16 * u, hy - 2 * u, u, u, C(0xE0303A)); c.rect(hx + 17 * u, hy + u, u, u, C(0x3BD15A))
+        c.rect(hx + 16 * u, hy + 3 * u, u, u, C(0xFFC040))
+        tantiveConsole(c, g, x: c.w * 16 / 25 / 16 * 16 + 5)
         c.ground(g, C(0xB8C0CA), edge: C(0xFFFFFF), speck: C(0xA8B0BA), seed: 15)
+        // the deck: a grating along the foot of the wall, then plates with faint seams, light enough to walk on
+        c.rect(0, g + 1, c.w, 2, C(0xA8B0BA))
+        for x in stride(from: 1, to: c.w, by: 3) { c.px(x, g + 1, C(0x8A939E)); c.px(x, g + 2, C(0x98A0AA)) }
+        c.rect(0, g + 3, c.w, 1, C(0xD8DEE4))
+        for x in stride(from: 8, to: c.w, by: 48) { c.rect(x, g + 4, 1, c.h - g - 4, C(0xA0A8B2, 0.55)) }
+        if c.h - g > 8 { c.rect(0, g + 4 + (c.h - g - 4) / 2, c.w, 1, C(0xA0A8B2, 0.35)) }
+    }
+
+    /// The Tantive IV's walls between the ribs: each rib lit on one side and casting a soft shadow, flared where it
+    /// springs from the ceiling and at its foot, so they read as arches; panel seams with a bevel; a lower skirt in
+    /// shadow where the wall curves in to the deck; and in some bays a service hatch, a vent grille or a plate of small
+    /// lit indicators. Full screen the bays are stacked up the wall to the conduit.
+    static func tantiveWall(_ c: PixelCanvas, _ g: Int) {
+        let tall = Scenes.isTall(c), hx = c.w * 3 / 4, cx = c.w * 16 / 25 / 16 * 16 + 5
+        let spring = tall ? g / 10 + 2 : 6, top = tall ? g / 4 + 3 * Scenes.unit(g) + 2 : 7
+        for x in stride(from: 0, to: c.w, by: 16) {
+            c.rect(x + 1, 0, 1, g, C(0xF4F6F8)); c.rect(x + 3, 0, 1, g, C(0xCDD3DA))
+            c.rect(x + 4, 0, 1, g, C(0xB8C0CA, 0.5)); c.rect(x + 5, 0, 1, g, C(0xB8C0CA, 0.2))
+            for k in 0..<3 {                                                      // springing from the ceiling
+                c.rect(x - 3 + k, spring + k, 10 - 2 * k, 1, C(0xDDE2E8)); c.px(x - 3 + k, spring + k, C(0xA8B0BA))
+                c.px(x + 6 - k, spring + k, C(0xC0C7D0))
+            }
+            c.rect(x - 1, g - 5, 7, 5, C(0xD4DAE1)); c.rect(x - 1, g - 5, 7, 1, C(0xF4F6F8))   // the foot
+            c.rect(x - 1, g - 4, 1, 4, C(0xA8B0BA)); c.rect(x + 5, g - 4, 1, 4, C(0xB8C0CA))
+        }
+        let skirt = g - 10, band = tall ? 44 : skirt - 22
+        for x in stride(from: 6, to: c.w, by: 16) {
+            for k in 0..<5 { c.rect(x, skirt + k, 10, 1, C(0xA8B0BA, 0.06 + 0.05 * Double(k))) }
+            c.rect(x, skirt, 10, 1, C(0xB0B8C2)); c.rect(x, skirt + 1, 10, 1, C(0xFFFFFF, 0.7))
+        }
+        var y = skirt, k = 0
+        while y - band >= top {
+            let y0 = y - band
+            for (i, x) in stride(from: 6, to: c.w, by: 16).enumerated() {
+                c.rect(x, y0, 10, 1, C(0xB8C0CA)); c.rect(x, y0 + 1, 10, 1, C(0xFFFFFF, 0.7))    // the panel seam
+                guard abs(x + 5 - hx) > 20, x + 10 < cx - 2 || x > cx + 24 else { continue }
+                let n = noise(i * 13 + k * 7 + 700) / (tall ? 0.65 : 1), h = band - 4      // sparser on the tall wall
+                if n < 0.16 {                                                     // a service hatch
+                    let hh = min(h - 6, 16), hy = y0 + 4
+                    c.rect(x + 1, hy, 8, hh, C(0xD4DAE1))
+                    c.rect(x + 1, hy, 8, 1, C(0xA8B0BA)); c.rect(x + 1, hy, 1, hh, C(0xA8B0BA))
+                    c.rect(x + 1, hy + hh - 1, 8, 1, C(0xFFFFFF)); c.rect(x + 8, hy, 1, hh, C(0xFFFFFF))
+                    c.rect(x + 4, hy + hh / 2, 2, 1, C(0x8A939E))
+                } else if n < 0.3 {                                               // a vent grille
+                    let gy = y0 + 5
+                    c.rect(x + 1, gy, 8, 7, C(0xC4CAD2))
+                    for r in stride(from: 1, to: 7, by: 2) { c.rect(x + 2, gy + r, 6, 1, C(0x98A0AA)) }
+                } else if n < 0.44 {                                              // a plate of lit indicators
+                    let py = y0 + h / 2
+                    c.rect(x + 1, py, 8, 4, C(0x3A4048)); c.rect(x + 1, py, 8, 1, C(0x5A626C))
+                    let lights = [C(0xE0303A), C(0x3BD15A), C(0xFFC040), C(0x5AB4FF)]
+                    for j in 0..<3 { c.px(x + 2 + j * 2, py + 2, lights[Int(noise(i * 5 + j + k * 11 + 710) * 4) % 4]) }
+                }
+            }
+            y = y0; k += 1
+        }
+    }
+
+    /// A lit control panel on the Tantive IV's wall, across two bays: a sloped white housing edged in red, a screen
+    /// with lines of readout, rows of buttons, and a post down to the deck.
+    static func tantiveConsole(_ c: PixelCanvas, _ g: Int, x: Int) {
+        let s = Scenes.unit(g), w = 22 * s, h = 13 * s, y = g - 26 * s
+        c.rect(x + w / 2 - 2 * s, y + h, 4 * s, g - y - h, C(0xC0C7D0)); c.rect(x + w / 2 - 2 * s, y + h, s, g - y - h, C(0xE4E8EE))
+        c.rect(x, y, w, h, C(0xE4E8EE)); c.rect(x, y, w, s, C(0xFFFFFF)); c.rect(x, y + h - s, w, s, C(0xA8B0BA))
+        c.rect(x, y, s, h, C(0xC0C7D0)); c.rect(x + w - s, y, s, h, C(0xA8B0BA))
+        c.rect(x, y + h, w, s, C(0xC0303A))                                          // the red trim
+        c.rect(x + 2 * s, y + 2 * s, 10 * s, 6 * s, C(0x1C2A30))                       // the screen
+        for (j, l) in [8, 5, 7].enumerated() { c.rect(x + 3 * s, y + (3 + j * 2) * s, l * s, s, j == 1 ? C(0x7AE0A0) : C(0x6AC8E8)) }
+        let lights = [C(0xE0303A), C(0xFFC040), C(0x3BD15A), C(0xFFFFFF), C(0x5AB4FF)]
+        for j in 0..<6 {
+            let bx = x + (14 + (j % 3) * 2) * s, by = y + (3 + (j / 3) * 3) * s
+            c.rect(bx, by, s, s, lights[(j * 2 + 1) % lights.count])
+        }
+        c.rect(x + 2 * s, y + 10 * s, 18 * s, s, C(0xC8CED6))
+        for j in 0..<5 { c.rect(x + (3 + j * 4) * s, y + 10 * s, 2 * s, s, j == 2 ? C(0xE0303A) : C(0x8A939E)) }
     }
 
     // Qui-Gon, the Jundland Wastes: canyon rocks, Tusken Raiders and a bantha.
@@ -2424,13 +2516,25 @@ private enum StarWarsScenes {
         for yy in stride(from: top + 4, to: g - 1, by: 5) { c.rect(lx, yy, 7, 1, C(0x7A766A)) }
     }
 
-    // Tantive IV: a ceiling with its light strip, a conduit, and doorways off the corridor.
+    // Tantive IV: a ceiling with its light strip, the ribs arching over it, pipes under it, a conduit with its lights,
+    // and doorways off the corridor, each with the corridor going on beyond it, red trim and a lit sign.
     static func tantiveHigh(_ c: PixelCanvas, _ g: Int) {
         let s = Scenes.unit(g), ceil = g / 10
         c.rect(0, 6, c.w, ceil - 6, C(0xE4E8EE)); c.rect(0, ceil, c.w, 2, C(0xC8CED6))
-        for x in stride(from: 10, to: c.w, by: 32) { c.rect(x, ceil - 4, 16, 2, C(0xFFFFFF)); c.rect(x - 1, ceil - 2, 18, 1, C(0xB8C0CA)) }
+        for x in stride(from: 0, to: c.w, by: 16) { c.rect(x, 6, 4, ceil - 6, C(0xDCE1E7)); c.rect(x, 6, 1, ceil - 6, C(0xC0C7D0)) }
+        for x in stride(from: 10, to: c.w, by: 32) {
+            c.rect(x - 2, ceil - 5, 20, 4, C(0xFFFFFF, 0.5))                       // the strip's glow on the ceiling
+            c.rect(x, ceil - 4, 16, 2, C(0xFFFFFF)); c.rect(x - 1, ceil - 2, 18, 1, C(0xB8C0CA))
+        }
+        let py = ceil + 7 * s                                                      // two pipes under the ceiling
+        c.rect(0, py, c.w, 2 * s, C(0xC8CED6)); c.rect(0, py, c.w, s, C(0xF4F6F8)); c.rect(0, py + 2 * s, c.w, 1, C(0xA8B0BA))
+        c.rect(0, py + 4 * s, c.w, s, C(0xD4DAE1)); c.rect(0, py + 5 * s, c.w, 1, C(0xB0B8C2))
+        for x in stride(from: 0, to: c.w, by: 32) { c.rect(x, py - s, 4, 7 * s, C(0xB8C0CA)); c.rect(x, py - s, 1, 7 * s, C(0xA0A8B2)) }
         let y = g / 4
         c.rect(0, y, c.w, 3 * s, C(0xD2D8E0)); c.rect(0, y, c.w, 1, C(0xFFFFFF)); c.rect(0, y + 3 * s, c.w, 1, C(0xA8B0BA))
+        for (i, x) in stride(from: 22, to: c.w, by: 64).enumerated() {
+            c.rect(x, y + s, 4 * s, s, C(0x3A4048)); c.rect(x + s, y + s, s, s, i % 2 == 0 ? C(0xFFC040) : C(0x3BD15A))
+        }
         for fx in [0.18, 0.5] {
             let dx = Int(Double(c.w) * fx), dw = 28 * s, top = g - g * 2 / 5, cham = 6 * s
             for yy in top..<g {
@@ -2441,9 +2545,22 @@ private enum StarWarsScenes {
                     c.rect(dx - dw / 2 + i2, yy, dw - i2 * 2, 1, lerp(C(0xC4CBD4), C(0xDCE1E7), Double(yy - top) / Double(g - top)))
                 }
             }
+            let inner = top + 3 * s + cham
+            for xx in stride(from: dx - dw / 2 + 3 * s, to: dx + dw / 2 - s, by: 5 * s) {   // the corridor going on beyond
+                c.rect(xx, inner, s, g - 3 * s - inner, C(0xB8C0CA, 0.4))
+            }
+            c.rect(dx - dw / 2 + 2 * s, inner + 2 * s, dw - 4 * s, s, C(0xFFFFFF, 0.7))
+            for side in [-1, 1] {                                                   // red trim inside the frame
+                c.rect(side < 0 ? dx - dw / 2 - 2 * s : dx + dw / 2 + s, inner, s, g - 3 * s - inner, C(0xC0303A, 0.85))
+            }
+            c.rect(dx - 7 * s, top - 6 * s, 14 * s, 3 * s, C(0x3A4048)); c.rect(dx - 7 * s, top - 6 * s, 14 * s, s, C(0x5A626C))
+            for j in 0..<3 { c.rect(dx - 5 * s + j * 4 * s, top - 5 * s, 2 * s, s, j == 1 ? C(0xE0303A) : C(0xF4F6F8)) }
             c.rect(dx - dw / 2, g - 3 * s, dw, 3 * s, C(0xB8C0CA))
+            for xx in stride(from: dx - dw / 2 + s, to: dx + dw / 2, by: 3 * s) { c.rect(xx, g - 2 * s, s, s, C(0x98A0AA)) }
             c.rect(dx + dw / 2 + 6 * s, g - g / 4, 4 * s, 7 * s, C(0xC8CED6))
+            c.rect(dx + dw / 2 + 6 * s, g - g / 4, 4 * s, s, C(0xF4F6F8)); c.rect(dx + dw / 2 + 9 * s, g - g / 4, s, 7 * s, C(0xA8B0BA))
             c.px(dx + dw / 2 + 7 * s, g - g / 4 + 2 * s, C(0xE0303A)); c.px(dx + dw / 2 + 8 * s, g - g / 4 + 4 * s, C(0x3BD15A))
+            c.px(dx + dw / 2 + 7 * s, g - g / 4 + 5 * s, C(0xFFC040))
         }
     }
 
