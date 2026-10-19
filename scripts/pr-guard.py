@@ -435,9 +435,9 @@ def classify(rep, status, path, old_mode, new_mode, head):
         # A manifest is plain `key = value` lines, read by Tools/universes.sh: nothing else in it.
         for n, line in enumerate((show(head, path) or b"").decode("utf-8", "replace").split("\n"), 1):
             if line.strip() and not line.lstrip().startswith("#") and not re.fullmatch(
-                    r"\s*(number|key|title|prefix|entry|reel|cask)\s*=\s*[A-Za-z0-9 ,.'&:!-]*(#.*)?", line):
+                    r"\s*(number|key|title|prefix|entry|reel|cask|detail)\s*=\s*[A-Za-z0-9 ,.'&:!-]*(#.*)?", line):
                 rep.fail("%s:%d" % (path, n), "a manifest line is `key = value` with a plain value (number, key, title, "
-                                               "prefix, entry, reel, cask)")
+                                               "prefix, entry, reel, cask, detail)")
     if any(re.search(p, path) for p in GREEN):
         rep.green.append(path)
         return path.startswith(UNIVERSES) and path.endswith(".swift") and status != "D"
