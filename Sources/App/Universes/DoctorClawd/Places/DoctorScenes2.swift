@@ -1000,8 +1000,10 @@ extension Scenes {
         let roofY = base - 36 * b
         // The cathedral dome.
         let dx = Int(Double(c.w) * 0.47), dk = C(0x2C3450), dl = C(0x46506E), rib = C(0x232A42), snow = C(0xDCE4F0)
-        let ds = tall ? 2 : 1
-        let dome = D2Pen(c: c, x: dx, y: roofY - (tall ? 2 : 8) * b * ds, s: b * ds)
+        // Full screen the dome is drawn at twice the unit, but never so big that the cross on its lantern (50 units
+        // over the roofs) runs off the top: on wide, short screens it comes down a step to fit with a margin.
+        let ds = tall ? max(b, min(2 * b, (roofY - 4 * b) / 50)) : b
+        let dome = D2Pen(c: c, x: dx, y: roofY - (tall ? 2 : 8) * ds, s: ds)
         let top = tall ? -18 : 0
         dome.ellipse(0, top, 18, 16, dk); dome.rect(-19, top, 38, 2, dk)
         if tall {
