@@ -113,7 +113,9 @@ extension Scenes {
         c.rect(0, g - 4 * s, c.w, 4 * s, C(0x515862)); c.rect(0, g - 4 * s, c.w, s, C(0x8A939F))
         for x in stride(from: 6, to: c.w, by: 22 * s) { c.rect(x, g - 4 * s, s, s, C(0xFFC83A)) }
         helicarrierQuinjet(c, c.w / 7, g - 2 * s, s)
+        helicarrierDeckGear(c, c.w / 7 + 40 * s, g - 2 * s, g)
         helicarrierTower(c, c.w * 3 / 4, g - 3 * s, s)
+        helicarrierCrates(c, c.w * 3 / 4 + 56 * s, g - 2 * s, g)
         // The deck: dark non-slip plating, yellow taxi lines and the white runway dashes.
         c.ground(g, C(0x454B54), edge: C(0x6E7682), speck: C(0x3A4048), seed: 30)
         let f = c.h - g
@@ -128,8 +130,8 @@ extension Scenes {
         return (c.w * 2 / 5, g - 11 * s, 40 * s, 10 * s)
     }
 
-    /// A Quinjet parked on the deck, nose to the left, its gear standing on row `b`.
-    static func helicarrierQuinjet(_ c: PixelCanvas, _ x: Int, _ b: Int, _ s: Int) {
+    /// A Quinjet parked on the deck, nose to the left, its gear standing on row `b` (or, with `gear` off, flying).
+    static func helicarrierQuinjet(_ c: PixelCanvas, _ x: Int, _ b: Int, _ s: Int, gear: Bool = true) {
         let body = C(0x2E333C), mid = C(0x454C57), lit = C(0x66707E), dark = C(0x1C2026)
         func r(_ u: Int, _ v: Int, _ w: Int, _ h: Int, _ col: Px) { c.rect(x + u * s, b + v * s, w * s, h * s, col) }
         // the far wing, swept back and canted down
@@ -147,7 +149,29 @@ extension Scenes {
         for k in 0..<5 { r(23 + k / 2, -12 - k, 3, 1, body) }
         r(33, -10, 2, 3, C(0x5A9ADA, 0.8))                            // the engine glow, idling
         // the gear
-        r(-3, -5, 1, 4, dark); r(25, -5, 1, 4, dark); r(-4, -1, 3, 1, C(0x15181D)); r(24, -1, 3, 1, C(0x15181D))
+        if gear { r(-3, -5, 1, 4, dark); r(25, -5, 1, 4, dark); r(-4, -1, 3, 1, C(0x15181D)); r(24, -1, 3, 1, C(0x15181D)) }
+    }
+
+    /// Deck gear by the parked Quinjet, standing on row `b`: a low yellow tow tractor and a fuel cart with its
+    /// coiled hose.
+    static func helicarrierDeckGear(_ c: PixelCanvas, _ x: Int, _ b: Int, _ g: Int) {
+        let p = Pen(c, x, b, g), yellow = C(0xE0B030), ylit = C(0xF4CE5A), dark = C(0x1C2026)
+        // the tow tractor
+        p.rect(0, -5, 14, 3, yellow); p.rect(0, -5, 14, 1, ylit); p.rect(9, -8, 5, 3, yellow); p.rect(10, -7, 3, 1, C(0x3A4A5A))
+        p.rect(-2, -4, 2, 1, dark); p.circle(3, -2, 2, dark); p.circle(11, -2, 2, dark); p.rect(3, -2, 1, 1, C(0x6E7682))
+        p.rect(11, -2, 1, 1, C(0x6E7682)); p.rect(13, -9, 1, 1, C(0xFF8A2A))
+        // the fuel cart
+        p.rect(18, -8, 14, 6, C(0x9AA4B0)); p.rect(18, -8, 14, 1, C(0xC8D0D8)); p.rect(18, -6, 14, 1, C(0xC83A3A))
+        p.circle(21, -2, 2, dark); p.circle(29, -2, 2, dark)
+        p.ellipse(35, -5, 3, 2, dark); p.ellipse(35, -5, 2, 1, C(0x3A4048)); p.rect(32, -5, 1, 1, dark)   // the hose reel
+    }
+
+    /// A stack of crates under a strapped tarp by the tower, standing on row `b`, a marshal's wand-light on top.
+    static func helicarrierCrates(_ c: PixelCanvas, _ x: Int, _ b: Int, _ g: Int) {
+        let p = Pen(c, x - 40 * unit(g), b, g)
+        p.rect(40, -9, 10, 9, C(0x5A6A4A)); p.rect(50, -6, 8, 6, C(0x4E5E40)); p.rect(40, -9, 10, 1, C(0x7A8A64))
+        p.rect(44, -9, 1, 9, C(0x3A4630)); p.rect(53, -6, 1, 6, C(0x3A4630)); p.rect(40, -5, 18, 1, C(0x2E3828, 0.8))
+        p.rect(45, -10, 4, 1, C(0xFF8A2A))
     }
 
     /// The bridge tower standing on row `b`, its left edge at `x`.
@@ -177,8 +201,9 @@ extension Scenes {
         r(23, -63, 1, 5, dark); r(23, -59, 1, 1, C(0x8A2A2A))
     }
 
-    /// Full screen: a high sun, streaks of cirrus, cumulus heaped at several heights and a second Helicarrier on
-    /// station far off, its four rotors under it.
+    /// Full screen: a high sun, streaks of cirrus, cumulus heaped at several heights, a thunderhead towering on the
+    /// right, three escort fighters in a vee, a Quinjet climbing away and a second Helicarrier on station far off,
+    /// its four rotors under it.
     static func helicarrierHigh(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g)
         c.circle(c.w / 8, g / 7, 14 * s, C(0xFFFFFF, 0.12)); c.circle(c.w / 8, g / 7, 9 * s, C(0xFFFFFF, 0.25))
@@ -196,6 +221,29 @@ extension Scenes {
             cloud(c, x, y, (5 + Int(noise(i + 152) * 5)) * s, seed: i + 150, top: C(0xEEF4FA), base: C(0xD2E2F0))
         }
         c.rect(0, g - g / 9, c.w, g / 9, C(0xD8E7F3))
+        // a thunderhead towering on the right: a broad heaped base narrowing up its column, its anvil spread at the top
+        let tx = c.w * 84 / 100, tb = g - g / 7, tt = Int(Double(g) * 0.26)
+        for k in 0..<7 {                                                               // the anvil, flat underneath
+            cloud(c, tx - 36 * s + k * 13 * s, tt, (5 + k % 2 * 2) * s, seed: k + 200, top: C(0xF6F9FC), base: C(0xC4D4E4))
+        }
+        for (k, y) in stride(from: tt + 6 * s, to: tb, by: 8 * s).enumerated() {
+            let u = Double(y - tt) / Double(max(1, tb - tt)), half = Int((8 + u * u * 26) * Double(s))
+            for j in 0..<3 {
+                let x = tx - half + j * half + Int((noise(k * 3 + j + 170) - 0.5) * 8) * s
+                let shade = j == 2 ? C(0xC8D6E6) : C(0xEEF4FA)
+                cloud(c, x, y, (6 + Int(noise(k * 3 + j + 171) * 4)) * s, seed: k * 3 + j + 170, top: shade, base: C(0xBCCCDE))
+            }
+        }
+        // escort fighters in a vee, their contrails streaming back
+        for (u, v) in [(0, 0), (12, 5), (24, 10)] {
+            let jx = c.w * 52 / 100 + u * s, jy = Int(Double(g) * 0.2) + v * s
+            c.rect(jx + 9 * s, jy, 40 * s, s, C(0xFFFFFF, 0.35)); c.rect(jx + 49 * s, jy, 24 * s, s, C(0xFFFFFF, 0.15))
+            c.rect(jx, jy, 9 * s, s, C(0x3E4652)); c.rect(jx - s, jy, s, s, C(0x5A6472))
+            c.rect(jx + 4 * s, jy - s, 3 * s, s, C(0x4A5260)); c.rect(jx + 3 * s, jy + s, 4 * s, s, C(0x2E333C))
+            c.rect(jx + 7 * s, jy - 2 * s, 2 * s, 2 * s, C(0x3E4652))
+        }
+        // a Quinjet climbing away from the deck
+        helicarrierQuinjet(c, c.w * 58 / 100, Int(Double(g) * 0.42), s, gear: false)
         // the other Helicarrier, small with distance, hanging over the clouds
         let hx = c.w * 3 / 10, hy = Int(Double(g) * 0.56), col = C(0x7D93AE), dk = C(0x6A7F99), k = 2 * s
         func r(_ u: Int, _ v: Int, _ w: Int, _ h: Int, _ p: Px) { c.rect(hx + u * k, hy + v * k, w * k, h * k, p) }
@@ -347,12 +395,27 @@ extension Scenes {
         r(-1, -25, 2, 2, iron)
     }
 
-    /// Full screen: summer cumulus, the wooded hills of Westchester rolling away, and the lake beyond the lawn.
+    /// Full screen: summer cumulus, a skein of geese, the wooded hills of Westchester rolling away with a white church
+    /// steeple and a water tower on the far ridge, the lake beyond the lawn, and two great old oaks either side of the
+    /// grounds, the right-hand one towering.
     static func xMansionHigh(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g)
-        for (i, (fx, fy, r)) in [(0.2, 0.12, 8), (0.62, 0.08, 10), (0.88, 0.22, 7), (0.4, 0.3, 6), (0.08, 0.38, 5)].enumerated() {
+        for (i, (fx, fy, r)) in [(0.2, 0.12, 8), (0.62, 0.08, 10), (0.88, 0.22, 7), (0.4, 0.3, 6), (0.08, 0.38, 5),
+                                 (0.66, 0.44, 7), (0.3, 0.52, 5)].enumerated() {
             cloud(c, Int(Double(c.w) * fx), Int(Double(g) * fy), r * s, seed: i + 70)
         }
+        for k in 0..<9 {                                                                     // the geese, in a vee
+            let i = (k + 1) / 2, gx = c.w * 46 / 100 + i * 7 * s, gy = Int(Double(g) * 0.2) + i * 3 * s * (k % 2 == 0 ? 1 : -1)
+            c.rect(gx, gy, s, s, C(0x3A3E44)); c.rect(gx - 2 * s, gy - s, 2 * s, s, C(0x3A3E44)); c.rect(gx + s, gy - s, 2 * s, s, C(0x3A3E44))
+        }
+        let ridge = g - g / 4
+        // the far ridge's landmarks, hazy with distance: a church steeple and a water tower on its legs
+        let hz = C(0x8AAABE), hzLit = C(0xB4CCDA), cp = Pen(c, c.w * 30 / 100, ridge + 4 * s, g)
+        cp.rect(-6, -10, 12, 10, hzLit); cp.rect(-7, -12, 14, 2, hz); cp.rect(-2, -22, 4, 10, hzLit)
+        scenes2Peak(c, cp.x, cp.y - 30 * s, half: 3 * s, h: 8 * s, hz); cp.rect(0, -33, 1, 3, hz); cp.rect(-1, -18, 2, 2, hz)
+        let wp = Pen(c, c.w * 76 / 100, ridge + 4 * s, g)
+        for u in [-5, -2, 2, 5] { wp.rect(u, -14, 1, 14, hz) }
+        wp.rect(-6, -8, 13, 1, hz); wp.ellipse(0, -18, 8, 5, hzLit); wp.rect(-8, -18, 17, 1, hz); wp.rect(-1, -24, 2, 2, hz)
         c.dunes(base: g - g / 4, amp: Double(g) / 30, freq: 0.012, phase: 0.6, bottom: g, C(0x8AAEC0), shade: C(0x9ABCCC))
         c.dunes(base: g - g / 6, amp: Double(g) / 40, freq: 0.02, phase: 2, bottom: g, C(0x5E8A62), shade: C(0x6E9A6E))
         c.rect(0, g - g / 9, c.w, g / 9, C(0x5A8A58))
@@ -361,6 +424,8 @@ extension Scenes {
             let x = Int(noise(i * 5 + 300) * Double(c.w)), y = g - g / 6 + Int(noise(i * 5 + 301) * Double(g / 14))
             c.circle(x, y, (2 + Int(noise(i * 5 + 302) * 3)) * s, i % 3 == 0 ? C(0x4A7A48) : C(0x3E6A3E))
         }
+        xMansionTree(c, c.w - 16 * s, g - 8 * s, 44 * s, seed: 911)
+        xMansionTree(c, c.w * 3 / 100, g - 8 * s, 22 * s, seed: 917)
     }
 
     /// The fountain playing, and (full screen) the X-Jet passing over now and then.
@@ -507,12 +572,61 @@ extension Scenes {
         r(-12, -36, 1, 13, C(0x7A4A36, 0.6))
     }
 
-    /// Full screen: low cloud lit red from below, more of the skyline marching off to the horizon.
+    /// Full screen: low cloud lit red from below, Midtown's towers rising through the murk with red lights on top, a
+    /// tower crane over a building site, a taller block on the right with a lit billboard on its roof (a pair of
+    /// round red glasses), and more of the skyline marching off to the horizon.
     static func hellsKitchenHigh(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g)
         for i in 0..<8 {
             let y = Int(Double(g) * (0.08 + 0.07 * Double(i))), x = Int(noise(i + 400) * Double(c.w))
             c.ellipse(x, y, (60 + Int(noise(i + 401) * 60)) * s, 4 * s, C(0x6A2232, 0.18 + 0.03 * Double(i)))
+        }
+        // Midtown's towers, far off in the murk
+        let haze = C(0x4E1C2E), hazeLit = C(0x5E2638)
+        for (i, (fx, h, w)) in [(0.3, 120, 16), (0.36, 150, 12), (0.52, 172, 18), (0.6, 132, 14), (0.84, 158, 16), (0.93, 112, 20)].enumerated() {
+            let x = Int(Double(c.w) * fx), top = g - h * s
+            c.rect(x, top, w * s, h * s, haze); c.rect(x, top, s, h * s, hazeLit)
+            if i % 2 == 0 { c.rect(x + 2 * s, top - 4 * s, (w - 4) * s, 4 * s, haze); c.rect(x + w * s / 2, top - 12 * s, s, 8 * s, haze) }
+            for v in stride(from: top + 4 * s, to: g - 40 * s, by: 5 * s) {
+                for u in stride(from: x + 2 * s, to: x + (w - 2) * s, by: 3 * s) where noise(u * 5 + v * 3 + i) > 0.82 {
+                    c.rect(u, v, s, 2 * s, C(0xE8A050, 0.35))
+                }
+            }
+            c.rect(x + w * s / 2, top - (i % 2 == 0 ? 13 : 1) * s, s, s, C(0xFF4A4A))
+        }
+        // the tower crane: a lattice mast, the jib out to the left, the counter-jib and its weights
+        let kx = c.w * 70 / 100, kt = g - 156 * s, iron = C(0x2A0E1A)
+        for v in stride(from: kt, to: g, by: 4 * s) {
+            c.rect(kx, v, 4 * s, s, iron); c.rect(kx + s, v + s, 2 * s, s, iron); c.rect(kx + s, v + 2 * s, s, s, iron)
+        }
+        c.rect(kx, kt, s, g - kt, iron); c.rect(kx + 3 * s, kt, s, g - kt, iron)
+        c.rect(kx - 64 * s, kt - 3 * s, 86 * s, s, iron); c.rect(kx - 64 * s, kt, 64 * s, s, iron)
+        for u in stride(from: -64, to: 0, by: 4) { c.rect(kx + u * s, kt - 3 * s, s, 4 * s, iron) }
+        c.rect(kx + 14 * s, kt - 2 * s, 8 * s, 6 * s, iron); c.rect(kx - 2 * s, kt - 6 * s, 8 * s, 4 * s, iron)   // weights, cab
+        c.rect(kx + s, kt - 14 * s, s, 8 * s, iron)
+        for k in 0..<12 { c.rect(kx + s - k * 5 * s, kt - 14 * s + k * s, 5 * s, max(1, s / 2), iron) }   // the stay
+        c.rect(kx - 40 * s, kt + s, max(1, s / 2), 30 * s, iron); c.rect(kx - 42 * s, kt + 31 * s, 5 * s, 2 * s, iron)   // the hook
+        c.rect(kx + s, kt - 15 * s, s, s, C(0xFF4A4A)); c.rect(kx - 64 * s, kt - 4 * s, s, s, C(0xFF4A4A))
+        // the block on the right and its billboard: the frame on legs, two lamps on arms over it
+        let bx = c.w * 78 / 100, bt = g - 110 * s, bw = 50 * s
+        c.rect(bx, bt, bw, g - bt, C(0x2A0E1A)); c.rect(bx, bt, bw, s, C(0x3E1A26))
+        for v in stride(from: bt + 5 * s, to: g - 30 * s, by: 6 * s) {
+            for u in stride(from: bx + 3 * s, to: bx + bw - 3 * s, by: 6 * s) where noise(u * 3 + v * 11) > 0.6 {
+                c.rect(u, v, 2 * s, 3 * s, C(0xF0B060, 0.55))
+            }
+        }
+        let p = Pen(c, bx + 5 * s, bt, g)
+        for u in [4, 18, 34] { p.rect(u, -8, 1, 8, iron) }
+        p.rect(0, -8, 40, 1, iron)
+        p.rect(0, -28, 40, 20, C(0x14080E)); p.rect(1, -27, 38, 18, C(0xD8C8B0))
+        p.rect(1, -27, 38, 6, C(0xE8DCC4, 0.6)); p.rect(1, -13, 38, 4, C(0xA89880, 0.5))
+        p.circle(13, -19, 6, C(0x1A0A10)); p.circle(27, -19, 6, C(0x1A0A10))                // the glasses
+        p.circle(13, -19, 5, C(0xC81E2E)); p.circle(27, -19, 5, C(0xC81E2E))
+        p.rect(18, -20, 4, 1, C(0x1A0A10)); p.rect(10, -22, 2, 2, C(0xF08A8A)); p.rect(24, -22, 2, 2, C(0xF08A8A))
+        p.rect(3, -19, 4, 1, C(0x1A0A10)); p.rect(33, -19, 4, 1, C(0x1A0A10))
+        for u in [8, 30] {
+            p.rect(u, -32, 1, 4, iron); p.rect(u - 1, -33, 3, 1, iron)
+            c.ellipse(p.x + u * s, p.y - 24 * s, 9 * s, 6 * s, C(0xFFD890, 0.08))
         }
         hellsKitchenRow(c, g, top: g / 4, depth: g / 5, col: C(0x3A1626), lamp: C(0xE8A050, 0.3), seed: 7, s: s)
     }
