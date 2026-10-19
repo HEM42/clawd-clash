@@ -110,6 +110,7 @@ private func v4ToomsSqueezedLegs(_ c: PixelCanvas, wf: Double, hf: Double, dx: D
 
 private func toomsFigure(_ c: PixelCanvas, _ p: Pose, legs: Bool = true) {
     let shirt = C(0x8A7E52), shirtD = C(0x6A6040), trousers = C(0x4E4636), hair = C(0x241C14), nail = C(0xE6DCA8)
+    let shirtL = C(0xA69A6A), hairL = C(0x42362A), belt = C(0x2E2418)
     if legs {
         drawLegs(c, Look(leg: trousers), step: p.step)
         drawDressShoes(c, step: p.step, color: C(0x2A2018))
@@ -120,14 +121,17 @@ private func toomsFigure(_ c: PixelCanvas, _ p: Pose, legs: Bool = true) {
     c.rect(18, 34, 20, 4, shirt); c.rect(37, 34, 1, 4, shirtD); c.rect(18, 37, 20, 1, shirtD)
     c.pattern(24, 34, ["SSS..SSS", ".SS..SS."], ["S": shirtD])
     c.rect(20, 35, 2, 2, C(0xC8A04A))
-    // Hair combed flat to the scalp.
+    c.rect(18, 34, 3, 1, shirtL); c.rect(33, 34, 3, 1, shirtL)       // lit shoulders
+    c.rect(32, 35, 3, 1, shirtD); c.px(28, 36, shirtD)               // a pocket flap, a button
+    c.rect(18, 37, 19, 1, belt); c.px(27, 37, C(0xB8A060))           // the belt and its buckle
+    // Hair combed flat to the scalp, the comb lines lit in short runs.
     c.pattern(17, 22, [
-        ".....HHHHHHHHHHHH.....",
-        "...HHHHHHHHHHHHHHHH...",
-        "..HHHHHHHHHHHHHHHHHH..",
+        ".....HHHLLLHHHHHH.....",
+        "...HHLLLHHHHHLLLHHH...",
+        "..HHHHHHHHLLLHHHHHHH..",
         ".HHHHHHHHHHHHHHHHHHHH.",
         ".HH................HH.",
-    ], ["H": hair])
+    ], ["H": hair, "L": hairL])
     // The yellow eyes.
     for x in [22, 32] { c.rect(x, 29, 2, 3, C(0xF2D43A)); c.px(x + 1, 30, ink) }
     // Arms: long fingers hanging at rest, raking when he fights.
@@ -234,6 +238,7 @@ private func flukeFigure(_ c: PixelCanvas, _ p: Pose) {
 /// spreading out from his head.
 private func drawPusher(_ c: PixelCanvas, _ p: Pose) {
     let jacket = C(0x8E7E5A), jacketD = C(0x6E6044), shirt = C(0xEDEDE8), jeans = C(0x3E4E6A), hair = C(0x9A7A46)
+    let jacketL = C(0xAA9A72), hairL = C(0xC89A62), hairD = C(0x7A5E34)
     let will = C(0xB88AF4)
     let sig = p.signature
     let pushing = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
@@ -245,14 +250,17 @@ private func drawPusher(_ c: PixelCanvas, _ p: Pose) {
     // The windbreaker open over the T-shirt, its zip and collar.
     c.rect(18, 34, 20, 4, jacket); c.rect(37, 34, 1, 4, jacketD); c.rect(18, 37, 20, 1, jacketD)
     c.rect(25, 34, 6, 4, shirt); c.rect(24, 34, 1, 4, jacketD); c.rect(31, 34, 1, 4, jacketD)
-    // The crop, thin on top.
+    c.rect(18, 34, 3, 1, jacketL); c.rect(33, 34, 3, 1, jacketL)     // lit shoulders
+    c.rect(20, 35, 1, 2, jacketD); c.rect(34, 35, 1, 2, jacketD)     // the nylon's creases
+    c.rect(18, 37, 19, 1, C(0x5A4E36))                               // the elasticated hem
+    // The crop, thin on top: the sandy strands lit in short runs, the far side shaded.
     c.pattern(17, 22, [
-        "......HhHHHHhHHH......",
-        "....HHHhHHHHHhHHHH....",
-        "...HHHHHHHHHHHHHHHH...",
-        "..HHHHHHHHHHHHHHHHHH..",
-        ".HH................HH.",
-    ], ["H": hair, "h": C(0xC89A62)])
+        "......HhhHHHhhHH......",
+        "....HHHHHhhHHHHHHH....",
+        "...HHhhHHHHHHhhHHdH...",
+        "..HHHHHHHHHHHHHHHHdH..",
+        ".HH................dH.",
+    ], ["H": hair, "h": hairL, "d": hairD])
 
     if pushing, let s = sig {
         // Eyes narrowed to slits, two fingers to the temple, rings of will going out from his head.
@@ -265,10 +273,10 @@ private func drawPusher(_ c: PixelCanvas, _ p: Pose) {
                 c.px(28 + Int((cos(a) * r).rounded()), 27 + Int((sin(a) * r * 0.7).rounded()), will.alpha(0.7 * (1 - k)))
             }
         }
-        c.rect(15, 33, 3, 3, jacket)
+        c.rect(15, 33, 3, 3, jacket); c.rect(15, 35, 3, 1, jacketD)
         return
     }
-    c.rect(15, 33, 3, 3, jacket)
+    c.rect(15, 33, 3, 3, jacket); c.rect(15, 35, 3, 1, jacketD)   // the sleeve's cuff
     let using = p.zap != nil || p.ready
     if using {
         // The pointing finger, its tip at `pivot`; rings tighten round it while he pushes.
@@ -324,7 +332,7 @@ private func drawJerseyDevil(_ c: PixelCanvas, _ p: Pose) {
         if x % 3 == 0 { c.rect(x, top + 1, 1, 3, furL) }          // the lie of the hair, streaked
         if x % 4 == 1 { c.rect(x, bottom - 3, 1, 3, furD) }      // matted underneath
     }
-    for i in 0..<10 { c.px(16 + Int(noise(i + 40) * 18), 24 + Int(noise(i + 60) * 10), furD) }   // mud
+    for i in 0..<6 { c.rect(16 + Int(noise(i + 40) * 18), 24 + Int(noise(i + 60) * 9), 1, 2, furD) }   // mud, in clumps
     // Wild hair standing up off the hump and trailing behind, swaying.
     let sway: Int = Int(p.t * 2) % 2
     for (x, up) in [(15, 2), (17, 3), (19, 2), (21, 3), (23, 2), (26, 2), (29, 1)] {

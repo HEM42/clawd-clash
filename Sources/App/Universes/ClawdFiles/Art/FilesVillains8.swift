@@ -80,6 +80,7 @@ private func remap(_ src: PixelCanvas, into c: PixelCanvas, alpha: Double = 1, m
 /// steam rising, then gives you a big toothy grin, fangs and all.
 private func drawRonnie(_ c: PixelCanvas, _ p: Pose) {
     let red = C(0xC8302A), redD = C(0x8E1E1A), khaki = C(0xB8A478), box = C(0xE8DCC0), boxD = C(0xB8A880)
+    let redL = C(0xE04A3E)
     let sig = p.signature
     let offering = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
     let open = sig.map { ramp($0, 0.15, 0.3) - ramp($0, 0.82, 0.92) } ?? 0
@@ -93,15 +94,18 @@ private func drawRonnie(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 34, 20, 4, red); c.rect(37, 34, 1, 4, redD); c.rect(18, 37, 20, 1, redD)
     c.pattern(25, 34, ["WW..WW", ".WWWW."], ["W": C(0xF2EEE6)])
     c.rect(20, 35, 3, 2, C(0xF2EEE6)); c.px(21, 35, red)
+    c.rect(33, 34, 3, 1, redL); c.rect(34, 35, 1, 2, redD)          // a lit shoulder, a crease
+    c.px(27, 35, C(0xF2EEE6)); c.px(28, 36, C(0xF2EEE6))             // the placket's buttons
+    c.rect(18, 37, 19, 1, C(0x6A5A3A)); c.px(27, 37, C(0xC8C8C8))    // the belt over the khakis
     // The cap: crown over the head down to the body, the brim out in front.
     c.pattern(17, 20, [
-        "......RRRRRRRRRR......",
-        "....RRRRRRRRRRRRRR....",
-        "...RRRRRRWWWRRRRRRR...",
-        "..RRRRRRRWRWRRRRRRRR..",
+        "......RRRLLLRRRR......",
+        "....RRLLRRRRRRRRRR....",
+        "...RLLRRRWWWRRRRRrR...",
+        "..RRRRRRRWRWRRRRRrRR..",
         "..RRRRRRRRRRRRRRRRRRRBBBB",
         ".rrrrrrrrrrrrrrrrrrrrBBBBB",
-    ], ["R": red, "r": redD, "W": C(0xF2EEE6), "B": redD])
+    ], ["R": red, "r": redD, "W": C(0xF2EEE6), "B": redD, "L": redL])
     // The fangs (a grin shows the whole row).
     if grin {
         c.rect(24, 32, 8, 2, ink); for x in [24, 26, 28, 30] { c.px(x, 32, C(0xF8F8F2)) }
@@ -111,7 +115,7 @@ private func drawRonnie(_ c: PixelCanvas, _ p: Pose) {
         c.rect(25, 32, 6, 1, C(0x5A2418))
         c.rect(25, 32, 1, 2, C(0xF8F8F2)); c.rect(30, 32, 1, 2, C(0xF8F8F2))
     }
-    c.rect(15, 33, 3, 3, red)
+    c.rect(15, 33, 3, 3, red); c.rect(15, 35, 3, 1, redD)   // the short sleeve's hem
 
     if offering {
         // The box held out flat; the lid tips up on the pizza and its steam.
@@ -164,7 +168,11 @@ private func drawGuyMann(_ c: PixelCanvas, _ p: Pose) {
     drawDressShoes(c, step: p.step, color: C(0x2E241A))
     c.oy += p.breathe
     drawBody(c, Look(body: scale, shade: scaleD, arm: jacket, eye: nil))
-    for i in 0..<14 { c.px(19 + Int(noise(i + 300) * 17), 26 + Int(noise(i + 320) * 7), scaleL) }   // scales
+    // Scales: short lit arcs over the head, and a shaded run down the far side.
+    for i in 0..<7 {
+        let x = 19 + Int(noise(i + 300) * 15), y = 26 + Int(noise(i + 320) * 6)
+        c.rect(x, y, 2, 1, scaleL); c.px(x + 2, y + 1, scale)
+    }
     c.rect(22, 33, 12, 1, belly)
     // The spines over his head, down to the body.
     c.pattern(18, 20, [
@@ -184,7 +192,9 @@ private func drawGuyMann(_ c: PixelCanvas, _ p: Pose) {
     // The jacket, shirt and tie.
     c.rect(18, 34, 20, 4, jacket); c.rect(37, 34, 1, 4, jacketD); c.rect(18, 37, 20, 1, jacketD)
     c.pattern(24, 34, ["lSTTSl", ".lTTl.", "..TT..", "..TT.."], ["l": jacketD, "S": shirt, "T": tie])
-    c.rect(15, 33, 3, 3, jacket); c.px(15, 36, scale); c.px(17, 36, scale)
+    c.rect(18, 34, 3, 1, C(0xA6845A)); c.rect(33, 34, 3, 1, C(0xA6845A))   // lit shoulders
+    c.rect(20, 35, 1, 2, jacketD); c.rect(32, 36, 3, 1, jacketD)          // a fold, a pocket flap
+    c.rect(15, 33, 3, 3, jacket); c.rect(15, 35, 3, 1, shirt); c.px(15, 36, scale); c.px(17, 36, scale)
 
     if phone {
         // The phone up in front of his face, its screen glowing on him.
@@ -327,7 +337,12 @@ private func tulpaFigure(_ c: PixelCanvas, _ p: Pose) {
         for r in 10...23 { rows[r] = String(rows[r].prefix(24)) + "......" }
     }
     c.pattern(10, 15, rows, ["M": mud])
-    for i in 0..<16 { c.px(14 + Int(noise(i + 500) * 22), 17 + Int(noise(i + 520) * 22), i % 2 == 0 ? mudL : mudD) }
+    // The muck's streaks: short runs dripping down it, lit ones on the hump, dark ones lower.
+    for i in 0..<9 {
+        let x = 15 + Int(noise(i + 500) * 20), y = 18 + Int(noise(i + 520) * 20)
+        c.rect(x, y, 1, 2 + i % 2, y < 27 ? mudL : mudD)
+    }
+    c.rect(19, 17, 4, 1, mudL); c.rect(17, 19, 2, 1, mudL)   // the hump catching the light
     // Rubbish stuck in it: an eggshell, an orange peel, a blue bottle cap.
     c.rect(18, 21, 3, 2, C(0xF2EEDC)); c.rect(25, 30, 3, 2, C(0xE8902A)); c.rect(21, 38, 2, 2, C(0x3A6AC8))
     // The pinprick red eyes in the head, low on the front.
@@ -372,9 +387,9 @@ private func mothFigure(_ c: PixelCanvas, _ p: Pose) {
     c.oy += p.breathe
     drawBody(c, Look(body: moss, shade: mossD, arm: bark, eye: nil))
     // Bark and leaves all over, and a ragged fringe of leaves round the edge, head included.
-    for i in 0..<30 {
-        let x = 18 + Int(noise(i + 600) * 20), y = 26 + Int(noise(i + 640) * 12)
-        c.px(x, y, [bark, leaf, mossD, leafD][i % 4])
+    for i in 0..<14 {
+        let x = 18 + Int(noise(i + 600) * 19), y = 26 + Int(noise(i + 640) * 11)
+        c.rect(x, y, 1, 2, [bark, leaf, mossD, leafD][i % 4])   // hanging strips, not specks
     }
     // A rounded hood of moss and leaves over his head and shoulders, like a ghillie suit: tufts sticking up from it,
     // its ragged edge hanging down past the eyes at the sides.
@@ -424,7 +439,7 @@ private func mothFigure(_ c: PixelCanvas, _ p: Pose) {
 /// buttoned up and a yellow sou'wester hat, rubber boots. He throws blue lightning from his hand. Signature: a little
 /// rain cloud gathers over his head and pours on him, and a frog drops out of it and hops away.
 private func drawRainKing(_ c: PixelCanvas, _ p: Pose) {
-    let slicker = C(0xF2C81E), slickerD = C(0xC89A10), boot = C(0x2E4A3A)
+    let slicker = C(0xF2C81E), slickerD = C(0xC89A10), boot = C(0x2E4A3A), slickerL = C(0xFFE468)
     let sig = p.signature
     let cloud = sig.map { ramp($0, 0.05, 0.2) - ramp($0, 0.85, 0.97) } ?? 0
 
@@ -438,19 +453,21 @@ private func drawRainKing(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, slicker); c.rect(37, 33, 1, 5, slickerD)
     c.rect(17, 38, 22, seatedPose ? 1 : 2, slicker); c.rect(17, 39 + (seatedPose ? -1 : 1), 22, 1, slickerD)
     c.rect(28, 33, 1, 6, slickerD); for y in [34, 36] { c.px(27, y, C(0x8A6A10)) }
+    c.rect(18, 33, 3, 1, slickerL); c.rect(33, 33, 3, 1, slickerL)   // the shine across the shoulders
+    c.rect(21, 34, 1, 3, slickerD); c.rect(34, 34, 1, 3, slickerD)   // creases in the oilskin
     // The sou'wester: a brim all round, longer at the back, down to the body.
     c.pattern(15, 18, [
-        ".......SSSSSSSS.........",
-        ".....SSSSSSSSSSSS.......",
-        "....SSSSSSSSSSSSSSS.....",
-        "....SSSSSSSSSSSSSSSS....",
-        "...SSSSSSSSSSSSSSSSSS...",
+        ".......SSSLLLSS.........",
+        ".....SSLLSSSSSSSs.......",
+        "....SLLSSSsSSSSSSs......",
+        "....SSSSSSsSSSSSSSs.....",
+        "...SSSSSSSsSSSSSSSSs....",
         "ssssssssssssssssssssssss",
         "sss...................ss",
         "ss.....................s",
-    ], ["S": slicker, "s": slickerD])
+    ], ["S": slicker, "s": slickerD, "L": slickerL])
     c.rect(18, 24, 20, 2, slicker)
-    c.rect(15, 33, 3, 3, slicker)
+    c.rect(15, 33, 3, 3, slicker); c.rect(15, 35, 3, 1, slickerD)   // the sleeve's cuff
 
     if cloud > 0, let s = sig {
         // The cloud over his head, raining on him, and the frog dropping out and hopping off.
@@ -497,7 +514,12 @@ private func drawTeliko(_ c: PixelCanvas, _ p: Pose) {
     c.rect(25, 30, 6, 1, chalkD)
     // The dark suit, buttoned to the top.
     c.rect(18, 32, 20, 6, suit); c.rect(37, 32, 1, 6, suitD); c.rect(27, 32, 2, 3, chalk)
-    c.rect(15, 33, 3, 3, suit)
+    let suitL = C(0x3A3A44)
+    c.rect(18, 32, 4, 1, suitL); c.rect(32, 32, 4, 1, suitL)         // lit shoulders
+    c.rect(26, 33, 1, 4, suitD); c.rect(29, 33, 1, 4, suitL)         // the jacket's front edges
+    c.px(28, 35, suitL); c.px(28, 37, suitL)                         // its buttons
+    c.rect(20, 34, 1, 3, suitD); c.rect(35, 34, 1, 3, suitD)         // folds
+    c.rect(15, 33, 3, 3, suit); c.rect(15, 35, 3, 1, chalk)          // the sleeve, a chalk-white wrist
 
     if blowing, let s = sig {
         // The blowpipe up to his lips, cheeks out, the dust blowing across.
