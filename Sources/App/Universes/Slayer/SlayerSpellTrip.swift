@@ -14,8 +14,8 @@ extension SlayerTrip {
     /// turned by its own angle; the candles, ribbon and sparkles are pixel art about 180 pixels tall, scaled up
     /// without smoothing, with a little grain.
     func drawSpell(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
-        guard k > 0 else { ctx.draw(old, in: r); return }
-        guard k < 1 else { ctx.draw(new, in: r); return }
+        guard k > 0 else { ctx.drawShot(old, in: r); return }
+        guard k < 1 else { ctx.drawShot(new, in: r); return }
         let px: CGFloat = max(1, (r.height / 180).rounded())    // screen pixels per pixel of the spell's art
         let w = Int((r.width / px).rounded(.up)), h = Int((r.height / px).rounded(.up))
         guard let art = Self.artCanvas(width: w, height: h, px: px, in: r) else { return }
@@ -31,15 +31,20 @@ extension SlayerTrip {
         // crossfading through the flare.
         let blend = Self.ease(Self.span(k, 0.45, 0.55))
         if abs(twist) > 0.001 {
+            // While the window changes universe the picture is the window, its text among them, so it turns at its own
+            // resolution, straight onto the frame (under the art, as it would be in it), rather than cut into cells.
+            let into = ComicTransition.snapshotQuality == nil ? art : ctx
             art.interpolationQuality = .none
-            Self.spellTwist(art, swap ? new : old, twist: twist, centre: centre, in: r)
+            if into === ctx { ctx.saveGState(); ctx.setShouldAntialias(false) }   // the rings' edges hard, as in the art
+            Self.spellTwist(into, swap ? new : old, twist: twist, centre: centre, in: r)
             if blend > 0 && blend < 1 {
-                art.saveGState(); art.setAlpha(CGFloat(swap ? 1 - blend : blend))
-                Self.spellTwist(art, swap ? old : new, twist: twist, centre: centre, in: r)
-                art.restoreGState()
+                into.saveGState(); into.setAlpha(CGFloat(swap ? 1 - blend : blend))
+                Self.spellTwist(into, swap ? old : new, twist: twist, centre: centre, in: r)
+                into.restoreGState()
             }
+            if into === ctx { ctx.restoreGState() }
         } else {
-            ctx.draw(swap ? new : old, in: r)
+            ctx.drawShot(swap ? new : old, in: r)
         }
 
         // The dim: night drawn in around the circle while the spell is cast.
@@ -82,7 +87,7 @@ extension SlayerTrip {
     private static func spellTwist(_ c: CGContext, _ image: CGImage, twist: Double, centre: CGPoint, in r: CGRect) {
         let a = min(r.width / 2, r.height * 1.2), b = r.height / 2     // a circle seen at an angle, even in a short strip
         let n = 26
-        c.draw(image, in: r)
+        c.drawShot(image, in: r)
         for i in 0..<n {
             let outer = CGFloat(n - i) / CGFloat(n), inner = CGFloat(n - i - 1) / CGFloat(n)
             let mid = Double(outer + inner) / 2
@@ -99,7 +104,7 @@ extension SlayerTrip {
             c.rotate(by: CGFloat(angle))
             c.scaleBy(x: 1 / a, y: 1 / b)
             c.translateBy(x: -centre.x, y: -centre.y)
-            c.draw(image, in: r)
+            c.drawShot(image, in: r)
             c.restoreGState()
         }
     }

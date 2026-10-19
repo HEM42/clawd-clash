@@ -14,12 +14,12 @@ extension RingsTrip {
     /// stone's own (its glass, rim, highlight, glow, smoke, fire and the Eye) is pixel art, drawn into a bitmap about
     /// 180 pixels tall and scaled up without smoothing. The stone is cut on that same grid.
     func drawPalantir(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
-        guard k > 0 else { ctx.draw(old, in: r); return }
-        guard k < 1 else { ctx.draw(new, in: r); return }
+        guard k > 0 else { ctx.drawShot(old, in: r); return }
+        guard k < 1 else { ctx.drawShot(new, in: r); return }
         let s = r.height / 800
         let px: CGFloat = max(1, (r.height / 180).rounded())      // screen pixels per pixel of the stone's art
         let w = Int((r.width / px).rounded(.up)), h = Int((r.height / px).rounded(.up))
-        guard let art = palantirCanvas(width: w, height: h, px: px, in: r) else { ctx.draw(k < 0.5 ? old : new, in: r); return }
+        guard let art = palantirCanvas(width: w, height: h, px: px, in: r) else { ctx.drawShot(k < 0.5 ? old : new, in: r); return }
         let centre = CGPoint(x: r.midX, y: r.midY)
         let settled = min(r.height, r.width) * 0.42
         let reach = (r.width * r.width + r.height * r.height).squareRoot() / 2 + 6 * px
@@ -33,10 +33,10 @@ extension RingsTrip {
         let crisp = rise >= 1                                       // the new place, upright, drawn as it is
 
         // The old place outside the stone, dimming.
-        ctx.draw(old, in: r)
+        ctx.drawShot(old, in: r)
         let inside = palantirRows(of: ball, px: px, height: h, in: r)
         if crisp {
-            ctx.saveGState(); ctx.clip(to: inside); ctx.draw(new, in: r); ctx.restoreGState()
+            ctx.saveGState(); ctx.clip(to: inside); ctx.drawShot(new, in: r); ctx.restoreGState()
         }
         art.setFillColor(palantirRGB(0x05060A, 0.72 * grow))
         art.fill(r)
@@ -115,7 +115,7 @@ private func palantirSunk(_ art: CGContext, _ place: CGImage, scale: CGFloat, an
     art.translateBy(x: r.midX, y: r.midY)
     art.rotate(by: angle)
     art.scaleBy(x: scale, y: scale)
-    art.draw(place, in: CGRect(x: -r.width / 2, y: -r.height / 2, width: r.width, height: r.height))
+    art.drawShot(place, in: CGRect(x: -r.width / 2, y: -r.height / 2, width: r.width, height: r.height))
     art.restoreGState()
 }
 

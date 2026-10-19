@@ -120,9 +120,13 @@ struct FilesTrip {
     /// A frame `k` (0…1) of the way from `old` to `new`, over the whole of `r`: put together at one cell per art
     /// pixel, then scaled up without smoothing.
     func draw(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
-        let cell = max(1, (max(r.height / CGFloat(max(1, old.height)), r.height / 200)).rounded(.down))
+        // While the window changes universe (`ComicTransition.snapshotQuality`), the pictures are the window itself, its
+        // text among them: the frame is put together at their own resolution, so the text isn't cut into cells, or as
+        // near it as about half a million pixels a frame allows (a big Retina window, at every other pixel).
+        let cell = ComicTransition.snapshotQuality != nil ? max(1, (r.width * r.height / 500_000).squareRoot().rounded(.up))
+            : max(1, (max(r.height / CGFloat(max(1, old.height)), r.height / 200)).rounded(.down))
         let w = max(8, Int((r.width / cell).rounded())), h = max(8, Int((r.height / cell).rounded()))
-        guard let lo = Lo(w, h) else { ctx.draw(k < 0.5 ? old : new, in: r); return }
+        guard let lo = Lo(w, h) else { ctx.drawShot(k < 0.5 ? old : new, in: r); return }
         let k = min(1, max(0, k))
         switch kind {
         case .blackOil: drawBlackOil(lo, old: old, new: new, k: k)

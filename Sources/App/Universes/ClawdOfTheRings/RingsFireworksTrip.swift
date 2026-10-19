@@ -13,7 +13,7 @@ extension RingsTrip {
     /// own is pixel art, into a bitmap about 180 pixels tall, scaled up without smoothing: the
     /// night, smoke and glitter set pixel by pixel, and the rocket, burst, flash and dragon drawn over them.
     func drawFireworks(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
-        guard k < 1 else { ctx.draw(new, in: r); return }
+        guard k < 1 else { ctx.drawShot(new, in: r); return }
         let s = r.height / 800
         let px: CGFloat = max(1, (r.height / 180).rounded())  // screen pixels per pixel of the rocket's art
         let w = Int((r.width / px).rounded(.up)), h = Int((r.height / px).rounded(.up))
@@ -114,10 +114,10 @@ extension RingsTrip {
         }
 
         // The places: the new one where the old has gone, what's left of the old one, and the art over them.
-        if k >= bang - 0.02 { ctx.draw(new, in: r) }
+        if k >= bang - 0.02 { ctx.drawShot(new, in: r) }
         ctx.saveGState()
         if k >= bang { ctx.clip(to: keep) }
-        if k < bang || !keep.isEmpty { ctx.draw(old, in: r) }
+        if k < bang || !keep.isEmpty { ctx.drawShot(old, in: r) }
         ctx.restoreGState()
         Self.fwBlit(art, onto: ctx, width: w, height: h, px: px, in: r)
     }

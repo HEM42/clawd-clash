@@ -12,7 +12,7 @@ extension SlayerTrip {
     /// from the line; then the glare and the blush ebb and the new place settles in as it is (0.6–1). The light, the
     /// blush and the embers are pixel art, and the old place is cut on the art's grid, with grain over the night.
     func drawSunrise(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
-        guard let canvas = Self.slayerDustCanvas(in: r) else { ctx.draw(k < 0.5 ? old : new, in: r); return }
+        guard let canvas = Self.slayerDustCanvas(in: r) else { ctx.drawShot(k < 0.5 ? old : new, in: r); return }
         let (art, w, h, px) = canvas
         let W = Double(w), H = Double(h)
         let flick = Int(k * 2.0 * 15)
@@ -24,7 +24,7 @@ extension SlayerTrip {
         func line(_ y: Double) -> Double { -slant - 6 + (W + 2 * slant + 12) * sweepE + (y / H - 0.5) * slant * 2 }
 
         // The new place behind; the old one ahead of the line, its edge ragged as it burns.
-        ctx.draw(new, in: r)
+        ctx.drawShot(new, in: r)
         let edge: [Double] = (0..<h).map { j in
             (line(Double(j)) + ((noise(j / 2 * 31 + flick * 7) - 0.5) * 3).rounded()).rounded()
         }
@@ -34,7 +34,7 @@ extension SlayerTrip {
             rows.append(CGRect(x: r.minX + CGFloat(x) * px, y: r.minY + CGFloat(j) * px,
                                width: CGFloat(W - x) * px, height: px))
         }
-        if !rows.isEmpty { ctx.saveGState(); ctx.clip(to: rows); ctx.draw(old, in: r); ctx.restoreGState() }
+        if !rows.isEmpty { ctx.saveGState(); ctx.clip(to: rows); ctx.drawShot(old, in: r); ctx.restoreGState() }
 
         // The blush: four soft bands down the sky, close in colour, deepening toward the horizon, a warm wash below.
         let ebb = blush * (1 - settle)

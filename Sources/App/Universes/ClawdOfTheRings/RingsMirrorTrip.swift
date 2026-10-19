@@ -13,7 +13,7 @@ extension RingsTrip {
     /// moon's reflection, the drop and the ripples) is drawn as pixel art: into a bitmap about 180 pixels tall, in
     /// stepped bands of colour, then scaled up without smoothing. The water is cut on that same grid.
     func drawMirror(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
-        guard k < 1 else { ctx.draw(new, in: r); return }
+        guard k < 1 else { ctx.drawShot(new, in: r); return }
         let px: CGFloat = max(1, (r.height / 180).rounded())  // screen pixels per pixel of the Mirror's art
         let w = Int((r.width / px).rounded(.up)), h = Int((r.height / px).rounded(.up))
         guard let art = Self.mirrorCanvas(width: w, height: h, px: px, in: r) else { return }
@@ -126,7 +126,7 @@ extension RingsTrip {
             let crop = CGRect(x: 0, y: ((r.maxY - top) * sy).rounded(), width: CGFloat(image.width),
                               height: ((top - y) * sy).rounded())
             if let piece = image.cropping(to: crop) {
-                ctx.draw(piece, in: CGRect(x: r.minX + shift((y + top) / 2), y: y, width: r.width, height: top - y))
+                ctx.drawShot(piece, in: CGRect(x: r.minX + shift((y + top) / 2), y: y, width: r.width, height: top - y))
             }
             y = top
         }

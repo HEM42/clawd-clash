@@ -76,3 +76,23 @@ enum ComicTransition {
         }
     }
 }
+
+extension ComicTransition {
+    /// How a trip resamples the old and new pictures it was handed, while it scales, turns or shakes them. nil (the
+    /// screen saver, and place changes in the window's scene strip) leaves the trip's own setting, `.none`: those
+    /// pictures are pixel art. The window sets it while the universe changes (`ClawdWindow.switchFrame`), when they are
+    /// snapshots of the whole window, its anti-aliased cards and info list among them, which nearest-neighbour breaks
+    /// into blocks. A trip's own art (its canvases, sprites and lettering) is drawn with plain `draw` and stays crisp.
+    static var snapshotQuality: CGInterpolationQuality?
+}
+
+extension CGContext {
+    /// Draws a trip's old or new picture, resampled as `ComicTransition.snapshotQuality` says.
+    func drawShot(_ image: CGImage, in rect: CGRect) {
+        guard let quality = ComicTransition.snapshotQuality else { draw(image, in: rect); return }
+        let was = interpolationQuality
+        interpolationQuality = quality
+        draw(image, in: rect)
+        interpolationQuality = was
+    }
+}

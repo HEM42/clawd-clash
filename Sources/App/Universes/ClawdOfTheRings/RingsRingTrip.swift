@@ -15,12 +15,12 @@ extension RingsTrip {
     /// the edges and the flood's rim) is pixel art, drawn into a bitmap about 180 pixels tall and
     /// scaled up without smoothing. The flood is cut on that same grid.
     func drawRing(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
-        guard k > 0 else { ctx.draw(old, in: r); return }
-        guard k < 1 else { ctx.draw(new, in: r); return }
+        guard k > 0 else { ctx.drawShot(old, in: r); return }
+        guard k < 1 else { ctx.drawShot(new, in: r); return }
         let s = r.height / 800
         let px: CGFloat = max(1, (r.height / 180).rounded())      // screen pixels per pixel of the trip's art
         let w = Int((r.width / px).rounded(.up)), h = Int((r.height / px).rounded(.up))
-        guard let art = ringCanvas(width: w, height: h, px: px, in: r) else { ctx.draw(k < 0.5 ? old : new, in: r); return }
+        guard let art = ringCanvas(width: w, height: h, px: px, in: r) else { ctx.drawShot(k < 0.5 ? old : new, in: r); return }
         let centre = CGPoint(x: r.midX, y: r.midY)
         let radius = min(r.height * 0.11, r.width * 0.08)          // the Ring, settled
         let drain = CGFloat(ringEase(ringSpan(k, 0.12, 0.35)))
@@ -30,7 +30,7 @@ extension RingsTrip {
 
         // The old place, fading under the wraith-world; then the grey world, wavering; then the new place, flooding
         // back in colour from the middle.
-        if drain < 1 { ctx.draw(old, in: r) }
+        if drain < 1 { ctx.drawShot(old, in: r) }
         let coarse = px * 2
         let cw = Int((r.width / coarse).rounded(.up)), ch = Int((r.height / coarse).rounded(.up))
         if drain > 0, let wraith = ringWraith(old: old, new: new, mix: mix, waver: 2.5 * drain, k: k, width: cw, height: ch) {
@@ -50,7 +50,7 @@ extension RingsTrip {
         if !hole.isEmpty {
             ctx.saveGState()
             ctx.clip(to: hole)
-            ctx.draw(new, in: r)
+            ctx.drawShot(new, in: r)
             ctx.restoreGState()
         }
 
@@ -132,8 +132,8 @@ private func ringWraith(old: CGImage, new: CGImage, mix: CGFloat, waver: CGFloat
     else { return nil }
     let all = CGRect(x: 0, y: 0, width: w, height: h)
     flat.interpolationQuality = .medium
-    flat.draw(old, in: all)
-    if mix > 0 { flat.setAlpha(mix); flat.draw(new, in: all); flat.setAlpha(1) }
+    flat.drawShot(old, in: all)
+    if mix > 0 { flat.setAlpha(mix); flat.drawShot(new, in: all); flat.setAlpha(1) }
     if let sharp = flat.makeImage() {
         flat.setAlpha(0.3)
         flat.draw(sharp, in: all.offsetBy(dx: 2, dy: 0))

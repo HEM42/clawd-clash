@@ -15,8 +15,8 @@ extension SlayerTrip {
     /// Everything but the places is pixel art: drawn into a bitmap about 180 pixels tall and scaled up without
     /// smoothing, with a little grain; the leads are their own sprites, blacked out, at a whole number of pixels.
     func drawTitles(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
-        guard k > 0 else { ctx.draw(old, in: r); return }
-        guard k < 1 else { ctx.draw(new, in: r); return }
+        guard k > 0 else { ctx.drawShot(old, in: r); return }
+        guard k < 1 else { ctx.drawShot(new, in: r); return }
         let px: CGFloat = max(1, (r.height / 180).rounded())      // screen pixels per pixel of the art
         let w = Int((r.width / px).rounded(.up)), h = Int((r.height / px).rounded(.up))
         guard let art = Self.artCanvas(width: w, height: h, px: px, in: r) else {
@@ -35,7 +35,7 @@ extension SlayerTrip {
             let sky = Self.span(k, 0, 0.26)
             titlesSky(art, W: W, H: H, t: sky, frame: frame)
             titlesGrain(art, W: W, H: H, frame: frame)
-            if fade < 1 { ctx.draw(old, in: r) }
+            if fade < 1 { ctx.drawShot(old, in: r) }
             ctx.saveGState()
             ctx.setAlpha(CGFloat((fade * 5).rounded() / 5))
             Self.blit(art, onto: ctx, width: w, height: h, px: px, in: r)
@@ -66,7 +66,7 @@ extension SlayerTrip {
             let clear = Self.span(k, 0.88, 0.995)
             let layout = TitlesLayout(W: W, H: H)
             if clear > 0 {
-                ctx.draw(new, in: r)
+                ctx.drawShot(new, in: r)
                 titlesSweep(art, W: W, H: H, p: clear)
             } else {
                 art.setFillColor(titlesRGB(0x050509)); art.fill(CGRect(x: 0, y: 0, width: W, height: H))

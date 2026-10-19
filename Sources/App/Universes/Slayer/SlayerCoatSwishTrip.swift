@@ -29,17 +29,17 @@ extension SlayerTrip {
         }
 
         // Where the coat has passed, the new place; ahead of it, the old one.
-        if lead <= 0 { ctx.draw(old, in: r); return }
+        if lead <= 0 { ctx.drawShot(old, in: r); return }
         let past = (0..<h).map { edges($0).tail }.min() ?? 0
-        if past >= fw { ctx.draw(new, in: r); return }
-        ctx.draw(old, in: r)
+        if past >= fw { ctx.drawShot(new, in: r); return }
+        ctx.drawShot(old, in: r)
         // The new place behind the tail, row by row on the art grid.
         var rows: [CGRect] = []
         for y in 0..<h {
             let t = Int(edges(y).tail.rounded())
             if t > 0 { rows.append(CGRect(x: r.minX, y: r.minY + CGFloat(h - y - 1) * px, width: CGFloat(min(t, w)) * px, height: px)) }
         }
-        if !rows.isEmpty { ctx.saveGState(); ctx.clip(to: rows); ctx.draw(new, in: r); ctx.restoreGState() }
+        if !rows.isEmpty { ctx.saveGState(); ctx.clip(to: rows); ctx.drawShot(new, in: r); ctx.restoreGState() }
 
         guard let art = Self.artCanvas(width: w, height: h, px: px, in: r) else { return }
         let pen = CoatPen(c: art, px: px, r: r, h: h)

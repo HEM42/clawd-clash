@@ -13,7 +13,7 @@ extension SlayerTrip {
     func drawMusical(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
         let shut = Self.ease(Self.span(k, 0.02, 0.32)), open = Self.ease(Self.span(k, 0.72, 0.98))
         let close = shut * (1 - open)
-        ctx.draw(k < 0.5 ? old : new, in: r)
+        ctx.drawShot(k < 0.5 ? old : new, in: r)
         if close <= 0 && (k <= 0.02 || k >= 0.98) { return }
 
         let px: CGFloat = max(1, (r.height / 180).rounded())
