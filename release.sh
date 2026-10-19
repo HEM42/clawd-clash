@@ -35,6 +35,14 @@ gh auth status >/dev/null 2>&1 || { echo "gh isn't signed in to GitHub: run 'gh 
 # The notes: this version's CHANGELOG section, matched as plain text (the dots in a version aren't wildcards).
 NOTES=$(awk -v head="## $VERSION " 'index($0, head) == 1 {f=1; next} /^## /{f=0} f' CHANGELOG.md)
 [[ -n "${NOTES//[[:space:]]/}" ]] || { echo "add a '## $VERSION' entry with notes to CHANGELOG.md first" >&2; exit 1; }
+# GitHub caps release notes at 125,000 characters. A long section (a big overhaul) gets a short summary of its own in
+# release-notes/<version>.md, which links to the full CHANGELOG; the release uses that instead.
+if [[ -f release-notes/$VERSION.md ]]; then
+    NOTES=$(<release-notes/$VERSION.md)
+elif (( ${#NOTES} > 120000 )); then
+    echo "the CHANGELOG section for $VERSION is ${#NOTES} characters, over GitHub's limit: write a summary in release-notes/$VERSION.md" >&2
+    exit 1
+fi
 git fetch -q origin
 [[ "$(git rev-parse HEAD)" == "$(git rev-parse origin/main)" ]] \
     || { echo "HEAD isn't origin/main: push (or pull) first" >&2; exit 1; }
