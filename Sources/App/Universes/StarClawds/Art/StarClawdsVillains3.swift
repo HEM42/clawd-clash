@@ -11,7 +11,7 @@ let starWarsVillains3: [SWVillain: Persona] = [
     .deathTrooper: Persona(name: "Dearth Trooper", weapon: .blaster, armoured: true, muzzle: (52, 32), headTop: 19,
                   draw: drawDeathTrooper),
     .scoutTrooper: Persona(name: "Scoot Trooper", weapon: .blaster, armoured: true, canSit: false, muzzle: (50, 33), handGun: false,
-                  headTop: 12, draw: drawScoutTrooper),
+                  headTop: 12, missesEverything: true, draw: drawScoutTrooper),
     .ventress: Persona(name: "Asaj Vengress", weapon: .saber, headTop: 22,
                   draw: drawVentress),
     .savageOpress: Persona(name: "Savage Distress", weapon: .saber, headTop: 20,

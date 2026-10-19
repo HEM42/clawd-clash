@@ -12,7 +12,7 @@ let starWarsVillains1: [SWVillain: Persona] = [
     .boba: Persona(name: "Boba Feta", weapon: .blaster, armoured: true, muzzle: (52, 32), headTop: 11, signature: 2.6,
                   draw: drawBoba),
     .trooper: Persona(name: "Stormtrouper", weapon: .blaster, armoured: true, muzzle: (52, 32), headTop: 16, signature: 2.6,
-                  draw: drawTrooper),
+                  missesEverything: true, draw: drawTrooper),
     .emperor: Persona(name: "The Emperor", weapon: .lightning, canSit: false, headTop: 19,
                   draw: drawEmperor),
     .rogr: Persona(name: "R0-DG3R", weapon: .blaster, armoured: true, muzzle: (52, 32), headTop: 15, callout: "Roger roger!",

@@ -388,17 +388,18 @@ private func drawFredBurkel(_ c: PixelCanvas, _ p: Pose) {
     // The cardigan, open over the pink top.
     c.rect(18, 33, 20, 5, cardi); c.rect(37, 33, 1, 5, cardiD); c.rect(18, 37, 20, 1, cardiD)
     c.rect(25, 33, 6, 5, top); c.rect(25, 37, 6, 1, topD); c.rect(24, 33, 1, 5, cardiL); c.rect(31, 33, 1, 5, cardiD)
+    c.rect(20, 33, 3, 1, cardiL); c.rect(22, 35, 1, 2, cardiD); c.rect(15, 35, 3, 1, cardiD)   // lit shoulder, a fold, the cuff
     c.rect(18, 24, 20, 2, clawdOrange)
     // Long hair parted in the middle, down to her shoulders, the ties of the bunches at the sides; loose strands.
     c.pattern(16, 20, [
         "......HHHHHpHHHHH.......",
-        "....HHHHHHHpHHHHHHH.....",
-        "...HHHlHHHHpHHHHHlHH....",
-        "..HHHHHHHHHpHHHHHHHHH...",
-        "..HHHHHHHHHpHHHHHHHHHH..",
-        ".HHHHHHHHH....HHHHHHHHH.",
-        ".HHHHH............HHHHH.",
-        ".HHH................HHH.",
+        "....HHHlllHpHlllHHH.....",
+        "...HHllHHHHpHHHHllHH....",
+        "..HHlHHHHHHpHHHHHHHdH...",
+        "..HHHHHHHHHpHHHHHHHHdH..",
+        ".HHHHHHHHH....HHHHHHHdH.",
+        ".HlHHH............HHHdH.",
+        ".HlH................HdH.",
         "HHHl................lHHH",
         ".HHt................tHH.",
         "..H..................H..",
@@ -462,15 +463,17 @@ private func drawLorn(_ c: PixelCanvas, _ p: Pose) {
     c.rect(25, 33, 6, 5, shirtC); c.rect(27, 34, 2, 4, tie)
     c.pattern(22, 33, ["LLL......LLL", ".LL......LL.", "..L......L.."], ["L": suitL])
     c.px(20, 35, C(0xF2D048))   // a pocket square
+    c.rect(18, 33, 3, 1, suitL); c.rect(34, 33, 2, 1, suitL); c.rect(33, 35, 1, 2, suitD)   // lit shoulders, a crease
+    c.rect(15, 35, 3, 1, suitD)   // the cuff
     // Auburn hair swept up in a quiff, and the little red horns on his brow.
     c.rect(18, 24, 20, 2, green)
     c.pattern(16, 19, [
         "........HHHH............",
-        "......HHHHHHHH..H.......",
-        "....HHHHlHHHHHHHH.......",
-        "...HHHHHHHHlHHHHHHH.....",
-        "..HHHHHHHHHHHHHHHHHHH...",
-        "..HHHHHHHHHHHHHHHHHHHH..",
+        "......HHlllHHH..H.......",
+        "....HHlllHHHHHHHH.......",
+        "...HHllHHHHllllHHHH.....",
+        "..HHHHHHHHHHHHHHHHHdH...",
+        "..HHHHHHHHHHHHHHHHHHdH..",
         "..HH.HHH........HHHHHH..",
         "..dH................Hd..",
     ], ["H": hair, "l": hairL, "d": hairD])
@@ -530,15 +533,17 @@ private func drawDoyl(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 37, 20, 1, jacketD); c.rect(24, 37, 8, 1, C(0x8A3820))
     c.rect(22, 33, 2, 1, jacketL); c.rect(32, 33, 2, 1, jacketL)
     c.rect(15, 34, 2, 1, C(0x5A5040))
+    c.rect(18, 33, 3, 1, jacketL); c.rect(34, 33, 2, 1, jacketL); c.rect(35, 35, 1, 2, jacketD)   // shoulders, a crease
+    c.rect(15, 35, 3, 1, jacketD)   // the cuff
     // Tousled dark hair, strands sticking up and falling over his brow.
     c.rect(18, 24, 20, 2, demon ? blue : clawdOrange)
     c.pattern(16, 19, [
         ".....H...H..H...H.......",
-        "....HHH.HH.HHH.HHH.H....",
-        "...HHHHHHHHHHHHHHHHHH...",
-        "..HHHlHHHHHHlHHHHHHHHH..",
-        "..HHHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHHHH.",
+        "....HlH.lH.HlH.HlH.H....",
+        "...HHlHHlHHHlHHHlHHHH...",
+        "..HHllHHlllHHllHHHHHdH..",
+        "..HHHHHHHHHHHHHHHHHHHdH.",
+        ".HHHHHHHHHHHHHHHHHHHHdH.",
         "..HHHHHH.HHHHH..HHHHHH..",
         "..dHH......H.......HHd..",
         "..dH................Hd..",

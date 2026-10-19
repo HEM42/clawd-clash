@@ -231,6 +231,25 @@ extension Scenes {
             slayerLine(c, Double(hx), Double(top - 34 * s), Double(hx + 10 * s), Double(top), C(0x1A1014), Double(s) * 0.5)
             for y in stride(from: top - 30 * s, to: top, by: 6 * s) { c.rect(hx - 3 * s, y, 6 * s, max(1, s / 2), C(0x1A1014)) }
         }
+        // The town's water tower standing on the skyline off to the right: four splayed legs and their bracing, the
+        // tank and its cone roof, the underside warmed by the town's glow, a dim red lamp on top.
+        do {
+            let wx = c.w * 88 / 100, lh = 22 * s, tw = 16 * s, ty = hz - lh - 10 * s
+            let sil = C(0x1A1014), warm = C(0x4A2A1E)
+            for (a, b) in [(-7, -5), (7, 5), (-3, -2), (3, 2)] {
+                slayerLine(c, Double(wx + b * s), Double(hz - lh), Double(wx + a * s), Double(hz + s), sil, Double(s) * 0.55)
+            }
+            for k in 1...2 {
+                let y = hz - lh + k * lh / 3
+                c.rect(wx - 6 * s, y, 12 * s, max(1, s / 2), sil)
+                slayerLine(c, Double(wx - 6 * s), Double(y), Double(wx + 6 * s), Double(y - lh / 3), sil, Double(s) * 0.35)
+            }
+            c.rect(wx - tw / 2, ty, tw, 10 * s, sil); c.rect(wx - tw / 2, ty + 9 * s, tw, s, warm)
+            c.rect(wx - tw / 2, ty + 3 * s, tw, max(1, s / 2), C(0x2A1A1A))
+            for r in 0..<(4 * s) { c.rect(wx - tw / 2 + r * 2, ty - r - 1, tw - r * 4, 1, sil) }
+            c.rect(wx - tw / 2 - s, ty + 10 * s, tw + 2 * s, s, sil)   // the catwalk round its foot
+            c.rect(wx - max(1, s / 2), ty - 6 * s, s, s, C(0xC83A2A, 0.8))
+        }
         // Two lines of dry hills, the town's lights twinkling at their feet.
         c.dunes(base: hz, amp: Double(5 * s), freq: 0.017, phase: 0.6, bottom: g, C(0x2A1A18))
         for i in 0..<(c.w / 5) {
@@ -241,6 +260,28 @@ extension Scenes {
         c.gradient(hz + 9 * s, g, C(0x1E1612), C(0x2E2218), bands: 4)
         // The far road along the hills.
         c.rect(0, f.road, c.w, s, C(0x3A2C22))
+        // Telephone poles marching along the far road, the same height all the way, with a crossarm and three
+        // insulators each and the wires sagging between them.
+        do {
+            let gap = 74 * s, ph = 34 * s, pole = C(0x120A0C), arm = 6 * s
+            let xs = Array(stride(from: c.w * 6 / 100 - gap, to: c.w + gap, by: gap))
+            for x in xs {
+                let foot = f.road + s, top = foot - ph
+                c.rect(x, top, 2 * s, ph, pole); c.rect(x - arm, top + 3 * s, 2 * arm + 2 * s, s, pole)
+                for d in [-arm, s / 2, arm + s] { c.rect(x + d, top + 2 * s, s, s, C(0x8A7A62)) }
+            }
+            for (a, b) in zip(xs, xs.dropFirst()) {
+                for d in [-arm, arm + s] {
+                    let y = Double(f.road + s - ph + 2 * s), x0 = Double(a + d), x1 = Double(b + d)
+                    var lx = x0, ly = y
+                    for q in 1...8 {
+                        let u = Double(q) / 8, nx = x0 + (x1 - x0) * u, ny = y + 4 * Double(s) * 4 * u * (1 - u)
+                        slayerLine(c, lx, ly, nx, ny, C(0x0E080A, 0.9), Double(s) * 0.4)
+                        lx = nx; ly = ny
+                    }
+                }
+            }
+        }
         // Scrub, and a wire fence on short posts. Each bush is a few lumps of dusty sage, darker underneath, its top
         // caught by the lamp's orange or the sky's glow, with dry twigs poking out; the far ones smaller and fainter.
         for k in 0..<(c.w / (9 * s)) {

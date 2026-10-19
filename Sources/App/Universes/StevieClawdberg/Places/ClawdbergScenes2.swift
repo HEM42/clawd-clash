@@ -278,6 +278,12 @@ extension Scenes {
                 wisp(c, Int(noise(i + 140) * Double(c.w)), Int(noise(i + 150) * Double(g / 3)) + 10 * s,
                      (40 + Int(noise(i + 160) * 50)) * s, C(0xFFFFFF, 0.5), s: s)
             }
+            // Thunderheads building over the desert, away from the top left, and the Sierra far off in the haze.
+            for (i, cl) in [(x: 48, y: 30, w: 90), (x: 66, y: 22, w: 70), (x: 94, y: 36, w: 110), (x: 34, y: 46, w: 54),
+                            (x: 78, y: 48, w: 60)].enumerated() {
+                hv85Cloud(c, c.w * cl.x / 100, g * cl.y / 100, cl.w * s, s, seed: 170 + i * 7)
+            }
+            hv85Sierra(c, g)
             // A far range in the haze, then the big mesas with their layered cliffs.
             mesa(c, x: -20 * s, width: 200 * s, h: 50 * s, base: g - 16 * s, C(0xD8A890), seed: 2)
             mesa(c, x: c.w * 50 / 100, width: 240 * s, h: 40 * s, base: g - 16 * s, C(0xDCB094), seed: 6)
@@ -297,6 +303,7 @@ extension Scenes {
         mesa(c, x: c.w * 70 / 100, width: 90 * s, h: 22 * s, base: g - 14 * s, C(0xC07A5E), seed: 12)
         mesa(c, x: c.w * 46 / 100, width: 40 * s, h: 12 * s, base: g - 14 * s, C(0xD09478), seed: 13)
         c.rect(0, g - 14 * s, c.w, 14 * s, C(0xE2BE88))
+        hv85Desert(c, g)
         // The railway on its bank, the telegraph poles and the water tower.
         c.rect(f.townEnd, f.rail, c.w - f.townEnd, 2 * s, C(0xB8946A))
         c.rect(f.townEnd, f.rail, c.w - f.townEnd, s, C(0x5A4A3A))
@@ -375,6 +382,63 @@ extension Scenes {
         // The dirt street, wheel ruts and hoof prints.
         c.ground(g, C(0xC8A070), edge: C(0xE2C090), speck: C(0xA88458), seed: 18)
         c.rect(0, g + 3, c.w, s, C(0xB08A5E)); c.rect(0, g + 6, c.w, s, C(0xB08A5E))
+    }
+
+    /// A heaped thunderhead on a flat base at (`x`, `base`), `w` wide: white puffs lit from the sun, a warm grey
+    /// shade under them, and the top piled higher in the middle.
+    private static func hv85Cloud(_ c: PixelCanvas, _ x: Int, _ base: Int, _ w: Int, _ s: Int, seed: Int) {
+        let n = max(3, w / (9 * s))
+        var puffs: [(x: Int, y: Int, r: Int)] = []
+        for k in 0..<n {
+            let mid = 1 - abs(Double(k) / Double(n - 1) - 0.5) * 2
+            let r = Int((0.3 + 0.7 * mid) * Double(w) / 5 * (0.7 + 0.5 * noise(seed + k))) / s * s + 2 * s
+            puffs.append((x - w / 2 + w * k / (n - 1), base - r, r))
+            if mid > 0.5 { puffs.append((x - w / 2 + w * k / (n - 1) + 2 * s, base - r * 2, r * 2 / 3)) }
+        }
+        for p in puffs { c.circle(p.x, p.y, p.r, C(0xD8CCC0)) }
+        for p in puffs { c.circle(p.x + s, p.y - s, p.r - s, C(0xFFFCF4)) }
+        c.rect(x - w / 2 - 2 * s, base - 3 * s, w + 4 * s, 3 * s, C(0xD8CCC0))
+    }
+
+    /// The Sierra far off behind the mesas on the screen saver: a jagged range, pale lilac in the haze, with a
+    /// lighter face on the sunny side of each peak.
+    private static func hv85Sierra(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), base = g - 16 * s
+        for x in stride(from: 0, to: c.w, by: s) {
+            let k = Double(x / s)
+            let ridge = 0.5 + 0.3 * sin(k * 0.021 + 0.7) + 0.2 * abs(sin(k * 0.067 + 2.1)) + 0.08 * sin(k * 0.23)
+            let h = Int(ridge * Double(120 * s)) / s * s
+            c.rect(x, base - h, s, h, C(0xC4AEB4))
+            let slope = sin(k * 0.067 + 2.1) * cos(k * 0.067 + 2.1)
+            if slope > 0 { c.rect(x, base - h, s, min(h, 10 * s), C(0xD4C0C0)) }
+        }
+    }
+
+    /// The open desert past the town: a few saguaros behind the railway, and a windmill pump between the telegraph
+    /// poles with its wheel of blades and its tail vane.
+    private static func hv85Desert(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), f = hv85Frame(c, g)
+        for (i, px) in [74, 83, 97].enumerated() {
+            let x = c.w * px / 100, h = (6 + i % 2 * 3) * s, base = f.rail - s
+            c.rect(x, base - h, 2 * s, h, C(0x5A7A3A)); c.rect(x, base - h, s, h, C(0x6E8E48))
+            c.rect(x - 2 * s, base - h * 2 / 3, 2 * s, s, C(0x5A7A3A)); c.rect(x - 2 * s, base - h + s, s, h / 3, C(0x5A7A3A))
+            c.rect(x + 2 * s, base - h / 2, 2 * s, s, C(0x5A7A3A)); c.rect(x + 3 * s, base - h * 3 / 4, s, h / 4, C(0x5A7A3A))
+        }
+        let k = max(0, (c.w * 79 / 100 - f.townEnd) / (30 * s))
+        let wx = f.townEnd + 4 * s + k * 30 * s + 15 * s, top = f.rail - 26 * s
+        for y in stride(from: top, to: f.rail, by: s) {   // the tower, tapering up
+            let half = 2 * s + (y - top) * 4 / 26 / s * s
+            c.rect(wx - half, y, s, s, C(0x6A4A30)); c.rect(wx + half, y, s, s, C(0x6A4A30))
+            if ((y - top) / s) % 6 == 0 { c.rect(wx - half, y, 2 * half + s, s, C(0x7A5A3A)) }
+        }
+        for a in 0..<12 {   // the wheel of blades, and its hub
+            let ang = Double(a) / 12 * 2 * .pi
+            for r in 2...7 {
+                c.rect(wx + Int(cos(ang) * Double(r * s)), top + Int(sin(ang) * Double(r * s)), s, s, C(0x8A8A86))
+            }
+        }
+        c.rect(wx - s, top - s, 2 * s, 2 * s, C(0x3A3A36))
+        c.rect(wx, top, 9 * s, s, C(0x5A4A3A)); c.rect(wx + 7 * s, top - 3 * s, 3 * s, 5 * s, C(0xB8463A))
     }
 
     /// What moves in 1885: the steam train puffing along the railway (it comes in from the right and goes behind the

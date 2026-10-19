@@ -112,22 +112,33 @@ extension Scenes {
     /// Where things stand at Area 51: the hangar's left edge and roofline, the fence's height.
     static func area51Frame(_ c: PixelCanvas, _ g: Int) -> (hangarX: Int, roof: Int, fence: Int) {
         let s = unit(g), tall = isTall(c)
-        let roof = tall ? g - g / 3 : max(6 * s, g - 34 * s)
+        let roof = tall ? g - 56 * s : max(6 * s, g - 34 * s)   // a fixed height, so full screen it stays a hangar
         return (c.w * 58 / 100, roof, 11 * s)
     }
 
     /// Area 51 at night: desert under a starry sky, low mountains far off, a great hangar with its doors cracked open on
-    /// a green glow inside, and a chain-link perimeter fence with a warning sign. The helicopter and the searchlights
-    /// come with the moving layer.
+    /// a green glow inside, a radar dish on its roof and a side door under a lamp, the control tower and the low blocks
+    /// of the base beyond, and a chain-link perimeter fence with a warning sign and a camera. On the screen saver a moon
+    /// hangs over the range and a radio mast stands on the far ridge. The helicopter and the searchlights come with the
+    /// moving layer.
     static func area51(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), f = area51Frame(c, g)
         c.gradient(0, g, C(0x070A18), C(0x2A2838), bands: 8)
         c.stars(0, g * 2 / 3, density: tall ? 150 : 70, seed: 57)
+        if tall {
+            s46Moon(c, x: c.w * 40 / 100, y: g / 5, r: 10 * s, sky: lerp(C(0x070A18), C(0x2A2838), 0.125))
+            s46NightCloud(c, x: c.w * 66 / 100, y: g * 30 / 100, len: c.w * 24 / 100, s: s, body: C(0x161626), rim: C(0x34344A), seed: 31)
+            s46NightCloud(c, x: c.w * 18 / 100, y: g * 44 / 100, len: c.w * 16 / 100, s: s, body: C(0x1A1A2A), rim: C(0x30304A), seed: 32)
+        }
         // The mountains, two ranges.
         c.dunes(base: g - (tall ? g / 6 : 19 * s), amp: Double(tall ? g / 12 : 7 * s), freq: 0.018 / Double(s), phase: 1.2,
                 bottom: g, C(0x1A1A28))
+        if tall { s3RadioMast(c, x: c.w * 22 / 100, base: g - g / 6 + 2 * s, s: s) }
         c.dunes(base: g - (tall ? g / 12 : 13 * s), amp: Double(tall ? g / 24 : 3 * s), freq: 0.03 / Double(s), phase: 4.0,
                 bottom: g, C(0x2A2430))
+        // The base beyond the fence: low blocks with a few lit windows, and the control tower by the hangar.
+        s3BaseBlocks(c, from: c.w * 30 / 100, to: f.hangarX - 30 * s, base: g - 5 * s, s: s)
+        s3ControlTower(c, x: f.hangarX - 22 * s, base: g - 5 * s, g)
         // The hangar: a long low shed with a curved roof, its doors open a crack.
         let hx = f.hangarX, hw = c.w - hx + 4 * s, top = f.roof
         c.rect(hx, top, hw, g - top, C(0x3E434A)); c.rect(hx, top, hw, s, C(0x6A7078))
@@ -146,6 +157,12 @@ extension Scenes {
         if numX + 16 * s < c.w { drawSignText(c, "51", x: numX, y: top + 6 * s, s: 3 * s, col: C(0x5A6068)) }
         // Lights on the hangar's front.
         for x in stride(from: hx + 4 * s, to: c.w, by: 22 * s) { c.rect(x, top + 2 * s, 2 * s, s, C(0xFFD27A)) }
+        // The wall's sheeting beside the doors, its left edge catching the searchlights, a side door under its lamp, and
+        // the radar dish on the roof.
+        for x in stride(from: doorX + doorW + 4 * s, to: c.w, by: 10 * s) where x < numX - s || x > numX + 20 * s { c.rect(x, top + 4 * s, max(1, s / 2), g - top - 4 * s, C(0x363A40)) }
+        c.rect(hx, top + s, 2 * s, g - top - s, C(0x5A6068))
+        s3HangarDoor(c, x: doorX + doorW + 34 * s, g: g, s: s, right: c.w)
+        s3Radar(c, x: hx + (c.w - hx) * 55 / 100, roof: top - 2 * s, s: s, right: c.w)
         // The desert floor.
         c.ground(g, C(0x3A3228), edge: C(0x5C4E3C), speck: C(0x2A241C), seed: 58)
         // The fence: posts, the chain link, barbed wire on top.
@@ -161,6 +178,74 @@ extension Scenes {
         c.rect(sx, sy, 29 * s, 13 * s, C(0xEDEAE0)); c.rect(sx, sy, 29 * s, 3 * s, C(0xB8202A))
         drawSignText(c, "AREA 51", x: sx + 3 * s, y: sy + 5 * s, s: s, col: C(0x1A1A1E))
         c.rect(sx + 3 * s, sy + 11 * s, 23 * s, max(1, s / 2), C(0x8A8676))
+        // A security camera on a pole above the fence, watching the road.
+        let cx = c.w * 42 / 100
+        if cx + 6 * s < fenceEnd {
+            c.rect(cx, ft - 9 * s, s, 9 * s, C(0x6A7078))
+            c.rect(cx - 4 * s, ft - 11 * s, 6 * s, 3 * s, C(0xC8CCD0)); c.rect(cx - 5 * s, ft - 10 * s, s, s, C(0x1A1A1E))
+            c.rect(cx - 4 * s, ft - 11 * s, 6 * s, max(1, s / 2), C(0xE8ECF0)); c.px(cx + s, ft - 10 * s, C(0xFF3A2A))
+        }
+    }
+
+    /// The base's low buildings far off beyond the fence, between `from` and `to`: flat roofs, a lit window here and
+    /// there, an aerial on one or two.
+    private static func s3BaseBlocks(_ c: PixelCanvas, from: Int, to: Int, base: Int, s: Int) {
+        var x = from, i = 0
+        while x < to - 8 * s {
+            let w = min((10 + Int(noise(i + 870) * 14)) * s, to - x), h = (5 + Int(noise(i + 880) * 5)) * s
+            c.rect(x, base - h, w, h, C(0x1C1E28)); c.rect(x, base - h, w, max(1, s / 2), C(0x34364A))
+            for wx in stride(from: x + 2 * s, to: x + w - 2 * s, by: 4 * s) where noise(i * 13 + wx / s) > 0.62 {
+                c.rect(wx, base - h + 2 * s, 2 * s, s, C(0xFFD27A, 0.75))
+            }
+            if noise(i + 890) > 0.6 { c.rect(x + w / 2, base - h - 4 * s, max(1, s / 2), 4 * s, C(0x34364A)) }
+            x += w + (2 + Int(noise(i + 895) * 6)) * s; i += 1
+        }
+    }
+
+    /// The control tower: a slim shaft, a cab of green-lit glass with its mullions, a flat roof and an aerial with a red
+    /// light, its shadow falling away to the right.
+    private static func s3ControlTower(_ c: PixelCanvas, x: Int, base: Int, _ g: Int) {
+        let p = Pen(c, x, base, g)
+        p.rect(5, -1, 8, 1, C(0x14141C, 0.6))   // the shadow
+        p.rect(-2, -34, 5, 34, C(0x2A2C36)); p.rect(-2, -34, 1, 34, C(0x44485A))
+        for v in stride(from: -30, to: -2, by: 6) { p.rect(0, v, 1, 2, C(0xFFD27A, 0.6)) }   // the stair windows
+        p.rect(-8, -41, 17, 7, C(0x24262E)); p.rect(-7, -40, 15, 4, C(0x8AE8B0, 0.55))
+        for u in stride(from: -4, to: 8, by: 4) { p.rect(u, -40, 1, 4, C(0x24262E)) }
+        p.rect(-9, -43, 19, 2, C(0x3A3C48)); p.rect(-9, -43, 19, 1, C(0x5A5E6E))
+        p.rect(4, -50, 1, 7, C(0x5A5E6E)); p.rect(4, -51, 1, 1, C(0xFF3A2A))
+    }
+
+    /// A small side door in the hangar's wall, standing on the ground, a caged lamp over it throwing a little light.
+    private static func s3HangarDoor(_ c: PixelCanvas, x: Int, g: Int, s: Int, right: Int) {
+        guard x + 10 * s < right else { return }
+        c.ellipse(x + 4 * s, g - 12 * s, 9 * s, 6 * s, C(0xFFD27A, 0.07))
+        c.rect(x - s, g - 13 * s, 10 * s, 13 * s, C(0x2E3238)); c.rect(x, g - 12 * s, 8 * s, 12 * s, C(0x24282C))
+        c.rect(x + s, g - 11 * s, 6 * s, 3 * s, C(0x3A4048)); c.rect(x + 6 * s, g - 6 * s, s, s, C(0xB8BCC0))
+        c.rect(x + 2 * s, g - 16 * s, 4 * s, 2 * s, C(0x1A1C20)); c.rect(x + 3 * s, g - 15 * s, 2 * s, s, C(0xFFE8A0))
+    }
+
+    /// The radar dish on the roof: a lattice mast and a dish turned to the sky on the right, its feed arm out in front.
+    private static func s3Radar(_ c: PixelCanvas, x: Int, roof: Int, s: Int, right: Int) {
+        guard x + 10 * s < right else { return }
+        for v in 0..<10 {   // the mast, a little lattice
+            c.rect(x - 2 * s + v * s / 5, roof - v * s, s / 2 + 1, 1, C(0x5A6068)); c.rect(x + 2 * s - v * s / 5, roof - v * s, s / 2 + 1, 1, C(0x5A6068))
+            if v % 3 == 0 { c.rect(x - 2 * s + v * s / 5, roof - v * s, 4 * s - 2 * v * s / 5, max(1, s / 2), C(0x4A5058)) }
+        }
+        c.ellipse(x, roof - 15 * s, 3 * s, 7 * s, C(0xB8BEC6)); c.ellipse(x + s, roof - 15 * s, 2 * s, 6 * s, C(0x6A7078))
+        c.rect(x + s, roof - 15 * s, 6 * s, max(1, s / 2), C(0x8A9098)); c.rect(x + 6 * s, roof - 16 * s, s, 2 * s, C(0xB8BEC6))
+        c.px(x - 2 * s, roof - 22 * s, C(0xFF3A2A))
+    }
+
+    /// A radio mast on the far ridge: a tall lattice tapering up, with red lights at its top and halfway up.
+    private static func s3RadioMast(_ c: PixelCanvas, x: Int, base: Int, s: Int) {
+        let h = 60 * s
+        for v in stride(from: 0, to: h, by: 1) {
+            let half = 3 * s - v * 2 * s / h
+            c.rect(x - half, base - v, 1, 1, C(0x2A2A3A)); c.rect(x + half, base - v, 1, 1, C(0x2A2A3A))
+            if v % (5 * s) == 0 { c.rect(x - half, base - v, half * 2 + 1, 1, C(0x2A2A3A)) }
+        }
+        c.rect(x, base - h - 4 * s, 1, 4 * s, C(0x2A2A3A))
+        for y in [base - h - 4 * s, base - h / 2] { c.rect(x - s / 2, y, s, s, C(0xFF3A2A)); c.circle(x, y, 3 * s, C(0xFF3A2A, 0.12)) }
     }
 
     /// AREA 51 in a 3×5 font, for the fence's sign.

@@ -408,6 +408,7 @@ extension Scenes {
             c.circle(m.x + dx * m.r / 8, m.y + dy * m.r / 8, rr * m.r / 9, C(0xC8D6C0))
         }
         if m.r <= 10 * s { c.rect(m.x - 2 * s, m.y - s, 2 * s, 2 * s, C(0xC8D6C0)) }
+        if tall { slayerCemeteryChapel(c, hz, s) }
         // Hills and a tree line on the horizon, then the graveyard's grass.
         c.dunes(base: hz + 2 * s, amp: Double(3 * s), freq: 0.02, phase: 1, bottom: g, C(0x0C1C1C))
         for x in stride(from: 0, to: c.w, by: 3 * s) {
@@ -423,6 +424,17 @@ extension Scenes {
         let fb = hz + 8 * s
         c.rect(0, fb - 9 * s, c.w, s, C(0x0A0E10)); c.rect(0, fb - 3 * s, c.w, s, C(0x0A0E10))
         for x in stride(from: 0, to: c.w, by: 4 * s) { c.rect(x, fb - 11 * s, s, 11 * s, C(0x0A0E10)); c.px(x, fb - 12 * s, C(0x0A0E10)) }
+        if tall {   // the bigger monuments, back by the fence: a weeping angel on her plinth and an obelisk
+            slayerCemeteryAngel(c, c.w * 40 / 100, hz + 24 * s, s)
+            let ox = c.w * 77 / 100, ob = hz + 22 * s, ow = 6 * s, oh = 34 * s
+            c.rect(ox - 2 * s, ob - 4 * s, ow + 4 * s, 4 * s, C(0x3A4644)); c.rect(ox - 2 * s, ob - 4 * s, ow + 4 * s, s, C(0x4A5652))
+            for r in 0..<oh {   // the shaft narrows a little as it climbs, then a pyramid cap
+                let inset = r / 12, y = ob - 4 * s - r - 1
+                c.rect(ox + inset, y, ow - 2 * inset, 1, C(0x3A4644)); c.rect(ox + inset, y, s, 1, C(0x4A5652))
+            }
+            let capW = ow - 2 * (oh / 12)
+            for r in 0..<(capW / 2) { c.rect(ox + oh / 12 + r, ob - 4 * s - oh - r - 1, capW - 2 * r, 1, C(0x4A5652)) }
+        }
         if tall {   // a middle row of stones on the screen saver's deeper ground
             for k in 0..<9 {
                 let x = c.w * (3 + k * 11) / 100 + Int(noise(k + 60) * 20) * s
@@ -537,6 +549,76 @@ extension Scenes {
             for d in 0..<4 { c.rect(x - 4 * s + Int(noise(Int(t * 6) + d) * 12) * s, base - Int(noise(Int(t * 6) + d + 9) * 6) * s, s, s, C(0x4A3624)) }
         }
     }
+}
+
+/// On the screen saver, a far hill rising behind the cemetery's tree line with the old chapel on its crest: a nave
+/// under a steep gable, a steeple with its cross, the sides facing the moon catching its light, one window still lit,
+/// and dark cypresses standing down both slopes.
+private func slayerCemeteryChapel(_ c: PixelCanvas, _ hz: Int, _ s: Int) {
+    let hill = C(0x0E2224), lit = C(0x24403C), dark = C(0x081414)
+    let cx = c.w * 60 / 100, half = 130 * s, rise = 30 * s
+    func ground(_ x: Int) -> Int {
+        let d = Double(x - cx) / Double(half)
+        return hz + 2 * s - Int(Double(rise) * max(0, 1 - d * d) * max(0, 1 - d * d))
+    }
+    for x in max(0, cx - half)..<min(c.w, cx + half) {
+        let y = ground(x)
+        guard y < hz + 2 * s else { continue }
+        c.rect(x, y, 1, hz + 2 * s - y, hill)
+        if x < cx { c.px(x, y, lit) }
+    }
+    // The cypresses: tall flames of dark green, widest a third of the way up.
+    for (k, dx) in [-96, -74, -58, 50, 66, 88].enumerated() {
+        let x = cx + dx * s, base = ground(x) + s, th = (12 + Int(noise(k + 1240) * 9)) * s
+        for r in 0..<th {
+            let u = Double(r) / Double(th), w = Int((3.2 * sin(.pi * pow(u, 0.75))) * Double(s))
+            guard w > 0 else { c.px(x, base - th + r, dark); continue }
+            c.rect(x - w, base - th + r, 2 * w + 1, 1, dark); c.px(x - w, base - th + r, hill)
+        }
+    }
+    // The chapel: the nave, its gable, the steeple on the moon's side.
+    let base = ground(cx) + 2 * s, nx = cx - 8 * s, nw = 24 * s, nh = 11 * s
+    c.rect(nx, base - nh, nw, nh, dark); c.rect(nx, base - nh, s, nh, lit)
+    for r in 0..<(8 * s) { c.rect(nx - s + r, base - nh - r - 1, nw + 2 * s - 2 * r, 1, dark) }
+    for r in 0..<(8 * s) { c.px(nx - s + r, base - nh - r - 1, lit) }
+    let tx = nx - 6 * s, tw = 8 * s, th = 24 * s
+    c.rect(tx, base - th, tw, th, dark); c.rect(tx, base - th, s, th, lit)
+    for r in 0..<(12 * s) {
+        let inset = r * (tw / 2) / (12 * s)
+        c.rect(tx + inset, base - th - r - 1, tw - 2 * inset, 1, dark); c.px(tx + inset, base - th - r - 1, lit)
+    }
+    let top = base - th - 12 * s
+    c.rect(tx + tw / 2 - max(1, s / 2), top - 6 * s, s, 6 * s, dark); c.rect(tx + tw / 2 - 2 * s, top - 4 * s, 4 * s, s, dark)
+    c.rect(tx + 3 * s, base - th + 4 * s, 2 * s, 3 * s, C(0x2E4440))   // the belfry's opening
+    c.rect(nx + 12 * s, base - 8 * s, 2 * s, 4 * s, C(0xD8B060, 0.85)); c.px(nx + 12 * s, base - 9 * s, C(0xD8B060, 0.5))
+    c.circle(nx + 13 * s, base - 6 * s, 4 * s, C(0xD8B060, 0.08))
+}
+
+/// A weeping angel on a plinth, back by the fence on the screen saver: her face in her hands, wings folded high
+/// behind her, the moonlight down her left side. She stands on `base` at x.
+private func slayerCemeteryAngel(_ c: PixelCanvas, _ x: Int, _ base: Int, _ s: Int) {
+    let body = C(0x3A4644), lit = C(0x56625E), shade = C(0x2A3432)
+    // The plinth, with a cap and a foot.
+    c.rect(x - 7 * s, base - 3 * s, 14 * s, 3 * s, body); c.rect(x - 7 * s, base - 3 * s, 14 * s, s, lit)
+    c.rect(x - 5 * s, base - 14 * s, 10 * s, 11 * s, body); c.rect(x - 5 * s, base - 14 * s, s, 11 * s, lit)
+    c.rect(x + 4 * s, base - 14 * s, s, 11 * s, shade); c.rect(x - 3 * s, base - 10 * s, 6 * s, s, shade)
+    c.rect(x - 6 * s, base - 16 * s, 12 * s, 2 * s, body); c.rect(x - 6 * s, base - 16 * s, 12 * s, s, lit)
+    let foot = base - 16 * s
+    // The wings, folded and rising above her head, their tips pointed.
+    for (dx, col) in [(-5, lit), (2, shade)] {
+        for r in 0..<(22 * s) {
+            let w = r < 4 * s ? max(s, r / 2) : 3 * s
+            c.rect(x + dx * s + (r < 4 * s ? (3 * s - w) / 2 : 0), foot - 24 * s + r, w, 1, col)
+        }
+    }
+    // The robe, flaring to the hem; the head bowed into her hands.
+    for r in 0..<(16 * s) {
+        let w = 4 * s + r * 3 * s / (16 * s)
+        c.rect(x - w / 2 - s, foot - 16 * s + r, w + s, 1, body); c.px(x - w / 2 - s, foot - 16 * s + r, lit)
+    }
+    for k in 0..<3 { c.rect(x - s + k * s, foot - 11 * s, max(1, s / 2), 11 * s, shade) }   // the folds
+    c.rect(x - 2 * s, foot - 20 * s, 3 * s, 4 * s, body); c.rect(x - 2 * s, foot - 20 * s, s, 3 * s, lit)
+    c.rect(x - 3 * s, foot - 17 * s, 4 * s, 2 * s, lit)   // the hands over her face
 }
 
 // MARK: - 1630 Revello Drive
@@ -1583,6 +1665,22 @@ extension Scenes {
                 c.rect(x - half, top + y, 2 * half + 1, 1, rock); c.px(x - half, top + y, rockL)
             }
         }
+        // Chains hanging from the roof, rusted, each ending in a hook: the Master's old fittings.
+        for (k, cx) in [c.w * 57 / 100, c.w * 64 / 100, c.w * 88 / 100].enumerated() {
+            let len = (tall ? 26 + k * 9 : 10 + k * 4) * s
+            for y in stride(from: top, to: top + len, by: 3 * s) {
+                let odd = (y - top) / (3 * s) % 2 == 1
+                c.rect(cx - (odd ? 0 : s), y, odd ? s : 3 * s, 2 * s, odd ? C(0x7A3A22) : C(0x4A2214))
+                if !odd { c.px(cx - s, y, C(0x9A4A2A)) }
+            }
+            let hy = top + len
+            c.rect(cx, hy, s, 3 * s, C(0x5A2A1A)); c.rect(cx - 2 * s, hy + 3 * s, 3 * s, s, C(0x5A2A1A)); c.rect(cx - 2 * s, hy + s, s, 2 * s, C(0x5A2A1A))
+        }
+        if !tall {   // a broken pipe from the school poking down through the roof, a dribble of rust below it
+            let px = c.w * 72 / 100
+            c.rect(px, 0, 4 * s, 9 * s, C(0x4A4440)); c.rect(px, 0, s, 9 * s, C(0x6A625C)); c.rect(px - s, 7 * s, 6 * s, 2 * s, C(0x3A3430))
+            c.rect(px + s, 9 * s, 2 * s, s, C(0x6A3A22)); c.rect(px + 2 * s, 11 * s, s, s, C(0x6A3A22, 0.6))
+        }
         // The cracks, dark with a dull red edge (the moving layer makes them glow).
         for run in f.cracks {
             for (i, (a, b)) in zip(run, run.dropFirst()).enumerated() {
@@ -1629,9 +1727,37 @@ extension Scenes {
         } else {
             for y in (g - 22 * s)..<g { c.rect(0, y, c.w, 1, C(0xFF2A10, 0.10 * Double(y - g + 22 * s) / Double(22 * s))) }
         }
+        // Stalagmites growing up from the cavern floor (or, on the screen saver, from the lip of the drop), at a
+        // fixed size, their faces towards the seal caught by its red light.
+        for (k, px) in [27, 36, 67, 75].enumerated() {
+            let x = c.w * px / 100, base = (f.rim ?? g) + s, h = (16 + Int(noise(k + 1720) * 10)) * s
+            let w = (8 + Int(noise(k + 1721) * 4)) * s, toSeal = x < f.seal
+            for r in 0..<h {
+                // A blunt cone: straight sides, rounding off over the last few rows.
+                let u = Double(r) / Double(h), half = Int(Double(w) * (1 - u) * min(1, (1 - u) * 6 + 0.35))
+                let y = base - r - 1
+                c.rect(x - half, y, 2 * half + 1, 1, C(0x1E0806))
+                c.rect(toSeal ? x + half - 3 * s : x - half + s, y, 2 * s, 1, C(0x4A1A12))
+                c.rect(toSeal ? x + half - s : x - half, y, s, 1, C(0x8A2A14))
+                c.rect(toSeal ? x - half : x + half - s, y, s, 1, rockD)
+                if r % (4 * s) == 0 { c.rect(x - half + s, y, max(0, 2 * half - s), 1, rockD.alpha(0.5)) }   // the growth rings
+            }
+            c.ellipse(x, base, w + 2 * s, s, rockD)
+        }
         // Boulders on the right.
         for (bx, br) in [(c.w * 86 / 100, 9), (c.w * 93 / 100, 6), (c.w * 79 / 100, 5)] {
             c.ellipse(bx, g - br * s / 2, br * s, br * s * 2 / 3, rock); c.ellipse(bx - br * s / 3, g - br * s * 3 / 4, br * s / 2, br * s / 4, rockL)
+        }
+        // Old bones by the boulders and at the foot of the stairs: a skull, a rib cage, scattered long bones.
+        let bone = C(0xB8A890), boneD = C(0x7A6A58)
+        for (bx, flip) in [(c.w * 82 / 100, false), (f.stairs + 10 * s, true)] {
+            let sx = bx + (flip ? 9 * s : 0)
+            c.rect(sx, g - 4 * s, 4 * s, 3 * s, bone); c.rect(sx + s, g - 2 * s, 2 * s, 2 * s, bone)
+            c.rect(sx + s, g - 3 * s, s, s, C(0x1A0806)); c.rect(sx + 3 * s - (flip ? 2 * s : 0), g - 3 * s, s, s, C(0x1A0806))
+            c.rect(sx, g - 4 * s, 4 * s, s, C(0xD8CCB4))
+            let lx = bx + (flip ? 0 : 6 * s)
+            c.rect(lx, g - s, 7 * s, s, boneD); c.rect(lx, g - 2 * s, s, s, boneD); c.rect(lx + 6 * s, g - 2 * s, s, s, boneD)
+            for r in 0..<3 { c.rect(lx + 2 * s + r * 2 * s, g - 4 * s, s, 3 * s, boneD) }
         }
         // The stairs up to the school's basement door.
         let sx = f.stairs

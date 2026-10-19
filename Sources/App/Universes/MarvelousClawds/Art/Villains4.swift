@@ -106,6 +106,9 @@ private func drawKingpin(_ c: PixelCanvas, _ p: Pose) {
     let shoe = C(0x1A1A1E), cane = C(0x1E1E24)
     drawLegs(c, Look(leg: suit), step: p.step)
     drawBoots(c, step: p.step, shoe, rows: 1)
+    if !seatedPose {                                                     // a glint of polish on each shoe
+        for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx, p.step >= 0 && i % 2 == p.step ? 42 : 43, C(0x4A4A56)) }
+    }
     c.oy += p.breathe
     let sig = p.signature
     let tug = sig.map { $0 > 0.55 && $0 < 0.95 } ?? false
@@ -120,6 +123,7 @@ private func drawKingpin(_ c: PixelCanvas, _ p: Pose) {
     ], ["S": clawdOrange, "s": clawdShade])
     c.rect(15, 25, 26, 6, clawdOrange)
     c.rect(40, 23, 1, 8, clawdShade)
+    c.rect(22, 21, 7, 1, C(0xEA9A7C)); c.rect(19, 22, 3, 1, C(0xEA9A7C))   // light across the bald dome
     c.rect(20, 25, 5, 1, clawdShade); c.rect(31, 25, 5, 1, clawdShade)     // heavy brows
     c.rect(21, 26, 2, 3, ink); c.rect(32, 26, 2, 3, ink)
     c.rect(25, 29, 6, 1, clawdShade)                                     // a stern mouth
@@ -129,6 +133,7 @@ private func drawKingpin(_ c: PixelCanvas, _ p: Pose) {
     c.rect(15, 37, 26, 1, suitShade)
     c.pattern(23, 31, ["LPPPPPPPPL", ".LPPPPPPL.", "..LPPPPL..", "...LLLL..."], ["P": purple, "L": lapel])
     c.px(28, 34, C(0x8A80A0)); c.px(28, 36, C(0x8A80A0))                 // buttons
+    c.rect(19, 33, 1, 3, suitShade); c.rect(37, 34, 1, 3, suitShade)     // folds either side of the lapels
     c.pattern(33, 32, ["PpP", "LLL"], ["P": purple, "p": C(0x8A4AAA), "L": lapel])   // pocket square
     // Arms: the left one goes up to tug a lapel in the signature.
     if tug {
@@ -137,6 +142,7 @@ private func drawKingpin(_ c: PixelCanvas, _ p: Pose) {
         c.rect(23, 31 + y, 2, 2, clawdOrange)
     } else {
         c.rect(12, 32, 3, 4, suit); c.rect(12, 35, 3, 1, suitShade)
+        c.rect(12, 34, 3, 1, lapel)                                      // the shirt cuff
     }
     c.rect(41, 31, 3, 4, suit); c.rect(41, 34, 3, 1, suitShade)
 
@@ -193,6 +199,10 @@ private func drawBullseye(_ c: PixelCanvas, _ p: Pose) {
     c.rect(22, 29, 2, 3, w); c.rect(32, 29, 2, 3, w)                          // white eye pieces
     c.rect(18, 35, 20, 1, grey)
     c.rect(21, 34, 1, 1, steel); c.rect(24, 34, 1, 1, steel)                  // knife handles in the belt
+    c.rect(28, 35, 2, 1, C(0x8A8E98))                                          // its buckle
+    c.rect(22, 23, 5, 1, C(0x34343E)); c.rect(18, 26, 1, 4, C(0x34343E))     // a sheen over the hood and down the near side
+    c.rect(19, 36, 1, 2, C(0x2E2E38)); c.px(32, 36, shade); c.px(32, 37, shade)   // folds under the belt
+    c.rect(15, 35, 3, 1, grey)                                                 // the glove's cuff
     if let s = p.signature {
         // A card flipped up out of the hand and caught.
         let k = frac(s * 2)
@@ -234,12 +244,16 @@ private func drawHandNinja(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(body: red, shade: dark, arm: red, eye: nil))
     c.pattern(18, 22, ["...RRRRRRRRRRRRRR...", ".RRRRRRRRRRRRRRRRRR.", "RRRRRRRRRRRRRRRRRRRR",
                        "RRRRRRRRRRRRRRRRRRRr"], ["R": red, "r": dark])
+    c.rect(22, 22, 7, 1, C(0xC84040)); c.rect(19, 23, 3, 1, C(0xC84040))     // the hood lit along its top
     c.rect(19, 28, 18, 4, clawdOrange)                                        // eye slit
     c.rect(36, 28, 1, 4, clawdShade)
     c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink)
     c.rect(21, 28, 3, 1, dark); c.rect(31, 28, 3, 1, dark)                    // a frown in the slit
     c.rect(18, 34, 20, 2, black)
     c.rect(20, 36, 1, 2, black); c.rect(22, 36, 1, 1, black)                  // sash knot ends
+    c.rect(29, 34, 4, 1, C(0x34282C))                                         // the sash lit along its top
+    c.rect(33, 36, 1, 2, dark)                                                // a fold below it
+    c.rect(15, 35, 3, 1, dark)                                                // the sleeve's wrap
     if let a = p.melee {
         drawSword(c, at: Sprite.hand, angle: a, trail: p.trail, length: 15, blade: C(0xDDE2EA), grip: black,
                   guard: C(0xC8A040))
@@ -255,16 +269,21 @@ private func drawHydraAgent(_ c: PixelCanvas, _ p: Pose) {
     let gun = C(0x2A2A30), cell = C(0x5AB8FF)
     let salute = p.signature.map { habitArc($0, hold: 0.6) } ?? 0
     drawLegs(c, Look(leg: green), step: p.step)
-    drawBoots(c, step: p.step, black, rows: 2)
+    drawBoots(c, step: p.step, C(0x3A3A42), rows: 2)                          // boots lit along the top
+    drawBoots(c, step: p.step, black, rows: 1)
     c.oy += p.breathe
     if salute > 0 { line(c, 12, 37, 21, 23, gun, 0.8) }                       // rifle slung on the back
     drawBody(c, Look(body: green, shade: shade, arm: green, eye: nil))
     c.pattern(18, 23, ["...GGGGGGGGGGGGGG...", ".GGGGGGGGGGGGGGGGGG.", "GGGGGGGGGGGGGGGGGGGg"], ["G": green, "g": shade])
+    c.rect(22, 23, 7, 1, C(0x587A40)); c.rect(19, 24, 3, 1, C(0x587A40))     // the hood lit along its top
     c.rect(19, 28, 18, 4, ink)                                                // goggles
     c.rect(20, 29, 5, 2, yellow); c.rect(31, 29, 5, 2, yellow)
     c.px(20, 29, C(0xFFF2A0)); c.px(31, 29, C(0xFFF2A0))
     c.pattern(25, 32, [".RRRR.", "RKRRKR", ".RRRR.", "R.RR.R"], ["R": red, "K": black])   // the skull and tentacles
     c.rect(18, 36, 20, 1, yellow); c.rect(27, 36, 2, 1, black)
+    c.rect(20, 36, 3, 2, C(0x5A4A26)); c.rect(20, 36, 3, 1, C(0x7A6636))     // a pouch on the belt
+    c.rect(33, 33, 1, 3, shade)                                               // a fold
+    if salute == 0 { c.rect(15, 35, 3, 1, shade) }                            // the sleeve's cuff
     if salute > 0 {
         // Both arms up, fists clenched: Hail Hydra.
         let up = 11 * salute
@@ -312,10 +331,14 @@ private func drawAimAgent(_ c: PixelCanvas, _ p: Pose) {
         "YYYYYYYYYYYYYYYYYYYYYs",
         "ssssssssssssssssssssss",
     ], ["Y": yellow, "s": shade])
+    c.rect(20, 19, 9, 1, C(0xFFE27A)); c.rect(17, 21, 1, 6, C(0xFFE27A))   // the hood lit along its top and near side
+    c.rect(19, 29, 17, 1, shade); c.rect(19, 22, 1, 7, shade)               // the visor's frame in shadow
     c.rect(20, 22, 16, 7, visor)
     for y in stride(from: 22, through: 28, by: 2) { for x in stride(from: 20, through: 35, by: 2) { c.px(x, y, mesh) } }
     c.rect(23, 25, 2, 1, C(0x7A9A88)); c.rect(31, 25, 2, 1, C(0x7A9A88))     // eyes, dimly, behind the mesh
     c.rect(18, 35, 20, 1, black); c.rect(27, 35, 2, 1, C(0x8A8E98))
+    c.rect(22, 36, 1, 2, shade); c.rect(33, 36, 1, 2, shade)                 // folds under the belt
+    c.rect(15, 33, 3, 1, C(0x3A3A34))                                        // the glove's cuff
     if let s = p.signature {
         // The gadget: a little box with blinking lights and an antenna.
         c.pattern(38, 29, ["...A..", "...A..", "GGGGGG", "GrGgGG", "GGGGGG"],
@@ -335,7 +358,8 @@ private func drawAimAgent(_ c: PixelCanvas, _ p: Pose) {
 private func drawSkrull(_ c: PixelCanvas, _ p: Pose) {
     let green = C(0x5AA03A), gShade = C(0x3E7A28), purple = C(0x6A2A8A), pShade = C(0x4A1A62), black = C(0x1A1A22)
     drawLegs(c, Look(leg: purple), step: p.step)
-    drawBoots(c, step: p.step, black, rows: 2)
+    drawBoots(c, step: p.step, C(0x34343E), rows: 2)                          // boots lit along the top
+    drawBoots(c, step: p.step, black, rows: 1)
     c.oy += p.breathe
     // How far down the shapeshift has rippled (26 = not at all, 38 = all the way).
     var wave = 26
@@ -345,6 +369,8 @@ private func drawSkrull(_ c: PixelCanvas, _ p: Pose) {
         c.pattern(38, 24, ["...G", "..GG", "GGG.", "gGG.", "gg.."], ["G": green, "g": gShade])
     }
     drawBody(c, Look(body: green, shade: gShade, arm: purple, eye: nil))
+    c.rect(20, 26, 6, 1, C(0x7AC05A)); c.rect(29, 26, 3, 1, C(0x7AC05A))   // light along the top of his head
+    c.rect(15, 35, 3, 1, pShade)                                             // the sleeve's cuff
     c.rect(21, 28, 4, 1, gShade); c.rect(31, 28, 4, 1, gShade)               // the heavy brow
     c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink)
     for x in stride(from: 24, through: 31, by: 2) { c.rect(x, 32, 1, 2, gShade) }   // the ridged chin
@@ -352,6 +378,7 @@ private func drawSkrull(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 34, 20, 1, black)
     c.rect(37, 34, 1, 4, pShade)
     c.rect(26, 35, 4, 1, black)
+    c.rect(19, 35, 1, 2, C(0x8A4AAA)); c.rect(22, 36, 1, 2, pShade); c.rect(33, 36, 1, 2, pShade)   // lit near side, folds
     if wave > 26 {
         // Everything above the ripple is Clawd already.
         c.rect(18, 26, 20, wave - 26, clawdOrange)
@@ -375,17 +402,22 @@ private func drawTaskmaster(_ c: PixelCanvas, _ p: Pose) {
     let hood = C(0xF4F4F6), hoodShade = C(0xC8CCD4)
     drawCape(c, t: p.t, speed: p.capeSpeed, color: C(0xD4D6DE), edge: C(0x9A9EAA))
     drawLegs(c, Look(leg: navy), step: p.step)
-    drawBoots(c, step: p.step, orange, rows: 3)
+    drawBoots(c, step: p.step, C(0xF4A050), rows: 3)                          // boots lit at the top
+    drawBoots(c, step: p.step, orange, rows: 2)
     c.oy += p.breathe
     let capPose = p.signature.map { habitArc($0, hold: 0.55) } ?? 0
     drawBody(c, Look(body: navy, shade: nShade, arm: orange, eye: nil))
     c.rect(18, 26, 20, 8, bone)
     c.rect(37, 26, 1, 8, boneShade)
+    c.rect(20, 26, 16, 1, boneShade)                                          // the hood's shadow on the mask
+    c.rect(15, 33, 3, 1, C(0xB05A10))                                         // the glove's cuff
     c.rect(21, 28, 4, 3, ink); c.rect(31, 28, 4, 3, ink)                      // eye sockets
     c.px(27, 31, ink); c.px(28, 31, ink)
     c.pattern(22, 32, ["KbKbKbKbKbKb", ".K.K.K.K.K.K"], ["K": ink, "b": bone])
     drawHood(c, hood, hoodShade)
     c.rect(18, 35, 20, 1, ink); c.rect(27, 35, 2, 1, C(0xC8CCD4))
+    c.rect(22, 36, 1, 2, nShade); c.rect(33, 36, 1, 2, nShade)               // folds in the tunic
+    c.rect(35, 21, 1, 4, hoodShade)                                           // the hood's far side shaded
     let h = Sprite.hand
     if let a = p.melee, capPose == 0 {
         drawSword(c, at: h, angle: a, trail: p.trail, length: 14, blade: C(0xD8DCE4), grip: C(0x3A2A1A), guard: orange)
@@ -423,11 +455,15 @@ private func drawZemo(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(18, 23, ["...PPPPPPPPPPPPPP...", ".PPPPPPPPPPPPPPPPPP.", "PPPPPPPPPPPPPPPPPPPp"], ["P": purple, "p": pShade])
     c.pattern(18, 24, ["....G....G....G....", ".GGGGGGGGGGGGGGGGGG."], ["G": gold])
     c.rect(18, 26, 20, 1, gold)
+    c.rect(22, 23, 6, 1, C(0x8A4A9A))                                         // the hood lit along its top
     for x in [21, 31] { c.rect(x, 28, 4, 3, clawdOrange); c.rect(x + 1, 29, 2, 2, ink) }
     c.oy -= tug
     if reach > 4 { c.rect(16, 26, 2, 3, purple) }                            // fingers on the mask's edge
     c.pattern(17, 32, ["FFfFFfFFfFFfFFfFFfFFfF", ".fFFfFFfFFfFFfFFfFFfF."], ["F": fur, "f": furShade])
     c.rect(18, 36, 20, 1, gold); c.rect(27, 36, 2, 1, C(0xFFF2A0))
+    c.rect(18, 37, 20, 1, pShade); c.rect(37, 34, 1, 2, pShade)              // shade under the belt and on the far side
+    c.px(22, 34, pShade); c.px(22, 35, pShade); c.px(32, 34, pShade); c.px(32, 35, pShade)   // folds
+    c.rect(15, 35 - reach, 3, 1, pShade)                                      // the glove's cuff
     c.oy += p.gunY
     drawPistol(c, x: 40, y: 31)
 }
@@ -445,6 +481,7 @@ private func drawWhiplash(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(body: clawdOrange, shade: clawdShade, arm: metal, eye: nil))
     c.pattern(18, 24, ["..HHHHHHHHHHHHHHHH..", "HHHHHHHHHHHHHHHHHHHH", "HHHHHHHHHHHHHHHHHHHH", "H.H................H"],
               ["H": hair])
+    c.rect(22, 25, 5, 1, C(0x4A403A)); c.rect(30, 25, 3, 1, C(0x4A403A))   // a sheen across the cropped hair
     c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink)
     c.rect(21, 28, 3, 1, clawdShade); c.rect(32, 28, 3, 1, clawdShade)
     for x in stride(from: 21, through: 34, by: 2) { c.px(x + (x / 2) % 2, 33, C(0x8A4A30)) }   // stubble
@@ -454,6 +491,10 @@ private func drawWhiplash(_ c: PixelCanvas, _ p: Pose) {
     c.glowLine(28, 35.5, 28, 35.5, core: C(0xE8FAFF), glow: C(0x3AAAFF), coreR: 1, glowR: 2.2,
                strength: 0.85 + 0.15 * sin(p.t * 9))
     c.rect(38, 33, 3, 3, metal); c.rect(40, 34, 1, 1, C(0x5A5E68))
+    c.rect(38, 33, 3, 1, C(0xB8BCC6)); c.rect(15, 33, 3, 1, C(0xB8BCC6))   // the gauntlets lit along the top
+    c.rect(15, 35, 3, 1, C(0x5A5E68))                                         // and shaded underneath
+    c.rect(18, 37, 20, 1, strap); c.rect(27, 37, 2, 1, metal)                // a belt and buckle
+    c.rect(19, 34, 1, 3, C(0x54545C))                                         // the harness lit down the near side
 
     let right = Sprite.hand, left = (x: 16.0, y: 34.5)
     let floor = groundY(p) - 0.5
@@ -532,12 +573,15 @@ private func drawMandarin(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(body: clawdOrange, shade: clawdShade, arm: robe, eye: ink), armLeft: leftUp, armRight: rightUp)
     c.pattern(18, 23, ["....HHHHHHHHHHHH....", "..HHHHHHHHHHHHHHHH..", ".HHHHHHHHHHHHHHHHHH.", "HHHHHHHHHHHHHHHHHHHH",
                        "HH................HH", "H..................H"], ["H": hair])
+    c.rect(23, 24, 6, 1, C(0x3A322C)); c.rect(20, 25, 3, 1, C(0x3A322C))   // a sheen swept back through the hair
     c.rect(21, 28, 3, 1, clawdShade); c.rect(32, 28, 3, 1, clawdShade)
     c.rect(18, 32, 20, 6, robe)
     c.rect(37, 32, 1, 6, rShade)
     c.rect(18, 32, 20, 1, gold)                                               // the high collar
     c.rect(27, 33, 2, 5, gold)
     c.px(25, 34, gold); c.px(30, 34, gold); c.px(25, 36, gold); c.px(30, 36, gold)
+    c.rect(18, 33, 1, 4, C(0x2E7448))                                          // light down the near side
+    c.rect(15, 35 - leftUp, 3, 1, gold); c.rect(38, 35 - rightUp, 3, 1, gold) // gold-trimmed cuffs
     // Fists and their rings: five on each.
     let hands = [(x: 13, y: 33 - leftUp), (x: 41, y: 33 - rightUp)]
     let spots = [(0, 0), (1, 0), (0, 1), (1, 2), (0, 2)]
@@ -562,6 +606,7 @@ private func drawKillmonger(_ c: PixelCanvas, _ p: Pose) {
     let black = C(0x1A1A20), shade = C(0x101014), gold = C(0xE8B530), goldDark = C(0xB08420), lens = C(0xF4F4F0)
     drawLegs(c, Look(leg: black), step: p.step)
     for lx in [19, 31] where !seatedPose { c.rect(lx, 38, 1, 4, goldDark) }
+    drawBoots(c, step: p.step, C(0x2A2A32), rows: 2)                          // boots a shade apart from the legs
     c.oy += p.breathe
     drawBody(c, Look(body: black, shade: shade, arm: black, eye: nil))
     // Signature: the face under the helmet, uncovered from the top down.
@@ -593,11 +638,14 @@ private func drawKillmonger(_ c: PixelCanvas, _ p: Pose) {
     if start < helmet.count {
         c.pattern(18, cut, Array(helmet[start...]), ["K": black, "G": gold, "L": lens])
         if start > 0 { c.rect(18, cut, 20, 1, gold.alpha(0.8)) }             // the nanite edge
+        if start == 0 { c.rect(21, 24, 6, 1, C(0x34343E)); c.rect(19, 25, 2, 1, C(0x34343E)) }   // the helmet lit along its top
     }
     // The golden necklace pattern and trim.
     c.pattern(19, 34, ["GG.G.G.G.G.G.G.G.GG", "..G.G.G.G.G.G.G.G.."], ["G": gold])
     c.rect(18, 37, 20, 1, goldDark)
+    c.rect(27, 37, 2, 1, gold)                                                // the belt's buckle
     c.px(39, 34, gold); c.px(16, 34, gold)
+    c.rect(19, 35, 1, 2, C(0x34343E)); c.rect(15, 35, 3, 1, goldDark)       // a sheen down the near side, a gold cuff
     // The spear.
     let h = Sprite.hand
     let a = p.melee ?? -84
@@ -619,7 +667,8 @@ private func drawBatroc(_ c: PixelCanvas, _ p: Pose) {
     let purple = C(0x6A2A8A), pShade = C(0x4A1A62), yellow = C(0xF0C830), yShade = C(0xC09A20)
     let tache = C(0x16120E)
     drawLegs(c, Look(leg: purple), step: p.step)
-    drawBoots(c, step: p.step, yellow, rows: 3)
+    drawBoots(c, step: p.step, C(0xFFE27A), rows: 3)                          // boots lit at the top
+    drawBoots(c, step: p.step, yellow, rows: 2)
     c.oy += p.breathe
     var kick = p.melee.map { a -> Double in
         var a = a.truncatingRemainder(dividingBy: 360)
@@ -635,6 +684,7 @@ private func drawBatroc(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(18, 23, ["...PPPPPPPPPPPPPP...", ".PPPPPPPPPPPPPPPPPP.", "PPPPPPPPPPPPPPPPPPPp"], ["P": purple, "p": pShade])
     c.rect(18, 26, 20, 5, purple)
     c.rect(37, 26, 1, 5, pShade)
+    c.rect(22, 23, 7, 1, C(0x8A4AAA)); c.rect(19, 24, 3, 1, C(0x8A4AAA))     // the hood lit along its top
     for x in [21, 31] { c.rect(x, 28, 4, 2, white); c.rect(x + 1, 28, 2, 2, ink) }
     let twirl = flourish != nil
     c.pattern(21, 31, twirl ? ["T..........T", "TTTTTTTTTTTT", "...TT..TT..."] : [".TTTTTTTTTT.", "TTTT....TTTT", "T..........T"],
@@ -643,6 +693,9 @@ private func drawBatroc(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 34, 20, 4, purple)
     c.rect(37, 34, 1, 4, pShade)
     c.rect(18, 36, 20, 1, yellow); c.rect(27, 36, 2, 1, yShade)
+    c.rect(18, 37, 20, 1, pShade)                                             // shade under the belt
+    c.rect(22, 34, 1, 2, pShade); c.rect(33, 34, 1, 2, pShade)               // folds
+    c.rect(15, 35, 3, 1, yShade)                                              // the glove's cuff
     guard let a = kick else { return }
     // The kicking leg, from the hip.
     let h = (x: 37.0, y: 37.5)

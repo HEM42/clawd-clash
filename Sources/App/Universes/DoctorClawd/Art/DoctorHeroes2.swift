@@ -86,7 +86,7 @@ private func drawNote(_ c: PixelCanvas, x: Int, y: Int, f: Double, _ col: Px) {
 /// leans on a black cane with a silver knob, and moves it to his other hand to point the sonic (pale gold tip).
 /// Signature: he grips his lapels and rocks up on his heels, "Hmm!", the cane leant against him.
 private func drawDoctorOne(_ c: PixelCanvas, _ p: Pose) {
-    let coat = C(0x22222A), coatDark = C(0x16161C), lapel = C(0x4A4A54), vest = C(0x5E5848), vestDark = C(0x46412F)
+    let coat = C(0x22222A), coatDark = C(0x16161C), coatLight = C(0x363642), lapel = C(0x4A4A54), vest = C(0x5E5848), vestDark = C(0x46412F)
     let check = C(0x707074), checkDark = C(0x505054), shirt = C(0xF0ECE2), gold = C(0xE0B848)
     let hair = C(0xF2F2F4), hairShade = C(0xC0C0CC), cane = C(0x2E2018), knob = C(0xD8DCE4)
     let tip = C(0xFFE07A)
@@ -109,21 +109,25 @@ private func drawDoctorOne(_ c: PixelCanvas, _ p: Pose) {
     c.rect(24, 35, 3, 1, gold); c.px(27, 36, gold)                 // the watch chain
     c.rect(25, 33, 6, 1, shirt); c.rect(27, 33, 2, 2, ink)          // wing collar and cravat
     c.rect(21, 33, 2, 4, lapel); c.rect(33, 33, 2, 4, lapel)
-    c.rect(15, 33, 3, 3, coat)
-    // The hair: back off the forehead, long down the sides.
+    c.px(21, 33, coatLight); c.px(34, 36, coatDark)                  // the lapels' roll, lit and shaded
+    c.rect(18, 33, 3, 1, coatLight); c.rect(35, 33, 2, 1, coatLight)   // lit shoulders
+    c.rect(19, 35, 1, 3, coatDark); c.rect(36, 34, 1, 4, coatDark)     // folds
+    c.px(25, 34, vestDark); c.px(30, 34, vestDark); c.px(28, 36, vestDark)   // waistcoat buttons
+    c.rect(15, 33, 3, 3, coat); c.rect(15, 33, 3, 1, coatLight); c.rect(15, 35, 2, 1, shirt)   // sleeve, shirt cuff
+    // The hair: back off the forehead, long down the sides, combed back in strands.
     c.pattern(17, 21, [
         "......WWWWWWWWW.......",
         "...WWWWWWWWWWWWWW.....",
-        "..WWWwWWWWWWWWWWWWW...",
-        "..WWWWWWWWWwWWWWWWWW..",
-        ".WWWWWWwWWWWWWWWWWWWW.",
-        ".WWWWWW........wWWWWW.",
-        ".WWWW.............WWW.",
-        ".WWW...............WW.",
-        ".WWw...............WW.",
+        "..WWWWWWWWWWWWWWWWW...",
+        "..WWwwWWWWWWWWWwwWWW..",
+        ".WWWWWWWwwWWWWWWWWwWW.",
+        ".WWWWWW........WwwWWW.",
+        ".WWWW.............WwW.",
+        ".WWw...............Ww.",
+        ".WWw...............Ww.",
         ".WW................Ww.",
-        ".Ww................WW.",
-        "..W................W..",
+        ".Ww................Ww.",
+        "..W................w..",
     ], ["W": hair, "w": hairShade])
 
     let g = groundRow
@@ -169,16 +173,18 @@ private func drawDoctorTwo(_ c: PixelCanvas, _ p: Pose) {
     c.rect(24, 33, 8, 4, shirt)
     c.rect(26, 33, 1, 2, bow); c.rect(29, 33, 1, 2, bow); c.rect(27, 33, 2, 1, bow)
     c.rect(22, 33, 2, 5, coatLight); c.rect(32, 33, 2, 5, coatLight)
-    c.rect(14, 33, 4, 4, coat)
-    // The mop.
+    c.rect(18, 34, 1, 3, coatDark); c.rect(37, 34, 1, 3, coatDark)   // the baggy coat's folds
+    c.px(28, 35, C(0xC8C0B4))                                        // a shirt button
+    c.rect(14, 33, 4, 4, coat); c.rect(14, 33, 4, 1, coatLight); c.rect(14, 36, 4, 1, coatDark)   // the sleeve hanging over the hand
+    // The mop, its strands caught by the light in short runs.
     c.pattern(17, 20, [
         ".....HHHHHHHHHHH......",
-        "...HHHHHHlHHHHHHHH....",
-        "..HHHHlHHHHHHHlHHHH...",
+        "...HHHHHllHHHHHHHH....",
+        "..HHHllHHHHHHHllHHH...",
         ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHlHHHHHHHHHH.",
-        "HHHHHHHHHHHHHHHHHlHHHH",
-        "HHHlHHHHHHHHHHHHHHHHHH",
+        ".HHHHHHHHllHHHHHHHHHH.",
+        "HHHHHHHHHHHHHHHHllHHHH",
+        "HHllHHHHHHHHHHHHHHHHHH",
         "HHHH.H.HH.H..H.HH.HHHH",
         "HHH................HHH",
         "HH..................HH",
@@ -220,18 +226,20 @@ private func drawDoctorThree(_ c: PixelCanvas, _ p: Pose) {
     // The velvet jacket and the frills down the front.
     c.rect(18, 33, 20, 5, velvet); c.rect(37, 33, 1, 5, velvetDark); c.rect(18, 37, 20, 1, velvetDark)
     c.rect(22, 33, 2, 4, velvetLight); c.rect(32, 33, 2, 4, velvetLight)
+    c.rect(18, 33, 4, 1, velvetLight); c.rect(34, 33, 3, 1, velvetLight)   // lit shoulders
+    c.rect(19, 34, 1, 3, velvetDark); c.rect(35, 34, 1, 3, velvetDark)     // the velvet's folds
     c.pattern(24, 33, ["FFFFFFFF", ".FfFFfF.", "FFFFFFFF", ".FfFFfF.", "..FFFF.."], ["F": frill, "f": frillShade])
     c.rect(18, 32, 2, 1, lining); c.rect(36, 32, 2, 1, lining)        // the cape's clasp edges
-    c.rect(15, 33, 3, 3, velvet)
-    // The bouffant.
+    c.rect(15, 33, 3, 3, velvet); c.rect(15, 33, 3, 1, velvetLight); c.rect(15, 35, 2, 1, frill)   // sleeve, frilled cuff
+    // The bouffant, its waves in short shaded runs.
     c.pattern(16, 19, [
         "......WWWWWWWWWW........",
         "....WWWWWWWWWWWWWW......",
-        "...WWWWwWWWWWWWWWWWW....",
-        "..WWWWWWWWWWwWWWWWWWWW..",
-        "..WWwWWWWWWWWWWWWWWwWWW.",
-        ".WWWWWWWWWWWWWWWWWWWWWW.",
-        ".WWWWWWwWWWWWWWwWWWWWWW.",
+        "...WWWWwwWWWWWWWWWWW....",
+        "..WWWWWWWWWWwwWWWWWWWW..",
+        "..WWwWWWWWWWWWWWWWWwwWW.",
+        ".WWwWWWWWWWWWWWWWWWWWwW.",
+        ".WWWWWWwwWWWWWWwwWWWWwW.",
         ".WWWWWW..........WWWWWW.",
         ".WWWW..............WWWW.",
         ".WWw................WWW.",
@@ -289,7 +297,7 @@ private func scarf(_ n: Int) -> Px { scarfStripes[((n % scarfStripes.count) + sc
 /// trailing far behind along the ground. His sonic glows amber. Signature: he offers a paper bag of jelly babies, then
 /// twirls the scarf's long end round over his head.
 private func drawDoctorFour(_ c: PixelCanvas, _ p: Pose) {
-    let coat = C(0x7A3E2A), coatDark = C(0x5A2C1E), shirt = C(0xE8DCC0), hat = C(0x6A4A2E), hatDark = C(0x4E3420)
+    let coat = C(0x7A3E2A), coatDark = C(0x5A2C1E), shirt = C(0xE8DCC0), hat = C(0x6A4A2E), hatDark = C(0x4E3420), hatLight = C(0x8A6844)
     let band = C(0x2E2018), curl = C(0x3A2416), curlLight = C(0x5E3E26), tip = C(0xFFC23A)
     let offering = p.signature.map { $0 > 0.05 && $0 < 0.45 } ?? false
     let twirl: Double? = p.signature.flatMap { $0 >= 0.5 && $0 < 0.98 ? ($0 - 0.5) / 0.48 : nil }
@@ -310,7 +318,9 @@ private func drawDoctorFour(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: coat))
     c.rect(18, 33, 20, 5, coat); c.rect(37, 33, 1, 5, coatDark)
     c.rect(24, 34, 8, 4, shirt); c.rect(22, 34, 2, 4, coatDark); c.rect(32, 34, 2, 4, coatDark)
-    c.rect(15, 33, 3, 3, coat)
+    c.rect(19, 35, 1, 3, coatDark); c.rect(34, 36, 3, 1, coatDark)   // a fold, a pocket flap
+    c.px(29, 35, C(0xB8AC90)); c.px(29, 37, C(0xB8AC90))             // shirt buttons
+    c.rect(15, 33, 3, 3, coat); c.rect(15, 35, 3, 1, coatDark)       // the sleeve's turned-back cuff
     // The scarf round his neck, and its front end down to his feet.
     for x in 18...37 { c.rect(x, 32, 1, 2, scarf(x / 2)) }
     for y in 34...(g - 1) { c.rect(23, y, 3, 1, scarf((y - 34) / 2 + 3)) }
@@ -318,26 +328,26 @@ private func drawDoctorFour(_ c: PixelCanvas, _ p: Pose) {
 
     // The curls, then the hat.
     c.pattern(15, 22, [
-        "..CCcCCCCcCCCCCCcCCCCcC...",
-        ".CCCCCcCCCCCCCcCCCCCCCcC..",
-        "CCcCCCCCCCCCCCCCCCCCCCcCC.",
-        "CCCCCCcCCCCCcCCCCCcCCCCCCC",
-        "CCCcCC.CC.C..C.CC.C.CcCCC.",
-        "CCCCC..............CCCCcC.",
-        "CcCCC..............CCCCC..",
-        "CCCc................cCCC..",
+        "..CCccCCCCCCCCCccCCCCCC...",
+        ".CCCCCCccCCCCCCCCCCCCccC..",
+        "CCccCCCCCCCCCCccCCCCCCCCC.",
+        "CCCCCCCCccCCCCCCCCCCCccCCC",
+        "CCccCC.CC.C..C.CC.C.CccCC.",
+        "CCCCC..............CCCccC.",
+        "CccCC..............CCCCC..",
+        "CCcc................ccCC..",
         "CCCC................CCCC..",
         ".CCC................CCC...",
         "..C..................C....",
     ], ["C": curl, "c": curlLight])
     c.pattern(15, 16, [
-        "........HHHHHHHHHH........",
-        ".......HHHHhHHHHHHH.......",
-        ".......HHHHHHHHHHHH.......",
+        "........HllllHHHHh........",
+        ".......HlHHHHHHHHhH.......",
+        ".......HHHHHHHHHHhH.......",
         ".......BBBBBBBBBBBB.......",
-        "..HHHHHHHHHHHHHHHHHHHHHH..",
+        "..HllllHHHHHHHHHHHHHHHhH..",
         "hHHHHHHHHHHHHHHHHHHHHHHHHh",
-    ], ["H": hat, "h": hatDark, "B": band])
+    ], ["H": hat, "h": hatDark, "l": hatLight, "B": band])
 
     if offering {
         // A paper bag of jelly babies held out.
@@ -368,7 +378,7 @@ private func drawDoctorFour(_ c: PixelCanvas, _ p: Pose) {
 /// bowling cricket balls. Signature: he polishes the ball on his trousers, then winds his arm right over and bowls it.
 private func drawDoctorFive(_ c: PixelCanvas, _ p: Pose) {
     let coat = C(0xEAE4D0), coatShade = C(0xC8C0A6), piping = C(0xC8402A), jumper = C(0xF4F0E4)
-    let hair = C(0xE8C878), hairShade = C(0xC49E52), celery = C(0x8AD04A), leaf = C(0x4E9A2E)
+    let hair = C(0xE8C878), hairShade = C(0xC49E52), hairLight = C(0xF6E0A0), celery = C(0x8AD04A), leaf = C(0x4E9A2E)
     let ball = C(0xB4202A), seam = C(0xF0E0C0), stripe = C(0xC4BEB0)
 
     drawTails(c, coatShade)
@@ -385,19 +395,21 @@ private func drawDoctorFive(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(25, 33, ["rg..gr", ".rggr."], ["r": C(0xC8302A), "g": C(0x3A8A3A)])
     c.rect(22, 33, 1, 5, piping); c.rect(33, 33, 1, 5, piping)
     c.rect(35, 33, 1, 4, celery); c.px(34, 33, leaf); c.px(36, 33, leaf); c.px(35, 32, leaf)
-    c.rect(15, 33, 3, 3, coat)
+    c.rect(19, 35, 1, 3, coatShade); c.rect(36, 37, 2, 1, coatShade)   // the coat's folds
+    c.rect(15, 33, 3, 3, coat); c.rect(15, 35, 3, 1, piping)           // the sleeve, piped at the cuff
+    // The floppy fringe, lit in short runs where it sweeps across.
     c.pattern(17, 21, [
-        ".....HHHHHHHHHH.......",
-        "...HHHHHHHHHHHHHHH....",
-        "..HHHHhHHHHHHHHHHHH...",
-        ".HHHHHHHHHHHHHHHHhHHH.",
-        ".HHHHHHHhHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHhHHHHH..HH...HHH.",
+        ".....HHHllllHHH.......",
+        "...HHllHHHHHHHHHHH....",
+        "..HHHHhhHHHHllHHHHH...",
+        ".HHHHHHHHHHHHHHHhhHHH.",
+        ".HHHHHHHhhHHHHHHHHhHH.",
+        ".HHHHHHHHHHHHHHHHHHhH.",
+        ".HHHHhHHHHH..HH...HhH.",
         ".HHH...HH.........HHH.",
         ".HH................HH.",
         ".H..................H.",
-    ], ["H": hair, "h": hairShade])
+    ], ["H": hair, "h": hairShade, "l": hairLight])
 
     func drawBall(_ x: Int, _ y: Int) { c.rect(x, y, 2, 2, ball); c.px(x, y, seam) }
 
@@ -476,12 +488,12 @@ private func drawDoctorSix(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(31, 33, ["b.b", "bbb"], ["b": badge])                  // the cat badge
     c.rect(15, 33, 3, 3, patches[0])
     c.pattern(16, 20, [
-        ".....HHHhHHHHhHHH.......",
-        "...HHhHHHHHHHHHHHhH.....",
-        "..HHHHHHhHHHhHHHHHHH....",
-        ".HHhHHHHHHHHHHHHhHHHHH..",
-        ".HHHHHhHHHHHHHhHHHHHHHH.",
-        "HHhHHHHHHhHHHHHHHHHhHHH.",
+        ".....HHHHhhHHHHHH.......",
+        "...HhhHHHHHHHHHHhhH.....",
+        "..HHHHHHHhhHHHHHHHHH....",
+        ".HhhHHHHHHHHHHHHHhhHHH..",
+        ".HHHHHHhhHHHHHHHHHHhhHH.",
+        "HhhHHHHHHHHHhhHHHHHHhhH.",
         "HHHHHH.hH.HH.hHH.HHHHHH.",
         ".HHHh............hHHHH..",
         ".HHH..............HHHH..",
@@ -513,7 +525,7 @@ private func drawQuestionHandle(_ c: PixelCanvas, x: Int, y: Int) {
 /// umbrella like a baton, then rattles out a tune on the spoons.
 private func drawDoctorSeven(_ c: PixelCanvas, _ p: Pose) {
     let jacket = C(0xD8CCAA), jacketShade = C(0xB4A886), vest = C(0xA8282E), mark = C(0xF0C83A)
-    let hat = C(0xEDE4C6), hatShade = C(0xC8BE9E), band = C(0x3A2A20), hair = C(0x3A2818)
+    let hat = C(0xEDE4C6), hatShade = C(0xC8BE9E), hatLight = C(0xFAF4E2), band = C(0x3A2A20), hair = C(0x3A2818), hairLight = C(0x5A4028)
     let canopy = C(0x1E1E26), shaft = C(0x34343C), tip = C(0xFF5A5A), spoon = C(0xD8DCE4)
     let g = groundRow
 
@@ -528,22 +540,24 @@ private func drawDoctorSeven(_ c: PixelCanvas, _ p: Pose) {
     for x in [24, 30] { c.pattern(x, 33, ["mm", ".m", "m.", "..", "m."], ["m": mark]) }   // question marks
     c.rect(27, 33, 2, 3, C(0x5A2A4A))                                  // the tie
     c.rect(22, 33, 1, 5, jacketShade); c.rect(33, 33, 1, 5, jacketShade)
-    c.rect(15, 33, 3, 3, jacket)
+    c.rect(18, 33, 4, 1, C(0xE8DEC0)); c.rect(34, 33, 3, 1, C(0xE8DEC0))   // the linen lit along the shoulders
+    c.rect(19, 35, 1, 2, jacketShade); c.rect(34, 35, 2, 1, jacketShade)   // a crease, a pocket flap
+    c.rect(15, 33, 3, 3, jacket); c.rect(15, 35, 3, 1, jacketShade)     // the sleeve's cuff
     c.pattern(17, 23, [
-        "..DDDDDDDDDDDDDDDDDD..",
+        "..DDDdddDDDDDDDddDDD..",
         ".DDDDDDDDDDDDDDDDDDDD.",
-        ".DDDDDDDDDDDDDDDDDDDD.",
+        ".DdDDDDDDDDDDDDDDDDDD.",
         ".DD................DD.",
         ".D..................D.",
-    ], ["D": hair])
+    ], ["D": hair, "d": hairLight])
     c.pattern(16, 17, [
         "........HHHHHHHH........",
-        ".......HHHHHHHHHH.......",
-        ".......HHHHhHHHHH.......",
+        ".......HllHHHHHhH.......",
+        ".......HHHHHHHHhH.......",
         ".......BBBBBBBBBB.......",
-        "...HHHHHHHHHHHHHHHHHH...",
+        "...HllllHHHHHHHHHHHHH...",
         "..hHHHHHHHHHHHHHHHHHHh..",
-    ], ["H": hat, "h": hatShade, "B": band])
+    ], ["H": hat, "h": hatShade, "l": hatLight, "B": band])
 
     if let s = p.signature {
         if s < 0.5 {
@@ -583,7 +597,7 @@ private func drawDoctorSeven(_ c: PixelCanvas, _ p: Pose) {
 /// trousers. His sonic glows sea-green. Signature: he holds up his pocket watch by the chain and lets it swing.
 private func drawDoctorEight(_ c: PixelCanvas, _ p: Pose) {
     let coat = C(0x2A4A34), coatDark = C(0x1C3424), coatLight = C(0x3E6448), vest = C(0x9A9A8C), vestDark = C(0x74746A)
-    let hair = C(0x6A3A1E), hairLight = C(0x8E5432), cravat = C(0xEADCC0), gold = C(0xE8C040), goldDark = C(0xB08A24)
+    let hair = C(0x6A3A1E), hairLight = C(0x8E5432), hairShade = C(0x4E2A14), cravat = C(0xEADCC0), gold = C(0xE8C040), goldDark = C(0xB08A24)
     let tip = C(0x4AF0C0)
 
     drawTails(c, coatDark, long: true)
@@ -598,25 +612,27 @@ private func drawDoctorEight(_ c: PixelCanvas, _ p: Pose) {
     c.rect(25, 32, 6, 2, cravat); c.rect(27, 34, 2, 2, cravat)
     c.rect(29, 35, 3, 1, gold)
     c.rect(21, 33, 2, 5, coatLight); c.rect(33, 33, 2, 5, coatLight)
-    c.rect(15, 33, 3, 3, coat)
+    c.rect(19, 35, 1, 3, coatDark); c.rect(36, 34, 1, 3, coatDark)   // the velvet's folds
+    c.rect(15, 33, 3, 3, coat); c.rect(15, 35, 2, 1, cravat)         // the sleeve, a shirt cuff
+    // The long waves: lit runs on the near side, shaded on the far side.
     c.pattern(15, 20, [
         ".......HHHHHHHHHHH.......",
         ".....HHHHHHHHHHHHHHH.....",
-        "....HHHlHHHHHHHlHHHHH....",
-        "...HHHHHHHHHHHHHHHHHHH...",
-        "...HHHHHHHlHHHHHHHHlHHH..",
+        "....HHllHHHHHHllHHHHH....",
+        "...HHHHllHHHHHHHHHhHHH...",
+        "...HHHHHHllHHHHHHHhhHHH..",
         "..HHHHHHHHHHHHHHHHHHHHH..",
         "..HHHHHHH..HHHH....HHHHH.",
         "..HHHHH.............HHHH.",
         ".HHHH...............HHHHH",
-        ".HHHl...............lHHH.",
-        ".HHHH...............HHHH.",
+        ".HlHH...............HhHH.",
+        ".HlHH...............HhHH.",
         "HHHH.................HHH.",
-        ".HHHH...............HHHH.",
-        "HHHl.................HHHH",
+        ".HHlH...............HHhH.",
+        "HHlH.................HhHH",
         ".HHH.................HHH.",
         "..H...................H..",
-    ], ["H": hair, "l": hairLight])
+    ], ["H": hair, "l": hairLight, "h": hairShade])
 
     if let s = p.signature, s > 0.06, s < 0.94 {
         // The pocket watch held up by its chain, swinging.

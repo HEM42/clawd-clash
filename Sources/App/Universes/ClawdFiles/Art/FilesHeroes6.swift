@@ -33,8 +33,9 @@ private func line(_ c: PixelCanvas, _ x0: Double, _ y0: Double, _ x1: Double, _ 
     c.glowLine(x0, y0, x1, y1, core: col, glow: clear, coreR: r, glowR: r + 0.1)
 }
 
-/// The arms for someone with no weapon: hands down at the sides, or both thrown up while they cheer a fight on.
-private func drawPlainArms(_ c: PixelCanvas, _ p: Pose, sleeve: Px) {
+/// The arms for someone with no weapon: hands down at the sides, or both thrown up while they cheer a fight on. With
+/// `cuff`, a cuff a shade apart above each hand.
+private func drawPlainArms(_ c: PixelCanvas, _ p: Pose, sleeve: Px, cuff: Px? = nil) {
     if p.cheering {
         let up = Int(p.t * 6) % 2
         c.rect(14, 28 - up, 3, 5, sleeve); c.rect(14, 26 - up, 3, 2, clawdOrange)
@@ -42,6 +43,7 @@ private func drawPlainArms(_ c: PixelCanvas, _ p: Pose, sleeve: Px) {
     } else {
         c.rect(15, 33, 3, 3, sleeve); c.rect(15, 35, 3, 1, clawdOrange)
         c.rect(38, 33, 3, 3, sleeve); c.rect(38, 35, 3, 1, clawdOrange)
+        if let cuff { c.rect(15, 34, 3, 1, cuff); c.rect(38, 34, 3, 1, cuff) }
     }
 }
 
@@ -58,6 +60,7 @@ private func drawRoundGlasses(_ c: PixelCanvas, _ frame: Px) {
 private func drawTails(_ c: PixelCanvas, _ coat: Px, _ dark: Px, length: Int) {
     let tails = seatedPose ? 1 : length
     c.rect(17, 38, 22, tails, coat); c.rect(17, 37 + tails, 22, 1, dark); c.rect(28, 38, 1, tails, dark)
+    if !seatedPose { c.rect(22, 38, 1, 2, dark); c.rect(34, 38, 1, 2, dark) }   // folds in the tails
 }
 
 // MARK: - Max Fenig
@@ -76,22 +79,24 @@ private func drawMaxFenig(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: jacket))
     // The jacket open over the T-shirt, its pockets.
     c.rect(18, 34, 20, 4, jacket); c.rect(37, 34, 1, 4, jacketD); c.rect(25, 34, 6, 4, tee)
-    c.rect(19, 35, 3, 2, jacketD); c.rect(34, 35, 3, 2, jacketD)
+    c.rect(19, 35, 3, 1, jacketD); c.rect(34, 35, 3, 1, jacketD); c.px(20, 36, jacketD); c.px(35, 36, jacketD)   // pocket flaps
+    c.rect(18, 34, 3, 1, C(0x868E60)); c.rect(24, 34, 1, 4, jacketD); c.rect(31, 34, 1, 4, jacketD)   // lit shoulder, the opening
+    c.rect(25, 37, 6, 1, C(0x6E7278))   // the T-shirt's fold
     // The cap and the hair under it: down past his shoulders at the back.
     c.pattern(17, 19, [
-        "......CCCCCCCCC.........",
-        "....CCCCCCCCCCCCC.......",
-        "...CCCCCCCWWWCCCCC......",
-        "..CCCCCCCCWWWCCCCCC.....",
-        "..CCCCCCCCCCCCCCCCCC....",
+        "......CCLLLCCCC.........",
+        "....CCLLCCCCCCccC.......",
+        "...CCLCCCCWWWCCCcc......",
+        "..CCCCCCCCWWWCCCCcc.....",
+        "..CCCCCCCCCCCCCCCCcc....",
         ".HcccccccccccccccccBBBBB",
-        ".HHHHHHHHHHHHHHHHHHHH...",
-        ".HHh................HH..",
-        ".HHh....................",
-        ".HHh....................",
-        ".HH.....................",
+        ".HlHHHHHHHHHHHHHHHHhh...",
+        ".HlH................hH..",
+        ".HlH....................",
+        ".HHl....................",
+        ".Hl.....................",
         "..H.....................",
-    ], ["C": cap, "c": capD, "W": patch, "B": capD, "H": hair, "h": hairD])
+    ], ["C": cap, "c": capD, "W": patch, "B": capD, "H": hair, "h": hairD, "L": C(0x587A4A), "l": C(0x7A5232)])
     drawRoundGlasses(c, C(0x6A4A2A))
 
     if filming {
@@ -100,10 +105,10 @@ private func drawMaxFenig(_ c: PixelCanvas, _ p: Pose) {
         c.pattern(36, 26, ["KKKKKKKKK.", "KGGKKKKKKL", "KKKKKKKKKL", "KKKKKKKKK.", ".KK......."],
                   ["K": C(0x26262C), "G": C(0x4A4A52), "L": C(0x7AA8C8)])
         if Int(p.t * 3) % 2 == 0 { c.px(37, 27, C(0xFF3A2A)) }
-        c.rect(15, 33, 3, 3, jacket); c.rect(15, 35, 3, 1, clawdOrange)
+        c.rect(15, 33, 3, 3, jacket); c.rect(15, 35, 3, 1, clawdOrange); c.rect(15, 34, 3, 1, jacketD)
         return
     }
-    drawPlainArms(c, p, sleeve: jacket)
+    drawPlainArms(c, p, sleeve: jacket, cuff: jacketD)
 }
 
 // MARK: - Agent Pendrill
@@ -127,15 +132,17 @@ private func drawPendrill(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, coat); c.rect(37, 33, 1, 5, coatD); c.rect(18, 37, 20, 1, coatD)
     c.pattern(24, 33, ["dSSTTSSd", ".dSTTSd.", "..dTTd..", "...TT..."], ["d": coatD, "S": shirt, "T": tie])
     c.rect(33, 34, 3, 1, coatD); c.px(34, 33, C(0x2A3E6A))
+    // A fold, the far side in shade, the coat's buttons.
+    c.rect(20, 35, 1, 2, coatD); c.rect(36, 35, 1, 2, coatD); c.px(23, 36, C(0xA8ACB4))
     // Neat side-parted hair, short at the back.
     c.pattern(17, 21, [
-        "......HHHHHHHHH.......",
-        "....HHHHHHlHHHHHHH....",
-        "...HHHHHHHHlHHHHHHH...",
-        "..HHHHHHHHHHHHHHHHHH..",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HH................HH.",
-    ], ["H": hair, "l": hairL])
+        "......HHHHllHHH.......",
+        "....HHlllHlHHHllHH....",
+        "...HHlHHHHHlHHHHHHd...",
+        "..HHHHHHHHHHHlllHHdd..",
+        ".HHlllHHHHHHHHHHHHHdd.",
+        ".HH................dd.",
+    ], ["H": hair, "l": hairL, "d": C(0x7A3A1E)])
     if blush {   // a proper blush, both cheeks
         for x in [19, 34] { c.rect(x, 31, 3, 2, C(0xF0607A)); c.px(x + 1, 31, C(0xFF8A9A)) }
     }
@@ -145,10 +152,10 @@ private func drawPendrill(_ c: PixelCanvas, _ p: Pose) {
         c.rect(38, 28, 3, 5, coat)
         c.rect(39, 20, 2, 8, C(0xDCEEF0, 0.85)); c.rect(39, 23, 2, 5, C(0x6ADB5A)); c.px(39, 20, C(0xB8C4C8))
         c.rect(38, 22, 4, 6, C(0x8AFF6A, 0.12))
-        c.rect(15, 33, 3, 3, coat); c.rect(15, 35, 3, 1, clawdOrange)
+        c.rect(15, 33, 3, 3, coat); c.rect(15, 35, 3, 1, clawdOrange); c.rect(15, 34, 3, 1, coatD)
         return
     }
-    drawPlainArms(c, p, sleeve: coat)
+    drawPlainArms(c, p, sleeve: coat, cuff: coatD)
 }
 
 // MARK: - Arthur Dales
@@ -168,14 +175,18 @@ private func drawArthurDales(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, cardigan); c.rect(37, 33, 1, 5, cardiganD); c.rect(18, 37, 20, 1, cardiganD)
     c.pattern(25, 33, ["SSSSSS", ".SSSS.", "..dd.."], ["S": shirt, "d": cardiganD])
     for y in [35, 37] { c.px(28, y, C(0xD8C8A0)) }
+    // Light on the shoulders, a fold either side, the knit's ribbed hem.
+    c.rect(18, 33, 3, 1, C(0x9A4048)); c.rect(34, 33, 2, 1, C(0x9A4048))
+    c.rect(21, 35, 1, 2, cardiganD); c.rect(35, 34, 1, 3, cardiganD)
+    for x in stride(from: 19, to: 37, by: 3) { c.px(x, 37, C(0x8A3A40)) }
     // Thin white hair combed back, and the bushy brows.
     c.pattern(17, 21, [
         ".......HHHHHHHH.......",
-        ".....HHhHHHHhHHHH.....",
-        "...HHHHHHHhHHHHHHHH...",
-        "..HHHHHHHHHHHHHHHHHH..",
-        ".HHHHhHHHHHHHHHHhHHHH.",
-        ".HH................HH.",
+        ".....HHhhHHHHhhHH.....",
+        "...HHHHHHHhhHHHHHHH...",
+        "..HHHHhhHHHHHHHhhHHh..",
+        ".HHHHHHHHHHhhHHHHHHhh.",
+        ".HH................hh.",
     ], ["H": hair, "h": hairD])
     c.rect(21, 27, 4, 1, hair); c.rect(31, 27, 4, 1, hair)
 
@@ -189,17 +200,17 @@ private func drawArthurDales(_ c: PixelCanvas, _ p: Pose) {
             let f = (s - 0.42) / 0.53
             c.rect(46 + Int(f * 24), 30 - Int(f * 26), 2, 2, white)
         }
-        c.rect(15, 33, 3, 3, cardigan)
+        c.rect(15, 33, 3, 3, cardigan); drawCuffs(c, cardiganD, right: false)
         return
     }
-    c.rect(15, 33, 3, 3, cardigan)
+    c.rect(15, 33, 3, 3, cardigan); drawCuffs(c, cardiganD, right: false)
     if let a = p.melee {
         for (i, ta) in p.trail.enumerated() { drawBat(c, angle: ta, alpha: 0.35 / Double(i + 1)) }
         drawBat(c, angle: a)
     } else {
         drawBat(c, angle: p.cheering ? -95 : -120)   // resting on his shoulder
     }
-    c.rect(38, 33, 3, 3, cardigan)
+    c.rect(38, 33, 3, 3, cardigan); drawCuffs(c, cardiganD, left: false)
 }
 
 /// A wooden baseball bat from the hand at `angle` degrees (0 forward, -90 up), thicker towards the barrel.
@@ -233,13 +244,15 @@ private func drawClydeBruckclaw(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: suit))
     // The rumpled suit (creases), the crooked tie.
     c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, suitD); c.rect(18, 37, 20, 1, suitD)
-    for (x, y) in [(20, 35), (21, 36), (33, 34), (34, 36)] { c.px(x, y, suitD) }
+    c.rect(20, 34, 1, 2, suitD); c.px(21, 36, suitD); c.rect(33, 34, 1, 2, suitD); c.px(34, 36, suitD)
+    c.rect(18, 33, 3, 1, C(0xC0AC80)); c.rect(36, 34, 1, 3, suitD)   // a lit shoulder, the far side in shade
+    c.rect(18, 37, 20, 1, C(0x4A3A2A)); c.rect(27, 37, 2, 1, C(0xB8A880))   // the belt, its buckle
     c.pattern(25, 33, ["SSSSSS", ".SSTS.", "..TT..", "...T.."], ["S": shirt, "T": tie])
     // The fedora, its brim all round, grey hair at the sides under it.
     c.pattern(16, 18, [
-        "........HHHHHHHH........",
-        "......HHHHHHHHHHHH......",
-        "......HHHHHHHHHHHH......",
+        "........HHLLLHHh........",
+        "......HHLHHHHHHHhh......",
+        "......HHHHHHddHHhh......",
         "......BBBBBBBBBBBB......",
         "..hhhhhhhhhhhhhhhhhhhh..",
         "..gssssssssssssssssssg..",
@@ -247,7 +260,7 @@ private func drawClydeBruckclaw(_ c: PixelCanvas, _ p: Pose) {
         "..gssssssssssssssssssg..",
         "..gg................gg..",
         "..gg................gg..",
-    ], ["H": hat, "B": band, "h": hatD, "g": grey, "s": clawdShade])
+    ], ["H": hat, "B": band, "h": hatD, "g": grey, "s": clawdShade, "L": C(0x86684A), "d": hatD])
     // Heavy lids over the eyes.
     c.rect(22, 28, 2, 1, clawdShade); c.rect(32, 28, 2, 1, clawdShade)
 
@@ -265,10 +278,10 @@ private func drawClydeBruckclaw(_ c: PixelCanvas, _ p: Pose) {
             "..PPPPd.",
             "..PP.Pd.",
         ], ["T": C(0xB8862A), "P": C(0xFFA8A0), "d": C(0xE07C7A), "p": C(0xFFA8A0), "k": ink, "r": C(0xD8404A)])
-        c.rect(15, 33, 3, 3, suit); c.rect(15, 35, 3, 1, clawdOrange)
+        c.rect(15, 33, 3, 3, suit); c.rect(15, 35, 3, 1, clawdOrange); c.rect(15, 34, 3, 1, suitD)
         return
     }
-    drawPlainArms(c, p, sleeve: suit)
+    drawPlainArms(c, p, sleeve: suit, cuff: suitD)
 }
 
 // MARK: - Jose Chung
@@ -288,6 +301,8 @@ private func drawJoseChung(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, blazer); c.rect(37, 33, 1, 5, blazerD); c.rect(18, 37, 20, 1, blazerD)
     c.rect(24, 33, 8, 5, shirt); c.rect(22, 33, 2, 3, blazerD); c.rect(32, 33, 2, 3, blazerD)
     c.pattern(25, 33, ["BB..BB", "BBBBBB", "BB..BB"], ["B": bow])
+    drawJacketDetail(c, dark: blazerD, light: C(0x38466A), pocket: false)
+    c.rect(34, 34, 2, 1, shirt); c.px(29, 36, blazerD)   // a pocket square; a button on the shirt
     // The grey fringe round the sides of a bald head.
     c.pattern(16, 25, ["GGG...................GGG", "GGG...................GGG", ".GG...................GG.", ".G.....................G."],
               ["G": grey])
@@ -299,7 +314,7 @@ private func drawJoseChung(_ c: PixelCanvas, _ p: Pose) {
         c.pattern(37, 33, ["..PPPPP..", "KKKKKKKKK", "KkKkKkKkK", "KKKKKKKKK"],
                   ["P": C(0xF4F2EA), "K": C(0x3A3A40), "k": C(0x8A8A92)])
         c.rect(37 + tap, 32, 9, 1, C(0x5A5A62))
-        c.rect(38, 31, 3, 2, blazer); c.rect(15, 33, 3, 3, blazer)
+        c.rect(38, 31, 3, 2, blazer); c.rect(15, 33, 3, 3, blazer); drawCuffs(c, blazerD, right: false)
         for i in 0..<3 {
             let f = (s * 3 + Double(i) / 3).truncatingRemainder(dividingBy: 1)
             guard f > 0.1 else { continue }
@@ -308,7 +323,7 @@ private func drawJoseChung(_ c: PixelCanvas, _ p: Pose) {
         }
         return
     }
-    drawPlainArms(c, p, sleeve: blazer)
+    drawPlainArms(c, p, sleeve: blazer, cuff: blazerD)
 }
 
 // MARK: - Leyla Harriclaw
@@ -328,17 +343,19 @@ private func drawLeylaHarriclaw(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: blazer))
     c.rect(18, 33, 20, 5, blazer); c.rect(37, 33, 1, 5, blazerD); c.rect(18, 37, 20, 1, blazerD)
     c.pattern(24, 33, ["dBBBBBBd", ".dBBBBd.", "..dBBd.."], ["d": blazerD, "B": blouse])
+    drawJacketDetail(c, dark: blazerD, light: C(0x3E4E74))
+    c.px(28, 36, C(0xC8B060))   // the blazer's brass button
     // The hair pulled back, the ponytail out behind her (on the left), swinging a pixel as she walks.
     c.pattern(17, 20, [
-        "......HHHHHHHHH.......",
-        "....HHHHHHHHlHHHHH....",
-        "...HHHHHHHHHHlHHHHH...",
-        "..HHHHHHHHHHHHHHHHHH..",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HH................HH.",
-    ], ["H": hair, "l": hairL])
-    c.pattern(11, 22 + bob, ["..HHHH", ".HHHHH", "HHHH..", "HHH...", "HH....", ".H...."], ["H": hair])
+        "......HHHllHHHH.......",
+        "....HHlllHHHlHHHHH....",
+        "...HHHHHHHHHHlllHHH...",
+        "..HHlllHHHHHHHHHHHdd..",
+        ".HHHHHHHHHHHlllHHHHdd.",
+        ".HHHHHHHHHHHHHHHHHHdd.",
+        ".HH................dd.",
+    ], ["H": hair, "l": hairL, "d": C(0xB4743E)])
+    c.pattern(11, 22 + bob, ["..HlHH", ".HlHHd", "HlHd..", "HHd...", "Hd....", ".d...."], ["H": hair, "l": hairL, "d": C(0xB4743E)])
     c.rect(16, 23, 2, 2, C(0x2A3858))   // the hair tie
 
     if let s = sig, notebook {
@@ -350,12 +367,13 @@ private func drawLeylaHarriclaw(_ c: PixelCanvas, _ p: Pose) {
             let x = 26 + Int(cos(a) * 20), y = 11 + Int(sin(a) * 4)
             c.rect(x, y, 4, 3, C(0xD8B878)); c.rect(x, y, 2, 1, C(0xC09A58))
         }
-        c.rect(15, 33, 3, 3, blazer)
+        c.rect(15, 33, 3, 3, blazer); drawCuffs(c, blazerD, right: false)
         return
     }
-    c.rect(15, 33, 3, 3, blazer)
+    c.rect(15, 33, 3, 3, blazer); drawCuffs(c, blazerD, right: false)
     c.oy += p.gunY
     drawSidearm(c, sleeve: blazer, searching: p.ready || p.fire != nil)
+    drawCuffs(c, blazerD, left: false)
 }
 
 // MARK: - Frank Blackclaw
@@ -390,27 +408,31 @@ private func drawFrankBlackclaw(_ c: PixelCanvas, _ p: Pose) {
     // The heavy coat, collar up, over a dark shirt.
     c.rect(18, 33, 20, 5, coat); c.rect(37, 33, 1, 5, coatD); c.rect(18, 37, 20, 1, coatD)
     c.rect(25, 33, 6, 5, shirt)
+    c.rect(24, 33, 1, 5, coatL); c.rect(31, 33, 1, 5, coatD)   // the coat's front edges
+    c.rect(20, 35, 1, 2, coatD); c.rect(36, 34, 1, 3, coatD); c.rect(32, 36, 3, 1, coatD)   // a fold, far side, pocket
+    c.px(23, 34, coatD); c.px(23, 36, coatD)   // buttons
     // The collar turned up: points standing at his shoulders, lit on the outside, shadowed on the inside.
     c.pattern(16, 27, ["L...", "L...", "LL..", "LcL.", "LcL.", "LccL", "LccL"], ["L": coatL, "c": coatD])
     c.pattern(36, 27, ["...L", "...L", "..LL", ".LcL", ".LcL", "LccL", "LccL"], ["L": coatL, "c": coatD])
     // Close-cropped grey hair; lines under the eyes.
     c.pattern(17, 21, [
-        ".......HHHHHHHH.......",
-        ".....HHhHHHHhHHHH.....",
-        "...HHHHHHHHHHHHHHHH...",
-        "..HHHHHHhHHHHHhHHHHH..",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-    ], ["H": hair, "h": hairD])
+        ".......HHllllHH.......",
+        ".....HHllHHHHHHlH.....",
+        "...HHHHHHHHHHHHHHHh...",
+        "..HHHHHHhhHHHHhhHHhh..",
+        ".HHHHHHHHHHHHHHHHHHhh.",
+    ], ["H": hair, "h": hairD, "l": C(0xAEB0B8)])
     c.px(22, 32, clawdShade); c.px(33, 32, clawdShade)
 
     if seeing {
         // His hand at his temple, his eyes squeezed shut.
         c.rect(38, 26, 3, 7, coat); c.rect(36, 26, 2, 2, clawdOrange)
         c.rect(22, 30, 2, 1, ink); c.rect(32, 30, 2, 1, ink)
-        c.rect(15, 33, 3, 3, coat)
+        c.rect(15, 33, 3, 3, coat); drawCuffs(c, coatD, right: false)
         return
     }
-    c.rect(15, 33, 3, 3, coat)
+    c.rect(15, 33, 3, 3, coat); drawCuffs(c, coatD, right: false)
     c.oy += p.gunY
     drawSidearm(c, sleeve: coat, searching: p.ready || p.fire != nil)
+    drawCuffs(c, coatD, left: false)
 }

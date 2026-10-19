@@ -25,6 +25,8 @@ enum Legend {
                   icon: bubble(.waiting, t: 0.1)),
             Entry(title: "Idle", detail: "Sitting on the floor: done for 2+ minutes (the big ones stay standing)",
                   icon: character(mode: .idle, t: 0, sitting: true)),
+            Entry(title: "Waiting on its agents", detail: "A blue number: done for now, but that many of its agents are still out",
+                  icon: bubble(.agentsOut(3), t: 0)),
             Entry(title: "Asleep", detail: "zZz: idle for 5+ minutes",
                   icon: bubble(.sleeping, t: 0)),
             Entry(title: "No live status", detail: "A “?”: the session started before the hooks were installed, or they stopped "

@@ -163,7 +163,7 @@ func v23DrawScrawlyLook(_ c: PixelCanvas, _ p: Pose) {
 /// The Bounty Hunter as himself, without the stiletto.
 private func drawBountyHunterSelf(_ c: PixelCanvas, _ p: Pose) {
     let leather = C(0x1E1E24), leatherL = C(0x3A3A44), leatherD = C(0x101014), roll = C(0x2E2E36)
-    let hair = C(0x1A1612)
+    let hair = C(0x1A1612), hairL = C(0x3A322A), hairD = C(0x0E0B09)
     drawLegs(c, Look(leg: leather), step: p.step)
     drawBoots(c, step: p.step, C(0x0A0A0C))
     c.oy += p.breathe
@@ -175,16 +175,18 @@ private func drawBountyHunterSelf(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, leather); c.rect(25, 33, 6, 5, roll); c.rect(25, 33, 6, 1, C(0x40404A))
     c.rect(22, 33, 1, 4, leatherL); c.rect(33, 33, 1, 4, leatherL); c.rect(37, 33, 1, 5, leatherD)
     c.rect(18, 37, 20, 1, leatherD)
-    // The hair: cropped flat on top, down to the brow.
+    c.rect(18, 33, 3, 1, leatherL); c.rect(34, 33, 3, 1, leatherL)   // lit shoulders
+    c.rect(20, 35, 1, 2, leatherD); c.rect(35, 35, 1, 2, leatherD)   // creases in the leather
+    // The hair: cropped flat on top, down to the brow; lit in short runs across the top, the far side shaded.
     c.pattern(17, 21, [
-        "...HHHHHHHHHHHHHHHH...",
+        "...HHHLLLHHHHLLLHHH...",
         "..HHHHHHHHHHHHHHHHHH..",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HH................HH.",
-    ], ["H": hair])
-    c.rect(15, 33, 3, 3, leather)
+        ".HHHLLHHHHHHHHHLLHHdH.",
+        ".HHHHHHHHHHHHHHHHHHdH.",
+        ".HHHHHHHHHHHHHHHHHHdH.",
+        ".HH................dH.",
+    ], ["H": hair, "L": hairL, "d": hairD])
+    c.rect(15, 33, 3, 3, leather); c.rect(15, 35, 3, 1, leatherD)   // the sleeve's cuff
 }
 
 /// His stiletto: out of the fist in a fight, a short point by it at rest.
@@ -197,10 +199,10 @@ private func drawStiletto(_ c: PixelCanvas, _ p: Pose, sleeve leather: Px) {
         bar(c, hand, a, from: 2, to: 11, steel, r: 0.5)
         let tip = reach(hand, a, 11)
         c.px(Int(tip.x), Int(tip.y), steelLight)
-        c.rect(15, 33, 3, 3, leather)
+        c.rect(15, 33, 3, 3, leather); c.rect(15, 35, 3, 1, C(0x101014))
         return
     }
-    c.rect(15, 33, 3, 3, leather)
+    c.rect(15, 33, 3, 3, leather); c.rect(15, 35, 3, 1, C(0x101014))
     c.rect(38, 33, 3, 3, leather); c.rect(38, 35, 3, 1, clawdOrange)
     // The stiletto at rest: a short silver point by his fist, a green drop on it after a change.
     c.rect(41, 32, 1, 3, steel); c.px(41, 31, steelLight)
@@ -374,6 +376,9 @@ private func drawFacelessRebel(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: coat, eye: nil))
     c.rect(18, 33, 20, 5, coat); c.rect(37, 33, 1, 5, coatD); c.rect(27, 33, 1, 5, coatD)
     c.rect(18, 37, 20, 1, coatD)
+    c.rect(18, 33, 3, 1, coatL); c.rect(33, 33, 3, 1, coatL)         // lit shoulders
+    c.rect(21, 34, 1, 3, coatD); c.rect(33, 34, 1, 3, coatD)         // folds
+    if !seatedPose { c.rect(22, 38, 1, 2, coatD); c.rect(34, 38, 1, 2, coatD) }   // and down the skirts
     // The face: sealed over, the seams where the eyes and mouth were.
     c.rect(21, 30, 4, 1, seam); c.px(22, 29, seamL); c.px(23, 31, seamL)
     c.rect(31, 30, 4, 1, seam); c.px(32, 29, seamL); c.px(33, 31, seamL)
@@ -384,20 +389,20 @@ private func drawFacelessRebel(_ c: PixelCanvas, _ p: Pose) {
         ".......HHHHHHHH.......",
         ".....HHHHHHHHHHHH.....",
         "...HHHHHHHHHHHHHHHH...",
-        "..HHHlHHHHHHHHHHHHHH..",
-        ".HHHlHHHHHHHHHHHHHHHH.",
-        ".HHH..............HHHH",
-        "HHH................HHH",
-        "HHH................HHH",
-        "HHH................HHH",
+        "..HHllHHHHHHHHHHHHHd..",
+        ".HHllHHHHHHHHHHHHHHdH.",
+        ".HlH..............HdHH",
+        "HlH................HdH",
+        "HlH................HdH",
+        "HHH................HdH",
+        "Hl..................dH",
+        "HH..................dH",
+        "Hl..................HH",
+        "HH..................dH",
         "HH..................HH",
-        "HH..................HH",
-        "HH..................HH",
-        "HH..................HH",
-        "HH..................HH",
-    ], ["H": coat, "l": coatL])
+    ], ["H": coat, "l": coatL, "d": coatD])
 
-    c.rect(15, 33, 3, 3, coat)
+    c.rect(15, 33, 3, 3, coat); c.rect(15, 35, 3, 1, coatD)   // the sleeve's cuff
     // The torch: a wooden haft with a rag-wrapped head and its flame.
     let flicker = Int(p.t * 12) % 3
     if raising {
@@ -435,6 +440,7 @@ private func drawFlame(_ c: PixelCanvas, x: Int, y: Int, size: Int, flicker: Int
 /// back through the cloth.
 private func drawKnowleRohrer(_ c: PixelCanvas, _ p: Pose) {
     let suit = C(0x262A34), suitD = C(0x181B22), shirt = C(0xE6E6E0), tie = C(0x5A1E26), hair = C(0x3A2A1E)
+    let suitL = C(0x3C4250), hairL = C(0x56402E), hairD = C(0x261B13)
     let sig = p.signature
     let showSpine = p.hit || (sig.map { $0 > 0.3 && $0 < 0.85 } ?? false)
     let roll: Int = sig.map { s in s > 0.05 && s < 0.3 ? (Int(s * 30) % 2 == 0 ? 1 : -1) : 0 } ?? 0
@@ -447,14 +453,16 @@ private func drawKnowleRohrer(_ c: PixelCanvas, _ p: Pose) {
     c.rect(21 + roll, 28, 3, 1, hair); c.rect(32 + roll, 28, 3, 1, hair)   // straight, heavy brows
     c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, suitD); c.rect(18, 37, 20, 1, suitD)
     c.pattern(25, 33, ["lSTTSl", ".lTTl.", "..TT..", "..TT.."], ["l": suitD, "S": shirt, "T": tie])
-    // The hair: short and squared off.
+    c.rect(18, 33, 4, 1, suitL); c.rect(33, 33, 3, 1, suitL)         // lit shoulders
+    c.rect(20, 35, 1, 2, suitD); c.rect(35, 35, 1, 2, suitD)         // folds
+    // The hair: short and squared off, lit along the flat top, the far side shaded.
     c.pattern(17, 22, [
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        "HHHHHHHHHHHHHHHHHHHHHH",
-        "HHHHHHHHHHHHHHHHHHHHHH",
-        "HHHHHHHHHHHHHHHHHHHHHH",
-        "HH..................HH",
-    ], ["H": hair])
+        ".HHLLLLHHHHHLLLLLHHHH.",
+        "HHHHHHHHHHHHHHHHHHHdHH",
+        "HHHHHHHHHHHHHHHHHHHdHH",
+        "HHHHHHHHHHHHHHHHHHHdHH",
+        "HH..................dH",
+    ], ["H": hair, "L": hairL, "d": hairD])
     if showSpine {
         // The suit torn at his back, and the spine under it: steel vertebrae down the line of it.
         c.rect(17, 26, 3, 12, C(0x101216))
@@ -495,13 +503,13 @@ private func drawBillyMiles(_ c: PixelCanvas, _ p: Pose) {
     for x in stride(from: 19, to: 37, by: 4) { c.px(x, 32, check) }
     c.pattern(17, 20, [
         "......H.HHHH.H........",
-        "....HHHHHHHHHHHHHH....",
-        "..HHHHHhHHHHHhHHHHHH..",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HHHhHH.HHHHHH.HHhHHH.",
-        ".HH..H..........H..HH.",
-        ".H..................H.",
-    ], ["H": hair, "h": hairL])
+        "....HHHhhHHHHhhHHH....",
+        "..HHhhHHHHhhHHHHHHdH..",
+        ".HHHHHHhHHHHHHhhHHdHH.",
+        ".HHHhHH.HHHHHH.HHHdHH.",
+        ".HH..H..........H..dH.",
+        ".H..................d.",
+    ], ["H": hair, "h": hairL, "d": C(0x3E2814)])
     c.oy += gap
     if gap > 0 {
         // The seam between the halves: a shadow across it (too faint to be outlined, so no white lines), the metal

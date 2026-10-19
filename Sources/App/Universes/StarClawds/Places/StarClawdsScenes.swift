@@ -59,19 +59,26 @@ let starWarsPlaces: [Location: Place] = [
 // MARK: - The scenes
 
 private enum StarWarsScenes {
-    // Vader, a Death Star corridor: grey panels, light strips, and a viewport onto space.
+    // Vader, a Death Star corridor: grey panels with bevelled seams, recessed trench panels, vents and small lights,
+    // glowing light strips, a bank of lit controls on the wall, and a viewport onto space.
     static func deathStar(_ c: PixelCanvas, _ g: Int) {
         c.gradient(0, g, C(0x4A4E57), C(0x2C2F36), bands: 4)
         c.rect(0, 0, c.w, 5, C(0x1E2025))
         for y in stride(from: 9, to: g - 4, by: 9) { c.rect(0, y, c.w, 1, C(0x23262C)) }
         for x in stride(from: 0, to: c.w, by: 24) { c.rect(x, 5, 1, g - 5, C(0x23262C)) }
-        // wall light panels
+        deathStarWall(c, g)
+        // wall light panels, each with a faint glow on the metal round it
         for x in stride(from: 6, to: c.w, by: 24) {
             for y in stride(from: 12, to: g - 10, by: 18) {
+                c.rect(x - 2, y - 2, 14, 7, C(0xC8D4E8, 0.05)); c.rect(x - 1, y - 1, 12, 5, C(0xC8D4E8, 0.07))
                 c.rect(x, y, 10, 3, C(0x9EA6B2)); c.rect(x + 1, y + 1, 8, 1, C(0xE8F0FF))
             }
         }
+        // a recessed skirting along the foot of the wall, with a dim strip of light in it
+        c.rect(0, g - 3, c.w, 3, C(0x1E2025)); c.rect(0, g - 3, c.w, 1, C(0x15171B))
+        for x in stride(from: 3, to: c.w, by: 12) { c.rect(x, g - 2, 6, 1, C(0x8A9AB4, 0.45)) }
         if Scenes.isTall(c) { deathStarHigh(c, g) }
+        deathStarControls(c, g, x: c.w * 2 / 3 + min(70, c.w / 3) + 20)
         // The viewport: stars, and a planet's curve rising along its bottom edge (a Star Destroyer drifts past now and
         // then, in the animated layer). All of it cut off at the frame, so it reads as outside.
         let v = deathStarViewport(c, g), vx = v.minX, vw = v.width, vh = v.height
@@ -86,8 +93,63 @@ private enum StarWarsScenes {
             }
         }
         for x in stride(from: vx + vw / 3, to: vx + vw, by: max(1, vw / 3)) { c.rect(x, 10, 1, vh, C(0x15171B)) }
+        // the viewport's frame: a lit bevel round it, a small light at each lower corner, and a sill under it
+        c.rect(vx - 3, 7, vw + 6, 1, C(0x6E7480)); c.rect(vx - 3, 7, 1, vh + 6, C(0x5A606C))
+        c.rect(vx + vw + 2, 8, 1, vh + 5, C(0x23262C))
+        c.px(vx - 1, 10 + vh, C(0xE0303A)); c.px(vx + vw, 10 + vh, C(0x3BD15A))
+        c.rect(vx - 4, 12 + vh, vw + 8, 2, C(0x5A606C)); c.rect(vx - 4, 12 + vh, vw + 8, 1, C(0x8A909C))
+        c.rect(vx - 4, 14 + vh, vw + 8, 1, C(0x15171B))
         c.ground(g, C(0x1C1E23), edge: C(0x6E7480), speck: C(0x2A2D33), seed: 1)
         for x in stride(from: 0, to: c.w, by: 12) { c.rect(x, g + 2, 6, 1, C(0x30343B)) }
+        // faint plate seams in the deck, kept dark so the crew reads on it
+        for x in stride(from: 18, to: c.w, by: 48) { c.rect(x, g + 4, 1, c.h - g - 4, C(0x2A2D33, 0.8)) }
+        if c.h - g > 8 { c.rect(0, g + 4 + (c.h - g - 4) / 2, c.w, 1, C(0x2A2D33, 0.6)) }
+    }
+
+    /// The Death Star's wall panels: each seam bevelled (a lit edge under it and right of it), and in some of the bays
+    /// between the light strips a recessed trench panel, a vent grille or a plate of small lit indicators, picked with
+    /// noise so it's the same every time. Full screen they're sparser, so the tall wall stays calm.
+    static func deathStarWall(_ c: PixelCanvas, _ g: Int) {
+        let tall = Scenes.isTall(c), v = deathStarViewport(c, g)
+        for y in stride(from: 9, to: g - 4, by: 9) { c.rect(0, y + 1, c.w, 1, C(0xFFFFFF, 0.06)) }
+        for x in stride(from: 0, to: c.w, by: 24) { c.rect(x + 1, 5, 1, g - 5, C(0xFFFFFF, 0.04)) }
+        let lights = [C(0xE0303A), C(0x3BD15A), C(0xFFC040), C(0x5AB4FF)]
+        for (j, y) in stride(from: 18, to: g - 12, by: 18).enumerated() {             // the bays without a light strip
+            for (i, x) in stride(from: 0, to: c.w, by: 24).enumerated() {
+                guard x + 24 < v.minX - 3 || x > v.minX + v.width + 3, x > 24 || y > 30 else { continue }   // calm top-left
+                if tall, y < g / 14 + 4 || abs(y + 4 - g * 3 / 10 - 4 * Scenes.unit(g)) < 10 * Scenes.unit(g) { continue }  // clear of the ceiling and conduit
+                if tall, abs(x + 12 - c.w / 6) < 34 * Scenes.unit(g), y + 9 > g - g * 2 / 5 - 6 * Scenes.unit(g) { continue }       // and the blast door
+                let n = noise(i * 17 + j * 31 + 820) / (tall ? 0.6 : 1)
+                if n < 0.14 {                                                     // a recessed trench panel
+                    c.rect(x + 3, y + 2, 19, 6, C(0x23262C)); c.rect(x + 3, y + 2, 19, 1, C(0x15171B))
+                    c.rect(x + 3, y + 2, 1, 6, C(0x15171B)); c.rect(x + 3, y + 7, 19, 1, C(0x5A606C))
+                    for k in stride(from: 6, to: 21, by: 5) { c.rect(x + k, y + 3, 2, 4, C(0x30343B)) }
+                } else if n < 0.24 {                                              // a vent grille
+                    c.rect(x + 7, y + 2, 11, 6, C(0x2A2D33))
+                    for r in stride(from: 3, to: 8, by: 2) { c.rect(x + 8, y + r, 9, 1, C(0x1A1C21)) }
+                } else if n < 0.34 {                                              // a plate of lit indicators
+                    c.rect(x + 8, y + 3, 9, 4, C(0x1A1C21)); c.rect(x + 8, y + 3, 9, 1, C(0x3A3E46))
+                    for k in 0..<3 { c.px(x + 10 + k * 2, y + 5, lights[Int(noise(i * 7 + j * 3 + k + 860) * 4) % 4]) }
+                }
+            }
+        }
+    }
+
+    /// A bank of controls on the Death Star's wall, as by its doors: a black panel in a grey housing, set with rows of
+    /// small coloured lights and buttons, and a little screen. A fixed size, its foot well above the floor.
+    static func deathStarControls(_ c: PixelCanvas, _ g: Int, x: Int) {
+        let s = Scenes.unit(g), w = 20 * s, h = 14 * s, y = g - 34 * s
+        guard x + w < c.w - 2 else { return }
+        c.rect(x - s, y - s, w + 2 * s, h + 2 * s, C(0x6E7480)); c.rect(x - s, y + h, w + 2 * s, s, C(0x23262C))
+        c.rect(x, y, w, h, C(0x101114))
+        let lights = [C(0xE0303A), C(0x3BD15A), C(0xFFC040), C(0x5AB4FF), C(0xE8F0FF)]
+        for r in 0..<3 {
+            for k in 0..<8 where noise(r * 11 + k + 900) > 0.25 {
+                c.rect(x + (2 + k * 2) * s, y + (2 + r * 2) * s, s, s, lights[Int(noise(r * 13 + k * 5 + 910) * 5) % 5])
+            }
+        }
+        c.rect(x + 2 * s, y + 9 * s, 7 * s, 3 * s, C(0x1C2A30)); c.rect(x + 3 * s, y + 10 * s, 5 * s, s, C(0x6AC8E8))
+        for k in 0..<3 { c.rect(x + (11 + k * 3) * s, y + 10 * s, 2 * s, 2 * s, k == 1 ? C(0xE0303A) : C(0x5A606C)) }
     }
 
     /// The Death Star corridor's viewport, in canvas pixels (row 0 at the top).
@@ -761,37 +823,126 @@ private enum StarWarsScenes {
         }
     }
 
-    // Dooku, Geonosis: an orange sky, red mesas and rock spires.
+    // Dooku, Geonosis: an orange sky, red mesas and rock spires. The spires are the Geonosians' hives, the same size
+    // on every canvas: holed with dark openings, a ledge where each steps out, lit on the sun's side and shadowed on
+    // the other, each throwing its shadow on the sand. The execution arena's bowl sits on the horizon, rocks lie
+    // between the spires, and far off a swarm of Geonosians is on the wing.
     static func geonosis(_ c: PixelCanvas, _ g: Int) {
+        let s = Scenes.unit(g)
         c.gradient(0, g, C(0xE89A5A), C(0xF2C48A), bands: 5)
         c.circle(c.w / 6, g / 4, 4, C(0xFFF0C8))
         if Scenes.isTall(c) { geonosisFar(c, g) }
+        geonosisArena(c, g)
+        for i in 0..<14 {                                                  // the swarm, far off on the right
+            let x = c.w / 2 + Int(noise(i * 5 + 400) * Double(c.w / 2 - 8)), y = 6 * s + Int(noise(i * 5 + 401) * Double(max(4, g / 3)))
+            c.px(x, y, C(0x6A3420, 0.7)); c.px(x - 1, y - (i % 2), C(0x8A4A30, 0.5)); c.px(x + 1, y - (i % 2), C(0x8A4A30, 0.5))
+        }
+        let rock = C(0xA8442E), lit = C(0xC86A48), dark = C(0x7E3020), hole = C(0x4A1C12)
         for (i, x) in stride(from: 10, to: c.w, by: 34).enumerated() {
-            let hgt = Int(Double(g) * (0.35 + noise(i * 3) * 0.35))
-            let wid = 6 + Int(noise(i * 3 + 1) * 8)
-            c.rect(x, g - hgt, wid, hgt, C(0xA8442E))
-            c.rect(x - 2, g - hgt / 2, wid + 4, hgt / 2, C(0xA8442E))
-            c.rect(x, g - hgt, 2, hgt, C(0xC86A48))
+            let hgt = (23 + Int(noise(i * 3) * 22)) * s
+            let wid = (6 + Int(noise(i * 3 + 1) * 8)) * s
+            let step = g - hgt / 2
+            c.rect(x, g - hgt, wid, hgt, rock)
+            c.rect(x - 2 * s, step, wid + 4 * s, hgt / 2, rock)
+            c.rect(x, g - hgt, 2 * s, hgt, lit)                            // the sun's side
+            c.rect(x - 2 * s, step, 2 * s, hgt / 2, lit)
+            c.rect(x + wid - 2 * s, g - hgt, 2 * s, hgt / 2, dark)         // and the shadowed side
+            c.rect(x + wid, step, 2 * s, hgt / 2, dark)
+            c.rect(x - 2 * s, step, wid + 4 * s, s, C(0xD88058))           // the ledge where it steps out
+            c.rect(x + s, g - hgt - s, max(1, wid - 2 * s), s, rock)       // a rounded crown
+            for k in 0..<max(1, hgt / (9 * s)) {                           // hive openings, with a lit sill under each
+                let hy = g - hgt + (4 + k * 9) * s, hx = x + 2 * s + Int(noise(i * 7 + k) * Double(max(1, wid - 5 * s)))
+                if hy + 3 * s >= g - 2 * s { break }
+                c.rect(hx, hy, 2 * s, 3 * s, hole); c.rect(hx, hy + 3 * s, 2 * s, s, lit)
+            }
         }
         c.dunes(base: g - 4, amp: 2, freq: 0.07, phase: 0, bottom: g, C(0xB85A3A))
+        for (i, x) in stride(from: 10, to: c.w, by: 34).enumerated() {      // each spire's shadow, away from the sun
+            let wid = (6 + Int(noise(i * 3 + 1) * 8)) * s, len = (10 + Int(noise(i * 3) * 10)) * s
+            c.rect(x + wid + 2 * s, g - 2, len, 2, C(0x5A2418, 0.35))
+        }
+        for i in 0..<9 {                                                   // rocks between the spires
+            let x = 27 * s + i * 34 + Int(noise(i * 4 + 410) * 8), r = (1 + Int(noise(i * 4 + 411) * 2)) * s
+            guard x < c.w else { break }
+            c.ellipse(x, g - r / 2, r + s, r, C(0x9A3E2A)); c.rect(x - r, g - r, s, s, lit)
+        }
         c.ground(g, C(0xB0583A), edge: C(0xD07A54), speck: C(0x96462C), seed: 7)
     }
 
-    // R0-GR, the plains of Naboo, with the Trade Federation's tanks on the horizon.
+    /// The Petranaki arena on the horizon: a pale bowl, its rim of arches and the towers either side, one size on
+    /// every canvas.
+    static func geonosisArena(_ c: PixelCanvas, _ g: Int) {
+        let s = Scenes.unit(g), cx = c.w * 11 / 20, base = g - 3 * s, rx = 34 * s, hgt = 13 * s
+        let wall = C(0xD08A62), lit = C(0xE0A07A), arch = C(0xB06A48)
+        for x in (cx - rx)...(cx + rx) {                                   // the bowl, its sides sloping in
+            let u = Double(x - cx) / Double(rx), top = base - hgt + Int(abs(u) * abs(u) * Double(4 * s))
+            c.rect(x, top, 1, base - top, x < cx ? lit : wall)
+        }
+        c.rect(cx - rx, base - hgt + 3 * s, rx * 2, s, arch)
+        for x in stride(from: cx - rx + 3 * s, to: cx + rx - 2 * s, by: 5 * s) {   // the rim's arches
+            c.rect(x, base - hgt + 5 * s, 2 * s, 4 * s, arch); c.rect(x, base - hgt + 5 * s, 2 * s, s, C(0x9A5A3C))
+        }
+        for dx in [-rx - 3 * s, rx] {                                      // a tower either side
+            c.rect(cx + dx, base - hgt - 7 * s, 3 * s, hgt + 7 * s, wall); c.rect(cx + dx, base - hgt - 7 * s, s, hgt + 7 * s, lit)
+        }
+    }
+
+    // R0-GR, the plains of Naboo, with the Trade Federation's tanks on the horizon. On the left the Gungans' sacred
+    // place: broken columns and a great carved stone head, mossy and half-sunk in the grass; round trees dot the
+    // hills, and the troop transports have their bulbous noses, a lit top and a shadow under them.
     static func naboo(_ c: PixelCanvas, _ g: Int) {
+        let s = Scenes.unit(g)
         c.gradient(0, g, C(0x6FA8E0), C(0xCFE6F2), bands: 5)
         for (i, x) in stride(from: 20, to: c.w, by: 70).enumerated() {      // clouds
             c.ellipse(x, 8 + Int(noise(i) * 6), 9, 2, C(0xF4F8FC))
         }
         if Scenes.isTall(c) { nabooFar(c, g) }
         c.dunes(base: g - 12, amp: 4, freq: 0.03, phase: 2, bottom: g, C(0x6FA05A), shade: C(0x8ABF6E))
+        for i in 0..<9 {                                                    // trees along the far hills
+            let x = 90 + Int(noise(i * 3 + 600) * Double(max(1, c.w - 100))), y = g - 13 - Int(noise(i * 3 + 601) * 3)
+            let r = (2 + Int(noise(i * 3 + 602) * 2)) * s
+            c.rect(x, y, s, 2 * s, C(0x4A3A2A)); c.circle(x, y - r, r, C(0x3E6E3A)); c.px(x - r / 2, y - r - r / 2, C(0x6A9A54))
+        }
         c.dunes(base: g - 5, amp: 3, freq: 0.05, phase: 0.5, bottom: g, C(0x5A8A48))
         if Scenes.isTall(c) { gunganShield(c, g) }
+        nabooSacredPlace(c, g)
         for (i, x) in stride(from: c.w / 3, to: c.w, by: 40).enumerated() {  // MTTs
             let y = g - 10 - Int(noise(i + 9) * 3)
             c.rect(x, y, 10, 4, C(0x9A8A6E)); c.rect(x + 7, y - 2, 4, 3, C(0x9A8A6E)); c.px(x + 10, y - 1, C(0x5A4E3A))
+            c.rect(x, y, 10, 1, C(0xB8AA8C)); c.ellipse(x - 1, y + 2, 2, 2, C(0x8A7A60))   // the lit top and the nose
+            c.px(x - 2, y + 2, C(0x5A4E3A)); c.rect(x + 1, y + 4, 9, 1, C(0x2E4A26, 0.45))
+        }
+        for (i, x) in [c.w * 3 / 5, c.w - 22].enumerated() {                 // two nearer trees, with their shadows
+            let r = (6 + i) * s, y = g - 3
+            c.ellipse(x + 6 * s, y + 2, r + 2 * s, 2, C(0x2E4A26, 0.4))
+            c.rect(x - s, y - 7 * s, 2 * s, 7 * s + 2, C(0x4A3A2A)); c.circle(x, y - 7 * s - r, r, C(0x3A6634))
+            c.circle(x - r / 3, y - 7 * s - r - r / 3, r * 2 / 3, C(0x4E7E44)); c.circle(x - r / 2, y - 7 * s - r - r / 2, r / 4, C(0x6A9A54))
         }
         c.ground(g, C(0x5E8E4A), edge: C(0x7AAE60), speck: C(0x4E7A3E), seed: 8)
+    }
+
+    /// The Gungan sacred place on the plains: broken columns and a great carved head on its side, one size on every
+    /// canvas, lit from the left with moss on the stone.
+    static func nabooSacredPlace(_ c: PixelCanvas, _ g: Int) {
+        let s = Scenes.unit(g), x0 = 8 * s, base = g - s
+        let stone = C(0xB4B09A), lit = C(0xD4D0BC), shade = C(0x8A8672), moss = C(0x6E8E4A)
+        for (k, (dx, h)) in [(0, 20), (12, 14), (44, 24), (56, 9)].enumerated() {   // the columns, some broken off
+            let x = x0 + dx * s, hh = h * s
+            c.rect(x, base - hh, 5 * s, hh, stone); c.rect(x, base - hh, s, hh, lit); c.rect(x + 4 * s, base - hh, s, hh, shade)
+            if k != 1 && k != 3 { c.rect(x - s, base - hh - 2 * s, 7 * s, 2 * s, stone); c.rect(x - s, base - hh - 2 * s, 7 * s, s, lit) }
+            else { c.px(x + 2 * s, base - hh - 1, stone); c.px(x + 4 * s, base - hh - 1, stone) }   // jagged where it broke
+            c.rect(x, base - 2 * s, 5 * s, 2 * s, moss.alpha(0.7))
+            c.rect(x + 6 * s, base, 4 * s, s, C(0x2E4A26, 0.4))
+        }
+        // the great head, on its side between the columns: the brow, a deep eye, the long nose and the mouth
+        let hx = x0 + 30 * s, hy = base - 8 * s
+        c.ellipse(hx, hy, 10 * s, 8 * s, stone); c.ellipse(hx - 3 * s, hy - 3 * s, 6 * s, 4 * s, lit)
+        c.rect(hx - 8 * s, hy - 2 * s, 16 * s, s, shade)                   // the brow
+        c.circle(hx - 3 * s, hy + s, 2 * s, C(0x4A4838)); c.circle(hx + 4 * s, hy + s, 2 * s, C(0x4A4838))
+        c.rect(hx - s, hy + s, 2 * s, 5 * s, shade)                        // the nose
+        c.rect(hx - 5 * s, hy + 6 * s, 10 * s, s, C(0x4A4838))             // the mouth
+        c.ellipse(hx + 2 * s, hy - 7 * s, 6 * s, s, moss); c.ellipse(hx + 8 * s, hy + 3 * s, 2 * s, 3 * s, moss)
+        c.rect(hx + 10 * s, base, 6 * s, s, C(0x2E4A26, 0.4))
     }
 
     // IG-88, the Executor's bridge: the big angled windows, crew pits and consoles.
@@ -1532,31 +1683,66 @@ private enum StarWarsScenes {
         for j in 0..<5 { c.rect(x + (3 + j * 4) * s, y + 10 * s, 2 * s, s, j == 2 ? C(0xE0303A) : C(0x8A939E)) }
     }
 
-    // Qui-Gon, the Jundland Wastes: canyon rocks, Tusken Raiders and a bantha.
+    // Qui-Gon, the Jundland Wastes: canyon rocks, Tusken Raiders and a bantha. The mesas keep one size on every canvas,
+    // banded with strata, lit on the suns' side with their shadows on the sand and boulders at their feet; a krayt
+    // dragon's bleached skull and ribs lie half-buried on the left, and a second Tusken keeps watch from a ledge.
     static func tuskenDesert(_ c: PixelCanvas, _ g: Int) {
+        let s = Scenes.unit(g)
         c.gradient(0, g, C(0x8AB8E0), C(0xF0DCB0), bands: 5)
         c.circle(c.w / 5, 7, 3, C(0xFFF4D0)); c.circle(c.w / 5 + 9, 9, 2, C(0xFFE8B0))
         if Scenes.isTall(c) { tuskenFar(c, g) }
+        var ledge = (x: 0, y: 0)
         for (i, x) in stride(from: 0, to: c.w, by: 60).enumerated() {
-            let hgt = g / 2 + Int(noise(i) * Double(g / 4))
+            let hgt = (32 + Int(noise(i) * 16)) * s
             // rough, flat-topped mesa with sloping flanks and a sunlit ledge
-            for k in 0..<34 {
-                let flank = max(0, abs(k - 17) - 9) * 2
+            for k in 0..<34 * s {
+                let flank = max(0, abs(k - 17 * s) - 9 * s) * 2
                 let rough = Int(noise(k + i * 31) * 3)
                 let top = g - hgt + flank + rough
-                c.rect(x + k, top, 1, g - top, k < 17 ? C(0xC0905E) : C(0xA8784C))
+                c.rect(x + k, top, 1, g - top, k < 17 * s ? C(0xC0905E) : C(0xA8784C))
+                for band in [9, 17, 26] where top < g - hgt + band * s && (k / s + band) % 7 != 0 {   // strata
+                    c.px(x + k, g - hgt + band * s, k < 17 * s ? C(0xB08250, 0.8) : C(0x946A42, 0.8))
+                }
             }
-            c.rect(x + 10, g - hgt + 6, 12, 1, C(0xD8A878))
+            c.rect(x + 10 * s, g - hgt + 6 * s, 12 * s, s, C(0xD8A878))
+            c.rect(x + 25 * s, g - hgt + 4 * s, 2 * s, hgt - 8 * s, C(0x8E643E, 0.5))   // a crack down the shaded face
+            c.rect(x + 34 * s, g - 2, (8 + Int(noise(i + 60) * 8)) * s, 2, C(0x7A5232, 0.3))   // its shadow on the sand
+            for b in 0..<2 {                                                // boulders tumbled at its foot
+                let bx = x + (b == 0 ? 3 : 30) * s + Int(noise(i * 4 + b) * 3), r = (2 + b) * s
+                c.ellipse(bx, g - r / 2 - 1, r + s, r, C(0xA8784C)); c.rect(bx - r, g - r - 1, s, s, C(0xD8A878))
+            }
+            if i == 3 { ledge = (x + 8 * s, g - hgt + 6 * s) }
         }
+        // the krayt dragon's bones: a long skull, its jaw open, and a row of ribs arching out of the sand
+        let kx = 14 * s, bone = C(0xE2D6BC), boneDark = C(0xC0B08C)
+        for r in 0..<6 {
+            let rx = kx + 22 * s + r * 7 * s, rh = (13 - r) * s
+            c.rect(rx, g - rh, s, rh, bone); c.rect(rx + s, g - rh, 2 * s, s, bone); c.rect(rx + 3 * s, g - rh, s, 2 * s, boneDark)
+        }
+        c.rect(kx + 20 * s, g - 3 * s, 46 * s, s, boneDark)                 // the spine
+        c.ellipse(kx + 12 * s, g - 4 * s, 7 * s, 4 * s, bone)               // the skull, its long snout to the left
+        c.rect(kx - 2 * s, g - 4 * s, 12 * s, 3 * s, bone); c.rect(kx - 2 * s, g - 4 * s, 12 * s, s, C(0xF4ECD8))
+        c.rect(kx - 2 * s, g - s, 12 * s, s, boneDark)                      // the jaw
+        for k in 0..<5 { c.px(kx - s + k * 2 * s, g - s - 1, C(0xF4ECD8)) }  // teeth
+        c.ellipse(kx + 13 * s, g - 5 * s, 2 * s, s, C(0x5A4636))            // the eye socket
+        c.rect(kx + 16 * s, g - 9 * s, s, 3 * s, boneDark); c.rect(kx + 17 * s, g - 10 * s, s, 2 * s, boneDark)   // a horn
         // a Tusken on a rock, gaffi stick raised
         let tx = c.w * 2 / 3
-        c.rect(tx - 6, g - 10, 14, 10, C(0x9A7048))
+        c.rect(tx - 6, g - 10, 14, 10, C(0x9A7048)); c.rect(tx - 6, g - 10, 14, 1, C(0xB88A5A))
         c.rect(tx, g - 18, 3, 8, C(0xC8B48A)); c.rect(tx, g - 21, 3, 3, C(0xD8C8A8)); c.px(tx + 1, g - 20, C(0x2A1C10))
         c.rect(tx + 3, g - 24, 1, 10, C(0x5A4636)); c.rect(tx + 2, g - 25, 3, 1, C(0x8A8F9C))
+        c.rect(tx + 8, g - 1, 10, 1, C(0x7A5232, 0.3))
+        // and a second, smaller, up on a ledge, watching
+        if ledge.x > 0 && ledge.x < c.w - 8 {
+            c.rect(ledge.x, ledge.y - 5 * s, 2 * s, 5 * s, C(0xC8B48A)); c.rect(ledge.x, ledge.y - 7 * s, 2 * s, 2 * s, C(0xD8C8A8))
+            c.px(ledge.x + s, ledge.y - 6 * s, C(0x2A1C10)); c.rect(ledge.x + 2 * s, ledge.y - 8 * s, s, 7 * s, C(0x5A4636))
+        }
         // a bantha
         let bx = c.w / 3
         c.ellipse(bx, g - 6, 9, 5, C(0x5A4232)); c.rect(bx - 7, g - 3, 2, 3, C(0x4A3424)); c.rect(bx + 5, g - 3, 2, 3, C(0x4A3424))
         c.circle(bx + 9, g - 8, 3, C(0x4A3424)); c.px(bx + 12, g - 10, C(0xE8DCC0)); c.px(bx + 12, g - 7, C(0xE8DCC0))
+        c.rect(bx - 6, g - 9, 10, 1, C(0x6E5442))                            // the light on its shaggy back
+        c.rect(bx + 9, g - 1, 10, 1, C(0x7A5232, 0.3))
         c.ground(g, C(0xD8B07A), edge: C(0xE8C894), speck: C(0xC09A66), seed: 16)
     }
 
@@ -1576,7 +1762,8 @@ private enum StarWarsScenes {
         // its back face. Washed out by distance.
         let base = g - 6
         let noseX = 8, sternX = c.w - 62
-        let deck = Double(base - 3 - 24) / Double(sternX - noseX)          // slope: the stern deck sits 24 px from the top
+        // slope: the stern deck sits 24 px from the top in the window, and keeps that height full screen
+        let deck = Double(min(base - 3 - 24, 64 * Scenes.unit(g))) / Double(sternX - noseX)
         let hull = C(0xB4BAC2), hullDark = C(0x949AA4), hullLight = C(0xD2D6DC), seam = C(0xA2A8B0)
         func deckY(_ x: Int) -> Int { base - Int(Double(x - noseX) * deck) - 3 }
         for x in noseX...sternX {
@@ -1667,8 +1854,12 @@ private enum StarWarsScenes {
         }
     }
 
-    // Mace Windu / Ahsoka, the Jedi Council chamber: tall windows onto the Coruscant skyline.
+    // Mace Windu / Ahsoka, the Jedi Council chamber: tall windows onto the Coruscant skyline. The towers keep their
+    // size on every canvas, a hazy far rank behind a dark near one, lit windows here and there; the windows have a
+    // sill, a mullion across and pilasters between them, a panelled wainscot runs under them, and the Council's
+    // high-backed seats stand round the room, each with its own cushion.
     static func jediCouncil(_ c: PixelCanvas, _ g: Int) {
+        let s = Scenes.unit(g)
         c.rect(0, 0, c.w, g, C(0x6E5236))
         let top = 4, bottom = g - 8
         for x in stride(from: 4, to: c.w - 14, by: 24) {
@@ -1676,15 +1867,48 @@ private enum StarWarsScenes {
                 let k = Double(y - top) / Double(max(1, bottom - top))
                 c.rect(x, y, 18, 1, lerp(C(0xF2A85A), C(0xE87A6A), k))
             }
+            if Scenes.isTall(c) {                                                       // full screen: the evening sky
+                for k in 0..<3 {                                                        // streaks of sunset cloud
+                    let cy = top + Int(Double(bottom - top) * (0.2 + Double(k) * 0.12)) + Int(noise(k * 7 + x / 24) * 6)
+                    c.rect(x + Int(noise(k + x) * 6), cy, 10 + Int(noise(k * 3 + x) * 8), s, C(0xFFD08A, 0.45))
+                }
+                for (i, bx) in stride(from: x + 1, to: x + 17, by: 8).enumerated() where noise(i + x * 3 + 520) > 0.45 {
+                    let hgt = min(bottom - top - 8, (80 + Int(noise(i + x * 3 + 521) * 110)) * s)   // the great spires, far off
+                    c.rect(bx, bottom - hgt, 3 * s, hgt, C(0xA8606E, 0.5)); c.rect(bx + s, bottom - hgt - 8 * s, s, 8 * s, C(0xA8606E, 0.5))
+                    if noise(i + x * 3 + 522) > 0.5 { c.px(bx + s, bottom - hgt - 8 * s, C(0xFF6A5A)) }   // a beacon on its tip
+                }
+            }
+            for (i, bx) in stride(from: x, to: x + 18, by: 2).enumerated() {        // far towers, in the haze
+                let hgt = min(bottom - top - 2, (18 + Int(noise(i * 5 + x + 500) * 60)) * s)
+                c.rect(bx, bottom - hgt, 2, hgt, C(0x8A5260, 0.55))
+                if noise(i * 5 + x + 501) > 0.7 { c.rect(bx, bottom - hgt - 3 * s, 1, 3 * s, C(0x8A5260, 0.55)) }   // a needle
+            }
             for (i, bx) in stride(from: x, to: x + 18, by: 3).enumerated() {        // skyscrapers
-                let hgt = 6 + Int(noise(i + x) * Double(max(4, bottom - top - 6)))
+                let hgt = min(bottom - top - 4, (6 + Int(noise(i + x) * 34)) * s)
                 c.rect(bx, bottom - hgt, 3, hgt, C(0x3A2A3A))
-                if noise(i * 3 + x) > 0.6 { c.px(bx + 1, bottom - hgt + 2, C(0xFFE27A)) }
+                for wy in stride(from: bottom - hgt + 2, to: bottom - 1, by: 4) where noise(i * 3 + x + wy) > 0.72 {
+                    c.px(bx + 1, wy, C(0xFFE27A))
+                }
             }
             c.rect(x - 2, top, 2, bottom - top, C(0x4A3624))
+            c.rect(x, bottom - 30 * s, 18, s, C(0x4A3624, 0.85))                         // the mullion across
+            c.rect(x + 18, top, 1, bottom - top, C(0x8A6A48))                            // light on the pilaster's edge
+            c.rect(x + 22, top, 2, bottom - top, C(0x5E4430))
         }
         if Scenes.isTall(c) { councilHigh(c, g) }
-        for x in stride(from: 10, to: c.w, by: 32) { c.rect(x, g - 9, 10, 9, C(0x4A3624)); c.rect(x + 1, g - 12, 8, 3, C(0x5A4430)) }   // council seats
+        c.rect(0, bottom, c.w, 2, C(0x9A7A56)); c.rect(0, bottom, c.w, 1, C(0xC09A6A))     // the sill
+        c.rect(0, bottom + 2, c.w, g - bottom - 2, C(0x5A4430))                           // the wainscot, panelled
+        for x in stride(from: 2, to: c.w, by: 12) {
+            c.rect(x, bottom + 3, 9, g - bottom - 4, C(0x634A34)); c.rect(x, bottom + 3, 9, 1, C(0x4A3624))
+        }
+        for (i, x) in stride(from: 10, to: c.w, by: 32).enumerated() {                    // council seats
+            let cushion = [C(0x8A3A2E), C(0xC8B48A), C(0x5A6E4A), C(0x7A5A8A)][i % 4]
+            c.rect(x, g - 9, 10, 9, C(0x4A3624)); c.rect(x + 1, g - 12, 8, 3, C(0x5A4430))
+            c.rect(x + 2, g - 13, 6, 1, C(0x5A4430)); c.rect(x + 2, g - 13, 6, 1, C(0x8A6A48, 0.7))   // the rounded top
+            c.rect(x + 2, g - 11, 6, 5, cushion); c.rect(x + 2, g - 11, 6, 1, cushion.alpha(0.6))
+            c.rect(x - 1, g - 5, 2, 5, C(0x3A2A1C)); c.rect(x + 9, g - 5, 2, 5, C(0x3A2A1C))          // the armrests
+            c.rect(x - 1, g - 5, 2, 1, C(0x8A6A48)); c.rect(x + 9, g - 5, 2, 1, C(0x8A6A48))
+        }
         c.ground(g, C(0x8A6A48), edge: C(0xB08A60), speck: C(0x7A5C3E), seed: 18)
         for x in stride(from: 0, to: c.w, by: 10) { c.rect(x, g + 2, 5, 1, C(0x9A7A56)) }
     }
@@ -2145,7 +2369,7 @@ private enum StarWarsScenes {
 
     /// The Gungan army's shield on the plains, with the army drawn up under it.
     static func gunganShield(_ c: PixelCanvas, _ g: Int) {
-        let cx = c.w / 6, rx = max(40, c.w / 7), ry = g / 4, cy = g - 6
+        let cx = c.w / 6, rx = max(40, c.w / 7), ry = min(rx, 56 * Scenes.unit(g)), cy = g - 6
         c.ellipse(cx, cy, rx, ry, C(0xB8FFD8, 0.10))
         for x in (cx - rx)...(cx + rx) {
             let u = Double(x - cx) / Double(rx)
@@ -2251,15 +2475,24 @@ private enum StarWarsScenes {
         }
     }
 
-    // The Death Star corridor: a ceiling with its light slots, a conduit along the wall and a blast door.
+    // The Death Star corridor: a ceiling with its grid of light slots, a conduit along the wall with small lights, and
+    // a blast door with a lit bevel and its control box.
     static func deathStarHigh(_ c: PixelCanvas, _ g: Int) {
         let s = Scenes.unit(g), ceil = g / 14
         c.rect(0, 0, c.w, ceil, C(0x1E2025)); c.rect(0, ceil, c.w, 2, C(0x15171B))
+        for x in stride(from: 0, to: c.w, by: 24) { c.rect(x + 3, 0, 1, ceil, C(0x15171B)); c.rect(x + 4, 0, 1, ceil, C(0x2A2D33)) }   // ribs
+        if ceil > 14 { for x in stride(from: 10, to: c.w, by: 24) { c.rect(x, ceil - 11, 6, 1, C(0x6E7480)) } }   // the grid's far row
         for x in stride(from: 8, to: c.w, by: 24) { c.rect(x, ceil - 5, 10, 2, C(0x9EA6B2)); c.rect(x + 1, ceil - 5, 8, 1, C(0xE8F0FF)) }
+        for x in stride(from: 8, to: c.w, by: 24) {                                     // their glow spilling down the wall
+            for k in 0..<(8 * s) { c.rect(x - k / 3, ceil + 2 + k, 10 + k * 2 / 3, 1, C(0xC8D4E8, 0.06 * Double(8 * s - k) / Double(8 * s))) }
+        }
         let y = g * 3 / 10
         c.rect(0, y, c.w, 9 * s, C(0x24272D)); c.rect(0, y, c.w, 1, C(0x5A606C)); c.rect(0, y + 9 * s, c.w, 1, C(0x15171B))
         for k in 0..<3 { c.rect(0, y + (2 + k * 2) * s, c.w, 1, C(0x30343B)) }
-        for x in stride(from: 20, to: c.w, by: 48) { c.rect(x, y - s, 4 * s, 11 * s, C(0x1E2025)) }
+        for x in stride(from: 20, to: c.w, by: 48) {
+            c.rect(x, y - s, 4 * s, 11 * s, C(0x1E2025)); c.rect(x, y - s, s, 11 * s, C(0x3A3E46))
+            c.rect(x + s, y + 4 * s, 2 * s, s, [C(0xE0303A), C(0x3BD15A), C(0x5AB4FF)][(x / 48) % 3])   // a light on each clamp
+        }
         let dw = 36 * s, dx = c.w / 6, top = g - g * 2 / 5, cham = 8 * s
         for yy in top..<g {
             let inset = max(0, cham - (yy - top))
@@ -2271,6 +2504,11 @@ private enum StarWarsScenes {
         }
         c.rect(dx, top + 3 * s, 1, g - top, C(0x15171B))
         c.rect(dx - 4 * s, top - 4 * s, 2 * s, s, C(0xE0303A)); c.rect(dx + 2 * s, top - 4 * s, 2 * s, s, C(0x3BD15A))
+        // light caught on the frame's left edge, and the door's control box beside it
+        for yy in (top + cham)..<g { c.px(dx - dw / 2 - 3 * s, yy, C(0x5A606C)) }
+        let bx = dx + dw / 2 + 6 * s, by = g - 30 * s
+        c.rect(bx, by, 6 * s, 10 * s, C(0x6E7480)); c.rect(bx + s, by + s, 4 * s, 8 * s, C(0x101114))
+        for (k, col) in [C(0xE0303A), C(0xFFC040), C(0x3BD15A)].enumerated() { c.rect(bx + 2 * s, by + (2 + k * 2) * s, 2 * s, s, col) }
     }
 
     /// TIE fighters crossing the Death Star's viewport, or in a flight of three past the Executor's windows.
@@ -2497,20 +2735,28 @@ private enum StarWarsScenes {
     // Geonosis: the planet's ring arching over the sky, droid core ships landed in the haze, and far spires.
     static func geonosisFar(_ c: PixelCanvas, _ g: Int) {
         let s = Scenes.unit(g)
+        // two of its moons, pale in the haze, and a core ship lifting off on its landing legs
+        c.circle(c.w * 3 / 5, g / 3, 16 * s, C(0xF6D0A8, 0.5)); c.circle(c.w * 3 / 5 - 5 * s, g / 3 - 5 * s, 9 * s, C(0xFADCB8, 0.4))
+        c.circle(c.w * 2 / 5, g / 5, 6 * s, C(0xF6D0A8, 0.45))
+        let sx = c.w * 17 / 20, sy = g * 2 / 5
+        c.circle(sx, sy, 14 * s, C(0xB87050)); c.circle(sx - 4 * s, sy - 4 * s, 9 * s, C(0xC8805C))
+        c.rect(sx - 14 * s, sy - s, 28 * s + 1, s, C(0xA06044))
+        for d in [-10, -3, 4, 10] { c.rect(sx + d * s, sy + 12 * s, s, 6 * s, C(0x8A5038)); c.rect(sx + d * s - s, sy + 18 * s, 3 * s, s, C(0x8A5038)) }
+        for k in 0..<3 { c.rect(sx - 4 * s + k * 4 * s, sy + 19 * s, 2 * s, (4 + k % 2 * 3) * s, C(0xFFE0A0, 0.35)) }   // its thrust
         for x in 0..<c.w {
             let u = Double(x) / Double(c.w) * 2 - 1
             let y = Int(Double(g) * (0.06 + 0.13 * (u + 1) / 2 + 0.06 * u * u))
             c.rect(x, y, 1, 3 * s, C(0xFFF0D8, 0.22)); c.rect(x, y + s, 1, s, C(0xC8784A, 0.18))
             if noise(x * 7 + 300) > 0.9 { c.px(x, y - 2 * s + Int(noise(x * 7 + 301) * Double(7 * s)), C(0x8A4A30, 0.5)) }
         }
-        for (fx, fr, dy) in [(0.3, 0.17, 4), (0.76, 0.11, 2)] {
-            let cx = Int(Double(c.w) * fx), r = Int(Double(g) * fr), cy = g - dy
+        for (fx, fr, dy) in [(0.3, 34, 4), (0.76, 22, 2)] {                 // the core ships, one size on every canvas
+            let cx = Int(Double(c.w) * fx), r = fr * s, cy = g - dy
             c.circle(cx, cy, r, C(0xD48E68)); c.circle(cx - r / 6, cy - r / 6, r * 3 / 4, C(0xDC9C74))
             c.rect(cx - r, cy - r / 5, r * 2 + 1, max(1, r / 12), C(0xC28060))
             c.rect(cx - r / 2, cy - r - 2 * s, s, 3 * s, C(0xC28060))
         }
         for (i, x) in stride(from: 24, to: c.w, by: 51).enumerated() {
-            let hgt = Int(Double(g) * (0.4 + noise(i * 3 + 200) * 0.3)), wid = 8 + Int(noise(i * 3 + 201) * 8)
+            let hgt = (60 + Int(noise(i * 3 + 200) * 90)) * s, wid = (8 + Int(noise(i * 3 + 201) * 8)) * s
             c.rect(x, g - hgt, wid, hgt, C(0xE2A27A)); c.rect(x - 3, g - hgt / 2, wid + 6, hgt / 2, C(0xE2A27A))
             c.rect(x, g - hgt, 2, hgt, C(0xEAB088))
         }
@@ -2705,12 +2951,35 @@ private enum StarWarsScenes {
     // The Jundland Wastes: wisps of cloud and the far canyon wall.
     static func tuskenFar(_ c: PixelCanvas, _ g: Int) {
         let s = Scenes.unit(g)
+        c.circle(c.w / 5 + 4, 8, 14 * s, C(0xFFF4D0, 0.12)); c.circle(c.w / 5 + 4, 8, 24 * s, C(0xFFF4D0, 0.07))   // the suns' glare
+        c.circle(c.w * 7 / 10, g / 4, 7 * s, C(0xEEF2F6, 0.5)); c.circle(c.w * 7 / 10 + 2 * s, g / 4 - s, 6 * s, C(0xD8E4EE, 0.5))   // a pale moon
+        // a great rock arch and a lone needle rising out of the far canyon, one size on every canvas
+        let ax = c.w * 3 / 5, ab = g - 60 * s, ah = 90 * s, aw = 70 * s
+        let rock = C(0xD0AE84), rockLit = C(0xE0C49C), rockDark = C(0xB8946A)
+        for x in ax..<(ax + aw) {                                          // its legs and span: a round opening under a rough top
+            let u = Double(x - ax) / Double(aw) * 2 - 1
+            let t = ab - ah + Int(noise(x / s + 830) * Double(3 * s)) + (x > ax + aw / 2 ? (x - ax - aw / 2) * 8 * s / aw : 0)
+            let under = ab - ah + 16 * s + Int((1 - (1 - u * u).squareRoot()) * Double(ah))
+            let leg = abs(u) > 0.8
+            c.rect(x, t, 1, (leg ? ab : min(ab, under)) - t, x < ax + aw / 2 ? rock : rockDark)
+            c.px(x, t, rockLit)
+            if x - ax < 3 * s { c.rect(x, t, 1, ab - t, rockLit) }        // the sunlit flank of the left leg
+        }
+        let nx = c.w / 8
+        for v in 0..<(110 * s) {
+            let half = (5 + Int(noise(v / (6 * s) + 840) * 2.5) + (110 * s - v) / (22 * s)) * s
+            c.rect(nx - half, g - 60 * s - v, half * 2, 1, rock); c.rect(nx + half / 3, g - 60 * s - v, half * 2 / 3, 1, rockDark); c.px(nx - half, g - 60 * s - v, rockLit)
+        }
+        for k in 0..<2 {                                                   // a skyhopper and its wingman, very high
+            let hx = c.w * 2 / 5 + k * 18 * s, hy = g / 6 + k * 5 * s
+            c.rect(hx, hy, 6 * s, s, C(0x8A8F9C)); c.rect(hx + 2 * s, hy - s, s, 3 * s, C(0x8A8F9C))
+        }
         for i in 0..<5 {
             let x = Int(noise(i * 3 + 820) * Double(c.w)), y = Int(Double(g) * (0.08 + noise(i * 3 + 821) * 0.25))
             Scenes.wisp(c, x, y, (60 + Int(noise(i * 3 + 822) * 80)) * s, C(0xFFFFFF, 0.3), s: s)
         }
         for x in 0..<c.w {
-            let top = g - Int(Double(g) * (0.38 + 0.06 * sin(Double(x) * 0.013 + 1) + 0.03 * sin(Double(x) * 0.05))) + Int(noise(x / 3 + 800) * 3)
+            let top = g - Int(Double(80 * s) * (1 + 0.16 * sin(Double(x) * 0.013 + 1) + 0.08 * sin(Double(x) * 0.05))) + Int(noise(x / 3 + 800) * 3)
             c.rect(x, top, 1, g - top, C(0xD6B890)); c.px(x, top, C(0xE4C8A0))
             for k in 1...3 where (x / 7 + k) % 5 != 0 { c.px(x, top + (g - top) * k / 4, C(0xC8A47C, 0.6)) }
         }
@@ -2723,7 +2992,17 @@ private enum StarWarsScenes {
             let x = Int(noise(i * 3 + 850) * Double(c.w)), y = Int(Double(g) * (0.06 + noise(i * 3 + 851) * 0.3))
             Scenes.wisp(c, x, y, (60 + Int(noise(i * 3 + 852) * 80)) * s, C(0xFFFFFF, 0.3), s: s)
         }
-        let x1 = c.w / 7, h = g / 5
+        // a pale moon in the day sky, and far off another Star Destroyer, standing on its buried nose
+        c.circle(c.w * 3 / 4, g / 5, 9 * s, C(0xE8EEF2, 0.55)); c.circle(c.w * 3 / 4 + 3 * s, g / 5 - 2 * s, 3 * s, C(0xD4DCE4, 0.5))
+        let wx = c.w * 11 / 20, wb = g - 8, wh = 120 * s
+        for v in 0..<wh {                                                  // a wedge, widening toward its stern up top
+            let half = 4 * s + v * 26 * s / wh, y = wb - v
+            c.rect(wx - half + v / 8, y, half * 2, 1, v % 23 == 0 ? C(0xC6CCD0) : C(0xD0D6D8))
+            c.px(wx - half + v / 8, y, C(0xE2E6E6))
+        }
+        c.rect(wx - 30 * s + wh / 8, wb - wh - 4 * s, 60 * s, 4 * s, C(0xC6CCD0))   // its flat stern, up in the sky
+        for k in 0..<3 { c.circle(wx - 16 * s + k * 16 * s + wh / 8, wb - wh - 6 * s, 3 * s, C(0xBEC4C8)) }
+        let x1 = c.w / 7, h = 46 * s
         for x in 0..<x1 {
             let top = g - 8 - (x1 - x) * h / x1
             c.rect(x, top, 1, g - top, x % 9 == 0 ? C(0xCCD0D2) : C(0xD6D8D6)); c.px(x, top, C(0xE6E8E4))
@@ -2902,8 +3181,8 @@ private enum StarWarsCantina {
         let band = 0..<min(w, bandWidth)
         let barStart = Int(Double(w) * 0.56), barEnd = min(w - 4, barStart + max(60, w / 3))
 
-        // Arched booth alcoves along the back wall
-        let archH = max(14, Int(Double(wallBottom) * 0.62))
+        // Arched booth alcoves along the back wall, one size on every canvas (they are booths, not great doors)
+        let archH = min(max(14, Int(Double(wallBottom) * 0.62)), 40 * Scenes.unit(wallBottom))
         var x = bandWidth + 6
         while x + 26 < w {
             if !(x + 26 > barStart - 4 && x < barEnd + 4) && !band.contains(x) {
@@ -2972,6 +3251,7 @@ private enum StarWarsCantina {
         for y in 5..<vault { c.rect(0, y, w, 1, ceiling.alpha(0.3 * Double(vault - y) / Double(vault))) }   // the vault's shadow
         let gy = archTop - max(10, wallBottom / 12)                 // the gallery floor
         let doorX = 12, doorW = 34 * s, doorH = min(gy - 16, 46 * s)
+        drawDome(c, spring: gy - doorH - 14 * s, s: s)
         var x = doorX + doorW + 24
         while x + 20 < w {                                          // booths up on the gallery
             if !(x + 20 > bar.lowerBound + 10 && x < bar.upperBound - 10) {
@@ -2999,6 +3279,39 @@ private enum StarWarsCantina {
         c.rect(lx, 5, 1, ly - 5, ceiling)
         c.circle(lx, ly + 2 * s, 14 * s, glow.alpha(0.08))
         c.ellipse(lx, ly, 9 * s, 3 * s, C(0x6E5440)); c.rect(lx - 6 * s, ly + 2 * s, 12 * s, 2 * s, lamp); c.rect(lx - 4 * s, ly + 4 * s, 8 * s, s, glow)
+    }
+
+    /// Full screen only: the dome over the room. Its curve comes down to the walls with the shadow above it, wooden
+    /// ribs run from a sunlit opening at the top, daylight falls from it, and round windows sit along its foot.
+    private static func drawDome(_ c: PixelCanvas, spring: Int, s: Int) {
+        let w = c.w, cx = w / 2, top = 5
+        guard spring > top + 20 * s else { return }
+        let h = Double(spring - top)
+        for x in 0..<w {
+            let u = Double(x - cx) / Double(cx), y = top + Int((1 - max(0, 1 - u * u).squareRoot()) * h)
+            if y > top { c.rect(x, top, 1, y - top, ceiling.alpha(0.6)) }
+            c.rect(x, y, 1, s, C(0xEFE4CF)); c.rect(x, y + s, 1, s, plasterShade.alpha(0.5))
+        }
+        let oy = top + 3 * s
+        for k in 1..<8 where k != 4 {                               // the ribs, from the opening down to the walls
+            let ex = w * k / 8, n = max(abs(ex - cx), spring - oy)
+            for i in stride(from: 0, through: n, by: max(1, s)) {
+                let x = cx + (ex - cx) * i / n, y = oy + (spring - oy) * i / n
+                c.rect(x, y, 2 * s, s, wood); c.rect(x, y + s, 2 * s, 1, wood.alpha(0.4))
+            }
+        }
+        c.rect(cx - s, oy, 2 * s, spring - oy, wood)                // the middle rib, straight down
+        for i in 0..<((spring - oy) / 4) {                          // daylight falling from the opening
+            let y = oy + i * 4, spread = i * 4 / 3
+            c.rect(cx - 10 * s - spread, y, 20 * s + spread * 2, 4, C(0xFFF4D8, 0.035))
+        }
+        c.ellipse(cx, oy, 14 * s, 3 * s, C(0x6E5440)); c.ellipse(cx, oy, 11 * s, 2 * s, C(0xFFF8E8))   // the opening
+        for x in stride(from: 40, to: w - 20, by: 46) where abs(x - cx) > 30 * s {   // round windows along the dome's foot
+            let y = spring - 8 * s
+            c.circle(x, y, 5 * s, C(0xEFE4CF)); c.circle(x, y, 4 * s, C(0xFFF4D8)); c.rect(x - 4 * s, y, 8 * s, s, wood)
+            c.circle(x, y, 9 * s, C(0xFFF4D8, 0.06))
+        }
+        c.rect(0, spring, w, 2 * s, wood); c.rect(0, spring, w, 1, C(0x8A7058))   // the beam along its foot
     }
 
     private static func drawAlcove(_ c: PixelCanvas, x: Int, bottom: Int, width: Int, height: Int) {

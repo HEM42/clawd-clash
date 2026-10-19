@@ -286,8 +286,10 @@ private func drawMechanic(_ c: PixelCanvas, _ p: Pose) {
     // The vest: two straps over his shoulders, a scooped neck, grubby down one side; then the trousers' belt.
     c.rect(16, 29, 24, 7, vest); c.rect(19, 26, 2, 3, vest); c.rect(35, 26, 2, 3, vest)
     c.rect(22, 29, 12, 1, skin); c.rect(24, 30, 8, 1, skin)
-    c.px(18, 32, vestD); c.px(36, 33, vestD); c.px(30, 34, vestD); c.rect(39, 29, 1, 7, vestD)
+    c.rect(18, 32, 2, 1, vestD); c.rect(19, 33, 2, 1, vestD)        // a grease smear
+    c.rect(28, 34, 4, 1, vestD); c.rect(39, 29, 1, 7, vestD)        // the vest sagging over his belly
     c.rect(15, 36, 26, 1, C(0x3A2818)); c.rect(15, 37, 26, 1, khaki)
+    c.rect(27, 36, 2, 1, C(0x9A8A5A))                               // the belt buckle
 
     // The left arm, hanging by his side (up in a guard at the end of the signature).
     if guardUp {
@@ -504,7 +506,7 @@ private func drawWalterDonnervan(_ c: PixelCanvas, _ p: Pose) {
 /// Walter Donnervan himself, on `c`: everything but the dust.
 private func walterFigure(_ c: PixelCanvas, _ p: Pose, slump: Int) {
     let suit = C(0x6A7280), suitD = C(0x4C5260), vest = C(0x535A66), shirt = C(0xF0EEE6), tie = C(0x7A1E2A)
-    let hair = C(0xC8CACE), hairD = C(0x9A9CA4), gold = C(0xE8B830), goldD = C(0x9A7418)
+    let hair = C(0xC8CACE), hairD = C(0x9A9CA4), hairL = C(0xE4E6EA), gold = C(0xE8B830), goldD = C(0x9A7418)
     let sig = p.signature
 
     drawLegs(c, Look(leg: suit), step: p.step)
@@ -517,12 +519,12 @@ private func walterFigure(_ c: PixelCanvas, _ p: Pose, slump: Int) {
     c.pattern(25, 34, ["dSTTSd", ".STTS.", "..TT..", "..TT.."], ["d": suitD, "S": shirt, "T": tie])
     // Silver hair combed back from a side parting.
     c.pattern(18, 22, [
-        "....HHHHHHHHHHHHH...",
-        "..HHHHHhHHHHHHHhHH..",
+        "....LLLLHHHLLLLHH...",
+        "..HHHHhhHHHHHHHhhH..",
         ".HHHHHH.hhHHHHHHHHH.",
         "HHHHHHH..HHHHHHHHHHH",
         "HH................HH",
-    ], ["H": hair, "h": hairD])
+    ], ["H": hair, "h": hairD, "L": hairL])
     c.rect(26, 33, 4, 1, ink)
 
     if let s = sig {
@@ -551,6 +553,7 @@ private func walterFigure(_ c: PixelCanvas, _ p: Pose, slump: Int) {
 /// her fingertips, straining for it, before she draws back.
 private func drawElsaSnyder(_ c: PixelCanvas, _ p: Pose) {
     let suit = C(0x9C9EA2), suitD = C(0x7A7C82), blouse = C(0xF6F4EE), hair = C(0xE8C870), hairD = C(0xC09A48)
+    let hairL = C(0xF6E09A)
     let sig = p.signature
     let reaching = sig.map { $0 > 0.05 && $0 < 0.95 } ?? false
 
@@ -572,20 +575,20 @@ private func drawElsaSnyder(_ c: PixelCanvas, _ p: Pose) {
     c.rect(27, 33, 2, 1, C(0xB0303A))
     // Wavy blonde hair, parted, down to her shoulders.
     c.pattern(16, 21, [
-        ".....HHHHHHHHHHHH.......",
-        "...HHHhHHHHHHHHhHHH.....",
-        "..HHHHHHhHHHHHHHHhHHH...",
-        ".HHhHHHHHHHHHHHHHHHHHH..",
+        ".....LLLLHHHHLLLL.......",
+        "...HHhhHHHHHHHhhHHH.....",
+        "..HHHHHhhHHHHHHHhhHHH...",
+        ".HhhHHHHHHHHHHHHHHHHHH..",
         ".HHHHHHHHHHHhhHHHHHHHHH.",
         "HHHH................HHH.",
         "HHH..................HH.",
         "HHHH.................HH.",
         "HHH..................HHH",
-        "HHHH.................HHH",
-        "HHhH.................HhH",
+        "HhHH.................HhH",
+        "HhHH.................HhH",
         ".HHHH................HHH",
         "..HH..................H.",
-    ], ["H": hair, "h": hairD])
+    ], ["H": hair, "h": hairD, "L": hairL])
 
     if let s = sig, reaching {
         // Her arm stretched out towards it, fingers straining.

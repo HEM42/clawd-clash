@@ -732,6 +732,7 @@ extension Scenes {
         let s = unit(g), tall = isTall(c)
         c.gradient(0, g, C(0x040818), C(0x1C3A58), bands: 8)
         c.stars(0, g * 2 / 3, density: tall ? 70 : 50, seed: 12)
+        if tall { fortressFar(c, g) }
         // far peaks
         for i in 0..<(c.w / (30 * s)) {
             let x = Int(noise(i * 3 + 640) * Double(c.w)), hgt = Int(Double((tall ? 40 : 14) * s) + noise(i * 3 + 641) * Double((tall ? 70 : 16) * s))
@@ -742,6 +743,7 @@ extension Scenes {
         }
         c.dunes(base: g - (tall ? 40 : 16) * s, amp: Double((tall ? 14 : 5) * s), freq: 0.02, phase: 1, bottom: g, C(0x2A4664), shade: C(0x5A82A8))
         c.dunes(base: g - (tall ? 22 : 9) * s, amp: Double((tall ? 8 : 3) * s), freq: 0.035, phase: 4, bottom: g, C(0x3E6488), shade: C(0x8AB4D4))
+        if tall { fortressGlaciers(c, g) }
         // the fortress
         let cx = Int(Double(c.w) * 0.58), hmax = Double(g) * (tall ? 0.78 : 0.86)
         c.ellipse(cx, g - 10 * s, 70 * s, 26 * s, C(0x8AD8FF, 0.06))
@@ -767,6 +769,45 @@ extension Scenes {
         for i in 0..<(c.w / 30) {
             let x = Int(noise(i * 3 + 800) * Double(c.w)), y = g + 2 * s + Int(noise(i * 3 + 801) * Double(max(1, c.h - g - 3 * s)))
             c.ellipse(x, y, (6 + Int(noise(i * 3 + 802) * 10.0)) * s, s, C(0x8AAAC8, 0.5))
+        }
+    }
+
+    /// The screen saver's far north: a low moon with its halo over a pale range of ice mountains on the edge of the
+    /// world, and a shooting star.
+    static func fortressFar(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g)
+        let mx = Int(Double(c.w) * 0.84), my = g * 3 / 10
+        for r in [22, 16, 11] { c.circle(mx, my, r * s, C(0xC8E8FF, 0.06)) }
+        c.circle(mx, my, 8 * s, C(0xE8F2FA)); c.circle(mx + 2 * s, my - 2 * s, 2 * s, C(0xC8D8E8)); c.circle(mx - 3 * s, my + 2 * s, s, C(0xC8D8E8))
+        c.glowLine(Double(c.w) * 0.42, Double(g) * 0.22, Double(c.w) * 0.42 + 30 * Double(s), Double(g) * 0.22 + 10 * Double(s),
+                   core: C(0xFFFFFF, 0.7), glow: C(0xA8D8FF, 0.15), coreR: 0.5, glowR: 1.5)
+        let foot = g - 40 * s
+        for i in 0..<(c.w / (22 * s)) {
+            let x = Int(noise(i * 3 + 660) * Double(c.w)), hgt = (60 + Int(noise(i * 3 + 661) * 60)) * s
+            let half = hgt * 2 / 3 + Int(noise(i * 3 + 662) * Double(hgt / 2)), peak = foot - hgt
+            scenes1Spike(c, x, peak, foot, half: half, C(0x1E3A58))
+            for y in peak..<foot { c.rect(x + 1, y, half * (y - peak) / max(1, hgt), 1, C(0x18304A)) }
+            scenes1Spike(c, x, peak, peak + hgt / 4, half: half / 4, C(0x8AAAC8, 0.55))
+        }
+    }
+
+    /// Glacier walls at either side of the screen saver: blue ice cliffs with jagged tops, crevasses and icicles.
+    static func fortressGlaciers(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), wallW = Int(Double(c.w) * 0.14), base = g
+        for side in [0, 1] {
+            for k in 0..<wallW {
+                let x = side == 0 ? k : c.w - 1 - k
+                let edge = Double(wallW - k) / Double(wallW)
+                let top = base - Int(Double(70 * s) * min(1, edge * 1.6)) - Int(noise(k / max(1, s) + side * 97 + 880) * 6.0) * s
+                c.rect(x, top, 1, base - top, k % (9 * s) < 2 * s ? C(0x3E6E96) : C(0x5A8AB4))
+                c.rect(x, top, 1, 2 * s, C(0xE8F6FF))
+                if k % (9 * s) == 0 {
+                    for y in stride(from: top + 3 * s, to: base, by: 7 * s) where noise(y + k + side * 31) > 0.5 { c.rect(x, y, 2 * s, 4 * s, C(0x24486C)) }
+                }
+                if k % (5 * s) == 0 && noise(k + side * 13 + 890) > 0.4 {
+                    c.rect(x, top + 2 * s, s, (2 + Int(noise(k + side * 13 + 891) * 4)) * s, C(0xC8E8FA, 0.8))
+                }
+            }
         }
     }
 
@@ -876,6 +917,7 @@ extension Scenes {
             c.rect(hx, top - hh, 3 * s, hh, C(0xDCE4E8))
         }
         themysciraTemple(c, ix, hy - ih + s, cols: 4, s: s, scale: 1, stone: C(0xE4EAEE), shade: C(0xA8B4BC))
+        if tall { themysciraSea(c, g) }
         // the cliff with its temple
         let ct = tall ? Int(Double(g) * 0.42) : 22 * s, cw = Int(Double(c.w) * 0.3)
         for x in 0..<cw {
@@ -896,6 +938,7 @@ extension Scenes {
             c.rect(x, y, (2 + Int(noise(i + 446) * 8.0)) * s, s, C(0x7A5A40, 0.55))
             if noise(i + 447) > 0.7 { c.rect(x, y + s, s, (2 + Int(noise(i + 448) * 4.0)) * s, C(0x7A5A40, 0.45)) }
         }
+        if tall { themysciraStair(c, g, top: ct, width: cw) }
         themysciraTemple(c, cw * 2 / 5, ct, cols: tall ? 8 : 6, s: s, scale: tall ? 2 : 1, stone: C(0xF4F0E6), shade: C(0xCAC2B0))
         c.rect(cw - 2 * s, g - 3 * s, 20 * s, 3 * s, C(0xEAF4FF, 0.5))
         // cypresses and a broken column
@@ -913,6 +956,68 @@ extension Scenes {
         c.ground(g, C(0xE2DACA), edge: C(0xFFFCF4), speck: C(0xCCC2AE), seed: 19)
         for x in stride(from: 0, to: c.w, by: 14 * s) { c.rect(x, g + 1, s, c.h - g - 1, C(0xC8BEAA)) }
         for y in stride(from: g + 5 * s, to: c.h, by: 5 * s) { c.rect(0, y, c.w, s, C(0xD2C8B6)) }
+    }
+
+    /// The screen saver's sea: a lighthouse on a rock off the island, sea stacks with surf round their feet, and the
+    /// Amazons' galleys under sail, smaller the further out they are.
+    static func themysciraSea(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), hy = themysciraHorizon(c, g)
+        // the lighthouse on its rock, right of the island
+        let lx = Int(Double(c.w) * 0.84), lb = hy + 6 * s
+        c.ellipse(lx, lb, 16 * s, 4 * s, C(0x4A6270)); c.ellipse(lx - 3 * s, lb - s, 11 * s, 3 * s, C(0x6A8290))
+        c.rect(lx - 4 * s, lb - 26 * s, 8 * s, 24 * s, C(0xE8E4DA)); c.rect(lx + 2 * s, lb - 26 * s, 2 * s, 24 * s, C(0xB8B2A6))
+        for y in stride(from: lb - 22 * s, to: lb - 2 * s, by: 6 * s) { c.rect(lx - 4 * s, y, 8 * s, s, C(0xC8C0B0)) }
+        c.rect(lx - 5 * s, lb - 28 * s, 10 * s, 2 * s, C(0xD8D0C0))
+        c.rect(lx - 3 * s, lb - 33 * s, 6 * s, 5 * s, C(0x5A4A3A)); c.rect(lx - 2 * s, lb - 32 * s, 4 * s, 3 * s, C(0xFFC860))
+        for r in 0..<(3 * s) { c.rect(lx - 4 * s + r, lb - 34 * s - r, 8 * s - 2 * r, 1, C(0xC8963A)) }
+        c.circle(lx, lb - 30 * s, 6 * s, C(0xFFD890, 0.15))
+        c.rect(lx - 14 * s, lb + 2 * s, 28 * s, max(1, s / 2), C(0xFFFFFF, 0.5))
+        // sea stacks off the foot of the cliff
+        let cw = Int(Double(c.w) * 0.3)
+        for (k, fx) in [0.06, 0.13].enumerated() {
+            let x = cw + Int(Double(c.w) * fx), h = (18 - k * 7) * s, b = g - (8 + k * 10) * s, w = (7 - k * 2) * s
+            for r in 0..<h {
+                let half = w - r * w / (h * 2)
+                c.rect(x - half, b - r, half * 2, 1, r % (3 * s) == 0 ? C(0xBC9872) : C(0xC8A47C))
+                c.rect(x + half / 3, b - r, half * 2 / 3, 1, C(0x9A7A5A))
+            }
+            c.rect(x - w / 2, b - h, w, s, C(0x6A8A3A))
+            c.rect(x - w - 3 * s, b, 2 * w + 6 * s, s, C(0xFFFFFF, 0.55)); c.rect(x - w, b + s, 2 * w, s, C(0xFFFFFF, 0.3))
+        }
+        // galleys, one on the horizon, one nearer
+        for (fx, fy, sz) in [(0.47, 0.25, 1), (0.72, 0.6, 2)] {
+            let u = s * sz, x = Int(Double(c.w) * fx), y = hy + Int(Double(g - hy) * fy)
+            c.rect(x - 12 * u, y, 24 * u, 2 * u, C(0x6A3A22)); c.rect(x - 10 * u, y + 2 * u, 20 * u, u, C(0x4A2616))
+            c.rect(x + 12 * u, y - u, 2 * u, 2 * u, C(0x6A3A22)); c.rect(x - 14 * u, y - 2 * u, 2 * u, 3 * u, C(0xC8963A))
+            c.rect(x - 9 * u, y, 18 * u, max(1, u / 2), C(0xC8963A))
+            for o in stride(from: x - 9 * u, to: x + 10 * u, by: 3 * u) { c.rect(o, y + 3 * u, max(1, u / 2), 2 * u, C(0x4A2616)) }
+            c.rect(x, y - 16 * u, u, 16 * u, C(0x4A2616))
+            for r in 0..<(12 * u) {
+                let bow = Int(sin(Double(r) / Double(12 * u) * .pi) * Double(2 * u))
+                c.rect(x - 6 * u + bow, y - 15 * u + r, 12 * u, 1, r % (4 * u) < 2 * u ? C(0xF4EEE0) : C(0xB82A2A))
+            }
+            c.rect(x - 14 * u, y + 3 * u, 30 * u, max(1, u / 2), C(0xFFFFFF, 0.35))
+        }
+    }
+
+    /// Steps cut into the cliff, zigzagging up its face to the temple, with a bronze brazier at each landing.
+    static func themysciraStair(_ c: PixelCanvas, _ g: Int, top: Int, width: Int) {
+        let s = unit(g), x0 = width / 6, x1 = width * 11 / 20, flights = 5
+        let rise = (g - 6 * s - top - 8 * s) / flights
+        guard rise > 6 * s else { return }
+        for f in 0..<flights {
+            let yb = g - 6 * s - f * rise, yt = yb - rise
+            let (a, b) = f % 2 == 0 ? (x0, x1) : (x1, x0)
+            let n = max(1, rise / s)
+            for k in 0..<n {
+                let x = a + (b - a) * k / n, y = yb - k * rise / n
+                c.rect(x - s, y - s, 3 * s, s, C(0xE8DCC4)); c.rect(x - s, y, 3 * s, max(1, s / 2), C(0x8A6A4E))
+            }
+            let lx = b
+            c.rect(lx - 4 * s, yt, 8 * s, s, C(0xE8DCC4)); c.rect(lx - 4 * s, yt + s, 8 * s, max(1, s / 2), C(0x8A6A4E))
+            c.rect(lx - s, yt - 4 * s, 2 * s, 4 * s, C(0x8A5A2A)); c.rect(lx - 2 * s, yt - 5 * s, 4 * s, s, C(0xA87A3A))
+            c.rect(lx - s, yt - 7 * s, 2 * s, 2 * s, C(0xFFB040)); c.circle(lx, yt - 6 * s, 3 * s, C(0xFFC860, 0.15))
+        }
     }
 
     /// A Greek temple: stepped base, columns, architrave and pediment, standing on row `base` centred at `x`.

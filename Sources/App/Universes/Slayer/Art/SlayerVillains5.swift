@@ -393,13 +393,15 @@ private func drawAndrewWellz(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, jumper); c.rect(37, 33, 1, 5, jumperD); c.rect(18, 37, 20, 1, jumperD)
     c.rect(18, 35, 20, 1, band); c.rect(18, 37, 20, 1, band)
     c.rect(25, 33, 6, 1, jumperD)
+    c.rect(18, 33, 1, 2, C(0xE0B85A)); c.px(18, 36, C(0xE0B85A))              // lit down the near side
+    c.rect(22, 33, 1, 2, jumperD); c.rect(34, 33, 1, 2, jumperD)              // folds
     c.rect(26, 32, 4, 1, C(0x8A3A24))                                         // an eager grin
     c.px(25, 31, C(0x8A3A24)); c.px(30, 31, C(0x8A3A24))
     // Floppy blond hair with a side-swept fringe, a few strands loose.
     c.pattern(16, 20, [
         ".......HH.HHHHH.........",
-        ".....HHHHHHHlHHHHH......",
-        "...HHHlHHHHHHHHHlHHH....",
+        ".....HHHHHHlllHHHH......",
+        "...HHlllHHHHHHHHHHHH....",
         "..HHHHHHHHHHHHHHHHHHH...",
         "..HHHHHHHHHHHHHHHHHHHH..",
         ".HHHHHHHHHHHHHHHHHHHHHH.",

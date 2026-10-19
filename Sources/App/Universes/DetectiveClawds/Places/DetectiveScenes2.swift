@@ -870,6 +870,7 @@ extension Scenes {
             let mx = Int(Double(c.w) * 0.16), my = g / 6
             c.circle(mx, my, 9 * s, C(0xF0ECD8)); c.circle(mx + 4 * s, my - 2 * s, 8 * s, C(0x161842))
             for i in 0..<5 { wisp(c, Int(noise(i * 3 + 950) * Double(c.w)), g / 3 + Int(noise(i * 3 + 951) * Double(g / 4)), 60 * s, C(0xC87A8A, 0.35), s: s) }
+            starHigh(c, g)
         }
         // far haze towers
         for blk in scenes2Blocks(c.w, base: f.shore, lo: 6 * b, hi: 18 * b, minW: 5 * b, maxW: 12 * b, gap: 0, seed: 31) {
@@ -908,6 +909,58 @@ extension Scenes {
         c.rect(0, f.prom, c.w, g - f.prom, C(0x3A2E30)); c.rect(0, f.prom, c.w, b, C(0x8A6A58))
         c.ground(g, C(0x3E302C), edge: C(0x9A7A62), speck: C(0x2E2420), seed: 91)
         for x in stride(from: 0, to: c.w, by: 9 * s) { c.rect(x, g + 1, s, c.h - g - 1, C(0x2E2420)) }
+    }
+
+    /// The screen saver's sky over Star City: clouds lit orange from below, a blimp drifting with its lights on, the
+    /// hills behind the city with a radio mast, and a back row of taller towers, spires and cranes in the haze.
+    static func starHigh(_ c: PixelCanvas, _ g: Int) {
+        let f = starFrame(c, g), s = unit(g)
+        // clouds with sunset bellies, kept away from the top-left corner
+        for i in 0..<6 {
+            let x = Int(Double(c.w) * (0.3 + noise(i * 3 + 980) * 0.7)), y = f.shore / 4 + Int(noise(i * 3 + 981) * Double(f.shore / 3))
+            let len = (40 + Int(noise(i * 3 + 982) * 50)) * s
+            c.ellipse(x, y, len / 2, 3 * s, C(0x3A2A5A, 0.8)); c.ellipse(x - len / 6, y - 2 * s, len / 4, 3 * s, C(0x4A3468, 0.8))
+            c.rect(x - len / 3, y + 2 * s, len * 2 / 3, s, C(0xE8906A, 0.55))
+        }
+        // the blimp
+        let bx = Int(Double(c.w) * 0.4), by = f.shore / 3
+        c.ellipse(bx, by, 24 * s, 7 * s, C(0x5A5470)); c.ellipse(bx - 2 * s, by - 2 * s, 20 * s, 4 * s, C(0x7A7090))
+        c.ellipse(bx, by + 4 * s, 22 * s, 2 * s, C(0x3A3450))
+        c.rect(bx - 24 * s, by - 5 * s, 4 * s, 10 * s, C(0x3A3450)); c.rect(bx - 26 * s, by - s, 6 * s, 2 * s, C(0x3A3450))
+        c.rect(bx - 12 * s, by - s, 26 * s, 2 * s, C(0x5AE08A, 0.8))
+        c.rect(bx - 4 * s, by + 7 * s, 8 * s, 3 * s, C(0x2A2438)); c.rect(bx - 3 * s, by + 8 * s, 6 * s, s, C(0xFFE0A0))
+        c.rect(bx + 23 * s, by, s, s, C(0xFF5A5A)); c.rect(bx - 25 * s, by - 5 * s, s, s, C(0x5AFF7A))
+        // the hills behind the city, a few houses lit on them, and the radio mast
+        c.dunes(base: f.shore - 24 * f.b, amp: Double(10 * s), freq: 0.012, phase: 2, bottom: f.shore, C(0x3E2C52), shade: C(0x6A4A72))
+        for i in 0..<(c.w / (14 * s)) where noise(i + 990) > 0.55 {
+            let x = Int(noise(i * 2 + 991) * Double(c.w)), y = f.shore - (8 + Int(noise(i * 2 + 992) * 12)) * f.b
+            c.rect(x, y, s, s, C(0xFFD890, 0.6))
+        }
+        let rx = Int(Double(c.w) * 0.9), rb = f.shore - 30 * f.b
+        for y in (rb - 40 * s)..<rb {
+            let spread = (y - (rb - 40 * s)) / 8
+            c.px(rx - spread, y, C(0x2A2238)); c.px(rx + spread, y, C(0x2A2238))
+            if (y - rb) % (6 * s) == 0 { c.rect(rx - spread, y, spread * 2 + 1, 1, C(0x2A2238)) }
+        }
+        for y in stride(from: rb - 40 * s, to: rb, by: 12 * s) { c.rect(rx - s / 2, y, max(1, s), max(1, s), C(0xFF5A5A)) }
+        // the back row: taller hazy towers with spires and red beacons, and two cranes
+        let qx = Int(Double(c.w) * 0.62)
+        for blk in scenes2Blocks(c.w, base: f.shore, lo: 16 * f.b, hi: 36 * f.b, minW: 6 * f.b, maxW: 12 * f.b, gap: 10 * f.b, seed: 33)
+        where abs(blk.x + blk.w / 2 - qx) > 12 * f.b && blk.x > Int(Double(c.w) * 0.27) {
+            scenes2Building(c, blk, C(0x54406A), roof: C(0x8A6A8A), window: C(0xE8B080), chance: 0.12, step: 2 * f.b, seed: 3)
+            if noise(blk.x + 993) > 0.5 {
+                c.rect(blk.x + blk.w / 2, blk.y - 8 * f.b, max(1, f.b / 2 + 1), 8 * f.b, C(0x54406A))
+                c.rect(blk.x + blk.w / 2, blk.y - 9 * f.b, max(1, f.b / 2 + 1), f.b, C(0xFF5A5A))
+            }
+        }
+        for (k, fx) in [0.36, 0.8].enumerated() {
+            let x = Int(Double(c.w) * fx), top = f.shore - (40 + k * 6) * f.b
+            c.rect(x, top, 2 * f.b, f.shore - top, C(0x3A2E50))
+            for y in stride(from: top, to: f.shore, by: 3 * f.b) { c.rect(x, y, 2 * f.b, max(1, f.b / 2), C(0x6A5480)) }
+            c.rect(x - 14 * f.b, top, 24 * f.b, f.b, C(0x3A2E50)); c.rect(x + 6 * f.b, top + f.b, 3 * f.b, 2 * f.b, C(0x3A2E50))
+            c.rect(x - 12 * f.b, top + f.b, max(1, f.b / 2), 9 * f.b, C(0x6A5480, 0.8)); c.rect(x - 13 * f.b, top + 10 * f.b, 3 * f.b, 2 * f.b, C(0x3A2E50))
+            c.rect(x + f.b / 2, top - 2 * f.b, f.b, f.b, C(0xFF5A5A))
+        }
     }
 
     /// The suspension bridge on the left: two towers, the sagging cables, the deck and its lights.

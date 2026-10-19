@@ -89,9 +89,10 @@ func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walk
         if mode != .idle && mode != .thinking && persona.weapon == .saber { p.melee = -60 }
     } else {
         switch mode {
-        case .idle, .thinking:
+        case .idle, .thinking, .standGuard:
+            if mode == .standGuard { p.melee = -65 + 3 * sin(t * 2.2); p.capeSpeed = 2.2 }   // on guard, its agents out
             if case .rest = role {} else if case .none = role {} else { break }
-            guard mode == .idle, let h = idleHabit else { break }
+            guard mode != .thinking, let h = idleHabit else { break }
             switch h.kind {
             case .flourish:
                 // Weapon swung up, round once and back down.
@@ -122,9 +123,6 @@ func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walk
             if persona.weapon == .blaster && !classic { p.gunLift = 1 }
             if persona.weapon == .lightning { p.zap = false; p.armRaise = 2 }
             if urgent { p.hop = cheerHop(t * 1.5); p.breathe = 0 }
-        case .standGuard:
-            p.melee = -65 + 3 * sin(t * 2.2)
-            p.capeSpeed = 2.2
         case .working:
             p.capeSpeed = 4.5
             switch role {

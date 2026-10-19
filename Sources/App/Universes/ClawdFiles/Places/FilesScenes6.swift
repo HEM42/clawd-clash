@@ -466,22 +466,43 @@ extension Scenes {
     }
 
     /// Chaney, Texas ("Bad Blood"): a flat night sky, a one-storey motel with its row of numbered doors and a walkway
-    /// light over each, the tall MOTEL sign on its pole, the pizza place next door, a lamp post and a parked car. On the
-    /// screen saver, the town's water tower stands over it all with CHANEY on its tank.
+    /// light over each, the tall MOTEL sign on its pole, the pizza place next door, a lamp post and a parked car, with
+    /// telephone poles and their wires running along behind. On the screen saver, the town's water tower stands over it
+    /// all with CHANEY on its tank, a billboard on its legs and a grain elevator out on the flat, a moon and thin cloud.
     static func chaneyMotel(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), f = s6ChaneyFrame(c, g)
         c.gradient(0, g, C(0x070A18), C(0x1E2440), bands: tall ? 12 : 7)
         c.stars(0, g * 2 / 3, density: tall ? 60 : 110, seed: 91)
-        if tall {   // the water tower
-            let tx = c.w * 22 / 100, ty = g / 4, tw = 44 * s
+        if tall {   // the moon and cloud, the grain elevator and the billboard
+            s46Moon(c, x: c.w * 78 / 100, y: g / 6, r: 10 * s, sky: lerp(C(0x070A18), C(0x1E2440), 2.0 / 12))
+            s46NightCloud(c, x: c.w * 60 / 100, y: g / 4, len: c.w * 26 / 100, s: s, body: C(0x161A30), rim: C(0x3A4060), seed: 21)
+            s46NightCloud(c, x: c.w * 30 / 100, y: g * 2 / 5, len: c.w * 18 / 100, s: s, body: C(0x181C34), rim: C(0x2E3450), seed: 22)
+            s6Elevator(c, x: c.w * 84 / 100, base: g - 4 * s, s: s)
+            s6Billboard(c, x: c.w * 40 / 100, base: g - 4 * s, s: s)
+        }
+        if tall {   // the water tower, on legs of a fixed height
+            let tx = c.w * 22 / 100, ty = g - 130 * s, tw = 44 * s
             for side in [-1, 1] { for y in (ty + 20 * s)..<g { c.rect(tx + tw / 2 + side * (tw / 3 + (y - ty) * s / 12), y, 2 * s, 1, C(0x1A1E2C)) } }
             c.rect(tx, ty, tw, 22 * s, C(0x2A3046)); c.ellipse(tx + tw / 2, ty, tw / 2, 5 * s, C(0x2A3046))
             c.rect(tx, ty + 20 * s, tw, 2 * s, C(0x1A1E2C))
             let word = "CHANEY"
             s6Text(c, word, x: tx + (tw - s6TextWidth(word, s: s)) / 2, y: ty + 8 * s, s: s, C(0xA8B0C8))
+            c.rect(tx + tw / 2, ty - 9 * s, s, 4 * s, C(0x1A1E2C)); c.rect(tx + tw / 2 - s / 2, ty - 10 * s, s, s, C(0xFF3A2A))
         }
         // Low scrub on the horizon.
         c.dunes(base: g - 6 * s, amp: Double(2 * s), freq: 0.02 / Double(s), phase: 2.1, bottom: g, C(0x12141E))
+        // Telephone poles along the road behind, the wires sagging between them.
+        let poles = Array(stride(from: c.w / 10, to: c.w + c.w / 4, by: c.w / 4))
+        for (a, b) in zip(poles, poles.dropFirst()) {
+            for k in 0..<2 {
+                s6Wire(x0: a, y0: g - 38 * s + k * 3 * s, x1: b, y1: g - 38 * s + k * 3 * s, sag: 4 * s) { x, y, _ in c.px(x, y, C(0x2A2E40)) }
+            }
+        }
+        for x in poles where x < c.w {
+            c.rect(x, g - 42 * s, 2 * s, 42 * s, C(0x1E1A1A)); c.rect(x - 6 * s, g - 39 * s, 14 * s, s, C(0x1E1A1A))
+            c.rect(x - 6 * s, g - 36 * s, 14 * s, s, C(0x1E1A1A))
+            for u in [-6, 7] { c.rect(x + u * s, g - 40 * s, s, s, C(0x5A6A78)) }
+        }
         // The motel: a flat roof, the row of doors and windows, a light over each door.
         let m = f.motel, top = g - m.h
         c.rect(m.x, top, m.w, m.h, C(0x8A7A62)); c.rect(m.x - 2 * s, top - 3 * s, m.w + 4 * s, 3 * s, C(0x4A3A2A))
@@ -513,6 +534,32 @@ extension Scenes {
         for wx in [cx + 6 * s, cx + 28 * s] { c.circle(wx, g - s, 3 * s, C(0x101014)); c.circle(wx, g - s, s, C(0x8A8A90)) }
         // Asphalt.
         c.ground(g, C(0x26262C), edge: C(0x4A4A54), speck: C(0x1A1A20), seed: 93)
+    }
+
+    /// A grain elevator out on the flat: a row of tall concrete silos, the head house on top with its leg and spout, a
+    /// light on its roof.
+    private static func s6Elevator(_ c: PixelCanvas, x: Int, base: Int, s: Int) {
+        let body = C(0x1A1E30), lit = C(0x2A3048)
+        for k in 0..<4 { c.rect(x + k * 9 * s, base - 54 * s, 8 * s, 54 * s, body); c.rect(x + k * 9 * s, base - 54 * s, 2 * s, 54 * s, lit) }
+        c.rect(x + 8 * s, base - 72 * s, 18 * s, 18 * s, body); c.rect(x + 8 * s, base - 72 * s, 18 * s, 2 * s, lit)
+        c.rect(x + 12 * s, base - 66 * s, 3 * s, 3 * s, C(0xE8C47A, 0.8))
+        c.rect(x - 10 * s, base - 50 * s, 10 * s, s, body); c.rect(x - 11 * s, base - 50 * s, s, 14 * s, body)   // the spout
+        c.rect(x + 17 * s, base - 76 * s, s, 4 * s, body); c.rect(x + 17 * s, base - 77 * s, s, s, C(0xFF3A2A))
+    }
+
+    /// A billboard on its legs by the highway, lit from below: EAT, and a steer's head.
+    private static func s6Billboard(_ c: PixelCanvas, x: Int, base: Int, s: Int) {
+        let top = base - 66 * s, w = 52 * s, h = 22 * s
+        for u in [8, 40] { c.rect(x + u * s, top + h, 2 * s, base - top - h, C(0x14161E)) }
+        c.rect(x + 6 * s, top + h + 14 * s, 38 * s, s, C(0x14161E))   // the catwalk
+        c.rect(x - s, top - s, w + 2 * s, h + 2 * s, C(0x14161E)); c.rect(x, top, w, h, C(0xC8BC9A))
+        c.rect(x, top + h - 4 * s, w, 4 * s, C(0x8A2A2A))
+        s6Text(c, "EAT", x: x + 4 * s, y: top + 4 * s, s: 2 * s, C(0x2A1E1A))
+        let hx = x + 40 * s, hy = top + 8 * s   // the steer
+        c.rect(hx - 3 * s, hy - 2 * s, 6 * s, 7 * s, C(0x5A3A2A)); c.rect(hx - 7 * s, hy - 4 * s, 4 * s, s, C(0xE8E0C8))
+        c.rect(hx + 3 * s, hy - 4 * s, 4 * s, s, C(0xE8E0C8)); c.rect(hx - 8 * s, hy - 6 * s, s, 2 * s, C(0xE8E0C8)); c.rect(hx + 7 * s, hy - 6 * s, s, 2 * s, C(0xE8E0C8))
+        for u in [10, 30, 46] { c.ellipse(x + u * s, top + h + s, 4 * s, 2 * s, C(0xFFF0C0, 0.25)) }   // its lamps' light
+        c.ellipse(x + w / 2, top + h / 2, w / 2 + 4 * s, h / 2 + 4 * s, C(0xFFF0C0, 0.04))
     }
 
     /// What moves in Chaney: the MOTEL sign's neon (and its VACANCY), the pizza sign flickering and buzzing, the

@@ -83,12 +83,14 @@ private func drawMaster(_ c: PixelCanvas, _ p: Pose) {
     c.rect(24, 33, 9, 1, suit); c.rect(24, 33, 9, 1, suitLight.alpha(0.6)); c.px(28, 33, C(0x0A0A0E))
     for y in [35, 37] { c.px(28, y, button) }
     c.rect(19, 34, 1, 4, suitLight)
-    // The hair: slicked back, a widow's peak.
+    // The light along the shoulder, a fold on the far side, the cuff.
+    c.rect(20, 34, 3, 1, suitLight); c.rect(34, 35, 1, 2, C(0x101014)); c.rect(15, 35, 3, 1, suitLight)
+    // The hair: slicked back, a widow's peak, the light running back along it in short strokes.
     c.pattern(17, 21, [
         ".....HHHHHHHHHHHH.....",
-        "...HHHHHHHHHHHHHHHH...",
-        "..HHHHlllHHHHHHHHHHH..",
-        ".HHHHHHHHHHHHHHHHHHHH.",
+        "...HHHllllHHHHHHHHH...",
+        "..HHlllHHHHHlllHHHHH..",
+        ".HHHHHHHHHHHHHHHllHHH.",
         ".HHHHHHHHHHHHHHHHHHHH.",
         ".HHHH....HHH.....HHHH.",
         ".HHH......H.......HHH.",
@@ -116,7 +118,7 @@ private func drawMaster(_ c: PixelCanvas, _ p: Pose) {
     }
     // The right arm and the eliminator.
     c.oy += p.gunY
-    c.rect(38, 33, 3, 3, suit)
+    c.rect(38, 33, 3, 3, suit); c.rect(38, 35, 3, 1, suitLight)
     drawEliminator(c, body: C(0x18181C), band: C(0x8A8E98), tip: green, lit: firing(p))
 }
 
@@ -133,6 +135,9 @@ private func drawBurntMaster(_ c: PixelCanvas, _ p: Pose) {
     if !seatedPose {
         for y in 36...41 { let k = (y - 36) / 2; c.rect(17 - k, y, 22 + k * 2, 1, robe) }
         c.rect(18, 41, 20, 1, robeLight)
+        // Folds down the robe's length, catching a little light, and its far side in shade.
+        c.rect(17, 37, 1, 4, robeLight); c.rect(27, 37, 1, 4, robeLight); c.rect(28, 38, 1, 3, C(0x0C0A0E))
+        c.rect(38, 39, 1, 2, C(0x0C0A0E))
     }
     drawLegs(c, Look(leg: robe), step: p.step)
     drawShoes(c, step: p.step, C(0x0A0A0C))
@@ -141,13 +146,13 @@ private func drawBurntMaster(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(12, 15, [
         "..........ggggggggggg..........",
         "......gggggCCCCCCCCCggggg......",
-        "....ggCCCCCrCCCCCCCrCCCCCgg....",
-        "...gCCCCrCCCCCCrCCCCCCrCCCCg...",
-        "..gCCrCCCCCCCCCCCCCCCCCCCrCCg..",
-        ".gCCCCCCCrCCCCCCCCCCCrCCCCCCg..",
-        ".gCCrCCCCCCCCCCCCCCCCCCCCrCCCg.",
+        "....ggCCCCCCCCCCCCCCCCCCCgg....",
+        "...gCCCrrCCCCCCCCCCCCCrrCCCg...",
+        "..gCCCCCrCCCCCCCCCCCCCrCCCCCg..",
+        ".gCCCCCCCCCCCCCCCCCCCCCCCCCCg..",
+        ".gCCrrCCCCCCCCCCCCCCCCCCCrrCCg.",
         "gCCCCCCC..............CCCCCCCg.",
-        "gCCrCCC................CCCrCCg.",
+        "gCCCCCC................CCCCCCg.",
         "gCCCCC..................CCCCCg.",
         ".gCCC....................CCCg..",
         "..gCC....................CCg...",
@@ -176,10 +181,10 @@ private func drawBurntMaster(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 34, 20, 4, robe)
     c.rect(22, 34, 1, 4, robeLight); c.rect(33, 34, 1, 4, robeLight)
     c.rect(27, 34, 2, 1, gold)
-    c.rect(15, 33, 3, 3, robe); c.px(15, 35, char)
+    c.rect(15, 33, 3, 3, robe); c.rect(15, 34, 3, 1, robeLight); c.px(15, 35, char)   // a sleeve's turned cuff
     // The right arm, a charred claw round the eliminator.
     c.oy += p.gunY
-    c.rect(38, 33, 3, 3, robe); c.px(40, 35, char)
+    c.rect(38, 33, 3, 3, robe); c.rect(38, 34, 3, 1, robeLight); c.px(40, 35, char)
     drawEliminator(c, body: C(0x1A1416), band: gold, tip: C(0xFF8A2A), lit: firing(p))
 }
 
@@ -215,22 +220,23 @@ private func drawVelvetMaster(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(17, 21, [
         "......H.HH.H.H.H......",
         "...HHHHHHHHHHHHHHHH...",
-        "..HHHgHHHHHgHHHHHHHH..",
-        ".HHgHHHHHgHHHHHHHgHHH.",
+        "..HHssHHHHHssHHHHHHH..",
+        ".HHHssHHHHHHssHHHHHHH.",
         ".HHHHHHHHHHHHHHHHHHHH.",
         ".gHHHH.HHH..HHH.HHHHg.",
         ".gg................gg.",
         ".g..................g.",
-    ], ["H": hair, "g": grey])
+    ], ["H": hair, "g": grey, "s": C(0x3A3446)])
     drawBrows(c, hair)
     // The full pointed beard, down over the tunic.
     c.rect(24, 32, 9, 1, hair)
     c.rect(24, 33, 9, 2, hair); c.rect(25, 35, 7, 1, hair); c.rect(26, 36, 5, 1, hair); c.rect(27, 37, 3, 1, hair)
     c.px(28, 38, hair)
-    c.px(26, 34, grey); c.px(30, 35, grey)
+    c.rect(26, 33, 1, 2, grey); c.rect(30, 34, 1, 2, grey)   // grey strands through the beard
+    c.rect(15, 35, 3, 1, sheen)   // the cuff
     // The right arm, the ring and the long eliminator.
     c.oy += p.gunY
-    c.rect(38, 33, 3, 3, velvet); c.px(40, 35, silver)
+    c.rect(38, 33, 3, 3, velvet); c.rect(38, 35, 2, 1, sheen); c.px(40, 35, silver)
     drawEliminator(c, body: C(0x1A161E), band: silver, tip: C(0xB8FF4A), lit: firing(p))
     c.px(41, 33, silver)
 }
@@ -305,14 +311,17 @@ private func drawSexton(_ c: PixelCanvas, _ p: Pose) {
     c.rect(24, 33, 8, 5, shirt); c.rect(27, 33, 2, 5, tie)
     c.rect(23, 33, 1, 3, suitLight); c.rect(32, 33, 1, 3, suitLight)
     c.rect(37, 33, 1, 5, C(0x121420))
-    // The crop: short, bleached, the roots a shade darker.
+    // The light along the shoulder, a fold, a button, the shirt's cuff at the far wrist.
+    c.rect(18, 33, 4, 1, suitLight); c.rect(34, 35, 1, 2, C(0x121420)); c.px(22, 36, C(0x4A5068))
+    c.rect(15, 35, 3, 1, shirt)
+    // The crop: short, bleached, the light along the top in short runs, the roots a shade darker.
     c.pattern(18, 23, [
-        "...hHHHHHHHHHHHHh...",
-        ".hHHHHHHHHHHHHHHHHh.",
-        "hHHHhHHHHHHHHHhHHHHh",
+        "...hHHllllHHHHHHh...",
+        ".hHHllHHHHHlllHHHHh.",
+        "hHHHhhHHHHHHHhhHHHHh",
         "HH................HH",
         "H..................H",
-    ], ["H": hair, "h": hairDark])
+    ], ["H": hair, "h": hairDark, "l": C(0xFFF6D8)])
     c.rect(31, 32, 4, 1, C(0x5A2A1A)); c.px(35, 31, C(0x5A2A1A))   // the grin
     if drumming {
         // Both hands on his chest, fingers tapping.
@@ -378,6 +387,11 @@ private func drawMissy(_ c: PixelCanvas, _ p: Pose) {
         c.rect(18 - k + (y > 39 ? sway : 0), y, 20 + k * 2, 1, skirt)
     }
     c.rect(18 - (hem - 34) / 3 + sway, hem, 20 + (hem - 34) / 3 * 2, 1, skirtLight)
+    // Folds down the skirt's length, and its far side in shade.
+    if !seatedPose {
+        for x in [22, 27, 32] { c.rect(x + (x == 27 ? 0 : sway), 37, 1, 4, skirtLight) }
+        c.rect(38 + sway, 39, 1, 2, C(0x160E1A))
+    }
     c.oy += p.breathe
     drawBody(c, Look(arm: coat))
     // The coat: fitted, frogging across the front, the lace jabot and cameo at the throat.
@@ -388,13 +402,14 @@ private func drawMissy(_ c: PixelCanvas, _ p: Pose) {
     c.rect(26, 33, 4, 4, lace); c.px(27, 36, lace.alpha(0.6)); c.px(28, 37, lace.alpha(0.5))
     c.px(27, 34, C(0xE0B0A0)); c.px(28, 34, C(0xC88A7A))   // the cameo
     c.rect(19, 33, 1, 3, coatLight)
+    c.rect(15, 35, 3, 1, lace)   // a lace cuff
     // The hair: pinned up in a bun, wisps at the sides.
     c.pattern(17, 20, [
         "........HHHH..........",
-        "......HHHlHHHHHHHHHH..",
-        "....HHHHHHHHHHHHHHHH..",
-        "..HHHHHHHHHHHHHHHHHH..",
-        ".HHHlHHHHHHHHHHHlHHHH.",
+        "......HHllHHHHHHHHHH..",
+        "....HHlllHHHHllHHHHH..",
+        "..HHlHHHHHHHHHHHlHHH..",
+        ".HHlHHHHHHHHHHHHHlHHH.",
         ".HHHHHHHHHHHHHHHHHHHH.",
         ".HHH...............HH.",
         ".HH.................H.",
@@ -431,7 +446,7 @@ private func drawMissy(_ c: PixelCanvas, _ p: Pose) {
     }
     // The furled umbrella held out like a rifle: the crook in her fist, the tip forward.
     c.oy += p.gunY
-    c.rect(38, 33, 3, 3, coat)
+    c.rect(38, 33, 3, 3, coat); c.rect(38, 35, 3, 1, lace)
     let crook = C(0x6A4A2A)
     c.rect(36, 32, 3, 1, crook); c.px(36, 33, crook); c.px(36, 34, crook)
     c.rect(41, 33, 12, 1, C(0x2A2A30)); c.px(53, 33, C(0x8A8E98))
@@ -456,13 +471,15 @@ private func drawSpyMaster(_ c: PixelCanvas, _ p: Pose) {
     c.rect(23, 33, 2, 3, suitLight); c.rect(31, 33, 2, 3, suitLight)
     c.rect(37, 33, 1, 5, suitDark); c.rect(18, 37, 20, 1, suitDark)
     c.rect(33, 35, 2, 1, shirtLight)
-    c.rect(15, 33, 3, 3, suit)
+    // The light along the shoulder, a fold on the far side, the cuffs.
+    c.rect(18, 33, 4, 1, suitLight); c.rect(35, 34, 1, 2, suitDark)
+    c.rect(15, 33, 3, 3, suit); c.rect(15, 35, 3, 1, suitDark)
     // The hair: short, swept up into a quiff at the front.
     c.pattern(17, 21, [
         "...............HHH....",
-        "......HHHHHHHHHHHHH...",
-        "...HHHHHHHHHHHlllHHH..",
-        ".HHHHHHHHHHHHHHHHHHHH.",
+        "......HHllHHHHHHHHH...",
+        "...HHHHHllHHHHlllHHH..",
+        ".HHHllHHHHHHllHHHHHHH.",
         ".HHHHHHHHHHHHHHHHHHHH.",
         ".HHH..............HHH.",
         ".HHH...............HH.",
@@ -473,10 +490,10 @@ private func drawSpyMaster(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 29, 2, 4, hair); c.rect(36, 29, 2, 4, hair)
     c.rect(19, 32, 18, 2, hair); c.rect(25, 31, 7, 1, hair)
     c.rect(26, 32, 5, 1, C(0x5A2A1A))   // the smirk inside it
-    c.px(20, 33, hairLight); c.px(34, 33, hairLight)
+    c.rect(20, 32, 2, 1, hairLight); c.rect(33, 33, 2, 1, hairLight)   // the light along the beard
     // The right arm and his eliminator, gold-tipped.
     c.oy += p.gunY
-    c.rect(38, 33, 3, 3, suit)
+    c.rect(38, 33, 3, 3, suit); c.rect(38, 35, 3, 1, suitDark)
     drawEliminator(c, body: C(0x18181C), band: C(0xC89A2A), tip: C(0xE8B020), lit: firing(p))
 }
 
@@ -493,6 +510,7 @@ private func drawRanee(_ c: PixelCanvas, _ p: Pose) {
     // The gown-coat's skirts, behind the legs.
     if !seatedPose {
         c.rect(16, 36, 3, 5, crimson); c.rect(37, 36, 3, 5, crimson)
+        c.rect(16, 36, 1, 4, crimsonLight); c.rect(39, 36, 1, 4, crimsonDark)   // a fold lit, the far one in shade
         c.px(16, 40, gold); c.px(39, 40, gold)
     }
     c.oy += p.breathe
@@ -510,17 +528,17 @@ private func drawRanee(_ c: PixelCanvas, _ p: Pose) {
     c.rect(27, 33, 2, 5, gold); c.px(27, 35, C(0x2AC8B0)); c.px(28, 35, C(0x2AC8B0))
     c.rect(18, 37, 20, 1, crimsonDark); c.rect(37, 33, 1, 5, crimsonDark)
     c.rect(20, 34, 1, 3, crimsonLight)
-    c.rect(15, 32, 4, 1, gold); c.rect(15, 33, 3, 3, crimson)
+    c.rect(15, 32, 4, 1, gold); c.rect(15, 33, 3, 3, crimson); c.rect(15, 35, 3, 1, gold)   // a gold cuff
     // The hair: swept up into a tall sculpted crown.
     c.pattern(17, 14, [
         "........HHHHH.........",
-        ".......HHHlHHH........",
-        "......HHHlHHHHH.......",
-        "......HHlHHHHHH.......",
-        ".....HHHHHHHHHHH......",
-        "....HHHHHHHHHHHHH.....",
-        "...HHHHHHHHHHHHHHHH...",
-        "..HHHHlHHHHHHHHlHHHH..",
+        ".......HHlHHHH........",
+        "......HHlHHHHHd.......",
+        "......HlHHHHHHd.......",
+        ".....HHlHHHHHHdd......",
+        "....HHHHHHHHHHHdd.....",
+        "...HHllllHHHHHHHHHd...",
+        "..HHHHHHHHHlllHHHHHd..",
         ".HHHHHHHHHHHHHHHHHHHH.",
         ".HHHHHHHHHHHHHHHHHHHH.",
         ".HHHHHH........HHHHHH.",
@@ -528,7 +546,7 @@ private func drawRanee(_ c: PixelCanvas, _ p: Pose) {
         ".HHH..............HHH.",
         ".HH................HH.",
         ".H..................H.",
-    ], ["H": hair, "l": hairLight])
+    ], ["H": hair, "l": hairLight, "d": C(0x4A100C)])
     // The diadem.
     c.rect(19, 25, 18, 1, gold); c.rect(26, 24, 4, 1, gold); c.px(27, 23, gold); c.px(28, 23, gold)
     c.rect(27, 24, 2, 2, C(0x3AE87A)); c.px(27, 24, C(0xC8FFD8))
@@ -536,7 +554,7 @@ private func drawRanee(_ c: PixelCanvas, _ p: Pose) {
     c.rect(31, 32, 3, 1, C(0x6A0E1A))   // a thin cold smile
     // The right arm and the gold pistol.
     c.oy += p.gunY
-    c.rect(37, 32, 4, 1, gold); c.rect(38, 33, 3, 3, crimson)
+    c.rect(37, 32, 4, 1, gold); c.rect(38, 33, 3, 3, crimson); c.rect(38, 35, 3, 1, gold)
     c.pattern(40, 32, ["..GGGGg", "GGGGGGg", "GGd....", ".Gd...."], ["G": gold, "g": goldDark, "d": goldDark])
     c.px(46, 33, firing(p) ? C(0xE0FFF8) : C(0x2AC8B0))
 }

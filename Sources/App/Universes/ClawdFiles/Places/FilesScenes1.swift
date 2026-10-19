@@ -25,7 +25,9 @@ extension Scenes {
     /// The X-Files office in the basement of FBI headquarters: dingy green-grey walls over brown panelling, a ceiling of
     /// stained tiles with pencils stuck in them, a strip light, filing cabinets stuffed full, the I WANT TO BELIEVE
     /// poster (a saucer over the pines), a pull-down screen and a cluttered desk with the slide projector on it. On the
-    /// screen saver, pipes run up the wall into the dark.
+    /// screen saver, pipes run up the wall into the dark, with conduit across between them, a barred window high up at
+    /// pavement level, a pinned map, a second corkboard, clippings and a clock, boxes of old cases piled on the cabinets and archive shelving full of
+    /// them at the side.
     static func xFilesOffice(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c), f = officeFrame(c, g)
         c.gradient(0, g, C(0x1C1F18), C(0x3A3D30), bands: 7)
@@ -35,6 +37,7 @@ extension Scenes {
                 c.rect(x, 0, 3 * s, g - 14 * s, C(0x4A4E44)); c.rect(x, 0, s, g - 14 * s, C(0x6A6E62))
                 for y in stride(from: g / 5 + i * 9 * s, to: g - 16 * s, by: g / 4) { c.rect(x - s, y, 5 * s, 2 * s, C(0x3A3D34)) }
             }
+            s1UpperWall(c, g, s: s, ceiling: f.ceiling)
         }
         // The ceiling tiles, and the pencils thrown up into them.
         if f.ceiling > 0 {
@@ -62,6 +65,7 @@ extension Scenes {
                 c.rect(x + 2 * s, y - s, 12 * s, s, C(0xE8DCB8))   // paper sticking out
             }
         }
+        if tall { s1Archive(c, g, s: s, cabinets: c.w * 6 / 100) }
         // The pull-down screen (the slides come with the moving layer).
         let sc = f.screen
         c.rect(sc.x - 2 * s, sc.y - 2 * s, sc.w + 4 * s, 2 * s, C(0x2A2A26))
@@ -95,6 +99,86 @@ extension Scenes {
         c.rect(f.lens.x - 11 * s, f.lens.y, 3 * s, 2 * s, C(0x2A2A2E))
         // The floor: old lino.
         c.ground(g, C(0x3A3A32), edge: C(0x5E5E52), speck: C(0x2C2C26), seed: 41)
+    }
+
+    /// The office's upper wall on the screen saver: conduit running between the pipes with its junction boxes, a barred
+    /// window high up at pavement level with the street's light through it, a map of the country stuck with red pins,
+    /// a second corkboard, clippings taped up near the poster, and a clock. Everything at a fixed size, well above the crew.
+    private static func s1UpperWall(_ c: PixelCanvas, _ g: Int, s: Int, ceiling: Int) {
+        // Damp: dark stains spreading down from the ceiling, and patches where the paint has flaked off.
+        for i in 0..<10 {
+            let x = Int(noise(i + 260) * Double(c.w)), w = (10 + Int(noise(i + 270) * 24)) * s, h = (16 + Int(noise(i + 280) * 50)) * s
+            c.ellipse(x, ceiling + h / 3, w / 2, h / 2, C(0x10120C, 0.12)); c.rect(x - s, ceiling, 2 * s, h * 3 / 4, C(0x10120C, 0.1))
+        }
+        for i in 0..<8 {
+            let x = Int(noise(i + 290) * Double(c.w)), y = ceiling + 40 * s + Int(noise(i + 300) * Double(max(1, g - 150 * s - ceiling)))
+            c.rect(x, y, (4 + i % 4) * s, (2 + i % 3) * s, C(0x5A5E4E, 0.5)); c.rect(x + s, y + s, 2 * s, s, C(0x6A6E5C, 0.5))
+        }
+        let cy = ceiling + 26 * s
+        c.rect(c.w / 12, cy, c.w * 9 / 10 - c.w / 12, 2 * s, C(0x4A4E44)); c.rect(c.w / 12, cy, c.w * 9 / 10 - c.w / 12, max(1, s / 2), C(0x6A6E62))
+        for x in stride(from: c.w / 12 + c.w / 7, to: c.w * 9 / 10 - 6 * s, by: c.w / 5) {
+            c.rect(x, cy - 2 * s, 6 * s, 6 * s, C(0x3E4238)); c.rect(x, cy - 2 * s, 6 * s, s, C(0x5A5E52))
+            c.rect(x + 2 * s, cy + 4 * s, 2 * s, 8 * s, C(0x4A4E44))   // a drop down to a switch
+            c.rect(x + s, cy + 12 * s, 4 * s, 5 * s, C(0xB8B4A0)); c.rect(x + 2 * s, cy + 13 * s, 2 * s, 2 * s, C(0x6A6858))
+        }
+        // The window at pavement level: a deep sill, wire glass, bars, and the grey of a streetlamp outside.
+        let wx = c.w * 36 / 100, wy = ceiling + 8 * s, ww = 44 * s, wh = 14 * s
+        c.rect(wx - 2 * s, wy - 2 * s, ww + 4 * s, wh + 5 * s, C(0x2A2C24))
+        c.rect(wx, wy, ww, wh, C(0x2E3A3A)); c.rect(wx, wy, ww, wh / 2, C(0x3E4C4A))
+        c.rect(wx, wy + wh - 3 * s, ww, 3 * s, C(0x1E2A1C))   // the grass outside, at eye level
+        for x in stride(from: wx + s, to: wx + ww, by: 3 * s) { c.rect(x, wy + wh - 4 * s - Int(noise(x / s + 30) * 2) * s, s, 2 * s, C(0x2A3A26)) }
+        for x in stride(from: wx + 4 * s, to: wx + ww, by: 5 * s) { c.rect(x, wy, s, wh, C(0x1A1C18)) }
+        c.rect(wx, wy + wh, ww, 3 * s, C(0x6A6A5E)); c.rect(wx, wy + wh, ww, s, C(0x8A8A7A))
+        c.ellipse(wx + ww / 2, wy + wh + 10 * s, ww / 2 + 6 * s, 8 * s, C(0xDDE6D0, 0.04))
+        // The map: the country in pale green on cream, red pins where the cases were, a frame round it.
+        let mx = c.w * 46 / 100, my = g - 118 * s, mw = 44 * s, mh = 26 * s
+        c.rect(mx - s, my - s, mw + 2 * s, mh + 2 * s, C(0x2A2418)); c.rect(mx, my, mw, mh, C(0xE0D8B8))
+        for (u, v, rx, ry) in [(12, 10, 10, 6), (24, 12, 12, 7), (34, 11, 8, 6), (22, 18, 9, 4), (38, 18, 3, 4)] {
+            c.ellipse(mx + u * s, my + v * s, rx * s, ry * s, C(0x9AB88A))
+        }
+        for i in 0..<11 {
+            let px = mx + 4 * s + Int(noise(i + 150) * Double(mw - 8 * s)), py = my + 5 * s + Int(noise(i + 170) * Double(mh - 10 * s))
+            c.rect(px, py, s, s, C(0xC8202A))
+        }
+        // A second corkboard, higher up on the left, and newspaper clippings taped up round the poster's corner.
+        drawCorkboard(c, x: c.w * 16 / 100, bottom: g - 100 * s, s: s, room: 20 * s)
+        for i in 0..<7 {
+            let px = c.w * 56 / 100 + Int(noise(i + 190) * Double(28 * s)) + (i % 2) * 22 * s
+            let py = g - 132 * s + Int(noise(i + 200) * Double(40 * s)), cw = (6 + i % 3 * 2) * s, ch = (8 + i % 2 * 3) * s
+            c.rect(px, py, cw, ch, C(0xE0DAC0)); c.rect(px, py, cw, s, C(0x3A3A32))
+            for ly in stride(from: py + 3 * s, to: py + ch - s, by: 2 * s) { c.rect(px + s, ly, cw - 2 * s, max(1, s / 2), C(0x8A8676)) }
+            c.rect(px + cw / 2 - s, py - s, 2 * s, 2 * s, C(0xD8D4B8, 0.7))   // the tape
+        }
+        // The clock.
+        let kx = c.w * 72 / 100, ky = g - 96 * s
+        c.circle(kx, ky, 7 * s, C(0x2A2A24)); c.circle(kx, ky, 6 * s, C(0xE8E6DA))
+        c.rect(kx, ky - 4 * s, s, 4 * s, C(0x1A1A16)); c.rect(kx, ky, 3 * s, s, C(0x1A1A16))   // the hands, at three o'clock
+    }
+
+    /// The screen saver's boxes of old cases: piled on top of the filing cabinets, and on archive shelving that stands
+    /// on the floor at the right-hand side, shelf over shelf of them, labelled, one or two leaning or pulled out.
+    private static func s1Archive(_ c: PixelCanvas, _ g: Int, s: Int, cabinets: Int) {
+        func box(_ x: Int, _ y: Int, _ w: Int, _ h: Int, _ k: Int) {
+            let col = [C(0xA8885A), C(0x98784C), C(0xB89868), C(0x8A6E46)][k % 4]
+            c.rect(x, y, w, h, col); c.rect(x, y, w, max(1, s / 2), C(0xC8A878))
+            c.rect(x + w / 2 - 2 * s, y + h / 2 - s, 4 * s, 2 * s, C(0xE8E2CC))
+        }
+        // On the cabinets.
+        let top = g - 32 * s
+        for k in 0..<5 { box(cabinets + (k % 3) * 11 * s + (k / 3) * 5 * s, top - (k / 3 + 1) * 8 * s, 10 * s, 8 * s, k) }
+        // The shelving.
+        let x = c.w * 9 / 10 + 6 * s, w = 28 * s, h = 96 * s
+        guard x + w < c.w - s else { return }
+        c.rect(x, g - h, 2 * s, h, C(0x4A564A)); c.rect(x + w - 2 * s, g - h, 2 * s, h, C(0x3A463A))
+        for (row, y) in stride(from: g - h + 14 * s, through: g - 2 * s, by: 16 * s).enumerated() {
+            c.rect(x, y, w, 2 * s, C(0x5A665A)); c.rect(x, y, w, max(1, s / 2), C(0x7A8A7A))
+            var bx = x + 2 * s, k = row * 7
+            while bx + 8 * s < x + w - s {
+                let bw = (8 + Int(noise(k + 820) * 3)) * s
+                if noise(k + 830) > 0.18 { box(bx, y - 10 * s + (noise(k + 840) > 0.85 ? 2 * s : 0), min(bw - s, x + w - 2 * s - bx), 10 * s, k) }
+                bx += bw; k += 1
+            }
+        }
     }
 
     /// I WANT TO BELIEVE: a saucer under a night sky over a line of pines, the slogan along the bottom.

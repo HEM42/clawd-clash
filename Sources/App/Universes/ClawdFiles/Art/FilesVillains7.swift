@@ -194,7 +194,7 @@ private func drawBigBlue(_ c: PixelCanvas, _ p: Pose) {
 /// Signature: he raises the camera, the bulb pops, and a fresh print slides out and develops in his other hand.
 private func drawTithonus(_ c: PixelCanvas, _ p: Pose) {
     let cardigan = C(0x6A5038), cardiganD = C(0x4E3A28), shirt = C(0xE6E2D6), tie = C(0x3A3A44)
-    let hair = C(0xA8AAB0), hairD = C(0x7E8088), trousers = C(0x4A4A50)
+    let hair = C(0xA8AAB0), hairD = C(0x7E8088), trousers = C(0x4A4A50), hairL = C(0xCED0D4), cardiganL = C(0x86684A)
     let sig = p.signature
     let shooting = (sig.map { $0 > 0.08 && $0 < 0.5 } ?? false) || p.fire != nil || p.ready || (!p.resting && !p.walking)
     let fired: Bool = p.fire.map { frac($0.t / p.firePeriod) < 0.15 } ?? false
@@ -207,17 +207,21 @@ private func drawTithonus(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 34, 20, 4, cardigan); c.rect(37, 34, 1, 4, cardiganD); c.rect(18, 37, 20, 1, cardiganD)
     c.pattern(25, 34, ["SSTTSS", ".STTS.", "..TT.."], ["S": shirt, "T": tie])
     for y in [35, 37] { c.px(23, y, C(0xC8B48A)) }   // the cardigan's buttons
-    // Thin grey hair, combed flat over the top.
+    c.rect(18, 34, 3, 1, cardiganL); c.rect(33, 34, 3, 1, cardiganL)   // lit shoulders
+    c.rect(20, 35, 1, 2, cardiganD); c.rect(34, 35, 1, 2, cardiganD)   // the knit's sag
+    c.rect(18, 37, 19, 1, C(0x5A4430))                                 // the ribbed hem
+    for x in stride(from: 19, to: 37, by: 2) { c.px(x, 37, cardiganD) }
+    // Thin grey hair, combed flat over the top: the comb lines in short runs, lit and shaded.
     c.pattern(17, 22, [
-        ".....HHHHHHHHHHHH.....",
-        "...HHhHHHHHhHHHHHHH...",
-        "..HHHHHHHHHHHHHhHHHH..",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HH................HH.",
-    ], ["H": hair, "h": hairD])
+        ".....HHHHllllHHHH.....",
+        "...HHhhHHHHHHHhhHHH...",
+        "..HHHHHllllHHHHHHHdH..",
+        ".HHHHHHHHHHHHHHHHHHdH.",
+        ".HH................dH.",
+    ], ["H": hair, "h": hairD, "l": hairL, "d": hairD])
     // Sunken eyes: a shadow under each.
     c.rect(22, 32, 2, 1, C(0xB85F40)); c.rect(32, 32, 2, 1, C(0xB85F40))
-    c.rect(15, 33, 3, 3, cardigan)
+    c.rect(15, 33, 3, 3, cardigan); c.rect(15, 35, 3, 1, cardiganD)   // the sleeve's ribbed cuff
     if print {
         // The print in his left hand, its picture coming up out of the white.
         let k = min(1, ((sig ?? 0) - 0.45) / 0.3)
@@ -259,6 +263,8 @@ private func drawCecilLively(_ c: PixelCanvas, _ p: Pose) {
     c.rect(25, 33, 6, 1, clawdOrange)                             // the open neck
     c.rect(21, 33, 2, 5, braces); c.rect(33, 33, 2, 5, braces)
     c.rect(18, 37, 20, 1, trousers)                               // the waistband
+    c.rect(24, 35, 1, 2, vestD); c.rect(31, 35, 1, 2, vestD); c.rect(36, 34, 1, 3, vestD)   // folds in the cotton
+    c.px(21, 37, C(0xD8C8A0)); c.px(33, 37, C(0xD8C8A0))         // the braces' clips
     // Soot on his cheek, from the last time.
     c.px(34, 31, soot); c.px(35, 32, soot.alpha(0.6))
     // Slicked-back black hair with a shine.
@@ -272,7 +278,7 @@ private func drawCecilLively(_ c: PixelCanvas, _ p: Pose) {
     // A calm, heavy-lidded look.
     c.rect(22, 29, 2, 1, C(0xB85F40)); c.rect(32, 29, 2, 1, C(0xB85F40))
     let casting = p.fire != nil || p.ready || (!p.resting && !p.walking)
-    c.rect(15, 33, 3, 3, vest); c.rect(15, 35, 3, 1, clawdOrange)
+    c.rect(15, 33, 3, 3, vest); c.rect(15, 34, 3, 1, vestD); c.rect(15, 35, 3, 1, clawdOrange)   // a rolled cuff
     if casting {
         // The hand up and open, the fire it throws leaving from just over it.
         c.rect(38, 31, 3, 3, vest); c.rect(41, 31, 2, 2, clawdOrange)

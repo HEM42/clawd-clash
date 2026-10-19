@@ -226,9 +226,15 @@ extension Scenes {
                 wisp(c, Int(noise(i + 340) * Double(c.w)), Int(noise(i + 350) * Double(f.horizon / 2)) + 20 * s,
                      (50 + Int(noise(i + 360) * 60)) * s, C(0xF6E6C8, 0.5), s: s)
             }
+            // Fair-weather clouds building over the sea on the right, and a few high ones over the middle.
+            for (i, cl) in [(x: 62, up: 0, w: 110), (x: 84, up: 0, w: 80), (x: 96, up: 6, w: 60), (x: 48, up: 0, w: 60),
+                            (x: 70, up: 150, w: 70), (x: 44, up: 200, w: 50), (x: 88, up: 230, w: 56)].enumerated() {
+                orcaCloud(c, c.w * cl.x / 100, f.horizon - 4 * s - cl.up * f.horizon / 300 / s * s, cl.w * s, s, seed: 380 + i * 7)
+            }
         }
         c.gradient(f.horizon, f.rail, C(0x3E6A74), C(0x1E3E4A), bands: 4)
         c.rect(0, f.horizon, c.w, s, C(0x8AA8A8))
+        orcaAmity(c, g)
         for i in 0..<(c.w * (f.rail - f.horizon) / 160) {
             let x = Int(noise(i * 3 + 800) * Double(c.w)), y = f.horizon + 2 * s + Int(noise(i * 3 + 801) * Double(max(1, f.rail - f.horizon - 2 * s)))
             c.rect(x, y, (3 + Int(noise(i * 3 + 802) * 6)) * s, s, C(0x6A9AA0, 0.5))
@@ -247,6 +253,7 @@ extension Scenes {
             c.rect(wx, f.cabin.top + 5 * s, 9 * s, 7 * s, C(0x3A4A52)); c.rect(wx + s, f.cabin.top + 6 * s, 3 * s, 2 * s, C(0xC8DCE0, 0.6))
         }
         c.rect(f.cabin.r - 12 * s, f.cabin.top + 14 * s, 8 * s, f.rail - f.cabin.top - 14 * s, C(0x6A5A44))
+        orcaWheelhouseGear(c, g)
         // The bulwark and its rail, the full width of the deck.
         c.rect(0, f.rail, c.w, g - f.rail, C(0xE4DED0))
         c.rect(0, f.rail, c.w, 2 * s, C(0x6A4E34)); c.rect(0, g - 2 * s, c.w, 2 * s, C(0xB8B0A0))
@@ -261,10 +268,95 @@ extension Scenes {
         }
         let coil = c.w * 58 / 100
         c.ellipse(coil, g - 2 * s, 7 * s, 2 * s, C(0xD8C49A)); c.ellipse(coil, g - 2 * s, 4 * s, s, C(0xA89068))
+        orcaStern(c, g)
         // The deck: worn planks.
         c.ground(g, C(0x9A7A54), edge: C(0xB89A6A), speck: C(0x7A5E3E), seed: 41)
         for y in stride(from: g + 3, to: c.h, by: 3) { c.rect(0, y, c.w, 1, C(0x7A5E3E, 0.6)) }
         if tall { orcaDeckGear(c, g) }
+    }
+
+    /// A heaped fair-weather cloud on a flat base at (`x`, `base`), `w` wide: puffs lit warm from the sun on the
+    /// right, a cooler shade under them.
+    private static func orcaCloud(_ c: PixelCanvas, _ x: Int, _ base: Int, _ w: Int, _ s: Int, seed: Int) {
+        let n = max(3, w / (10 * s))
+        var puffs: [(x: Int, r: Int)] = []
+        for k in 0..<n {
+            let mid = 1 - abs(Double(k) / Double(n - 1) - 0.5) * 2
+            let r = Int((0.35 + 0.65 * mid) * Double(w) / 5 * (0.7 + 0.5 * noise(seed + k))) / s * s + 2 * s
+            puffs.append((x - w / 2 + w * k / (n - 1), r))
+        }
+        for p in puffs { c.circle(p.x, base - p.r, p.r, C(0xC8BCB0, 0.9)) }
+        for p in puffs { c.circle(p.x + s, base - p.r - s, p.r - s, C(0xFAF0DC, 0.9)) }
+        c.rect(x - w / 2 - 2 * s, base - 2 * s, w + 4 * s, 2 * s, C(0xC8BCB0, 0.9))
+    }
+
+    /// Amity, far off on the horizon: a low grey-green island with the lighthouse's white stick on its point.
+    private static func orcaAmity(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), tall = isTall(c), f = orcaFrame(c, g)
+        let x0 = c.w * 50 / 100, w = (tall ? 96 : 60) * s, h = Double((tall ? 12 : 8) * s)
+        for x in stride(from: 0, to: w, by: s) {
+            let k = Double(x) / Double(w)
+            let hh = Int((sin(k * .pi) * 0.75 + sin(k * 9) * 0.1 + 0.15) * h) / s * s
+            if hh > 0 { c.rect(x0 + x, f.horizon - hh, s, hh, C(0x5E7670)) }
+        }
+        let lx = x0 + w * 85 / 100
+        c.rect(lx, f.horizon - (tall ? 18 : 12) * s, s, (tall ? 10 : 7) * s, C(0xF4F0E4))
+        c.rect(lx, f.horizon - (tall ? 19 : 13) * s, s, s, C(0x3A3A36))
+    }
+
+    /// The wheelhouse's gear: a rail round the flying bridge on its roof with the searchlight, the exhaust stack and
+    /// two whip aerials, and a life ring hung on its side.
+    private static func orcaWheelhouseGear(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), tall = isTall(c), f = orcaFrame(c, g)
+        let top = f.cabin.top - 2 * s, l = f.cabin.l, r = f.cabin.r
+        // The flying bridge's rail, on posts, and its little windscreen.
+        c.rect(l, top - 6 * s, (r - l) * 55 / 100, s, C(0xEAE6DA))
+        for px in stride(from: l, through: l + (r - l) * 55 / 100, by: 8 * s) { c.rect(px, top - 6 * s, s, 6 * s, C(0xD4CFC0)) }
+        c.rect(l + 4 * s, top - 5 * s, 10 * s, 3 * s, C(0x8AA4AC, 0.7))
+        // The stack, sooty at the top.
+        let sx = r - 20 * s
+        c.rect(sx, top - 9 * s, 4 * s, 9 * s, C(0x2A2A2A)); c.rect(sx, top - 9 * s, 4 * s, s, C(0x141414))
+        c.rect(sx + 3 * s, top - 8 * s, s, 8 * s, C(0x1A1A1A))
+        // The searchlight on its post.
+        c.rect(r - 10 * s, top - 4 * s, s, 4 * s, C(0x3A3A36))
+        c.rect(r - 12 * s, top - 7 * s, 5 * s, 4 * s, C(0x5A5A54)); c.rect(r - 8 * s, top - 6 * s, s, 2 * s, C(0xF4F0D0))
+        // Two whip aerials.
+        for (ax, h) in [(r - 4 * s, tall ? 40 : 18), (r - 6 * s, tall ? 28 : 13)] {
+            c.rect(ax, top - h * s, s, h * s, C(0x5A5A54))
+        }
+        // The life ring on the wheelhouse's side, under the windows.
+        let rx = l + 10 * s, ry = f.cabin.top + (tall ? 22 : 17) * s
+        c.circle(rx, ry, 4 * s, C(0xE8642A))
+        c.rect(rx - 4 * s, ry, 2 * s, s, C(0xF4F0E8)); c.rect(rx + 3 * s, ry, 2 * s, s, C(0xF4F0E8))
+        c.rect(rx, ry - 4 * s, s, 2 * s, C(0xF4F0E8)); c.rect(rx, ry + 3 * s, s, 2 * s, C(0xF4F0E8))
+        c.circle(rx, ry, 2 * s, C(0xEAE6DA)); c.rect(rx - s, ry - s, 2 * s, s, C(0xD4CFC0))
+    }
+
+    /// The working end of the deck: Quint's fighting chair on its post, cleats and scuppers along the bulwark, and
+    /// the stern davit over the barrels with its block and a line hanging down.
+    private static func orcaStern(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), tall = isTall(c), f = orcaFrame(c, g)
+        // Cleats on the rail and scuppers at the foot of the bulwark.
+        for x in stride(from: c.w * 30 / 100, to: c.w, by: 64 * s) {
+            c.rect(x, f.rail - s, 5 * s, s, C(0x5A5A54)); c.rect(x + 2 * s, f.rail, s, s, C(0x5A5A54))
+        }
+        for x in stride(from: f.cabin.r + 10 * s, to: c.w, by: 24 * s) { c.rect(x + 10 * s, g - 3 * s, 4 * s, s, C(0x6A6458)) }
+        // The fighting chair: a pedestal, the seat with its back and arms, the footrest, the rod holder.
+        let cx = c.w * 50 / 100, seat = g - 9 * s
+        c.rect(cx - s, seat, 3 * s, 9 * s, C(0xB8B4A8)); c.rect(cx - 3 * s, g - s, 7 * s, s, C(0x8A867C))
+        c.rect(cx - 5 * s, seat - s, 11 * s, 2 * s, C(0x2E5A6A)); c.rect(cx - 5 * s, seat - s, 11 * s, s, C(0x4A7A8A))
+        c.rect(cx - 5 * s, seat - 9 * s, 2 * s, 9 * s, C(0x2E5A6A)); c.rect(cx - 5 * s, seat - 9 * s, s, 9 * s, C(0x4A7A8A))
+        c.rect(cx - 5 * s, seat - 4 * s, 9 * s, s, C(0xB8B4A8)); c.rect(cx + 4 * s, seat - 4 * s, s, 3 * s, C(0xB8B4A8))
+        c.rect(cx + 6 * s, seat + 4 * s, 6 * s, s, C(0xB8B4A8)); c.rect(cx + 2 * s, seat + 2 * s, 5 * s, s, C(0x8A867C))
+        c.rect(cx + s, seat - 3 * s, s, 3 * s, C(0x8A867C))
+        // The stern davit: a post up from the deck, its arm reaching out aft, a block and the line hanging.
+        let dx = c.w * 96 / 100, dTop = g - (tall ? 46 : 30) * s
+        c.rect(dx, dTop, 3 * s, g - dTop, C(0x8A8270)); c.rect(dx, dTop, s, g - dTop, C(0xB8AE9A))
+        c.rect(dx - 14 * s, dTop, 17 * s, 2 * s, C(0x8A8270)); c.rect(dx - 14 * s, dTop, 17 * s, s, C(0xB8AE9A))
+        for k in 0..<6 { c.rect(dx - k * 2 * s, dTop + 2 * s + k * s, s, s, C(0x6A6458)) }   // its brace
+        c.rect(dx - 14 * s, dTop + 2 * s, 3 * s, 3 * s, C(0x3A3A36))
+        c.rect(dx - 13 * s, dTop + 5 * s, s, (tall ? 22 : 10) * s, C(0xD8C49A))
+        c.rect(dx - 14 * s, dTop + (tall ? 27 : 15) * s, 3 * s, 2 * s, C(0x5A5A54))
     }
 
     /// The screen saver's sky gear on the Orca: rigging from the mast and the crow's nest.

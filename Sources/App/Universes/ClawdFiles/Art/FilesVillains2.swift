@@ -58,7 +58,7 @@ private func drawEyes(_ c: PixelCanvas, _ col: Px = ink) {
 /// his eyes and down his cheeks, then sinks back.
 private func drawClawcek(_ c: PixelCanvas, _ p: Pose) {
     let leather = C(0x1C1C20), leatherL = C(0x3C3C44), leatherD = C(0x101014), tee = C(0x5A5E66)
-    let jeans = C(0x2A3A56), hair = C(0x1E1814)
+    let jeans = C(0x2A3A56), hair = C(0x1E1814), hairL = C(0x3E342C), hairD = C(0x120E0B)
     let sig = p.signature
     // The oil: a second now and then on its own, the whole of the signature.
     let habit = frac(p.lt / 11) < 0.09
@@ -74,14 +74,17 @@ private func drawClawcek(_ c: PixelCanvas, _ p: Pose) {
     c.rect(20, 34, 1, 3, leatherL); c.rect(34, 34, 1, 2, leatherL)
     c.pattern(23, 32, ["L..........L"], ["L": leather])           // the collar, turned up
     c.rect(18, 37, 20, 1, leatherD)
-    // Short dark hair.
+    c.rect(18, 33, 2, 1, leatherL); c.rect(35, 33, 2, 1, leatherL)   // lit shoulders
+    c.rect(22, 35, 1, 2, leatherD); c.rect(33, 35, 1, 2, leatherD)   // the creases where it falls open
+    c.rect(19, 36, 3, 1, leatherL)                                   // a zipped pocket
+    // Short dark hair, cropped close: lit in short runs on top, the far side in shadow.
     c.pattern(17, 21, [
-        "......HHHHHHHHHH......",
-        "....HHHHHHHHHHHHHH....",
-        "...HHHHHHHHHHHHHHHH...",
-        "..HHHHHHHHHHHHHHHHHH..",
-        ".HHH..............HHH.",
-    ], ["H": hair])
+        "......HHHLLLHHHH......",
+        "....HHLLHHHHLLHHHH....",
+        "...HHHHHHHHHHHHHHdH...",
+        "..HHHHHHHHHHHHHHHHdH..",
+        ".HHH..............dHH.",
+    ], ["H": hair, "L": hairL, "d": hairD])
 
     if oil {
         let k = sig.map { min(1, ($0 - 0.08) / 0.15, (0.92 - $0) / 0.15) } ?? 1
@@ -99,7 +102,7 @@ private func drawClawcek(_ c: PixelCanvas, _ p: Pose) {
         drawEyes(c)
     }
 
-    c.rect(15, 33, 3, 3, leather)
+    c.rect(15, 33, 3, 3, leather); c.rect(15, 33, 3, 1, leatherL); c.rect(15, 35, 3, 1, leatherD)   // the cuff
     if let a = p.melee {
         drawPunch(c, angle: a, trail: p.trail, sleeve: leather)
     } else {
@@ -118,6 +121,7 @@ private func drawClawcek(_ c: PixelCanvas, _ p: Pose) {
 private func drawWellManicured(_ c: PixelCanvas, _ p: Pose) {
     let navy = C(0x22304E), navyD = C(0x161F36), stripe = C(0x3A4C70), waistcoat = C(0x2E3A5A)
     let shirt = C(0xF0EEE6), tie = C(0x6A1E3A), hair = C(0xD8DAE0), hairD = C(0xA8AAB4), wire = C(0xC4CAD2)
+    let hairL = C(0xF4F4F8), navyL = C(0x34466E)
     let brandy = C(0xB8641E), glass = C(0xE8F0F4, 0.55)
     let sig = p.signature
     let raised = sig.map { $0 > 0.1 && $0 < 0.9 } ?? false
@@ -135,22 +139,24 @@ private func drawWellManicured(_ c: PixelCanvas, _ p: Pose) {
     c.px(27, 36, C(0xC8B060)); c.px(28, 37, C(0xC8B060))
     c.pattern(19, 33, ["WW", "W."], ["W": shirt])
     c.rect(18, 37, 20, 1, navyD)
-    // Silver hair, a neat side parting.
+    c.rect(21, 33, 2, 1, navyL); c.rect(33, 33, 3, 1, navyL)        // lit shoulders
+    c.rect(33, 35, 2, 1, navyD)                                      // a pocket flap
+    // Silver hair, a neat side parting, combed in lit runs, the far side shaded.
     c.pattern(17, 21, [
-        ".......HHHHHHHHH......",
-        ".....HHHHHHHHHHHHH....",
-        "...HHHHhHHHHHHHHHHH...",
-        "..HHHHHHhHHHHHHHHHHH..",
-        ".HHH...........HHHHH..",
-        ".HH...............HH..",
-    ], ["H": hair, "h": hairD])
+        ".......HHHHLLLHH......",
+        ".....HHHHHhLLLHHHH....",
+        "...HHLLHhHHHHHLLHHd...",
+        "..HHHHHHhHHHHHHHHHdH..",
+        ".HHH...........HHHdH..",
+        ".HH...............dH..",
+    ], ["H": hair, "h": hairD, "L": hairL, "d": hairD])
     // Little round wire spectacles, the eyes behind them.
     for x0 in [21, 31] { c.pattern(x0, 28, [".WW.", "W..W", "W..W", ".WW."], ["W": wire]) }
     c.rect(25, 29, 6, 1, wire.alpha(0.8))
 
     if p.fire != nil || p.hit {
         // The glass in his other hand, kept level; the pistol out in this one.
-        c.rect(15, 33, 3, 3, navy)
+        c.rect(15, 33, 3, 3, navy); c.rect(15, 35, 3, 1, shirt)
         c.pattern(12, 30, ["GGG", "GbG", ".G.", "GGG"], ["G": glass, "b": brandy])
         c.oy += p.gunY
         c.rect(38, 33, 3, 3, navy)
@@ -158,7 +164,7 @@ private func drawWellManicured(_ c: PixelCanvas, _ p: Pose) {
         c.px(41, 31, C(0xEEF2F6))
         return
     }
-    c.rect(15, 33, 3, 3, navy)
+    c.rect(15, 33, 3, 3, navy); c.rect(15, 35, 3, 1, shirt)   // the sleeve and its shirt cuff
     // The brandy glass: at his chest, or raised to his mouth, swirling.
     let gx = raised ? (sipping ? 33 : 39) : 39, gy = raised ? (sipping ? 30 : 27) : 31
     c.rect(38, raised ? gy + 2 : 33, 3, 3, navy)
@@ -175,7 +181,7 @@ private func drawWellManicured(_ c: PixelCanvas, _ p: Pose) {
 /// to it. Signature: he taps the cane twice on the floor and leans on it with both hands.
 private func drawFirstElder(_ c: PixelCanvas, _ p: Pose) {
     let suit = C(0x5A3E2A), suitD = C(0x3E2A1C), button = C(0xC8A860), tie = C(0x6E1E26), shirt = C(0xEDE8DC)
-    let white = C(0xEEEEEA), cane = C(0x1A1A1E), knob = C(0xC8CCD4)
+    let white = C(0xEEEEEA), whiteD = C(0xC4C4C8), cane = C(0x1A1A1E), knob = C(0xC8CCD4), suitL = C(0x765440)
     let sig = p.signature
     let leaning = sig.map { $0 > 0.45 && $0 < 0.95 } ?? false
     let tap = sig.map { s -> Int in (s > 0.08 && s < 0.18) || (s > 0.25 && s < 0.35) ? 1 : 0 } ?? 0
@@ -188,16 +194,19 @@ private func drawFirstElder(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, suitD); c.rect(18, 37, 20, 1, suitD)
     c.pattern(25, 33, ["SSTTSS", ".STTS.", "..TT.."], ["S": shirt, "T": tie])
     for y in [35, 37] { c.px(23, y, button); c.px(33, y, button) }
-    // Bald on top (a few lines on the dome), the white fringe round the sides, bushy brows.
+    c.rect(18, 33, 3, 1, suitL); c.rect(34, 33, 3, 1, suitL)         // lit shoulders
+    c.rect(21, 33, 1, 3, suitD); c.rect(34, 34, 1, 3, suitD)         // the lapels' edges
+    c.rect(19, 35, 1, 2, suitD)                                      // a fold
+    // Bald on top (a few lines on the dome), the white fringe round the sides, combed in strands, bushy brows.
     c.rect(24, 26, 3, 1, clawdShade); c.rect(29, 26, 3, 1, clawdShade)
     c.pattern(17, 26, [
-        "HHH................HHH",
-        "HHH................HHH",
-        "HH..................HH",
-    ], ["H": white])
+        "HHH................HHd",
+        "HwH................HwH",
+        "Hw..................wH",
+    ], ["H": white, "w": whiteD, "d": whiteD])
     c.rect(21, 27, 4, 1, white); c.rect(31, 27, 4, 1, white)
 
-    c.rect(15, 33, 3, 3, suit)
+    c.rect(15, 33, 3, 3, suit); c.rect(15, 35, 3, 1, shirt)   // the sleeve and its shirt cuff
     if let a = p.melee {
         // The cane swung like a club.
         let e = along(a, 13)
@@ -224,6 +233,7 @@ private func drawFirstElder(_ c: PixelCanvas, _ p: Pose) {
 /// her mobile phone.
 private func drawDianaFowlclaw(_ c: PixelCanvas, _ p: Pose) {
     let suit = C(0x3E4E46), suitD = C(0x2A3630), blouse = C(0xEEE4CC), hair = C(0x1E1410), hairL = C(0x3A2A20)
+    let suitL = C(0x56685E), hairD = C(0x120B08)
     let sig = p.signature
     let glance = sig.map { $0 > 0.06 && $0 < 0.4 } ?? false
     let phoning = sig.map { $0 >= 0.4 && $0 < 0.94 } ?? false
@@ -234,29 +244,31 @@ private func drawDianaFowlclaw(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: suit, eye: nil))
     c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, suitD); c.rect(18, 37, 20, 1, suitD)
     c.pattern(25, 33, ["BBBBBB", ".BBBB.", "..BB.."], ["B": blouse])
-    c.rect(22, 33, 1, 3, C(0x56685E)); c.rect(33, 33, 1, 3, C(0x56685E))
-    // Long dark hair, a centre parting, falling past her shoulders.
+    c.rect(22, 33, 1, 3, suitL); c.rect(33, 33, 1, 3, suitL)
+    c.rect(18, 33, 3, 1, suitL); c.rect(35, 33, 2, 1, suitL)         // lit shoulders
+    c.rect(20, 35, 1, 2, suitD); c.rect(35, 35, 1, 2, suitD)         // folds
+    // Long dark hair, a centre parting, falling past her shoulders: lit strands on the crown, the far side shaded.
     c.pattern(16, 20, [
         "........HHHHHHHH........",
-        "......HHHHHHlHHHHHH.....",
-        "....HHHHHHHHlHHHHHHHH...",
-        "...HHHHHHHHHlHHHHHHHHH..",
-        "..HHHHHHHH..l..HHHHHHHH.",
-        "..HHHHHH..........HHHHH.",
-        ".HHHH...............HHHH",
-        ".HHH.................HHH",
-        ".HHH.................HHH",
-        ".HHH.................HHH",
-        ".HHH.................HHH",
-        ".HHH.................HHH",
-        ".HHH.................HHH",
+        "......HHllHHlHHllHH.....",
+        "....HHllHHHHlHHHHllHH...",
+        "...HHHHHHHHHlHHHHHHdHH..",
+        "..HHlHHHHH..l..HHHHHdHH.",
+        "..HHlHHH..........HHdHH.",
+        ".HHlH...............HdHH",
+        ".HlH.................HdH",
+        ".HlH.................HdH",
+        ".HHH.................HdH",
+        ".HlH.................HdH",
+        ".HlH.................HHH",
+        ".HHH.................HdH",
         "..HH.................HH.",
-    ], ["H": hair, "l": hairL])
+    ], ["H": hair, "l": hairL, "d": hairD])
     // Her eyes: looking back over her shoulder in the glance.
     let ex = glance ? -1 : 0
     c.rect(22 + ex, 29, 2, 3, ink); c.rect(32 + ex, 29, 2, 3, ink)
 
-    c.rect(15, 33, 3, 3, suit)
+    c.rect(15, 33, 3, 3, suit); c.rect(15, 35, 3, 1, blouse)   // the sleeve and the blouse's cuff
     if phoning {
         // The phone at her ear, its little aerial up, her voice down.
         c.rect(38, 28, 3, 5, suit)
@@ -274,7 +286,7 @@ private func drawDianaFowlclaw(_ c: PixelCanvas, _ p: Pose) {
 /// Signature: he lifts the file and slams it down, papers jumping out of it.
 private func drawKersh(_ c: PixelCanvas, _ p: Pose) {
     let suit = C(0x5A5E68), suitD = C(0x42454E), shirt = C(0xF2F2EE), tie = C(0x6A1A22), hair = C(0x241A14)
-    let manila = C(0xD8B870), manilaD = C(0xA88A48)
+    let manila = C(0xD8B870), manilaD = C(0xA88A48), suitL = C(0x767A86), hairL = C(0x46362A)
     let sig = p.signature
     let lifting = sig.map { $0 > 0.1 && $0 < 0.45 } ?? false
     let slam = sig.map { $0 >= 0.45 && $0 < 0.8 } ?? false
@@ -286,17 +298,20 @@ private func drawKersh(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, suitD); c.rect(18, 37, 20, 1, suitD)
     c.pattern(25, 33, ["SSTTSS", ".STTS.", "..TT..", "..TT.."], ["S": shirt, "T": tie])
     c.px(22, 34, C(0xC8A84A))   // the FBI pin
-    // Close-cropped hair, receding at the temples.
+    c.rect(18, 33, 3, 1, suitL); c.rect(34, 33, 3, 1, suitL)         // lit shoulders
+    c.rect(24, 34, 1, 2, suitD); c.rect(31, 34, 1, 2, suitD)         // the lapels' edges
+    c.rect(19, 35, 1, 2, suitD); c.rect(32, 36, 3, 1, suitD)         // a fold, a pocket flap
+    // Close-cropped hair, receding at the temples, a lit run along the top.
     c.pattern(17, 22, [
-        "......HHHHHHHHHH......",
-        "...HHHHHHHHHHHHHHHH...",
-        "..HHH............HHH..",
-    ], ["H": hair])
+        "......HHLLLLHHHH......",
+        "...HHHHHHHHHHHHHHHd...",
+        "..HHH............HdH..",
+    ], ["H": hair, "L": hairL, "d": C(0x16100C)])
     // The frown: brows down to the middle, eyes narrowed.
     c.pattern(21, 27, ["KK.......", "..K......"], ["K": ink]); c.pattern(31, 27, [".......KK", "......K.."], ["K": ink])
     c.rect(22, 30, 2, 2, ink); c.rect(32, 30, 2, 2, ink)
 
-    c.rect(15, 33, 3, 3, suit)
+    c.rect(15, 33, 3, 3, suit); c.rect(15, 35, 3, 1, shirt)   // the sleeve and its shirt cuff
     if let a = p.melee {
         // The file rolled into a baton and swung, a loose page or two fluttering off the end.
         for (i, ta) in p.trail.enumerated() {
@@ -343,7 +358,8 @@ private func drawKersh(_ c: PixelCanvas, _ p: Pose) {
 /// his neck.
 private func drawToothpickMan(_ c: PixelCanvas, _ p: Pose) {
     let suit = C(0x16181E), suitL = C(0x2C3038), shirt = C(0xE8E8E4), tie = C(0x16181E), hair = C(0xD8C890)   // a pale blond crew cut
-    let pick = C(0xF4E4B4), pickD = C(0x8A6A3A), steel = C(0xB8C4D0)
+    let pick = C(0xF4E4B4), pickD = C(0x8A6A3A), steel = C(0xB8C4D0), hairL = C(0xF0E4B4), hairD = C(0xB0A070)
+    let suitD = C(0x0C0D10)
     let sig = p.signature
     let flick = sig.map { $0 > 0.08 && $0 < 0.4 } ?? false
     let roll = sig.map { $0 >= 0.5 && $0 < 0.9 } ?? false
@@ -355,8 +371,11 @@ private func drawToothpickMan(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: suit, eye: nil))
     c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, suitL); c.rect(18, 37, 20, 1, suitL)
     c.pattern(25, 33, ["SSTTSS", ".STTS.", "..TT.."], ["S": shirt, "T": tie])
-    // The crew cut: flat on top, the sides clipped close.
+    c.rect(18, 33, 3, 1, suitL); c.rect(33, 33, 3, 1, suitL)         // lit shoulders
+    c.rect(20, 35, 1, 2, suitD); c.rect(34, 35, 1, 2, suitD)         // folds
+    // The crew cut: flat on top, the sides clipped close; the bristles lit in short runs, the far side shaded.
     c.rect(19, 22, 18, 3, hair); c.rect(18, 25, 2, 3, hair); c.rect(36, 25, 2, 3, hair)
+    c.rect(21, 22, 4, 1, hairL); c.rect(28, 22, 5, 1, hairL); c.rect(35, 23, 2, 2, hairD); c.rect(37, 25, 1, 3, hairD)
     c.rect(20, 21, 16, 1, C(0x2A2A2A))
     // The flat stare.
     c.rect(22, 30, 2, 2, ink); c.rect(32, 30, 2, 2, ink)
@@ -380,7 +399,7 @@ private func drawToothpickMan(_ c: PixelCanvas, _ p: Pose) {
         for y in stride(from: 27, to: 38, by: 2) { c.rect(17, y, 2, 1, steel) }
     }
 
-    c.rect(15, 33, 3, 3, suit)
+    c.rect(15, 33, 3, 3, suit); c.rect(15, 35, 3, 1, shirt)   // the sleeve and its shirt cuff
     if let a = p.melee {
         drawPunch(c, angle: a, trail: p.trail, sleeve: suit)
     } else {

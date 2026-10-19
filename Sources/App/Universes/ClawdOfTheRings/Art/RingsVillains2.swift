@@ -669,6 +669,11 @@ private func drawLurtz(_ c: PixelCanvas, _ p: Pose) {
     c.rect(20, 34, 6, 1, skinDark); c.rect(29, 34, 6, 1, skinDark); c.px(27, 35, skinDark)
     for i in 0..<4 { c.rect(33 - i * 3, 32 + i, 3, 1, plate) }
     c.rect(17, 36, 22, 2, plate); c.rect(17, 36, 22, 1, plateMid); c.px(27, 36, plateLight)
+    // The bare skin shaded: lit down the near side and across the near pec, the far side falling into shadow; an
+    // iron buckle on the belt.
+    c.rect(17, 27, 1, 6, skinLight); c.rect(20, 33, 5, 1, skinLight)
+    c.rect(37, 28, 1, 6, skinDark)
+    c.rect(26, 36, 3, 2, plateLight); c.px(27, 37, plate)
     for y in 38...39 where y + c.oy <= 43 {
         for x in stride(from: 17, through: 36, by: 4) { c.rect(x, y, 3, 1, y == 38 ? plateMid : plate) }
     }
@@ -890,7 +895,7 @@ private let shelobFangs: (x: Double, y: Double) = (45.5, 38.5)
 /// herself down onto her feet again, reeling the thread in (`shelobClimb`).
 private func drawShelob(_ c: PixelCanvas, _ p: Pose) {
     let body = C(0x2A221E), dark = C(0x1A1412), light = C(0x40362F), far = C(0x4A3E36), mark = C(0xC8C0A8)
-    let eye = C(0xFFE08A)
+    let eye = C(0xFFE08A), bristle = C(0x5E5048)
     // On her thread (the signature), whoever places her lifts her, fades her and draws the thread (`shelobClimb`);
     // here she only curls her legs and spreads her fangs.
     let hang = p.signature.flatMap { $0 > 0.02 && $0 < 0.98 ? shelobHang($0, lt: p.lt) : nil }
@@ -942,7 +947,11 @@ private func drawShelob(_ c: PixelCanvas, _ p: Pose) {
         "..MMMMM..",
         ".MMMMMMM.",
     ], ["M": mark])
-    for (x, y) in [(4, 27), (3, 32), (6, 37), (27, 24), (22, 22), (8, 23)] { c.px(x, y, far) }
+    // Lit along the top of the bulb, and coarse bristles in short strokes swept back along its curve.
+    c.rect(15, 23, 6, 1, far); c.rect(21, 24, 2, 1, far)
+    for (x, y, dx, dy) in [(4, 27, -1, 1), (3, 32, -1, 0), (5, 36, -1, 1), (25, 25, 1, -1), (19, 22, 1, -1), (7, 24, -1, 0)] {
+        c.px(x, y, bristle); c.px(x + dx, y + dy, bristle)
+    }
     // The front body; the near legs on it; then the head over their roots.
     c.ellipse(34, 34, 7, 5, body)
     c.rect(29, 31, 8, 1, light)

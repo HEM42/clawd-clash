@@ -1011,9 +1011,11 @@ extension Scenes {
         c.rect(0, ceil + 2 * s, c.w, 2 * s, C(0x3A3030)); c.rect(0, ceil + 2 * s, c.w, max(1, s / 2), C(0x5A4A48))   // the pipe run
         for x in stride(from: 20 * s, to: c.w, by: 50 * s) { c.rect(x, ceil, s, 4 * s, C(0x1E1616)) }
         for w in redRoomWindows(c, g) { redRoomWindow(c, w, s: s) }
-        if tall { redRoomBooth(c, g) }
+        if tall { redRoomBooth(c, g); redRoomCatwalk(c, g); redRoomRack(c, g); redRoomPortrait(c, g) }
+        redRoomFittings(c, g)
         redRoomMirror(c, g)
         redRoomBanner(c, g)
+        redRoomStallBars(c, g)
         redRoomBags(c, g)
         // Floor: worn boards under the barre, cold concrete elsewhere.
         c.ground(g, C(0x3A3030), edge: C(0x6A5452), speck: C(0x2C2424), seed: 79)
@@ -1066,7 +1068,7 @@ extension Scenes {
     /// Where the mirror wall stands.
     static func redRoomMirrorBox(_ c: PixelCanvas, _ g: Int) -> (x0: Int, x1: Int, top: Int) {
         let s = unit(g)
-        return (c.w * 4 / 100, c.w * 36 / 100, isTall(c) ? g * 64 / 100 : g - 30 * s)
+        return (c.w * 4 / 100, c.w * 36 / 100, g - 30 * s)
     }
 
     /// The long mirror in its frame, with the red room dimly in it, and the wooden barre on brackets in front.
@@ -1097,8 +1099,8 @@ extension Scenes {
     /// The banner down the middle: red cloth with folds, the gold star and hammer and sickle, a fringed hem.
     static func redRoomBanner(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c)
-        let k = tall ? max(2, g / 90) : s
-        let w = 20 * k, x = c.w / 2 - w / 2, top = redRoomCeiling(c, g) + 4 * s, bottom = tall ? g * 70 / 100 : g - 22 * s
+        let k = tall ? 2 * s : s
+        let w = 20 * k, x = c.w / 2 - w / 2, top = redRoomCeiling(c, g) + 4 * s, bottom = tall ? top + 36 * k : g - 22 * s
         c.rect(x - 2 * k, top - k, w + 4 * k, k, C(0x2A2020))
         c.rect(x, top, w, bottom - top, C(0xA81C1C))
         for f in stride(from: x + 3 * k, to: x + w, by: 5 * k) { c.rect(f, top, k, bottom - top, C(0x7A1010, 0.6)) }
@@ -1127,10 +1129,10 @@ extension Scenes {
 
     /// The heavy bags hanging on chains from the beam.
     static func redRoomBags(_ c: PixelCanvas, _ g: Int) {
-        let s = unit(g), tall = isTall(c), ceil = redRoomCeiling(c, g)
+        let s = unit(g), ceil = redRoomCeiling(c, g)
         for (i, fx) in [0.72, 0.8, 0.88].enumerated() {
-            let x = Int(fx * Double(c.w)), bottom = g - (6 + i % 2 * 3) * s, h = tall ? g * 22 / 100 : 20 * s
-            let top = bottom - h, b = tall ? max(2 * s, g / 120) : s                // b: the bag's width unit
+            let x = Int(fx * Double(c.w)), bottom = g - (6 + i % 2 * 3) * s, h = 20 * s
+            let top = bottom - h, b = s                                                 // b: the bag's width unit
             for y in stride(from: ceil + 4 * s, to: top - s, by: 2 * s) { c.rect(x, y, s, s, C(0x5A5250)); c.px(x + s, y + s, C(0x3A3434)) }
             c.rect(x - 3 * b, top - s, 7 * b, s, C(0x2A2424))
             c.rect(x - 4 * b, top, 9 * b, h, C(0x3A2622))
@@ -1153,6 +1155,132 @@ extension Scenes {
         c.rect(x0 - 6 * s, y + 20 * s, x1 - x0 + 12 * s, 2 * s, C(0x3A3030))
         for x in stride(from: x0 - 6 * s, through: x1 + 6 * s, by: 5 * s) { c.rect(x, y + 22 * s, s, 6 * s, C(0x2A2020)) }
         c.rect(x0 - 6 * s, y + 27 * s, x1 - x0 + 12 * s, s, C(0x2A2020))
+    }
+
+    /// Wall bars (a gymnasium's stall bars) standing on the floor between the banner and the bags: two wooden uprights
+    /// with round rungs, lit on the left, bolted to the wall top and bottom, and their shadow on the concrete.
+    static func redRoomStallBars(_ c: PixelCanvas, _ g: Int) {
+        let p = Pen(c, c.w * 57 / 100, g, g)
+        let wood = C(0x7A5436), lit = C(0xA87A4C), dark = C(0x4A3020)
+        p.rect(3, -37, 17, 37, C(0x000000, 0.18))                                    // the shadow on the wall
+        for u in [0, 15] {
+            p.rect(u, -38, 3, 38, wood); p.rect(u, -38, 1, 38, lit); p.rect(u + 2, -38, 1, 38, dark)
+            p.rect(u - 1, -36, 5, 1, C(0x2A2020)); p.rect(u - 1, -3, 5, 1, C(0x2A2020))   // the wall brackets
+        }
+        for v in stride(from: -35, through: -5, by: 3) {
+            p.rect(3, v, 12, 1, wood); p.rect(3, v, 12, 1, lit.alpha(0.5)); p.rect(3, v + 1, 12, 1, C(0x000000, 0.25))
+        }
+    }
+
+    /// Fittings high on the wall: a loudspeaker horn on its bracket for the drills and orders, and a plain round wall
+    /// clock, caged like the lamps, by the far window.
+    static func redRoomFittings(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), ceil = redRoomCeiling(c, g)
+        // the loudspeaker, its horn turned down to the floor
+        let sp = Pen(c, c.w * 41 / 100, ceil + 2 * s, g)
+        sp.rect(0, 0, 1, 4, C(0x2A2020)); sp.rect(0, 3, 4, 1, C(0x2A2020))
+        sp.rect(2, 4, 3, 3, C(0x4E5248)); sp.rect(2, 4, 1, 3, C(0x6E7266))
+        for (v, (u, w)) in [(1, 5), (0, 7), (-1, 9)].enumerated() {                    // the flared horn
+            sp.rect(u, 7 + v, w, 1, v == 2 ? C(0x1A1414) : C(0x5A5E54))
+        }
+        sp.rect(-1, 9, 1, 1, C(0x6E7266))
+        // the clock
+        let w = redRoomWindows(c, g).last!, cx = min(c.w - 7 * s, w.x + w.w + 16 * s), cy = w.y + w.h / 2
+        c.circle(cx, cy, 6 * s, C(0x2A2020)); c.circle(cx, cy, 5 * s, C(0xD8CCB4)); c.circle(cx - s, cy - s, 3 * s, C(0xE8DEC8))
+        for (dx, dy) in [(0, -4), (4, 0), (0, 4), (-4, 0)] { c.rect(cx + dx * s, cy + dy * s, s, s, C(0x3A3030)) }
+        c.rect(cx, cy - 3 * s, s, 3 * s, C(0x1A1414)); c.rect(cx, cy, 3 * s, s, C(0x1A1414))   // ten past twelve
+        c.rect(cx, cy + s, s, 2 * s, C(0xA81C1C))                                              // the second hand
+        for k in -2...2 { c.rect(cx + k * 2 * s, cy - 6 * s, max(1, s / 2), 12 * s, C(0x2A2020, 0.7)) }   // the cage
+    }
+
+    /// Full screen: a steel catwalk along the right-hand wall at the gallery's height, on angled brackets, with a
+    /// railing, and a ladder down to the floor at its far end.
+    static func redRoomCatwalk(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), y = g * 38 / 100 + 20 * s, x0 = c.w * 56 / 100, x1 = c.w - 3 * s
+        let iron = C(0x1E1616), steel = C(0x4A3E3C), lit = C(0x7A6662)
+        c.rect(x0, y + 2 * s, x1 - x0, 6 * s, C(0x000000, 0.15))                          // its shadow on the wall
+        for x in stride(from: x0 + 6 * s, to: x1, by: 34 * s) {                             // the brackets
+            for k in 0..<10 { c.rect(x + k * s, y + 2 * s + k * s, s, s, iron) }
+            c.rect(x, y + 2 * s, s, 11 * s, iron)
+        }
+        c.rect(x0, y, x1 - x0, 3 * s, steel); c.rect(x0, y, x1 - x0, s, lit)               // the deck's edge
+        c.rect(x0, y + 3 * s, x1 - x0, s, iron)
+        c.rect(x0, y - 9 * s, x1 - x0, s, lit)                                               // the top rail
+        c.rect(x0, y - 5 * s, x1 - x0, s, steel)
+        for x in stride(from: x0, through: x1 - s, by: 12 * s) { c.rect(x, y - 9 * s, s, 9 * s, steel) }
+        // paper targets pegged on a wire under it: a black head and shoulders, a red ring on the chest
+        c.rect(x0, y + 16 * s, x1 - x0, max(1, s / 2), iron)
+        for (i, x) in stride(from: x0 + 16 * s, to: x1 - 30 * s, by: 26 * s).enumerated() {
+            let p = Pen(c, x, y + 16 * s, g), tilt = i % 2
+            p.rect(1, 0, 1, 2, iron); p.rect(7, 0, 1, 2, iron)
+            p.rect(0, 2 + tilt, 9, 16, C(0xD8CCB0)); p.rect(0, 2 + tilt, 9, 1, C(0xEEE4CC))
+            p.rect(3, 4 + tilt, 3, 3, C(0x1A1414)); p.rect(1, 8 + tilt, 7, 9, C(0x1A1414))
+            p.rect(3, 10 + tilt, 3, 3, C(0xA81C1C)); p.rect(4, 11 + tilt, 1, 1, C(0x1A1414))
+            if i % 3 == 1 { p.rect(5, 5 + tilt, 1, 1, C(0xD8CCB0)); p.rect(3, 14 + tilt, 1, 1, C(0xD8CCB0)) }   // bullet holes
+        }
+        // the ladder down, rails and rungs
+        let lx = c.w * 94 / 100
+        for u in [0, 6] { c.rect(lx + u * s, y + 2 * s, s, g - y - 2 * s, iron) }
+        for v in stride(from: y + 5 * s, to: g - s, by: 4 * s) { c.rect(lx + s, v, 5 * s, s, steel) }
+    }
+
+    /// Full screen: under the banner, a stern portrait of the academy's founder in a heavy frame, a small lamp over
+    /// it, and the steam pipes dropping either side of it from the ceiling run to the floor, each with a valve wheel.
+    static func redRoomPortrait(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), ceil = redRoomCeiling(c, g)
+        for x in [c.w * 43 / 100, c.w * 57 / 100 - 6 * s] {
+            c.rect(x, ceil + 4 * s, 2 * s, g - ceil - 4 * s, C(0x3A3030)); c.rect(x, ceil + 4 * s, max(1, s / 2), g - ceil - 4 * s, C(0x5A4A48))
+            for v in stride(from: ceil + 30 * s, to: g - 10 * s, by: 40 * s) { c.rect(x - s, v, 4 * s, 2 * s, C(0x2A2020)) }   // the clamps
+            let vy = g * 55 / 100
+            c.rect(x - 3 * s, vy, 8 * s, s, C(0x8A2020)); c.rect(x, vy - 3 * s, 2 * s, 7 * s, C(0x8A2020))             // the valve wheel
+            c.rect(x - 3 * s, vy - 2 * s, s, 5 * s, C(0x6A1818)); c.rect(x + 4 * s, vy - 2 * s, s, 5 * s, C(0x6A1818))
+        }
+        let p = Pen(c, c.w / 2, ceil + 4 * s + 100 * s, g)
+        p.rect(-11, -2, 22, 2, C(0x2A2020)); p.rect(-2, -4, 4, 2, C(0x4A3E3C)); c.ellipse(c.w / 2, p.y + 4 * s, 10 * s, 6 * s, C(0xFFD0A0, 0.06))
+        p.rect(-11, 0, 22, 28, C(0x6A4A24)); p.rect(-11, 0, 22, 1, C(0x9A7A3C)); p.rect(-11, 0, 1, 28, C(0x8A6A30))
+        p.rect(-9, 2, 18, 24, C(0x2E2624))
+        p.rect(-3, 6, 6, 7, C(0x8A7468)); p.rect(-3, 6, 6, 2, C(0x3A2C28)); p.rect(-2, 9, 1, 1, C(0x1A1414)); p.rect(1, 9, 1, 1, C(0x1A1414))
+        p.rect(-7, 15, 14, 11, C(0x3A3A2E)); p.rect(-1, 15, 2, 4, C(0xC8C0B0)); p.rect(-5, 17, 2, 1, C(0xC8A048))   // tunic and medal
+    }
+
+    /// Full screen: a rack of training weapons on the wall above the mirror (wooden knives, batons, two foils and a
+    /// pair of pistols, each on its pegs, and a box of clips), and higher up a blackboard chalked with a figure and
+    /// the points to strike, a ballerina's turn and a few lines of notes.
+    static func redRoomRack(_ c: PixelCanvas, _ g: Int) {
+        let m = redRoomMirrorBox(c, g), p = Pen(c, m.x0 + (m.x1 - m.x0) / 2, m.top - 40 * unit(g), g)
+        let board = C(0x3A2622), peg = C(0x1E1414), wood = C(0xB08458), dark = C(0x2A2424), steel = C(0x9A9CA0)
+        p.rect(-34, 0, 68, 26, C(0x2A1C1A)); p.rect(-33, 1, 66, 24, board); p.rect(-33, 1, 66, 1, C(0x5A3E34))
+        for u in stride(from: -30, through: 30, by: 6) { for v in [5, 14, 22] { p.rect(u, v, 1, 1, peg) } }
+        for (i, u) in [-28, -22, -16].enumerated() {                                       // wooden knives
+            p.rect(u, 3, 1, 6, wood); p.rect(u, 9, 1, 3, C(0x6A4A30)); p.rect(u - 1, 9, 3, 1, dark)
+            if i == 1 { p.rect(u, 3, 1, 1, C(0xD8B080)) }
+        }
+        for u in [-10, -6] { p.rect(u, 3, 2, 20, dark); p.rect(u, 3, 1, 20, C(0x4A4444)); p.rect(u, 19, 2, 4, C(0x1A1414)) }   // batons
+        for (u, d) in [(1, 1), (4, -1)] {                                                    // the foils, crossed
+            for k in 0..<18 { p.rect(u + (k / 6) * d, 4 + k, 1, 1, steel) }
+            p.rect(u + 3 * d - 1, 22, 3, 1, steel); p.rect(u + 3 * d, 23, 1, 2, dark)
+        }
+        for u in [14, 24] {                                                                  // the pistols
+            p.rect(u, 6, 7, 2, dark); p.rect(u, 6, 7, 1, C(0x4A4444)); p.rect(u + 1, 8, 2, 4, dark)
+        }
+        p.rect(12, 16, 20, 6, C(0x2A1C1A)); p.rect(13, 17, 18, 4, C(0x5A4A38))                // a box of clips
+        for u in stride(from: 14, to: 30, by: 3) { p.rect(u, 17, 1, 4, C(0xC8A048)) }
+        // the blackboard, in its wooden frame with a chalk ledge
+        let b = Pen(c, m.x0 + 6 * unit(g), m.top - 104 * unit(g), g), chalk = C(0xD8DCD8, 0.75)
+        b.rect(0, 0, 70, 34, C(0x5A3E2A)); b.rect(2, 2, 66, 29, C(0x1E2A24)); b.rect(1, 32, 68, 2, C(0x6A4A30))
+        b.rect(10, 31, 3, 1, white); b.rect(50, 31, 2, 1, C(0xE0A0A0))
+        b.rect(10, 5, 3, 3, chalk); b.rect(11, 8, 1, 10, chalk); b.rect(7, 10, 9, 1, chalk)      // the figure
+        b.rect(9, 18, 1, 8, chalk); b.rect(13, 18, 1, 8, chalk)
+        for (u, v) in [(11, 6), (11, 12), (8, 21), (14, 24)] {                                   // the points, crossed
+            b.rect(u - 1, v - 1, 1, 1, C(0xE05050)); b.rect(u + 1, v + 1, 1, 1, C(0xE05050))
+            b.rect(u + 1, v - 1, 1, 1, C(0xE05050)); b.rect(u - 1, v + 1, 1, 1, C(0xE05050))
+        }
+        b.rect(25, 6, 2, 2, chalk); b.rect(25, 8, 1, 9, chalk); b.rect(22, 10, 7, 1, chalk)     // a turn en pointe
+        b.rect(26, 13, 4, 1, chalk); b.rect(25, 17, 1, 8, chalk)
+        for k in 0..<10 { b.rect(19 + k, 26 - Int(Double(k * k) / 12.0), 1, 1, chalk.alpha(0.5)) }
+        for (i, v) in [6, 10, 14, 18, 22].enumerated() {                                          // notes
+            b.rect(36, v, 26 - (i * 7) % 11, 1, chalk.alpha(0.55))
+        }
     }
 
     /// Lamps swinging on their cords, their red light following, and snow falling past the windows.

@@ -31,8 +31,8 @@ private func drawButterbur(_ c: PixelCanvas, _ p: Pose) {
     // The bald dome over the head, shining, and the bushy tufts sticking out over the ears.
     c.rect(21, 25, 14, 1, clawdOrange); c.rect(23, 24, 10, 1, clawdOrange); c.rect(25, 23, 6, 1, clawdOrange)
     c.px(25, 24, C(0xF4A888)); c.px(26, 24, C(0xF4A888)); c.px(24, 25, C(0xF0A080))
-    c.pattern(15, 27, [".TTT", "TlTT", "TTTd", "dTT.", ".d.."], ["T": tuft, "l": tuftLight, "d": tuftDark])
-    c.pattern(37, 27, ["TTT.", "TTlT", "dTTT", ".TTd", "..d."], ["T": tuft, "l": tuftLight, "d": tuftDark])
+    c.pattern(15, 27, [".lTT", "TllT", "TTdd", "ddT.", ".d.."], ["T": tuft, "l": tuftLight, "d": tuftDark])
+    c.pattern(37, 27, ["TTl.", "TllT", "ddTT", ".Tdd", "..d."], ["T": tuft, "l": tuftLight, "d": tuftDark])
     c.rect(21, 28, 4, 1, tuftDark); c.rect(31, 28, 4, 1, tuftDark)             // bushy brows
     c.rect(20, 32, 2, 1, C(0xE8907A)); c.rect(35, 32, 2, 1, C(0xE8907A))       // ruddy cheeks
     // The waistcoat over the shirt, buttoned tight over the belly bulging out in front.
@@ -41,6 +41,7 @@ private func drawButterbur(_ c: PixelCanvas, _ p: Pose) {
     let belly: [(y: Int, r: Int)] = [(32, 38), (33, 40), (34, 41), (35, 41), (36, 41), (37, 40), (38, 39)]
     for row in belly { c.rect(36, row.y, row.r - 35, 1, waistcoat); c.px(row.r, row.y, waistcoatDark) }
     for (x, y) in [(38, 33), (40, 34)] { c.px(x, y, C(0xC8A040)) }
+    c.rect(21, 33, 14, 1, C(0x86603A)); c.px(22, 35, waistcoatDark); c.px(22, 36, waistcoatDark)   // lit shoulders, a fold
     // The long apron, tied at the waist, round over the belly and down below the knee.
     c.rect(24, 35, 18, 1, apron)
     c.rect(24, 36, 18, 1, apron); c.rect(24, 37, 17, 1, apron); c.rect(24, 38, 16, 1, apron)

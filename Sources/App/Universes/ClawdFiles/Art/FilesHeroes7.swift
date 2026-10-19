@@ -59,21 +59,22 @@ private func drawTadOClawley(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, blazer); c.rect(37, 33, 1, 5, blazerD); c.rect(18, 37, 20, 1, blazerD)
     c.pattern(24, 33, ["SS..SS", "SSSSSS", ".SSSS.", "..SS.."], ["S": shirt])
     c.rect(22, 33, 1, 4, blazerL); c.rect(33, 33, 1, 4, blazerL)
-    c.px(20, 35, C(0xC8A04A))   // a pin on the lapel
+    drawJacketDetail(c, dark: blazerD, light: blazerL)
+    c.px(20, 34, C(0xC8A04A))   // a pin on the lapel
     // The hair: a glossy wave swept up off the forehead.
     c.pattern(17, 19, [
         "........HHHHHHH.......",
         ".....HHHHHHlllHHH.....",
-        "...HHHHHHHHHHHlHHHH...",
-        "..HHHHHHHHHHHHHHlHHH..",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HH...HHH..........HH.",
-    ], ["H": hair, "l": hairL])
+        "...HHlllHHHHHHlHHHd...",
+        "..HHHHHHlllHHHHHlHdd..",
+        ".HHHHHHHHHHHHlllHHHdd.",
+        ".HHlllHHHHHHHHHHHHHdd.",
+        ".HHHHHHlllHHHHHHHHHdd.",
+        ".HH...HHH..........dd.",
+    ], ["H": hair, "l": hairL, "d": C(0x1A100A)])
     c.px(18, 29, C(0xD8DCE4)); c.px(18, 30, C(0x2A2A30))   // the earpiece
 
-    c.rect(15, 33, 3, 3, blazer)
+    c.rect(15, 33, 3, 3, blazer); drawCuffs(c, blazerD, right: false)
     if live {
         // The mic up at his mouth, his voice rolling out, the LIVE light blinking.
         c.rect(36, 30, 3, 3, blazer); c.rect(35, 32, 2, 1, clawdOrange)
@@ -101,7 +102,7 @@ private func drawTadOClawley(_ c: PixelCanvas, _ p: Pose) {
         return
     }
     // At rest, the mic held down by his side.
-    c.rect(38, 33, 3, 3, blazer); c.rect(38, 35, 3, 1, clawdOrange)
+    c.rect(38, 33, 3, 3, blazer); c.rect(38, 35, 3, 1, clawdOrange); c.rect(38, 34, 3, 1, blazerD)
     c.rect(41, 33, 1, 4, mic); c.rect(40, 31, 3, 2, micHead)
 }
 
@@ -130,6 +131,9 @@ private func drawDrBlockclaw(_ c: PixelCanvas, _ p: Pose) {
     // The waistcoat open over the bare chest, its buttons, a watch chain.
     c.rect(18, 33, 6, 5, vest); c.rect(32, 33, 6, 5, vest); c.rect(37, 33, 1, 5, C(0x0E0E10))
     c.px(23, 34, vestL); c.px(23, 36, vestL); c.px(32, 34, vestL); c.px(32, 36, vestL)
+    c.rect(18, 33, 3, 1, vestL); c.rect(33, 33, 2, 1, vestL)                    // the waistcoat lit along the shoulders
+    c.rect(20, 35, 1, 2, C(0x0E0E10)); c.rect(36, 34, 1, 3, C(0x0E0E10))      // a fold, the far side in shade
+    c.rect(19, 36, 2, 1, C(0x2A2A30))                                           // its watch pocket
     c.pattern(25, 34, ["i.i.i", ".i.i."], ["i": ink])   // more ink on the chest
     c.rect(24, 36, 8, 1, C(0xD8B44A))
     // Tattooed arms.
@@ -245,32 +249,36 @@ private func drawSheriffHartwell(_ c: PixelCanvas, _ p: Pose) {
     // The shirt, its pockets, the star and the tie.
     c.rect(18, 33, 20, 5, shirt); c.rect(37, 33, 1, 5, shirtD); c.rect(18, 37, 20, 1, shirtD)
     c.rect(20, 34, 4, 2, shirtD); c.rect(32, 34, 4, 2, shirtD)
-    c.pattern(21, 33, [".S.", "SSS", ".S."], ["S": star])
+    c.rect(20, 35, 4, 1, shirt); c.rect(32, 35, 4, 1, shirt); c.px(34, 34, C(0xD8C8A0))   // pocket flaps, a button
+    c.pattern(21, 33, [".S.", "SSS", ".S."], ["S": star]); c.px(21, 33, C(0xFFF0A0))       // the star, catching the light
+    c.rect(18, 33, 2, 1, C(0xD0BC8C)); c.rect(36, 34, 1, 3, shirtD)                        // a lit shoulder, the far side
     c.rect(27, 33, 2, 4, C(0x5A3A22))
+    // The gun belt, its buckle, the holster at his hip.
+    c.rect(18, 37, 20, 1, C(0x4A3018)); c.rect(27, 37, 2, 1, C(0xD8C080)); c.rect(35, 37, 2, 2, C(0x3A2412))
     // The buck teeth, under a grin.
     c.rect(26, 32, 4, 1, C(0x8A3A2A)); c.rect(27, 33, 1, 2, white); c.rect(28, 33, 1, 2, white)
     // The hat: its crown and band, the brim wide over the eyes, down to the top of the body. Lifted when he tips it.
     let lift = tipping ? (sig! < 0.3 || sig! > 0.7 ? 1 : 3) : 0
     c.pattern(13, 17 - lift, [
-        "........HHHHHHHHHH........",
-        ".......HHHHdHHdHHHH.......",
-        ".......HHHHHHHHHHHH.......",
-        ".......HHHHHHHHHHHH.......",
+        "........HHLLLLHHHH........",
+        ".......HHLHdHHdHHHd.......",
+        ".......HHHHHHHHHHdd.......",
+        ".......HHHHHHHHHHHd.......",
         ".......BBBBBBBBBBBB.......",
         "..H....HHHHHHHHHHHH....H..",
         ".HHHHHHHHHHHHHHHHHHHHHHHH.",
         "HHHHddddddddddddddddddHHHH",
         "..dddddddddddddddddddddd..",
-    ], ["H": hat, "d": hatD, "B": band])
+    ], ["H": hat, "d": hatD, "B": band, "L": C(0xF6EED6)])
     if lift > 0 { c.rect(18, 26 - lift, 20, lift, clawdOrange) }   // the gap under a lifted hat shows his forehead
     if tipping {
         c.rect(38, 22 - lift, 3, 11, shirt); c.rect(38, 21 - lift, 3, 2, clawdOrange)
-        c.rect(15, 33, 3, 3, shirt)
+        c.rect(15, 33, 3, 3, shirt); drawCuffs(c, shirtD, right: false)
         return
     }
-    c.rect(15, 33, 3, 3, shirt)
+    c.rect(15, 33, 3, 3, shirt); drawCuffs(c, shirtD, right: false)
     c.oy += p.gunY
-    c.rect(38, 33, 3, 3, shirt)
+    c.rect(38, 33, 3, 3, shirt); drawCuffs(c, shirtD, left: false)
     c.pattern(40, 31, ["KKKKKKK", "KKCCKK.", "KW.....", "KW....."], ["K": C(0x2A2A30), "C": C(0x6A6E78), "W": C(0x6A4428)])
 }
 

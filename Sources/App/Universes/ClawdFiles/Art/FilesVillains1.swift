@@ -16,7 +16,7 @@ let filesVillains1: [FilesVillain: Persona] = [
 /// smoke ring drift up and away.
 private func drawSmokingClawd(_ c: PixelCanvas, _ p: Pose) {
     let suit = C(0x34363C), suitD = C(0x24262B), shirt = C(0xEDEDE8), tie = C(0x1E2028)
-    let hair = C(0x9A9CA4), hairD = C(0x6E7078)
+    let suitL = C(0x4A4C54), hair = C(0x9A9CA4), hairD = C(0x6E7078), hairL = C(0xC4C6CC)
     let sig = p.signature
     let lighting = sig.map { $0 > 0.05 && $0 < 0.3 } ?? false
     let drawing = sig.map { $0 >= 0.3 && $0 < 0.5 } ?? false
@@ -28,15 +28,19 @@ private func drawSmokingClawd(_ c: PixelCanvas, _ p: Pose) {
     // The suit, the white shirt and the narrow dark tie.
     c.rect(18, 34, 20, 4, suit); c.rect(37, 34, 1, 4, suitD); c.rect(18, 37, 20, 1, suitD)
     c.pattern(25, 34, ["lSTTSl", ".lTTl.", "..TT..", "..TT.."], ["l": suitD, "S": shirt, "T": tie])
-    // The hair, combed straight back off a high forehead, down to the top of the body (a gap would show the outline).
+    c.rect(18, 34, 4, 1, suitL); c.rect(32, 34, 4, 1, suitL)          // lit shoulders
+    c.rect(20, 35, 1, 2, suitD); c.rect(35, 35, 1, 2, suitD)          // folds
+    c.rect(32, 36, 3, 1, suitD)                                       // a pocket flap
+    // The hair, combed straight back off a high forehead, down to the top of the body (a gap would show the outline):
+    // the comb lines in short runs, lit on top, the far side shaded.
     c.pattern(17, 22, [
-        ".....HHHHHHHHHHHH.....",
-        "...HHHhHHHHhHHHHhHH...",
-        "..HHHHHHhHHHHhHHHHHH..",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HH................HH.",
-        ".H..................H.",
-    ], ["H": hair, "h": hairD])
+        ".....HHHHllllHHHH.....",
+        "...HHllllHHHHHHhhHH...",
+        "..HHHHHHHhhhHHHHHHhH..",
+        ".HHHhhHHHHHHHHhhHHHhH.",
+        ".HH................hH.",
+        ".H..................h.",
+    ], ["H": hair, "h": hairD, "l": hairL])
 
     // The cigarette at the corner of his mouth, out past his cheek, and its ember.
     let flare = drawing ? 1.0 : 0.5 + 0.5 * sin(p.t * 1.7)
@@ -57,7 +61,7 @@ private func drawSmokingClawd(_ c: PixelCanvas, _ p: Pose) {
         c.rect(38, 34, 3, 3, suit); c.rect(40, 33, 2, 2, C(0xB8BCC4))
         let tall = Int(p.t * 14) % 3
         c.rect(41, 30 - tall % 2, 1, 3 + tall % 2, C(0xFFD24A)); c.px(41, 32, C(0xFF8A2A))
-        c.rect(15, 33, 3, 3, suit)
+        c.rect(15, 33, 3, 3, suit); c.rect(15, 35, 3, 1, shirt)
         return
     }
     if let s = sig, s >= 0.55, s < 0.97 {
@@ -69,7 +73,7 @@ private func drawSmokingClawd(_ c: PixelCanvas, _ p: Pose) {
             c.px(cx + Int((cos(a) * Double(r + 1)).rounded()), cy + Int((sin(a) * Double(r)).rounded()), ring)
         }
     }
-    c.rect(15, 33, 3, 3, suit)
+    c.rect(15, 33, 3, 3, suit); c.rect(15, 35, 3, 1, shirt)   // the sleeve and its shirt cuff
     c.oy += p.gunY
     drawSidearm(c, sleeve: suit, searching: false)
 }

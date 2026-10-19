@@ -46,8 +46,8 @@ private func drawThorin(_ c: PixelCanvas, _ p: Pose) {
     c.rect(13, 35 - up, 4, 3 + up, coat); c.rect(11, 35 - up, 2, 3, clawdOrange)   // the off arm, its fist round the branch
     // The fur collar, heavy across the shoulders.
     c.pattern(14, 32, [
-        "..fFFlF..............FlFFf..",
-        ".FFFFfFFFlFFFFFFFFlFFFfFFFF.",
+        "..fFllF..............llFFf..",
+        ".FFFFfFFllFFFFFFFllFFFfFFFF.",
         "..fFF.FFf.FfF.FFf.FfF.fFF...",
     ], ["F": fur, "f": furDark, "l": furLight])
     // Long black hair streaked with grey, a ragged fringe, falling past the shoulders.
@@ -170,8 +170,8 @@ private func drawBalin(_ c: PixelCanvas, _ p: Pose) {
     // The hood, pushed back: a red ring round the head, behind it.
     c.pattern(14, 23, [
         ".......RRRRRRRRRRRRRR.......",
-        ".....RRRRRRlRRRRRRRRRRR.....",
-        "...RRRRlRRRRRRRRRRRRRRRRR...",
+        ".....RRRRRlllRRRRRRRRRR.....",
+        "...RRRlllRRRRRRRRRRRRRRRR...",
         "..RRRRRRRRRRRRRRRRRRRRRRRd..",
         ".RRRRRRRRRRRRRRRRRRRRRRRRRd.",
         ".RRR....................RRd.",
@@ -201,14 +201,14 @@ private func drawBalin(_ c: PixelCanvas, _ p: Pose) {
         "WWW..............WWW",
         "WWWWWWWWWWWWWWWWWWWW",
         "WWWWWsWWWWWWWWsWWWWW",
-        ".WWWWWWWWWWWWWWWWWW.",
+        ".WWWWsWWWWWWWWsWWWW.",
         ".WWsWWWWWWWWWWWWsWW.",
-        "..WWWWWWWsWWWWWWWW..",
+        "..WsWWWWWWWWWWWWsW..",
         "..WWWWWW....WWWWWW..",
-        "..WWWWWs....sWWWWW..",
+        "..WWWWss....ssWWWW..",
         "..WWWWW......WWWWW..",
         "..WsWW........WWsW..",
-        "..WWW..........WWW..",
+        "..WsW..........WsW..",
         "..W..............W..",
     ], ["W": white, "s": whiteShade])
     c.rect(23, 33, 10, 1, whiteShade)                                         // the moustache's edge
@@ -302,8 +302,8 @@ private func drawKili(_ c: PixelCanvas, _ p: Pose) {
     // Long dark hair, parted in the middle, loose to the shoulders.
     c.pattern(15, 25, [
         ".......HHHHHHHHHHHH.......",
-        "....HHHHHHHHhHHHHHHHH.....",
-        "..HHHHhHHHHHhHHHHHHhHHHH..",
+        "....HHHHHHHhhhHHHHHHH.....",
+        "..HHHhhHHHHHHHHHHHhhHHHH..",
         ".HHHhHH............HhHHH..",
         "HHHh.................hHHH.",
         "HHHh.................hHHH.",
@@ -446,9 +446,9 @@ private func drawFili(_ c: PixelCanvas, _ p: Pose) {
     // Thick blond hair to the shoulders, a braid at each temple.
     c.pattern(15, 25, [
         "......HHHHHHHHHHHHHH......",
-        "...HHHHlHHHHHHHHHlHHHH....",
+        "...HHHlllHHHHHHHlllHHH....",
         ".HHHHHHHHHHHHHHHHHHHHHHH..",
-        ".HHhHHHHlHHHHHHHHHlHHhHHH.",
+        ".HHhHHHllHHHHHHHHllHHhHHH.",
         "HHHhHHHH.H......H.HHHhHHH.",
         "HHHh.b..............b.hHH.",
         "HHhH.H..............H.HhH.",
@@ -461,7 +461,7 @@ private func drawFili(_ c: PixelCanvas, _ p: Pose) {
     // The moustache, braided down past his chin, and the short beard between the braids.
     c.pattern(21, 32, [
         "..HHHHHHHHHH..",
-        ".HHHlHHHHlHHH.",
+        ".HHllHHHHllHH.",
         ".Hh..HHHH..hH.",
         ".hH...hH...Hh.",
         ".Hh........hH.",
@@ -532,11 +532,11 @@ private func drawGloin(_ c: PixelCanvas, _ p: Pose) {
     }
     // The fur hat: tall and round, a gold band, ear flaps down the cheeks.
     c.pattern(16, 21, [
-        "......FFFfFFFFfFFFF.....",
-        "...FFfFFFFFFlFFFFFfFF...",
-        "..FFFFFFlFFFfFFFFFFFFF..",
-        ".FfFFFFFFFFFFFFFlFFFfFF.",
-        ".FFFFfFFFFFFFFFFFFFFFFF.",
+        "......FFFFFllFFFFFF.....",
+        "...FFffFFFFFllFFFFffF...",
+        "..FFFFFllFFFFFFFFFffFF..",
+        ".FffFFFFFFFFFFFllFFFFFF.",
+        ".FFFFffFFFFFFFFFFFFFFFF.",
         ".GGGGGGGGGGgGGGGGGGGGGG.",
         "DDDDDDDDDDDDDDDDDDDDDDDD",
         "DDD..................DDD",
@@ -550,13 +550,13 @@ private func drawGloin(_ c: PixelCanvas, _ p: Pose) {
         "...HH.................HH....",
         "..HHHd...............dHHH...",
         ".HHgHHHHdHHHHHHHHHHdHHHHgH..",
-        "HHHgHHHHHlHHggHHHlHHHHHgHHHH",
-        "HHHHHHgHHHHHGgGHHHHHgHHHHHHH",
-        "HdHHHHHHHHHgHHHgHHHHHHHHHdHH",
-        "HHHHHlHHHgHHHHHHHHHgHlHHHHHH",
-        "HHHgHHHHHHHHHgGHHHHHHHHHgHHH",
+        "HHHgHHHHllHHggHHllHHHHHgHHHH",
+        "HHHHHHgHHHHHGGGHHHHHgHHHHHHH",
+        "HdHHHHgHHHHgHHHgHHHHgHHHHdHH",
+        "HHHHllHHHgHHHHHHHHHgHllHHHHH",
+        "HHHHHHHHHgHHHgGHHHHgHHHHHHHH",
         ".HHHHHHgHHHHHHHHHHHgHHHHHHd.",
-        "..HdHHHHHHHlHHHHHHHHHHHdHH..",
+        "..HdHHHgHHHllHHHHHHgHHHdHH..",
         "....HHHgHHHHHHHHHHgHHHHH....",
         ".......dHHHHgHHHHHHd........",
     ], ["H": beard, "d": beardDark, "l": beardLight, "g": grey, "G": greyLight])

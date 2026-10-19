@@ -220,18 +220,18 @@ private func drawBard(_ c: PixelCanvas, _ p: Pose) {
     // Long straight dark hair, parted in the middle, past the shoulders.
     c.pattern(16, 20, [
         ".......HHHHHHHHHH.......",
-        "....HHHHHHHHHHHHHHHH....",
+        "....HHHlllHHHHHHHHHH....",
         "..HHHHHHHHHlHHHHHHHHHH..",
         ".HHHHHHHHHlHHHHHHHHHHHH.",
         ".HHlHHHHHHlHHHHHHHHlHHH.",
         "HHHHHHHHHl..HHHHHHHHHHHH",
         "HHHHH..............HHHHH",
         "HHHl................lHHH",
-        "HHH..................HHH",
-        "HHH..................HHH",
+        "HHl..................lHH",
+        "HHl..................lHH",
         "HHl..................lHH",
         "HHH..................HHH",
-        "HHH..................HHH",
+        "HHl..................lHH",
         "HHl..................lHH",
         ".HH..................HH.",
         ".HH..................HH.",
@@ -241,7 +241,7 @@ private func drawBard(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(19, 32, [
         "B....BBBBBBBB....B",
         ".BB.BBB....BBB.BB.",
-        "...BBBBBlBBBBB....",
+        "...BBBBllBBBBB....",
         ".......BBBB.......",
     ], ["B": hair, "l": hairLight])
     // The black longbow, held out at arm's length; the Black Arrow on the string while he aims, drawn back to shoot.
@@ -365,7 +365,7 @@ private func drawBeorn(_ c: PixelCanvas, _ p: Pose) {
     }
     c.rect(15, 35, 26, 1, rope); c.px(18, 36, rope); c.px(18, 37, rope)
     // The wild black mane, spilling out either side from under the bear-skin.
-    let mane = ["..HHHH", ".HHHHH", "HHHhHH", ".HHHHH", "HHhHHH", ".HHHHh", "HHHHH.", ".HhHH.", "HHHH..", ".HHH..",
+    let mane = ["..HHHH", ".HHHHH", "HHHhHH", ".HHhHH", "HHhHHH", ".HhHHH", "HHHHH.", ".HhHH.", "HHhH..", ".HHH..",
                 "HH.H..", ".H...."]
     c.pattern(11, 21, mane, ["H": hair, "h": hairLight])
     c.pattern(39, 21, mane.map { String($0.reversed()) }, ["H": hair, "h": hairLight])
@@ -378,10 +378,10 @@ private func drawBeorn(_ c: PixelCanvas, _ p: Pose) {
         "HHHHH..HHHHHHHHHHHH..HHHHH",
         "HHHHHHHHHHHddddHHHHHHHHHHH",
         "HHHhHHHHHHHHHHHHHHHHHHhHHH",
-        ".HHHHHHhHHHHHlHHHHhHHHHHH.",
-        ".HHHlHHHHHHHHHHHHHHHHlHHH.",
-        "..HHHHHHhHHHHHHHHhHHHHHH..",
-        "..HHHHHHHHHHlHHHHHHHHHHH..",
+        ".HHhHHHhHHHHHHHHHHhHHHhHH.",
+        ".HHHHHHhHHHllHHHHHhHHHHHH.",
+        "..HHHHHHHHhHHHHHHhHHHHHH..",
+        "..HHHHHHHHhHHHHHHhHHHHHH..",
         "...HHHhHHHHHHHHHHHHhHHH...",
         "...HH.HHHHHhHHHHHHHH.HH...",
         ".....HH.HHHHHHHHH.HH......",
@@ -393,7 +393,7 @@ private func drawBeorn(_ c: PixelCanvas, _ p: Pose) {
         "...FFF..................FFF...",
         "..FmmF..................FmmF..",
         "..FFFFFFFFFFFFFFFFFFFFFFFFFF..",
-        ".FFFFFFFFlFFFFFFFFFFlFFFFFFFF.",
+        ".FFFFFFFllFFFFFFFFFFllFFFFFFF.",
         ".FFFFFFFFFFFFFFFFFFFFFFFFFFFF.",
         "FFFFFFFFFeFFFFFFFFFFeFFFFFFFFF",
         "FFFFFFFFFFFFmmmmmmFFFFFFFFFFFF",

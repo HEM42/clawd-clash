@@ -93,7 +93,7 @@ private func puff(_ c: PixelCanvas, _ x: Double, _ y: Double, r: Double, alpha: 
 /// Signature: the key ring swings and jingles at his hip, the keys glinting as they knock together.
 private func drawKeyz(_ c: PixelCanvas, _ p: Pose) {
     let jacket = C(0x22283A), jacketD = C(0x161A28), jacketL = C(0x3A4258), trousers = C(0x5A5E66)
-    let hair = C(0x5A4E44), hairG = C(0x9A948C), steel = C(0xC8CCD4), brass = C(0xC8A848)
+    let hair = C(0x5A4E44), hairG = C(0x9A948C), hairL = C(0x7A6E62), steel = C(0xC8CCD4), brass = C(0xC8A848)
     let sig = p.signature
     let casting = p.zap != nil || p.armRaise > 0
 
@@ -108,15 +108,15 @@ private func drawKeyz(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 4, jacket); c.rect(37, 33, 1, 4, jacketD)
     c.rect(28, 33, 1, 4, jacketL); c.rect(24, 33, 9, 1, jacketL)
     c.rect(18, 37, 20, 1, C(0x1A1410)); c.px(28, 37, brass)
-    // Greying hair, neat.
+    // Neat hair, lit along the top and greying at the temples.
     c.pattern(17, 21, [
-        "....HHHHHHHHHHHH.....",
-        "..HHHHHHHHgHHHHHHH...",
+        "....LLLLLHHHHHHH.....",
+        "..HHHHHHHHHHHHHHHH...",
         ".HHHHHHHHHHHHHHHHHH..",
-        ".HHHHHHgHHHHHHHHHHHH.",
+        ".gHHHHHHHHHHHHHHHHHg.",
         ".gHHHHHHHHHHHHHHHHHg.",
         ".gg...............gg.",
-    ], ["H": hair, "g": hairG])
+    ], ["H": hair, "g": hairG, "L": hairL])
     // The key ring at his right hip, still or swinging.
     var swing: Double = 0
     if let s = sig, s > 0.04, s < 0.96 {

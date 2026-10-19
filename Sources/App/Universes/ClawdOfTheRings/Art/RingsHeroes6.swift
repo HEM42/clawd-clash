@@ -313,10 +313,10 @@ private func drawGlorfindelBody(_ c: PixelCanvas, _ p: Pose, shine: Double) {
     c.pattern(10, 22, [
         "...HHHH",
         ".HHHHhH",
-        "HHlHHHH",
+        "HllHHHH",
         "HHHHhHH",
         ".HhHHHH",
-        "HHHHHlH",
+        "HHHHllH",
         ".HHhHHH",
         "..HHHhH",
         "...HHHH",
@@ -340,17 +340,17 @@ private func drawGlorfindelBody(_ c: PixelCanvas, _ p: Pose, shine: Double) {
     // Gold hair over the head, to the shoulders.
     c.pattern(16, 19, [
         "........HHHHHHHH........",
-        ".....HHHHHlHHHHHHHH.....",
-        "...HHHHlHHHHHHHHlHHHH...",
+        ".....HHHHlllHHHHHHH.....",
+        "...HHHlllHHHHHHlllHHH...",
         "..HHHHHHHHHHHHHHHHHHHH..",
-        ".HHlHHHHHHHhHHHHHHHlHHH.",
-        ".HHHHHHHhHHHHHHHhHHHHHH.",
+        ".HHHHHHHHHhhHHHHHHHHHHH.",
+        ".HHHHHHhhHHHHHHhhHHHHHH.",
         "HHHHHhh..........hhHHHHH",
         "HHHh..............hHHHH.",
         "HHh..................hH.",
-        "HHH..................HH.",
         "HHh..................hH.",
-        "HHH..................HH.",
+        "HHh..................hH.",
+        "HHh..................hH.",
         ".Hh...................H.",
         "..H.....................",
     ], ["H": hair, "h": hairShade, "l": hairLight])
@@ -570,7 +570,7 @@ private func drawCelebornBody(_ c: PixelCanvas, _ p: Pose, lift: Double) {
     drawBoots(c, p.step, silverDark, rows: 1)
     c.oy += p.breathe
     // His hair down his back, to the waist.
-    c.pattern(13, 26, ["HHHH", "HhHH", "HHHH", "HHhH", "hHHH", "HHHH", "HHhH", ".HHH", ".HhH", "..HH"],
+    c.pattern(13, 26, ["HHHH", "HhHH", "HhHH", "HHhH", "HHhH", "HHHH", "HhHH", ".HhH", ".HhH", "..HH"],
               ["H": hair, "h": hairShade])
     drawBody(c, Look(arm: robe))
     // The robe, the shoulders to the ankles, flaring a little, silver down the front and round the hem.
@@ -590,18 +590,18 @@ private func drawCelebornBody(_ c: PixelCanvas, _ p: Pose, lift: Double) {
     // Long straight silver-white hair, framing the face, past the shoulders.
     c.pattern(16, 20, [
         ".......HHHHHHHHHH.......",
-        "....HHHHHHlHHhHHHHHH....",
+        "....HHHHHlllHhHHHHHH....",
         "..HHHHHHlHHhhHHHHHHHHH..",
         ".HHhHHHHHHhHHhHHlHHHhHH.",
         ".HHhHHHHHhHHHHhHHHHHhHH.",
         "HHHhHHHHh......hHHHHhHHH",
         "HHHh................hHHH",
         "HHh..................hHH",
-        "HHH..................HHH",
         "HHh..................hHH",
-        "HHH..................HHH",
         "HHh..................hHH",
-        "HHH..................HHH",
+        "HHh..................hHH",
+        "HHh..................hHH",
+        "HHh..................hHH",
         ".Hh..................hH.",
     ], ["H": hair, "h": hairShade, "l": hairLight])
     // The circlet: three little silver leaves over a band across the brow.
@@ -676,7 +676,7 @@ private func drawThranduil(_ c: PixelCanvas, _ p: Pose) {
     drawBoots(c, p.step, C(0x3A2A2A), rows: 1)
     c.oy += p.breathe
     // His hair down his back, to the waist.
-    c.pattern(13, 26, ["HHHH", "HhHH", "HHHH", "HHhH", "hHHH", "HHHH", "HHhH", ".HHH", ".HhH", "..HH"],
+    c.pattern(13, 26, ["HHHH", "HhHH", "HhHH", "HHhH", "HHhH", "HHHH", "HhHH", ".HhH", ".HhH", "..HH"],
               ["H": hair, "h": hairShade])
     drawBody(c, Look(arm: robe, eye: smug ? nil : ink))
     // The robe, the shoulders to the ankles, flaring a little, silver at the collar, down the front and round the hem.
@@ -689,7 +689,7 @@ private func drawThranduil(_ c: PixelCanvas, _ p: Pose) {
     }
     c.rect(18, 32, 20, 1, silver)
     c.rect(29, 33, 1, 8, silver)
-    c.pattern(21, 33, ["s.s.s", ".s.s.", "s.s.s"], ["s": silverDark])           // the brocade
+    c.pattern(21, 33, ["ss.ss", "..s..", "ss.ss"], ["s": silverDark])           // the brocade
     c.rect(18, 36, 20, 1, silverDark); c.rect(28, 36, 3, 1, silver)          // the girdle and its clasp
     c.rect(14, 33 - lift, 4, 4 + lift, robe); c.rect(14, 36 - lift, 4, 1, silver); c.px(14, 33 - lift, robeLight)   // the back sleeve
     c.rect(15, 34 - lift, 2, 2, clawdOrange)                                   // the back fist on its hilt
@@ -703,11 +703,11 @@ private func drawThranduil(_ c: PixelCanvas, _ p: Pose) {
         "HHHhHHHHHh...hHHHHHHhHHH",
         "HHHh................hHHH",
         "HHh..................hHH",
-        "HHH..................HHH",
         "HHh..................hHH",
-        "HHH..................HHH",
         "HHh..................hHH",
-        "HHH..................HHH",
+        "HHh..................hHH",
+        "HHh..................hHH",
+        "HHh..................hHH",
         ".Hh..................hH.",
     ], ["H": hair, "h": hairShade])
     c.px(15, 28, clawdOrange); c.px(40, 28, clawdOrange)                      // the pointed ears

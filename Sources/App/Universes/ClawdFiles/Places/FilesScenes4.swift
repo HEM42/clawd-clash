@@ -184,7 +184,8 @@ extension Scenes {
 extension Scenes {
     /// The mothership: a vast round hall inside the saucer. Ribbed metal walls curving up into the dark, panels of
     /// alien glyphs glowing green, pods of pale silhouettes along the wall, and a ring of light in the floor, where the
-    /// beam comes up from below. On the screen saver the ribs arch up into the dome, rings of lights round its crown.
+    /// beam comes up from below. On the screen saver the ribs arch up into the dome, rings of lights round its crown, and
+    /// tier on tier of catwalks climbs the walls, lined with more pods and glyph strips, a gap in each for the beam.
     static func mothership(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c)
         c.gradient(0, g, C(0x060A08), C(0x18241E), bands: 8)
@@ -203,6 +204,7 @@ extension Scenes {
                 let half = c.w / 8 + k * c.w / 9
                 for x in stride(from: c.w / 2 - half, to: c.w / 2 + half, by: 6 * s) { c.rect(x, y, s, s, C(0x6AE8A0, 0.6)) }
             }
+            s4Tiers(c, g, s: s)
         }
         // Glyph panels and the pods along the wall.
         let wallY = g - 30 * s
@@ -226,6 +228,39 @@ extension Scenes {
         c.ground(g, C(0x1A221E), edge: C(0x4A6A5A), speck: C(0x121814), seed: 77)
         for x in stride(from: 0, to: c.w, by: 12 * s) { c.rect(x, g + 1, s, c.h - g - 1, C(0x121814)) }
         c.ellipse(c.w / 2, g + 2 * s, 34 * s, 3 * s, C(0x2E4A3A)); c.ellipse(c.w / 2, g + 2 * s, 30 * s, 2 * s, C(0x0A100C))
+    }
+
+    /// The screen saver's tiers: catwalks across the hall every so far up, each as wide as the dome is there, with a
+    /// rail, small green lights along its edge, pods standing on it and strips of glyphs between them. Each leaves a gap
+    /// in the middle for the beam.
+    private static func s4Tiers(_ c: PixelCanvas, _ g: Int, s: Int) {
+        let mid = c.w / 2, gap = 34 * s
+        for (t, y) in stride(from: g - 74 * s, to: g / 3, by: -64 * s).enumerated() {
+            let k = Double(g - y) / Double(g)
+            let x0 = Int(Double(mid) * k * k * 0.9) + 4 * s, x1 = c.w - x0
+            guard mid - gap - x0 > 20 * s else { break }
+            for (a, b) in [(x0, mid - gap), (mid + gap, x1)] {
+                c.rect(a, y, b - a, 3 * s, C(0x1E2A24)); c.rect(a, y, b - a, s, C(0x4A6A5A))
+                c.rect(a, y - 7 * s, b - a, max(1, s / 2), C(0x3E5046))
+                for x in stride(from: a, to: b, by: 8 * s) { c.rect(x, y - 7 * s, max(1, s / 2), 7 * s, C(0x2E3E36)) }
+                for x in stride(from: a + 4 * s, to: b, by: 12 * s) { c.rect(x, y + 3 * s, s, s, C(0x6AE8A0, 0.7)) }
+                // Pods along it, glyph strips between.
+                var n = 0
+                for x in stride(from: a + 6 * s, to: b - 14 * s, by: 22 * s) {
+                    if (n + t) % 3 == 2 {
+                        c.rect(x, y - 16 * s, 12 * s, 8 * s, C(0x101814)); c.rect(x, y - 16 * s, 12 * s, max(1, s / 2), C(0x3E5046))
+                        for r in 0..<2 { for q in 0..<3 where noise(t * 90 + n * 7 + r * 3 + q + x / s) > 0.35 {
+                            c.rect(x + 2 * s + q * 3 * s, y - 14 * s + r * 3 * s, 2 * s, s, C(0x4AD87A))
+                        } }
+                    } else {
+                        c.rect(x, y - 22 * s, 12 * s, 22 * s, C(0x1E2E26)); c.rect(x + s, y - 21 * s, 10 * s, 20 * s, C(0x5AB88A, 0.22))
+                        c.ellipse(x + 6 * s, y - 16 * s, 3 * s, 3 * s, C(0xC8D8CC, 0.5)); c.rect(x + 4 * s, y - 13 * s, 4 * s, 9 * s, C(0xC8D8CC, 0.4))
+                        c.rect(x, y - 22 * s, 12 * s, s, C(0x6A8A7A))
+                    }
+                    n += 1
+                }
+            }
+        }
     }
 
     /// What moves in the mothership: the beam coming up through the floor ring and breathing, the glyph panels and the

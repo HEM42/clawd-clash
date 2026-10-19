@@ -174,19 +174,19 @@ private func drawGandalfBody(_ c: PixelCanvas, _ p: Pose, _ w: WizardLook, sig: 
         c.px(24, y, robeShade); if y > 38 { c.px(32, y, robeShade) }
     }
     // Grey hair falling from under the brim to the shoulders, and bushy brows.
-    c.pattern(16, 26, ["HHH", "HhH", "HHH", "hHH", "HHH", ".Hh", ".H."], ["H": hair, "h": hairShade])
-    c.pattern(37, 26, ["HHH", "HhH", "HHH", "HHh", "HHH", "hH.", ".H."], ["H": hair, "h": hairShade])
+    c.pattern(16, 26, ["HHH", "HhH", "HhH", "HHH", "HHh", ".Hh", ".H."], ["H": hair, "h": hairShade])
+    c.pattern(37, 26, ["HHH", "HhH", "HhH", "HHH", "hHH", "hH.", ".H."], ["H": hair, "h": hairShade])
     c.rect(21, 28, 4, 1, beard); c.rect(31, 28, 4, 1, beard)
     // The long beard over the robe, to a point below the belt (folded on his lap when he sits).
     let beardRows: [String] = [
         ".HHHHHHHHHHHHHH.",
         "HHHhHHHHHHHHhHHH",
-        "bHHHHHHhHHHHHHHb",
-        ".bHHhHHHHHHhHHb.",
+        "bHHhHHHHHHHHhHHb",
+        ".bHHHHhHHHHHHHb.",
+        "..bHHHhHHhHHHb..",
         "..bHHHHHHhHHHb..",
-        "..bHHhHHHHHHHb..",
-        "...bHHHHHhHHb...",
-        "....bHHHHHHb....",
+        "...bHHHHHHHHb...",
+        "....bHHhHHHb....",
         ".....bHhHHb.....",
         "......bHHb......",
     ]
@@ -209,11 +209,11 @@ private func drawGandalfBody(_ c: PixelCanvas, _ p: Pose, _ w: WizardLook, sig: 
     } else {
         // No hat: a bushy crown of hair over the head top, swept back off the brow into the hair at the sides.
         c.pattern(16, 21, [
-            "......HHhHHHHHhHHH......",
-            "...HHHHHHHHHHHHHHHHHH...",
-            ".HHHhHHHHHHhHHHHHHHhHHH.",
-            "HHHHHHHhHHHHHHHHhHHHHHHH",
-            "HHhHHHHhHHhHHHHHhHHHHhHH",
+            "......HHHHHHHHHHHH......",
+            "...HHHHhhHHHHHHhhHHHH...",
+            ".HHhhHHHHHHHHhhHHHHHHhH.",
+            "HHHHHHHhhHHHHHHHHhhHHHHH",
+            "HHhhHHHHHHhhHHHHHHHhhHHH",
         ], ["H": hair, "h": hairShade])
     }
     if let angle = swing {
@@ -513,17 +513,17 @@ private func drawRanger(_ c: PixelCanvas, _ p: Pose, _ r: RangerLook,
         // The shaggy hair, to the shoulders, framing the face: a ragged fringe on the brow, the sides outside the face.
         c.pattern(16, 20, [
             ".....H.HHH.HHHH.HH.H....",
-            "...HHHHHHHHHHHHHHHHHH...",
-            ".HHHHlHHHHHHHHHHlHHHHHH.",
-            ".HHlHHHHHlHHHHHHHHlHHHH.",
+            "...HHHlllHHHHlllHHHHH...",
             ".HHHHHHHHHHHHHHHHHHHHHH.",
-            "HHHHHHlHHHHHHlHHHHHHHHHH",
-            "HHHHl..H......H.....HHHH",
-            "HHH..................HHH",
-            "HHl..................lHH",
-            "HH....................HH",
-            "HH....................HH",
+            ".HHHHHHlllHHHHHHHHHHHHH.",
+            ".HHHHHHHHHHHHHHHHHHHHHH.",
+            "HHHHllHHHHHHHHHHllHHHHHH",
+            "HHHll..H......H.....HHHH",
+            "HlH..................HHH",
+            "HlH..................lHH",
             "Hl....................lH",
+            "HH....................lH",
+            "HH....................HH",
             "HH....................H.",
             "..H..................H.H",
         ], ["H": hair, "l": hairLight])
@@ -904,8 +904,8 @@ private func drawGimli(_ c: PixelCanvas, _ p: Pose) {
     // The helmet: an iron dome, a riveted rim and cheek guards.
     c.pattern(17, 25, [
         "....HHHHHHHHHHHHHH....",
-        "..HHHHlHHHHHHHHHHHHH..",
-        ".HHlHHHHHHHHHHHHHHHHD.",
+        "..HHHlllHHHHHHHHHHHH..",
+        ".HllHHHHHHHHHHHHHHHHD.",
         "DDDDDDDDDDDDDDDDDDDDDD",
         "HHH................HHH",
         "HlH................HHD",
@@ -916,10 +916,10 @@ private func drawGimli(_ c: PixelCanvas, _ p: Pose) {
     // The beard: sideburns down the cheeks, then a great red bush to the belt, two braids hanging below it.
     c.rect(20, 31, 1, 2, beard); c.rect(35, 31, 1, 2, beard)
     c.pattern(19, 33, [
-        ".HHHHHHHHHHHHHHHH.",
-        "HHHlHHHHHHHHHHlHHH",
+        ".HHllHHHHHHHHllHH.",
         "HHHHHHdHHHHdHHHHHH",
-        "HdHHHlHHHHHHlHHHdH",
+        "HdHHHHdHHHHdHHHHdH",
+        "HdHHdHHHllHHHdHHdH",
         ".HHHdHHHHHHHHdHHH.",
         "..HHHHHdHHdHHHHH..",
         "....TT......TT....",
@@ -1005,21 +1005,21 @@ private func drawBoromir(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 36, 20, 1, C(0x3A2A1E)); c.px(27, 36, C(0xC8A040))           // the belt and its buckle
     // The fur collar, heavy across the shoulders.
     c.pattern(15, 33, [
-        "..FfFFlFFfFFFFfFFlFFfFF...",
-        ".FFFlFFfFFFlFFFFlFFFfFFFF.",
+        "..FllFFFllFFFFllFFFllFF...",
+        ".fFFFfFFFFfFFFfFFfFFFfFFF.",
         "..dFF.dFF.FdF.FdF.dFF.d...",
     ], ["F": fur, "f": furDark, "l": furLight, "d": furDark])
     // Chestnut hair to the shoulders.
     c.pattern(16, 20, [
         ".......HHHHHHHHHH.......",
         "....HHHHHHHHHHHHHHHH....",
-        "..HHHHlHHHHHHHHHHlHHHH..",
-        ".HHHHHHHHHlHHHHHHHHHHHH.",
-        ".HHlHHHHHHHHHHHHHHlHHHH.",
-        "HHHHHHHHdHHHHHdHHHHHHHHH",
-        "HHHHHd............dHHHHH",
-        "HHHd................dHHH",
-        "HHH..................HHH",
+        "..HHHlllHHHHHHHlllHHHH..",
+        ".HHHHHHHHHHHHHHHHHHHHHH.",
+        ".HHHHHHHHllHHHHHHHHHHHH.",
+        "HHHHHHHddHHHHHddHHHHHHHH",
+        "HHHHdd............ddHHHH",
+        "HHdH................HdHH",
+        "HHd..................dHH",
         "HHd..................dHH",
         "HHH..................HHH",
         ".Hd..................dH.",
@@ -1102,7 +1102,7 @@ private func drawGaladriel(_ c: PixelCanvas, _ p: Pose) {
     c.oy += p.breathe
     // Her hair down her back, to the waist.
     c.pattern(14, 25, [
-        "HHHH", "HhHH", "HHhH", "HHHH", "hHHH", "HHhH", "HHHH", "HhHH", "HHHH", "HHhH", ".HHH", ".HhH", "..HH",
+        "HHHH", "HhHH", "HhHH", "HHHH", "HHhH", "HHhH", "HHHH", "HhHH", "HhHH", "HHHH", ".HhH", ".HhH", "..HH",
     ], ["H": hair, "h": hairShade])
     let sig = p.signature
     let lift: Double = sig.map { s in s < 0.2 ? smooth(s / 0.2) : s < 0.8 ? 1 : 1 - smooth((s - 0.8) / 0.2) } ?? 0
@@ -1122,18 +1122,18 @@ private func drawGaladriel(_ c: PixelCanvas, _ p: Pose) {
     // The hair over the head, down either side of the face, and the circlet.
     c.pattern(16, 19, [
         ".......HHHHHHHHHH.......",
-        "....HHHHHHHlHHHHHHHH....",
-        "..HHHHHHHlHHHHHHHHHHHH..",
-        ".HHHHHHHHHHHHHHHlHHHHHH.",
+        "....HHHHHHlllHHHHHHH....",
+        "..HHHHHHHHHHHHHHlllHHH..",
+        ".HHHHHHHHHHHHHHHHHHHHHH.",
         ".HHhHHHHHHHHHHHHHHHHhHH.",
-        "HHHHHHHHHHHHHHHHHHHHHHHH",
+        "HHHhHHHHHHHHHHHHHHHHhHHH",
         "HHHh................hHHH",
         "HHh..................hHH",
-        "HHH..................HHH",
+        "HHh..................hHH",
         "HHh..................hHH",
         "HHH..................HHH",
         "HHh..................hHH",
-        "HHH..................HHH",
+        "HHh..................hHH",
         ".HH..................HH.",
         ".Hh..................hH.",
         ".HH..................HH.",

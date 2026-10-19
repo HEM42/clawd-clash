@@ -198,18 +198,18 @@ private func drawTheoden(_ c: PixelCanvas, _ p: Pose) {
     // Long white hair, combed back to the shoulders, the sides outside the face.
     c.pattern(16, 20, [
         ".......HHHHHHHHHH.......",
-        "....HHHHHHHlHHHHHHHH....",
-        "..HHHHHlHHHHHHHHHlHHHH..",
+        "....HHHHHHlllHHHHHHH....",
+        "..HHHHlllHHHHHHHlllHHH..",
         ".HHHHHHHHHHHHHHHHHHHHHH.",
         ".HHhHHHHHHHHHHHHHHHHhHH.",
-        "HHHHHHhHHHHHHHHhHHHHHHHH",
-        "HHHHh..............hHHHH",
+        "HHHhHHhhHHHHHHhhHHHHhHHH",
+        "HHHhh..............hhHHH",
         "HHHh................hHHH",
-        "HHH..................HHH",
+        "HHh..................hHH",
         "HHh..................hHH",
         "HHH..................HHH",
         ".Hh..................hH.",
-        ".HH..................HH.",
+        ".Hh..................hH.",
     ], ["H": hair, "h": hairShade, "l": hairLight])
     // The circlet: a gold band round the brow, raised to a peak at the front, an emerald in it.
     c.rect(17, 24, 22, 1, rohanGold)
@@ -226,10 +226,10 @@ private func drawTheoden(_ c: PixelCanvas, _ p: Pose) {
     let beardRows = [
         "HHHHHHHHHHHHHH",
         "HHHhHHHHHHhHHH",
-        ".HHHHHhHHHHHH.",
-        "..HHhHHHHhHH..",
+        ".HHhHHhHHHhHH.",
+        "..HHHHhHHHHH..",
         "...HHHHhHH....",
-        "....HhHH......",
+        "....HHhH......",
     ]
     c.pattern(21, 32, Array(beardRows.prefix(max(0, 43 - c.oy - 32 + 1))), ["H": hair, "h": hairShade])
     c.rect(25, 32, 6, 1, hairShade)                                           // the moustache's edge
@@ -420,20 +420,20 @@ private func drawFaramirBody(_ c: PixelCanvas, _ p: Pose, _ m: FaramirMove?) {
     // The hood, up, mottled green and brown, its sides falling to the shoulders; short dark hair under its brim.
     c.pattern(15, 18, [
         ".......BBBBBBBBBBB........",
-        ".....BBBdBBBBfBBBBBB......",
-        "....BBfBBBBBBBBBdBBBB.....",
-        "...BBBBBBdBBBBBBBBBfBB....",
-        "...BdBBBBBBBfBBBBBBBBBB...",
-        "..BBBBfBBBBBBBBBBdBBBBBB..",
-        "..BBBBBBBBBBBBBBBBBBfBBB..",
-        ".BBdBB..............BBdBB.",
-        ".BBBd................BBBB.",
-        ".BfBB................dBfB.",
+        ".....BBddBBBBffBBBBB......",
+        "....BffBBBBBBBBddBBBB.....",
+        "...BBBBBddBBBBBBBBffBB....",
+        "...BddBBBBBBffBBBBBBBBB...",
+        "..BBBffBBBBBBBBBBddBBBBB..",
+        "..BBBBBBBBBBBBBBBBBffBBB..",
+        ".BddBB..............BddBB.",
+        ".BBBB................BBBB.",
+        ".BffB................ddBB.",
         "BBBB..................BBBB",
-        "BdBB..................BBdB",
-        "BBBf..................BBBB",
-        "BBBB..................fBB.",
-        ".dBB..................BBd.",
+        "BddB..................BddB",
+        "BBff..................BBBB",
+        "BBBB..................ffB.",
+        ".ddB..................Bdd.",
     ], ["B": mottle, "d": mottleDark, "f": mottleBrown])
     c.rect(21, 25, 14, 1, hair); c.px(24, 25, hairLight); c.px(30, 25, hairLight)
     c.rect(19, 26, 2, 1, hair); c.rect(35, 26, 2, 1, hair)
@@ -485,7 +485,7 @@ private func drawRangerCape(_ c: PixelCanvas, t: Double, speed: Double, color: P
         let l = Int((15.5 - k * 3.5 + sway).rounded()), r = 24 + Int((k * 2).rounded())
         c.rect(l, y, r - l + 1, 1, color)
         c.px(l, y, dark)
-        if y % 3 == 0 { c.px(l + 2, y, fleck) } else if y % 4 == 1 { c.px(l + 4, y, dark) }
+        if y % 3 == 0 { c.rect(l + 2, y, 2, 1, fleck) } else if y % 4 == 1 { c.rect(l + 4, y, 2, 1, dark) }
     }
 }
 

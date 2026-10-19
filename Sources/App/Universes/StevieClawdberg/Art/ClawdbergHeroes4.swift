@@ -105,7 +105,7 @@ private func drawMikeyWaltz(_ c: PixelCanvas, _ p: Pose) {
 /// back, in grey sweats and white sneakers. He fights with his fists. Signature: he pumps the chest expander, its two
 /// red handles pulled wide and its springs stretching across his chest, three reps.
 private func drawBrandWaltz(_ c: PixelCanvas, _ p: Pose) {
-    let sweats = C(0x8C8E94), sweatsD = C(0x6A6C72), band = C(0xD23A30)
+    let sweats = C(0x8C8E94), sweatsD = C(0x6A6C72), sweatsL = C(0xA8AAB0), band = C(0xD23A30)
     let hair = C(0x9A6A3A), hairL = C(0xB8864E), spring = C(0xD8DCE4), springD = C(0x8A8E96)
     let sig = p.signature
     let pumping = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
@@ -117,12 +117,16 @@ private func drawBrandWaltz(_ c: PixelCanvas, _ p: Pose) {
     // The sweatshirt, its ribbed collar and hem.
     c.rect(18, 33, 20, 5, sweats); c.rect(37, 33, 1, 5, sweatsD); c.rect(18, 37, 20, 1, sweatsD)
     c.rect(24, 33, 8, 1, sweatsD)
+    // Light along the shoulders, the front pocket's seam and a fold either side.
+    c.rect(18, 33, 6, 1, sweatsL); c.rect(32, 33, 5, 1, sweatsL)
+    c.rect(24, 35, 8, 1, sweatsD); c.px(24, 36, sweatsD); c.px(31, 36, sweatsD)
+    c.rect(20, 34, 1, 2, sweatsD); c.rect(34, 34, 1, 2, sweatsD)
     // Feathered hair, parted in the middle and swept back.
     c.pattern(16, 20, [
         ".......HHHHHHHH.......",
-        ".....HHHHHhhHHHHH.....",
-        "...HHHHHhHHHHhHHHHH...",
-        "..HHHHhHHHHHHHHhHHHH..",
+        ".....HHHhhHHhhHHH.....",
+        "...HHHhhHHHHHHhhHHH...",
+        "..HHhhHHHHHHHHHHhhHH..",
         ".HHHHHHHHHHHHHHHHHHHH.",
         "HHHHHHHHHHHHHHHHHHHHH.",
         "HH....................",
@@ -149,6 +153,8 @@ private func drawBrandWaltz(_ c: PixelCanvas, _ p: Pose) {
     }
     if let a = p.melee {
         cbPunch(c, angle: a, trail: p.trail, arm: sweats)
+    } else {
+        c.rect(15, 35, 3, 1, sweatsD); c.rect(38, 35, 3, 1, sweatsD)   // the ribbed cuffs
     }
 }
 
@@ -413,7 +419,7 @@ private func drawAndyCarmichaw(_ c: PixelCanvas, _ p: Pose) {
 /// purple turtleneck sweater, jeans and sneakers. She fights with a punch. Signature: the glasses slide down
 /// her nose and she pushes them back up with one finger, and they glint.
 private func drawStefSteinclawd(_ c: PixelCanvas, _ p: Pose) {
-    let sweater = C(0x6A4A8A), sweaterD = C(0x4C3266), frame = C(0x2A1E2A), lens = C(0xCFE6F0, 0.35)
+    let sweater = C(0x6A4A8A), sweaterD = C(0x4C3266), sweaterL = C(0x8466A4), frame = C(0x2A1E2A), lens = C(0xCFE6F0, 0.35)
     let hair = C(0x2E1E14), hairL = C(0x4A3222)
     let sig = p.signature
     let pushing = sig.map { $0 > 0.3 && $0 < 0.75 } ?? false
@@ -424,17 +430,20 @@ private func drawStefSteinclawd(_ c: PixelCanvas, _ p: Pose) {
     sneakers(c, step: p.step, stripe: sweater)
     c.oy += p.breathe
     // The bob, bushy at the back.
-    c.rect(15, 25, 4, 9, hair); c.px(16, 30, hairL)
+    c.rect(15, 25, 4, 9, hair); c.rect(16, 29, 1, 3, hairL)
     drawBody(c, Look(arm: pushing ? clear : sweater))
-    c.rect(15, 33, 3, 3, sweater)
+    c.rect(15, 33, 3, 3, sweater); c.rect(15, 35, 3, 1, sweaterD)
     // The sweater and its white collar.
     c.rect(18, 34, 20, 4, sweater); c.rect(37, 34, 1, 4, sweaterD); c.rect(18, 37, 20, 1, sweaterD)
     c.rect(24, 34, 8, 1, C(0x8A6AAA))   // the turtleneck's roll
+    // Light on the shoulders and the knit's folds.
+    c.rect(18, 34, 5, 1, sweaterL); c.rect(33, 34, 4, 1, sweaterL)
+    c.rect(21, 35, 1, 2, sweaterD); c.rect(34, 35, 1, 2, sweaterD); c.px(27, 36, sweaterD)
     c.pattern(16, 20, [
         ".....HHHHHHHHHHH......",
-        "...HHHHhHHHHHHhHHH....",
-        "..HHHHHHHHhHHHHHHHHH..",
-        ".HHhHHHHHHHHHHHHHhHHH.",
+        "...HHHhhhHHHHHHHHH....",
+        "..HHhhHHHHHHhhhHHHHH..",
+        ".HHHHHHHHHHHHHHHHHhhH.",
         "HHHHHHHHHHHHHHHHHHHHHH",
         "HHHHHHHHHHHHHHHHHHHHHH",
         "HHHH.HHHHHHHHHHHH.HHHH",

@@ -166,21 +166,22 @@ private func drawMarion(_ c: PixelCanvas, _ p: Pose) {
     c.oy += p.breathe
     if standing { c.ox += sin(p.t * 5) > 0 ? 1 : 0 }   // a little unsteady
     drawBody(c, Look(arm: blouse))
-    // The blouse, open at the neck, and the belt.
+    // The blouse, open at the neck, soft folds gathered over the belt; the belt and its buckle.
     c.rect(18, 33, 20, 5, blouse); c.rect(37, 33, 1, 5, blouseD)
     c.pattern(25, 33, ["dOOOOd", ".dOOd."], ["d": blouseD, "O": clawdOrange])
-    c.rect(18, 37, 20, 1, belt); c.px(28, 37, C(0xC8A04A))
+    c.rect(21, 35, 1, 2, blouseD); c.rect(34, 35, 1, 2, blouseD); c.px(23, 36, blouseD); c.px(31, 36, blouseD)
+    c.rect(18, 37, 20, 1, belt); c.rect(27, 37, 2, 1, C(0xC8A04A))
     // The bob: a straight fringe, the sides down to the jaw.
     c.pattern(16, 20, [
         "......HHHHHHHHHHH.......",
-        "....HHHHHHHHHHHHHHH.....",
-        "...HHHHHHlHHHHHHHHHHH...",
-        "..HHHHHHHHHHHHHlHHHHHH..",
-        "..HHHHHHHHHHHHHHHHHHHH..",
-        ".HHHHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHHHH.",
-        ".HHH................HHH.",
-        ".HHH................HHH.",
+        "....HHHHlllHHHHHHHH.....",
+        "...HHHllHHHHHHlllHHHH...",
+        "..HHlHHHHHHHHHHHHHHHHH..",
+        "..HHlHHHHHHHHHHHHHHHHH..",
+        ".HHHHHHlHHHHHlHHHHlHHHH.",
+        ".HHHHHHlHHHHHlHHHHlHHHH.",
+        ".HlH................HHH.",
+        ".HlH................HHH.",
         ".HHH................HHH.",
         ".HHH................HHH.",
         "..HH................HH..",
@@ -214,7 +215,7 @@ private func drawMarion(_ c: PixelCanvas, _ p: Pose) {
         c.rect(15, 33, 3, 3, blouse)
         return
     }
-    c.rect(15, 33, 3, 3, blouse)
+    c.rect(15, 33, 3, 3, blouse); c.rect(15, 35, 3, 1, blouseD)   // the sleeve, its cuff
     drawFryingPan(c, angle: p.melee ?? 78, trail: p.trail, reach: p.melee == nil ? 7.5 : 9)
 }
 
@@ -232,7 +233,7 @@ private func drawFryingPan(_ c: PixelCanvas, angle: Double, trail: [Double], rea
 /// shirt, dark trousers and white sneakers. He fights with kicks: fists up in guard and the front leg snapping out.
 /// Signature: he tugs his cap down hard, then drops into a kung-fu stance, legs wide and one hand out flat.
 private func drawShortRounds(_ c: PixelCanvas, _ p: Pose) {
-    let cap = C(0x1E2A4A), capL = C(0x34446A), shirt = C(0x8AB0D0), shirtD = C(0x6A90B0)
+    let cap = C(0x1E2A4A), capL = C(0x34446A), shirt = C(0x8AB0D0), shirtD = C(0x6A90B0), shirtL = C(0xA8C8E4)
     let trousers = C(0x3A3A44), shoe = C(0xF0F0EC), hair = C(0x1A1614)
     let sig = p.signature
     let pulling = sig.map { $0 > 0.05 && $0 < 0.35 } ?? false
@@ -247,16 +248,19 @@ private func drawShortRounds(_ c: PixelCanvas, _ p: Pose) {
     // The shirt.
     c.rect(21, 35, 14, 4, shirt); c.rect(34, 35, 1, 4, shirtD); c.rect(21, 38, 14, 1, shirtD)
     c.pattern(26, 35, ["dOOd", ".dd."], ["d": shirtD, "O": clawdOrange])
+    // Light along the shoulders, a fold either side and the pocket.
+    c.rect(21, 35, 4, 1, shirtL); c.rect(30, 35, 4, 1, shirtL)
+    c.rect(23, 36, 1, 2, shirtD); c.px(32, 37, shirtD); c.rect(30, 36, 2, 1, shirtD)
     c.rect(24, 32, 2, 2, ink); c.rect(30, 32, 2, 2, ink)
     // The cap, pulled down a row while he tugs at it; black hair under it at the back.
     c.rect(21, 30, 1, 2, hair)
     let capY = pulling ? 27 : 26
     c.pattern(20, capY, [
         "...CCCCCCCC......",
-        "..CCCCCCCwCCC....",
-        ".CCCCCCCCCCCCC...",
-        ".CCCCCCCCCCCCClLL",
-    ], ["C": cap, "w": white, "l": capL, "L": cap])
+        "..CllllCCwCCC....",
+        ".CllCCCCCCCCCd...",
+        ".CCCCCCCCCCCCdlLL",
+    ], ["C": cap, "w": white, "l": capL, "L": cap, "d": C(0x141C34)])
 
     if pulling {
         // A hand up on the peak, tugging it down.
@@ -277,6 +281,7 @@ private func drawShortRounds(_ c: PixelCanvas, _ p: Pose) {
         return
     }
     c.rect(19, 35, 2, 2, shirt); c.rect(35, 35, 2, 2, shirt); c.px(36, 36, clawdOrange)
+    c.rect(19, 36, 2, 1, shirtD)   // the cuff
 }
 
 // MARK: - Willie Scoot
@@ -286,7 +291,7 @@ private func drawShortRounds(_ c: PixelCanvas, _ p: Pose) {
 /// Signature: a beetle lands on her arm and she leaps in the air screaming, arms flailing, mouth wide open.
 private func drawWillieScoot(_ c: PixelCanvas, _ p: Pose) {
     let gown = C(0xC8962E), gownD = C(0x9A6E1E), sequin = C(0xFFEC9A), heel = C(0xE8C050)
-    let hair = C(0xF2DC8A), hairL = C(0xFFF0B8), hairD = C(0xC8AE5A), bug = C(0x1E2416)
+    let hair = C(0xF2DC8A), hairL = C(0xFFF0B8), hairD = C(0xC8AE5A), bug = C(0x1E2416), gownL = C(0xE0B04A)
     let sig = p.signature
     let fright = sig.map { $0 > 0.05 && $0 < 0.95 } ?? false
     var jump = 0
@@ -304,6 +309,9 @@ private func drawWillieScoot(_ c: PixelCanvas, _ p: Pose) {
     // The gown: a strapless bodice, the skirt down over the knees, sequins twinkling.
     c.rect(18, 33, 20, 5, gown); c.rect(37, 33, 1, 5, gownD)
     hem(c, gown, dark: gownD, length: 2)
+    // The bodice's lit top edge, the seam at the waist and the skirt falling in folds.
+    c.rect(18, 33, 19, 1, gownL); c.rect(18, 37, 19, 1, gownD)
+    if !seatedPose { for fx in [21, 26, 30, 34] { c.rect(fx, 38, 1, 2, gownD) } }
     let seqs = [(20, 34), (24, 36), (29, 34), (33, 36), (22, 38), (27, 39), (31, 38), (36, 34), (19, 39), (35, 39)]
     for (i, (x, y)) in seqs.enumerated() where noise(Int(p.t * 5) * 13 + i) > 0.45 { c.px(x, y, sequin) }
     // The necklace.
@@ -311,11 +319,11 @@ private func drawWillieScoot(_ c: PixelCanvas, _ p: Pose) {
     // Platinum waves, pinned up, a few curls down the sides.
     c.pattern(15, 19, [
         "......HHHHHHHHHHHH......",
-        "....HHHHlHHHHHlHHHHH....",
-        "...HHHHHHHHlHHHHHHHHH...",
-        "..HHlHHHHHHHHHHHHlHHHH..",
-        "..HHHHHHHdHHHHHHHHHHHH..",
-        "..HHHHHlHHHHHHlHHHHHHH..",
+        "....HHHlllHHHHllHHHH....",
+        "...HHllHHHHHlllHHHHHH...",
+        "..HHHHHHHHHHHHHHHHHHdH..",
+        "..HllHHHHHHHHHHllHHHdH..",
+        "..HHHHHHHHHHHHHHHHHdHH..",
         ".HHHHHHHHHHHHHHHHHHHHHH.",
         ".HHHHH.HHHHHHH...HHHHHH.",
         ".HHHd..............dHHH.",
@@ -515,6 +523,9 @@ private func drawMarcusBrodie(_ c: PixelCanvas, _ p: Pose) {
     // The suit, its waistcoat, the shirt and tie.
     c.rect(18, 34, 20, 4, suit); c.rect(37, 34, 1, 4, suitD); c.rect(18, 37, 20, 1, suitD)
     c.pattern(24, 34, ["lSTTSl", ".lTTl.", ".dTTd."], ["l": suitL, "S": shirt, "T": tie, "d": suitD])
+    // Light along the shoulders, a pocket flap either side and a crease down the far side.
+    c.rect(18, 34, 5, 1, suitL); c.rect(31, 34, 6, 1, suitL)
+    c.rect(19, 36, 3, 1, suitD); c.rect(33, 36, 3, 1, suitD); c.px(35, 35, suitD)
     // The fringe of grey hair and the combed-over strands, and the moustache.
     c.pattern(17, 24, [
         "....h.h..h.h.h......",
@@ -527,6 +538,7 @@ private func drawMarcusBrodie(_ c: PixelCanvas, _ p: Pose) {
 
     guard reading, let s = sig else {
         c.rect(15, 33, 3, 3, suit); c.rect(38, 33, 3, 3, suit)
+        c.rect(15, 35, 3, 1, suitD); c.rect(38, 35, 3, 1, suitD)   // the cuffs
         return
     }
     // The map held up in front of him, turned round half way through.
@@ -663,6 +675,9 @@ private func drawMutt(_ c: PixelCanvas, _ p: Pose) {
     c.rect(25, 33, 6, 5, tee); c.rect(26, 37, 4, 1, C(0xD0CEC8))
     c.rect(23, 33, 2, 2, leatherL); c.rect(31, 33, 2, 2, leatherL)
     c.rect(24, 35, 1, 3, chrome); c.px(20, 36, chrome)
+    // The leather catching the light along the shoulders and down a crease, a seam on each side.
+    c.rect(18, 33, 4, 1, leatherL); c.rect(33, 33, 4, 1, leatherL)
+    c.rect(21, 35, 1, 2, leatherL); c.rect(34, 34, 1, 3, C(0x121216))
     // Sideburns, the cap pushed back, and the quiff in front of it.
     c.rect(18, 26, 2, 3, quiff)
     c.pattern(16, 20, [
@@ -675,14 +690,14 @@ private func drawMutt(_ c: PixelCanvas, _ p: Pose) {
     ], ["K": leather, "l": leatherL, "S": chrome])
     c.pattern(30, 19, [
         "...QQ...",
-        "..QQQQ..",
-        ".QQqQQQ.",
-        "QQQQQqQQ",
+        "..QqqQ..",
+        ".QqqQQQ.",
+        "QQQQqqQQ",
         "QQQQQQQ.",
         "QQQQQ...",
         "QQQ.....",
     ], ["Q": quiff, "q": quiffL])
-    c.rect(15, 33, 3, 3, leather)
+    c.rect(15, 33, 3, 3, leather); c.rect(15, 35, 3, 1, C(0x121216))
 
     if flicking {
         // The comb flicked out at his hip.

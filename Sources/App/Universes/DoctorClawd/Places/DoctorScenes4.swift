@@ -330,6 +330,7 @@ extension Scenes {
             }
         }
         c.rect(0, f.hy - 2 * u, c.w, 2 * u, C(0xC6CAC8, 0.35))
+        doctorBayFurniture(c, g, sea: false)
         // The sea.
         for y in f.hy..<f.sy {
             let k = Double(y - f.hy) / Double(max(1, f.sy - f.hy))
@@ -346,6 +347,7 @@ extension Scenes {
             let k = Double(y - f.sy) / Double(max(1, g - f.sy))
             c.rect(0, y, c.w, 1, lerp(C(0xA29C90), C(0xB8B09E), k))
         }
+        doctorBayFurniture(c, g, sea: true)
         c.rect(c.w * 40 / 100, g - 3 * u, 9 * u, u, C(0x6A5A48))       // a bit of driftwood
         c.rect(c.w * 40 / 100 + 2 * u, g - 4 * u, 2 * u, u, C(0x6A5A48))
         // The dunes and their grass.
@@ -363,7 +365,77 @@ extension Scenes {
             let len = (3 + Int(noise(i * 3 + 4621) * 4)) * u
             for b in -1...1 { doc4Line(c, x, top + u, x + b * 2 * u, top + u - len, blades[(i + b + 1) % 3]) }
         }
+        doctorBayDuneFurniture(c, g)
         c.ground(g, C(0xBCB4A2), edge: C(0xD2CBB8), speck: C(0xA49C8A), seed: 46)
+    }
+
+    /// Where the lighthouse stands on the headland: its middle and the row of its foot.
+    static func doctorBayLighthouse(_ c: PixelCanvas, _ g: Int) -> (x: Int, y: Int) {
+        let f = doc4BayFrame(c, g)
+        return (c.w * 91 / 100, f.hy - 8 * f.u)
+    }
+
+    /// The bay's furniture, all at fixed sizes. Before the sea (`sea` false): a pale break in the cloud with light
+    /// slanting down through it on the screen saver, a lighthouse on the headland, a fishing boat far out on the
+    /// horizon. After it: two dark sea stacks off the headland with foam at their feet.
+    private static func doctorBayFurniture(_ c: PixelCanvas, _ g: Int, sea: Bool) {
+        let f = doc4BayFrame(c, g), u = f.u
+        if !sea {
+            if isTall(c) {
+                let bx = c.w * 62 / 100, by = f.hy * 30 / 100
+                c.ellipse(bx, by, 40 * u, 6 * u, C(0xD8DCDA, 0.35)); c.ellipse(bx, by, 26 * u, 4 * u, C(0xECEEEC, 0.4))
+                for k in 0..<5 {
+                    let x0 = bx - 20 * u + k * 10 * u
+                    for y in stride(from: by + 4 * u, to: f.hy - 4 * u, by: 1) {
+                        let x = x0 + (y - by) * (k - 2) / 6
+                        c.rect(x, y, 3 * u, 1, C(0xE8ECEA, 0.07))
+                    }
+                }
+            }
+            // The lighthouse, white with a red band, on the headland's back.
+            let lh = doctorBayLighthouse(c, g)
+            c.rect(lh.x - 4 * u, lh.y, 8 * u, 6 * u, C(0x58646E))                      // the rock it stands on
+            c.rect(lh.x - 2 * u, lh.y - 10 * u, 4 * u, 10 * u, C(0xDCE0E0))
+            c.rect(lh.x + u, lh.y - 10 * u, u, 10 * u, C(0xA8AEB2))
+            c.rect(lh.x - 2 * u, lh.y - 6 * u, 4 * u, 2 * u, C(0xA84A3A))
+            c.rect(lh.x - 2 * u, lh.y - 12 * u, 4 * u, 2 * u, C(0x2E363C)); c.rect(lh.x - u, lh.y - 12 * u, 2 * u, u, C(0xF0E2A0))
+            c.rect(lh.x - 3 * u, lh.y - 13 * u, 6 * u, u, C(0x2E363C))
+            // A fishing boat, far out.
+            let bx = c.w * 47 / 100, by = f.hy
+            c.rect(bx - 4 * u, by - u, 8 * u, u, C(0x3E4850)); c.rect(bx - 3 * u, by, 6 * u, max(1, u / 2), C(0x3E4850, 0.5))
+            c.rect(bx - u, by - 3 * u, 2 * u, 2 * u, C(0x4A545C)); c.rect(bx + u, by - 5 * u, max(1, u / 2), 4 * u, C(0x3E4850))
+        } else {
+            // Two sea stacks off the headland, lit faintly from the left.
+            for (fx, w, h) in [(74, 9, 12), (80, 5, 7)] {
+                let x = c.w * fx / 100, foot = f.hy + 6 * u
+                for r in 0..<(h * u) {
+                    let half = w * u / 2 - r * u / (3 * max(1, u)) / 2 - Int(noise(r / max(1, u) + fx * 7 + 4630) * Double(u))
+                    guard half > 0 else { continue }
+                    c.rect(x - half, foot - r, 2 * half, 1, C(0x3A444C))
+                    c.rect(x - half, foot - r, max(1, half / 3), 1, C(0x5E6A72))
+                }
+                c.ellipse(x, foot, w * u / 2 + 2 * u, u, C(0xE8ECEC, 0.6))
+            }
+        }
+    }
+
+    /// On the dunes and the sand at their feet: an old fence of leaning posts with a sagging wire along the left dune,
+    /// and grey boulders where the dunes meet the beach.
+    private static func doctorBayDuneFurniture(_ c: PixelCanvas, _ g: Int) {
+        let f = doc4BayFrame(c, g), u = f.u
+        let posts = stride(from: c.w * 3 / 100, to: c.w * 20 / 100, by: max(8 * u, c.w * 4 / 100)).map { $0 }
+        var prev: (Int, Int)? = nil
+        for (k, x) in posts.enumerated() {
+            let top = doc4BayDune(c, g, x) - 7 * u, lean = k % 2 == 0 ? u : -u
+            doc4Line(c, x, top + 8 * u, x + lean, top, C(0x5E5040), th: u)
+            if let p = prev { doc4Line(c, p.0, p.1 + 2 * u, x + lean, top + 2 * u + u, C(0x4A4038, 0.7)) }
+            prev = (x + lean, top)
+        }
+        for (fx, r) in [(27, 4), (29, 2), (82, 5), (85, 3)] {
+            let x = c.w * fx / 100
+            c.ellipse(x, g - r * u / 2, r * u, r * u * 2 / 3, C(0x6E7276))
+            c.ellipse(x - r * u / 3, g - r * u * 3 / 4, r * u / 2, r * u / 3, C(0x9A9EA0))
+        }
     }
 
     /// What moves at the bay: lines of surf rolling in, a wash of foam running up the sand and sliding back, and a
@@ -399,6 +471,11 @@ extension Scenes {
                 c.rect(x, f.sy, 1, max(0, edge - f.sy), C(0x9AA8AC, 0.35))
                 c.rect(x, edge, 1, u, C(0xF0F2F0, 0.75))
             }
+        }
+        // The lighthouse's lamp, flashing.
+        if doc4Phase(t, 5) < 0.15 {
+            let lh = doctorBayLighthouse(c, g)
+            c.circle(lh.x, lh.y - 12 * u, 3 * u, C(0xFFF2C0, 0.35)); c.rect(lh.x - u, lh.y - 12 * u, 2 * u, u, C(0xFFF8E0))
         }
         // Gulls.
         for i in 0..<2 {
@@ -579,10 +656,22 @@ extension Scenes {
         let f = doc4AsylumFrame(c, g), u = f.u, tall = isTall(c)
         c.gradient(0, g, C(0x1E1A2C), C(0x7A7088), bands: 8)
         c.circle(c.w * 30 / 100, g * 22 / 100, 6 * u, C(0xD0C8DA, 0.35))
+        if tall { doctorAsylumSky(c, g) }
         for i in 0..<(tall ? 24 : 11) {
             let x = Int(noise(i * 4 + 4800) * Double(c.w)), y = Int(noise(i * 4 + 4801) * Double(g) * 0.6)
             c.ellipse(x, y, (30 + Int(noise(i * 4 + 4802) * 50)) * u, (2 + Int(noise(i * 4 + 4803) * 3)) * u,
                       (i % 2 == 0 ? C(0x2A2638) : C(0x4A4458)).alpha(0.65))
+        }
+        if tall {
+            // A far range on the screen saver, pale in the haze, snow on its upper slopes.
+            let fb = g - 12 * u
+            for x in 0..<c.w {
+                let xf = Double(x)
+                let v = (sin(xf * 0.008 + 1.3) * 0.5 + 0.5) * 0.7 + abs((xf * 0.017).truncatingRemainder(dividingBy: 2) - 1) * 0.3
+                let hgt = Int(v * Double(56 * u)) + 6 * u
+                c.rect(x, fb - hgt, 1, hgt, C(0x5E5872))
+                c.rect(x, fb - hgt, 1, max(1, hgt / 4), C(0x9A96AC))
+            }
         }
         // Jagged peaks.
         let mb = g - 10 * u
@@ -596,11 +685,74 @@ extension Scenes {
             c.rect(x, mb - hgt, 1, max(1, hgt / 3), C(0xC8C6D4))
         }
         c.dunes(base: g - 8 * u, amp: Double(2 * u), freq: 0.02, phase: 0.7, bottom: g, C(0xC8CAD6), shade: C(0xEEF0F6))
+        doctorAsylumGrounds(c, g)
         doc4AsylumDome(c, g)
         doc4Dalick(c, f.kx, g - u, u)
         // The drifts that bury them.
         c.dunes(base: g - 4 * u, amp: Double(3 * u), freq: 0.03, phase: 0.4, bottom: g, C(0xE2E4EC), shade: C(0xFAFBFD))
         c.ground(g, C(0xD8DAE4), edge: C(0xF4F6FA), speck: C(0xB8BAC8), seed: 48)
+    }
+
+    /// High over the asylum on the screen saver: a pale ringed planet, and the planetary shield, a great faint arc of
+    /// hexagon cells curving across the sky.
+    private static func doctorAsylumSky(_ c: PixelCanvas, _ g: Int) {
+        let u = doc4AsylumFrame(c, g).u
+        let px = c.w * 80 / 100, py = g * 14 / 100
+        c.ellipse(px, py, 22 * u, 3 * u, C(0x9A90AE, 0.45))
+        c.circle(px, py, 11 * u, C(0x6A6280)); c.circle(px - 3 * u, py - 3 * u, 7 * u, C(0x7E7694))
+        doc4LowerEllipse(c, px, py, 22 * u, 3 * u, minY: py + u, C(0xB4AAC6, 0.55))
+        // The shield: an arc from one side of the sky to the other, its cells outlined faintly.
+        let cx = c.w / 2, cy = g * 120 / 100, r = max(c.w * 70 / 100, g)
+        let cell = 9 * u
+        for i in stride(from: 0, to: c.w, by: max(1, u)) {
+            let dx = Double(i - cx), k = Double(r * r) - dx * dx
+            guard k > 0 else { continue }
+            let y = cy - Int(k.squareRoot())
+            guard y > 2 * u, y < g * 55 / 100 else { continue }
+            c.rect(i, y - u, max(1, u), 3 * u, C(0x9AD8E8, 0.12)); c.rect(i, y, max(1, u), max(1, u), C(0xC8F0F8, 0.45))
+            for band in 1...3 {
+                let yy = y + band * cell
+                if (i / cell + band) % 2 == 0 { c.rect(i, yy, max(1, u), max(1, u / 2), C(0x9AD8E8, 0.22)) }
+            }
+            if i % cell < u { c.rect(i, y, max(1, u / 2), 3 * cell, C(0x9AD8E8, 0.16)) }
+        }
+    }
+
+    /// Round the asylum, at fixed sizes: a smaller outbuilding dome and a bent radio mast on the far snow, three old
+    /// Dalicks sunk to their shoulders in the drifts further off, and a ribbed conduit running from the dome into the
+    /// snow on the left.
+    private static func doctorAsylumGrounds(_ c: PixelCanvas, _ g: Int) {
+        let f = doc4AsylumFrame(c, g), u = f.u, far = g - 8 * u
+        // The outbuilding.
+        let ox = c.w * 40 / 100
+        doc4UpperEllipse(c, ox, far + u, 14 * u, 9 * u, maxY: far + u, C(0x4E4C5A))
+        doc4UpperEllipse(c, ox - 3 * u, far + u, 6 * u, 7 * u, maxY: far + u, C(0x605E70))
+        c.rect(ox - 2 * u, far - 4 * u, 4 * u, 5 * u, C(0x1A1820)); c.rect(ox - u, far - 3 * u, 2 * u, u, C(0xC8502A, 0.7))
+        c.rect(ox - 10 * u, far - 7 * u, 20 * u, max(1, u / 2), C(0xE6E8F0, 0.7))
+        // The radio mast, a lattice bent over near its top.
+        let mx = c.w * 92 / 100
+        for k in 0..<(30 * u) {
+            let bend = k > 22 * u ? (k - 22 * u) / 2 : 0
+            c.rect(mx - 2 * u + bend, far - k, u, 1, C(0x3A3846)); c.rect(mx + u + bend, far - k, u, 1, C(0x3A3846))
+            if (k / u) % 4 == 0 { c.rect(mx - 2 * u + bend, far - k, 4 * u, max(1, u / 2), C(0x3A3846)) }
+        }
+        c.rect(mx - 6 * u, far - 18 * u, 12 * u, max(1, u / 2), C(0x3A3846))
+        c.rect(mx - 6 * u, far - 18 * u - u, 12 * u, max(1, u / 2), C(0xE6E8F0, 0.6))
+        // Dalicks sunk in the far drifts: heads and shoulders, dark against the snow.
+        for (k, fx) in [8, 50, 86].enumerated() {
+            let x = c.w * fx / 100, y = far + u
+            c.rect(x - 4 * u, y - 4 * u, 8 * u, 4 * u, C(0x4A3A2A)); c.rect(x - 4 * u, y - 4 * u, 8 * u, u, C(0x6A5434))
+            c.ellipse(x, y - 6 * u, 3 * u, 2 * u, C(0x5A4630))
+            doc4Line(c, x + 2 * u, y - 6 * u, x + 5 * u, y - (k == 1 ? 3 : 7) * u, C(0x2A2A2A), th: max(1, u / 2))
+            c.ellipse(x, y - 8 * u, 2 * u, u / 2 + 1, C(0xF0F2F6))
+        }
+        // The conduit, half buried, ribbed every few units.
+        let y = g - 6 * u
+        for x in stride(from: f.dx - f.rx - 2 * u, to: f.dx - f.rx - 34 * u, by: -1) {
+            let dip = Int(sin(Double(x) / Double(10 * u)) * Double(u))
+            c.rect(x, y + dip, 1, 3 * u, C(0x4A4856)); c.rect(x, y + dip, 1, u, C(0x75738A))
+            if (x / u) % 5 == 0 { c.rect(x, y + dip - u / 2, max(1, u), 4 * u, C(0x3A3846)) }
+        }
     }
 
     /// The asylum's dome, half buried.
