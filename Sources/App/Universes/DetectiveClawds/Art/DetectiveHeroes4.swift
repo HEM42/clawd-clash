@@ -44,6 +44,7 @@ let dcHeroes4: [DCHero: Persona] = [
 
 private let clear = C(0x000000, 0)
 private let glGreen = C(0x2E9E44), glGreenD = C(0x1E7432), glBlack = C(0x1E2026), glBlackD = C(0x121318)
+private let glGreenL = C(0x4AB860), glBlackL = C(0x363840)
 private let ringCore = C(0xE8FFE0), ringGlow = C(0x2ADB4A)
 
 /// Draws `shape` (any solid silhouette, drawn on a scratch canvas with the same offsets) as a ring construct: a
@@ -107,6 +108,23 @@ private func lanternLegs(_ c: PixelCanvas, _ p: Pose, leg: Px, boot: Px) {
     drawBoots(c, boot, step: p.step, rows: 3)
 }
 
+/// The finer detail on a Lantern's uniform (rows 33…37, clear of the emblem): the green down the middle lit along
+/// the top and shaded low, the black sides lit along the shoulders.
+private func lanternShading(_ c: PixelCanvas, litTop: Bool = true, sides: Bool = true) {
+    if litTop { c.rect(21, 34, 3, 1, glGreenL); c.rect(32, 34, 2, 1, glGreenL) }
+    c.rect(21, 36, 3, 1, glGreenD); c.rect(32, 36, 3, 1, glGreenD)
+    if sides { c.rect(18, 33, 2, 1, glBlackL); c.rect(35, 33, 2, 1, glBlackL) }
+}
+
+/// The boots shaded down the far side, standing or walking.
+private func shadeBoots(_ c: PixelCanvas, _ p: Pose, _ col: Px, rows: Int = 2) {
+    guard !p.flying, !seatedPose else { return }
+    for (i, lx) in [19, 23, 31, 35].enumerated() {
+        let lifted = p.step >= 0 && i % 2 == p.step
+        c.rect(lx + 1, (lifted ? 42 : 43) - rows + 1, 1, rows, col)
+    }
+}
+
 /// In flight: the ring fist thrust forward, blazing.
 private func flightFist(_ c: PixelCanvas, glove: Px, t: Double) {
     c.rect(38, 31, 4, 3, glove)
@@ -165,6 +183,7 @@ private func johnStewart(_ c: PixelCanvas, _ p: Pose) {
     let charge = p.signature.map { habitArc($0, hold: 0.55) } ?? 0
     if charge > 0 { powerBattery(c, x: 43, y: 32, alpha: charge, light: charge > 0.95 ? 1 : 0, t: p.t) }
     lanternLegs(c, p, leg: glBlack, boot: glGreen)
+    shadeBoots(c, p, glGreenD)
     c.oy += p.breathe
     drawBody(c, Look(arm: glBlack, eye: nil))
     c.pattern(18, 24, [
@@ -179,8 +198,11 @@ private func johnStewart(_ c: PixelCanvas, _ p: Pose) {
     c.rect(26, 32, 4, 1, clawdShade)
     lanternChest(c, mid: glGreen, side: glBlack, emblem: false)
     c.rect(18, 33, 20, 1, glBlack)                                    // black across the shoulders
+    c.rect(24, 24, 3, 1, hairL); c.rect(31, 25, 2, 1, hairL)            // the buzz cut catching the light
+    lanternShading(c, sides: false)
+    c.rect(18, 33, 4, 1, glBlackL); c.rect(32, 33, 4, 1, glBlackL)    // the black shoulders lit
     lanternEmblem(c, x: 25, y: 33)
-    c.rect(15, 33, 3, 3, glGreen)
+    c.rect(15, 33, 3, 3, glGreen); c.rect(15, 35, 3, 1, glGreenD)     // the glove shaded underneath
     if p.flying { flightFist(c, glove: glGreen, t: p.t); return }
     if charge > 0 {
         // Arm out, ring to the battery's lens.
@@ -251,6 +273,7 @@ private func drawGuyGardner(_ c: PixelCanvas, _ p: Pose) {
 private func guyGardner(_ c: PixelCanvas, _ p: Pose) {
     let hair = C(0xC8522A), hairD = C(0x9A3A1C), hairL = C(0xE07A44)
     lanternLegs(c, p, leg: glBlack, boot: glGreen)
+    shadeBoots(c, p, glGreenD)
     c.oy += p.breathe
     drawBody(c, Look(arm: glGreen, eye: nil))
     c.pattern(16, 21, [
@@ -270,10 +293,13 @@ private func guyGardner(_ c: PixelCanvas, _ p: Pose) {
     c.rect(22, 30, 2, 2, ink); c.rect(32, 30, 2, 2, ink)
     c.rect(22, 29, 2, 1, clawdShade); c.rect(32, 29, 2, 1, clawdShade)
     c.rect(28, 32, 4, 1, C(0x8A3A22)); c.px(32, 31, C(0x8A3A22))
+    c.rect(25, 22, 3, 1, hairL); c.rect(31, 23, 3, 1, hairL); c.rect(19, 25, 2, 1, hairL)   // runs of light on the bowl
     lanternChest(c, mid: glGreen, side: glGreen, emblem: false)
     c.pattern(18, 33, ["KKKKKK........KKKKKK", ".KKKK..........KKKK.", "..KK............KK.."], ["K": glBlack])
+    c.rect(18, 33, 3, 1, glBlackL); c.rect(33, 33, 3, 1, glBlackL)    // the collar lit along the top
+    c.rect(19, 36, 4, 1, glGreenD); c.rect(32, 36, 4, 1, glGreenD)    // the shirt shaded low
     lanternEmblem(c, x: 25, y: 33)
-    c.rect(15, 33, 3, 3, glGreen)
+    c.rect(15, 33, 3, 3, glGreen); c.rect(15, 35, 3, 1, glGreenD)     // a cuff
     if p.flying { flightFist(c, glove: glGreen, t: p.t); return }
     if let a = p.melee {
         for (i, ta) in p.trail.enumerated() { construct(c, alpha: 0.35 / Double(i + 1)) { guyMallet($0, angle: ta) } }
@@ -367,10 +393,12 @@ private func kyleRayner(_ c: PixelCanvas, _ p: Pose) {
         "....MMMMWKMMMMMMMMWKMM....",
         ".....MMMMMM.....MMMMM.....",
     ], ["F": fin, "f": glGreenD, "M": mask, "W": C(0xF2F4F2), "K": ink])
+    c.rect(23, 21, 3, 1, hairL); c.rect(30, 22, 3, 1, hairL)            // light through the shag
     c.rect(26, 32, 4, 1, clawdShade)
     lanternChest(c, mid: glGreen, side: glBlack, emblem: false)
+    lanternShading(c)
     drawLampEmblem(c, x: 25, y: 33, size: .medium, lamp: C(0xF2F4F2), field: nil)
-    c.rect(15, 33, 3, 3, glBlack)
+    c.rect(15, 33, 3, 3, glBlack); c.rect(15, 33, 3, 1, glBlackL)     // the glove's lit edge
     if p.flying { flightFist(c, glove: glBlack, t: p.t); return }
     if let s = p.signature {
         // Ring up like a pen, the dragon drawn left to right, then held, then gone.
@@ -433,7 +461,9 @@ private func jessicaCruz(_ c: PixelCanvas, _ p: Pose) {
             i % 2 == 0 ? hair : hairL, 1.9 - Double(i) * 0.3)
     }
     c.rect(16, 22 + p.breathe, 3, 3, glGreen)                                // the band
+    c.rect(16, 22 + p.breathe, 3, 1, glGreenL)
     lanternLegs(c, p, leg: glBlack, boot: glGreen)
+    shadeBoots(c, p, glGreenD)
     c.oy += p.breathe
     drawBody(c, Look(arm: glGreen, eye: nil))
     c.pattern(17, 21, [
@@ -450,8 +480,10 @@ private func jessicaCruz(_ c: PixelCanvas, _ p: Pose) {
               ["M": mask, "W": C(0xF2F4F2)])
     c.rect(22, 30, 2, 1, ink); c.rect(32, 30, 2, 1, ink)
     c.rect(27, 32, 3, 1, C(0xA84A3A))
+    c.rect(25, 21, 4, 1, hairL); c.rect(30, 22, 3, 1, hairL)            // light along her hair, pulled back
     lanternChest(c, mid: glGreen, side: glBlack)
-    c.rect(15, 33, 3, 3, glGreen)
+    lanternShading(c)
+    c.rect(15, 33, 3, 3, glGreen); c.rect(15, 35, 3, 1, glGreenD)     // the glove shaded underneath
     if p.flying { flightFist(c, glove: glGreen, t: p.t); return }
     if let s = p.signature {
         let k = habitArc(min(1, s / 0.88), hold: 0.5)
@@ -486,6 +518,7 @@ private func drawSimonBaz(_ c: PixelCanvas, _ p: Pose) {
 private func simonBaz(_ c: PixelCanvas, _ p: Pose) {
     let hood = C(0x1A1B20), hoodL = C(0x34363E)
     lanternLegs(c, p, leg: glGreen, boot: glBlack)
+    shadeBoots(c, p, glBlackL, rows: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: glBlack, eye: nil))
     c.pattern(17, 22, [
@@ -504,8 +537,11 @@ private func simonBaz(_ c: PixelCanvas, _ p: Pose) {
     ], ["K": hood, "k": hoodL, "G": glGreenD])
     c.rect(20, 29, 5, 2, clawdOrange); c.rect(31, 29, 5, 2, clawdOrange)
     c.rect(22, 29, 2, 2, ink); c.rect(32, 29, 2, 2, ink)
+    c.rect(24, 22, 3, 1, hoodL); c.rect(31, 23, 2, 1, hoodL)            // a sheen on the balaclava
     lanternChest(c, mid: glGreen, side: glBlack)
     c.rect(18, 33, 20, 1, hood)
+    lanternShading(c, sides: false)
+    c.rect(18, 33, 3, 1, hoodL); c.rect(34, 33, 3, 1, hoodL)          // the shoulders lit
     lanternEmblem(c, x: 25, y: 33)
     ringHand(c, x: 15, y: 33, glove: glBlack, glow: p.ready || p.fire != nil ? 0.6 : 0)
     if p.flying { flightFist(c, glove: glBlack, t: p.t); return }
@@ -557,13 +593,14 @@ private func kilowog(_ c: PixelCanvas, _ p: Pose) {
             let lifted = p.step >= 0 && i % 2 == p.step
             c.rect(lx, 36, 3, lifted ? 7 : 8, glBlack)
             c.rect(lx, lifted ? 39 : 40, 3, 3, glGreen)
+            c.rect(lx + 2, lifted ? 40 : 41, 1, 2, glGreenD)              // the boots shaded down the far side
         }
     }
     c.oy += p.breathe
     if yell { c.ox += 1 }                                             // leaning into it
-    // The left arm hangs at his side.
-    c.rect(10, 26, 5, 8, glGreen); c.rect(10, 26, 1, 8, glGreenD)
-    c.rect(9, 33, 6, 5, pink); c.rect(9, 37, 6, 1, shade)
+    // The left arm hangs at his side, the sleeve lit along the top, the knuckles creased.
+    c.rect(10, 26, 5, 8, glGreen); c.rect(10, 26, 1, 8, glGreenD); c.rect(11, 26, 4, 1, glGreenL)
+    c.rect(9, 33, 6, 5, pink); c.rect(9, 37, 6, 1, shade); c.rect(10, 35, 3, 1, shade)
     // The big body and head.
     c.rect(15, 22, 26, 16, pink)
     c.rect(40, 22, 1, 16, shade)
@@ -572,6 +609,8 @@ private func kilowog(_ c: PixelCanvas, _ p: Pose) {
         "...PPPPPPPPPPPPPPPPPPPP...",
     ], ["P": pink])
     c.rect(17, 21, 3, 1, C(0xF0B8BC))                                // a shine on the dome
+    c.rect(22, 23, 3, 1, shade); c.rect(31, 23, 3, 1, shade)          // furrows over the brow
+    c.rect(37, 21, 3, 1, shade); c.rect(39, 22, 1, 3, shade)           // the dome shaded on its far side
     c.pattern(12, 24, ["PP.", ".PPP", "..PP"], ["P": shade])          // ears, swept back
     c.pattern(41, 24, [".PP", "PPP.", "PP.."], ["P": shade])
     c.pattern(17, 25, [
@@ -593,6 +632,8 @@ private func kilowog(_ c: PixelCanvas, _ p: Pose) {
     c.rect(15, 34, 26, 4, glBlack)
     c.rect(19, 34, 18, 4, glGreen)
     c.rect(15, 37, 26, 1, glBlackD)
+    c.rect(20, 34, 4, 1, glGreenL); c.rect(32, 34, 4, 1, glGreenL)    // the green lit across the chest
+    c.rect(15, 34, 3, 1, glBlackL); c.rect(37, 34, 2, 1, glBlackL)    // and the black sides
     lanternEmblem(c, x: 25, y: 33)
     if p.flying {
         prop(c, at: kilowogShoulder, angle: -8) { kilowogArm($0) }
@@ -621,7 +662,7 @@ private func kilowog(_ c: PixelCanvas, _ p: Pose) {
 /// Kilowog's right arm, swung from the shoulder: bare pink upper arm, green glove, the ring.
 private func kilowogArm(_ s: PixelCanvas, point: Bool = false) {
     let pink = C(0xDE9298)
-    s.rect(18, 18, 7, 5, glGreen); s.rect(18, 22, 7, 1, glGreenD)
+    s.rect(18, 18, 7, 5, glGreen); s.rect(18, 22, 7, 1, glGreenD); s.rect(18, 18, 7, 1, glGreenL)
     s.rect(25, 18, 3, 5, pink)
     s.rect(28, 17, 5, 7, glGreen); s.rect(28, 23, 5, 1, glGreenD)
     s.px(31, 19, C(0x9CFFA8))
@@ -652,6 +693,7 @@ private func tomarRe(_ c: PixelCanvas, _ p: Pose) {
     let crest = C(0xB8302A), crestD = C(0x82201C), crestL = C(0xE85A3A), beak = C(0xE8C24A), beakD = C(0xB08A2A)
     let study = p.signature.map { habitArc($0, hold: 0.55) } ?? 0
     lanternLegs(c, p, leg: glBlack, boot: glGreen)
+    shadeBoots(c, p, glGreenD)
     c.oy += p.breathe
     drawBody(c, Look(arm: glBlack, eye: nil))
     // The crest: swept back at rest, fanned up when he's interested.
@@ -673,6 +715,9 @@ private func tomarRe(_ c: PixelCanvas, _ p: Pose) {
         "cccccccccccccccccccc",
         "cDcccccccccccccccDcc",
     ], ["c": crest, "D": crestD])
+    // The feathers in short strokes, swept back, and the far side in shade.
+    c.rect(22, 23, 3, 1, crestD); c.rect(29, 23, 3, 1, crestD); c.rect(18, 25, 3, 1, crestD); c.rect(33, 25, 3, 1, crestD)
+    c.rect(22, 22, 4, 1, crestL)
     // Eyes in pale rings, and the beak, long and hooked.
     c.pattern(21, 28, [".WW.......WW..", "WKKW.....WKKW.", "WKKW.....WKKW.", ".WW.......WW.."],
               ["W": C(0xF4E8C8), "K": ink])
@@ -683,8 +728,10 @@ private func tomarRe(_ c: PixelCanvas, _ p: Pose) {
         ".......bbbbbbbbB.",
         "...............b.",
     ], ["B": beak, "b": beakD])
+    c.rect(28, 29, 6, 1, C(0xF8DC80)); c.rect(38, 30, 2, 1, beakD)    // the beak lit along the top, a nostril
     lanternChest(c, mid: glGreen, side: glBlack)
-    c.rect(15, 33, 3, 3, glGreen)
+    lanternShading(c)
+    c.rect(15, 33, 3, 3, glGreen); c.rect(15, 35, 3, 1, glGreenD)     // the glove shaded underneath
     if p.flying { flightFist(c, glove: glGreen, t: p.t); return }
     if study > 0 {
         let y = 33 - Int((8 * study).rounded())
@@ -745,6 +792,8 @@ private func chP(_ c: PixelCanvas, _ p: Pose) {
     // Ears, head and body in one, like Clawd.
     c.pattern(23, 26, ["XX........XX", "XiX......XiX", "XiX......XiX", "XXX......XXX"], ["X": fur, "i": C(0xE0A0A0)])
     c.rect(23, 30, 12, 11, fur); c.rect(34, 30, 1, 11, furD)
+    c.rect(25, 30, 3, 1, furL); c.rect(30, 31, 2, 1, furL)                     // the crown lit in short strokes
+    c.rect(23, 36, 2, 1, furD); c.rect(32, 36, 2, 1, furD)                     // fur strokes on the cheeks
     c.pattern(23, 32, [".MMMMMMMMMM.", "MMWKMMMMWKMM", "MMKKMMMMKKMM", ".MM......MM."], ["M": glGreenD, "W": white, "K": ink])
     c.rect(26, 36, 6, 2, pale)
     c.rect(28, 35, 2, 1, ink)                                                // nose
@@ -752,6 +801,7 @@ private func chP(_ c: PixelCanvas, _ p: Pose) {
     c.rect(28, 37, 2, chew ? 1 : 2, white)                                     // buck teeth
     if nibble { c.rect(24, 36, 2, 2, furL); c.rect(32, 36, 2, 2, furL) }      // cheeks full
     c.rect(23, 38, 12, 3, glGreen); c.rect(23, 38, 2, 3, glBlack); c.rect(33, 38, 2, 3, glBlack)
+    c.rect(25, 38, 2, 1, glGreenL); c.rect(31, 38, 2, 1, glGreenL); c.rect(25, 40, 8, 1, glGreenD)   // lit, shaded low
     c.pattern(27, 38, [".WW.", "WGGW", ".WW."], ["W": C(0xF2F4F2), "G": glGreenD])
     c.rect(21, 37, 2, 2, fur)
     if p.flying {
@@ -828,6 +878,8 @@ private func adamStrange(_ c: PixelCanvas, _ p: Pose) {
     let jy = 26 + p.breathe
     c.rect(12, jy, 7, 11, silver); c.rect(12, jy, 1, 11, silverD); c.rect(15, jy, 1, 11, silverD)
     c.rect(12, jy + 3, 7, 1, silverD); c.rect(12, jy + 8, 7, 1, silverD)
+    c.rect(13, jy, 2, 1, C(0xDCE0E6)); c.rect(16, jy, 2, 1, C(0xDCE0E6))   // the tanks lit along the top
+    c.px(17, jy + 5, C(0xFF5A3A))                                           // a little light on the pack
     c.rect(13, jy + 11, 2, 1, C(0x4A4E58)); c.rect(16, jy + 11, 2, 1, C(0x4A4E58))
     if p.flying || (p.ready && p.urgent) {
         drawJet(c, x: 13, y: jy + 12, w: 2, t: p.t, seed: 3); drawJet(c, x: 16, y: jy + 12, w: 2, t: p.t, seed: 9)
@@ -837,6 +889,7 @@ private func adamStrange(_ c: PixelCanvas, _ p: Pose) {
     } else {
         drawLegs(c, Look(leg: red), step: p.step)
         drawBoots(c, wht, step: p.step, rows: 2)
+        shadeBoots(c, p, C(0xB8BCC6), rows: 2)
     }
     c.oy += p.breathe
     drawBody(c, Look(arm: red, eye: ink))
@@ -857,8 +910,10 @@ private func adamStrange(_ c: PixelCanvas, _ p: Pose) {
     c.rect(20, 19, 3, 1, C(0xF07A7A))                                    // shine
     c.rect(26, 32, 4, 1, clawdShade)
     c.rect(18, 33, 20, 5, red); c.rect(37, 33, 1, 5, redD); c.rect(18, 37, 20, 1, redD)
+    c.rect(18, 33, 4, 1, C(0xE85050)); c.rect(32, 33, 3, 1, C(0xE85050))   // the suit lit along the shoulders
+    c.rect(22, 35, 1, 2, redD); c.rect(33, 35, 1, 2, redD)                // and creased either side
     c.pattern(25, 33, [".WWWW.", "WRRRRW", "WRWWRW", "WRRRRW", ".WWWW."], ["W": wht, "R": red])
-    c.rect(15, 33, 3, 3, red)
+    c.rect(15, 33, 3, 3, red); c.rect(15, 35, 3, 1, redD)                 // a cuff
     if p.flying {
         c.rect(38, 31, 4, 3, red)
         drawRayGun(c, x: 41, y: 30)
@@ -907,15 +962,18 @@ private func hawkman(_ c: PixelCanvas, _ p: Pose, spread: Double) {
     } else {
         drawLegs(c, Look(leg: green), step: p.step)
         drawBoots(c, boot, step: p.step, rows: 3)
+        shadeBoots(c, p, C(0x4A2814))
     }
     c.oy += p.breathe
     drawBody(c, Look(arm: clawdOrange, eye: ink))
     hawkHelmet(c, gold: gold, dark: goldD, light: goldL)
+    c.rect(25, 19, 3, 1, goldL)                                          // more light along the helmet's dome
     // Harness across the bare chest, the belt, the trousers' top.
     c.rect(18, 36, 20, 2, green); c.rect(18, 37, 20, 1, greenD)
-    c.rect(18, 35, 20, 1, strap)
+    c.rect(22, 36, 1, 1, greenD); c.rect(33, 36, 1, 1, greenD)           // folds at the trousers' top
+    c.rect(18, 35, 20, 1, strap); c.rect(19, 35, 3, 1, C(0xB04A34))      // the belt lit along a run
     bar(c, 20, 32.5, 35, 35, strap, 0.6); bar(c, 35, 32.5, 20, 35, strap, 0.6)
-    c.rect(27, 33, 2, 2, gold)
+    c.rect(27, 33, 2, 2, gold); c.px(27, 33, goldL); c.px(28, 34, goldD)   // the harness boss, lit
     hawkWing(c, spread: spread, flap: beat, far: false, lift: p.breathe, cols: wing, left: edge)
     c.rect(15, 33, 3, 3, clawdOrange)
     hawkMaceInHand(c, p, head: C(0x8A8070), light: C(0xC8BC9C), dark: C(0x5A5446), crackle: false)
@@ -952,11 +1010,13 @@ private func hawkgirl(_ c: PixelCanvas, _ p: Pose, spread: Double) {
         ".HH...",
         "..H...",
     ], ["H": hair, "h": hairD])
+    c.rect(16, 26 + p.breathe, 1, 3, C(0xE0603E))                       // a lit strand down her back
     if p.flying {
         for lx in [21, 31] { c.rect(lx, 36, 3, 6, greenD); c.rect(lx, 39, 3, 3, gold) }
     } else {
         drawLegs(c, Look(leg: greenD), step: p.step)
         drawBoots(c, gold, step: p.step, rows: 3)
+        shadeBoots(c, p, goldD)
     }
     c.oy += p.breathe
     drawBody(c, Look(arm: clawdOrange, eye: ink))
@@ -965,7 +1025,10 @@ private func hawkgirl(_ c: PixelCanvas, _ p: Pose, spread: Double) {
     hawkHelmet(c, gold: gold, dark: goldD, light: goldL)
     c.rect(26, 32, 4, 1, C(0xB84A3A))
     c.rect(18, 33, 20, 5, green); c.rect(37, 33, 1, 5, greenD)
+    c.rect(18, 33, 4, 1, C(0x4A9A60)); c.rect(34, 33, 3, 1, C(0x4A9A60))   // the top lit along the shoulders
+    c.rect(19, 35, 3, 1, greenD); c.rect(33, 35, 3, 1, greenD)           // and shaded above the belt
     c.rect(18, 36, 20, 1, gold); c.rect(18, 37, 20, 1, greenD)
+    c.rect(27, 36, 2, 1, goldL); c.px(26, 36, goldD); c.px(29, 36, goldD)   // the belt's clasp
     c.pattern(22, 33, ["G..........G", ".G........G.", "..GG....GG.."], ["G": gold])
     hawkWing(c, spread: spread, flap: beat, far: false, lift: p.breathe, cols: wing)
     c.rect(15, 33, 3, 3, clawdOrange)
