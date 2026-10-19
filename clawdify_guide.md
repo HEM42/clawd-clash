@@ -370,7 +370,7 @@ Do these freely (on the branch):
 
 ## Promo: the universe's trailer
 
-Each universe has its own trailer in `Tools/RenderPromo/main.swift`, rendered with the app's own sprites, places and transitions, with a synthesized chiptune soundtrack. **Read the Doctor Clawd trailer (`// MARK: The Doctor Clawd trailer`) as the model.**
+Each universe has its own trailer in its folder, `Promo/<Prefix>Reel.swift`, rendered by `Tools/RenderPromo` with the app's own sprites, places and transitions, with a synthesized chiptune soundtrack. It's drawn with the tool's kit (`Tools/RenderPromo/Kit/`: `Shot`, `brawl`, `statusOf`, `agentsOf`, `windowShot`, `everyAI`, `Mix`…) and compiled only into that tool. **Read the Doctor Clawd trailer (`DoctorClawd/Promo/DoctorReel.swift`) as the model.**
 
 ### Structure
 
@@ -390,17 +390,13 @@ Use `doctorShots` as the pattern. The trailer runs about 45–50 seconds:
 
 ### Wiring a new reel `REEL=<reel>`
 
-`<reel>` is a short lowercase name, like `doctor` or `files`. All of this is in `Tools/RenderPromo/main.swift`:
-- [ ] the header comment: add the `REEL=<reel> build/renderpromo video promo → promo/<universe-name>-promo.mp4` line;
+`<reel>` is a short lowercase name, like `doctor` or `files`, the `reel` in `universe.conf`. All of it is in `Promo/<Prefix>Reel.swift`, which `Tools/universes.sh` finds and lists in `registeredReels`:
+- [ ] `struct <Prefix>Reel: PromoReel` (`Tools/RenderPromo/Kit/Reel.swift` says what each member is): its REEL `name`, the video's file `base` (`<universe-name>-promo`), the 720p name, the storyboard `title`, `universe`, the `gemini ▸ …` terminal line, and who's in the shared shots: `brawl` (the desktop brawl's cast and caption) and `window` (the window's place, cast and prompts);
 - [ ] `let <prefix>Shots: [Shot]`, plus the intro and set-piece drawing functions, and `<prefix>Title`;
 - [ ] `let <prefix>Beats`: the storyboard, one row per beat (time, title, what happens, on-screen text, sound);
-- [ ] `func <prefix>Sound(_ m: Mix)`: the soundtrack. Add new `Mix` sound effects in an `extension Mix` next to it, like `wheeze` and `exterminate`;
-- [ ] the `shots` switch under `// MARK: Which video`, `softWipe`'s reel list, and the poster frame's reel list;
-- [ ] the soundtrack switch (`case "<reel>": <prefix>Sound(m)`);
-- [ ] the `base` file-name map, and the `720p` name map;
-- [ ] the storyboard `save(storyboard("<TITLE>", <prefix>Beats), …)` line;
-- [ ] the per-universe switches the shared shots use: the window-mode cast and prompts, the brawl cast, the "pick your universe" caption, and the `gemini ▸ …` terminal line. The compiler flags the exhaustive ones; grep for `reel == "doctor"` for the rest.
-- [ ] Optionally, the main promo (`REEL=promo`) and the Clawd Royale teaser can show off the new universe too. Ask the user.
+- [ ] `func <prefix>Sound(_ m: Mix)`: the soundtrack. Add new `Mix` sound effects in an `extension Mix` next to it, like `sonic` and `exterminate`;
+- [ ] the `REEL=<reel> build/renderpromo video promo → promo/<universe-name>-promo.mp4` line in `Tools/RenderPromo/main.swift`'s header comment;
+- [ ] Optionally, the main promo (`REEL=promo`) and the Clawd Royale teaser can show off the new universe too: they're the owner's reels, in `Tools/RenderPromo/main.swift` (its comic page's panel, `pickVerse` and `setPiece`, and its sound). Ask the user.
 
 ### Music and sound
 
@@ -409,7 +405,7 @@ Use `doctorShots` as the pattern. The trailer runs about 45–50 seconds:
 
 ### The routine
 
-1. Build. The full `swiftc` command is in the file's header comment. It compiles the App sources, `Universes/**`, `Shared/` and `Tools/RenderPromo/main.swift` into `build/renderpromo`.
+1. Build. The full `swiftc` command is in `Tools/RenderPromo/main.swift`'s header comment. It compiles the App sources, the universes (`$UNIVERSE_APP`, and `$UNIVERSE_PROMO` for the trailers), `Shared/`, the kit and `main.swift` into `build/renderpromo`.
 2. `REEL=<reel> build/renderpromo storyboard promo` writes `promo/storyboard-<universe-name>.png`. **Show the storyboard to the user for approval before rendering video.** This is an approval gate.
 3. `REEL=<reel> build/renderpromo frame promo 4.5` renders spot-check frames. Look at them, the intro especially.
 4. `REEL=<reel> build/renderpromo check` renders every frame once.

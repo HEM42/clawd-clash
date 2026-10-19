@@ -19,7 +19,8 @@ echo "→ building the tools"
 Tools/Preview/build.sh >/dev/null
 Tools/Transitions/build.sh >/dev/null
 swiftc -O -swift-version 5 $SRC Tools/RenderDocs/main.swift -o build/renderdocs 2>/dev/null
-[[ -n ${QUICK:-} ]] || swiftc -O -swift-version 5 $SRC Tools/RenderPromo/main.swift -o build/renderpromo 2>/dev/null
+[[ -n ${QUICK:-} ]] || swiftc -O -swift-version 5 $SRC $UNIVERSE_PROMO Tools/RenderPromo/Kit/*.swift Tools/RenderPromo/main.swift \
+    -o build/renderpromo 2>/dev/null
 
 echo "→ ids"
 build/preview ids "$OUT/ids.txt" >/dev/null
