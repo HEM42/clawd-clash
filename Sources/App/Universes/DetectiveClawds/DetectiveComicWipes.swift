@@ -153,11 +153,11 @@ struct DCComicTrip {
         ctx.setFillColor(Self.paper); ctx.fill(r)
 
         func smeared(_ img: CGImage) {
-            ctx.draw(img, in: p)
+            ctx.drawShot(img, in: p)
             guard blur > 0.01 else { return }
             for i in 1...5 {
                 ctx.setAlpha(0.22)
-                ctx.draw(img, in: p.offsetBy(dx: -CGFloat(i) * blur * p.width * 0.03, dy: 0))
+                ctx.drawShot(img, in: p.offsetBy(dx: -CGFloat(i) * blur * p.width * 0.03, dy: 0))
             }
             ctx.setAlpha(1)
         }
@@ -217,7 +217,7 @@ struct DCComicTrip {
         let sky = CGPoint(x: r.midX, y: r.minY + r.height * 0.64)
         let rad = CGFloat(0.12 + 0.04 * Self.ease(Self.span(k, 0.2, 0.42))) * r.height
             + CGFloat(Self.ease(Self.span(k, 0.42, 0.86))) * far * 0.62
-        ctx.draw(old, in: r)
+        ctx.drawShot(old, in: r)
         ctx.setFillColor(rgb(0x070C24, 0.72 * night)); ctx.fill(r)
         guard lit > 0.01 else { return }
 
@@ -236,7 +236,7 @@ struct DCComicTrip {
         ctx.saveGState()
         ctx.addEllipse(in: circle); ctx.clip()
         ctx.setAlpha(lit); ctx.setFillColor(rgb(0xFFE36B)); ctx.fill(r)
-        ctx.setAlpha(lit * CGFloat(Self.ease(Self.span(k, 0.36, 0.76)))); ctx.draw(new, in: r)
+        ctx.setAlpha(lit * CGFloat(Self.ease(Self.span(k, 0.36, 0.76)))); ctx.drawShot(new, in: r)
         ctx.setAlpha(1)
         ctx.setFillColor(rgb(0xFFE36B, 0.42 * (1 - fade))); ctx.fill(r)
         let batA = lit * CGFloat(1 - Self.ease(Self.span(k, 0.46, 0.72)))
@@ -323,11 +323,11 @@ struct DCComicTrip {
             }
             hole.addPath(Self.polygon(pts))
         }
-        ctx.saveGState(); ctx.clip(to: p); ctx.draw(new, in: p); ctx.restoreGState()
+        ctx.saveGState(); ctx.clip(to: p); ctx.drawShot(new, in: p); ctx.restoreGState()
         ctx.saveGState()
         ctx.addRect(p); if open > 1 { ctx.addPath(hole) }
         ctx.clip(using: .evenOdd)
-        ctx.draw(old, in: p)
+        ctx.drawShot(old, in: p)
         // The paper straining: cracks running out from where he'll come through.
         if strain > 0 {
             for i in 0..<9 {
@@ -447,13 +447,13 @@ struct DCComicTrip {
         let dissolve = CGFloat(Self.ease(Self.span(k, 0.04, 0.32))), build = CGFloat(Self.ease(Self.span(k, 0.36, 0.62)))
         let stage = 2 * Self.span(k, 0.5, 0.95)
         ctx.setFillColor(rgb(0x031208)); ctx.fill(r)
-        ctx.setAlpha(1 - dissolve); ctx.draw(old, in: r); ctx.setAlpha(1)
+        ctx.setAlpha(1 - dissolve); ctx.drawShot(old, in: r); ctx.setAlpha(1)
         Self.dots(ctx, r, 0x39FF6A, alpha: CGFloat(Self.pop(k, 0, 0.16, 0.34, 0.52)), size: 0.35 + 0.35 * dissolve, cell: 11 * s)
 
         if build > 0.001 {
             let area = CGRect(x: c.x - r.width / 2 * build, y: c.y - r.height / 2 * build, width: r.width * build, height: r.height * build)
             ctx.saveGState(); ctx.clip(to: area)
-            ctx.draw(new, in: r)
+            ctx.drawShot(new, in: r)
             Self.develop(ctx, area, pencil: 1 - Self.clamp(stage), ink: 1 - Self.clamp(stage - 1))
             let grid = CGFloat(1 - Self.span(k, 0.6, 0.9)) * 0.5
             if grid > 0.01 {
@@ -494,7 +494,7 @@ struct DCComicTrip {
         let scale = (0.25 + 0.75 * fly) * (1 + (cover - 1) * grow)
         let at = CGPoint(x: c.x + (1 - fly) * r.width * 0.75, y: c.y + (1 - fly) * r.height * 0.6)
         let xs = CGFloat(abs(cos(.pi * flip)))
-        ctx.draw(old, in: r)
+        ctx.drawShot(old, in: r)
         ctx.setFillColor(rgb(0x1E0A2E, 0.55 * Self.span(k, 0.05, 0.3))); ctx.fill(r)
 
         ctx.saveGState()
@@ -509,7 +509,7 @@ struct DCComicTrip {
             let inner = card.insetBy(dx: w0 * 0.045, dy: w0 * 0.045)
             ctx.addPath(CGPath(roundedRect: inner, cornerWidth: round * 0.6, cornerHeight: round * 0.6, transform: nil)); ctx.clip()
             // Lined up with the screen, so it's the new place exactly once the card stops turning.
-            ctx.draw(new, in: CGRect(x: (r.minX - at.x) / scale, y: (r.minY - at.y) / scale, width: r.width / scale, height: r.height / scale))
+            ctx.drawShot(new, in: CGRect(x: (r.minX - at.x) / scale, y: (r.minY - at.y) / scale, width: r.width / scale, height: r.height / scale))
             ctx.restoreGState()
             ctx.addPath(CGPath(roundedRect: card, cornerWidth: round, cornerHeight: round, transform: nil))
             ctx.setStrokeColor(Self.ink); ctx.setLineWidth(4 * s / scale); ctx.strokePath()
@@ -545,7 +545,7 @@ struct DCComicTrip {
         let s = r.height / 800
         let rise = CGFloat(Self.ease(Self.span(k, 0, 0.42))), recede = CGFloat(Self.ease(Self.span(k, 0.56, 1)))
         let front = k < 0.5 ? r.minY - r.height * 0.6 + r.height * 2.05 * rise : r.maxY + r.height * 0.45 - r.height * 2.1 * recede
-        ctx.draw(k < 0.5 ? old : new, in: r)
+        ctx.drawShot(k < 0.5 ? old : new, in: r)
 
         // The water's top: three big breakers, each curling over into a lip, drifting sideways.
         let humps = 3, hw = r.width / CGFloat(humps) * 1.05, drift = CGFloat(k) * hw * 0.6
@@ -682,9 +682,9 @@ struct DCComicTrip {
         let gold = rgb(0xFFC21A)
         let inked: Double
         if k < 0.55 {
-            ctx.draw(old, in: r); inked = Self.span(k, 0.09, 0.16)
+            ctx.drawShot(old, in: r); inked = Self.span(k, 0.09, 0.16)
         } else {
-            ctx.draw(new, in: r); inked = 1 - Self.ease(Self.span(k, 0.62, 0.96))
+            ctx.drawShot(new, in: r); inked = 1 - Self.ease(Self.span(k, 0.62, 0.96))
         }
         Self.develop(ctx, r, pencil: 0, ink: inked)
         Self.dots(ctx, r, 0x000000, alpha: 0.2 * CGFloat(inked), size: 0.32, cell: 9 * s)
@@ -786,7 +786,7 @@ struct DCComicTrip {
         let door = CGPoint(x: hole.midX, y: hole.midY), to = Self.mix(door, c, dive)
         let cam = CGAffineTransform(translationX: to.x, y: to.y).scaledBy(x: zoom, y: zoom).translatedBy(x: -door.x, y: -door.y)
 
-        ctx.draw(old, in: r)
+        ctx.drawShot(old, in: r)
         ctx.setFillColor(rgb(0x140C02, 0.5 * spread)); ctx.fill(r)
         ctx.saveGState()
         ctx.concatenate(cam)
@@ -803,7 +803,7 @@ struct DCComicTrip {
             ctx.addEllipse(in: hole); ctx.clip()
             ctx.concatenate(cam.inverted())   // the new place on screen as it is, a little zoomed while the camera arrives
             let z = 1.2 - 0.2 * dive
-            ctx.draw(new, in: CGRect(x: c.x - r.width / 2 * z, y: c.y - r.height / 2 * z, width: r.width * z, height: r.height * z))
+            ctx.drawShot(new, in: CGRect(x: c.x - r.width / 2 * z, y: c.y - r.height / 2 * z, width: r.width * z, height: r.height * z))
             ctx.restoreGState()
             ctx.saveGState(); ctx.addEllipse(in: hole); ctx.clip()
             ctx.setFillColor(rgb(0xFFE9A8, 1 - open)); ctx.fill(hole)
@@ -859,7 +859,7 @@ struct DCComicTrip {
         func printed(_ img: CGImage, in box: CGRect, mirrored: Bool = false, faint: CGFloat = 1) {
             ctx.saveGState(); ctx.clip(to: box)
             if mirrored { ctx.translateBy(x: box.midX, y: 0); ctx.scaleBy(x: -1, y: 1); ctx.translateBy(x: -box.midX, y: 0) }
-            ctx.setAlpha(faint); ctx.draw(img, in: box)
+            ctx.setAlpha(faint); ctx.drawShot(img, in: box)
             ctx.setBlendMode(.multiply); ctx.setFillColor(rgb(0xE9D3A0, 0.5 * out)); ctx.fill(box)
             ctx.restoreGState()
             if faint >= 1 {
@@ -873,7 +873,7 @@ struct DCComicTrip {
             let cell = CGRect(x: la.minX + CGFloat(i % 2) * gw, y: la.minY + CGFloat(i / 2) * gh, width: gw, height: gh).insetBy(dx: gut / 2, dy: gut / 2)
             ctx.saveGState(); ctx.clip(to: cell)
             let zoomIn = 1.6 + 0.3 * CGFloat(i)
-            ctx.draw(old, in: CGRect(x: cell.midX - cell.width * zoomIn / 2 - CGFloat(i) * 20 * s, y: cell.midY - cell.height * zoomIn / 2,
+            ctx.drawShot(old, in: CGRect(x: cell.midX - cell.width * zoomIn / 2 - CGFloat(i) * 20 * s, y: cell.midY - cell.height * zoomIn / 2,
                                      width: cell.width * zoomIn, height: cell.height * zoomIn))
             ctx.setBlendMode(.multiply); ctx.setFillColor(rgb(0xE9D3A0, 0.5)); ctx.fill(cell)
             ctx.restoreGState()
@@ -922,7 +922,7 @@ struct DCComicTrip {
                 let wild = CGFloat(noise(id) < 0.3 ? 1 : 0.25) * CGFloat(amount)
                 let dx = (CGFloat(noise(id * 3 + tick)) - 0.5) * cell * 3 * wild, dy = (CGFloat(noise(id * 3 + tick + 1)) - 0.5) * cell * wild
                 let tile = CGRect(x: r.minX + CGFloat(i) * cell + dx, y: r.minY + CGFloat(j) * cell + dy, width: cell, height: cell)
-                ctx.saveGState(); ctx.clip(to: tile); ctx.draw(img, in: r.offsetBy(dx: dx, dy: dy)); ctx.restoreGState()
+                ctx.saveGState(); ctx.clip(to: tile); ctx.drawShot(img, in: r.offsetBy(dx: dx, dy: dy)); ctx.restoreGState()
             }
         }
         if k >= 0.5 { Self.develop(ctx, r, pencil: 1 - Self.clamp(stage), ink: 1 - Self.clamp(stage - 1)) }
@@ -991,12 +991,12 @@ struct DCComicTrip {
             ctx.saveGState(); ctx.clip(to: box)
             // Its piece of the old place, giving way to the whole scene, its own way.
             let piece = box.width / t.cell.width
-            ctx.draw(old, in: CGRect(x: box.minX - (t.cell.minX - r.minX) * piece, y: box.minY - (t.cell.minY - r.minY) * piece,
+            ctx.drawShot(old, in: CGRect(x: box.minX - (t.cell.minX - r.minX) * piece, y: box.minY - (t.cell.minY - r.minY) * piece,
                                      width: r.width * piece, height: r.height * piece))
             if morph > 0.01 {
                 ctx.setAlpha(morph)
-                if t.n % 3 == 1 { ctx.saveGState(); ctx.scaleBy(x: -1, y: 1); ctx.draw(old, in: box); ctx.restoreGState() }
-                else { ctx.draw(old, in: box) }
+                if t.n % 3 == 1 { ctx.saveGState(); ctx.scaleBy(x: -1, y: 1); ctx.drawShot(old, in: box); ctx.restoreGState() }
+                else { ctx.drawShot(old, in: box) }
                 ctx.setAlpha(1)
                 Self.variant(ctx, t.n, box, amount: morph)
             }
@@ -1011,7 +1011,7 @@ struct DCComicTrip {
             let box = CGRect(x: -r.width / 2 * sc, y: -r.height / 2 * sc, width: r.width * sc, height: r.height * sc)
             ctx.saveGState()
             ctx.translateBy(x: c.x, y: c.y); ctx.rotate(by: (1 - z) * 0.9)
-            ctx.saveGState(); ctx.clip(to: box); ctx.draw(new, in: box); ctx.restoreGState()
+            ctx.saveGState(); ctx.clip(to: box); ctx.drawShot(new, in: box); ctx.restoreGState()
             let edge = CGFloat(1 - Self.span(k, 0.9, 1))
             if edge > 0.01 {
                 ctx.setStrokeColor(rgb(0xFFFFFF, edge)); ctx.setLineWidth(10 * s); ctx.stroke(box)
@@ -1033,7 +1033,7 @@ struct DCComicTrip {
 
     /// `img` filling panel `p`, with its black border (`f` thins it away to nothing).
     private static func panel(_ ctx: CGContext, _ img: CGImage, _ p: CGRect, s: CGFloat, border f: Double = 1) {
-        ctx.saveGState(); ctx.clip(to: p); ctx.draw(img, in: p); ctx.restoreGState()
+        ctx.saveGState(); ctx.clip(to: p); ctx.drawShot(img, in: p); ctx.restoreGState()
         frame(ctx, p, s: s, f: f)
     }
 
@@ -1170,7 +1170,7 @@ struct DCComicTrip {
             ctx.translateBy(x: mid.x + m.offset.x, y: mid.y + m.offset.y); ctx.rotate(by: m.angle); ctx.scaleBy(x: m.scale, y: m.scale)
             ctx.translateBy(x: -mid.x, y: -mid.y)
             let shape = polygon(poly)
-            ctx.saveGState(); ctx.addPath(shape); ctx.clip(); ctx.draw(img, in: r); ctx.restoreGState()
+            ctx.saveGState(); ctx.addPath(shape); ctx.clip(); ctx.drawShot(img, in: r); ctx.restoreGState()
             ctx.addPath(shape); ctx.setStrokeColor(edge(i)); ctx.setLineWidth(width); ctx.setLineJoin(.round); ctx.strokePath()
             ctx.restoreGState()
         }

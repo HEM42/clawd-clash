@@ -481,6 +481,10 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
             return
         }
         let r = CGRect(x: 0, y: 0, width: new.width, height: new.height)
+        // These pictures are the window itself, its cards and info list anti-aliased text: smoothed as a trip scales,
+        // turns or shakes them, where pixel art would be left blocky. The trip's own art stays crisp.
+        ComicTransition.snapshotQuality = .high
+        defer { ComicTransition.snapshotQuality = nil }
         if let comic = s.comic {
             comic.draw(ctx, old: s.old, new: new, k: k, in: r)
         } else {

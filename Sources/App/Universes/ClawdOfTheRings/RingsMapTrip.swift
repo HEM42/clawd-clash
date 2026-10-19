@@ -80,11 +80,11 @@ private enum RingsMap {
         let reach = [CGPoint(x: r.minX, y: r.minY), CGPoint(x: r.maxX, y: r.minY), CGPoint(x: r.minX, y: r.maxY),
                      CGPoint(x: r.maxX, y: r.maxY)].map { hypot($0.x - dest.x, $0.y - dest.y) }.max() ?? r.width
         let radius = (reach + px) * CGFloat(open * open)
-        if open >= 1 { ctx.draw(new, in: r); return }
+        if open >= 1 { ctx.drawShot(new, in: r); return }
 
         if reveal < 1 {
             // The old place, yellowing like old paper.
-            ctx.draw(old, in: r)
+            ctx.drawShot(old, in: r)
             let yellow = CGFloat(ease(span(k, 0, 0.16)))
             ctx.saveGState()
             ctx.setBlendMode(.color); ctx.setFillColor(rgb(0xB08A4C, 0.85 * yellow)); ctx.fill(r)
@@ -92,14 +92,14 @@ private enum RingsMap {
             ctx.restoreGState()
         }
 
-        guard let art = artCanvas(width: w, height: h, px: px, in: r) else { ctx.draw(k < 0.5 ? old : new, in: r); return }
+        guard let art = artCanvas(width: w, height: h, px: px, in: r) else { ctx.drawShot(k < 0.5 ? old : new, in: r); return }
         let disc = CGRect(x: dest.x - radius, y: dest.y - radius, width: radius * 2, height: radius * 2)
         let hole: [CGRect] = radius > px / 2 ? rows(of: disc, px: px, height: h, in: r) : []
         if !hole.isEmpty {
             // The new place through the iris, sepia at first, its colour coming back as it opens.
             ctx.saveGState()
             ctx.clip(to: hole)
-            ctx.draw(new, in: r)
+            ctx.drawShot(new, in: r)
             let sepia = CGFloat(1 - ease(span(k, 0.66, 0.9)))
             if sepia > 0 { ctx.setBlendMode(.color); ctx.setFillColor(rgb(0xB08A4C, 0.8 * sepia)); ctx.fill(r) }
             ctx.restoreGState()

@@ -13,14 +13,14 @@ extension SlayerTrip {
     /// blowing across her; under the haze the old place gives way to the new (0.42–0.55); then the haze and the
     /// streaks thin out and leave the new place (0.6–0.95). The sand and the face are pixel art.
     func drawRestless(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
-        guard let canvas = Self.slayerDustCanvas(in: r) else { ctx.draw(k < 0.5 ? old : new, in: r); return }
+        guard let canvas = Self.slayerDustCanvas(in: r) else { ctx.drawShot(k < 0.5 ? old : new, in: r); return }
         let (art, w, h, px) = canvas
         let W = Double(w), H = Double(h)
 
         // The places, the old giving way to the new while the sand is thickest.
-        ctx.draw(new, in: r)
+        ctx.drawShot(new, in: r)
         let swap = Self.ease(Self.span(k, 0.42, 0.55))
-        if swap < 1 { ctx.setAlpha(CGFloat(1 - swap)); ctx.draw(old, in: r); ctx.setAlpha(1) }
+        if swap < 1 { ctx.setAlpha(CGFloat(1 - swap)); ctx.drawShot(old, in: r); ctx.setAlpha(1) }
 
         // The haze, in bands down the frame.
         let haze = 0.93 * Self.ease(Self.span(k, 0, 0.3)) * (1 - Self.ease(Self.span(k, 0.62, 0.95)))

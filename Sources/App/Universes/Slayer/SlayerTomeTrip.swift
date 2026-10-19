@@ -14,8 +14,8 @@ extension SlayerTrip {
     /// places are drawn as they are; the tome, the dust and the woodcut are pixel art about 180 pixels tall, scaled
     /// up without smoothing, with a little grain over it all.
     func drawTome(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
-        guard k > 0 else { ctx.draw(old, in: r); return }
-        guard k < 1 else { ctx.draw(new, in: r); return }
+        guard k > 0 else { ctx.drawShot(old, in: r); return }
+        guard k < 1 else { ctx.drawShot(new, in: r); return }
         let px: CGFloat = max(1, (r.height / 180).rounded())    // screen pixels per pixel of the tome's art
         let w = Int((r.width / px).rounded(.up)), h = Int((r.height / px).rounded(.up))
         guard let art = Self.artCanvas(width: w, height: h, px: px, in: r) else { return }
@@ -34,7 +34,7 @@ extension SlayerTrip {
         let shake = book.snap(CGFloat(noise(Int(k * 240)) - 0.5) * 2 * u * 5 * CGFloat(thud * thud))
         let jolt = book.snap(CGFloat(noise(Int(k * 240) + 7) - 0.5) * 2 * u * 3 * CGFloat(thud * thud))
         ctx.setFillColor(rgb(0x05060C)); ctx.fill(r)
-        ctx.draw(old, in: r.offsetBy(dx: shake, dy: jolt).insetBy(dx: -abs(shake), dy: -abs(jolt)))
+        ctx.drawShot(old, in: r.offsetBy(dx: shake, dy: jolt).insetBy(dx: -abs(shake), dy: -abs(jolt)))
         art.setFillColor(rgb(0x05060C, CGFloat(dim))); art.fill(r)
         // Shut, the tome lies in the middle; as its cover opens it slides left until its spine is in the middle.
         art.saveGState()
@@ -140,7 +140,7 @@ extension SlayerTrip {
                 ctx.saveGState()
                 ctx.clip(to: rows)
                 ctx.setAlpha(CGFloat(alpha))
-                ctx.draw(new, in: frame)
+                ctx.drawShot(new, in: frame)
                 ctx.restoreGState()
             }
         }

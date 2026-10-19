@@ -13,8 +13,8 @@ extension RingsTrip {
     /// lettering, writing) is pixel art, drawn into a bitmap about 180 pixels tall and scaled up
     /// without smoothing, and the turning page is cut into columns on that same grid.
     func drawBook(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
-        guard k > 0 else { ctx.draw(old, in: r); return }
-        guard k < 1 else { ctx.draw(new, in: r); return }
+        guard k > 0 else { ctx.drawShot(old, in: r); return }
+        guard k < 1 else { ctx.drawShot(new, in: r); return }
         let book = RedBook(r)
         let px: CGFloat = max(1, (r.height / 180).rounded())       // screen pixels per pixel of the book's art
         let zoom = CGFloat(bookEase(bookSpan(k, 0, 0.2)) * (1 - bookEase(bookSpan(k, 0.75, 1))))
@@ -40,7 +40,7 @@ extension RingsTrip {
 
         // The picture on the right-hand page: the new place once the old one's page has started to lift.
         let picture = grid.rect(cam.rect(book.picture))
-        ctx.draw(turn > 0 ? new : old, in: picture)
+        ctx.drawShot(turn > 0 ? new : old, in: picture)
         if turn > 0 && turn < 1 {
             drawTurningPage(ctx, book: book, cam: cam, grid: grid, old: old, turn: turn, px: px)
         }
@@ -116,7 +116,7 @@ extension RingsTrip {
                     let c0 = max(0, (p0 * ow).rounded(.down)), c1 = min(ow, max(c0 + 1, (p1 * ow).rounded(.up)))
                     let pb = grid.y(bottom + (top - bottom) * picLo), pt = grid.y(bottom + (top - bottom) * picHi)
                     if pt > pb, let col = old.cropping(to: CGRect(x: c0, y: 0, width: c1 - c0, height: oh)) {
-                        ctx.draw(col, in: CGRect(x: x0, y: pb, width: x1 - x0, height: pt - pb))
+                        ctx.drawShot(col, in: CGRect(x: x0, y: pb, width: x1 - x0, height: pt - pb))
                     }
                 }
             } else if let col = back.cropping(to: CGRect(x: n - 1 - i, y: 0, width: 1, height: th)) {

@@ -15,7 +15,7 @@ extension SlayerTrip {
         let shut = Self.ease(Self.span(k, 0.04, 0.28)), open = Self.ease(Self.span(k, 0.72, 0.95))
         let close = shut * (1 - open)
         let drop = Self.ease(Self.span(k, 0, 0.12)) * (1 - Self.ease(Self.span(k, 0.9, 1)))
-        ctx.draw(k < 0.5 ? old : new, in: r)
+        ctx.drawShot(k < 0.5 ? old : new, in: r)
         if close <= 0 && drop <= 0 { return }
 
         let px: CGFloat = max(1, (r.height / 180).rounded())

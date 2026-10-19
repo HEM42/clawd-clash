@@ -17,7 +17,7 @@ extension RingsTrip {
     func drawEagles(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
         let px: CGFloat = max(1, (r.height / 180).rounded())  // screen pixels per pixel of the trip's art
         let w = Int((r.width / px).rounded(.up)), h = Int((r.height / px).rounded(.up))
-        guard let art = Self.eagleCanvas(width: w, height: h) else { ctx.draw(k < 0.5 ? old : new, in: r); return }
+        guard let art = Self.eagleCanvas(width: w, height: h) else { ctx.drawShot(k < 0.5 ? old : new, in: r); return }
         let W = Double(w), H = Double(h)
         let unit = min(H, W * 0.56) / 64                       // art pixels to a unit of the Eagle's drawing, close up
         let bird = Self.eagleFlight(k, W: W, H: H, unit: unit)
@@ -32,10 +32,10 @@ extension RingsTrip {
         // The places: the old one until the sky has covered it, the new one rising from below once the view tips.
         ctx.saveGState()
         ctx.clip(to: r)
-        if front < W + 0.6 * H { ctx.draw(old, in: r) }
+        if front < W + 0.6 * H { ctx.drawShot(old, in: r) }
         if down > 0 {
             let below = r.offsetBy(dx: 0, dy: -CGFloat(1 - down) * r.height)
-            ctx.setFillColor(eagleRGB(0x000000)); ctx.fill(below); ctx.draw(new, in: below)
+            ctx.setFillColor(eagleRGB(0x000000)); ctx.fill(below); ctx.drawShot(new, in: below)
         }
         ctx.restoreGState()
 

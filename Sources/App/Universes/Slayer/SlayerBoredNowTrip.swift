@@ -11,14 +11,14 @@ extension SlayerTrip {
     /// the edges the way they came, the dark lifting off the new place after them (0.56–1). The places are drawn as
     /// they are; the veins and the dark are pixel art about 180 pixels tall, scaled up without smoothing, with grain.
     func drawBoredNow(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
-        guard k > 0 else { ctx.draw(old, in: r); return }
-        guard k < 1 else { ctx.draw(new, in: r); return }
+        guard k > 0 else { ctx.drawShot(old, in: r); return }
+        guard k < 1 else { ctx.drawShot(new, in: r); return }
         let px: CGFloat = max(1, (r.height / 180).rounded())    // screen pixels per pixel of the veins' art
         let w = Int((r.width / px).rounded(.up)), h = Int((r.height / px).rounded(.up))
         guard let art = Self.artCanvas(width: w, height: h, px: px, in: r),
               let stain = Self.artCanvas(width: w, height: h, px: px, in: r) else { return }
         let swap = k >= 0.5
-        ctx.draw(swap ? new : old, in: r)
+        ctx.drawShot(swap ? new : old, in: r)
         // A web of its own each time, from where it leaves and where it goes.
         let trip = (from.rawValue + ">" + to.rawValue).unicodeScalars.reduce(7) { ($0 &* 31 &+ Int($1.value)) % 100_003 }
 

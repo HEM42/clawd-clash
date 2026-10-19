@@ -14,8 +14,8 @@ extension SlayerTrip {
     /// are; the cavern, the light, the cracks and the falling slabs are pixel art, drawn into bitmaps about 180 pixels
     /// tall and scaled up without smoothing, with a little grain.
     func drawHellmouth(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
-        guard k > 0 else { ctx.draw(old, in: r); return }
-        guard k < 1 else { ctx.draw(new, in: r); return }
+        guard k > 0 else { ctx.drawShot(old, in: r); return }
+        guard k < 1 else { ctx.drawShot(new, in: r); return }
         let px: CGFloat = max(1, (r.height / 180).rounded())
         let w = Int((r.width / px).rounded(.up)), h = Int((r.height / px).rounded(.up))
         guard let back = Self.artCanvas(width: w, height: h, px: px, in: r),
@@ -134,7 +134,7 @@ extension SlayerTrip {
             if let lo = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
                                   bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) {
                 lo.interpolationQuality = .none
-                lo.draw(old, in: CGRect(x: 0, y: 0, width: W, height: H))
+                lo.drawShot(old, in: CGRect(x: 0, y: 0, width: W, height: H))
                 if let img = lo.makeImage() { small = img }
             }
             let smallRect = small === old ? CGRect(x: 0, y: 0, width: W, height: H)
@@ -181,11 +181,11 @@ extension SlayerTrip {
         ctx.saveGState(); ctx.clip(to: r)
         if !falling {
             ctx.setFillColor(rgb(0x0E0306)); ctx.fill(r)
-            ctx.draw(old, in: r.offsetBy(dx: shakeOn.x * px, dy: shakeOn.y * px))
+            ctx.drawShot(old, in: r.offsetBy(dx: shakeOn.x * px, dy: shakeOn.y * px))
         }
         if rise > 0 {
             let jolt = seal > 0 ? shakeOn : .zero
-            ctx.draw(new, in: r.offsetBy(dx: jolt.x * px, dy: ((rise - 1) * H).rounded() * px + jolt.y * px))
+            ctx.drawShot(new, in: r.offsetBy(dx: jolt.x * px, dy: ((rise - 1) * H).rounded() * px + jolt.y * px))
         }
         ctx.restoreGState()
 
