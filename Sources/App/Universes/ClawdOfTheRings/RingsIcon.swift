@@ -4,7 +4,7 @@ import Foundation
 /// (and on the inner wall facing the light) and shaded to the bottom-right, with a few glints of the fire-letters on
 /// it. `mono`: the band in one colour with the hole and the glints left out, for a template image macOS tints, so it
 /// still reads as a ring.
-func drawOneRingIcon(_ c: PixelCanvas, mono: Bool = false) {
+func ringsDrawOneRingIcon(_ c: PixelCanvas, mono: Bool = false) {
     let gold = mono ? C(0x000000) : C(0xE8B33A)
     let rows: [String] = [
         "............................",

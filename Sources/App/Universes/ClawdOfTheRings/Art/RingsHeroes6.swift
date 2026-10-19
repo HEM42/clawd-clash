@@ -30,7 +30,7 @@ private let radagastStaffHead: (x: Double, y: Double) = (43.5, 13.5)
 private let radagastHand: (x: Double, y: Double) = (43.5, 34.5)
 
 /// The soft earthy green light in the curl of his staff.
-private let radagastGlow = StaffGlow(core: C(0xE4F0B0), glow: C(0x7A9A3A))
+private let radagastGlow = RingsStaffGlow(core: C(0xE4F0B0), glow: C(0x7A9A3A))
 
 /// Radagast the Brownfield, the scruffy brown wizard: a patched, muddy brown robe to the ankles with a ragged hem and a
 /// rope belt; a battered, floppy ochre hat, its low crown dented and its tip flopped over the back, the wide brim
@@ -162,13 +162,13 @@ private func drawRadagastBody(_ c: PixelCanvas, _ p: Pose) {
     // a sword. The sleeve behind it and the fist round it.
     c.rect(38, 33 - up, 4, 3 + up, robe); c.rect(38, 35, 4, 1, robeShade)
     if let angle = p.walking || p.seated ? nil : p.melee {
-        drawSwungStaff(c, hand: radagastHand, head: radagastStaffHead, angle: angle, trail: p.trail, glow: radagastGlow,
+        ringsDrawSwungStaff(c, hand: radagastHand, head: radagastStaffHead, angle: angle, trail: p.trail, glow: radagastGlow,
                        t: p.t) { drawRadagastStaff($0, up: 0) }
     } else {
         let head = (x: radagastStaffHead.x, y: radagastStaffHead.y - Double(up))
-        drawStaffGlow(c, at: head, radagastGlow, bright: false, t: p.t)
+        ringsDrawStaffGlow(c, at: head, radagastGlow, bright: false, t: p.t)
         drawRadagastStaff(c, up: up)
-        drawStaffGlow(c, at: head, radagastGlow, bright: false, t: p.t, front: true)
+        ringsDrawStaffGlow(c, at: head, radagastGlow, bright: false, t: p.t, front: true)
     }
     c.rect(42, 33 - up, 3, 3, clawdOrange); c.px(42, 35 - up, clawdShade)
 }

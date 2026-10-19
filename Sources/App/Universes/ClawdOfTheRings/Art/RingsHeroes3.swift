@@ -1,8 +1,8 @@
 import Foundation
 
 // Heroes: the Riders of Rohan and the ranger of Ithilien, Clawd in costume, Clawd's orange face and ink eyes under it.
-// Éowin and King Théodone wear the same Rohan kit as HEM's Éowyn (`drawRohanCloak`, `drawRohanHelmet`,
-// `drawRohanShield`, `drawRohanSword` and the `rohan…` colours in RingsHem.swift), so they read as one people; Faramirror's
+// Éowin and King Théodone wear the same Rohan kit as HEM's Éowyn (`ringsDrawRohanCloak`, `ringsDrawRohanHelmet`,
+// `ringsDrawRohanShield`, `ringsDrawRohanSword` and the `rohan…` colours in RingsHem.swift), so they read as one people; Faramirror's
 // longbow is held and drawn the way Leggolas holds and draws his. All three stand Clawd's full height.
 
 let ringsHeroes3: [RingsHero: Persona] = [
@@ -25,8 +25,8 @@ let ringsHeroes3: [RingsHero: Persona] = [
 private func drawEowyn(_ c: PixelCanvas, _ p: Pose) {
     let hair = C(0xE8C860), hairShade = C(0xC8A440), hairLight = C(0xF8E498)
     let m = p.signature.map(eowinMove)
-    drawRohanCloak(c, t: p.t, speed: p.capeSpeed)
-    drawLegs(c, Look(leg: rohanTrousers), step: p.step)
+    ringsDrawRohanCloak(c, t: p.t, speed: p.capeSpeed)
+    drawLegs(c, Look(leg: ringsRohanTrousers), step: p.step)
     drawRiderBoots(c, p.step)
     let standing = c.oy
     c.oy += p.breathe
@@ -34,11 +34,11 @@ private func drawEowyn(_ c: PixelCanvas, _ p: Pose) {
         drawEowinUnhelmed(c, p, m, standing: standing)
         return
     }
-    drawBody(c, Look(arm: rohanMail))
+    drawBody(c, Look(arm: ringsRohanMail))
     drawRohanMail(c)
     // The cloak over the shoulders, gold-edged, and its clasps.
-    c.rect(18, 33, 2, 5, rohanCloak); c.rect(20, 33, 1, 5, rohanGold)
-    c.rect(36, 33, 2, 5, rohanCloak); c.rect(35, 33, 1, 5, rohanGold)
+    c.rect(18, 33, 2, 5, ringsRohanCloak); c.rect(20, 33, 1, 5, ringsRohanGold)
+    c.rect(36, 33, 2, 5, ringsRohanCloak); c.rect(35, 33, 1, 5, ringsRohanGold)
     c.px(20, 33, C(0xFFE08A)); c.px(35, 33, C(0xFFE08A))
     // Long golden hair: down her back behind the shield, and a lock past the cheek piece on the near side.
     c.pattern(13, 26, [
@@ -47,16 +47,16 @@ private func drawEowyn(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(36, 26, ["HHHH", "hHHH", "HhHHl", "HlHHH", ".HHhH", ".hHHl", ".HhH.", "..HH.", "..H.."],
               ["H": hair, "h": hairShade, "l": hairLight])
     c.rect(19, 26, 3, 1, hair); c.rect(34, 26, 3, 1, hair); c.px(19, 27, hairShade); c.px(36, 27, hairShade)   // the fringe
-    drawRohanHelmet(c, t: p.t, strand: false)
+    ringsDrawRohanHelmet(c, t: p.t, strand: false)
     // The sword held low, swung along `p.melee`; the fist round its grip; the shield on the off arm.
     if let a = p.melee {
-        for (i, ta) in p.trail.enumerated() { drawRohanSword(c, angle: ta, alpha: 0.3 / Double(i + 1)) }
-        drawRohanSword(c, angle: a)
+        for (i, ta) in p.trail.enumerated() { ringsDrawRohanSword(c, angle: ta, alpha: 0.3 / Double(i + 1)) }
+        ringsDrawRohanSword(c, angle: a)
     } else {
-        drawRohanSword(c, angle: seatedPose ? 8 : 35)
+        ringsDrawRohanSword(c, angle: seatedPose ? 8 : 35)
     }
-    c.rect(38, 33, 2, 3, rohanMail); c.rect(40, 33, 2, 3, clawdOrange); c.px(40, 35, clawdShade)
-    drawRohanShield(c, cx: 14, cy: seatedPose ? 33 : 35)
+    c.rect(38, 33, 2, 3, ringsRohanMail); c.rect(40, 33, 2, 3, clawdOrange); c.px(40, 35, clawdShade)
+    ringsDrawRohanShield(c, cx: 14, cy: seatedPose ? 33 : 35)
 }
 
 /// Where Éowin is in her signature: how far her sword has turned from her guard to point-down in the ground (`plant`,
@@ -91,10 +91,10 @@ private func eowinMove(_ s: Double) -> EowinMove {
 private func drawEowinUnhelmed(_ c: PixelCanvas, _ p: Pose, _ m: EowinMove, standing: Int) {
     let hair = C(0xE8C860), hairShade = C(0xC8A440), hairLight = C(0xF8E498)
     let pal: [Character: Px] = ["H": hair, "h": hairShade, "l": hairLight]
-    drawBody(c, Look(arm: rohanMail))
+    drawBody(c, Look(arm: ringsRohanMail))
     drawRohanMail(c)
-    c.rect(18, 33, 2, 5, rohanCloak); c.rect(20, 33, 1, 5, rohanGold)
-    c.rect(36, 33, 2, 5, rohanCloak); c.rect(35, 33, 1, 5, rohanGold)
+    c.rect(18, 33, 2, 5, ringsRohanCloak); c.rect(20, 33, 1, 5, ringsRohanGold)
+    c.rect(36, 33, 2, 5, ringsRohanCloak); c.rect(35, 33, 1, 5, ringsRohanGold)
     c.px(20, 33, C(0xFFE08A)); c.px(35, 33, C(0xFFE08A))
     // Her hair down her back and the lock in front, growing longer as it spills out, its ends lifting in the wind.
     if m.hair == 0 {
@@ -137,7 +137,7 @@ private func drawEowinUnhelmed(_ c: PixelCanvas, _ p: Pose, _ m: EowinMove, stan
     // The helmet, lifted off in her fist and drawn a little forward with it.
     let oxHere = c.ox
     c.ox += min(2, m.rise)
-    drawRohanHelmet(c, t: p.t, rise: m.rise, strand: false)
+    ringsDrawRohanHelmet(c, t: p.t, rise: m.rise, strand: false)
     c.ox = oxHere
     // The sword: in her fist, turned point-down; let go, it stands in the ground where she drove it.
     let angle = 35 + 55 * m.plant
@@ -146,20 +146,20 @@ private func drawEowinUnhelmed(_ c: PixelCanvas, _ p: Pose, _ m: EowinMove, stan
         c.oy = standing
         drawPlantedSword(c, angle: angle, ground: 43 + standing)
         c.oy = oy
-        c.rect(38, 33 - m.up, 2, 3 + m.up, rohanMail); c.rect(38, 33 - m.up, 1, 3 + m.up, rohanMailLight)
+        c.rect(38, 33 - m.up, 2, 3 + m.up, ringsRohanMail); c.rect(38, 33 - m.up, 1, 3 + m.up, ringsRohanMailLight)
         c.rect(40, 33 - m.up, 2, 3, clawdOrange); c.px(40, 35 - m.up, clawdShade)
     } else {
         drawPlantedSword(c, angle: angle, ground: 43 + standing)
-        c.rect(38, 33, 2, 3, rohanMail); c.rect(40, 33, 2, 3, clawdOrange); c.px(40, 35, clawdShade)
+        c.rect(38, 33, 2, 3, ringsRohanMail); c.rect(40, 33, 2, 3, clawdOrange); c.px(40, 35, clawdShade)
     }
-    drawRohanShield(c, cx: 14, cy: 35)
+    ringsDrawRohanShield(c, cx: 14, cy: 35)
 }
 
 /// The Rohan sword at `angle`, nothing of it drawn below row `ground` (the point is in the earth).
 private func drawPlantedSword(_ c: PixelCanvas, angle: Double, ground: Int) {
     let s = PixelCanvas(c.w, c.h)
     s.ox = c.ox; s.oy = c.oy; s.baseY = c.baseY
-    drawRohanSword(s, angle: angle)
+    ringsDrawRohanSword(s, angle: angle)
     let (ox, oy, by) = (c.ox, c.oy, c.baseY)
     c.ox = 0; c.oy = 0; c.baseY = 0
     defer { c.ox = ox; c.oy = oy; c.baseY = by }
@@ -184,16 +184,16 @@ private func drawPlantedSword(_ c: PixelCanvas, angle: Double, ground: Int) {
 private func drawTheoden(_ c: PixelCanvas, _ p: Pose) {
     let hair = C(0xECECE6), hairShade = C(0xC4C4BE), hairLight = C(0xFFFFFC), gem = C(0x3AB86A)
     let shout = p.signature.map { $0 > 0.17 && $0 < 0.8 } ?? false
-    drawRohanCloak(c, t: p.t, speed: p.capeSpeed)
-    drawLegs(c, Look(leg: rohanTrousers), step: p.step)
+    ringsDrawRohanCloak(c, t: p.t, speed: p.capeSpeed)
+    drawLegs(c, Look(leg: ringsRohanTrousers), step: p.step)
     drawRiderBoots(c, p.step)
     c.oy += p.breathe
-    drawBody(c, Look(arm: rohanMail))
-    drawRohanMail(c, hem: rohanGold)
-    c.rect(18, 37, 20, 1, C(0x5A4430)); c.rect(27, 37, 2, 1, rohanGold)      // the belt and its gold buckle
+    drawBody(c, Look(arm: ringsRohanMail))
+    drawRohanMail(c, hem: ringsRohanGold)
+    c.rect(18, 37, 20, 1, C(0x5A4430)); c.rect(27, 37, 2, 1, ringsRohanGold)      // the belt and its gold buckle
     // The royal mantle over the shoulders, gold-edged, with gold brooches.
-    c.rect(17, 32, 3, 6, rohanCloak); c.rect(20, 32, 1, 6, rohanGold)
-    c.rect(36, 32, 2, 6, rohanCloak); c.rect(35, 32, 1, 6, rohanGold)
+    c.rect(17, 32, 3, 6, ringsRohanCloak); c.rect(20, 32, 1, 6, ringsRohanGold)
+    c.rect(36, 32, 2, 6, ringsRohanCloak); c.rect(35, 32, 1, 6, ringsRohanGold)
     c.rect(20, 32, 2, 2, C(0xFFE08A)); c.rect(34, 32, 2, 2, C(0xFFE08A))
     // Long white hair, combed back to the shoulders, the sides outside the face.
     c.pattern(16, 20, [
@@ -212,8 +212,8 @@ private func drawTheoden(_ c: PixelCanvas, _ p: Pose) {
         ".Hh..................hH.",
     ], ["H": hair, "h": hairShade, "l": hairLight])
     // The circlet: a gold band round the brow, raised to a peak at the front, an emerald in it.
-    c.rect(17, 24, 22, 1, rohanGold)
-    c.pattern(25, 21, ["..GG..", ".GGGG.", "GGEEGG"], ["G": rohanGold, "E": gem])
+    c.rect(17, 24, 22, 1, ringsRohanGold)
+    c.pattern(25, 21, ["..GG..", ".GGGG.", "GGEEGG"], ["G": ringsRohanGold, "E": gem])
     c.px(20, 24, C(0xFFE08A)); c.px(35, 24, C(0xFFE08A))
     if let s = p.signature { drawCircletFlash(c, s) }
     // White brows (drawn down hard while he shouts), sideburns and a short beard over the mail.
@@ -240,12 +240,12 @@ private func drawTheoden(_ c: PixelCanvas, _ p: Pose) {
     }
     // The sword held low, swung along `p.melee`, and the fist round its grip.
     if let a = p.melee {
-        for (i, ta) in p.trail.enumerated() { drawRohanSword(c, angle: ta, alpha: 0.3 / Double(i + 1)) }
-        drawRohanSword(c, angle: a)
+        for (i, ta) in p.trail.enumerated() { ringsDrawRohanSword(c, angle: ta, alpha: 0.3 / Double(i + 1)) }
+        ringsDrawRohanSword(c, angle: a)
     } else {
-        drawRohanSword(c, angle: seatedPose ? 8 : 35)
+        ringsDrawRohanSword(c, angle: seatedPose ? 8 : 35)
     }
-    c.rect(38, 33, 2, 3, rohanMail); c.rect(40, 33, 2, 3, clawdOrange); c.px(40, 35, clawdShade)
+    c.rect(38, 33, 2, 3, ringsRohanMail); c.rect(40, 33, 2, 3, clawdOrange); c.px(40, 35, clawdShade)
 }
 
 /// How high Théodone's sword arm is up `s` through his signature, 0…1: swung up (…0.15), held, lowered (0.82…0.96).
@@ -268,12 +268,12 @@ private func drawTheodenCharge(_ c: PixelCanvas, _ s: Double) {
     if s > 0.03 && s < 0.15 {
         for (i, d) in [0.025, 0.05].enumerated() {
             let back = theodenRaise(s - d)
-            drawRohanSword(c, angle: 35 - 120 * back, alpha: 0.3 / Double(i + 1))
+            ringsDrawRohanSword(c, angle: 35 - 120 * back, alpha: 0.3 / Double(i + 1))
         }
     }
-    drawRohanSword(c, angle: angle)
+    ringsDrawRohanSword(c, angle: angle)
     c.oy = oy
-    c.rect(38, 33 - up, 2, 3 + up, rohanMail); c.rect(38, 33 - up, 1, 3 + up, rohanMailLight)
+    c.rect(38, 33 - up, 2, 3 + up, ringsRohanMail); c.rect(38, 33 - up, 1, 3 + up, ringsRohanMailLight)
     c.rect(40, 33 - up, 2, 3, clawdOrange); c.px(40, 35 - up, clawdShade)
     // The glint at the sword's point as it gets to the top.
     let tip = (x: Sprite.hand.x + cos(angle * .pi / 180) * 15, y: Sprite.hand.y - Double(up) + sin(angle * .pi / 180) * 15)
@@ -494,17 +494,17 @@ private func drawRangerCape(_ c: PixelCanvas, t: Double, speed: Double, color: P
 /// Mail from the shoulders to the waist (the body's top rows 34–36, checked light), and a green tunic below it to
 /// mid-thigh; `hem`: a trim colour along its bottom row.
 private func drawRohanMail(_ c: PixelCanvas, hem: Px? = nil) {
-    c.rect(18, 33, 20, 4, rohanMail); c.rect(37, 33, 1, 4, rohanMailDark)
-    for y in 34...36 { for x in 18...36 where (x + y) % 2 == 0 { c.px(x, y, rohanMailLight) } }
-    c.rect(18, 37, 20, 1, rohanTunic)
+    c.rect(18, 33, 20, 4, ringsRohanMail); c.rect(37, 33, 1, 4, ringsRohanMailDark)
+    for y in 34...36 { for x in 18...36 where (x + y) % 2 == 0 { c.px(x, y, ringsRohanMailLight) } }
+    c.rect(18, 37, 20, 1, ringsRohanTunic)
     for y in 38...39 where y + c.oy <= 43 {
-        c.rect(18, y, 20, 1, y == 39 ? hem ?? rohanTunic : rohanTunic); c.px(27, y, rohanTunicDark); c.px(37, y, rohanTunicDark)
+        c.rect(18, y, 20, 1, y == 39 ? hem ?? ringsRohanTunic : ringsRohanTunic); c.px(27, y, ringsRohanTunicDark); c.px(37, y, ringsRohanTunicDark)
     }
 }
 
 /// Rohan's riding boots over the bottom three rows of each leg, as HEM's Éowyn wears them.
 private func drawRiderBoots(_ c: PixelCanvas, _ step: Int) {
-    drawBoots3(c, step, rohanBoot)
+    drawBoots3(c, step, ringsRohanBoot)
 }
 
 /// Boots over the bottom three rows of each leg (a bit of the folded foot when sitting).

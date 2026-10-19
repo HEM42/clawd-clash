@@ -2,7 +2,7 @@ import Foundation
 
 // The Clawd of the Rings universe (inspired by The Lord of the Rings): 38 villains, 37 heroes (and HEM) and 22 places. Each
 // character is a `Persona` registered in one of the Art/*.swift files next to its drawing code. Who lives where, the
-// arch-enemies and the Eagle are decided here, in `middleEarthTheme`.
+// arch-enemies and the Eagle are decided here, in `ringsTheme`.
 //
 // Ids: villains `RingsVillain.rawValue`, heroes 100 + `RingsHero.rawValue`, plus `Universe.middleEarth.base`. Only ever
 // append cases, so running sessions keep their characters across an update.
@@ -15,11 +15,11 @@ extension RingsHero {
     var persona: Persona { middleEarthHeroPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-let middleEarthVillainPersonas: [RingsVillain: Persona] = ringsVillains1.merging(ringsVillains2) { a, _ in a }
+private let middleEarthVillainPersonas: [RingsVillain: Persona] = ringsVillains1.merging(ringsVillains2) { a, _ in a }
     .merging(ringsVillains3) { a, _ in a }.merging(ringsVillains4) { a, _ in a }
     .merging(ringsVillains5) { a, _ in a }.merging(ringsVillains6) { a, _ in a }.merging(ringsVillains7) { a, _ in a }
     .merging(ringsVillains8) { a, _ in a }
-let middleEarthHeroPersonas: [RingsHero: Persona] = ringsHeroes1.merging(ringsHeroes2) { a, _ in a }
+private let middleEarthHeroPersonas: [RingsHero: Persona] = ringsHeroes1.merging(ringsHeroes2) { a, _ in a }
     .merging(ringsHeroes3) { a, _ in a }.merging(ringsHeroes4) { a, _ in a }
     .merging(ringsHeroes5) { a, _ in a }.merging(ringsHeroes6) { a, _ in a }.merging(ringsHeroes7) { a, _ in a }
     .merging(ringsHeroes8) { a, _ in a }
@@ -105,7 +105,7 @@ private let middleEarthNemeses: [(RingsHero, RingsVillain)] = [
 /// from the slopes of Mount Doom.
 private let eagleCrew: [RingsHero] = [.gandalf, .frodo, .sam]
 
-let middleEarthTheme = Theme(
+let ringsTheme = Theme(
     universe: .middleEarth,
     villains: RingsVillain.allCases.map(\.persona),
     heroes: RingsHero.allCases.map(\.persona),
@@ -120,7 +120,7 @@ let middleEarthTheme = Theme(
         guard c.universe == .middleEarth, !c.isDark, let h = RingsHero(rawValue: c.index) else { return nil }
         return eagleCrew.contains(h) ? .eagle : nil
     },
-    menuIcon: { c, mono in drawOneRingIcon(c, mono: mono) },
+    menuIcon: { c, mono in ringsDrawOneRingIcon(c, mono: mono) },
     legend: .hero(.frodo))
 
 // MARK: - Places
@@ -137,6 +137,6 @@ extension Location {
 }
 
 /// Every Clawd of the Rings place, from the Places/RingsScenes*.swift files.
-let middleEarthPlaces: [Location: Place] = ringsScenes1.merging(ringsScenes2) { a, _ in a }
+let ringsPlaces: [Location: Place] = ringsScenes1.merging(ringsScenes2) { a, _ in a }
     .merging(ringsScenes3) { a, _ in a }.merging(ringsScenes4) { a, _ in a }.merging(ringsScenes5) { a, _ in a }
     .merging(ringsScenes6) { a, _ in a }.merging(ringsScenes7) { a, _ in a }.merging(ringsScenes8) { a, _ in a }

@@ -251,19 +251,19 @@ private struct WizardRobes {
     let robe: Px, robeShade: Px, fold: Px
     let hair: Px, hairShade: Px, beardEdge: Px
     let shoes: Px, staff: Px, staffLight: Px
-    let glow: StaffGlow
+    let glow: RingsStaffGlow
     let fallen: Bool
 }
 
 private let whiteRobes = WizardRobes(robe: C(0xE4E4E0), robeShade: C(0xB4B4AE), fold: C(0xCACAC4),
                                      hair: C(0xF0F0EC), hairShade: C(0xC4C4BE), beardEdge: C(0xA4A49E),
                                      shoes: C(0x7A7A76), staff: C(0x2A2A30), staffLight: C(0x4A4A54),
-                                     glow: StaffGlow(core: C(0xF4F0FF), glow: C(0xC8B8FF)), fallen: false)
+                                     glow: RingsStaffGlow(core: C(0xF4F0FF), glow: C(0xC8B8FF)), fallen: false)
 
 private let shabbyRobes = WizardRobes(robe: C(0x857D70), robeShade: C(0x5E574C), fold: C(0x726B5F),
                                       hair: C(0xB8B3A6), hairShade: C(0x8A857A), beardEdge: C(0x6E695F),
                                       shoes: C(0x3E342A), staff: C(0x4A4036), staffLight: C(0x6A5E50),
-                                      glow: StaffGlow(core: C(0xD8D4B0), glow: C(0x9A9468), strength: 0.6, sputters: true),
+                                      glow: RingsStaffGlow(core: C(0xD8D4B0), glow: C(0x9A9468), strength: 0.6, sputters: true),
                                       fallen: true)
 
 /// Sarumanual the White: white robes, long white hair falling past his shoulders and a beard to his belt, Clawd's
@@ -423,16 +423,16 @@ private func drawWizard(_ c: PixelCanvas, _ p: Pose, _ w: WizardRobes, sig: Doub
     }
     if let angle = p.walking || p.seated ? nil : p.melee {
         // Fighting: the staff swung like a sword from his fist, the crystal's light bright and smeared behind it.
-        drawSwungStaff(c, hand: sarumanHand, head: sarumanCrystal, angle: angle, trail: p.trail, glow: w.glow, t: p.t) {
+        ringsDrawSwungStaff(c, hand: sarumanHand, head: sarumanCrystal, angle: angle, trail: p.trail, glow: w.glow, t: p.t) {
             drawSarumanStaff($0, w, up: 0)
         }
     } else {
         // The staff upright in his hand, the crystal glowing softly (Sharkey's bent halfway down, and splintered).
         let up = p.armRaise
         let crystal = (x: sarumanCrystal.x, y: sarumanCrystal.y - Double(up))
-        drawStaffGlow(c, at: crystal, w.glow, bright: false, t: p.t)
+        ringsDrawStaffGlow(c, at: crystal, w.glow, bright: false, t: p.t)
         drawSarumanStaff(c, w, up: up)
-        drawStaffGlow(c, at: crystal, w.glow, bright: false, t: p.t, front: true)
+        ringsDrawStaffGlow(c, at: crystal, w.glow, bright: false, t: p.t, front: true)
     }
     c.rect(38, 33 - p.armRaise, 4, 3, robe)                                    // sleeve and fist round the staff
     c.rect(38, 35 - p.armRaise, 4, 1, robeShade)

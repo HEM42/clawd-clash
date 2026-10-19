@@ -170,7 +170,7 @@ func ringsEmbers(_ ctx: CGContext, t: Double, count: Int, alpha: Double, burst: 
 
 /// How far (art pixels, + outside) the point `dx, dy` from the centre is from the ellipse `rx × ry`: a first-order
 /// estimate, good near the curve, which is all the band needs.
-func ringBandDistance(_ dx: Double, _ dy: Double, rx: Double, ry: Double) -> Double {
+private func ringBandDistance(_ dx: Double, _ dy: Double, rx: Double, ry: Double) -> Double {
     let u: Double = dx / rx, v: Double = dy / ry
     let e: Double = (u * u + v * v).squareRoot()
     let grad: Double = (u * u / (rx * rx) + v * v / (ry * ry)).squareRoot()
@@ -181,7 +181,7 @@ func ringBandDistance(_ dx: Double, _ dy: Double, rx: Double, ry: Double) -> Dou
 /// The One Ring in pixel art, like the sprites (6 screen pixels to the art pixel): a gold band `r` screen pixels round,
 /// its width squashed by `squash` (a spin seen edge-on), its gold in bands, lit on its upper-left rim and shaded on the
 /// inner one, with a glint; and (`glow` 0…1) fire-letters waking along it, a pixel or three each: not real letters.
-func oneRing(_ ctx: CGContext, center c: CGPoint, radius r: Double, squash: Double, glow: Double, alpha: Double) {
+private func oneRing(_ ctx: CGContext, center c: CGPoint, radius r: Double, squash: Double, glow: Double, alpha: Double) {
     let scale: Double = 6
     let R: Double = r / scale
     let rx: Double = max(0.5, R * squash), ry: Double = R * 0.94
@@ -294,7 +294,7 @@ func ringsOpening(_ ctx: CGContext, local l: Double, t: Double) {
 }
 
 /// Draws `a` darkened towards a near-black silhouette (`dark` 0…1).
-func drawShadowed(_ a: Actor, _ ctx: CGContext, t: Double, dark: Double) {
+private func drawShadowed(_ a: Actor, _ ctx: CGContext, t: Double, dark: Double) {
     guard dark > 0 else { draw(a, ctx, t: t); return }
     let box = CGRect(x: (a.x - 40) * S, y: stageH - (a.top + 56) * S, width: 90 * S, height: 62 * S)
     ctx.saveGState()
@@ -759,7 +759,7 @@ let ringsBeats: [(key: Double, beat: Beat)] = [
 
 /// The Shire tune: an original jig-like line in D major, 3/4, on a tin-whistle triangle, with a light square
 /// countermelody an octave down. `bars` of its 8.
-func shireTune(_ m: Mix, at t0: Double, bars: Int, vol: Double = 0.05) {
+private func shireTune(_ m: Mix, at t0: Double, bars: Int, vol: Double = 0.05) {
     let beat: Double = 0.2
     let tune: [[(Int, Double)]] = [[(74, 1), (78, 1), (76, 1)], [(74, 2), (69, 1)], [(71, 1), (74, 1), (76, 1)], [(78, 2), (76, 1)],
                                    [(79, 1), (78, 1), (76, 1)], [(74, 1), (71, 1), (69, 1)], [(71, 1), (76, 1), (73, 1)], [(74, 3)]]

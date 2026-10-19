@@ -2,7 +2,7 @@ import Foundation
 
 // Heroes: the Marshal of the Mark, the folk of the Wilderland and the hasty young Ent. Éomore and Bard the Bowmanpage
 // are Clawd in costume at Clawd's full height: Éomore in the same Rohan kit as Éowin and King Théodone
-// (`drawRohanCloak`, `drawRohanShield` and the `rohan…` colours in RingsHem.swift), but with a taller, gold-ridged helmet
+// (`ringsDrawRohanCloak`, `ringsDrawRohanShield` and the `rohan…` colours in RingsHem.swift), but with a taller, gold-ridged helmet
 // and its long horsetail, a spear and a leather cuirass; Bard's black longbow is held and drawn the way Leggolas holds
 // and draws his. Beorn is a big Clawd, a quarter again a Man's height and half again as broad (his `headTop`, his fist
 // and his `bulk` say so). Quicksort isn't Clawd at all: an Ent, half again a Man's height like B-Treebeard, but a
@@ -32,23 +32,23 @@ let ringsHeroes8: [RingsHero: Persona] = [
 private func drawEomer(_ c: PixelCanvas, _ p: Pose) {
     let leather = C(0x5A3A24), leatherDark = C(0x3E2818), leatherLight = C(0x7A5232)
     let beard = C(0xA8823E), beardDark = C(0x7E5E28)
-    drawRohanCloak(c, t: p.t, speed: p.capeSpeed)
-    drawLegs(c, Look(leg: rohanTrousers), step: p.step)
-    drawBoots(c, p.step, rohanBoot, rows: 3)
+    ringsDrawRohanCloak(c, t: p.t, speed: p.capeSpeed)
+    drawLegs(c, Look(leg: ringsRohanTrousers), step: p.step)
+    drawBoots(c, p.step, ringsRohanBoot, rows: 3)
     c.oy += p.breathe
     drawHorsetail(c, t: p.t)
-    drawBody(c, Look(arm: rohanMail))
+    drawBody(c, Look(arm: ringsRohanMail))
     // The cuirass, the gold horse on it, the belt, and the mail skirt below it.
     c.rect(18, 33, 20, 4, leather); c.rect(37, 33, 1, 4, leatherDark); c.rect(18, 33, 20, 1, leatherLight)
-    c.pattern(26, 34, ["..GG", ".GGG", "GG.."], ["G": rohanGold])
-    c.rect(18, 37, 20, 1, leatherDark); c.rect(27, 37, 2, 1, rohanGold)
+    c.pattern(26, 34, ["..GG", ".GGG", "GG.."], ["G": ringsRohanGold])
+    c.rect(18, 37, 20, 1, leatherDark); c.rect(27, 37, 2, 1, ringsRohanGold)
     for y in 38...39 where y + c.oy <= 43 {
-        for x in 18...36 { c.px(x, y, (x + y) % 2 == 0 ? rohanMailLight : rohanMail) }
-        c.px(37, y, rohanMailDark)
+        for x in 18...36 { c.px(x, y, (x + y) % 2 == 0 ? ringsRohanMailLight : ringsRohanMail) }
+        c.px(37, y, ringsRohanMailDark)
     }
     // The cloak over the shoulders, gold-edged, and its clasps.
-    c.rect(18, 33, 2, 5, rohanCloak); c.rect(20, 33, 1, 5, rohanGold)
-    c.rect(36, 33, 2, 5, rohanCloak); c.rect(35, 33, 1, 5, rohanGold)
+    c.rect(18, 33, 2, 5, ringsRohanCloak); c.rect(20, 33, 1, 5, ringsRohanGold)
+    c.rect(36, 33, 2, 5, ringsRohanCloak); c.rect(35, 33, 1, 5, ringsRohanGold)
     c.px(20, 33, C(0xFFE08A)); c.px(35, 33, C(0xFFE08A))
     // The short beard, from the sideburns under the cheek pieces round the jaw, and the moustache.
     c.rect(19, 29, 2, 3, beard); c.rect(35, 29, 2, 3, beard)
@@ -69,9 +69,9 @@ private func drawEomer(_ c: PixelCanvas, _ p: Pose) {
     let up = Int((5 * (p.signature.map { arc($0, rise: 0.16, fall: 0.86) } ?? 0)).rounded())
     c.oy -= up                                                                // raised high in his signature
     drawSpear(c, angle: angle, t: p.t, butt: seatedPose ? 3 : 9)
-    c.rect(38, 33, 2, 3 + up, rohanMail); c.rect(40, 33, 2, 3, clawdOrange); c.px(40, 35, clawdShade)   // the fist round the shaft
+    c.rect(38, 33, 2, 3 + up, ringsRohanMail); c.rect(40, 33, 2, 3, clawdOrange); c.px(40, 35, clawdShade)   // the fist round the shaft
     c.oy += up
-    drawRohanShield(c, cx: 14, cy: seatedPose ? 33 : 35)
+    ringsDrawRohanShield(c, cx: 14, cy: seatedPose ? 33 : 35)
     if let s = p.signature, s >= 0.24, s < 0.8 { drawMorePrompt(c, s) }
 }
 
@@ -118,9 +118,9 @@ private func drawEomerHelmet(_ c: PixelCanvas) {
         "GG........NN........GG",
         "GG........NN........GG",
         "g.........NN.........g",
-    ], ["H": rohanSteel, "l": white, "D": rohanSteelDark, "B": rohanSteelDark, "N": rohanSteel, "G": rohanGold, "g": goldDark])
-    for x in [19, 23, 32, 36] { c.px(x, 25, rohanGold) }
-    c.rect(27, 13, 2, 2, rohanGold); c.px(28, 13, C(0xFFE08A)); c.rect(26, 15, 4, 1, goldDark)   // the finial
+    ], ["H": ringsRohanSteel, "l": white, "D": ringsRohanSteelDark, "B": ringsRohanSteelDark, "N": ringsRohanSteel, "G": ringsRohanGold, "g": goldDark])
+    for x in [19, 23, 32, 36] { c.px(x, 25, ringsRohanGold) }
+    c.rect(27, 13, 2, 2, ringsRohanGold); c.px(28, 13, C(0xFFE08A)); c.rect(26, 15, 4, 1, goldDark)   // the finial
 }
 
 /// The long white horsetail, springing up and back from the helmet's finial and hanging down his back, its lower end
@@ -135,7 +135,7 @@ private func drawHorsetail(_ c: PixelCanvas, t: Double) {
     }
     for i in 1..<pts.count {
         let k = Double(i) / Double(pts.count - 1), a = at(i - 1), b = at(i)
-        line(c, a.x, a.y, b.x, b.y, rohanCrest, 0.9 + sin(k * .pi) * 0.9)
+        line(c, a.x, a.y, b.x, b.y, ringsRohanCrest, 0.9 + sin(k * .pi) * 0.9)
     }
     for i in 3..<pts.count {
         let a = at(i - 1), b = at(i)
@@ -157,11 +157,11 @@ private func drawSpear(_ c: PixelCanvas, angle: Double, t: Double, butt: Double)
     for (k, len) in [(0, 4), (1, 3), (2, 2), (3, 1)] {
         for o in 1...len + (k == 0 ? flap : 0) {
             let q = at(17.5 + Double(k), Double(o))
-            c.px(Int(q.x.rounded(.down)), Int(q.y.rounded(.down)), k % 2 == 0 ? rohanCloak : rohanCrest)
+            c.px(Int(q.x.rounded(.down)), Int(q.y.rounded(.down)), k % 2 == 0 ? ringsRohanCloak : ringsRohanCrest)
         }
     }
     let g = at(21)
-    c.px(Int(g.x.rounded(.down)), Int(g.y.rounded(.down)), rohanGold)                     // the collar
+    c.px(Int(g.x.rounded(.down)), Int(g.y.rounded(.down)), ringsRohanGold)                     // the collar
     let b0 = at(21.5), b1 = at(27.5), m0 = at(23), m1 = at(25.5)
     line(c, b0.x, b0.y, b1.x, b1.y, steel, 0.5)
     line(c, m0.x, m0.y, m1.x, m1.y, steel, 1.1)

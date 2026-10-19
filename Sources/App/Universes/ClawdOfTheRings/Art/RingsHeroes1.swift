@@ -6,37 +6,37 @@ import Foundation
 // face is Clawd's own orange.
 
 let ringsHeroes1: [RingsHero: Persona] = [
-    .frodo: Persona(name: "Frodough Bagclawds", weapon: .saber, pivot: hobbitHand, headTop: 27, signature: 3.0,
+    .frodo: Persona(name: "Frodough Bagclawds", weapon: .saber, pivot: ringsHobbitHand, headTop: 27, signature: 3.0,
                     callout: "I will take the Ring!", draw: drawFrodo),
-    .sam: Persona(name: "Samwise Gamjee", weapon: .saber, pivot: hobbitHand, headTop: 27, signature: 3.2,
+    .sam: Persona(name: "Samwise Gamjee", weapon: .saber, pivot: ringsHobbitHand, headTop: 27, signature: 3.2,
                   callout: "Po-tay-toes!", draw: drawSam),
-    .pippin: Persona(name: "Pippin Tookmuch", weapon: .saber, pivot: hobbitHand, headTop: 27, signature: 3.0,
+    .pippin: Persona(name: "Pippin Tookmuch", weapon: .saber, pivot: ringsHobbitHand, headTop: 27, signature: 3.0,
                      callout: "Second breakfast?", draw: drawPippin),
-    .merry: Persona(name: "Merge-y Brandybranch", weapon: .saber, pivot: hobbitHand, headTop: 27, signature: 3.0,
+    .merry: Persona(name: "Merge-y Brandybranch", weapon: .saber, pivot: ringsHobbitHand, headTop: 27, signature: 3.0,
                     callout: "Ride now, ride for main!", draw: drawMerry),
-    .bilbo: Persona(name: "Bilbyte Bagclawds", weapon: .saber, pivot: hobbitHand, headTop: 27, signature: 3.4,
+    .bilbo: Persona(name: "Bilbyte Bagclawds", weapon: .saber, pivot: ringsHobbitHand, headTop: 27, signature: 3.4,
                     callout: "I'm going on a refactor!", draw: drawBilbo),
-    .rosie: Persona(name: "Rosie Kotlin", weapon: .saber, pivot: hobbitHand, headTop: 26, signature: 3.0,
+    .rosie: Persona(name: "Rosie Kotlin", weapon: .saber, pivot: ringsHobbitHand, headTop: 26, signature: 3.0,
                     callout: "Samwise? He's my one non-nullable.", draw: drawRosie),
-    .farmerMaggot: Persona(name: "Farmer Mag-git", weapon: .saber, pivot: hobbitHand, bulk: 1, headTop: 23,
+    .farmerMaggot: Persona(name: "Farmer Mag-git", weapon: .saber, pivot: ringsHobbitHand, bulk: 1, headTop: 23,
                            signature: 3.2, callout: "Trespassers! Who's been cherry-picking my mushrooms?", draw: drawMaggot),
 ]
 
 // MARK: - The hobbit
 
 /// Where a hobbit's weapon hand is: just past the 2×2 fist at x 36…37, rows 36…37 (Clawd's is (41.5, 34.5)).
-let hobbitHand = (x: 38.5, y: 36.5)
+let ringsHobbitHand = (x: 38.5, y: 36.5)
 
 /// What tells one hobbit from another: the colours of the curls, waistcoat, shirt, breeches and cloak, and what each
 /// carries about him (the Ring on its chain, a pack with the pan on it, or nothing at all).
-struct HobbitKit {
+struct RingsHobbitKit {
     let curl: Px, curlLight: Px, curlDark: Px
     let waistcoat: Px, waistcoatDark: Px, shirt: Px, breeches: Px
     let cloak: Px, cloakEdge: Px
-    let prop: HobbitProp
+    let prop: RingsHobbitProp
 }
 
-enum HobbitProp { case ring, pack, none }
+enum RingsHobbitProp { case ring, pack, none }
 
 private let brass = C(0xC8A04A), leaf = C(0x7FBF5A), silver = C(0xC8D0D8)
 private let ringGold = C(0xE8B33A), ringChain = C(0x9AA0A8)
@@ -47,10 +47,10 @@ private let ringGold = C(0xE8B33A), ringChain = C(0x9AA0A8)
 /// edges and the leaf brooch, the curls over the head top (row 27), and what the kit carries (the pack behind, or the
 /// Ring on its chain at the chest). `armRight` raises the right hand; `wince` squeezes the eyes shut; a sword still in
 /// its sheath (`sheath`) hangs at the hip. Sitting, it sits 2 px less low than a Clawd, so its feet still show. Shared
-/// with the hobbits drawn in other files (Lotho), along with `HobbitKit` and `hobbitHand`. `fine` adds the finer
+/// with the hobbits drawn in other files (Lotho), along with `RingsHobbitKit` and `ringsHobbitHand`. `fine` adds the finer
 /// detail: a fold down the cloak, the waistcoat lit along the shoulders with a pocket flap, and the curls lit and
 /// shaded in short runs.
-func drawHobbit(_ c: PixelCanvas, _ p: Pose, _ k: HobbitKit, armRight: Int = 0, wince: Bool = false,
+func ringsDrawHobbit(_ c: PixelCanvas, _ p: Pose, _ k: RingsHobbitKit, armRight: Int = 0, wince: Bool = false,
                  sheath: Bool = false, fine: Bool = false) {
     if seatedPose { c.oy -= 2 }
     drawBackCape(c, t: p.t, speed: p.capeSpeed, color: k.cloak, edge: k.cloakEdge, hem: 42, fold: fine)
@@ -110,7 +110,7 @@ func drawHobbit(_ c: PixelCanvas, _ p: Pose, _ k: HobbitKit, armRight: Int = 0, 
 
 /// Breeches to the shin, then bare hobbit feet: a pixel wider than the leg, toes forward, with tufts of hair on top.
 /// Folded forward when sitting, the feet sticking out in front.
-private func drawHobbitFeet(_ c: PixelCanvas, _ k: HobbitKit, step: Int) {
+private func drawHobbitFeet(_ c: PixelCanvas, _ k: RingsHobbitKit, step: Int) {
     if seatedPose {
         for lx in [20, 24, 29, 33] {
             c.rect(lx - 1, 40, 2, 2, k.breeches)
@@ -154,7 +154,7 @@ private func drawPack(_ c: PixelCanvas, pan: Bool) {
 
 // MARK: - Frodough
 
-private let frodoKit = HobbitKit(curl: C(0x3A2414), curlLight: C(0x6A4428), curlDark: C(0x24160A),
+private let frodoKit = RingsHobbitKit(curl: C(0x3A2414), curlLight: C(0x6A4428), curlDark: C(0x24160A),
                                  waistcoat: C(0x6A5A3A), waistcoatDark: C(0x4E4228),
                                  shirt: C(0xE8E0C8), breeches: C(0x4A4232), cloak: C(0x4A6A3A), cloakEdge: C(0x34502A),
                                  prop: .ring)
@@ -187,7 +187,7 @@ private func drawFrodoBody(_ c: PixelCanvas, _ p: Pose, sig: Double?) {
     let slip: Double = sig.map { smooth(min(1, max(0, ($0 - 0.15) / 0.2))) } ?? 0
     let back: Double = sig.map { smooth(max(0, ($0 - 0.9) / 0.1)) } ?? 0
     let raise = sig == nil ? 0 : Int(((4 * lift - 2 * slip) * (1 - back)).rounded())
-    drawHobbit(c, p, k, armRight: raise, sheath: p.melee == nil, fine: true)
+    ringsDrawHobbit(c, p, k, armRight: raise, sheath: p.melee == nil, fine: true)
     if let a = p.melee {
         for (i, ta) in p.trail.enumerated() { drawSting(c, angle: ta, alpha: 0.3 / Double(i + 1)) }
         drawSting(c, angle: a)
@@ -223,7 +223,7 @@ private func drawFrodoBody(_ c: PixelCanvas, _ p: Pose, sig: Double?) {
 
 /// Sting, gripped at the hand: a leather grip, a curved silver guard and a short (8 px) leaf-shaped elven blade.
 private func drawSting(_ c: PixelCanvas, angle: Double, alpha: Double = 1) {
-    prop(c, at: hobbitHand, angle: angle, alpha: alpha) { s in
+    prop(c, at: ringsHobbitHand, angle: angle, alpha: alpha) { s in
         let blade = C(0xD8E0E8), edge = C(0x9AA4B0), guardSilver = C(0xB8C0C8)
         s.px(17, 20, edge)
         s.rect(18, 20, 3, 1, C(0x5A3A22))
@@ -237,7 +237,7 @@ private func drawSting(_ c: PixelCanvas, angle: Double, alpha: Double = 1) {
 
 // MARK: - Samwise
 
-private let samKit = HobbitKit(curl: C(0x5A3A1E), curlLight: C(0x8A6238), curlDark: C(0x3E2812),
+private let samKit = RingsHobbitKit(curl: C(0x5A3A1E), curlLight: C(0x8A6238), curlDark: C(0x3E2812),
                                waistcoat: C(0x8A6A3A), waistcoatDark: C(0x6A4E28),
                                shirt: C(0xE8E0C8), breeches: C(0x5A4630), cloak: C(0x5E4A2A), cloakEdge: C(0x44361E),
                                prop: .pack)
@@ -251,7 +251,7 @@ private func drawSam(_ c: PixelCanvas, _ p: Pose) {
     let potato = sig.map { $0 > 0.42 && $0 < 0.62 } ?? false
     let th: Double = p.t * 6
     let stirHand = Int((1 + sin(th)).rounded())
-    drawHobbit(c, p, samKit, armRight: sig == nil ? 0 : potato ? 6 : stirHand, fine: true)
+    ringsDrawHobbit(c, p, samKit, armRight: sig == nil ? 0 : potato ? 6 : stirHand, fine: true)
     c.px(20, 37, C(0x4A3A22)); c.px(21, 38, C(0x4A3A22))                     // the pack's strap at the shoulder
     if let s = sig {
         // The pot at his belly, the spoon going round in it, steam rising.
@@ -287,7 +287,7 @@ private func drawSam(_ c: PixelCanvas, _ p: Pose) {
 
 /// Sam's frying pan, gripped by the end of the handle: a wooden handle and a heavy black pan, swung like a club.
 private func drawPan(_ c: PixelCanvas, angle: Double, alpha: Double = 1) {
-    prop(c, at: hobbitHand, angle: angle, alpha: alpha) { s in
+    prop(c, at: ringsHobbitHand, angle: angle, alpha: alpha) { s in
         s.rect(17, 20, 7, 1, C(0x6A4A2A)); s.rect(17, 21, 6, 1, C(0x4E3420))
         s.circle(27, 20, 3, C(0x2A2A30))
         s.circle(27, 20, 2, C(0x3A3A42))
@@ -297,7 +297,7 @@ private func drawPan(_ c: PixelCanvas, angle: Double, alpha: Double = 1) {
 
 // MARK: - Pippin
 
-private let pippinKit = HobbitKit(curl: C(0x6A4424), curlLight: C(0x9A6A3A), curlDark: C(0x4A2E16),
+private let pippinKit = RingsHobbitKit(curl: C(0x6A4424), curlLight: C(0x9A6A3A), curlDark: C(0x4A2E16),
                                   waistcoat: C(0x3A5A7A), waistcoatDark: C(0x2A4258),
                                   shirt: C(0xE8E0C8), breeches: C(0x5A4E3A), cloak: C(0x4A5A6A), cloakEdge: C(0x36424E),
                                   prop: .none)
@@ -311,7 +311,7 @@ private func drawPippin(_ c: PixelCanvas, _ p: Pose) {
     let wince = sig.map { $0 > 0.3 && $0 < 0.95 } ?? false
     let reach = sig.map { $0 > 0.05 && $0 < 0.17 } ?? false
     let ground = c.oy - (p.seated ? 4 : 0)                                  // the rim and bucket stand on the floor
-    drawHobbit(c, p, pippinKit, armRight: reach ? 1 : 0, wince: wince, sheath: p.melee == nil, fine: true)
+    ringsDrawHobbit(c, p, pippinKit, armRight: reach ? 1 : 0, wince: wince, sheath: p.melee == nil, fine: true)
     if let a = p.melee {
         for (i, ta) in p.trail.enumerated() { drawShortSword(c, angle: ta, alpha: 0.3 / Double(i + 1)) }
         drawShortSword(c, angle: a)
@@ -364,7 +364,7 @@ private func drawBucket(_ c: PixelCanvas, x: Double, y: Double, angle: Double, a
 
 /// Pippin's short sword, gripped at the hand: a dark grip and gold pommel, a gold guard and a plain bright blade.
 private func drawShortSword(_ c: PixelCanvas, angle: Double, alpha: Double = 1) {
-    prop(c, at: hobbitHand, angle: angle, alpha: alpha) { s in
+    prop(c, at: ringsHobbitHand, angle: angle, alpha: alpha) { s in
         let blade = C(0xC8CCD4), edge = C(0x8A8F9C), gold = C(0xC8A040)
         s.rect(18, 20, 3, 1, C(0x3A2A1C)); s.px(17, 20, gold)
         s.rect(21, 18, 1, 5, gold)
@@ -377,7 +377,7 @@ private func drawShortSword(_ c: PixelCanvas, angle: Double, alpha: Double = 1) 
 
 // MARK: - Merge-y
 
-private let merryKit = HobbitKit(curl: C(0xA8782E), curlLight: C(0xD4A456), curlDark: C(0x74501C),
+private let merryKit = RingsHobbitKit(curl: C(0xA8782E), curlLight: C(0xD4A456), curlDark: C(0x74501C),
                                  waistcoat: C(0x8E4A26), waistcoatDark: C(0x683418),
                                  shirt: C(0xE8E0C8), breeches: C(0x5A4A32), cloak: C(0x2E6A3A), cloakEdge: C(0xD4AE4A),
                                  prop: .none)
@@ -392,7 +392,7 @@ private func drawMerry(_ c: PixelCanvas, _ p: Pose) {
     // 0.06…0.13 and 0.86…0.94 on the way up and back down; at his lips in between, blowing 0.18…0.8.
     let atLips = sig.map { $0 > 0.13 && $0 < 0.86 } ?? false
     let blowing = sig.map { $0 > 0.18 && $0 < 0.8 } ?? false
-    drawHobbit(c, p, merryKit, armRight: sig == nil ? 0 : atLips ? 1 : 0, wince: blowing, sheath: p.melee == nil, fine: true)
+    ringsDrawHobbit(c, p, merryKit, armRight: sig == nil ? 0 : atLips ? 1 : 0, wince: blowing, sheath: p.melee == nil, fine: true)
     guard let s = sig else {
         drawHornOfTheMark(c)
         if let a = p.melee {
@@ -456,7 +456,7 @@ private func drawRaisedHorn(_ c: PixelCanvas) {
 
 // MARK: - Bilbyte
 
-private let bilboKit = HobbitKit(curl: C(0xC8C8C2), curlLight: C(0xEDEDE8), curlDark: C(0x96968E),
+private let bilboKit = RingsHobbitKit(curl: C(0xC8C8C2), curlLight: C(0xEDEDE8), curlDark: C(0x96968E),
                                  waistcoat: C(0x8A2232), waistcoatDark: C(0x621624),
                                  shirt: C(0xEEE6D0), breeches: C(0x6A5A40), cloak: C(0x6E4E30), cloakEdge: C(0x4E3620),
                                  prop: .none)
@@ -471,7 +471,7 @@ private func drawBilbo(_ c: PixelCanvas, _ p: Pose) {
     // The hand up by 0.1 and down again from 0.88; unrolled 0.12…0.42, held, rolled back up 0.6…0.86.
     let raise = sig.map { smooth(($0 - 0.03) / 0.07) * (1 - smooth(($0 - 0.88) / 0.08)) } ?? 0
     let up = Int((5 * raise).rounded())
-    drawHobbit(c, p, bilboKit, armRight: up, sheath: p.melee == nil, fine: true)
+    ringsDrawHobbit(c, p, bilboKit, armRight: up, sheath: p.melee == nil, fine: true)
     // The book, under the back arm.
     let red = C(0xA82A2A), redDark = C(0x6E1A1A), pages = C(0xF0E8D0)
     c.rect(14, 34, 5, 5, red)
@@ -520,7 +520,7 @@ private func drawContract(_ c: PixelCanvas, top: Int, floor: Int, unrolled: Doub
 
 /// Bilbyte's small blade, gripped at the hand: a wooden grip, a little brass guard and a short (5 px) bright blade.
 private func drawSmallBlade(_ c: PixelCanvas, angle: Double, alpha: Double = 1) {
-    prop(c, at: hobbitHand, angle: angle, alpha: alpha) { s in
+    prop(c, at: ringsHobbitHand, angle: angle, alpha: alpha) { s in
         let blade = C(0xD0D4DC), edge = C(0x8E94A0)
         s.rect(18, 20, 3, 1, C(0x6A4A2A))
         s.rect(21, 19, 1, 3, brass)
@@ -533,7 +533,7 @@ private func drawSmallBlade(_ c: PixelCanvas, angle: Double, alpha: Double = 1) 
 
 // MARK: - Rosie
 
-private let rosieKit = HobbitKit(curl: C(0x9A4626), curlLight: C(0xC8683A), curlDark: C(0x6A2C16),
+private let rosieKit = RingsHobbitKit(curl: C(0x9A4626), curlLight: C(0xC8683A), curlDark: C(0x6A2C16),
                                  waistcoat: C(0xE8C04A), waistcoatDark: C(0xB8902A),
                                  shirt: C(0xF2EADA), breeches: C(0xE8C04A), cloak: C(0xC8607A), cloakEdge: C(0x9A4058),
                                  prop: .none)
@@ -549,7 +549,7 @@ private func drawRosie(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature.flatMap { $0 > 0.03 && $0 < 0.97 ? $0 : nil }
     let up = sig.map { rosieReach($0) } ?? 0
     let flower = sig.map { rosieFlower($0, up: up) }
-    drawHobbit(c, p, k, armRight: up, fine: true)
+    ringsDrawHobbit(c, p, k, armRight: up, fine: true)
     // The skirt, flaring a little to the shin, a lace trim at its hem.
     c.rect(20, 38, 16, 1, k.waistcoat)
     c.rect(19, 39, 18, 1, k.waistcoat)
@@ -637,7 +637,7 @@ private func rosieFlower(_ s: Double, up: Int) -> (x: Int, y: Int, spin: Bool) {
 
 /// Rosie's rolling pin, gripped by one handle: a fat pale-wood roller between two turned handles.
 private func drawRollingPin(_ c: PixelCanvas, angle: Double, alpha: Double = 1) {
-    prop(c, at: hobbitHand, angle: angle, alpha: alpha) { s in
+    prop(c, at: ringsHobbitHand, angle: angle, alpha: alpha) { s in
         let wood = C(0xE0C090), woodDark = C(0xB0905A), handle = C(0xA87A44)
         s.rect(17, 20, 3, 1, handle)
         s.rect(20, 19, 9, 3, wood)
@@ -648,7 +648,7 @@ private func drawRollingPin(_ c: PixelCanvas, angle: Double, alpha: Double = 1) 
 
 // MARK: - Farmer Mag-git
 
-private let maggotKit = HobbitKit(curl: C(0x8A8274), curlLight: C(0xB0A898), curlDark: C(0x605A4E),
+private let maggotKit = RingsHobbitKit(curl: C(0x8A8274), curlLight: C(0xB0A898), curlDark: C(0x605A4E),
                                   waistcoat: C(0x5A6A3A), waistcoatDark: C(0x424E2A),
                                   shirt: C(0xDCD4BC), breeches: C(0x6A4A2A), cloak: C(0x6A5E4A), cloakEdge: C(0x4E4434),
                                   prop: .none)
@@ -665,7 +665,7 @@ private func drawMaggot(_ c: PixelCanvas, _ p: Pose) {
     // Raised by 0.12 and shaken, lowered 0.62…0.74.
     let shake: Double = sig.map { smooth(($0 - 0.02) / 0.1) * (1 - smooth(($0 - 0.62) / 0.12)) } ?? 0
     let lift = Int((3 * shake).rounded()) + (shake > 0.6 && Int(p.t * 14) % 2 == 0 ? 1 : 0)
-    drawHobbit(c, p, k, armRight: lift, fine: true)
+    ringsDrawHobbit(c, p, k, armRight: lift, fine: true)
     let floor = 43 - c.oy
     // The leather apron, bulging out over his belly, with a pocket.
     c.rect(22, 36, 14, 5, leather)
@@ -712,7 +712,7 @@ private func drawMaggot(_ c: PixelCanvas, _ p: Pose) {
 /// Mag-git's pitchfork, gripped two thirds down its long ash shaft (the butt sticks out behind the hand): an iron
 /// crossbar and three long prongs. `lift` raises the hand holding it.
 private func drawPitchfork(_ c: PixelCanvas, angle: Double, alpha: Double = 1, lift: Int = 0) {
-    prop(c, at: (hobbitHand.x, hobbitHand.y - Double(lift)), angle: angle, alpha: alpha) { s in
+    prop(c, at: (ringsHobbitHand.x, ringsHobbitHand.y - Double(lift)), angle: angle, alpha: alpha) { s in
         let ash = C(0xA8865A), ashDark = C(0x7A5E3A), iron = C(0x8A8E94), ironLight = C(0xB8BCC4)
         s.rect(14, 20, 18, 1, ash); s.rect(14, 21, 18, 1, ashDark)
         s.rect(32, 18, 1, 5, iron)

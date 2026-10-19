@@ -13,7 +13,7 @@ struct RingsShowcase: Showcase {
 
 /// A character `k` (0…1) through its signature move, outlined, facing right (or left), and how far through the move
 /// the drawing says it is (`drawnSignature`, for a move that climbs a thread).
-func signatureSprite(_ who: Cast, k: Double, t: Double = 0.3, left: Bool = false) -> (PixelCanvas, Double?) {
+private func signatureSprite(_ who: Cast, k: Double, t: Double = 0.3, left: Bool = false) -> (PixelCanvas, Double?) {
     let len = who.signatureLength ?? IdleHabit.signature.length
     forcedHabit = HabitPlay(kind: .signature, e: len * k, length: len)
     let c = PixelCanvas(Sprite.width, Sprite.height)
@@ -27,7 +27,7 @@ func signatureSprite(_ who: Cast, k: Double, t: Double = 0.3, left: Bool = false
 
 /// A character in a signature that climbs a thread (`Persona.climb`, Shellob), standing at `bodyX`: risen and faded
 /// by the move, its thread drawn from where it leaves the body up to the top of the panel, as the overlay draws it.
-func climber(_ who: Cast, k: Double, _ ctx: CGContext, _ o: CGPoint, bodyX: Double, left: Bool = false,
+private func climber(_ who: Cast, k: Double, _ ctx: CGContext, _ o: CGPoint, bodyX: Double, left: Bool = false,
              sy: (Double) -> CGFloat) {
     let (c, drawn) = signatureSprite(who, k: k, left: left)
     guard let move = who.persona.climb, let p = drawn else { at(c, ctx, o, bodyX: bodyX, left: left); return }
@@ -45,7 +45,7 @@ func climber(_ who: Cast, k: Double, _ ctx: CGContext, _ o: CGPoint, bodyX: Doub
 }
 
 /// The Great Eagle, `lift` pixels off the floor, its wings beating on the clock `t`.
-func eagle(_ ctx: CGContext, _ o: CGPoint, x: Double, lift: Double = 0, ramp: Double, flying: Bool, t: Double = 0.1,
+private func eagle(_ ctx: CGContext, _ o: CGPoint, x: Double, lift: Double = 0, ramp: Double, flying: Bool, t: Double = 0.1,
            alpha: CGFloat = 1) {
     let c = PixelCanvas(Ride.width, Ride.height)
     drawRide(c, .eagle, ramp: ramp, engines: flying, gear: !flying || lift < 6, t: t)

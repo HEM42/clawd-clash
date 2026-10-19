@@ -1,12 +1,12 @@
 import Foundation
 
 // Villains: the small ones close to home, and the oldest thing in the Old Forest. Lotho is a hobbit, drawn with the
-// hobbits' own `drawHobbit` (RingsHeroes1.swift) in his own kit; Bill Firmware is Clawd in costume at a Man's height.
+// hobbits' own `ringsDrawHobbit` (RingsHeroes1.swift) in his own kit; Bill Firmware is Clawd in costume at a Man's height.
 // Old Man Pillow isn't Clawd at all: an old willow half again a Man's height (the size is drawn on the canvas, so his
 // `headTop`, the root he grabs with and his `bulk` say so), drooping, grey-green and very, very sleepy.
 
 let ringsVillains5: [RingsVillain: Persona] = [
-    .lotho: Persona(name: "Lotho Sackville-Bagclawds", weapon: .saber, pivot: hobbitHand, headTop: 27, signature: 3.0,
+    .lotho: Persona(name: "Lotho Sackville-Bagclawds", weapon: .saber, pivot: ringsHobbitHand, headTop: 27, signature: 3.0,
                     callout: "I'm the Chief now. Every commit in the Shire needs my sign-off.", draw: drawLotho),
     .billFerny: Persona(name: "Bill Firmware", weapon: .saber, headTop: 21, signature: 2.6,
                         callout: "Want your pony back? That's a paid firmware upgrade.", draw: drawBillFerny),
@@ -17,7 +17,7 @@ let ringsVillains5: [RingsVillain: Persona] = [
 
 // MARK: - Lotho
 
-private let lothoKit = HobbitKit(curl: C(0x241C1A), curlLight: C(0x4A3C36), curlDark: C(0x120E0C),
+private let lothoKit = RingsHobbitKit(curl: C(0x241C1A), curlLight: C(0x4A3C36), curlDark: C(0x120E0C),
                                  waistcoat: C(0x2A2232), waistcoatDark: C(0x18121E),
                                  shirt: C(0xF4F0E4), breeches: C(0x3A3040), cloak: C(0x5A2A4A), cloakEdge: C(0xC8A040),
                                  prop: .none)
@@ -32,7 +32,7 @@ private let lothoKit = HobbitKit(curl: C(0x241C1A), curlLight: C(0x4A3C36), curl
 private func drawLotho(_ c: PixelCanvas, _ p: Pose) {
     let k = lothoKit, gold = C(0xE0B840), pimple = C(0xB82A22), pimpleTip = C(0xF4C0A8)
     let sig = p.signature.flatMap { $0 > 0.06 && $0 < 0.94 ? $0 : nil }
-    drawHobbit(c, p, k, armRight: sig == nil ? 0 : 2)
+    ringsDrawHobbit(c, p, k, armRight: sig == nil ? 0 : 2)
     // The smug face: heavy lids over the eyes, one brow cocked, a smirk; and the pimples.
     c.rect(23, 33, 2, 1, clawdShade); c.rect(31, 33, 2, 1, clawdShade)
     c.rect(22, 32, 3, 1, ink); c.px(31, 31, ink); c.px(32, 31, ink); c.px(33, 32, ink)
@@ -57,7 +57,7 @@ private func drawLotho(_ c: PixelCanvas, _ p: Pose) {
 
 /// Lotho's cane, gripped below its gold knob: a slim black stick with a gold ferrule at the tip. `at`: where it's held
 /// (or leant).
-private func drawCane(_ c: PixelCanvas, angle: Double, alpha: Double = 1, at: (x: Double, y: Double) = hobbitHand) {
+private func drawCane(_ c: PixelCanvas, angle: Double, alpha: Double = 1, at: (x: Double, y: Double) = ringsHobbitHand) {
     prop(c, at: at, angle: angle, alpha: alpha) { s in
         let gold = C(0xE0B840)
         s.rect(18, 19, 2, 3, gold); s.px(18, 19, C(0xF8E08A))

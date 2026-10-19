@@ -41,7 +41,7 @@ private struct WizardLook {
     let beard: Px, beardShade: Px, beardEdge: Px, hair: Px, hairShade: Px
     let boots: Px
     let wood: Px, woodDark: Px, woodLight: Px
-    let glow: StaffGlow
+    let glow: RingsStaffGlow
     let hat: Bool
 }
 
@@ -49,13 +49,13 @@ private let greyWizard = WizardLook(robe: C(0x8A8C92), robeShade: C(0x5E6066), r
                                     beard: C(0xD8D8D4), beardShade: C(0xB0B0AA), beardEdge: C(0x9C9C96),
                                     hair: C(0xC4C4C0), hairShade: C(0x9C9C98), boots: C(0x3A3632),
                                     wood: C(0x6A4A2A), woodDark: C(0x4A321C), woodLight: C(0x8A6A44),
-                                    glow: StaffGlow(core: C(0xFFFFFF), glow: C(0xBFD8FF)), hat: true)
+                                    glow: RingsStaffGlow(core: C(0xFFFFFF), glow: C(0xBFD8FF)), hat: true)
 
 private let whiteWizard = WizardLook(robe: C(0xE4E8EE), robeShade: C(0xA8B0BE), robeLight: C(0xFFFFFF),
                                      beard: C(0xFFFFFC), beardShade: C(0xDCDCD8), beardEdge: C(0x9AA2B0),
                                      hair: C(0xF8F8F6), hairShade: C(0xCCCED2), boots: C(0x9A9EA6),
                                      wood: C(0xE6E0D0), woodDark: C(0x9C9484), woodLight: C(0xFFFFFF),
-                                     glow: StaffGlow(core: C(0xFFFFFF), glow: C(0xFFFFFF)), hat: false)
+                                     glow: RingsStaffGlow(core: C(0xFFFFFF), glow: C(0xFFFFFF)), hat: false)
 
 /// Gandclawd the Grey: a grey robe to the ankles, a tall crooked pointy hat with a wide brim, its tip bent back, grey
 /// hair under it, bushy brows and a long white-grey beard over the chest. A gnarled wooden staff stands in his off
@@ -158,9 +158,9 @@ private func drawGandalfBody(_ c: PixelCanvas, _ p: Pose, _ w: WizardLook, sig: 
     c.oy += p.breathe
     if let s = blow, s >= gandalfImpact, s < gandalfImpact + 0.06 { c.oy += 1 }   // the jolt of the blow
     func offHand(_ c: PixelCanvas) {
-        drawStaffGlow(c, at: (12.5, 15.5), w.glow, bright: false, t: p.t)
+        ringsDrawStaffGlow(c, at: (12.5, 15.5), w.glow, bright: false, t: p.t)
         drawGandalfStaff(c, w)
-        drawStaffGlow(c, at: (12.5, 15.5), w.glow, bright: false, t: p.t, front: true)
+        ringsDrawStaffGlow(c, at: (12.5, 15.5), w.glow, bright: false, t: p.t, front: true)
     }
     if !forward && swing == nil { offHand(c) } else if handover < 1 { faded(c, alpha: 1 - handover, offHand) }
     drawBody(c, Look(arm: robe))
@@ -219,7 +219,7 @@ private func drawGandalfBody(_ c: PixelCanvas, _ p: Pose, _ w: WizardLook, sig: 
     if let angle = swing {
         // Fighting: the staff swung from his front fist like a sword, the sleeve behind it and the fist over it.
         c.rect(38, 33, 4, 3, robe); c.rect(38, 35, 4, 1, robeShade)
-        drawSwungStaff(c, hand: gandalfHand, head: gandalfStaffHead, angle: angle, trail: p.trail, glow: w.glow, t: p.t) {
+        ringsDrawSwungStaff(c, hand: gandalfHand, head: gandalfStaffHead, angle: angle, trail: p.trail, glow: w.glow, t: p.t) {
             drawGandalfStaffForward($0, w, up: 0)
         }
         c.rect(42, 33, 3, 3, clawdOrange); c.px(42, 35, clawdShade)
@@ -234,9 +234,9 @@ private func drawGandalfBody(_ c: PixelCanvas, _ p: Pose, _ w: WizardLook, sig: 
                        core: C(0xE8ECF4, 0.5), glow: clear, coreR: 1.6, glowR: 1.7)
         }
         let head = (x: gandalfStaffHead.x, y: gandalfStaffHead.y - Double(up))
-        drawStaffGlow(c, at: head, w.glow, bright: true, t: p.t)
+        ringsDrawStaffGlow(c, at: head, w.glow, bright: true, t: p.t)
         drawGandalfStaffForward(c, w, up: up)
-        drawStaffGlow(c, at: head, w.glow, bright: true, t: p.t, front: true)
+        ringsDrawStaffGlow(c, at: head, w.glow, bright: true, t: p.t, front: true)
         let reach = sig == nil ? 0 : 3                                        // the other hand, above it
         c.rect(38, 33 - up - reach, 4, 3 + up + reach, robe); c.rect(38, 35, 4, 1, robeShade)
         c.rect(42, 33 - up, 3, 3, clawdOrange); c.px(42, 35 - up, clawdShade)
@@ -321,7 +321,7 @@ private func drawShockRing(_ c: PixelCanvas, _ k: Double, front: Bool) {
 
 /// The light at the head of a wizard's staff: its colours, how strongly it shines (Sharkey's is dim), and whether it
 /// sputters.
-struct StaffGlow {
+struct RingsStaffGlow {
     let core: Px, glow: Px
     var strength = 1.0
     var sputters = false
@@ -329,7 +329,7 @@ struct StaffGlow {
 
 /// The soft light round a staff's head at `at`, always on, `bright` while he fights or swings it. Draw it twice: behind
 /// the head for the halo, then over it (`front`) for the light in its middle.
-func drawStaffGlow(_ c: PixelCanvas, at: (x: Double, y: Double), _ g: StaffGlow, bright: Bool, t: Double, front: Bool = false) {
+func ringsDrawStaffGlow(_ c: PixelCanvas, at: (x: Double, y: Double), _ g: RingsStaffGlow, bright: Bool, t: Double, front: Bool = false) {
     var k: Double = g.strength * (0.88 + 0.12 * sin(t * 3.1))
     if g.sputters && noise(Int(t * 14)) < 0.35 { k *= 0.45 }                  // more often low than out
     if front {
@@ -344,8 +344,8 @@ func drawStaffGlow(_ c: PixelCanvas, at: (x: Double, y: Double), _ g: StaffGlow,
 /// A wizard's staff swung from his fist at `hand` at `angle` (0 forward, -90 upright), its light bright and smeared
 /// along `trail` behind a fast stroke. `art` draws the staff upright, held at `hand`, on a scratch canvas the size of
 /// the sprite's (no offsets), and `head` is where its head is then: the drawing turns about the fist.
-func drawSwungStaff(_ c: PixelCanvas, hand: (x: Double, y: Double), head: (x: Double, y: Double), angle: Double,
-                    trail: [Double], glow g: StaffGlow, t: Double, _ art: (PixelCanvas) -> Void) {
+func ringsDrawSwungStaff(_ c: PixelCanvas, hand: (x: Double, y: Double), head: (x: Double, y: Double), angle: Double,
+                    trail: [Double], glow g: RingsStaffGlow, t: Double, _ art: (PixelCanvas) -> Void) {
     let reach = hypot(head.x - hand.x, head.y - hand.y)
     let lean: Double = atan2(head.y - hand.y, head.x - hand.x) * 180 / .pi + 90   // the head's lean off the shaft's line
     // A long staff isn't a sword. Wound back over his shoulder it stops a little past upright (further, it would go
@@ -372,7 +372,7 @@ func drawSwungStaff(_ c: PixelCanvas, hand: (x: Double, y: Double), head: (x: Do
                    core: g.core, glow: g.glow, coreR: 0.5, glowR: 1.6, strength: fade * g.strength)
     }
     let u = unit(angle + lean), tip = (x: hand.x + u.x * reach, y: hand.y + u.y * reach)
-    drawStaffGlow(c, at: tip, g, bright: true, t: t)
+    ringsDrawStaffGlow(c, at: tip, g, bright: true, t: t)
     let s = PixelCanvas(c.w, c.h)
     art(s)
     let r = s.rotated(angle + 90, about: hand, into: c.w, c.h, at: hand)
@@ -383,7 +383,7 @@ func drawSwungStaff(_ c: PixelCanvas, hand: (x: Double, y: Double), head: (x: Do
             c.px(x, y, unpremultiplied(r, i))
         }
     }
-    drawStaffGlow(c, at: tip, g, bright: true, t: t, front: true)
+    ringsDrawStaffGlow(c, at: tip, g, bright: true, t: t, front: true)
 }
 
 // MARK: - Arrogorn and Stride-r
