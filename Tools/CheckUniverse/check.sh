@@ -6,7 +6,8 @@
 #   QUICK=1 Tools/CheckUniverse/check.sh --all         no builds of the app, saver, Preview or Transitions, no sheets
 #   Tools/CheckUniverse/check.sh --template            the template (_Template/), which no normal build compiles: Preview
 #                                                      and the checker built with TEMPLATE=1 into build/check/template/,
-#                                                      its sheets drawn there, and its checklist (release.sh runs this)
+#                                                      its sheets drawn there, its checklist and its file and top-level
+#                                                      names, by the same prefix rule (release.sh runs this)
 # It prints a list per universe: ✓ passes, ✗ fails, ! is worth a look, · is a note. It exits 1 if anything fails.
 #
 # This part does the files and git: the manifest against NUMBERS, the template's leftovers, what the branch changed,
@@ -55,6 +56,34 @@ for conf in $UROOT/*/universe.conf(N); do
     done < $conf
 done
 
+# Every top-level declaration in the universes' folders: folder, file, line, name, and "private" or "open".
+read -r -d '' DECLS <<'PERL'
+my $root = shift;
+for my $file (@ARGV) {
+    my ($folder) = $file =~ m{^\Q$root\E/([^/]+)/};
+    open my $fh, '<', $file or next;
+    while (my $line = <$fh>) {
+        next unless $line =~ /^((?:@\w+(?:\([^)]*\))?\s+)*)((?:(?:public|internal|private|fileprivate|final|nonisolated|indirect)\s+)*)(func|let|var|struct|enum|class|protocol|typealias|actor)\s+([A-Za-z_]\w*)(.*)$/;
+        my ($mods, $kind, $name, $rest) = ($2, $3, $4, $5);
+        my $vis = $mods =~ /\b(?:private|fileprivate)\b/ ? 'private' : 'open';
+        my @names = ($name);
+        if ($kind eq 'let' || $kind eq 'var') {
+            # More names on the same line, `let a = 1, b = 2`: split at the commas outside brackets.
+            my ($depth, $piece, @pieces) = (0, '');
+            for my $ch (split //, $rest) {
+                if ($ch =~ /[(\[{]/) { $depth++ } elsif ($ch =~ /[)\]}]/) { $depth-- }
+                if ($ch eq ',' && $depth == 0) { push @pieces, $piece; $piece = ''; next }
+                $piece .= $ch;
+            }
+            push @pieces, $piece;
+            shift @pieces;   # the first name's own type and value
+            for (@pieces) { push @names, $1 if /^\s*([A-Za-z_]\w*)\s*(?::[^=]*)?=(?!=)/ }
+        }
+        print "$folder\t$file\t$.\t$_\t$vis\n" for @names;
+    }
+}
+PERL
+
 # MARK: The template
 
 # Never compiled by a normal build, so an engine change could break it without anyone noticing: built here with
@@ -99,6 +128,16 @@ if [[ $1 == --template ]]; then
     else
         tsay ✗ "builds: the checker with the template doesn't build (see $OUT/logs/template-checker.log)"
     fi
+    # Its names, by the rule every universe follows, so a copy starts clean.
+    tp=${conf_prefix[$tf]-}
+    tfiles=($UROOT/$tf/**/*.swift(N:t))
+    tbad=(${tfiles:#$tp*})
+    if (( ${#tbad} )); then tsay ✗ "file names: ${#tbad} don't start with $tp: ${(j:, :)tbad}"
+    else tsay ✓ "file names: all ${#tfiles} start with $tp"; fi
+    perl -e "$DECLS" $UROOT ${(f)"$(find $UROOT/$tf -name '*.swift' | sort)"} > $tdir/decls.tsv
+    tloose=(${(f)"$(awk -F'\t' -v p="${(L)tp}" '$5=="open" && index(tolower($4), p) != 1 {print $4}' $tdir/decls.tsv | sort -u)"})
+    if (( ${#tloose} )); then tsay ✗ "top-level names: ${#tloose} aren't prefixed ($tp…) or private: ${(j:, :)tloose}"
+    else tsay ✓ "top-level names: every one that isn't private starts with $tp"; fi
     exit $failed
 fi
 
@@ -194,33 +233,6 @@ done < $facts
 
 # MARK: Names: top-level declarations, and who mentions whom
 
-# Every top-level declaration in the universes' folders: folder, file, line, name, and "private" or "open".
-read -r -d '' DECLS <<'PERL'
-my $root = shift;
-for my $file (@ARGV) {
-    my ($folder) = $file =~ m{^\Q$root\E/([^/]+)/};
-    open my $fh, '<', $file or next;
-    while (my $line = <$fh>) {
-        next unless $line =~ /^((?:@\w+(?:\([^)]*\))?\s+)*)((?:(?:public|internal|private|fileprivate|final|nonisolated|indirect)\s+)*)(func|let|var|struct|enum|class|protocol|typealias|actor)\s+([A-Za-z_]\w*)(.*)$/;
-        my ($mods, $kind, $name, $rest) = ($2, $3, $4, $5);
-        my $vis = $mods =~ /\b(?:private|fileprivate)\b/ ? 'private' : 'open';
-        my @names = ($name);
-        if ($kind eq 'let' || $kind eq 'var') {
-            # More names on the same line, `let a = 1, b = 2`: split at the commas outside brackets.
-            my ($depth, $piece, @pieces) = (0, '');
-            for my $ch (split //, $rest) {
-                if ($ch =~ /[(\[{]/) { $depth++ } elsif ($ch =~ /[)\]}]/) { $depth-- }
-                if ($ch eq ',' && $depth == 0) { push @pieces, $piece; $piece = ''; next }
-                $piece .= $ch;
-            }
-            push @pieces, $piece;
-            shift @pieces;   # the first name's own type and value
-            for (@pieces) { push @names, $1 if /^\s*([A-Za-z_]\w*)\s*(?::[^=]*)?=(?!=)/ }
-        }
-        print "$folder\t$file\t$.\t$_\t$vis\n" for @names;
-    }
-}
-PERL
 decls=$OUT/decls.tsv
 perl -e "$DECLS" $UROOT ${(f)"$(find $UROOT -mindepth 2 -name '*.swift' | sort)"} > $decls
 
