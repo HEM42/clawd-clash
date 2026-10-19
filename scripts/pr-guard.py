@@ -95,13 +95,7 @@ MAX_UNIVERSE_FILE_LINES = 2000
 MAX_LINE = 260
 HIDDEN_CHARS = re.compile("[؜​-‏‪-‮⁠-⁤⁦-⁩﻿­  ]")
 
-# Prefixes for names new to the universes that predate this guard (their old names stay as they are). A new
-# universe's prefix is its `<Prefix>Roster.swift`, as the clawdify guide lays out.
-PREFIXES = {
-    "StarClawds": ["starWars", "starClawds"], "MarvelousClawds": ["marvel"], "DetectiveClawds": ["dc", "detective"],
-    "DoctorClawd": ["doctor"], "ClawdFiles": ["files"], "StevieClawdberg": ["clawdberg", "cb"],
-    "ClawdOfTheRings": ["rings", "middleEarth"],
-}
+
 
 
 def git(*args, check=True):
@@ -115,6 +109,30 @@ def show(rev, path):
     """A file's bytes at `rev`, or None if it isn't there."""
     r = subprocess.run(["git", "show", "%s:%s" % (rev, path)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return r.stdout if r.returncode == 0 else None
+
+
+def manifest(rev, folder):
+    """A universe folder's `universe.conf` at `rev` as a dict (`number`, `key`, `prefix`…), or None if it has none."""
+    data = show(rev, folder + "/universe.conf")
+    if data is None:
+        return None
+    conf = {}
+    for line in data.decode("utf-8", "replace").split("\n"):
+        line = line.split("#", 1)[0]
+        if "=" in line:
+            k, v = line.split("=", 1)
+            conf[k.strip()] = v.strip()
+    return conf
+
+
+def numbers(rev):
+    """NUMBERS at `rev`: number → (key, folder)."""
+    out = {}
+    for line in (show(rev, UNIVERSES + "NUMBERS") or b"").decode("utf-8", "replace").split("\n"):
+        f = line.split()
+        if len(f) >= 3 and not f[0].startswith("#") and f[0].isdigit():
+            out[int(f[0])] = (f[1], f[2])
+    return out
 
 
 # --- Swift, as far as the checks need it -------------------------------------------------------------------------
@@ -376,36 +394,60 @@ def check_swift(rep, base, head, path, src, added, strict, folder=None, prefixes
 
 
 def check_ids(rep, head):
-    """Cast ids are `universe * 1000 + local`, villains 0..<heroBase and heroes from heroBase: no universe may spill
-    into the next one's ids or its own heroes'."""
-    src = show(head, "Sources/Shared/Universe.swift")
+    """Cast ids are `number * 1000 + local`, villains 0..<heroBase and heroes from heroBase: no universe may spill
+    into the next one's ids or its own heroes'. Each folder's number and key come from its universe.conf, which must
+    match NUMBERS; its counts are the cases of the enums its `<Prefix>Facts.swift` counts (`….allCases.count`)."""
     store = show(head, "Sources/Shared/StatusStore.swift")
-    if src is None or store is None:
-        rep.fail("Sources/Shared/Universe.swift", "missing")
+    if store is None:
+        rep.fail("Sources/Shared/StatusStore.swift", "missing")
         return
-    src = code_only(src.decode("utf-8", "replace"))
     m = re.search(r"static let heroBase = (\d+)", store.decode("utf-8", "replace"))
     hero_base = int(m.group(1)) if m else 100
-    cases = re.findall(r"^\s*case (\w+) = (\d+)\s*$", src, re.M)
-    raws = [int(r) for _, r in cases]
-    if len(set(raws)) != len(raws):
-        rep.fail("Sources/Shared/Universe.swift", "two universes share a raw value: %s" % cases)
-
-    def counts(var):
-        body = re.search(r"var %s: Int \{(.*?)\n    \}" % var, src, re.S)
-        return dict(re.findall(r"case \.(\w+): return (\d+)", body.group(1))) if body else {}
-
-    villains, heroes = counts("villainCount"), counts("heroCount")
-    for name, _ in cases:
-        if name not in villains or name not in heroes:
-            rep.fail("Sources/Shared/Universe.swift", "couldn't find the villain and hero counts of `%s`" % name)
+    listed = numbers(head)
+    seen = {}
+    out = git("ls-tree", "-r", "--name-only", head, "--", UNIVERSES).decode()
+    for conf_path in sorted(p for p in out.splitlines() if re.match(UNIVERSES + r"[^/]+/universe\.conf$", p)):
+        root = conf_path[:-len("/universe.conf")]
+        folder = root[len(UNIVERSES):]
+        if folder.startswith("_"):
+            continue   # the template, never in a normal build
+        conf = manifest(head, root) or {}
+        num, key, prefix = conf.get("number", ""), conf.get("key", ""), conf.get("prefix", "")
+        if not num.isdigit() or not key or not prefix:
+            rep.fail(conf_path, "needs a number, a key and a prefix")
             continue
-        if int(villains[name]) > hero_base:
-            rep.fail("Sources/Shared/Universe.swift", "`%s` has %s villains; ids run out at %d (they'd become heroes')"
-                     % (name, villains[name], hero_base))
-        if hero_base + int(heroes[name]) > 1000:
-            rep.fail("Sources/Shared/Universe.swift", "`%s` has %s heroes; ids run out at %d (they'd become the next "
-                     "universe's)" % (name, heroes[name], 1000 - hero_base))
+        num = int(num)
+        if listed.get(num) != (key, folder):
+            rep.fail(conf_path, "number %d isn't NUMBERS' line for %s in %s/: ask the maintainer for a number"
+                     % (num, key, folder))
+        if num in seen:
+            rep.fail(conf_path, "number %d is %s's too" % (num, seen[num]))
+        seen[num] = folder
+        facts_path = "%s/%sFacts.swift" % (root, prefix)
+        facts = show(head, facts_path)
+        if facts is None:
+            rep.fail(root, "no %sFacts.swift (its cast's enums and its UniverseFacts)" % prefix)
+            continue
+        src = code_only(facts.decode("utf-8", "replace"))
+
+        def count(field):
+            m = re.search(r"\b%s:\s*(\w+)\.allCases\.count" % field, src)
+            body = m and re.search(r"\benum %s\b[^{]*\{(.*?)\n\}" % m.group(1), src, re.S)
+            if not body:
+                return None
+            return sum(len([c for c in line.split(",") if c.strip()])
+                       for line in re.findall(r"^\s*case\s+([^\n]+)", body.group(1), re.M))
+
+        villains, heroes = count("villainCount"), count("heroCount")
+        if villains is None or heroes is None:
+            rep.fail(facts_path, "couldn't find the villain and hero enums its counts come from "
+                                 "(`villainCount: <Prefix>Villain.allCases.count`, the same for heroes)")
+            continue
+        if villains > hero_base:
+            rep.fail(facts_path, "%d villains; ids run out at %d (they'd become heroes')" % (villains, hero_base))
+        if hero_base + heroes > 1000:
+            rep.fail(facts_path, "%d heroes; ids run out at %d (they'd become the next universe's)"
+                     % (heroes, 1000 - hero_base))
 
 
 def classify(rep, status, path, old_mode, new_mode, head):
@@ -482,15 +524,13 @@ def main(argv):
         folders.setdefault(path[len(UNIVERSES):].split("/")[0], []).append(path)
     for folder, paths in sorted(folders.items()):
         root = UNIVERSES + folder
-        prefixes = PREFIXES.get(folder)
-        if prefixes is None:
-            files = git("ls-tree", "-r", "--name-only", head, "--", root).decode().splitlines()
-            rosters = [os.path.basename(f)[:-len("Roster.swift")] for f in files if f.endswith("Roster.swift")]
-            if len(rosters) != 1 or not rosters[0]:
-                rep.fail(root, "a new universe has exactly one <Prefix>Roster.swift, whose prefix its top-level "
-                               "names share (see clawdify_guide.md)")
-                continue
-            prefixes = [rosters[0]]
+        # The prefix its top-level names share: from main's manifest for a universe main has, else from the PR's.
+        conf = manifest(merge_base, root) or manifest(head, root)
+        if not conf or not conf.get("prefix"):
+            rep.fail(root, "a universe folder has a universe.conf with its prefix, which its file and top-level "
+                           "names share (see clawdify_guide.md)")
+            continue
+        prefixes = [conf["prefix"]]
         before = universe_names(merge_base, root)
         own_types = set()
         for f in git("ls-tree", "-r", "--name-only", head, "--", root).decode().splitlines():

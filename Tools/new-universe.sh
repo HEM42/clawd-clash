@@ -4,12 +4,12 @@
 # lines that keep the template out of normal builds. What comes out builds and runs at once, with the template's
 # sample characters and place in it, ready to grow into the real thing (clawdify_guide.md has the rest).
 #   Tools/new-universe.sh <Folder> <Prefix> <key> "<Title>" <number>
-#   Tools/new-universe.sh BuffyClawds Buffy buffy "Clawd Slayer" 8
-#     Folder  the folder's name, matching its NUMBERS line            (BuffyClawds)
-#     Prefix  starts every file and type, lower-cased every helper     (Buffy: BuffyHero, buffyTheme, buffyMeadow)
-#     key     the universe's key: saved in settings, forever           (buffy)
-#     Title   the name people see                                      ("Clawd Slayer")
-#     number  its permanent number, from its NUMBERS line              (8)
+#   Tools/new-universe.sh HarborClawds Harbor harbor "Harbor Clawds" 12
+#     Folder  the folder's name, matching its NUMBERS line            (HarborClawds)
+#     Prefix  starts every file and type, lower-cased every helper     (Harbor: HarborHero, harborTheme, harborMeadow)
+#     key     the universe's key: saved in settings, forever           (harbor)
+#     Title   the name people see                                      ("Harbor Clawds")
+#     number  its permanent number, from its NUMBERS line              (12)
 # The number has to be handed out first: the owner adds `<number> <key> <Folder> reserved` to
 # Sources/App/Universes/NUMBERS before work starts.
 set -euo pipefail
@@ -25,9 +25,9 @@ DEST=$ROOT/$FOLDER
 fail() { print -u2 -- "new-universe: $*"; exit 1 }
 
 # What each argument may be.
-[[ $FOLDER =~ '^[A-Z][A-Za-z0-9]*$' ]] || fail "the folder ($FOLDER) is a name like BuffyClawds: letters and digits, a capital first"
-[[ $PREFIX =~ '^[A-Z][A-Za-z0-9]*$' ]] || fail "the prefix ($PREFIX) is a name like Buffy: letters and digits, a capital first"
-[[ $KEY =~ '^[a-z][A-Za-z0-9]*$' ]] || fail "the key ($KEY) is a name like buffy: letters and digits, a small letter first"
+[[ $FOLDER =~ '^[A-Z][A-Za-z0-9]*$' ]] || fail "the folder ($FOLDER) is a name like HarborClawds: letters and digits, a capital first"
+[[ $PREFIX =~ '^[A-Z][A-Za-z0-9]*$' ]] || fail "the prefix ($PREFIX) is a name like Harbor: letters and digits, a capital first"
+[[ $KEY =~ '^[a-z][A-Za-z0-9]*$' ]] || fail "the key ($KEY) is a name like harbor: letters and digits, a small letter first"
 [[ -n ${TITLE//[[:space:]]/} ]] || fail "the title is empty"
 [[ $TITLE != *[\"\\]* ]] || fail "the title can't have a double quote or a backslash in it"
 [[ $NUMBER =~ '^[0-9]+$' ]] || fail "the number ($NUMBER) is a whole number, from NUMBERS"
@@ -47,16 +47,16 @@ for conf in $ROOT/*/universe.conf(N); do
     grep -qE "^prefix[[:space:]]*=[[:space:]]*$PREFIX([[:space:]]|$)" $conf && fail "${conf:h:t}/ already has the prefix $PREFIX"
 done
 
-LOWER=${(L)PREFIX[1]}${PREFIX[2,-1]}            # Buffy → buffy, StarClawds → starClawds
-SLUG=${${${(L)TITLE}//[^a-z0-9]##/-}##-}; SLUG=${SLUG%%-}   # "Clawd Slayer" → clawd-slayer
-SMALL=${${TITLE//[^A-Za-z0-9]##/-}##-}; SMALL=${SMALL%%-}   # "Clawd Slayer" → Clawd-Slayer
+LOWER=${(L)PREFIX[1]}${PREFIX[2,-1]}            # Harbor → harbor, StarClawds → starClawds
+SLUG=${${${(L)TITLE}//[^a-z0-9]##/-}##-}; SLUG=${SLUG%%-}   # "Harbor Clawds" → harbor-clawds
+SMALL=${${TITLE//[^A-Za-z0-9]##/-}##-}; SMALL=${SMALL%%-}   # "Harbor Clawds" → Harbor-Clawds
 
 print "→ copying the template to $DEST/"
 cp -R $SRC $DEST
 # Its files: Template… → <Prefix>…
 for file in $DEST/**/Template*(N.); do mv $file ${file:h}/$PREFIX${${file:t}#Template}; done
 
-# Its place keys (`sampleMeadow`) become the prefix's (`buffyMeadow`), here and wherever they're used.
+# Its place keys (`sampleMeadow`) become the prefix's (`harborMeadow`), here and wherever they're used.
 places=(${(f)"$(grep -rhoE 'Location\("sample[A-Za-z0-9_]+"' $DEST | sed -E 's/^Location\("sample//; s/"$//' | sort -u || true)"})
 
 print "→ renaming it to $PREFIX ($KEY, $NUMBER)"

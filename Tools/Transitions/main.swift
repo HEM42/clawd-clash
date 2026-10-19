@@ -1,12 +1,10 @@
 import AppKit
 import AVFoundation
 
-// The transitions between places, rendered as short clips and a sheet of key frames (Star Clawds' plain wipes, or a
-// universe's own trips): Marvel's (`MarvelousComicWipe`)
-// or, between two DC places, DC's (`DetectiveComicWipe`), or between two Doctor Clawd places, its trips (`DoctorWipe`), or
-// between two Clawd Files places, its own (`FilesWipe`), each clip ending on the typed caption, or between two Stevie
-// Clawdberg places, its film moments (`ClawdbergWipe`), or, to a Clawd of the Rings place, its nine trips (`RingsWipe`):
-// the Eye, the map journey, the Red Book, the Great Eagles, the Ring, the beacons, the Mirror, the fireworks and the palantír.
+// The transitions between places, rendered as short clips and a sheet of key frames. What it renders comes from the
+// registry: the destination's universe module (`to.universe.module.transitions`, a `TransitionSet`) shows one of every
+// trip it has, from `every(from, to)`; a universe without trips of its own (Star Clawds) gets every plain wipe
+// (`Wipe.Kind`), as the window and the screen saver draw them. Adding a universe adds its trips here with no edit.
 //   Tools/Transitions/build.sh && build/transitions <out folder> [from place] [to place]
 //   build/transitions build/transitions-dc watchtower gotham     DC's fifteen
 //   build/transitions build/transitions-doctor consoleRoom skarro   Doctor Clawd's ten

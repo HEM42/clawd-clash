@@ -48,7 +48,7 @@ These apply to the lines your PR adds in a universe folder.
 
 **Imports.** Only `Foundation`, `CoreGraphics`, `CoreText` and `AppKit`.
 
-**Names.** A new top-level name is either `private` or starts with your universe's prefix: the `prefix` in your `universe.conf`, the `<Prefix>` of your `<Prefix>Roster.swift`, as in `ringsHeroes1` or `RingsTrip`. A plain top-level name can quietly replace one of the system's (a `chmod` of your own would switch off one of the app's protections), so the guard refuses it. It also refuses a name the app's own code already uses.
+**Names.** A new top-level name is either `private` or starts with your universe's prefix: the `prefix` in your `universe.conf`, which starts every file name in your folder too, as in `ringsHeroes1` or `RingsTrip`. A plain top-level name can quietly replace one of the system's (a `chmod` of your own would switch off one of the app's protections), so the guard refuses it. It also refuses a name the app's own code already uses.
 
 **Extensions.**
 - Extend only `Scenes`, `Location`, `Cast`, `Universe`, `Ride`, or types your universe declares.

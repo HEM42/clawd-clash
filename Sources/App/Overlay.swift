@@ -191,14 +191,16 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     private static let footroom: CGFloat = 7 * leaderScale
 
     override init() {
-        // The hook only knows the cast sizes (`Universe`); a character added without bumping them would never be picked,
-        // and saved ids would point at the wrong one. A `precondition`, not an `assert`: every build here is optimised
-        // (-O), which compiles asserts out, so this is what stops a mismatched build at its first launch.
+        // The hook only knows the cast sizes, counted from the enums in each universe's facts file; a persona without its
+        // enum case (or a case without its persona) would never be picked, and saved ids would point at the wrong one. A
+        // `precondition`, not an `assert`: every build here is optimised (-O), which compiles asserts out, so this is what
+        // stops a mismatched build at its first launch.
         for u in Universe.allCases {
             let villains = Theme.of(u).villains.count, heroes = Theme.of(u).heroes.count
             precondition(villains == u.villainCount && heroes == u.heroCount,
-                         "\(u.title): the roster has \(villains) villains and \(heroes) heroes, but Universe.swift says "
-                         + "\(u.villainCount) and \(u.heroCount). Update villainCount/heroCount in Sources/Shared/Universe.swift.")
+                         "\(u.title): the roster has \(villains) villains and \(heroes) heroes, but its facts file has "
+                         + "\(u.villainCount) and \(u.heroCount). Every case of the villain and hero enums in the universe's "
+                         + "<Prefix>Facts.swift needs its persona in the roster, and every persona its case.")
         }
         panel = OverlayPanel(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10),
                              styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
