@@ -15,12 +15,12 @@ extension SlayerTrip {
     /// glints (gone by 0.95). The new place waits behind in a night-blue shade that lifts as the dust clears. The
     /// stake, the dust and the flash are pixel art, with a little film grain over the night.
     func drawDusting(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
-        guard let canvas = Self.slayerDustCanvas(in: r) else { ctx.draw(k < 0.5 ? old : new, in: r); return }
+        guard let canvas = Self.slayerDustCanvas(in: r) else { ctx.drawShot(k < 0.5 ? old : new, in: r); return }
         let (art, w, h, px) = canvas
         let W = Double(w), H = Double(h)
 
         // The new place behind, in the night's shade until the dust has gone.
-        ctx.draw(new, in: r)
+        ctx.drawShot(new, in: r)
         let shade = 0.42 * (1 - Self.ease(Self.span(k, 0.3, 0.95)))
         if shade > 0 { ctx.setFillColor(dustRGB(0x0A0E22, CGFloat(shade))); ctx.fill(r) }
 
@@ -93,7 +93,7 @@ extension SlayerTrip {
             }
         }
         if !keep.isEmpty {
-            ctx.saveGState(); ctx.clip(to: keep); ctx.draw(old, in: r); ctx.restoreGState()
+            ctx.saveGState(); ctx.clip(to: keep); ctx.drawShot(old, in: r); ctx.restoreGState()
         }
 
         // The dust: each speck from a block, born as it goes, bursts out from the strike, then rides its ribbon on

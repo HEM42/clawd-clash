@@ -761,6 +761,7 @@ extension Scenes {
             let y = Int(Double(g) * (tall ? 0.15 + noise(i * 5 + 600) * 0.4 : 0.1 + noise(i * 5 + 600) * 0.25))
             wisp(c, Int(noise(i * 5 + 601) * Double(c.w)), y, (30 + Int(noise(i * 5 + 602) * 50)) * s, C(0xF0A07A, 0.45), s: s)
         }
+        if tall { centralHigh(c, g) }
         for blk in scenes2Blocks(c.w, base: g, lo: Int(Double(g) * 0.25), hi: Int(Double(g) * (tall ? 0.45 : 0.55)), minW: 6 * b, maxW: 14 * b,
                                  gap: 0, seed: 19) {
             scenes2Building(c, blk, C(0x9A4A62), roof: C(0xC8707A), window: C(0xFFC890), chance: 0.18, step: 2 * b, seed: 3)
@@ -774,6 +775,70 @@ extension Scenes {
         // the street
         c.ground(g, C(0x2E2228), edge: C(0x9A6A5A), speck: C(0x261C22), seed: 81)
         for x in stride(from: 0, to: c.w, by: 14 * s) { c.rect(x, g + (c.h - g) / 2, 6 * s, s, C(0xC8A050, 0.6)) }
+    }
+
+    /// The far towers behind the skyline on the screen saver: centre, top row and width (a fixed size, so a full
+    /// screen shows more sky over them rather than taller towers).
+    static func centralSpires(_ c: PixelCanvas, _ g: Int) -> [(x: Int, top: Int, w: Int)] {
+        let s = unit(g)
+        return stride(from: 24 * s, to: c.w, by: 56 * s).enumerated().map { i, x0 in
+            let h = min(Int(Double(g) * 0.62), (130 + Int(noise(i * 5 + 620) * 90)) * s)
+            return (x0 + Int(noise(i * 5 + 621) * 30) * s, g - h, (10 + Int(noise(i * 5 + 622) * 8)) * s)
+        }
+    }
+
+    /// Up in the screen saver's sky: the city's far towers in the haze with their spires and masts, long banks of
+    /// cloud lit gold underneath by the low sun, a news blimp drifting over the city with its lit band, and an
+    /// airliner high up drawing a contrail that catches the sunset.
+    static func centralHigh(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g)
+        // cloud banks: dusky on top, gold where the sun catches them from below
+        for i in 0..<(c.w / (110 * s)) {
+            let len = (60 + Int(noise(i * 5 + 630) * 60)) * s, th = (9 + Int(noise(i * 5 + 631) * 6)) * s
+            let x = Int(noise(i * 5 + 632) * Double(c.w)), y = Int(Double(g) * (0.14 + Double(i % 4) * 0.075 + noise(i * 5 + 633) * 0.03))
+            let top = C(0x8A4674), under = C(0xC86A70)
+            c.ellipse(x, y, len / 2 + 6 * s, th / 2, top)
+            for k in 0..<7 {
+                let cx = x - len / 2 + len * k / 6 + Int(noise(i * 9 + k + 640) * 6) * s, r = th / 2 + Int(noise(i * 9 + k + 650) * 5) * s
+                c.ellipse(cx, y - r / 2, r * 3 / 2, r, top)
+                c.ellipse(cx - r / 3, y - r / 2 - r / 3, r / 2, max(1, r / 4), C(0xA05A80))
+            }
+            c.ellipse(x, y + th / 3, len / 2 + 2 * s, max(1, th / 5), under)
+            c.ellipse(x, y + th / 2, len / 2 - 2 * s, max(1, s), C(0xF6A070))
+            c.ellipse(x - 4 * s, y + th / 2, len / 3, max(1, s / 2), C(0xFFD8A0))
+        }
+        // the far towers, hazed into the sunset
+        let haze = C(0xB0607A), lit = C(0xD8888A)
+        for (i, t) in centralSpires(c, g).enumerated() {
+            let w = t.w
+            c.rect(t.x - w / 2, t.top, w, g - t.top, haze)
+            c.rect(t.x - w / 2, t.top, max(1, s), g - t.top, lit)
+            switch i % 3 {
+            case 0:                                            // stepped crown and a spire
+                c.rect(t.x - w / 3, t.top - 6 * s, w * 2 / 3, 6 * s, haze); c.rect(t.x - w / 6, t.top - 12 * s, w / 3, 6 * s, haze)
+                c.rect(t.x - s / 2, t.top - 26 * s, max(1, s), 14 * s, haze)
+            case 1:                                            // a slanted top
+                for k in 0..<(w / 2) { c.rect(t.x - w / 2 + k * 2, t.top - k, w - k * 2, 1, haze) }
+                c.rect(t.x - s / 2, t.top - w / 2 - 10 * s, max(1, s), 10 * s, haze)
+            default:                                           // a flat roof with masts
+                c.rect(t.x - w / 3, t.top - 10 * s, max(1, s), 10 * s, haze); c.rect(t.x + w / 4, t.top - 6 * s, max(1, s), 6 * s, haze)
+            }
+            for (j, wy) in stride(from: t.top + 4 * s, to: g - 4 * s, by: 6 * s).enumerated() where noise(i * 41 + j + 660) > 0.75 {
+                c.rect(t.x - w / 2 + 2 * s + Int(noise(i * 43 + j) * Double(max(1, w - 5 * s))), wy, 2 * s, s, C(0xFFD8A0, 0.5))
+            }
+        }
+        // the news blimp
+        let bx = Int(Double(c.w) * 0.52), by = Int(Double(g) * 0.31), brx = 20 * s, bry = 7 * s
+        c.ellipse(bx, by, brx, bry, C(0x5A4A6A)); c.ellipse(bx - 2 * s, by - 2 * s, brx - 3 * s, bry - 3 * s, C(0x8A7A9A))
+        c.ellipse(bx, by + bry - 2 * s, brx - 4 * s, 2 * s, C(0x3A2E48))
+        for side in [-1, 1] { c.rect(bx - brx - 2 * s, by + side * 3 * s - (side < 0 ? 2 * s : 0), 6 * s, 2 * s, C(0x4A3A5A)) }
+        c.rect(bx - 12 * s, by - s, 24 * s, 3 * s, C(0x2A2034)); c.rect(bx - 11 * s, by, 22 * s, s, C(0xFFC86A, 0.85))
+        c.rect(bx - 3 * s, by + bry, 6 * s, 2 * s, C(0x3A2E48))
+        // the airliner and its contrail
+        let px = Int(Double(c.w) * 0.66), py = Int(Double(g) * 0.11)
+        for k in 0..<(140 * s) { c.rect(px - 6 * s - k, py + k / (28 * s), max(1, s), max(1, s), C(0xF8C8B0, 0.55 * (1 - Double(k) / Double(140 * s)))) }
+        c.rect(px - 5 * s, py, 10 * s, 2 * s, C(0x3A2A48)); c.rect(px - 2 * s, py - 2 * s, 3 * s, 6 * s, C(0x3A2A48))
+        c.rect(px - 5 * s, py - 2 * s, 2 * s, 2 * s, C(0x3A2A48))
     }
 
     /// S.C.A.R. Labs: the low wide block, its lettered band and the big panelled dome with its ring.
@@ -812,6 +877,17 @@ extension Scenes {
                 let wx = blk.x + 1 + Int(noise(i * 13 + 6) * Double(max(1, blk.w - 3)))
                 let wy = blk.y + 3 * b + Int(noise(i * 13 + 7) * Double(max(1, blk.h - 6 * b)))
                 if noise(Int(t * 0.5 + noise(i) * 7) * 31 + i) > 0.5 { c.rect(wx, wy, b, 1, C(0xFFE0A0, 0.85)) }
+            }
+        }
+        if isTall(c) {                                         // aviation lights on the far towers, the airliner's strobe
+            let s = unit(g)
+            for (i, sp) in centralSpires(c, g).enumerated() where dcScenes2Phase(t, 2.2, offset: Double(i) * 0.37) < 0.3 {
+                let ty = sp.top - [26 * s, sp.w / 2 + 10 * s, 10 * s][i % 3], tx = i % 3 == 2 ? sp.x - sp.w / 3 + s / 2 : sp.x
+                c.rect(tx - s / 2, ty, max(1, s), max(1, s), C(0xFF4A3A)); c.circle(tx, ty, 2 * s, C(0xFF4A3A, 0.25))
+            }
+            if dcScenes2Phase(t, 1.3) < 0.12 {
+                let px = Int(Double(c.w) * 0.66), py = Int(Double(g) * 0.11)
+                c.rect(px + 4 * s, py, s, s, C(0xFFFFFF)); c.circle(px + 4 * s, py, 2 * s, C(0xFFFFFF, 0.3))
             }
         }
         if dcScenes2Phase(t, 1.8) < 0.2 { c.rect(l.x - l.b, g - 46 * l.b, 2 * l.b + 1, l.b, C(0xFF5A4A)); c.circle(l.x, g - 46 * l.b, 2 * l.b, C(0xFF5A4A, 0.3)) }

@@ -114,7 +114,7 @@ struct ComicTrip {
         ctx.interpolationQuality = .none
         switch kind {
         case .halftone:
-            ctx.draw(old, in: r)
+            ctx.drawShot(old, in: r)
             let cell = 26 * s
             let path = CGMutablePath()
             let cols = Int(r.width / cell) + 2, rows = Int(r.height / cell) + 2
@@ -130,13 +130,13 @@ struct ComicTrip {
             // Clipping to an empty path clips nothing, which flashed the whole new place up on the first frame.
             guard !path.isEmpty else { return }
             ctx.addPath(path); ctx.clip()
-            ctx.draw(new, in: r)
+            ctx.drawShot(new, in: r)
 
         case .burst:
             drawSound(ctx, old: old, new: new, k: k, in: r)
 
         case .panels:
-            ctx.draw(old, in: r)
+            ctx.drawShot(old, in: r)
             let gutter = 14 * s, w = r.width / 3
             for i in 0..<3 {
                 let local = clamp((k - Double(i) * 0.18) / 0.46)
@@ -149,18 +149,18 @@ struct ComicTrip {
                 let panel = CGRect(x: -w / 2, y: -r.height / 2, width: w, height: r.height)
                 ctx.setFillColor(Self.ink); ctx.fill(panel)
                 ctx.clip(to: panel.insetBy(dx: gutter / 2, dy: gutter / 2))
-                ctx.draw(new, in: CGRect(x: -w / 2 - w * CGFloat(i), y: -r.height / 2, width: r.width, height: r.height))
+                ctx.drawShot(new, in: CGRect(x: -w / 2 - w * CGFloat(i), y: -r.height / 2, width: r.width, height: r.height))
                 ctx.restoreGState()
             }
             // Once all three are down, the gutters close up.
-            if k > 0.86 { ctx.setAlpha(CGFloat((k - 0.86) / 0.14)); ctx.draw(new, in: r); ctx.setAlpha(1) }
+            if k > 0.86 { ctx.setAlpha(CGFloat((k - 0.86) / 0.14)); ctx.drawShot(new, in: r); ctx.setAlpha(1) }
 
         case .speedLines:
             let zoom: CGFloat = k < 0.5 ? 1 + CGFloat(ease(k / 0.5)) * 0.35 : 1.35 - CGFloat(ease((k - 0.5) / 0.5)) * 0.35
             ctx.saveGState()
             ctx.clip(to: r)
             ctx.translateBy(x: c.x, y: c.y); ctx.scaleBy(x: zoom, y: zoom); ctx.translateBy(x: -c.x, y: -c.y)
-            ctx.draw(k < 0.5 ? old : new, in: r)
+            ctx.drawShot(k < 0.5 ? old : new, in: r)
             ctx.restoreGState()
             let strength = k < 0.5 ? ease(k / 0.5) : 1 - ease((k - 0.5) / 0.5)
             let far = hypot(r.width, r.height), inner = far * 0.53 * CGFloat(1 - strength)
@@ -185,7 +185,7 @@ struct ComicTrip {
                 let iris = CGRect(x: c.x - rad, y: c.y - rad, width: rad * 2, height: rad * 2)
                 ctx.saveGState()
                 ctx.addEllipse(in: iris); ctx.clip()
-                ctx.draw(closing ? old : new, in: r)
+                ctx.drawShot(closing ? old : new, in: r)
                 ctx.restoreGState()
                 ctx.addEllipse(in: iris)
                 ctx.setStrokeColor(Self.ink); ctx.setLineWidth(10 * s); ctx.strokePath()
@@ -232,7 +232,7 @@ struct ComicTrip {
             Self.letters(ctx, word, at: c, size: (40 + 150 * grow) * s, maxWidth: r.width * 0.9, angle: angle,
                          fill: fill, outline: outline)
         }
-        if sound != .snikt { ctx.draw(k < 0.5 ? old : new, in: r) }
+        if sound != .snikt { ctx.drawShot(k < 0.5 ? old : new, in: r) }
         guard grow > 0.01 || sound == .snikt else { return }
 
         switch sound {
@@ -245,7 +245,7 @@ struct ComicTrip {
 
         case .snikt:
             // Three claw slashes rip across the old place, showing the new one through the tears, then open up.
-            ctx.draw(old, in: r)
+            ctx.drawShot(old, in: r)
             let angle: CGFloat = -0.5, dir = CGPoint(x: cos(angle), y: sin(angle)), n = CGPoint(x: -dir.y, y: dir.x)
             let gap = r.height * 0.26
             let rip = CGFloat(ease(clamp(k / 0.3)))                           // how far along each slash has torn
@@ -273,7 +273,7 @@ struct ComicTrip {
             ctx.saveGState()
             for p in slashes { ctx.addPath(p) }
             ctx.clip()
-            ctx.draw(new, in: r)
+            ctx.drawShot(new, in: r)
             ctx.restoreGState()
             // Adamantium gleam along the torn edges.
             for p in slashes {
@@ -448,12 +448,12 @@ struct ComicTrip {
         func along(_ p: CGPoint) -> CGFloat { (p.x - corner.x) * u.x + (p.y - corner.y) * u.y }
         func flip(_ p: CGPoint) -> CGPoint { let d = 2 * (fold - along(p)); return CGPoint(x: p.x + u.x * d, y: p.y + u.y * d) }
 
-        ctx.draw(new, in: r)
+        ctx.drawShot(new, in: r)
         let page = [CGPoint(x: r.minX, y: r.minY), CGPoint(x: r.maxX, y: r.minY), CGPoint(x: r.maxX, y: r.maxY), CGPoint(x: r.minX, y: r.maxY)]
         let left = Self.cut(page) { along($0) - fold }                      // what's still stuck down
         let peeled = Self.cut(page) { fold - along($0) }                    // what's been lifted, folded back over
         if left.count > 2 {
-            ctx.saveGState(); ctx.addPath(Self.polygon(left)); ctx.clip(); ctx.draw(old, in: r); ctx.restoreGState()
+            ctx.saveGState(); ctx.addPath(Self.polygon(left)); ctx.clip(); ctx.drawShot(old, in: r); ctx.restoreGState()
         }
         let tip = flip(corner)
         if peeled.count > 2 {
@@ -470,7 +470,7 @@ struct ComicTrip {
             ctx.concatenate(CGAffineTransform(a: 1 - 2 * u.x * u.x, b: -2 * u.x * u.y, c: -2 * u.x * u.y, d: 1 - 2 * u.y * u.y,
                                               tx: 2 * u.x * (fold + corner.x * u.x + corner.y * u.y),
                                               ty: 2 * u.y * (fold + corner.x * u.x + corner.y * u.y)))
-            ctx.setAlpha(0.18); ctx.draw(old, in: r)
+            ctx.setAlpha(0.18); ctx.drawShot(old, in: r)
             ctx.restoreGState()
             let foldAt = CGPoint(x: corner.x + u.x * fold, y: corner.y + u.y * fold)
             let shade = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
@@ -501,7 +501,7 @@ struct ComicTrip {
         let tilt = sin(CGFloat(k) * .pi * 6) * 0.1 + 0.06
 
         // The wake: the new place behind the chimichanga's tail, with a crumbly edge.
-        ctx.draw(old, in: r)
+        ctx.drawShot(old, in: r)
         let edge = x - len * 0.35
         let wake = CGMutablePath()
         wake.move(to: CGPoint(x: r.minX - 10, y: r.minY - 10))
@@ -512,7 +512,7 @@ struct ComicTrip {
         }
         wake.addLine(to: CGPoint(x: r.minX - 10, y: r.maxY + 10))
         wake.closeSubpath()
-        ctx.saveGState(); ctx.addPath(wake); ctx.clip(); ctx.draw(new, in: r); ctx.restoreGState()
+        ctx.saveGState(); ctx.addPath(wake); ctx.clip(); ctx.drawShot(new, in: r); ctx.restoreGState()
 
         // Crumbs and salsa flung off behind him, falling.
         for i in 0..<36 {

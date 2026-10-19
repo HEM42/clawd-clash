@@ -153,9 +153,9 @@ struct SlayerTrip {
 
     /// A plain crossfade, for a trip not drawn yet.
     static func crossfade(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
-        ctx.draw(old, in: r)
+        ctx.drawShot(old, in: r)
         ctx.setAlpha(CGFloat(ease(k)))
-        ctx.draw(new, in: r)
+        ctx.drawShot(new, in: r)
         ctx.setAlpha(1)
     }
 }

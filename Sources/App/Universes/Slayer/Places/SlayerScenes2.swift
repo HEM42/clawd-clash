@@ -1581,7 +1581,82 @@ extension Scenes {
             }
             cracks.append(run)
         }
+        if let rim {
+            // Full screen, more fissures up the middle of the wall: shorter, finer runs between the first ones.
+            for k in 0..<max(3, c.w / (150 * s)) {
+                var x = (Double(k) + 0.5 + (noise(k + 1740) - 0.5) * 0.5) / Double(max(3, c.w / (150 * s))) * Double(c.w)
+                var y = Double(top) + (0.25 + noise(k + 1741) * 0.5) * Double(rim - top)
+                let heading = (noise(k + 1742) - 0.5) * 1.2 + (noise(k + 1743) > 0.5 ? 0 : .pi)
+                var run: [(x: Int, y: Int)] = [(Int(x), Int(y))]
+                for i in 0..<(6 + Int(noise(k + 1744) * 4)) {
+                    let zig = (i % 2 == 0 ? 1.0 : -1.0) * (0.5 + noise(k * 40 + i + 1750) * 0.4)
+                    let step = Double((3 + Int(noise(k * 40 + i + 1790) * 4)) * s)
+                    x += cos(heading + zig) * step; y = max(Double(top), min(Double(bottom), y + sin(heading + zig) * step))
+                    run.append((Int(x), Int(y)))
+                }
+                cracks.append(run)
+            }
+        }
         return (cracks, c.w / 2, c.w * 16 / 100, rim)
+    }
+
+    /// The seals carved into the screen saver's cavern wall, older than the one in the floor: centre and radius.
+    static func slayerHellmouthSigils(_ c: PixelCanvas, _ g: Int) -> [(x: Int, y: Int, r: Int)] {
+        guard let rim = slayerHellmouthFrame(c, g).rim else { return [] }
+        let s = unit(g), top = 36 * s, mid = top + (rim - top) * 45 / 100
+        return [(c.w * 20 / 100, mid + 10 * s, 30 * s), (c.w * 67 / 100, mid - 14 * s, 38 * s)]
+    }
+
+    /// One carved seal on the wall: a shallow round recess, a double ring with runes cut between, and a five-pointed
+    /// star cut across it, all dark (the moving layer brings a faint red up in the cuts).
+    static func slayerHellmouthSigil(_ c: PixelCanvas, _ g: Int, _ q: (x: Int, y: Int, r: Int)) {
+        let s = unit(g), cut = C(0x0A0202), edge = C(0x4A1610)
+        c.circle(q.x, q.y, q.r + 2 * s, C(0x140505, 0.7)); c.circle(q.x, q.y, q.r, C(0x220A07))
+        for ring in [q.r, q.r - 7 * s] {
+            for k in 0..<(ring * 3 / max(1, s)) {
+                let a = Double(k) / Double(ring * 3 / max(1, s)) * 2 * .pi
+                let x = q.x + Int(cos(a) * Double(ring)), y = q.y + Int(sin(a) * Double(ring))
+                c.rect(x, y, s, s, cut); if sin(a) > 0.3 { c.rect(x, y + s, s, s, edge) }      // lit on the lower lip
+            }
+        }
+        for k in 0..<12 {                                            // the runes between the rings
+            let a = Double(k) / 12 * 2 * .pi, rr = Double(q.r - 4 * s)
+            let x = q.x + Int(cos(a) * rr) - s, y = q.y + Int(sin(a) * rr) - s
+            c.rect(x, y, 2 * s, s, cut); c.rect(x + (k % 2) * s, y + s, s, s + (k % 3 == 0 ? s : 0), cut)
+        }
+        let r = Double(q.r - 9 * s)
+        for k in 0..<5 {
+            let a0 = -Double.pi / 2 + Double(k) * 2 * .pi / 5, a1 = a0 + 4 * .pi / 5
+            let x0 = Double(q.x) + cos(a0) * r, y0 = Double(q.y) + sin(a0) * r, x1 = Double(q.x) + cos(a1) * r, y1 = Double(q.y) + sin(a1) * r
+            slayerLine(c, x0, y0 + Double(s), x1, y1 + Double(s), edge, Double(s) * 0.5)
+            slayerLine(c, x0, y0, x1, y1, cut, Double(s) * 0.6)
+        }
+        // a crack through it, as if something pushed at it from behind
+        var x = Double(q.x + q.r / 3), y = Double(q.y - q.r)
+        for i in 0..<7 {
+            let nx = x + Double((i % 2 == 0 ? 2 : -3) * s), ny = y + Double(q.r * 2 / 7)
+            slayerLine(c, x, y, nx, ny, cut, Double(s) * 0.6); x = nx; y = ny
+        }
+    }
+
+    /// Roots of the trees over the school, come down through the cavern roof: tapering, twisting, with fine
+    /// rootlets.
+    static func slayerHellmouthRoots(_ c: PixelCanvas, _ g: Int, top: Int) {
+        let s = unit(g)
+        for k in 0..<max(4, c.w / (120 * s)) {
+            var x = Double(Int(noise(k + 1760) * Double(c.w))), y = Double(top)
+            let len = (30 + Int(noise(k + 1761) * 50)) * s
+            for i in 0..<(len / s) {
+                let w = max(1, (3 * s) * (len / s - i) / (len / s))
+                x += sin(Double(i) * 0.25 + Double(k)) * 0.6 * Double(s)
+                c.rect(Int(x), Int(y), w, s, C(0x2A140C)); c.rect(Int(x), Int(y), max(1, w / 3), s, C(0x4A2414))
+                if i % 9 == 4 {                                       // a rootlet
+                    let d = i % 18 == 4 ? 1.0 : -1.0
+                    for j in 0..<(6 * s) { c.rect(Int(x) + Int(d * Double(j)), Int(y) + j / 2, max(1, s / 2 + 1), max(1, s / 2 + 1), C(0x24100A)) }
+                }
+                y += Double(s)
+            }
+        }
     }
 
     /// The Hellmouth: the cavern under Sunnydale High. Black-red rock with stalactites, cracks in the walls glowing
@@ -1646,6 +1721,7 @@ extension Scenes {
                 }
             }
         }
+        for q in slayerHellmouthSigils(c, g) { slayerHellmouthSigil(c, g, q) }
         if let rim = f.rim {   // two great columns where stalactite and stalagmite have grown together
             for cx in [c.w * 41 / 100, c.w * 93 / 100] {
                 for y in top..<rim {
@@ -1665,6 +1741,7 @@ extension Scenes {
                 c.rect(x - half, top + y, 2 * half + 1, 1, rock); c.px(x - half, top + y, rockL)
             }
         }
+        if tall { slayerHellmouthRoots(c, g, top: top) }
         // Chains hanging from the roof, rusted, each ending in a hook: the Master's old fittings.
         for (k, cx) in [c.w * 57 / 100, c.w * 64 / 100, c.w * 88 / 100].enumerated() {
             let len = (tall ? 26 + k * 9 : 10 + k * 4) * s
@@ -1808,6 +1885,15 @@ extension Scenes {
             if run.count > 3 { let m = run[run.count / 2]; c.circle(m.x, m.y, 4 * s, C(0xFF3A10, a * 0.18)) }
         }
         let pulse = 0.5 + 0.5 * sin(t * 1.1)
+        for q in slayerHellmouthSigils(c, g) {                      // the carved seals on the wall answer, faintly
+            let r = Double(q.r - 9 * s), a = 0.08 + 0.22 * pulse
+            for k in 0..<5 {
+                let a0 = -Double.pi / 2 + Double(k) * 2 * .pi / 5, a1 = a0 + 4 * .pi / 5
+                slayerLine(c, Double(q.x) + cos(a0) * r, Double(q.y) + sin(a0) * r, Double(q.x) + cos(a1) * r, Double(q.y) + sin(a1) * r,
+                           C(0xFF3A10, a), Double(s) * 0.4)
+            }
+            c.circle(q.x, q.y, q.r / 3, C(0xFF2A0A, a * 0.25))
+        }
         c.ellipse(f.seal, g + 5 * s, 6 * s, s, C(0xFF4A1A, 0.3 + 0.5 * pulse))
         for k in 0..<18 {
             let ang = Double(k) / 18 * 2 * .pi

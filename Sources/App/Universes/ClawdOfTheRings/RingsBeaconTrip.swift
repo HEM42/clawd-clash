@@ -16,12 +16,12 @@ extension RingsTrip {
     func drawBeacons(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
         let px: CGFloat = max(1, (r.height / 180).rounded())  // screen pixels per pixel of the trip's art
         let w = Int((r.width / px).rounded(.up)), h = Int((r.height / px).rounded(.up))
-        guard let art = Self.beaconCanvas(width: w, height: h) else { ctx.draw(k < 0.5 ? old : new, in: r); return }
+        guard let art = Self.beaconCanvas(width: w, height: h) else { ctx.drawShot(k < 0.5 ? old : new, in: r); return }
         let W = Double(w), H = Double(h)
         let flick = Int(k * 2.4 * 12)                            // the flames change a dozen times a second
 
         // Night falls on the old place, and the stars come out.
-        ctx.draw(old, in: r)
+        ctx.drawShot(old, in: r)
         let night = Self.beaconEase(Self.beaconSpan(k, 0, 0.22))
         art.setFillColor(beaconRGB(0x060818, CGFloat(0.86 * night))); art.fill(CGRect(x: 0, y: 0, width: W, height: H))
         for i in 0..<36 {
@@ -63,7 +63,7 @@ extension RingsTrip {
                 ctx.saveGState()
                 ctx.clip(to: hole.map { CGRect(x: r.minX + $0.minX * px, y: r.minY + $0.minY * px,
                                                width: $0.width * px, height: $0.height * px) })
-                ctx.setFillColor(beaconRGB(0x000000)); ctx.fill(r); ctx.draw(new, in: r)
+                ctx.setFillColor(beaconRGB(0x000000)); ctx.fill(r); ctx.drawShot(new, in: r)
                 ctx.setFillColor(beaconRGB(0xFF8A1E, CGFloat(0.4 * (1 - Self.beaconSpan(k, 0.82, 0.98))))); ctx.fill(r)
                 ctx.restoreGState()
                 for row in hole { art.clear(row) }

@@ -125,7 +125,7 @@ struct DoctorTrip {
         ctx.saveGState()
         ctx.translateBy(x: c.x, y: c.y); ctx.rotate(by: turn); ctx.scaleBy(x: scale, y: scale)
         ctx.setAlpha(alpha)
-        ctx.draw(img, in: CGRect(x: -r.width / 2, y: -r.height / 2, width: r.width, height: r.height))
+        ctx.drawShot(img, in: CGRect(x: -r.width / 2, y: -r.height / 2, width: r.width, height: r.height))
         ctx.restoreGState()
     }
 
@@ -257,7 +257,7 @@ struct DoctorTrip {
                     ctx.saveGState()
                     ctx.translateBy(x: x, y: y); ctx.rotate(by: CGFloat((noise(seed) - 0.5) * 3 * f)); ctx.scaleBy(x: scale, y: scale)
                     ctx.setAlpha(CGFloat(1 - f * f))
-                    ctx.draw(tile, in: CGRect(x: -tw / 2, y: -th / 2, width: tw + 1, height: th + 1))
+                    ctx.drawShot(tile, in: CGRect(x: -tw / 2, y: -th / 2, width: tw + 1, height: th + 1))
                     ctx.restoreGState()
                 }
             }
@@ -301,9 +301,9 @@ struct DoctorTrip {
         let f = out ? Self.ease(Self.span(k, 0.08, 0.5)) : 1 - Self.ease(Self.span(k, 0.5, 0.88))
         let img = out ? old : new
         // Whole, before it cracks and once it's back together (no seams between the shards).
-        if f < 0.005 { ctx.draw(img, in: r); return }
+        if f < 0.005 { ctx.drawShot(img, in: r); return }
         let whole = CGFloat(max(0, 1 - f * 5))   // the picture under the shards while they're still close, hiding the cracks
-        if whole > 0 { ctx.setAlpha(whole); ctx.draw(img, in: r); ctx.setAlpha(1) }
+        if whole > 0 { ctx.setAlpha(whole); ctx.drawShot(img, in: r); ctx.setAlpha(1) }
         let sectors = 10, rings = 3
         for ring in 0..<rings {
             for sec in 0..<sectors {
@@ -326,7 +326,7 @@ struct DoctorTrip {
                 ctx.translateBy(x: -c.x, y: -c.y)
                 ctx.addPath(wedge); ctx.clip()
                 ctx.setAlpha(CGFloat(1 - f * f))
-                ctx.draw(img, in: r)
+                ctx.drawShot(img, in: r)
                 ctx.restoreGState()
                 if f > 0.02 {
                     ctx.saveGState()
@@ -376,7 +376,7 @@ struct DoctorTrip {
             ctx.saveGState()
             ctx.translateBy(x: c.x, y: c.y); ctx.rotate(by: turn); ctx.scaleBy(x: scale, y: scale)
             ctx.setAlpha(alpha)
-            ctx.draw(img, in: CGRect(x: -r.width / 2, y: -r.height / 2, width: r.width, height: r.height))
+            ctx.drawShot(img, in: CGRect(x: -r.width / 2, y: -r.height / 2, width: r.width, height: r.height))
             ctx.restoreGState()
         }
         let out = Self.ease(Self.span(k, 0, 0.45)), back = Self.ease(Self.span(k, 0.55, 1))
@@ -411,8 +411,8 @@ struct DoctorTrip {
             let x = r.minX + r.width * CGFloat(noise(i * 3)), y = r.minY + r.height * CGFloat(noise(i * 3 + 1))
             ctx.setFillColor(rgb(0xFFFFFF, 0.25 + 0.4 * CGFloat(noise(i * 3 + 2)))); ctx.fill(CGRect(x: x, y: y, width: 2 * s, height: 2 * s))
         }
-        ctx.setAlpha(1 - wheeze(0.05, 0.35)); ctx.draw(old, in: r)
-        ctx.setAlpha(wheeze(0.68, 0.95)); ctx.draw(new, in: r); ctx.setAlpha(1)
+        ctx.setAlpha(1 - wheeze(0.05, 0.35)); ctx.drawShot(old, in: r)
+        ctx.setAlpha(wheeze(0.68, 0.95)); ctx.drawShot(new, in: r); ctx.setAlpha(1)
         let box = k < 0.5 ? 1 - wheeze(0.3, 0.48) : wheeze(0.52, 0.7) * CGFloat(1 - Self.span(k, 0.9, 1))   // gone as the trip ends
         guard box > 0.01 else { return }
         let lampOn = Int(k * 18) % 2 == 0
@@ -440,7 +440,7 @@ struct DoctorTrip {
     private func drawRegeneration(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
         let c = CGPoint(x: r.midX, y: r.minY + r.height * 0.42), far = hypot(r.width, r.height)
         let flare = Self.ease(Self.span(k, 0, 0.5)) * (1 - Self.ease(Self.span(k, 0.55, 1)))
-        ctx.draw(k < 0.5 ? old : new, in: r)
+        ctx.drawShot(k < 0.5 ? old : new, in: r)
         ctx.setFillColor(rgb(0xFFB040, 0.35 * flare)); ctx.fill(r)
         // The shafts of fire.
         let n = 14
@@ -473,7 +473,7 @@ struct DoctorTrip {
         // How shut the eyes are, 0 open … 1 shut: a blink in the middle of each quarter.
         let shut = CGFloat(max(0, 1 - abs(f - 0.5) / 0.22))
         let opensOnNew = Double(i) + (f > 0.5 ? 1 : 0) >= blinks - 0.5
-        ctx.draw(opensOnNew ? new : old, in: r)
+        ctx.drawShot(opensOnNew ? new : old, in: r)
         // The Angle, closer after each blink, gone on the new place.
         let seen = i + (f > 0.5 ? 1 : 0)
         if !opensOnNew && seen > 0 {
@@ -511,7 +511,7 @@ struct DoctorTrip {
         // The view through the lens.
         ctx.saveGState()
         ctx.addEllipse(in: CGRect(x: c.x - aperture, y: c.y - aperture, width: aperture * 2, height: aperture * 2)); ctx.clip()
-        ctx.draw(k < 0.5 ? old : new, in: r)
+        ctx.drawShot(k < 0.5 ? old : new, in: r)
         ctx.setFillColor(rgb(0x2A7ADA, 0.45 * tint)); ctx.fill(r)
         // The scan lines.
         for y in stride(from: r.minY, to: r.maxY, by: 6 * s) {

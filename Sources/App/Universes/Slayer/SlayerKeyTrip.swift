@@ -14,8 +14,8 @@ extension SlayerTrip {
     /// energy, the light and the tear's ragged edge are pixel art, drawn into a bitmap about 180 pixels tall and scaled
     /// up without smoothing, with a little grain.
     func drawKey(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
-        guard k > 0 else { ctx.draw(old, in: r); return }
-        guard k < 1 else { ctx.draw(new, in: r); return }
+        guard k > 0 else { ctx.drawShot(old, in: r); return }
+        guard k < 1 else { ctx.drawShot(new, in: r); return }
         let px: CGFloat = max(1, (r.height / 180).rounded())
         let w = Int((r.width / px).rounded(.up)), h = Int((r.height / px).rounded(.up))
         guard let art = Self.artCanvas(width: w, height: h, px: px, in: r) else {
@@ -53,11 +53,11 @@ extension SlayerTrip {
         }
 
         // The places: the old one round the tear, the new one through it.
-        ctx.draw(through ? new : old, in: r)
+        ctx.drawShot(through ? new : old, in: r)
         if !through && reveal > 0 && !rows.isEmpty {
             ctx.saveGState()
             ctx.clip(to: rows.map { CGRect(x: r.minX + $0.x0 * px, y: r.minY + $0.y * px, width: ($0.x1 - $0.x0) * px, height: px) })
-            ctx.draw(new, in: r)
+            ctx.drawShot(new, in: r)
             ctx.restoreGState()
         }
 

@@ -367,6 +367,7 @@ extension Scenes {
             let x = m.x + Int(u * Double(m.r)), y = m.y + Int(v * Double(m.r)), cr = max(s, Int(k * Double(m.r)))
             c.circle(x, y, cr + s, C(0x2A2A2A)); c.circle(x, y, cr, C(0xB8B8B4)); c.circle(x - cr / 3, y - cr / 3, max(1, cr / 3), C(0xD8D8D4))
         }
+        if tall { s6FarmHigh(c, g) }
         // Far fields: a low ridge.
         c.dunes(base: g - 10 * s, amp: Double(3 * s), freq: 0.015 / Double(s), phase: 0.4, bottom: g, C(0x2E2E2E))
         // The farmhouse: white clapboard, a gable, a porch, warm (here: bright) windows.
@@ -411,7 +412,93 @@ extension Scenes {
         for x in stride(from: 0, to: c.w, by: 16 * s) where !(x > hx - 6 * s && x < hx + hw + 6 * s) && !(x > bx - 4 * s && x < bx + bw + 4 * s) {
             c.rect(x, g - 9 * s, 2 * s, 9 * s, C(0x2A2A2A))
         }
+        if tall {                                               // crows on the fence posts
+            for (i, x) in stride(from: 0, to: c.w, by: 16 * s).enumerated() where noise(i + 8410) > 0.78
+                && !(x > hx - 6 * s && x < hx + hw + 6 * s) && !(x > bx - 4 * s && x < bx + bw + 4 * s) {
+                s6Crow(c, x + s, g - 9 * s, s: s, perched: true, flip: noise(i + 8411) > 0.5)
+            }
+        }
         c.ground(g, C(0x3E3E3E), edge: C(0x8A8A8A), speck: C(0x2A2A2A), seed: 83)
+    }
+
+    /// The far hills' crest on the screen saver: a fixed height above the floor, rolling gently.
+    static func s6FarmHill(_ x: Int, _ g: Int) -> Int {
+        let s = unit(g), f = 0.006 / Double(s)
+        return g - 24 * s - Int((sin(Double(x) * f + 0.9) * 0.6 + sin(Double(x) * f * 2.3 + 2) * 0.4 + 0.6) * Double(12 * s))
+    }
+
+    /// Where the torches of the mob coming over the far hill are (screen saver only).
+    static func s6FarmTorches(_ c: PixelCanvas, _ g: Int) -> [(x: Int, y: Int)] {
+        let s = unit(g)
+        return (0..<7).map { i in
+            let x = c.w * 44 / 100 + i * 9 * s + Int(noise(i + 8420) * 4) * s
+            return (x, s6FarmHill(x, g) - 5 * s - Int(noise(i + 8421) * 2) * s)
+        }
+    }
+
+    /// A crow in black: perched (hunched, tail down) or flying (wings in a shallow V).
+    static func s6Crow(_ c: PixelCanvas, _ x: Int, _ y: Int, s: Int, perched: Bool, flip: Bool) {
+        let ink = C(0x0A0A0A), d = flip ? -1 : 1
+        if perched {
+            c.ellipse(x, y - 2 * s, 2 * s, s + s / 2, ink)
+            c.rect(x + d * 2 * s - (d < 0 ? s : 0), y - 4 * s, s, s, ink); c.rect(x + d * 3 * s - (d < 0 ? s : 0), y - 3 * s - s / 2, s, max(1, s / 2), C(0x3A3A3A))
+            c.rect(x - d * 3 * s - (d > 0 ? s : 0), y - 2 * s, s, 2 * s, ink)
+        } else {
+            for k in 0..<(4 * s) { let dy = (4 * s - k) / 2; c.rect(x - k, y - dy + s, max(1, s), max(1, s), ink); c.rect(x + k, y - dy + s, max(1, s), max(1, s), ink) }
+            c.rect(x - s / 2, y, max(1, s), 2 * s, ink)
+        }
+    }
+
+    /// The screen saver's lower sky: storm clouds heaped up under the moon, edged in moonlight and inked like a comic,
+    /// crows wheeling, and rolling hills with a far farm (a lit window, a silo), bare trees, and the mob's torches
+    /// coming over the crest.
+    static func s6FarmHigh(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), m = s6FarmFrame(c, g).moon
+        let top = m.y + m.r + 10 * s, bottom = s6FarmHill(c.w / 2, g) - 20 * s
+        if bottom - top > 30 * s {
+            // separate heaps of storm cloud, tallest in the middle, dark underneath, outlined in ink
+            let n = max(2, c.w / (150 * s))
+            for i in 0..<n {
+                let cx = (c.w * (2 * i + 1)) / (2 * n) + Int((noise(i + 8430) - 0.5) * 50) * s
+                let hw = (50 + Int(noise(i + 8431) * 40)) * s, ht = (22 + Int(noise(i + 8432) * 24)) * s
+                let base = top + Int(Double(bottom - top) * (0.45 + noise(i + 8433) * 0.5))
+                var puffs: [(x: Int, y: Int, r: Int)] = []
+                for k in 0..<9 {
+                    let u = Double(k) / 8 * 2 - 1, r = Int(Double(ht) * (0.35 + (1 - u * u) * 0.45)) + Int(noise(i * 13 + k + 8434) * 4) * s
+                    puffs.append((cx + Int(u * Double(hw - r / 2)), min(base - r, base - Int(Double(ht) * (1 - u * u) * 0.6) - r / 3), r))
+                }
+                for p in puffs { c.circle(p.x, p.y, p.r + s, C(0x0A0A0A)) }
+                for p in puffs { c.circle(p.x, p.y, p.r, C(0x4A4A48)) }
+                for p in puffs { c.ellipse(p.x, p.y + p.r / 2, p.r * 4 / 5, p.r / 3, C(0x363636)) }
+                for p in puffs {                                                     // moonlight on the upper side
+                    c.ellipse(p.x - p.r / 4, p.y - p.r / 2, p.r * 2 / 3, p.r / 3, C(0x7A7A76))
+                    c.ellipse(p.x - p.r / 3, p.y - p.r * 2 / 3, p.r / 3, max(1, p.r / 8), C(0xB8B8B2))
+                }
+            }
+        }
+        // crows wheeling round the moon
+        for i in 0..<6 {
+            let a = noise(i + 8440) * 2 * .pi, d = Double(m.r) * (1.3 + noise(i + 8441) * 1.2)
+            s6Crow(c, m.x + Int(cos(a) * d * 1.4), m.y + Int(sin(a) * d), s: s, perched: false, flip: false)
+        }
+        // the hills, the far farm and the trees
+        for x in 0..<c.w { let y = s6FarmHill(x, g); c.rect(x, y, 1, g - y, C(0x383838)); c.px(x, y, C(0x6A6A68)) }
+        let fx = c.w * 30 / 100, fy = s6FarmHill(fx, g)
+        c.rect(fx, fy - 8 * s, 12 * s, 9 * s, C(0x222222))
+        for k in 0..<(5 * s) { c.rect(fx - s + k, fy - 8 * s - k, 14 * s - 2 * k, 1, C(0x161616)) }
+        c.rect(fx + 3 * s, fy - 6 * s, 2 * s, 2 * s, C(0xF0F0E0))
+        c.rect(fx + 15 * s, fy - 16 * s, 5 * s, 17 * s, C(0x262626)); c.ellipse(fx + 17 * s + s / 2, fy - 16 * s, 2 * s + s / 2, 2 * s, C(0x262626))
+        for (i, tx) in [c.w * 6 / 100, c.w * 38 / 100, c.w * 58 / 100, c.w * 92 / 100].enumerated() {
+            let ty = s6FarmHill(tx, g), th = (14 + Int(noise(i + 8450) * 8)) * s
+            c.rect(tx, ty - th, s, th, C(0x1E1E1E))
+            for b in 0..<4 {
+                let by = ty - th + b * 3 * s, dir = b % 2 == 0 ? -1 : 1, len = (6 - b) * s
+                for k in 0..<len { c.rect(tx + dir * k, by - k / 2, max(1, s), max(1, s), C(0x1E1E1E)) }
+            }
+        }
+        for p in s6FarmTorches(c, g) {                                                 // the mob, small on the crest
+            c.rect(p.x, p.y + s, max(1, s), 4 * s, C(0x1A1A1A)); c.rect(p.x - s, p.y + 3 * s, 3 * s, 3 * s, C(0x1A1A1A))
+        }
     }
 
     /// What moves at the farm: clouds sliding across the moon, the windmill's wheel turning, and the whole picture
@@ -436,6 +523,13 @@ extension Scenes {
             c.rect(ml.x + Int(cos(a) * Double(ml.r)) - s, ml.y + Int(sin(a) * Double(ml.r)) - s, 2 * s, 2 * s, C(0x2A2A2A))
         }
         c.rect(ml.x - s, ml.y - s, 2 * s, 2 * s, C(0x4A4A4A))
+        if isTall(c) {                                          // the mob's torches flickering on the far hill
+            for (i, p) in s6FarmTorches(c, g).enumerated() {
+                let k = noise(Int(t * 9) + i * 7)
+                c.circle(p.x, p.y, (3 + Int(k * 2)) * s, C(0xF0F0E0, 0.12 + k * 0.08))
+                c.rect(p.x, p.y - (k > 0.5 ? s : 0), max(1, s), s + (k > 0.5 ? s : 0), C(0xFFFFF4))
+            }
+        }
         // The film: a flicker over everything, a scratch now and then, specks.
         let frame = Int(t * 12)
         let flick = noise(frame) * 0.07

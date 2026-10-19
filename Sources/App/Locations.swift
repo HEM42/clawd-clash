@@ -141,7 +141,7 @@ enum Wipe {
     static func drawOld(_ old: CGImage, _ k: Double, _ kind: Kind, in ctx: CGContext, _ r: CGRect) {
         guard let m = mask(k, kind, aspect: Double(r.width / max(1, r.height))) else { return }
         ctx.saveGState(); ctx.clip(to: r, mask: m)
-        ctx.draw(old, in: r)
+        ctx.drawShot(old, in: r)
         ctx.restoreGState()
     }
 

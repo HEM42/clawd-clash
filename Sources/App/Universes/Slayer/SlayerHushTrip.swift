@@ -18,8 +18,8 @@ extension SlayerTrip {
     /// while it tilts and the Gentlemen (their own sprite, as silhouettes) are pixel art, drawn into a bitmap about 180
     /// pixels tall and scaled up without smoothing, with a little grain.
     func drawHush(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
-        guard k > 0 else { ctx.draw(old, in: r); return }
-        guard k < 1 else { ctx.draw(new, in: r); return }
+        guard k > 0 else { ctx.drawShot(old, in: r); return }
+        guard k < 1 else { ctx.drawShot(new, in: r); return }
         let px: CGFloat = max(1, (r.height / 180).rounded())
         let w = Int((r.width / px).rounded(.up)), h = Int((r.height / px).rounded(.up))
         guard let art = Self.artCanvas(width: w, height: h, px: px, in: r) else {
@@ -49,7 +49,7 @@ extension SlayerTrip {
         let oldRect = r.offsetBy(dx: 0, dy: -fall * px)
         ctx.saveGState()
         ctx.clip(to: r)
-        ctx.draw(old, in: oldRect)
+        ctx.drawShot(old, in: oldRect)
         ctx.setBlendMode(.saturation); ctx.setFillColor(rgb(0x808080, drain)); ctx.fill(oldRect)
         ctx.setBlendMode(.normal)
         ctx.setFillColor(rgb(0x0C1220, 0.3 * drain + 0.55 * silence)); ctx.fill(oldRect)
@@ -148,18 +148,30 @@ extension SlayerTrip {
             let pic = CGRect(x: -W / 2, y: -H / 2, width: W, height: H)
             art.setFillColor(rgb(0x1A1410)); art.fill(pic.insetBy(dx: -3 * edge, dy: -3 * edge))
             art.setFillColor(rgb(0xEDE6D2)); art.fill(pic.insetBy(dx: -2 * edge, dy: -2 * edge))
-            art.draw(new, in: pic)
+            if ComicTransition.snapshotQuality == nil { art.drawShot(new, in: pic) }   // else at full size, below
             art.restoreGState()
         }
         hushGrain(art, k: k, W: W, H: H, amount: 1 - CGFloat(Self.span(k, 0.85, 0.95)))
         Self.blit(art, onto: ctx, width: w, height: h, px: px, in: r)
+        if let c = card, !squared, ComicTransition.snapshotQuality != nil {
+            // While the window changes universe the card's picture is the window, its text among them: drawn at its own
+            // resolution in the card's frame, rather than cut into the art's cells.
+            ctx.saveGState()
+            ctx.clip(to: r)
+            ctx.translateBy(x: r.minX, y: r.minY); ctx.scaleBy(x: px, y: px)
+            ctx.translateBy(x: c.x + c.shake.x, y: c.y + c.shake.y)
+            ctx.rotate(by: c.tilt)
+            ctx.scaleBy(x: c.scale * c.sx, y: c.scale * c.sy)
+            ctx.drawShot(new, in: CGRect(x: -W / 2, y: -H / 2, width: W, height: H))
+            ctx.restoreGState()
+        }
         if let c = card, squared {
             ctx.saveGState()
             ctx.clip(to: r)
             ctx.translateBy(x: r.minX + (c.x + c.shake.x) * px, y: r.minY + (c.y + c.shake.y) * px)
             ctx.scaleBy(x: c.scale, y: c.scale)
             ctx.interpolationQuality = .none
-            ctx.draw(new, in: CGRect(x: -r.width / 2, y: -r.height / 2, width: r.width, height: r.height))
+            ctx.drawShot(new, in: CGRect(x: -r.width / 2, y: -r.height / 2, width: r.width, height: r.height))
             ctx.restoreGState()
         }
     }

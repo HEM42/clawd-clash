@@ -133,7 +133,7 @@ struct RingsTrip {
 
         if k >= 0.85 {
             // The new place everywhere, the Eye's rim peeling outward, thicker and fainter.
-            ctx.setFillColor(rgb(0x000000)); ctx.fill(r); ctx.draw(new, in: r)
+            ctx.setFillColor(rgb(0x000000)); ctx.fill(r); ctx.drawShot(new, in: r)
             let grow = 1 + CGFloat(peel) * 0.6
             let rim = Self.almond(centre, halfWidth: halfWidth * grow, halfHeight: fullHalfHeight * grow)
             let fade = CGFloat(1 - peel)
@@ -144,7 +144,7 @@ struct RingsTrip {
         }
 
         // The old place, darkening, embers rising off it.
-        ctx.draw(old, in: r)
+        ctx.drawShot(old, in: r)
         let dark = Self.clamp(k / 0.3)
         art.setFillColor(rgb(0x000000, CGFloat(dark * 0.7))); art.fill(r)
         drawEmbers(art, k: k, strength: min(1, dark * 2), in: r)
@@ -162,7 +162,7 @@ struct RingsTrip {
             // The new place, through the pupil, out of the dark.
             ctx.saveGState()
             ctx.clip(to: hole)
-            ctx.setFillColor(rgb(0x000000)); ctx.fill(r); ctx.draw(new, in: r)
+            ctx.setFillColor(rgb(0x000000)); ctx.fill(r); ctx.drawShot(new, in: r)
             ctx.setFillColor(rgb(0x000000, CGFloat(1 - Self.ease(Self.span(k, 0.55, 0.72))))); ctx.fill(r)
             ctx.restoreGState()
         }
