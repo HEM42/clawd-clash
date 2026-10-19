@@ -11,10 +11,10 @@ struct SettingsSection {
 }
 
 enum SettingsRow {
-    /// A label and a checkbox, with an optional line under it.
+    /// A label and a checkbox, with an optional short line after it.
     case toggle(String, note: String? = nil, get: () -> Bool, set: (Bool) -> Void)
-    /// A label and a column of checkboxes under it, each with its own title.
-    case checks(String, items: [(title: String, get: () -> Bool, set: (Bool) -> Void)])
+    /// A label and a column of checkboxes under it, each with its own title, with an optional line under them.
+    case checks(String, note: String? = nil, items: [(title: String, get: () -> Bool, set: (Bool) -> Void)])
     /// A label and a pop-up of choices, left out while not `shown`.
     case choice(String, options: [String], shown: () -> Bool = { true }, get: () -> Int, set: (Int) -> Void)
     /// A label, what it says now, and a button (none when `button` gives nil). `dimmed` greys the row out.
@@ -121,9 +121,9 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
             box.state = get() ? .on : .off
             box.setAccessibilityLabel(title)
             hook(box) { set(($0 as? NSButton)?.state == .on) }
-            grid.addRow(with: [Self.label(title), box])
-            if let note { addNote(note, to: grid) }
-        case let .checks(title, items):
+            // The note follows the checkbox on the same line, small and grey.
+            grid.addRow(with: [Self.label(title), note.map { Self.line([box, Self.note($0, width: 280)], spacing: 6) } ?? box])
+        case let .checks(title, note, items):
             for (i, item) in items.enumerated() {
                 let box = NSButton(checkboxWithTitle: item.title, target: nil, action: nil)
                 box.state = item.get() ? .on : .off
@@ -132,6 +132,7 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
                 let r = grid.addRow(with: [i == 0 ? Self.label(title) : NSGridCell.emptyContentView, box])
                 if i > 0 { r.topPadding = -3 }
             }
+            if let note { addNote(note, to: grid) }
         case let .choice(title, options, shown, get, set):
             let popup = NSPopUpButton(frame: .zero, pullsDown: false)
             popup.addItems(withTitles: options)
@@ -180,11 +181,11 @@ final class SettingsWindow: NSObject, NSWindowDelegate, NSToolbarDelegate {
         r.topPadding = -5
     }
 
-    private static func line(_ views: [NSView]) -> NSView {
+    private static func line(_ views: [NSView], spacing: CGFloat = 10) -> NSView {
         let v = NSStackView(views: views)
         v.orientation = .horizontal
         v.alignment = .centerY
-        v.spacing = 10
+        v.spacing = spacing
         return v
     }
 
