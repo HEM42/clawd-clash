@@ -338,25 +338,40 @@ private func drawR2d2(_ c: PixelCanvas, _ pose: Pose) {
     heroOrigin(c, pose, dx: sin(t * 2 * .pi * (pose.walking ? 3 : 1.6)) > 0 ? 1 : -1)
     let blue = C(0x2E62D6), grey = C(0x9AA3B2)
     let look = Look(body: C(0xEEF1F5), shade: C(0xC9D0DA), leg: C(0xA7B0BF), arm: blue, eye: nil)
+    let seam = C(0xC9D0DA), blueLit = C(0x5A8CEE), blueDark = C(0x1E4AA8), dirt = C(0xB8B2A4)
     drawLegs(c, look)
+    for lx in [19, 23, 31, 35] {                                    // the legs lit down one edge, dark feet
+        c.rect(lx, 36, 1, 7, C(0xC3CAD6)); c.rect(lx, 43, 2, 1, C(0x7E8796))
+    }
     drawBody(c, look)
+    c.px(16, 34, C(0xDCE2EA)); c.px(39, 34, C(0xDCE2EA))           // the bolt in each shoulder hub
     let light = Int(t * 2.5) % 2 == 0 ? C(0xFF3B3B) : C(0x4FA8FF)
+    // The dome: the light along it, shaded down the far side, a glint in the eye, the collar ring lit.
     c.pattern(18, 17, [
-        "......SSSSSSSS......",
-        "....SSSSSSSSSSSS....",
-        "...SSSSSSSSSSSSSS...",
-        "..SSBBSSSEEESSBBSS..",
-        ".SSSBBSSSEEESSBBSSS.",
-        ".SSSSSSSSSSSSSSSSSS.",
+        "......SSllSSSS......",
+        "....SSllSSSSSSSd....",
+        "...SlSSSSSSSSSSSd...",
+        "..SSBBSSSEEESSBBSd..",
+        ".SSSBBSSSEeESSBBSSd.",
+        ".SSSSSSSSSSSSSSSSSd.",
         "SSBBBSSSRSSSSSBBBSSs",
+        "kkkkkkkkkkkkkkkkkkks",
         "ssssssssssssssssssss",
-        "ssssssssssssssssssss",
-    ], ["S": C(0xC3CAD6), "s": grey, "B": blue, "E": C(0x111118), "R": light])
+    ], ["S": C(0xC3CAD6), "s": grey, "B": blue, "E": C(0x111118), "R": light, "l": C(0xE4E8EE), "d": C(0xA4ACBA),
+        "e": C(0x5A6A8A), "k": C(0xB0B8C6)])
+    // The body's panels: blue ones lit along the top, seams between them, vents slotted, a little light, and the
+    // dust and scuffs of a long life.
     c.rect(20, 28, 3, 6, blue)
     c.rect(33, 28, 3, 6, blue)
+    c.rect(20, 28, 3, 1, blueLit); c.rect(33, 28, 3, 1, blueLit); c.rect(22, 29, 1, 5, blueDark); c.rect(35, 29, 1, 5, blueDark)
     c.rect(24, 29, 8, 2, grey)
+    for x in [25, 27, 29] { c.rect(x, 29, 1, 2, C(0x7A8292)) }
     c.rect(24, 32, 8, 1, blue)
     c.rect(26, 34, 4, 3, grey)
+    c.px(27, 35, Int(t * 1.3) % 2 == 0 ? C(0x5AE07A) : C(0x2A6A3A)); c.px(28, 35, C(0x6A7282))
+    c.rect(19, 27, 1, 9, seam); c.rect(23, 34, 1, 3, seam); c.rect(32, 34, 1, 3, seam)
+    c.px(24, 27, seam); c.px(31, 27, seam)
+    c.px(21, 36, dirt); c.px(30, 37, dirt); c.px(34, 35, dirt); c.px(25, 36, C(0xD4D2CA))
 
     c.ox = 0
     if let s = pose.signature {
@@ -431,10 +446,17 @@ private func drawC3po(_ c: PixelCanvas, _ pose: Pose) {
     // Signature: "We're doomed!" Both arms thrown straight up, hands flapping, the whole droid rattling.
     let doomed = pose.signature.map { $0 > 0.08 && $0 < 0.92 } ?? false
     heroOrigin(c, pose, dx: walking ? 0 : doomed ? (Int(t * 16) % 2 == 0 ? 0 : 1) : (Int(t * 1.5) % 2 == 0 ? 0 : 1))
-    let gold = C(0xE2B33C), goldShade = C(0xB8862A)
+    let gold = C(0xE2B33C), goldShade = C(0xB8862A), goldLit = C(0xF4D068), joint = C(0x8A6420)
     let look = Look(body: gold, shade: goldShade, leg: C(0xD4A436), arm: gold, eye: nil)
     drawLegs(c, look, step: step)
-    drawBody(c, look, armLeft: doomed ? 0 : (flail == 0 ? 4 : 0), armRight: doomed ? 0 : (flail == 0 ? 0 : 4))
+    if !seatedPose {                                                // the legs lit down one edge, a dark knee joint
+        for (i, lx) in [19, 23, 31, 35].enumerated() {
+            c.rect(lx, 36, 1, step >= 0 && i % 2 == step ? 6 : 7, C(0xEEC458)); c.px(lx + 1, 39, joint)
+        }
+    }
+    let armL = doomed ? 0 : (flail == 0 ? 4 : 0), armR = doomed ? 0 : (flail == 0 ? 0 : 4)
+    drawBody(c, look, armLeft: armL, armRight: armR)
+    if !doomed { c.px(15, 33 - armL, goldLit); c.px(38, 33 - armR, goldLit) }   // the light on his hands
     if doomed {
         // Arms straight up from the shoulders, elbows locked, hands splayed and flapping out of step.
         for (side, x) in [(0, 14), (1, 39)] {
@@ -459,8 +481,18 @@ private func drawC3po(_ c: PixelCanvas, _ pose: Pose) {
         c.rect(ex + 1, 29, 2, 2, eye)
     }
     c.rect(26, 33, 4, doomed ? 2 : 1, eyeRim)                     // the mouth, agape when he's doomed
+    // Polished plating: lit down the near edge, the far side in shadow, a brow ridge over the eyes, seams with a
+    // rivet at the shoulders, and the odd dent and scratch.
+    c.rect(18, 26, 1, 10, goldLit); c.rect(36, 26, 1, 10, C(0xCC9C32))
+    c.rect(21, 27, 4, 1, goldShade); c.rect(31, 27, 4, 1, goldShade)
+    c.rect(26, 29, 4, 1, C(0xCC9C32)); c.px(27, 31, goldShade)
+    c.px(19, 34, joint); c.px(35, 34, joint)
+    c.px(33, 24, goldShade); c.px(34, 25, goldShade); c.px(22, 25, C(0xCC9C32))
+    // The chest's panel of lights, rimmed and lit along the top, and his midriff's wires showing at the waist.
     c.rect(23, 35, 10, 2, goldShade)
+    c.rect(23, 34, 10, 1, C(0xCC9C32))
     c.px(25, 35, C(0xE0303A)); c.px(28, 36, C(0x3A7BEA)); c.px(31, 35, C(0x3BD15A))
+    c.px(23, 37, C(0xA03A2A)); c.px(26, 37, C(0x5A5A64)); c.px(30, 37, C(0xA03A2A)); c.px(33, 37, C(0x5A5A64))
     c.rect(19, 27, 2, 1, C(0xFFE08A))
 }
 
@@ -759,20 +791,30 @@ private func drawTauntaun(_ c: PixelCanvas, _ pose: Pose) {
     let step = pose.walking ? Int(t * 8) % 2 : (sin(t * 3) > 0.7 ? 0 : -1)   // an impatient stomp now and then
     let bob = Int((sin(t * 2.4) * 1.2).rounded())
     heroOrigin(c, pose)
-    // Two strong legs with big feet
+    let furLight = C(0xECE8DE), claw = C(0x4A443A)
+    // Two strong legs with big feet: fur in short strokes down the thighs, the far edge shaded, dark claws
     for (i, lx) in [21, 31].enumerated() {
         let up = step == i ? 1 : 0
         c.rect(lx, 34, 4, 9 - up, furShade)
+        c.rect(lx, 35, 1, 3, C(0xC4BCAE)); c.rect(lx + 2, 36, 1, 2, furDark); c.rect(lx + 3, 34, 1, 8 - up, C(0x9C9486))
         c.rect(lx - 1, 42 - up, 6, 2, furDark)
+        c.px(lx + 4, 43 - up, claw); c.px(lx + 2, 43 - up, claw)
     }
-    // Tail swishing behind
+    // Tail swishing behind, lit along the top
     let sway = Int((sin(t * 2) * 2).rounded())
     c.glowLine(18, 32, 9, Double(36 + sway), core: furShade, glow: C(0, 0), coreR: 1.4, glowR: 1.5)
-    // Body (a shaggy Clawd) with a little arm
+    c.glowLine(17, 31.5, 11, 34.0 + Double(sway) * 0.7, core: C(0xC4BCAE), glow: C(0, 0), coreR: 0.5, glowR: 0.6)
+    // Body (a shaggy Clawd) with a little arm: the light along the back, fur in short strokes (they were specks),
+    // the far side in shadow
     c.rect(18, 22, 18, 13, fur)
     c.rect(18, 33, 18, 2, furShade)
-    for (x, y) in [(20, 25), (24, 29), (29, 24), (33, 30), (22, 32), (31, 27)] { c.px(x, y, furShade) }
+    c.rect(19, 22, 10, 1, furLight); c.rect(18, 23, 1, 9, furLight)
+    c.rect(35, 23, 1, 10, C(0xC4BCAE))
+    for (x, y) in [(21, 25), (25, 28), (29, 24), (33, 29), (22, 30), (31, 26), (27, 31)] { c.rect(x, y, 1, 2, furShade) }
+    for (x, y) in [(24, 24), (20, 28), (30, 29)] { c.rect(x, y, 1, 2, furLight) }
+    for x in stride(from: 19, through: 34, by: 3) { c.px(x, 34, furDark) }   // shaggy fringe at the belly
     c.rect(35, 28, 3, 2, furShade)
+    c.px(37, 29, claw)
     // Neck and head, bobbing; long snout forward, horns curling back.
     // Signature: it shakes its head, then snorts out a great cloud of frosty breath.
     let snort = pose.signature
@@ -780,12 +822,19 @@ private func drawTauntaun(_ c: PixelCanvas, _ pose: Pose) {
     c.oy = base + bob
     c.ox = shaking ? (Int(t * 14) % 2 == 0 ? 1 : -1) : 0
     c.rect(30, 16, 6, 7, fur)
+    c.rect(30, 17, 1, 5, furLight); c.rect(35, 18, 1, 5, C(0xC4BCAE))   // the neck lit and shaded
+    c.rect(32, 19, 1, 2, furShade); c.rect(33, 21, 1, 2, furShade)
     c.rect(32, 11, 10, 7, fur)
+    c.rect(33, 11, 8, 1, furLight)                // the light along the head
+    c.rect(36, 17, 6, 1, furShade)                // the jaw shaded underneath
+    c.rect(39, 13, 1, 2, furShade)
     c.rect(42, 13, 5, 4, fur)                    // snout
+    c.rect(42, 13, 4, 1, furLight)
     c.rect(42, 16, 5, 1, furShade)
     c.px(46, 14, furDark)                         // nostril
     c.rect(36, 13, 2, 2, C(0x1A1612))             // eye
-    c.pattern(30, 7, [".HHH.", "H...H", "H....", ".H..."], ["H": horn])   // curled horn
+    c.px(36, 13, C(0x6A625A))                     // a glint in it
+    c.pattern(30, 7, [".HlH.", "H...d", "H....", ".d..."], ["H": horn, "l": C(0xB08C66), "d": C(0x6A4E34)])   // curled horn, ridged
     c.oy = base; c.ox = 0
     if let s = snort, s > 0.45 {
         let k = (s - 0.45) / 0.55

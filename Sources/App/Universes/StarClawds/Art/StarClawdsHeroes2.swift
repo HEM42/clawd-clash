@@ -93,23 +93,33 @@ private func drawJarjar(_ c: PixelCanvas, _ p: Pose) {
     let t = p.t
     let skin = C(0xD9935A), skinDark = C(0xB0703C), cloth = C(0x6E5A3A), clothDark = C(0x54442A)
     let flail = Int(t * 5) % 2
+    let skinLight = C(0xEAAE78), spot = C(0xC27E48)
     let look = Look(body: skin, shade: skinDark, leg: cloth, arm: skin, eye: nil)
-    heroLegs(c, p, look)
-    // Long ears hanging down both sides, under the arms.
-    let ear = ["EE..", "EEE.", ".EE.", ".EEE", "..EE", "..EE", "..EE", "..EE", ".EEE", ".EEE", "EEE.", "EE..", "E..."]
-    c.pattern(13, 26, ear, ["E": skinDark])
-    c.pattern(39, 26, ear.map { String($0.reversed()) }, ["E": skinDark])
+    heroLegs(c, p, look, boots: clothDark, rows: 1)                 // the trousers' ragged hems
+    // Long ears hanging down both sides, under the arms: a lighter fold down each, darker at the tips.
+    let ear = ["EE..", "EeE.", ".Ee.", ".EeE", "..Ee", "..Ee", "..EE", "..EE", ".EEE", ".EEE", "EEE.", "dd..", "d..."]
+    c.pattern(13, 26, ear, ["E": skinDark, "e": spot, "d": C(0x94582C)])
+    c.pattern(39, 26, ear.map { String($0.reversed()) }, ["E": skinDark, "e": spot, "d": C(0x94582C)])
     drawBody(c, look, armLeft: flail == 0 ? 3 : 0, armRight: flail == 0 ? 0 : 3)
-    // Eyes up on stalks, wobbling.
+    // The light along his crown, and his mottled skin in short darker strokes.
+    c.rect(19, 26, 8, 1, skinLight); c.px(18, 27, skinLight)
+    c.rect(20, 29, 2, 1, spot); c.rect(28, 28, 2, 1, spot); c.rect(24, 31, 2, 1, spot); c.rect(32, 27, 2, 1, spot)
+    // Eyes up on stalks, wobbling: the stalks shaded down one side, a heavy lid over each eye.
     let wob = sin(t * 7) > 0 ? 1 : 0
     c.rect(23, 21, 1, 5, skin); c.rect(32, 21, 1, 5, skin)
+    c.px(23, 24, skinDark); c.px(32, 24, skinDark)
     for ex in [21 + wob, 30 + wob] {
-        c.pattern(ex, 18, [".WWW.", "WWWkW", ".WWW."], ["W": C(0xF2E8C8), "k": ink])
+        c.pattern(ex, 18, [".LLL.", "WWWkW", ".WWW."], ["W": C(0xF2E8C8), "k": ink, "L": skinLight])
     }
-    c.rect(35, 30, 6, 3, skin)                  // the duck bill
+    c.rect(35, 30, 6, 3, skin)                  // the duck bill: lit along the top, nostrils, shaded under
+    c.rect(35, 30, 5, 1, skinLight); c.px(39, 31, C(0x8A5430))
     c.rect(36, 32, 5, 1, skinDark)
+    // The tattered vest over his shirt, its edges dark, a fold or two, and a belt with a little buckle.
     c.rect(18, 34, 20, 4, cloth)
     c.rect(18, 34, 20, 1, clothDark)
+    c.rect(18, 35, 3, 2, clothDark); c.rect(34, 35, 3, 2, clothDark); c.rect(37, 34, 1, 4, C(0x44361F))
+    c.px(24, 35, C(0x7E6A48)); c.px(30, 35, clothDark)
+    c.rect(18, 37, 20, 1, C(0x44361F)); c.px(27, 37, C(0xA89060))
 }
 
 /// Lando Calrissian: neat moustache, sky-blue shirt and a cape lined in gold.
@@ -318,23 +328,43 @@ private func drawWedge(_ c: PixelCanvas, _ p: Pose) {
 private func drawL337(_ c: PixelCanvas, _ p: Pose) {
     let tan = C(0xCBB89A), tanDark = C(0x9E8C70), grey = C(0x5A5C64)
     let protest = !p.walking && Int(p.t * 0.8) % 2 == 0
+    let tanLight = C(0xE0D0B2), greyLight = C(0x7E8088), greyDark = C(0x44464E)
     let look = Look(body: tan, shade: tanDark, leg: grey, arm: grey, eye: nil)
     heroLegs(c, p, look)
+    if !seatedPose {                                                // the legs' struts lit down one side, dark down the other
+        for (i, lx) in [19, 23, 31, 35].enumerated() {
+            let h = p.step >= 0 && i % 2 == p.step ? 7 : 8
+            c.rect(lx, 36, 1, h, greyLight); c.rect(lx + 1, 36, 1, h, greyDark)
+        }
+    }
     drawBody(c, look, armRight: protest ? 6 : 0)
+    c.px(15, 33, greyLight); c.px(38, 33 - (protest ? 6 : 0), greyLight)   // the light on each hand
+    // A body pieced together from old plates: lit along the top, seams between them with rivets at the corners,
+    // scratches, and the far side in shadow.
+    c.rect(18, 26, 19, 1, tanLight)
     c.rect(18, 30, 20, 1, tanDark)
-    c.rect(20, 32, 5, 4, C(0xB06A3A))           // a rusty patch
-    c.rect(30, 33, 4, 3, C(0x7A7E88))
+    c.rect(27, 31, 1, 6, tanDark); c.px(26, 31, tanLight)
+    for (x, y) in [(19, 27), (35, 27), (19, 36), (35, 36), (26, 32), (28, 32)] { c.px(x, y, C(0x8A7A5E)) }
+    c.px(22, 28, tanDark); c.px(23, 27, tanDark); c.px(31, 28, C(0xDCCCAE))
+    c.rect(20, 32, 5, 4, C(0xB06A3A))           // a rusty patch, its edge lit, rust pitting it
+    c.rect(20, 32, 5, 1, C(0xCC8450)); c.px(21, 34, C(0x8A4E28)); c.px(23, 33, C(0x8A4E28))
+    c.rect(30, 33, 4, 3, C(0x7A7E88))           // a grey panel with a vent grille and a little light
+    c.rect(30, 34, 3, 1, greyDark); c.px(33, 33, C(0x5AE07A))
     c.rect(24, 24, 2, 2, grey); c.rect(30, 24, 2, 2, grey)     // neck struts
+    c.px(24, 24, greyLight); c.px(30, 24, greyLight)
+    // The head: lit along the dome, shaded down the far side, a seam round it and a scuff.
     c.pattern(21, 16, [
-        "...TTTTTTTT...",
-        ".TTTTTTTTTTTT.",
-        "TTTTTTTTTTTTTT",
-        "TTTTTTTTTBBBTT",
+        "...TTllllTT...",
+        ".TTllTTTTTTTs.",
+        "TTlTTTTTTTTTTs",
+        "TTTTTTTTTBBBTs",
         "TTTTTTTTBbbbBT",
         "TTTTTTTTBbbbBT",
-        "TTTTTTTTTBBBTT",
-        ".TTTTTTTTTTTT.",
-    ], ["T": C(0xE8DCC4), "B": C(0x3A3A44), "b": C(0x6FC8FF)])
+        "ssssssssTBBBTs",
+        ".TTTTTTTTTTTs.",
+    ], ["T": C(0xE8DCC4), "B": C(0x3A3A44), "b": C(0x6FC8FF), "l": C(0xF6EEDE), "s": C(0xC8BCA4)])
+    c.px(24, 20, C(0xC8BCA4)); c.px(25, 21, C(0xC8BCA4))
+    c.px(30, 20, C(0xC8F0FF))                   // a glint in the eye
 }
 
 /// Mon Mothma: white robes to the floor, short auburn hair, a silver medallion.
