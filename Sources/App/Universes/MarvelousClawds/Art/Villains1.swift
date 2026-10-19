@@ -607,8 +607,10 @@ private func drawNebula(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0x4A78C8), skinDark = C(0x35589A), metal = C(0x8C8496), metalDark = C(0x5C5468)
     let suit = C(0x2A2230), suitLight = C(0x4A3A50)
     drawLegs(c, Look(leg: suit), step: p.step)
+    drawBoots(c, C(0x3E3248), step: p.step, rows: 2)                    // boots a shade lighter than the suit
     c.oy += p.breathe
     drawBody(c, Look(body: skin, shade: skinDark, arm: suit))
+    c.rect(15, 33, 3, 1, suitLight); c.rect(15, 35, 3, 1, C(0x1A141E))  // the sleeve lit on top, a dark glove cuff
     let glitch = p.signature.map { $0 > 0.1 && $0 < 0.9 } ?? false
     let i = Int(p.t * 16)
     let jx = glitch && noise(i) > 0.6 ? 1 : 0
@@ -629,6 +631,7 @@ private func drawNebula(_ c: PixelCanvas, _ p: Pose) {
         "MMMMMMMMm...........",
         "MMMMMm..............",
     ], ["M": plateCol, "m": metalDark])
+    c.rect(22 + jx, 23, 4, 1, glitch ? plateCol : C(0xACA4B6))          // light along the scalp plate
     c.rect(30 - jx, 23, 1, 5, metalDark)                               // the seam over her scalp
     c.pattern(30, 27, ["mMMMMm", "M....M", "M....M", "M....M", "mMMMMm"], ["M": plateCol, "m": metalDark])
     c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink)
@@ -643,6 +646,8 @@ private func drawNebula(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 34, 20, 1, suitLight)
     c.rect(18, 36, 20, 1, C(0x5A3A2A))
     c.rect(37, 34, 1, 4, C(0x1A141E))
+    c.px(23, 35, C(0x1A141E)); c.px(33, 35, C(0x1A141E)); c.px(33, 37, C(0x1A141E))   // folds
+    c.rect(33, 36, 2, 1, C(0x9A8E7A))                                  // the belt's buckle
 
     // The electric baton (clipped to her belt when put away).
     guard let a = p.melee else {
@@ -706,6 +711,11 @@ private func drawEbonyMaw(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 34, 20, 4, robe)
     c.rect(26, 34, 4, 4, collar)
     c.rect(27, 34, 2, 4, trim)
+    // The robe: folds falling either side of the placket, its far side in shadow, trimmed cuffs.
+    let robeFold = C(0x30303E)
+    c.rect(22, 35, 1, 5, robeFold); c.rect(33, 35, 1, 4, robeFold)
+    c.rect(29, 34, 1, 4, C(0x36364E))
+    c.rect(15, 35, 3, 1, collar); c.rect(38, 35 - raise, 3, 1, collar)
     if k > 0.3 {
         // The needles, circling his raised fingers.
         let cx = 40.5, cy = 32.5 - Double(raise)
@@ -729,6 +739,7 @@ private func drawChitauri(_ c: PixelCanvas, _ p: Pose) {
     let armour = C(0x6E6C60), dark = C(0x44433C), light = C(0x9C9A88), hide = C(0x7C8486), eye = C(0xE8F4C8)
     drawLegs(c, Look(leg: dark), step: p.step)
     if !seatedPose { for lx in [19, 23, 31, 35] { c.px(lx, 38, light) } }
+    drawBoots(c, C(0x302F2A), step: p.step, rows: 2)                    // armoured feet, darker than the shins
     c.oy += p.breathe
     drawBody(c, Look(body: hide, shade: C(0x5A6264), arm: armour, eye: nil))
     c.pattern(14, 17, [
@@ -749,7 +760,10 @@ private func drawChitauri(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 35, 20, 3, armour)
     c.rect(18, 35, 20, 1, light)
     c.rect(24, 36, 8, 1, dark)
+    c.rect(37, 35, 1, 3, dark)                                         // the plates' far side in shadow
+    c.px(20, 36, light); c.px(34, 36, light)                           // a rivet either side of the belly plate
     c.rect(15, 32, 3, 2, light)
+    c.rect(15, 35, 3, 1, dark)                                         // the arm plate shaded underneath
 
     // The spear-gun, held level.
     let y = 32 + p.gunY
@@ -784,12 +798,17 @@ private func drawGrandmaster(_ c: PixelCanvas, _ p: Pose) {
         c.px(17 - k, y, robeDark); c.px(38 + k, y, robeDark)
     }
     c.rect(15, seatedPose ? 39 : 42, 26, 1, blue)
+    // Soft folds down the robe, and light down its near side.
+    let foldLen = seatedPose ? 1 : 3
+    c.rect(23, 38, 1, foldLen, robeDark); c.rect(33, 38, 1, foldLen, robeDark)
+    c.rect(18, 36, 1, 3, C(0xF4C85A))
     c.oy += p.breathe + (dance > 0 && sin(dance * 2 * .pi * 8) > 0 ? -1 : 0)
     var look = Look(body: skin, shade: skinDark, arm: robe, eye: ink)
     look.legs = false
     let armL = dance > 0 ? (sin(dance * 2 * .pi * 4) > 0 ? 9 : 0) : 0
     let armR = dance > 0 ? (sin(dance * 2 * .pi * 4) > 0 ? 0 : 9) : 0
     drawBody(c, look, armLeft: armL, armRight: armR)
+    c.rect(15, 35 - armL, 3, 1, blue); c.rect(38, 35 - armR, 3, 1, blue)   // blue cuffs on the sleeves
     c.rect(22, 28, 2, 1, blue); c.rect(32, 28, 2, 1, blue)             // a touch of blue liner
     if dance > 0 {
             c.rect(25, 31, 6, 2, C(0x4A1A1A)); c.rect(25, 31, 6, 1, white)   // laughing
@@ -850,6 +869,9 @@ private func drawUltronSentry(_ c: PixelCanvas, _ p: Pose) {
         ".....dddddddddd.....",
     ], ["C": chrome, "d": dark, "L": light])
     c.rect(28, 22, 1, 6, dark)
+    // A lit run down the near side, the pod shaded underneath.
+    c.rect(19, 28, 1, 4, light)
+    c.rect(22, 34, 12, 1, C(0x9AA0AC))
     for (x, y) in [(22, 28), (23, 28), (24, 29), (25, 29), (31, 29), (32, 29), (33, 28), (34, 28)] {
         c.glowLine(Double(x) + 0.5, Double(y) + 0.5, Double(x) + 0.5, Double(y) + 0.5, core: red, glow: red, coreR: 0.5, glowR: 1.2, strength: 0.4)
         c.px(x, y, x == 23 || x == 33 ? hot : red)
@@ -859,6 +881,7 @@ private func drawUltronSentry(_ c: PixelCanvas, _ p: Pose) {
     // The stub cannon.
     let y = 31 + p.gunY
     c.rect(37, y, 6, 3, dark); c.rect(37, y, 6, 1, chrome)
+    c.rect(37, y + 2, 6, 1, C(0x5A606C))                               // the cannon shaded underneath
     c.px(42, y + 1, p.fire != nil ? hot : red)
     c.rect(16, 30, 3, 3, dark)
 }
