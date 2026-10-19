@@ -56,7 +56,8 @@ func drawSpecs(_ c: PixelCanvas) {
 /// one finger, then throws a fist up with a little hop.
 private func drawDoctorTen(_ c: PixelCanvas, _ p: Pose) {
     let suit = C(0x6A4A32), suitDark = C(0x4E3624), stripe = C(0x8A6A4E)
-    let coat = C(0x8A5E3A), coatDark = C(0x6A4428), hair = C(0x4A2E1A), hairLight = C(0x6A4428)
+    let coat = C(0x8A5E3A), coatDark = C(0x6A4428), coatLight = C(0xA6764C), hair = C(0x4A2E1A), hairLight = C(0x6A4428)
+    let hairShade = C(0x34200F)
     let shirt = C(0xEDE6D8), tie = C(0xA8202A)
     let sig = p.signature
     let specs = sig.map { $0 > 0.22 && $0 < 0.95 } ?? false
@@ -83,20 +84,22 @@ private func drawDoctorTen(_ c: PixelCanvas, _ p: Pose) {
     c.rect(25, 33, 6, 2, shirt); c.rect(27, 33, 2, 5, tie); c.px(27, 33, C(0x7A1218))
     c.rect(18, 33, 3, 5, coat); c.rect(35, 33, 3, 5, coat); c.rect(37, 33, 1, 5, coatDark)
     c.rect(21, 33, 1, 3, coatDark); c.rect(34, 33, 1, 3, coatDark)   // the lapels
-    c.rect(15, 33, 3, 3, coat)
-    // The hair: up in spikes, sideburns down past the eyes.
+    c.rect(18, 33, 3, 1, coatLight); c.rect(35, 33, 2, 1, coatLight)   // lit shoulders
+    c.rect(18, 36, 2, 1, coatDark)                                     // a pocket flap
+    c.rect(15, 33, 3, 3, coat); c.rect(15, 35, 3, 1, coatDark)         // the sleeve's cuff
+    // The hair: up in spikes, sideburns down past the eyes; lit runs along the spikes, the far side shaded.
     c.pattern(17, 18, [
         "...........H.H........",
         "........HHHHHHHH......",
-        ".....HHHHHHlHHHHHH....",
-        "...HHHHHlHHHHHHlHHHH..",
-        "..HHHHHHHHHHHHHHHHHHH.",
-        ".HHHHlHHHHHHHHHHHlHHHH",
-        ".HHHH...........HHHHHH",
-        ".HHH...............HHH",
+        ".....HHHHHllHHHHHH....",
+        "...HHHHllHHHHHllHHHH..",
+        "..HHHHHHHHHHHHHHHHHhH.",
+        ".HHHllHHHHHHHHHHHHhHHH",
+        ".HHlH...........HHHhHH",
+        ".HlH...............HhH",
         ".HH.................HH",
         ".H...................H",
-    ], ["H": hair, "l": hairLight])
+    ], ["H": hair, "l": hairLight, "h": hairShade])
     if specs { drawSpecs(c) }
 
     // The right arm: up to his glasses, punched up, pointing the sonic, or holding it at rest.

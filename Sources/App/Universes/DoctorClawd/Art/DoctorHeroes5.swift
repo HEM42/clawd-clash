@@ -133,6 +133,7 @@ private func drawRomanah(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: blouse))
     drawSkirt(c, skirt, skirtDark, pleats: true)
     c.rect(18, 32, 20, 4, blouse); c.rect(37, 32, 1, 4, blouseShade)
+    c.rect(19, 34, 1, 2, blouseShade); c.rect(15, 35, 3, 1, blouseShade)   // a fold, the sleeve's cuff
     // Wound round the neck, the front end hanging down to the hem with a fringe.
     for x in 18...37 { c.px(x, 32, stripes[(x / 2) % 4]); c.px(x, 33, stripes[(x / 2 + 1) % 4]) }
     for y in 34...38 { c.rect(33, y, 2, 1, stripes[(y / 2) % 4]) }
@@ -142,18 +143,18 @@ private func drawRomanah(_ c: PixelCanvas, _ p: Pose) {
         "....HHHHHHHHHHHHHHHH....",
         "...HHHHHHHHHHHHHHHHHH...",
         "..bbbbbbbbbbbbbbbbbbbb..",
-        "..HHHHHHhHHHHHHHHhHHHHH.",
+        "..HHHHHhhHHHHHHHhhHHHHH.",
         "..HHHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHhHHHHHHHHHHHHhHHH.",
+        ".HHHHhhHHHHHHHHHHHhhHHH.",
         ".HHHHH............HHHHH.",
         ".HHHH..............HHHH.",
         ".HHH................HHH.",
         ".HhH................HHH.",
-        ".HHH................HhH.",
-        "HHHH................HHH.",
+        ".HhH................HhH.",
+        "HHHH................HhH.",
         "HHhH................HH..",
+        "HHhH....................",
         "HHHH....................",
-        "HhHH....................",
         ".HH.....................",
     ], ["H": C(0xE8C870), "h": C(0xC09A44), "b": C(0xD8507A)])
     drawCompanionArm(c, p, sleeve: blouse)
@@ -172,25 +173,26 @@ private func drawNyssa(_ c: PixelCanvas, _ p: Pose) {
     c.oy += p.breathe
     drawBody(c, Look(arm: velvet))
     c.rect(18, 32, 20, 6, velvet); c.rect(37, 32, 1, 6, velvetDark); c.rect(18, 37, 20, 1, velvetDark)
-    for (x, y) in [(20, 34), (21, 35), (26, 33), (31, 35), (32, 36), (35, 33)] { c.px(x, y, sheen) }
+    for (x, y) in [(19, 34), (25, 33), (30, 35), (34, 33)] { c.rect(x, y, 2, 1, sheen) }   // the velvet's sheen, in short strokes
     c.rect(18, 32, 20, 1, gold)                                    // the collar trim
     c.rect(28, 33, 1, 5, gold)                                     // down the front
     c.rect(18, 37, 20, 1, C(0xA8843A))                             // and round the hem
+    c.rect(15, 35, 3, 1, C(0xA8843A))                              // and the cuffs
     c.pattern(16, 20, [
-        "......hHHhHHhHHhH.......",
-        "....HhHHHhHHHhHHHhH.....",
-        "...HHHhHHHHhHHHHhHHH....",
-        "..hHHHHHhHHHHHhHHHHHh...",
-        "..HHhHHHHHHhHHHHHhHHHH..",
-        ".hHHHHhHHHHHHHhHHHHhHHh.",
-        ".HHhHHHHHhHHHHHHhHHHHHH.",
-        ".HHHHhH..........hHHHHh.",
-        ".hHHHH............HHhHH.",
-        ".HHhH..............hHHh.",
-        "HhHHH..............HHhH.",
-        "HHhHh...............hHH.",
-        "hHHHH...............HH..",
-        ".hHh....................",
+        "......HHHhhHHHHhh.......",
+        "....HhhHHHHHHhhHHHH.....",
+        "...HHHHHHHHhhHHHHHHH....",
+        "..hhHHHHHHHHHHhhHHHHH...",
+        "..HHHHHHHHHhhHHHHHHHHH..",
+        ".hhHHHHHHHHHHHhhHHHHHhh.",
+        ".HHHHHHHHhhHHHHHHHHHHHH.",
+        ".HHHHhh..........HHHHhh.",
+        ".HHHHH............HHhhH.",
+        ".HHhh..............HHhh.",
+        "HHHHH..............HHhh.",
+        "HHhhH...............hhH.",
+        "HHHHH...............HH..",
+        ".hhH....................",
     ], ["H": C(0x4A2A1A), "h": C(0x6A402A)])
     // The tiara.
     c.rect(20, 23, 16, 1, silver)
@@ -221,19 +223,21 @@ private func drawTegan(_ c: PixelCanvas, _ p: Pose) {
     c.rect(25, 32, 6, 2, white); c.rect(27, 32, 2, 3, C(0xC82A32))   // the collar and neckerchief
     c.rect(24, 32, 1, 5, plumDark); c.rect(31, 32, 1, 5, plumDark)   // the jacket's front
     for y in [34, 36] { c.px(23, y, gold); c.px(32, y, gold) }
+    c.rect(18, 32, 6, 1, plumLight); c.rect(32, 32, 5, 1, plumLight)   // lit shoulders
+    c.rect(35, 34, 1, 2, plumDark); c.rect(15, 35, 3, 1, plumDark)      // a fold, the sleeve's cuff
     c.rect(19, 33, 3, 1, gold); c.px(20, 34, gold)                    // the wing badge
     c.pattern(16, 21, [
         "......HHHHHHHHHHHH......",
         "....HHHHHHHHHHHHHHHH....",
-        "...HHHhHHHHHHHHhHHHHH...",
+        "...HHhhHHHHHHHhhHHHHH...",
         "..HHHHHHHHHHHHHHHHHHHH..",
         "..HHHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHhHHHHHHHHHhHHHHH.",
+        ".HHHHHhhHHHHHHHHhhHHHHH.",
         ".HHHHHHHHH......HHHHHHH.",
         ".HHHH.............HHHHH.",
         ".HHH...............HHHH.",
         ".HHH...............HHHH.",
-        ".HHhH..............HHHh.",
+        ".HhhH..............HHhh.",
         "..HHH...............HH..",
     ], ["H": C(0x3A2418), "h": C(0x5A3A26)])
     c.pattern(21, 18, [
@@ -273,24 +277,25 @@ private func drawPery(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 32, 20, 3, top); c.rect(37, 32, 1, 3, topDark); c.rect(18, 33, 20, 1, C(0xF8E8F0))
     c.rect(18, 35, 20, 3, denim); c.rect(37, 35, 1, 3, denimDark); c.rect(18, 35, 20, 1, denimDark)
     if !seatedPose { c.rect(18, 38, 8, 1, denim); c.rect(30, 38, 8, 1, denim) }
-    c.px(27, 36, C(0xD4AA4A))
+    c.px(27, 36, C(0xD4AA4A)); c.rect(28, 36, 1, 2, denimDark)       // the button and the fly seam
+    c.rect(20, 36, 2, 1, denimDark); c.rect(34, 36, 2, 1, denimDark)   // the pockets
     c.pattern(14, 17, [
-        "........HhHHhHHhHH..........",
-        "......HHHHHhHHHHHhHHH.......",
-        "....hHHHhHHHHHhHHHHHhHH.....",
-        "...HHHHHHHhHHHHHHHhHHHHH....",
-        "..HhHHhHHHHHHhHHHHHHHhHHh...",
-        "..HHHHHHHhHHHHHHhHHHHHHHHH..",
-        ".hHHHhHHHHHHhHHHHHHhHHHHhH..",
-        ".HHHHHHhHHHHHHHHhHHHHHHHHHh.",
-        ".HHhHHHHHHHhHHHHHHHHHhHHHHH.",
-        "hHHHHHhHHHHHHHHHhHHHHHHHhHH.",
-        "HHHhHHH.hHH.H.HhH.HHHHhHHHH.",
-        "HhHHHH..............HHHHhH..",
-        ".HHHhH...............HhHHH..",
-        ".HhHH................HHHhH..",
-        "..HHH................HhHH...",
-        "..hH..................HH....",
+        "........HHHHhhHHHH..........",
+        "......HHHHHhhHHHHHHHH.......",
+        "....HHHHhhHHHHHHHHHHhhH.....",
+        "...HHHHHHHhhHHHHHHHHHHHH....",
+        "..HHHHhhHHHHHHHHHHHHHhhHH...",
+        "..HHHHHHHhhHHHHHHHHHHHHHHH..",
+        ".HHHHhhHHHHHHHHHHHHhhHHHHH..",
+        ".HHHHHHhhHHHHHHHHHHHHHHHHhh.",
+        ".HHHHHHHHHHhhHHHHHHHHHHHHHH.",
+        "hhHHHHHHHHHHHHHHhhHHHHHHHHH.",
+        "HHHHHHH.hhH.H.HHH.HHHHhhHHH.",
+        "HhhHHH..............HHHHHH..",
+        ".HHHHH...............HhhHH..",
+        ".HhhH................HHHHH..",
+        "..HHH................HHHH...",
+        "..hh..................HH....",
     ], ["H": C(0x6A3A20), "h": C(0x8E5432)])
     drawCompanionArm(c, p, sleeve: clawdOrange)
 }
@@ -319,21 +324,21 @@ private func drawMel(_ c: PixelCanvas, _ p: Pose) {
     }
     c.oy -= screaming ? 1 : 0
     c.pattern(15, 16, [
-        ".......RrRRrRRrR.........",
-        ".....rRRRrRRRRrRRr.......",
-        "...RRrRRRRRrRRRRRrRR.....",
-        "..rRRRRrRRRRRrRRRRRRr....",
-        ".RRRrRRRRRrRRRRRRrRRRR...",
-        ".RrRRRRRrRRRRRrRRRRRrRR..",
-        "rRRRRrRRRRRRrRRRRRrRRRRr.",
-        "RRrRRRRRrRRRRRRrRRRRRrRR.",
-        "RRRRRrRRRRRRrRRRRRRRRRrR.",
-        "RrRRRRRRRrRRRRRRRrRRRRRR.",
-        ".RRRrRRrRRRRrRRRRRRrRRRR.",
-        ".RRRRRR.rR.R..rR.RRRrRRR.",
-        ".RrRR...............RRrR.",
+        ".......RRRRrrRRR.........",
+        ".....rrRRRRRRRrrRR.......",
+        "...RRRRRRRRrrRRRRRRR.....",
+        "..rrRRRRRRRRRrrRRRRRR....",
+        ".RRRRRRRRRrrRRRRRRRRRR...",
+        ".RrrRRRRRRRRRRrrRRRRRRR..",
+        "RRRRRrrRRRRRRRRRRRrrRRRR.",
+        "RRrrRRRRRRRRRRRrrRRRRRRR.",
+        "RRRRRRRRRRRRrrRRRRRRRRRR.",
+        "RrrRRRRRRRRRRRRRRrrRRRRR.",
+        ".RRRRRRrrRRRRRRRRRRrrRRR.",
+        ".RRRRRR.rr.R..RR.RRRrrRR.",
+        ".RRRR...............RRrr.",
         "..RRR...............RRR..",
-        "..rR.................Rr..",
+        "..RR.................rr..",
     ], ["R": C(0xB8281E), "r": C(0xE0583A)])
     c.oy += screaming ? 1 : 0
     if screaming {
@@ -376,14 +381,15 @@ private func drawAce(_ c: PixelCanvas, _ p: Pose) {
         c.px(x, y, col)
     }
     c.rect(19, 35, 2, 2, C(0xE8E0D0)); c.px(19, 35, C(0xE04A3A))    // a round badge
+    c.rect(15, 35, 3, 1, rib)                                        // the ribbed cuff
     c.pattern(16, 20, [
         ".....HHHHHHHHHHH........",
         "...HHHHHHHHHHHHHHH......",
-        "..HHHhHHHHHHHHhHHHH.....",
+        "..HHhhHHHHHHHhhHHHH.....",
         ".HHHHHHHHHHHHHHHHHHHH...",
-        ".HHhHHHHHHhHHHHHHHHHHH..",
+        ".HhhHHHHHhhHHHHHHHHHHH..",
         "HHHHHHHHHHHHHHHHHHHHHHH.",
-        "HHHHHHhHHHHHHHHHHhHHHHH.",
+        "HHHHHhhHHHHHHHHhhHHHHHH.",
         ".HHHHH...........HHHHHH.",
         "..HHH..............HHHH.",
         "...H...............HHH..",
@@ -459,20 +465,21 @@ private func drawRose(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 32, 20, 6, hoodie); c.rect(37, 32, 1, 6, hoodieDark); c.rect(18, 37, 20, 1, hoodieDark)
     c.rect(22, 36, 12, 1, hoodieDark); c.px(22, 35, hoodieDark); c.px(33, 35, hoodieDark)   // the pocket
     c.px(25, 33, C(0xF08AAE)); c.px(30, 33, C(0xF08AAE))          // the drawstrings
+    c.rect(19, 33, 1, 3, hoodieDark); c.rect(15, 35, 3, 1, hoodieDark)   // a fold, the ribbed cuff
     let hair = lerp(C(0xF0D890), C(0xFFF0A0), glow), roots = lerp(C(0x9A7A4A), C(0xFFD25A), glow)
     c.pattern(16, 20, [
         "......rrrrrrrrrrrr......",
         "....HHHHHHrrHHHHHHHH....",
         "...HHHHHHHHHHHHHHHHHH...",
         "..HHHHHHHHHHHHHHHHHHHH..",
-        "..HHHHhHHHHHHHHHHhHHHHH.",
+        "..HHHhhHHHHHHHHHhhHHHHH.",
         "..HHHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHhHHHHHHHHHHhHHHH.",
+        ".HHHHHhhHHHHHHHHHhhHHHH.",
         ".HHHHH............HHHHH.",
         ".HHHH..............HHHH.",
         ".HHH................HHH.",
-        ".HhH................HHH.",
-        ".HHH................HhH.",
+        ".HhH................HhH.",
+        ".HhH................HhH.",
         "HHHH................HHH.",
         "HHH.....................",
     ], ["H": hair, "h": lerp(C(0xC8A858), C(0xFFD25A), glow), "r": roots])
@@ -539,14 +546,16 @@ private func drawJackStanding(_ c: PixelCanvas, _ p: Pose, dead: Bool = false, g
     c.rect(24, 32, 2, 4, coatLight); c.rect(30, 32, 2, 4, coatLight)  // the lapels
     for y in [33, 35] { c.px(22, y, brass); c.px(33, y, brass) }
     c.rect(18, 36, 20, 1, coatDark); c.rect(27, 36, 2, 1, brass)      // the belt
+    c.rect(20, 33, 1, 3, coatDark); c.rect(35, 33, 1, 3, coatDark)    // the greatcoat's folds
+    c.rect(15, 35, 3, 1, coatDark)                                    // the sleeve's cuff
     c.rect(18, 30, 3, 3, coat); c.rect(35, 30, 3, 3, coat)            // the collar, turned up
     c.px(18, 30, coatLight); c.px(37, 30, coatDark)
     c.pattern(17, 20, [
         "...........hHHHH......",
         "......HHHHHHHHHHHHH...",
-        "....HHHHHHhHHHHHHHHH..",
+        "....HHHHHhhHHHHHHHHH..",
         "..HHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHhHHHHHHHHHhHHHH.",
+        ".HHHHhhHHHHHHHHhhHHHH.",
         ".HHHHHHHHHHHHHHHHHHHHH",
         ".HHHHH...........HHHHH",
         ".HHH...............HHH",
