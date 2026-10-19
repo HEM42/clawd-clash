@@ -64,6 +64,7 @@ private func drawMisterX(_ c: PixelCanvas, _ p: Pose) {
     c.oy += p.breathe
     let tails = seatedPose ? 1 : 3
     c.rect(17, 38, 22, tails, coat); c.rect(17, 37 + tails, 22, 1, coatD); c.rect(28, 38, 1, tails, coatD)
+    if !seatedPose { c.rect(22, 38, 1, 2, coatD); c.rect(34, 38, 1, 2, coatD) }   // folds in the tails
     // A taller body: the head rises four rows above plain Clawd's.
     c.rect(18, 22, 20, 16, clawdOrange); c.rect(37, 22, 1, 16, clawdShade)
     c.rect(19, 22, 18, 1, C(0xC8664A))   // the shaved scalp catching the light
@@ -74,8 +75,13 @@ private func drawMisterX(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(25, 32, ["lSTTSl", ".lTTl.", "..TT..", "..TT..", "..TT.."], ["l": coatD, "S": shirt, "T": tie])
     c.rect(18, 31, 5, 7, coat); c.rect(33, 31, 5, 7, coat); c.rect(37, 31, 1, 7, coatD)
     c.rect(17, 29, 3, 4, coatL); c.rect(36, 29, 3, 4, coatL)   // the turned-up collar
+    c.rect(17, 29, 1, 4, C(0x46464E)); c.rect(38, 30, 1, 3, coatD)   // the collar's lit and shaded edges
+    // A fold down the front, the far side in shade, the coat's buttons and belt.
+    c.rect(20, 34, 1, 3, coatD); c.rect(35, 33, 1, 4, coatD)
+    c.px(22, 34, coatL); c.px(22, 36, coatL)
+    c.rect(18, 36, 5, 1, coatD); c.rect(33, 36, 5, 1, coatD)
     c.rect(18, 37, 20, 1, coatD)
-    c.rect(15, 33, 3, 3, coat)
+    c.rect(15, 33, 3, 3, coat); drawCuffs(c, coatD, right: false)
     if taping {
         // His arm up at the pane, pressing the tape down.
         let s = sig!, k = s < 0.48 ? (s - 0.18) / 0.25 : (s - 0.48) / 0.25
@@ -86,6 +92,7 @@ private func drawMisterX(_ c: PixelCanvas, _ p: Pose) {
     }
     c.oy += p.gunY
     drawSidearm(c, sleeve: coat, searching: false)
+    drawCuffs(c, coatD, left: false)
 }
 
 // MARK: - Marita Covarrubyass
@@ -105,6 +112,7 @@ private func drawMarita(_ c: PixelCanvas, _ p: Pose) {
     drawDressShoes(c, step: p.step, color: C(0x2A2028))
     c.oy += p.breathe
     c.rect(17, 38, 22, seatedPose ? 1 : 2, suit); c.rect(17, seatedPose ? 38 : 39, 22, 1, suitD)
+    if !seatedPose { c.px(22, 38, suitD); c.px(28, 38, suitD); c.px(34, 38, suitD) }   // the skirt's pleats
     drawBody(c, Look(arm: suit, eye: nil))
     // The eyes: straight ahead, or slid hard to the back as she glances over her shoulder.
     if glance { c.rect(19, 29, 2, 3, ink); c.rect(29, 29, 2, 3, ink) } else { c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink) }
@@ -112,27 +120,30 @@ private func drawMarita(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(25, 33, ["BBBBBB", ".BBBB.", "..BB.."], ["B": blouse])
     c.rect(20, 33, 2, 4, suitL); c.rect(34, 33, 2, 4, suitL)   // the lapels
     c.px(21, 34, C(0x4A8AD8))   // the UN pin
+    c.rect(18, 33, 2, 1, suitL); c.rect(36, 34, 1, 3, suitD)   // light on the shoulder, the far side in shade
+    c.rect(19, 35, 1, 2, suitD); c.px(28, 36, suitD)              // a fold, the jacket's button
     c.rect(18, 37, 20, 1, suitD)
     // The hair: centre parting, straight down to the shoulders.
     c.pattern(16 + swing, 20, [
-        "......HHHHHHHHHHH.......",
-        "....HHHHHHHHlHHHHHH.....",
-        "..HHHHHHHHHHlHHHHHHHH...",
-        ".HHHHLHHHHHHdHHHHHLHHH..",
-        ".HHHHHHHHHH...HHHHHHHHH.",
-        ".HHHHHHHHHHH.HHHHHHHHHH.",
-        ".HHH................HHH.",
-        ".HHH................HHH.",
-        ".HHd................dHH.",
-        ".HHH................HHH.",
-        ".HHH................HHH.",
-        ".HHd................dHH.",
+        "......HHHHlllHHHH.......",
+        "....HHlllHHHlHHlllH.....",
+        "..HHlHHHHHHHlHHHHHHlH...",
+        ".HHlHLHHHHHHdHHHHHLHHd..",
+        ".HlHHHHHHHH...HHHHHHHdd.",
+        ".HlHHHHHHHHH.HHHHHHHHdd.",
+        ".HlH................Hdd.",
+        ".HlH................HdH.",
+        ".HHd................ddH.",
+        ".HlH................HdH.",
+        ".HlH................HdH.",
+        ".HHd................ddH.",
         "..Hd................dH..",
         "..d..................d..",
     ], ["H": hair, "L": hairL, "l": hairL, "d": hairD])
-    c.rect(15, 33, 3, 3, suit)
+    c.rect(15, 33, 3, 3, suit); drawCuffs(c, suitD, right: false)
     c.oy += p.gunY
     drawSidearm(c, sleeve: suit, searching: false)
+    drawCuffs(c, suitD, left: false)
 }
 
 // MARK: - Gibson Prays
@@ -161,15 +172,16 @@ private func drawGibsonPrays(_ c: PixelCanvas, _ p: Pose) {
     drawChildBody(c, p, leg: jeans, shoe: C(0xE8E6E0))
     // The striped T-shirt.
     c.rect(21, 35, 14, 3, shirt); c.rect(21, 36, 14, 1, stripe); c.rect(21, 37, 14, 1, C(0x2A5088))
+    c.rect(26, 35, 4, 1, C(0x2A5088)); c.px(33, 35, C(0x2A5088)); c.px(33, 36, C(0xC4C2BC))   // the neckline, the far side
     c.rect(19, 35, 2, 2, shirt)
     c.rect(35, 35 - p.armRaise, 2, 2, shirt); c.px(36, 35 - p.armRaise, clawdOrange)
     // Short hair, and the big round glasses over his eyes.
     c.pattern(20, 27, [
-        "...HHHHHHHHHH...",
-        "..HHHHHHHHHHHH..",
-        ".HHHHHHHHHHHHHH.",
-        ".HH..........HH.",
-    ], ["H": hair])
+        "...HHHHllHHHH...",
+        "..HHlllHHHHlHd..",
+        ".HHHHHHHHHHHHdd.",
+        ".HH..........Hd.",
+    ], ["H": hair, "l": C(0x46362A), "d": C(0x1A120C)])
     c.rect(24, 32, 2, 2, ink); c.rect(30, 32, 2, 2, ink)
     c.pattern(22, 31, ["FFFFF.FFFFF", "F...FFF...F", "F...F.F...F", "FFFFF.FFFFF"], ["F": frame])
     c.rect(23, 32, 3, 2, C(0xDFF0FF, 0.25)); c.rect(29, 32, 3, 2, C(0xDFF0FF, 0.25))
@@ -202,18 +214,19 @@ private func drawSamantha(_ c: PixelCanvas, _ p: Pose) {
     c.rect(21, 35, 14, 4, pj); c.rect(21, 38, 14, 1, pjD)
     for (x, y) in [(22, 36), (26, 35), (30, 37), (33, 35), (24, 38)] { c.px(x, y, flower) }
     c.rect(27, 35, 2, 1, C(0xFFFFFF))   // the collar
+    c.rect(28, 36, 1, 2, pjD); c.rect(33, 36, 1, 2, pjD); c.rect(19, 36, 2, 1, pjD); c.rect(35, 36, 2, 1, pjD)   // placket, a fold, cuffs
     c.rect(19, 35, 2, 2, pj); c.rect(35, 35, 2, 2, pj)
     // Hair: a straight fringe, down past her ears.
     c.pattern(19, 27, [
-        "...HHHHHHHHHHH....",
-        "..HHHHHHHHHHHHH...",
-        ".HHHHHHHHHHHHHHH..",
-        ".HHHdHHHdHHHdHHH..",
-        ".HH...........HH..",
-        ".HH...........HH..",
-        ".Hd...........dH..",
-        ".H.............H..",
-    ], ["H": hair, "d": hairD])
+        "...HHHHllHHHHH....",
+        "..HHlllHHHHlllH...",
+        ".HlHHHHHHHHHHHdH..",
+        ".HHHdHHHdHHHdHdd..",
+        ".Hl...........dd..",
+        ".Hl...........Hd..",
+        ".Hd...........dd..",
+        ".H.............d..",
+    ], ["H": hair, "d": hairD, "l": C(0x6A4630)])
     c.rect(24, 32, 2, 2, ink); c.rect(30, 32, 2, 2, ink)
     if glow > 0 {
         // She glows: light catching the top of her hair and her shoulders, and a ring of it round her feet (not a
