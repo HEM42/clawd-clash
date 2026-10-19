@@ -9,6 +9,11 @@ Its first three universes started as separate apps. Their changelogs from before
 
 Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://github.com/rodclemen/doctor-clawd)), so its whole history is below, from 3.1.0.
 
+## Unreleased
+
+### Fixed
+- **No thin line after the place's name in the window.** The darker band behind the name was a solid strip and a fade drawn side by side, and where they met on a fraction of a pixel a faint vertical line showed (after "HILL VALLEY, 1885", for one). It's one gradient now, solid then fading, with no join.
+
 ## 3.7.1 (2026-10-19)
 
 ### Added

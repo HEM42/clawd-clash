@@ -648,11 +648,10 @@ final class HeaderView: NSView, NSViewToolTipOwner {
             // Behind the place's name only, fading out just past it: enough to read the name over a busy scene, and
             // the rest of the bar leaves the scene clear.
             let tint = (base.blended(withFraction: 0.45, of: .black) ?? base).withAlphaComponent(0.32)
+            // One gradient, solid then fading, so there's no seam where a solid strip and a fade would meet.
             let solid = 14 + titleWidth() + 16, fade: CGFloat = 70
-            tint.setFill()
-            NSRect(x: 0, y: 0, width: solid, height: b.height).fill()
-            NSGradient(colors: [tint, tint.withAlphaComponent(0)])?.draw(in: NSRect(x: solid, y: 0, width: fade, height: b.height),
-                                                                        angle: 0)
+            NSGradient(colors: [tint, tint, tint.withAlphaComponent(0)], atLocations: [0, solid / (solid + fade), 1],
+                       colorSpace: .sRGB)?.draw(in: NSRect(x: 0, y: 0, width: solid + fade, height: b.height), angle: 0)
         }
         // Title and buttons cast a soft shadow, so they stand off any background.
         let shadow = NSShadow()
