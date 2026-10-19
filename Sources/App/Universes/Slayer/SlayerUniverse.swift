@@ -27,6 +27,9 @@ struct SlayerUniverse: UniverseModule {
     /// A compacted "Tabula Rasa" eight: Willow's forgetting spell, cast and broken.
     func compactionLook(k: Double, cast: Cast) -> CompactionLook? { SlayerTabulaRasa(k: k, cast: cast) }
     var rides: [Ride] { [.schoolBus, .deSoto, .gtx] }
+
+    /// Hush: while the Gentlemen are on stage, nobody has a voice. Mayor Wilclaws wipes his hands after every duel.
+    var quirks: StageQuirks { StageQuirks(hushers: [.villain(SlayerVillain.gentlemen)], afterDuel: [.villain(SlayerVillain.mayorWilclaws)]) }
 }
 
 extension Ride {
@@ -38,9 +41,6 @@ extension Ride {
     static let deSoto = Ride(key: "deSoto", arrival: .drives) { c, ramp, engines, _, _ in slayerDeSoto(c, ramp: ramp, lit: engines) }
     /// Angstel's convertible: it drives in.
     static let gtx = Ride(key: "gtx", arrival: .drives) { c, ramp, engines, _, _ in slayerGTX(c, ramp: ramp, lit: engines) }
-
-    /// Hush: while the Gentlemen are on stage, nobody has a voice. Mayor Wilclaws wipes his hands after every duel.
-    var quirks: StageQuirks { StageQuirks(hushers: [.villain(SlayerVillain.gentlemen)], afterDuel: [.villain(SlayerVillain.mayorWilclaws)]) }
 }
 
 extension SlayerUniverse {
