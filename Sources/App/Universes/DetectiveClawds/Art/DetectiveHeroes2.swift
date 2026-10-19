@@ -122,8 +122,9 @@ private func drawStreamingCape(_ c: PixelCanvas, t: Double, color: Px, edge: Px)
     }
 }
 
-/// A cape that stops short of the knees (`bottom` row), its hem in the lining colour.
-private func drawShortCape(_ c: PixelCanvas, t: Double, speed: Double, color: Px, lining: Px, bottom: Int) {
+/// A cape that stops short of the knees (`bottom` row), its hem in the lining colour. `fold` runs a fold down the
+/// cloth that shows behind the back.
+private func drawShortCape(_ c: PixelCanvas, t: Double, speed: Double, color: Px, lining: Px, bottom: Int, fold: Px? = nil) {
     for y in 27...bottom where y + c.oy <= 43 {
         let k = Double(y - 27) / Double(bottom - 27)
         let hw = 10.5 + k * 3
@@ -131,6 +132,7 @@ private func drawShortCape(_ c: PixelCanvas, t: Double, speed: Double, color: Px
         let l = Int((Sprite.bodyCenterX - hw + sway).rounded()), r = Int((Sprite.bodyCenterX + hw + sway).rounded()) - 1
         c.rect(l, y, r - l + 1, 1, y == bottom ? lining : color)
         c.px(l, y, lining)
+        if let fold, k > 0.3, y < bottom { c.px(l + 2, y, fold) }
     }
 }
 
@@ -214,6 +216,7 @@ private func twinkle(_ c: PixelCanvas, _ x: Int, _ y: Int, _ col: Px) {
 private func drawRobin(_ c: PixelCanvas, _ p: Pose) {
     let red = C(0xC8202A), redD = C(0x8A1418), green = C(0x2E8A3E), greenD = C(0x1E5E2A)
     let yellow = C(0xF2C230), cape = C(0x1C1C24), hair = C(0x16161C), boot = C(0x1E1E24)
+    let redL = C(0xE04450), hairLit = C(0x34343E)
     var angle = p.melee, trail = p.trail
     let sig = p.signature
     if let s = sig, s > 0.5, s < 0.88 {
@@ -228,7 +231,7 @@ private func drawRobin(_ c: PixelCanvas, _ p: Pose) {
         }
         angle = cut(p.t); trail = saberTrail(p.t, pose: cut)
     }
-    drawShortCape(c, t: p.t, speed: p.capeSpeed, color: cape, lining: yellow, bottom: 38)
+    drawShortCape(c, t: p.t, speed: p.capeSpeed, color: cape, lining: yellow, bottom: 38, fold: C(0x30303C))
     // The scabbard across his back, the hilt over his left shoulder while the sword's in it.
     line(c, 15, 23, 29, 40, greenD, 0.9)
     if angle == nil {
@@ -250,10 +253,13 @@ private func drawRobin(_ c: PixelCanvas, _ p: Pose) {
         "HHH.HHH.HH.HHHH.HHHH",
         "HH...H....H...H...HH",
     ], ["H": hair])
+    c.rect(22, 23, 4, 1, hairLit); c.rect(30, 23, 3, 1, hairLit)            // highlights in the spikes
     drawDomino(c, C(0x101014))
-    // Tunic, belt, the R.
+    // Tunic lit at the shoulder and shaded low, belt, the R.
     c.rect(27, 32, 2, 1, clawdShade)
     c.rect(18, 33, 20, 4, red); c.rect(37, 33, 1, 4, redD)
+    c.rect(19, 33, 4, 1, redL); c.rect(20, 36, 6, 1, redD)
+    c.px(26, 34, redD); c.px(26, 35, redD)                                 // the tunic's front seam
     c.pattern(16, 33, ["GG.", "GGG"], ["G": green])
     c.rect(18, 37, 20, 1, yellow); c.px(24, 37, C(0xC09018)); c.px(25, 37, C(0xC09018))
     c.pattern(29, 33, [".YYYY", "YKKYY", "YKYKY", "YKKYY", "YKYKY"], ["Y": yellow, "K": C(0x101014)])
@@ -358,9 +364,11 @@ private func nightwing(_ c: PixelCanvas, _ p: Pose, tuck: Bool) {
         "HHH...................",
         ".H....................",
     ], ["H": hair, "h": C(0x2A2A3A)])
+    c.rect(21, 22, 4, 1, C(0x2E2E3E)); c.rect(28, 22, 3, 1, C(0x2E2E3E))   // the sweep of his hair catching the light
     drawDomino(c, C(0x0E0E14))
     c.rect(27, 32, 2, 1, clawdShade)
     c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, C(0x101016))
+    c.px(19, 35, suitL); c.px(20, 36, suitL); c.px(35, 35, suitL)          // the suit's sheen under the wings
     c.pattern(18, 33, [
         "BBB..............BBB",
         ".BBBB..........BBBB.",
@@ -370,7 +378,7 @@ private func nightwing(_ c: PixelCanvas, _ p: Pose, tuck: Bool) {
     ], ["B": blue])
     c.px(18, 33, blueL); c.px(37, 33, blueL)
     c.rect(18, 37, 20, 1, suitL)
-    c.rect(15, 33, 3, 3, blue); c.px(15, 33, suit)
+    c.rect(15, 33, 3, 3, blue); c.px(15, 33, suit); c.rect(16, 35, 2, 1, C(0x1E66B8))
     if swinging {
         drawLineHand(c, arm: suit, glove: blue)
         return
@@ -629,6 +637,10 @@ private func drawCatwoman(_ c: PixelCanvas, _ p: Pose) {
     let admire = sig.map { $0 > 0.12 && $0 < 0.86 } ?? false
     drawLegs(c, Look(leg: suit), step: p.step)
     drawBoots(c, step: p.step, C(0x101016), height: 3)
+    if !seatedPose {
+        // The boots' polish, a glint high on each.
+        for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx, (p.step >= 0 && i % 2 == p.step ? 40 : 41), C(0x34343F)) }
+    }
     c.oy += p.breathe
     drawBody(c, Look(body: suit, shade: C(0x121218), arm: suit, eye: nil))
     c.pattern(17, 19, [
@@ -663,10 +675,11 @@ private func drawCatwoman(_ c: PixelCanvas, _ p: Pose) {
         c.pattern(30, 27, goggles, ["R": silver, "L": lens, "l": lensL])
         c.rect(26, 29, 4, 1, silver)
     }
-    // Zip down the front.
-    c.rect(28, 34, 1, 4, silver); c.px(28, 34, white)
+    // The suit's sheen, catching the light at the shoulder and down the near side; the zip down the front.
+    c.rect(18, 34, 3, 1, sheen); c.px(19, 35, sheen); c.rect(31, 34, 3, 1, sheen)
+    c.rect(28, 34, 1, 4, silver); c.px(28, 34, white); c.px(28, 37, C(0x8A8E98))
     c.rect(18, 37, 20, 1, C(0x121218))
-    c.rect(15, 33, 3, 3, suit)
+    c.rect(15, 33, 3, 3, suit); c.rect(15, 33, 2, 1, sheen)
     if admire, let s = sig {
         let k = min(1, (s - 0.12) / 0.12)
         let y = 32 - Int((5 * k).rounded())
