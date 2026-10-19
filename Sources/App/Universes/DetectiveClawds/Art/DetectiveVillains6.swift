@@ -4,7 +4,7 @@ import Foundation
 // and armour drawn over and around the blocky body; where a face shows, it's Clawd's own orange. Speedsters crackle
 // with lightning in their own colour and smear when they strike.
 
-let dcVillains6: [DCVillain: Persona] = [
+let detectiveVillains6: [DetectiveVillain: Persona] = [
     .reverseFlash: Persona(name: "Reverse-Flare", weapon: .saber, headTop: 21, signature: 2.6,
                   callout: "Always one step ahead, Flare.",
                   draw: drawReverseFlash),
@@ -268,7 +268,7 @@ private func reverseFlashArt(_ c: PixelCanvas, _ p: Pose, ghost: Bool = false) {
     c.rect(18, 36, 20, 1, red); c.rect(21, 36, 2, 1, redDark); c.rect(33, 36, 2, 1, redDark)   // the belt's buckles
     c.rect(18, 33, 4, 1, yellowLight); c.rect(22, 34, 1, 2, yellowDark); c.rect(33, 34, 1, 2, yellowDark)   // a lit shoulder, folds
     c.pattern(25, 33, [".KKKK.", "KKKKKK", "KKKKKK", "KKKKKK", ".KKKK."], ["K": black])
-    drawFlameEmblem(c, x: 26, y: 33, size: .small, flame: red, field: nil)
+    detectiveDrawFlameEmblem(c, x: 26, y: 33, size: .small, flame: red, field: nil)
     c.rect(15, 33, 3, 3, yellow); c.rect(15, 35, 3, 1, yellowDark)
     if let a = p.melee, !ghost {
         speedPunch(c, angle: a, trail: p.trail, t: p.t, arm: yellow, fist: yellow, core: core, glow: glow)
@@ -331,7 +331,7 @@ private func zoomArt(_ c: PixelCanvas, _ p: Pose, buzz: Double, ghost: Bool = fa
     c.rect(18, 36, 20, 1, grey); c.rect(21, 36, 2, 1, greyLight)               // the belt, a glint on it
     c.rect(18, 33, 4, 1, sheen); c.rect(22, 34, 1, 2, blackDark); c.rect(33, 34, 1, 2, blackDark)   // a lit shoulder, folds
     c.pattern(25, 33, [".GGGG.", "GGGGGG", "GGGGGG", "GGGGGG", ".GGGG."], ["G": C(0x34343E)])
-    drawFlameEmblem(c, x: 26, y: 33, size: .small, flame: C(0x5AA0FF), field: nil)
+    detectiveDrawFlameEmblem(c, x: 26, y: 33, size: .small, flame: C(0x5AA0FF), field: nil)
     c.px(26, 33, greyLight)
     c.rect(15, 33, 3, 3, black); c.rect(15, 33, 3, 1, sheen)
     if let a = p.melee {

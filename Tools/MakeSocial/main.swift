@@ -38,7 +38,7 @@ let allVerses: [Verse] = [
           burst: 0xFFE14D, face: (0xFFFFFF, 0xFF6A5A), sky: (0x7A0E1E, 0x14050C), caption: "A LONG TIME AGO…"),
     Verse(name: "MARVELOUS CLAWDS", hero: .hero(MarvelousHero.thor), villain: .villain(MarvelousVillain.loki), place: .avengersTower, sound: "KRAKOOM!",
           burst: 0x7FD0FF, face: (0xFFF6B0, 0xFFC21A), sky: (0xC21E2E, 0x0E2A6E), caption: "MEANWHILE, AT THE TOWER…"),
-    Verse(name: "DETECTIVE CLAWDS", hero: .hero(DCHero.batman), villain: .villain(DCVillain.joker), place: .gotham, sound: "BLAM!",
+    Verse(name: "DETECTIVE CLAWDS", hero: .hero(DetectiveHero.batman), villain: .villain(DetectiveVillain.joker), place: .gotham, sound: "BLAM!",
           burst: 0xFF5A8A, face: (0xFFFFFF, 0xC8F06A), sky: (0x2E4482, 0x0A1028), caption: "LATER, IN GOTHAMBURG…"),
     Verse(name: "DOCTOR CLAWD", hero: .hero(DoctorHero.doctorTen), villain: .villain(DoctorVillain.dalick), place: .skarro, sound: "VWORP!",
           burst: 0xFFB45A, face: (0xFFFFFF, 0x8FB8FF), sky: (0x2A4AC8, 0x0A0A2E), caption: "SOMEWHERE IN TIME…"),
@@ -120,7 +120,7 @@ for i in 0..<panels {
         ctx.move(to: CGPoint(x: 740, y: 0)); ctx.addLine(to: CGPoint(x: signal.x - 36, y: signal.y)); ctx.addLine(to: CGPoint(x: signal.x + 36, y: signal.y))
         ctx.closePath(); ctx.fillPath()
         ctx.setFillColor(hex(0xFFE36B, 0.92)); ctx.fillEllipse(in: CGRect(x: signal.x - 36, y: signal.y - 25, width: 72, height: 50))
-        ctx.addPath(cowlMaskPath(signal, width: 57)); ctx.setFillColor(inkColor); ctx.fillPath(using: .evenOdd)
+        ctx.addPath(detectiveCowlMaskPath(signal, width: 57)); ctx.setFillColor(inkColor); ctx.fillPath(using: .evenOdd)
     }
     if i == 4 {   // a saucer's beam slanting down through the trees
         ctx.setFillColor(hex(0xC8FFE0, 0.12))
@@ -166,7 +166,7 @@ let p: CGFloat = 3.1
 if style == 1 {
 fight(.hero(StarClawdsHero.luke), .villain(StarClawdsVillain.vader), centre: centres[0], dist: 40, p: p, t: 0.55)
 fight(.hero(MarvelousHero.thor), .villain(MarvelousVillain.loki), centre: centres[1], dist: 46, p: p, t: 0.35)
-fight(.hero(DCHero.batman), .villain(DCVillain.joker), centre: centres[2], dist: 46, p: p, t: 0.3)
+fight(.hero(DetectiveHero.batman), .villain(DetectiveVillain.joker), centre: centres[2], dist: 46, p: p, t: 0.3)
 fight(.hero(DoctorHero.doctorTen), .villain(DoctorVillain.dalick), centre: centres[3], dist: 46, p: p, t: 0.42)
 fight(.hero(FilesHero.foxClawder), .villain(FilesVillain.grey), centre: centres[4], dist: 44, p: p, t: 0.42)
 }

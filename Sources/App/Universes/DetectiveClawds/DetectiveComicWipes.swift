@@ -3,7 +3,7 @@ import AppKit
 /// The trips between places: comic-book transitions, a different one each time. Most belong to someone (the Flash,
 /// Batman, Superman…) and come up more often with them on screen, or when the trip heads for their home turf; any of
 /// them can turn up on any trip.
-enum DCComicWipe: Int, CaseIterable {
+enum DetectiveComicWipe: Int, CaseIterable {
     case speedForce     // the Flash races through the frozen panel in red and yellow lightning: WHOOSH!
     case batSignal      // Gotham goes dark, the Night Beacon lights the sky, and its circle grows into the new place
     case pageBreaker    // Superman punches through the page from behind (KRAASH!), the new place underneath
@@ -87,21 +87,21 @@ enum DCComicWipe: Int, CaseIterable {
 /// One trip's transition, picked for who's on screen and where it's going. Shared by the window and the screen saver,
 /// which hand over the old picture (frozen), the new one (as it is right now) and how far through it is; a frame is
 /// drawn over the whole of `r`. Sizes are against an 800-pixel-tall frame.
-struct DCComicTrip {
-    let kind: DCComicWipe
+struct DetectiveComicTrip {
+    let kind: DetectiveComicWipe
     var caption = ""
     var duration: Double { kind.duration }
 
     /// Any transition but the last one, those of whoever's on screen and of the place it's going to weighted up.
-    static func pick(after last: DCComicWipe?, cast: [Cast], to place: Location) -> DCComicTrip {
+    static func pick(after last: DetectiveComicWipe?, cast: [Cast], to place: Location) -> DetectiveComicTrip {
         let here = Set(cast)
-        var kinds: [DCComicWipe] = []
-        for kind in DCComicWipe.allCases where kind != last {
+        var kinds: [DetectiveComicWipe] = []
+        for kind in DetectiveComicWipe.allCases where kind != last {
             kinds.append(kind)
             if kind.owners.contains(where: here.contains) { kinds += [kind, kind, kind] }
             if kind.turf.contains(place) { kinds += [kind, kind] }
         }
-        return DCComicTrip(kind: kinds.randomElement() ?? .multiverse, caption: "MEANWHILE, IN \(place.name.uppercased())…")
+        return DetectiveComicTrip(kind: kinds.randomElement() ?? .multiverse, caption: "MEANWHILE, IN \(place.name.uppercased())…")
     }
 
     // MARK: Drawing
@@ -240,7 +240,7 @@ struct DCComicTrip {
         ctx.setAlpha(1)
         ctx.setFillColor(rgb(0xFFE36B, 0.42 * (1 - fade))); ctx.fill(r)
         let batA = lit * CGFloat(1 - Self.ease(Self.span(k, 0.46, 0.72)))
-        if batA > 0.01 { ctx.addPath(cowlMaskPath(sky, width: rad * 1.6)); ctx.setFillColor(rgb(0x0A0A0A, batA)); ctx.fillPath(using: .evenOdd) }
+        if batA > 0.01 { ctx.addPath(detectiveCowlMaskPath(sky, width: rad * 1.6)); ctx.setFillColor(rgb(0x0A0A0A, batA)); ctx.fillPath(using: .evenOdd) }
         ctx.restoreGState()
         ctx.saveGState()
         ctx.setShadow(offset: .zero, blur: 24 * s, color: rgb(0xFFE36B))
@@ -1548,4 +1548,4 @@ struct DCComicTrip {
     }
 }
 
-extension DCComicTrip: Trip {}
+extension DetectiveComicTrip: Trip {}

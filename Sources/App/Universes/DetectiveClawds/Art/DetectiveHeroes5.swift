@@ -4,7 +4,7 @@ import Foundation
 // the blocky body; where a face shows, it's Clawd's own orange (Starfire's a shade more golden). The speedsters fight
 // with a blur of punches, lightning crackling off them, and leave speed lines behind when they run.
 
-let dcHeroes5: [DCHero: Persona] = [
+let detectiveHeroes5: [DetectiveHero: Persona] = [
     .wallyWest: Persona(name: "Wally Wes", weapon: .saber, headTop: 21, signature: 2.6, callout: "Quickest guy around.",
                   draw: drawWallyWest),
     .jayGarrick: Persona(name: "Jay Carrick", weapon: .saber, headTop: 17, signature: 2.8,
@@ -135,7 +135,7 @@ private func wallyArt(_ c: PixelCanvas, _ p: Pose) {
     // The emblem and the belt.
     c.rect(19, 34, 4, 1, redLight); c.rect(32, 34, 3, 1, redLight)       // the suit lit along the shoulders
     c.rect(19, 36, 4, 1, redDark); c.rect(32, 36, 5, 1, redDark)         // and shaded above the belt
-    drawFlameEmblem(c, x: 25, y: 34, size: .medium, flame: yellow, field: white)
+    detectiveDrawFlameEmblem(c, x: 25, y: 34, size: .medium, flame: yellow, field: white)
     c.rect(18, 37, 20, 1, yellow); c.rect(37, 37, 1, 1, yellowDark)
     c.rect(26, 37, 4, 1, yellowLight)                                    // the buckle
     c.rect(15, 35, 3, 1, yellow)
@@ -184,7 +184,7 @@ private func jayArt(_ c: PixelCanvas, _ p: Pose) {
     c.rect(26, 33, 4, 1, clawdShade)
     // Red shirt with the flame.
     c.rect(18, 34, 20, 4, red)
-    drawFlameEmblem(c, x: 25, y: 34, size: .medium, flame: yellow, field: nil)
+    detectiveDrawFlameEmblem(c, x: 25, y: 34, size: .medium, flame: yellow, field: nil)
     c.rect(18, 37, 20, 1, redDark)
     c.rect(37, 34, 1, 3, redDark)
     c.rect(19, 34, 4, 1, redLight); c.rect(32, 34, 3, 1, redLight)       // the shirt lit along the shoulders
@@ -351,7 +351,7 @@ private func jesseArt(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 34, 20, 4, gold)
     c.rect(19, 34, 4, 1, goldLight); c.rect(32, 34, 3, 1, goldLight)   // lit along the shoulders
     c.rect(19, 36, 4, 1, goldDark); c.rect(32, 36, 5, 1, goldDark)     // shaded above the belt
-    drawFlameEmblem(c, x: 26, y: 34, size: .small, flame: red, field: nil)
+    detectiveDrawFlameEmblem(c, x: 26, y: 34, size: .small, flame: red, field: nil)
     c.rect(37, 34, 1, 4, goldDark)
     c.rect(18, 37, 20, 1, redDark); c.rect(27, 37, 2, 1, gold)         // the belt and its buckle
     c.rect(15, 35, 3, 1, red)

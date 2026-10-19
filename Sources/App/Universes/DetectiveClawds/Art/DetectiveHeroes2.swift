@@ -5,7 +5,7 @@ import Foundation
 // glance, so each keeps one loud tell: Robin's R, Nightwing's blue bird, Batgirl's red hair and yellow cowl mask, Red Hood's
 // helmet, Red Robin's wings, Batwoman's red cowl mask, Orphan's stitches, Spoiler's purple hood, Gordon's coat and glasses.
 
-let dcHeroes2: [DCHero: Persona] = [
+let detectiveHeroes2: [DetectiveHero: Persona] = [
     .robin: Persona(name: "Wren", weapon: .saber, headTop: 21, signature: 2.6, callout: "Tch.",
                     draw: drawRobin),
     .nightwing: Persona(name: "Nightglider", weapon: .saber, motion: .swing, headTop: 21, signature: 2.4,
@@ -481,7 +481,7 @@ private func drawBatgirl(_ c: PixelCanvas, _ p: Pose) {
     drawCowl(c, suit, suitD)
     c.rect(22, 22, 4, 1, suitL); c.rect(31, 22, 2, 1, suitL)            // the cowl's sheen along the top
     c.rect(18, 33, 2, 1, suitL)                                          // the lit shoulder
-    drawCowlMask(c, x: 20, y: 34, width: 16, color: yellow)
+    detectiveDrawCowlMask(c, x: 20, y: 34, width: 16, color: yellow)
     c.rect(18, 37, 20, 1, yellow); c.rect(26, 37, 4, 1, yellowD); c.rect(27, 37, 2, 1, C(0xFFE680))   // the buckle
     c.rect(15, 33, 3, 3, yellow); c.rect(15, 35, 3, 1, yellowD)          // the glove shaded underneath
     if swinging {
@@ -551,7 +551,7 @@ private func drawRedHood(_ c: PixelCanvas, _ p: Pose) {
     let jacketL = C(0x8C5E38)
     // The leather lit along the collar and the near shoulder, a crease down the front panel.
     c.px(16, 31, jacketL); c.px(38, 31, jacketL); c.rect(18, 33, 2, 1, jacketL); c.px(19, 35, jacketD)
-    drawCowlMask(c, x: 21, y: 34, width: 14, color: C(0xD0202A))
+    detectiveDrawCowlMask(c, x: 21, y: 34, width: 14, color: C(0xD0202A))
     c.rect(18, 37, 20, 1, C(0x22222A)); c.rect(27, 37, 2, 1, C(0x8A909C))   // the belt's buckle
     c.rect(15, 33, 3, 3, jacket); c.rect(15, 35, 3, 1, jacketD)            // the sleeve's cuff
 
@@ -880,7 +880,7 @@ private func drawBatwoman(_ c: PixelCanvas, _ p: Pose) {
     drawCowl(c, black, blackD, lips: C(0xC01020))
     c.rect(22, 22, 4, 1, blackL); c.rect(31, 22, 2, 1, blackL)           // the cowl's sheen along the top
     c.rect(18, 33, 2, 1, blackL)                                         // the lit shoulder
-    drawCowlMask(c, x: 20, y: 34, width: 16, color: red)
+    detectiveDrawCowlMask(c, x: 20, y: 34, width: 16, color: red)
     c.rect(15, 33, 3, 3, red); c.rect(15, 35, 3, 1, hairD)               // the glove shaded underneath
     if let s = p.signature, s > 0.06, s < 0.96 {
         // Wind up, throw, and the clawdarang loops out and back.
@@ -951,7 +951,7 @@ private func drawOrphan(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(21, 29, ["WWWW......WWWW", ".WW........WW."], ["W": white])
     c.rect(22, 33, 12, 1, stitch)
     for x in stride(from: 22, through: 33, by: 2) { c.px(x, 32, stitch); c.px(x, 34, stitch) }
-    drawCowlMask(c, x: 25, y: 34, width: 7, color: C(0x5A5A66))
+    detectiveDrawCowlMask(c, x: 25, y: 34, width: 7, color: C(0x5A5A66))
     c.rect(18, 33, 3, 1, blackL); c.px(18, 34, blackL)                   // the shoulder lit along the top
     c.rect(18, 37, 20, 1, C(0x0A0A0E)); c.rect(27, 37, 2, 1, C(0x4A4A56))   // the belt's buckle
     if let k = kick {
@@ -1126,5 +1126,5 @@ private func drawBatSignal(_ c: PixelCanvas, s: Double, t: Double) {
         line(c, 11, 31, 22 + Double(k) * 2, 10, C(0xFFF4C0, 0.07 * on), 1.6)
     }
     c.ellipse(22, 6, 10, 5, C(0xFFF0A0, 0.85 * on))
-    drawCowlMask(c, x: 15, y: 1, width: 15, color: C(0x16161B).alpha(on))
+    detectiveDrawCowlMask(c, x: 15, y: 1, width: 15, color: C(0x16161B).alpha(on))
 }

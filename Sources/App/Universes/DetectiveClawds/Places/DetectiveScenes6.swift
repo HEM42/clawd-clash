@@ -1,6 +1,6 @@
 import Foundation
 
-let dcScenes6: [Location: Place] = [
+let detectiveScenes6: [Location: Place] = [
     .aceChemicals: Place(name: "Acme Chemicals", panel: 0x0E1810, still: Scenes.aceChemicals, moving: Scenes.aceChemicalsLife),
     .lexCorp: Place(name: "LugarCorp Tower", panel: 0x18162A, still: Scenes.lexCorp, moving: Scenes.lexCorpLife),
     .bayou: Place(name: "Louisiana Bayou", panel: 0x0E1A16, still: Scenes.bayou, moving: Scenes.bayouLife),
@@ -292,7 +292,7 @@ extension Scenes {
         c.ellipse(bx, by, br * 3 / 2 + 2 * s, br + 2 * s, C(0xF0E8A8, 0.12))
         c.ellipse(bx, by, br * 3 / 2, br, C(0xF0E8A8, 0.42))
         let k = max(1, br / 6)
-        s6Stamp(c, bx - 13 * k / 2, by - 3 * k, cowlMaskRows(13), ["#": C(0x0A0C10, 0.85)], s: k)   // the cowl mask
+        s6Stamp(c, bx - 13 * k / 2, by - 3 * k, detectiveCowlMaskRows(13), ["#": C(0x0A0C10, 0.85)], s: k)   // the cowl mask
     }
 
     /// A gantry catwalk high across the plant on a tall canvas, with caged lamps hanging under it.

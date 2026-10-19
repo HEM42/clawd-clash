@@ -4,7 +4,7 @@ import Foundation
 // rest of the cast is done: hair, helmets and armour drawn over (and around) the blocky body, Clawd's own orange wherever
 // a face shows.
 
-let dcHeroes9: [DCHero: Persona] = [
+let detectiveHeroes9: [DetectiveHero: Persona] = [
     .mera: Persona(name: "Merra", weapon: .lightning, magic: Magic(core: C(0xE0FFFF), glow: C(0x2AC8D8), jagged: false),
                    headTop: 20, signature: 3.2, callout: "The sea listens to me.",
                    draw: drawMera),

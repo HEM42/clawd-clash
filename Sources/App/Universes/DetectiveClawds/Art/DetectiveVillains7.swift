@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: Wonder Woman's and Aquaman's foes, from Themyscira's enemies to the things at the bottom of the sea.
 
-let dcVillains7: [DCVillain: Persona] = [
+let detectiveVillains7: [DetectiveVillain: Persona] = [
     .cheetah: Persona(name: "Jaguar", weapon: .saber, headTop: 22, signature: 2.8, callout: "Run, little Amazon.",
                   draw: drawCheetah),
     .ares: Persona(name: "Ares", weapon: .saber, armoured: true, bulk: 1, headTop: 13, signature: 3.2,

@@ -4,7 +4,7 @@ import Foundation
 // goggles and armour over the blocky body; where a face shows, it's Clawd's own orange. Two of them stretch, one
 // shrinks, one is a whirlwind and one has no face at all.
 
-let dcHeroes8: [DCHero: Persona] = [
+let detectiveHeroes8: [DetectiveHero: Persona] = [
     .blueBeetle: Persona(name: "Blue Scarab", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xE8F4FF), glow: C(0x2A8AFF)),
                   armoured: true, muzzle: (45, 34), handGun: false, headTop: 20, signature: 2.8, callout: "Scarab, not now!",
                   draw: drawBlueBeetle),

@@ -3,7 +3,7 @@ import AVFoundation
 
 // The transitions between places, rendered as short clips and a sheet of key frames (Star Clawds' plain wipes, or a
 // universe's own trips): Marvel's (`MarvelousComicWipe`)
-// or, between two DC places, DC's (`DCComicWipe`), or between two Doctor Clawd places, its trips (`DoctorWipe`), or
+// or, between two DC places, DC's (`DetectiveComicWipe`), or between two Doctor Clawd places, its trips (`DoctorWipe`), or
 // between two Clawd Files places, its own (`FilesWipe`), each clip ending on the typed caption, or between two Stevie
 // Clawdberg places, its film moments (`ClawdbergWipe`), or, to a Clawd of the Rings place, its nine trips (`RingsWipe`):
 // the Eye, the map journey, the Red Book, the Great Eagles, the Ring, the beacons, the Mirror, the fireworks and the palantír.

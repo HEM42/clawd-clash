@@ -3,7 +3,7 @@ import Foundation
 // Heroes: Task Force X, the Legion of Super-Heroes, the Wonder Twins and the pets. Clawd in costume, except King
 // Shark, Ace, Streaky, Gleek and Beppo, who are a shark, a dog, a cat and two monkeys (blocky ones, at least).
 
-let dcHeroes10: [DCHero: Persona] = [
+let detectiveHeroes10: [DetectiveHero: Persona] = [
     .peacemaker: Persona(name: "Peacekeeper", weapon: .blaster, shot: .bullet, muzzle: (47, 32), headTop: 15, signature: 3.4,
                   callout: "I love peace so much I'd fight for it.",
                   draw: drawPeacemaker),
@@ -881,7 +881,7 @@ private func drawAce(_ c: PixelCanvas, _ p: Pose) {
         let a = howl
         c.glowLine(2, 40, 13, 8, core: C(0xFFF4C0, 0.08 * a), glow: C(0xFFF4C0, 0.06 * a), coreR: 2, glowR: 5)
         c.ellipse(13, 7, 7, 4, C(0xFFE27A, 0.85 * a))
-        drawCowlMask(c, x: 8, y: 3, width: 11, color: C(0x1A1A22, a))
+        detectiveDrawCowlMask(c, x: 8, y: 3, width: 11, color: C(0x1A1A22, a))
     }
     for (i, lx) in [13, 18, 28, 33].enumerated() {
         let lifted = p.step >= 0 && i % 2 == p.step
@@ -1195,7 +1195,7 @@ private func drawBeppo(_ c: PixelCanvas, _ p: Pose) {
         c.rect(22, 34, 13, 1, yel); c.rect(22, 35, 13, 3, red)
         c.rect(28, 34, 2, 1, C(0xFFF0A0))                                  // the buckle
         c.rect(33, 35, 1, 3, redDark); c.rect(26, 36, 1, 2, redDark)      // the trunks shaded, a fold
-        drawCShield(c, x: 25, y: 28, size: .medium, letter: red, field: yel)
+        detectiveDrawCShield(c, x: 25, y: 28, size: .medium, letter: red, field: yel)
         let eating: Double? = sig.flatMap { $0 > 0.06 && $0 < 0.94 ? ($0 - 0.06) / 0.88 : nil }
         let chew = eating.map { $0 > 0.4 && Int($0 * 20) % 2 == 0 } ?? false
         drawMonkeyHead(c, x: 20, y: 16, fur: fur, dark: dark, face: face, happy: (eating ?? 0) > 0.75, mouth: chew ? 2 : 0,

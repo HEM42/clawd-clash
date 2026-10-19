@@ -4,7 +4,7 @@ import Foundation
 // on Clawd's legs, Parallax and Starro are what Clawd would look like if fear or a starfish got hold of him). The
 // ring-slingers fire steady beams in their Corps colour and build constructs in it.
 
-let dcVillains5: [DCVillain: Persona] = [
+let detectiveVillains5: [DetectiveVillain: Persona] = [
     .sinestro: Persona(name: "Sinistro", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFFFD0), glow: C(0xFFD81E), jagged: false),
                   headTop: 23, signature: 3.2, callout: "Beware your fears made light!",
                   draw: drawSinestro),
@@ -219,7 +219,7 @@ private func drawSinestroBody(_ c: PixelCanvas, _ p: Pose) {
     c.rect(37, 34, 1, 4, suitDark)
     c.pattern(18, 34, ["YYY..............YYY", "yY................Yy"], ["Y": yellow, "y": yellowDark])
     c.rect(18, 37, 20, 1, yellowDark)
-    drawLampEmblem(c, x: 26, y: 34, size: .small, lamp: yellow, field: suit, rim: yellow)
+    detectiveDrawLampEmblem(c, x: 26, y: 34, size: .small, lamp: yellow, field: suit, rim: yellow)
     c.rect(22, 35, 1, 2, C(0x34343E)); c.rect(33, 35, 1, 2, suitDark)        // a fold either side of the lamp
     c.rect(15, 33, 3, 1, yellow); c.rect(15, 35, 3, 1, suitDark)              // the far glove's cuff
 
@@ -326,7 +326,7 @@ private func drawAtrocitusBody(_ c: PixelCanvas, _ p: Pose) {
     c.rect(39, 31, 1, 7, armourDark)
     c.pattern(12, 26, ["A.......................", "AA......................", "AAAA....................", ".AAAAA.................."],
               ["A": armourLight])
-    drawLampEmblem(c, x: 25, y: 31, size: .large, lamp: red, field: nil)
+    detectiveDrawLampEmblem(c, x: 25, y: 31, size: .large, lamp: red, field: nil)
     c.rect(16, 37, 24, 1, armourDark)
     c.rect(21, 33, 1, 4, armourDark); c.rect(34, 33, 1, 4, armourDark)       // the plates' seams either side
     c.px(18, 33, armourLight); c.px(37, 33, armourLight)                     // a rivet on each
@@ -422,7 +422,7 @@ private func drawLarfleezeBody(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 35, 20, 1, C(0x52402E))                                       // the rag's lit top, folds in it
     c.rect(22, 36, 1, 2, C(0x261A12)); c.rect(32, 36, 1, 2, C(0x261A12)); c.rect(37, 35, 1, 3, C(0x261A12))
     for x in stride(from: 19, to: 37, by: 3) { c.px(x, 37, fur) }
-    drawLampEmblem(c, x: 26, y: 34, size: .small, lamp: orangeLight, field: orange, rim: orange)
+    detectiveDrawLampEmblem(c, x: 26, y: 34, size: .small, lamp: orangeLight, field: orange, rim: orange)
 
     // The Orange Lantern: at his side, or hugged to his chest.
     let lx = 9 + Int((hug * 16).rounded()), ly = 29 - Int((hug * 2).rounded())
@@ -680,7 +680,7 @@ private func drawDexStarr(_ c: PixelCanvas, _ p: Pose) {
     c.rect(30, 29 - arch, 4, 1, furLight); c.rect(22, 29 - arch, 2, 1, furLight)   // light along his back
     c.rect(19, 32, 1, 2, furDark); c.rect(36, 32, 1, 2, furDark)               // the fur in short strokes
     if hiss > 0.3 { for x in stride(from: 21, to: 35, by: 2) { c.px(x, 28 - arch, furDark); c.px(x + 1, 27 - arch, fur) } }
-    drawLampEmblem(c, x: 24, y: 30 - arch / 2, size: .small, lamp: red, field: nil, rim: red)
+    detectiveDrawLampEmblem(c, x: 24, y: 30 - arch / 2, size: .small, lamp: red, field: nil, rim: red)
     // The head, out front, with pointed ears.
     let hy = 19 - arch / 2 + (p.flying ? 3 : 0)
     c.pattern(33, hy, [

@@ -3,7 +3,7 @@ import Foundation
 // Heroes: the Justice Society of America. Every one of them is Clawd in costume: masks, helmets, hoods and capes drawn
 // over (and around) the blocky body. Where the hero shows a face, it's Clawd's own orange.
 
-let dcHeroes6: [DCHero: Persona] = [
+let detectiveHeroes6: [DetectiveHero: Persona] = [
     .alanScott: Persona(name: "Alan Scotch", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xD8FFD0), glow: C(0x2ADB4A), jagged: false),
                   headTop: 22, signature: 3.0, callout: "Dark things can't stand the light!",
                   draw: drawAlanScott),
@@ -84,7 +84,7 @@ private func drawAlanScott(_ c: PixelCanvas, _ p: Pose) {
         c.rect(37, 33, 1, 5, redDark)
         c.rect(20, 33, 4, 1, C(0xE04448)); c.rect(31, 33, 3, 1, C(0xE04448))   // the shirt lit along the shoulders
         c.rect(19, 36, 4, 1, redDark); c.rect(32, 36, 5, 1, redDark)         // and shaded above the waist
-        drawLampEmblem(c, x: 25, y: 33, size: .small, lamp: C(0x8AFF9A), field: C(0x2A8A3A), rim: C(0xE8C030))
+        detectiveDrawLampEmblem(c, x: 25, y: 33, size: .small, lamp: C(0x8AFF9A), field: C(0x2A8A3A), rim: C(0xE8C030))
         c.rect(18, 37, 20, 1, green); c.rect(27, 37, 2, 1, C(0xE8C030))    // a buckle on the waistband
         // The tall purple collar.
         c.pattern(16, 28, [

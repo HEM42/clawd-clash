@@ -3,7 +3,7 @@ import Foundation
 // Heroes: the Justice League. Every one of them is Clawd in costume: the cowl, hair, mask and armour drawn over (and
 // around) the blocky body, the way the whole cast is done. Where the hero shows a face, it's Clawd's own orange.
 
-let dcHeroes1: [DCHero: Persona] = [
+let detectiveHeroes1: [DetectiveHero: Persona] = [
     .superman: Persona(name: "Superb-Man", weapon: .blaster, motion: .fly, shot: .beam(core: C(0xFFF4D0), glow: C(0xFF3A1E)),
                   armoured: true, muzzle: (34, 30), handGun: false, headTop: 21, signature: 3.0, callout: "Up, up and onward!",
                   draw: drawSuperman),
@@ -92,7 +92,7 @@ private func drawSuperman(_ c: PixelCanvas, _ p: Pose) {
         c.rect(37, 32, 1, 6, blueDark)
         c.rect(18, 32, 5, 1, blueLight); c.rect(33, 32, 3, 1, blueLight)          // light along the shoulders
         c.rect(19, 36, 4, 1, blueDark); c.rect(33, 36, 4, 1, blueDark)           // the chest's shade above the belt
-        drawCShield(c, x: 24, y: 32, size: .large, letter: red, field: yellow)
+        detectiveDrawCShield(c, x: 24, y: 32, size: .large, letter: red, field: yellow)
         c.rect(18, 37, 20, 1, yellow)
         c.rect(26, 37, 4, 1, C(0xC89A20)); c.rect(27, 37, 2, 1, C(0xFFE27A))   // the buckle
         if !p.flying && !aloft && !seatedPose { c.rect(18, 38, 20, 1, red); c.rect(37, 38, 1, 1, redDark) }
@@ -152,7 +152,7 @@ private func drawBatman(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 5, 1, greyLight); c.rect(33, 33, 4, 1, greyLight)
     c.rect(19, 36, 4, 1, greyDark); c.rect(33, 36, 4, 1, greyDark)
     c.pattern(24, 33, [".YYYYYYY.", "YYYYYYYYY", "YYYYYYYYY", ".YYYYYYY."], ["Y": yellow])
-    drawCowlMask(c, x: 25, y: 34, width: 7, color: black)
+    detectiveDrawCowlMask(c, x: 25, y: 34, width: 7, color: black)
     // The utility belt: its pouches and the buckle.
     c.rect(18, 37, 20, 1, yellow)
     for x in [19, 22, 32, 35] { c.rect(x, 37, 2, 1, yellowDark) }
@@ -453,7 +453,7 @@ private func drawFlashBody(_ c: PixelCanvas, _ p: Pose, coffee: Bool = false) {
     // The suit shaded under the chest, the emblem: a white disc with the flame in it.
     c.rect(19, 36, 4, 1, redDark); c.rect(33, 36, 4, 1, redDark)
     c.ellipse(28, 35, 3, 3, C(0xF4F2EC))
-    drawFlameEmblem(c, x: 26, y: 32, size: .large, flame: gold, field: nil)
+    detectiveDrawFlameEmblem(c, x: 26, y: 32, size: .large, flame: gold, field: nil)
     c.rect(18, 37, 20, 1, gold)
     c.rect(26, 37, 4, 1, goldDark); c.rect(19, 37, 3, 1, C(0xFFE680))
     c.rect(15, 33, 3, 3, red); c.rect(15, 33, 3, 1, redLight)
@@ -540,7 +540,7 @@ private func drawGreenLantern(_ c: PixelCanvas, _ p: Pose) {
         c.rect(21, 32, 3, 1, greenLight); c.rect(32, 32, 3, 1, greenLight)        // light along the top of the chest
         c.rect(21, 36, 3, 1, greenDark); c.rect(32, 36, 3, 1, greenDark)
         c.rect(18, 37, 20, 1, greenDark)
-        drawLampEmblem(c, x: 25, y: 32, size: .large, lamp: white, field: nil)
+        detectiveDrawLampEmblem(c, x: 25, y: 32, size: .large, lamp: white, field: nil)
         c.rect(15, 33, 3, 3, glove); c.rect(15, 35, 3, 1, gloveShade)
         let ringLit = p.zap != nil || p.flying || charge > 0.2 || p.ready
         if p.flying {

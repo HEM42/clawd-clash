@@ -4,7 +4,7 @@ import Foundation
 // no drawing: the hook compiles this file too. The enums' order is the ids, so only ever append cases (HEM stays last)
 // and never reorder or remove one: running sessions keep their characters across an update.
 
-enum DCHero: Int, CaseIterable {
+enum DetectiveHero: Int, CaseIterable {
     // The Justice League
     case superman, batman, wonderWoman, flash, greenLantern, aquaman, cyborg, martianManhunter, greenArrow, blackCanary
     case shazam
@@ -35,7 +35,7 @@ enum DCHero: Int, CaseIterable {
 
 }
 
-enum DCVillain: Int, CaseIterable {
+enum DetectiveVillain: Int, CaseIterable {
     // Batman's rogues
     case joker, harleyQuinn, penguin, riddler, twoFace, scarecrow, poisonIvy, mrFreeze, bane, killerCroc
     case rasAlGhul
@@ -72,7 +72,7 @@ extension Universe {
 enum DetectiveFacts {
     static let entry = UniverseEntry(universe: .dc, key: "dc", title: "Detective Clawds", facts: facts)
     static let facts = UniverseFacts(
-        villainCount: DCVillain.allCases.count, heroCount: DCHero.allCases.count,
+        villainCount: DetectiveVillain.allCases.count, heroCount: DetectiveHero.allCases.count,
         // Joker Goon, Dex-Starr, Mister Mind, Krypto, Ch'p, Ace the Bat-Hound, Streaky, Gleek, Beppo
         agentOnly: [22, 49, 77, 131, 139, 206, 207, 208, 209]
     )

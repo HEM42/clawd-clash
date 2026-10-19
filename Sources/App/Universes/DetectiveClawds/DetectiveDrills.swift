@@ -4,7 +4,7 @@ import Foundation
 
 let detectiveBespokeDrills: [Cast: BespokeDrill] = [
         // The Flare: running on the spot, very, very fast.
-        .hero(DCHero.flash): { c, who, d, t in
+        .hero(DetectiveHero.flash): { c, who, d, t in
             let r = setRamp(d)
             standing(c, who, t: t) { p in
                 if r > 0.2 { p.step = Int(t * 16) % 2; p.breathe = 0; p.dx = Int(t * 16) % 2 }
@@ -20,7 +20,7 @@ let detectiveBespokeDrills: [Cast: BespokeDrill] = [
             }
         },
         // Wondrous Woman: the golden lasso twirled in a loop over her head.
-        .hero(DCHero.wonderWoman): { c, who, d, t in
+        .hero(DetectiveHero.wonderWoman): { c, who, d, t in
             standing(c, who, t: t)
             let r = setRamp(d)
             guard r > 0.1 else { return }
@@ -34,7 +34,7 @@ let detectiveBespokeDrills: [Cast: BespokeDrill] = [
             }
         },
         // Green Lamplighter: willpower made solid, a glowing box, then a spring, then gone.
-        .hero(DCHero.greenLantern): { c, who, d, t in
+        .hero(DetectiveHero.greenLantern): { c, who, d, t in
             standing(c, who, t: t) { $0.armRaise = 3 }
             let period = 2.8, n = Int(d.e / period), f = frac(d.e / period)
             guard f < 0.8 else { return }

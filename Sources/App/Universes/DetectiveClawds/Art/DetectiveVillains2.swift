@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: more of Gotham's worst, and the League's assassins.
 
-let dcVillains2: [DCVillain: Persona] = [
+let detectiveVillains2: [DetectiveVillain: Persona] = [
     .talia: Persona(name: "Talya al Ghoul", weapon: .saber, headTop: 20, signature: 2.8, callout: "My beloved.",
                   draw: drawTalia),
     .deathstroke: Persona(name: "Deathstrike", weapon: .saber, headTop: 21, signature: 3.2, callout: "A deal's a deal.",

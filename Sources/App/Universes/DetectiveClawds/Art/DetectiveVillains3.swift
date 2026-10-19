@@ -3,7 +3,7 @@ import Foundation
 // Villains: Superman's rogues. Kryptonian criminals, a bald billionaire, a skull full of stolen cities and a few
 // people who should never have been let near kryptonite.
 
-let dcVillains3: [DCVillain: Persona] = [
+let detectiveVillains3: [DetectiveVillain: Persona] = [
     .lexLuthor: Persona(name: "Lex Lugar", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xF0FFF0), glow: C(0x3AE86A)),
                   armoured: true, muzzle: (44, 34), handGun: false, headTop: 24, signature: 3.0,
                   callout: "Brains beat muscle, Superb-Man.",

@@ -7,7 +7,7 @@ import Foundation
 
 private let lanternMagic = Magic(core: C(0xD8FFD0), glow: C(0x2ADB4A), jagged: false)
 
-let dcHeroes4: [DCHero: Persona] = [
+let detectiveHeroes4: [DetectiveHero: Persona] = [
     .johnStewart: Persona(name: "John Steward", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xE8FFE0), glow: C(0x2ADB4A)),
                   muzzle: (50, 32), handGun: false, headTop: 23, signature: 3.2,
                   callout: "In brightest light, in darkest dark…",
@@ -77,7 +77,7 @@ private let shapeCol = C(0x00FF00), lineCol = C(0xFF0000)
 
 /// The lamp emblem: a white disc with the green lamp in it.
 private func lanternEmblem(_ c: PixelCanvas, x: Int, y: Int, mark: Px = glGreenD) {
-    drawLampEmblem(c, x: x, y: y, size: .medium, lamp: mark, field: C(0xF2F4F2))
+    detectiveDrawLampEmblem(c, x: x, y: y, size: .medium, lamp: mark, field: C(0xF2F4F2))
 }
 
 /// The uniform across the chest (rows 33…37): `side` panels at the edges, `mid` down the middle, the emblem on it.
@@ -397,7 +397,7 @@ private func kyleRayner(_ c: PixelCanvas, _ p: Pose) {
     c.rect(26, 32, 4, 1, clawdShade)
     lanternChest(c, mid: glGreen, side: glBlack, emblem: false)
     lanternShading(c)
-    drawLampEmblem(c, x: 25, y: 33, size: .medium, lamp: C(0xF2F4F2), field: nil)
+    detectiveDrawLampEmblem(c, x: 25, y: 33, size: .medium, lamp: C(0xF2F4F2), field: nil)
     c.rect(15, 33, 3, 3, glBlack); c.rect(15, 33, 3, 1, glBlackL)     // the glove's lit edge
     if p.flying { flightFist(c, glove: glBlack, t: p.t); return }
     if let s = p.signature {

@@ -1,6 +1,6 @@
 import Foundation
 
-let dcScenes5: [Location: Place] = [
+let detectiveScenes5: [Location: Place] = [
     .phantomZone: Place(name: "The Phantasm Zone", panel: 0x14102A, still: Scenes.phantomZone, moving: Scenes.phantomZoneDrift),
     .kahndaq: Place(name: "Khandaq", panel: 0x2A1C10, still: Scenes.kahndaq, moving: Scenes.kahndaqLife),
     .ironHeights: Place(name: "Iron Hills Prison", panel: 0x16181A, still: Scenes.ironHeights, moving: Scenes.ironHeightsLights),

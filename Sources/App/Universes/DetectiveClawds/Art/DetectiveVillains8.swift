@@ -3,7 +3,7 @@ import Foundation
 // Villains: Shazam's foes, a cult leader, the JSA's undead and a few of the Legion of Doom's old guard. Clawd in
 // costume again, except Mister Mind (a worm) and Monsieur Mallah (a gorilla), who are at least blocky ones.
 
-let dcVillains8: [DCVillain: Persona] = [
+let detectiveVillains8: [DetectiveVillain: Persona] = [
     .blackAdam: Persona(name: "Black Abel", weapon: .lightning, motion: .fly, magic: Magic(core: C(0xFFF8D0), glow: C(0xFFD21E)),
                   headTop: 21, signature: 3.2, callout: "KA-ZAM!",
                   draw: drawBlackAdam),

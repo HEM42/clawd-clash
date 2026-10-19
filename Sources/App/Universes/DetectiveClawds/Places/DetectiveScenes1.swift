@@ -1,6 +1,6 @@
 import Foundation
 
-let dcScenes1: [Location: Place] = [
+let detectiveScenes1: [Location: Place] = [
     .metropolis: Place(name: "Megalopolis", panel: 0x142438, still: Scenes.metropolis, moving: Scenes.metropolisLife),
     .gotham: Place(name: "Gothamburg", panel: 0x12121C, still: Scenes.gotham, moving: Scenes.gothamLife),
     .batcave: Place(name: "The Night Grotto", panel: 0x0E1216, still: Scenes.batcave, moving: Scenes.batcaveLife),
@@ -322,7 +322,7 @@ extension Scenes {
         c.ellipse(sig.x, sig.y, 26 * s, 16 * s, C(0xF0E6B0, 0.07))
         c.ellipse(sig.x, sig.y, 19 * s, 12 * s, C(0xF0E6B0, 0.12))
         c.ellipse(sig.x, sig.y, 14 * s, 9 * s, C(0xF4ECB8, 0.9))
-        dcScenes1Stamp(c, sig.x - 10 * s, sig.y - 4 * s, cowlMaskRows(21), ["#": C(0x14141C)], s: s)
+        dcScenes1Stamp(c, sig.x - 10 * s, sig.y - 4 * s, detectiveCowlMaskRows(21), ["#": C(0x14141C)], s: s)
         // far towers then near ones
         gothamRow(c, g, lo: tall ? 0.30 : 0.34, hi: tall ? 0.62 : 0.62, col: C(0x1C1C2C), lamp: 0.35, seed: 2)
         gothamTower(c, g)

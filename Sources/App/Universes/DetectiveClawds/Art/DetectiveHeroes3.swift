@@ -3,7 +3,7 @@ import Foundation
 // Heroes: the Super-family and Metropolis. Clawd in costume as ever: the top of the block is the face (Clawd orange
 // where they show skin), the C-shields, capes, hair and suits drawn over it. Krypto is a dog, a small white one.
 
-let dcHeroes3: [DCHero: Persona] = [
+let detectiveHeroes3: [DetectiveHero: Persona] = [
     .supergirl: Persona(name: "Superb-Girl", weapon: .blaster, motion: .fly, shot: .beam(core: C(0xFFF4D0), glow: C(0xFF3A1E)),
                   muzzle: (34, 30), handGun: false, headTop: 20, signature: 3.2, callout: "Hope and help, every time.",
                   draw: drawSupergirl),
@@ -83,7 +83,7 @@ private func drawSuitLegs(_ c: PixelCanvas, _ p: Pose, _ leg: Px, boot: Px, rows
 
 /// The C-shield, its top-left at (`x`, `y`): a 7×5 pentagon, the C in `letter` on a `field` ground (clear: just the C).
 private func drawFamilyShield(_ c: PixelCanvas, x: Int, y: Int, field: Px, letter: Px = capeRed) {
-    drawCShield(c, x: x, y: y, size: .small, letter: letter, field: field)
+    detectiveDrawCShield(c, x: x, y: y, size: .small, letter: letter, field: field)
 }
 
 /// Eyes burning with heat vision, `k` 0…1 how hot.

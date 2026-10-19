@@ -3,7 +3,7 @@ import Foundation
 // Villains: the Suicide Squad, the assassins and the ring-wielders. Clawd in costume, every one of them; where the
 // costume shows a face it's Clawd's own orange (Killer Frost and Black Hand have gone pale for their own reasons).
 
-let dcVillains9: [DCVillain: Persona] = [
+let detectiveVillains9: [DetectiveVillain: Persona] = [
     .deadshot: Persona(name: "Deadeye", weapon: .blaster, shot: .bullet, muzzle: (47, 33), headTop: 22, signature: 2.8,
                   callout: "I never miss.",
                   draw: drawDeadshot),
@@ -669,7 +669,7 @@ private func drawBlackHand(_ c: PixelCanvas, _ p: Pose) {
     c.px(19, 30, skinShade); c.px(35, 31, skinShade)
     c.rect(18, 32, 20, 6, black)
     c.rect(18, 32, 20, 1, gray)
-    drawLampEmblem(c, x: 25, y: 33, size: .small, lamp: C(0xC8C8D4), field: C(0x0A0A0E), rim: C(0xC8C8D4))
+    detectiveDrawLampEmblem(c, x: 25, y: 33, size: .small, lamp: C(0xC8C8D4), field: C(0x0A0A0E), rim: C(0xC8C8D4))
     c.rect(18, 37, 20, 1, blackLight)
     c.rect(21, 34, 1, 3, blackLight); c.rect(34, 34, 1, 3, blackLight)           // folds
     c.rect(15, 33, 3, 3, black); c.rect(15, 35, 3, 1, gray)                     // piping on the cuff
@@ -767,7 +767,7 @@ private func drawCyborgSuperman(_ c: PixelCanvas, _ p: Pose) {
         c.rect(32, 33, 6, 5, metal); c.rect(32, 33, 1, 5, metalDark); c.px(35, 35, metalDark)
         c.rect(33, 33, 5, 1, metalLight); c.px(36, 36, metalLight)                // the plate lit on top, a rivet
         c.rect(19, 33, 3, 1, C(0x4A6AC8)); c.rect(22, 34, 1, 2, blueDark)         // a lit shoulder, a fold
-        drawCShield(c, x: 24, y: 32, size: .small, letter: red, field: yellow)
+        detectiveDrawCShield(c, x: 24, y: 32, size: .small, letter: red, field: yellow)
         c.rect(18, 37, 20, 1, red); c.rect(27, 37, 2, 1, yellow)
         c.rect(18, 33, 1, 4, blueDark)
         if p.flying {

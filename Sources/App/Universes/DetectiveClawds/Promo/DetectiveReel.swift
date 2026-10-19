@@ -14,14 +14,14 @@ struct DetectiveReel: PromoReel {
     var beats: [(key: Double, beat: Beat)] { detectiveBeats }
     var universe: Universe { .dc }
     var brawl: BrawlCast {
-        BrawlCast(claude: .hero(DCHero.batman), other: .villain(DCVillain.joker),
-                  agent: .hero(DCHero.greenArrow), otherAgent: .villain(DCVillain.captainCold),
+        BrawlCast(claude: .hero(DetectiveHero.batman), other: .villain(DetectiveVillain.joker),
+                  agent: .hero(DetectiveHero.greenArrow), otherAgent: .villain(DetectiveVillain.captainCold),
                   line: "Or pick Detective Clawds.",
                   sub: "Capes, power rings and one very serious bat: 207 characters in 43 places.")
     }
     var window: WindowCast {
-        WindowCast(place: .gotham, claude: .hero(DCHero.batman), other: .villain(DCVillain.joker),
-                   agentA: .hero(DCHero.robin), agentB: .hero(DCHero.nightwing), extra: .villain(DCVillain.jokerGoon),
+        WindowCast(place: .gotham, claude: .hero(DetectiveHero.batman), other: .villain(DetectiveVillain.joker),
+                   agentA: .hero(DetectiveHero.robin), agentB: .hero(DetectiveHero.nightwing), extra: .villain(DetectiveVillain.jokerGoon),
                    prompt: "You: “make the clawdarang come back”", otherPrompt: "You: “put a smile on that error page”")
     }
     func sound(_ m: Mix) { detectiveSound(m) }
@@ -33,7 +33,7 @@ struct DetectiveReel: PromoReel {
 /// heat vision.
 
 /// Fills a polygon on a pixel canvas (scanline, even-odd).
-func fillPoly(_ c: PixelCanvas, _ pts: [(Double, Double)], _ col: Px) {
+private func fillPoly(_ c: PixelCanvas, _ pts: [(Double, Double)], _ col: Px) {
     guard let y0 = pts.map({ $0.1 }).min(), let y1 = pts.map({ $0.1 }).max() else { return }
     for y in Int(y0.rounded(.down))...Int(y1.rounded(.up)) {             // rows off the canvas are clipped by rect
         let yy = Double(y) + 0.5
@@ -49,7 +49,7 @@ func fillPoly(_ c: PixelCanvas, _ pts: [(Double, Double)], _ col: Px) {
 }
 
 /// A filled ellipse (centre, radii) that tolerates any size.
-func blob(_ c: PixelCanvas, _ cx: Double, _ cy: Double, _ rx: Double, _ ry: Double, _ col: Px) {
+private func blob(_ c: PixelCanvas, _ cx: Double, _ cy: Double, _ rx: Double, _ ry: Double, _ col: Px) {
     guard rx > 0, ry > 0 else { return }
     for y in Int((cy - ry).rounded(.down))...Int((cy + ry).rounded(.up)) {
         let d = (Double(y) + 0.5 - cy) / ry
@@ -60,7 +60,7 @@ func blob(_ c: PixelCanvas, _ cx: Double, _ cy: Double, _ rx: Double, _ ry: Doub
 }
 
 /// A horn: a chain of shrinking circles along a curve from the root to the tip, lit along one side.
-func horn(_ c: PixelCanvas, from a: (Double, Double), bend b: (Double, Double), to e: (Double, Double), r: Double) {
+private func horn(_ c: PixelCanvas, from a: (Double, Double), bend b: (Double, Double), to e: (Double, Double), r: Double) {
     for i in 0...24 {
         let u = Double(i) / 24
         let x = (1 - u) * (1 - u) * a.0 + 2 * (1 - u) * u * b.0 + u * u * e.0
@@ -73,8 +73,8 @@ func horn(_ c: PixelCanvas, from a: (Double, Double), bend b: (Double, Double), 
 
 /// The kaiju, facing left, on a 120×128 canvas: hulking and upright, slate-green hide with a pale plated belly, a row of
 /// bone spines down its back, two great curved horns, burning orange eyes, a jaw that drops open to roar.
-let kaijuW = 120, kaijuH = 128                // 18 rows of headroom over the 110-row body for the horns
-func drawKaiju(_ c: PixelCanvas, t: Double, roar: Double, step: Double) {
+private let kaijuW = 120, kaijuH = 128                // 18 rows of headroom over the 110-row body for the horns
+private func drawKaiju(_ c: PixelCanvas, t: Double, roar: Double, step: Double) {
     let hide = C(0x3E4A44), dark = C(0x232B28), lite = C(0x5E6E64), belly = C(0x8C8E70), bellyDark = C(0x6A6C54)
     c.oy = 18; defer { c.oy = 0 }
     let breathe = sin(t * 2.2) * 1.2, lift = -abs(sin(step * .pi)) * 2
@@ -132,12 +132,12 @@ func drawKaiju(_ c: PixelCanvas, t: Double, roar: Double, step: Double) {
 }
 
 /// Where the kaiju is (fx units, its feet), how big, and how far through a step, at shot-local time `l`.
-func kaijuAt(_ l: Double) -> (x: Double, y: Double, k: Double, step: Double) {
+private func kaijuAt(_ l: Double) -> (x: Double, y: Double, k: Double, step: Double) {
     let f = clamp((l - 0.8) / 5.6), e = f * f * (3 - 2 * f)
     return (lerp(330, 210, e), lerp(150, 190, e), lerp(0.5, 1.45, e), (l - 0.8) / 0.9)
 }
 
-func kaijuRoar(_ l: Double) -> Double {
+private func kaijuRoar(_ l: Double) -> Double {
     func pulse(_ at: Double, _ len: Double) -> Double { let u = (l - at) / len; return u > 0 && u < 1 ? sin(u * .pi) : 0 }
     return max(pulse(2.8, 1.6), pulse(6.0, 1.8))
 }
@@ -164,7 +164,7 @@ func detectiveShowcase(_ ctx: CGContext, local l: Double, t: Double) {
     if l > 3.8 {
         let f = easeOut((l - 3.8) / 1.4)
         onStage(ctx, CGRect(x: 0, y: 0, width: W, height: H), scale: 6, ground: Double(fxH) + 10) {
-            var sup = Actor(cast: .hero(DCHero.superman), x: lerp(-20, 70, f), facing: 1)
+            var sup = Actor(cast: .hero(DetectiveHero.superman), x: lerp(-20, 70, f), facing: 1)
             sup.airborne = true
             sup.lift = lerp(10, 96, f)
             draw(sup, ctx, t: t)
@@ -254,7 +254,7 @@ func detectiveSignal(_ ctx: CGContext, local l: Double, t: Double) {
 /// The Lookout: the Justice Clawds arrive one by one and line up in front of the Earth.
 func detectiveLineup(_ ctx: CGContext, local l: Double, t: Double) {
     blit(place(.watchtower, floorRows: 30, t: t), ctx)
-    let league: [(DCHero, Double, String)] = [(.aquaman, 32, "walk"), (.greenLantern, 74, "fly"), (.wonderWoman, 116, "fly"),
+    let league: [(DetectiveHero, Double, String)] = [(.aquaman, 32, "walk"), (.greenLantern, 74, "fly"), (.wonderWoman, 116, "fly"),
                                                  (.superman, 160, "fly"), (.batman, 204, "rope"), (.flash, 246, "zip"),
                                                  (.cyborg, 288, "walk")]
     onStage(ctx, CGRect(x: 0, y: 0, width: W, height: H), scale: 6, ground: 158) {
@@ -317,12 +317,12 @@ let detectiveShots: [Shot] = [
         caption("along the bottom of your screen. They fight while they work.", ctx, local: local, start: 0.6, y: 830, size: 40, color: yellow, weight: .bold)
     },
     Shot(name: "status", start: 29.6, end: 33.8) { ctx, local, t in
-        let cast: [Cast] = [.hero(DCHero.superman), .villain(DCVillain.riddler), .villain(DCVillain.harleyQuinn), .villain(DCVillain.solomonGrundy)]
+        let cast: [Cast] = [.hero(DetectiveHero.superman), .villain(DetectiveVillain.riddler), .villain(DetectiveVillain.harleyQuinn), .villain(DetectiveVillain.solomonGrundy)]
         statusOf(ctx, local: local, t: t, cast: cast, badgeText: "DETECTIVE CLAWDS", aside: "(\(cast[3].name): born on a Monday, napping by Thursday.)")
     },
     Shot(name: "agents", start: 33.8, end: 37.8) { ctx, local, t in
-        agentsOf(ctx, local: local, t: t, guardCast: .hero(DCHero.wonderWoman),
-                 crew: [.hero(DCHero.robin), .hero(DCHero.nightwing), .hero(DCHero.cyborg), .hero(DCHero.krypto)],
+        agentsOf(ctx, local: local, t: t, guardCast: .hero(DetectiveHero.wonderWoman),
+                 crew: [.hero(DetectiveHero.robin), .hero(DetectiveHero.nightwing), .hero(DetectiveHero.cyborg), .hero(DetectiveHero.krypto)],
                  line: "Every subagent answers the beacon.", badgeText: "DETECTIVE CLAWDS")
     },
     Shot(name: "window", start: 37.8, end: 42.6) { ctx, local, t in
@@ -332,9 +332,9 @@ let detectiveShots: [Shot] = [
         caption("A live card per session: what it's doing, your last prompt, every agent.", ctx, local: local, start: 0.4, y: 890, size: 32, color: yellow, weight: .bold)
     },
     Shot(name: "ais", start: 42.6, end: 47.0) { ctx, local, t in
-        everyAI(ctx, local: local, t: t, cast: [.hero(DCHero.superman), .hero(DCHero.wonderWoman), .villain(DCVillain.lexLuthor),
-                                                .villain(DCVillain.sinestro), .villain(DCVillain.cheetah), .villain(DCVillain.blackManta),
-                                                .villain(DCVillain.jokerGoon)])
+        everyAI(ctx, local: local, t: t, cast: [.hero(DetectiveHero.superman), .hero(DetectiveHero.wonderWoman), .villain(DetectiveVillain.lexLuthor),
+                                                .villain(DetectiveVillain.sinestro), .villain(DetectiveVillain.cheetah), .villain(DetectiveVillain.blackManta),
+                                                .villain(DetectiveVillain.jokerGoon)])
     },
     // The end card: Gothamburg's rooftop under the beacon, the Clawdwing flies through, the title lands.
     Shot(name: "endcard", start: 47.0, end: 51.2) { ctx, local, t in
@@ -351,9 +351,9 @@ let detectiveShots: [Shot] = [
                 ctx.restoreGState()
             }
         }
-        let crew: [(Cast, FightRole, AI)] = [(.hero(DCHero.wonderWoman), .cheer, .desktop), (.hero(DCHero.superman), .shoot(offset: 0), .claude),
-                                             (.villain(DCVillain.lexLuthor), .shoot(offset: blasterPeriod / 2), .codex), (.villain(DCVillain.blackManta), .none, .copilot),
-                                             (.villain(DCVillain.sinestro), .cheer, .qwen), (.villain(DCVillain.cheetah), .none, .gemini)]
+        let crew: [(Cast, FightRole, AI)] = [(.hero(DetectiveHero.wonderWoman), .cheer, .desktop), (.hero(DetectiveHero.superman), .shoot(offset: 0), .claude),
+                                             (.villain(DetectiveVillain.lexLuthor), .shoot(offset: blasterPeriod / 2), .codex), (.villain(DetectiveVillain.blackManta), .none, .copilot),
+                                             (.villain(DetectiveVillain.sinestro), .cheer, .qwen), (.villain(DetectiveVillain.cheetah), .none, .gemini)]
         var placed: [Actor] = []
         for (i, (who, role, ai)) in crew.enumerated() {
             var a = Actor(cast: who, x: [28.0, 84, 156, 206, 252, 296][i], facing: i < 2 ? 1 : -1, role: role, ai: ai)

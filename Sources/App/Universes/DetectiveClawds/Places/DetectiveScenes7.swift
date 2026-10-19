@@ -1,6 +1,6 @@
 import Foundation
 
-let dcScenes7: [Location: Place] = [
+let detectiveScenes7: [Location: Place] = [
     .korugar: Place(name: "Korugor", panel: 0x1E1A0C, still: Scenes.korugar, moving: Scenes.korugarLife),
     .warworld: Place(name: "Battleworld", panel: 0x1E0E0C, still: Scenes.warworld, moving: Scenes.warworldLife),
     .bludhaven: Place(name: "Bloodhaven", panel: 0x12141C, still: Scenes.bludhaven, moving: Scenes.bludhavenLife),

@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: Batman's rogues. Clawd in costume, except Killer Croc, who keeps only a hint of him.
 
-let dcVillains1: [DCVillain: Persona] = [
+let detectiveVillains1: [DetectiveVillain: Persona] = [
     .joker: Persona(name: "The Jester", weapon: .blaster, shot: .bullet, muzzle: (51, 31.5), headTop: 19, signature: 3.0,
                   callout: "Why the long face?",
                   draw: drawJoker),

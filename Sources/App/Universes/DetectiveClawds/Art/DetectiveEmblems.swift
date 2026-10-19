@@ -6,7 +6,7 @@ import Foundation
 // of the Flash's bolt. Each keeps the size, place and colours of the mark it replaces.
 
 /// How big an emblem is, in canvas pixels.
-enum DCEmblemSize {
+enum DetectiveEmblemSize {
     case small    // C-shield 7×5, lamp 5×4, flame 4×4
     case medium   // C-shield 7×6, lamp 6×5, flame 6×4
     case large    // C-shield 9×6, lamp 7×6, flame 5×6
@@ -14,7 +14,7 @@ enum DCEmblemSize {
 
 /// The C-shield, its top-left at (`x`, `y`): the five-sided shield with a C in `letter` on a `field` ground (nil:
 /// just the C). The C's top bar runs along the shield's top edge and its stem down the left, open to the right.
-func drawCShield(_ c: PixelCanvas, x: Int, y: Int, size: DCEmblemSize, letter: Px, field: Px?) {
+func detectiveDrawCShield(_ c: PixelCanvas, x: Int, y: Int, size: DetectiveEmblemSize, letter: Px, field: Px?) {
     let rows: [String]
     switch size {
     case .small: rows = ["FCCCCCF", "CCFFFFF", ".CFFFF.", "..CCC..", "...C..."]
@@ -28,7 +28,7 @@ func drawCShield(_ c: PixelCanvas, x: Int, y: Int, size: DCEmblemSize, letter: P
 
 /// The cowl mask, `width` pixels wide (7, 11, 13, 14, 15, 16 or 21; others take the nearest): two pointed ears over
 /// a domino mask with its eyes cut out, as rows of `#`.
-func cowlMaskRows(_ width: Int) -> [String] {
+func detectiveCowlMaskRows(_ width: Int) -> [String] {
     let all: [Int: [String]] = [
         7: [".#...#.", "##.#.##", ".#####."],
         11: [".#.......#.", ".##.....##.", "###########", "##..###..##", ".#########."],
@@ -44,14 +44,14 @@ func cowlMaskRows(_ width: Int) -> [String] {
     return all[w]!
 }
 
-/// The cowl mask in `color`, its top-left at (`x`, `y`), `width` pixels wide (see `cowlMaskRows`).
-func drawCowlMask(_ c: PixelCanvas, x: Int, y: Int, width: Int, color: Px) {
-    c.pattern(x, y, cowlMaskRows(width), ["#": color])
+/// The cowl mask in `color`, its top-left at (`x`, `y`), `width` pixels wide (see `detectiveCowlMaskRows`).
+func detectiveDrawCowlMask(_ c: PixelCanvas, x: Int, y: Int, width: Int, color: Px) {
+    c.pattern(x, y, detectiveCowlMaskRows(width), ["#": color])
 }
 
 /// The cowl mask as a smooth shape, `w` wide, centred on `c`, ears up (y grows upwards). Fill it even-odd, so the
 /// eyes stay open.
-func cowlMaskPath(_ c: CGPoint, width w: CGFloat) -> CGPath {
+func detectiveCowlMaskPath(_ c: CGPoint, width w: CGFloat) -> CGPath {
     let outer: [(CGFloat, CGFloat)] = [(-0.5, 0.02), (-0.44, 0.16), (-0.40, 0.42), (-0.26, 0.20), (0.26, 0.20), (0.40, 0.42),
                                        (0.44, 0.16), (0.5, 0.02), (0.42, -0.14), (0.14, -0.18), (0, -0.10), (-0.14, -0.18),
                                        (-0.42, -0.14)]
@@ -66,7 +66,7 @@ func cowlMaskPath(_ c: CGPoint, width w: CGFloat) -> CGPath {
 
 /// The lamp emblem, its top-left at (`x`, `y`): an oil lamp's flame over its bowl in `lamp`, on a `field` disc
 /// (nil: the lamp straight on the suit). `rim` rings the disc where the emblem had one.
-func drawLampEmblem(_ c: PixelCanvas, x: Int, y: Int, size: DCEmblemSize, lamp: Px, field: Px?, rim: Px? = nil) {
+func detectiveDrawLampEmblem(_ c: PixelCanvas, x: Int, y: Int, size: DetectiveEmblemSize, lamp: Px, field: Px?, rim: Px? = nil) {
     let rows: [String]
     switch size {
     case .small: rows = [".RRR.", "RFLFR", "RLLLR", ".RRR."]
@@ -80,7 +80,7 @@ func drawLampEmblem(_ c: PixelCanvas, x: Int, y: Int, size: DCEmblemSize, lamp: 
 }
 
 /// The flame emblem, its top-left at (`x`, `y`): a small flame in `flame`, on a `field` disc where the bolt had one.
-func drawFlameEmblem(_ c: PixelCanvas, x: Int, y: Int, size: DCEmblemSize, flame: Px, field: Px?) {
+func detectiveDrawFlameEmblem(_ c: PixelCanvas, x: Int, y: Int, size: DetectiveEmblemSize, flame: Px, field: Px?) {
     let rows: [String]
     switch size {
     case .small: rows = ["..L.", ".LL.", "LLLL", ".LL."]

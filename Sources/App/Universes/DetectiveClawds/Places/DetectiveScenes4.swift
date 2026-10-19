@@ -1,6 +1,6 @@
 import Foundation
 
-let dcScenes4: [Location: Place] = [
+let detectiveScenes4: [Location: Place] = [
     .nandaParbat: Place(name: "Nanga Parbat", panel: 0x141A28, still: Scenes.nandaParbat, moving: Scenes.nandaLife),
     .houseOfMystery: Place(name: "House of Riddles", panel: 0x150E20, still: Scenes.houseOfMystery, moving: Scenes.mysteryLife),
     .rockOfEternity: Place(name: "Rock of Forever", panel: 0x1A1510, still: Scenes.rockOfEternity, moving: Scenes.eternityLife),

@@ -3,7 +3,7 @@ import Foundation
 // Heroes: Justice League Dark. Stage magicians, chain-smoking exorcists, ghosts, a demon and a walking swamp, every one
 // of them Clawd in costume: hats, hoods, helms and rags drawn over (and around) the blocky body.
 
-let dcHeroes7: [DCHero: Persona] = [
+let detectiveHeroes7: [DetectiveHero: Persona] = [
     .zatanna: Persona(name: "Zatanya", weapon: .lightning, magic: Magic(core: C(0xFFF0FF), glow: C(0xD84AE8), jagged: false, spell: true),
                   pivot: zatannaWand, headTop: 15, signature: 3.0, callout: "!og yats",
                   draw: drawZatanna),

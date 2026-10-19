@@ -98,7 +98,7 @@ func coverPanels(_ ctx: CGContext, t: Double, fighters: Bool = true, dim: Double
             let pairs: [(Actor, Actor)] = [
                 (Actor(cast: .hero(StarClawdsHero.luke), x: 30, role: .duel), Actor(cast: .villain(StarClawdsVillain.vader), x: 87, facing: -1, role: .duel)),
                 (Actor(cast: .hero(MarvelousHero.captainAmerica), x: 132, role: .block), Actor(cast: .villain(MarvelousVillain.thanos), x: 196, facing: -1, role: .zap)),
-                (Actor(cast: .hero(DCHero.batman), x: 236, role: .deflect), Actor(cast: .villain(DCVillain.joker), x: 296, facing: -1, role: .shoot(offset: 0))),
+                (Actor(cast: .hero(DetectiveHero.batman), x: 236, role: .deflect), Actor(cast: .villain(DetectiveVillain.joker), x: 296, facing: -1, role: .shoot(offset: 0))),
             ]
             let (a, b) = pairs[i]
             draw(a, ctx, t: t); draw(b, ctx, t: t)
@@ -201,8 +201,8 @@ func statusLineup(_ ctx: CGContext, local: Double, t: Double) {
 /// Subagents arriving with their jobs on their labels.
 func agentsArrive(_ ctx: CGContext, local: Double, t: Double) {
     desktop(ctx, dim: 1)
-    draw(Actor(cast: .hero(DCHero.wonderWoman), x: 262, facing: -1, mode: .standGuard, label: "idle-claude"), ctx, t: t)
-    let crew: [(DCHero, String, Double)] = [(.robin, "Find hook events", 190), (.nightwing, "Write changelog", 140),
+    draw(Actor(cast: .hero(DetectiveHero.wonderWoman), x: 262, facing: -1, mode: .standGuard, label: "idle-claude"), ctx, t: t)
+    let crew: [(DetectiveHero, String, Double)] = [(.robin, "Find hook events", 190), (.nightwing, "Write changelog", 140),
                                             (.cyborg, "Check git history", 90), (.krypto, "Plan the refactor", 40)]
     for (i, (who, task, stop)) in crew.enumerated() {
         let f = easeOut((local - Double(i) * 0.18) / 0.75)
@@ -220,7 +220,7 @@ func pickVerse(_ u: Universe) -> (hero: Cast, villain: Cast, sound: String, pop:
     switch u {
     case .starWars: return (.hero(StarClawdsHero.luke), .villain(StarClawdsVillain.vader), "VWOOM!", (0xFFD62E, 0xFFF08A))
     case .marvel: return (.hero(MarvelousHero.thor), .villain(MarvelousVillain.loki), "KRAKOOM!", (0xE8322E, 0xFF7A70))
-    case .dc: return (.hero(DCHero.batman), .villain(DCVillain.joker), "BLAM!", (0x2EA8E8, 0x8AD8FF))
+    case .dc: return (.hero(DetectiveHero.batman), .villain(DetectiveVillain.joker), "BLAM!", (0x2EA8E8, 0x8AD8FF))
     case .doctor: return (.hero(DoctorHero.doctorTen), .villain(DoctorVillain.dalick), "VWORP!", (0x7CC84A, 0xB8EC88))
     case .clawdFiles: return (.hero(FilesHero.foxClawder), .villain(FilesVillain.grey), "ZZZT!", (0xFF7A1E, 0xFFC27A))
     case .clawdberg: return (.hero(ClawdbergHero.indianaBones), .villain(ClawdbergVillain.reneBellock), "CRACK!", (0xA65AE8, 0xD2A8FF))
@@ -755,7 +755,7 @@ let promoShots: [Shot] = [
     Shot(name: "royale", start: afterChoose + 21.0, end: afterChoose + 24.0, into: .cut) { ctx, local, t in royaleCollide(ctx, local: local, t: t) },
     Shot(name: "crossover", start: afterChoose + 24.0, end: afterChoose + 28.5, into: .marvel(MarvelousComicTrip(kind: .burst, sound: .thwip))) { ctx, local, t in
         let (fox, dalick) = versus(.hero(FilesHero.foxClawder), 30, .villain(DoctorVillain.dalick), 96)
-        let (bat, vapor) = versus(.hero(DCHero.batman), 150, .villain(StarClawdsVillain.vader), 207)
+        let (bat, vapor) = versus(.hero(DetectiveHero.batman), 150, .villain(StarClawdsVillain.vader), 207)
         let (gandclawd, thanoz) = versus(.hero(RingsHero.gandalf), 250, .villain(MarvelousVillain.thanos), 306)
         let swing = webSwing(local, start: 0.7)
         royaleScene(ctx, .cantina, t: t, fights: [(fox, dalick), (bat, vapor), (gandclawd, thanoz)], also: swing.map { [$0.actor] } ?? [])
@@ -884,9 +884,9 @@ let blooperShots: [Shot] = [
         let sig = CGPoint(x: 1300, y: 860)
         ctx.setFillColor(CGColor(red: 1, green: 0.89, blue: 0.42, alpha: 0.2 * on)); ctx.fillEllipse(in: CGRect(x: sig.x - 260, y: sig.y - 170, width: 520, height: 340))
         ctx.setFillColor(CGColor(red: 1, green: 0.89, blue: 0.42, alpha: 0.9 * on)); ctx.fillEllipse(in: CGRect(x: sig.x - 200, y: sig.y - 130, width: 400, height: 260))
-        ctx.addPath(cowlMaskPath(sig, width: 330))                 // the cowl mask in the beacon, as on the icon
+        ctx.addPath(detectiveCowlMaskPath(sig, width: 330))                 // the cowl mask in the beacon, as on the icon
         ctx.setFillColor(inkColor.copy(alpha: on) ?? inkColor); ctx.fillPath(using: .evenOdd)
-        let bat = Actor(cast: .hero(DCHero.batman), x: 40, mode: .idle)
+        let bat = Actor(cast: .hero(DetectiveHero.batman), x: 40, mode: .idle)
         draw(bat, ctx, t: t)
         let troopers = [Actor(cast: .villain(StarClawdsVillain.trooper), x: 150, mode: .idle, role: .none), Actor(cast: .villain(StarClawdsVillain.trooper), x: 200, mode: .idle, role: .none)]
         for tr in troopers { draw(tr, ctx, t: t) }
@@ -905,21 +905,21 @@ let blooperShots: [Shot] = [
     },
     // Take 15: the Jester Card flips over and Thanoz is on the back.
     Shot(name: "take15", start: 17.6, end: 21.8, into: .cut) { ctx, l, t in
-        let jester = Actor(cast: .villain(DCVillain.joker), x: 150, mode: .idle)
+        let jester = Actor(cast: .villain(DetectiveVillain.joker), x: 150, mode: .idle)
         func front() -> CGImage? { shotImage { c in set(c, .gotham, t: t); draw(jester, c, t: t) } }
         func back() -> CGImage? {
             shotImage { c in
                 set(c, .titan, t: t)
                 draw(Actor(cast: .villain(MarvelousVillain.thanos), x: 160, facing: -1, mode: .idle), c, t: t)
-                var j = Actor(cast: .villain(DCVillain.joker), x: 50, mode: .idle, bubble: .unknown); j.grow = 0.9
+                var j = Actor(cast: .villain(DetectiveVillain.joker), x: 50, mode: .idle, bubble: .unknown); j.grow = 0.9
                 if l > 2.6 { draw(j, c, t: t) }
             }
         }
-        let k = clamp((l - 0.3) / (DCComicWipe.jokerCard.duration * 1.2))
+        let k = clamp((l - 0.3) / (DetectiveComicWipe.jokerCard.duration * 1.2))
         if let a = front(), let b = back() {
             if k <= 0 { ctx.draw(a, in: CGRect(x: 0, y: 0, width: W, height: H)) }
             else if k >= 1 { ctx.draw(b, in: CGRect(x: 0, y: 0, width: W, height: H)) }
-            else { DCComicTrip(kind: .jokerCard).draw(ctx, old: a, new: b, k: k, in: CGRect(x: 0, y: 0, width: W, height: H)) }
+            else { DetectiveComicTrip(kind: .jokerCard).draw(ctx, old: a, new: b, k: k, in: CGRect(x: 0, y: 0, width: W, height: H)) }
         }
         cutAndSlate(ctx, local: l, at: 3.4, take: "15")
     },
@@ -965,7 +965,7 @@ let blooperShots: [Shot] = [
                 ctx.restoreGState()
             }
         }
-        var sup = Actor(cast: .hero(DCHero.superman), x: lerp(-20, 70, easeOut(l / 1.0)) - max(0, l - 1.6) * 6, mode: .idle)
+        var sup = Actor(cast: .hero(DetectiveHero.superman), x: lerp(-20, 70, easeOut(l / 1.0)) - max(0, l - 1.6) * 6, mode: .idle)
         sup.airborne = true; sup.lift = 70
         draw(sup, ctx, t: t)
         if l > 1.8 { balloon("Hey! Wait up!", ctx, center: CGPoint(x: 700, y: 780), tail: headPoint(sup), size: 46, width: 600) }
@@ -976,7 +976,7 @@ let blooperShots: [Shot] = [
         set(ctx, .avengersTower, t: t)
         let wave = l > 5.6
         let back: [(Cast, Double)] = [(.villain(StarClawdsVillain.vader), 22), (.hero(StarClawdsHero.luke), 58), (.villain(MarvelousVillain.thanos), 100),
-                                      (.hero(MarvelousHero.thor), 146), (.villain(DoctorVillain.dalick), 190), (.villain(DCVillain.joker), 232),
+                                      (.hero(MarvelousHero.thor), 146), (.villain(DoctorVillain.dalick), 190), (.villain(DetectiveVillain.joker), 232),
                                       (.hero(StarClawdsHero.han), 270), (.hero(DoctorHero.rose), 306)]
         for (i, (who, x)) in back.enumerated() {
             var a = Actor(cast: who, x: x, facing: i % 2 == 0 ? 1 : -1, mode: .idle, role: wave ? .cheer : .none)
@@ -987,7 +987,7 @@ let blooperShots: [Shot] = [
         let moon = { (who: Cast, offset: Double) in
             if !wave && who.persona.fidgets { forcedHabit = HabitPlay(kind: .moonwalk, e: (l + offset).truncatingRemainder(dividingBy: IdleHabit.moonwalk.length)) }
         }
-        let front: [(Cast, Double)] = [(.hero(MarvelousHero.starLord), 36), (.hero(DoctorHero.doctorTen), 88), (.hero(DCHero.batman), 236), (.hero(MarvelousHero.howardTheDuck), 288)]
+        let front: [(Cast, Double)] = [(.hero(MarvelousHero.starLord), 36), (.hero(DoctorHero.doctorTen), 88), (.hero(DetectiveHero.batman), 236), (.hero(MarvelousHero.howardTheDuck), 288)]
         for (i, (who, x)) in front.enumerated() {
             var a = Actor(cast: who, x: x, facing: x < 160 ? 1 : -1, mode: .idle, role: wave ? .cheer : .none)
             a.grow = 1.05
@@ -1014,7 +1014,7 @@ let blooperShots: [Shot] = [
         }
         let fl = (l - 0.7) / 2.0
         if fl > 0 && fl < 1 {
-            var sup = Actor(cast: .hero(DCHero.superman), x: lerp(370, -50, fl), facing: -1, mode: .idle)
+            var sup = Actor(cast: .hero(DetectiveHero.superman), x: lerp(370, -50, fl), facing: -1, mode: .idle)
             sup.airborne = true; sup.lift = 64 + sin(fl * .pi) * 8
             draw(sup, ctx, t: t)
         }
@@ -1222,9 +1222,9 @@ let royaleShots: [Shot] = [
     // And Gothamburg, by the Night Beacon: new match-ups, Han Yolo on the Dalick, Batclawd on Darth Vapor, Indiana Bones
     // on Thanoz.
     Shot(name: "hopDC", start: 13.5, end: 16.0,
-         into: .dc(DCComicTrip(kind: .batSignal, caption: "MEANWHILE, IN \(Location.gotham.name.uppercased())…"))) { ctx, local, t in
+         into: .dc(DetectiveComicTrip(kind: .batSignal, caption: "MEANWHILE, IN \(Location.gotham.name.uppercased())…"))) { ctx, local, t in
         let (han, dalick) = versus(.hero(StarClawdsHero.han), 26, .villain(DoctorVillain.dalick), 92)
-        let (bat, vapor) = versus(.hero(DCHero.batman), 150, .villain(StarClawdsVillain.vader), 207)
+        let (bat, vapor) = versus(.hero(DetectiveHero.batman), 150, .villain(StarClawdsVillain.vader), 207)
         let (indy, thanoz) = versus(.hero(ClawdbergHero.indianaBones), 246, .villain(MarvelousVillain.thanos), 304)
         royaleScene(ctx, .gotham, t: t, fights: [(han, dalick), (bat, vapor), (indy, thanoz)])
     },
@@ -1232,7 +1232,7 @@ let royaleShots: [Shot] = [
     Shot(name: "endcard", start: 16.0, end: 20.5) { ctx, local, t in
         coverPanels(ctx, t: t, fighters: false, dim: 0.45)
         let crew: [(Cast, FightRole, AI)] = [(.hero(ClawdbergHero.indianaBones), .cheer, .desktop), (.hero(RingsHero.gandalf), .cheer, .qwen),
-                                             (.hero(DCHero.batman), .duel, .claude), (.villain(StarClawdsVillain.vader), .duel, .codex),
+                                             (.hero(DetectiveHero.batman), .duel, .claude), (.villain(StarClawdsVillain.vader), .duel, .codex),
                                              (.villain(DoctorVillain.dalick), .cheer, .copilot), (.villain(MarvelousVillain.thanos), .cheer, .gemini)]
         var placed: [Actor] = []
         for (i, (who, role, ai)) in crew.enumerated() {

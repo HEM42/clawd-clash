@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: Apokolips and the cosmic tyrants.
 
-let dcVillains4: [DCVillain: Persona] = [
+let detectiveVillains4: [DetectiveVillain: Persona] = [
     .darkseid: Persona(name: "Darksyde", weapon: .blaster, shot: .beam(core: C(0xFFE0D0), glow: C(0xFF2A1E)), armoured: true,
                   canSit: false, muzzle: darkseidEyes, handGun: false, bulk: 5, headTop: 0, signature: 3.4,
                   callout: "I am the dark.",

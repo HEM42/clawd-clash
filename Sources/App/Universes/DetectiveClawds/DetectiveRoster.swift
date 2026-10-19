@@ -3,31 +3,31 @@ import Foundation
 // The DC universe (Justice League: Clawd Wars' cast): 110 heroes, 97 villains and 43 places. Any character can lead a
 // session (drawn large) or be an agent (small). Who they are, how they fight and how they move is a `Persona`,
 // registered in one of the Art/*.swift files next to its drawing code; who lives where, who fights whom first and who
-// gets picked up is decided here, in `dcTheme`.
+// gets picked up is decided here, in `detectiveTheme`.
 //
-// Ids are stored in the status file: `Universe.dc.base` plus `DCVillain.rawValue` (< 100) or 100 + `DCHero.rawValue`.
+// Ids are stored in the status file: `Universe.dc.base` plus `DetectiveVillain.rawValue` (< 100) or 100 + `DetectiveHero.rawValue`.
 // Only ever append cases, so running sessions keep their characters across an update.
 
-extension DCHero {
+extension DetectiveHero {
     var persona: Persona { dcHeroPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-extension DCVillain {
+extension DetectiveVillain {
     var persona: Persona { dcVillainPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-let dcHeroPersonas: [DCHero: Persona] = dcHeroes1.merging(dcHeroes2) { a, _ in a }.merging(dcHeroes3) { a, _ in a }
-    .merging(dcHeroes4) { a, _ in a }.merging(dcHeroes5) { a, _ in a }.merging(dcHeroes6) { a, _ in a }
-    .merging(dcHeroes7) { a, _ in a }.merging(dcHeroes8) { a, _ in a }.merging(dcHeroes9) { a, _ in a }
-    .merging(dcHeroes10) { a, _ in a }.merging([.hem: hemPersona(.dc)]) { a, _ in a }
-let dcVillainPersonas: [DCVillain: Persona] = dcVillains1.merging(dcVillains2) { a, _ in a }.merging(dcVillains3) { a, _ in a }
-    .merging(dcVillains4) { a, _ in a }.merging(dcVillains5) { a, _ in a }.merging(dcVillains6) { a, _ in a }
-    .merging(dcVillains7) { a, _ in a }.merging(dcVillains8) { a, _ in a }.merging(dcVillains9) { a, _ in a }
+private let dcHeroPersonas: [DetectiveHero: Persona] = detectiveHeroes1.merging(detectiveHeroes2) { a, _ in a }.merging(detectiveHeroes3) { a, _ in a }
+    .merging(detectiveHeroes4) { a, _ in a }.merging(detectiveHeroes5) { a, _ in a }.merging(detectiveHeroes6) { a, _ in a }
+    .merging(detectiveHeroes7) { a, _ in a }.merging(detectiveHeroes8) { a, _ in a }.merging(detectiveHeroes9) { a, _ in a }
+    .merging(detectiveHeroes10) { a, _ in a }.merging([.hem: hemPersona(.dc)]) { a, _ in a }
+private let dcVillainPersonas: [DetectiveVillain: Persona] = detectiveVillains1.merging(detectiveVillains2) { a, _ in a }.merging(detectiveVillains3) { a, _ in a }
+    .merging(detectiveVillains4) { a, _ in a }.merging(detectiveVillains5) { a, _ in a }.merging(detectiveVillains6) { a, _ in a }
+    .merging(detectiveVillains7) { a, _ in a }.merging(detectiveVillains8) { a, _ in a }.merging(detectiveVillains9) { a, _ in a }
 
 // MARK: - Homes
 
 extension Location {
-    static func dcHome(of leader: DCVillain) -> Location {
+    static func dcHome(of leader: DetectiveVillain) -> Location {
         switch leader {
         case .joker, .jokerGoon: return .aceChemicals
         case .harleyQuinn, .riddler, .scarecrow, .poisonIvy, .mrFreeze, .killerCroc, .madHatter, .zsasz, .calendarMan: return .arkham
@@ -63,7 +63,7 @@ extension Location {
         }
     }
 
-    static func dcHome(of hero: DCHero) -> Location {
+    static func dcHome(of hero: DetectiveHero) -> Location {
         switch hero {
         case .superman, .krypto, .beppo: return .fortressOfSolitude
         case .batman, .robin, .orphan, .aceTheBatHound: return .batcave
@@ -101,12 +101,12 @@ extension Location {
 // MARK: - The theme
 
 extension Cast {
-    static func hero(_ h: DCHero) -> Cast { Cast(universe: .dc, isDark: false, index: h.rawValue) }
-    static func villain(_ v: DCVillain) -> Cast { Cast(universe: .dc, isDark: true, index: v.rawValue) }
+    static func hero(_ h: DetectiveHero) -> Cast { Cast(universe: .dc, isDark: false, index: h.rawValue) }
+    static func villain(_ v: DetectiveVillain) -> Cast { Cast(universe: .dc, isDark: true, index: v.rawValue) }
 }
 
 /// Arch-enemies: whenever both are fighting, they're paired with each other first, wherever they are in the line.
-private let dcNemeses: [(DCHero, DCVillain)] = [
+private let dcNemeses: [(DetectiveHero, DetectiveVillain)] = [
     (.superman, .lexLuthor), (.superman, .doomsday), (.superman, .generalZod), (.superman, .brainiac),
     (.superman, .darkseid), (.superman, .bizarro), (.superman, .metallo), (.superman, .parasite),
     (.batman, .joker), (.batman, .bane), (.batman, .rasAlGhul), (.batman, .riddler), (.batman, .twoFace),
@@ -140,29 +140,29 @@ private let dcNemeses: [(DCHero, DCVillain)] = [
 ]
 
 /// When these agents are done, their ship comes to pick them up instead of them just fading out.
-private let javelinCrew: [DCHero] = [.greenArrow, .blackCanary, .vixen, .theQuestion, .mrTerrific, .steveTrevor, .blackLightning,
+private let javelinCrew: [DetectiveHero] = [.greenArrow, .blackCanary, .vixen, .theQuestion, .mrTerrific, .steveTrevor, .blackLightning,
                                      .elongatedMan, .plasticMan, .zan, .jayna]
-private let batwingCrew: [DCHero] = [.batman, .robin, .nightwing, .batgirl, .redRobin, .batwoman, .orphan, .spoiler, .redHood,
+private let batwingCrew: [DetectiveHero] = [.batman, .robin, .nightwing, .batgirl, .redRobin, .batwoman, .orphan, .spoiler, .redHood,
                                      .huntress]
 
-let dcTheme = Theme(
+let detectiveTheme = Theme(
     universe: .dc,
-    villains: DCVillain.allCases.map(\.persona),
-    heroes: DCHero.allCases.map(\.persona),
+    villains: DetectiveVillain.allCases.map(\.persona),
+    heroes: DetectiveHero.allCases.map(\.persona),
     places: [.watchtower, .metropolis, .gotham, .batcave, .fortressOfSolitude, .themyscira, .atlantis, .hallOfJustice, .arkham,
              .centralCity, .starCity, .oa, .apokolips, .krypton, .titansTower, .smallville, .strykersIsland, .belleReve,
              .nandaParbat, .houseOfMystery, .rockOfEternity, .newGenesis, .thanagar, .kandor, .phantomZone, .kahndaq,
              .ironHeights, .speedForce, .wayneManor, .legionHQ, .aceChemicals, .lexCorp, .bayou, .theDreaming, .coastCity,
              .gorillaCity, .korugar, .warworld, .bludhaven, .jsaHQ, .fawcettCity, .starLabs, .hallOfDoom],
     home: { c in
-        c.isDark ? .dcHome(of: DCVillain(rawValue: c.index) ?? .joker) : .dcHome(of: DCHero(rawValue: c.index) ?? .superman)
+        c.isDark ? .dcHome(of: DetectiveVillain(rawValue: c.index) ?? .joker) : .dcHome(of: DetectiveHero(rawValue: c.index) ?? .superman)
     },
     nemeses: dcNemeses.map { (.hero($0.0), .villain($0.1)) },
     ride: { c in
-        guard c.universe == .dc, !c.isDark, let h = DCHero(rawValue: c.index) else { return nil }
+        guard c.universe == .dc, !c.isDark, let h = DetectiveHero(rawValue: c.index) else { return nil }
         return javelinCrew.contains(h) ? .javelin : batwingCrew.contains(h) ? .batwing : nil
     },
-    menuIcon: drawCShieldIcon,
+    menuIcon: detectiveDrawCShieldIcon,
     legend: .hero(.superman))
 
 // MARK: - Places
@@ -214,6 +214,6 @@ extension Location {
 }
 
 /// Every DC place, from the Places/DetectiveScenes*.swift files.
-let dcPlaces: [Location: Place] = dcScenes1.merging(dcScenes2) { a, _ in a }.merging(dcScenes3) { a, _ in a }
-    .merging(dcScenes4) { a, _ in a }.merging(dcScenes5) { a, _ in a }.merging(dcScenes6) { a, _ in a }
-    .merging(dcScenes7) { a, _ in a }
+let detectivePlaces: [Location: Place] = detectiveScenes1.merging(detectiveScenes2) { a, _ in a }.merging(detectiveScenes3) { a, _ in a }
+    .merging(detectiveScenes4) { a, _ in a }.merging(detectiveScenes5) { a, _ in a }.merging(detectiveScenes6) { a, _ in a }
+    .merging(detectiveScenes7) { a, _ in a }
