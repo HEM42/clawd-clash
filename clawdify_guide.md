@@ -1,6 +1,6 @@
 # Clawdify guide: adding a universe to Clawd Clash
 
-## Last updated: 17 October 2026 (Clawd Clash 3.6.0)
+## Last updated: 19 October 2026 (Clawd Clash 3.7)
 
 This guide is for an AI assistant (Claude Code or similar) working in this repo. To start, point the assistant at it along with the franchise you want, for example:
 
@@ -249,6 +249,7 @@ For **every** character, check the `Persona` and the drawing against the source 
 - **Signature:** it's in the roster, `signature:` is set, and the drawing actually uses `p.signature`. Check that it plays and reads in `build/preview cast`.
 - **Callout:** in character, and short.
 - **Look:** recognisable, and not confusable with anyone else in this universe or with a lookalike in another one (they meet in Clawd Royale).
+- **Detail:** up to the bar in [Look and style](#characters): folds, buckles, cuffs and boots, seams and rivets, fur in strokes, readable at 1×. A character still in two flat blocks of colour isn't finished.
 - **Home and nemesis:** they make sense.
 
 Re-check the facts with a quick search where you're not sure. Then show the user a table of **only the mismatches**, with a proposed fix for each:
@@ -433,6 +434,21 @@ drawing anything, and check your work against it at the end of every phase.
 - **Pixel art, drawn in code.** Whole pixels, flat colours (`C(0xRRGGBB)`), no gradients or blur on the body. Give
   each material two or three tones: a base, a darker shade and a lighter highlight (`suit`, `suitDark`, `stripe`).
   Light comes from the front-left: highlights on top and left edges, shade on the right and underneath.
+- **Detail: the bar every character meets.** A flat costume in two blocks of colour looks unfinished next to the
+  rest. In 3.7 every Star Clawds character was brought up to this, and it's the standard from now on, not a polish
+  extra. Keep the silhouette, colours and props, and add the small things that make the costume real:
+  - **Clothes:** folds and a shaded far side, a collar or neckline, cuffs, a belt with its buckle, pouches or a
+    holster, and boots a shade apart from the legs.
+  - **Armour and droids:** seams, a few rivets, plates lit along the top edge, vents or grilles, a small light, a
+    scratch or two. Fewer than you think: a plate covered in rivets turns to noise at 1×.
+  - **Fur, skin, scales and hair:** short strokes that follow the shape and a lit run along the top, never
+    scattered single pixels. Specks read as dirt or noise; strokes read as fur.
+  - **Long robes and gowns stay long.** Don't shorten them to show the legs. Hint at the four legs under the cloth
+    with a soft shadow either side of each, and let the toes peep out under the hem if it suits.
+  - **Mind the legs.** Knee plates plus boots plus a lit edge can turn a leg into stripes, and dark boots under a
+    pale cape read as holes. Look at the legs on their own before moving on.
+  - **It has to read at 1×.** Check at normal size, not only zoomed in: detail too faint to see is wasted, and
+    detail too busy looks like a smudge. When in doubt, take a stroke away.
 - **Don't outline the silhouette yourself.** The app adds a 1-pixel outline round every character in its AI's colour
   (white for Claude Code), so dark costumes read on a dark desktop. Use the dark `outline` colour only for lines
   inside the figure: a belt, a visor, the edge of a coat.
@@ -469,6 +485,13 @@ drawing anything, and check your work against it at the end of every phase.
 - **The crew has to read on it.** Characters stand on the bottom `floorRows` rows, and their names and speech
   appear above them. Keep the floor and the band just above it plain and mid-to-dark, so white outlines and labels
   stand out. Put the busy detail (shelves, machinery, signs, crowds) higher up and at the sides.
+- **Never a bare backdrop.** Even a place that is meant to be empty (a desert farm, a white corridor) gets its
+  furniture: the buildings at a believable size, lit on the side the light comes from with a shadow on the ground,
+  panels, hatches, pipes, small lights, rocks, a far-off landmark. A sky and a floor with one prop on them looks
+  unfinished next to the rest.
+- **Props keep their size.** Draw buildings, doors and machines at a fixed size (in `Scenes.unit(g)` steps), not as
+  a fraction of the scene's height: the screen saver is many times taller than the window, and a door sized from
+  the height turns into a sliver. A door stands on the floor.
 - **The moving layer stays subtle:** a flicker, rain, water, a blinking light. Nothing that flashes across the
   crew or pulls the eye from them.
 - **Window and screen saver.** The window shows a short strip of the place; the screen saver shows it much taller

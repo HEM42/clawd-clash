@@ -262,24 +262,123 @@ private enum StarWarsScenes {
         }
     }
 
-    // Kylo, Snoke's throne room on the Supremacy: red curtains and a black mirrored floor.
+    // Kylo, Snoke's throne room on the Supremacy: red curtains hung in deep folds, Snoke's black throne on its stepped
+    // dais, the Praetorian Guard standing in a line either side, and the black mirrored floor giving all of it back.
     static func supremacy(_ c: PixelCanvas, _ g: Int) {
-        c.rect(0, 0, c.w, g, C(0xA8111A))
-        for x in stride(from: 0, to: c.w, by: 7) {
-            c.rect(x, 0, 2, g, C(0x7E0C13))
-            c.rect(x + 3, 0, 1, g, C(0xC21C26))
-        }
-        if Scenes.isTall(c) { supremacyHigh(c, g) }
-        // the throne and two Praetorian guards
+        let tall = Scenes.isTall(c), s = Scenes.unit(g)
+        supremacyCurtains(c, g)
+        if tall { supremacyHigh(c, g) }
         let tx = c.w / 2
-        c.rect(tx - 6, g - 18, 12, 18, C(0x111114)); c.rect(tx - 8, g - 4, 16, 4, C(0x1A1A1F))
-        for gx in [tx - 40, tx + 34] {
-            c.rect(gx, g - 16, 6, 16, C(0xC8202A)); c.rect(gx + 1, g - 19, 4, 3, C(0xC8202A))
-            c.rect(gx + 6, g - 22, 1, 20, C(0x8A8F9C))
+        let guards = tall ? [-46, -88, -130, -172, 46, 88, 130, 172] : [-46, -88, -130, 46, 88, 130]
+        for (i, d) in guards.enumerated() {
+            let gx = tx + d * s - (d < 0 ? 12 * s : 0)
+            c.ellipse(gx + 6 * s, g - 12 * s, 9 * s, 12 * s, C(0xFF5A48, 0.06))      // the light falling on the curtain behind
+            praetorian(c, x: gx, feet: g, s: s, kind: i % 3, flip: d > 0)
         }
-        c.rect(0, g, c.w, c.h - g, C(0x0C0B0D))
-        c.rect(0, g, c.w, 1, C(0x3A0A0E))
-        for x in stride(from: 0, to: c.w, by: 7) { c.rect(x + 3, g + 1, 1, c.h - g - 1, C(0x5A0C12, 0.6)) }   // reflections
+        snokeThrone(c, x: tx, base: g, k: tall ? 2 * s : s)
+        // the mirrored floor: the curtain's folds, the guards and the dais given back, darker and broken by the sheen
+        c.rect(0, g, c.w, c.h - g, C(0x0A090B))
+        c.rect(0, g, c.w, 1, C(0x4A0C12))
+        var x = 0, i = 0
+        while x < c.w {
+            let fw = (6 + Int(noise(i * 5 + 900) * 5)) * s
+            c.rect(x + fw / 2, g + 1, s, c.h - g - 1, C(0x6A0C14, 0.25))
+            x += fw; i += 1
+        }
+        for (i, d) in guards.enumerated() {
+            let gx = tx + d * s - (d < 0 ? 12 * s : 0)
+            for k in 0..<min(c.h - g - 1, 9 * s) { c.rect(gx + 2 * s, g + 1 + k, 7 * s, 1, C(0xA0141E, 0.4 * Double(9 * s - k) / Double(9 * s))) }
+            if i % 3 == 0 { c.rect(gx + 10 * s, g + 1, s, min(c.h - g - 1, 6 * s), C(0xFF7050, 0.35)) }
+        }
+        for k in 0..<min(c.h - g - 1, 8 * s) { c.rect(tx - (22 - k) * s, g + 1 + k, (44 - 2 * k) * s, 1, C(0x26262C, 0.5)) }
+        for y in stride(from: g + 3 * s, to: c.h, by: 4 * s) { c.rect(0, y, c.w, 1, C(0xFFFFFF, 0.025)) }
+    }
+
+    /// The red curtain walls: folds of uneven width, each shaded from a dark crease to a lit crown and back, with a
+    /// darker hem at the floor.
+    static func supremacyCurtains(_ c: PixelCanvas, _ g: Int) {
+        let s = Scenes.unit(g)
+        let shades = [C(0x5A0810), C(0x7E0C13), C(0x9A1019), C(0xAE141D), C(0xC21C26)]
+        var x = 0, i = 0
+        while x < c.w {
+            let fw = (6 + Int(noise(i * 5 + 900) * 5)) * s
+            for u in 0..<fw {
+                let k = sin(Double(u) / Double(fw) * .pi)
+                c.rect(x + u, 0, 1, g, shades[min(4, Int(k * 4.6))])
+            }
+            c.rect(x + fw * 3 / 5, 0, s, g, C(0xD8343C))                          // the crown's sheen
+            x += fw; i += 1
+        }
+        for k in 0..<(6 * s) { c.rect(0, g - 6 * s + k, c.w, 1, C(0x1A0205, 0.06 * Double(k + 1))) }
+        if !Scenes.isTall(c) { for k in 0..<(10 * s) { c.rect(0, k, c.w, 1, C(0x100204, 0.5 * Double(10 * s - k) / Double(10 * s))) } }
+    }
+
+    /// One of Snoke's Praetorian Guards: the red armour plated down its body, the flat-topped helmet with its black
+    /// slit, the pleated skirt, and one of their weapons (a bladed staff, a double blade, or a heavy axe-headed voulge).
+    static func praetorian(_ c: PixelCanvas, x: Int, feet: Int, s: Int, kind: Int, flip: Bool) {
+        var rows = [
+            "           ",
+            "           ",
+            "  aaaaa    ",
+            "  aAAAa    ",
+            "  aAAAa    ",
+            "  akkka    ",
+            "  aAAAa    ",
+            "   aAa     ",
+            "aAAAaAAAa  ",
+            "aAAAAAAAAa ",
+            "aAaAAAAaAah",
+            " aaAAAAaa  ",
+            " aAAAAAAa  ",
+            " ddddddd   ",
+            " aAAaAAaA  ",
+            " aAAaAAaA  ",
+            "aAAaAAaAAa ",
+            "aAaAAaAAaA ",
+            "aAaAAaAAaA ",
+            "  aA  aA   ",
+            "  aA  aA   ",
+            " aaA  aAa  ",
+        ]
+        // the weapon, held upright in the right hand at column 10
+        func set(_ j: Int, _ ch: Character) {
+            var r = Array(rows[j]); r[10] = ch; rows[j] = String(r)
+        }
+        for j in 0..<rows.count where j != 10 { set(j, "w") }
+        switch kind {
+        case 0: for j in 0..<4 { set(j, "W") }
+        case 1: for j in 0..<3 { set(j, "W") }; for j in 19..<22 { set(j, "W") }
+        default:
+            for j in 0..<5 { var r = Array(rows[j]); r[9] = j < 4 ? "V" : " "; rows[j] = String(r) }
+            set(0, "V")
+        }
+        for j in 20..<rows.count where kind != 1 { set(j, " ") }
+        let pal: [Character: Px] = ["A": C(0xD02630), "a": C(0x8A121B), "d": C(0x4A0810), "k": C(0x0A0A0C), "h": C(0x8A121B),
+                                    "w": C(0x5A5E68), "W": C(0xFF6A4A), "V": C(0xB8BCC8)]
+        swSprite(c, x, feet - rows.count * s, s: s, flip: flip, rows, pal, outline: C(0x22050A))
+    }
+
+    /// Snoke's throne: a black seat with a tall back flaring at the top, armrests, on a three-step dais, all of it
+    /// edged in the red the curtains throw on it. `k` is its scale.
+    static func snokeThrone(_ c: PixelCanvas, x tx: Int, base g: Int, k: Int) {
+        let edge = C(0x5A1A20), black = C(0x111114), panel = C(0x18181D)
+        for i in 0..<3 {
+            let w = (44 - i * 10) * k, y = g - (i + 1) * 2 * k
+            c.rect(tx - w / 2, y, w, 2 * k, C(0x141317)); c.rect(tx - w / 2, y, w, max(1, k / 2), edge)
+        }
+        let seat = g - 6 * k
+        for j in 0..<(18 * k) {                                       // the back, wider toward its top
+            let w = 12 * k + (j < 6 * k ? (6 * k - j) * 2 / 3 : 0), y = seat - 4 * k - j
+            c.rect(tx - w / 2, y, w, 1, black)
+            c.px(tx - w / 2, y, edge); c.px(tx + w / 2 - 1, y, C(0x1E1A1E))
+        }
+        c.rect(tx - 4 * k, seat - 19 * k, 8 * k, 13 * k, panel)
+        c.rect(tx - 5 * k, seat - 22 * k, 10 * k, max(1, k / 2), edge)
+        c.rect(tx - 8 * k, seat - 4 * k, 16 * k, 4 * k, black); c.rect(tx - 8 * k, seat - 4 * k, 16 * k, max(1, k / 2), edge)
+        for side in [-1, 1] {
+            let ax = side < 0 ? tx - 10 * k : tx + 7 * k
+            c.rect(ax, seat - 7 * k, 3 * k, 7 * k, black); c.rect(ax, seat - 7 * k, 3 * k, max(1, k / 2), edge)
+        }
     }
 
     // Maul, the Theed generator complex: a catwalk with no railings over a bottomless shaft. Steel-blue haze above, the
@@ -588,11 +687,16 @@ private enum StarWarsScenes {
         }
     }
 
-    // The Emperor, the Death Star II throne room: the great round window onto Endor and the fleet.
+    // The Emperor, the Death Star II throne room: the great round window onto Endor and the fleet, between lit pillars,
+    // in a wall of dark metal panels. Royal Guards stand in lit alcoves, the turbolift is on the left and a bank of
+    // consoles on the right (full screen: the stairs instead, with guards on them); the throne on its stepped dais, and
+    // a polished floor.
     static func emperorThrone(_ c: PixelCanvas, _ g: Int) {
-        c.rect(0, 0, c.w, g, C(0x1E2026))
-        if Scenes.isTall(c) { emperorWalls(c, g) }
+        let tall = Scenes.isTall(c), s = Scenes.unit(g)
+        emperorPanels(c, g)
+        if tall { emperorWalls(c, g) }
         let cx = c.w / 2, cy = g / 2 + 2, r = max(12, min(g / 2 - 2, c.w / 5))
+        emperorWindowSurround(c, g, cx: cx, cy: cy, r: r)
         c.circle(cx, cy, r + 2, C(0x3A3D46))
         c.circle(cx, cy, r, C(0x04050A))
         c.stars(cy - r, cy + r, density: 18, seed: 6, x0: cx - r, x1: cx + r) { x, y in   // only through the round window
@@ -605,11 +709,44 @@ private enum StarWarsScenes {
                        core: C(0x3A3D46), glow: C(0, 0), coreR: 0.6, glowR: 0.7)
         }
         c.circle(cx, cy, 3, C(0x3A3D46))
-        if Scenes.isTall(c) { emperorStairs(c, g) }
-        // steps and the throne
-        for i in 0..<3 { c.rect(cx - 30 + i * 6, g - 3 - i * 2, 60 - i * 12, 2, C(0x2E3138)) }
+        if tall {
+            emperorStairs(c, g)
+            for side in [-1, 1] {                     // guards on the stairs, two to a side, and one at each foot
+                for f in [0.45, 0.8] {
+                    let gx = side < 0 ? 6 + Int(Double(cx - r - 14) * f) : c.w - 17 - Int(Double(cx - r - 14) * f)
+                    royalGuard(c, x: gx, feet: emperorStairTop(c, g, x: gx + 5), s: 1, flip: side > 0)
+                }
+                royalGuard(c, x: side < 0 ? 14 : c.w - 25, feet: g, s: 1, flip: side > 0)
+                throneConsole(c, g, x: side < 0 ? cx - r + 4 * s : cx + 40 * s, w: r - 44 * s, s: s, seed: side + 5)
+            }
+        } else {
+            for side in [-1, 1] {
+                guardAlcove(c, g, x: side < 0 ? cx - r - 40 * s : cx + r + 23 * s, s: s, flip: side > 0)
+                guardAlcove(c, g, x: side < 0 ? cx - r - 158 * s : cx + r + 141 * s, s: s, flip: side > 0)
+            }
+            turbolift(c, g, x: cx - r - 110 * s, s: s)
+            throneConsole(c, g, x: cx + r + 58 * s, w: 64 * s, s: s, seed: 3)
+        }
+        // the dais: three steps with lit nosings, and the throne seen from behind, turned to the window
+        for i in 0..<3 {
+            let x = cx - 30 + i * 6, w = 60 - i * 12, y = g - 3 - i * 2
+            c.rect(x, y, w, g - y, C(0x2E3138)); c.rect(x, y, w, 1, C(0x5A606C))
+            for k in stride(from: 2, to: w - 1, by: 5) { c.px(x + k, y + 1, C(0x6A86B0, 0.8)) }
+        }
         c.rect(cx - 5, g - 16, 10, 10, C(0x15161A))
-        c.ground(g, C(0x15161A), edge: C(0x4A4E57), speck: C(0x1E2026), seed: 6)
+        c.rect(cx - 5, g - 16, 10, 1, C(0x2E3138)); c.rect(cx - 5, g - 16, 1, 10, C(0x2A2D35)); c.rect(cx, g - 15, 1, 8, C(0x0C0D10))
+        c.rect(cx - 8, g - 10, 3, 3, C(0x1E2026)); c.rect(cx + 5, g - 10, 3, 3, C(0x1E2026))
+        c.px(cx - 7, g - 10, C(0xE0303A)); c.px(cx + 6, g - 10, C(0x3BD15A))
+        // the polished floor: plate seams fanning out from the throne, and the window's cold light on it
+        c.ground(g, C(0x15161A), edge: C(0x4A4E57), speck: C(0x1A1B20), seed: 6)
+        for k in -14...14 where k != 0 {
+            c.glowLine(Double(cx + k * 22 * s), Double(g + 1), Double(cx + k * 34 * s), Double(c.h),
+                       core: C(0x0E0F12), glow: C(0, 0), coreR: 0.5, glowR: 0.6)
+        }
+        for y in (g + 1)..<c.h {
+            let hw = r + (y - g) * 2
+            c.rect(cx - hw, y, hw * 2, 1, C(0x8EA8D0, 0.05)); c.rect(cx - hw / 2, y, hw, 1, C(0x8EA8D0, 0.04))
+        }
     }
 
     static func spaceBattle(_ c: PixelCanvas, _ g: Int, t: Double) {
@@ -674,26 +811,164 @@ private enum StarWarsScenes {
         c.ground(g, C(0x22252B), edge: C(0x6E7480), speck: C(0x2C2F36), seed: 10)
     }
 
-    // Luke, the Lars homestead at twin-sunset: the dome, the vaporators, the dunes.
+    // Luke, the Lars homestead at twin-sunset: the domed entrance hut with its arched porch and low wings, the sunken
+    // courtyard's rim beyond it, moisture vaporators near and far, a few rocks and the rippled sand.
     static func larsFarm(_ c: PixelCanvas, _ g: Int) {
+        let s = Scenes.unit(g)
         c.gradient(0, g, C(0x5A4A8A), C(0xF2A85A), bands: 6)
-        let sy = max(8, g / 2)
-        c.circle(c.w * 2 / 3, sy, 5, C(0xFFE8B0)); c.circle(c.w * 2 / 3 + 14, sy + 4, 4, C(0xFFD08A))
-        c.circle(c.w * 2 / 3, sy, 9, C(0xFFE8B0, 0.15)); c.circle(c.w * 2 / 3 + 14, sy + 4, 8, C(0xFFD08A, 0.15))
+        let sx = c.w * 2 / 3, sy = max(8, g / 2)
+        c.circle(sx, sy, 13 * s, C(0xFFE8B0, 0.08)); c.circle(sx + 18 * s, sy + 5 * s, 11 * s, C(0xFFD08A, 0.08))
+        c.circle(sx, sy, 10 * s, C(0xFFE8B0, 0.15)); c.circle(sx + 18 * s, sy + 5 * s, 8 * s, C(0xFFD08A, 0.15))
+        c.circle(sx, sy, 7 * s, C(0xFFE8B0)); c.circle(sx + 18 * s, sy + 5 * s, 5 * s, C(0xFFD08A))
+        c.circle(sx - 2 * s, sy - 2 * s, 2 * s, C(0xFFF6DC)); c.rect(sx + 16 * s, sy + 3 * s, 2 * s, 2 * s, C(0xFFE4B4))
         if Scenes.isTall(c) { larsSky(c, g) }
         c.dunes(base: g - 6, amp: 3, freq: 0.04, phase: 1.2, bottom: g, C(0xC8945A), shade: C(0xDCAA6E))
-        // the dome entrance
         let dx = c.w / 4
-        c.ellipse(dx, g, 21, 14, C(0xD8C8A8)); c.ellipse(dx, g, 21, 2, C(0xB8A888))
-        c.rect(dx - 6, g - 9, 12, 9, C(0x3A2C22))
-        // moisture vaporators
-        for x in [dx + 32, c.w - 40] where x < c.w - 6 {
-            c.rect(x, g - 33, 3, 33, C(0xB9BEC8))
-            for y in [g - 30, g - 21, g - 12] { c.rect(x - 3, y, 9, 2, C(0x8A8F9C)) }
-            c.rect(x - 1, g - 36, 5, 3, C(0xD7DCE4))
-        }
-        if Scenes.isTall(c) { landspeeder(c, dx + 52, g) }
+        larsCourtyard(c, dx + 125 * s, g)
+        vaporator(c, c.w - 40, g - 3, g, far: true)
+        vaporator(c, c.w / 16, g - 4, g, far: true)
+        vaporator(c, c.w * 4 / 5, g - 5, g, far: true)
+        for f in [0.31, 0.47, 0.71, 0.88] { larsRock(c, Int(Double(c.w) * f), g, seed: Int(f * 100)) }
+        larsHut(c, dx, g)
+        vaporator(c, dx + 44 * s, g, g, far: false)
+        if Scenes.isTall(c) { landspeeder(c, dx + 58 * s, g) }
         c.ground(g, C(0xD0A066), edge: C(0xE6BA80), speck: C(0xB88A52), seed: 11)
+        // ripples in the sand, faint so the crew still reads on it
+        for i in 0..<(c.w * (c.h - g) / 70) {
+            let x = Int(noise(i * 7 + 900) * Double(c.w)), y = g + 2 + Int(noise(i * 7 + 901) * Double(max(1, c.h - g - 3)))
+            let l = (3 + Int(noise(i * 7 + 902) * 5)) * s
+            c.rect(x, y, l, 1, C(0xE6BA80, 0.55)); c.rect(x + s, y + 1, l - s, 1, C(0xB88A52, 0.35))
+        }
+    }
+
+    /// The homestead's entrance: a weathered sandstone dome between two low rounded wings, with an arched porch
+    /// block in front (a dark arched doorway, a small control panel beside it and a sill at its foot). The low twin
+    /// suns light it from the right, so the right-hand faces are warm and the left ones cool, and it casts a long
+    /// shadow to the left over the sand.
+    static func larsHut(_ c: PixelCanvas, _ x: Int, _ g: Int) {
+        let s = Scenes.unit(g), p = Scenes.Pen(c, x, g, g)
+        let lit = C(0xEED8AC), mid = C(0xD8C3A0), shade = C(0xB4A08E), deep = C(0x9C8A7E), dark = C(0x2E221C)
+        func dot(_ u: Int, _ v: Int, _ col: Px) { p.rect(u, v, 1, 1, col) }
+        // the tone of a curved face at `u` across a half-width `half`: cool on the left, warm on the right
+        func tone(_ u: Int, _ half: Int) -> Px {
+            let k = Double(u) / Double(max(1, half))
+            return k < -0.55 ? deep : k < -0.15 ? shade : k < 0.5 ? mid : lit
+        }
+        c.rect(x - 52 * s, g - s, 22 * s, s, C(0x8A5E3A, 0.25))                       // its shadow on the sand
+        c.rect(x - 44 * s, g - 2 * s, 12 * s, s, C(0x8A5E3A, 0.15))
+        // the dome, weathered
+        let rx = 18, ry = 16, cy = -9
+        for dv in -ry...0 {
+            let k = Double(dv) / (Double(ry) + 0.5), half = Int((Double(rx) * (1 - k * k).squareRoot()).rounded())
+            for u in -half...half { dot(u, cy + dv, tone(u - dv / 4, half)) }
+        }
+        for i in 0..<34 {                                                               // stains and pitting
+            let u = Int((noise(i * 3 + 300) - 0.5) * Double(rx * 2 - 4)), v = cy - Int(noise(i * 3 + 301) * Double(ry - 2))
+            let half = Int((Double(rx) * (1 - Double((v - cy) * (v - cy)) / Double(ry * ry)).squareRoot()))
+            if abs(u) < half - 1 { dot(u, v, noise(i * 3 + 302) > 0.5 ? C(0xA88C6A, 0.45) : C(0xFFF0D0, 0.35)) }
+        }
+        for u in -rx...rx { dot(u, cy, deep.alpha(0.6)) }                                // the dome's base course
+        // the low wings either side, rounded along the top
+        for (a, b) in [(-31, -10), (11, 31)] {
+            let l = a < 0 ? 1 : 0, r = a < 0 ? 0 : 1                                   // rounder at the outer end
+            p.rect(a, -9, b - a + 1, 9, mid)
+            p.rect(a + l, -10, b - a + 1 - l - r, 1, C(0xE4CEA6)); p.rect(a + 2 * l, -11, b - a + 1 - 2 * l - 2 * r, 1, lit)
+            p.rect(a, -9, b - a + 1, 1, lit.alpha(0.4))
+            p.rect(a, -9, 2, 9, a < 0 ? deep : shade); p.rect(b - 1, -9, 2, 9, a < 0 ? shade : lit)
+            p.rect(a, -1, b - a + 1, 1, shade.alpha(0.7))
+        }
+        for i in 0..<16 {
+            let u = Int(noise(i * 5 + 320) * 40) - 20 + (i % 2 == 0 ? -10 : 10), v = -2 - Int(noise(i * 5 + 321) * 7)
+            if abs(u) > 11, abs(u) < 30 { dot(u, v, C(0xA88C6A, 0.4)) }
+        }
+        // the porch block with its arched top
+        for dv in -7...0 {                                                              // a shadow line against the dome
+            let k = Double(dv) / 7.5, half = Int((11.0 * (1 - k * k).squareRoot()).rounded())
+            p.rect(-half, -11 + dv, half * 2 + 1, 1, C(0x8A786C))
+        }
+        p.rect(-10, -11, 21, 11, C(0xE2CDA8))
+        for dv in -6...0 {
+            let k = Double(dv) / 6.5, half = Int((10.0 * (1 - k * k).squareRoot()).rounded())
+            for u in -half...half { dot(u, -11 + dv, dv == -6 || u - half == 0 ? lit : tone(u + 3, 10)) }
+        }
+        p.rect(-10, -11, 3, 11, shade); p.rect(-10, -11, 1, 11, deep); p.rect(9, -11, 2, 11, lit)
+        p.rect(-10, -1, 21, 1, shade.alpha(0.7))
+        // the arched doorway, its jamb lit on the left inside
+        p.rect(-4, -10, 9, 10, dark)
+        for (v, half) in [(-11, 4), (-12, 3), (-13, 2)] { p.rect(-half, v, half * 2 + 1, 1, dark) }
+        p.rect(4, -11, 1, 11, C(0x4A3A2E)); p.rect(3, -12, 1, 1, C(0x4A3A2E)); p.rect(-4, -10, 1, 10, C(0x5A483A))
+        // the control panel beside it
+        p.rect(6, -7, 3, 4, C(0x3A3A40)); dot(7, -6, C(0xE0303A)); dot(7, -4, C(0x3BD15A)); dot(6, -7, C(0x6A6A72))
+        // the sill
+        p.rect(-7, -1, 15, 1, C(0xC8B494)); p.rect(-6, -1, 1, 1, C(0xA89480)); p.rect(6, -1, 2, 1, lit)
+    }
+
+    /// A moisture vaporator: a segmented column of stacked drums with a port, a thin mast with two vanes on top,
+    /// a boxy lower body with grilles, and two thin side poles with dark bands at the foot, braced to the column,
+    /// on a small octagonal base. `far` draws a smaller, hazier one out on the flats.
+    static func vaporator(_ c: PixelCanvas, _ x: Int, _ base: Int, _ g: Int, far: Bool) {
+        let p = Scenes.Pen(c, x, base, g)
+        let haze = far ? 0.35 : 0.0, sky = C(0xD8A07A)
+        let hi = lerp(C(0xE6EAF0), sky, haze), lt = lerp(C(0xC8CDD6), sky, haze)
+        let md = lerp(C(0xA4AAB6), sky, haze), dk = lerp(C(0x6E7380), sky, haze), bd = lerp(C(0x2E3036), sky, haze)
+        if far {
+            p.rect(-3, -12, 1, 11, lt); p.rect(3, -12, 1, 11, lt); p.rect(-3, -3, 1, 2, bd); p.rect(3, -3, 1, 2, bd)
+            p.rect(-2, -10, 5, 1, md); p.rect(-2, -5, 5, 1, md)
+            p.rect(-2, -1, 5, 1, dk)
+            p.rect(-1, -7, 3, 6, lt); p.rect(1, -7, 1, 6, hi); p.rect(-1, -5, 2, 1, dk)
+            p.rect(0, -19, 1, 12, lt); p.rect(-1, -15, 3, 1, md); p.rect(-1, -11, 3, 1, md)
+            p.rect(0, -24, 1, 5, md); p.rect(-1, -24, 1, 1, hi); p.rect(1, -24, 1, 1, hi)
+            return
+        }
+        // side poles, braced to the column (the column is drawn over the braces' middles)
+        for u in [-5, 5] {
+            p.rect(u, -23, 1, 21, u < 0 ? lt : hi); p.rect(u, -24, 1, 1, hi)
+            p.rect(u, -6, 1, 3, bd)
+        }
+        for v in [-9, -19] { p.rect(-4, v, 9, 1, md) }
+        // the octagonal base
+        p.rect(-4, -1, 9, 1, dk); p.rect(-3, -2, 7, 1, md); p.rect(2, -2, 2, 1, lt)
+        // the lower body, with grilles and a panel
+        p.rect(-2, -13, 5, 11, lt); p.rect(-2, -13, 1, 11, md); p.rect(2, -13, 1, 11, hi)
+        for v in [-11, -9, -7] { p.rect(-1, v, 3, 1, dk) }
+        p.rect(-1, -5, 2, 2, md); p.rect(-2, -13, 5, 1, dk)
+        // the column of drums, from the body up: (half-width, height)
+        var v = -13
+        for (i, (hw, h)) in [(1, 3), (2, 2), (1, 4), (2, 3), (1, 3), (2, 2), (1, 3)].enumerated() {
+            v -= h
+            p.rect(-hw, v, hw * 2 + 1, h, lt); p.rect(-hw, v, 1, h, md); p.rect(hw, v, 1, h, hi)
+            p.rect(-hw, v + h - 1, hw * 2 + 1, 1, md)
+            if i == 3 { p.rect(-1, v + 1, 1, 1, bd) }                                         // the port
+        }
+        p.rect(0, v - 1, 1, 1, lt)
+        // the mast and its two vanes
+        p.rect(0, v - 11, 1, 10, md)
+        p.rect(-2, v - 11, 5, 1, md); p.rect(-4, v - 12, 2, 2, lt); p.rect(3, v - 12, 2, 2, hi)
+        c.rect(x - 9 * p.s, g - p.s, 6 * p.s, p.s, C(0x8A5E3A, 0.2))                    // a shadow to the left
+    }
+
+    /// The sunken courtyard beyond the hut: a mound of rubble round it and a low rim with its ring of round dark
+    /// windows, under a shallow cone with a small ring on top.
+    static func larsCourtyard(_ c: PixelCanvas, _ x: Int, _ g: Int) {
+        let p = Scenes.Pen(c, x, g - 2, g)
+        p.ellipse(0, 0, 36, 7, C(0xB4845A))
+        for i in 0..<60 {
+            let u = Int((noise(i * 3 + 500) - 0.5) * 66), v = Int(noise(i * 3 + 501) * 7) - 6
+            if abs(u) < 36 - abs(v) * 3 { p.rect(u, v, 1, 1, noise(i * 3 + 502) > 0.5 ? C(0x946A46) : C(0xD0A070)) }
+        }
+        p.rect(-24, -11, 49, 1, C(0xA8988C)); p.rect(-19, -12, 39, 1, C(0xB4A498)); p.rect(-13, -13, 27, 1, C(0xC0B0A2))
+        p.rect(-5, -14, 11, 1, C(0xD8C8A8)); p.rect(-5, -15, 11, 1, C(0xCDBB9A))
+        for u in stride(from: -4, through: 4, by: 2) { p.rect(u, -15, 1, 1, C(0x5A4A3E)) }
+        p.rect(-24, -10, 49, 4, C(0xCDBB9A)); p.rect(-24, -10, 49, 1, C(0xE6D2AC)); p.rect(-24, -7, 49, 1, C(0xB4A08E))
+        p.rect(-24, -10, 3, 4, C(0xB4A08E)); p.rect(22, -10, 3, 4, C(0xE6D2AC))
+        for u in stride(from: -20, through: 19, by: 4) { p.rect(u, -9, 2, 2, C(0x3A2C22)) }
+    }
+
+    /// A small weathered rock half sunk in the sand.
+    static func larsRock(_ c: PixelCanvas, _ x: Int, _ g: Int, seed: Int) {
+        let p = Scenes.Pen(c, x, g - 1, g), w = 4 + Int(noise(seed + 600) * 3)
+        p.rect(0, 0, w, 1, C(0x8A5E3A)); p.rect(1, -1, w - 2, 1, C(0xA87850)); p.rect(w - 3, -1, 2, 1, C(0xD4A472))
+        p.rect(2, -2, w - 4, 1, C(0xB8865A)); p.rect(-3, 0, 3, 1, C(0x8A5E3A, 0.3))
     }
 
     // Obi-Wan, inside his domed hut in the Jundland Wastes (A New Hope): a cave-like plaster dome, desert sun
@@ -1152,7 +1427,9 @@ private enum StarWarsScenes {
         }
     }
 
-    // Leia / C-3PO, the Tantive IV: white ribbed corridor.
+    // Leia / C-3PO, the Tantive IV: white ribbed corridor, the ribs shaded as arches, panelled bays with hatches,
+    // grilles and small lit indicators, a pipe along the upper wall, a lit control panel, the round hatch in its rim,
+    // and a deck of plates with a grating along the foot of the wall.
     static func tantive(_ c: PixelCanvas, _ g: Int) {
         c.gradient(0, g, C(0xF2F4F6), C(0xC8CED6), bands: 4)
         for x in stride(from: 0, to: c.w, by: 16) {
@@ -1160,9 +1437,99 @@ private enum StarWarsScenes {
         }
         c.rect(0, 0, c.w, 4, C(0xA8B0BA))
         for x in stride(from: 6, to: c.w, by: 32) { c.rect(x, 4, 8, 2, C(0xFFFFFF)) }
+        tantiveWall(c, g)
         if Scenes.isTall(c) { tantiveHigh(c, g) }
-        c.ellipse(c.w * 3 / 4, g / 2, 10, g / 3, C(0xA8B0BA)); c.ellipse(c.w * 3 / 4, g / 2, 8, g / 3 - 2, C(0x8A939E))
+        // The round hatch is a door: the same size whatever the canvas, its rim standing just above the deck.
+        let u = Scenes.unit(g), hx = c.w * 3 / 4, r = 28 * u, hy = g - r - 5 * u
+        c.ellipse(hx, hy, 13 * u, r + 3 * u, C(0xB8C0CA)); c.ellipse(hx, hy, 12 * u, r + 2 * u, C(0xF4F6F8))   // the hatch's rim
+        c.ellipse(hx, hy, 10 * u, r, C(0xA8B0BA)); c.ellipse(hx, hy, 8 * u, r - 2 * u, C(0x8A939E))
+        c.ellipse(hx + u, hy, 5 * u, r - 5 * u, C(0x7E8792))                                  // its recessed leaf
+        c.rect(hx + u, hy - r + 6 * u, u, 2 * r - 12 * u, C(0x6A727C))                          // and the seam down it
+        let ry = r - 2 * u
+        for dy in (3 * u - ry)...(ry - 3 * u) {                                            // light caught on its left edge
+            let half = Int((Double(8 * u) * (1 - Double(dy * dy) / Double(ry * ry)).squareRoot()).rounded())
+            c.rect(hx - half + 1, hy + dy, u, 1, C(0xA4ACB6))
+        }
+        c.rect(hx + 15 * u, hy - 4 * u, 4 * u, 9 * u, C(0x3A4048)); c.rect(hx + 15 * u, hy - 4 * u, 4 * u, u, C(0x8A939E))
+        c.rect(hx + 16 * u, hy - 2 * u, u, u, C(0xE0303A)); c.rect(hx + 17 * u, hy + u, u, u, C(0x3BD15A))
+        c.rect(hx + 16 * u, hy + 3 * u, u, u, C(0xFFC040))
+        tantiveConsole(c, g, x: c.w * 16 / 25 / 16 * 16 + 5)
         c.ground(g, C(0xB8C0CA), edge: C(0xFFFFFF), speck: C(0xA8B0BA), seed: 15)
+        // the deck: a grating along the foot of the wall, then plates with faint seams, light enough to walk on
+        c.rect(0, g + 1, c.w, 2, C(0xA8B0BA))
+        for x in stride(from: 1, to: c.w, by: 3) { c.px(x, g + 1, C(0x8A939E)); c.px(x, g + 2, C(0x98A0AA)) }
+        c.rect(0, g + 3, c.w, 1, C(0xD8DEE4))
+        for x in stride(from: 8, to: c.w, by: 48) { c.rect(x, g + 4, 1, c.h - g - 4, C(0xA0A8B2, 0.55)) }
+        if c.h - g > 8 { c.rect(0, g + 4 + (c.h - g - 4) / 2, c.w, 1, C(0xA0A8B2, 0.35)) }
+    }
+
+    /// The Tantive IV's walls between the ribs: each rib lit on one side and casting a soft shadow, flared where it
+    /// springs from the ceiling and at its foot, so they read as arches; panel seams with a bevel; a lower skirt in
+    /// shadow where the wall curves in to the deck; and in some bays a service hatch, a vent grille or a plate of small
+    /// lit indicators. Full screen the bays are stacked up the wall to the conduit.
+    static func tantiveWall(_ c: PixelCanvas, _ g: Int) {
+        let tall = Scenes.isTall(c), hx = c.w * 3 / 4, cx = c.w * 16 / 25 / 16 * 16 + 5
+        let spring = tall ? g / 10 + 2 : 6, top = tall ? g / 4 + 3 * Scenes.unit(g) + 2 : 7
+        for x in stride(from: 0, to: c.w, by: 16) {
+            c.rect(x + 1, 0, 1, g, C(0xF4F6F8)); c.rect(x + 3, 0, 1, g, C(0xCDD3DA))
+            c.rect(x + 4, 0, 1, g, C(0xB8C0CA, 0.5)); c.rect(x + 5, 0, 1, g, C(0xB8C0CA, 0.2))
+            for k in 0..<3 {                                                      // springing from the ceiling
+                c.rect(x - 3 + k, spring + k, 10 - 2 * k, 1, C(0xDDE2E8)); c.px(x - 3 + k, spring + k, C(0xA8B0BA))
+                c.px(x + 6 - k, spring + k, C(0xC0C7D0))
+            }
+            c.rect(x - 1, g - 5, 7, 5, C(0xD4DAE1)); c.rect(x - 1, g - 5, 7, 1, C(0xF4F6F8))   // the foot
+            c.rect(x - 1, g - 4, 1, 4, C(0xA8B0BA)); c.rect(x + 5, g - 4, 1, 4, C(0xB8C0CA))
+        }
+        let skirt = g - 10, band = tall ? 44 : skirt - 22
+        for x in stride(from: 6, to: c.w, by: 16) {
+            for k in 0..<5 { c.rect(x, skirt + k, 10, 1, C(0xA8B0BA, 0.06 + 0.05 * Double(k))) }
+            c.rect(x, skirt, 10, 1, C(0xB0B8C2)); c.rect(x, skirt + 1, 10, 1, C(0xFFFFFF, 0.7))
+        }
+        var y = skirt, k = 0
+        while y - band >= top {
+            let y0 = y - band
+            for (i, x) in stride(from: 6, to: c.w, by: 16).enumerated() {
+                c.rect(x, y0, 10, 1, C(0xB8C0CA)); c.rect(x, y0 + 1, 10, 1, C(0xFFFFFF, 0.7))    // the panel seam
+                guard abs(x + 5 - hx) > 20, x + 10 < cx - 2 || x > cx + 24 else { continue }
+                let n = noise(i * 13 + k * 7 + 700) / (tall ? 0.65 : 1), h = band - 4      // sparser on the tall wall
+                if n < 0.16 {                                                     // a service hatch
+                    let hh = min(h - 6, 16), hy = y0 + 4
+                    c.rect(x + 1, hy, 8, hh, C(0xD4DAE1))
+                    c.rect(x + 1, hy, 8, 1, C(0xA8B0BA)); c.rect(x + 1, hy, 1, hh, C(0xA8B0BA))
+                    c.rect(x + 1, hy + hh - 1, 8, 1, C(0xFFFFFF)); c.rect(x + 8, hy, 1, hh, C(0xFFFFFF))
+                    c.rect(x + 4, hy + hh / 2, 2, 1, C(0x8A939E))
+                } else if n < 0.3 {                                               // a vent grille
+                    let gy = y0 + 5
+                    c.rect(x + 1, gy, 8, 7, C(0xC4CAD2))
+                    for r in stride(from: 1, to: 7, by: 2) { c.rect(x + 2, gy + r, 6, 1, C(0x98A0AA)) }
+                } else if n < 0.44 {                                              // a plate of lit indicators
+                    let py = y0 + h / 2
+                    c.rect(x + 1, py, 8, 4, C(0x3A4048)); c.rect(x + 1, py, 8, 1, C(0x5A626C))
+                    let lights = [C(0xE0303A), C(0x3BD15A), C(0xFFC040), C(0x5AB4FF)]
+                    for j in 0..<3 { c.px(x + 2 + j * 2, py + 2, lights[Int(noise(i * 5 + j + k * 11 + 710) * 4) % 4]) }
+                }
+            }
+            y = y0; k += 1
+        }
+    }
+
+    /// A lit control panel on the Tantive IV's wall, across two bays: a sloped white housing edged in red, a screen
+    /// with lines of readout, rows of buttons, and a post down to the deck.
+    static func tantiveConsole(_ c: PixelCanvas, _ g: Int, x: Int) {
+        let s = Scenes.unit(g), w = 22 * s, h = 13 * s, y = g - 26 * s
+        c.rect(x + w / 2 - 2 * s, y + h, 4 * s, g - y - h, C(0xC0C7D0)); c.rect(x + w / 2 - 2 * s, y + h, s, g - y - h, C(0xE4E8EE))
+        c.rect(x, y, w, h, C(0xE4E8EE)); c.rect(x, y, w, s, C(0xFFFFFF)); c.rect(x, y + h - s, w, s, C(0xA8B0BA))
+        c.rect(x, y, s, h, C(0xC0C7D0)); c.rect(x + w - s, y, s, h, C(0xA8B0BA))
+        c.rect(x, y + h, w, s, C(0xC0303A))                                          // the red trim
+        c.rect(x + 2 * s, y + 2 * s, 10 * s, 6 * s, C(0x1C2A30))                       // the screen
+        for (j, l) in [8, 5, 7].enumerated() { c.rect(x + 3 * s, y + (3 + j * 2) * s, l * s, s, j == 1 ? C(0x7AE0A0) : C(0x6AC8E8)) }
+        let lights = [C(0xE0303A), C(0xFFC040), C(0x3BD15A), C(0xFFFFFF), C(0x5AB4FF)]
+        for j in 0..<6 {
+            let bx = x + (14 + (j % 3) * 2) * s, by = y + (3 + (j / 3) * 3) * s
+            c.rect(bx, by, s, s, lights[(j * 2 + 1) % lights.count])
+        }
+        c.rect(x + 2 * s, y + 10 * s, 18 * s, s, C(0xC8CED6))
+        for j in 0..<5 { c.rect(x + (3 + j * 4) * s, y + 10 * s, 2 * s, s, j == 2 ? C(0xE0303A) : C(0x8A939E)) }
     }
 
     // Qui-Gon, the Jundland Wastes: canyon rocks, Tusken Raiders and a bantha.
@@ -1864,13 +2231,13 @@ private enum StarWarsScenes {
         c.rect(0, bottom + 8 * s, c.w, 1, C(0x2A1C12, 0.7))
     }
 
-    // Snoke's throne room: the drapes vanishing into the dark overhead under a black rail, soft spotlights down them,
-    // the throne's high back, and more Praetorian guards along the room.
+    // Snoke's throne room: the drapes vanishing into the dark overhead under a black rail, and soft spotlights
+    // down them.
     static func supremacyHigh(_ c: PixelCanvas, _ g: Int) {
         let s = Scenes.unit(g), fade = g * 2 / 5
         for fx in [0.17, 0.39, 0.61, 0.83] {
             let x = Int(Double(c.w) * fx)
-            for y in (g / 14)..<g { let sp = 3 * s + y / 7; c.rect(x - sp, y, sp * 2, 1, C(0xFF6A58, 0.05)) }
+            for y in (g / 14)..<g { let sp = 3 * s + y / 7; c.rect(x - sp, y, sp * 2, 1, C(0xFF8A70, 0.07)) }
         }
         for y in 0..<fade {
             let k = (Double(fade - y) / Double(fade) * 6).rounded(.up) / 6
@@ -1881,12 +2248,6 @@ private enum StarWarsScenes {
         for x in stride(from: 0, to: c.w, by: 14) {
             for k in 0..<14 { let y = rail + Int(sin(Double(k) / 14 * .pi) * 3); c.px(x + k, y, C(0x2A0408)); c.px(x + k, y - 1, C(0x1A0205)) }
             c.rect(x, rail - 1, 2, 2, C(0x3A3A40))
-        }
-        let tx = c.w / 2
-        c.rect(tx - 9, g - 52, 18, 36, C(0x111114)); c.rect(tx - 9, g - 52, 18, 1, C(0x2E2E36)); c.rect(tx - 9, g - 52, 1, 36, C(0x24242A))
-        for gx in [tx - 76, tx - 112, tx + 70, tx + 106] where gx > 4 && gx < c.w - 10 {
-            c.rect(gx, g - 16, 6, 16, C(0xC8202A)); c.rect(gx + 1, g - 19, 4, 3, C(0xC8202A))
-            c.rect(gx + 6, g - 22, 1, 20, C(0x8A8F9C))
         }
     }
 
@@ -1938,31 +2299,199 @@ private enum StarWarsScenes {
         }
     }
 
-    // The Death Star II throne room: panelled walls, and a ceiling band.
+    // The Death Star II throne room, full screen: a ceiling with its light bars, and a deep ledge across the upper wall
+    // with a row of lit ports under it.
     static func emperorWalls(_ c: PixelCanvas, _ g: Int) {
-        let s = Scenes.unit(g)
-        for x in stride(from: 0, to: c.w, by: 18 * s) { c.rect(x, 0, 1, g, C(0x272A31)) }
-        for y in stride(from: g / 14, to: g, by: 14 * s) { c.rect(0, y, c.w, 1, C(0x272A31)) }
-        c.rect(0, 0, c.w, g / 14, C(0x15161A)); c.rect(0, g / 14, c.w, 1, C(0x3A3D46))
+        let s = Scenes.unit(g), ceil = g / 14
+        c.rect(0, 0, c.w, ceil, C(0x111216)); c.rect(0, ceil, c.w, s, C(0x3A3D46)); c.rect(0, ceil + s, c.w, 2 * s, C(0x0C0D10))
+        for x in stride(from: 4 * s, to: c.w, by: 22 * s) { c.rect(x, 0, s, ceil, C(0x1A1B20)) }   // ceiling ribs
+        for x in stride(from: 12 * s, to: c.w, by: 44 * s) {
+            c.rect(x, ceil - 4 * s, 18 * s, 2 * s, C(0x8E98A8)); c.rect(x + s, ceil - 4 * s, 16 * s, s, C(0xDCE4F0))
+            for k in 0..<(12 * s) { c.rect(x - k / 2, ceil + 3 * s + k, 18 * s + k, 1, C(0xB8C4D8, 0.05 * Double(12 * s - k) / Double(12 * s))) }
+        }
+        let ly = g * 2 / 9, lh = 7 * s
+        c.rect(0, ly, c.w, lh, C(0x26292F)); c.rect(0, ly, c.w, s, C(0x4A4E57)); c.rect(0, ly + lh, c.w, 2 * s, C(0x0E0F12))
+        for x in stride(from: 0, to: c.w, by: 11 * s) { c.rect(x, ly + 2 * s, s, lh - 3 * s, C(0x1A1C21)) }
+        for (i, x) in stride(from: 6 * s, to: c.w, by: 26 * s).enumerated() {
+            let lit = noise(i * 17 + 640) > 0.3
+            c.rect(x, ly + lh + 5 * s, 8 * s, 4 * s, C(0x111216)); c.rect(x, ly + lh + 5 * s, 8 * s, s, C(0x3A3D46))
+            c.rect(x + s, ly + lh + 6 * s, 6 * s, 2 * s, lit ? C(0x5C7AA6) : C(0x23262C))
+            if lit { c.rect(x + 2 * s, ly + lh + 6 * s, 2 * s, s, C(0xA8C4EC)) }
+        }
     }
 
-    /// The two staircases climbing from the edges of the room toward the throne platform.
+    /// The two staircases climbing from the edges of the room toward the throne platform: solid stepped blocks, a light
+    /// pip on every step's riser, panel seams on their faces, and a rail with posts.
     static func emperorStairs(_ c: PixelCanvas, _ g: Int) {
         let cx = c.w / 2, r = max(12, min(g / 2 - 2, c.w / 5))
         let rise = g / 4, x0 = 6, x1 = cx - r - 8, step = 3
         guard x1 - x0 > 40 else { return }
         let run = x1 - x0
         for side in [-1, 1] {
+            var last = g
             for i in 0...(run + 14) {
                 let x = side < 0 ? x0 + i : c.w - 1 - x0 - i
                 let lift = min(rise, i * rise / run)
                 let top = g - lift / step * step - step
-                c.rect(x, top, 1, g - top, C(0x18191E)); c.px(x, top, C(0x3A3D46))
+                c.rect(x, top, 1, g - top, C(0x18191E)); c.px(x, top, C(0x4A4E57))
+                if top < last { c.px(x, top + 1, C(0x6A86B0)) }                  // a riser's light, at each new step
+                last = top
+                if i % 20 == 0, g - top > 8 { c.rect(x, top + 4, 1, g - top - 4, C(0x111216)) }
+                if g - top > 10, i % 4 == 0 { c.px(x, top + 6, C(0x22252B)) }
                 let rail = g - lift - step - 10
-                c.px(x, rail, C(0x3A3D46))
+                c.px(x, rail, C(0x4A4E57)); c.px(x, rail + 1, C(0x22252B))
                 if i % 9 == 0 { c.rect(x, rail, 1, top - rail, C(0x2E3138)) }
             }
         }
+    }
+
+    /// Where a staircase's tread is, at column `x` (the row a figure standing there puts its feet on).
+    static func emperorStairTop(_ c: PixelCanvas, _ g: Int, x: Int) -> Int {
+        let cx = c.w / 2, r = max(12, min(g / 2 - 2, c.w / 5))
+        let rise = g / 4, x0 = 6, x1 = cx - r - 8, run = max(1, x1 - x0)
+        let i = x < cx ? x - x0 : c.w - 1 - x0 - x
+        let lift = min(rise, max(0, i) * rise / run)
+        return g - lift / 3 * 3 - 3
+    }
+
+    /// The throne room's wall: dark metal panels with bevelled seams, grooves running across, lit slots on some panels
+    /// and a band of small cool lights along the wall.
+    static func emperorPanels(_ c: PixelCanvas, _ g: Int) {
+        let s = Scenes.unit(g), pw = 22 * s, band = 22 * s
+        c.rect(0, 0, c.w, g, C(0x1E2026))
+        for x in stride(from: 0, to: c.w, by: pw) {
+            c.rect(x, 0, s, g, C(0x15161A)); c.rect(x + s, 0, s, g, C(0x272A31))
+            c.rect(x + pw / 2, 0, s, g, C(0x1B1D22))
+        }
+        var y = g - band, k = 0
+        while y > 2 * s {
+            c.rect(0, y, c.w, s, C(0x121317)); c.rect(0, y + s, c.w, s, C(0x2C2F37))
+            if k == 1 {                                             // the light band
+                c.rect(0, y + 2 * s, c.w, 2 * s, C(0x17181D))
+                for x in stride(from: 3 * s, to: c.w, by: 9 * s) { c.rect(x, y + 2 * s, 4 * s, s, C(0x6A7A92)) }
+            }
+            for (i, x) in stride(from: 0, to: c.w, by: pw).enumerated() {
+                let n = noise(i * 13 + k * 7 + 600)
+                if n < 0.18 {                                       // a recessed service hatch
+                    c.rect(x + 4 * s, y - band + 5 * s, pw - 8 * s, band - 9 * s, C(0x18191E))
+                    c.rect(x + 4 * s, y - band + 5 * s, pw - 8 * s, s, C(0x111216))
+                    c.rect(x + 4 * s, y - 4 * s - s, pw - 8 * s, s, C(0x2C2F37))
+                }
+                guard n > (Scenes.isTall(c) ? 0.72 : 0.62) else { continue }
+                let sy = y - 7 * s, lw = (6 + Int(noise(i * 13 + k * 7 + 601) * 6)) * s
+                guard sy > 12 * s || x > 80 else { continue }       // never under the window's title bar
+                c.rect(x + 5 * s, sy, lw + 2 * s, 3 * s, C(0x16171B)); c.rect(x + 6 * s, sy + s, lw, s, C(0x5A6478))
+                c.rect(x + 7 * s, sy + s, 3 * s, s, C(0x9EAAC0))
+            }
+            y -= band; k += 1
+        }
+    }
+
+    /// Pillars either side of the round window, and a recessed collar round its rim with a ring of small lights. All of
+    /// it outside the window's own frame, which stays as it was.
+    static func emperorWindowSurround(_ c: PixelCanvas, _ g: Int, cx: Int, cy: Int, r: Int) {
+        let s = Scenes.unit(g)
+        for side in [-1, 1] {
+            let pw = 7 * s, x = side < 0 ? cx - r - 9 * s - pw : cx + r + 9 * s
+            c.rect(x, 0, pw, g, C(0x2A2D35)); c.rect(x, 0, s, g, C(0x3E424C)); c.rect(x + pw - s, 0, s, g, C(0x111216))
+            c.rect(x + 3 * s, 0, s, g, C(0x15161A))
+            for yy in stride(from: 5 * s, to: g - 4 * s, by: 7 * s) { c.rect(x + 3 * s, yy, s, 2 * s, C(0x6A86B0)) }
+        }
+        c.circle(cx, cy, r + 6 * s, C(0x2A2D35)); c.circle(cx, cy, r + 5 * s, C(0x111216))
+        for k in 0..<32 {
+            let a = Double(k) * .pi / 16, rr = Double(r) + 3.5 * Double(s)
+            c.rect(cx + Int((cos(a) * rr).rounded()), cy + Int((sin(a) * rr).rounded()), s, s, k % 2 == 0 ? C(0x7A8AA4) : C(0x3A3D46))
+        }
+    }
+
+    /// One of the Emperor's Royal Guards: red robe to the floor, the tall rounded helmet with its black slit, and a pike.
+    static func royalGuard(_ c: PixelCanvas, x: Int, feet: Int, s: Int, flip: Bool = false) {
+        let rows = [
+            "   hhh    p",
+            "  hHHHh   p",
+            "  hHHHh   p",
+            "  hvvvh   p",
+            "  hHHHh   p",
+            "  hhHhh   p",
+            " rRRRRRr  p",
+            "rRRRRRRRr p",
+            "rRRRRRRRrhp",
+            "rRRrRRRRrhp",
+            "rRRrRRRRr p",
+            "rRRrRRRRr p",
+            "rRRrRRRRr p",
+            "rRRrRRRRr p",
+            "rRRrRRRRRrp",
+            "rRRrRRRRRrp",
+            "rRRrRRRRRrp",
+            "rRRrRRRRRrp",
+            "rRRrRRRRRrp",
+            "rrRrRRRRRrr",
+            "rrrrrrrrrrr",
+        ]
+        let pal: [Character: Px] = ["H": C(0xB8202A), "h": C(0x7E0E16), "v": C(0x0A0A0C), "R": C(0xA0141E), "r": C(0x640A11),
+                                    "p": C(0x8A8F9C)]
+        swSprite(c, x, feet - rows.count * s, s: s, flip: flip, rows, pal)
+    }
+
+    /// String art drawn in blocks of `s` pixels, mirrored left to right when `flip`.
+    static func swSprite(_ c: PixelCanvas, _ x: Int, _ y: Int, s: Int, flip: Bool = false, _ rows: [String], _ pal: [Character: Px],
+                         outline: Px? = nil) {
+        let wide = rows.map(\.count).max() ?? 0
+        if let outline {                                     // a dark edge all round, so it reads against a busy wall
+            for (j, row) in rows.enumerated() {
+                for (i, ch) in row.enumerated() where pal[ch] != nil {
+                    let u = x + (flip ? wide - 1 - i : i) * s, v = y + j * s
+                    for (dx, dy) in [(-1, 0), (1, 0), (0, -1)] { c.rect(u + dx * s, v + dy * s, s, s, outline) }
+                }
+            }
+        }
+        for (j, row) in rows.enumerated() {
+            for (i, ch) in row.enumerated() {
+                guard let p = pal[ch] else { continue }
+                c.rect(x + (flip ? wide - 1 - i : i) * s, y + j * s, s, s, p)
+            }
+        }
+    }
+
+    /// An alcove in the wall, lit from above, with a Royal Guard standing in it.
+    static func guardAlcove(_ c: PixelCanvas, _ g: Int, x: Int, s: Int, flip: Bool) {
+        let w = 17 * s, h = 29 * s, top = g - h
+        c.rect(x - s, top - s, w + 2 * s, h + s, C(0x353943)); c.rect(x, top, w, h, C(0x0D0E11))
+        c.rect(x + w, top, s, h, C(0x2A2D35))
+        c.rect(x + 2 * s, top, w - 4 * s, s, C(0xC8D0DC))
+        for k in 0..<(h - 2 * s) { c.rect(x + s, top + s + k, w - 2 * s, 1, C(0x9EAAC0, 0.13 * Double(h - k) / Double(h))) }
+        royalGuard(c, x: x + 3 * s, feet: g, s: s, flip: flip)
+    }
+
+    /// The turbolift: a framed pair of door leaves, a lit header and a call light.
+    static func turbolift(_ c: PixelCanvas, _ g: Int, x: Int, s: Int) {
+        let w = 28 * s, h = 36 * s, top = g - h
+        c.rect(x - 2 * s, top - 4 * s, w + 4 * s, h + 4 * s, C(0x2E3138)); c.rect(x - 2 * s, top - 4 * s, w + 4 * s, s, C(0x4A4E57))
+        c.rect(x + 3 * s, top - 3 * s, w - 6 * s, 2 * s, C(0x111216)); c.rect(x + 4 * s, top - 3 * s, w - 8 * s, s, C(0x8E98A8))
+        c.rect(x, top, w, h, C(0x3A3E47))
+        c.rect(x + w / 2 - s, top, 2 * s, h, C(0x111216))
+        for side in [0, 1] {
+            let lx = x + side * (w / 2 + s)
+            c.rect(lx + 2 * s, top + 3 * s, w / 2 - 5 * s, h / 2 - 5 * s, C(0x30343C))
+            c.rect(lx + 2 * s, top + h / 2 + 2 * s, w / 2 - 5 * s, h / 2 - 5 * s, C(0x30343C))
+            c.rect(lx + 2 * s, top + h / 2 - s, w / 2 - 5 * s, s, C(0x4A4E57))
+        }
+        c.rect(x + w + 4 * s, top + h / 2, 3 * s, 5 * s, C(0x15161A)); c.rect(x + w + 5 * s, top + h / 2 + s, s, s, C(0xE0303A))
+        c.rect(x + w + 5 * s, top + h / 2 + 3 * s, s, s, C(0x3BD15A))
+    }
+
+    /// A low bank of consoles: slanted tops with small screens and rows of lit keys.
+    static func throneConsole(_ c: PixelCanvas, _ g: Int, x: Int, w: Int, s: Int, seed: Int) {
+        let h = 11 * s, top = g - h
+        c.rect(x, top + 3 * s, w, h - 3 * s, C(0x22252B)); c.rect(x, top + 3 * s, w, s, C(0x353943))
+        c.rect(x + s, top, w - 2 * s, 3 * s, C(0x2E3138)); c.rect(x + s, top, w - 2 * s, s, C(0x4A4E57))
+        for (i, sx) in stride(from: x + 3 * s, to: x + w - 9 * s, by: 12 * s).enumerated() {
+            c.rect(sx, top + 5 * s, 8 * s, 3 * s, C(0x0E1A24)); c.rect(sx + s, top + 6 * s, 5 * s, s, C(0x4AA8E0))
+            let cols = [C(0xE0303A), C(0x3BD15A), C(0xFFD23D), C(0x3A7BEA)]
+            for k in 0..<4 where noise(seed * 31 + i * 5 + k) > 0.35 { c.rect(sx + k * 2 * s, top + s, s, s, cols[(i + k) % 4]) }
+        }
+        for sx in stride(from: x + 4 * s, to: x + w - 2 * s, by: 6 * s) { c.rect(sx, g - 2 * s, 3 * s, s, C(0x15161A)) }
     }
 
     // Geonosis: the planet's ring arching over the sky, droid core ships landed in the haze, and far spires.
@@ -2125,13 +2654,25 @@ private enum StarWarsScenes {
         for yy in stride(from: top + 4, to: g - 1, by: 5) { c.rect(lx, yy, 7, 1, C(0x7A766A)) }
     }
 
-    // Tantive IV: a ceiling with its light strip, a conduit, and doorways off the corridor.
+    // Tantive IV: a ceiling with its light strip, the ribs arching over it, pipes under it, a conduit with its lights,
+    // and doorways off the corridor, each with the corridor going on beyond it, red trim and a lit sign.
     static func tantiveHigh(_ c: PixelCanvas, _ g: Int) {
         let s = Scenes.unit(g), ceil = g / 10
         c.rect(0, 6, c.w, ceil - 6, C(0xE4E8EE)); c.rect(0, ceil, c.w, 2, C(0xC8CED6))
-        for x in stride(from: 10, to: c.w, by: 32) { c.rect(x, ceil - 4, 16, 2, C(0xFFFFFF)); c.rect(x - 1, ceil - 2, 18, 1, C(0xB8C0CA)) }
+        for x in stride(from: 0, to: c.w, by: 16) { c.rect(x, 6, 4, ceil - 6, C(0xDCE1E7)); c.rect(x, 6, 1, ceil - 6, C(0xC0C7D0)) }
+        for x in stride(from: 10, to: c.w, by: 32) {
+            c.rect(x - 2, ceil - 5, 20, 4, C(0xFFFFFF, 0.5))                       // the strip's glow on the ceiling
+            c.rect(x, ceil - 4, 16, 2, C(0xFFFFFF)); c.rect(x - 1, ceil - 2, 18, 1, C(0xB8C0CA))
+        }
+        let py = ceil + 7 * s                                                      // two pipes under the ceiling
+        c.rect(0, py, c.w, 2 * s, C(0xC8CED6)); c.rect(0, py, c.w, s, C(0xF4F6F8)); c.rect(0, py + 2 * s, c.w, 1, C(0xA8B0BA))
+        c.rect(0, py + 4 * s, c.w, s, C(0xD4DAE1)); c.rect(0, py + 5 * s, c.w, 1, C(0xB0B8C2))
+        for x in stride(from: 0, to: c.w, by: 32) { c.rect(x, py - s, 4, 7 * s, C(0xB8C0CA)); c.rect(x, py - s, 1, 7 * s, C(0xA0A8B2)) }
         let y = g / 4
         c.rect(0, y, c.w, 3 * s, C(0xD2D8E0)); c.rect(0, y, c.w, 1, C(0xFFFFFF)); c.rect(0, y + 3 * s, c.w, 1, C(0xA8B0BA))
+        for (i, x) in stride(from: 22, to: c.w, by: 64).enumerated() {
+            c.rect(x, y + s, 4 * s, s, C(0x3A4048)); c.rect(x + s, y + s, s, s, i % 2 == 0 ? C(0xFFC040) : C(0x3BD15A))
+        }
         for fx in [0.18, 0.5] {
             let dx = Int(Double(c.w) * fx), dw = 28 * s, top = g - g * 2 / 5, cham = 6 * s
             for yy in top..<g {
@@ -2142,9 +2683,22 @@ private enum StarWarsScenes {
                     c.rect(dx - dw / 2 + i2, yy, dw - i2 * 2, 1, lerp(C(0xC4CBD4), C(0xDCE1E7), Double(yy - top) / Double(g - top)))
                 }
             }
+            let inner = top + 3 * s + cham
+            for xx in stride(from: dx - dw / 2 + 3 * s, to: dx + dw / 2 - s, by: 5 * s) {   // the corridor going on beyond
+                c.rect(xx, inner, s, g - 3 * s - inner, C(0xB8C0CA, 0.4))
+            }
+            c.rect(dx - dw / 2 + 2 * s, inner + 2 * s, dw - 4 * s, s, C(0xFFFFFF, 0.7))
+            for side in [-1, 1] {                                                   // red trim inside the frame
+                c.rect(side < 0 ? dx - dw / 2 - 2 * s : dx + dw / 2 + s, inner, s, g - 3 * s - inner, C(0xC0303A, 0.85))
+            }
+            c.rect(dx - 7 * s, top - 6 * s, 14 * s, 3 * s, C(0x3A4048)); c.rect(dx - 7 * s, top - 6 * s, 14 * s, s, C(0x5A626C))
+            for j in 0..<3 { c.rect(dx - 5 * s + j * 4 * s, top - 5 * s, 2 * s, s, j == 1 ? C(0xE0303A) : C(0xF4F6F8)) }
             c.rect(dx - dw / 2, g - 3 * s, dw, 3 * s, C(0xB8C0CA))
+            for xx in stride(from: dx - dw / 2 + s, to: dx + dw / 2, by: 3 * s) { c.rect(xx, g - 2 * s, s, s, C(0x98A0AA)) }
             c.rect(dx + dw / 2 + 6 * s, g - g / 4, 4 * s, 7 * s, C(0xC8CED6))
+            c.rect(dx + dw / 2 + 6 * s, g - g / 4, 4 * s, s, C(0xF4F6F8)); c.rect(dx + dw / 2 + 9 * s, g - g / 4, s, 7 * s, C(0xA8B0BA))
             c.px(dx + dw / 2 + 7 * s, g - g / 4 + 2 * s, C(0xE0303A)); c.px(dx + dw / 2 + 8 * s, g - g / 4 + 4 * s, C(0x3BD15A))
+            c.px(dx + dw / 2 + 7 * s, g - g / 4 + 5 * s, C(0xFFC040))
         }
     }
 
