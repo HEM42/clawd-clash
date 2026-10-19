@@ -14,12 +14,18 @@ import Foundation
 enum HawkinsHero: Int, CaseIterable {
     // The Party
     case eleven, mikeWheeler, dustinHenderson
+    case lucasSinclawd, willByers, maxMayfield, ericaSinclair
+    // The teenagers
+    case steveHarringclawd, nancyWheeler, jonathanByers, robinBuckley, eddieMunclawd, argyle, barb, derekTurnbow
+    // The grown-ups
+    case chiefHopper, joyceByers
     case hem   // always last (`Universe.hem`)
 }
 
 enum HawkinsVillain: Int, CaseIterable {
     // The Upside Down and the people who hunt the kids
     case vecna
+    case one, mindFlayer, democlawgon, drBrenner, billyHargrove
 }
 
 extension Universe {
@@ -32,9 +38,11 @@ enum HawkinsFacts {
     static let entry = UniverseEntry(universe: .hawkins, key: "hawkins", title: "Stranger Clawds", facts: facts)
     static let facts = UniverseFacts(
         // The counts come from the enums, never typed by hand.
-        villainCount: HawkinsVillain.allCases.count, heroCount: HawkinsHero.allCases.count
-        // Nothing else yet: no small fry until the Demodog, Dart, the Demobat and the flayed rat are drawn, Vecna and
-        // One become rivals once One is, and the compaction (taken to the Upside Down) comes with the mechanics.
+        villainCount: HawkinsVillain.allCases.count, heroCount: HawkinsHero.allCases.count,
+        // Vecna and One are the same man in two forms, so they never lead sessions back to back.
+        rivals: [HawkinsVillain.vecna.rawValue, HawkinsVillain.one.rawValue]
+        // Nothing else yet: no small fry until the Demodog, Dart, the Demobat and the flayed rat are drawn, and the
+        // compaction (taken to the Upside Down) comes with the mechanics.
         //
         // Everything below is optional: uncomment what your universe needs. Ids here are local: a villain's is its
         // rawValue, a hero's `UniverseFacts.heroBase + rawValue`.
