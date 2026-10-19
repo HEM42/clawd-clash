@@ -96,6 +96,12 @@ private func heroSaberPose(_ t: Double, walking: Bool, role: FightRole, speed: D
 /// Lightsabers are switched off while a hero rests.
 private func heroLit(_ role: FightRole) -> Bool { if case .rest = role { return false } else { return true } }
 
+/// A glint of light on the toe of each two-row boot (not when sitting), lifting with the leg as it steps.
+private func drawBootShine(_ c: PixelCanvas, step: Int, _ col: Px) {
+    guard !seatedPose else { return }
+    for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx, step >= 0 && i % 2 == step ? 41 : 42, col) }
+}
+
 /// A blaster hero's gun: how far to lift it (the kick of a shot, or waved while cheering) and a sideways shake when
 /// hit. Only the gun moves; the shot and its flash are the engine's.
 private func heroGun(_ p: Pose, _ role: FightRole) -> (recoil: Int, shake: Int) {
@@ -489,6 +495,9 @@ private func drawJedi(_ c: PixelCanvas, _ pose: Pose, _ who: SWHero) {
     switch who {                                                    // boots
     case .quigon: drawBoots(c, C(0x4A3420), step: step, rows: 2)
     case .mace: drawBoots(c, C(0x1A1410), step: step, rows: 2)
+    case .ahsoka:                                                   // dark leather boots
+        drawBoots(c, C(0x3A2E24), step: step, rows: 2); drawBootShine(c, step: step, C(0x6A5A4A))
+    case .yoda: drawBoots(c, C(0x7A9E52), step: step, rows: 1)     // his toes, a shade darker
     case .rey:
         // Her boots, wound with strips of cloth.
         drawBoots(c, C(0x6E6250), step: step, rows: 3)
@@ -547,8 +556,16 @@ private func drawJedi(_ c: PixelCanvas, _ pose: Pose, _ who: SWHero) {
         c.pattern(38, 26 + droop, droop > 1 ? ["EEEEEEEE.", "EEEeeeE..", "EEEEE...."] : ["EEEEEEEEE", "EEEEeeeE.", "EEEEEE..."],
                   ["E": ear, "e": earIn])
         if droop > 1 { c.rect(21, 27, 4, 1, C(0x6E9148)); c.rect(31, 27, 4, 1, C(0x6E9148)) }   // eyes half shut
+        c.rect(19, 26, 4, 1, C(0xA8C878)); c.px(18, 27, C(0xA8C878))   // the light on his crown
+        c.rect(26, 27, 4, 1, C(0x7AA052))                             // a furrowed brow
         c.pattern(22, 24, ["W..W..W.W..W", ".W..W...W.W."], ["W": C(0xEDEDED)])
+        // The robe's sleeves at his wrists.
+        c.rect(15, 33, 3, 1, robe); c.rect(38, 33, 3, 1, C(0x5E3F22))
+        // The rough robe over the cream tunic: its edges shaded, folds, a cord tied at the waist.
         c.rect(18, 33, 20, 5, robe); c.rect(26, 33, 4, 5, cream)
+        c.rect(25, 33, 1, 5, C(0x5E3F22)); c.rect(29, 33, 1, 5, C(0xC9B892)); c.rect(37, 33, 1, 5, C(0x5E3F22))
+        c.px(20, 34, C(0x8E6A44)); c.px(21, 35, C(0x5E3F22)); c.px(34, 34, C(0x5E3F22)); c.px(33, 37, C(0x5E3F22))
+        c.rect(18, 36, 20, 1, belt); c.px(27, 36, C(0x8A6A48)); c.px(28, 37, belt)
     case .rey:
         let H = C(0x4A2E18)
         let l = C(0x6E4626)
@@ -567,20 +584,28 @@ private func drawJedi(_ c: PixelCanvas, _ pose: Pose, _ who: SWHero) {
     case .ahsoka:
         let W = C(0xF4F4F4), B = C(0x2E62D6)
         // montrals and lekku: white with blue stripes
+        // montrals and lekku: white with blue stripes, shaded down their far sides
         c.pattern(17, 16, [
-            ".WW..............WW.",
+            ".Ws..............Ws.",
             ".WB..............BW.",
-            "WWW..............WWW",
+            "WWs..............WWs",
             "WBW..............WBW",
-            "WWWW............WWWW",
-            "WBWW............WWBW",
-            "WWWWWWWWWWWWWWWWWWWW",
-            ".WWWWWWWWWWWWWWWWWW.",
+            "WWWs............WWWs",
+            "WBWW............WWBs",
+            "WWWWWWWWWWWWWWWWWWWs",
+            ".WWWWWWWWWWWWWWWWWs.",
             "..BB.BB..BB..BB.BB..",
-        ], ["W": W, "B": B])
+        ], ["W": W, "B": B, "s": C(0xC4CAD6)])
         c.rect(21, 28, 4, 1, W); c.rect(31, 28, 4, 1, W)        // facial markings
         c.rect(27, 30, 2, 3, W)
+        c.rect(15, 35, 3, 1, C(0x4A3A30)); c.rect(38, 35, 3, 1, C(0x4A3A30))   // the arm wraps
+        // The leather top: a lit neckline, a fold shaded down the side; the belt with its clasp, and the leather
+        // strips of the skirt hanging from it.
         c.rect(18, 33, 20, 5, C(0x4A3A30)); c.rect(18, 35, 20, 1, C(0x8A6A44))
+        c.rect(22, 33, 12, 1, C(0x6A5444)); c.rect(37, 33, 1, 5, C(0x342820))
+        c.px(20, 34, C(0x5E4C40)); c.px(33, 34, C(0x342820))
+        c.rect(27, 35, 2, 1, C(0xB8BCC4)); c.px(27, 35, C(0xE4E8EE))
+        for x in [21, 25, 30, 34] { c.rect(x, 36, 1, 2, C(0x342820)) }
     default:
         break
     }
@@ -608,11 +633,26 @@ private func drawGunner(_ c: PixelCanvas, _ pose: Pose, _ who: SWHero) {
         drawLegs(c, look, step: step)
         c.oy = base + bob
         drawBody(c, look)
-        c.pattern(18, 21, ["...FFFFFFFFFFFFFF...", ".FFFfFFFFFFFFFfFFFF.", "FFFFFFFFfFFFFFFFFFFF", "FfFFFFFFFFFFFFFFFfFF", "FF................FF"],
-                  ["F": fur, "f": furLight])
-        for (x, y) in [(20, 33), (24, 35), (30, 34), (34, 33), (22, 30), (35, 29)] { c.px(x, y, furLight) }
+        if !seatedPose {                                             // fur on the legs, in short strokes
+            for (i, lx) in [19, 23, 31, 35].enumerated() { c.rect(lx + 1, step >= 0 && i % 2 == step ? 38 : 39, 1, 2, furDark) }
+        }
+        // The shaggy mane: light running down the strands, darker locks between them.
+        c.pattern(18, 21, ["...FFFffFFFFFfFFF...", ".FFfdFFFFfFFFFdfFFF.", "FfFFdFFFFfFFFFFdFfFF", "FfFFFdFFFFFFFFFFdfFF", "Ff................fF"],
+                  ["F": fur, "f": furLight, "d": furDark])
+        // Fur in short strokes falling down the body, a heavy brow and a dark nose.
+        for (x, y) in [(20, 32), (33, 33), (35, 28), (19, 27)] { c.rect(x, y, 1, 2, furLight) }
+        for (x, y) in [(29, 35), (21, 34), (35, 32)] { c.rect(x, y, 1, 2, furDark) }
+        c.rect(22, 28, 2, 1, furDark); c.rect(32, 28, 2, 1, furDark)
+        c.rect(27, 31, 2, 1, C(0x2A1A10))
         c.rect(25, 33, 6, 1, C(0x3A2412))                       // mouth
-        for i in 0..<10 { c.rect(19 + i * 2, 36 - i, 2, 2, i % 3 == 0 ? C(0xB9BEC8) : C(0x4A3020)) }  // bandolier
+        for i in 0..<10 {                                       // bandolier: leather, and the lit steel boxes on it
+            let x = 19 + i * 2, y = 36 - i
+            if i % 3 == 0 {
+                c.rect(x, y, 2, 2, C(0xB9BEC8)); c.px(x, y, C(0xE4E8EE)); c.px(x + 1, y + 1, C(0x8A8F99))
+            } else {
+                c.rect(x, y, 2, 2, C(0x4A3020)); c.px(x, y, C(0x6A4830))
+            }
+        }
         if let s = pose.signature, s > 0.08, s < 0.92 {
             // Signature: head back, arms up, a full-throated Wookiee roar.
             let k = habitArc((s - 0.08) / 0.84, hold: 0.6)
@@ -638,14 +678,24 @@ private func drawGunner(_ c: PixelCanvas, _ pose: Pose, _ who: SWHero) {
             c.rect(18 - k, y, 20 + k * 2, 1, robe)
             c.px(18 - k, y, robeDark); c.px(37 + k, y, robeDark)
         }
+        // A soft fold either side of each leg under the robe, and a frayed, shaded hem.
+        for x in [22, 26, 30, 34] { c.rect(x, 40, 1, 3, robeDark) }
+        for x in stride(from: 16, through: 39, by: 3) { c.px(x, 43, robeDark) }
         c.oy = base + bob
         drawBody(c, look)
-        c.pattern(18, 19, ["......RRRRRRRR......", "....RRRRRRRRRRRR....", "..RRRRRRRRRRRRRRRR..", ".RRRRRRRRRRRRRRRRRR.", "RRRRRRRRRRRRRRRRRRRR",
-                           "RRRRRRRRRRRRRRRRRRRR", "RRRRRRRRRRRRRRRRRRRR"], ["R": robe])
+        c.rect(15, 35, 3, 1, robeDark); c.rect(38, 35, 3, 1, robeDark)   // the sleeves' frayed cuffs
+        // The hood: the light along its crown, its far side shaded, its rim lit round the face.
+        c.pattern(18, 19, ["......RRRRRRRR......", "....RRlllRRRRRRR....", "..RRllRRRRRRRRRRRd..", ".RRlRRRRRRRRRRRRRRd.", "RRRRRRRRRRRRRRRRRRRd",
+                           "RRRRRRRRRRRRRRRRRRRd", "RRRRRRRRRRRRRRRRRRRR"], ["R": robe, "l": C(0x9A7650), "d": robeDark])
+        c.rect(20, 26, 17, 1, C(0x8E6C48)); c.rect(20, 27, 1, 6, C(0x8E6C48))
         c.rect(21, 27, 15, 6, C(0x14100C))                      // shadowed face
         let glow = sin(t * 3) > -0.8 ? C(0xFFE14A) : C(0x8A7A2A)
         c.rect(24, 29, 2, 2, glow); c.rect(31, 29, 2, 2, glow)
+        // The robe's folds; a belt with a buckle, a pouch and a power cell on it.
+        c.px(20, 34, robeDark); c.px(33, 34, robeDark); c.rect(37, 33, 1, 5, robeDark)
         c.rect(18, 35, 20, 1, C(0x3A2A18))
+        c.rect(27, 35, 2, 1, C(0x9AA0AE))
+        c.rect(20, 35, 2, 2, C(0x4A3622)); c.rect(32, 35, 2, 2, C(0x6A6E78)); c.px(32, 35, C(0xB8BCC4))
     }
     let (recoil, shake) = heroGun(pose, role)
     c.oy = base + bob - recoil
@@ -672,16 +722,20 @@ private func drawEwok(_ c: PixelCanvas, _ pose: Pose) {
     drawLegs(c, look, step: step)
     c.oy += step == 0 ? -1 : 0
     drawBody(c, look)
-    for (x, y) in [(20, 33), (27, 35), (33, 32), (23, 30), (31, 36)] { c.px(x, y, furLight) }
-    // leather hood with little ears poking through
+    // Fur in short strokes, lighter on the cheeks and chest, darker lower down.
+    for (x, y) in [(20, 33), (33, 32), (19, 28), (36, 28)] { c.rect(x, y, 1, 2, furLight) }
+    for (x, y) in [(24, 35), (31, 35)] { c.rect(x, y, 1, 2, furDark) }
+    c.rect(26, 34, 4, 1, furLight)
+    // leather hood with little ears poking through: lit along the top, a seam stitched over the crown, its far
+    // side and rim in shadow
     c.pattern(17, 22, [
         "..E...............E...",
-        ".EEH.HHHHHHHHHHH.HEE..",
-        ".HHHHHHHHhHHHHHHHHHH..",
-        "HHHHHHhHHHHHHHhHHHHHH.",
-        "HH..................HH",
-        "HH..................HH",
-    ], ["H": C(0xB07A42), "h": C(0x8A5A2E), "E": furDark])
+        ".EEH.HlllHHHHHHH.HEE..",
+        ".HHHlHHHHsHsHsHHHHhH..",
+        "HHHHHHhhHHHHHhhHHHHhH.",
+        "HH..................hH",
+        "HH..................hH",
+    ], ["H": C(0xB07A42), "h": C(0x8A5A2E), "l": C(0xCC9858), "s": C(0x6A4222), "E": furDark])
     c.rect(22, 29, 3, 3, C(0x0E0A08)); c.rect(31, 29, 3, 3, C(0x0E0A08))   // big dark eyes
     c.px(23, 29, C(0x6A5A4A)); c.px(32, 29, C(0x6A5A4A))
     c.rect(27, 32, 2, 1, C(0x2A1A10))                                      // little nose

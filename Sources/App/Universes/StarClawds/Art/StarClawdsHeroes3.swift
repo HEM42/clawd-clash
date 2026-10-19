@@ -59,6 +59,12 @@ private func heroBob(_ p: Pose, _ rate: Double, over: Double = 0.6) -> Int {
 /// cheer, but Clawd Wars' heroes never raised it while waiting or checking it (the smoke shows that).
 private func heroGunY(_ p: Pose) -> Int { p.cheering ? p.gunY : -p.recoil }
 
+/// A glint of light on the toe of each two-row boot (not when sitting), lifting with the leg as it steps.
+private func drawBootShine(_ c: PixelCanvas, step: Int, _ col: Px) {
+    guard !seatedPose else { return }
+    for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx, step >= 0 && i % 2 == step ? 41 : 42, col) }
+}
+
 /// A Mandalorian helmet: the T visor.
 private func drawMandoHelmet(_ c: PixelCanvas, _ main: Px, _ shine: Px) {
     c.pattern(17, 19, [
@@ -164,11 +170,20 @@ private func drawBabuFrik(_ c: PixelCanvas, _ p: Pose) {
     c.rect(17, 37, 22, 1, C(0xA87A48))
     c.rect(17, 40, 22, 1, woodDark)
     c.rect(17, 37, 1, 7, woodDark); c.rect(38, 37, 1, 7, woodDark); c.rect(27, 38, 1, 6, woodDark)
+    // Its grain in short strokes, a nail in each board's corner, the bottom in shadow.
+    c.rect(20, 39, 3, 1, C(0x7A5530)); c.rect(31, 38, 3, 1, C(0x7A5530)); c.rect(22, 42, 3, 1, C(0x7A5530))
+    c.rect(32, 42, 2, 1, C(0x7A5530))
+    for x in [18, 26, 28, 37] { c.px(x, 38, C(0x4A3420)); c.px(x, 41, C(0x4A3420)) }
+    c.rect(18, 43, 20, 1, C(0x5A3E22))
     c.oy = rig.base + heroBob(p, 5)
-    // A very small body in a dark coat, little feet.
+    // A very small body in a dark coat: lapels, buttons, a tool belt, little boots.
     c.rect(24, 35, 2, 2, coat); c.rect(30, 35, 2, 2, coat)
+    c.rect(24, 36, 2, 1, C(0x2A1A12)); c.rect(30, 36, 2, 1, C(0x2A1A12))
     c.rect(23, 31, 11, 5, coat)
     c.rect(23, 31, 11, 1, C(0x6A4434))
+    c.px(26, 32, C(0x6A4434)); c.px(30, 32, C(0x6A4434)); c.px(28, 33, C(0x9A7A3A)); c.px(33, 32, C(0x34201A))
+    c.rect(33, 31, 1, 5, C(0x34201A))
+    c.rect(23, 34, 11, 1, C(0x2A1A12)); c.px(24, 34, brass); c.rect(31, 34, 2, 1, C(0x9AA0AE))
     // The head.
     c.pattern(20, 16, [
         ".....H..H.H.....",
@@ -187,6 +202,10 @@ private func drawBabuFrik(_ c: PixelCanvas, _ p: Pose) {
         "..SSSSSSSSSSSS..",
         "....SSSSSSSS....",
     ], ["H": hair, "S": skin, "w": wrinkle, "N": nose, "G": C(0x3A2A22), "K": ink, "M": C(0x8A4A3A)])
+    c.rect(24, 18, 7, 1, C(0xC8C8CC)); c.px(24, 17, C(0xC8C8CC))      // the tuft's roots in shadow
+    c.rect(22, 19, 3, 1, C(0xF6E2D4)); c.px(21, 20, C(0xF6E2D4))      // the light on his brow
+    c.rect(32, 25, 2, 1, C(0xEAB4A2))                                  // and on his nose
+    c.rect(21, 23, 3, 1, C(0x5A4636))                                  // the light along his heavy brow
     // The loupe: lenses on an arm out in front of his near eye, the big one wobbling as he peers.
     let peer = sin(t * 2.2) > 0.3 ? 1 : 0
     c.rect(35, 23, 3, 1, brass)
@@ -210,16 +229,37 @@ private func drawMando(_ c: PixelCanvas, _ p: Pose) {
     let seat = p.seated ? 4 : 0
     c.oy -= seat; c.baseY += seat
     drawCape(c, t: p.t, speed: 1.2, color: C(0x5A4430), edge: C(0x3E2E20))
+    // A fold falling down each side of the cape, swaying with it.
+    for y in 34...42 where y + c.oy <= 43 {
+        let k = Double(y - 27) / 16
+        let hw = 10.5 + k * 4.5
+        let sway = sin(p.t * 1.2 + k * 2.2) * k * 1.6
+        let l = Int((Sprite.bodyCenterX - hw + sway).rounded())
+        let r = Int((Sprite.bodyCenterX + hw + sway).rounded()) - 1
+        c.px(l + 2, y, C(0x4A3826)); c.px(r - 2, y, C(0x4A3826))
+        if y >= 39 { c.px(l + 1, y, C(0x6E5640)) }
+    }
     c.oy += seat; c.baseY -= seat
     let look = Look(body: suit, shade: C(0x4E4838), leg: C(0x5A5446), arm: suit, eye: nil)
     c.oy = rig.ground
     drawLegs(c, look, step: p.step)
+    drawBoots(c, C(0x3A2E22), step: p.step, rows: 2)               // worn brown boots
+    drawBootShine(c, step: p.step, C(0x6A5A48))
     c.oy = rig.base + heroBob(p, 3.5)
     drawBody(c, look)
+    c.rect(15, 34, 3, 2, C(0x9AA0AC)); c.rect(15, 34, 3, 1, beskar)   // the vambrace
+    c.rect(38, 35, 3, 1, C(0x3E3628))                                  // a glove
     drawMandoHelmet(c, beskar, C(0xF2F4F8))
+    c.rect(37, 24, 1, 7, C(0xA8AEBA)); c.rect(21, 32, 15, 1, C(0xA8AEBA))   // the helmet's far side and rim in shadow
+    c.rect(20, 20, 3, 1, C(0xF2F4F8))                                  // the light along the dome
+    // The beskar chest plates, lit along the top, a seam down the middle and a rivet either side.
     c.rect(19, 33, 18, 3, beskar)
     c.rect(19, 33, 18, 1, C(0xE8ECF2))
+    c.rect(28, 34, 1, 2, C(0x8E949F)); c.px(21, 34, C(0x8E949F)); c.px(34, 34, C(0x8E949F)); c.rect(36, 34, 1, 2, C(0xA8AEBA))
+    // The belt, a buckle and pouches at the hip.
     c.rect(18, 36, 20, 1, C(0x3A2A1C))
+    c.rect(27, 36, 2, 1, C(0x9AA0AC)); c.px(27, 36, C(0xE8ECF2))
+    c.rect(20, 36, 2, 2, C(0x4A3826)); c.rect(33, 36, 2, 2, C(0x4A3826))
     c.oy += heroGunY(p); c.ox += rig.shake
     c.pattern(38, 31, [
         "...........SS.......",
