@@ -5,11 +5,11 @@ import Foundation
 // context compacted, they hit 88 miles per hour: blue sparks crackle over them, a white flash, and they're gone,
 // leaving two lines of fire burning on the ground where they went. A beat later three sonic booms bring them back
 // where they stood, and OUTATIME (the DeLorean's number plate) types itself out over their head. Same session, same
-// face. It reuses The Clawd Files' missing-time clock (`SessionRecord.abducted`, `missingTimeLength`).
+// face. It runs on the engine's missing-time clock (`SessionRecord.abducted`, `missingTimeLength`).
 
 /// Where a trip is, `k` 0…1 through it: how visible the traveller is, how strong the sparks, the flash and the fire
 /// trails are, and the caption typed so far.
-struct OutaTime {
+struct ClawdbergOutaTime {
     let alpha: Double
     let sparks: Double
     let flash: Double
@@ -40,16 +40,16 @@ struct OutaTime {
     }
 }
 
-/// Where the traveller stands on `drawOutaTime`'s canvas (its body's middle), the fire trails running ahead of them.
-let outaTimeAnchor = 24
-/// The width of `drawOutaTime`'s canvas; it's `Sprite.height` tall, its rows lined up with the traveller's sprite.
-let outaTimeWidth = 150
+/// Where the traveller stands on `clawdbergDrawOutaTime`'s canvas (its body's middle), the fire trails running ahead of them.
+let clawdbergOutaTimeAnchor = 24
+/// The width of `clawdbergDrawOutaTime`'s canvas; it's `Sprite.height` tall, its rows lined up with the traveller's sprite.
+let clawdbergOutaTimeWidth = 150
 
 /// The 88 mph effects on their own canvas: blue-white sparks crackling round the traveller, the white flash, and the
 /// two fire trails burning along the ground ahead of where they stood (facing right; mirror it for a traveller facing
 /// left).
-func drawOutaTime(_ c: PixelCanvas, _ o: OutaTime, t: Double) {
-    let x0 = outaTimeAnchor, feet = 43
+func clawdbergDrawOutaTime(_ c: PixelCanvas, _ o: ClawdbergOutaTime, t: Double) {
+    let x0 = clawdbergOutaTimeAnchor, feet = 43
     if o.trails > 0 {
         let len = Int(Double(c.w - x0) * min(1, o.trails * 3))
         for (i, y) in [feet - 1, feet + 1].enumerated() {
@@ -81,14 +81,14 @@ func drawOutaTime(_ c: PixelCanvas, _ o: OutaTime, t: Double) {
     }
 }
 
-extension OutaTime: CompactionLook {
+extension ClawdbergOutaTime: CompactionLook {
     /// The sparks, the flash and the fire trails, from the traveller's feet back the way it faces.
     func layers(cast: Cast, x: CGFloat, y: CGFloat, lift: CGFloat, scale: CGFloat, facing: CGFloat, t: Double) -> [StageLayer] {
-        let fx = PixelCanvas(outaTimeWidth, Sprite.height)
-        drawOutaTime(fx, self, t: t)
+        let fx = PixelCanvas(clawdbergOutaTimeWidth, Sprite.height)
+        clawdbergDrawOutaTime(fx, self, t: t)
         guard let img = fx.makeImage() else { return [] }
         let w = CGFloat(fx.w) * scale, h = CGFloat(fx.h) * scale
-        let left = facing < 0 ? x - (CGFloat(fx.w - outaTimeAnchor)) * scale : x - CGFloat(outaTimeAnchor) * scale
+        let left = facing < 0 ? x - (CGFloat(fx.w - clawdbergOutaTimeAnchor)) * scale : x - CGFloat(clawdbergOutaTimeAnchor) * scale
         return [StageLayer(image: img, rect: CGRect(x: left.rounded(), y: y, width: w, height: h), mirrored: facing < 0)]
     }
 }

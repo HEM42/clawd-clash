@@ -40,6 +40,14 @@ func said(_ s: String, _ ctx: CGContext, centerX: CGFloat, bottom: CGFloat) {
     NSGraphicsContext.restoreGraphicsState()
 }
 
+/// A ride standing on the floor of a panel, centred on `x`.
+private func ride(_ ctx: CGContext, _ o: CGPoint, _ kind: Ride, x: Double, lift: Double = 0, ramp: Double, lit: Bool, alpha: CGFloat = 1) {
+    let c = PixelCanvas(Ride.width, Ride.height)
+    drawRide(c, kind, ramp: ramp, engines: lit, gear: true)
+    c.addOutline(C(0xFFFFFF, 0.92))
+    put(c, ctx, x: x - Double(Ride.width) / 2, y: Double(ph - 8 - Ride.height + 1) - lift, unit: unit, frameH: ph, origin: o, alpha: alpha)
+}
+
 func slayerShowcase() {
     Universe.shown = .slayer
     let buffy = Cast.hero(SlayerHero.buffyClawmers), willow = Cast.hero(SlayerHero.willowRosenclaw)

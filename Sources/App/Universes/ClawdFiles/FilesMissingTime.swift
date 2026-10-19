@@ -5,9 +5,6 @@ import Foundation
 // sight, nothing for a beat, then they're set back down where they stood, and MISSING TIME types itself out over
 // their head. Same session, same face, some time gone.
 
-/// How long it plays, in seconds.
-let missingTimeLength = 6.0
-
 /// Where an abduction is, `k` 0…1 through it: how high the agent is lifted (sprite pixels), how visible they are,
 /// how strong the beam is, and the caption typed so far.
 struct MissingTime {

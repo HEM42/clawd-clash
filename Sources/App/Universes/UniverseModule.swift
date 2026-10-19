@@ -153,6 +153,10 @@ struct StageQuirks {
     static func hushed(_ line: String) -> String { String(repeating: "\u{00A0}", count: max(3, line.count)) }
 }
 
+/// How long a compaction plays on stage (`SessionRecord.abducted` to set down), in seconds: the missing-time clock
+/// every `compactionLook` runs on.
+let missingTimeLength = 6.0
+
 /// A moment of a compaction on stage: The Clawd Files' abduction beam, Stevie Clawdberg's 88 mph, Clawd Slayer's
 /// forgetting spell. The overlay asks for it every frame while it plays.
 protocol CompactionLook {

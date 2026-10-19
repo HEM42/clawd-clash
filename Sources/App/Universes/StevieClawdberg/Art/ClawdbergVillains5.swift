@@ -542,3 +542,11 @@ private func drawDrWoo(_ c: PixelCanvas, _ p: Pose) {
     c.rect(39, 30, 6, 8, board); c.rect(40, 31, 4, 6, paper); c.rect(41, 30, 2, 1, C(0x8A8A90))
     for y in [32, 34, 36] { c.rect(40, y, 3, 1, C(0x8A8A96)) }
 }
+
+/// Black dress shoes on the four feet; the lifted pair a row higher while walking.
+private func drawDressShoes(_ c: PixelCanvas, step: Int, color: Px = C(0x18181C)) {
+    guard !seatedPose else { return }
+    for (i, lx) in [19, 23, 31, 35].enumerated() {
+        c.rect(lx, step >= 0 && i % 2 == step ? 41 : 42, 2, 2, color)
+    }
+}

@@ -6,7 +6,7 @@ import Foundation
 // and puffs pale pink smoke, a big "?" pops up over their head and they say who they think they are ("JOAN?" for
 // Buffy, the name she picks; "RANDY?" for Spyke, off the label in his coat; "ALEX?" for Xander; "WHO AM I?" for the
 // rest). Then the crystal cracks underfoot, as in the episode, and it all comes back: a short shimmer and the caption
-// clears. Same session, same face throughout. It runs on The Clawd Files' missing-time clock (`SessionRecord.abducted`,
+// clears. Same session, same face throughout. It runs on the engine's missing-time clock (`SessionRecord.abducted`,
 // `missingTimeLength`).
 
 /// Where the spell is, `k` 0…1 through it: how bright the crystal glows, whether it has cracked (and the burst of

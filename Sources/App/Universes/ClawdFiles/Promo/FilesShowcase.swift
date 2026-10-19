@@ -12,7 +12,7 @@ struct FilesShowcase: Showcase {
 // MARK: The Clawd Files
 
 /// A ride (the sedan, the saucer) standing on the floor of a panel, centred on `x`.
-func ride(_ ctx: CGContext, _ o: CGPoint, _ kind: Ride, x: Double, lift: Double = 0, ramp: Double, lit: Bool, alpha: CGFloat = 1) {
+private func ride(_ ctx: CGContext, _ o: CGPoint, _ kind: Ride, x: Double, lift: Double = 0, ramp: Double, lit: Bool, alpha: CGFloat = 1) {
     let c = PixelCanvas(Ride.width, Ride.height)
     drawRide(c, kind, ramp: ramp, engines: lit, gear: true)
     c.addOutline(C(0xFFFFFF, 0.92))
