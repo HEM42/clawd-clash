@@ -145,10 +145,17 @@ private func drawLando(_ c: PixelCanvas, _ p: Pose) {
 
 /// Zorii Bliss: the bronze helmet with its dark visor and an orange glint, maroon flight suit.
 private func drawZorii(_ c: PixelCanvas, _ p: Pose) {
-    let suit = C(0x5A2A3A)
-    let look = Look(body: suit, shade: C(0x44202C), leg: C(0x3A2A30), arm: suit, eye: nil)
-    heroLegs(c, p, look)
+    let suit = C(0x5A2A3A), suitDark = C(0x44202C), suitHi = C(0x74384A)
+    let look = Look(body: suit, shade: suitDark, leg: C(0x3A2A30), arm: suit, eye: nil)
+    let grounded = p.cheering && !p.walking
+    if grounded { c.oy -= p.hop }
+    drawLegs(c, look, step: p.step)
+    drawBoots(c, C(0x1E1418), step: p.step, rows: 3)   // tall black flight boots
+    if grounded { c.oy += p.hop }
+    c.oy += p.breathe
     drawBody(c, look)
+    c.rect(15, 35, 3, 1, suitDark); c.rect(38, 35, 3, 1, suitDark)   // the gloves' cuffs
+    // The helmet: the seam round the dome, the visor's bolts, the grille's slots.
     c.pattern(17, 19, [
         ".....BBBBBBBBBBBB.....",
         "...BBBBBBBBBBBBBBBB...",
@@ -157,15 +164,23 @@ private func drawZorii(_ c: PixelCanvas, _ p: Pose) {
         ".BBBBBBBBBBBBBBBBBBBB.",
         "BBBBBBBBBBBBBBBBBBBBBB",
         "BBBBBBBBBBBBBBBBBBBBBB",
-        "BBBBBBBBBBBBBBBBBBBBBB",
-        "BBBBBBBBBBBBBBBBBBBBBB",
-        "BBVVVVVVVVVVVVVVVVVVBB",
+        "BBBBBBBBBBBBBBBBBBBBBs",
+        "ssssssssssssssssssssss",
+        "BoVVVVVVVVVVVVVVVVVVoB",
         "BBvvvvvvvvvvvvvvvvvvBB",
-        "BBBBBBBBBBBBBBBBBBBBBB",
-        ".BBBBBBBBGGGGBBBBBBBB.",
-        "..BBBBBBBBBBBBBBBBBB..",
-    ], ["B": C(0xB8923E), "h": C(0xE8C870), "V": C(0x1A1410), "v": C(0xD86A2A), "G": C(0x5A4420)])
+        "BBBBBBBBBBBBBBBBBBBBBs",
+        ".BBBBBBBBGgGgBBBBBBBs.",
+        "..ssssssssssssssssss..",
+    ], ["B": C(0xB8923E), "h": C(0xE8C870), "V": C(0x1A1410), "v": C(0xD86A2A), "G": C(0x5A4420),
+        "g": C(0x2E2210), "s": C(0x8E6E2C), "o": C(0x5A4420)])
+    // The flight suit: a quilted chest, the light on one shoulder, a fold down the side.
+    c.rect(19, 33, 2, 1, suitHi); c.rect(34, 33, 2, 1, suitHi)
+    for x in [21, 24, 31, 34] { c.px(x, 34, suitDark) }
+    c.rect(37, 33, 1, 4, suitDark)
+    // The belt, its bronze buckle, the holster strap hanging off it.
     c.rect(18, 36, 20, 1, C(0x2A1A1E))
+    c.rect(27, 36, 2, 1, C(0xB8923E)); c.px(27, 36, C(0xE8C870))
+    c.rect(33, 37, 2, 1, C(0x2A1A1E))
     heroPistol(c, p)
 }
 
@@ -221,25 +236,41 @@ private func drawMaz(_ c: PixelCanvas, _ p: Pose) {
 
 /// Wedge Antilles: an X-wing pilot, orange flight suit and white helmet with red flashes.
 private func drawWedge(_ c: PixelCanvas, _ p: Pose) {
-    let suit = C(0xE0782A), white = C(0xEDEDED)
+    let suit = C(0xE0782A), white = C(0xEDEDED), suitShade = C(0xB85E1E), strap = C(0xC8C8CC)
     let look = Look(leg: suit, arm: suit)
-    heroLegs(c, p, look)
+    let grounded = p.cheering && !p.walking
+    if grounded { c.oy -= p.hop }
+    drawLegs(c, look, step: p.step)
+    drawBoots(c, C(0x1E1E24), step: p.step, rows: 2)   // black flight boots
+    if grounded { c.oy += p.hop }
+    c.oy += p.breathe
     drawBody(c, look)
+    c.rect(15, 35, 3, 1, C(0x2A2A30)); c.rect(38, 35, 3, 1, C(0x2A2A30))   // black gloves
+    // The helmet: a shine on the dome, its right side in shadow, the visor's rim catching the light.
     c.pattern(17, 19, [
         ".....WWWWWWWWWWWW.....",
-        "...WWWWWWWWWWWWWWWW...",
-        "..WWRRRWWWWWWWWRRRWW..",
-        ".WWWWWWWWWWWWWWWWWWWW.",
-        ".WWWWWWWWWWWWWWWWWWWW.",
-        "WWGGGGGGGGGGGGGGGGGGWW",
-        "WW..................WW",
-        "WW..................WW",
+        "...WWWlWWWWWWWWWWWS...",
+        "..WWRRRWWWWWWWWRRRSW..",
+        ".WWWWWWWWWWWWWWWWWWSW.",
+        ".WWWWWWWWWWWWWWWWWWSW.",
+        "WWGGgGGGGGGGGGGGGGGGWW",
+        "WW..................SW",
+        "WW..................SW",
         "W....................W",
-    ], ["W": white, "R": C(0xD84A2A), "G": C(0x5A5A64)])
+    ], ["W": white, "R": C(0xD84A2A), "G": C(0x5A5A64), "g": C(0x9AA0AE), "l": C(0xFFFFFF), "S": strap])
+    // The flight suit, folds shaded down the side and under the harness.
     c.rect(18, 33, 20, 5, suit)
+    c.rect(37, 33, 1, 5, suitShade); c.px(24, 36, suitShade); c.px(31, 36, suitShade)
+    c.rect(18, 37, 20, 1, suitShade)
+    // The white flak vest's harness, its buckles where the straps cross.
     c.rect(21, 33, 2, 5, white); c.rect(33, 33, 2, 5, white)    // harness
     c.rect(18, 35, 20, 1, white)
-    c.rect(25, 33, 6, 2, C(0x6A6E78))                           // chest box
+    c.rect(22, 33, 1, 5, strap); c.rect(34, 33, 1, 5, strap)
+    c.rect(21, 35, 2, 1, C(0x9AA0AE)); c.rect(33, 35, 2, 1, C(0x9AA0AE))
+    // The chest box, its switches lit.
+    c.rect(25, 33, 6, 2, C(0x6A6E78))
+    c.rect(25, 34, 6, 1, C(0x4E525C))
+    c.px(26, 33, C(0xD84A2A)); c.px(28, 33, C(0x3A7BEA)); c.px(29, 33, C(0x9AA0AE))
     heroPistol(c, p)
 }
 
@@ -307,15 +338,29 @@ private func drawMonMothma(_ c: PixelCanvas, _ p: Pose) {
 
 /// Padmé Amidala, as at Geonosis: white suit, dark hair in a bun, a pistol.
 private func drawPadme(_ c: PixelCanvas, _ p: Pose) {
-    let suit = C(0xF2F0EA), hair = C(0x4A2A1A)
+    let suit = C(0xF2F0EA), suitShade = C(0xD4D2CC), hair = C(0x4A2A1A), hairHi = C(0x6A4028)
     let look = Look(leg: suit, arm: suit)
-    heroLegs(c, p, look)
+    let grounded = p.cheering && !p.walking
+    if grounded { c.oy -= p.hop }
+    drawLegs(c, look, step: p.step)
+    drawBoots(c, C(0xC4C0B6), step: p.step, rows: 2)   // pale boots
+    if grounded { c.oy += p.hop }
+    c.oy += p.breathe
     drawBody(c, look)
-    c.pattern(18, 22, ["...HHHHHHHHHHHH...", ".HHHHHHHHHHHHHHHH.", "HHHHHHHHHHHHHHHHHH", "HH..............HH"], ["H": hair])
-    c.pattern(13, 22, [".HHH.", "HHHHH", "HHHHH", ".HHH."], ["H": hair])      // the bun at the back
+    c.rect(15, 35, 3, 1, suitShade); c.rect(38, 35, 3, 1, suitShade)   // the sleeves' cuffs
+    c.pattern(18, 22, ["...HHHHHlHHHHHH...", ".HHHHHHHHHHHlHHHH.", "HHHlHHHHHHHHHHHHHH", "HH..............HH"],
+              ["H": hair, "l": hairHi])
+    // The bun at the back, a band wound round it.
+    c.pattern(13, 22, [".HlH.", "HlHHH", "bbbbb", ".HHH."], ["H": hair, "l": hairHi, "b": C(0x2E1A10)])
+    // The suit: a round neck, folds shaded at the sides.
     c.rect(18, 33, 20, 5, suit)
-    c.rect(37, 33, 1, 5, C(0xD4D2CC))
+    c.rect(25, 33, 6, 1, C(0xE2E0D8))
+    c.rect(37, 33, 1, 5, suitShade)
+    c.px(21, 34, suitShade); c.px(33, 34, suitShade); c.px(22, 37, suitShade); c.px(32, 37, suitShade)
+    // The belt, its clasp, and the holster on her hip.
     c.rect(18, 36, 20, 1, C(0x6A5A4A))
+    c.rect(27, 36, 2, 1, C(0xB8BCC4))
+    c.rect(34, 36, 2, 2, C(0x4A3A2E))
     heroPistol(c, p)
 }
 

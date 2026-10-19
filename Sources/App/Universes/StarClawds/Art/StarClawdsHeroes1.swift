@@ -156,22 +156,29 @@ private func drawObiwan(_ c: PixelCanvas, _ pose: Pose) {
     let p = heroSaberPose(t, walking: pose.walking, role: role, speed: 0.85, offset: 1.3)
     let step = pose.step
     heroOrigin(c, pose, dx: Int(p.dx.rounded()), dy: Int(p.dy.rounded()))
-    let robe = C(0x7A5532)
+    let robe = C(0x7A5532), robeDark = C(0x5E3F22), cream = C(0xE4D3B0), creamShade = C(0xC9B892)
     let look = Look(leg: C(0x8A6A44), arm: robe)
     drawLegs(c, look, step: step)
+    drawBoots(c, C(0x4A3420), step: step, rows: 2)                 // dark brown Jedi boots
     c.oy += step == 0 ? -1 : 0
     drawBody(c, look)
-    drawHood(c, robe, C(0x5E3F22))
-    c.rect(18, 33, 4, 5, C(0xE4D3B0))
-    c.rect(34, 33, 4, 5, C(0xE4D3B0))
+    c.rect(15, 35, 3, 1, robeDark); c.rect(38, 35, 3, 1, robeDark)   // the wide sleeves' folds
+    drawHood(c, robe, robeDark)
+    // The cream tunic's crossed panels either side of the beard, shaded where they fold under.
+    c.rect(18, 33, 4, 5, cream)
+    c.rect(34, 33, 4, 5, cream)
+    c.rect(21, 33, 1, 4, creamShade); c.rect(37, 33, 1, 5, creamShade); c.px(19, 35, creamShade)
     c.pattern(22, 32, [
-        ".FFFF..FFFF.",
-        "FFFFFFFFFFFF",
-        "FFfFFFFFFfFF",
+        ".FFlF..FlFF.",
+        "FFFFlFFFFFFF",
+        "FFfFFFFlFfFF",
         ".FFFFfFFFFF.",
-        "...FFFFFF...",
-    ], ["F": C(0xC9A27A), "f": C(0xA9825A)])
+        "...FFfFFF...",
+    ], ["F": C(0xC9A27A), "f": C(0xA9825A), "l": C(0xDDB892)])
+    // The belt, its buckle, a pouch either side.
     c.rect(18, 37, 20, 1, C(0x5A3A22))
+    c.rect(27, 37, 2, 1, C(0x9A8A6A))
+    c.rect(19, 36, 2, 2, C(0x4A2E18)); c.rect(34, 36, 2, 2, C(0x4A2E18))
     if case .rest = role, let s = pose.signature, s > 0.1, s < 0.9 {
         // Signature: thoughtfully stroking his beard. The sleeve comes up and the hand runs down the beard, again.
         let stroke = frac((s - 0.1) / 0.8 * 3)
@@ -479,6 +486,17 @@ private func drawJedi(_ c: PixelCanvas, _ pose: Pose, _ who: SWHero) {
     default: look = Look(leg: C(0x6E5236), arm: robe)
     }
     drawLegs(c, look, step: step)
+    switch who {                                                    // boots
+    case .quigon: drawBoots(c, C(0x4A3420), step: step, rows: 2)
+    case .mace: drawBoots(c, C(0x1A1410), step: step, rows: 2)
+    case .rey:
+        // Her boots, wound with strips of cloth.
+        drawBoots(c, C(0x6E6250), step: step, rows: 3)
+        if !seatedPose {
+            for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx + 1, step >= 0 && i % 2 == step ? 40 : 41, C(0x8E826E)) }
+        }
+    default: break
+    }
     c.oy += step == 0 ? -1 : 0
     drawBody(c, look)
 
@@ -486,20 +504,34 @@ private func drawJedi(_ c: PixelCanvas, _ pose: Pose, _ who: SWHero) {
     case .quigon:
         let H = C(0x6A4A2A)
         c.pattern(16, 21, [
-            ".....HHHHHHHHHHHH.....",
-            "...HHHHHHHHHHHHHHHH...",
-            "..HHHHHHHHHHHHHHHHHH..",
-            ".HHHH............HHHH.",
-            "HHH................HHH",
-            "HHH................HHH",
+            ".....HHHHHHlHHHHH.....",
+            "...HHHHlHHHHHHlHHHH...",
+            "..HHHlHHHHHlHHHHHHhH..",
+            ".HHlH............HhHH.",
+            "HHl................hHH",
+            "HHH................HhH",
+            "HH..................hH",
             "HH..................HH",
-            "HH..................HH",
-        ], ["H": H])
-        c.pattern(23, 32, [".HH....HH.", "HHHHHHHHHH", ".HHHHHHHH.", "...HHHH..."], ["H": H])
-        c.rect(18, 35, 20, 3, cream); c.rect(18, 36, 20, 1, belt)
+        ], ["H": H, "l": C(0x8E6A40), "h": C(0x523820)])
+        c.pattern(23, 32, [".HH....HH.", "HHlHHHHHHH", ".HHHhHHlH.", "...HHhH..."], ["H": H, "l": C(0x8E6A40), "h": C(0x523820)])
+        c.rect(15, 35, 3, 1, C(0x5E3F22)); c.rect(38, 35, 3, 1, C(0x5E3F22))   // the robe's sleeves
+        c.rect(18, 33, 1, 5, robe); c.rect(37, 33, 1, 5, C(0x5E3F22))   // the robe's edges either side
+        // The tunic, folds shaded, the belt with its buckle and a pouch.
+        c.rect(19, 35, 18, 3, cream); c.rect(19, 36, 18, 1, belt)
+        c.px(21, 37, C(0xC9B892)); c.px(34, 37, C(0xC9B892)); c.rect(36, 35, 1, 3, C(0xC9B892))
+        c.rect(27, 36, 2, 1, C(0x9A8A6A)); c.rect(32, 36, 2, 2, C(0x4A2E18))
     case .mace:
         c.rect(22, 28, 3, 1, C(0x2A1C12)); c.rect(31, 28, 3, 1, C(0x2A1C12))   // stern brows, bald head
-        c.rect(18, 33, 20, 5, C(0x5A3A22)); c.rect(25, 33, 6, 5, cream); c.rect(18, 36, 20, 1, C(0x2A1C12))
+        c.rect(20, 26, 3, 1, C(0xEE9878)); c.px(19, 27, C(0xEE9878))          // the shine on his head
+        c.rect(15, 35, 3, 1, C(0x2E2014)); c.rect(38, 35, 3, 1, C(0x2E2014))   // the sleeves' cuffs
+        // The dark tunic over the cream one, its edges and folds shaded.
+        c.rect(18, 33, 20, 5, C(0x5A3A22)); c.rect(25, 33, 6, 5, cream)
+        c.rect(24, 33, 1, 5, C(0x3E2818)); c.rect(37, 33, 1, 5, C(0x3E2818))
+        c.px(20, 34, C(0x6E4A2E)); c.px(21, 35, C(0x3E2818)); c.px(34, 35, C(0x3E2818))
+        c.rect(30, 33, 1, 3, C(0xC9B892)); c.px(27, 33, C(0xC9B892))
+        // The belt, its buckle, and a pouch.
+        c.rect(18, 36, 20, 1, C(0x2A1C12))
+        c.rect(27, 36, 2, 1, C(0x9A8A6A)); c.rect(20, 36, 2, 2, C(0x3A2818))
     case .yoda:
         let ear = C(0x8DB360), earIn = C(0xC98F7A)
         // Signature: he leans on his gimer stick, ears drooping as he ponders, then perking up again. Hmm.
@@ -519,10 +551,19 @@ private func drawJedi(_ c: PixelCanvas, _ pose: Pose, _ who: SWHero) {
         c.rect(18, 33, 20, 5, robe); c.rect(26, 33, 4, 5, cream)
     case .rey:
         let H = C(0x4A2E18)
-        c.pattern(18, 22, ["...HHHHHHHHHHHH...", ".HHHHHHHHHHHHHHHH.", "HHHHHHHHHHHHHHHHHH", "HH..............HH"], ["H": H])
-        c.pattern(15, 19, [".HH.", "HHHH", ".HHH"], ["H": H])   // buns at the back of the head
-        c.pattern(15, 22, ["HHHH", "HHHH", ".HHH"], ["H": H])
+        let l = C(0x6E4626)
+        c.pattern(18, 22, ["...HHHHHlHHHHHH...", ".HHHHlHHHHHHlHHHH.", "HHHHHHHHHlHHHHHHHH", "HH..............HH"], ["H": H, "l": l])
+        c.pattern(15, 19, [".lH.", "HlHH", ".HHH"], ["H": H, "l": l])   // buns at the back of the head
+        c.pattern(15, 22, ["HlHH", "HHHH", ".HHH"], ["H": H, "l": l])
+        // The arm wraps, bound in stripes at the wrist.
+        c.px(15, 35, C(0x9A8A72)); c.px(17, 35, C(0x9A8A72)); c.px(39, 35, C(0x9A8A72))
+        // The wrapped top crossing over at the chest, folds shaded, the sash and her satchel's strap.
         c.rect(18, 33, 20, 5, C(0xEFE6D2)); c.rect(18, 35, 20, 1, C(0xB5A58A))
+        c.px(25, 33, C(0xD4C9AE)); c.px(26, 34, C(0xD4C9AE)); c.px(30, 33, C(0xD4C9AE))
+        c.rect(37, 33, 1, 5, C(0xD4C9AE)); c.px(21, 36, C(0xD4C9AE)); c.px(34, 37, C(0xD4C9AE))
+        c.rect(18, 37, 20, 1, C(0xD4C9AE))
+        c.rect(27, 35, 2, 1, C(0x8A7A60))
+        c.rect(32, 35, 2, 3, C(0x6A4A2E)); c.px(32, 35, C(0x8A6A48))
     case .ahsoka:
         let W = C(0xF4F4F4), B = C(0x2E62D6)
         // montrals and lekku: white with blue stripes

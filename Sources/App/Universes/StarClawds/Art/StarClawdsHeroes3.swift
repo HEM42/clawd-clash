@@ -292,21 +292,29 @@ private func drawCassian(_ c: PixelCanvas, _ p: Pose) {
     let rig = heroRig(c, p)
     c.oy = rig.ground
     drawLegs(c, look, step: p.step)
+    drawBoots(c, C(0x4A3424), step: p.step, rows: 2)               // worn brown boots
     c.oy = rig.base + heroBob(p, 4.5)
     drawBody(c, look)
+    c.rect(15, 35, 3, 1, jacketDark); c.rect(38, 35, 3, 1, jacketDark)   // the sleeves' cuffs
     c.pattern(18, 22, [
-        "..HHHHHHHHHHHHHHH...",
-        ".HHHHHHHHHHHHHHHHHH.",
-        "HHHHhHHHHHHHHHhHHHHH",
+        "..HHHHHlHHHHHHHHH...",
+        ".HHHHHHHHHHlHHHHHHH.",
+        "HHHHhHHHlHHHHHhHHHHH",
         "HH.H............H.HH",
-    ], ["H": hair, "h": C(0x3E2A1E)])
+    ], ["H": hair, "h": C(0x3E2A1E), "l": C(0x4A3426)])
     let glance = !p.walking && sin(p.t * 0.8) > 0.75 ? -1 : 0       // a look back, just in case
     c.rect(22 + glance, 29, 2, 3, ink); c.rect(32 + glance, 29, 2, 3, ink)
     for x in stride(from: 21, through: 34, by: 2) { c.px(x, 32, C(0x8A4A34)) }   // stubble
+    // The jacket: the collar turned up, the zip and its pull, pocket flaps, the shoulders catching the light.
     c.rect(18, 33, 20, 5, jacket)
     c.rect(18, 33, 20, 1, C(0x5A4430))                             // the collar
-    c.rect(27, 34, 1, 4, jacketDark)
+    c.px(19, 33, C(0x6E5640)); c.px(36, 33, C(0x44321F))
+    c.rect(19, 34, 3, 1, C(0x56627A)); c.rect(33, 34, 2, 1, C(0x56627A))
+    c.rect(27, 34, 1, 4, jacketDark); c.px(27, 35, C(0x9AA0AE))
+    c.rect(21, 36, 4, 1, jacketDark); c.rect(30, 36, 4, 1, jacketDark)
+    c.px(23, 36, C(0x6A7284)); c.px(32, 36, C(0x6A7284))           // the flaps' press studs
     c.rect(37, 33, 1, 5, jacketDark)
+    c.rect(18, 37, 20, 1, jacketDark)                              // the hem's shadow
     c.oy += heroGunY(p); c.ox += rig.shake
     drawPistol(c, x: 40, y: 31)
 }
@@ -323,22 +331,32 @@ private func drawBix(_ c: PixelCanvas, _ p: Pose) {
     let rig = heroRig(c, p)
     c.oy = rig.ground
     drawLegs(c, look, step: p.step)
+    drawBoots(c, C(0x5A4230), step: p.step, rows: 2)               // scuffed work boots
     c.oy = rig.base + heroBob(p, 4)
     drawBody(c, look, armRight: calling ? 5 : 0)
+    c.rect(15, 35, 3, 1, coatDark); c.rect(38, calling ? 30 : 35, 3, 1, coatDark)   // the sleeves rolled at the cuff
     c.pattern(16, 19, [
         "....HH.HHHH.HH.HH.....",
-        "..HHHHHHHHHHHHHHHHHH..",
-        ".HHHhHHHHhHHHHhHHHHHH.",
-        "HHHHHHHHHHHHHHHHHHHHHH",
-        "HHhHHHHHHHHHHHHHHhHHHH",
+        "..HHHlHHHHHlHHHHlHHH..",
+        ".HHHhHHlHHhHHHHhHHlHH.",
+        "HHlHHHHHHHHHlHHHHHHHHH",
+        "HHhHHHHlHHHHHHHHHhHHHH",
         "HHHH..............HHHH",
         ".HH................HHH",
         ".HH.................HH",
-    ], ["H": hair, "h": C(0x4A3020)])
+    ], ["H": hair, "h": C(0x4A3020), "l": C(0x5E3E28)])
+    // The work jacket, open at the neck over a pale shirt, the front edge and its folds shaded, oil on one pocket.
     c.rect(18, 33, 20, 5, coat)
+    c.rect(26, 33, 4, 1, C(0xB8A88A)); c.px(27, 34, C(0xB8A88A)); c.px(28, 34, C(0xB8A88A))
+    c.rect(25, 33, 1, 3, coatDark); c.rect(30, 33, 1, 3, coatDark)
+    c.rect(19, 33, 2, 1, C(0x84725A)); c.px(21, 34, coatDark); c.px(34, 34, coatDark)
+    c.rect(32, 34, 2, 1, C(0x3E3428))
     c.rect(37, 33, 1, 5, coatDark)
     c.rect(18, 36, 20, 1, C(0x3A2A1E))                             // tool belt…
+    c.rect(27, 36, 2, 1, C(0xB8A060))
+    c.rect(24, 37, 2, 1, C(0x2A1E14)); c.rect(29, 37, 2, 1, C(0x2A1E14))   // pouches
     c.rect(21, 37, 2, 1, C(0x9AA0AE)); c.rect(32, 37, 3, 1, C(0x9AA0AE))
+    c.px(21, 37, C(0xD0D4DC)); c.px(34, 37, C(0x6A707C))
     if calling {                                                   // …and the comm, its light blinking
         c.rect(39, 26, 2, 4, C(0x2A2A30))
         c.px(39, 26, Int(t * 4) % 2 == 0 ? C(0x4AD86A) : C(0x1E5A2A))
@@ -359,21 +377,31 @@ private func drawCobbVanth(_ c: PixelCanvas, _ p: Pose) {
     let rig = heroRig(c, p)
     c.oy = rig.base + heroBob(p, 3.5)
     c.rect(17, 36, 3, 6, coatDark); c.rect(36, 36, 3, 6, coatDark)  // the duster's tails
+    c.rect(17, 36, 1, 6, coat); c.px(17, 41, C(0x3A2818)); c.px(38, 41, C(0x3A2818))   // lit edge, frayed hems
     c.oy = rig.ground
     drawLegs(c, look, step: p.step)
+    drawBoots(c, C(0x5A3E26), step: p.step, rows: 3)               // tall riding boots
     c.oy = rig.base + heroBob(p, 3.5)
     drawBody(c, look)
+    c.rect(15, 35, 3, 1, coatDark); c.rect(38, 35, 3, 1, coatDark)   // the duster's cuffs
     c.pattern(18, 22, [
-        "...HHHHHHHHHHHHHH...",
-        ".HHHHHHHHHHHHHHHHHH.",
-        "HHHHhHHHHHHHHHHhHHHH",
+        "...HHHHHHlHHHHHHH...",
+        ".HHHHlHHHHHHHlHHHHH.",
+        "HHHHhHHHHHlHHHHhHHHH",
         "HH................HH",
-    ], ["H": hair, "h": C(0x7A5A36)])
+    ], ["H": hair, "h": C(0x7A5A36), "l": C(0xC0A070)])
     c.rect(25, 32, 6, 1, C(0x7A5A36))                              // the moustache
-    c.rect(18, 33, 20, 2, C(0x9A3A2A))                             // scarf
+    // The scarf, knotted at the front, the light along its top fold.
+    c.rect(18, 33, 20, 2, C(0x9A3A2A))
+    c.rect(19, 33, 4, 1, C(0xB84A36)); c.rect(32, 33, 3, 1, C(0xB84A36))
+    c.rect(26, 33, 3, 2, C(0x7A2A1E)); c.px(27, 33, C(0xB84A36))
+    // The duster: its lapel running down, the gun belt under it, the badge with a glint.
     c.rect(18, 35, 20, 3, coat)
+    c.px(24, 35, coatDark); c.px(25, 36, coatDark); c.rect(28, 35, 1, 2, coatDark)
     c.rect(37, 35, 1, 3, coatDark)
+    c.rect(18, 37, 20, 1, C(0x3A2818)); c.rect(26, 37, 2, 1, C(0xB8BCC4))
     c.px(32, 35, C(0xD8DCE4)); c.px(31, 36, C(0xD8DCE4)); c.px(33, 36, C(0xD8DCE4))   // the badge
+    c.px(32, 36, C(0xA8ACB4)); c.px(32, 35, C(0xFFFFFF))
     c.oy += heroGunY(p); c.ox += rig.shake
     drawPistol(c, x: 40, y: 31, body: C(0x3A3A40), trim: C(0xB8BCC4))
     if !p.walking {                                                // smoke curling off the barrel
