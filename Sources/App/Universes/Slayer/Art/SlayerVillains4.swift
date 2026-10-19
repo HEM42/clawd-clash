@@ -61,8 +61,8 @@ private func bigBadFist(_ c: PixelCanvas, angle: Double, trail: [Double], sleeve
 // The Mayor's neat side-parted hair, also worn by the First Evil.
 private let mayorHair = [
     "....HHHHHHHHHHHH....",
-    "..HHHHHHHHHHHHlHHH..",
-    ".HHHHHHpHlHHHHHHHHH.",
+    "..HHlllHHHHHHHHHHH..",
+    ".HHHHHHpHllHHHHHHHH.",
     ".HHHHHpppHHHHHHHHHH.",
     ".HH.................",
     ".H..................",
@@ -207,6 +207,7 @@ private func drawMayorWilclaws(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, suitD); c.rect(18, 37, 20, 1, suitD)
     c.pattern(24, 33, ["LSSSSSSL", ".LSTTSL.", "..LTTL..", "...TT...", "...TT..."], ["S": shirt, "T": tie, "L": suitL])
     c.px(20, 35, suitL); c.rect(33, 35, 3, 1, suitD)                           // a breast pocket
+    c.rect(18, 34, 1, 3, suitL); c.rect(22, 35, 1, 2, suitD)                   // lit down the near side, a fold
     mayorHead(c)
 
     guard wipeK >= 0 else { return }
@@ -298,16 +299,17 @@ private func drawProfessorWalshe(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, coat); c.rect(37, 33, 1, 5, coatD)
     c.pattern(24, 33, ["dBBBBBBd", ".dBBBBd.", "..dBBd..", "...dd..."], ["B": blouse, "d": coatD])
     c.rect(33, 35, 3, 1, coatD); c.px(34, 34, C(0x3A6AD0)); c.px(35, 34, C(0xC03030))       // a pocket of pens
+    c.rect(21, 35, 1, 2, coatD); c.px(31, 36, coatD)                                          // folds
     // The bob: short and neat, a side fringe.
     c.pattern(16, 20, [
         "......HHHHHHHHHHH.......",
-        "....HHHHlHHHHHHHHHH.....",
-        "...HHHlHHHHHHHHHHHHH....",
+        "....HHHHlllHHHHHHHH.....",
+        "...HHlHHHHHHHHHHHHHH....",
         "..HHHHHHHHHHHHHHHHHHHH..",
         "..HHHHHHHHHHHHHHHHHdHH..",
         ".HHHHHHHHHHHHHHHdd.HHH..",
         ".HHH...........d....HHH.",
-        ".HHH.................HH.",
+        ".HHl.................HH.",
         ".HHl.................HH.",
         ".HHH.................HH.",
         ".dHH.................Hd.",

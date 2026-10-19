@@ -73,12 +73,14 @@ private func drawLukewarm(_ c: PixelCanvas, _ p: Pose) {
     c.rect(39, 33, 1, 5, coatD); c.rect(16, 37, 24, 1, coatD)
     c.rect(25, 33, 6, 5, shirt); c.rect(24, 33, 1, 5, coatL); c.rect(31, 33, 1, 5, coatL)
     c.rect(16, 32, 3, 1, coatL)
+    c.rect(16, 33, 1, 4, coatL)                                              // the coat lit down the near side
+    c.rect(20, 35, 1, 2, coatD); c.rect(35, 35, 1, 2, coatD)                 // folds
     // Hair slicked straight back off the brow, lying flat on top.
     c.pattern(17, 21, [
         "....HHHHHHHHHHHH....",
-        "..HHHHhHHHHHhHHHHHH.",
+        "..HHHhhhHHHHhhHHHHH.",
         ".HHHHHHHHHHHHHHHHHHH",
-        ".HHHhHHHHHHHHHHhHHHH",
+        ".HHhhHHHHHHHHHHHHHHH",
         "HHHHHHHHHHHHHHHHHHHH",
         "HHHH............HHHH",
         "HHH..............HHH",
@@ -369,19 +371,21 @@ private func drawHarmonyClawdall(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 34, 20, 4, top); c.rect(37, 34, 1, 4, topD); c.rect(18, 37, 20, 1, topD)
     c.rect(24, 34, 8, 1, topL)
     c.pattern(27, 35, ["W.W", ".W."], ["W": topL])
+    c.rect(18, 34, 1, 3, topL)                                               // the top lit down the near side
+    c.rect(21, 35, 1, 2, topD); c.rect(34, 35, 1, 2, topD)                   // folds
     if face { slGameFace(c) }
     // Long straight platinum hair, a pink clip at the side; the back curtain swings away in the flip.
     let back = swing > 0.3
     c.pattern(16, 20, [
         "......HHHHHHHHHHHH......",
-        "....HHHHlHHHHHHHHHH.....",
-        "...HHHHHHHHHlHHHHHHH....",
-        "..HHHHHHHHHHHHHHHHHHH...",
+        "....HHHlllHHHHHHHHH.....",
+        "...HHlHHHHHHllHHHHHH....",
+        "..HHlHHHHHHHHHHHHHHHH...",
         "..HHHHHHHHHHHHHHHHPPHH..",
         ".HHHHHHHHHHHHHHHHHPPHHH.",
         ".HHHHHH.........HHPPHHH.",
         ".HHHH...............HHH.",
-        ".HHH................HHH.",
+        ".HHl................HHH.",
         ".HHl................lHH.",
         ".HHH................HHH.",
         ".HHH................HHH.",
