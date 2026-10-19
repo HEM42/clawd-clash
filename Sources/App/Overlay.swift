@@ -323,7 +323,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// his palace… Clawd Royale: always Random, from every universe's places (the menu's choice is kept for after).
     var location: Location {
         if Universe.mixed { return randomPlace(from: Location.everywhere) }
-        let raw = UserDefaults.standard.string(forKey: "location")
+        let raw = Self.pickedLocation
         if raw == Self.randomLocation { return randomPlace(from: Location.all(in: .shown)) }
         if let raw, let l = Location(rawValue: raw), l.universe == .shown { return l }
         return sessions.first.map { Cast(id: $0.leader).home } ?? Location.all(in: .shown)[0]
@@ -517,7 +517,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// About once a second, while the screen saver is installed or the window shows its view: what it should show
     /// (see `SaverFeed`). Only real sessions are written to the file; the Playground, demo and test runs leave it alone.
     private func publishSaverFeed(_ now: Double) {
-        let real = playground == nil && !demo && chaosSeconds == nil && shotPath == nil
+        // A template preview's sessions are adopted into the template's cast: never written where the saver reads them.
+        let real = playground == nil && !demo && chaosSeconds == nil && shotPath == nil && Universe.previewed == nil
         if real && now - lastSaverCheck > 10 { lastSaverCheck = now; saverInstalled = SaverFeed.installedSaver != nil }
         let board = windowMode && ClawdWindow.view == .board
         guard (real && saverInstalled) || board, now - lastFeed >= 1 else { return }
@@ -2025,7 +2026,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             u = kept
         } else {
             u = .shown
-            UserDefaults.standard.set(u.key, forKey: "menuIconUniverse")
+            if Universe.previewed == nil { UserDefaults.standard.set(u.key, forKey: "menuIconUniverse") }
         }
         let c = PixelCanvas(28, 26)
         Theme.of(u).menuIcon(c, mono)
@@ -2875,6 +2876,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// League: Clawd Wars: DC); the Homebrew casks preset it.
     static var universe: Universe {
         get {
+            if let t = Universe.previewed { return previewPicks["universe"] as? Universe ?? t }
             let d = UserDefaults.standard
             if let key = d.string(forKey: "universe"), let u = Universe.offered(key: key) { return u }
             let used = { (id: String) in UserDefaults(suiteName: id)?.object(forKey: "windowMode") != nil }
@@ -2886,15 +2888,35 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             // Unchecked in Settings → Universes (the saved one too): the first universe still in.
             return Universe.offered.contains(first) ? first : Universe.offered[0]
         }
-        set { UserDefaults.standard.set(newValue.key, forKey: "universe") }
+        set {
+            if Universe.previewed != nil { previewPicks["universe"] = newValue; return }
+            UserDefaults.standard.set(newValue.key, forKey: "universe")
+        }
+    }
+    /// What a `--template-preview` run picks (the universe, Clawd Royale, the place, what's unchecked), kept for the run
+    /// only: nothing that names the template is ever saved (`Universe.previewed`).
+    private static var previewPicks: [String: Any] = [:]
+    /// The place picked in the Location menu (a key, or `randomLocation`); nil: Automatic.
+    static var pickedLocation: String? {
+        get { Universe.previewed != nil ? previewPicks["location"] as? String : UserDefaults.standard.string(forKey: "location") }
+        set {
+            if Universe.previewed != nil { previewPicks["location"] = newValue; return }
+            if let newValue { UserDefaults.standard.set(newValue, forKey: "location") } else { UserDefaults.standard.removeObject(forKey: "location") }
+        }
     }
     /// `--clawd-royale`: Clawd Royale for this run only (test and screenshot runs); the flag itself isn't saved.
     private static let clawdRoyaleArg = CommandLine.arguments.contains("--clawd-royale")
     /// Clawd Royale (Settings → Universe): every universe's cast at once, in random places from all of them.
     /// `universe` keeps the last single universe meanwhile.
     static var clawdRoyale: Bool {
-        get { clawdRoyaleArg || UserDefaults.standard.bool(forKey: "clawdRoyale") }
-        set { UserDefaults.standard.set(newValue, forKey: "clawdRoyale") }
+        get {
+            clawdRoyaleArg || (Universe.previewed != nil ? previewPicks["clawdRoyale"] as? Bool ?? false
+                                                          : UserDefaults.standard.bool(forKey: "clawdRoyale"))
+        }
+        set {
+            if Universe.previewed != nil { previewPicks["clawdRoyale"] = newValue; return }
+            UserDefaults.standard.set(newValue, forKey: "clawdRoyale")
+        }
     }
     /// A test or screenshot run (as `main.swift` judges it): it never tells the hook what to cast, which would change
     /// what the real app's sessions get.
@@ -2911,8 +2933,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// Universes unchecked in Settings → Universes. Saved by key as what's removed, not what's kept, so a universe that
     /// comes with an update shows up checked.
     static var universesRemoved: Set<Universe> {
-        get { Set((UserDefaults.standard.stringArray(forKey: "universesRemoved") ?? []).compactMap(Universe.init(key:))) }
-        set { UserDefaults.standard.set(newValue.map(\.key).sorted(), forKey: "universesRemoved") }
+        get {
+            if Universe.previewed != nil { return previewPicks["universesRemoved"] as? Set<Universe> ?? [] }
+            return Set((UserDefaults.standard.stringArray(forKey: "universesRemoved") ?? []).compactMap(Universe.init(key:)))
+        }
+        set {
+            if Universe.previewed != nil { previewPicks["universesRemoved"] = newValue; return }
+            UserDefaults.standard.set(newValue.map(\.key).sorted(), forKey: "universesRemoved")
+        }
     }
 
     /// Settings → Universes: check `u` back in, or uncheck it. It leaves (or rejoins) the Universe menu, Random,
@@ -2968,9 +2996,9 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         Self.clawdRoyale = mixed
         Universe.mixed = mixed
         random = nil
-        if !mixed, let raw = UserDefaults.standard.string(forKey: "location"), raw != Self.randomLocation,
+        if !mixed, let raw = Self.pickedLocation, raw != Self.randomLocation,
            Location(rawValue: raw)?.universe != u {
-            UserDefaults.standard.removeObject(forKey: "location")     // a place from the other universe: back to automatic
+            Self.pickedLocation = nil     // a place from the other universe: back to automatic
         }
         Universe.shown = mixed ? location.universe : u
         publishUniverse()
@@ -2995,7 +3023,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let root = NSMenuItem(title: Universe.mixed ? "Location: \(location.name) (Clawd Royale)" : "Location: \(location.name)",
                               action: nil, keyEquivalent: "")
         let lm = NSMenu()
-        let picked = UserDefaults.standard.string(forKey: "location")
+        let picked = Self.pickedLocation
         let auto = NSMenuItem(title: "Automatic (where the first Claude belongs)", action: #selector(setLocation(_:)), keyEquivalent: "")
         auto.target = self
         auto.state = picked == nil ? .on : .off
@@ -3028,11 +3056,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     }
 
     @objc private func setLocation(_ sender: NSMenuItem) {
-        if let raw = sender.representedObject as? String {
-            UserDefaults.standard.set(raw, forKey: "location")
-        } else {
-            UserDefaults.standard.removeObject(forKey: "location")
-        }
+        Self.pickedLocation = sender.representedObject as? String
         clawdWindow?.sceneView.showFrame()
         clawdWindow?.cardsView.needsDisplay = true
         clawdWindow?.header.needsDisplay = true

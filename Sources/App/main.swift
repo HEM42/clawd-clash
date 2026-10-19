@@ -5,6 +5,14 @@ umask(0o077)
 
 let args = CommandLine.arguments
 
+// `--list-universes`: every universe this build registered, one a line (number, key, title, tab-separated; a fourth
+// column says `template` for the template), then exit. release.sh runs the built app with it and stops if the list
+// isn't what NUMBERS ships. Asking each for its module runs the registry's own checks too.
+if args.contains("--list-universes") {
+    for u in Universe.allCases { print("\(u.rawValue)\t\(u.key)\t\(u.title)" + (u.module.isTemplate ? "\ttemplate" : "")) }
+    exit(0)
+}
+
 if args.contains("--install-hooks") || args.contains("--update-hooks") || args.contains("--uninstall-hooks") {
     // Each AI on its own: one that fails doesn't stop the others, and every failure is reported.
     let errors: [String]

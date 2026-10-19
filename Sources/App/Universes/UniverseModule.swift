@@ -220,8 +220,30 @@ enum PoseStyle {
 
 extension Universe {
     /// The universe's module (`registeredModules`, generated from the folders by Tools/universes.sh).
-    var module: UniverseModule { registeredModules[self]! }
+    var module: UniverseModule { checkedModules[self]! }
+
+    /// `--template-preview`, which `TEMPLATE=1 ./build.sh` launches with: the template on show for a look, real
+    /// sessions adopted into its cast. It counts as a test run (any `--` flag does), so the hook is never told about it,
+    /// and nothing that names it is saved (the universe, the place, the menu icon's, the screen-saver feed).
+    static let templatePreview = CommandLine.arguments.contains("--template-preview")
+    /// The template, in a `--template-preview` run of a TEMPLATE=1 build; nil otherwise.
+    static let previewed: Universe? = templatePreview ? allCases.first { $0.module.isTemplate } : nil
 }
+
+/// `registeredModules`, checked the first time any is asked for: the template (`isTemplate`) only ever comes in a
+/// TEMPLATE=1 build, which passes `-D CLAWD_TEMPLATE`, and never in a release build (`-D CLAWD_RELEASE`), flag or not.
+/// Anything else stops the app before it can show it.
+private let checkedModules: [Universe: UniverseModule] = {
+    let templates = registeredModules.filter { $0.value.isTemplate }.map { "\($0.key.title) (\($0.key.rawValue))" }
+    #if CLAWD_RELEASE
+    if !templates.isEmpty { fatalError("the template is never released: \(templates.joined(separator: ", ")) is in a release build") }
+    #elseif CLAWD_TEMPLATE
+    _ = templates
+    #else
+    if !templates.isEmpty { fatalError("the template is only for TEMPLATE=1 builds: \(templates.joined(separator: ", ")) is in this one") }
+    #endif
+    return registeredModules
+}()
 
 /// A universe's characters as Tools/Preview finds them: by batch (one art file's worth, "slayerHeroes1") and by enum
 /// case name (`buffy`).

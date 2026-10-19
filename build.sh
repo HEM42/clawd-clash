@@ -14,6 +14,10 @@
 #                                  diagnostics. Only with --no-install: any process that launches a copy built with
 #                                  it can use the app's Accessibility grant, so it never goes to /Applications or
 #                                  into a release (release.sh also checks the binary for it)
+#   TEMPLATE=1 ./build.sh          the app with the template universe in it (Sources/App/Universes/_Template/), to
+#                                  try it: always as --no-install (it runs from build/, hooks left alone), launched
+#                                  with --template-preview, a test run that never tells the hook about it or saves
+#                                  anything that names it. With --untrusted: built only. Never with --release.
 set -euo pipefail
 cd "${0:A:h}"
 
@@ -32,6 +36,14 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
+# The template is never installed and never released: TEMPLATE=1 is a local build, and a release refuses it outright.
+TPL=0
+if [[ -n ${TEMPLATE:-} ]]; then
+    [[ $TEMPLATE == 1 ]] || { echo "error: TEMPLATE=1 or nothing (it was '$TEMPLATE')" >&2; exit 2; }
+    [[ $MODE != release ]] || { echo "error: a release never has the template in it: build it without TEMPLATE=1" >&2; exit 2; }
+    TPL=1
+    if [[ $MODE == install ]]; then MODE=local; HOOKS=0; fi
+fi
 if [[ $DEV_TOOLS == 1 && $MODE != local ]]; then
     echo "error: --dev-tools only goes with --no-install (never installed, never released)" >&2; exit 2
 fi
@@ -49,6 +61,8 @@ FLAGS=(-O -swift-version 5 -num-threads "$(sysctl -n hw.ncpu)")
 # The app's diagnostics (main.swift), only with --dev-tools.
 DEV_FLAGS=()
 [[ $DEV_TOOLS == 0 ]] || DEV_FLAGS=(-D CLAWD_DEV_TOOLS)
+# A release build says so, and the app then refuses the template even if it were compiled in (UniverseModule.swift).
+[[ $MODE != release ]] || FLAGS+=(-D CLAWD_RELEASE)
 
 # Separate commands, not `&&`: set -e doesn't stop on a failure inside a chain, and a build/ that couldn't be cleared
 # (Finder rewriting its .DS_Store mid-delete) would otherwise go on to fail at the link step, far from the cause.
@@ -56,6 +70,13 @@ rm -rf build
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 # The universes, from their folders: the registry (build/gen/) and the source lists below (see Tools/universes.sh).
 source Tools/universes.sh || exit 1
+# A release checks what universes.sh registered too: no template, nothing from 900 up, no template flag.
+if [[ $MODE == release ]]; then
+    if awk -F'\t' '$1 >= 900 || $2 == "template" { found = 1 } END { exit !found }' build/gen/universes.tsv \
+        || [[ " ${UNIVERSE_APP[*]} ${UNIVERSE_FACTS[*]} " == *" CLAWD_TEMPLATE "* ]]; then
+        echo "error: the template (or a number from 900 up) is in the release's universes (build/gen/universes.tsv)" >&2; exit 1
+    fi
+fi
 
 # compile <output> <sources…>: Apple silicon, for installs and releases alike
 compile() {
@@ -193,6 +214,11 @@ pkill -x ClawdClash 2>/dev/null || true
 
 if [[ $MODE == local ]]; then
     # Not installed: the build/ copy never takes over hooks that still point at a working app (HookInstaller.repairMoved).
+    if [[ $TPL == 1 ]]; then
+        open "$APP" --args --template-preview
+        echo "✓ Clawd Clash is running from $APP with the template on show (a test run: nothing about it is saved)."
+        exit 0
+    fi
     open "$APP"
     echo "✓ Clawd Clash is running from $APP (not installed). Right-click any character for options."
     exit 0

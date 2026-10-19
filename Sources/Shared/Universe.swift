@@ -18,8 +18,16 @@ struct Universe: Hashable, Comparable, CaseIterable, Codable, RawRepresentable {
     init(number: Int) { rawValue = number }
     init?(key: String) { guard let e = registeredUniverses.first(where: { $0.key == key }) else { return nil }; self = e.universe }
 
-    /// Every registered universe, in number order.
-    static let allCases: [Universe] = registeredUniverses.map(\.universe).sorted()
+    /// Every registered universe, in number order. Numbers from 900 up are the template's, only ever in a TEMPLATE=1
+    /// build (`-D CLAWD_TEMPLATE`) and never in a release (`-D CLAWD_RELEASE`): the app, the hook and the screen saver
+    /// all stop here rather than cast or show one.
+    static let allCases: [Universe] = {
+        let all = registeredUniverses.map(\.universe).sorted()
+        #if CLAWD_RELEASE || !CLAWD_TEMPLATE
+        if let u = all.first(where: { $0.rawValue >= 900 }) { fatalError("universe \(u.rawValue) is the template's number, never in this build") }
+        #endif
+        return all
+    }()
     /// The lowest-numbered universe, for when none is known (Star Clawds).
     static var fallback: Universe { allCases[0] }
     private static let entries: [Int: UniverseEntry] = Dictionary(uniqueKeysWithValues: registeredUniverses.map { ($0.universe.rawValue, $0) })

@@ -72,6 +72,28 @@ fi
 ./build.sh --release "$VERSION"
 APP="build/Clawd Clash.app"
 
+# What the built app itself says it has: never the template or a number from 900 up, and exactly the universes the
+# build registered, each of them shipped (or reserved, on its way) in NUMBERS, and every shipped one there.
+echo "→ checking the app's universes"
+LISTED=$("$APP/Contents/MacOS/ClawdClash" --list-universes) || { echo "error: the app couldn't list its universes" >&2; exit 1; }
+print -r -- "$LISTED" | sed 's/^/    /'
+if print -r -- "$LISTED" | awk -F'\t' '$1 >= 900 || $2 == "template" || $4 == "template" { bad = 1 } END { exit !bad }'; then
+    echo "error: the release app lists the template (or a number from 900 up)" >&2; exit 1
+fi
+[[ "$LISTED" == "$(cut -f1-3 build/gen/universes.tsv)" ]] \
+    || { echo "error: the app's universes don't match the build's list (build/gen/universes.tsv)" >&2; exit 1; }
+typeset -A NUM_KEY NUM_STATUS
+while read -r n k f st; do [[ -z $n || $n == \#* ]] || { NUM_KEY[$n]=$k; NUM_STATUS[$n]=$st } done < Sources/App/Universes/NUMBERS
+typeset -A SEEN
+while IFS=$'\t' read -r n k _title _rest; do
+    SEEN[$n]=1
+    [[ ${NUM_KEY[$n]-} == $k && ( ${NUM_STATUS[$n]-} == shipped || ${NUM_STATUS[$n]-} == reserved ) ]] \
+        || { echo "error: the app has $k ($n), which NUMBERS doesn't list as shipped or reserved with that key" >&2; exit 1; }
+done <<< "$LISTED"
+for n st in ${(kv)NUM_STATUS}; do
+    [[ $st != shipped || -n ${SEEN[$n]-} ]] || { echo "error: NUMBERS ships ${NUM_KEY[$n]} ($n), but the app doesn't have it" >&2; exit 1; }
+done
+
 # A --dev-tools build must never ship (see main.swift): its diagnostics carry this text, so it's checked for here.
 if grep -aq "dev-tools build, never ship" "$APP/Contents/MacOS/ClawdClash"; then
     echo "error: the release binary contains the --dev-tools diagnostics" >&2; exit 1
