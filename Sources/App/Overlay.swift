@@ -799,6 +799,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 case .waiting: bubble = .waiting; urgent = held > 60
                 case .idle:
                     if (!s.live && s.pid != nil) || s.stalled { bubble = .unknown }  // no live status: say so, don't fake idle
+                    else if !s.agents.isEmpty { bubble = .agentsOut(s.agents.count) } // its agents are still out
                     else if s.record != nil && held > 300 { bubble = .sleeping }    // idle 5+ min
                 case .working: break
                 }
@@ -1089,6 +1090,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         case .working: lines.append("Working · \(held)")
         case .thinking: lines.append("Thinking · \(held)")
         case .waiting: lines.append("Needs you · \(held)")
+        case .idle where !s.agents.isEmpty:
+            lines.append("Waiting on \(s.agents.count) agent\(s.agents.count == 1 ? "" : "s") · " + held)
         case .idle: lines.append((now - since(s, now: now) > 300 ? "Asleep · " : "Idle · ") + held)
         }
         if let r = s.record {
@@ -2394,6 +2397,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 color = NSColor(srgbRed: 1, green: 0.35, blue: 0.35, alpha: 1)
             case (.idle, .some(.unknown)): status = "NO LIVE STATUS"; color = NSColor(srgbRed: 1, green: 0.69, blue: 0.24, alpha: 1)
             case (.idle, .some(.sleeping)): status = "ASLEEP · \(held)"; color = NSColor(srgbRed: 0.63, green: 0.55, blue: 1, alpha: 1)
+            case (.idle, .some(.agentsOut(let n))): status = "WAITING ON \(n) AGENT\(n == 1 ? "" : "S") · \(held)"
+                color = NSColor(srgbRed: 0.45, green: 0.65, blue: 1, alpha: 1)
             case (.idle, _): status = "IDLE · \(held)"; color = dim
             }
 

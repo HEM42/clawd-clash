@@ -56,8 +56,9 @@ struct Cast: Hashable {
             drawDrill(c, d, t: t)
             return
         }
-        // Idle habits (`Habits.swift`): only an idle session standing about, not fighting, walking or sitting.
-        var idle = habits && asSession && mode == .idle && !walking && !sitting
+        // Idle habits (`Habits.swift`): only an idle session standing about, not fighting, walking or sitting. One whose
+        // agents are still out (standing guard) keeps its habits too, so it never stands frozen while it waits on them.
+        var idle = habits && asSession && (mode == .idle || mode == .standGuard) && !walking && !sitting
         switch role { case .none, .rest: break; default: idle = false }
         let play = idle ? habit(at: t) : nil
         idleHabit = play

@@ -298,15 +298,16 @@ func drawFightFX(_ c: PixelCanvas, t: Double, left: Fighter, right: Fighter) {
 
 enum Bubble { static let width = 18, height = 13 }
 
-/// What a Claude's bubble says. There's never real text: dots, "!", "?" or zZz.
-enum BubbleKind {
+/// What a Claude's bubble says. There's never real text: dots, "!", "?", zZz or a number.
+enum BubbleKind: Equatable {
     case thinking
     case waiting        // needs your attention
     case unknown        // session without hooks: we can't tell what it's doing
     case sleeping       // idle for a long time
+    case agentsOut(Int) // done for now, but this many of its agents are still out: it's waiting on them, not on you
 }
 
-/// Compact bubble, it only ever holds three thinking dots, a "!", a "?" or zZz.
+/// Compact bubble, it only ever holds three thinking dots, a "!", a "?", zZz or how many agents are out.
 /// `tailRight`: the bubble sits left of the head, so its tail points right. Only the frame is
 /// mirrored for that, the symbol inside never reads backwards.
 func drawBubble(_ c: PixelCanvas, kind: BubbleKind, t: Double, urgent: Bool = false, tailRight: Bool = false) {
@@ -315,6 +316,7 @@ func drawBubble(_ c: PixelCanvas, kind: BubbleKind, t: Double, urgent: Bool = fa
     case .waiting: border = sin(t * (urgent ? 14 : 6)) > 0 ? C(0xE0303A) : C(0xFF6A6A)
     case .unknown: border = C(0xC98A1A)
     case .sleeping: border = C(0x6A5ACD)
+    case .agentsOut: border = C(0x5B8FE8)   // the blue of an agent's name tag
     case .thinking: border = outline
     }
     c.rect(5, 1, 11, 7, white)
@@ -341,6 +343,15 @@ func drawBubble(_ c: PixelCanvas, kind: BubbleKind, t: Double, urgent: Bool = fa
     case .thinking:
         let step = Int(t * 3) % 4
         for i in 0..<3 where step > i { c.rect(6 + i * 3, 3, 2, 2, border) }
+    case .agentsOut(let n):
+        // The number out, in a 3×5 pixel figure (9 and over: a "+").
+        let digits: [[String]] = [["XXX", "X.X", "X.X", "X.X", "XXX"], [".X.", "XX.", ".X.", ".X.", "XXX"],
+                                  ["XXX", "..X", "XXX", "X..", "XXX"], ["XXX", "..X", ".XX", "..X", "XXX"],
+                                  ["X.X", "X.X", "XXX", "..X", "..X"], ["XXX", "X..", "XXX", "..X", "XXX"],
+                                  ["XXX", "X..", "XXX", "X.X", "XXX"], ["XXX", "..X", ".X.", ".X.", ".X."],
+                                  ["XXX", "X.X", "XXX", "X.X", "XXX"]]
+        let figure = n >= 1 && n <= 8 ? digits[n] : n > 8 ? ["...", ".X.", "XXX", ".X.", "..."] : digits[0]
+        c.pattern(9, 2, figure, ["X": border])
     }
 }
 
