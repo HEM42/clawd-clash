@@ -5,7 +5,7 @@ import Foundation
 // whom first, who gets picked up by what, and the `Theme` that puts it all together. Then the place keys, and every
 // place's drawing merged from the Places files.
 //
-// Names: every top-level name in the folder starts with the prefix (`template…`, `Template…`) or is `private`. Preview
+// Names: every top-level name in the folder starts with the prefix (lower-cased for helpers) or is `private`. Preview
 // compiles every universe together, so two universes' `drawHat`s would clash, and a plain name could shadow one the
 // app relies on (scripts/pr-guard.py refuses it). Helpers one file uses stay `private` to it; helpers several files
 // share go in a `<Prefix>Kit.swift` with prefixed names.

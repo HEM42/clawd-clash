@@ -68,7 +68,7 @@ for conf in $_uroot/*/universe.conf(N); do
         grep -rlq CLAWD_TEMPLATE $_uroot/$folder 2>/dev/null \
             && _uleft+=("a CLAWD_TEMPLATE line: take out the first and last line of each file that has one")
         if (( ${#_uleft} )); then
-            for l in $_uleft; do print -u2 -r -- "universes: $folder/ is a copy of the template and still says $l"; done
+            for l in $_uleft; do print -u2 -r -- "universes: $folder/ is a copy of the template and still has $l"; done
             _ufail "Tools/new-universe.sh copies the template with all of that renamed"
             return 1
         fi
