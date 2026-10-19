@@ -35,7 +35,7 @@ private func drawElrond(_ c: PixelCanvas, _ p: Pose) {
     drawBoots(c, p.step, C(0x3A2A20), rows: 1)
     c.oy += p.breathe
     // His hair down his back, past the shoulders.
-    c.pattern(14, 26, ["HHHH", "HHlH", "HHHH", "lHHH", "HHHH", "HHlH", "HHHH", ".HHH", ".HH."], ["H": hair, "l": hairLight])
+    c.pattern(14, 26, ["HHHH", "HHlH", "HHlH", "HHHH", "HlHH", "HlHH", "HHHH", ".HlH", ".HH."], ["H": hair, "l": hairLight])
     drawBody(c, Look(arm: robe))
     // The robe, the shoulders to the ankles, flaring a little, gold at the collar, down the front and round the hem.
     c.rect(18, 32, 20, 6, robe)
@@ -54,17 +54,17 @@ private func drawElrond(_ c: PixelCanvas, _ p: Pose) {
     // Long straight hair, parted in the middle, framing the face, and the silver circlet across the brow.
     c.pattern(16, 20, [
         ".......HHHHHHHHHH.......",
-        "....HHHHHHHHHHHHHHHH....",
+        "....HHHlllHHHHHHHHHH....",
         "..HHHHHHHHHlHHHHHHHHHH..",
         ".HHHHHHHHHlHHHHHHHHHHHH.",
         ".HHlHHHHHHlHHHHHHHHHlHH.",
         "HHHHHHHHHHHHHHHHHHHHHHHH",
-        "HHH..................HHH",
+        "HHl..................lHH",
+        "HHl..................lHH",
         "HHl..................lHH",
         "HHH..................HHH",
-        "HHH..................HHH",
         "HHl..................lHH",
-        "HHH..................HHH",
+        "HHl..................lHH",
         "HHH..................HHH",
         ".Hl..................lH.",
     ], ["H": hair, "l": hairLight])
@@ -137,7 +137,7 @@ private func drawArwen(_ c: PixelCanvas, _ p: Pose) {
     c.oy += p.breathe
     // Her hair down her back, to the waist, over the cloak.
     c.pattern(14, 25, [
-        "HHHH", "HlHH", "HHlH", "HHHH", "lHHH", "HHlH", "HHHH", "HlHH", "HHHH", ".HHH", ".HlH", "..HH",
+        "HHHH", "HlHH", "HlHH", "HHHH", "HHlH", "HHlH", "HHHH", "HlHH", "HlHH", ".HHH", ".HlH", "..HH",
     ], ["H": hair, "l": hairLight])
     drawBody(c, Look(arm: gown))
     // The bodice and the riding skirt, flaring a little to mid-calf, a fold or two in it.
@@ -156,17 +156,17 @@ private func drawArwen(_ c: PixelCanvas, _ p: Pose) {
     // Long dark hair over the head and down in front of her shoulders.
     c.pattern(16, 20, [
         ".......HHHHHHHHHH.......",
-        "....HHHHHHHHHHlHHHHH....",
+        "....HHHHHHHHHlllHHHH....",
         "..HHHHHHHHHlHHHHHHHHHH..",
-        ".HHHHHHHHHlHHHHHHHlHHHH.",
+        ".HHHHHHHHHlHHHHHHHHHHHH.",
         ".HHlHHHHHHHHHHHHHHHHHHH.",
-        "HHHHHHHHHH....HHHHHHHHHH",
+        "HHHlHHHHHH....HHHHHHlHHH",
         "HHHl................lHHH",
         "HHl..................lHH",
-        "HHH..................HHH",
-        "HHH..................HHH",
         "HHl..................lHH",
         "HHH..................HHH",
+        "HHl..................lHH",
+        "HHl..................lHH",
         "HHH..................HHH",
         ".HH..................HH.",
         ".Hl..................lH.",
@@ -485,18 +485,18 @@ private func drawBombadil(_ c: PixelCanvas, _ p: Pose) {
     c.rect(14, 33, 4, 3, coat); c.px(14, 33, coatLight); c.rect(14, 36, 2, 1, clawdOrange)   // the back sleeve, a hand
     c.rect(41, 33 - arm, 1, 2, clawdOrange)                                  // the front hand
     // Brown hair under the hat, over the ears.
-    c.pattern(16, 26, ["BBB", "BbB", "BBB", ".Bb"], ["B": beard, "b": beardDark])
-    c.pattern(37, 26, ["BBB", "BbB", "BBB", "bB."], ["B": beard, "b": beardDark])
+    c.pattern(16, 26, ["BBB", "BbB", "BbB", ".BB"], ["B": beard, "b": beardDark])
+    c.pattern(37, 26, ["BBB", "BbB", "BbB", "BB."], ["B": beard, "b": beardDark])
     // The great bushy beard over his chest, and the moustache.
     c.pattern(19, 31, [
         "..BBBBBBBBBBBBBB..",
-        ".BBBlBBBBBBBBlBBB.",
+        ".BBllBBBBBBBllBBB.",
         "BBBBBBdBBBBdBBBBBB",
-        "BdBBlBBBBBBBBlBBdB",
-        "BBBBBBBdBBdBBBBBBB",
-        ".BBdBBBBBBBBBBdBB.",
-        "..BBBBlBBBBlBBBB..",
-        "...BBBBBdBBBBBB...",
+        "BdBBBBdBBBBdBBBBdB",
+        "BdBBBBBdBBdBBBBBdB",
+        ".BBdBBBdBBdBBBdBB.",
+        "..BBBBBllBBBBBBB..",
+        "...BBBBBddBBBBB...",
         ".....BBBBBBBB.....",
     ], ["B": beard, "d": beardDark, "l": beardLight])
     c.rect(23, 31, 10, 1, beardDark)
