@@ -203,7 +203,7 @@ struct ClawdbergTrip {
         Self.moon(lo, at: c, radius: r, face: face, halo: 1 - Self.span(open, 0.5, 1), above: horizon)
         // The bike, across the moon.
         let fly = Self.span(k, 0.27, 0.7)
-        if fly > 0, fly < 1, let bike = Self.ride({ drawMoonBike($0, ramp: 0, lit: true) }, silhouette: 0x06070D) {
+        if fly > 0, fly < 1, let bike = Self.ride({ clawdbergDrawMoonBike($0, ramp: 0, lit: true) }, silhouette: 0x06070D) {
             let sc = max(1, (h / 180).rounded(.down))
             let bw = 66 * sc, bh = 29 * sc
             let bx = (-bw + (w + bw) * CGFloat(fly)).rounded()
@@ -289,7 +289,7 @@ struct ClawdbergTrip {
             Self.fire(lo, y: upper, from: start, to: tail, seed: Int(k * 50), alpha: burn)
             Self.fire(lo, y: lower, from: start, to: tail, seed: Int(k * 50) + 7, alpha: burn)
         }
-        if k < vanish, let car = Self.ride({ drawDelorean($0, ramp: 0, lit: true) }) {
+        if k < vanish, let car = Self.ride({ clawdbergDrawDelorean($0, ramp: 0, lit: true) }) {
             let speed = drive * drive
             // Streaks of light off the back of it, longer the faster it goes.
             for i in 0..<7 {

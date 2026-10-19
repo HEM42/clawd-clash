@@ -61,8 +61,8 @@ private func drawRifle(_ c: PixelCanvas, sleeve: Px) {
 /// hot glow in `glow` and sparks spitting off it.
 private func drawFlare(_ c: PixelCanvas, x: Double, y: Double, angle: Double, lit: Bool, t: Double, glow: Px,
                        stick: Px, big: Bool = false) {
-    let tip = cbReach((x, y), angle, 5)
-    cbLine(c, x, y, tip.x, tip.y, stick, 0.6)
+    let tip = clawdbergReach((x, y), angle, 5)
+    clawdbergLine(c, x, y, tip.x, tip.y, stick, 0.6)
     guard lit else { return }
     let i = Int(t * 24)
     let flick = noise(i) * 0.8
@@ -80,7 +80,7 @@ private func drawTalons(_ c: PixelCanvas, _ h: (x: Double, y: Double), angle: Do
                         alpha: Double = 1) {
     for k in -1...1 {
         let a = angle + Double(k) * 28
-        cbBar(c, h, a, from: 0, to: len, col.alpha(alpha), r: 0.5)
+        clawdbergBar(c, h, a, from: 0, to: len, col.alpha(alpha), r: 0.5)
     }
 }
 
@@ -102,7 +102,7 @@ private func drawAlanGrand(_ c: PixelCanvas, _ p: Pose) {
     let reaching = sig.map { ($0 > 0.05 && $0 <= 0.2) || ($0 >= 0.84 && $0 < 0.95) } ?? false
 
     drawLegs(c, Look(leg: C(0xB8A57A)), step: p.step)
-    cbBoots(c, step: p.step, C(0x5A3E26), height: 2)
+    clawdbergBoots(c, step: p.step, C(0x5A3E26), height: 2)
     c.oy += p.breathe
     drawBody(c, Look(arm: denim, eye: nil))
     // The denim shirt, its placket and a pocket; the red neckerchief knotted at the throat.
@@ -159,8 +159,8 @@ private func drawEllieSaddler(_ c: PixelCanvas, _ p: Pose) {
             c.rect(lx, lifted ? 37 : 38, 2, 2, khaki)
         }
     }
-    cbBoots(c, step: p.step, white, height: 3)
-    cbBoots(c, step: p.step, C(0x6A4A2E), height: 2)
+    clawdbergBoots(c, step: p.step, white, height: 3)
+    clawdbergBoots(c, step: p.step, C(0x6A4A2E), height: 2)
     c.oy += p.breathe
     // The ponytail, behind.
     c.pattern(12, 23, ["...HHH", "..HHHh", ".HHHH.", ".HHh..", "HHH...", "HH....", "H....."],
@@ -196,12 +196,12 @@ private func drawEllieSaddler(_ c: PixelCanvas, _ p: Pose) {
     c.px(52, 26, up >= 1 ? C(0x5AF07A) : C(0x2E4A32))
     if up >= 1 { c.glowLine(52.5, 26.5, 52.5, 26.5, core: C(0xB8FFC8), glow: C(0x5AF07A), coreR: 0.5, glowR: 2) }
     let pivot = (x: 47.5, y: 31.5)
-    let grip = cbReach(pivot, angle, 7)
-    cbBar(c, pivot, angle, from: 0, to: 7, C(0x2A2A2E), r: 0.7)
+    let grip = clawdbergReach(pivot, angle, 7)
+    clawdbergBar(c, pivot, angle, from: 0, to: 7, C(0x2A2A2E), r: 0.7)
     c.rect(Int(grip.x.rounded()) - 1, Int(grip.y.rounded()) - 1, 3, 2, C(0xC83A2A))
     // Both arms on the handle.
-    cbLine(c, 39.5, 33.5, grip.x - 1, grip.y + 0.5, clawdOrange, 1.1)
-    cbLine(c, 36.5, 34.5, grip.x - 1, grip.y + 1.5, clawdOrange, 1.0)
+    clawdbergLine(c, 39.5, 33.5, grip.x - 1, grip.y + 0.5, clawdOrange, 1.1)
+    clawdbergLine(c, 36.5, 34.5, grip.x - 1, grip.y + 1.5, clawdOrange, 1.0)
     c.rect(38, 33, 3, 1, peach)
     if s > 0.6 && s < 0.7 {   // the clunk
         let i = Int(p.t * 30)
@@ -220,7 +220,7 @@ private func drawIanMalclawm(_ c: PixelCanvas, _ p: Pose) {
     let stick = C(0xC8302A), glow = C(0xFF8A1A)
 
     drawLegs(c, Look(leg: C(0x26262C)), step: p.step)
-    cbBoots(c, step: p.step, C(0x101012), height: 2)
+    clawdbergBoots(c, step: p.step, C(0x101012), height: 2)
     c.oy += p.breathe
     drawBody(c, Look(arm: jacket))
     // The jacket, the shirt open to a V of chest.
@@ -254,7 +254,7 @@ private func drawIanMalclawm(_ c: PixelCanvas, _ p: Pose) {
         let a0 = -90 + wave
         for (i, back) in [12.0, 24.0].enumerated() {
             let a = a0 - back * (cos(s * .pi * 6) > 0 ? 1 : -1)
-            let tip = cbReach((39.5, 22), a, 5)
+            let tip = clawdbergReach((39.5, 22), a, 5)
             c.glowLine(tip.x, tip.y, tip.x, tip.y, core: glow.alpha(0.5), glow: glow, coreR: 0.6, glowR: 1.8,
                        strength: 0.4 / Double(i + 1))
         }
@@ -286,7 +286,7 @@ private func drawJohnHammend(_ c: PixelCanvas, _ p: Pose) {
     let raised = sig.map { $0 > 0.08 && $0 < 0.92 } ?? false
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    cbBoots(c, step: p.step, C(0x9A6A3E), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x9A6A3E), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
     // The suit and its lapels, the shirt between.
@@ -304,7 +304,7 @@ private func drawJohnHammend(_ c: PixelCanvas, _ p: Pose) {
         "..dWWWWWWWWWWd..",
         "....dWWWWWWd....",
     ], ["W": beard, "d": beardD, "m": C(0x8A4A3A)])
-    cbFedora(c, felt: C(0xF4ECD0), dark: C(0xCFC29C), band: C(0x7A4A2A))
+    clawdbergFedora(c, felt: C(0xF4ECD0), dark: C(0xCFC29C), band: C(0x7A4A2A))
 
     if raised, let s = sig {
         // The cane lifted, its amber held up to the light and glinting.
@@ -341,7 +341,7 @@ private func drawMuldune(_ c: PixelCanvas, _ p: Pose) {
     let aiming = crouch > 0.6
 
     drawLegs(c, Look(leg: C(0x9A8A5E)), step: p.step)
-    cbBoots(c, step: p.step, C(0x4A3420), height: 3)
+    clawdbergBoots(c, step: p.step, C(0x4A3420), height: 3)
     c.oy += p.breathe + Int((crouch * 2).rounded())
     drawBody(c, Look(arm: shirt, eye: nil))
     if aiming {
@@ -393,7 +393,7 @@ private func drawTimMurphey(_ c: PixelCanvas, _ p: Pose) {
     let down = sig.map { $0 > 0.18 && $0 < 0.88 } ?? false
 
     drawLegs(c, Look(leg: C(0x34507E)), step: p.step)
-    cbBoots(c, step: p.step, C(0xEAEAEA), height: 1)
+    clawdbergBoots(c, step: p.step, C(0xEAEAEA), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: clawdOrange, eye: down ? nil : ink))
     drawShortSleeves(c, tee)
@@ -441,7 +441,7 @@ private func drawLexMurphey(_ c: PixelCanvas, _ p: Pose) {
     let jelly = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: C(0xA8BCD4)), step: p.step)
-    cbBoots(c, step: p.step, C(0xF08AB8), height: 1)
+    clawdbergBoots(c, step: p.step, C(0xF08AB8), height: 1)
     c.oy += p.breathe
     // Her hair down her back.
     c.rect(15, 26, 4, 11, hair); c.rect(15, 36, 4, 1, hairD); c.rect(16, 29, 1, 4, hairD)
@@ -474,7 +474,7 @@ private func drawLexMurphey(_ c: PixelCanvas, _ p: Pose) {
     guard jelly else { return }
     // The spoon held up, the jelly on it wobbling.
     c.rect(38, 30, 3, 3, clawdOrange); c.rect(38, 33, 3, 1, top)
-    cbLine(c, 40.5, 30.5, 45, 28.5, C(0xC8CCD4), 0.5)
+    clawdbergLine(c, 40.5, 30.5, 45, 28.5, C(0xC8CCD4), 0.5)
     c.rect(45, 28, 4, 1, C(0xC8CCD4))
     let w = Int(p.t * 10) % 2
     let green = C(0x6AD84A), greenD = C(0x3EA82E), greenL = C(0xC8FFB0)
@@ -496,7 +496,7 @@ private func drawRayArnie(_ c: PixelCanvas, _ p: Pose) {
     let typing = sig.map { $0 > 0.05 && $0 < 0.95 } ?? false
 
     drawLegs(c, Look(leg: C(0x4A4A52)), step: p.step)
-    cbBoots(c, step: p.step, C(0x18181C), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x18181C), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: clawdOrange))
     drawShortSleeves(c, shirt)
@@ -534,7 +534,7 @@ private func drawRayArnie(_ c: PixelCanvas, _ p: Pose) {
     c.rect(38, 33, 3, 2, clawdOrange)
     c.rect(42, 33 + (beat == 0 ? 0 : 1), 2, 2, clawdOrange)
     c.rect(47, 33 + (beat == 0 ? 1 : 0), 2, 2, clawdOrange)
-    cbLine(c, 40, 34, 47, 33.5 + Double(beat == 0 ? 1 : 0), clawdOrange, 0.6)
+    clawdbergLine(c, 40, 34, 47, 33.5 + Double(beat == 0 ? 1 : 0), clawdOrange, 0.6)
     c.px(43 + beat * 5, 35, white)
 }
 
@@ -550,9 +550,9 @@ private func drawOwenGravy(_ c: PixelCanvas, _ p: Pose) {
     let palm = sig.map { $0 > 0.08 && $0 < 0.92 } ?? false
 
     drawLegs(c, Look(leg: C(0x6A6A50)), step: p.step)
-    cbBoots(c, step: p.step, C(0x3A2818), height: 3)
+    clawdbergBoots(c, step: p.step, C(0x3A2818), height: 3)
     c.oy += p.breathe
-    if palm { cbLine(c, 15, 26, 33, 41, C(0x2A2A2E), 0.6) }   // the rifle slung across his back
+    if palm { clawdbergLine(c, 15, 26, 33, 41, C(0x2A2A2E), 0.6) }   // the rifle slung across his back
     drawBody(c, Look(arm: henley))
     // The henley with its buttons, the leather vest open over it.
     c.rect(18, 33, 20, 5, henley); c.rect(37, 33, 1, 5, henleyD)
@@ -577,7 +577,7 @@ private func drawOwenGravy(_ c: PixelCanvas, _ p: Pose) {
 
     if palm {
         // The arm out straight, palm open and fingers up: easy, easy.
-        cbLine(c, 39, 34, 45, 33.5, henley, 1.2)
+        clawdbergLine(c, 39, 34, 45, 33.5, henley, 1.2)
         c.pattern(45, 29, [".O.O", "OOOO", "OOOO", "OOO.", "OOO.", ".OO."], ["O": clawdOrange])
         c.px(44, 31, clawdOrange)
         return
@@ -704,8 +704,8 @@ private func drawBlue(_ c: PixelCanvas, _ p: Pose) {
     c.rect(36, sy + 2, 3, 2, C(0xF0C82A)); c.px(37, sy + 2, ink); c.px(37, sy + 3, ink)
     c.rect(35, sy + 1, 5, 1, hideD)
     // The stripe, from the eye down the neck and along her side.
-    cbLine(c, 35, Double(sy) + 4.5, 29, 29.5, stripe, 0.6)
-    cbLine(c, 29, 29.5, 18, 32.5, stripe, 0.6)
+    clawdbergLine(c, 35, Double(sy) + 4.5, 29, 29.5, stripe, 0.6)
+    clawdbergLine(c, 29, 29.5, 18, 32.5, stripe, 0.6)
     if cock > 0.5 {
         // The chirp.
         let n = Int(p.lt * 10) % 3
@@ -718,11 +718,11 @@ private func drawBlue(_ c: PixelCanvas, _ p: Pose) {
     // The little clawed arm.
     if let a = p.melee {
         for (i, ta) in p.trail.enumerated() {
-            let e = cbReach(cbHand, ta, 4)
+            let e = clawdbergReach(clawdbergHand, ta, 4)
             drawTalons(c, e, angle: ta, len: 4, C(0xE8E0C8), alpha: 0.35 / Double(i + 1))
         }
-        cbBar(c, (38, 34), a, from: 0, to: 4, hide, r: 1.1)
-        let e = cbReach(cbHand, a, 4)
+        clawdbergBar(c, (38, 34), a, from: 0, to: 4, hide, r: 1.1)
+        let e = clawdbergReach(clawdbergHand, a, 4)
         drawTalons(c, e, angle: a, len: 3.5, claw)
     } else {
         c.rect(38, 33, 3, 2, hide)
@@ -802,16 +802,16 @@ private func drawTrike(_ c: PixelCanvas, _ p: Pose) {
     if !p.trail.isEmpty && !lying {
         for tr in p.trail {
             let ta = max(-40, min(12, -20 + (tr + 60) * 0.4))
-            cbSmear(c, base1, [ta], from: 2, to: 15, C(0xF0E6C8))
+            clawdbergSmear(c, base1, [ta], from: 2, to: 15, C(0xF0E6C8))
         }
     }
     let a = lying ? -15 : hornA
-    let t1 = cbReach(base1, a, 15), t2 = cbReach(base2, a - 6, 14)
-    let m1 = cbReach(base1, a, 6), m2 = cbReach(base2, a - 6, 6)
-    cbLine(c, base2.x, base2.y, m2.x, m2.y, hornD, 1.0)
-    cbLine(c, m2.x, m2.y, t2.x, t2.y, hornD, 0.6)
-    cbLine(c, base1.x, base1.y, m1.x, m1.y, horn, 1.1)
-    cbLine(c, m1.x, m1.y, t1.x, t1.y, horn, 0.6)
+    let t1 = clawdbergReach(base1, a, 15), t2 = clawdbergReach(base2, a - 6, 14)
+    let m1 = clawdbergReach(base1, a, 6), m2 = clawdbergReach(base2, a - 6, 6)
+    clawdbergLine(c, base2.x, base2.y, m2.x, m2.y, hornD, 1.0)
+    clawdbergLine(c, m2.x, m2.y, t2.x, t2.y, hornD, 0.6)
+    clawdbergLine(c, base1.x, base1.y, m1.x, m1.y, horn, 1.1)
+    clawdbergLine(c, m1.x, m1.y, t1.x, t1.y, horn, 0.6)
 
     if lying {
         // A hand comes down and strokes her nose; a little heart pops up.

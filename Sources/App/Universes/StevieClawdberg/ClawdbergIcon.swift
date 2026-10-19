@@ -3,7 +3,7 @@ import Foundation
 /// The bike crossing the full moon, on a 28×26 canvas, for the menu bar: a big pale moon and, in silhouette across it,
 /// the boy on his bike with the little alien in the basket. `mono`: the moon in one colour with the bike cut out of it,
 /// so it reads as a hole, for a template image macOS tints.
-func drawMoonBikeIcon(_ c: PixelCanvas, mono: Bool = false) {
+func clawdbergDrawMoonBikeIcon(_ c: PixelCanvas, mono: Bool = false) {
     // The rider, the basket and its passenger, and the two wheels, against the lower half of the moon.
     let bike: [String] = [
         "...........HH.......",

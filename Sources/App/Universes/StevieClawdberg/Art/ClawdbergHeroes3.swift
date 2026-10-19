@@ -38,7 +38,7 @@ private func drawBillyPeltclawd(_ c: PixelCanvas, _ p: Pose) {
     let sketching = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: jeans), step: p.step)
-    cbBoots(c, step: p.step, C(0xE8E4DA), height: 1)
+    clawdbergBoots(c, step: p.step, C(0xE8E4DA), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: sweater))
     // The green sweater, knit ribs, the white tee at the collar.
@@ -87,13 +87,13 @@ private func drawBillyPeltclawd(_ c: PixelCanvas, _ p: Pose) {
     }
     if let a = p.melee {
         // The ornamental sword: a dark red grip, a gold guard, a long slightly curved steel blade.
-        cbSmear(c, cbHand, p.trail, from: 4, to: 17, C(0xEAF0F8))
-        cbBar(c, cbHand, a, from: -2, to: 2, grip, r: 0.8)
-        let g0 = cbReach(cbHand, a - 90, 2), g1 = cbReach(cbHand, a + 90, 2)
-        let gc = cbReach(cbHand, a, 2.5)
-        cbLine(c, g0.x + gc.x - cbHand.x, g0.y + gc.y - cbHand.y, g1.x + gc.x - cbHand.x, g1.y + gc.y - cbHand.y, gold, 0.6)
-        cbBar(c, cbHand, a, from: 3, to: 12, steel, r: 0.7)
-        cbBar(c, cbHand, a + 4, from: 12, to: 17, steel, r: 0.6)
+        clawdbergSmear(c, clawdbergHand, p.trail, from: 4, to: 17, C(0xEAF0F8))
+        clawdbergBar(c, clawdbergHand, a, from: -2, to: 2, grip, r: 0.8)
+        let g0 = clawdbergReach(clawdbergHand, a - 90, 2), g1 = clawdbergReach(clawdbergHand, a + 90, 2)
+        let gc = clawdbergReach(clawdbergHand, a, 2.5)
+        clawdbergLine(c, g0.x + gc.x - clawdbergHand.x, g0.y + gc.y - clawdbergHand.y, g1.x + gc.x - clawdbergHand.x, g1.y + gc.y - clawdbergHand.y, gold, 0.6)
+        clawdbergBar(c, clawdbergHand, a, from: 3, to: 12, steel, r: 0.7)
+        clawdbergBar(c, clawdbergHand, a + 4, from: 12, to: 17, steel, r: 0.6)
         c.rect(40, 33, 3, 3, clawdOrange)
         return
     }
@@ -114,7 +114,7 @@ private func drawKateBeringer(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
 
     drawLegs(c, Look(leg: tights), step: p.step)
-    cbBoots(c, step: p.step, C(0x141416), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x141416), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: blouse))
     c.rect(18, 33, 20, 5, blouse); c.rect(37, 33, 1, 5, blouseD)
@@ -269,7 +269,7 @@ private func drawRandPeltclawd(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
 
     drawLegs(c, Look(leg: trousers), step: p.step)
-    cbBoots(c, step: p.step, C(0x3A2416), height: 2)
+    clawdbergBoots(c, step: p.step, C(0x3A2416), height: 2)
     c.oy += p.breathe
     drawBody(c, Look(arm: jacket))
     c.rect(18, 34, 20, 4, jacket); c.rect(37, 34, 1, 4, jacketD); c.rect(18, 37, 20, 1, jacketD)
@@ -334,7 +334,7 @@ private func drawLynnPeltclawd(_ c: PixelCanvas, _ p: Pose) {
     let hair = C(0x7A4A2A), hairL = C(0x9A6238), blade = C(0xDCE2EA), handle = C(0x2A2420)
 
     drawLegs(c, Look(leg: skirt), step: p.step)
-    cbBoots(c, step: p.step, C(0x6A3A2A), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x6A3A2A), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: blouse))
     c.rect(18, 33, 20, 5, blouse); c.rect(37, 33, 1, 5, blouseD)
@@ -356,10 +356,10 @@ private func drawLynnPeltclawd(_ c: PixelCanvas, _ p: Pose) {
 
     if let a = p.melee {
         // The kitchen knife: a black handle, a broad pointed blade.
-        cbSmear(c, cbHand, p.trail, from: 3, to: 11, C(0xEAF0F8))
-        cbBar(c, cbHand, a, from: -2, to: 2.5, handle, r: 0.8)
-        cbBar(c, cbHand, a, from: 3, to: 9, blade, r: 1.0)
-        cbBar(c, cbHand, a, from: 9, to: 11, blade, r: 0.5)
+        clawdbergSmear(c, clawdbergHand, p.trail, from: 3, to: 11, C(0xEAF0F8))
+        clawdbergBar(c, clawdbergHand, a, from: -2, to: 2.5, handle, r: 0.8)
+        clawdbergBar(c, clawdbergHand, a, from: 3, to: 9, blade, r: 1.0)
+        clawdbergBar(c, clawdbergHand, a, from: 9, to: 11, blade, r: 0.5)
         c.rect(40, 33, 3, 3, clawdOrange)
         return
     }
@@ -379,7 +379,7 @@ private func drawMrWing(_ c: PixelCanvas, _ p: Pose) {
     let wood = C(0x8A5A2E), woodD = C(0x5A3A1E), cloth = C(0xC8B48A), clothD = C(0x9A8A68)
 
     drawLegs(c, Look(leg: C(0x2A2A30)), step: p.step)
-    cbBoots(c, step: p.step, C(0x16161B), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x16161B), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: robe))
     // The robe, down over the tops of his legs, a gold trim down its front.
@@ -435,7 +435,7 @@ private func drawFutterclaw(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
 
     drawLegs(c, Look(leg: trousers), step: p.step)
-    cbBoots(c, step: p.step, C(0x2A1E16), height: 2)
+    clawdbergBoots(c, step: p.step, C(0x2A1E16), height: 2)
     c.oy += p.breathe
     drawBody(c, Look(arm: red))
     // The buffalo plaid: red, with black checks.
@@ -466,7 +466,7 @@ private func drawFutterclaw(_ c: PixelCanvas, _ p: Pose) {
     if p.fire != nil || p.ready || p.gunLift > 0 {
         // The fire hose: the canvas hose trailing back down to the ground, the brass nozzle out front.
         let y = 32 + p.gunY
-        cbLine(c, 12, 42, 18, 39, hose, 1.0); cbLine(c, 18, 39, 39, Double(y) + 1.5, hose, 1.0)
+        clawdbergLine(c, 12, 42, 18, 39, hose, 1.0); clawdbergLine(c, 18, 39, 39, Double(y) + 1.5, hose, 1.0)
         c.rect(38, y, 3, 3, red)
         c.rect(41, y, 6, 3, brass); c.rect(47, y + 1, 2, 1, C(0x9A7A2A)); c.px(43, y, C(0xF4D47A))
         return
@@ -485,7 +485,7 @@ private func drawGrandpaDread(_ c: PixelCanvas, _ p: Pose) {
     let hair = C(0x0E0E12), sig = p.signature
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    cbBoots(c, step: p.step, C(0x0A0A0C), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x0A0A0C), height: 1)
     c.oy += p.breathe
     // The cape behind him, its collar standing up behind his head.
     c.rect(15, 27, 3, 13, cape); c.rect(38, 27, 2, 12, cape)

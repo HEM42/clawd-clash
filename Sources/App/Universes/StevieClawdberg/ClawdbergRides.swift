@@ -9,7 +9,7 @@ import Foundation
 /// The DeLorean: a low brushed-steel wedge with gull-wing doors, the flux-capacitor glow through the back window and the
 /// time machine's coils and vents on its tail. `ramp` 0…1 lifts the gull-wing door; `lit`: on the move at 88 mph, blue
 /// sparks crackling over it and two fire trails burning behind its wheels.
-func drawDelorean(_ c: PixelCanvas, ramp: Double, lit: Bool) {
+func clawdbergDrawDelorean(_ c: PixelCanvas, ramp: Double, lit: Bool) {
     let steel = C(0xB8BEC6), shine = C(0xDCE2E8), dark = C(0x6E747C), black = C(0x1A1C20), glass = C(0x2A3440)
     let tyre = C(0x101114), hub = C(0x9AA0A8)
     if lit {   // the fire trails, first, so the car sits over their ends
@@ -88,16 +88,16 @@ func drawDelorean(_ c: PixelCanvas, ramp: Double, lit: Bool) {
 
 /// The moon bike: a red BMX ridden by a kid in a red hoodie, the little alien in a white blanket in the basket up
 /// front, flying. No ramp: whoever's taken climbs on at the middle.
-func drawMoonBike(_ c: PixelCanvas, ramp: Double, lit: Bool) {
+func clawdbergDrawMoonBike(_ c: PixelCanvas, ramp: Double, lit: Bool) {
     let frame = C(0xC82A2A), tyre = C(0x18181C), hoodie = C(0xB8202A), basket = C(0xC8A060), sheet = C(0xF2F0EA)
     // The wheels.
     for wx in [20, 46] {
         c.circle(wx, 22, 5, tyre); c.circle(wx, 22, 3, C(0x3A3A44)); c.rect(wx - 3, 22, 7, 1, C(0x8A8A90)); c.rect(wx, 19, 1, 7, C(0x8A8A90))
     }
     // The frame, the handlebars and the seat.
-    cbLine(c, 20, 22, 30, 16, frame, 0.6); cbLine(c, 30, 16, 42, 16, frame, 0.6)
-    cbLine(c, 30, 16, 33, 22, frame, 0.6); cbLine(c, 20, 22, 33, 22, frame, 0.6)
-    cbLine(c, 42, 16, 46, 22, frame, 0.6); cbLine(c, 42, 16, 41, 11, frame, 0.6)
+    clawdbergLine(c, 20, 22, 30, 16, frame, 0.6); clawdbergLine(c, 30, 16, 42, 16, frame, 0.6)
+    clawdbergLine(c, 30, 16, 33, 22, frame, 0.6); clawdbergLine(c, 20, 22, 33, 22, frame, 0.6)
+    clawdbergLine(c, 42, 16, 46, 22, frame, 0.6); clawdbergLine(c, 42, 16, 41, 11, frame, 0.6)
     c.rect(39, 10, 4, 1, C(0x2A2A30)); c.rect(27, 14, 5, 1, C(0x2A2A30))
     // The basket, and the little alien in his blanket peeking out.
     c.rect(44, 11, 8, 5, basket); c.rect(44, 11, 8, 1, C(0x8A6A3A))
@@ -113,7 +113,7 @@ func drawMoonBike(_ c: PixelCanvas, ramp: Double, lit: Bool) {
 /// The mothership: a vast dark dome crowned with lights, coloured lamps in rows round its belly and a blaze of white
 /// light underneath. Its "ramp" is that light pouring down (`ramp` 0…1), which whoever's taken walks into; `lit`: the
 /// lamps chase round while it moves.
-func drawMothership(_ c: PixelCanvas, ramp: Double, lit: Bool) {
+func clawdbergDrawMothership(_ c: PixelCanvas, ramp: Double, lit: Bool) {
     let cx = 33
     if ramp > 0 {
         for y in 16..<c.h {
@@ -140,7 +140,7 @@ func drawMothership(_ c: PixelCanvas, ramp: Double, lit: Bool) {
 
 /// The park jeep: a red-and-green Jurassic Park Wrangler with the yellow band and the logo on its door, a roll bar and
 /// a spare tyre on the back. `ramp` 0…1 swings its half door open on the back seat; `lit`: headlights on.
-func drawParkJeep(_ c: PixelCanvas, ramp: Double, lit: Bool) {
+func clawdbergDrawParkJeep(_ c: PixelCanvas, ramp: Double, lit: Bool) {
     let green = C(0x2E6A3A), red = C(0xC82A2A), yellow = C(0xF2C82A), dark = C(0x1A2A1E), tyre = C(0x101114)
     // The roll bar and the windscreen.
     c.rect(18, 7, 2, 10, C(0x3A3A40)); c.rect(32, 7, 2, 10, C(0x3A3A40)); c.rect(18, 7, 16, 2, C(0x3A3A40))

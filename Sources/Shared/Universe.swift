@@ -85,7 +85,7 @@ struct Universe: Hashable, Comparable, CaseIterable, Codable, RawRepresentable {
 
     /// Who's gone for a moment when their session is compacted, the same face when they're back, as global ids
     /// (`StatusStore`'s PreCompact): The Clawd Files' FBI agents (`FilesMissingTime`), Stevie Clawdberg's time travellers
-    /// (`OutaTime`), Clawd Slayer's eight from "Tabula Rasa" (`SlayerTabulaRasa`).
+    /// (`ClawdbergOutaTime`), Clawd Slayer's eight from "Tabula Rasa" (`SlayerTabulaRasa`).
     var abductees: Set<Int> {
         if case .away(let who)? = facts.compaction { return Set(who.map { base + $0 }) }
         return []

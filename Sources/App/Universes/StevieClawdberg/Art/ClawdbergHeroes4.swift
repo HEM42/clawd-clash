@@ -26,7 +26,7 @@ private let sneakerWhite = C(0xEDEDED)
 
 /// Sneakers on the four feet, white with a coloured stripe.
 private func sneakers(_ c: PixelCanvas, step: Int, stripe: Px) {
-    cbBoots(c, step: step, sneakerWhite)
+    clawdbergBoots(c, step: step, sneakerWhite)
     guard !seatedPose else { return }
     for (i, lx) in [19, 23, 31, 35].enumerated() {
         let lifted = step >= 0 && i % 2 == step
@@ -152,7 +152,7 @@ private func drawBrandWaltz(_ c: PixelCanvas, _ p: Pose) {
         return
     }
     if let a = p.melee {
-        cbPunch(c, angle: a, trail: p.trail, arm: sweats)
+        clawdbergPunch(c, angle: a, trail: p.trail, arm: sweats)
     } else {
         c.rect(15, 35, 3, 1, sweatsD); c.rect(38, 35, 3, 1, sweatsD)   // the ribbed cuffs
     }
@@ -291,7 +291,7 @@ private func drawData(_ c: PixelCanvas, _ p: Pose) {
     let pinching = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: C(0x3A3A44)), step: p.step)
-    cbBoots(c, step: p.step, C(0x24242A))
+    clawdbergBoots(c, step: p.step, C(0x24242A))
     c.oy += p.breathe
     // The coat tails over the legs.
     let tails = seatedPose ? 1 : 3
@@ -327,14 +327,14 @@ private func drawData(_ c: PixelCanvas, _ p: Pose) {
         var i = 0
         while i + 3 <= len {
             let xa = Double(39 + i), xb = Double(42 + i)
-            cbLine(c, xa, 30, xb, 34, metal, 0.5); cbLine(c, xa, 34, xb, 30, metalD, 0.5)
+            clawdbergLine(c, xa, 30, xb, 34, metal, 0.5); clawdbergLine(c, xa, 34, xb, 30, metalD, 0.5)
             i += 3
         }
         let tip = Double(39 + i)
         let open = k > 0.32 && k < 0.72 && Int(k * 24) % 2 == 0
         let spread = open ? 3.0 : 0.5
-        cbLine(c, tip, 31, tip + 4, 32 - spread, metal, 0.5); cbLine(c, tip + 4, 32 - spread, tip + 6, 32, metal, 0.5)
-        cbLine(c, tip, 33, tip + 4, 32 + spread, metal, 0.5); cbLine(c, tip + 4, 32 + spread, tip + 6, 32, metal, 0.5)
+        clawdbergLine(c, tip, 31, tip + 4, 32 - spread, metal, 0.5); clawdbergLine(c, tip + 4, 32 - spread, tip + 6, 32, metal, 0.5)
+        clawdbergLine(c, tip, 33, tip + 4, 32 + spread, metal, 0.5); clawdbergLine(c, tip + 4, 32 + spread, tip + 6, 32, metal, 0.5)
         return
     }
     if p.fire != nil || p.ready || p.gunLift > 0 || p.smoke != nil {
@@ -458,13 +458,13 @@ private func drawStefSteinclawd(_ c: PixelCanvas, _ p: Pose) {
     if pushing, let k = sig {
         // A finger on the bridge, pushing them home; then a glint.
         c.rect(36, 31, 3, 4, sweater)
-        cbLine(c, 36, 31.5, 30, 30.5, sweater, 1)
+        clawdbergLine(c, 36, 31.5, 30, 30.5, sweater, 1)
         c.rect(27, 29, 2, 2, clawdOrange)
         if k > 0.55 { c.px(31, 28, white); c.px(21, 28, white) }
         return
     }
     if let a = p.melee {
-        cbPunch(c, angle: a, trail: p.trail, arm: sweater)
+        clawdbergPunch(c, angle: a, trail: p.trail, arm: sweater)
     }
 }
 
@@ -484,7 +484,7 @@ private func drawSlawth(_ c: PixelCanvas, _ p: Pose) {
     let torn = ripping && k > 0.32
 
     drawLegs(c, Look(leg: C(0x4A3A30)), step: p.step)
-    cbBoots(c, step: p.step, C(0x2A1E16), height: 3)
+    clawdbergBoots(c, step: p.step, C(0x2A1E16), height: 3)
     c.oy += p.breathe
     // The big body, a lump on the head.
     c.rect(15, 22, 26, 16, body); c.rect(15, 37, 26, 1, shade); c.rect(40, 22, 1, 16, shade)
@@ -543,8 +543,8 @@ private func drawSlawth(_ c: PixelCanvas, _ p: Pose) {
     }
     c.rect(11, 31, 4, 5, shirt); c.rect(11, 35, 4, 2, big)
     if let a = p.melee {
-        cbPunch(c, angle: a, trail: p.trail, arm: shirt, reach: 8)
-        let e = cbReach(cbHand, a, 8)
+        clawdbergPunch(c, angle: a, trail: p.trail, arm: shirt, reach: 8)
+        let e = clawdbergReach(clawdbergHand, a, 8)
         c.rect(Int(e.x.rounded()) - 2, Int(e.y.rounded()) - 2, 4, 4, big)
     } else {
         c.rect(41, 31, 4, 5, shirt); c.rect(41, 35, 4, 2, big)

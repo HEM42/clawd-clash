@@ -29,7 +29,7 @@ private func drawBiffTannin(_ c: PixelCanvas, _ p: Pose) {
     let knocking = sig.map { $0 > 0.08 && $0 < 0.92 } ?? false
 
     drawLegs(c, Look(leg: C(0x3E5888)), step: p.step)
-    cbBoots(c, step: p.step, C(0x2A2420), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x2A2420), height: 1)
     c.oy += p.breathe
     // The big body: a row taller and a pixel wider each side than plain Clawd.
     c.rect(17, 25, 22, 13, clawdOrange)
@@ -64,7 +64,7 @@ private func drawBiffTannin(_ c: PixelCanvas, _ p: Pose) {
         return
     }
     if let a = p.melee {
-        cbPunch(c, angle: a, trail: p.trail, arm: sleeve)
+        clawdbergPunch(c, angle: a, trail: p.trail, arm: sleeve)
     } else {
         c.rect(39, 33, 3, 3, sleeve); c.rect(39, 35, 3, 1, sleeveD)
     }
@@ -82,7 +82,7 @@ private func drawOldBiff(_ c: PixelCanvas, _ p: Pose) {
     let waving = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: C(0x5A4A3A)), step: p.step)
-    cbBoots(c, step: p.step, C(0x2A1E16), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x2A1E16), height: 1)
     c.oy += p.breathe
     c.oy += 1                                                      // a little stooped
     drawBody(c, Look(arm: suit))
@@ -118,10 +118,10 @@ private func drawOldBiff(_ c: PixelCanvas, _ p: Pose) {
     default: swinging = false
     }
     if let a = p.melee, swinging {
-        cbSmear(c, cbHand, p.trail, from: 3, to: 13, C(0xE8D8B8))
-        cbBar(c, cbHand, a, from: -1, to: 12, cane, r: 0.7)
-        let grip = cbReach(cbHand, a, -1)
-        cbBar(c, grip, a - 90, from: 0, to: 2.5, caneL, r: 0.6)   // the crook
+        clawdbergSmear(c, clawdbergHand, p.trail, from: 3, to: 13, C(0xE8D8B8))
+        clawdbergBar(c, clawdbergHand, a, from: -1, to: 12, cane, r: 0.7)
+        let grip = clawdbergReach(clawdbergHand, a, -1)
+        clawdbergBar(c, grip, a - 90, from: 0, to: 2.5, caneL, r: 0.6)   // the crook
         c.rect(38, 33, 3, 3, suit)
         return
     }
@@ -158,7 +158,7 @@ private func drawGriffTannin(_ c: PixelCanvas, _ p: Pose) {
               ["K": C(0x1E1C24), "m": C(0xE83AAA)])
     c.ox += jerk
     drawLegs(c, Look(leg: C(0x3A3A44)), step: p.step)
-    cbBoots(c, step: p.step, C(0x8A8A96), height: 2)
+    clawdbergBoots(c, step: p.step, C(0x8A8A96), height: 2)
     c.oy += p.breathe
     drawBody(c, Look(arm: jacket, eye: nil))
     c.rect(18, 33, 20, 5, jacket); c.rect(37, 33, 1, 5, jacketD); c.rect(18, 37, 20, 1, jacketD)
@@ -193,16 +193,16 @@ private func drawGriffTannin(_ c: PixelCanvas, _ p: Pose) {
     c.rect(15, 33, 3, 3, jacket); c.rect(15, 33, 3, 1, chrome)
 
     if let a = p.melee {
-        cbSmear(c, cbHand, p.trail, from: 3, to: 15, C(0xE8F0FF))
-        cbBar(c, cbHand, a, from: -1, to: 4, C(0x2A2A30), r: 0.6)
-        cbBar(c, cbHand, a, from: 4, to: 14, bat, r: 1.0)
-        cbBar(c, cbHand, a, from: 8, to: 14, chromeD, r: 0.3)
+        clawdbergSmear(c, clawdbergHand, p.trail, from: 3, to: 15, C(0xE8F0FF))
+        clawdbergBar(c, clawdbergHand, a, from: -1, to: 4, C(0x2A2A30), r: 0.6)
+        clawdbergBar(c, clawdbergHand, a, from: 4, to: 14, bat, r: 1.0)
+        clawdbergBar(c, clawdbergHand, a, from: 8, to: 14, chromeD, r: 0.3)
         c.rect(38, 33, 3, 3, jacket); c.rect(38, 33, 3, 1, chrome)
         return
     }
     // At rest: the bat hanging from his hand, its end down by his feet.
-    cbLine(c, 41.5, 34, 44, 37, C(0x2A2A30), 0.6)
-    cbLine(c, 44, 37, 47, 43, bat, 1.0)
+    clawdbergLine(c, 41.5, 34, 44, 37, C(0x2A2A30), 0.6)
+    clawdbergLine(c, 44, 37, 47, 43, bat, 1.0)
     c.rect(38, 33, 3, 3, jacket); c.rect(38, 33, 3, 1, chrome)
 }
 
@@ -218,7 +218,7 @@ private func drawMadDogTannin(_ c: PixelCanvas, _ p: Pose) {
     let shooting = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: C(0x4A3E34)), step: p.step)
-    cbBoots(c, step: p.step, C(0x3A2618), height: 3)
+    clawdbergBoots(c, step: p.step, C(0x3A2618), height: 3)
     if !seatedPose {
         c.px(18, 42, C(0xC8CCD4)); c.px(30, 42, C(0xC8CCD4))     // spurs
     }
@@ -286,7 +286,7 @@ private func drawMrStricklaw(_ c: PixelCanvas, _ p: Pose) {
     let handing = sig.map { $0 > 0.08 && $0 < 0.92 } ?? false
 
     drawLegs(c, Look(leg: C(0x6A6A6E)), step: p.step)
-    cbBoots(c, step: p.step, C(0x2A1E18), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x2A1E18), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: shirt))
     // The bald dome over the top of his head, and its shine.
@@ -330,7 +330,7 @@ private func drawNeedles(_ c: PixelCanvas, _ p: Pose) {
     let flap = flapping && Int(p.t * 10) % 2 == 0 ? 4 : (flapping ? 1 : 0)
 
     drawLegs(c, Look(leg: C(0x7A7A80)), step: p.step)
-    cbBoots(c, step: p.step, C(0x16161A), height: 2)
+    clawdbergBoots(c, step: p.step, C(0x16161A), height: 2)
     c.oy += p.breathe
     // The mullet's long back, down past his neck.
     c.pattern(13, 25, [".HHHH", "HHHHH", "HHHHH", "HHHHh", "HHHH.", "HHHh.", ".HHH.", ".HH..", "..H.."], ["H": hair, "h": hairL])

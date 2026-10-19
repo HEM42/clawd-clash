@@ -138,7 +138,7 @@ let clawdbergTheme = Theme(
             return nil
         }
     },
-    menuIcon: drawMoonBikeIcon,
+    menuIcon: clawdbergDrawMoonBikeIcon,
     legend: .hero(.indianaBones))
 
 // MARK: - Places

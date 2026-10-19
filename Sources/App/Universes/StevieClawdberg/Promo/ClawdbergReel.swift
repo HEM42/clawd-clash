@@ -67,7 +67,7 @@ func clawdbergSilhouette(_ src: PixelCanvas, _ col: Px) -> PixelCanvas {
 }
 
 /// A line `w` pixels thick from (x0, y0) to (x1, y1).
-func inkLine(_ c: PixelCanvas, _ x0: Double, _ y0: Double, _ x1: Double, _ y1: Double, w: Int = 1, _ col: Px) {
+private func inkLine(_ c: PixelCanvas, _ x0: Double, _ y0: Double, _ x1: Double, _ y1: Double, w: Int = 1, _ col: Px) {
     let dx = x1 - x0, dy = y1 - y0, n = Int(max(abs(dx), abs(dy)) * 2) + 1
     for i in 0...n {
         let f = Double(i) / Double(n)
@@ -163,17 +163,17 @@ func clawdbergIntro(_ ctx: CGContext, local l: Double, t: Double) {
 
 /// The set piece's timings (shot-local seconds): Marty walks up, the DeLorean comes in at 88 mph and pulls up beside
 /// him, the gull-wing door lifts, he hops in, it shuts, the car tears off and is gone in a flash.
-let hvGround = 158.0, martyX = 150.0, docX = 52.0, carIn = 2.2, carStop = 3.0, doorUp = 3.1, hopIn = 3.5, doorDown = 4.0,
+private let hvGround = 158.0, martyX = 150.0, docX = 52.0, carIn = 2.2, carStop = 3.0, doorUp = 3.1, hopIn = 3.5, doorDown = 4.0,
     carGo = 4.4, vanishAt = 5.6, biffIn = 7.2
 /// The DeLorean is drawn at twice the cast's pixel size, so Marty fits in it.
-let carScale = 2.0
+private let carScale = 2.0
 /// Where the DeLorean's canvas starts (fx columns): parked with its door at Marty, and where it vanishes.
-let carParked = martyX - 33 * carScale, carVanish = carParked + 90
+private let carParked = martyX - 33 * carScale, carVanish = carParked + 90
 /// The fire trails: from where the car hit 88 to where it vanished (its front wheel); the plate lands past them.
-let trailFrom = carParked + 40 * carScale, trailTo = carVanish + 50 * carScale
+private let trailFrom = carParked + 40 * carScale, trailTo = carVanish + 50 * carScale
 
 /// The DeLorean's left edge (fx columns) and how fast it's going (0…1) at shot time `l`; nil when it's not there.
-func deloreanAt(_ l: Double) -> (x: Double, speed: Double)? {
+private func deloreanAt(_ l: Double) -> (x: Double, speed: Double)? {
     switch l {
     case ..<carIn: return nil
     case ..<carStop:
@@ -190,7 +190,7 @@ func deloreanAt(_ l: Double) -> (x: Double, speed: Double)? {
 /// The DeLorean on the stage at `carScale`, its wheels on the floor, `door` 0…1 lifting the gull-wing, `lit` crackling.
 func clawdbergDelorean(_ ctx: CGContext, left: Double, door: Double, lit: Bool) {
     let fc = PixelCanvas(Ride.width, Ride.height)
-    drawDelorean(fc, ramp: door, lit: lit)
+    clawdbergDrawDelorean(fc, ramp: door, lit: lit)
     fc.addOutline(C(0xFFFFFF, 0.92))
     guard let img = fc.makeImage() else { return }
     ctx.saveGState(); ctx.interpolationQuality = .none

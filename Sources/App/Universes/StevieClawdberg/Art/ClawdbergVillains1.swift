@@ -102,7 +102,7 @@ private func drawMajorTote(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
 
     drawLegs(c, Look(leg: C(0x2A2A2E)), step: p.step)
-    cbBoots(c, step: p.step, coatD, height: 3)
+    clawdbergBoots(c, step: p.step, coatD, height: 3)
     c.oy += p.breathe
     drawBody(c, Look(arm: coat))
     // The coat: buttoned up, a sheen down the leather, its skirts hanging over the legs.
@@ -112,7 +112,7 @@ private func drawMajorTote(_ c: PixelCanvas, _ p: Pose) {
         c.rect(17, 38, 22, 2, coat); c.rect(17, 39, 22, 1, coatD); c.rect(27, 38, 2, 2, coatD)
     }
     // The hat, pulled low.
-    cbFedora(c, felt: coat, dark: coatD, band: C(0x3A3A42))
+    clawdbergFedora(c, felt: coat, dark: coatD, band: C(0x3A3A42))
     // Little round spectacles, silver-rimmed, and the thin smile.
     let rim = C(0xB8BCC4)
     for gx in [21, 31] { c.pattern(gx, 28, [".RR.", "R..R", "R..R", "R..R", ".RR."], ["R": rim]) }
@@ -158,11 +158,11 @@ private func drawMajorTote(_ c: PixelCanvas, _ p: Pose) {
 
     // The poker: in a fight swung about, at rest held point down by his side, still glowing.
     let a = p.melee ?? 32
-    let h = cbHand
-    cbSmear(c, h, p.trail, from: 3, to: 14, C(0xFF9A4A))
-    cbBar(c, h, a, from: -2, to: 1, C(0x5A3A22), r: 0.7)
-    cbBar(c, h, a, from: 1, to: 11, C(0x3A3A40), r: 0.6)
-    let t0 = cbReach(h, a, 11), t1 = cbReach(h, a, 14)
+    let h = clawdbergHand
+    clawdbergSmear(c, h, p.trail, from: 3, to: 14, C(0xFF9A4A))
+    clawdbergBar(c, h, a, from: -2, to: 1, C(0x5A3A22), r: 0.7)
+    clawdbergBar(c, h, a, from: 1, to: 11, C(0x3A3A40), r: 0.6)
+    let t0 = clawdbergReach(h, a, 11), t1 = clawdbergReach(h, a, 14)
     let flick: Double = 0.8 + 0.2 * noise(Int(p.t * 12))
     c.glowLine(t0.x, t0.y, t1.x, t1.y, core: C(0xFFC060), glow: C(0xFF4A1A, 0.8), coreR: 0.6, glowR: 1.7,
                strength: flick)
@@ -180,7 +180,7 @@ private func drawCairoSwordsman(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
 
     drawLegs(c, Look(leg: robe), step: p.step)
-    cbBoots(c, step: p.step, C(0x3A2A1E), height: 2)
+    clawdbergBoots(c, step: p.step, C(0x3A2A1E), height: 2)
     c.oy += p.breathe
     // The headcloth's tail, hanging down behind.
     c.rect(15, 23, 3, 10, robe); c.rect(15, 32, 3, 1, robeL)
@@ -204,7 +204,7 @@ private func drawCairoSwordsman(_ c: PixelCanvas, _ p: Pose) {
         ".RR................RR.",
     ], ["R": robe, "r": robeL])
 
-    var h = cbHand
+    var h = clawdbergHand
     var a = p.melee ?? -105
     var trail = p.trail
     if let s = sig, s > 0.04, s < 0.97 {
@@ -229,21 +229,21 @@ private func drawCairoSwordsman(_ c: PixelCanvas, _ p: Pose) {
 /// A broad curved blade on a dark grip with a brass crossguard, at `angle` from `h`, its tip curving up and back.
 private func scimitar(_ c: PixelCanvas, _ h: (x: Double, y: Double), _ angle: Double, trail: [Double]) {
     let steel = C(0xD8DCE4), edge = C(0xF6F8FC), brass = C(0xC8A040)
-    cbSmear(c, h, trail, from: 3, to: 15, C(0xE8ECF4))
-    cbBar(c, h, angle, from: -2.5, to: 1.5, C(0x4A2E1A), r: 0.7)
+    clawdbergSmear(c, h, trail, from: 3, to: 15, C(0xE8ECF4))
+    clawdbergBar(c, h, angle, from: -2.5, to: 1.5, C(0x4A2E1A), r: 0.7)
     let r = angle * .pi / 180
     let ux = cos(r), uy = sin(r)
     let nx = uy, ny = -ux            // the back of the blade: up, when it's held out level
-    let g = cbReach(h, angle, 2)
-    cbLine(c, g.x + nx * 2, g.y + ny * 2, g.x - nx * 2, g.y - ny * 2, brass, 0.6)
-    var prev = cbReach(h, angle, 2.5)
+    let g = clawdbergReach(h, angle, 2)
+    clawdbergLine(c, g.x + nx * 2, g.y + ny * 2, g.x - nx * 2, g.y - ny * 2, brass, 0.6)
+    var prev = clawdbergReach(h, angle, 2.5)
     for i in 1...6 {
         let f = Double(i) / 6
         let d: Double = 2.5 + Double(i) * 2.4
         let off: Double = f * f * 3.2
         let q = (x: h.x + ux * d + nx * off, y: h.y + uy * d + ny * off)
         let w: Double = i < 5 ? 0.9 : 0.6
-        cbLine(c, prev.x, prev.y, q.x, q.y, steel, w)
+        clawdbergLine(c, prev.x, prev.y, q.x, q.y, steel, w)
         prev = q
     }
     c.px(Int(prev.x.rounded()), Int(prev.y.rounded()), edge)
@@ -260,7 +260,7 @@ private func drawMechanic(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
 
     drawLegs(c, Look(leg: khaki), step: p.step)
-    cbBoots(c, step: p.step, C(0x3A2818), height: 2)
+    clawdbergBoots(c, step: p.step, C(0x3A2818), height: 2)
     c.oy += p.breathe
 
     var rollL = 0, rollR = 0, guardUp = false
@@ -303,7 +303,7 @@ private func drawMechanic(_ c: PixelCanvas, _ p: Pose) {
     }
     if let a = p.melee {
         c.rect(41, 25, 3, 8, skin)
-        cbPunch(c, angle: a, trail: p.trail, arm: skin, fist: fist, reach: 8)
+        clawdbergPunch(c, angle: a, trail: p.trail, arm: skin, fist: fist, reach: 8)
         return
     }
     c.rect(41, 24 - rollR, 4, 11, skin); c.rect(41, 33 - rollR, 4, 3, fist); c.rect(44, 24 - rollR, 1, 9, shade)
@@ -320,7 +320,7 @@ private func drawMolaRamm(_ c: PixelCanvas, _ p: Pose) {
     let raising = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: black), step: p.step)
-    cbBoots(c, step: p.step, redD, height: 1)
+    clawdbergBoots(c, step: p.step, redD, height: 1)
     c.oy += p.breathe
     // The hood's sides, hanging down behind the body.
     c.rect(16, 22, 3, 13, red); c.rect(16, 34, 3, 1, redD)
@@ -336,7 +336,7 @@ private func drawMolaRamm(_ c: PixelCanvas, _ p: Pose) {
     for horn in [hornL, hornR] {
         for i in 1..<horn.count {
             let w: Double = 1.3 - Double(i) * 0.25
-            cbLine(c, horn[i - 1].0, horn[i - 1].1, horn[i].0, horn[i].1, i == 3 ? boneD : bone, w)
+            clawdbergLine(c, horn[i - 1].0, horn[i - 1].1, horn[i].0, horn[i].1, i == 3 ? boneD : bone, w)
         }
     }
     // The hood across the head, and the skull on his forehead.
@@ -380,7 +380,7 @@ private func drawLaoChay(_ c: PixelCanvas, _ p: Pose) {
     let dangling = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: C(0x1A1A1E)), step: p.step)
-    cbBoots(c, step: p.step, C(0x08080A), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x08080A), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: jacket))
     // The dinner jacket, its black bow tie and the carnation in his buttonhole.
@@ -404,12 +404,12 @@ private func drawLaoChay(_ c: PixelCanvas, _ p: Pose) {
 
     if dangling {
         // The hand up, the vial swinging below it on its chain.
-        cbLine(c, 39, 34, 43, 28, jacket, 1.1)
+        clawdbergLine(c, 39, 34, 43, 28, jacket, 1.1)
         c.rect(43, 26, 2, 2, clawdOrange)
         let swing: Double = sin(p.t * 4) * 0.45
         let hx = 44.0, hy = 28.0
         let vx = hx + sin(swing) * 7, vy = hy + cos(swing) * 7
-        cbLine(c, hx, hy, vx, vy - 1, C(0xC8B060), 0.45)
+        clawdbergLine(c, hx, hy, vx, vy - 1, C(0xC8B060), 0.45)
         c.rect(Int(vx.rounded()) - 1, Int(vy.rounded()), 2, 3, C(0x3A9AE8))
         c.px(Int(vx.rounded()) - 1, Int(vy.rounded()) - 1, C(0x8A6A3A))
         c.px(Int(vx.rounded()), Int(vy.rounded()) + 1, C(0xBFE6FF))
@@ -429,7 +429,7 @@ private func drawColonelVogle(_ c: PixelCanvas, _ p: Pose) {
     let slapping = sig.map { $0 > 0.05 && $0 < 0.95 } ?? false
 
     drawLegs(c, Look(leg: cloth), step: p.step)
-    cbBoots(c, step: p.step, black, height: 4)
+    clawdbergBoots(c, step: p.step, black, height: 4)
     c.oy += p.breathe
     drawBody(c, Look(arm: cloth))
     plainTunic(c, cloth: cloth, dark: clothD)
@@ -510,7 +510,7 @@ private func walterFigure(_ c: PixelCanvas, _ p: Pose, slump: Int) {
     let sig = p.signature
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    cbBoots(c, step: p.step, C(0x1E1A16), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x1E1A16), height: 1)
     c.oy += p.breathe + slump
     drawBody(c, Look(arm: suit))
     // The suit, the waistcoat under it, the white shirt and the tie.
@@ -563,7 +563,7 @@ private func drawElsaSnyder(_ c: PixelCanvas, _ p: Pose) {
         c.pattern(53, 39, ["WWW.", "WwWW", "WWW.", ".W..", "WWW."], ["W": C(0x9A7A50), "w": C(0x6A4E30)])
     }
     drawLegs(c, Look(leg: suit), step: p.step)
-    cbBoots(c, step: p.step, C(0x2A1E1A), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x2A1E1A), height: 1)
     c.oy += p.breathe
     var lean = 0
     if let s = sig, reaching { lean = Int((ramp(s, 0.05, 0.25) * 2 * (1 - ramp(s, 0.82, 0.95))).rounded()) }
@@ -594,7 +594,7 @@ private func drawElsaSnyder(_ c: PixelCanvas, _ p: Pose) {
         // Her arm stretched out towards it, fingers straining.
         let strain = s > 0.25 && s < 0.82 ? (Int(p.t * 10) % 2) : 0
         let reach = Double(lean) + ramp(s, 0.08, 0.25) * 9 + Double(strain)
-        cbLine(c, 39, 34.5, 39 + reach, 37.5, suit, 1.1)
+        clawdbergLine(c, 39, 34.5, 39 + reach, 37.5, suit, 1.1)
         c.rect(Int(39 + reach), 37, 2, 2, clawdOrange)
         return
     }
@@ -612,11 +612,11 @@ private func drawIrinaSpalco(_ c: PixelCanvas, _ p: Pose) {
     let holding = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: cloth), step: p.step)
-    cbBoots(c, step: p.step, C(0x101012), height: 4)
+    clawdbergBoots(c, step: p.step, C(0x101012), height: 4)
     c.oy += p.breathe
     if p.melee == nil {
         // The rapier at her hip in its scabbard, slanting back.
-        cbLine(c, 18, 36, 9, 42, C(0x2A2A2E), 0.6); c.rect(17, 35, 2, 2, C(0xB8BCC4))
+        clawdbergLine(c, 18, 36, 9, 42, C(0x2A2A2E), 0.6); c.rect(17, 35, 2, 2, C(0xB8BCC4))
     }
     drawBody(c, Look(arm: cloth))
     plainTunic(c, cloth: cloth, dark: clothD)
@@ -655,18 +655,18 @@ private func drawIrinaSpalco(_ c: PixelCanvas, _ p: Pose) {
         return
     }
     if let a = p.melee {
-        rapier(c, cbHand, a, trail: p.trail)
+        rapier(c, clawdbergHand, a, trail: p.trail)
         c.rect(38, 33, 3, 3, cloth)
     }
 }
 
 /// A slender silver rapier with a cup guard, at `angle` from `h`.
 private func rapier(_ c: PixelCanvas, _ h: (x: Double, y: Double), _ angle: Double, trail: [Double]) {
-    cbSmear(c, h, trail, from: 3, to: 19, C(0xE8ECF4))
-    cbBar(c, h, angle, from: -2, to: 1.5, C(0x2A2A2E), r: 0.6)
-    let g = cbReach(h, angle, 2)
+    clawdbergSmear(c, h, trail, from: 3, to: 19, C(0xE8ECF4))
+    clawdbergBar(c, h, angle, from: -2, to: 1.5, C(0x2A2A2E), r: 0.6)
+    let g = clawdbergReach(h, angle, 2)
     c.rect(Int(g.x.rounded()) - 1, Int(g.y.rounded()) - 1, 3, 3, C(0xB8BCC4))
-    cbBar(c, h, angle, from: 3, to: 19, C(0xDCE0E8), r: 0.5)
+    clawdbergBar(c, h, angle, from: 3, to: 19, C(0xDCE0E8), r: 0.5)
 }
 
 // MARK: - Jürgen Vollar
@@ -680,7 +680,7 @@ private func drawJurgenVollar(_ c: PixelCanvas, _ p: Pose) {
     let checking = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: cloth), step: p.step)
-    cbBoots(c, step: p.step, C(0x141416), height: 3)
+    clawdbergBoots(c, step: p.step, C(0x141416), height: 3)
     c.oy += p.breathe
     drawBody(c, Look(arm: cloth))
     plainTunic(c, cloth: cloth, dark: clothD)
@@ -707,7 +707,7 @@ private func drawJurgenVollar(_ c: PixelCanvas, _ p: Pose) {
                   ["B": bronze, "d": bronzeD])
         let ang: Double = p.t * 2.5
         let rx = Double(cx) + 0.5 + cos(ang) * 2, ry = Double(cy) + 0.5 + sin(ang) * 2
-        cbLine(c, Double(cx) + 0.5, Double(cy) + 0.5, rx, ry, bronzeL, 0.5)
+        clawdbergLine(c, Double(cx) + 0.5, Double(cy) + 0.5, rx, ry, bronzeL, 0.5)
         c.px(cx, cy, bronzeD)
         if Int(p.t * 2) % 3 == 0 { c.px(23, 29, white); c.px(33, 29, white) }
         return
@@ -728,7 +728,7 @@ private func drawMaharajah(_ c: PixelCanvas, _ p: Pose) {
     let pinning = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: C(0xF0ECE0)), step: p.step)
-    cbBoots(c, step: p.step, gold, height: 1)
+    clawdbergBoots(c, step: p.step, gold, height: 1)
     c.oy += p.breathe
     // A short little body: three rows lower than anyone else's, on the same four legs.
     c.rect(19, 29, 18, 9, skin); c.rect(19, 37, 18, 1, shade); c.rect(36, 29, 1, 9, shade)
@@ -762,7 +762,7 @@ private func drawMaharajah(_ c: PixelCanvas, _ p: Pose) {
     let cyc = f - floor(f)
     let jab: Double = cyc < 0.3 ? cyc / 0.3 : max(0, 1 - (cyc - 0.3) / 0.4)
     let px0: Double = 51 - jab * 4, py0: Double = 23 + jab * 3
-    cbLine(c, px0, py0, px0 - 6, py0 + 4.5, C(0xD8DCE4), 0.45)
+    clawdbergLine(c, px0, py0, px0 - 6, py0 + 4.5, C(0xD8DCE4), 0.45)
     c.rect(Int(px0.rounded()), Int(py0.rounded()) - 1, 2, 2, ruby)
     c.rect(Int(px0.rounded()) + 1, Int(py0.rounded()), 2, 2, gold)
     if jab > 0.9 {
@@ -782,14 +782,14 @@ private func drawReneBellock(_ c: PixelCanvas, _ p: Pose) {
     let admiring = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    cbBoots(c, step: p.step, C(0x6A4A2E), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x6A4A2E), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
     // The linen suit, its open collar and a loose tie.
     c.rect(18, 34, 20, 4, suit); c.rect(37, 34, 1, 4, suitD); c.rect(18, 37, 20, 1, suitD)
     c.pattern(25, 34, ["dSSSSd", ".dTTd.", "..TT.."], ["d": suitD, "S": shirt, "T": tie])
     // The panama.
-    cbFedora(c, felt: straw, dark: strawD, band: C(0x1E1A16))
+    clawdbergFedora(c, felt: straw, dark: strawD, band: C(0x1E1A16))
 
     if admiring {
         // The golden idol held up before his face in both hands, a glint running over it.

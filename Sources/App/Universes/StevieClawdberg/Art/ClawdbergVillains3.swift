@@ -108,11 +108,11 @@ private func gremClaws(_ c: PixelCanvas, _ p: Pose, _ h: Hide, reach len: Double
         c.rect(38, 33, 3, 3, h.skin); c.px(41, 34, gremClaw); c.px(41, 36, gremClaw)
         return
     }
-    cbSmear(c, cbHand, p.trail, from: 3, to: len + 4, C(0xE8F0D8))
-    cbBar(c, cbHand, a, from: -2, to: len, h.skin, r: 1.3)
-    let tip = cbReach(cbHand, a, len)
+    clawdbergSmear(c, clawdbergHand, p.trail, from: 3, to: len + 4, C(0xE8F0D8))
+    clawdbergBar(c, clawdbergHand, a, from: -2, to: len, h.skin, r: 1.3)
+    let tip = clawdbergReach(clawdbergHand, a, len)
     for d in [-30.0, 0, 30] {
-        cbBar(c, tip, a + d, from: 0.8, to: 3.2, gremClaw, r: 0.5)
+        clawdbergBar(c, tip, a + d, from: 0.8, to: 3.2, gremClaw, r: 0.5)
     }
 }
 
@@ -187,10 +187,10 @@ private func drawMohawk(_ c: PixelCanvas, _ p: Pose) {
             let y0 = 29 + fi * 3
             let kneeX = 17 - (5 + fi * 2) * g, kneeY = y0 - (6 - fi) * g
             let footX = 17 - (9 + fi * 3) * g, footY = y0 + (14 - fi * 3) * g
-            cbLine(c, 18, y0, kneeX, kneeY, spider, 0.7); cbLine(c, kneeX, kneeY, footX, footY, spider, 0.6)
+            clawdbergLine(c, 18, y0, kneeX, kneeY, spider, 0.7); clawdbergLine(c, kneeX, kneeY, footX, footY, spider, 0.6)
             c.px(Int(kneeX.rounded()), Int(kneeY.rounded()), spiderL)
             let rKneeX = 39 + (5 + fi * 2) * g, rFootX = 39 + (9 + fi * 3) * g
-            cbLine(c, 38, y0, rKneeX, kneeY, spider, 0.7); cbLine(c, rKneeX, kneeY, rFootX, footY, spider, 0.6)
+            clawdbergLine(c, 38, y0, rKneeX, kneeY, spider, 0.7); clawdbergLine(c, rKneeX, kneeY, rFootX, footY, spider, 0.6)
             c.px(Int(rKneeX.rounded()), Int(kneeY.rounded()), spiderL)
         }
     }
@@ -259,7 +259,7 @@ private func drawTheBrain(_ c: PixelCanvas, _ p: Pose) {
         let a = -60 + beat * 30
         c.rect(14, 28 + Int((beat * 2).rounded()), 3, 3, jacket)
         c.rect(38, 26, 3, 8, jacket); c.rect(40, 24, 3, 3, h.skin)
-        cbBar(c, (42, 24.5), a, from: 0, to: 10, white, r: 0.5)
+        clawdbergBar(c, (42, 24.5), a, from: 0, to: 10, white, r: 0.5)
         let f = frac(p.t * 0.8)
         for i in 0..<3 {
             let ff = frac(f + Double(i) / 3)
@@ -299,11 +299,11 @@ private func drawBatGremlin(_ c: PixelCanvas, _ p: Pose) {
         // The arm bone up to the wrist, then three long fingers fanning out from it.
         let elbowA: Double = spread ? -140 + flap * 15 - wd * 10 : -150 - wd * 12
         let elbowL: Double = spread ? 9 : 8
-        let wrist = cbReach((sx, sy), elbowA, elbowL)
+        let wrist = clawdbergReach((sx, sy), elbowA, elbowL)
         let fingerA: [Double] = spread ? [-165, 160, 125] : [-178, 145, 112]
         let fingerL: [Double] = spread ? [10, 11, 9] : [9, 10, 8]
         var tips: [(x: Double, y: Double)] = []
-        for i in 0..<3 { tips.append(cbReach(wrist, fingerA[i] + (spread ? flap * 9 : 0), fingerL[i])) }
+        for i in 0..<3 { tips.append(clawdbergReach(wrist, fingerA[i] + (spread ? flap * 9 : 0), fingerL[i])) }
         // The membrane, scalloped between the fingertips, down to its root on the body.
         let edge = tips + [root]
         for seg in 0..<3 {
@@ -313,13 +313,13 @@ private func drawBatGremlin(_ c: PixelCanvas, _ p: Pose) {
                 let pull = sin(f * .pi) * 0.28
                 let mx0 = a.x + (b.x - a.x) * f, my0 = a.y + (b.y - a.y) * f
                 let mx = mx0 + (wrist.x - mx0) * pull, my = my0 + (wrist.y - my0) * pull
-                cbLine(c, wrist.x, wrist.y, mx, my, col, 1.0)
+                clawdbergLine(c, wrist.x, wrist.y, mx, my, col, 1.0)
             }
         }
-        cbLine(c, sx, sy, wrist.x, wrist.y, col, 1.2)
-        cbLine(c, root.x, root.y, wrist.x, wrist.y, col, 1.2)
-        cbLine(c, sx, sy, wrist.x, wrist.y, bone, 0.6)
-        for tip in tips { cbLine(c, wrist.x, wrist.y, tip.x, tip.y, bone, 0.4) }
+        clawdbergLine(c, sx, sy, wrist.x, wrist.y, col, 1.2)
+        clawdbergLine(c, root.x, root.y, wrist.x, wrist.y, col, 1.2)
+        clawdbergLine(c, sx, sy, wrist.x, wrist.y, bone, 0.6)
+        for tip in tips { clawdbergLine(c, wrist.x, wrist.y, tip.x, tip.y, bone, 0.4) }
         c.px(Int(wrist.x.rounded()), Int(wrist.y.rounded()) - 1, gremClaw)
     }
     gremBody(c, p, h, earLift: 2)
@@ -387,8 +387,8 @@ private func drawElectricGremlin(_ c: PixelCanvas, _ p: Pose) {
         let mx = Double(e.0) + dx / len * 2 + (noise(tick + s * 7) - 0.5) * 3
         let my = Double(e.1) + dy / len * 2
         let ex = Double(e.0) + dx / len * 5, ey = Double(e.1) + dy / len * 5
-        cbLine(c, Double(e.0), Double(e.1), mx, my, arc, 0.4)
-        cbLine(c, mx, my, ex, ey, arcB, 0.4)
+        clawdbergLine(c, Double(e.0), Double(e.1), mx, my, arc, 0.4)
+        clawdbergLine(c, mx, my, ex, ey, arcB, 0.4)
     }
 }
 
@@ -515,7 +515,7 @@ private func drawMrsDeegle(_ c: PixelCanvas, _ p: Pose) {
     }
 
     drawLegs(c, Look(leg: stockings), step: p.step)
-    cbBoots(c, step: p.step, C(0x101012), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x101012), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: coat))
     // The black coat, buttoned to the throat, down over the tops of her legs; a brooch.
@@ -563,7 +563,7 @@ private func drawDrClawtheter(_ c: PixelCanvas, _ p: Pose) {
     let gazing = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: C(0x3A3A44)), step: p.step)
-    cbBoots(c, step: p.step, C(0x16161B), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x16161B), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: lab, eye: gazing ? nil : ink))
     if gazing { c.rect(23, 28, 2, 3, ink); c.rect(33, 28, 2, 3, ink) }   // eyes up at the vial

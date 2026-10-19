@@ -64,7 +64,7 @@ enum ClawdbergFacts {
         villainCount: ClawdbergVillain.allCases.count, heroCount: ClawdbergHero.allCases.count,
         agentOnly: Set(49...53),             // Compy, mogwai pup, snake, frog, Croc Clock
         // Back to the Future's time travellers (Marty, Doc Brawn, Jennifer, Einstein the Dog, and Old Biff, who stole the
-        // DeLorean): they hit 88 mph and come back (`OutaTime`).
+        // DeLorean): they hit 88 mph and come back (`ClawdbergOutaTime`).
         compaction: .away(who: Set([55, 56, 57, 60].map { UniverseFacts.heroBase + $0 } + [44]))
     )
 }

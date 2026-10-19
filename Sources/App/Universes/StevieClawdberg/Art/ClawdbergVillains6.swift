@@ -98,7 +98,7 @@ private func drawKeyz(_ c: PixelCanvas, _ p: Pose) {
     let casting = p.zap != nil || p.armRaise > 0
 
     drawLegs(c, Look(leg: trousers), step: p.step)
-    cbBoots(c, step: p.step, C(0x141418), height: 2)
+    clawdbergBoots(c, step: p.step, C(0x141418), height: 2)
     c.oy += p.breathe
     drawBody(c, Look(arm: jacket, eye: nil))
     // A level stare under a straight brow.
@@ -133,7 +133,7 @@ private func drawKeyz(_ c: PixelCanvas, _ p: Pose) {
         let ka = (90 - swing * 1.3 + off) * .pi / 180
         let kx = rx + cos(ka) * 2, ky = ry + sin(ka) * 2
         let ex = rx + cos(ka) * 5, ey = ry + sin(ka) * 5
-        cbLine(c, kx, ky, ex, ey, i == 1 ? brass : steel, 0.5)
+        clawdbergLine(c, kx, ky, ex, ey, i == 1 ? brass : steel, 0.5)
     }
     c.px(34, 37, steel)
     if abs(swing) > 20 {
@@ -156,11 +156,11 @@ private func drawSpacesuitMan(_ c: PixelCanvas, _ p: Pose) {
     let casting = p.zap != nil || p.armRaise > 0
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    cbBoots(c, step: p.step, glove, height: 3)
+    clawdbergBoots(c, step: p.step, glove, height: 3)
     c.oy += p.breathe
     // The air pack on his back, and its hose looping down.
     c.rect(13, 27, 5, 9, suitD); c.rect(13, 27, 5, 1, suit)
-    cbLine(c, 14, 36, 12, 40, hose, 0.6); cbLine(c, 12, 40, 16, 42, hose, 0.6)
+    clawdbergLine(c, 14, 36, 12, 40, hose, 0.6); clawdbergLine(c, 12, 40, 16, 42, hose, 0.6)
     drawBody(c, Look(body: suit, shade: suitD, arm: suit, eye: ink))
     // The helmet: a rounded white dome, a collar ring, the visor over his face with Clawd behind the glass.
     c.pattern(17, 19, [
@@ -332,7 +332,7 @@ private func drawMayorVaun(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
 
     drawLegs(c, Look(leg: slacks), step: p.step)
-    cbBoots(c, step: p.step, C(0x3A2418), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x3A2418), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: blazer))
     // The grin.
@@ -360,8 +360,8 @@ private func drawMayorVaun(_ c: PixelCanvas, _ p: Pose) {
         let k = (s - 0.04) / 0.92
         let a: Double = -55 + 60 * (0.5 + 0.5 * sin(k * 2 * .pi * 3))
         let h: (x: Double, y: Double) = (39, 33.5)
-        let e = cbReach(h, a, 6)
-        cbLine(c, h.x - 1, h.y, e.x, e.y, blazer, 1.2)
+        let e = clawdbergReach(h, a, 6)
+        clawdbergLine(c, h.x - 1, h.y, e.x, e.y, blazer, 1.2)
         c.rect(Int(e.x.rounded()) - 1, Int(e.y.rounded()) - 1, 3, 3, clawdOrange)
         c.rect(23, 31, 10, 2, white); c.rect(24, 32, 8, 1, C(0xE0DCD4))
         for x in 46..<70 {
@@ -386,7 +386,7 @@ private func drawMajorMildBill(_ c: PixelCanvas, _ p: Pose) {
     let masked = sig.map { $0 >= 0.32 && $0 < 0.96 } ?? false
 
     drawLegs(c, Look(leg: olive), step: p.step)
-    cbBoots(c, step: p.step, C(0x2A1E16), height: 3)
+    clawdbergBoots(c, step: p.step, C(0x2A1E16), height: 3)
     c.oy += p.breathe
     // The mask bag at his left hip.
     c.rect(13, 34, 5, 5, bag); c.rect(13, 34, 5, 1, oliveD); c.px(15, 36, brass)
@@ -440,7 +440,7 @@ private func drawGasMaskTrooper(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
 
     drawLegs(c, Look(leg: suit), step: p.step)
-    cbBoots(c, step: p.step, rubber, height: 3)
+    clawdbergBoots(c, step: p.step, rubber, height: 3)
     c.oy += p.breathe
     // The tank on his back.
     c.pattern(11, 25, [".TTTT.", "TTTTTT", "TtTTTT", "TtTTTT", "TtTTTT", "TtTTTT", "TtTTTT", "TTTTTT", "DDDDDD", ".DDDD."],
@@ -461,13 +461,13 @@ private func drawGasMaskTrooper(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 36, 20, 1, suitD); c.rect(27, 34, 1, 2, suitD)
     c.rect(15, 35, 3, 1, rubber)
     // The hose from the tank round to the wand.
-    cbLine(c, 15, 34, 17, 40, hose, 0.55); cbLine(c, 17, 40, 37, 38, hose, 0.55)
+    clawdbergLine(c, 15, 34, 17, 40, hose, 0.55); clawdbergLine(c, 17, 40, 37, 38, hose, 0.55)
 
     if let s = sig, s > 0.04, s < 0.96 {
         // The wand lifted, a great puff of gas billowing out of it.
         let k = (s - 0.04) / 0.92
         c.rect(38, 30, 3, 4, suit); c.rect(38, 33, 3, 1, rubber)
-        cbLine(c, 40, 31, 48, 27, metal, 0.6); c.rect(48, 26, 2, 2, C(0x3A3C40))
+        clawdbergLine(c, 40, 31, 48, 27, metal, 0.6); c.rect(48, 26, 2, 2, C(0x3A3C40))
         for i in 0..<6 {
             let f: Double = k * 1.3 - Double(i) * 0.08
             guard f > 0, f < 1 else { continue }

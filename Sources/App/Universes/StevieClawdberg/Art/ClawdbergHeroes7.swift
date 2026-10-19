@@ -62,11 +62,11 @@ private func tilted(_ c: PixelCanvas, _ degrees: Double, _ art: (PixelCanvas) ->
 /// A thin sword in the hand at `angle`: a steel blade, a gold crossguard and a dark grip, with the swing's smear.
 private func sword(_ c: PixelCanvas, angle: Double, trail: [Double], length: Double = 14, blade: Px = steel,
                    guardCol: Px = gold) {
-    cbSmear(c, cbHand, trail, from: 3, to: length, C(0xE8EEF4))
-    cbBar(c, cbHand, angle, from: 3, to: length, blade, r: 0.6)
-    cbBar(c, cbHand, angle, from: -1.5, to: 2, C(0x4A2E1A), r: 0.7)
-    let g = cbReach(cbHand, angle, 2.6)
-    cbBar(c, g, angle + 90, from: -2, to: 2, guardCol, r: 0.5)
+    clawdbergSmear(c, clawdbergHand, trail, from: 3, to: length, C(0xE8EEF4))
+    clawdbergBar(c, clawdbergHand, angle, from: 3, to: length, blade, r: 0.6)
+    clawdbergBar(c, clawdbergHand, angle, from: -1.5, to: 2, C(0x4A2E1A), r: 0.7)
+    let g = clawdbergReach(clawdbergHand, angle, 2.6)
+    clawdbergBar(c, g, angle + 90, from: -2, to: 2, guardCol, r: 0.5)
 }
 
 /// A four-point twinkle.
@@ -123,7 +123,7 @@ private func peterPanning(_ c: PixelCanvas, _ p: Pose, crowing: Bool) {
     let tunic = C(0x3E8A3A), tunicD = C(0x2A6A2A), tunicL = C(0x62AE4E), tights = C(0x2E5A2A)
     let belt = C(0x6A4428), hair = C(0x6A3E22), hairL = C(0x8A5A32)
     drawLegs(c, Look(leg: tights), step: p.step)
-    cbBoots(c, step: p.step, C(0x7A5232), height: 2)
+    clawdbergBoots(c, step: p.step, C(0x7A5232), height: 2)
     c.oy += p.breathe
     drawBody(c, Look(arm: tunic), armLeft: crowing ? 2 : 0, armRight: crowing ? 2 : 0)
     // The tunic from the chin down, its belt, and the leaf hem hanging over the tops of his legs.
@@ -201,7 +201,7 @@ private func tinkerbelle(_ c: PixelCanvas, _ p: Pose) {
     c.glowLine(19, 28, tipA.0, tipA.1, core: film, glow: vein, coreR: 3.2, glowR: 4.2)
     c.glowLine(19, 31, tipB.0, tipB.1, core: film, glow: vein, coreR: 2.4, glowR: 3.4)
     drawLegs(c, Look(leg: clawdOrange), step: p.step)
-    cbBoots(c, step: p.step, leafD, height: 2)
+    clawdbergBoots(c, step: p.step, leafD, height: 2)
     c.oy += p.breathe
     drawBody(c, Look())
     // The leaf dress, pointed petals over the tops of her legs.
@@ -237,7 +237,7 @@ private func drawRoofio(_ c: PixelCanvas, _ p: Pose) {
 
     drawLegs(c, Look(leg: vest), step: p.step)
     if !seatedPose { c.rect(19, 39, 2, 2, red); c.rect(35, 38, 2, 2, red) }   // patches on the knees
-    cbBoots(c, step: p.step, C(0x3A2A1E), height: 2)
+    clawdbergBoots(c, step: p.step, C(0x3A2A1E), height: 2)
     c.oy += p.breathe
     let up = chanting ? (pump ? 7 : 5) : 0
     drawBody(c, Look(arm: clawdOrange), armLeft: chanting ? (pump ? 5 : 7) : 0, armRight: up)
@@ -305,7 +305,7 @@ private func drawThudButt(_ c: PixelCanvas, _ p: Pose) {
 
     let shirt = C(0x8A5A32), shirtD = C(0x6A4224), fur = C(0x5A4232), furL = C(0x7A5A42), rope = C(0xC8A870)
     drawLegs(c, Look(leg: C(0x5A4A3A)), step: p.step)
-    cbBoots(c, step: p.step, C(0x3A2A1E), height: 2)
+    clawdbergBoots(c, step: p.step, C(0x3A2A1E), height: 2)
     c.oy += p.breathe
     // The big round body.
     c.rect(15, 25, 26, 13, clawdOrange)
@@ -345,7 +345,7 @@ private func thudBall(_ c: PixelCanvas, _ p: Pose, roll: Double, dx: Double) {
     let rolling = abs(dx) > 1 || roll != 0
     let step = rolling ? Int(p.t * 10) % 2 : -1
     drawLegs(c, Look(leg: C(0x5A4A3A)), step: step)
-    cbBoots(c, step: step, C(0x3A2A1E), height: 2)
+    clawdbergBoots(c, step: step, C(0x3A2A1E), height: 2)
     c.oy += p.breathe
     let cx = 28.0, cy = 29.5
     c.glowLine(cx, cy, cx, cy, core: shirt, glow: C(0, 0), coreR: 9.2, glowR: 9.3)
@@ -382,7 +382,7 @@ private func drawJackBanning(_ c: PixelCanvas, _ p: Pose) {
             c.rect(lx, lifted ? 39 : 40, 2, 3, navy)
         }
     }
-    cbBoots(c, step: p.step, C(0x1A1A1E), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x1A1A1E), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: uni))
     // The jersey: pinstripes, piping and a number.
@@ -434,11 +434,11 @@ private func drawJackBanning(_ c: PixelCanvas, _ p: Pose) {
 
 /// The wooden bat at `angle`: the taped grip, the barrel thickening to its end.
 private func bat(_ c: PixelCanvas, angle: Double, trail: [Double], wood: Px, dark: Px) {
-    cbSmear(c, cbHand, trail, from: 2, to: 14, C(0xF0E0C0))
-    cbBar(c, cbHand, angle, from: -1.5, to: 3, C(0x2A2A30), r: 0.6)
-    cbBar(c, cbHand, angle, from: 3, to: 8, wood, r: 0.7)
-    cbBar(c, cbHand, angle, from: 8, to: 14, wood, r: 1.2)
-    let e = cbReach(cbHand, angle, 14)
+    clawdbergSmear(c, clawdbergHand, trail, from: 2, to: 14, C(0xF0E0C0))
+    clawdbergBar(c, clawdbergHand, angle, from: -1.5, to: 3, C(0x2A2A30), r: 0.6)
+    clawdbergBar(c, clawdbergHand, angle, from: 3, to: 8, wood, r: 0.7)
+    clawdbergBar(c, clawdbergHand, angle, from: 8, to: 14, wood, r: 1.2)
+    let e = clawdbergReach(clawdbergHand, angle, 14)
     c.px(Int(e.x.rounded()), Int(e.y.rounded()), dark)
     c.rect(39, 33, 3, 3, C(0xF2F2EE))
 }
@@ -469,7 +469,7 @@ private func drawTootles(_ c: PixelCanvas, _ p: Pose) {
         }
     }
     drawLegs(c, Look(leg: C(0x8A8A90)), step: p.step)
-    cbBoots(c, step: p.step, C(0x7A2E2E), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x7A2E2E), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: cardigan))
     // The cardigan open over his shirt, the bow tie.

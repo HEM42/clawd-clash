@@ -33,7 +33,7 @@ private func drawCaptainClawk(_ c: PixelCanvas, _ p: Pose) {
     let clocking = sig.map { $0 > 0.04 && $0 < 0.96 } ?? false
 
     drawLegs(c, Look(leg: C(0x2A2228)), step: p.step)
-    cbBoots(c, step: p.step, C(0x1A1418), height: 3)
+    clawdbergBoots(c, step: p.step, C(0x1A1418), height: 3)
     if clocking { clock(c, p, s: sig!) }
     c.oy += p.breathe
     drawBody(c, Look(arm: coat))
@@ -94,23 +94,23 @@ private func drawCaptainClawk(_ c: PixelCanvas, _ p: Pose) {
 /// The hook on the end of his right arm at `angle`: the red sleeve and lace cuff, the silver shaft, the curl.
 private func hook(_ c: PixelCanvas, angle a: Double, trail: [Double], coat: Px, reach: Double = 3) {
     for (i, ta) in trail.enumerated() {
-        let e = cbReach(cbHand, ta, reach + 6)
+        let e = clawdbergReach(clawdbergHand, ta, reach + 6)
         c.glowLine(e.x, e.y, e.x, e.y, core: steel.alpha(0.3 / Double(i + 1)), glow: steel.alpha(0.2 / Double(i + 1)),
                    coreR: 1, glowR: 2.2)
     }
-    if reach > 0 { cbBar(c, (39.5, 34.5), a, from: -1, to: reach, coat, r: 1.3) }
-    let cuff = cbReach((39.5, 34.5), a, reach + 0.5)
-    cbBar(c, cuff, a + 90, from: -1.6, to: 1.6, C(0xF4F0E6), r: 0.6)
-    let base = cbReach((39.5, 34.5), a, reach + 1.5)
-    let end = cbReach(base, a, 3.5)
-    cbLine(c, base.x, base.y, end.x, end.y, steel, 0.55)
+    if reach > 0 { clawdbergBar(c, (39.5, 34.5), a, from: -1, to: reach, coat, r: 1.3) }
+    let cuff = clawdbergReach((39.5, 34.5), a, reach + 0.5)
+    clawdbergBar(c, cuff, a + 90, from: -1.6, to: 1.6, C(0xF4F0E6), r: 0.6)
+    let base = clawdbergReach((39.5, 34.5), a, reach + 1.5)
+    let end = clawdbergReach(base, a, 3.5)
+    clawdbergLine(c, base.x, base.y, end.x, end.y, steel, 0.55)
     // The curl: round from the end of the shaft, forward and up and back to its point.
-    let o = cbReach(end, a - 90, 2.2)
+    let o = clawdbergReach(end, a - 90, 2.2)
     var prev = end
     for k in 1...7 {
         let th = (a + 90 - Double(k) * 30) * .pi / 180
         let q = (x: o.x + cos(th) * 2.2, y: o.y + sin(th) * 2.2)
-        cbLine(c, prev.x, prev.y, q.x, q.y, k == 7 ? white : steel, 0.5)
+        clawdbergLine(c, prev.x, prev.y, q.x, q.y, k == 7 ? white : steel, 0.5)
         prev = q
     }
     c.px(Int(o.x.rounded()), Int(o.y.rounded()), steelD.alpha(0.5))
@@ -186,7 +186,7 @@ private func drawMrSmeeh(_ c: PixelCanvas, _ p: Pose) {
     if fussing && Int(p.t * 6) % 3 == 0 { c.oy -= 1 }
 
     drawLegs(c, Look(leg: breeches), step: p.step)
-    cbBoots(c, step: p.step, C(0x2A2018), height: 2)
+    clawdbergBoots(c, step: p.step, C(0x2A2018), height: 2)
     c.oy += p.breathe
     drawBody(c, Look(arm: stripeA))
     // The striped shirt and its sleeves.
@@ -214,8 +214,8 @@ private func drawMrSmeeh(_ c: PixelCanvas, _ p: Pose) {
         // The clothes brush flicked at the captain, dust puffing off, a sweat drop.
         let flick = Int(p.t * 10) % 2
         let a: Double = flick == 0 ? -40 : 10
-        cbBar(c, cbHand, a, from: -1, to: 4, C(0x8A5A2E), r: 0.7)
-        let e = cbReach(cbHand, a, 5)
+        clawdbergBar(c, clawdbergHand, a, from: -1, to: 4, C(0x8A5A2E), r: 0.7)
+        let e = clawdbergReach(clawdbergHand, a, 5)
         c.rect(Int(e.x) - 1, Int(e.y) - 1, 3, 3, C(0x3A2A1E))
         for k in 0..<3 {
             let f = frac(p.t * 2 + Double(k) / 3)
@@ -240,7 +240,7 @@ private func drawBillJukes(_ c: PixelCanvas, _ p: Pose) {
     let ink2 = C(0x2A3A6A), bandana = C(0xB8262A), bandanaD = C(0x7A1A1E), breeches = C(0x6A6A70), rope = C(0xC8A870)
     drawLegs(c, Look(leg: breeches), step: p.step)
     if !seatedPose { for lx in [19, 23, 31, 35] { c.px(lx + (lx % 2), 40, C(0x4A4A52)) } }
-    cbBoots(c, step: p.step, C(0x2A2018), height: 2)
+    clawdbergBoots(c, step: p.step, C(0x2A2018), height: 2)
     c.oy += p.breathe
     drawBody(c, Look())
     // Tattoos: an anchor in the middle of his chest, swirls and bands round it and on his arms.
@@ -273,14 +273,14 @@ private func drawBillJukes(_ c: PixelCanvas, _ p: Pose) {
 
 /// A heavy cutlass: a broad blade curving at its point, a brass knuckle guard.
 private func cutlass(_ c: PixelCanvas, angle a: Double, trail: [Double]) {
-    cbSmear(c, cbHand, trail, from: 3, to: 13, C(0xE8EEF4))
-    cbBar(c, cbHand, a, from: 3, to: 10, steel, r: 0.9)
-    let bend = cbReach(cbHand, a, 10)
-    cbBar(c, bend, a - 18, from: 0, to: 3.5, steel, r: 0.7)
-    cbBar(c, cbHand, a, from: 3, to: 10, steelD, r: 0.3)
-    cbBar(c, cbHand, a, from: -1.5, to: 2, C(0x3A2A1E), r: 0.7)
-    let g = cbReach(cbHand, a, 2.6)
-    cbBar(c, g, a + 90, from: -2.2, to: 1.5, gold, r: 0.55)
+    clawdbergSmear(c, clawdbergHand, trail, from: 3, to: 13, C(0xE8EEF4))
+    clawdbergBar(c, clawdbergHand, a, from: 3, to: 10, steel, r: 0.9)
+    let bend = clawdbergReach(clawdbergHand, a, 10)
+    clawdbergBar(c, bend, a - 18, from: 0, to: 3.5, steel, r: 0.7)
+    clawdbergBar(c, clawdbergHand, a, from: 3, to: 10, steelD, r: 0.3)
+    clawdbergBar(c, clawdbergHand, a, from: -1.5, to: 2, C(0x3A2A1E), r: 0.7)
+    let g = clawdbergReach(clawdbergHand, a, 2.6)
+    clawdbergBar(c, g, a + 90, from: -2.2, to: 1.5, gold, r: 0.55)
     c.rect(39, 33, 3, 3, clawdOrange)
 }
 
@@ -292,7 +292,7 @@ private func cutlass(_ c: PixelCanvas, angle a: Double, trail: [Double]) {
 private func drawCompy(_ c: PixelCanvas, _ p: Pose) {
     let green = C(0x6A9A3A), greenD = C(0x4A7228), greenL = C(0x9AC25A), belly = C(0xD8D49A)
     drawLegs(c, Look(leg: green), step: p.step)
-    cbBoots(c, step: p.step, greenD, height: 1)
+    clawdbergBoots(c, step: p.step, greenD, height: 1)
     c.oy += p.breathe
     // The tail, out behind and swishing.
     let swish = Int(p.lt * 3) % 2
@@ -328,7 +328,7 @@ private func drawCompy(_ c: PixelCanvas, _ p: Pose) {
 private func drawMogwaiPup(_ c: PixelCanvas, _ p: Pose) {
     let brown = C(0x7A5232), brownL = C(0x9A6E44), cream = C(0xF0E6D0), creamD = C(0xCCC0A8), pink = C(0xE89A9A)
     drawLegs(c, Look(leg: cream), step: p.step)
-    cbBoots(c, step: p.step, brown, height: 1)
+    clawdbergBoots(c, step: p.step, brown, height: 1)
     c.oy += p.breathe
     // The ears, twitching now and then.
     let twitch = Int(p.lt * 1.3) % 4 == 0 ? -1 : 0
@@ -430,7 +430,7 @@ private func drawCrocClock(_ c: PixelCanvas, _ p: Pose) {
     let tick = Int(p.t * 2)
     let jolt = frac(p.t * 2) < 0.12 ? 1 : 0
     drawLegs(c, Look(leg: green), step: p.step)
-    cbBoots(c, step: p.step, greenD, height: 1)
+    clawdbergBoots(c, step: p.step, greenD, height: 1)
     c.oy += p.breathe
     c.ox += jolt
     // The stubby tail.
@@ -453,7 +453,7 @@ private func drawCrocClock(_ c: PixelCanvas, _ p: Pose) {
     c.px(27, 32, ink); c.px(27, 36, ink); c.px(24, 34, ink); c.px(31, 34, ink)
     let ang = Double(tick % 12) * 30 * .pi / 180 - .pi / 2
     let hx = 27.5 + cos(ang) * 2, hy = 34 + sin(ang) * 2
-    cbLine(c, 27.5, 34, hx, hy, ink, 0.45)
+    clawdbergLine(c, 27.5, 34, hx, hy, ink, 0.45)
     c.rect(27, 33, 1, 2, C(0xC83A3A))
     if jolt == 1 { c.px(38, 24, white.alpha(0.7)); c.px(40, 23, white.alpha(0.5)) }
     c.ox -= jolt

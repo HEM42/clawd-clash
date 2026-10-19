@@ -12,14 +12,14 @@ struct ClawdbergShowcase: Showcase {
 // MARK: Stevie Clawdberg
 
 /// The 88 mph effects (sparks, flash, fire trails) for a traveller standing at `bodyX`, facing right.
-func outaTime(_ ctx: CGContext, _ o: CGPoint, bodyX: Double, k: Double) {
-    let c = PixelCanvas(outaTimeWidth, Sprite.height)
-    drawOutaTime(c, OutaTime(k: k), t: 1.2)
-    put(c, ctx, x: bodyX - Double(outaTimeAnchor), y: spriteTop, unit: unit, frameH: ph, origin: o)
+private func outaTime(_ ctx: CGContext, _ o: CGPoint, bodyX: Double, k: Double) {
+    let c = PixelCanvas(clawdbergOutaTimeWidth, Sprite.height)
+    clawdbergDrawOutaTime(c, ClawdbergOutaTime(k: k), t: 1.2)
+    put(c, ctx, x: bodyX - Double(clawdbergOutaTimeAnchor), y: spriteTop, unit: unit, frameH: ph, origin: o)
 }
 
 /// OUTATIME over a traveller's head, in the number plate's bold capitals.
-func plate(_ s: String, _ ctx: CGContext, centerX: CGFloat, bottom: CGFloat) {
+private func plate(_ s: String, _ ctx: CGContext, centerX: CGFloat, bottom: CGFloat) {
     let text = NSAttributedString(string: s, attributes: [.font: NSFont.monospacedSystemFont(ofSize: 17, weight: .heavy),
                                                           .foregroundColor: NSColor(srgbRed: 1, green: 0.62, blue: 0.24, alpha: 1)])
     NSGraphicsContext.saveGraphicsState()
@@ -144,7 +144,7 @@ func clawdbergShowcase() {
         }
         // The bike across it, a black silhouette.
         let bike = PixelCanvas(Ride.width, Ride.height)
-        drawMoonBike(bike, ramp: 0, lit: true)
+        clawdbergDrawMoonBike(bike, ramp: 0, lit: true)
         let shadow = PixelCanvas(Ride.width, Ride.height)
         for y in 0..<bike.h { for x in 0..<bike.w where bike.buf[(y * bike.w + x) * 4 + 3] > 40 { shadow.px(x, y, C(0x05060C)) } }
         let sc: CGFloat = 4

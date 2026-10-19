@@ -44,8 +44,8 @@ private func drawHarpoonBarrel(_ c: PixelCanvas, _ who: Cast, _ d: DrillPlay, _ 
     if beat > 0.15 && beat < 0.45 {   // the harpoon in flight, its line trailing back
         let k = (beat - 0.15) / 0.3
         let hx = 46 + k * 15, hy = 31 + k * 5
-        cbLine(c, hx - 5, hy - 1, hx, hy, C(0xC8CCD4, r), 0.5)
-        cbLine(c, 44, 33, hx - 5, hy - 1, C(0xE8E0C8, 0.6 * r), 0.3)
+        clawdbergLine(c, hx - 5, hy - 1, hx, hy, C(0xC8CCD4, r), 0.5)
+        clawdbergLine(c, 44, 33, hx - 5, hy - 1, C(0xE8E0C8, 0.6 * r), 0.3)
     }
 }
 
@@ -80,7 +80,7 @@ private func drawGuitarSolo(_ c: PixelCanvas, _ who: Cast, _ d: DrillPlay, _ t: 
     let red = C(0xB8202A), dark = C(0x6A1016), neck = C(0x5A3A22)
     // The body of the guitar at his hip, the neck up and out in front.
     c.ellipse(32, 36, 5, 3, red); c.rect(30, 35, 3, 2, dark); c.px(28, 37, C(0xE8E0D0))
-    cbLine(c, 36, 35, 47, 29, neck, 0.6); c.rect(47, 28, 2, 2, C(0x2A1A10))
+    clawdbergLine(c, 36, 35, 47, 29, neck, 0.6); c.rect(47, 28, 2, 2, C(0x2A1A10))
     // The duck walk: a hop every beat.
     let beat = frac(d.e / 0.6)
     if beat < 0.5 { c.shift(dx: 0, dy: -1) }

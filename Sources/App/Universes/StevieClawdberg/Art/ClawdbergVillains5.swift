@@ -199,7 +199,7 @@ private func drawCleverGirl(_ c: PixelCanvas, _ p: Pose) {
         c.rect(56 + gap, 10, 6, 34, wood); c.rect(56 + gap, 10, 1, 34, woodD)
         c.rect(62, 8, 3, 36, woodD)
         let drop = press * 3
-        cbLine(c, Double(57 + gap), 27, Double(52 + gap), 27 + drop, lever, 0.7)
+        clawdbergLine(c, Double(57 + gap), 27, Double(52 + gap), 27 + drop, lever, 0.7)
         c.rect(56 + gap, 26, 2, 3, lever)
     }
     // Her hand: reaching for the handle, slashing, or held up in front with the claws hanging.
@@ -207,13 +207,13 @@ private func drawCleverGirl(_ c: PixelCanvas, _ p: Pose) {
     if reach > 0 {
         let target = (x: 53.0 + swing * 5, y: 26.0 + press * 3)
         let hx = shoulder.x + (target.x - shoulder.x) * reach, hy = shoulder.y + (target.y - shoulder.y) * reach
-        cbLine(c, shoulder.x, shoulder.y, hx, hy, tan, 1.0)
+        clawdbergLine(c, shoulder.x, shoulder.y, hx, hy, tan, 1.0)
         c.px(Int(hx.rounded()), Int(hy.rounded()) - 1, claw); c.px(Int(hx.rounded()) + 1, Int(hy.rounded()), claw)
     } else if let a = p.melee, !p.walking {
-        cbSmear(c, shoulder, p.trail, from: 3, to: 9, C(0xF0E8D8))
-        cbBar(c, shoulder, a, from: 0, to: 6, tan, r: 1.0)
+        clawdbergSmear(c, shoulder, p.trail, from: 3, to: 9, C(0xF0E8D8))
+        clawdbergBar(c, shoulder, a, from: 0, to: 6, tan, r: 1.0)
         for d in [-35.0, 0, 35] {
-            let q = cbReach(cbReach(shoulder, a, 6), a + d, 2.5)
+            let q = clawdbergReach(clawdbergReach(shoulder, a, 6), a + d, 2.5)
             c.px(Int(q.x.rounded()), Int(q.y.rounded()), claw)
         }
     } else {
@@ -295,7 +295,7 @@ private func drawDennisNerdry(_ c: PixelCanvas, _ p: Pose) {
     let wagging = sig.map { $0 > 0.08 && $0 < 0.92 } ?? false
 
     drawLegs(c, Look(leg: C(0x4A4A50)), step: p.step)
-    cbBoots(c, step: p.step, C(0x2A2420), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x2A2420), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: coat, eye: nil))
     // The belly, wider than the body, in the loud shirt; the raincoat open over it, its hem over the tops of the legs.
@@ -335,12 +335,12 @@ private func drawDennisNerdry(_ c: PixelCanvas, _ p: Pose) {
     if p.ready {
         // A stick held up, waved at you.
         c.rect(38, 29, 3, 5, coat); c.rect(38, 27, 3, 3, clawdOrange)
-        cbLine(c, 37.5, 23, 42.5, 29, stick, 0.6)
+        clawdbergLine(c, 37.5, 23, 42.5, 29, stick, 0.6)
         return
     }
     // At rest: the stick in his hand, pointing down.
     c.rect(38, 33, 3, 3, coat); c.rect(39, 36, 3, 2, clawdOrange)
-    cbLine(c, 41, 37, 44, 42, stick, 0.6)
+    clawdbergLine(c, 41, 37, 44, 42, stick, 0.6)
 }
 
 // MARK: - Indominous Rex
@@ -407,11 +407,11 @@ private func indominusSuit(_ c: PixelCanvas, _ p: Pose) {
     // The long arms: slashing, or held out in front with the claws hooked.
     let shoulder = (x: 37.5, y: 29.5)
     let a = p.melee ?? 55
-    if p.melee != nil { cbSmear(c, shoulder, p.trail, from: 4, to: 11, C(0xF0F0EA)) }
-    cbBar(c, shoulder, a, from: 0, to: 8, hide, r: 1.1)
-    let hand = cbReach(shoulder, a, 8)
+    if p.melee != nil { clawdbergSmear(c, shoulder, p.trail, from: 4, to: 11, C(0xF0F0EA)) }
+    clawdbergBar(c, shoulder, a, from: 0, to: 8, hide, r: 1.1)
+    let hand = clawdbergReach(shoulder, a, 8)
     for d in [-40.0, 0, 40] {
-        let q = cbReach(hand, a + d, 2.5)
+        let q = clawdbergReach(hand, a + d, 2.5)
         c.px(Int(q.x.rounded()), Int(q.y.rounded()), claw)
     }
 }

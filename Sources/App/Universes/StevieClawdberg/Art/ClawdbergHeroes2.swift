@@ -57,7 +57,7 @@ private func drawMartyMcFry(_ c: PixelCanvas, _ p: Pose) {
         c.oy += 1
     }
     drawLegs(c, Look(leg: jeans), step: solo ? Int(p.t * 6) % 2 : p.step)
-    cbBoots(c, step: solo ? Int(p.t * 6) % 2 : p.step, C(0xF2F2F2), height: 2)
+    clawdbergBoots(c, step: solo ? Int(p.t * 6) % 2 : p.step, C(0xF2F2F2), height: 2)
     if !seatedPose {
         for lx in [19, 23, 31, 35] { c.px(lx, 43, C(0xC83A2A)) }   // the trainers' red flash
     }
@@ -85,7 +85,7 @@ private func drawMartyMcFry(_ c: PixelCanvas, _ p: Pose) {
     if solo {
         // The guitar slung across him, his left hand up the neck, his right strumming; notes rising off it.
         let red = C(0xB01E24), redL = C(0xD8484A), wood = C(0x5A3A1E)
-        cbLine(c, 30, 35, 44, 27, wood, 0.7)
+        clawdbergLine(c, 30, 35, 44, 27, wood, 0.7)
         c.rect(44, 25, 2, 3, C(0x2A1A10))
         c.pattern(21, 33, [".RRRR..", "RRrRRRR", "RRRRRRR", ".RRWRR.", "..RRR.."], ["R": red, "r": redL, "W": C(0xEEE6D0)])
         c.rect(39, 28, 3, 3, denim)
@@ -103,7 +103,7 @@ private func drawMartyMcFry(_ c: PixelCanvas, _ p: Pose) {
     // The guitar slung across him; in a fight he strums it and the sound blasts out from its body at the foe.
     let red = C(0xB01E24), redL = C(0xD8484A), wood = C(0x5A3A1E)
     let playing = p.zap != nil   // strumming
-    cbLine(c, 30, 35, 44, 27, wood, 0.7)
+    clawdbergLine(c, 30, 35, 44, 27, wood, 0.7)
     c.rect(44, 25, 2, 3, C(0x2A1A10))
     c.pattern(21, 33, [".RRRR..", "RRrRRRR", "RRRRRRR", ".RRWRR.", "..RRR.."], ["R": red, "r": redL, "W": C(0xEEE6D0)])
     c.rect(39, 28, 3, 3, denim)
@@ -123,7 +123,7 @@ private func drawDocBrawn(_ c: PixelCanvas, _ p: Pose) {
     let clap = sig.map { $0 > 0.1 && $0 < 0.85 } ?? false
 
     drawLegs(c, Look(leg: C(0x5A5A62)), step: p.step)
-    cbBoots(c, step: p.step, C(0x2A2420), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x2A2420), height: 1)
     c.oy += p.breathe
     // The lab coat's tails over his legs.
     let tails = seatedPose ? 1 : 3
@@ -200,7 +200,7 @@ private func drawJenniferParka(_ c: PixelCanvas, _ p: Pose) {
     let hair = C(0xA8743E), hairL = C(0xC8945A), hairD = C(0x7E5428)
 
     drawLegs(c, Look(leg: C(0x86A2C8)), step: p.step)
-    cbBoots(c, step: p.step, C(0xF0EEE8), height: 1)
+    clawdbergBoots(c, step: p.step, C(0xF0EEE8), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: top))
     c.rect(18, 33, 20, 5, top); c.rect(37, 33, 1, 5, topD); c.rect(18, 37, 20, 1, topD)
@@ -241,7 +241,7 @@ private func drawGeorgeMcFry(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
 
     drawLegs(c, Look(leg: C(0x8A8A86)), step: p.step)
-    cbBoots(c, step: p.step, C(0x3A2A1E), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x3A2A1E), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: shirt))
     // The sweater vest, its argyle diamonds, the shirt collar.
@@ -269,10 +269,10 @@ private func drawGeorgeMcFry(_ c: PixelCanvas, _ p: Pose) {
         if k < 0.65 {
             let a = -90 - k / 0.65 * 720
             let prev = a + 40
-            cbPunch(c, angle: a, trail: [prev, prev + 30], arm: shirt, reach: 6)
+            clawdbergPunch(c, angle: a, trail: [prev, prev + 30], arm: shirt, reach: 6)
         } else {
             let f = min(1, (k - 0.65) / 0.1)
-            cbPunch(c, angle: -20 + 20 * f, trail: f < 1 ? [-60, -90] : [], arm: shirt, reach: 6 + 3 * f)
+            clawdbergPunch(c, angle: -20 + 20 * f, trail: f < 1 ? [-60, -90] : [], arm: shirt, reach: 6 + 3 * f)
             if f >= 1 {
                 c.px(52, 31, white); c.px(53, 33, white); c.px(52, 36, white)
             }
@@ -280,7 +280,7 @@ private func drawGeorgeMcFry(_ c: PixelCanvas, _ p: Pose) {
         return
     }
     if let a = p.melee {
-        cbPunch(c, angle: a, trail: p.trail, arm: shirt)
+        clawdbergPunch(c, angle: a, trail: p.trail, arm: shirt)
     } else {
         c.rect(38, 33, 3, 3, shirt)
     }
@@ -296,7 +296,7 @@ private func drawLorraineBaynes(_ c: PixelCanvas, _ p: Pose) {
 
     drawLegs(c, Look(), step: p.step)
     if !seatedPose {
-        cbBoots(c, step: p.step, C(0xF4F0E8), height: 2)
+        clawdbergBoots(c, step: p.step, C(0xF4F0E8), height: 2)
         for (i, lx) in [19, 23, 31, 35].enumerated() {
             let lifted = p.step >= 0 && i % 2 == p.step
             c.px(lx, lifted ? 41 : 42, C(0x2A2420))                // the saddle
@@ -402,7 +402,7 @@ private func drawEinsteinDog(_ c: PixelCanvas, _ p: Pose) {
         let tick = Int(p.t * 2) % 4
         let hand = [(1, 0), (2, 1), (2, 2), (1, 1)][tick]
         c.px(wx + hand.0, wy + hand.1, ink)
-        cbLine(c, 35, 31, Double(wx), Double(wy + 2), gold.alpha(0.8), 0.35)   // the chain
+        clawdbergLine(c, 35, 31, Double(wx), Double(wy + 2), gold.alpha(0.8), 0.35)   // the chain
         return
     }
     // The watch hanging from the collar on a short chain.
@@ -422,7 +422,7 @@ private func drawClaraClawton(_ c: PixelCanvas, _ p: Pose) {
     let looking = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
     drawLegs(c, Look(leg: C(0x3A2A2E)), step: p.step)
-    cbBoots(c, step: p.step, C(0x1E1A1C), height: 2)
+    clawdbergBoots(c, step: p.step, C(0x1E1A1C), height: 2)
     c.oy += p.breathe
     bttfSkirt(c, skirt, skirtD, length: 5)
     drawBody(c, Look(arm: blouse))
@@ -452,8 +452,8 @@ private func drawClaraClawton(_ c: PixelCanvas, _ p: Pose) {
         let k = sig!
         let rise = min(1, (k - 0.06) / 0.15)
         let tipX = 36 + 12 * rise, tipY = 30 - 12 * rise
-        cbLine(c, 33, 30, tipX, tipY, brass, 1.1)
-        cbLine(c, 33, 30, 33 + (tipX - 33) * 0.4, 30 + (tipY - 30) * 0.4, brassD, 1.0)
+        clawdbergLine(c, 33, 30, tipX, tipY, brass, 1.1)
+        clawdbergLine(c, 33, 30, 33 + (tipX - 33) * 0.4, 30 + (tipY - 30) * 0.4, brassD, 1.0)
         c.rect(36, 29, 4, 4, blouse); c.rect(38, 26, 3, 3, blouse)
         if rise >= 1 {
             for i in 0..<3 {
@@ -481,7 +481,7 @@ private func drawGoldieWilsun(_ c: PixelCanvas, _ p: Pose) {
     let sweeping = sig.map { $0 > 0.05 && $0 < 0.95 } ?? false
 
     drawLegs(c, Look(leg: C(0x6A6A70)), step: p.step)
-    cbBoots(c, step: p.step, C(0x1E1A18), height: 1)
+    clawdbergBoots(c, step: p.step, C(0x1E1A18), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(arm: shirt))
     c.rect(18, 33, 20, 5, shirt); c.rect(37, 33, 1, 5, shirtD); c.rect(18, 37, 20, 1, shirtD)
@@ -508,7 +508,7 @@ private func drawGoldieWilsun(_ c: PixelCanvas, _ p: Pose) {
         let swish = sin(p.t * 9)
         let hx = 41.0, hy = 31.0
         let bx = 48 + swish * 4, by = 42.0
-        cbLine(c, hx, hy, bx, by, handle, 0.6)
+        clawdbergLine(c, hx, hy, bx, by, handle, 0.6)
         c.rect(38, 30, 3, 3, shirt); c.rect(41, 34, 3, 3, shirt)
         c.rect(Int(bx.rounded()) - 2, 41, 5, 3, straw); c.rect(Int(bx.rounded()) - 2, 41, 5, 1, C(0x8A3A2A))
         for i in 0..<3 {

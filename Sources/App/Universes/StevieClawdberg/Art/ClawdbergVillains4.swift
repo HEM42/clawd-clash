@@ -20,7 +20,7 @@ let clawdbergVillains4: [ClawdbergVillain: Persona] = [
 private let clear = C(0, 0)
 
 /// Dark shoes on the four feet.
-private func shoes(_ c: PixelCanvas, step: Int, _ col: Px = C(0x1E1A18)) { cbBoots(c, step: step, col) }
+private func shoes(_ c: PixelCanvas, step: Int, _ col: Px = C(0x1E1A18)) { clawdbergBoots(c, step: step, col) }
 
 /// A plain dark pistol in the right hand: aimed level (muzzle at (46, 31)) when shooting, waiting or checking it, or
 /// held pointing down by the side.
@@ -285,7 +285,7 @@ private func drawOneEyedWilly(_ c: PixelCanvas, _ p: Pose) {
     if !seatedPose {
         // Knee joints, and the boots.
         for lx in [19, 23, 31, 35] { c.rect(lx, 39, 2, 1, boneD) }
-        cbBoots(c, step: p.step, C(0x1E1A18), height: 2)
+        clawdbergBoots(c, step: p.step, C(0x1E1A18), height: 2)
     } else {
         // Folded bone legs, a dark joint between each pair so all four read.
         for x in [21, 33] { c.rect(x, 38, 1, 2, boneD) }
@@ -298,7 +298,7 @@ private func drawOneEyedWilly(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: coat, eye: nil))
     // The skull: a dark socket with a gold glint, the eye patch and its strap, the nose and the teeth.
     c.rect(21, 28, 4, 4, socket); c.px(22, 29, gold)
-    c.rect(31, 28, 4, 4, ink); cbLine(c, 18, 26, 31, 29, ink, 0.45); c.px(35, 28, ink); c.px(36, 27, ink)
+    c.rect(31, 28, 4, 4, ink); clawdbergLine(c, 18, 26, 31, 29, ink, 0.45); c.px(35, 28, ink); c.px(36, 27, ink)
     c.px(27, 31, socket); c.px(28, 31, socket)
     c.pattern(23, 32, ["WkWkWkWkW", "kkkkkkkkk"], ["W": bone, "k": ink])
     // The ribcage and spine, the coat hanging open either side with its gold buttons.

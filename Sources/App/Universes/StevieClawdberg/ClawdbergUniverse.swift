@@ -25,7 +25,7 @@ struct ClawdbergUniverse: UniverseModule {
     var meditation: Meditation { Meditation(who: .never) }
 
     /// A compacted time traveller hits 88 mph: gone in a flash, back with three booms.
-    func compactionLook(k: Double, cast: Cast) -> CompactionLook? { OutaTime(k: k) }
+    func compactionLook(k: Double, cast: Cast) -> CompactionLook? { ClawdbergOutaTime(k: k) }
 
     /// Captain Clawk flinches at the Croc Clock's tick; T. Wrecks's footsteps ripple a glass of water.
     var quirks: StageQuirks { StageQuirks(jitter: clawdbergClawkFlinch, prop: clawdbergWaterGlass) }
@@ -41,13 +41,13 @@ struct ClawdbergUniverse: UniverseModule {
 
 extension Ride {
     /// The DeLorean: it drives in.
-    static let delorean = Ride(key: "delorean", arrival: .drives) { c, ramp, engines, _, _ in drawDelorean(c, ramp: ramp, lit: engines) }
+    static let delorean = Ride(key: "delorean", arrival: .drives) { c, ramp, engines, _, _ in clawdbergDrawDelorean(c, ramp: ramp, lit: engines) }
     /// Elliott's bike across the moon: whoever's taken climbs on right under its middle.
-    static let moonBike = Ride(key: "moonBike", boardingOffset: 0) { c, ramp, engines, _, _ in drawMoonBike(c, ramp: ramp, lit: engines) }
+    static let moonBike = Ride(key: "moonBike", boardingOffset: 0) { c, ramp, engines, _, _ in clawdbergDrawMoonBike(c, ramp: ramp, lit: engines) }
     /// The mothership: right under its light.
-    static let mothership = Ride(key: "mothership", boardingOffset: 0) { c, ramp, engines, _, _ in drawMothership(c, ramp: ramp, lit: engines) }
+    static let mothership = Ride(key: "mothership", boardingOffset: 0) { c, ramp, engines, _, _ in clawdbergDrawMothership(c, ramp: ramp, lit: engines) }
     /// The park jeep: it drives in.
-    static let jeep = Ride(key: "jeep", arrival: .drives) { c, ramp, engines, _, _ in drawParkJeep(c, ramp: ramp, lit: engines) }
+    static let jeep = Ride(key: "jeep", arrival: .drives) { c, ramp, engines, _, _ in clawdbergDrawParkJeep(c, ramp: ramp, lit: engines) }
 }
 
 extension ClawdbergUniverse {
