@@ -45,13 +45,11 @@ private func gremBody(_ c: PixelCanvas, _ p: Pose, _ h: Hide, earLift: Int = 0) 
     }
     c.oy += p.breathe
     drawBody(c, Look(body: h.skin, shade: h.dark, arm: h.skin, eye: nil))
-    // The mottled back and the scales.
-    c.rect(18, 26, 20, 1, h.dark)
-    for (x, y) in [(20, 27), (23, 27), (27, 27), (31, 27), (35, 27), (19, 31), (36, 31), (20, 34), (35, 34),
-                   (19, 36), (22, 36), (33, 36), (36, 36)] {
-        c.px(x, y, h.dark)
-    }
-    for (x, y) in [(21, 27), (25, 27), (29, 27), (33, 27), (19, 29), (36, 29), (19, 33)] { c.px(x, y, h.light) }
+    // The hide lit in runs along the top, then its scales in short strokes that follow the shape.
+    for (x, w) in [(19, 3), (24, 4), (30, 3)] { c.rect(x, 26, w, 1, h.light) }
+    for (x, w) in [(21, 2), (27, 3), (33, 2)] { c.rect(x, 27, w, 1, h.dark) }
+    for (x, y) in [(19, 29), (36, 30), (19, 33), (36, 34)] { c.rect(x, y, 1, 2, h.dark) }
+    c.rect(19, 36, 3, 1, h.dark); c.rect(33, 36, 3, 1, h.dark)
     c.rect(23, 35, 10, 2, h.belly)
     gremEars(c, h, lift: earLift)
 }
@@ -199,7 +197,7 @@ private func drawMohawk(_ c: PixelCanvas, _ p: Pose) {
     gremBody(c, p, h)
     // Bulked out: broad shoulders over the body's edges.
     c.rect(16, 27, 2, 9, h.skin); c.rect(38, 27, 2, 8, h.dark); c.rect(18, 25, 20, 1, h.skin)
-    c.px(17, 29, h.dark); c.px(16, 32, h.dark)
+    c.rect(16, 30, 1, 2, h.dark); c.rect(17, 33, 1, 2, h.dark)     // scales on the broad shoulder
     gremFace(c, h, open: shudder)
     // The fin of a mohawk, spines and all.
     c.pattern(18, 15, [

@@ -24,7 +24,7 @@ let clawdbergVillains2: [ClawdbergVillain: Persona] = [
 /// Signature: he knocks on an invisible head in front of him, knuckles rapping ("Hello? McFly?").
 private func drawBiffTannin(_ c: PixelCanvas, _ p: Pose) {
     let jacket = C(0x7A1E2A), jacketD = C(0x5A1420), sleeve = C(0xEADFC4), sleeveD = C(0xC8BC9E)
-    let hair = C(0x9A7444), hairL = C(0xBA9460)
+    let hair = C(0x9A7444), hairL = C(0xBA9460), hairD = C(0x7A5834)
     let sig = p.signature
     let knocking = sig.map { $0 > 0.08 && $0 < 0.92 } ?? false
 
@@ -41,16 +41,16 @@ private func drawBiffTannin(_ c: PixelCanvas, _ p: Pose) {
     c.rect(22, 33, 12, 1, sleeve)
     c.pattern(19, 34, ["LLL", "LL.", "LLL"], ["L": sleeve])
     c.rect(27, 34, 1, 4, jacketD)
-    // The pompadour, piled up at the front.
+    // The pompadour, piled up at the front, lit along the top and combed through in short strokes.
     c.pattern(16, 19, [
-        "............HHHHHHH...",
-        "........HHHHHHHHhHHHH.",
-        ".....HHHHHHHHHHHHHHhHH",
-        "...HHHHHHHHHHhHHHHHHHH",
-        "..HHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHHH",
+        "............hhhHHHH...",
+        "........hhhhHHHHHHHHH.",
+        ".....hhhHHHHHHHHHddHHH",
+        "...hhHHHHHddHHHHHHHddH",
+        "..HHHHHHHHHHHHHddHHHH.",
+        ".HHHHHHddHHHHHHHHHHddH",
         ".HHH...............HH.",
-    ], ["H": hair, "h": hairL])
+    ], ["H": hair, "h": hairL, "d": hairD])
     c.rect(14, 33, 3, 3, sleeve); c.rect(14, 35, 3, 1, sleeveD)
 
     if knocking {
@@ -299,8 +299,10 @@ private func drawMrStricklaw(_ c: PixelCanvas, _ p: Pose) {
     // The shirt and the bow tie.
     c.rect(18, 33, 20, 5, shirt); c.rect(37, 33, 1, 5, shirtD); c.rect(18, 37, 20, 1, shirtD)
     c.rect(18, 37, 20, 1, C(0x3A3A3E))                              // the belt
+    c.rect(27, 37, 2, 1, C(0xB8A060))                               // its buckle
+    c.rect(27, 35, 1, 2, shirtD); c.rect(32, 35, 2, 1, shirtD)      // the button placket and a fold
     c.pattern(25, 32, ["BB.BB", "BBBBB", "BB.BB"], ["B": bow])
-    c.rect(15, 33, 3, 3, shirt)
+    c.rect(15, 33, 3, 3, shirt); c.rect(15, 35, 3, 1, shirtD)       // the short sleeve's hem
 
     if handing {
         // The arm straight out, a pink tardy slip held up between finger and thumb.
@@ -312,7 +314,7 @@ private func drawMrStricklaw(_ c: PixelCanvas, _ p: Pose) {
                   ["P": C(0xF6B0C8), "l": C(0xB06080)])
         return
     }
-    c.rect(38, 33, 3, 3, shirt)
+    c.rect(38, 33, 3, 3, shirt); c.rect(38, 35, 3, 1, shirtD)
 }
 
 // MARK: - Needles

@@ -72,10 +72,10 @@ private func drawMamaFratelly(_ c: PixelCanvas, _ p: Pose) {
     c.rect(26, 32, 4, 1, ink); c.px(25, 33, ink); c.px(30, 33, ink)
     // The grey bob, stiff as a helmet.
     c.pattern(16, 20, [
-        "......HHHHHHHHHH......",
-        "....HHHHHlHHHHHHHH....",
-        "..HHHHHHHHHHlHHHHHHH..",
-        ".HHHHlHHHHHHHHHHHHHHH.",
+        "......lllllHHHHH......",
+        "....llHHHHHHHHHHHH....",
+        "..lHHHHHHHHHHHHHHHdd..",
+        ".HHHHHHHHHHHHHHHHHHdd.",
         "HHHHHHHHHHHHHHHHHHHHHH",
         "HHHHHHHHHHHHHHHHHHHHHH",
         "HHHHHH.........HHHHHHH",
@@ -190,10 +190,10 @@ private func drawTroyPerkins(_ c: PixelCanvas, _ p: Pose) {
     c.rect(27, 32, 3, 1, ink); c.px(30, 31, ink)
     // Blond hair swept up and over to one side.
     c.pattern(16, 20, [
-        "........HHHHHHHHH.....",
-        ".....HHHHHHHlHHHHHHH..",
-        "...HHHHHHlHHHHHHHHHHHH",
-        "..HHHHHHHHHHHHHlHHHHHH",
+        "........llllHHHHH.....",
+        ".....HHllllHHHHHHHHH..",
+        "...HHHHHHHHHllllHHHHHH",
+        "..HHHHHHHHHHHHHHHHHlll",
         ".HHHHHHHHHHHHHHHHHHH..",
         "HHHHHHHHHHHHHHHHHH....",
         "HHH...................",
