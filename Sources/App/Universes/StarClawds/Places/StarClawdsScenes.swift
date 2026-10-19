@@ -811,26 +811,164 @@ private enum StarWarsScenes {
         c.ground(g, C(0x22252B), edge: C(0x6E7480), speck: C(0x2C2F36), seed: 10)
     }
 
-    // Luke, the Lars homestead at twin-sunset: the dome, the vaporators, the dunes.
+    // Luke, the Lars homestead at twin-sunset: the domed entrance hut with its arched porch and low wings, the sunken
+    // courtyard's rim beyond it, moisture vaporators near and far, a few rocks and the rippled sand.
     static func larsFarm(_ c: PixelCanvas, _ g: Int) {
+        let s = Scenes.unit(g)
         c.gradient(0, g, C(0x5A4A8A), C(0xF2A85A), bands: 6)
-        let sy = max(8, g / 2)
-        c.circle(c.w * 2 / 3, sy, 5, C(0xFFE8B0)); c.circle(c.w * 2 / 3 + 14, sy + 4, 4, C(0xFFD08A))
-        c.circle(c.w * 2 / 3, sy, 9, C(0xFFE8B0, 0.15)); c.circle(c.w * 2 / 3 + 14, sy + 4, 8, C(0xFFD08A, 0.15))
+        let sx = c.w * 2 / 3, sy = max(8, g / 2)
+        c.circle(sx, sy, 13 * s, C(0xFFE8B0, 0.08)); c.circle(sx + 18 * s, sy + 5 * s, 11 * s, C(0xFFD08A, 0.08))
+        c.circle(sx, sy, 10 * s, C(0xFFE8B0, 0.15)); c.circle(sx + 18 * s, sy + 5 * s, 8 * s, C(0xFFD08A, 0.15))
+        c.circle(sx, sy, 7 * s, C(0xFFE8B0)); c.circle(sx + 18 * s, sy + 5 * s, 5 * s, C(0xFFD08A))
+        c.circle(sx - 2 * s, sy - 2 * s, 2 * s, C(0xFFF6DC)); c.rect(sx + 16 * s, sy + 3 * s, 2 * s, 2 * s, C(0xFFE4B4))
         if Scenes.isTall(c) { larsSky(c, g) }
         c.dunes(base: g - 6, amp: 3, freq: 0.04, phase: 1.2, bottom: g, C(0xC8945A), shade: C(0xDCAA6E))
-        // the dome entrance
         let dx = c.w / 4
-        c.ellipse(dx, g, 21, 14, C(0xD8C8A8)); c.ellipse(dx, g, 21, 2, C(0xB8A888))
-        c.rect(dx - 6, g - 9, 12, 9, C(0x3A2C22))
-        // moisture vaporators
-        for x in [dx + 32, c.w - 40] where x < c.w - 6 {
-            c.rect(x, g - 33, 3, 33, C(0xB9BEC8))
-            for y in [g - 30, g - 21, g - 12] { c.rect(x - 3, y, 9, 2, C(0x8A8F9C)) }
-            c.rect(x - 1, g - 36, 5, 3, C(0xD7DCE4))
-        }
-        if Scenes.isTall(c) { landspeeder(c, dx + 52, g) }
+        larsCourtyard(c, dx + 125 * s, g)
+        vaporator(c, c.w - 40, g - 3, g, far: true)
+        vaporator(c, c.w / 16, g - 4, g, far: true)
+        vaporator(c, c.w * 4 / 5, g - 5, g, far: true)
+        for f in [0.31, 0.47, 0.71, 0.88] { larsRock(c, Int(Double(c.w) * f), g, seed: Int(f * 100)) }
+        larsHut(c, dx, g)
+        vaporator(c, dx + 44 * s, g, g, far: false)
+        if Scenes.isTall(c) { landspeeder(c, dx + 58 * s, g) }
         c.ground(g, C(0xD0A066), edge: C(0xE6BA80), speck: C(0xB88A52), seed: 11)
+        // ripples in the sand, faint so the crew still reads on it
+        for i in 0..<(c.w * (c.h - g) / 70) {
+            let x = Int(noise(i * 7 + 900) * Double(c.w)), y = g + 2 + Int(noise(i * 7 + 901) * Double(max(1, c.h - g - 3)))
+            let l = (3 + Int(noise(i * 7 + 902) * 5)) * s
+            c.rect(x, y, l, 1, C(0xE6BA80, 0.55)); c.rect(x + s, y + 1, l - s, 1, C(0xB88A52, 0.35))
+        }
+    }
+
+    /// The homestead's entrance: a weathered sandstone dome between two low rounded wings, with an arched porch
+    /// block in front (a dark arched doorway, a small control panel beside it and a sill at its foot). The low twin
+    /// suns light it from the right, so the right-hand faces are warm and the left ones cool, and it casts a long
+    /// shadow to the left over the sand.
+    static func larsHut(_ c: PixelCanvas, _ x: Int, _ g: Int) {
+        let s = Scenes.unit(g), p = Scenes.Pen(c, x, g, g)
+        let lit = C(0xEED8AC), mid = C(0xD8C3A0), shade = C(0xB4A08E), deep = C(0x9C8A7E), dark = C(0x2E221C)
+        func dot(_ u: Int, _ v: Int, _ col: Px) { p.rect(u, v, 1, 1, col) }
+        // the tone of a curved face at `u` across a half-width `half`: cool on the left, warm on the right
+        func tone(_ u: Int, _ half: Int) -> Px {
+            let k = Double(u) / Double(max(1, half))
+            return k < -0.55 ? deep : k < -0.15 ? shade : k < 0.5 ? mid : lit
+        }
+        c.rect(x - 52 * s, g - s, 22 * s, s, C(0x8A5E3A, 0.25))                       // its shadow on the sand
+        c.rect(x - 44 * s, g - 2 * s, 12 * s, s, C(0x8A5E3A, 0.15))
+        // the dome, weathered
+        let rx = 18, ry = 16, cy = -9
+        for dv in -ry...0 {
+            let k = Double(dv) / (Double(ry) + 0.5), half = Int((Double(rx) * (1 - k * k).squareRoot()).rounded())
+            for u in -half...half { dot(u, cy + dv, tone(u - dv / 4, half)) }
+        }
+        for i in 0..<34 {                                                               // stains and pitting
+            let u = Int((noise(i * 3 + 300) - 0.5) * Double(rx * 2 - 4)), v = cy - Int(noise(i * 3 + 301) * Double(ry - 2))
+            let half = Int((Double(rx) * (1 - Double((v - cy) * (v - cy)) / Double(ry * ry)).squareRoot()))
+            if abs(u) < half - 1 { dot(u, v, noise(i * 3 + 302) > 0.5 ? C(0xA88C6A, 0.45) : C(0xFFF0D0, 0.35)) }
+        }
+        for u in -rx...rx { dot(u, cy, deep.alpha(0.6)) }                                // the dome's base course
+        // the low wings either side, rounded along the top
+        for (a, b) in [(-31, -10), (11, 31)] {
+            let l = a < 0 ? 1 : 0, r = a < 0 ? 0 : 1                                   // rounder at the outer end
+            p.rect(a, -9, b - a + 1, 9, mid)
+            p.rect(a + l, -10, b - a + 1 - l - r, 1, C(0xE4CEA6)); p.rect(a + 2 * l, -11, b - a + 1 - 2 * l - 2 * r, 1, lit)
+            p.rect(a, -9, b - a + 1, 1, lit.alpha(0.4))
+            p.rect(a, -9, 2, 9, a < 0 ? deep : shade); p.rect(b - 1, -9, 2, 9, a < 0 ? shade : lit)
+            p.rect(a, -1, b - a + 1, 1, shade.alpha(0.7))
+        }
+        for i in 0..<16 {
+            let u = Int(noise(i * 5 + 320) * 40) - 20 + (i % 2 == 0 ? -10 : 10), v = -2 - Int(noise(i * 5 + 321) * 7)
+            if abs(u) > 11, abs(u) < 30 { dot(u, v, C(0xA88C6A, 0.4)) }
+        }
+        // the porch block with its arched top
+        for dv in -7...0 {                                                              // a shadow line against the dome
+            let k = Double(dv) / 7.5, half = Int((11.0 * (1 - k * k).squareRoot()).rounded())
+            p.rect(-half, -11 + dv, half * 2 + 1, 1, C(0x8A786C))
+        }
+        p.rect(-10, -11, 21, 11, C(0xE2CDA8))
+        for dv in -6...0 {
+            let k = Double(dv) / 6.5, half = Int((10.0 * (1 - k * k).squareRoot()).rounded())
+            for u in -half...half { dot(u, -11 + dv, dv == -6 || u - half == 0 ? lit : tone(u + 3, 10)) }
+        }
+        p.rect(-10, -11, 3, 11, shade); p.rect(-10, -11, 1, 11, deep); p.rect(9, -11, 2, 11, lit)
+        p.rect(-10, -1, 21, 1, shade.alpha(0.7))
+        // the arched doorway, its jamb lit on the left inside
+        p.rect(-4, -10, 9, 10, dark)
+        for (v, half) in [(-11, 4), (-12, 3), (-13, 2)] { p.rect(-half, v, half * 2 + 1, 1, dark) }
+        p.rect(4, -11, 1, 11, C(0x4A3A2E)); p.rect(3, -12, 1, 1, C(0x4A3A2E)); p.rect(-4, -10, 1, 10, C(0x5A483A))
+        // the control panel beside it
+        p.rect(6, -7, 3, 4, C(0x3A3A40)); dot(7, -6, C(0xE0303A)); dot(7, -4, C(0x3BD15A)); dot(6, -7, C(0x6A6A72))
+        // the sill
+        p.rect(-7, -1, 15, 1, C(0xC8B494)); p.rect(-6, -1, 1, 1, C(0xA89480)); p.rect(6, -1, 2, 1, lit)
+    }
+
+    /// A moisture vaporator: a segmented column of stacked drums with a port, a thin mast with two vanes on top,
+    /// a boxy lower body with grilles, and two thin side poles with dark bands at the foot, braced to the column,
+    /// on a small octagonal base. `far` draws a smaller, hazier one out on the flats.
+    static func vaporator(_ c: PixelCanvas, _ x: Int, _ base: Int, _ g: Int, far: Bool) {
+        let p = Scenes.Pen(c, x, base, g)
+        let haze = far ? 0.35 : 0.0, sky = C(0xD8A07A)
+        let hi = lerp(C(0xE6EAF0), sky, haze), lt = lerp(C(0xC8CDD6), sky, haze)
+        let md = lerp(C(0xA4AAB6), sky, haze), dk = lerp(C(0x6E7380), sky, haze), bd = lerp(C(0x2E3036), sky, haze)
+        if far {
+            p.rect(-3, -12, 1, 11, lt); p.rect(3, -12, 1, 11, lt); p.rect(-3, -3, 1, 2, bd); p.rect(3, -3, 1, 2, bd)
+            p.rect(-2, -10, 5, 1, md); p.rect(-2, -5, 5, 1, md)
+            p.rect(-2, -1, 5, 1, dk)
+            p.rect(-1, -7, 3, 6, lt); p.rect(1, -7, 1, 6, hi); p.rect(-1, -5, 2, 1, dk)
+            p.rect(0, -19, 1, 12, lt); p.rect(-1, -15, 3, 1, md); p.rect(-1, -11, 3, 1, md)
+            p.rect(0, -24, 1, 5, md); p.rect(-1, -24, 1, 1, hi); p.rect(1, -24, 1, 1, hi)
+            return
+        }
+        // side poles, braced to the column (the column is drawn over the braces' middles)
+        for u in [-5, 5] {
+            p.rect(u, -23, 1, 21, u < 0 ? lt : hi); p.rect(u, -24, 1, 1, hi)
+            p.rect(u, -6, 1, 3, bd)
+        }
+        for v in [-9, -19] { p.rect(-4, v, 9, 1, md) }
+        // the octagonal base
+        p.rect(-4, -1, 9, 1, dk); p.rect(-3, -2, 7, 1, md); p.rect(2, -2, 2, 1, lt)
+        // the lower body, with grilles and a panel
+        p.rect(-2, -13, 5, 11, lt); p.rect(-2, -13, 1, 11, md); p.rect(2, -13, 1, 11, hi)
+        for v in [-11, -9, -7] { p.rect(-1, v, 3, 1, dk) }
+        p.rect(-1, -5, 2, 2, md); p.rect(-2, -13, 5, 1, dk)
+        // the column of drums, from the body up: (half-width, height)
+        var v = -13
+        for (i, (hw, h)) in [(1, 3), (2, 2), (1, 4), (2, 3), (1, 3), (2, 2), (1, 3)].enumerated() {
+            v -= h
+            p.rect(-hw, v, hw * 2 + 1, h, lt); p.rect(-hw, v, 1, h, md); p.rect(hw, v, 1, h, hi)
+            p.rect(-hw, v + h - 1, hw * 2 + 1, 1, md)
+            if i == 3 { p.rect(-1, v + 1, 1, 1, bd) }                                         // the port
+        }
+        p.rect(0, v - 1, 1, 1, lt)
+        // the mast and its two vanes
+        p.rect(0, v - 11, 1, 10, md)
+        p.rect(-2, v - 11, 5, 1, md); p.rect(-4, v - 12, 2, 2, lt); p.rect(3, v - 12, 2, 2, hi)
+        c.rect(x - 9 * p.s, g - p.s, 6 * p.s, p.s, C(0x8A5E3A, 0.2))                    // a shadow to the left
+    }
+
+    /// The sunken courtyard beyond the hut: a mound of rubble round it and a low rim with its ring of round dark
+    /// windows, under a shallow cone with a small ring on top.
+    static func larsCourtyard(_ c: PixelCanvas, _ x: Int, _ g: Int) {
+        let p = Scenes.Pen(c, x, g - 2, g)
+        p.ellipse(0, 0, 36, 7, C(0xB4845A))
+        for i in 0..<60 {
+            let u = Int((noise(i * 3 + 500) - 0.5) * 66), v = Int(noise(i * 3 + 501) * 7) - 6
+            if abs(u) < 36 - abs(v) * 3 { p.rect(u, v, 1, 1, noise(i * 3 + 502) > 0.5 ? C(0x946A46) : C(0xD0A070)) }
+        }
+        p.rect(-24, -11, 49, 1, C(0xA8988C)); p.rect(-19, -12, 39, 1, C(0xB4A498)); p.rect(-13, -13, 27, 1, C(0xC0B0A2))
+        p.rect(-5, -14, 11, 1, C(0xD8C8A8)); p.rect(-5, -15, 11, 1, C(0xCDBB9A))
+        for u in stride(from: -4, through: 4, by: 2) { p.rect(u, -15, 1, 1, C(0x5A4A3E)) }
+        p.rect(-24, -10, 49, 4, C(0xCDBB9A)); p.rect(-24, -10, 49, 1, C(0xE6D2AC)); p.rect(-24, -7, 49, 1, C(0xB4A08E))
+        p.rect(-24, -10, 3, 4, C(0xB4A08E)); p.rect(22, -10, 3, 4, C(0xE6D2AC))
+        for u in stride(from: -20, through: 19, by: 4) { p.rect(u, -9, 2, 2, C(0x3A2C22)) }
+    }
+
+    /// A small weathered rock half sunk in the sand.
+    static func larsRock(_ c: PixelCanvas, _ x: Int, _ g: Int, seed: Int) {
+        let p = Scenes.Pen(c, x, g - 1, g), w = 4 + Int(noise(seed + 600) * 3)
+        p.rect(0, 0, w, 1, C(0x8A5E3A)); p.rect(1, -1, w - 2, 1, C(0xA87850)); p.rect(w - 3, -1, 2, 1, C(0xD4A472))
+        p.rect(2, -2, w - 4, 1, C(0xB8865A)); p.rect(-3, 0, 3, 1, C(0x8A5E3A, 0.3))
     }
 
     // Obi-Wan, inside his domed hut in the Jundland Wastes (A New Hope): a cave-like plaster dome, desert sun
