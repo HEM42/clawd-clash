@@ -415,13 +415,22 @@ extension Scenes {
         return (water, edge, c.w * 58 / 100, tall ? min(water - 30 * s, 150 * s) : max(16 * s, water * 55 / 100))
     }
 
-    /// The Reflecting Pool at night: the Washington Monument lit white from below at the far end, its reflection
-    /// laid down the long dark water, rows of elms in silhouette either side, lamp posts along the walk and the park
-    /// benches where informants meet. On the screen saver the obelisk rises tall into a deep sky with stars.
+    /// The Reflecting Pool at night: the Washington Monument lit white from below at the far end, the ring of flags at
+    /// its foot and the Capitol's dome low beyond it, its reflection laid down the long dark water, rows of elms in
+    /// silhouette either side and big near elms framing the walk, lamp posts along it, their lights on the water, and
+    /// the park benches where informants meet. On the screen saver the obelisk rises tall into a deep sky with stars, a
+    /// moon and the city's glow along the horizon.
     static func reflectingPool(_ c: PixelCanvas, _ g: Int) {
-        let s = unit(g), f = s5PoolFrame(c, g)
+        let s = unit(g), tall = isTall(c), f = s5PoolFrame(c, g)
         c.gradient(0, f.water, C(0x060A16), C(0x1E2840), bands: 7)
         for i in 0..<40 { c.px(Int(noise(i + 700) * Double(c.w)), Int(noise(i + 760) * Double(f.water * 2 / 3)), C(0xD0D8E8, 0.6)) }
+        if tall {
+            c.stars(0, f.water / 2, density: 260, seed: 74)
+            s46Moon(c, x: c.w * 84 / 100, y: f.water / 6, r: 9 * s, sky: C(0x060A16))
+            for k in 0..<5 { c.ellipse(c.w / 2, f.water - 3 * s, c.w * (6 - k) / 10, (14 - 2 * k) * s, C(0xE8A860, 0.025)) }
+        }
+        // The Capitol far beyond, its dome lit, low behind the far trees.
+        s5Capitol(c, x: f.mx + 46 * s, base: f.water - 3 * s, s: s)
         // The far bank and the trees.
         c.rect(0, f.water - 3 * s, c.w, 3 * s, C(0x0E1418))
         for i in 0..<14 {
@@ -439,6 +448,16 @@ extension Scenes {
         }
         for i in 0..<(mw) { c.rect(f.mx - i, base - f.mh - (mw - i), i * 2, 1, C(0xE8ECF2)) }
         c.px(f.mx, base - f.mh - mw - s, C(0xFF4040))   // the aircraft light on top
+        // The floodlights' glow at its foot, and the ring of flags round it.
+        c.ellipse(f.mx, base - s, 16 * s, 3 * s, C(0xF4F0E0, 0.12))
+        for i in 0..<14 {
+            let a = Double(i) / 14 * 2 * .pi
+            let x = f.mx + Int(cos(a) * Double(13 * s)), y = base - s + Int(sin(a) * Double(2 * s))
+            guard abs(x - f.mx) > mw + s || sin(a) > 0 else { continue }   // the ones behind the obelisk are hidden
+            c.rect(x, y - 6 * s, max(1, s / 2), 6 * s, C(0x8A8E96))
+            c.rect(x + max(1, s / 2), y - 6 * s, 2 * s, s, i % 3 == 0 ? C(0x3A4A8A) : C(0xC8303A))
+            c.rect(x + max(1, s / 2), y - 5 * s, 2 * s, max(1, s / 2), C(0xE8E8EC))
+        }
         // The water: dark, the Monument's reflection laid down it.
         c.rect(0, f.water, c.w, f.edge - f.water, C(0x0A1222))
         let refl = min(f.mh, f.edge - f.water)
@@ -446,11 +465,15 @@ extension Scenes {
             let hw = Int(Double(mw) * (1 - 0.3 * Double(y) / Double(max(1, f.mh))))
             c.rect(f.mx - hw, f.water + y, hw * 2, 1, C(0xC8D0E0, 0.45 * (1 - Double(y) / Double(max(1, refl)))))
         }
+        // The near elms framing the walk, broad dark crowns lit a little on their undersides by the lamps: on the right,
+        // and on the screen saver on the left too (in the window that corner stays calm under the title).
+        for (k, x) in [-4 * s, c.w + 4 * s].enumerated() where tall || k == 1 { s5Elm(c, x: x, foot: f.edge, s: s, seed: k) }
         // The walk's edge, lamp posts and benches.
         c.rect(0, f.edge, c.w, 2 * s, C(0x8A8E94)); c.rect(0, f.edge, c.w, s, C(0xB8BCC2))
         for x in stride(from: c.w / 10, to: c.w, by: c.w / 4) where abs(x - f.mx) > 12 * s {
             c.rect(x, g - 30 * s, s, 30 * s, C(0x1E2228)); c.rect(x - 2 * s, g - 33 * s, 5 * s, 3 * s, C(0x1E2228))
             c.rect(x - s, g - 32 * s, 3 * s, 2 * s, C(0xFFE8B0)); c.ellipse(x, g - 28 * s, 8 * s, 6 * s, C(0xFFE8B0, 0.06))
+            for k in 0..<3 { c.rect(x - (2 - k) * s, f.water + 2 * s + k * 3 * s, (5 - 2 * k) * s, max(1, s / 2), C(0xFFE8B0, 0.3 - 0.08 * Double(k))) }
         }
         for bx in [c.w * 22 / 100, c.w * 80 / 100] {
             c.rect(bx, g - 8 * s, 22 * s, 2 * s, C(0x5A4430)); c.rect(bx, g - 12 * s, 22 * s, 2 * s, C(0x5A4430))
@@ -458,6 +481,33 @@ extension Scenes {
             c.rect(bx + 2 * s, g - 12 * s, s, 4 * s, C(0x1E2228)); c.rect(bx + 19 * s, g - 12 * s, s, 4 * s, C(0x1E2228))
         }
         c.ground(g, C(0x4A4C50), edge: C(0x6A6C72), speck: C(0x3A3C40), seed: 69)
+    }
+
+    /// The Capitol, far off: a long low front with its colonnade picked out, the drum, the lit dome and its statue.
+    private static func s5Capitol(_ c: PixelCanvas, x: Int, base: Int, s: Int) {
+        let stone = C(0x8A90A0), lit = C(0xC8CCD8)
+        c.rect(x - 22 * s, base - 4 * s, 44 * s, 4 * s, stone); c.rect(x - 22 * s, base - 4 * s, 44 * s, max(1, s / 2), lit)
+        for u in stride(from: -20, to: 21, by: 3) { c.rect(x + u * s, base - 3 * s, max(1, s / 2), 3 * s, C(0x5A6070)) }
+        c.rect(x - 8 * s, base - 7 * s, 16 * s, 3 * s, stone)
+        c.rect(x - 6 * s, base - 11 * s, 12 * s, 4 * s, lit)
+        for u in stride(from: -5, to: 6, by: 2) { c.rect(x + u * s, base - 10 * s, max(1, s / 2), 3 * s, C(0x8A90A0)) }
+        c.ellipse(x, base - 11 * s, 6 * s, 5 * s, C(0xE0E4EC)); c.rect(x - 6 * s, base - 11 * s, 12 * s, 5 * s, lit)
+        c.rect(x - s, base - 18 * s, 2 * s, 2 * s, lit); c.rect(x - max(1, s / 2), base - 20 * s, max(1, s), 2 * s, C(0xA8ACB8))
+        c.ellipse(x, base - 10 * s, 14 * s, 8 * s, C(0xF4F0E0, 0.05))   // its floodlit glow
+    }
+
+    /// A near elm at the side of the walk: a trunk standing on `foot`, a broad crown of overlapping clumps, the lamps'
+    /// light catching their undersides.
+    private static func s5Elm(_ c: PixelCanvas, x: Int, foot: Int, s: Int, seed: Int) {
+        let top = foot - 44 * s, dir = x < c.w / 2 ? 1 : -1
+        c.rect(x - 2 * s, top + 20 * s, 5 * s, foot - top - 20 * s, C(0x0A0E10))
+        c.rect(dir > 0 ? x + 2 * s : x - 9 * s, top + 22 * s, 7 * s, 2 * s, C(0x0A0E10))   // a bough reaching in
+        for k in 0..<9 {
+            let u = x + dir * Int(noise(seed * 31 + k) * Double(30 * s)) - dir * 4 * s
+            let v = top + 4 * s + Int(noise(seed * 31 + k + 10) * Double(18 * s)), r = (8 + Int(noise(seed * 31 + k + 20) * 7)) * s
+            c.ellipse(u, v + 2 * s, r + s, r * 2 / 3, C(0x16221E))   // the lit underside
+            c.ellipse(u, v, r + s, r * 2 / 3, C(0x070C0C))
+        }
     }
 
     /// What moves at the pool: ripples breaking up the reflection, clouds sliding over the stars, and far down the
