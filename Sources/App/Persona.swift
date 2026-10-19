@@ -105,6 +105,8 @@ struct Persona {
     /// A signature that climbs a thread up out of sight and back down (Shellob): drawn by whoever places the sprite,
     /// since the thread runs up to the top of the screen, past the canvas.
     var climb: Climb? = nil
+    /// Its shots never land (the Stormtroupers, to keep the joke going): a bolt that would hit goes wide instead.
+    var missesEverything = false
     /// Draws it facing right on the 72×52 canvas.
     let draw: (PixelCanvas, Pose) -> Void
 

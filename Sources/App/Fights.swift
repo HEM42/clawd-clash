@@ -111,11 +111,12 @@ struct Fighter {
     var pivot = Sprite.hand              // where its weapon swings from (`Cast.weaponPivot`), own canvas coordinates
     var shot: ShotStyle = .energy(core: C(0xFFE0E0), glow: C(0xFF2A2A))   // what its shots look like
     var magic: Magic = .lightning        // what its magic looks like
+    var missesEverything = false         // its bolts never land (`Persona.missesEverything`)
 
     /// This fighter with `who`'s shots and magic.
     func dressed(as who: Cast) -> Fighter {
         var f = self
-        f.shot = who.persona.shot; f.magic = who.persona.magic
+        f.shot = who.persona.shot; f.magic = who.persona.magic; f.missesEverything = who.persona.missesEverything
         return f
     }
 
@@ -138,6 +139,16 @@ private func drawShootout(_ c: PixelCanvas, f: Double, t: Double, m: (x: Double,
                           bolt: ((x: Double, y: Double), (x: Double, y: Double), Double, Double) -> Void) {
     let arrive = boltArrival
     switch outcome {
+    case .hit where me.missesEverything:
+        // A Stormtrouper's sure shot: it sails high and wide past the shoulder and away, and the target doesn't flinch.
+        let head = foe.point(Sprite.bodyCenterX + 4, 21)
+        let wide = (x: foe.x - foe.side * 48 * foe.k, y: head.y - 9 * foe.k)
+        let total = arrive * 1.7
+        if f < total {
+            let g = f / total
+            bolt(m, wide, g, g > 0.8 ? (1 - g) / 0.2 : 1)
+        }
+
     case .hit:
         if f < arrive { bolt(m, foe.body, f / arrive, 1) }
         else if f < arrive + 0.06 { drawSparks(c, x: foe.body.x, y: foe.body.y, t: t, size: 2) }
