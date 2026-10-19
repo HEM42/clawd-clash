@@ -112,7 +112,7 @@ let doctorTheme = Theme(
         guard c.universe == .doctor, !c.isDark, let h = DoctorHero(rawValue: c.index), h != .hem else { return nil }
         return .tardis
     },
-    menuIcon: drawPoliceBoxIcon,
+    menuIcon: doctorDrawPoliceBoxIcon,
     legend: .hero(.doctorTen))
 
 // MARK: - Places

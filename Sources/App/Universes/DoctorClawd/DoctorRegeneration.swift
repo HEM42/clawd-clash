@@ -1,11 +1,11 @@
 import Foundation
 
 /// How long a regeneration's golden flare plays over the new Doctor, in seconds.
-let regenerationFlare = 3.0
+let doctorRegenerationFlare = 3.0
 
 /// A regeneration, `k` 0…1 through it, drawn over a Doctor already in the next face: golden fire streaming up out of
 /// the head and the hands, brightest early on (hiding the change of face) and dying away to a few sparks.
-func drawRegeneration(_ c: PixelCanvas, k: Double, t: Double) {
+func doctorDrawRegeneration(_ c: PixelCanvas, k: Double, t: Double) {
     let (ox, oy, by) = (c.ox, c.oy, c.baseY)
     c.ox = 0; c.oy = 0; c.baseY = 0
     defer { c.ox = ox; c.oy = oy; c.baseY = by }

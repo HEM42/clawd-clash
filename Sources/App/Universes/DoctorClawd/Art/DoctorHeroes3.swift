@@ -6,22 +6,22 @@ import Foundation
 
 let doctorHeroes3: [DoctorHero: Persona] = [
     .doctorNine: Persona(name: "Doctor Nine", weapon: .lightning, magic: Magic(core: C(0xE8F4FF), glow: C(0x3A8CFF), jagged: false),
-                  pivot: sonicTip, headTop: 23, signature: 2.6, callout: "Fantastic!",
+                  pivot: doctorSonicTip, headTop: 23, signature: 2.6, callout: "Fantastic!",
                   draw: drawDoctorNine),
     .doctorEleven: Persona(name: "Doctor Eleven", weapon: .lightning, magic: Magic(core: C(0xEAFFE4), glow: C(0x3ACC4A), jagged: false),
-                  pivot: sonicTip, headTop: 19, signature: 3.2, callout: "Geronimo!",
+                  pivot: doctorSonicTip, headTop: 19, signature: 3.2, callout: "Geronimo!",
                   draw: drawDoctorEleven),
     .doctorTwelve: Persona(name: "Doctor Twelve", weapon: .lightning, magic: Magic(core: C(0xEAFFE4), glow: C(0x3ACC4A), jagged: false),
                   pivot: (37, 31), headTop: 17, signature: 3.2, callout: "Pudding brains!",
                   draw: drawDoctorTwelve),
     .doctorThirteen: Persona(name: "Doctor Thirteen", weapon: .lightning, magic: Magic(core: C(0xFFF4DC), glow: C(0xFFA028), jagged: false),
-                  pivot: sonicTip, headTop: 20, signature: 3.4, callout: "Brilliant!",
+                  pivot: doctorSonicTip, headTop: 20, signature: 3.4, callout: "Brilliant!",
                   draw: drawDoctorThirteen),
     .doctorFourteen: Persona(name: "Doctor Fourteen", weapon: .lightning, magic: Magic(core: C(0xE8F4FF), glow: C(0x3A8CFF), jagged: false),
-                  pivot: sonicTip, headTop: 18, signature: 2.8, callout: "Oh!",
+                  pivot: doctorSonicTip, headTop: 18, signature: 2.8, callout: "Oh!",
                   draw: drawDoctorFourteen),
     .doctorFifteen: Persona(name: "Doctor Fifteen", weapon: .lightning, magic: Magic(core: C(0xFBEAFF), glow: C(0xB060FF), jagged: false),
-                  pivot: sonicTip, headTop: 20, signature: 3.0, callout: "Let's dance!",
+                  pivot: doctorSonicTip, headTop: 20, signature: 3.0, callout: "Let's dance!",
                   draw: drawDoctorFifteen),
     .warDoctor: Persona(name: "The War Doctor", weapon: .blaster, shot: .energy(core: C(0xFFE8C8), glow: C(0xFF6A2A)),
                   muzzle: (48, 32), headTop: 22, signature: 3.6, callout: "No more.",
@@ -40,10 +40,10 @@ private func drawSonicArm(_ c: PixelCanvas, _ p: Pose, sleeve: Px, tip: Px) {
     if using {
         let raise = p.armRaise
         c.rect(38, 31 - raise, 3, 3, sleeve)
-        drawSonic(c, out: true, lift: raise, lit: p.zap == true, tip: tip, t: p.t)
+        doctorDrawSonic(c, out: true, lift: raise, lit: p.zap == true, tip: tip, t: p.t)
     } else {
         c.rect(38, 31, 3, 3, sleeve); c.rect(38, 30, 3, 1, clawdOrange)
-        drawSonic(c, out: false, lift: 0, lit: false, tip: tip, t: p.t)
+        doctorDrawSonic(c, out: false, lift: 0, lit: false, tip: tip, t: p.t)
     }
 }
 
@@ -106,7 +106,7 @@ private func drawDoctorNine(_ c: PixelCanvas, _ p: Pose) {
     if let s = sig, s > 0.3, s < 0.5 { c.oy -= 2 }
 
     drawLegs(c, Look(leg: trousers), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0x141416), sole: C(0x2E2E34))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x141416), sole: C(0x2E2E34))
     c.oy += p.breathe
     drawBody(c, Look(arm: leather), armLeft: wide ? 3 : 0, armRight: wide ? 3 : 0)
     // The ears.
@@ -156,7 +156,7 @@ private func drawDoctorEleven(_ c: PixelCanvas, _ p: Pose) {
     let straighten = sig.map { $0 > 0.45 && $0 < 0.85 } ?? false
 
     drawLegs(c, Look(leg: C(0x2A2A30)), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0x2A1C14), sole: C(0x16100C))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x2A1C14), sole: C(0x16100C))
     c.oy += p.breathe
     drawBody(c, Look(arm: tweed))
     // The tweed jacket, open on the shirt and braces, the bow tie at the collar.
@@ -221,7 +221,7 @@ private func drawDoctorTwelve(_ c: PixelCanvas, _ p: Pose) {
 
     drawCoatTails(c, coatDark, down: 3)
     drawLegs(c, Look(leg: C(0x1C1C22)), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0x141416), sole: C(0x26262C))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x141416), sole: C(0x26262C))
     c.oy += p.breathe
     drawBody(c, Look(arm: coat), armLeft: riff ? 3 : 0)
     // The hoodie, the coat open over it, its red lining at the lapels.
@@ -319,7 +319,7 @@ private func drawDoctorThirteen(_ c: PixelCanvas, _ p: Pose) {
             c.rect(lx, y, 2, 1, C(0xB43A3A))
         }
     }
-    drawTrainers(c, step: p.step, upper: C(0x7A4E2C), sole: C(0x4A2E18))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x7A4E2C), sole: C(0x4A2E18))
     c.oy += p.breathe
     drawBody(c, Look(arm: coat))
     // The top: navy with the rainbow band, braces over it, the coat open either side.
@@ -390,7 +390,7 @@ private func drawDoctorFourteen(_ c: PixelCanvas, _ p: Pose) {
 
     drawCoatTails(c, coatDark, down: 4)
     drawLegs(c, Look(leg: C(0x2A3452)), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0xE8EAEE), sole: C(0xB8BCC4))
+    doctorDrawTrainers(c, step: p.step, upper: C(0xE8EAEE), sole: C(0xB8BCC4))
     c.oy += p.breathe
     if lean { c.ox -= 1 }
     drawBody(c, Look(arm: coat), armLeft: lean ? -2 : 0, armRight: lean ? -2 : 0)
@@ -454,7 +454,7 @@ private func drawDoctorFifteen(_ c: PixelCanvas, _ p: Pose) {
             c.px(lx - 1, hem, tartan(lx - 1, hem)); c.px(lx + 2, hem, tartan(lx + 2, hem))
         }
     }
-    drawTrainers(c, step: step, upper: C(0x6A4428), sole: C(0x3A2416))
+    doctorDrawTrainers(c, step: step, upper: C(0x6A4428), sole: C(0x3A2416))
     c.oy += p.breathe
     let up = dancing ? (beat == 0 ? 0 : 1) : -1   // which arm points up: 0 left, 1 right
     drawBody(c, Look(arm: coat), armLeft: up == 0 ? 8 : 0)
@@ -523,7 +523,7 @@ private func drawWarDoctor(_ c: PixelCanvas, _ p: Pose) {
 
     drawCoatTails(c, leatherDark, down: 3)
     drawLegs(c, Look(leg: C(0x2E2A28)), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0x2A1C12), sole: C(0x16100A))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x2A1C12), sole: C(0x16100A))
     c.oy += p.breathe
     drawBody(c, Look(arm: leather))
     // The coat, worn through in patches, the scarf at the neck and the bandolier across.
@@ -611,7 +611,7 @@ private func drawFugitiveDoctor(_ c: PixelCanvas, _ p: Pose) {
     }()
 
     drawLegs(c, Look(leg: C(0x26262C)), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0x2A1E16), sole: C(0x140E0A))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x2A1E16), sole: C(0x140E0A))
     c.oy += p.breathe
     drawBody(c, Look(arm: coat))
     // The utility coat open over the dark top, a pocket each side, the collar up.

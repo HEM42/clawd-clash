@@ -48,7 +48,7 @@ func sprite(_ who: Cast, t: Double = 0.3, mode: VaderMode = .idle, walking: Bool
             left: Bool = false, flare: Double? = nil) -> PixelCanvas {
     let c = PixelCanvas(Sprite.width, Sprite.height)
     who.draw(c, t: t, mode: mode, walking: walking, role: role, asSession: false)
-    if let flare { drawRegeneration(c, k: flare, t: t) }
+    if let flare { doctorDrawRegeneration(c, k: flare, t: t) }
     if left { c.flipHorizontally() }
     c.addOutline(C(0xFFFFFF, 0.92))
     return c

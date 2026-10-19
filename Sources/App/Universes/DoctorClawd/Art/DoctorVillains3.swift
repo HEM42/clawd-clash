@@ -498,7 +498,7 @@ private func drawMaestro(_ c: PixelCanvas, _ p: Pose) {
         c.rect(14, 33, 5, 8, coat); c.rect(14, 33, 1, 8, coatLight)
     }
     drawLegs(c, Look(leg: coat), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0x0E0E12), sole: C(0x5A5A66))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x0E0E12), sole: C(0x5A5A66))
     c.oy += p.breathe
     drawBody(c, Look(arm: coat), armRight: 0)
     // Shirt, bow tie, the glittering lapels.
@@ -627,7 +627,7 @@ private func drawClockworkDroid(_ c: PixelCanvas, _ p: Pose) {
     let jerk = p.signature != nil && tick % 2 == 1 ? 1 : 0
     if !seatedPose { c.rect(16, 36, 24, 3, coatDark) }              // the coat's skirts, behind
     drawLegs(c, Look(leg: stocking), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0x1A1A1E), sole: C(0x2A2A30))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x1A1A1E), sole: C(0x2A2A30))
     if !seatedPose { for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx, p.step >= 0 && i % 2 == p.step ? 41 : 42, C(0xD8DCE4)) } }
     c.oy += p.breathe - jerk
     c.ox += jerk

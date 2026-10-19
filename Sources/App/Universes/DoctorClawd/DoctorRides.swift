@@ -10,7 +10,7 @@ extension Ride {
 
     /// A compacted Doctor regenerates: golden fire over the next face.
     var regeneration: (length: Double, draw: (_ c: PixelCanvas, _ k: Double, _ t: Double) -> Void)? {
-        (regenerationFlare, { c, k, t in drawRegeneration(c, k: k, t: t) })
+        (doctorRegenerationFlare, { c, k, t in doctorDrawRegeneration(c, k: k, t: t) })
     }
 }
 

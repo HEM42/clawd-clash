@@ -5,27 +5,27 @@ import Foundation
 
 let doctorHeroes2: [DoctorHero: Persona] = [
     .doctorOne: Persona(name: "Doctor One", weapon: .lightning, magic: Magic(core: C(0xFFFBEA), glow: C(0xE8C860), jagged: false),
-                  pivot: sonicTip, headTop: 21, signature: 3.0, callout: "Hmm!",
+                  pivot: doctorSonicTip, headTop: 21, signature: 3.0, callout: "Hmm!",
                   draw: drawDoctorOne),
     .doctorTwo: Persona(name: "Doctor Two", weapon: .lightning, magic: Magic(core: C(0xE8FFFF), glow: C(0x3AD0D8), jagged: false),
-                  pivot: sonicTip, headTop: 20, signature: 3.2, callout: "Oh, crumbs!",
+                  pivot: doctorSonicTip, headTop: 20, signature: 3.2, callout: "Oh, crumbs!",
                   draw: drawDoctorTwo),
     .doctorThree: Persona(name: "Doctor Three", weapon: .saber, headTop: 19, signature: 2.8, callout: "Hai!",
                   draw: drawDoctorThree),
     .doctorFour: Persona(name: "Doctor Four", weapon: .lightning, magic: Magic(core: C(0xFFF6D8), glow: C(0xFFB21E), jagged: false),
-                  pivot: sonicTip, headTop: 16, signature: 3.6, callout: "Jelly baby?",
+                  pivot: doctorSonicTip, headTop: 16, signature: 3.6, callout: "Jelly baby?",
                   draw: drawDoctorFour),
     .doctorFive: Persona(name: "Doctor Five", weapon: .blaster, shot: .thrown(C(0xB4202A)), muzzle: (45, 31),
                   handGun: false, headTop: 21, signature: 3.0, callout: "Howzat!",
                   draw: drawDoctorFive),
     .doctorSix: Persona(name: "Doctor Six", weapon: .lightning, magic: Magic(core: C(0xF6E8FF), glow: C(0xB46AFF), jagged: false),
-                  pivot: sonicTip, headTop: 19, signature: 2.8, callout: "Change, my dear!",
+                  pivot: doctorSonicTip, headTop: 19, signature: 2.8, callout: "Change, my dear!",
                   draw: drawDoctorSix),
     .doctorSeven: Persona(name: "Doctor Seven", weapon: .lightning, magic: Magic(core: C(0xFFE8E8), glow: C(0xFF4A4A), jagged: false),
-                  pivot: sonicTip, headTop: 17, signature: 3.4, callout: "Spoons at dawn!",
+                  pivot: doctorSonicTip, headTop: 17, signature: 3.4, callout: "Spoons at dawn!",
                   draw: drawDoctorSeven),
     .doctorEight: Persona(name: "Doctor Eight", weapon: .lightning, magic: Magic(core: C(0xE8FFF6), glow: C(0x3AE0B0), jagged: false),
-                  pivot: sonicTip, headTop: 20, signature: 3.0, callout: "About time!",
+                  pivot: doctorSonicTip, headTop: 20, signature: 3.0, callout: "About time!",
                   draw: drawDoctorEight),
 ]
 
@@ -64,12 +64,12 @@ private func drawSonicArm(_ c: PixelCanvas, _ p: Pose, sleeve: Px, tip: Px, rest
         c.rect(38, 24, 3, 9, sleeve); c.rect(38, 22, 3, 2, clawdOrange)
     } else if sonicOut(p) {
         c.rect(38, 31 - p.armRaise, 3, 3, sleeve)
-        drawSonic(c, out: true, lift: p.armRaise, lit: p.zap == true, tip: tip, t: p.t)
+        doctorDrawSonic(c, out: true, lift: p.armRaise, lit: p.zap == true, tip: tip, t: p.t)
     } else if let rest {
         rest(c)
     } else {
         c.rect(38, 31, 3, 3, sleeve); c.rect(38, 30, 3, 1, clawdOrange)
-        drawSonic(c, out: false, lift: 0, lit: false, tip: tip, t: p.t)
+        doctorDrawSonic(c, out: false, lift: 0, lit: false, tip: tip, t: p.t)
     }
 }
 
@@ -98,7 +98,7 @@ private func drawDoctorOne(_ c: PixelCanvas, _ p: Pose) {
     if !seatedPose {
         for lx in [19, 23, 31, 35] { for y in stride(from: 37, to: 42, by: 2) { c.px(lx + (y / 2) % 2, y, checkDark) } }
     }
-    drawTrainers(c, step: p.step, upper: C(0x141418), sole: C(0x2E2E34))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x141418), sole: C(0x2E2E34))
     c.oy += p.breathe
 
     drawBody(c, Look(arm: coat))
@@ -164,7 +164,7 @@ private func drawDoctorTwo(_ c: PixelCanvas, _ p: Pose) {
     if !seatedPose {
         for lx in [19, 23, 31, 35] { for y in stride(from: 41, to: 43, by: 1) { c.px(lx + y % 2, y, checkDark) } }
     }
-    drawTrainers(c, step: p.step, upper: C(0x141416), sole: C(0x2A2A2E))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x141416), sole: C(0x2A2A2E))
     c.oy += p.breathe
 
     drawBody(c, Look(arm: coat))
@@ -219,7 +219,7 @@ private func drawDoctorThree(_ c: PixelCanvas, _ p: Pose) {
 
     drawCape(c, t: p.t, speed: p.capeSpeed, color: cape, edge: lining)
     drawLegs(c, Look(leg: C(0x5E5A66)), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0x141418), sole: C(0x24242A))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x141418), sole: C(0x24242A))
     c.oy += p.breathe
 
     drawBody(c, Look(arm: velvet))
@@ -312,7 +312,7 @@ private func drawDoctorFour(_ c: PixelCanvas, _ p: Pose) {
     }
     drawTails(c, coatDark, long: true)
     drawLegs(c, Look(leg: C(0x5A4636)), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0x3A2618), sole: C(0x24180E))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x3A2618), sole: C(0x24180E))
     c.oy += p.breathe
 
     drawBody(c, Look(arm: coat))
@@ -384,7 +384,7 @@ private func drawDoctorFive(_ c: PixelCanvas, _ p: Pose) {
     drawTails(c, coatShade)
     drawLegs(c, Look(leg: C(0xE4E0D2)), step: p.step)
     if !seatedPose { for lx in [20, 24, 32, 36] { c.rect(lx, 37, 1, 4, stripe) } }
-    drawTrainers(c, step: p.step, upper: C(0xF2EEE4), sole: C(0x8A6A4A))
+    doctorDrawTrainers(c, step: p.step, upper: C(0xF2EEE4), sole: C(0x8A6A4A))
     c.oy += p.breathe
 
     drawBody(c, Look(arm: coat))
@@ -476,7 +476,7 @@ private func drawDoctorSix(_ c: PixelCanvas, _ p: Pose) {
     }
     drawLegs(c, Look(leg: trousers), step: p.step)
     if !seatedPose { for lx in [20, 24, 32, 36] { c.rect(lx, 37, 1, 4, trouserStripe) } }
-    drawTrainers(c, step: p.step, upper: C(0x2A8A3A), sole: C(0xE8E0C8))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x2A8A3A), sole: C(0xE8E0C8))
     c.oy += p.breathe
 
     drawBody(c, Look(arm: patches[3]))
@@ -531,7 +531,7 @@ private func drawDoctorSeven(_ c: PixelCanvas, _ p: Pose) {
 
     drawLegs(c, Look(leg: C(0x7A5A3A)), step: p.step)
     if !seatedPose { for lx in [19, 23, 31, 35] { c.px(lx + 1, 38, C(0x5A402A)); c.px(lx, 40, C(0x5A402A)) } }
-    drawTrainers(c, step: p.step, upper: C(0x5A3A22), sole: C(0xF0EAD8))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x5A3A22), sole: C(0xF0EAD8))
     c.oy += p.breathe
 
     drawBody(c, Look(arm: jacket))
@@ -602,7 +602,7 @@ private func drawDoctorEight(_ c: PixelCanvas, _ p: Pose) {
 
     drawTails(c, coatDark, long: true)
     drawLegs(c, Look(leg: C(0x5A5A62)), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0x141418), sole: C(0x2A2A30))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x141418), sole: C(0x2A2A30))
     c.oy += p.breathe
 
     drawBody(c, Look(arm: coat))

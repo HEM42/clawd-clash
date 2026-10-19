@@ -132,7 +132,7 @@ private func drawBill(_ c: PixelCanvas, _ p: Pose) {
     let hair = C(0x241610), hairLight = C(0x46301E)
     let g = gesture(p)
     drawLegs(c, Look(leg: C(0x2A2A34)), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0xE8E8EC), sole: C(0xB8B8C0))
+    doctorDrawTrainers(c, step: p.step, upper: C(0xE8E8EC), sole: C(0xB8B8C0))
     c.oy += p.breathe
     drawBody(c, Look(arm: denim), armRight: g == .point ? 1 : 0)
     // The jacket.
@@ -281,7 +281,7 @@ private func drawRyan(_ c: PixelCanvas, _ p: Pose) {
     let hair = C(0x141010), hairLight = C(0x2E2622)
     let g = gesture(p)
     drawLegs(c, Look(leg: C(0x3A4A6A)), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0xF2F2F4), sole: C(0xC8C8CE))
+    doctorDrawTrainers(c, step: p.step, upper: C(0xF2F2F4), sole: C(0xC8C8CE))
     c.oy += p.breathe
     drawBody(c, Look(arm: jacket), armRight: g == .point ? 1 : 0)
     // The crop.
@@ -550,7 +550,7 @@ private func drawOsgoode(_ c: PixelCanvas, _ p: Pose) {
         "..H..HH...............HHH",
         "......H................HH",
     ], ["H": hair, "h": hairLight])
-    drawSpecs(c)
+    doctorDrawSpecs(c)
 
     if let s = sig, puffing {
         // The inhaler up to her mouth, a puff of mist.

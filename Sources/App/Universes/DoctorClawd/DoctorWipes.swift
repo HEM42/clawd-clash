@@ -112,7 +112,7 @@ struct DoctorTrip {
         case .vortex: drawVortex(ctx, old: old, new: new, k: k, in: r, neon: false)
         case .explosive: drawExplosive(ctx, old: old, new: new, k: k, in: r)
         case .neon: drawVortex(ctx, old: old, new: new, k: k, in: r, neon: true)
-        case .regeneration: drawRegeneration(ctx, old: old, new: new, k: k, in: r)
+        case .regeneration: doctorDrawRegeneration(ctx, old: old, new: new, k: k, in: r)
         case .blink: drawBlink(ctx, old: old, new: new, k: k, in: r)
         case .eyestalk: drawEyestalk(ctx, old: old, new: new, k: k, in: r)
         }
@@ -132,7 +132,7 @@ struct DoctorTrip {
     /// The police box on its own, `height` tall, its lamp lit or not, outlined, for flying through tunnels.
     private static func policeBox(lamp: Bool) -> CGImage? {
         let c = PixelCanvas(28, 26)
-        drawPoliceBoxIcon(c)
+        doctorDrawPoliceBoxIcon(c)
         if !lamp { c.rect(12, 2, 4, 2, C(0x8A94A8)) }
         c.addOutline(C(0xFFFFFF, 0.85))
         return c.makeImage()
@@ -417,7 +417,7 @@ struct DoctorTrip {
         guard box > 0.01 else { return }
         let lampOn = Int(k * 18) % 2 == 0
         let c = PixelCanvas(28, 26)
-        drawPoliceBoxIcon(c)
+        doctorDrawPoliceBoxIcon(c)
         if !lampOn { c.rect(12, 2, 4, 2, C(0x8A94A8)) }
         c.addOutline(C(0xFFFFFF, 0.85))
         guard let img = c.makeImage() else { return }
@@ -437,7 +437,7 @@ struct DoctorTrip {
 
     /// Golden fire pours out of the middle in shafts that turn and grow, until the screen is all gold and white; it
     /// dies down on the new place.
-    private func drawRegeneration(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
+    private func doctorDrawRegeneration(_ ctx: CGContext, old: CGImage, new: CGImage, k: Double, in r: CGRect) {
         let c = CGPoint(x: r.midX, y: r.minY + r.height * 0.42), far = hypot(r.width, r.height)
         let flare = Self.ease(Self.span(k, 0, 0.5)) * (1 - Self.ease(Self.span(k, 0.55, 1)))
         ctx.drawShot(k < 0.5 ? old : new, in: r)

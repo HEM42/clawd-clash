@@ -30,13 +30,13 @@ struct DoctorReel: PromoReel {
 // MARK: The Doctor Clawd trailer
 
 /// The vortex's palette, darkest first, and the 4×4 ordered dither between its bands.
-let vortexBlues: [UInt32] = [0x060A1E, 0x0E1A4A, 0x1A3290, 0x2C56CC, 0x5A86F0, 0x9CBCFF, 0xD8E6FF]
-let vortexBayer: [Double] = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map { Double($0) / 15 }
+private let vortexBlues: [UInt32] = [0x060A1E, 0x0E1A4A, 0x1A3290, 0x2C56CC, 0x5A86F0, 0x9CBCFF, 0xD8E6FF]
+private let vortexBayer: [Double] = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map { Double($0) / 15 }
 
 /// The time vortex of the title sequence, at the frame's pixel size: a tunnel of blue cloud with streams of orange and violet
 /// fire twisting through it, spiralling down to a bright eye in the middle, streaks of light flying past. `glow` 0…1 fades it
 /// up from the dark.
-func vortexTunnel(_ g: CGContext, t: Double, glow: Double, centre c: CGPoint) {
+func doctorVortexTunnel(_ g: CGContext, t: Double, glow: Double, centre c: CGPoint) {
     let w = fxW, h = fxH
     guard let data = g.data else { return }
     let px = data.bindMemory(to: UInt8.self, capacity: g.bytesPerRow * h)
@@ -75,7 +75,7 @@ func vortexTunnel(_ g: CGContext, t: Double, glow: Double, centre c: CGPoint) {
 }
 
 /// A fork of lightning from the top of the frame down into the vortex's eye (pixel-size coordinates).
-func vortexLightning(_ g: CGContext, seed: Int, to c: CGPoint, alpha: Double) {
+func doctorVortexLightning(_ g: CGContext, seed: Int, to c: CGPoint, alpha: Double) {
     var p = CGPoint(x: c.x + (noise(seed) - 0.5) * 160, y: Double(fxH) + 4)
     g.move(to: p)
     for k in 1...9 {
@@ -95,16 +95,16 @@ func vortexLightning(_ g: CGContext, seed: Int, to c: CGPoint, alpha: Double) {
 }
 
 /// The police box on its own, outlined, its lamp lit or not: for tumbling through the vortex.
-func tumblingBox(lamp: Bool) -> CGImage? {
+private func tumblingBox(lamp: Bool) -> CGImage? {
     let c = PixelCanvas(28, 26)
-    drawPoliceBoxIcon(c)
+    doctorDrawPoliceBoxIcon(c)
     if !lamp { c.rect(12, 2, 4, 2, C(0x8A94A8)) }
     c.addOutline(C(0xFFFFFF, 0.85))
     return c.makeImage()
 }
 
 /// The box drawn `height` tall, centred on `p`, turned `turn` radians.
-func drawBox(_ ctx: CGContext, at p: CGPoint, height h: Double, turn: Double, lamp: Bool, alpha: Double = 1) {
+func doctorDrawBox(_ ctx: CGContext, at p: CGPoint, height h: Double, turn: Double, lamp: Bool, alpha: Double = 1) {
     guard h > 2, alpha > 0.01, let box = tumblingBox(lamp: lamp) else { return }
     ctx.saveGState(); ctx.interpolationQuality = .none
     ctx.translateBy(x: p.x, y: p.y); ctx.rotate(by: CGFloat(turn)); ctx.setAlpha(CGFloat(alpha))
@@ -156,8 +156,8 @@ func doctorIntro(_ ctx: CGContext, local l: Double, t: Double) {
     let c = CGPoint(x: Double(fxW) / 2 + sin(l * 0.7) * 14, y: Double(fxH) / 2 + cos(l * 0.5) * 6)
     let bolts: [(Double, Int)] = [(0.25, 11), (0.95, 23), (4.35, 37)]
     if let img = lowRes({ g in
-        vortexTunnel(g, t: l, glow: clamp(l / 0.9) * (1 - clamp((l - 8.4) / 0.4)), centre: c)
-        for (at, seed) in bolts where l > at && l < at + 0.3 { vortexLightning(g, seed: seed, to: c, alpha: 1 - (l - at) / 0.3) }
+        doctorVortexTunnel(g, t: l, glow: clamp(l / 0.9) * (1 - clamp((l - 8.4) / 0.4)), centre: c)
+        for (at, seed) in bolts where l > at && l < at + 0.3 { doctorVortexLightning(g, seed: seed, to: c, alpha: 1 - (l - at) / 0.3) }
     }) { ctx.saveGState(); ctx.interpolationQuality = .none; ctx.draw(img, in: fullRect); ctx.restoreGState() }
     for (at, _) in bolts where l > at && l < at + 0.18 {                            // each bolt lights up the whole frame
         ctx.setFillColor(hexColor(0xDDE8FF, 0.5 * (1 - (l - at) / 0.18))); ctx.fill(fullRect)
@@ -166,13 +166,13 @@ func doctorIntro(_ ctx: CGContext, local l: Double, t: Double) {
     // the box comes up out of the depths, tumbling, and flies past us to the right
     if l > 0.8 && l < 4.9 {
         let f = (l - 0.8) / 4.1, z = pow(f, 2.6)
-        drawBox(ctx, at: CGPoint(x: eye.x + z * 760 + sin(l * 1.4) * 30, y: eye.y + z * 160 + cos(l * 1.2) * 24),
+        doctorDrawBox(ctx, at: CGPoint(x: eye.x + z * 760 + sin(l * 1.4) * 30, y: eye.y + z * 160 + cos(l * 1.2) * 24),
                 height: 24 + z * 1300, turn: 0.5 * sin(l * 1.5) - 0.1, lamp: lamp, alpha: clamp(f * 8))
     }
     // ...and comes back past us from behind, diving away into the eye of the vortex, behind the title
     if l > 6.0 && l < 8.0 {
         let f = (l - 6.0) / 2.0, z = pow(1 - f, 2.4)
-        drawBox(ctx, at: CGPoint(x: eye.x - z * 700, y: eye.y - z * 220), height: 18 + z * 1100, turn: -l * 1.1, lamp: lamp,
+        doctorDrawBox(ctx, at: CGPoint(x: eye.x - z * 700, y: eye.y - z * 220), height: 18 + z * 1100, turn: -l * 1.1, lamp: lamp,
                 alpha: 1 - clamp((f - 0.8) / 0.2))
     }
     // the title swells out of the eye, settles, then rushes at us
@@ -187,12 +187,12 @@ func doctorIntro(_ ctx: CGContext, local l: Double, t: Double) {
 }
 
 /// The invasion's timings (shot-local seconds).
-let dalickXs = [178.0, 216.0, 254.0, 292.0], dalickHover = [34.0, 58.0, 40.0, 64.0]
-let invGround = 160.0, tardisX = 62.0
-let boxIn = 3.6, doorOpen = 5.5, zapFrom = 6.5, zapEach = 0.45
+private let dalickXs = [178.0, 216.0, 254.0, 292.0], dalickHover = [34.0, 58.0, 40.0, 64.0]
+private let invGround = 160.0, tardisX = 62.0
+private let boxIn = 3.6, doorOpen = 5.5, zapFrom = 6.5, zapEach = 0.45
 
 /// Each Dalick: how far it has come down, whether the Doctor's sonic is on it, and how far it has fled.
-func dalickState(_ i: Int, _ l: Double) -> (down: Double, zapped: Bool, fled: Double) {
+private func dalickState(_ i: Int, _ l: Double) -> (down: Double, zapped: Bool, fled: Double) {
     let down = easeOut((l - 0.3 - Double(i) * 0.32) / 1.3)
     let z0 = zapFrom + Double(i) * zapEach
     return (down, l > z0 && l < z0 + zapEach, easeIn((l - z0 - zapEach * 0.7) / 1.1))

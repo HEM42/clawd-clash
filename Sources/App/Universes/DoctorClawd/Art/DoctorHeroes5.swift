@@ -120,7 +120,7 @@ private func drawRomanah(_ c: PixelCanvas, _ p: Pose) {
     let blouse = C(0xF4F0EA), blouseShade = C(0xD4CEC6), skirt = C(0xE89AB8), skirtDark = C(0xC0708E)
     let stripes = [C(0xF2E2C8), C(0xC8507A), C(0x7A4A8A), C(0xC8507A)]
     drawLegs(c, Look(), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0x2A2A30), sole: C(0x16161B))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x2A2A30), sole: C(0x16161B))
     c.oy += p.breathe
 
     // The scarf's long end, trailing behind.
@@ -169,7 +169,7 @@ private func drawNyssa(_ c: PixelCanvas, _ p: Pose) {
     let velvet = C(0x7A1E3A), velvetDark = C(0x5A1228), sheen = C(0xA8486A), gold = C(0xD4AA4A)
     let silver = C(0xD8DCE4)
     drawLegs(c, Look(leg: velvet), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0x8A6A3A), sole: C(0x5A4426))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x8A6A3A), sole: C(0x5A4426))
     c.oy += p.breathe
     drawBody(c, Look(arm: velvet))
     c.rect(18, 32, 20, 6, velvet); c.rect(37, 32, 1, 6, velvetDark); c.rect(18, 37, 20, 1, velvetDark)
@@ -215,7 +215,7 @@ private func drawTegan(_ c: PixelCanvas, _ p: Pose) {
     let punch = sig.map { $0 > 0.46 && $0 < 0.92 } ?? false
     if punch, let s = sig, s > 0.5 && s < 0.68 { c.oy -= 2 }
     drawLegs(c, Look(), step: p.step)
-    drawTrainers(c, step: p.step, upper: plumDark, sole: plumDark)
+    doctorDrawTrainers(c, step: p.step, upper: plumDark, sole: plumDark)
     c.oy += p.breathe
     drawBody(c, Look(arm: plum))
     drawSkirt(c, plum, plumDark)
@@ -271,7 +271,7 @@ private func drawTegan(_ c: PixelCanvas, _ p: Pose) {
 private func drawPery(_ c: PixelCanvas, _ p: Pose) {
     let top = C(0xE85AA0), topDark = C(0xC03C80), denim = C(0x3A6AB0), denimDark = C(0x284E86)
     drawLegs(c, Look(), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0xF2F0EA), sole: C(0xC8C4BC))
+    doctorDrawTrainers(c, step: p.step, upper: C(0xF2F0EA), sole: C(0xC8C4BC))
     c.oy += p.breathe
     drawBody(c, Look())
     c.rect(18, 32, 20, 3, top); c.rect(37, 32, 1, 3, topDark); c.rect(18, 33, 20, 1, C(0xF8E8F0))
@@ -310,7 +310,7 @@ private func drawMel(_ c: PixelCanvas, _ p: Pose) {
     let screaming = p.signature.map { $0 > 0.1 && $0 < 0.88 } ?? false
     let shake = screaming && Int(p.t * 30) % 2 == 0 ? 1 : 0
     drawLegs(c, Look(leg: legging), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0xE8709A), sole: C(0xC0507A))
+    doctorDrawTrainers(c, step: p.step, upper: C(0xE8709A), sole: C(0xC0507A))
     c.oy += p.breathe
     c.ox += shake
     drawBody(c, Look(arm: pink, eye: screaming ? nil : ink))
@@ -367,7 +367,7 @@ private func drawAce(_ c: PixelCanvas, _ p: Pose) {
     let jacket = C(0x1E1E26), jacketDark = C(0x101016), jacketLight = C(0x3A3A48), rib = C(0x4A4A56)
     let hair = C(0x3A2214), hairLight = C(0x5A3622)
     drawLegs(c, Look(leg: C(0x1A1A20)), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0x2A1414), sole: C(0x3A2A1E))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x2A1414), sole: C(0x3A2A1E))
     c.oy += p.breathe
     // The ponytail, behind; it swings while she runs.
     let swing = p.walking ? (p.step == 0 ? 1 : -1) : 0
@@ -458,7 +458,7 @@ private func drawRose(_ c: PixelCanvas, _ p: Pose) {
 
     c.oy -= lift
     drawLegs(c, Look(leg: denim), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0xF2F0EA), sole: C(0xC8C4BC))
+    doctorDrawTrainers(c, step: p.step, upper: C(0xF2F0EA), sole: C(0xC8C4BC))
     c.oy += p.breathe
     c.pattern(15, 29, ["..HH", ".HHH", "HHHH", "HHHh", ".HHh"], ["H": hoodie, "h": hoodieDark])   // the hood
     drawBody(c, Look(arm: hoodie, eye: glow > 0.5 ? gold : ink))
@@ -537,7 +537,7 @@ private func drawJackStanding(_ c: PixelCanvas, _ p: Pose, dead: Bool = false, g
         c.rect(16, 40, 23, 1, coatDark.alpha(0.8))
     }
     drawLegs(c, Look(leg: C(0x2A2A30)), step: p.step)
-    drawTrainers(c, step: p.step, upper: C(0x1A1A1E), sole: C(0x101014))
+    doctorDrawTrainers(c, step: p.step, upper: C(0x1A1A1E), sole: C(0x101014))
     c.oy += p.breathe
     if gasp { c.oy -= 1 }
     drawBody(c, Look(arm: coat, eye: dead ? nil : ink))

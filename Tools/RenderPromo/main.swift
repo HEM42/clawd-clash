@@ -398,8 +398,8 @@ func clashIntro(_ ctx: CGContext, local l: Double, t: Double) {
     let slam = introSlam, since = l - slam, shake = since > 0 && since < 0.3 ? (0.3 - since) * 60 : 0
     ctx.saveGState(); ctx.translateBy(x: sin(t * 80) * shake, y: cos(t * 70) * shake)
     if let img = lowRes({ g in
-        vortexTunnel(g, t: l + 2, glow: clamp(l / 0.5), centre: c)
-        if l > 0.1 && l < 0.4 { vortexLightning(g, seed: 11, to: c, alpha: 1 - (l - 0.1) / 0.3) }
+        doctorVortexTunnel(g, t: l + 2, glow: clamp(l / 0.5), centre: c)
+        if l > 0.1 && l < 0.4 { doctorVortexLightning(g, seed: 11, to: c, alpha: 1 - (l - 0.1) / 0.3) }
     }) { ctx.saveGState(); ctx.interpolationQuality = .none; ctx.draw(img, in: fullRect.insetBy(dx: -40, dy: -40)); ctx.restoreGState() }
     let eye = CGPoint(x: c.x * 6, y: c.y * 6), lamp = Int(l * 5) % 2 == 0
     for (i, who) in introTumblers.enumerated() {
@@ -411,7 +411,7 @@ func clashIntro(_ ctx: CGContext, local l: Double, t: Double) {
         let a = Double(wave) * 2.1 + 0.6 + Double(j) * (2 * .pi / Double(introPerWave) + 0.35) + z * (j == 0 ? 0.7 : -0.45)
         let p = CGPoint(x: eye.x + cos(a) * z * (1100 - Double(j) * 120), y: eye.y + sin(a) * z * (700 + Double(j) * 90))
         let h = 20 + z * (1000 - Double(j) * 140), turn = sin(l * (0.9 + 0.4 * Double(j)) + Double(i)) * (0.6 - 0.25 * Double(j)) + Double(i) * 0.4
-        guard let who else { drawBox(ctx, at: p, height: h, turn: 0.5 * sin(l * 1.5), lamp: lamp, alpha: clamp(f * 8)); continue }
+        guard let who else { doctorDrawBox(ctx, at: p, height: h, turn: 0.5 * sin(l * 1.5), lamp: lamp, alpha: clamp(f * 8)); continue }
         let pc = PixelCanvas(Sprite.width, Sprite.height)
         who.draw(pc, t: l, mode: .working, walking: false, role: .none, asSession: false)   // posed, not practising
         pc.addOutline(C(AI.claude.hex, 0.92))

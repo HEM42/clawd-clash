@@ -19,7 +19,7 @@ let doctorVillains2: [DoctorVillain: Persona] = [
                   muzzle: (38, 33), handGun: false, headTop: 21,
                   draw: drawSnakeskinMaster),
     .sexton: Persona(name: "Mister Sexton", weapon: .lightning, magic: Magic(core: C(0xFFE8C8), glow: C(0xFF2A1E), jagged: false),
-                  pivot: sonicTip, headTop: 23, signature: 2.6,
+                  pivot: doctorSonicTip, headTop: 23, signature: 2.6,
                   draw: drawSexton),
     .missy: Persona(name: "Missy", weapon: .blaster, motion: .hover, shot: .energy(core: C(0xFFE0F4), glow: C(0xE03AB8)),
                   muzzle: (53, 33), headTop: 15, signature: 3.4,
@@ -344,7 +344,7 @@ private func drawSexton(_ c: PixelCanvas, _ p: Pose) {
     if !using { c.rect(38, 31, 3, 3, suit); c.rect(38, 30, 3, 1, clawdOrange) }
 }
 
-/// The laser screwdriver: Sexton's gold one with a red tip. Out, the tip at `sonicTip` `lift` higher, lit while it
+/// The laser screwdriver: Sexton's gold one with a red tip. Out, the tip at `doctorSonicTip` `lift` higher, lit while it
 /// fires; at rest, upright in the fist.
 private func drawLaser(_ c: PixelCanvas, out: Bool, lift: Int, lit: Bool, t: Double) {
     let gold = C(0xE0B040), goldDark = C(0x8A6A1E), tip = C(0xFF3A2A)

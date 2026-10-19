@@ -3,7 +3,7 @@ import Foundation
 /// The police box on a 28×26 canvas, for the menu bar: the lamp on top, the POLICE BOX sign, the windows and the panelled
 /// doors. `mono`: one colour with the sign and the windows left out, for a template image macOS tints, so they read as
 /// holes in the box.
-func drawPoliceBoxIcon(_ c: PixelCanvas, mono: Bool = false) {
+func doctorDrawPoliceBoxIcon(_ c: PixelCanvas, mono: Bool = false) {
     let rows: [String] = [
         ".............LL.............",
         "............LLLL............",
