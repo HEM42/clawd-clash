@@ -311,7 +311,11 @@ private func drawSontaron(_ c: PixelCanvas, _ p: Pose) {
         ".OOOOOOOOOOOOOOOOOOOS.",
         ".OOOOOOOOOOOOOOOOOOOS.",
     ], ["O": clawdOrange, "S": clawdShade])
-    for (x, y) in [(24, 21), (30, 20), (21, 23), (33, 23), (27, 24)] { c.px(x, y, clawdShade) }
+    // The light along the crown, and the lumps as short strokes, each lit on top and shaded underneath.
+    c.rect(22, 20, 5, 1, C(0xF0A080)); c.rect(19, 21, 2, 1, C(0xF0A080))
+    for (x, y) in [(23, 22), (30, 21), (18, 24), (33, 23)] {
+        c.rect(x, y, 2, 1, C(0xF0A080)); c.px(x + 1, y + 1, clawdShade)
+    }
     c.rect(21, 27, 4, 1, clawdShade); c.rect(31, 27, 4, 1, clawdShade)
     c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink)
     c.rect(16, 28, 2, 2, clawdShade)   // the ear
@@ -321,6 +325,7 @@ private func drawSontaron(_ c: PixelCanvas, _ p: Pose) {
     c.rect(14, 30, 3, 3, collar); c.px(15, 31, C(0xC8CCD4))   // the probic vent
     c.rect(18, 35, 20, 3, armour); c.rect(37, 35, 1, 3, armourDark)
     for y in [35] { for x in stride(from: 19 + (y / 2) % 2 * 2, to: 37, by: 4) { c.px(x, y, quilt); c.px(x + 1, y + 1, quilt) } }
+    c.rect(18, 37, 20, 1, armourDark); c.rect(27, 37, 2, 1, C(0x8A94B0))   // the belt and its buckle
     c.rect(15, 35, 3, 2, black)
     c.oy += p.gunY
     c.rect(38, 33, 3, 3, armour); c.rect(40, 33, 1, 3, black)
@@ -342,6 +347,12 @@ private func drawJudoom(_ c: PixelCanvas, _ p: Pose) {
     let black = C(0x1C1C22), plate = C(0x34343E), silver = C(0xA8ACB6), skin = C(0x8A847C), skinDark = C(0x625D56)
     let horn = C(0xC2BAA8), hornDark = C(0x8E8676)
     drawLegs(c, Look(leg: black), step: p.step)
+    if !seatedPose {   // heavy boots, a shade darker, a glint at the toe
+        for (i, lx) in [19, 23, 31, 35].enumerated() {
+            let y = p.step >= 0 && i % 2 == p.step ? 41 : 42
+            c.rect(lx, y, 2, 2, C(0x0C0C10)); c.px(lx, y, plate)
+        }
+    }
     c.oy += p.breathe
     drawBody(c, Look(body: skin, shade: skinDark, arm: plate, eye: nil))
     // The helmet: over the top and down the back, a silver rim.
@@ -362,6 +373,9 @@ private func drawJudoom(_ c: PixelCanvas, _ p: Pose) {
         "HHHHHR................",
     ], ["H": black, "R": silver])
     c.rect(19, 21, 14, 1, plate)
+    // The helmet's sheen: a run of light over the crown and down the back, a seam over the dome.
+    c.rect(22, 20, 6, 1, C(0x52525E)); c.rect(17, 24, 1, 4, plate); c.rect(18, 23, 1, 2, plate)
+    c.rect(30, 22, 1, 4, C(0x101014))
     // The rhino face: wrinkles, small eyes, the snout and the horns.
     c.rect(25, 28, 1, 1, skinDark); c.rect(27, 31, 3, 1, skinDark)
     c.rect(22, 29, 2, 2, ink); c.rect(32, 29, 2, 2, ink)
@@ -379,6 +393,7 @@ private func drawJudoom(_ c: PixelCanvas, _ p: Pose) {
     // The armour: plates, silver bands, the badge.
     c.rect(18, 33, 20, 5, black); c.rect(18, 33, 20, 1, silver)
     c.rect(19, 35, 18, 1, plate); c.rect(26, 34, 3, 3, silver); c.px(27, 35, C(0x3AD88A))
+    c.rect(37, 34, 1, 4, C(0x0E0E12)); c.px(21, 36, plate); c.px(34, 36, plate)   // far side in shade, a rivet each side
     c.rect(15, 33, 3, 3, plate); c.rect(15, 33, 3, 1, silver)
     c.oy += p.gunY
     c.rect(38, 33, 3, 3, plate); c.rect(38, 33, 3, 1, silver)

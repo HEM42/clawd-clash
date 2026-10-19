@@ -160,27 +160,30 @@ private func drawSilents(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, C(0x0E0E12))
     c.rect(25, 33, 6, 3, white); c.rect(27, 33, 2, 5, C(0x0E0E12))
     c.px(24, 33, suitLight); c.px(31, 33, suitLight); c.px(24, 34, suitLight); c.px(31, 34, suitLight)
-    // The long skull, swelling up and back from the face.
+    // The jacket lit along the shoulder, a fold on the far side, a button.
+    c.rect(18, 33, 3, 1, suitLight); c.rect(34, 35, 1, 2, C(0x16161C)); c.px(24, 36, C(0x4A4A54))
+    // The long skull, swelling up and back from the face: the light along its crown, the leathery wrinkles in short
+    // strokes that follow the curve.
     c.pattern(15, 8, [
-        "........GGGGGGG.........",
-        ".....GGGGGGGGGGGGG......",
-        "...GGGGGGGWGGGGGGGGG....",
-        "..GGGGWGGGGGGGGGGGGGG...",
-        ".GGGGGGGGGGGGGWGGGGGGG..",
-        ".GGGGGGGGWGGGGGGGGGGGGs.",
-        "GGGWGGGGGGGGGGGGGGGGGGs.",
+        "........LLLLLLL.........",
+        ".....LLLGGGGGGGGGG......",
+        "...LLGGGGGGGGGGGGGGG....",
+        "..LGGGGWWWGGGGGGGGGGG...",
+        ".LGGGGGGGGGGGGWWGGGGGG..",
+        ".LGGGGGGGGGGGGGGWGGGGGs.",
+        "GLGWWGGGGGGGGGGGGGGGGGs.",
+        "GGGGGWGGGGGWWWGGGGGGGGGs",
         "GGGGGGGGGGGGGGWGGGGGGGGs",
-        "GGGGGGGWGGGGGGGGGGGGGGGs",
         "GGGGGGGGGGGGGGGGGGGGGGGs",
         ".GGGGGGGGGGGGGGGGGGGGGs.",
-        ".GGGGWGGGGGGGGGGGWGGGGs.",
-        "..GGGGGGGGGGGGGGGGGGGs..",
-        "..GGGGGGGGGGGGGGGGGGGs..",
-        "...GGGWGGGGGGGGWGGGGGs..",
+        ".GGWWGGGGGGGGGGGGGGGGGs.",
+        "..GGGWGGGGGGGGGGGWWGGs..",
+        "..GGGGGGGGGGGGGGGGGWGs..",
+        "...GGGGWWWGGGGGGGGGGGs..",
         "...GGGGGGGGGGGGGGGGGGs..",
         "...GGGGGGGGGGGGGGGGGGs..",
         "...GGGGGGGGGGGGGGGGGGs..",
-    ], ["G": skin, "W": wrinkle, "s": skinShade])
+    ], ["G": skin, "W": wrinkle, "s": skinShade, "L": C(0xE8E4DA)])
     // Deep sockets, the brow folding over them; the puckered chin where a mouth should be.
     c.rect(21, 28, 4, 4, C(0x2A2622)); c.rect(31, 28, 4, 4, C(0x2A2622))
     c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink)
@@ -188,8 +191,8 @@ private func drawSilents(_ c: PixelCanvas, _ p: Pose) {
     c.rect(26, 31, 4, 1, wrinkle); c.px(27, 32, wrinkle); c.px(28, 32, skinShade)
     c.rect(18, 31, 3, 2, suit); c.px(21, 32, suit); c.rect(35, 31, 3, 2, suit); c.px(34, 32, suit)   // the high collar
     // The long-fingered hands.
-    c.rect(15, 33, 3, 3, suit); c.rect(15, 36, 2, 2, skin)
-    c.rect(38, 32 - raise, 3, 3, suit)
+    c.rect(15, 33, 3, 3, suit); c.rect(15, 35, 3, 1, white); c.rect(15, 36, 2, 2, skin)   // a shirt cuff
+    c.rect(38, 32 - raise, 3, 3, suit); c.rect(38, 34 - raise, 3, 1, white)
     if casting {
         c.rect(41, 32 - raise, 2, 2, skin); c.px(43, 32 - raise, skin); c.px(43, 34 - raise, skin); c.px(42, 34 - raise, skinShade)
     } else {
@@ -301,11 +304,16 @@ private func drawSilurean(_ c: PixelCanvas, _ p: Pose) {
     let green = C(0x5A8C3A), dark = C(0x3C6226), scale = C(0x78AA4C), fin = C(0x8AB85A), finDark = C(0x4A7430)
     let armour = C(0x3A3028), bronze = C(0xA8823A)
     drawLegs(c, Look(leg: armour), step: p.step)
+    if !seatedPose {   // armoured boots, a shade darker than the greaves
+        for (i, lx) in [19, 23, 31, 35].enumerated() { c.rect(lx, p.step >= 0 && i % 2 == p.step ? 41 : 42, 2, 2, C(0x1E1812)) }
+    }
     c.oy += p.breathe
     let spitting = p.fire.map { frac($0.t / p.firePeriod) < 0.3 } ?? false
     drawBody(c, Look(body: green, shade: dark, arm: green, eye: nil))
-    // Scales.
-    for (x, y) in [(20, 27), (25, 28), (29, 27), (35, 28), (19, 31), (27, 30), (36, 31)] { c.px(x, y, scale) }
+    // Scales in short strokes, each lit along its top and shadowed underneath.
+    for (x, y) in [(19, 26), (24, 27), (29, 26), (34, 26), (19, 31)] {
+        c.rect(x, y, 2, 1, scale); c.px(x + 1, y + 1, dark)
+    }
     // The fins: a fan sweeping up and back over the head.
     c.pattern(13, 15, [
         "..........F.....F.......",
@@ -334,7 +342,11 @@ private func drawSilurean(_ c: PixelCanvas, _ p: Pose) {
     else { c.rect(30, 33, 8, 1, dark) }
     // Armour on the body, bronze-edged.
     c.rect(18, 34, 20, 4, armour); c.rect(18, 34, 20, 1, bronze); c.rect(26, 35, 4, 2, bronze)
+    // The plates' seams and their far side in shade, the buckle lit along its top.
+    c.rect(22, 35, 1, 3, C(0x261E18)); c.rect(33, 35, 1, 3, C(0x261E18)); c.rect(37, 35, 1, 3, C(0x261E18))
+    c.rect(26, 35, 4, 1, C(0xD0AA5A)); c.px(19, 35, C(0x54463A))
     c.rect(15, 33, 3, 2, armour); c.rect(38, 33, 3, 2, armour)
+    c.px(15, 33, bronze); c.px(38, 33, bronze)   // bronze-edged vambraces
 }
 
 // MARK: - Sea Devvil
@@ -351,10 +363,10 @@ private func drawSeaDevvil(_ c: PixelCanvas, _ p: Pose) {
     // The turtle head: a ridged crown, the face jutting forward to the beak.
     c.pattern(17, 19, [
         "....LLLLLLLLLLL..........",
-        "..LGGGGGGGGGGGGGLL.......",
-        ".GGGGdGGGGdGGGGGGGGG.....",
-        "GGGGGGGGGGGGGGGGGGGGGG...",
-        "GGGdGGGGdGGGGdGGGGGGGGG..",
+        "..LGGLLGGGGLLGGGLL.......",
+        ".GGGGddGGGGddGGGGGGG.....",
+        "GGLLGGGGLLGGGGLGGGGGGG...",
+        "GGGddGGGddGGGGddGGGGGGG..",
         "GGGGGGGGGGGGGGGGGGGGGGGG.",
         "GGGGGGGGGGGGGGGGGGGGGGGGG",
         "....................GGGGGB",
@@ -371,8 +383,9 @@ private func drawSeaDevvil(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 32, 20, 6, dark)
     for y in 32...37 { for x in 18...37 where (x + y) % 3 == 0 || (x - y) % 3 == 0 { c.px(x, y, mesh) } }
     c.rect(18, 37, 20, 1, C(0x5A6878))
-    // The far arm, and the heat gun in the near hand.
-    c.rect(15, 33, 3, 3, green)
+    c.rect(37, 32, 1, 5, C(0x24402A))   // the tunic's far side in shade
+    // The far arm, and the heat gun in the near hand; scales on the arm in a short stroke.
+    c.rect(15, 33, 3, 3, green); c.rect(15, 33, 2, 1, light); c.rect(15, 35, 3, 1, dark)
     let gy = 32 + p.gunY
     c.rect(38, gy + 2, 3, 3, green)
     c.pattern(39, gy, [
@@ -623,14 +636,17 @@ private func drawEmptyKid(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 36, 20, 2, C(0x5A5E64))
     for y in [34, 36] { c.px(28, y, C(0x2A2420)) }
     c.rect(28, 33, 1, 3, coatDark)
-    // Messy hair, then the mask over the whole face.
+    // The too-big coat: the light along the shoulder, a fold, a pocket flap, the far side in shade.
+    c.rect(18, 33, 3, 1, C(0xA8966E)); c.rect(22, 34, 1, 2, coatDark); c.rect(31, 34, 3, 1, coatDark)
+    c.rect(37, 33, 1, 3, C(0x54462E))
+    // Messy hair (the light catching a few tufts), then the mask over the whole face.
     c.pattern(18, 21, [
         "...H..HH.H..H.......",
-        "..HHHHHHHHHHHHH.H...",
-        ".HHHHHHHHHHHHHHHHH..",
-        "HHHHHHHHHHHHHHHHHHH.",
+        "..HHllHHHHllHHH.H...",
+        ".HHHHHHllHHHHHHHdd..",
+        "HHHHHHHHHHHHHHHHHdd.",
         "SSSSSSSSSSSSSSSSSSSS",
-    ], ["H": hair, "S": strap])
+    ], ["H": hair, "l": C(0x7A5A38), "d": C(0x3E2A18), "S": strap])
     c.rect(18, 26, 20, 7, rubber); c.rect(37, 26, 1, 7, C(0x1A1A1E))
     c.rect(19, 26, 18, 1, rubberLight)
     for x0 in [20, 30] {
@@ -644,6 +660,7 @@ private func drawEmptyKid(_ c: PixelCanvas, _ p: Pose) {
     // Arms out for his mummy.
     if reaching {
         c.rect(38, 30, 6, 3, coat); c.rect(44, 30, 2, 2, C(0xC8B8A0))
+        c.rect(42, 30, 2, 3, coatDark)   // the turned-back cuff
         c.rect(15, 30, 3, 2, coatDark)
     }
 }
