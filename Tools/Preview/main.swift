@@ -4,7 +4,8 @@ import AppKit
 //
 //   Tools/Preview/build.sh                         compiles it into build/preview
 //   build/preview cast  out.png ironMan thor ...   every pose of each character (or a batch: heroes1 … villains9,
-//                                                  ringsHeroes1 …, a universe's key or title, all)
+//                                                  ringsHeroes1 …, a universe's key or title, all). A name two
+//                                                  universes share (sandman) is an error: dc:sandman says which
 //   build/preview fight out.png ironMan ultron     two characters fighting, a few moments of it, with the effects
 //   build/preview drills out.png luke ironMan ...  each solo practice set it does, at a few moments (blank: not one of its);
 //                                                  DRILL=bespoke shows just that one, at more moments
@@ -24,6 +25,7 @@ import AppKit
 let args = Array(CommandLine.arguments.dropFirst())
 guard args.count >= 2 else {
     print("usage: preview cast|fight|drills|magic|place|rides|edges <out.png> [names…]")
+    print("  a name two universes share is an error; put the universe's key in front: dc:sandman, marvel:sandman")
     exit(2)
 }
 let mode = args[0], out = args[1], names = Array(args.dropFirst(2))
@@ -72,8 +74,9 @@ func put(_ c: PixelCanvas, _ ctx: CGContext, x: CGFloat, y: CGFloat, outline: Bo
 func squashed(_ s: String) -> String { s.lowercased().filter { $0.isLetter || $0.isNumber } }
 
 /// Characters by batch name (each universe's art files: heroes1…, slayerVillains3…, ringsHem; see `PreviewInfo`), by
-/// universe (its key, `slayer`, or its name), `all` (the first universe), by enum case name (ironMan, vader, superman…;
-/// the first universe's, in number order, where two have one) or by the name shown on screen ("Darth Vapor").
+/// universe (its key, `slayer`, or its name), `all` (the first universe), by enum case name (ironMan, vader, superman…)
+/// or by the name shown on screen ("Darth Vapor"). A name two universes share (sandman, enchantress) is an error that
+/// lists them: say which with the universe's key in front, `dc:sandman` or `marvel:sandman`.
 /// Universes can't be mixed in one call.
 func cast(named n: String) -> [Cast] {
     var batches: [String: [Cast]] = ["all": Theme.of(Universe.allCases[0]).cast]
@@ -83,10 +86,27 @@ func cast(named n: String) -> [Cast] {
         for b in u.module.preview.batches { batches[b.name] = b.cast }
     }
     if let b = batches[n] ?? batches[squashed(n)] { return b }
-    for u in Universe.allCases { if let c = u.module.preview.caseName(n) { return [c] } }
-    for u in Universe.allCases {
-        if let c = Theme.of(u).cast.first(where: { squashed($0.name) == squashed(n) }) { return [c] }
+    // `key:name` looks in that universe alone (keys from its universe.conf).
+    var universes = Universe.allCases, name = n
+    if let colon = n.firstIndex(of: ":") {
+        let key = String(n[..<colon])
+        name = String(n[n.index(after: colon)...])
+        guard let u = Universe.allCases.first(where: { $0.key.lowercased() == key.lowercased() }) else {
+            print("unknown universe: \(key) (one of \(Universe.allCases.map(\.key).joined(separator: ", ")))")
+            exit(2)
+        }
+        universes = [u]
     }
+    // An enum case name first, else the name shown on screen.
+    var found = universes.compactMap { u in u.module.preview.caseName(name).map { (u, $0) } }
+    if found.isEmpty {
+        found = universes.compactMap { u in Theme.of(u).cast.first(where: { squashed($0.name) == squashed(name) }).map { (u, $0) } }
+    }
+    if found.count > 1 {
+        print("\(n) is in \(found.count) universes: say which, \(found.map { "\($0.0.key):\(name)" }.joined(separator: " or "))")
+        exit(2)
+    }
+    if let (_, c) = found.first { return [c] }
     print("unknown character: \(n)")
     exit(2)
 }

@@ -383,7 +383,7 @@ Drawing, in short (the template's art files and the header of `Sources/App/Pose.
 - `./build.sh --no-install` builds and launches the copy in `build/`. If the owner is building their own installed app, plain `./build.sh` installs it too.
 - The optimized release build can hit Swift's "unable to type-check in reasonable time" on dense `sin`/`cos` drawing expressions. Find them with `-Xfrontend -warn-long-expression-type-checking=300` and split them up. `check.sh` lists the slow ones for you (it doesn't yet do the full release-style build), so look at its "slow to type-check" line before calling a phase done.
 - `Tools/Preview/build.sh`, then:
-  - `build/preview cast out.png <name>` shows every pose of one character (or a batch: `<prefix>Heroes1`, or the universe's key or title for everyone);
+  - `build/preview cast out.png <name>` shows every pose of one character (or a batch: `<prefix>Heroes1`, or the universe's key or title for everyone); a name another universe has too is an error, so put your key in front (`<key>:<name>`);
   - `build/preview fight out.png <hero> <villain>`;
   - `build/preview place out.png "<Universe title>"` (or place keys) shows each place at window and screen-saver size;
   - `build/preview drills`, `build/preview rides` and `build/preview magic` for the rest;
