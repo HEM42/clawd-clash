@@ -81,6 +81,9 @@ private func drawSebulba(_ c: PixelCanvas, _ p: Pose) {
     // The far engine, up and behind, and the energy binder between the two.
     c.rect(42, 19, 24, 6, orangeDark)
     c.rect(64, 19, 3, 6, dark)
+    c.rect(42, 19, 22, 1, orange)                                    // lit along its top
+    c.rect(50, 20, 1, 4, C(0x8A3E10)); c.rect(59, 20, 1, 4, C(0x8A3E10))   // panel seams
+    c.px(65, 21, metal); c.px(65, 23, metal)                         // its intake's grille
     let binder = Int(t * 12) % 2 == 0 ? C(0x9FD8FF) : C(0x6FB8FF)
     c.rect(52, 25, 1, 3, binder); c.rect(58, 25, 1, 3, binder)
     // The near engine.
@@ -88,7 +91,14 @@ private func drawSebulba(_ c: PixelCanvas, _ p: Pose) {
     c.rect(38, 33, 30, 2, orangeDark)
     c.rect(38, 28, 30, 1, C(0xF0904A))
     c.rect(66, 27, 3, 8, metal); c.rect(68, 28, 2, 6, dark)          // the intake
+    for y in stride(from: 29, to: 34, by: 2) { c.px(68, y, C(0x5A5E68)) }   // the intake's grille
+    c.rect(66, 27, 1, 8, C(0xB4BAC6))                                // its lit rim
+    // Panel seams with rivets down the cowling, and a scratch.
+    let seam = C(0xA84E14), rivet = C(0xF4B07A)
+    for x in [47, 57] { c.rect(x, 29, 1, 4, seam); c.px(x + 1, 29, rivet); c.px(x + 1, 32, rivet) }
+    c.px(62, 30, C(0x8A3E10)); c.px(63, 31, C(0x8A3E10))                // a scratch
     c.rect(42, 24, 6, 3, orangeDark)                                 // its fin
+    c.rect(42, 24, 6, 1, orange)
     c.rect(54, 35, 4, 2, orangeDark)
     if Int(t * 15) % 2 == 0 { c.rect(35, 29, 3, 4, C(0xFF9A2A)) } else { c.rect(36, 30, 2, 2, C(0xFFE27A)) }
     // Control cables back to the cockpit.
@@ -106,7 +116,15 @@ private func drawSebulba(_ c: PixelCanvas, _ p: Pose) {
         "SSSSSSSSSSSS",
         ".SSSSSSSSSS.",
     ], ["L": C(0x5A3A22), "S": C(0xB89068), "K": ink, "M": C(0x5A2A1A)])
+    // The cap lit on its crown; his wrinkled hide: brows, creases in short strokes, the far side shaded.
+    let skinDark = C(0x967050), skinHi = C(0xD0AA80)
+    c.rect(19, 21, 3, 1, C(0x7A5434))
+    c.px(21, 23, skinDark); c.px(25, 23, skinDark)
+    c.rect(16, 25, 2, 1, skinDark); c.rect(22, 25, 2, 1, skinHi)
+    c.rect(15, 24, 1, 4, skinDark)
+    c.rect(20, 27, 6, 1, skinDark)                                   // the heavy lower lip
     c.rect(26, 28, 3, 2, C(0xB89068))                                // a hand on the controls
+    c.px(28, 28, skinHi)
     c.oy -= lift
     // The cockpit tub.
     c.pattern(8, 28, [
@@ -119,7 +137,11 @@ private func drawSebulba(_ c: PixelCanvas, _ p: Pose) {
         ".oooOOOOOOOOOOOOOOOOOoo.",
         "...ooooooooooooooooooo..",
     ], ["O": orange, "o": orangeDark])
+    c.rect(14, 28, 18, 1, C(0xF0904A)); c.rect(11, 29, 3, 1, C(0xF0904A))   // the tub's rim lit along the top
     c.rect(14, 31, 12, 1, dark)
+    c.rect(14, 32, 12, 1, C(0xF0904A))                               // the cockpit's lit sill
+    for x in [11, 20, 29] { c.px(x, 33, seam) }; for x in [12, 21, 30] { c.px(x, 33, rivet) }   // rivets along a seam
+    c.px(26, 34, C(0x6A3410)); c.px(27, 33, C(0x6A3410))             // a scorch from a rival's engine
     c.oy = base
 }
 
@@ -132,11 +154,19 @@ private func drawSalacious(_ c: PixelCanvas, _ p: Pose) {
     let base = c.oy
     c.rect(24, 38, 2, 5, dark); c.rect(31, 38, 2, 5, dark)
     c.rect(23, 43, 4, 1, dark); c.rect(30, 43, 4, 1, dark)
+    let light = C(0xE0BC8C), claw = C(0xF0E6D0)
+    c.px(23, 43, claw); c.px(33, 43, claw)                           // little claws on the toes
+    c.px(25, 39, skin); c.px(32, 40, C(0x7A5838))                    // knobbly knees
     c.glowLine(22, 36, 12, Double(30 + (laugh ? 1 : 0)), core: dark, glow: C(0, 0), coreR: 0.6, glowR: 0.7)   // tail
     c.oy = base + p.breathe + (laugh ? -1 : 0)
     c.rect(22, 29, 13, 10, skin)
     c.rect(22, 37, 13, 1, dark)
+    // His hide lit across the chest, the far side shaded, a crease under the pot belly.
+    c.rect(34, 30, 1, 7, dark)
+    c.rect(24, 30, 3, 1, light); c.rect(29, 31, 2, 1, light)
+    c.rect(26, 35, 4, 1, C(0xB08A5C))
     c.rect(35, 31, 3, 2, skin)                                       // a little arm, slapping a knee
+    c.px(37, 32, claw)
     c.pattern(18, 18, [
         "EEE................EEE",
         "EEEE..............EEEE",
@@ -151,6 +181,13 @@ private func drawSalacious(_ c: PixelCanvas, _ p: Pose) {
         ".......SSSSSSSSSS.....",
     ], ["E": dark, "S": skin, "K": ink, "N": dark, "M": C(0x5A1A1A)])
     c.px(27, 17, dark); c.px(29, 16, dark)                          // a tuft
+    // The light along his crown, the inside of each ear, brows and creases round the eyes.
+    c.rect(26, 20, 3, 1, light); c.rect(30, 21, 2, 1, light)
+    c.rect(19, 19, 2, 1, C(0xB8905E)); c.rect(37, 19, 2, 1, C(0xB8905E)); c.px(21, 20, C(0xB8905E)); c.px(36, 20, C(0xB8905E))
+    c.rect(26, 23, 2, 1, dark); c.rect(31, 23, 2, 1, dark)
+    c.px(26, 25, dark); c.px(33, 25, dark); c.rect(25, 28, 2, 1, dark)
+    c.rect(35, 23, 1, 4, dark)
+    if laugh { c.px(27, 27, claw); c.px(30, 27, claw) }             // sharp little teeth as he cackles
     c.oy = base
 }
 
@@ -166,13 +203,24 @@ private func drawGrievous(_ c: PixelCanvas, _ p: Pose) {
     }
     drawCape(c, t: p.t, speed: p.capeSpeed * 0.7, color: C(0x3A3028), edge: C(0x5A4A3A))
     let metal = C(0x9AA0A8), metalDark = C(0x6E747C)
+    let metalLight = C(0xC4CAD2), seam = C(0x585E66)
     drawLegs(c, Look(leg: metalDark), step: p.step)
+    drawBoots(c, C(0x4A4E56), step: p.step, rows: 1)                 // clawed metal feet
+    drawBootShine(c, step: p.step, metal)                            // the shins' lit edge
     c.oy += lift
     drawBody(c, Look(body: metal, shade: metalDark, arm: metal, eye: nil))
+    // The chassis: lit along the top, ribbed plates with rivets, the organ sack's folds.
+    c.rect(18, 26, 19, 1, metalLight)
+    c.rect(19, 29, 3, 1, seam); c.rect(34, 29, 3, 1, seam); c.rect(19, 30, 3, 1, metalLight)
+    for (x, y) in [(19, 32), (35, 32), (19, 35), (35, 35)] { c.px(x, y, seam) }
+    c.px(21, 34, metalLight); c.px(34, 34, metalLight)                // scratches
     c.rect(13, 31, 3, 3, metal)                                      // the second pair of arms
+    c.rect(13, 31, 3, 1, metalLight); c.px(14, 33, seam)
     c.rect(38, 30, 3, 3, metalDark)
+    c.px(38, 30, metal); c.px(15, 33, metalLight); c.px(38, 33, metalLight)
     c.rect(22, 31, 12, 5, C(0x5A4A3A))                               // the organ sack
     c.rect(22, 31, 12, 1, metalDark)
+    c.rect(23, 32, 4, 1, C(0x6E5C48)); c.rect(24, 34, 7, 1, C(0x4A3C2E)); c.px(32, 33, C(0x4A3C2E))
     c.pattern(18, 14, [
         "......BBBBBBBB......",
         "....BBBBBBBBBBBB....",
@@ -189,6 +237,13 @@ private func drawGrievous(_ c: PixelCanvas, _ p: Pose) {
         ".....BBBBBBBBBBB....",
         "......BBBBBBBBB.....",
     ], ["B": C(0xEDE6D2), "b": C(0x2A2418), "Y": C(0xF0D040), "d": C(0x8A8270)])
+    // The bone mask: light along the dome, the far side in shadow, the brow ridge and cheek seams.
+    let boneShade = C(0xC8C0A8), boneHi = C(0xFFFBF0)
+    c.rect(26, 15, 5, 1, boneHi); c.rect(22, 16, 3, 1, boneHi)
+    c.rect(36, 17, 1, 4, boneShade); c.rect(35, 21, 1, 3, boneShade); c.px(34, 24, boneShade); c.px(33, 26, boneShade)
+    c.rect(22, 21, 5, 1, boneShade); c.rect(31, 21, 5, 1, boneShade)
+    c.px(28, 22, boneShade); c.px(28, 23, boneShade)
+    c.px(23, 24, boneShade); c.px(33, 24, boneShade)
     if let s = p.signature, s > 0.1, s < 0.95 {
         // The cough: a wheezing hack with a little puff out of the mask on every beat.
         let e = s * 2.2 * 3.2                                        // coughs at 3.2 a second
@@ -415,6 +470,14 @@ private func drawMse6(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 36, 22, 6, black)
     c.rect(19, 35, 20, 1, C(0x3A3A42))
     c.rect(22, 37, 6, 2, C(0x6A6E78)); c.rect(30, 37, 6, 2, C(0x6A6E78))
+    // The panels lit along their tops, rivets at the corners, a seam between them and a vent grille below.
+    c.rect(22, 37, 6, 1, C(0x8A8F9A)); c.rect(30, 37, 6, 1, C(0x8A8F9A))
+    c.rect(29, 37, 1, 2, C(0x0E0E12))
+    for x in [19, 38] { c.px(x, 37, C(0x4A4A54)); c.px(x, 40, C(0x4A4A54)) }
+    for x in stride(from: 22, to: 36, by: 2) { c.px(x, 40, C(0x34343C)) }
+    c.px(35, 39, C(0x4A4A54)); c.px(23, 39, C(0x2E2E36))                // scuffs
+    c.px(21, 43, C(0x6A6E78)); c.px(34, 43, C(0x6A6E78))                // the wheels' hubs
+    c.px(18, 38, C(0x2ADA6A).alpha(Int(t * 3) % 3 == 0 ? 1 : 0.4))      // a green status light at the back
     c.px(39, 38, Int(t * 4) % 2 == 0 ? C(0xFF3A3A) : C(0x7A2A20))
 }
 
@@ -530,9 +593,15 @@ private func drawId9(_ c: PixelCanvas, _ p: Pose) {
         let knee = (x: 28 + (lx - 28) * 1.3, y: 36.0)
         c.glowLine(28 + (lx - 28) * 0.6, 31, knee.x, knee.y, core: dark, glow: C(0, 0), coreR: 0.5, glowR: 0.6)
         c.glowLine(knee.x, knee.y, knee.x + sway, 42, core: dark, glow: C(0, 0), coreR: 0.5, glowR: 0.6)
+        c.px(Int(knee.x.rounded()), Int(knee.y), C(0x4A4E56))      // a lit joint at each knee
     }
     c.circle(28, 27, 7, shell)
     c.rect(21, 28, 15, 1, dark)
+    // The shell's underside in shadow, panel seams below the band with rivets along it, a lit rim on top.
+    c.rect(24, 32, 9, 1, C(0x222328)); c.rect(26, 33, 5, 1, C(0x222328))
+    c.rect(24, 29, 1, 3, dark); c.rect(31, 29, 1, 3, dark)
+    for x in [22, 26, 29, 33] { c.px(x, 28, C(0x4A4E56)) }
+    c.rect(27, 21, 4, 1, C(0x484B53))
     c.px(25, 22, light); c.px(24, 23, light); c.px(26, 21, light)  // a glint on top
     let look = Int((sin(t * 1.1) * 2).rounded())
     c.circle(31 + look, 26, 2, C(0x3A0A0A))
@@ -662,6 +731,8 @@ private func drawBantha(_ c: PixelCanvas, _ p: Pose) {
         let up = p.step >= 0 && i % 2 == p.step ? 1 : 0
         c.rect(lx, 33, 5, 10 - up, furDark)
         c.rect(lx, 42 - up, 5, 1, C(0x221A14))                      // hooves
+        c.px(lx + 1, 42 - up, C(0x4A3C30))                          // a dull shine on each hoof
+        c.rect(lx + 1, 36, 1, 3, C(0x4A3A2C)); c.rect(lx + 3, 38, 1, 3, C(0x2E2219))   // shaggy strands down the leg
     }
     c.oy = base + p.breathe
     let sway = sin(t * 1.5) * 1.5
@@ -673,12 +744,21 @@ private func drawBantha(_ c: PixelCanvas, _ p: Pose) {
     for (x, y) in [(16, 20), (22, 18), (30, 17), (38, 19), (44, 22), (19, 26), (27, 24), (35, 25), (41, 28)] {
         c.rect(x, y, 1, 3, furLight)
     }
+    // the light along its back, darker strands between the lit ones, the underside in shadow
+    for (x, y) in [(26, 16), (33, 16), (19, 18), (41, 18)] { c.rect(x, y, 3, 1, furLight) }
+    for (x, y) in [(19, 21), (25, 20), (34, 21), (42, 24), (14, 25), (23, 27), (31, 27), (38, 28), (47, 27)] {
+        c.rect(x, y, 1, 3, furDark)
+    }
     c.ellipse(53, 28, 7, 7, fur)                                    // the head
     for x in 48...58 { c.rect(x, 34, 1, 2 + Int(noise(x * 5 + 1) * 3), furDark) }   // beard
     c.ellipse(57, 31, 4, 3, furDark)                                // muzzle
     let chew = Int(t * 3) % 2
     c.rect(56, 33 + chew, 4, 1, C(0x221A14))
     c.rect(55, 26, 2, 1, ink)
+    // Fur on the head in short strokes, a heavy brow over the eye with a glint in it, nostrils in the muzzle.
+    c.rect(50, 24, 1, 3, furLight); c.rect(52, 30, 1, 2, furDark); c.rect(48, 28, 1, 3, furDark)
+    c.rect(54, 25, 4, 1, furDark); c.px(56, 26, C(0x6A5A4C))
+    c.px(59, 31, C(0x14100C)); c.px(57, 30, C(0x4E3E30))
     c.pattern(45, 18, [                                             // a great curled horn
         "..HHHHH..",
         ".HHhhhHH.",
@@ -689,6 +769,10 @@ private func drawBantha(_ c: PixelCanvas, _ p: Pose) {
         "..H.HH...",
         "....H....",
     ], ["H": horn, "h": hornDark])
+    // The horn lit along its outer curl, with ridges round it.
+    let hornLight = C(0xE8D8B4)
+    c.rect(48, 18, 3, 1, hornLight); c.px(45, 21, hornLight); c.px(46, 20, hornLight)
+    c.px(53, 21, hornDark); c.px(45, 22, hornDark); c.px(52, 23, hornDark); c.px(47, 19, hornDark)
     c.oy = base
 }
 

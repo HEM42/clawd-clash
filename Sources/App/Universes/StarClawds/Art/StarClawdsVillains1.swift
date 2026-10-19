@@ -445,13 +445,21 @@ private func drawRogr(_ c: PixelCanvas, _ p: Pose) {
     // Thin droid legs: draw them, then carve them narrower.
     drawLegs(c, look, step: p.step)
     for lx in [19, 23, 31, 35] { c.rect(lx, 38, 1, 4, dark) }
+    let tanLight = C(0xE8D8AC), rivet = C(0x8A7A56)
+    if !seatedPose { for lx in [19, 23, 31, 35] { c.px(lx + 1, 39, tanShade) } }   // knee joints
     c.oy += p.breathe
     drawBody(c, look)
+    c.rect(18, 26, 19, 1, tanLight)          // the shell lit along its top
     c.rect(20, 28, 16, 1, tanShade)          // chest plates
     c.rect(20, 31, 16, 1, tanShade)
     c.rect(26, 27, 4, 8, C(0xC7B282))
+    for (x, y) in [(19, 27), (35, 27), (19, 30), (35, 30), (19, 33), (35, 33)] { c.px(x, y, rivet) }   // rivets
+    c.px(32, 32, tanShade); c.px(33, 33, tanShade); c.px(21, 35, tanShade)   // scuffs from the battlefield
+    c.px(15, 33, tanLight); c.px(38, 33, tanLight)                          // lit shoulders of the arms
     c.rect(24, 34, 8, 2, dark)               // backpack strap / power unit
+    c.rect(24, 34, 8, 1, rivet); c.px(26, 35, C(0x4A3E28)); c.px(29, 35, C(0x4A3E28))   // its lit lip and vents
     c.rect(27, 22, 2, 4, dark)               // neck
+    c.px(27, 23, tanShade); c.px(27, 25, tanShade)                          // its joints
     c.pattern(21, 15, [
         "....HHHHHH......",
         "..HHHHHHHHHHH...",
@@ -461,6 +469,10 @@ private func drawRogr(_ c: PixelCanvas, _ p: Pose) {
         "....hhhhhhhh....",
         ".....hhhhh......",
     ], ["H": tan, "h": tanShade, "s": tanShade, "E": C(0x2A2418)])
+    // The head lit along its crown, a seam where the snout joins, a glint in the photoreceptor.
+    c.rect(25, 15, 6, 1, tanLight); c.rect(23, 16, 4, 1, tanLight)
+    c.rect(31, 16, 1, 3, tanShade)
+    c.px(25, 17, C(0x6A5A3A))
     c.oy += gunY(p)
     drawE5(c, x: 39, y: 31)
 }
@@ -555,6 +567,7 @@ private func drawJabba(_ c: PixelCanvas, _ p: Pose) {
     let laugh = sin(p.t * 9) > 0 ? -1 : 0
     // Tail curling off behind, then the big slug body (no legs).
     c.pattern(4, 36, ["......SSSS", "...SSSSSSS", ".SSSSSSSSS", "SSSSSSSSSS", "SS........"], ["S": dark])
+    c.rect(10, 36, 4, 1, skin); c.rect(7, 37, 3, 1, skin); c.px(5, 38, skin)   // the tail lit along its top
     // the belly stays planted on the floor; only the upper body bobs as he laughs
     for y in 40...43 {
         let hw = 10 + Double(y - 22) / 21 * 7
@@ -569,12 +582,29 @@ private func drawJabba(_ c: PixelCanvas, _ p: Pose) {
         c.rect(l, y, r - l, 1, skin)
         c.px(l, y, dark); c.px(r - 1, y, dark)
     }
+    // His hide: lit along the crown, the far side in shadow, warts and wrinkles in short strokes.
+    let light = C(0xA8A464), deep = C(0x5C5A2E)
+    c.rect(21, 22, 15, 1, light); c.rect(19, 23, 3, 1, light)
+    for y in 24...43 {
+        let r = Int((Sprite.bodyCenterX + 10 + Double(y - 22) / 21 * 7).rounded())
+        c.px(r - 2, y, dark)
+    }
+    for (x, y) in [(25, 24), (32, 23), (19, 27), (35, 28), (17, 33), (39, 37), (18, 39)] { c.rect(x, y, 2, 1, light) }
+    for (x, y) in [(27, 23), (34, 25), (20, 30), (37, 30), (17, 36), (39, 40)] { c.rect(x, y, 2, 1, dark) }
     c.rect(20, 34, 18, 9, belly)
     for y in stride(from: 35, to: 43, by: 2) { c.rect(21, y, 16, 1, C(0x9A925A)) }
+    for (i, y) in stride(from: 34, to: 43, by: 2).enumerated() { c.rect(22 + i % 2 * 2, y, 4, 1, C(0xC4BC80)) }   // light on each roll
+    c.rect(36, 34, 1, 9, C(0x9A925A))
+    c.rect(21, 25, 3, 1, dark); c.rect(29, 25, 3, 1, dark)      // heavy brows
     c.pattern(21, 26, ["OOO.....OOO", "OKO.....OKO"], ["O": C(0xE08A2A), "K": C(0x2A1A0A)])   // slit eyes
+    c.px(23, 26, C(0xFFC47A)); c.px(31, 26, C(0xFFC47A))      // a wet glint in each
+    c.rect(21, 28, 3, 1, deep); c.rect(29, 28, 3, 1, deep)      // the bags under them
+    c.px(25, 29, deep); c.px(27, 29, deep)                      // nostril slits
     c.rect(19, 31, 20, 1, C(0x4A4626))                          // the enormous mouth
     c.rect(20, 32, 18, 1, laugh < 0 ? C(0x7A3A3A) : dark)
+    c.rect(21, 33, 16, 1, light)                                // the lower lip catching the light
     c.rect(38, 33, 4, 2, skin)                                  // tiny arm
+    c.px(41, 34, deep); c.rect(38, 33, 2, 1, light)
     if let s = p.signature, s > 0.1, s < 0.9 {
         let k = (s - 0.1) / 0.8
         c.rect(21, 26, 3, 1, skin); c.rect(29, 26, 3, 1, skin)  // heavy lids
@@ -593,15 +623,30 @@ private func drawIg88(_ c: PixelCanvas, _ p: Pose) {
     let metal = C(0x6F747C), metalDark = C(0x4C5058), metalLight = C(0x9AA0A8)
     drawLegs(c, Look(leg: metalDark), step: p.step)
     for lx in [19, 23, 31, 35] { c.rect(lx, 39, 2, 1, metalLight) }
+    drawBoots(c, C(0x3A3D44), step: p.step, rows: 1)                       // flat metal feet
+    if !seatedPose { for lx in [19, 23, 31, 35] { c.px(lx + 1, 37, metalLight) } }   // a lit edge on each strut
     c.oy += p.breathe
     drawBody(c, Look(body: metal, shade: metalDark, arm: metalDark, eye: nil))
+    c.rect(18, 26, 19, 1, metalLight)                                      // the casing lit along its top
     c.rect(20, 28, 16, 2, metalDark); c.rect(22, 31, 12, 4, metalDark)    // chest plating
+    c.rect(20, 28, 16, 1, C(0x5E636B)); c.rect(22, 31, 12, 1, C(0x5E636B))   // the plates' lit rims
     c.rect(24, 32, 2, 2, C(0xE0303A)); c.rect(30, 32, 2, 2, C(0xE0303A))
+    c.px(24, 32, C(0xFF8A80)); c.px(30, 32, C(0xFF8A80))                  // the lights' hot centres
+    c.rect(27, 33, 2, 1, C(0x3A3D44))                                     // a vent slot between them
+    for (x, y) in [(19, 27), (36, 27), (19, 31), (19, 35), (35, 35)] { c.px(x, y, metalDark) }   // rivets
+    c.px(20, 33, metalLight); c.px(21, 34, metalLight); c.px(34, 30, metalLight)   // scratches through the paint
+    c.px(15, 33, metal); c.px(38, 33, metal)                              // the arms' lit joints
     c.rect(27, 22, 2, 4, metalDark)                                       // neck
+    c.px(27, 23, metalLight); c.px(28, 25, metalLight)                    // its ribbed joints
     // Tall cylindrical sensor head
     c.pattern(23, 9, ["..MMMMMM..", ".MMLMMMMM.", "MMLMMMMMMM", "MMLMMMMMMM", "RRRRRRRRRR", "MMLMMMMMMM",
                       "MMLMMMMMMM", "MMLMMMMMMM", "RRRRRRRRRR", "MMLMMMMMMM", "MMMMMMMMMM", ".MMMMMMMM.", "..MMMMMM.."],
               ["M": metal, "L": metalLight, "R": C(0xC0392B)])
+    // The head's far side in shadow, a seam round its middle and a glint on the crown.
+    c.rect(32, 11, 1, 2, metalDark); c.rect(32, 14, 1, 3, metalDark); c.rect(32, 18, 1, 2, metalDark)
+    c.px(31, 20, metalDark)
+    c.rect(24, 15, 8, 1, C(0x5E636B))
+    c.px(26, 9, metalLight); c.px(26, 10, C(0xC4C8D0))
     if let s = p.signature, s > 0.08, s < 0.92 {
         for (row, phase) in [(13, 0), (17, 5)] {
             c.rect(23, row, 10, 1, C(0x5A1A14))                      // the band dims…
@@ -630,17 +675,34 @@ private func drawAtst(_ c: PixelCanvas, _ p: Pose) {
         c.rect(hx - 2, 32 - up, 3, 10, metal)              // shin
         c.rect(hx - 5, 42 - up, 10, 2, dark)               // foot
         c.rect(hx - 5, 42 - up, 2, 1, light)
+        c.rect(hx - 2, 33 - up, 1, 8, light)               // the shin lit down its front edge
+        c.px(hx, 35 - up, dark); c.px(hx, 39 - up, dark)   // the shin's rivets
+        c.px(hx - 2, 31 - up, light)                       // the knee joint's lit rim
+        c.px(hx + 1, 26, metal)                            // a piston line down the thigh
+        c.px(hx + 1, 42 - up, C(0x3A3D46)); c.px(hx + 4, 42 - up, light)   // the foot's plate seam and toe
     }
     c.oy += p.breathe
     // The cockpit: Clawd-shaped head with a viewport slit, side guns and chin cannons.
     c.rect(18, 12, 20, 12, metal)
     c.rect(18, 12, 20, 2, light)
     c.rect(37, 12, 1, 12, dark)
+    // The hatch on top, a panel seam with rivets, the lower hull in shadow, a little wear.
+    c.rect(24, 12, 7, 1, C(0xD4D9E2)); c.px(23, 12, dark); c.px(31, 12, dark)
+    c.rect(18, 21, 19, 1, dark); c.rect(18, 22, 19, 2, C(0x787D8A))
+    for x in [20, 26, 32] { c.px(x, 22, light) }
+    c.rect(28, 18, 1, 3, dark)
+    c.px(33, 19, C(0x787D8A)); c.px(34, 20, C(0x787D8A))   // a scrape
+    c.rect(22, 15, 13, 1, C(0xC8CED8))                     // the viewport's lit brow
     c.rect(22, 16, 13, 2, C(0x1A1C21))                     // viewport
     c.px(24, 16, C(0xE0303A))
+    c.px(30, 16, C(0x3A4A5A)); c.px(34, 17, C(0x2A3440))   // glare on the glass
+    for y in stride(from: 19, to: 21, by: 1) { c.px(23, y, C(0x5C616C)); c.px(25, y, C(0x5C616C)) }   // a vent grille
     c.rect(16, 15, 2, 6, dark); c.rect(38, 17, 3, 3, dark) // side pods
+    c.px(16, 15, metal); c.px(16, 18, C(0x3A3D46)); c.px(38, 17, metal)
     c.rect(38, 21, 9, 1, C(0x3A3D46)); c.rect(38, 23, 7, 1, C(0x3A3D46))   // chin guns
+    c.px(46, 21, C(0x6A6F7A)); c.px(44, 23, C(0x6A6F7A))   // the muzzles' rims
     c.rect(24, 24, 8, 2, dark)                             // hip block
+    c.rect(24, 24, 8, 1, metal); c.px(27, 25, C(0x3A3D46)) // its lit top and pivot
 }
 
 // MARK: - AT-AT
@@ -654,20 +716,39 @@ private func drawAtat(_ c: PixelCanvas, _ p: Pose) {
         c.rect(lx - 1, 32 - up, 5, 2, dark)                // knee
         c.rect(lx, 34 - up, 3, 8, metal)                   // lower leg
         c.rect(lx - 1, 42 - up, 5, 2, dark)                // round foot
+        c.rect(lx, 34 - up, 1, 8, light)                   // the lower leg lit down one edge
+        c.px(lx + 2, 27, dark); c.px(lx + 2, 30 - up, dark) // a seam down the upper leg
+        c.px(lx, 32 - up, metal); c.px(lx + 2, 32 - up, metal)   // the knee's rivets
+        c.rect(lx - 1, 42 - up, 5, 1, C(0x80858F))         // the foot's lit rim
     }
     c.oy += p.breathe
     // Body
     c.rect(13, 14, 32, 12, metal)
     c.rect(13, 14, 32, 2, light)
     c.rect(13, 24, 32, 2, dark)
-    for x in stride(from: 17, to: 44, by: 6) { c.rect(x, 17, 1, 6, dark) }   // armour plates
+    for x in stride(from: 17, to: 44, by: 6) {
+        c.rect(x, 17, 1, 6, dark)                          // armour plates…
+        c.rect(x + 1, 17, 1, 6, light)                     // …each lit along its edge, riveted at the foot
+        c.px(x - 2, 22, C(0x80858F))
+    }
+    c.rect(13, 16, 32, 1, C(0x80858F))                     // the seam under the roof plates
+    c.rect(44, 14, 1, 10, dark)                            // the far end in shadow
+    c.px(20, 20, light); c.px(21, 21, light); c.px(38, 19, C(0x80858F))   // a scrape and a scorch mark
     // Neck and head
     c.rect(45, 17, 4, 4, dark)
+    c.px(46, 17, metal); c.px(46, 19, metal); c.px(48, 18, metal)   // the neck's ribbed joints
     c.rect(49, 13, 13, 9, metal)
     c.rect(49, 13, 13, 2, light)
+    c.rect(61, 15, 1, 7, dark)                             // the head's far side in shadow
+    c.rect(49, 20, 12, 1, C(0x80858F))                     // its lower plate's seam
+    c.rect(52, 15, 6, 1, light)                            // the viewport's lit brow
     c.rect(52, 16, 6, 2, C(0x1A1C21))                      // viewport
+    c.px(56, 16, C(0x3A4A5A))                              // glare on the glass
+    c.px(50, 16, dark); c.px(50, 19, dark); c.px(59, 19, dark)   // rivets
     c.rect(62, 15, 2, 5, dark)                             // snout
+    c.px(62, 15, metal); c.px(63, 17, C(0x3A3D46))
     c.rect(56, 21, 8, 1, C(0x3A3D46)); c.rect(58, 22, 4, 1, C(0x3A3D46))  // chin cannons
+    c.px(63, 21, C(0x6A6F7A))
 }
 
 // MARK: - Rancor
@@ -685,6 +766,9 @@ private func drawRancor(_ c: PixelCanvas, _ p: Pose) {
         c.rect(lx, 35, 6, 8 - up, shade)
         c.rect(lx - 1, 42 - up, 8, 2, C(0x54483A))
         for k in 0..<3 { c.px(lx - 1 + k * 3, 43 - up, claw) }      // three toes
+        c.px(lx - 1, 42 - up, C(0xFFF8EC))                           // a glint on the claw
+        c.rect(lx + 1, 37, 2, 1, C(0x54483A)); c.rect(lx + 3, 40 - up, 2, 1, C(0x54483A))   // wrinkled hide
+        c.rect(lx, 35, 2, 1, hide)
     }
     c.oy += p.signature == nil ? p.breathe : 0                      // it holds still to roar
     // tall torso, hunched forward (shoulders lean right)
@@ -695,22 +779,37 @@ private func drawRancor(_ c: PixelCanvas, _ p: Pose) {
     }
     c.rect(21, 33, 16, 3, shade)                                    // belly fold
     for (x, y) in [(24, 20), (29, 25), (23, 29), (32, 18), (27, 31), (33, 28)] { c.rect(x, y, 2, 1, light) }   // scales
+    // the light along the hunched shoulders, scales in shadow between the lit ones, the far side shaded
+    c.rect(25, 15, 9, 1, light); c.rect(23, 17, 3, 1, light)
+    for (x, y) in [(27, 22), (32, 23), (22, 25), (30, 30), (25, 27), (35, 20)] { c.rect(x, y, 2, 1, shade) }
+    for y in 23...32 { c.px(36 + (36 - y) / 4, y, shade) }
+    c.rect(23, 34, 3, 1, C(0x54483A)); c.rect(30, 34, 3, 1, C(0x54483A))   // creases in the belly fold
     for k in 0..<5 { c.px(21 + k * 3 + (5 - k) / 2, 13 - k % 2, spine); c.px(21 + k * 3 + (5 - k) / 2, 14, spine) }  // back spines
+    for k in [1, 3] { c.px(21 + k * 3 + (5 - k) / 2, 13 - k % 2, C(0x6E604E)) }   // tips catching the light
     // the near arm hangs almost to the ground: they're long
     c.rect(16, 19, 4, 20, shade)
+    c.rect(16, 19, 1, 18, hide)                                     // lit down its front
     c.rect(15, 38, 6, 2, shade)
     for k in 0..<3 { c.px(15 + k * 2, 40, claw) }
+    c.px(15, 40, C(0xFFF8EC))
     c.px(17, 22, spine); c.px(17, 26, spine)
+    c.rect(18, 30, 2, 1, C(0x54483A)); c.rect(17, 34, 2, 1, C(0x54483A))   // wrinkles at the elbow and wrist
     // flat face dominated by the mouth, thrust forward on the hunch
     c.rect(34, 9, 13, 14, hide)
     c.rect(34, 9, 13, 2, light)
+    c.rect(46, 11, 1, 4, shade)                                     // the face's far side
     c.px(37, 11, spine); c.px(41, 10, spine)                        // brow ridges
+    c.rect(38, 11, 2, 1, shade); c.rect(43, 11, 2, 1, shade)        // heavy brows over the eyes
+    c.rect(40, 13, 2, 1, shade); c.px(36, 13, shade); c.px(45, 14, shade)   // wrinkles round the snout
     c.px(38, 12, C(0xFFD23D)); c.px(43, 12, C(0xFFD23D))            // tiny eyes
+    c.px(39, 12, C(0x2A1E14)); c.px(44, 12, C(0x2A1E14))
     let roar = p.signature.map { habitArc($0, hold: 0.55) } ?? 0
     let gape = Int((roar * 4).rounded())
     if gape > 0 { c.rect(34, 22, 13, gape, hide) }                  // the jaw drops
     c.rect(35, 15, 12, 7 + gape, C(0x3A1A12))                       // the mouth
     for k in 0..<6 { c.px(35 + k * 2, 15, claw); c.px(36 + k * 2, 21 + gape, claw) }   // fangs top and bottom
+    c.px(37, 15, C(0xFFFFFF)); c.px(43, 15, C(0xFFFFFF))            // glints on two of them
+    c.rect(36, 16, 10, 1, C(0x2A100A))                              // the gums' shadow under the top row
     c.rect(35, 22 + gape, 12, 1, shade)                             // jaw
     if roar > 0.9, let s = p.signature {
         for i in 0..<3 {                                             // the roar: arcs pushing out from the mouth

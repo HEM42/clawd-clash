@@ -515,19 +515,36 @@ private func drawDroideka(_ c: PixelCanvas, _ p: Pose) {
             let a = t * 12 + Double(k) * 2.094
             c.glowLine(28, 35, 28 + cos(a) * 7, 35 + sin(a) * 7, core: bronzeLight, glow: clear, coreR: 0.6, glowR: 0.7)
         }
+        for k in 0..<6 {                                             // rivets round the rim, turning with it
+            let a = t * 12 + Double(k) * 1.047 + 0.5
+            c.px(Int((28 + cos(a) * 7).rounded()), Int((35 + sin(a) * 7).rounded()), C(0x5A4228))
+        }
+        c.rect(26, 28, 4, 1, C(0xE0BC86))                            // a glint along the top of the wheel
         return
     }
+    let seam = C(0x7E5E36), shine = C(0xE8C890)
     c.oy += p.breathe
     c.glowLine(22, 30, 14, 43, core: metal, glow: clear, coreR: 0.8, glowR: 0.9)      // legs
     c.glowLine(31, 32, 38, 43, core: metal, glow: clear, coreR: 0.8, glowR: 0.9)
     c.glowLine(27, 32, 27, 43, core: dark, glow: clear, coreR: 0.8, glowR: 0.9)
+    c.px(18, 37, dark); c.px(35, 38, dark); c.px(27, 37, metal)      // the legs' joints
+    c.px(14, 43, C(0xB0A890)); c.px(38, 43, C(0xB0A890))             // their feet catching the light
     c.ellipse(25, 25, 8, 6, bronze)                                  // the curved back
     c.ellipse(24, 23, 6, 3, bronzeLight)
+    // The back's plates: seams curving over it with rivets, a hot shine on top, the underside in shadow.
+    for x in [21, 25, 29] { c.rect(x, 25, 1, 4, seam); c.px(x, 24, shine) }
+    c.px(22, 21, shine); c.rect(23, 20, 3, 1, shine)
+    c.rect(19, 30, 10, 1, dark)
+    c.px(31, 23, dark); c.px(32, 25, dark)
     c.ellipse(34, 30, 5, 3, bronze)                                  // the head, down at the front
+    c.rect(32, 27, 5, 1, bronzeLight); c.rect(31, 32, 6, 1, seam)    // lit along its top, shaded underneath
     c.px(37, 30, C(0xFF4A3A)); c.px(36, 31, ink)
+    c.px(38, 30, C(0xFF9A8A).alpha(0.6))                             // the eye's glow
     c.rect(30, 26, 12, 2, dark)                                      // the gun arms
+    c.rect(30, 26, 12, 1, seam); c.px(35, 27, C(0x4A3820))           // lit along the top, a joint
     c.rect(42, 26, 3, 2, metal)
     c.rect(42, 30, 6, 1, dark); c.rect(42, 32, 6, 1, dark)
+    c.px(47, 30, metal); c.px(47, 32, metal)                         // the muzzles' rims
     c.oy -= p.breathe
     if p.mode == .working {
         for k in 0..<48 {
