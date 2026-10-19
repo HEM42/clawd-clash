@@ -38,6 +38,7 @@ extension Scenes {
                           C(0x221A34, 0.85))
             }
         }
+        hv55Behind(c, g)
         // The shops round the square: flat fronts, awnings, lit windows, one with a sign.
         let shopTop = g - (tall ? 34 : 24) * s
         var x = 0
@@ -120,6 +121,109 @@ extension Scenes {
             c.rect(px, py, (8 + Int(noise(i + 320) * 10)) * s, s, C(0x6A6A8A, 0.5))
         }
     }
+
+    /// Behind the square: the dark hills with porch lights dotted over them, the radio mast on the right with its
+    /// red light, and a back row of taller blocks over the shops, a few upper windows lit. On the screen saver a
+    /// lower bank of storm cloud, the town's water tower on its legs, and the Essex's blade sign standing up over the
+    /// roofs with its lights round the edge.
+    private static func hv55Behind(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), tall = isTall(c)
+        if tall {
+            // The storm's lower decks under the heavy stuff, rolling in from the right, their bellies lit a dull
+            // amber by the town below.
+            for i in 0..<16 {
+                let x = c.w * 25 / 100 + Int(noise(i * 5 + 61) * Double(c.w * 85 / 100))
+                let y = g * 30 / 100 + Int(noise(i * 5 + 62) * Double(g * 40 / 100)) / s * s
+                let rx = (40 + Int(noise(i * 5 + 63) * 60)) * s, ry = (6 + Int(noise(i * 5 + 64) * 7)) * s
+                c.ellipse(x, y, rx, ry, C(0x2E2446, 0.8))
+                c.ellipse(x - 4 * s, y - 2 * s, rx * 3 / 4, ry * 2 / 3, C(0x3A2E52, 0.6))
+                c.rect(x - rx / 2, y + ry - s, rx, s, C(0x6A4A4A, 0.35))
+                c.ellipse(x - 6 * s, y + ry, rx * 2 / 3, 2 * s, C(0x1C1630, 0.6))
+            }
+        }
+        // The hills, low and dark, with house lights scattered over them.
+        let hillBase = g - (tall ? 30 : 20) * s, hillH = Double((tall ? 46 : 12) * s)
+        func hill(_ x: Int) -> Int {
+            let k = Double(x / s)
+            return Int((0.55 + 0.25 * sin(k * 0.013 + 1.2) + 0.2 * sin(k * 0.041 + 0.4)) * hillH) / s * s
+        }
+        for x in stride(from: 0, to: c.w, by: s) {
+            let h = hill(x)
+            c.rect(x, hillBase - h, s, g - hillBase + h, C(0x1E1832))
+        }
+        for i in 0..<(c.w / (tall ? 14 : 30) / s) {
+            let x = Int(noise(i * 3 + 71) * Double(c.w)) / s * s, h = hill(x)
+            guard h > 3 * s, x > c.w * 20 / 100 || !tall else { continue }
+            let y = hillBase - h + 2 * s + Int(noise(i * 3 + 72) * Double(h - 2 * s)) / s * s
+            c.rect(x, y, s, s, C(0xF2C86A, noise(i * 3 + 73) > 0.5 ? 0.85 : 0.5))
+        }
+        // The radio mast on the hill: a lattice tapering up, guy wires, the red light on top.
+        let mx = c.w * 90 / 100, mBase = hillBase - hill(mx), mh = (tall ? 120 : 26) * s
+        for y in stride(from: mBase - mh, to: mBase, by: s) {
+            let half = (y - (mBase - mh)) * (tall ? 4 : 2) * s / mh / s * s + s
+            c.rect(mx - half, y, s, s, C(0x3A3446)); c.rect(mx + half, y, s, s, C(0x3A3446))
+            if ((y - mBase) / s) % (tall ? 6 : 4) == 0 { c.rect(mx - half, y, 2 * half + s, s, C(0x2E2A3A)) }
+        }
+        for gx in [mx - mh / 3, mx + mh / 3] {
+            let n = max(1, abs(gx - mx) / s)
+            for k in stride(from: 0, through: n, by: 2) {
+                c.rect(mx + (gx - mx) * k / n, mBase - mh * 2 / 3 + (mh * 2 / 3) * k / n, s, s, C(0x2A2636, 0.8))
+            }
+        }
+        c.rect(mx - s, mBase - mh - 2 * s, 3 * s, 2 * s, C(0xE03A3A)); c.circle(mx, mBase - mh - s, 4 * s, C(0xFF4A4A, 0.15))
+        if tall {
+            // The water tower on its legs, up on the hill.
+            let wx = c.w * 30 / 100, wBase = hillBase - hill(wx), top = wBase - 62 * s
+            for (lx, lean) in [(wx - 9 * s, -1), (wx + 8 * s, 1), (wx - 3 * s, 0), (wx + 2 * s, 0)] {
+                for y in stride(from: top + 14 * s, to: wBase, by: s) {
+                    c.rect(lx + lean * (y - top - 14 * s) / (12 * s) * s, y, s, s, C(0x2E2838))
+                }
+            }
+            for y in stride(from: top + 22 * s, to: wBase, by: 12 * s) { c.rect(wx - 10 * s, y, 21 * s, s, C(0x2A2434)) }
+            c.rect(wx - 12 * s, top + 2 * s, 24 * s, 12 * s, C(0x3A3246)); c.rect(wx - 12 * s, top + 2 * s, 2 * s, 12 * s, C(0x4A4258))
+            c.rect(wx - 12 * s, top + 13 * s, 24 * s, s, C(0x2A2434))
+            for k in 0..<7 { c.rect(wx - 10 * s + k * 2 * s, top - k / 2 * s + 2 * s, 20 * s - k * 4 * s, s, C(0x34303F)) }
+            c.rect(wx - s, top - 4 * s, s, 3 * s, C(0x2A2434))
+        }
+        // The back row: taller blocks behind the shops, some upper windows lit.
+        var x = -6 * s, k = 0
+        while x < c.w {
+            let w = (26 + Int(noise(k * 3 + 91) * 20)) * s
+            let h = (tall ? 44 + Int(noise(k * 3 + 92) * 22) : 28 + Int(noise(k * 3 + 92) * 6)) * s
+            let col = [C(0x261E30), C(0x2C2236), C(0x221C2C)][k % 3]
+            c.rect(x, g - h, w, h, col); c.rect(x, g - h, w, s, C(0x3A2E44))
+            if noise(k * 3 + 93) > 0.5 { c.rect(x + w / 2 - 3 * s, g - h - 3 * s, 6 * s, 3 * s, col) }   // a roof box
+            for wy in stride(from: g - h + 4 * s, to: g - (tall ? 36 : 25) * s, by: 7 * s) {
+                for wx in stride(from: x + 3 * s, to: x + w - 5 * s, by: 7 * s) {
+                    let lit = noise(wx / s * 7 + wy / s * 13 + 5) > 0.62
+                    c.rect(wx, wy, 3 * s, 4 * s, lit ? C(0xF2C86A, 0.7) : C(0x16121E))
+                }
+            }
+            x += w + s; k += 1
+        }
+        guard tall else { return }
+        // The Essex's blade sign up over the roofs, its letters stacked, lights round the edge.
+        let ex = c.w * 78 / 100, eTop = g - 84 * s, eh = 36 * s
+        c.rect(ex - s, eTop + eh, 2 * s, 8 * s, C(0x2A2434))
+        c.rect(ex - 6 * s, eTop, 12 * s, eh, C(0x8A1E22)); c.rect(ex - 5 * s, eTop + s, 10 * s, eh - 2 * s, C(0x1E1420))
+        for (i, rows) in hv55Essex.enumerated() {
+            for (dy, row) in rows.enumerated() {
+                for (dx, p) in row.enumerated() where p == "#" {
+                    c.rect(ex - 2 * s + dx * s, eTop + 3 * s + (i * 6 + dy) * s, s, s, C(0xFFD86A))
+                }
+            }
+        }
+        for y in stride(from: eTop + s, to: eTop + eh, by: 3 * s) {
+            c.rect(ex - 6 * s, y, s, s, C(0xFFF0B0)); c.rect(ex + 5 * s, y, s, s, C(0xFFF0B0))
+        }
+        c.circle(ex, eTop + eh / 2, 20 * s, C(0xF2A040, 0.06))
+    }
+
+    /// The Essex's letters, 3×5, stacked down its blade sign.
+    private static let hv55Essex: [[String]] = [
+        ["###", "#..", "##.", "#..", "###"], [".##", "#..", ".#.", "..#", "##."], [".##", "#..", ".#.", "..#", "##."],
+        ["###", "#..", "##.", "#..", "###"], ["#.#", "#.#", ".#.", "#.#", "#.#"],
+    ]
 
     /// What moves on the square: rain slanting down, and now and then the lightning strike, a jagged bolt into the
     /// tower's spike while the sky flashes white and sparks run down the cable.
