@@ -717,9 +717,12 @@ extension Scenes {
         c.rect(h.x - 6 * s, g + s, h.w + 12 * s, s, C(0x6A5E52))
     }
 
+    /// A tall sash window between its curtains. Full screen it is a fixed height standing on the dado, not a share of
+    /// the wall, so it never stretches into a sliver; a pennant of the Society hangs over it.
     static func jsaWindow(_ c: PixelCanvas, _ g: Int, _ x: Int) {
-        let s = unit(g), top = isTall(c) ? g * 2 / 5 : 6 * s, bot = g - 22 * s, w = (isTall(c) ? 28 : 18) * s
+        let s = unit(g), bot = g - 22 * s, top = isTall(c) ? bot - 120 * s : 6 * s, w = (isTall(c) ? 28 : 18) * s
         guard bot > top + 8 * s else { return }
+        if isTall(c) { jsaPennant(c, g, x, top - 30 * s) }
         c.rect(x - w / 2 - 2 * s, top - 2 * s, w + 4 * s, bot - top + 4 * s, C(0x5A3A22))
         c.rect(x - w / 2, top, w, bot - top, C(0x0E1428))
         c.ellipse(x, top, w / 2, 4 * s, C(0x5A3A22)); c.ellipse(x, top + s, w / 2 - 2 * s, 3 * s, C(0x0E1428))
@@ -738,6 +741,7 @@ extension Scenes {
 
     static func jsaShelf(_ c: PixelCanvas, _ g: Int, _ x: Int, seed: Int) {
         let s = unit(g), hgt = min(g - 4 * s, (isTall(c) ? 90 : 46) * s), y0 = g - hgt
+        if isTall(c) { jsaPainting(c, g, x, y0 - 44 * s, seed: seed) }
         let books: [Px] = [C(0x6A2A22), C(0x2A4A3A), C(0x7A5A2A), C(0x3A2A4A), C(0x8A6A4A), C(0x2A3A5A)]
         c.rect(x - 12 * s, y0, 24 * s, hgt, C(0x1E120B))
         c.rect(x - 13 * s, y0 - s, 26 * s, 2 * s, C(0x5A3A22))
@@ -750,6 +754,43 @@ extension Scenes {
             }
             c.rect(x - 12 * s, sy + 6 * s, 24 * s, s, C(0x4A3020))
         }
+    }
+
+    /// A felt pennant on a brass rod, `y` its top: red with a gold star and a gold stripe, tassels on its point.
+    static func jsaPennant(_ c: PixelCanvas, _ g: Int, _ x: Int, _ y: Int) {
+        let s = unit(g), w = 30 * s, h = 14 * s
+        c.rect(x - w / 2 - 2 * s, y, w + 4 * s, s, C(0xC8963A)); c.rect(x - w / 2 - 3 * s, y - s, 2 * s, 3 * s, C(0xE8C060))
+        c.rect(x + w / 2 + s, y - s, 2 * s, 3 * s, C(0xE8C060))
+        for r in 0..<h {
+            let half = w / 2 * (h - r) / h
+            c.rect(x - half, y + s + r, half * 2, 1, r < 2 * s ? C(0xC8963A) : C(0x8A1E22))
+            c.px(x + half - 1, y + s + r, C(0x5A1218))
+        }
+        c.rect(x - 2 * s, y + 4 * s, 4 * s, 2 * s, C(0xF0C850)); c.rect(x - s, y + 3 * s, 2 * s, 4 * s, C(0xF0C850))
+        c.rect(x - s / 2, y + s + h, max(1, s), 3 * s, C(0xE8C060))
+    }
+
+    /// A gilt-framed painting over a bookcase, `y` its top: a moonlit harbour or a mountain at dusk, as `seed` picks.
+    static func jsaPainting(_ c: PixelCanvas, _ g: Int, _ x: Int, _ y: Int, seed: Int) {
+        let s = unit(g), w = 30 * s, h = 22 * s, x0 = x - w / 2
+        c.rect(x0 - 3 * s, y - 3 * s, w + 6 * s, h + 6 * s, C(0xA87A2A)); c.rect(x0 - 3 * s, y - 3 * s, w + 6 * s, s, C(0xE8C060))
+        c.rect(x0 - s, y - s, w + 2 * s, h + 2 * s, C(0x5A3A1A))
+        if abs(seed) % 2 == 0 {
+            c.rect(x0, y, w, h * 3 / 5, C(0x1E2A4A)); c.rect(x0, y + h * 3 / 5, w, h * 2 / 5, C(0x14203A))
+            c.circle(x0 + w - 7 * s, y + 5 * s, 2 * s, C(0xE8E0C0))
+            for k in 0..<4 { c.rect(x0 + 2 * s + k * 6 * s, y + h * 3 / 5 - (2 + k % 3) * s, 5 * s, (2 + k % 3) * s, C(0x0E1426)) }
+            c.rect(x0 + w - 8 * s, y + h * 3 / 5 + 2 * s, 3 * s, max(1, s), C(0xE8E0C0, 0.6))
+            c.rect(x0 + w - 7 * s, y + h * 3 / 5 + 4 * s, 2 * s, max(1, s), C(0xE8E0C0, 0.4))
+        } else {
+            c.rect(x0, y, w, h / 2, C(0xC87A4A)); c.rect(x0, y + h / 2, w, h / 2, C(0x4A3A2A))
+            for r in 0..<(h * 3 / 5) {
+                let half = (r * 12 * s) / max(1, h * 3 / 5)
+                c.rect(x + 2 * s - half, y + 4 * s + r, half * 2, 1, r < 3 * s ? C(0xE8E0D8) : C(0x5A4A5A))
+            }
+            c.rect(x0, y + h - 4 * s, w, 4 * s, C(0x3A4A2A))
+        }
+        c.rect(x0, y, w, max(1, s / 2), C(0xFFFFFF, 0.12))
+        c.rect(x - 3 * s, y + h + 3 * s, 6 * s, 2 * s, C(0xC8963A))                  // its little brass plate
     }
 
     /// The stone fireplace, its mantel and the CSA crest above it.
@@ -881,6 +922,29 @@ extension Scenes {
             x += pw + 20 * s
         }
         c.rect(c.w / 2, 0, max(1, s), g / 4, C(0x8A6A2A))
+        // on a screen tall enough, a library gallery runs along the wall between the portraits and the pennants
+        let floor = g - 192 * s
+        if floor - 40 * s > y + ph + 16 * s {
+            let books: [Px] = [C(0x6A2A22), C(0x2A4A3A), C(0x7A5A2A), C(0x3A2A4A), C(0x8A6A4A), C(0x2A3A5A)]
+            c.rect(0, floor - 40 * s, c.w, 40 * s, C(0x1E120B))
+            for (j, sy) in [floor - 38 * s, floor - 24 * s].enumerated() {
+                var bx = 0, n = 0
+                while bx < c.w {
+                    let bw = (1 + Int(noise(j * 31 + n + 870) * 2.0)) * s, bh = (8 + Int(noise(j * 37 + n + 871) * 4.0)) * s
+                    c.rect(bx, sy + 12 * s - bh, bw, bh, books[(n + j * 2) % books.count])
+                    bx += bw; n += 1
+                }
+                c.rect(0, sy + 12 * s, c.w, 2 * s, C(0x4A3020))
+            }
+            c.rect(0, floor, c.w, 4 * s, C(0x5A3A22)); c.rect(0, floor, c.w, s, C(0xC8963A)); c.rect(0, floor + 4 * s, c.w, s, C(0x24140C))
+            c.rect(0, floor - 12 * s, c.w, 2 * s, C(0x5A3A22)); c.rect(0, floor - 12 * s, c.w, s, C(0x8A6038))
+            for x in stride(from: 2 * s, to: c.w, by: 6 * s) {
+                c.rect(x, floor - 10 * s, 2 * s, 10 * s, C(0x4A2E1C)); c.rect(x, floor - 7 * s, 2 * s, 3 * s, C(0x5A3A22))
+            }
+            for x in stride(from: 40 * s, to: c.w, by: 120 * s) {           // brackets under the gallery
+                c.rect(x, floor + 5 * s, 3 * s, 8 * s, C(0x4A2E1C)); c.rect(x + 3 * s, floor + 5 * s, 3 * s, 4 * s, C(0x4A2E1C))
+            }
+        }
         // framed front pages over the trophy cases, and a sconce over each
         for cs in jsaCases(c, g) {
             let ly = g - 100 * s

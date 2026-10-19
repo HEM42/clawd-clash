@@ -490,6 +490,7 @@ extension Scenes {
                 wisp(c, Int(noise(i * 5 + 710) * Double(c.w)), g / 10 + Int(noise(i * 5 + 711) * Double(g / 3)),
                      (30 + Int(noise(i * 5 + 712) * 40)) * s, C(0x3A4A80, 0.5), s: s)
             }
+            titansTowerHigh(c, g, horizon: horizon, moon: (mx, my, mr))
         }
         // Jump City along the far shore
         for k in 0..<3 { c.rect(0, horizon - 6 * s - k * 4 * s, c.w, 4 * s, C(0x7A6AA0, 0.07)) }
@@ -514,6 +515,7 @@ extension Scenes {
                 c.rect(k * 18 * s + Int(noise(j * 3 + k + 731) * 12.0) * s, y, (3 + Int(noise(k + j + 732) * 5)) * s, max(1, s / 2), C(0x3A5088, 0.6))
             }
         }
+        if tall { titansTowerBay(c, g, horizon: horizon) }
         titansTowerIsland(c, g)
         // the near shore: the island's grassy rock
         c.dunes(base: g - s, amp: 1.5, freq: 0.07, phase: 0.5, bottom: g, C(0x22302A), shade: C(0x3A5040))
@@ -523,6 +525,49 @@ extension Scenes {
             c.rect(rx, g + 2 * s, rw, 3 * s, C(0x3A424E))
             c.rect(rx + s, g + s, rw - 2 * s, s, C(0x3A424E))
             c.rect(rx + s, g + s, rw / 2, s, C(0x5A6474))
+        }
+    }
+
+    /// The screen saver's sky and far shore: moonlit clouds with silver edges, the hills behind Jump City, and its
+    /// downtown towers rising over the rest with their antennas and red lights.
+    static func titansTowerHigh(_ c: PixelCanvas, _ g: Int, horizon: Int, moon: (x: Int, y: Int, r: Int)) {
+        let s = unit(g)
+        for i in 0..<5 {                                    // clouds drifting past the moon, lit on top
+            let x = moon.x + Int((noise(i * 3 + 780) - 0.3) * Double(c.w) * 0.7), y = moon.y + Int((noise(i * 3 + 781) - 0.2) * Double(g / 4))
+            let len = (36 + Int(noise(i * 3 + 782) * 40)) * s
+            c.ellipse(x, y, len / 2, 3 * s, C(0x1A2448, 0.9)); c.ellipse(x + len / 6, y - 2 * s, len / 4, 3 * s, C(0x222E58, 0.9))
+            c.rect(x - len / 4, y - 3 * s, len / 2, s, C(0xB8C8F0, 0.5)); c.rect(x + len / 12, y - 5 * s, len / 4, s, C(0xB8C8F0, 0.4))
+        }
+        c.dunes(base: horizon - 20 * s, amp: Double(12 * s), freq: 0.009, phase: 0.7, bottom: horizon, C(0x141A38), shade: C(0x2A3460))
+        c.dunes(base: horizon - 10 * s, amp: Double(6 * s), freq: 0.02, phase: 2.2, bottom: horizon, C(0x101630))
+        for i in 0..<(c.w / (16 * s)) where noise(i + 785) > 0.6 {
+            c.rect(Int(noise(i * 2 + 786) * Double(c.w)), horizon - (6 + Int(noise(i * 2 + 787) * 18)) * s, s, s, C(0xFFD890, 0.5))
+        }
+        for (k, fx) in [0.3, 0.38, 0.45, 0.88].enumerated() {      // downtown, clear of the T
+            let x = Int(Double(c.w) * fx), w = (8 + k % 2 * 3) * s, h = (40 + Int(noise(k + 788) * 26)) * s
+            c.rect(x, horizon - h, w, h, C(0x121834)); c.rect(x, horizon - h, s, h, C(0x2A3460))
+            for (j, wy) in stride(from: horizon - h + 2 * s, to: horizon - s, by: 3 * s).enumerated() {
+                for (q, wx) in stride(from: x + s, to: x + w - s, by: 2 * s).enumerated() where noise(k * 97 + j * 7 + q) > 0.6 {
+                    c.rect(wx, wy, s, s, noise(j + q + k) > 0.7 ? C(0xBFE0FF, 0.7) : C(0xFFD890, 0.7))
+                }
+            }
+            c.rect(x + w / 2, horizon - h - 8 * s, s, 8 * s, C(0x121834)); c.rect(x + w / 2, horizon - h - 9 * s, s, s, C(0xFF4A4A))
+        }
+    }
+
+    /// The screen saver's bay: a lit ferry crossing, channel buoys with their lamps, and rocks off the island.
+    static func titansTowerBay(_ c: PixelCanvas, _ g: Int, horizon: Int) {
+        let s = unit(g), mid = horizon + (g - horizon) / 3
+        let fx = Int(Double(c.w) * 0.4)
+        c.rect(fx - 14 * s, mid, 28 * s, 3 * s, C(0x1A1E30)); c.rect(fx - 10 * s, mid - 3 * s, 20 * s, 3 * s, C(0x2A3048))
+        c.rect(fx - 6 * s, mid - 6 * s, 10 * s, 3 * s, C(0x2A3048)); c.rect(fx + 2 * s, mid - 9 * s, 2 * s, 3 * s, C(0x1A1E30))
+        for x in stride(from: fx - 9 * s, to: fx + 9 * s, by: 3 * s) { c.rect(x, mid - 2 * s, s, s, C(0xFFE0A0, 0.9)) }
+        c.rect(fx + 13 * s, mid, s, s, C(0x5AFF7A)); c.rect(fx - 14 * s, mid, s, s, C(0xFF4A4A))
+        for y in stride(from: mid + 4 * s, to: mid + 14 * s, by: 2 * s) { c.rect(fx - 8 * s, y, 16 * s, max(1, s / 2), C(0xFFD890, 0.18)) }
+        for (k, bx) in [0.12, 0.55, 0.95].enumerated() {
+            let x = Int(Double(c.w) * bx), y = mid + (4 + k * 5) * s
+            c.rect(x - s, y - 3 * s, 3 * s, 3 * s, k % 2 == 0 ? C(0xA83A3A) : C(0x3A8A4A)); c.rect(x, y - 5 * s, s, 2 * s, C(0x2A2E3A))
+            c.rect(x, y - 6 * s, s, s, k % 2 == 0 ? C(0xFF6A6A) : C(0x7AFF8A)); c.rect(x - 2 * s, y, 5 * s, max(1, s / 2), C(0x8AB0E8, 0.5))
         }
     }
 
@@ -632,8 +677,9 @@ extension Scenes {
         return (Int(Double(c.w) * 0.68), g - 10 * unit(g) - 26 * f, 7 * f)
     }
 
-    /// How big the farm buildings are drawn: doubled on the screen saver.
-    static func smallvilleScale(_ c: PixelCanvas, _ g: Int) -> Int { isTall(c) ? max(2, g / 130) : 1 }
+    /// How big the farm buildings are drawn: doubled on the screen saver, in whole units so they keep their size
+    /// next to the crew however tall the screen is.
+    static func smallvilleScale(_ c: PixelCanvas, _ g: Int) -> Int { isTall(c) ? 2 * unit(g) : 1 }
 
     /// Where the cornfield starts (it runs from here to the right edge; left of it is the farmyard).
     static func smallvilleCornStart(_ c: PixelCanvas) -> Int { Int(Double(c.w) * 0.4) }
@@ -667,6 +713,7 @@ extension Scenes {
                 c.dunes(base: g - 13 * s - (10 - k) * 3 * s, amp: 4, freq: 0.012, phase: Double(k) * 0.35, bottom: g - 12 * s,
                         cols[k % cols.count], shade: C(0x8A7A4A, 0.6))
             }
+            smallvilleCountry(c, g)
         }
         smallvilleWaterTower(c, Int(Double(c.w) * 0.86), g - 10 * s, f)
         smallvilleWindmill(c, g)
@@ -829,9 +876,87 @@ extension Scenes {
         c.stars(0, g / 3, density: 120, seed: 82)
         let mx = Int(Double(c.w) * 0.78), my = g / 6, mr = max(4, g / 24)
         c.circle(mx, my, mr, C(0xF4ECD8)); c.circle(mx + mr / 2, my - mr / 4, mr, C(0x2E2C5A))
+        // long banks of cloud low over the fields, their bellies lit by the sun that has just set
+        let mid = g / 2
+        for (i, fy) in [0.44, 0.56, 0.68].enumerated() {
+            let y = Int(Double(g) * fy)
+            for k in 0..<max(2, c.w / (110 * s)) {
+                let x = Int((Double(k) + noise(i * 13 + k + 660) * 0.8) * 110.0 * Double(s)), len = (50 + Int(noise(i * 13 + k + 661) * 50)) * s
+                c.ellipse(x, y, len / 2, 2 * s, C(0x7A4A72, 0.75))
+                c.ellipse(x - len / 6, y - 2 * s, len / 4, 2 * s, C(0x8A5A7E, 0.75))
+                c.rect(x - len / 3, y + 2 * s, len * 2 / 3, s, C(0xFFB880, 0.75))
+                c.rect(x - len / 5, y + 3 * s, len * 2 / 5, s, C(0xFFD8A0, 0.5))
+            }
+        }
         for i in 0..<4 {
             cloud(c, Int(noise(i * 5 + 630) * Double(c.w)), g / 4 + Int(noise(i * 5 + 631) * Double(g / 5)),
                   (4 + Int(noise(i * 5 + 632) * 4)) * s, seed: i + 60, top: C(0xE8A0A0), base: C(0xA8708A))
+        }
+        // a few higher puffs, kept to the right of the window title
+        for i in 0..<3 {
+            let x = Int(Double(c.w) * (0.35 + noise(i * 5 + 650) * 0.3)), y = g / 10 + Int(noise(i * 5 + 651) * Double(g / 8))
+            cloud(c, x, y, (3 + Int(noise(i * 5 + 652) * 3)) * s, seed: i + 70, top: C(0xB8789A), base: C(0x6A4A7A))
+        }
+        // a contrail catching the last light, and geese flying home in a V
+        let cy = g / 5
+        for k in 0..<(c.w / 3) {
+            let x = Int(Double(c.w) * 0.3) + k, y = cy + k / 9
+            guard y < mid else { break }
+            c.rect(x, y, 1, s, C(0xFFD8B0, 0.45 * Double(c.w / 3 - k) / Double(c.w / 3)))
+        }
+        let gx = Int(Double(c.w) * 0.55), gy = Int(Double(g) * 0.4)
+        for k in 0..<7 {
+            let side = k % 2 == 0 ? 1 : -1, n = (k + 1) / 2
+            scenes1Flapper(c, gx + n * 7 * s, gy + side * n * 4 * s, up: k % 3 == 0, C(0x2A2238), s: s)
+        }
+    }
+
+    /// The screen saver's farmland: a road of telephone poles running over the fields, round hay bales, and the town
+    /// on the far hill with its church steeple, main street and grain elevator.
+    static func smallvilleCountry(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), far = g - 40 * s
+        // the town, between the barn's silo and the farmhouse
+        let tx = Int(Double(c.w) * 0.33)
+        c.ellipse(tx, far + 2 * s, 34 * s, 4 * s, C(0x5A5A3A))
+        for k in 0..<9 {
+            let hx = tx - 26 * s + k * 6 * s, hh = (3 + Int(noise(k + 690) * 4)) * s, hw = (4 + Int(noise(k + 691) * 2)) * s
+            c.rect(hx, far - hh, hw, hh, k % 3 == 0 ? C(0x7A6A6A) : C(0x6A5E62))
+            for r in 0..<(2 * s) { c.rect(hx - s + r, far - hh - r - 1, hw + 2 * s - 2 * r, 1, C(0x4A3A44)) }
+            if noise(k + 692) > 0.4 { c.rect(hx + s, far - hh + s, s, s, C(0xFFD890, 0.85)) }
+        }
+        // the church and its white steeple
+        let ch = tx - 6 * s
+        c.rect(ch - 3 * s, far - 8 * s, 7 * s, 8 * s, C(0xD8D0C8)); c.rect(ch + 2 * s, far - 8 * s, 2 * s, 8 * s, C(0xA8A0A0))
+        c.rect(ch - s, far - 14 * s, 3 * s, 6 * s, C(0xE8E0D8))
+        for r in 0..<(6 * s) { c.rect(ch + s / 2 - r / 4, far - 20 * s + r, max(1, r / 2) + 1, 1, C(0x5A4A52)) }
+        c.rect(ch, far - 12 * s, s, 2 * s, C(0xFFD890, 0.8))
+        // the grain elevator with its head house
+        let ex = tx + 16 * s
+        c.rect(ex, far - 22 * s, 8 * s, 22 * s, C(0xB8B0A0)); c.rect(ex + 6 * s, far - 22 * s, 2 * s, 22 * s, C(0x8A8478))
+        c.rect(ex + 2 * s, far - 26 * s, 4 * s, 4 * s, C(0xA8A090)); c.rect(ex + 2 * s, far - 26 * s, 4 * s, s, C(0x7A3A2A))
+        for y in stride(from: far - 19 * s, to: far, by: 4 * s) { c.rect(ex, y, 8 * s, max(1, s / 2), C(0x8A8478)) }
+        c.rect(ex + 3 * s, far - 27 * s, s, s, C(0xFF5A4A))
+        // telephone poles marching along the field road, the wire sagging between them
+        let poles = stride(from: Int(Double(c.w) * 0.42), to: c.w + 40 * s, by: 46 * s).map { $0 }
+        let base = g - 22 * s
+        for (k, px) in poles.enumerated() {
+            c.rect(px, base - 18 * s, s, 18 * s, C(0x3A2A24))
+            c.rect(px - 3 * s, base - 16 * s, 7 * s, s, C(0x3A2A24))
+            if k + 1 < poles.count {
+                let nx = poles[k + 1], span = nx - px
+                for x in 0..<span {
+                    let u = Double(x) / Double(span) * 2 - 1, sag = Int((1 - u * u) * Double(4 * s))
+                    c.px(px + x, base - 16 * s + sag, C(0x2A2230, 0.8))
+                    c.px(px + x - 3 * s, base - 16 * s + sag, C(0x2A2230, 0.6))
+                }
+            }
+        }
+        // round bales on the stubble, lit on the sunset side
+        for k in 0..<12 {
+            let bx = Int(noise(k * 3 + 700) * Double(c.w)), by = g - 16 * s - Int(noise(k * 3 + 701) * 18.0) * s
+            guard abs(bx - tx) > 40 * s else { continue }
+            c.ellipse(bx, by, 3 * s, 2 * s, C(0x8A6A3A)); c.ellipse(bx - s, by - s / 2, 2 * s, s, C(0xC8A060))
+            c.rect(bx - 3 * s, by + 2 * s, 7 * s, max(1, s / 2), C(0x3A3A24, 0.6))
         }
     }
 
