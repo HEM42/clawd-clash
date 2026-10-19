@@ -5,7 +5,7 @@ import Foundation
 // speed and offset, a blaster that only kicks, a breathing rhythm of their own), so the art here does the same from
 // the `Pose` rather than taking the engine's generic one: `heroRole` rebuilds the role Clawd Wars used.
 
-let starWarsHeroes1: [SWHero: Persona] = [
+let starClawdsHeroes1: [StarClawdsHero: Persona] = [
     .luke: Persona(name: "Luke Skyclawder", weapon: .saber, headTop: 21, signature: 2.6,
                   draw: drawLuke),
     .han: Persona(name: "Han Yolo", weapon: .blaster, muzzle: (53, 32), headTop: 22, signature: 3,
@@ -499,7 +499,7 @@ private func drawC3po(_ c: PixelCanvas, _ pose: Pose) {
 // MARK: - The Jedi
 
 /// Saber wielders: Qui-Gon, Mace Windu, Yoda, Rey and Ahsoka (twin blades).
-private func drawJedi(_ c: PixelCanvas, _ pose: Pose, _ who: SWHero) {
+private func drawJedi(_ c: PixelCanvas, _ pose: Pose, _ who: StarClawdsHero) {
     let t = pose.t, role = heroRole(pose)
     // Each Jedi's kata offset and blade colours (core, glow).
     let offset: Double, core: Px, glow: Px
@@ -654,7 +654,7 @@ private func drawJedi(_ c: PixelCanvas, _ pose: Pose, _ who: SWHero) {
 // MARK: - Chewbacca, the Jawa
 
 /// Blaster carriers: Chewbacca (bowcaster) and a Jawa (ion blaster).
-private func drawGunner(_ c: PixelCanvas, _ pose: Pose, _ who: SWHero) {
+private func drawGunner(_ c: PixelCanvas, _ pose: Pose, _ who: StarClawdsHero) {
     let t = pose.t, role = heroRole(pose), base = heroBase(pose)
     let step = pose.step
     let bob = pose.walking ? (step == 0 ? -1 : 0) : (sin(t * 4.5) > 0.6 ? -1 : 0)

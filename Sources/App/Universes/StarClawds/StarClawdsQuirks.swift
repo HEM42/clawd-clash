@@ -9,7 +9,7 @@ let starClawdsBunLines = ["Cute buns. Amateur.", "Nice buns. Mine are bigger.", 
 /// has a word about buns (a different one each time).
 func starClawdsBunTalk(_ a: OnStage, others: [OnStage], zoom z: CGFloat, t: Double) -> (facing: CGFloat, line: String)? {
     guard a.cast.universe.isHem(a.cast.id), !a.leaving else { return nil }
-    guard let laya = others.first(where: { $0.cast == .hero(SWHero.leia) && !$0.walking && !$0.leaving && abs($0.x - a.x) < 90 * z })
+    guard let laya = others.first(where: { $0.cast == .hero(StarClawdsHero.leia) && !$0.walking && !$0.leaving && abs($0.x - a.x) < 90 * z })
     else { return nil }
     let cycle = t / 20 + a.phase
     guard frac(cycle) < 0.25 else { return nil }

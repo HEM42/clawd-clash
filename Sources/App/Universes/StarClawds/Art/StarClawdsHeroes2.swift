@@ -2,7 +2,7 @@ import Foundation
 
 // Star Wars heroes: Jar Jar to Admiral Ackbar. Ported from Clawd Wars' Recruits.swift.
 
-let starWarsHeroes2: [SWHero: Persona] = [
+let starClawdsHeroes2: [StarClawdsHero: Persona] = [
     .jarjar: Persona(name: "J.J Blinks", headTop: 18,
                   draw: drawJarjar),
     .lando: Persona(name: "Lando Coolrissian", weapon: .blaster, muzzle: (47, 32), headTop: 22,

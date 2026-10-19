@@ -9,19 +9,19 @@ import CoreText
 struct StarClawdsReel: PromoReel {
     let name = "starclawds", base = "star-clawds-promo", small = "Star-Clawds"
     let title = "STAR CLAWDS"
-    var geminiTask: String { "gemini ▸ add a \(Cast.hero(SWHero.tauntaun).name.lowercased())" }
+    var geminiTask: String { "gemini ▸ add a \(Cast.hero(StarClawdsHero.tauntaun).name.lowercased())" }
     var shots: [Shot] { starClawdsShots }
     var beats: [(key: Double, beat: Beat)] { starClawdsBeats }
     var universe: Universe { .starWars }
     var brawl: BrawlCast {
-        BrawlCast(claude: .villain(SWVillain.vader), other: .hero(SWHero.luke),
-                  agent: .hero(SWHero.han), otherAgent: .villain(SWVillain.trooper),
+        BrawlCast(claude: .villain(StarClawdsVillain.vader), other: .hero(StarClawdsHero.luke),
+                  agent: .hero(StarClawdsHero.han), otherAgent: .villain(StarClawdsVillain.trooper),
                   line: "One app. Three universes.",
                   sub: "Star Clawds: laser swords, blasters, 81 characters in 22 places.")
     }
     var window: WindowCast {
-        WindowCast(place: .cantina, claude: .villain(SWVillain.vader), other: .hero(SWHero.luke),
-                   agentA: .hero(SWHero.han), agentB: .hero(SWHero.chewie), extra: .hero(SWHero.r2d2),
+        WindowCast(place: .cantina, claude: .villain(StarClawdsVillain.vader), other: .hero(StarClawdsHero.luke),
+                   agentA: .hero(StarClawdsHero.han), agentB: .hero(StarClawdsHero.chewie), extra: .hero(StarClawdsHero.r2d2),
                    prompt: "You: “make the cape swish more”", otherPrompt: "You: “make the hero section pop”")
     }
     func sound(_ m: Mix) { starClawdsSound(m) }
@@ -30,7 +30,7 @@ struct StarClawdsReel: PromoReel {
 // MARK: The Star Clawds showcase (in its trailer, and on the promo's comic page)
 
 /// Deep-space starfield; `shift` moves it up (the camera tilting down).
-func starfield(_ c: PixelCanvas, shift: Double = 0, t: Double) {
+private func starfield(_ c: PixelCanvas, shift: Double = 0, t: Double) {
     for i in 0..<260 {
         let x = Int(noise(i * 5) * Double(c.w))
         let y = Int((noise(i * 5 + 1) * Double(c.h + 120) - shift).rounded()) - 0
@@ -47,7 +47,7 @@ func starfield(_ c: PixelCanvas, shift: Double = 0, t: Double) {
 }
 
 /// Tatooine rising from the bottom of the frame, with its two moons. `rise` 0…1 brings it into view.
-func tatooine(_ c: PixelCanvas, rise: Double) {
+private func tatooine(_ c: PixelCanvas, rise: Double) {
     let r = 330.0, cx = 205.0, cy = Double(c.h) + r - 34 - (1 - rise) * 70
     let bands = [C(0xE2B77A), C(0xD8A465), C(0xC98F52), C(0xDDAE70), C(0xB97C44), C(0xD39C5E)]
     for y in min(c.h, max(0, Int(cy - r)))..<c.h {
@@ -80,7 +80,7 @@ func tatooine(_ c: PixelCanvas, rise: Double) {
 }
 
 /// The Tantive IV seen from behind as it flees: engine bank at the top, hammerhead nose at the bottom.
-let tantiveRows = [
+private let tantiveRows = [
     "..EEEEEEEEE..",
     ".EEEEEEEEEEE.",
     ".HHHHHHHHHHH.",
@@ -103,7 +103,7 @@ let tantiveRows = [
     "......H......",
 ]
 
-func tantive(t: Double) -> PixelCanvas {
+private func tantive(t: Double) -> PixelCanvas {
     let c = PixelCanvas(15, tantiveRows.count + 2)
     c.pattern(1, 1, tantiveRows, ["H": C(0xD6D4CC), "D": C(0x8A8880), "L": C(0x6FA0D0), "W": C(0xFFFFFF),
                                   "E": C(0xFFC8D0, 0.75 + 0.25 * sin(t * 30))])
@@ -113,9 +113,9 @@ func tantive(t: Double) -> PixelCanvas {
 
 /// The Star Destroyer seen from below, nose pointing the way it flies (down the frame). `tipY` is the row of
 /// its nose; the hull reaches `length` rows back up to the engine block.
-let sdLength = 300.0, sdHalf = 190.0, sdX = 165.0
+private let sdLength = 300.0, sdHalf = 190.0, sdX = 165.0
 
-func starDestroyer(_ c: PixelCanvas, tipY: Double, t: Double) {
+private func starDestroyer(_ c: PixelCanvas, tipY: Double, t: Double) {
     let base = tipY - sdLength
     let lit = [C(0xA9ABB0), C(0x9A9CA2), C(0xB9BBC0)], shade = [C(0x8F9197), C(0x82848A), C(0x9C9EA4)]
     for y in min(c.h, max(0, Int(base) - 18))..<max(min(c.h, max(0, Int(base) - 18)), min(c.h, Int(tipY) + 1)) {
@@ -174,14 +174,14 @@ func starDestroyer(_ c: PixelCanvas, tipY: Double, t: Double) {
 }
 
 /// The chase: where the Tantive IV is at shot-local time `l` (fx units) and how big.
-func tantivePos(_ l: Double) -> (x: Double, y: Double, k: Double) {
+private func tantivePos(_ l: Double) -> (x: Double, y: Double, k: Double) {
     let f = easeOut((l - 1.6) / 3.0)
     return (lerp(186, 150, f) + sin(l * 2.3) * 3, lerp(-28, 118, f) + (l > 4.6 ? (l - 4.6) * 3 : 0), lerp(1.4, 0.7, clamp((l - 1.6) / 6)))
 }
 
-func destroyerTip(_ l: Double) -> Double { -4 + (l - 3.0) * 85 }
+private func destroyerTip(_ l: Double) -> Double { -4 + (l - 3.0) * 85 }
 
-func starClawsShowcase(_ ctx: CGContext, local l: Double, t: Double) {
+func starClawdsShowcase(_ ctx: CGContext, local l: Double, t: Double) {
     let tilt = easeOut((l - 0.2) / 1.6)
     let sky = PixelCanvas(fxW, fxH)
     sky.rect(0, 0, fxW, fxH, C(0x000000))
@@ -229,10 +229,10 @@ func starClawsShowcase(_ ctx: CGContext, local l: Double, t: Double) {
 
 // MARK: The boarding (Star Clawds): the door blows, Stormtroupers pour in, Darth Vapor steps through the smoke
 
-let doorX = 268.0, doorW = 46.0, doorTop = 62.0       // the blast door at the end of the corridor (fx units)
-let blowAt = 1.6
+private let doorX = 268.0, doorW = 46.0, doorTop = 62.0       // the blast door at the end of the corridor (fx units)
+private let blowAt = 1.6
 
-func boarding(_ ctx: CGContext, local l: Double, t: Double) {
+private func boarding(_ ctx: CGContext, local l: Double, t: Double) {
     let since = l - blowAt
     if since > 0 && since < 0.5 { let sh = (0.5 - since) * 40; ctx.translateBy(x: sin(t * 90) * sh, y: cos(t * 80) * sh) }   // the blast shakes the frame
     set(ctx, .tantive, t: t)
@@ -257,27 +257,27 @@ func boarding(_ ctx: CGContext, local l: Double, t: Double) {
     blit(fx, ctx)
     // the crew: the rebels hold the corridor, the droids and the princess behind them
     let fire = l > blowAt + 0.6, retreat = clamp((l - 4.6) / 1.4)
-    var wedge = Actor(cast: .hero(SWHero.wedge), x: lerp(118, -40, retreat), mode: .idle, role: fire && retreat == 0 ? .shoot(offset: 0) : .none)
-    var cassius = Actor(cast: .hero(SWHero.cassian), x: lerp(150, -20, retreat), mode: .idle, role: fire && retreat == 0 ? .shoot(offset: blasterPeriod / 2) : .none)
+    var wedge = Actor(cast: .hero(StarClawdsHero.wedge), x: lerp(118, -40, retreat), mode: .idle, role: fire && retreat == 0 ? .shoot(offset: 0) : .none)
+    var cassius = Actor(cast: .hero(StarClawdsHero.cassian), x: lerp(150, -20, retreat), mode: .idle, role: fire && retreat == 0 ? .shoot(offset: blasterPeriod / 2) : .none)
     wedge.walking = retreat > 0 && retreat < 1; cassius.walking = wedge.walking
     let away = clamp((l - 3.6) / 1.6)
-    var laya = Actor(cast: .hero(SWHero.leia), x: lerp(70, -30, away), facing: away > 0 ? -1 : 1, mode: .idle); laya.walking = away > 0 && away < 1
-    var r2 = Actor(cast: .hero(SWHero.r2d2), x: lerp(36, -50, away), facing: away > 0 ? -1 : 1, session: false, mode: .idle); r2.walking = laya.walking
-    var c3 = Actor(cast: .hero(SWHero.c3po), x: lerp(16, -60, clamp((l - 6.6) / 0.9)), facing: l > 6.6 ? -1 : 1, mode: .idle); c3.walking = l > 6.6 && l < 7.5
+    var laya = Actor(cast: .hero(StarClawdsHero.leia), x: lerp(70, -30, away), facing: away > 0 ? -1 : 1, mode: .idle); laya.walking = away > 0 && away < 1
+    var r2 = Actor(cast: .hero(StarClawdsHero.r2d2), x: lerp(36, -50, away), facing: away > 0 ? -1 : 1, session: false, mode: .idle); r2.walking = laya.walking
+    var c3 = Actor(cast: .hero(StarClawdsHero.c3po), x: lerp(16, -60, clamp((l - 6.6) / 0.9)), facing: l > 6.6 ? -1 : 1, mode: .idle); c3.walking = l > 6.6 && l < 7.5
     // the Stormtroupers, through the smoke one after another, firing as they come
     var troopers: [Actor] = []
     for i in 0..<5 {
         let at = blowAt + 0.35 + Double(i) * 0.32
         guard l > at else { continue }
         let f = easeOut((l - at) / 0.8), stop = [250.0, 218, 282, 190, 236][i]
-        var tr = Actor(cast: .villain(SWVillain.trooper), x: lerp(doorX + 22, stop, f), facing: -1, mode: .idle,
+        var tr = Actor(cast: .villain(StarClawdsVillain.trooper), x: lerp(doorX + 22, stop, f), facing: -1, mode: .idle,
                        role: f > 0.95 && retreat < 1 ? .shoot(offset: Double(i) * 0.17) : .none)
         tr.walking = f < 0.95
         troopers.append(tr)
     }
     // Darth Vapor, last through, slow
     let vf = clamp((l - 4.2) / 1.8)
-    var vapor = Actor(cast: .villain(SWVillain.vader), x: lerp(doorX + 22, 148, easeOut(vf)), facing: -1, mode: .idle)
+    var vapor = Actor(cast: .villain(StarClawdsVillain.vader), x: lerp(doorX + 22, 148, easeOut(vf)), facing: -1, mode: .idle)
     vapor.walking = vf > 0 && vf < 1
     for a in [c3, r2, laya] { draw(a, ctx, t: t) }
     for a in troopers.reversed() { draw(a, ctx, t: t) }
@@ -338,7 +338,7 @@ let starClawdsShots: [Shot] = [
         ctx.restoreGState()
     },
     // Tilt down to the desert planet: the blockade runner flees, the giant ship slides in overhead.
-    Shot(name: "destroyer", start: 7.0, end: 15.5, into: .cut) { ctx, local, t in starClawsShowcase(ctx, local: local, t: t) },
+    Shot(name: "destroyer", start: 7.0, end: 15.5, into: .cut) { ctx, local, t in starClawdsShowcase(ctx, local: local, t: t) },
     // Aboard the blockade runner: the door blows, the Stormtroupers pour in, Darth Vapor steps through.
     Shot(name: "boarding", start: 15.5, end: 23.0, into: .starWars(clock: false)) { ctx, local, t in boarding(ctx, local: local, t: t) },
     Shot(name: "hook", start: 23.0, end: 27.0) { ctx, local, t in
@@ -357,12 +357,12 @@ let starClawdsShots: [Shot] = [
         caption("along the bottom of your screen. They fight while they work.", ctx, local: local, start: 0.6, y: 830, size: 40, color: yellow, weight: .bold)
     },
     Shot(name: "status", start: 31.6, end: 35.8) { ctx, local, t in
-        let cast: [Cast] = [.villain(SWVillain.vader), .villain(SWVillain.emperor), .villain(SWVillain.boba), .villain(SWVillain.jabba)]
+        let cast: [Cast] = [.villain(StarClawdsVillain.vader), .villain(StarClawdsVillain.emperor), .villain(StarClawdsVillain.boba), .villain(StarClawdsVillain.jabba)]
         statusOf(ctx, local: local, t: t, cast: cast, badgeText: "STAR CLAWDS", aside: "(Leave \(cast[2].name) waiting and he starts jumping.)")
     },
     Shot(name: "agents", start: 35.8, end: 39.8) { ctx, local, t in
-        agentsOf(ctx, local: local, t: t, guardCast: .villain(SWVillain.vader),
-                 crew: [.hero(SWHero.luke), .hero(SWHero.leia), .hero(SWHero.chewie), .hero(SWHero.r2d2)],
+        agentsOf(ctx, local: local, t: t, guardCast: .villain(StarClawdsVillain.vader),
+                 crew: [.hero(StarClawdsHero.luke), .hero(StarClawdsHero.leia), .hero(StarClawdsHero.chewie), .hero(StarClawdsHero.r2d2)],
                  line: "Every subagent reports for duty.", badgeText: "STAR CLAWDS")
     },
     Shot(name: "window", start: 39.8, end: 44.6) { ctx, local, t in
@@ -372,8 +372,8 @@ let starClawdsShots: [Shot] = [
         caption("A live card per session: what it's doing, your last prompt, every agent.", ctx, local: local, start: 0.4, y: 890, size: 32, color: yellow, weight: .bold)
     },
     Shot(name: "ais", start: 44.6, end: 49.0) { ctx, local, t in
-        everyAI(ctx, local: local, t: t, cast: [.villain(SWVillain.vader), .villain(SWVillain.kylo), .hero(SWHero.luke), .hero(SWHero.yoda),
-                                                .hero(SWHero.leia), .hero(SWHero.r2d2), .villain(SWVillain.trooper)])
+        everyAI(ctx, local: local, t: t, cast: [.villain(StarClawdsVillain.vader), .villain(StarClawdsVillain.kylo), .hero(StarClawdsHero.luke), .hero(StarClawdsHero.yoda),
+                                                .hero(StarClawdsHero.leia), .hero(StarClawdsHero.r2d2), .villain(StarClawdsVillain.trooper)])
     },
     // The end card: the Millennial Falcon flies through, the crew on the horizon, the title lands.
     Shot(name: "endcard", start: 49.0, end: 53.2) { ctx, local, t in
@@ -389,9 +389,9 @@ let starClawdsShots: [Shot] = [
                 ctx.restoreGState()
             }
         }
-        let crew: [(Cast, FightRole, AI)] = [(.villain(SWVillain.kylo), .cheer, .desktop), (.villain(SWVillain.vader), .duel, .claude),
-                                             (.hero(SWHero.luke), .duel, .codex), (.hero(SWHero.r2d2), .none, .copilot),
-                                             (.hero(SWHero.yoda), .cheer, .qwen), (.hero(SWHero.leia), .none, .gemini)]
+        let crew: [(Cast, FightRole, AI)] = [(.villain(StarClawdsVillain.kylo), .cheer, .desktop), (.villain(StarClawdsVillain.vader), .duel, .claude),
+                                             (.hero(StarClawdsHero.luke), .duel, .codex), (.hero(StarClawdsHero.r2d2), .none, .copilot),
+                                             (.hero(StarClawdsHero.yoda), .cheer, .qwen), (.hero(StarClawdsHero.leia), .none, .gemini)]
         var placed: [Actor] = []
         for (i, (who, role, ai)) in crew.enumerated() {
             var a = Actor(cast: who, x: [28.0, 80, 137, 190, 240, 290][i], facing: i < 2 ? 1 : -1, role: role, ai: ai)

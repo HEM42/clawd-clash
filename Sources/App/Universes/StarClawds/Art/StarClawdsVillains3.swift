@@ -3,7 +3,7 @@ import Foundation
 // Star Wars villains: the third wave, Watto to Reva. Ported from Clawd Wars: the costumes from `Recruits.swift`, the
 // capes, jetpack, sabers and blasters from `drawLeader`.
 
-let starWarsVillains3: [SWVillain: Persona] = [
+let starClawdsVillains3: [StarClawdsVillain: Persona] = [
     .watto: Persona(name: "Whatto", canSit: false, headTop: 11, callout: "No credits, no bolts, no bargain!",
                   draw: drawWatto),
     .moffGideon: Persona(name: "Moff Giddyup", weapon: .saber, headTop: 22,

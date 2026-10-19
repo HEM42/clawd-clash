@@ -2,28 +2,28 @@ import Foundation
 
 // The Star Wars universe (Clawd Wars' cast): 46 villains, 35 heroes and 22 places. Any character can lead a session
 // (drawn large) or be an agent (small). Each is a `Persona` registered in one of the Art/*.swift files next to its
-// drawing code; who lives where, Han and Greedo, and the Falcon are decided here, in `starWarsTheme`.
+// drawing code; who lives where, Han and Greedo, and the Falcon are decided here, in `starClawdsTheme`.
 //
-// Ids are Clawd Wars' own (`Universe.starWars.base` is 0): villains `SWVillain.rawValue`, heroes 100 + `SWHero.rawValue`.
+// Ids are Clawd Wars' own (`Universe.starWars.base` is 0): villains `StarClawdsVillain.rawValue`, heroes 100 + `StarClawdsHero.rawValue`.
 // Only ever append cases, so running sessions keep their characters across an update.
 
-extension SWVillain {
+extension StarClawdsVillain {
     var persona: Persona { starWarsVillainPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-extension SWHero {
+extension StarClawdsHero {
     var persona: Persona { starWarsHeroPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-let starWarsVillainPersonas: [SWVillain: Persona] = starWarsVillains1.merging(starWarsVillains2) { a, _ in a }
-    .merging(starWarsVillains3) { a, _ in a }
-let starWarsHeroPersonas: [SWHero: Persona] = starWarsHeroes1.merging(starWarsHeroes2) { a, _ in a }
-    .merging(starWarsHeroes3) { a, _ in a }.merging([.hem: hemPersona(.starWars)]) { a, _ in a }
+private let starWarsVillainPersonas: [StarClawdsVillain: Persona] = starClawdsVillains1.merging(starClawdsVillains2) { a, _ in a }
+    .merging(starClawdsVillains3) { a, _ in a }
+private let starWarsHeroPersonas: [StarClawdsHero: Persona] = starClawdsHeroes1.merging(starClawdsHeroes2) { a, _ in a }
+    .merging(starClawdsHeroes3) { a, _ in a }.merging([.hem: hemPersona(.starWars)]) { a, _ in a }
 
 // MARK: - Homes
 
 extension Location {
-    static func starWarsHome(of leader: SWVillain) -> Location {
+    static func starWarsHome(of leader: StarClawdsVillain) -> Location {
         switch leader {
         case .vader, .mse6, .deathTrooper, .krennic, .tarkin: return .deathStar
         case .boba: return .sarlaccPit
@@ -45,7 +45,7 @@ extension Location {
         }
     }
 
-    static func starWarsHome(of hero: SWHero) -> Location {
+    static func starWarsHome(of hero: StarClawdsHero) -> Location {
         switch hero {
         case .luke: return .larsFarm
         case .obiwan: return .obiWanHut
@@ -70,29 +70,29 @@ extension Location {
 // MARK: - The theme
 
 extension Cast {
-    static func hero(_ h: SWHero) -> Cast { Cast(universe: .starWars, isDark: false, index: h.rawValue) }
-    static func villain(_ v: SWVillain) -> Cast { Cast(universe: .starWars, isDark: true, index: v.rawValue) }
+    static func hero(_ h: StarClawdsHero) -> Cast { Cast(universe: .starWars, isDark: false, index: h.rawValue) }
+    static func villain(_ v: StarClawdsVillain) -> Cast { Cast(universe: .starWars, isDark: true, index: v.rawValue) }
 }
 
-let starWarsTheme = Theme(
+let starClawdsTheme = Theme(
     universe: .starWars,
-    villains: SWVillain.allCases.map(\.persona),
-    heroes: SWHero.allCases.map(\.persona),
+    villains: StarClawdsVillain.allCases.map(\.persona),
+    heroes: StarClawdsHero.allCases.map(\.persona),
     places: [.cantina, .deathStar, .sarlaccPit, .jabbasPalace, .supremacy, .theed, .emperorThrone, .geonosis, .naboo, .executor, .larsFarm, .obiWanHut, .sandcrawler, .dagobah, .falcon, .tantive, .tuskenDesert, .jakku, .jediCouncil, .endor, .hoth, .rancorPit],
     home: { c in
-        c.isDark ? .starWarsHome(of: SWVillain(rawValue: c.index) ?? .vader) : .starWarsHome(of: SWHero(rawValue: c.index) ?? .luke)
+        c.isDark ? .starWarsHome(of: StarClawdsVillain(rawValue: c.index) ?? .vader) : .starWarsHome(of: StarClawdsHero(rawValue: c.index) ?? .luke)
     },
-    nemeses: [(.hero(SWHero.han), .villain(SWVillain.greedo))],
-    ride: { c in c == .hero(SWHero.han) ? .falcon : nil },
+    nemeses: [(.hero(StarClawdsHero.han), .villain(StarClawdsVillain.greedo))],
+    ride: { c in c == .hero(StarClawdsHero.han) ? .falcon : nil },
     menuIcon: drawVaderHelmetIcon,
-    legend: .villain(SWVillain.vader))
+    legend: .villain(StarClawdsVillain.vader))
 
 /// Vader's helmet for the menu bar, cut from his sprite (28×26 at (14, 13)). In colour it gets a white outline (the
 /// black helmet would vanish on a dark menu bar); monochrome keeps only its dark pixels, so the face under the helmet
 /// is cut out with its eyes left in, and macOS tints what's left to match the menu bar.
-func drawVaderHelmetIcon(_ icon: PixelCanvas, mono: Bool) {
+private func drawVaderHelmetIcon(_ icon: PixelCanvas, mono: Bool) {
     let c = PixelCanvas(Sprite.width, Sprite.height)
-    Cast.villain(SWVillain.vader).draw(c, t: 0, mode: .idle, walking: false, role: .none, asSession: true)
+    Cast.villain(StarClawdsVillain.vader).draw(c, t: 0, mode: .idle, walking: false, role: .none, asSession: true)
     let b = c.buf
     for y in 0..<icon.h {
         for x in 0..<icon.w {

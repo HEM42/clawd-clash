@@ -2,7 +2,7 @@ import Foundation
 
 // Star Wars heroes: Grogu to Kuiil.
 
-let starWarsHeroes3: [SWHero: Persona] = [
+let starClawdsHeroes3: [StarClawdsHero: Persona] = [
     .grogu: Persona(name: "Grogoo", canSit: false, headTop: 23, signature: 3.2,
                   draw: drawGrogu),
     .babuFrik: Persona(name: "Babu Flick", canSit: false, headTop: 16,

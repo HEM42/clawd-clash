@@ -4,7 +4,7 @@ import AppKit
 // tall canvases, and the Mos Eisley cantina with its band and bar crowd.
 
 /// Every Star Wars place.
-let starWarsPlaces: [Location: Place] = [
+let starClawdsPlaces: [Location: Place] = [
     .cantina: Place(name: "Mos Easy Cantina", panel: 0x2B2119, still: { c, g in StarWarsCantina.drawRoom(c, floorRows: c.h - g) },
                     moving: { c, g, t in
                         // Tonight's band: the Modal Nodes or, on some nights, the Max Rebo Band.

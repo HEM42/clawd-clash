@@ -96,7 +96,7 @@ func coverPanels(_ ctx: CGContext, t: Double, fighters: Bool = true, dim: Double
         ctx.drawLinearGradient(sky, start: CGPoint(x: 0, y: H), end: CGPoint(x: 0, y: 0), options: [])
         if fighters {
             let pairs: [(Actor, Actor)] = [
-                (Actor(cast: .hero(SWHero.luke), x: 30, role: .duel), Actor(cast: .villain(SWVillain.vader), x: 87, facing: -1, role: .duel)),
+                (Actor(cast: .hero(StarClawdsHero.luke), x: 30, role: .duel), Actor(cast: .villain(StarClawdsVillain.vader), x: 87, facing: -1, role: .duel)),
                 (Actor(cast: .hero(MarvelHero.captainAmerica), x: 132, role: .block), Actor(cast: .villain(MarvelVillain.thanos), x: 196, facing: -1, role: .zap)),
                 (Actor(cast: .hero(DCHero.batman), x: 236, role: .deflect), Actor(cast: .villain(DCVillain.joker), x: 296, facing: -1, role: .shoot(offset: 0))),
             ]
@@ -218,7 +218,7 @@ func agentsArrive(_ ctx: CGContext, local: Double, t: Double) {
 /// Each universe's face-off on the page, its sound word, and its panel's pop-art colours (base, pattern).
 func pickVerse(_ u: Universe) -> (hero: Cast, villain: Cast, sound: String, pop: (UInt32, UInt32)) {
     switch u {
-    case .starWars: return (.hero(SWHero.luke), .villain(SWVillain.vader), "VWOOM!", (0xFFD62E, 0xFFF08A))
+    case .starWars: return (.hero(StarClawdsHero.luke), .villain(StarClawdsVillain.vader), "VWOOM!", (0xFFD62E, 0xFFF08A))
     case .marvel: return (.hero(MarvelHero.thor), .villain(MarvelVillain.loki), "KRAKOOM!", (0xE8322E, 0xFF7A70))
     case .dc: return (.hero(DCHero.batman), .villain(DCVillain.joker), "BLAM!", (0x2EA8E8, 0x8AD8FF))
     case .doctor: return (.hero(DoctorHero.doctorTen), .villain(DoctorVillain.dalick), "VWORP!", (0x7CC84A, 0xB8EC88))
@@ -456,7 +456,7 @@ var chooseRunners: [Cast] {
 /// Each universe's big moment, from its own trailer, and its sound word.
 func setPiece(_ u: Universe) -> (word: String, draw: (CGContext, Double, Double) -> Void) {
     switch u {
-    case .starWars: return ("VWOOM!", { starClawsShowcase($0, local: 1.6 + $1, t: $2) })
+    case .starWars: return ("VWOOM!", { starClawdsShowcase($0, local: 1.6 + $1, t: $2) })
     case .marvel: return ("KAPOW!", { clawvelShowcase($0, local: 3.2 + $1, t: $2) })
     case .dc: return ("KRAK!", { detectiveShowcase($0, local: 2.2 + $1, t: $2) })
     case .doctor: return ("VWORP!", { doctorInvasion($0, local: 3.3 + $1, t: $2) })
@@ -755,7 +755,7 @@ let promoShots: [Shot] = [
     Shot(name: "royale", start: afterChoose + 21.0, end: afterChoose + 24.0, into: .cut) { ctx, local, t in royaleCollide(ctx, local: local, t: t) },
     Shot(name: "crossover", start: afterChoose + 24.0, end: afterChoose + 28.5, into: .marvel(ComicTrip(kind: .burst, sound: .thwip))) { ctx, local, t in
         let (fox, dalick) = versus(.hero(FilesHero.foxClawder), 30, .villain(DoctorVillain.dalick), 96)
-        let (bat, vapor) = versus(.hero(DCHero.batman), 150, .villain(SWVillain.vader), 207)
+        let (bat, vapor) = versus(.hero(DCHero.batman), 150, .villain(StarClawdsVillain.vader), 207)
         let (gandclawd, thanoz) = versus(.hero(RingsHero.gandalf), 250, .villain(MarvelVillain.thanos), 306)
         let swing = webSwing(local, start: 0.7)
         royaleScene(ctx, .cantina, t: t, fights: [(fox, dalick), (bat, vapor), (gandclawd, thanoz)], also: swing.map { [$0.actor] } ?? [])
@@ -864,7 +864,7 @@ let blooperShots: [Shot] = [
         if l > 5.4 && l < 6.8 { alpha = 0.55 + 0.45 * abs(cos((l - 5.4) / 1.4 * 3 * .pi)); lit = lamp }     // tries to go, and can't
         let door = min(1, clamp((l - 1.9) / 0.25) * (1 - clamp((l - 5.0) / 0.25)) + clamp((l - 7.0) / 0.25))
         standingTardis(ctx, x: 66, ground: groundY, alpha: alpha, door: door, lamp: lit)
-        let vapor = Actor(cast: .villain(SWVillain.vader), x: 240, facing: l > 1.2 ? -1 : 1, mode: .idle)
+        let vapor = Actor(cast: .villain(StarClawdsVillain.vader), x: 240, facing: l > 1.2 ? -1 : 1, mode: .idle)
         draw(vapor, ctx, t: t)
         // the Doctor: out, back in, and out again
         let x = l < 4.6 ? lerp(70, 112, easeOut((l - 2.1) / 0.6)) : l < 7.2 ? lerp(112, 70, easeIn((l - 4.6) / 0.5)) : lerp(70, 104, easeOut((l - 7.2) / 0.5))
@@ -888,7 +888,7 @@ let blooperShots: [Shot] = [
         ctx.setFillColor(inkColor.copy(alpha: on) ?? inkColor); ctx.fillPath(using: .evenOdd)
         let bat = Actor(cast: .hero(DCHero.batman), x: 40, mode: .idle)
         draw(bat, ctx, t: t)
-        let troopers = [Actor(cast: .villain(SWVillain.trooper), x: 150, mode: .idle, role: .none), Actor(cast: .villain(SWVillain.trooper), x: 200, mode: .idle, role: .none)]
+        let troopers = [Actor(cast: .villain(StarClawdsVillain.trooper), x: 150, mode: .idle, role: .none), Actor(cast: .villain(StarClawdsVillain.trooper), x: 200, mode: .idle, role: .none)]
         for tr in troopers { draw(tr, ctx, t: t) }
         let fx = PixelCanvas(fxW, fxH)
         for i in 0..<12 {                                           // wild shots, all wide of the mark
@@ -926,7 +926,7 @@ let blooperShots: [Shot] = [
     // Take 21: Yodle lifts Thorr's hammer. Thorr stares.
     Shot(name: "take21", start: 21.8, end: 28.0, into: .cut) { ctx, l, t in
         set(ctx, .asgard, t: t)
-        let yodle = Actor(cast: .hero(SWHero.yoda), x: 90, mode: .idle)
+        let yodle = Actor(cast: .hero(StarClawdsHero.yoda), x: 90, mode: .idle)
         let thorr = Actor(cast: .hero(MarvelHero.thor), x: 220, facing: -1, mode: .idle)
         draw(yodle, ctx, t: t); draw(thorr, ctx, t: t)
         let rise = easeOut((l - 0.5) / 1.4)
@@ -975,9 +975,9 @@ let blooperShots: [Shot] = [
     Shot(name: "wrap", start: 33.0, end: 41.9, into: .cut) { ctx, l, t in
         set(ctx, .avengersTower, t: t)
         let wave = l > 5.6
-        let back: [(Cast, Double)] = [(.villain(SWVillain.vader), 22), (.hero(SWHero.luke), 58), (.villain(MarvelVillain.thanos), 100),
+        let back: [(Cast, Double)] = [(.villain(StarClawdsVillain.vader), 22), (.hero(StarClawdsHero.luke), 58), (.villain(MarvelVillain.thanos), 100),
                                       (.hero(MarvelHero.thor), 146), (.villain(DoctorVillain.dalick), 190), (.villain(DCVillain.joker), 232),
-                                      (.hero(SWHero.han), 270), (.hero(DoctorHero.rose), 306)]
+                                      (.hero(StarClawdsHero.han), 270), (.hero(DoctorHero.rose), 306)]
         for (i, (who, x)) in back.enumerated() {
             var a = Actor(cast: who, x: x, facing: i % 2 == 0 ? 1 : -1, mode: .idle, role: wave ? .cheer : .none)
             a.grow = 0.85; a.lift = 18
@@ -1197,7 +1197,7 @@ let royaleShots: [Shot] = [
     // out, Spider-Clawd swings over everyone.
     Shot(name: "crossover", start: 6.5, end: 11.0, into: .marvel(ComicTrip(kind: .burst, sound: .thwip))) { ctx, local, t in
         let (fox, dalick) = versus(.hero(FilesHero.foxClawder), 34, .villain(DoctorVillain.dalick), 104)
-        let (gand, vapor) = versus(.hero(RingsHero.gandalf), 196, .villain(SWVillain.vader), 253)
+        let (gand, vapor) = versus(.hero(RingsHero.gandalf), 196, .villain(StarClawdsVillain.vader), 253)
         let swing = webSwing(local, start: 0.9)
         royaleScene(ctx, .cantina, t: t, fights: [(fox, dalick), (gand, vapor)], also: swing.map { [$0.actor] } ?? [])
         if let s = swing {                                          // his web line, from the raised hand up out of the frame
@@ -1212,7 +1212,7 @@ let royaleShots: [Shot] = [
         let land = clamp((local - 0.4) / 0.5), since = local - 0.9
         if since > 0 && since < 0.3 { let sh = (0.3 - since) * 40; ctx.translateBy(x: sin(t * 90) * sh, y: cos(t * 80) * sh) }   // the landing
         let (fox, dalick) = versus(.hero(FilesHero.foxClawder), 26, .villain(DoctorVillain.dalick), 92)
-        let (gand, vapor) = versus(.hero(RingsHero.gandalf), 150, .villain(SWVillain.vader), 207)
+        let (gand, vapor) = versus(.hero(RingsHero.gandalf), 150, .villain(StarClawdsVillain.vader), 207)
         var (spidey, thanoz) = versus(.hero(MarvelHero.spiderMan), 246, .villain(MarvelVillain.thanos), 304)
         thanoz.lift = 150 * (1 - easeIn(land))
         if land < 1 { spidey.role = .none; thanoz.role = .none }
@@ -1223,8 +1223,8 @@ let royaleShots: [Shot] = [
     // on Thanoz.
     Shot(name: "hopDC", start: 13.5, end: 16.0,
          into: .dc(DCComicTrip(kind: .batSignal, caption: "MEANWHILE, IN \(Location.gotham.name.uppercased())…"))) { ctx, local, t in
-        let (han, dalick) = versus(.hero(SWHero.han), 26, .villain(DoctorVillain.dalick), 92)
-        let (bat, vapor) = versus(.hero(DCHero.batman), 150, .villain(SWVillain.vader), 207)
+        let (han, dalick) = versus(.hero(StarClawdsHero.han), 26, .villain(DoctorVillain.dalick), 92)
+        let (bat, vapor) = versus(.hero(DCHero.batman), 150, .villain(StarClawdsVillain.vader), 207)
         let (indy, thanoz) = versus(.hero(ClawdbergHero.indianaBones), 246, .villain(MarvelVillain.thanos), 304)
         royaleScene(ctx, .gotham, t: t, fights: [(han, dalick), (bat, vapor), (indy, thanoz)])
     },
@@ -1232,7 +1232,7 @@ let royaleShots: [Shot] = [
     Shot(name: "endcard", start: 16.0, end: 20.5) { ctx, local, t in
         coverPanels(ctx, t: t, fighters: false, dim: 0.45)
         let crew: [(Cast, FightRole, AI)] = [(.hero(ClawdbergHero.indianaBones), .cheer, .desktop), (.hero(RingsHero.gandalf), .cheer, .qwen),
-                                             (.hero(DCHero.batman), .duel, .claude), (.villain(SWVillain.vader), .duel, .codex),
+                                             (.hero(DCHero.batman), .duel, .claude), (.villain(StarClawdsVillain.vader), .duel, .codex),
                                              (.villain(DoctorVillain.dalick), .cheer, .copilot), (.villain(MarvelVillain.thanos), .cheer, .gemini)]
         var placed: [Actor] = []
         for (i, (who, role, ai)) in crew.enumerated() {

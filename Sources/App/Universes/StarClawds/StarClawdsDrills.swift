@@ -4,12 +4,12 @@ import Foundation
 
 let starClawdsBespokeDrills: [Cast: BespokeDrill] = [
         // Yodle: a little cairn of stones lifted off the ground with the Force, turning slowly.
-        .hero(SWHero.yoda): { c, who, d, t in
+        .hero(StarClawdsHero.yoda): { c, who, d, t in
             standing(c, who, t: t)
             drawLiftedStones(c, d: d, t: t)
         },
         // Darth Vapor: an Imperial crate held up in the air, shaking with the strain.
-        .villain(SWVillain.vader): { c, who, d, t in
+        .villain(StarClawdsVillain.vader): { c, who, d, t in
             standing(c, who, t: t)
             let lift = 11 * setRamp(d, rise: 1.2)
             let shake = lift > 8 ? (noise(Int(t * 24)) > 0.5 ? 1 : 0) : 0
@@ -20,7 +20,7 @@ let starClawdsBespokeDrills: [Cast: BespokeDrill] = [
             if lift < 3 { c.rect(x - 1, 44, 11, 1, C(0x8A7E6E, 0.6)) }
         },
         // Ahh2-De2: playing a hologram message, a little flickering blue figure in a beam of light.
-        .hero(SWHero.r2d2): { c, who, d, t in
+        .hero(StarClawdsHero.r2d2): { c, who, d, t in
             standing(c, who, t: t)
             let r = setRamp(d, rise: 0.5)
             guard r > 0.5, noise(Int(t * 16)) > 0.1 else { return }

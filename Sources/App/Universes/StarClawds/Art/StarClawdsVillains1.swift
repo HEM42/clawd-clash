@@ -2,7 +2,7 @@ import Foundation
 
 // Star Wars villains: the originals.
 
-let starWarsVillains1: [SWVillain: Persona] = [
+let starClawdsVillains1: [StarClawdsVillain: Persona] = [
     .vader: Persona(name: "Darth Vapor", weapon: .saber, headTop: 14, signature: 2.6,
                   draw: drawVader),
     .kylo: Persona(name: "Kylo Rant", weapon: .saber, headTop: 15, signature: 1.8,

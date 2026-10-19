@@ -3,7 +3,7 @@ import Foundation
 // Star Wars villains: the second wave, Sebulba to Bib Fortuna. Ported from Clawd Wars' `Recruits.swift` costumes and
 // the weapon and quirk code that lived in its `drawLeader`.
 
-let starWarsVillains2: [SWVillain: Persona] = [
+let starClawdsVillains2: [StarClawdsVillain: Persona] = [
     .sebulba: Persona(name: "Sebulbous", weapon: .blaster, shot: .fire, armoured: true, canSit: false, muzzle: (70, 31), handGun: false,
                   headTop: 19, draw: drawSebulba),
     .salacious: Persona(name: "Salacious Crumble", canSit: false, headTop: 16,
