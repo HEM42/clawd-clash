@@ -66,7 +66,8 @@ let hawkinsTheme = Theme(
     heroes: HawkinsHero.allCases.map(\.persona),
     // Every place, in menu order. The first is the default: where the crew stands when nobody's home is known. A full
     // universe has about 20.
-    places: [.hawkinsBasement],
+    places: [.hawkinsBasement, .hawkinsByers, .hawkinsLab, .hawkinsUpsideDown, .hawkinsStarcourt, .hawkinsCabin,
+             .hawkinsCreel, .hawkinsMind],
     home: { c in
         c.isDark ? .hawkinsHome(of: HawkinsVillain(rawValue: c.index) ?? .vecna)
                  : .hawkinsHome(of: HawkinsHero(rawValue: c.index) ?? .mikeWheeler)
@@ -99,5 +100,5 @@ extension Location {
 
 /// Every place's drawing, from the Places/HawkinsScenes*.swift files (a few places a file). Add each new file to the
 /// list.
-let hawkinsPlaces: [Location: Place] = [hawkinsScenes1]
+let hawkinsPlaces: [Location: Place] = [hawkinsScenes1, hawkinsScenes2, hawkinsScenes3, hawkinsScenes4]
     .reduce([:]) { $0.merging($1) { a, _ in a } }
