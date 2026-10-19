@@ -532,23 +532,26 @@ extension Scenes {
 // MARK: - Time Variance Authority
 
 extension Scenes {
-    /// The big clock: centre and radius.
+    /// The big clock: centre and radius. On the screen saver it is a fixed size, its top level with the windows'.
     static func tvaClock(_ c: PixelCanvas, _ g: Int) -> (x: Int, y: Int, r: Int) {
         let s = unit(g)
-        let r = isTall(c) ? Int(Double(g) * 0.16) : max(10, Int(Double(g) * 0.23))
-        return (c.w / 2, isTall(c) ? Int(Double(g) * 0.3) : 6 * s + r, r)
+        guard isTall(c) else { let r = max(10, Int(Double(g) * 0.23)); return (c.w / 2, 6 * s + r, r) }
+        let r = 44 * s
+        return (c.w / 2, tvaWindows(c, g).y0 + 4 * s + r, r)
     }
 
-    /// The windows onto the end-of-time city, as column ranges, and their top and bottom rows.
+    /// The windows onto the end-of-time city, as column ranges, and their top and bottom rows. On the screen saver
+    /// they are a fixed size, their sills on the line just above the desks, whatever the screen's height.
     static func tvaWindows(_ c: PixelCanvas, _ g: Int) -> (cols: [(Int, Int)], y0: Int, y1: Int) {
-        let s = unit(g), cl = tvaClock(c, g), ww = isTall(c) ? Int(Double(g) * 0.26) : 46 * s, gap = 34 * s
+        let s = unit(g), tall = isTall(c), ww = tall ? 62 * s : 46 * s, gap = 34 * s
+        let half = tall ? 44 * s : max(10, Int(Double(g) * 0.23))       // the clock's radius, kept clear
         var cols: [(Int, Int)] = []
-        var x = cl.x + cl.r + 22 * s
+        var x = c.w / 2 + half + 22 * s
         while x < c.w { cols.append((x, x + ww)); x += ww + gap }
-        x = cl.x - cl.r - 22 * s
+        x = c.w / 2 - half - 22 * s
         while x > 0 { cols.append((x - ww, x)); x -= ww + gap }
-        let y0 = isTall(c) ? g / 9 : 7 * s
-        return (cols, y0, isTall(c) ? g - Int(Double(g) * 0.24) : g - 22 * s)
+        let y1 = tall ? g - 26 * s : g - 22 * s
+        return (cols, tall ? max(7 * s, y1 - 190 * s) : 7 * s, y1)
     }
 
     /// The pneumatic tube's row and the drop-tubes' columns.
@@ -612,12 +615,75 @@ extension Scenes {
         let wain = g - 14 * s
         c.rect(0, wain, c.w, g - wain, panel)
         c.rect(0, wain, c.w, s, C(0xE08A3A)); c.rect(0, wain + 2 * s, c.w, s, C(0xC8602A)); c.rect(0, wain + 4 * s, c.w, s, C(0x8A3E1E))
+        if tall { tvaHigh(c, g) }
         tvaTubes(c, g)
         tvaClockDraw(c, g)
         tvaFurniture(c, g)
         c.ground(g, C(0x6A4428), edge: C(0xD8843A), speck: C(0x5A3820), seed: 81)
         for x in stride(from: 0, to: c.w, by: 16 * s) { c.rect(x, g + s, s, c.h - g - s, C(0x52341E)) }
         c.rect(0, g + (c.h - g) / 2, c.w, s, C(0x52341E))
+    }
+
+    /// The wall above the windows on the screen saver: 70s slatted panelling, orange dome lamps hanging from the
+    /// ceiling, a cornice over the windows, the Sacred Timeline painted along the wall with its pruned branches, and a
+    /// row of little office clocks, each a few minutes off the next.
+    static func tvaHigh(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), win = tvaWindows(c, g), top = 3 * s + g / 40, cornice = win.y0 - 12 * s
+        guard cornice - top > 20 * s else { return }
+        for x in stride(from: 0, to: c.w, by: 8 * s) {                      // slats
+            c.rect(x, top, max(1, s), cornice - top, C(0x4A2E1C, 0.7))
+            c.rect(x + s, top, max(1, s), cornice - top, C(0x6A4630, 0.35))
+        }
+        c.rect(0, cornice, c.w, 3 * s, C(0x3A2414)); c.rect(0, cornice, c.w, s, C(0xC8803A))
+        c.rect(0, cornice + 3 * s, c.w, s, C(0x2E1C10, 0.6))
+        // dome lamps on cords, over the gaps between the windows
+        let lampY = top + 16 * s
+        for col in win.cols {
+            let x = col.0 - 17 * s
+            guard x > 6 * s, x < c.w - 6 * s, abs(x - c.w / 2) > 60 * s else { continue }
+            c.rect(x, top, max(1, s / 2), lampY - top, C(0x1E1208))
+            c.ellipse(x, lampY + 3 * s, 7 * s, 4 * s, C(0xE07A2A)); c.rect(x - 7 * s, lampY + 3 * s, 14 * s + 1, 4 * s, C(0x5A3A24))
+            c.ellipse(x - 2 * s, lampY + 2 * s, 2 * s, s, C(0xF6B060))
+            c.rect(x - 4 * s, lampY + 6 * s, 8 * s, s, C(0xFFE0A0))
+            c.ellipse(x, lampY + 10 * s, 9 * s, 4 * s, C(0xFFD080, 0.08))
+        }
+        // the Sacred Timeline, a glowing line along a long painted band, with branches splitting off and pruned
+        let room = cornice - (lampY + 10 * s)
+        guard room > 44 * s else { return }
+        let clocks = room > 80 * s, by = lampY + 10 * s + (clocks ? (room - 26 * s) / 2 - 14 * s : room / 2 - 14 * s)
+        c.rect(0, by, c.w, 28 * s, C(0x3A2414)); c.rect(0, by, c.w, s, C(0x8A5A30)); c.rect(0, by + 27 * s, c.w, s, C(0x8A5A30))
+        let my = by + 14 * s
+        for x in stride(from: 0, to: c.w, by: max(1, s)) {
+            let y = my + Int(sin(Double(x) / Double(40 * s)) * 2.0) * s
+            c.rect(x, y - s, s, 3 * s, C(0xF6A040, 0.3)); c.rect(x, y, s, s, C(0xFFE08A))
+        }
+        for (i, x0) in stride(from: 30 * s, to: c.w - 40 * s, by: 70 * s).enumerated() {
+            let up = i % 2 == 0 ? -1 : 1, len = (16 + Int(noise(i + 1500) * 14)) * s
+            let y0 = my + Int(sin(Double(x0) / Double(40 * s)) * 2.0) * s
+            for k in stride(from: 0, to: len, by: max(1, s)) {
+                c.rect(x0 + k, y0 + up * Int(Double(k) * 0.35 / Double(s)) * s, s, s, C(0xF6C060, 0.8))
+            }
+            let ex = x0 + len, ey = y0 + up * Int(Double(len) * 0.35 / Double(s)) * s
+            c.rect(ex - s, ey - s, s, s, C(0xE0402A)); c.rect(ex + s, ey + s, s, s, C(0xE0402A))   // pruned: a red cross
+            c.rect(ex + s, ey - s, s, s, C(0xE0402A)); c.rect(ex - s, ey + s, s, s, C(0xE0402A)); c.rect(ex, ey, s, s, C(0xE0402A))
+        }
+        guard clocks else { return }
+        // the little office clocks over the windows, never quite agreeing
+        let cy = cornice - 12 * s
+        for (i, col) in win.cols.enumerated() {
+            let x = (col.0 + col.1) / 2, r = 7 * s
+            c.circle(x, cy, r + s, C(0xC8602A)); c.circle(x, cy, r, C(0xF6E2B4))
+            for h in 0..<4 {
+                let a = Double(h) * .pi / 2
+                c.rect(x + Int(sin(a) * Double(r - 2 * s)), cy - Int(cos(a) * Double(r - 2 * s)), max(1, s), max(1, s), C(0x5A3420))
+            }
+            let ah = noise(i + 1510) * 2 * .pi, am = noise(i + 1511) * 2 * .pi
+            c.glowLine(Double(x), Double(cy), Double(x) + sin(ah) * Double(r) * 0.45, Double(cy) - cos(ah) * Double(r) * 0.45,
+                       core: C(0x3A2010), glow: C(0x3A2010, 0), coreR: Double(s) * 0.6, glowR: Double(s) * 0.7)
+            c.glowLine(Double(x), Double(cy), Double(x) + sin(am) * Double(r) * 0.75, Double(cy) - cos(am) * Double(r) * 0.75,
+                       core: C(0x3A2010), glow: C(0x3A2010, 0), coreR: Double(s) * 0.45, glowR: Double(s) * 0.55)
+            c.rect(x - s / 2, cy + r + s, max(1, s), cornice - cy - r - s, C(0x2E1C10, 0.6))
+        }
     }
 
     /// One Time-Keeper statue far off in the city: a towering robed figure on a plinth, its hands folded, bronze
@@ -662,8 +728,9 @@ extension Scenes {
     /// The big Miss Seconds clock on its orange roundel, and the TVA sign under it.
     static func tvaClockDraw(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), k = tvaClock(c, g), r = k.r
-        c.rect(k.x - r - 10 * s, 3 * s, (r + 10 * s) * 2, g - 17 * s, C(0x4A2E1C))
-        c.rect(k.x - r - 10 * s, 3 * s, s, g - 17 * s, C(0x2E1C10)); c.rect(k.x + r + 10 * s - s, 3 * s, s, g - 17 * s, C(0x2E1C10))
+        let ct = isTall(c) ? tvaWindows(c, g).y0 - 8 * s : 3 * s     // full screen, the panelling runs on over it
+        c.rect(k.x - r - 10 * s, ct, (r + 10 * s) * 2, g - 14 * s - ct, C(0x4A2E1C))
+        c.rect(k.x - r - 10 * s, ct, s, g - 14 * s - ct, C(0x2E1C10)); c.rect(k.x + r + 10 * s - s, ct, s, g - 14 * s - ct, C(0x2E1C10))
         c.circle(k.x, k.y, r + 4 * s, C(0xC8602A))
         c.circle(k.x, k.y, r + 2 * s, C(0xF08A30))
         c.circle(k.x, k.y, r, C(0xF6E2B4))
@@ -781,10 +848,19 @@ extension Scenes {
 // MARK: - Krakoa
 
 extension Scenes {
-    /// The island's face-rock: centre, half-width and height.
+    /// The island's face-rock: centre, half-width and height (a fixed size on the screen saver, so a full screen
+    /// doesn't blow it up into a mountain).
     static func krakoaRock(_ c: PixelCanvas, _ g: Int) -> (x: Int, hw: Int, h: Int) {
-        let h = Int(Double(g) * (isTall(c) ? 0.62 : 0.84))
-        return (Int(Double(c.w) * 0.56), min(Int(Double(h) * 1.3), c.w / 4), h)
+        let h = isTall(c) ? 180 * unit(g) : Int(Double(g) * 0.84)
+        return (Int(Double(c.w) * 0.56), min(isTall(c) ? h * 2 / 3 : Int(Double(h) * 1.3), c.w / 4), h)
+    }
+
+    /// The sea's horizon, the jungle's edge and the row the face-rock stands on. On the screen saver they sit a fixed
+    /// distance above the floor, so a full screen adds sky instead of stretching the island.
+    static func krakoaRows(_ c: PixelCanvas, _ g: Int) -> (horizon: Int, jungle: Int, rock: Int) {
+        let s = unit(g)
+        guard isTall(c) else { return (g - Int(Double(g) * 0.42), g - Int(Double(g) * 0.24), g - Int(Double(g) * 0.12)) }
+        return (g - 88 * s, g - 40 * s, g - 35 * s)
     }
 
     /// The great flowers by the floor: centre, stem top and size.
@@ -792,15 +868,15 @@ extension Scenes {
         let s = unit(g)
         var out: [(x: Int, y: Int, r: Int)] = []
         for (i, x) in stride(from: 18 * s, to: c.w, by: 58 * s).enumerated() {
-            let r = (3 + Int(noise(i * 3 + 901) * 3)) * s * (isTall(c) ? 2 : 1)
-            out.append((x + Int(noise(i * 3 + 902) * 16.0) * s, g - (12 + Int(noise(i * 3 + 903) * 8)) * s * (isTall(c) ? 2 : 1), r))
+            let r = (3 + Int(noise(i * 3 + 901) * 3)) * s
+            out.append((x + Int(noise(i * 3 + 902) * 16.0) * s, g - (12 + Int(noise(i * 3 + 903) * 8)) * s, r))
         }
         return out
     }
 
-    /// The Krakoan gate: centre and size.
+    /// The Krakoan gate: centre and size. It is a door, so it has one size on every canvas and stands on the floor.
     static func krakoaGate(_ c: PixelCanvas, _ g: Int) -> (x: Int, y: Int, r: Int) {
-        let s = unit(g), r = isTall(c) ? Int(Double(g) * 0.08) : 9 * s
+        let s = unit(g), r = 11 * s
         return (Int(Double(c.w) * 0.15), g - r - 2 * s, r)
     }
 
@@ -809,11 +885,22 @@ extension Scenes {
     /// a Krakoan gate and huge blossoms nodding over a mossy floor.
     static func krakoa(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), tall = isTall(c)
-        let horizon = g - Int(Double(g) * (tall ? 0.3 : 0.42))
+        let horizon = krakoaRows(c, g).horizon
         c.gradient(0, horizon, C(0x3A7AC8), C(0xC8E8E0), bands: 7)
         for i in 0..<(tall ? 6 : 3) {
             cloud(c, Int(noise(i * 5 + 920) * Double(c.w)), Int(Double(horizon) * (0.15 + noise(i * 5 + 921) * 0.5)),
                   (3 + Int(noise(i * 5 + 922) * 4)) * s, seed: i + 90)
+        }
+        if tall {                                               // a big sky gets more: high fair-weather clouds, gulls
+            for i in 0..<(c.w * horizon / (90 * 90 * s * s)) {
+                let y = Int(Double(horizon) * (0.05 + noise(i * 5 + 1100) * 0.75))
+                cloud(c, Int(noise(i * 5 + 1101) * Double(c.w)), y, (2 + Int(noise(i * 5 + 1102) * 5)) * s, seed: i + 300)
+            }
+            for i in 0..<(c.w / (70 * s)) {
+                let x = Int(noise(i * 3 + 1110) * Double(c.w)), y = Int(Double(horizon) * (0.2 + noise(i * 3 + 1111) * 0.65))
+                let w = (2 + Int(noise(i * 3 + 1112) * 2)) * s
+                for k in 0..<w { let d = (w - k) / max(1, s) / 2; c.rect(x - k, y - d, max(1, s), max(1, s), C(0x2A3A4A, 0.8)); c.rect(x + k, y - d, max(1, s), max(1, s), C(0x2A3A4A, 0.8)) }
+            }
         }
         // the sea, with far islets and glints
         c.gradient(horizon, g, C(0x2A8AB0), C(0x46C0C0), bands: 4)
@@ -825,7 +912,7 @@ extension Scenes {
         scenes6Ridge(c, x0: Int(Double(c.w) * 0.86), x1: Int(Double(c.w) * 0.97), base: horizon + s, h: 4 * s, C(0x4A7A6A), top: C(0x6A9A7A), seed: 7)
         krakoaRockDraw(c, g)
         // the jungle: a band of canopy across the island, rising in front of the rock's foot
-        let jb = g - Int(Double(g) * (tall ? 0.14 : 0.24))
+        let jb = krakoaRows(c, g).jungle
         for x in stride(from: -4 * s, to: c.w + 4 * s, by: 4 * s) {
             let near = abs(x - krakoaRock(c, g).x) < krakoaRock(c, g).hw
             let h = (near ? 10 : 6) * s + Int(noise(x * 7 + 940) * 6) * s
@@ -860,7 +947,7 @@ extension Scenes {
 
     /// The face-rock: a mossy dome with a heavy brow, two deep eye-caves and a long mouth.
     static func krakoaRockDraw(_ c: PixelCanvas, _ g: Int) {
-        let s = unit(g), r = krakoaRock(c, g), base = g - Int(Double(g) * 0.12)
+        let s = unit(g), r = krakoaRock(c, g), base = krakoaRows(c, g).rock
         for x in (r.x - r.hw)..<(r.x + r.hw) {
             let u = Double(x - r.x) / Double(r.hw)
             let prof = pow(max(0, 1 - u * u), 0.6) + (noise(x / 3 + 970) - 0.5) * 0.06
@@ -904,18 +991,18 @@ extension Scenes {
 
     /// The habitat pods: peach-and-pink bulbs grown among the trees, with round windows.
     static func krakoaPods(_ c: PixelCanvas, _ g: Int, jb: Int) {
-        let s = unit(g), rock = krakoaRock(c, g), q = isTall(c) ? 2 : 1
+        let s = unit(g), rock = krakoaRock(c, g)
         for (i, x) in stride(from: 40 * s, to: c.w, by: 90 * s).enumerated() {
             let px = x + Int(noise(i + 980) * 30.0) * s
-            guard abs(px - rock.x) > rock.hw / 2, abs(px - krakoaGate(c, g).x) > krakoaGate(c, g).r * 3 else { continue }
-            let rx = (8 + Int(noise(i + 981) * 6)) * s * q, ry = rx * 3 / 4
+            guard abs(px - rock.x) > rock.hw / 2, abs(px - krakoaGate(c, g).x) > krakoaGate(c, g).r * 3 + 12 * s else { continue }
+            let rx = (8 + Int(noise(i + 981) * 6)) * s, ry = rx * 3 / 4
             c.ellipse(px, jb, rx, ry, C(0xE8A890))
             c.ellipse(px - rx / 4, jb - ry / 4, rx * 2 / 3, ry * 2 / 3, C(0xF6C8A8))
             c.ellipse(px + rx / 2, jb - ry - s, rx / 3, ry / 3, C(0xE8A890))
             let dw = max(1, rx / 5), dh = ry / 2
             c.ellipse(px + rx / 4, jb - dh, dw, dw, C(0x6A3A4A))                              // an arched doorway
             c.rect(px + rx / 4 - dw, jb - dh, dw * 2 + 1, dh, C(0x6A3A4A))
-            c.circle(px - rx / 3, jb - ry / 2, max(1, s * q), C(0x8A4A5A)); c.px(px - rx / 3, jb - ry / 2, C(0xFFE08A))
+            c.circle(px - rx / 3, jb - ry / 2, max(1, s), C(0x8A4A5A)); c.px(px - rx / 3, jb - ry / 2, C(0xFFE08A))
             c.ellipse(px, jb - ry, max(1, rx / 4), max(1, s), C(0xFFE6D0))
         }
     }
@@ -946,16 +1033,16 @@ extension Scenes {
         c.ellipse(gt.x, gt.y, gt.r - 2 * s, gt.r, C(0xE8FF9A, 0.15 + p * 0.3))
         c.ellipse(gt.x, gt.y, gt.r / 2, gt.r * 2 / 3, C(0xFFFFE0, 0.1 + p * 0.25))
         // the rock's eyes glow faintly now and then
-        let r = krakoaRock(c, g), base = g - Int(Double(g) * 0.12), fy = base - r.h * 6 / 10
+        let r = krakoaRock(c, g), base = krakoaRows(c, g).rock, fy = base - r.h * 6 / 10
         let e = max(0, sin(t * 0.7))
         for side in [-1, 1] {
             let ew = max(3, r.hw / 6)
             c.rect(r.x + side * r.hw / 4 - ew / 2, fy - s / 2, ew, max(1, s), C(0xC8FF6A, e * 0.5))
             c.rect(r.x + side * r.hw / 4 - ew / 4, fy - s / 2, ew / 2, max(1, s), C(0xF0FFB0, e * 0.6))
         }
-        let horizon = g - Int(Double(g) * (isTall(c) ? 0.3 : 0.42))
+        let horizon = krakoaRows(c, g).horizon
         for k in 0..<max(4, c.w / 60) where sin(t * 3 + Double(k) * 2.1) > 0.6 {
-            let x = Int(noise(k * 5 + 990) * Double(c.w)), y = horizon + 1 + Int(noise(k * 5 + 991) * Double(max(1, g / 6)))
+            let x = Int(noise(k * 5 + 990) * Double(c.w)), y = horizon + 1 + Int(noise(k * 5 + 991) * Double(max(1, min(g / 6, krakoaRows(c, g).jungle - horizon - 12 * s))))
             c.rect(x, y, 2 * s, max(1, s), C(0xFFFFFF, 0.8))
         }
     }
@@ -964,10 +1051,11 @@ extension Scenes {
 // MARK: - Morlock Tunnels
 
 extension Scenes {
-    /// The arched openings in the back wall: centre, half-width and the crown's row.
+    /// The arched openings in the back wall: centre, half-width and the crown's row. They are passages, so on the
+    /// screen saver they keep one size and stand on the floor however tall the screen is.
     static func morlockArches(_ c: PixelCanvas, _ g: Int) -> [(x: Int, hw: Int, top: Int)] {
-        let s = unit(g), hw = isTall(c) ? Int(Double(g) * 0.16) : 18 * s
-        let top = isTall(c) ? Int(Double(g) * 0.42) : 14 * s, step = hw * 2 + 110 * s
+        let s = unit(g), hw = isTall(c) ? 34 * s : 18 * s
+        let top = isTall(c) ? g - 124 * s : 14 * s, step = hw * 2 + 110 * s
         return stride(from: hw + 30 * s, to: c.w + hw, by: step).map { ($0, hw, top) }
     }
 
@@ -1010,6 +1098,7 @@ extension Scenes {
             c.rect(0, 0, c.w, g / 14, C(0x0E0A08))
         }
         for (i, a) in morlockArches(c, g).enumerated() { morlockArch(c, g, a, subway: i == 1 || (i == 0 && morlockArches(c, g).count == 1)) }
+        if tall { morlockTiles(c, g) }
         morlockGraffiti(c, g)
         morlockPipesDraw(c, g)
         if tall { morlockHigh(c, g) }
@@ -1038,7 +1127,7 @@ extension Scenes {
         c.ellipse(a.x, a.top + a.hw + a.hw / 3, a.hw * 2 / 3, a.hw * 2 / 3, C(0x070605))
         c.rect(a.x - a.hw * 2 / 3, a.top + a.hw + a.hw / 3, a.hw * 4 / 3, bottom - a.top - a.hw - a.hw / 3, C(0x070605))
         if subway {                                            // a subway car glimpsed down the tracks
-            let q = max(1, a.hw / (18 * s)) * s, ch = 8 * q
+            let q = isTall(c) ? 2 * s : max(1, a.hw / (18 * s)) * s, ch = 8 * q
             let cy = bottom - ch - 2 * s - max(0, (bottom - a.top) / 8), cw = a.hw * 2 - 4 * s
             c.rect(a.x - cw / 2, cy, cw, ch, C(0x5A6068))
             c.rect(a.x - cw / 2, cy, cw, q, C(0x8A9098))
@@ -1047,6 +1136,49 @@ extension Scenes {
             if q > s { c.rect(a.x - cw / 2 + 3 * q, cy - 2 * q, 6 * q, 2 * q, C(0x3A3E44)) }
             c.rect(a.x - cw / 2, bottom - 2 * s, cw, s, C(0x6A6A6A))
             c.ellipse(a.x, cy + 3 * s, cw / 2 + 4 * s, 6 * s, C(0xFFE08A, 0.06))
+        }
+    }
+
+    /// Full screen, what's left of the old station on the wall over the arches: a band of cream tiles with a mosaic
+    /// border and framed mosaic panels between the arches, cracked and stained, tiles fallen out here and there,
+    /// and rust streaks running down from the pipes.
+    static func morlockTiles(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), arches = morlockArches(c, g), p = morlockPipes(c, g)
+        guard let a0 = arches.first else { return }
+        let by = a0.top - 40 * s, bh = 22 * s
+        guard by > p.y + 20 * s else { return }
+        c.rect(0, by, c.w, bh, C(0xB8AC8A))
+        for y in stride(from: by, to: by + bh, by: 3 * s) { c.rect(0, y, c.w, max(1, s / 2), C(0x8A7E62, 0.6)) }
+        for x in stride(from: 0, to: c.w, by: 4 * s) { c.rect(x, by, max(1, s / 2), bh, C(0x8A7E62, 0.5)) }
+        for (y, col) in [(by, C(0x6A3A2A)), (by + bh - 2 * s, C(0x6A3A2A))] {       // the mosaic border, a key pattern
+            c.rect(0, y, c.w, 2 * s, col)
+            for x in stride(from: 0, to: c.w, by: 6 * s) { c.rect(x, y + (y == by ? 2 * s : -s), 3 * s, s, C(0x2A5A5A)) }
+        }
+        // a framed mosaic panel midway between each pair of arches, a green-and-ochre diamond on cream
+        for (i, a) in arches.enumerated() {
+            let px = a.x + a.hw + 55 * s, py = by + 3 * s, pw = 30 * s, ph = bh - 6 * s
+            guard px + pw / 2 < c.w else { continue }
+            c.rect(px - pw / 2 - s, py - s, pw + 2 * s, ph + 2 * s, C(0x5A2A1E))
+            c.rect(px - pw / 2, py, pw, ph, C(0xD8CCA8))
+            for k in s..<(ph - s) {
+                let w = (ph / 2 - abs(k - ph / 2)) * (pw - 6 * s) / ph
+                if w > 0 { c.rect(px - w, py + k, w * 2, 1, i % 2 == 0 ? C(0x3A7A5A) : C(0xC88A3A)) }
+            }
+            c.rect(px - s, py + ph / 2 - s, 2 * s, 2 * s, C(0x6A3A2A))
+        }
+        // fallen tiles and cracks
+        for k in 0..<(c.w / (18 * s)) where noise(k + 1040) > 0.6 {
+            let x = Int(noise(k + 1041) * Double(c.w)), y = by + 3 * s + Int(noise(k + 1042) * Double(bh - 8 * s))
+            c.rect(x, y, (2 + Int(noise(k + 1043) * 3)) * s, 2 * s, C(0x4A3024))
+        }
+        for k in 0..<(c.w / (40 * s)) {
+            var x = Int(noise(k + 1050) * Double(c.w))
+            for y in stride(from: by, to: by + bh, by: max(1, s)) { x += Int((noise(y + k * 31) - 0.5) * 2.5) * max(1, s / 2); c.rect(x, y, max(1, s / 2), max(1, s), C(0x3A2A20)) }
+        }
+        // rust and water streaks down from the pipe joints
+        for (i, x) in p.drips.enumerated() where i % 2 == 0 {
+            let len = Int(Double(by - p.y) * (0.4 + noise(i + 1060) * 0.5))
+            c.rect(x - s, p.y + 8 * s, 3 * s, len, C(0x5A3A22, 0.35)); c.rect(x, p.y + 8 * s, s, len + 6 * s, C(0x2A3A3A, 0.3))
         }
     }
 

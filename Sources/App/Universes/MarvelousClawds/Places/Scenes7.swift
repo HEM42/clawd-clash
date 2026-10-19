@@ -482,8 +482,8 @@ extension Scenes {
         savageLandCitadelCrag(c, g)
         savageLandCitadelFortress(c, g)
         savageLandCitadelCanopy(c, base: g - 3 * s, top: g - 11 * s, k: s, col: C(0x24442E), lite: C(0x3A6040), seed: 4)
-        savageLandCitadelPalm(c, x: c.w * 4 / 100, base: g, h: 30 * s + (tall ? g / 4 : 0), lean: 4, k: s)
-        savageLandCitadelPalm(c, x: c.w * 97 / 100, base: g, h: 24 * s + (tall ? g / 5 : 0), lean: -3, k: s)
+        savageLandCitadelPalm(c, x: c.w * 4 / 100, base: g, h: (tall ? 100 : 30) * s, lean: 4, k: s)
+        savageLandCitadelPalm(c, x: c.w * 97 / 100, base: g, h: (tall ? 82 : 24) * s, lean: -3, k: s)
         for v in savageLandCitadelVents(c, g) {                                              // steam vents
             c.ellipse(v.x, g - s, 7 * s, 3 * s, C(0x3A3230))
             c.ellipse(v.x - s, g - 2 * s, 5 * s, 2 * s, C(0x54484A))
@@ -570,12 +570,12 @@ extension Scenes {
         }
     }
 
-    /// The fortress's footprint: centre column, the row its shards stand on, and its height.
+    /// The fortress's footprint: centre column, the row its shards stand on, and its height. On the screen saver it
+    /// is a fixed size (a big one), so a full screen gives it more sky rather than a taller citadel.
     static func savageLandCitadelFrame(_ c: PixelCanvas, _ g: Int) -> (x: Int, base: Int, H: Int) {
         let s = unit(g), tall = isTall(c)
         let base = g - (tall ? 22 : 13) * s
-        let top = tall ? g * 16 / 100 : 2
-        return (c.w * 56 / 100, base, base - top)
+        return (c.w * 56 / 100, base, tall ? min(210 * s, base - 4 * s) : base - 2)
     }
 
     /// How much wider than tall the citadel is drawn: the window's strip is short, so it spreads out there.
