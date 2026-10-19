@@ -1301,18 +1301,20 @@ private enum StarWarsScenes {
         for x in stride(from: 6, to: c.w, by: 32) { c.rect(x, 4, 8, 2, C(0xFFFFFF)) }
         tantiveWall(c, g)
         if Scenes.isTall(c) { tantiveHigh(c, g) }
-        let hx = c.w * 3 / 4
-        c.ellipse(hx, g / 2, 13, g / 3 + 3, C(0xB8C0CA)); c.ellipse(hx, g / 2, 12, g / 3 + 2, C(0xF4F6F8))   // the hatch's rim
-        c.ellipse(c.w * 3 / 4, g / 2, 10, g / 3, C(0xA8B0BA)); c.ellipse(c.w * 3 / 4, g / 2, 8, g / 3 - 2, C(0x8A939E))
-        c.ellipse(hx + 1, g / 2, 5, g / 3 - 5, C(0x7E8792))                                // its recessed leaf
-        c.rect(hx + 1, g / 2 - g / 3 + 6, 1, g * 2 / 3 - 12, C(0x6A727C))                    // and the seam down it
-        let ry = g / 3 - 2
-        for dy in (3 - ry)...(ry - 3) {                                                   // light caught on its left edge
-            let half = Int((8 * (1 - Double(dy * dy) / Double(ry * ry)).squareRoot()).rounded())
-            c.px(hx - half + 1, g / 2 + dy, C(0xA4ACB6))
+        // The round hatch is a door: the same size whatever the canvas, its rim standing just above the deck.
+        let u = Scenes.unit(g), hx = c.w * 3 / 4, r = 28 * u, hy = g - r - 5 * u
+        c.ellipse(hx, hy, 13 * u, r + 3 * u, C(0xB8C0CA)); c.ellipse(hx, hy, 12 * u, r + 2 * u, C(0xF4F6F8))   // the hatch's rim
+        c.ellipse(hx, hy, 10 * u, r, C(0xA8B0BA)); c.ellipse(hx, hy, 8 * u, r - 2 * u, C(0x8A939E))
+        c.ellipse(hx + u, hy, 5 * u, r - 5 * u, C(0x7E8792))                                  // its recessed leaf
+        c.rect(hx + u, hy - r + 6 * u, u, 2 * r - 12 * u, C(0x6A727C))                          // and the seam down it
+        let ry = r - 2 * u
+        for dy in (3 * u - ry)...(ry - 3 * u) {                                            // light caught on its left edge
+            let half = Int((Double(8 * u) * (1 - Double(dy * dy) / Double(ry * ry)).squareRoot()).rounded())
+            c.rect(hx - half + 1, hy + dy, u, 1, C(0xA4ACB6))
         }
-        c.rect(hx + 15, g / 2 - 4, 4, 9, C(0x3A4048)); c.rect(hx + 15, g / 2 - 4, 4, 1, C(0x8A939E))
-        c.px(hx + 16, g / 2 - 2, C(0xE0303A)); c.px(hx + 17, g / 2 + 1, C(0x3BD15A)); c.px(hx + 16, g / 2 + 3, C(0xFFC040))
+        c.rect(hx + 15 * u, hy - 4 * u, 4 * u, 9 * u, C(0x3A4048)); c.rect(hx + 15 * u, hy - 4 * u, 4 * u, u, C(0x8A939E))
+        c.rect(hx + 16 * u, hy - 2 * u, u, u, C(0xE0303A)); c.rect(hx + 17 * u, hy + u, u, u, C(0x3BD15A))
+        c.rect(hx + 16 * u, hy + 3 * u, u, u, C(0xFFC040))
         tantiveConsole(c, g, x: c.w * 16 / 25 / 16 * 16 + 5)
         c.ground(g, C(0xB8C0CA), edge: C(0xFFFFFF), speck: C(0xA8B0BA), seed: 15)
         // the deck: a grating along the foot of the wall, then plates with faint seams, light enough to walk on
