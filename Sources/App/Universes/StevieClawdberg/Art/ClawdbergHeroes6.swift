@@ -762,16 +762,20 @@ private func drawClawdLacombe(_ c: PixelCanvas, _ p: Pose) {
     // The suit, the shirt and tie, the lapels.
     c.rect(18, 33, 20, 5, suit); c.rect(37, 33, 1, 5, suitD); c.rect(18, 37, 20, 1, suitD)
     c.pattern(24, 33, ["lSTTSl", ".lTTl.", "..TT..", "..TT.."], ["l": suitL, "S": cream, "T": tie])
+    // Light along the shoulders, a pocket flap either side, a crease down the far side and the cuff.
+    c.rect(18, 33, 5, 1, suitL); c.rect(31, 33, 6, 1, suitL)
+    c.rect(19, 36, 3, 1, suitD); c.rect(33, 36, 3, 1, suitD); c.rect(35, 34, 1, 2, suitD)
+    c.rect(15, 35, 3, 1, suitD)
     // Receding hair, grey at the temples.
     c.pattern(17, 22, [
         ".....HHHHHHHHHH.......",
-        "...HHHHHHHHHHHHHHH....",
-        "..HHHHHHHHHHHHHHHHH...",
+        "...HHHlllHHHHHHHHH....",
+        "..HHllHHHHHHlllHHHH...",
         ".HHHHHHHHHHHHHHHHHHH..",
         ".gHHH..........HHHHg..",
         ".gH..............HHg..",
         ".g.................g..",
-    ], ["H": hair, "g": hairG])
+    ], ["H": hair, "g": hairG, "l": C(0x56483E)])
 
     if let s = sig, s > 0.04, s < 0.96 {
         let k = (s - 0.04) / 0.92

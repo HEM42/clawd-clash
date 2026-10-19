@@ -196,7 +196,7 @@ private func drawDocGadget(_ c: PixelCanvas, _ p: Pose) {
 /// Jennifer Parka: Clawd with big 1985 feathered hair, light brown and winged back at the sides down to her shoulders,
 /// a lilac top with a mint collar and stone-washed jeans with white flats. She stays out of fights.
 private func drawJenniferParka(_ c: PixelCanvas, _ p: Pose) {
-    let top = C(0xC6B0E2), topD = C(0x9E86C0), mint = C(0xA8E0C8)
+    let top = C(0xC6B0E2), topD = C(0x9E86C0), topL = C(0xDCCAF2), mint = C(0xA8E0C8)
     let hair = C(0xA8743E), hairL = C(0xC8945A), hairD = C(0x7E5428)
 
     drawLegs(c, Look(leg: C(0x86A2C8)), step: p.step)
@@ -206,16 +206,19 @@ private func drawJenniferParka(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, top); c.rect(37, 33, 1, 5, topD); c.rect(18, 37, 20, 1, topD)
     c.rect(24, 33, 8, 1, mint); c.rect(26, 34, 4, 1, mint)
     c.px(27, 35, C(0xF4E06A))                                    // a little pendant
+    // Light along the shoulders and soft folds where the top gathers at the waist.
+    c.rect(18, 33, 5, 1, topL); c.rect(33, 33, 4, 1, topL)
+    c.rect(21, 35, 1, 2, topD); c.rect(33, 35, 1, 2, topD); c.px(30, 36, topD)
     // The feathered hair: lots of volume on top, winged back at the sides.
     c.pattern(14, 18, [
         "........HHHHHHHHH.........",
-        "......HHHHHlHHHHHHHH......",
-        "....HHHHHHHHHHHlHHHHHH....",
-        "...HHHHlHHHHHHHHHHHHHHH...",
-        "..HHHHHHHHHHHHHHHHHHHlHHH.",
-        ".HHHHHHHHHHlHHHHHHHHHHHHHH",
-        "HHHHHHHHHHHHHHHHHHHHHHHHHH",
-        "HHHHlHHHHHHHHHHHHHHHHHHHHH",
+        "......HHHlllHHHHHHHH......",
+        "....HHHllHHHHHHlllHHHH....",
+        "...HHllHHHHHHHllHHHHHHH...",
+        "..HHHHHHHHHHHHHHHHHHHddHH.",
+        ".HHHHHHHHHHHHHHHHHHHHHdHHH",
+        "HHHlHHHHHHHHHHHHHHHHHHHHdH",
+        "HHHHllHHHHHHHHHHHHHHHHHHdH",
         "HHHHHdHHH.....HHHH....dHHH",
         "HHHHd.................HHHH",
         ".HHHH..................lHH",
@@ -224,6 +227,7 @@ private func drawJenniferParka(_ c: PixelCanvas, _ p: Pose) {
         "..H.....................H.",
     ], ["H": hair, "l": hairL, "d": hairD])
     c.rect(15, 33, 3, 3, top); c.rect(38, 33, 3, 3, top)
+    c.rect(15, 35, 3, 1, topD); c.rect(38, 35, 3, 1, topD)       // the cuffs
 }
 
 // MARK: - George McFry
