@@ -281,10 +281,11 @@ extension Scenes {
 // MARK: - Clawdvengers Compound
 
 extension Scenes {
-    /// The compound's frame: left edge, width, roof row of the long block and of the tall centre block.
+    /// The compound's frame: left edge, width, roof row of the long block and of the tall centre block. Its height is
+    /// fixed, so full screen it keeps its size rather than growing with the screen.
     static func compoundFrame(_ c: PixelCanvas, _ g: Int) -> (x: Int, w: Int, roof: Int, tower: Int) {
         let s = unit(g), base = g - 8 * s
-        let bh = isTall(c) ? Int(Double(g) * 0.2) : Int(Double(g) * 0.3)
+        let bh = 20 * s
         let w = max(150 * s, Int(Double(c.w) * 0.46))
         return (Int(Double(c.w) * 0.3), w, base - bh, base - bh * 2)
     }
@@ -305,6 +306,7 @@ extension Scenes {
             cloud(c, Int(noise(i * 5 + 700) * Double(c.w)), Int(Double(g) * (tall ? 0.12 + noise(i * 5 + 701) * 0.35 : 0.12)),
                   (3 + Int(noise(i * 5 + 702) * 3)) * s, seed: i + 70)
         }
+        if tall { compoundFar(c, g) }
         // far hills and the treeline
         c.dunes(base: g - Int(Double(g) * 0.3), amp: Double(g) * 0.06, freq: 0.012, phase: 2, bottom: g, C(0x7E9CA8))
         c.dunes(base: g - Int(Double(g) * 0.22), amp: Double(g) * 0.05, freq: 0.02, phase: 0.5, bottom: g, C(0x5A7A6A))
@@ -334,6 +336,7 @@ extension Scenes {
         }
         c.rect(lx1, ly1 - 2 * s, c.w - lx1, g - ly1 + 2 * s, C(0x5A8A3E))
         c.rect(0, ly1 + s, c.w, g - ly1 - s, C(0x5A8A3E))
+        if tall { compoundHangar(c, g) }
         compoundBuilding(c, g)
         compoundPadDraw(c, g)
         // the lawn, mown in stripes
@@ -405,27 +408,13 @@ extension Scenes {
 
     /// The helipad and the parked Quinjet; the windsock's pole.
     static func compoundPadDraw(_ c: PixelCanvas, _ g: Int) {
-        let s = unit(g), p = compoundPad(c, g), q = max(s, g / 100)
+        let s = unit(g), p = compoundPad(c, g), q = s
         c.ellipse(p.x, p.y, 34 * s, 4 * s, C(0x6A6E72))
         c.ellipse(p.x, p.y, 32 * s, 3 * s, C(0x8A8E92))
         c.ellipse(p.x, p.y, 24 * s, 2 * s, C(0xE8C83A)); c.ellipse(p.x, p.y, 22 * s, 2 * s, C(0x8A8E92))
         // the Quinjet, nose to the left, gear down
         let qx = p.x - 17 * q, qy = p.y - 13 * q
-        scenes6Stamp(c, qx, qy, [
-            "........................ff.",
-            ".......................fff.",
-            "......................ffff.",
-            "....ccdddddddddddddddddddd.",
-            "..ccddddddddddddddddddddddd",
-            "kdddddddddddddddddddddddddd",
-            ".mmmmmmmwwwwwwwwwwwwwwmmmmm",
-            "....mmmmmmmmmmmmmmmmmmmm...",
-            ".......mmm.......mmm.......",
-            "........l.........l........",
-            "........l.........l........",
-            ".......lll.......lll.......",
-        ], ["d": C(0x4A525E), "m": C(0x363C46), "c": C(0x8AD8FF), "k": C(0x2A2E36), "w": C(0x6A7482),
-            "f": C(0x3E4652), "l": C(0x222630)], s: q)
+        compoundQuinjet(c, qx, qy, q, gear: true)
         c.ellipse(p.x - 3 * q, p.y, 15 * q, max(1, q), C(0x000000, 0.2))
         // the windsock's pole
         let wx = p.x + 34 * s
@@ -435,9 +424,88 @@ extension Scenes {
         }
     }
 
+    /// The Quinjet, nose to the left, `q` pixels a cell; with its gear down when parked.
+    static func compoundQuinjet(_ c: PixelCanvas, _ x: Int, _ y: Int, _ q: Int, gear: Bool) {
+        let body = [
+            "........................ff.",
+            ".......................fff.",
+            "......................ffff.",
+            "....ccdddddddddddddddddddd.",
+            "..ccddddddddddddddddddddddd",
+            "kdddddddddddddddddddddddddd",
+            ".mmmmmmmwwwwwwwwwwwwwwmmmmm",
+            "....mmmmmmmmmmmmmmmmmmmm...",
+        ]
+        let legs = [
+            ".......mmm.......mmm.......",
+            "........l.........l........",
+            "........l.........l........",
+            ".......lll.......lll.......",
+        ]
+        scenes6Stamp(c, x, y, gear ? body + legs : body, ["d": C(0x4A525E), "m": C(0x363C46), "c": C(0x8AD8FF),
+            "k": C(0x2A2E36), "w": C(0x6A7482), "f": C(0x3E4652), "l": C(0x222630)], s: q)
+    }
+
+    /// Full screen, far off: a high jet's contrail, summer cumulus banked up over the blue ridges of the Catskills
+    /// behind the hills, a radio mast with its dishes on the nearer ridge, and a Quinjet coming in to land, its
+    /// engines glowing.
+    static func compoundFar(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g)
+        let cy = Int(Double(g) * 0.1)                                                       // the contrail
+        for x in stride(from: c.w * 55 / 100, to: c.w - 20 * s, by: 1) {
+            let y = cy + (x - c.w * 55 / 100) / 9, k = Double(x - c.w * 55 / 100) / Double(c.w * 45 / 100)
+            c.rect(x, y, 1, 2 * s, C(0xFFFFFF, 0.5 * k)); c.rect(x, y - s, 1, s, C(0xFFFFFF, 0.2 * k))
+        }
+        c.rect(c.w - 20 * s, cy + (c.w * 45 / 100 - 20 * s) / 9, 2 * s, s, C(0xE8EEF4))
+        for i in 0..<(c.w / (16 * s) + 2) {                                                  // the cloud bank
+            let x = i * 16 * s + Int(noise(i * 3 + 760) * 10) * s
+            let y = g - Int(Double(g) * 0.4) - Int(noise(i * 3 + 761) * Double(g) * 0.08)
+            cloud(c, x, y, (5 + Int(noise(i * 3 + 762) * 6)) * s, seed: i + 760, top: C(0xF2F6FA), base: C(0xD6E2EC))
+        }
+        c.dunes(base: g - Int(Double(g) * 0.42), amp: Double(g) * 0.05, freq: 0.008, phase: 4, bottom: g, C(0xA8C0D0), shade: C(0xB4CAD8))
+        c.dunes(base: g - Int(Double(g) * 0.36), amp: Double(g) * 0.04, freq: 0.014, phase: 1, bottom: g, C(0x92AEC0))
+        // the radio mast on the ridge to the right: a lattice tower, guyed, with two dishes and a red light on top
+        let mx = c.w * 88 / 100, mb = g - Int(Double(g) * 0.3), p = Pen(c, mx, mb, g)
+        let steel = C(0x6E7E8A), lit = C(0xC8D2DA)
+        for v in stride(from: -60, to: 0, by: 1) {
+            let half = 1 + (v + 60) / 20
+            p.rect(-half, v, 1, 1, steel); p.rect(half, v, 1, 1, steel)
+            if (v + 60) % 5 == 0 { p.rect(-half, v, half * 2 + 1, 1, steel) }
+        }
+        for u in [-14, 14] { for k in 0..<14 { p.rect(u * k / 14, -50 + k * 50 / 14, 1, 1, C(0x6E7E8A, 0.5)) } }   // the guys
+        p.ellipse(-4, -44, 3, 4, lit); p.rect(-4, -44, 1, 1, steel)
+        p.ellipse(4, -32, 3, 4, lit); p.rect(4, -32, 1, 1, steel)
+        p.rect(0, -66, 1, 6, steel); p.rect(0, -67, 1, 1, C(0xE03A3A))
+        // the Quinjet coming in, gear up, its engines lit
+        let jx = c.w * 58 / 100, jy = Int(Double(g) * 0.3)
+        compoundQuinjet(c, jx, jy, s, gear: false)
+        c.rect(jx + 27 * s, jy + 4 * s, 3 * s, s, C(0x7ACCFF, 0.8)); c.rect(jx + 30 * s, jy + 4 * s, 4 * s, s, C(0x7ACCFF, 0.35))
+    }
+
+    /// Full screen: the hangar up behind the main building among the trees, its arched roof lit by the afternoon sun
+    /// from the left, a big door half open on a dark inside, a row of high windows, and a small control hut by it.
+    static func compoundHangar(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), b = g - Int(Double(g) * 0.14), p = Pen(c, c.w * 70 / 100, b, g)
+        let white = C(0xE4E8EA), shade = C(0xB4BCC2), roof = C(0x9AA4AC), roofLit = C(0xCAD2D8)
+        p.rect(-40, -1, 90, 1, C(0x1E3A26, 0.6))                                           // its shadow on the trees
+        p.rect(-36, -20, 72, 20, white); p.rect(30, -20, 6, 20, shade)
+        for u in -36..<36 {                                                                // the arched roof
+            let k = Double(u) / 36, h = Int((1 - k * k).squareRoot() * 12)
+            p.rect(u, -20 - h, 1, h, u < 6 ? roofLit : roof)
+            if u % 6 == 0 { p.rect(u, -20 - h, 1, h, C(0x8A949C)) }
+        }
+        p.rect(-36, -21, 72, 1, C(0x8A949C))
+        p.rect(-24, -16, 40, 16, C(0x2A3440)); p.rect(-24, -16, 40, 1, C(0x8A949C))       // the door, half open
+        p.rect(-4, -16, 20, 16, C(0xC4CACE)); for u in stride(from: -2, to: 16, by: 4) { p.rect(u, -16, 1, 16, C(0xA8B0B8)) }
+        p.rect(-20, -6, 10, 6, C(0x3A4654)); p.rect(-19, -8, 6, 2, C(0x4A5664))           // a jeep parked inside
+        for u in stride(from: -32, to: 32, by: 6) { p.rect(u, -19, 4, 2, C(0x2C3E54)) }   // the high windows
+        p.rect(40, -10, 12, 10, white); p.rect(40, -11, 12, 1, roof); p.rect(43, -8, 6, 3, C(0x2C3E54))   // the hut
+        p.rect(50, -10, 2, 10, shade)
+    }
+
     /// The windsock fluttering, the Quinjet's navigation lights and birds crossing over the lake.
     static func compoundLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
-        let s = unit(g), p = compoundPad(c, g), q = max(s, g / 100)
+        let s = unit(g), p = compoundPad(c, g), q = s
         let wx = p.x + 34 * s
         if wx < c.w - 2 * s {
             let y = p.y - 22 * s
@@ -1103,10 +1171,11 @@ extension Scenes {
 // MARK: - Asteroid M
 
 extension Scenes {
-    /// The citadel's centre and the top of its main spire.
+    /// The citadel's centre, the top of its main spire and its width: a fixed size, the same full screen as in the
+    /// window.
     static func asteroidCitadel(_ c: PixelCanvas, _ g: Int) -> (x: Int, top: Int, w: Int) {
-        let s = unit(g), h = Int(Double(g) * (isTall(c) ? 0.62 : 0.86))
-        return (Int(Double(c.w) * 0.66), g - h, max(70 * s, isTall(c) ? h : h * 3 / 2))
+        let s = unit(g)
+        return (Int(Double(c.w) * 0.66), g - 56 * s, 84 * s)
     }
 
     /// Asteroid M: Magnetto's fortress adrift in orbit, black space and stars, Earth's blue limb curving below, the
@@ -1147,6 +1216,7 @@ extension Scenes {
             c.rect(ex + half / 2, y, half - half / 2, 1, C(0x05040E, 0.35))
             c.px(ex - half, y, C(0xA8D8FF, 0.7))
         }
+        if tall { asteroidHigh(c, g) }
         // far rocks, then the asteroid's crags
         scenes6Ridge(c, x0: -10 * s, x1: c.w / 2, base: g, h: Int(Double(g) * 0.22), C(0x3A3040), top: C(0x6A5A70), seed: 4)
         scenes6Ridge(c, x0: c.w / 3, x1: c.w + 20 * s, base: g, h: Int(Double(g) * 0.4), C(0x2E2634), top: C(0x5A4A62), seed: 9)
@@ -1157,6 +1227,40 @@ extension Scenes {
             let x = Int(noise(k + 1120) * Double(c.w)), y = g + 2 * s + Int(noise(k + 1121) * Double(max(1, c.h - g - 4 * s)))
             c.ellipse(x, y, (2 + Int(noise(k + 1122) * 3)) * s, max(1, s), C(0x2E2632))
         }
+    }
+
+    /// Full screen: a broken-off shard of the asteroid hanging above it, held up by the same magnetism, with an
+    /// observatory on top (a dome with its slit open, a block with red-lit slits, a mast with a beacon and a landing
+    /// shelf with Magnetto's shuttle), and smaller boulders drifting about, lit from Earth's side.
+    static func asteroidHigh(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g)
+        let rock = C(0x3A3040), rockLit = C(0x6A5A70), rockDark = C(0x241E2C)
+        let steel = C(0x7A7E8C), dark = C(0x3A3C4A), lit = C(0xB8BCC8), red = C(0xC02838)
+        for (i, (fx, fy, r)) in [(0.44, 0.16, 5), (0.56, 0.36, 3), (0.94, 0.48, 4), (0.36, 0.42, 2), (0.66, 0.08, 2)].enumerated() {
+            let p = Pen(c, Int(Double(c.w) * fx), Int(Double(g) * fy), g)
+            p.ellipse(0, 0, r + 1, r, rock); p.ellipse(-1, -1, r - 1, max(1, r - 2), rockLit)
+            p.rect(r / 2, r / 2, 1, 1, rockDark); if i % 2 == 0 { p.rect(-r, 0, 1, 1, rockDark) }
+        }
+        // the shard: a flat top, a jagged underside tapering to a point
+        let p = Pen(c, Int(Double(c.w) * 0.8), Int(Double(g) * 0.24), g)
+        for u in -36...36 {
+            let k = Double(abs(u)) / 36, depth = Int((1 - k) * 30 + noise(u + 1140) * 5) + 3
+            p.rect(u, 0, 1, depth, u < -8 ? rockLit : rock)
+            p.rect(u, depth - 1, 1, 1, rockDark)
+            if noise(u * 3 + 1141) > 0.8 { p.rect(u, depth / 2, 1, 2, rockDark) }
+        }
+        p.rect(-36, 0, 73, 1, C(0x8A7488)); p.rect(-36, 1, 73, 1, rockLit)
+        // the observatory: a block with lit slits, the dome on it with its slit open, the mast
+        p.rect(-14, -12, 26, 12, dark); p.rect(-14, -12, 26, 1, lit); p.rect(-14, -12, 2, 12, steel)
+        for u in stride(from: -9, to: 10, by: 4) { p.rect(u, -9, 1, 5, red.alpha(0.85)) }
+        p.ellipse(-1, -12, 10, 8, steel); p.ellipse(-3, -14, 6, 5, lit); p.rect(-11, -12, 21, 2, dark)
+        p.rect(0, -20, 3, 8, C(0x14101E)); p.rect(2, -20, 1, 8, dark)                         // the open slit
+        p.rect(18, -30, 1, 30, steel); p.rect(15, -24, 7, 1, steel); p.rect(16, -18, 5, 1, steel)
+        p.rect(18, -31, 1, 1, C(0xFF6A7A))
+        // the landing shelf and the shuttle on it
+        p.rect(-34, -2, 18, 2, steel); p.rect(-34, -2, 18, 1, lit)
+        p.rect(-31, -6, 12, 4, C(0x8A8E9C)); p.rect(-33, -5, 2, 2, C(0x8A8E9C)); p.rect(-31, -6, 12, 1, lit)
+        p.rect(-29, -5, 3, 1, C(0x8AD8FF)); p.rect(-19, -5, 1, 2, red); p.rect(-27, -7, 6, 1, dark)
     }
 
     /// The steel citadel: a ribbed curtain wall, a ring of spires around the tall central one, a dish and the helmet.
