@@ -225,20 +225,21 @@ private func drawIanMalclawm(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: jacket))
     // The jacket, the shirt open to a V of chest.
     c.pattern(18, 33, [
-        "JJJJJSS....SSJJJJJJJ",
-        "JJJJJJSS..SSJJJJJJJJ",
-        "JJJJJlSSSSSSlJJJJJJJ",
-        "JJJJJlSSSSSSlJJJJJJJ",
+        "llllJSS....SSJlllllJ",
+        "JJJJJJSS..SSJJJJJJdJ",
+        "JJlJJlSSSSSSlJJJJJdJ",
+        "JJJJJlSSSSSSlJJddJJJ",
         "JJJJJJJJJJJJJJJJJJJJ",
-    ], ["J": jacket, "S": shirt, "l": jacketL])
+    ], ["J": jacket, "S": shirt, "l": jacketL, "d": C(0x121218)])
+    c.rect(15, 35, 3, 1, C(0x121218))                                 // the cuff
     // Curly hair, swept back.
     c.pattern(17, 20, [
         "....HH.HHH.HHH.HH.....",
-        "..HHHHHHHHHHHHHHHHHH..",
-        ".HHHHHHHhHHHHHHhHHHHH.",
-        ".HHhHHHHHHHHhHHHHHhHH.",
+        "..HHHhhHHHhhHHHhhHHH..",
+        ".HHhhHHHHhhHHHhhHHHHH.",
+        ".HHHHHhhHHHHHHHHHhhHH.",
+        "HHhhHHHHHHHhhHHHHHHHHH",
         "HHHHHHHHHHHHHHHHHHHHHH",
-        "HHHHhHHHHHHHHHHHHHHHHH",
         "HHH................HHH",
         "HH..................H.",
     ], ["H": hair, "h": hairL])
@@ -435,6 +436,7 @@ private func drawTimMurphey(_ c: PixelCanvas, _ p: Pose) {
 /// pink trainers. She doesn't fight. Signature: she holds up a spoonful of green jelly and watches it wobble.
 private func drawLexMurphey(_ c: PixelCanvas, _ p: Pose) {
     let hair = C(0xF0D890), hairD = C(0xC8AA62), hairL = C(0xFFF0C0), top = C(0xE87AAA), topD = C(0xC05A88)
+    let topL = C(0xF49AC0)
     let sig = p.signature
     let jelly = sig.map { $0 > 0.06 && $0 < 0.94 } ?? false
 
@@ -442,26 +444,29 @@ private func drawLexMurphey(_ c: PixelCanvas, _ p: Pose) {
     cbBoots(c, step: p.step, C(0xF08AB8), height: 1)
     c.oy += p.breathe
     // Her hair down her back.
-    c.rect(15, 26, 4, 11, hair); c.rect(15, 36, 4, 1, hairD); c.px(16, 30, hairD)
+    c.rect(15, 26, 4, 11, hair); c.rect(15, 36, 4, 1, hairD); c.rect(16, 29, 1, 4, hairD)
     drawBody(c, Look(arm: clawdOrange))
     drawShortSleeves(c, top)
     // The pink top.
     c.rect(18, 33, 20, 5, top); c.rect(37, 33, 1, 5, topD); c.rect(18, 37, 20, 1, topD)
     c.rect(25, 33, 6, 1, C(0xF6A6C8))
+    // Light along the shoulders and the top's soft folds.
+    c.rect(18, 33, 5, 1, topL); c.rect(32, 33, 5, 1, topL)
+    c.rect(21, 35, 1, 2, topD); c.rect(33, 35, 1, 2, topD); c.px(28, 36, topD)
     // The hair: long and straight, parted, a lock falling down in front.
     c.pattern(15, 20, [
         "......HHHHHHHHHHHH.......",
-        "....HHHHHHHHHlHHHHHH.....",
-        "...HHHHHHHHHHHlHHHHHHH...",
-        "..HHHHHHHHHHHHHHHHHHHHH..",
-        "..HHHHhHHHHHHHHHHHHHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHHHHH.",
+        "....HHHlllHHHhHHHHHH.....",
+        "...HHllHHHHHHhHHlllHHH...",
+        "..HHHHHHHHHHHhHHHHHHHHH..",
+        "..HHHhhHHHHHHHHHHHHHHhHH.",
+        ".HHHHHHHHHHHHHHHHHHHHhHH.",
         ".HHHHHHHH..........HHHHH.",
         "HHHHH...............HHHH.",
+        "HhHH.................HhH.",
+        "HhHH.................HhH.",
         "HHHH.................HHH.",
         "HHHH.................HHH.",
-        "HHHh.................HHH.",
-        "HHHH.................hHH.",
         "HHHH..................HH.",
         "HHHH..................H..",
     ], ["H": hair, "h": hairD, "l": hairL])
@@ -602,17 +607,19 @@ private func drawClaireDaring(_ c: PixelCanvas, _ p: Pose) {
     // The blouse and its collar.
     c.rect(18, 33, 20, 5, blouse); c.rect(37, 33, 1, 5, blouseD)
     c.pattern(25, 33, ["d....d", ".d..d.", "..dd.."], ["d": blouseD])
+    c.rect(21, 34, 1, 2, blouseD); c.rect(34, 34, 1, 3, blouseD)        // soft folds
     // The pencil skirt, hanging over the tops of the legs.
     let skirt = seatedPose ? 1 : 2
     c.rect(18, 37, 20, skirt + 1, blouse); c.rect(18, 37 + skirt, 20, 1, blouseD); c.rect(37, 37, 1, skirt + 1, blouseD)
     c.rect(18, 37, 20, 1, blouseD.alpha(0.6))
+    if !seatedPose { c.px(23, 38, blouseD); c.px(32, 38, blouseD) }      // the skirt's creases
     // The bob: side parting, the fringe swept across, down to the jaw.
     c.pattern(16, 20, [
         "......HHHHHHHHHH........",
-        "....HHHHHHHHlHHHHHH.....",
-        "..HHHHHHHHHHHHlHHHHHH...",
-        ".HHHHHHHHHHHHHHHlHHHHH..",
-        ".HHHHHHHHHHHHHHHHHHHHHH.",
+        "....HHHlllHHHHHHHHH.....",
+        "..HHHllHHHHHHllllHHHH...",
+        ".HHHHHHHHHHHHHHHHHHHhH..",
+        ".HHHHHHHHHHHHHHHHHHHhHH.",
         "HHHHHHHHHHHHHHHHHHHHHHH.",
         "HHHHHHHHHHHHHHHHHHHHHH..",
         "HHHHHHHHHHHH........HHH.",

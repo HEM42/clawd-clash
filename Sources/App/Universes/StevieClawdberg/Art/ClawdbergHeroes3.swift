@@ -43,14 +43,17 @@ private func drawBillyPeltclawd(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(arm: sweater))
     // The green sweater, knit ribs, the white tee at the collar.
     c.rect(18, 33, 20, 5, sweater); c.rect(37, 33, 1, 5, sweaterD); c.rect(18, 37, 20, 1, sweaterD)
-    for x in stride(from: 19, to: 37, by: 3) { c.px(x, 35, sweaterL) }
+    // Light along the shoulders, the knit ribs running down, a ribbed hem.
+    c.rect(18, 33, 6, 1, sweaterL); c.rect(31, 33, 6, 1, sweaterL)
+    for x in [20, 23, 33] { c.rect(x, 34, 1, 2, sweaterD) }
+    for x in stride(from: 19, to: 37, by: 2) { c.px(x, 37, C(0x1E461E)) }
     c.rect(25, 33, 6, 1, tee)
     // The mop of brown hair, a ragged fringe over his forehead.
     c.pattern(17, 21, [
         "....HHHHHHHHHHHHH.....",
-        "..HHHHHHhHHHHHHHHHH...",
-        ".HHHHHHHHHHHHHHhHHHHH.",
-        "HHHHHhHHHHHHHHHHHHHHHH",
+        "..HHHHhhhHHHHHHHHHH...",
+        ".HHHhhHHHHHHHhhhHHHHH.",
+        "HHHHHHHHHHHHHHHHHHHHHH",
         "HHHHHHHHHHHHHHHHHHHHHH",
         "HHH.HHH.HHHH.HHHHH.HHH",
         "HH...H......H......HH.",
@@ -96,6 +99,7 @@ private func drawBillyPeltclawd(_ c: PixelCanvas, _ p: Pose) {
     }
     // The sketch pad under his left arm.
     c.rect(12, 30, 5, 7, pad); c.rect(12, 30, 5, 1, C(0x9A9AA4)); c.rect(15, 32, 3, 3, sweater)
+    c.rect(15, 34, 3, 1, sweaterD)                                // the cuff
 }
 
 // MARK: - Kate Beringer
