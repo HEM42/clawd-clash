@@ -267,11 +267,15 @@ private func drawTusken(_ c: PixelCanvas, _ p: Pose) {
 
 /// Cad Bane: wide-brimmed hat, blue Duros skin and red eyes, the high-collared coat; a blaster pistol.
 private func drawCadBane(_ c: PixelCanvas, _ p: Pose) {
-    let skin = C(0x5A8A9A), coat = C(0x6A4A32), coatDark = C(0x4A3222), hat = C(0x7A5A3A)
+    let skin = C(0x5A8A9A), coat = C(0x6A4A32), coatDark = C(0x4A3222), hat = C(0x7A5A3A), coatHi = C(0x86603E)
+    let tube = C(0x8A8F99)
     drawLegs(c, Look(leg: C(0x3A3A40)), step: p.step)
+    drawBoots(c, C(0x241C16), step: p.step, rows: 2)                // dark leather boots
+    drawBootShine(c, step: p.step, C(0x5A5048))
     c.oy += p.breathe
     drawBody(c, Look(body: skin, shade: C(0x467080), arm: coat, eye: nil))
     c.rect(19, 23, 18, 3, skin)
+    c.rect(19, 23, 18, 1, C(0x467080))                              // the brim's shadow on his brow
     c.pattern(10, 15, [
         "...........HHHHHHHHHHHHHH...........",
         "...........HHHHHHHHHHHHHH...........",
@@ -280,11 +284,28 @@ private func drawCadBane(_ c: PixelCanvas, _ p: Pose) {
         "..BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB..",
         "....BBBBBBBBBBBBBBBBBBBBBBBBBBBB....",
     ], ["H": hat, "h": C(0x3A2A1A), "B": C(0x5A4028)])
+    // The hat: light along the crown, its far side and the brim's underside in shadow, a stud on the band.
+    c.rect(22, 15, 5, 1, C(0x9A7A52)); c.rect(21, 16, 2, 1, C(0x9A7A52))
+    c.rect(34, 15, 1, 3, C(0x5E4430))
+    c.rect(14, 20, 28, 1, C(0x45301E)); c.rect(12, 19, 8, 1, C(0x6E5236))
+    c.px(23, 18, C(0xB08D57))
     c.rect(22, 28, 3, 2, C(0xE0302A)); c.rect(31, 28, 3, 2, C(0xE0302A))
-    c.rect(35, 30, 2, 3, C(0x8A8F99))                                 // breathing tube
-    c.rect(18, 31, 20, 2, coatDark)                                   // the high collar
+    c.px(22, 28, C(0xFF7A6A)); c.px(31, 28, C(0xFF7A6A))
+    // His breathing tubes, one on each cheek, lit on top.
+    c.rect(35, 30, 2, 3, tube); c.rect(19, 30, 2, 3, tube)
+    c.px(35, 30, C(0xC4C8D0)); c.px(19, 30, C(0xC4C8D0))
+    // The high collar, lit along its turned-up rim.
+    c.rect(18, 31, 20, 2, coatDark)
+    c.rect(18, 31, 5, 1, coatHi); c.rect(33, 31, 5, 1, coatHi)
+    // The coat: lapels either side of the dark vest, folds shaded, cuffs.
     c.rect(18, 33, 20, 5, coat)
+    c.rect(27, 33, 2, 3, C(0x3A3030)); c.rect(26, 33, 1, 2, coatHi); c.rect(29, 33, 1, 2, coatHi)
+    c.rect(37, 33, 1, 5, coatDark); c.px(21, 34, coatDark); c.px(34, 37, coatDark)
+    c.rect(15, 35, 3, 1, coatDark); c.rect(38, 35, 3, 1, coatDark)
+    // The gun belt, its brass buckle and the holster at his hip.
     c.rect(18, 36, 20, 1, coatDark)
+    c.rect(27, 36, 2, 1, C(0xB08D57)); c.px(27, 36, C(0xE0C080))
+    c.rect(33, 36, 2, 2, C(0x2A1E16))
     c.oy += gunOffset(p)
     drawPistol(c, x: 40, y: 31)
 }
@@ -375,32 +396,43 @@ private func drawMse6(_ c: PixelCanvas, _ p: Pose) {
 /// beard.
 private func drawBaylan(_ c: PixelCanvas, _ p: Pose) {
     drawCape(c, t: p.t, speed: p.capeSpeed * 0.6, color: C(0x2A2420), edge: C(0x4A3A2E), extra: 1)
-    let robe = C(0x3A302A), grey = C(0xB8B4AC), greyDark = C(0x8E8A84)
+    let robe = C(0x3A302A), robeHi = C(0x52443A), robeDeep = C(0x2A221E)
+    let grey = C(0xB8B4AC), greyDark = C(0x8E8A84), greyHi = C(0xDAD6CE)
     drawLegs(c, Look(leg: C(0x2A2622)), step: p.step)
+    drawBoots(c, ink, step: p.step, rows: 2)                        // black boots, a glint down the front
+    drawBootShine(c, step: p.step, C(0x5A5048))
     c.oy += p.breathe
     let stroke = p.melee == nil && !p.walking && sin(p.lt * 0.6) > 0.3
     drawBody(c, Look(arm: robe), armRight: stroke ? 4 : 0)
+    c.rect(15, 35, 3, 1, robeDeep); c.rect(38, stroke ? 31 : 35, 3, 1, robeDeep)   // the sleeves' cuffs
+    // Long grey hair swept back, the light running along it, darker strands falling at the sides.
     c.pattern(17, 21, [
-        ".....GGGGGGGGGGGG.....",
-        "...GGGGGGGGGGGGGGGG...",
+        ".....GGGlllGGGGGG.....",
+        "...GGGllGGGGGlllGGG...",
         "..GGGgGGGGGGGGGGgGGG..",
-        ".GGGGGGGGGGGGGGGGGGGG.",
-        ".GGG..............GGG.",
-        "GGG................GGG",
-        "GG..................GG",
-        "GG..................GG",
-    ], ["G": grey, "g": greyDark])
+        ".GGlGGGGGGGGGGGGGGgGG.",
+        ".GlG..............GgG.",
+        "GlG................GgG",
+        "Gl..................gG",
+        "Gl..................gG",
+    ], ["G": grey, "g": greyDark, "l": greyHi])
+    // The dark robe: its lit edges down the front, folds shaded, a belt with a bronze buckle.
     c.rect(18, 34, 20, 4, robe)
-    c.rect(37, 34, 1, 4, C(0x2A221E))
-    c.rect(15, 33, 4, 2, C(0x5A4A3A))                               // the pauldron on his far shoulder
+    c.rect(37, 34, 1, 4, robeDeep)
+    c.rect(18, 34, 1, 3, robeHi); c.rect(36, 34, 1, 3, robeHi)
+    c.rect(18, 37, 20, 1, C(0x4E3E2E)); c.rect(27, 37, 2, 1, C(0xB08D57))
+    // The pauldron on his far shoulder, lit along the top, a rivet in it.
+    c.rect(15, 33, 4, 2, C(0x5A4A3A))
+    c.rect(15, 33, 4, 1, C(0x7A6650)); c.px(17, 34, C(0xA89070))
+    // The beard: strands catching the light, the moustache shaded.
     c.pattern(19, 31, [
         "GG..............GG",
         "GGG...gggggg...GGG",
-        "GGGGGGGGGGGGGGGGGG",
-        ".GGGGGGGgGGGGGGGG.",
-        "...GGGGGGGGGGGG...",
-        ".....GGGGGGGG.....",
-    ], ["G": grey, "g": greyDark])
+        "GGGlGGGGGGGGGGlGGG",
+        ".GGGlGGGgGGGGlGGG.",
+        "...GGlGGGGGGgGG...",
+        ".....GGlGGgGG.....",
+    ], ["G": grey, "g": greyDark, "l": greyHi])
     if let angle = p.melee {
         drawSaber(c, t: p.t, angle: angle, core: C(0xFFF0D8), glow: C(0xFF8A1E), lit: true, trail: p.trail, length: 20)
     } else {
@@ -418,22 +450,36 @@ private func drawShinHati(_ c: PixelCanvas, _ p: Pose) {
         angle = kataPose(p.lt).angle; trail = saberTrail(p.lt)
     }
     let suit = C(0x2E2E36), plate = C(0x4A4A56), hair = C(0xE8DCB0), hairDark = C(0xC2B488)
+    let plateHi = C(0x6E6E7C), hairHi = C(0xFFF6DC), deep = C(0x1C1C22)
     drawLegs(c, Look(leg: C(0x26262C)), step: p.step)
+    drawBoots(c, ink, step: p.step, rows: 2)                        // black boots, a glint down the front
+    drawBootShine(c, step: p.step, C(0x4A4C56))
     c.oy += p.breathe
     drawBody(c, Look(arm: suit))
+    c.rect(15, 35, 3, 1, deep); c.rect(38, 35, 3, 1, deep)          // the gloves
+    c.rect(15, 33, 3, 1, plate); c.rect(38, 33, 3, 1, plate)        // plates over the shoulders
+    // Short platinum hair, the light running along it, the far side in shadow.
     c.pattern(18, 21, [
-        "......BBBBBBBB......",
-        "...BBBBBBBBBBBBBB...",
-        ".BBBBbBBBBBBBBBBBBB.",
-        "BBBBBBBBBBBBBBBBBBBB",
+        "......BBBhhhBB......",
+        "...BBBhhBBBBBBBBB...",
+        ".BBhBbBBBBBBBBBBBbB.",
+        "BBBBBBBBBBBBBBBBBbBB",
         "BBb..............bBB",
         "BB................BB",
-    ], ["B": hair, "b": hairDark])
-    c.pattern(16, 24, ["BB", "Bb", "BB", ".b", ".B"], ["B": hair, "b": hairDark])   // the braid
+    ], ["B": hair, "b": hairDark, "h": hairHi])
+    // The braid, lit on alternate twists, tied off at the end.
+    c.pattern(16, 24, ["Bh", "bB", "Bh", "bB", ".K"], ["B": hair, "b": hairDark, "h": hairHi, "K": plate])
+    // The armoured robe: the neck of its collar, plates lit along the top with a rivet in each, folds shaded.
     c.rect(18, 33, 20, 5, suit)
     c.rect(18, 33, 20, 1, plate)
+    c.rect(25, 33, 6, 1, deep)
     c.rect(20, 34, 5, 2, plate); c.rect(31, 34, 5, 2, plate)        // armour plates
+    c.rect(20, 34, 5, 1, plateHi); c.rect(31, 34, 5, 1, plateHi)
+    c.px(22, 35, deep); c.px(33, 35, deep)
+    c.rect(37, 33, 1, 5, deep); c.px(27, 37, deep)
+    // The belt, its brass buckle.
     c.rect(18, 36, 20, 1, C(0x6A4A2E))
+    c.rect(27, 36, 2, 1, C(0xC9A44A)); c.px(27, 36, C(0xF0D47A))
     if let angle {
         drawSaber(c, t: p.t, angle: angle, core: C(0xFFF0D8), glow: C(0xFF8A1E), lit: true, trail: trail, length: 18)
     } else {

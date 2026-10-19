@@ -109,10 +109,13 @@ private func drawJetpack(_ c: PixelCanvas, t: Double, burning: Bool) {
     for x in [13, 38] {
         c.rect(x, 23, 5, 11, pack)
         c.rect(x + 4, 23, 1, 11, packShade)
+        c.rect(x, 23, 4, 1, C(0x9AA88A))                            // lit along the top
+        c.rect(x, 29, 4, 1, packShade); c.px(x + 1, 27, packShade)  // a seam and a rivet
         c.rect(x, 34, 5, 1, C(0x4A4A52))
     }
     c.rect(13, 21, 5, 2, C(0xC8402A))   // the missile
     c.rect(14, 20, 3, 1, C(0xC8402A))
+    c.rect(14, 21, 2, 1, C(0xE86A4A))
     if burning {
         for x in [14, 39] {
             let len = 3 + Int(noise(Int(t * 30) + x) * 3)
@@ -245,17 +248,27 @@ private func drawKylo(_ c: PixelCanvas, _ p: Pose) {
 
 /// Darth Maul: red and black tattoos, horns, and the double-bladed saber.
 private func drawMaul(_ c: PixelCanvas, _ p: Pose) {
-    let robe = C(0x1A1A1F)
+    let robe = C(0x1A1A1F), robeHi = C(0x3A3A44), fold = C(0x0C0C10), sash = C(0x3A3A42)
     drawLegs(c, Look(leg: robe), step: p.step)
+    drawBoots(c, ink, step: p.step, rows: 2)                        // black boots, a glint down the front
+    drawBootShine(c, step: p.step, C(0x4A4C56))
     c.oy += p.breathe
     drawBody(c, Look(body: C(0xC0262D), shade: C(0x8E1A20), arm: robe, eye: C(0xF5D547)))
+    c.rect(15, 35, 3, 1, ink); c.rect(38, 35, 3, 1, ink)            // the gloves
     let K: [Character: Px] = ["K": C(0x111114)]
     c.pattern(18, 26, ["KK...K..KKKK..K...KK", "K....KK..KK..KK....K"], K)
     c.pattern(18, 32, ["..KK....KKKK....KK..", "...KKK..KKKK..KKK..."], K)
     c.px(21, 29, C(0x111114)); c.px(34, 29, C(0x111114))
-    c.pattern(18, 23, ["..h..h...hh...h..h..", "..H..H...HH...H..H..", "..H..H..H..H..H..H.."], ["H": C(0xF0E6CC), "h": C(0xFFF8E6)])
+    // The horns, shaded at the root.
+    c.pattern(18, 23, ["..h..h...hh...h..h..", "..H..H...HH...H..H..", "..d..d..d..d..d..d.."],
+              ["H": C(0xF0E6CC), "h": C(0xFFF8E6), "d": C(0xC8BC9E)])
+    // The black tunic: the neck of its wrap with lit edges, folds shaded, a sash tied at the side with a clasp.
     c.rect(18, 34, 20, 4, robe)
-    c.rect(18, 35, 20, 1, C(0x3A3A42))
+    c.rect(25, 34, 6, 1, fold); c.px(24, 34, robeHi); c.px(31, 34, robeHi)
+    c.rect(37, 34, 1, 4, fold); c.px(22, 36, fold); c.px(33, 37, fold); c.px(28, 37, fold)
+    c.rect(18, 35, 20, 1, sash)
+    c.rect(20, 35, 2, 1, C(0x52525C)); c.px(21, 36, sash)          // the sash's knot and its end
+    c.rect(27, 35, 2, 1, C(0x8A8F99)); c.px(27, 35, C(0xB8BCC6))
     if let a = p.melee {
         drawSaber(c, t: p.t, angle: a + 180, core: C(0xFFE3E3), glow: C(0xFF1E2D), lit: true, length: 15)
         drawSaber(c, t: p.t, angle: a, core: C(0xFFE3E3), glow: C(0xFF1E2D), lit: true, trail: p.trail, length: 15)
@@ -270,10 +283,19 @@ private func drawMaul(_ c: PixelCanvas, _ p: Pose) {
 /// blinks red.
 private func drawBoba(_ c: PixelCanvas, _ p: Pose) {
     drawJetpack(c, t: p.t, burning: p.fire.map { frac($0.t / blasterPeriod) > 0.7 } ?? false)
-    let armor = C(0x6B7A5E), armorShade = C(0x4E5A44)
+    let armor = C(0x6B7A5E), armorShade = C(0x4E5A44), armorHi = C(0x8E9E7C), brass = C(0xB08D57)
     drawLegs(c, Look(leg: C(0x6E6A5A)), step: p.step)
+    if !seatedPose {                                                // green knee plates, lit on top
+        for (i, lx) in [19, 23, 31, 35].enumerated() {
+            let y = p.step >= 0 && i % 2 == p.step ? 38 : 39
+            c.rect(lx, y, 2, 2, armor); c.px(lx, y, armorHi)
+        }
+    }
+    drawBoots(c, C(0x3E362A), step: p.step, rows: 2)                // worn brown boots
+    drawBootShine(c, step: p.step, C(0x6E6250))
     c.oy += p.breathe
     drawBody(c, Look(body: armor, shade: armorShade, arm: C(0x9A8F72), eye: nil))
+    c.rect(15, 35, 3, 1, C(0x5A4632))                               // the glove
     c.pattern(16, 17, [
         "......GGGGGGGGGGGG......",
         "....GGGGGGGGGGGGGGGG....",
@@ -285,6 +307,10 @@ private func drawBoba(_ c: PixelCanvas, _ p: Pose) {
         ".GGGGGGGGGGGGGGGGGGGGGG.",
         ".GGGGGGGGGGGGGGGGGGGGGG.",
     ], ["G": armor, "R": C(0xA8442E)])
+    // The helmet: the light along its dome, the far side in shadow, a scrape and a dent from old fights.
+    c.rect(22, 18, 4, 1, armorHi); c.rect(20, 19, 2, 1, armorHi); c.px(19, 20, armorHi)
+    c.rect(36, 20, 1, 4, armorShade); c.rect(37, 24, 1, 2, armorShade)
+    c.rect(31, 21, 2, 1, C(0x434E3A)); c.px(33, 22, C(0x434E3A)); c.px(21, 33, C(0x434E3A))
     c.rect(20, 28, 16, 2, ink)       // T visor
     c.rect(27, 30, 2, 5, ink)
     // Rangefinder antenna, up beside the helmet. Signature: it swings down in front of the visor and blinks red.
@@ -299,9 +325,14 @@ private func drawBoba(_ c: PixelCanvas, _ p: Pose) {
         c.rect(end.x - 1, end.y, 2, 2, C(0x5A5E68))         // the scope
         if Int(s * 14) % 2 == 0 { c.px(end.x - 1, end.y, C(0xFF3A2A)) }
     }
+    // The helmet's rim, the chest plates under it lit along their top edges with a seam between.
     c.rect(18, 35, 20, 1, armorShade)
+    c.rect(19, 36, 7, 1, armorHi); c.rect(30, 36, 7, 1, armorHi); c.rect(27, 36, 2, 1, armorShade)
+    // The gun belt: pouches with brass catches, the buckle.
     c.rect(18, 37, 20, 1, C(0x6B4A2B))
-    c.rect(21, 37, 2, 1, C(0xB08D57)); c.rect(32, 37, 2, 1, C(0xB08D57))
+    c.rect(20, 37, 3, 1, C(0x4E3420)); c.rect(32, 37, 3, 1, C(0x4E3420))
+    c.px(21, 37, brass); c.px(33, 37, brass)
+    c.rect(27, 37, 2, 1, brass); c.px(27, 37, C(0xE0C080))
     c.oy += gunY(p)
     drawEE3(c, x: 38, y: 30)
 }
