@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: the TVA, the Morlock Tunnels, Asteroid M, Ta Lo and the Red Room.
 
-let villains9: [MarvelVillain: Persona] = [
+let marvelousVillains9: [MarvelousVillain: Persona] = [
     .missMinutes: Persona(name: "Miss Seconds", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFF0D0), glow: C(0xFF9A1E), jagged: false), canSit: false,
                   headTop: 17, signature: 3.0, callout: "Hey y'all!",
                   draw: drawMissMinutes),

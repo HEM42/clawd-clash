@@ -2,28 +2,28 @@ import Foundation
 
 /// Marvelous Clawds, as the app sees it: everything the engine asks of it (`UniverseModule`).
 struct MarvelousUniverse: UniverseModule {
-    var theme: Theme { marvelTheme }
-    var places: [Location: Place] { marvelPlaces }
+    var theme: Theme { marvelousTheme }
+    var places: [Location: Place] { marvelousPlaces }
     var hem: HemCostume { marvelousHem }
     var drills: [Cast: BespokeDrill] { marvelousBespokeDrills }
     var transitions: TransitionSet? {
-        TransitionSet(pick: { last, cast, from, to in ComicTrip.pick(after: (last as? ComicTrip)?.kind, cast: cast, to: to) }, every: marvelousEveryTrip)
+        TransitionSet(pick: { last, cast, from, to in MarvelousComicTrip.pick(after: (last as? MarvelousComicTrip)?.kind, cast: cast, to: to) }, every: marvelousEveryTrip)
     }
 
     var preview: PreviewInfo {
-        .of(.marvel, heroes: "heroes", [heroes1, heroes2, heroes3, heroes4, heroes5, heroes6, heroes7, heroes8, heroes9, heroes10],
-            villains: "villains", [villains1, villains2, villains3, villains4, villains5, villains6, villains7, villains8, villains9])
+        .of(.marvel, heroes: "heroes", [marvelousHeroes1, marvelousHeroes2, marvelousHeroes3, marvelousHeroes4, marvelousHeroes5, marvelousHeroes6, marvelousHeroes7, marvelousHeroes8, marvelousHeroes9, marvelousHeroes10],
+            villains: "villains", [marvelousVillains1, marvelousVillains2, marvelousVillains3, marvelousVillains4, marvelousVillains5, marvelousVillains6, marvelousVillains7, marvelousVillains8, marvelousVillains9])
     }
 
     /// Who moonwalks when idle: dancers, with legs free to show it (four plain legs, nothing hanging over them).
-    var moonwalkers: Set<Cast> { [.hero(MarvelHero.starLord), .hero(MarvelHero.deadpool), .hero(MarvelHero.howardTheDuck)] }
+    var moonwalkers: Set<Cast> { [.hero(MarvelousHero.starLord), .hero(MarvelousHero.deadpool), .hero(MarvelousHero.howardTheDuck)] }
     var rides: [Ride] { [.quinjet, .milano] }
 }
 
 /// Tools/Transitions' Marvelous Clawds sheet: every kind, and the burst once for each sound word, with Deadpool's two.
 private func marvelousEveryTrip(from: Location, to: Location) -> [ShownTrip] {
-    func shown(_ kind: ComicWipe, _ key: String, _ title: String, sound: ComicSound = .kapow) -> ShownTrip {
-        ShownTrip(key: key, title: title, trip: ComicTrip(kind: kind, sound: sound, caption: "MEANWHILE, IN \(to.name.uppercased())…",
+    func shown(_ kind: MarvelousComicWipe, _ key: String, _ title: String, sound: MarvelousComicSound = .kapow) -> ShownTrip {
+        ShownTrip(key: key, title: title, trip: MarvelousComicTrip(kind: kind, sound: sound, caption: "MEANWHILE, IN \(to.name.uppercased())…",
                                                           quip: "Psst. Yes, you. Hold on, I'll change the set."))
     }
     return [
@@ -56,9 +56,9 @@ extension MarvelousUniverse {
              LineupSlot(who: .villain(.redSkull), leader: true, label: "Red Skull", x: 352, facing: -1, role: .shoot(offset: 0))],
             [LineupSlot(who: .hero(.groot), leader: false, label: "Run the test suite", x: 388, facing: 1, role: .cheer)],
         ], social: (title: "CLAWDVENGERS: CLAWD WARS", subtitle: "Your Claude Code sessions as a pixel-art Marvelous Clawds battle on your desktop",
-                       cast: [.hero(MarvelHero.thor), .hero(MarvelHero.spiderMan), .hero(MarvelHero.captainAmerica),
-                              .hero(MarvelHero.ironMan), .villain(MarvelVillain.thanos),
-                              .villain(MarvelVillain.loki), .villain(MarvelVillain.greenGoblin),
-                              .villain(MarvelVillain.venom)]))
+                       cast: [.hero(MarvelousHero.thor), .hero(MarvelousHero.spiderMan), .hero(MarvelousHero.captainAmerica),
+                              .hero(MarvelousHero.ironMan), .villain(MarvelousVillain.thanos),
+                              .villain(MarvelousVillain.loki), .villain(MarvelousVillain.greenGoblin),
+                              .villain(MarvelousVillain.venom)]))
     }
 }

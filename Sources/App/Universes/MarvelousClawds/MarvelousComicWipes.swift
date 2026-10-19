@@ -1,9 +1,9 @@
 import AppKit
 
 /// Marvel's trips between places, in place of Star Wars' wipes: comic-book transitions, a different one each time.
-enum ComicWipe: Int, CaseIterable {
+enum MarvelousComicWipe: Int, CaseIterable {
     case halftone       // the new place prints in as halftone dots, sweeping left to right
-    case burst          // a sound effect (`ComicSound`) covers the screen and clears away on the new place
+    case burst          // a sound effect (`MarvelousComicSound`) covers the screen and clears away on the new place
     case panels         // the new place drops in as three comic panels
     case speedLines     // action lines rush in, a white flash, and the new place zooms out of it
     case meanwhile      // an iris closes, "MEANWHILE, IN …", and opens on the new place
@@ -24,7 +24,7 @@ enum ComicWipe: Int, CaseIterable {
 }
 
 /// The sound effect a `.burst` makes, each in its own look: a sound of someone on screen, or KAPOW!.
-enum ComicSound: CaseIterable {
+enum MarvelousComicSound: CaseIterable {
     case kapow          // the classic yellow and red starburst
     case snikt          // Wolverine, X-23: three claw slashes tear the old place open
     case bamf           // Nightcrawler: a puff of purple smoke
@@ -49,21 +49,21 @@ enum ComicSound: CaseIterable {
 /// One trip's transition, picked for who's on screen and where it's going. Shared by the window and the screen saver,
 /// which hand over the old picture (frozen), the new one (as it is right now) and how far through it is; a frame is
 /// drawn over the whole of `r`. Sizes are against an 800-pixel-tall frame.
-struct ComicTrip {
-    let kind: ComicWipe
-    var sound = ComicSound.kapow
+struct MarvelousComicTrip {
+    let kind: MarvelousComicWipe
+    var sound = MarvelousComicSound.kapow
     var caption = ""
     var quip = ""
     var duration: Double { kind.duration }
 
     /// Any transition but the last one. A sound effect belongs to someone on screen if it can; Deadpool on screen
     /// brings his own two transitions (often: he hogs the spotlight) and sometimes his own caption.
-    static func pick(after last: ComicWipe?, cast: [Cast], to place: Location) -> ComicTrip {
-        let heroes = Set(cast.filter { $0.universe == .marvel && !$0.isDark }.compactMap { MarvelHero(rawValue: $0.index) })
+    static func pick(after last: MarvelousComicWipe?, cast: [Cast], to place: Location) -> MarvelousComicTrip {
+        let heroes = Set(cast.filter { $0.universe == .marvel && !$0.isDark }.compactMap { MarvelousHero(rawValue: $0.index) })
         let deadpool = heroes.contains(.deadpool)
-        var kinds: [ComicWipe] = [.halftone, .burst, .panels, .speedLines, .meanwhile]
+        var kinds: [MarvelousComicWipe] = [.halftone, .burst, .panels, .speedLines, .meanwhile]
         if deadpool { kinds += [.fourthWall, .fourthWall, .chimichanga, .chimichanga] }
-        var trip = ComicTrip(kind: kinds.filter { $0 != last }.randomElement() ?? .halftone)
+        var trip = MarvelousComicTrip(kind: kinds.filter { $0 != last }.randomElement() ?? .halftone)
         trip.sound = heroes.flatMap { sounds[$0] ?? [] }.randomElement() ?? .kapow
         let name = place.name.uppercased()
         trip.caption = deadpool && Bool.random() ? deadpoolCaptions.randomElement()!(name) : "MEANWHILE, IN \(name)…"
@@ -71,7 +71,7 @@ struct ComicTrip {
         return trip
     }
 
-    private static let sounds: [MarvelHero: [ComicSound]] = [
+    private static let sounds: [MarvelousHero: [MarvelousComicSound]] = [
         .wolverine: [.snikt], .x23: [.snikt],
         .nightcrawler: [.bamf],
         .thor: [.krakatoom, .thoom],
@@ -648,4 +648,4 @@ struct ComicTrip {
     }
 }
 
-extension ComicTrip: Trip {}
+extension MarvelousComicTrip: Trip {}

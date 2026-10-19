@@ -3,7 +3,7 @@ import Foundation
 // Heroes: the street, Defenders, Punisher, Blade and friends. Clawd in costume, classic comic colours: masks, hair,
 // leather and armour over the blocky body; where a face shows, it's Clawd's own orange.
 
-let heroes8: [MarvelHero: Persona] = [
+let marvelousHeroes8: [MarvelousHero: Persona] = [
     .spiderWoman: Persona(name: "Spider-Lady", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xF0FFE0), glow: C(0x9AE04A)),
                   muzzle: (43, 34), handGun: false, headTop: 20, signature: 2.8,
                   draw: drawSpiderWoman),

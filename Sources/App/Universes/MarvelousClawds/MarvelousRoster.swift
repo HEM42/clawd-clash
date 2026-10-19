@@ -3,33 +3,33 @@ import Foundation
 // The Marvel universe: 105 heroes, 88 villains and 43 places. Any character can lead a session (drawn large) or be an
 // agent (small). Who they are, how they fight and how they move is a `Persona`, registered in one of the Art/*.swift
 // files next to its drawing code; who lives where, who fights whom first and who gets picked up is decided here, in
-// `marvelTheme`.
+// `marvelousTheme`.
 //
-// Ids are stored in the status file: `Universe.marvel.base` plus `MarvelVillain.rawValue` (< 100) or
-// 100 + `MarvelHero.rawValue`. Only ever append cases, so running sessions keep their characters across an update.
+// Ids are stored in the status file: `Universe.marvel.base` plus `MarvelousVillain.rawValue` (< 100) or
+// 100 + `MarvelousHero.rawValue`. Only ever append cases, so running sessions keep their characters across an update.
 
-extension MarvelHero {
+extension MarvelousHero {
     var persona: Persona { heroPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-extension MarvelVillain {
+extension MarvelousVillain {
     var persona: Persona { villainPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-let heroPersonas: [MarvelHero: Persona] = heroes1.merging(heroes2) { a, _ in a }.merging(heroes3) { a, _ in a }
-    .merging(heroes4) { a, _ in a }
-    .merging(heroes5) { a, _ in a }.merging(heroes6) { a, _ in a }.merging(heroes7) { a, _ in a }
-    .merging(heroes8) { a, _ in a }.merging(heroes9) { a, _ in a }
-    .merging(heroes10) { a, _ in a }.merging([.hem: hemPersona(.marvel)]) { a, _ in a }
-let villainPersonas: [MarvelVillain: Persona] = villains1.merging(villains2) { a, _ in a }.merging(villains3) { a, _ in a }
-    .merging(villains4) { a, _ in a }
-    .merging(villains5) { a, _ in a }.merging(villains6) { a, _ in a }.merging(villains7) { a, _ in a }
-    .merging(villains8) { a, _ in a }.merging(villains9) { a, _ in a }
+private let heroPersonas: [MarvelousHero: Persona] = marvelousHeroes1.merging(marvelousHeroes2) { a, _ in a }.merging(marvelousHeroes3) { a, _ in a }
+    .merging(marvelousHeroes4) { a, _ in a }
+    .merging(marvelousHeroes5) { a, _ in a }.merging(marvelousHeroes6) { a, _ in a }.merging(marvelousHeroes7) { a, _ in a }
+    .merging(marvelousHeroes8) { a, _ in a }.merging(marvelousHeroes9) { a, _ in a }
+    .merging(marvelousHeroes10) { a, _ in a }.merging([.hem: hemPersona(.marvel)]) { a, _ in a }
+private let villainPersonas: [MarvelousVillain: Persona] = marvelousVillains1.merging(marvelousVillains2) { a, _ in a }.merging(marvelousVillains3) { a, _ in a }
+    .merging(marvelousVillains4) { a, _ in a }
+    .merging(marvelousVillains5) { a, _ in a }.merging(marvelousVillains6) { a, _ in a }.merging(marvelousVillains7) { a, _ in a }
+    .merging(marvelousVillains8) { a, _ in a }.merging(marvelousVillains9) { a, _ in a }
 
 // MARK: - Homes
 
 extension Location {
-    static func marvelHome(of leader: MarvelVillain) -> Location {
+    static func marvelHome(of leader: MarvelousVillain) -> Location {
         switch leader {
         case .thanos, .nebula, .ebonyMaw: return .titan
         case .loki, .hela: return .asgard
@@ -81,7 +81,7 @@ extension Location {
         }
     }
 
-    static func marvelHome(of hero: MarvelHero) -> Location {
+    static func marvelHome(of hero: MarvelousHero) -> Location {
         switch hero {
         case .vision, .hem: return .avengersTower
         case .ironMan: return .starkWorkshop
@@ -142,12 +142,12 @@ extension Location {
 // MARK: - The theme
 
 extension Cast {
-    static func hero(_ h: MarvelHero) -> Cast { Cast(universe: .marvel, isDark: false, index: h.rawValue) }
-    static func villain(_ v: MarvelVillain) -> Cast { Cast(universe: .marvel, isDark: true, index: v.rawValue) }
+    static func hero(_ h: MarvelousHero) -> Cast { Cast(universe: .marvel, isDark: false, index: h.rawValue) }
+    static func villain(_ v: MarvelousVillain) -> Cast { Cast(universe: .marvel, isDark: true, index: v.rawValue) }
 }
 
 /// Arch-enemies: whenever both are fighting, they're paired with each other first, wherever they are in the line.
-private let marvelNemeses: [(MarvelHero, MarvelVillain)] = [
+private let marvelNemeses: [(MarvelousHero, MarvelousVillain)] = [
     (.captainAmerica, .redSkull), (.thor, .loki), (.spiderMan, .greenGoblin), (.spiderMan, .venom),
     (.wolverine, .sabretooth), (.blackPanther, .killmonger), (.doctorStrange, .dormammu), (.hulk, .abomination),
     (.vision, .ultron), (.ironMan, .ultron), (.daredevil, .kingpin), (.daredevil, .bullseye), (.gamora, .nebula),
@@ -164,24 +164,24 @@ private let marvelNemeses: [(MarvelHero, MarvelVillain)] = [
 ]
 
 /// When these agents are done, their ship comes to pick them up instead of them just fading out.
-private let quinjetCrew: [MarvelHero] = [.captainAmerica, .blackWidow, .hawkeye, .nickFury, .hulk, .kateBishop, .yelena]
-private let milanoCrew: [MarvelHero] = [.starLord, .gamora, .drax, .rocket, .groot, .mantis, .kraglin, .cosmo]
+private let quinjetCrew: [MarvelousHero] = [.captainAmerica, .blackWidow, .hawkeye, .nickFury, .hulk, .kateBishop, .yelena]
+private let milanoCrew: [MarvelousHero] = [.starLord, .gamora, .drax, .rocket, .groot, .mantis, .kraglin, .cosmo]
 
-let marvelTheme = Theme(
+let marvelousTheme = Theme(
     universe: .marvel,
-    villains: MarvelVillain.allCases.map(\.persona),
-    heroes: MarvelHero.allCases.map(\.persona),
+    villains: MarvelousVillain.allCases.map(\.persona),
+    heroes: MarvelousHero.allCases.map(\.persona),
     places: [.avengersTower, .sanctum, .wakanda, .asgard, .sakaar, .knowhere, .titan, .helicarrier, .xMansion, .hellsKitchen,
              .vormir, .quantumRealm, .latveria, .hydraBase, .dailyBugle, .egosPlanet, .kamarTaj, .raft, .battleOfNewYork,
              .darkDimension, .attilan, .savageLand, .baxterBuilding, .jotunheim, .muspelheim, .hala, .genosha, .madripoor,
              .sokovia, .worldship, .harlem, .kunLun, .xandar, .avengersCompound, .tva, .krakoa, .morlockTunnels, .asteroidM,
              .newYorkStreets, .savageLandCitadel, .starkWorkshop, .redRoom, .taLo],
     home: { c in
-        c.isDark ? .marvelHome(of: MarvelVillain(rawValue: c.index) ?? .thanos) : .marvelHome(of: MarvelHero(rawValue: c.index) ?? .ironMan)
+        c.isDark ? .marvelHome(of: MarvelousVillain(rawValue: c.index) ?? .thanos) : .marvelHome(of: MarvelousHero(rawValue: c.index) ?? .ironMan)
     },
     nemeses: marvelNemeses.map { (.hero($0.0), .villain($0.1)) },
     ride: { c in
-        guard c.universe == .marvel, !c.isDark, let h = MarvelHero(rawValue: c.index) else { return nil }
+        guard c.universe == .marvel, !c.isDark, let h = MarvelousHero(rawValue: c.index) else { return nil }
         return quinjetCrew.contains(h) ? .quinjet : milanoCrew.contains(h) ? .milano : nil
     },
     menuIcon: drawMenuBarShield,
@@ -207,5 +207,5 @@ extension Location {
 }
 
 /// Every Marvel place, from the Places/MarvelousScenes*.swift files.
-let marvelPlaces: [Location: Place] = scenes1.merging(scenes2) { a, _ in a }.merging(scenes3) { a, _ in a }
-    .merging(scenes4) { a, _ in a }.merging(scenes5) { a, _ in a }.merging(scenes6) { a, _ in a }.merging(scenes7) { a, _ in a }
+let marvelousPlaces: [Location: Place] = marvelousScenes1.merging(marvelousScenes2) { a, _ in a }.merging(marvelousScenes3) { a, _ in a }
+    .merging(marvelousScenes4) { a, _ in a }.merging(marvelousScenes5) { a, _ in a }.merging(marvelousScenes6) { a, _ in a }.merging(marvelousScenes7) { a, _ in a }

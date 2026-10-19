@@ -3,7 +3,7 @@ import Foundation
 // Heroes: the TVA, the Red Room, the Savage Land, Stark's workshop and Ta Lo. Clawd in costume, except the alligator,
 // the sabretooth, the faceless hundun and the robot arm, who keep only a hint of him.
 
-let heroes10: [MarvelHero: Persona] = [
+let marvelousHeroes10: [MarvelousHero: Persona] = [
     .mobius: Persona(name: "Moebius", weapon: .saber, headTop: 21, signature: 3.2,
                   draw: drawMobius),
     .sylvie: Persona(name: "Sylvi", weapon: .saber, headTop: 15, signature: 3.0,

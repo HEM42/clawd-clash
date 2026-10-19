@@ -4,7 +4,7 @@ import Foundation
 // no drawing: the hook compiles this file too. The enums' order is the ids, so only ever append cases (HEM stays last)
 // and never reorder or remove one: running sessions keep their characters across an update.
 
-enum MarvelHero: Int, CaseIterable {
+enum MarvelousHero: Int, CaseIterable {
     // Avengers
     case ironMan, captainAmerica, thor, hulk, blackWidow, hawkeye, spiderMan, blackPanther, doctorStrange, scarletWitch
     case vision, captainMarvel
@@ -31,7 +31,7 @@ enum MarvelHero: Int, CaseIterable {
 
 }
 
-enum MarvelVillain: Int, CaseIterable {
+enum MarvelousVillain: Int, CaseIterable {
     // Cosmic and Avengers foes
     case thanos, loki, ultron, redSkull, doctorDoom, hela, ronan, nebula, ebonyMaw, chitauri, grandmaster, ultronSentry
     // Spider-Man's rogues
@@ -64,7 +64,7 @@ extension Universe {
 enum MarvelousFacts {
     static let entry = UniverseEntry(universe: .marvel, key: "marvel", title: "Marvelous Clawds", facts: facts)
     static let facts = UniverseFacts(
-        villainCount: MarvelVillain.allCases.count, heroCount: MarvelHero.allCases.count,
+        villainCount: MarvelousVillain.allCases.count, heroCount: MarvelousHero.allCases.count,
         agentOnly: [11, 33, 190, 202, 203, 204]   // Ultron Sentry, Doombot, Jeff, Zabu, Morris, Dum-E
     )
 }

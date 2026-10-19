@@ -125,7 +125,7 @@ ctx.addPath(burst); ctx.setStrokeColor(inkColor); ctx.setLineWidth(10); ctx.setL
 // Captain Americlawd, shield up, standing on the name. Drawn as an agent: a session working alone would be doing its
 // solo practice (Drills.swift) instead of posing.
 let cap = PixelCanvas(72, 52)
-Cast.hero(MarvelHero.captainAmerica).draw(cap, t: 0.42, mode: .working, walking: false, role: .none, asSession: false)
+Cast.hero(MarvelousHero.captainAmerica).draw(cap, t: 0.42, mode: .working, walking: false, role: .none, asSession: false)
 cap.addOutline(C(0xFFFFFF, 0.95))
 let p: CGFloat = 13   // icon pixels a sprite pixel; the body's centre is 28 columns in, the feet 8 rows up
 ctx.draw(cap.makeImage()!, in: CGRect(x: 512 - 28 * p, y: 488 - 8 * p, width: 72 * p, height: 52 * p))

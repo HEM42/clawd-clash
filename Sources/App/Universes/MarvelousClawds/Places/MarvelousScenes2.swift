@@ -1,6 +1,6 @@
 import Foundation
 
-let scenes2: [Location: Place] = [
+let marvelousScenes2: [Location: Place] = [
     .helicarrier: Place(name: "S.H.E.L.L. Skycarrier", panel: 0x16181D, still: Scenes.helicarrier, moving: Scenes.helicarrierMoving),
     .xMansion: Place(name: "Professor Why's School", panel: 0x14231A, still: Scenes.xMansion, moving: Scenes.xMansionMoving),
     .hellsKitchen: Place(name: "Hell's Kitchen", panel: 0x1A1418, still: Scenes.hellsKitchen, moving: Scenes.hellsKitchenMoving),

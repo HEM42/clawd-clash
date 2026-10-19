@@ -2,7 +2,7 @@ import Foundation
 
 // Heroes: more Avengers and the Guardians of the Galaxy.
 
-let heroes2: [MarvelHero: Persona] = [
+let marvelousHeroes2: [MarvelousHero: Persona] = [
     .antMan: Persona(name: "Aunt-Man", weapon: .saber, headTop: 13, signature: 3.0,
                   draw: drawAntMan),
     .wasp: Persona(name: "The Waspette", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xFFFBD0), glow: C(0xFFC81E)),

@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: gamma, Asgard's enemies and foot soldiers.
 
-let villains8: [MarvelVillain: Persona] = [
+let marvelousVillains8: [MarvelousVillain: Persona] = [
     .countNefaria: Persona(name: "Count Nefarius", weapon: .blaster, shot: .energy(core: C(0xFFE0E0), glow: C(0xFF4A2A)),
                   muzzle: nefariaPalm, handGun: false, headTop: 22, signature: 2.8,
                   draw: drawCountNefaria),

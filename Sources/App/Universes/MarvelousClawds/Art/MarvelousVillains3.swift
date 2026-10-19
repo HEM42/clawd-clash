@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: mutants, monsters and machines.
 
-let villains3: [MarvelVillain: Persona] = [
+let marvelousVillains3: [MarvelousVillain: Persona] = [
     .magneto: Persona(name: "Magnetto", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFE8FF), glow: C(0xC83AE0), jagged: false),
                   headTop: 17, signature: 3.2,
                   draw: drawMagneto),

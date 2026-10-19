@@ -3,7 +3,7 @@ import Foundation
 // Heroes: the Avengers. Every one of them is Clawd in costume: the mask, hair, helmet and armour drawn over (and
 // around) the blocky body, the way the Star Wars cast was done. Where the hero shows a face, it's Clawd's own orange.
 
-let heroes1: [MarvelHero: Persona] = [
+let marvelousHeroes1: [MarvelousHero: Persona] = [
     .ironMan: Persona(name: "Iron Clawd", weapon: .blaster, motion: .fly, shot: .energy(core: C(0xF4FCFF), glow: C(0x6FD8FF)), armoured: true,
                   muzzle: (43, 34), handGun: false, headTop: 20, signature: 3.0, callout: "I am Iron Clawd.",
                   draw: drawIronMan),

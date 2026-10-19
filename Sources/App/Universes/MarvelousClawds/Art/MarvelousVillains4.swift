@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: the street, spies and soldiers.
 
-let villains4: [MarvelVillain: Persona] = [
+let marvelousVillains4: [MarvelousVillain: Persona] = [
     .kingpin: Persona(name: "Kingping", weapon: .saber, pivot: (43.5, 33.5), bulk: 2, headTop: 20, signature: 3.0,
                   draw: drawKingpin),
     .bullseye: Persona(name: "Bullseyes", weapon: .blaster, shot: .thrown(C(0xC8CCD4)), muzzle: (46, 32), signature: 2.6,

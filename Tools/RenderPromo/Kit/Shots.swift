@@ -12,7 +12,7 @@ enum Into {
     case cut
     case wipe
     case starWars(clock: Bool)
-    case marvel(ComicTrip)
+    case marvel(MarvelousComicTrip)
     case dc(DCComicTrip)
     case middleEarth(RingsTrip)
     case trip(ComicTransition)    // any other universe's own trips (Doctor Clawd, The Clawd Files, Stevie Clawdberg)

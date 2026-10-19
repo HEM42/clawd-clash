@@ -3,7 +3,7 @@ import Foundation
 // Heroes: more X-Men and the Spider-heroes. Clawd in costume, as ever: the body is the face (Clawd orange where the
 // hero shows skin), with cowls, hair, masks and suits drawn over it.
 
-let heroes7: [MarvelHero: Persona] = [
+let marvelousHeroes7: [MarvelousHero: Persona] = [
     .bishop: Persona(name: "Bisshop", weapon: .blaster, shot: .energy(core: C(0xFFE8D0), glow: C(0xFF8A3A)),
                   muzzle: (54, 32), headTop: 21, signature: 3.0,
                   draw: drawBishop),

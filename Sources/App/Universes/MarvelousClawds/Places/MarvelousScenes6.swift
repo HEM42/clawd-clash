@@ -1,6 +1,6 @@
 import Foundation
 
-let scenes6: [Location: Place] = [
+let marvelousScenes6: [Location: Place] = [
     .xandar: Place(name: "Xandarr", panel: 0x161E2A, still: Scenes.xandar, moving: Scenes.xandarLife),
     .avengersCompound: Place(name: "Clawdvengers Compound", panel: 0x16201A, still: Scenes.avengersCompound,
                              moving: Scenes.compoundLife),

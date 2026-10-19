@@ -1,6 +1,6 @@
 import Foundation
 
-let scenes1: [Location: Place] = [
+let marvelousScenes1: [Location: Place] = [
     .avengersTower: Place(name: "Clawdvengers Tower", panel: 0x141A2C, still: Scenes.avengersTower, moving: Scenes.towerLife),
     .sanctum: Place(name: "Sanctum Sanctorum", panel: 0x221510, still: Scenes.sanctum, moving: Scenes.sanctumLife),
     .wakanda: Place(name: "Wakandu", panel: 0x2A1620, still: Scenes.wakanda, moving: Scenes.wakandaLife),

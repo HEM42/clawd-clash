@@ -14,14 +14,14 @@ struct MarvelousReel: PromoReel {
     var beats: [(key: Double, beat: Beat)] { marvelousBeats }
     var universe: Universe { .marvel }
     var brawl: BrawlCast {
-        BrawlCast(claude: .hero(MarvelHero.captainAmerica), other: .villain(MarvelVillain.redSkull),
-                  agent: .hero(MarvelHero.spiderMan), otherAgent: .villain(MarvelVillain.greenGoblin),
+        BrawlCast(claude: .hero(MarvelousHero.captainAmerica), other: .villain(MarvelousVillain.redSkull),
+                  agent: .hero(MarvelousHero.spiderMan), otherAgent: .villain(MarvelousVillain.greenGoblin),
                   line: "Switch to Marvelous Clawds in Settings.",
                   sub: "Shields, hammers and webs: 193 characters in 43 places.")
     }
     var window: WindowCast {
-        WindowCast(place: .avengersTower, claude: .hero(MarvelHero.captainAmerica), other: .villain(MarvelVillain.redSkull),
-                   agentA: .hero(MarvelHero.spiderMan), agentB: .hero(MarvelHero.blackWidow), extra: .villain(MarvelVillain.hydraAgent),
+        WindowCast(place: .avengersTower, claude: .hero(MarvelousHero.captainAmerica), other: .villain(MarvelousVillain.redSkull),
+                   agentA: .hero(MarvelousHero.spiderMan), agentB: .hero(MarvelousHero.blackWidow), extra: .villain(MarvelousVillain.hydraAgent),
                    prompt: "You: “make the shield bounce twice”", otherPrompt: "You: “make the hero section pop”")
     }
     func sound(_ m: Mix) { marvelousSound(m) }
@@ -30,7 +30,7 @@ struct MarvelousReel: PromoReel {
 // MARK: The Marvelous Clawds showcase (in its trailer, and on the promo's comic page)
 
 /// The Battle of New York backdrop from the app, at frame size: the portal over Stark Tower, smoke, the Leviathans.
-func newYork(_ t: Double, floorRows: Int = 14) -> PixelCanvas {
+private func newYork(_ t: Double, floorRows: Int = 14) -> PixelCanvas {
     let c = PixelCanvas(fxW, fxH)
     Location("battleOfNewYork").drawStatic(c, floorRows: floorRows)
     Location("battleOfNewYork").drawAnimated(c, floorRows: floorRows, t: t)
@@ -39,13 +39,13 @@ func newYork(_ t: Double, floorRows: Int = 14) -> PixelCanvas {
 
 /// Where the giant Leviathan's tail is (fx units) and how big it is, at shot-local time `l`: it noses out of the
 /// portal small, then swells and dives toward us until it fills the frame.
-func leviathan(_ l: Double) -> (x: Double, y: Double, k: Double) {
+private func leviathan(_ l: Double) -> (x: Double, y: Double, k: Double) {
     let f = clamp((l - 2.6) / 5.0)
     let e = f * f
     return (lerp(150, -120, e), lerp(14, 70, e), lerp(1, 9, e))
 }
 
-func clawvelShowcase(_ ctx: CGContext, local l: Double, t: Double) {
+func marvelousClawvelShowcase(_ ctx: CGContext, local l: Double, t: Double) {
     // the city, slowly pushing in
     let zoom = 1 + 0.06 * clamp(l / 8)
     ctx.saveGState()
@@ -68,7 +68,7 @@ func clawvelShowcase(_ ctx: CGContext, local l: Double, t: Double) {
     if l > 4.2 {
         let f = easeOut((l - 4.2) / 1.6)
         onStage(ctx, CGRect(x: 0, y: 0, width: W, height: H), scale: 6, ground: Double(fxH) + 10) {
-            var im = Actor(cast: .hero(MarvelHero.ironMan), x: lerp(300, 236, f), facing: -1, role: .shoot(offset: 0))
+            var im = Actor(cast: .hero(MarvelousHero.ironMan), x: lerp(300, 236, f), facing: -1, role: .shoot(offset: 0))
             im.airborne = true
             im.lift = lerp(0, 110, f)
             draw(im, ctx, t: t)
@@ -111,9 +111,9 @@ func marvelousTitle(_ ctx: CGContext, center: CGPoint, scale s: Double, alpha: D
 }
 
 /// The heroes' ring: six of them back to back on the street of the Battle of New York, the camera circling round them.
-func heroesRing(_ ctx: CGContext, local l: Double, t: Double) {
+private func heroesRing(_ ctx: CGContext, local l: Double, t: Double) {
     blit(newYork(t, floorRows: 26), ctx)
-    let heroes: [MarvelHero] = [.captainAmerica, .ironMan, .thor, .hulk, .blackWidow, .hawkeye]
+    let heroes: [MarvelousHero] = [.captainAmerica, .ironMan, .thor, .hulk, .blackWidow, .hawkeye]
     let spin = -l * 0.55
     var ring: [(Actor, Double)] = []
     for (i, h) in heroes.enumerated() {
@@ -137,10 +137,10 @@ let marvelousShots: [Shot] = [
     },
     // Comic panels of the cast flip past, then MARVELOUS CLAWDS slams in on a burst.
     Shot(name: "panels", start: 3.5, end: 7.0, into: .cut) { ctx, local, t in
-        let cast: [Cast] = [.hero(MarvelHero.ironMan), .villain(MarvelVillain.thanos), .hero(MarvelHero.captainAmerica), .villain(MarvelVillain.loki),
-                            .hero(MarvelHero.thor), .villain(MarvelVillain.ultron), .hero(MarvelHero.hulk), .villain(MarvelVillain.redSkull),
-                            .hero(MarvelHero.spiderMan), .villain(MarvelVillain.greenGoblin), .hero(MarvelHero.blackPanther),
-                            .villain(MarvelVillain.doctorDoom), .hero(MarvelHero.doctorStrange), .villain(MarvelVillain.venom), .hero(MarvelHero.groot)]
+        let cast: [Cast] = [.hero(MarvelousHero.ironMan), .villain(MarvelousVillain.thanos), .hero(MarvelousHero.captainAmerica), .villain(MarvelousVillain.loki),
+                            .hero(MarvelousHero.thor), .villain(MarvelousVillain.ultron), .hero(MarvelousHero.hulk), .villain(MarvelousVillain.redSkull),
+                            .hero(MarvelousHero.spiderMan), .villain(MarvelousVillain.greenGoblin), .hero(MarvelousHero.blackPanther),
+                            .villain(MarvelousVillain.doctorDoom), .hero(MarvelousHero.doctorStrange), .villain(MarvelousVillain.venom), .hero(MarvelousHero.groot)]
         let colours: [(CGColor, CGColor)] = [(CGColor(red: 0.85, green: 0.15, blue: 0.15, alpha: 1), CGColor(red: 1, green: 0.4, blue: 0.3, alpha: 1)),
                                              (CGColor(red: 0.15, green: 0.35, blue: 0.85, alpha: 1), CGColor(red: 0.4, green: 0.6, blue: 1, alpha: 1)),
                                              (CGColor(red: 1, green: 0.8, blue: 0.1, alpha: 1), CGColor(red: 1, green: 0.95, blue: 0.5, alpha: 1)),
@@ -170,7 +170,7 @@ let marvelousShots: [Shot] = [
         }
     },
     // The Battle of New York: the portal, the space whale diving at us, Iron Clawd rocketing up to meet it.
-    Shot(name: "invasion", start: 7.0, end: 15.5, into: .cut) { ctx, local, t in clawvelShowcase(ctx, local: local, t: t) },
+    Shot(name: "invasion", start: 7.0, end: 15.5, into: .cut) { ctx, local, t in marvelousClawvelShowcase(ctx, local: local, t: t) },
     Shot(name: "ring", start: 15.5, end: 20.0, into: .cut) { ctx, local, t in heroesRing(ctx, local: local, t: t) },
     Shot(name: "hook", start: 20.0, end: 24.0) { ctx, local, t in
         let zoom = 1 + 0.03 * local
@@ -188,12 +188,12 @@ let marvelousShots: [Shot] = [
         caption("along the bottom of your screen. They fight while they work.", ctx, local: local, start: 0.6, y: 830, size: 40, color: yellow, weight: .bold)
     },
     Shot(name: "status", start: 28.6, end: 32.8) { ctx, local, t in
-        let cast: [Cast] = [.hero(MarvelHero.thor), .villain(MarvelVillain.loki), .villain(MarvelVillain.ultron), .villain(MarvelVillain.thanos)]
+        let cast: [Cast] = [.hero(MarvelousHero.thor), .villain(MarvelousVillain.loki), .villain(MarvelousVillain.ultron), .villain(MarvelousVillain.thanos)]
         statusOf(ctx, local: local, t: t, cast: cast, badgeText: "MARVELOUS CLAWDS", aside: "(\(cast[3].name) sits down when the job's done. Relatable.)")
     },
     Shot(name: "agents", start: 32.8, end: 36.8) { ctx, local, t in
-        agentsOf(ctx, local: local, t: t, guardCast: .hero(MarvelHero.ironMan),
-                 crew: [.hero(MarvelHero.spiderMan), .hero(MarvelHero.blackWidow), .hero(MarvelHero.groot), .hero(MarvelHero.rocket)],
+        agentsOf(ctx, local: local, t: t, guardCast: .hero(MarvelousHero.ironMan),
+                 crew: [.hero(MarvelousHero.spiderMan), .hero(MarvelousHero.blackWidow), .hero(MarvelousHero.groot), .hero(MarvelousHero.rocket)],
                  line: "Every subagent suits up.", badgeText: "MARVELOUS CLAWDS")
     },
     Shot(name: "window", start: 36.8, end: 41.6) { ctx, local, t in
@@ -203,9 +203,9 @@ let marvelousShots: [Shot] = [
         caption("A live card per session: what it's doing, your last prompt, every agent.", ctx, local: local, start: 0.4, y: 890, size: 32, color: yellow, weight: .bold)
     },
     Shot(name: "ais", start: 41.6, end: 46.0) { ctx, local, t in
-        everyAI(ctx, local: local, t: t, cast: [.hero(MarvelHero.captainAmerica), .hero(MarvelHero.ironMan), .villain(MarvelVillain.thanos),
-                                                .villain(MarvelVillain.loki), .villain(MarvelVillain.ultron), .villain(MarvelVillain.greenGoblin),
-                                                .villain(MarvelVillain.hydraAgent)])
+        everyAI(ctx, local: local, t: t, cast: [.hero(MarvelousHero.captainAmerica), .hero(MarvelousHero.ironMan), .villain(MarvelousVillain.thanos),
+                                                .villain(MarvelousVillain.loki), .villain(MarvelousVillain.ultron), .villain(MarvelousVillain.greenGoblin),
+                                                .villain(MarvelousVillain.hydraAgent)])
     },
     // The end card: Clawdvengers Tower at night, the Clawdjet flies through, the title lands.
     Shot(name: "endcard", start: 46.0, end: 50.2) { ctx, local, t in
@@ -222,9 +222,9 @@ let marvelousShots: [Shot] = [
                 ctx.restoreGState()
             }
         }
-        let crew: [(Cast, FightRole, AI)] = [(.hero(MarvelHero.ironMan), .cheer, .desktop), (.hero(MarvelHero.captainAmerica), .block, .claude),
-                                             (.villain(MarvelVillain.thanos), .zap, .codex), (.villain(MarvelVillain.greenGoblin), .none, .copilot),
-                                             (.villain(MarvelVillain.loki), .cheer, .qwen), (.villain(MarvelVillain.ultron), .none, .gemini)]
+        let crew: [(Cast, FightRole, AI)] = [(.hero(MarvelousHero.ironMan), .cheer, .desktop), (.hero(MarvelousHero.captainAmerica), .block, .claude),
+                                             (.villain(MarvelousVillain.thanos), .zap, .codex), (.villain(MarvelousVillain.greenGoblin), .none, .copilot),
+                                             (.villain(MarvelousVillain.loki), .cheer, .qwen), (.villain(MarvelousVillain.ultron), .none, .gemini)]
         var placed: [Actor] = []
         for (i, (who, role, ai)) in crew.enumerated() {
             var a = Actor(cast: who, x: [28.0, 84, 156, 206, 252, 296][i], facing: i < 2 ? 1 : -1, role: role, ai: ai)

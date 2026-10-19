@@ -4,7 +4,7 @@ import Foundation
 
 let marvelousBespokeDrills: [Cast: BespokeDrill] = [
         // Spider-Clawd: a web yo-yo, down to the ground and back up into the hand.
-        .hero(MarvelHero.spiderMan): { c, who, d, t in
+        .hero(MarvelousHero.spiderMan): { c, who, d, t in
             standing(c, who, t: t)
             let hand = (who.muzzle.x + 1, who.muzzle.y)
             let k = 0.5 - 0.5 * cos(d.e * 2 * .pi / 1.2)
@@ -14,7 +14,7 @@ let marvelousBespokeDrills: [Cast: BespokeDrill] = [
             c.px(Int(end.0), Int(end.1) + 1, C(0xB8BCC8))
         },
         // Hawk-I: target practice at a straw boss on a stand, the arrows staying in it.
-        .hero(MarvelHero.hawkeye): { c, who, d, t in
+        .hero(MarvelousHero.hawkeye): { c, who, d, t in
             let period = 1.6
             standing(c, who, t: t) { $0.fire = (d.e, false); $0.firePeriod = period }
             let tx = 64
@@ -34,7 +34,7 @@ let marvelousBespokeDrills: [Cast: BespokeDrill] = [
             }
         },
         // Thanoz: the gems glowing one by one round the gauntlet, then the snap.
-        .villain(MarvelVillain.thanos): { c, who, d, t in
+        .villain(MarvelousVillain.thanos): { c, who, d, t in
             standing(c, who, t: t) { $0.armRaise = 3 }
             let period = 3.2, f = frac(d.e / period)
             let hand = (who.weaponPivot.x, who.weaponPivot.y - 3)
@@ -60,7 +60,7 @@ let marvelousBespokeDrills: [Cast: BespokeDrill] = [
             }
         },
         // Lokee: an illusion of himself beside him, flickering in and out.
-        .villain(MarvelVillain.loki): { c, who, d, t in
+        .villain(MarvelousVillain.loki): { c, who, d, t in
             let period = 2.6, f = frac(d.e / period)
             if f > 0.15, f < 0.85, setRamp(d) > 0.9, noise(Int(t * 14)) > 0.12 {
                 let ghost = PixelCanvas(c.w, c.h)
@@ -74,7 +74,7 @@ let marvelousBespokeDrills: [Cast: BespokeDrill] = [
             standing(c, who, t: t)
         },
         // The Bulk: leaps a little and smashes the ground, dust and cracks flying.
-        .hero(MarvelHero.hulk): { c, who, d, t in
+        .hero(MarvelousHero.hulk): { c, who, d, t in
             let period = 2.2, f = frac(d.e / period)
             standing(c, who, t: t) { p in if f > 0.45, f < 0.6 { p.melee = 40 } }
             guard setRamp(d) > 0.9 else { return }
@@ -92,7 +92,7 @@ let marvelousBespokeDrills: [Cast: BespokeDrill] = [
             }
         },
         // Iron Clawd: testing the boot thrusters, wobbling a few pixels off the ground.
-        .hero(MarvelHero.ironMan): { c, who, d, t in
+        .hero(MarvelousHero.ironMan): { c, who, d, t in
             standing(c, who, t: t)
             let r = setRamp(d)
             let lift = Int((r * (4 + 2 * sin(d.e * 2.3))).rounded())

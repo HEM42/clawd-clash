@@ -2,7 +2,7 @@ import Foundation
 
 // Heroes: the Fantastic Four, the street and the rest.
 
-let heroes4: [MarvelHero: Persona] = [
+let marvelousHeroes4: [MarvelousHero: Persona] = [
     .humanTorch: Persona(name: "Human Blowtorch", weapon: .blaster, motion: .fly, shot: .fire, muzzle: (44, 32), handGun: false,
                   headTop: 15, signature: 3.2, callout: "Fire it up!",
                   draw: drawHumanTorch),

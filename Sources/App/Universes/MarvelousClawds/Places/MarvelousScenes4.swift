@@ -1,6 +1,6 @@
 import Foundation
 
-let scenes4: [Location: Place] = [
+let marvelousScenes4: [Location: Place] = [
     .baxterBuilding: Place(name: "Bexter Building", panel: 0x1A1E2A, still: Scenes.baxterBuilding, moving: Scenes.baxterLife),
     .jotunheim: Place(name: "Jotunheim", panel: 0x161C24, still: Scenes.jotunheim, moving: Scenes.jotunheimLife),
     .muspelheim: Place(name: "Muspelheim", panel: 0x2A1410, still: Scenes.muspelheim, moving: Scenes.muspelheimLife),

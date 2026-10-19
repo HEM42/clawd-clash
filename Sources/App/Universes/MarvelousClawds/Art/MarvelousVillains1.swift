@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: cosmic and Avengers foes.
 
-let villains1: [MarvelVillain: Persona] = [
+let marvelousVillains1: [MarvelousVillain: Persona] = [
     .thanos: Persona(name: "Thanoz", weapon: .lightning, magic: Magic(core: C(0xF4E0FF), glow: C(0xA040FF), jagged: false),
                   pivot: (42.5, 31.5), bulk: 2, headTop: 12, signature: 3.2, callout: "I am unavoidable.",
                   draw: drawThanos),

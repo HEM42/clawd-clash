@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: aliens, Avengers foes and sorcerers.
 
-let villains7: [MarvelVillain: Persona] = [
+let marvelousVillains7: [MarvelousVillain: Persona] = [
     .brood: Persona(name: "The Brude", weapon: .saber, headTop: 15, signature: 2.6,
                   draw: drawBrood),
     .cassandraNova: Persona(name: "Cassandra Supernova", weapon: .lightning, motion: .hover, magic: Magic(core: C(0xFFE0F0), glow: C(0xE84AA0), jagged: false, rings: true),
