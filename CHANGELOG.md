@@ -9,6 +9,11 @@ Its first three universes started as separate apps. Their changelogs from before
 
 Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://github.com/rodclemen/doctor-clawd)), so its whole history is below, from 3.1.0.
 
+## Unreleased
+
+### Added
+- **A new universe in the making, Stranger Clawds** (on the `stranger-clawds` branch), number 9 in `NUMBERS` (8 is reserved for Clawd Burton). Started from the template with `Tools/new-universe.sh`, so for now it's the template's sample cast and meadow under its own name (`Sources/App/Universes/StrangerClawds/`, prefix `Hawkins`, key `hawkins`); `Tools/CheckUniverse/check.sh StrangerClawds` passes apart from its size.
+
 ## 3.7.1 (2026-10-19)
 
 ### Added
