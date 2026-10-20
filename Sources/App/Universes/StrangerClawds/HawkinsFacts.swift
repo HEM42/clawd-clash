@@ -50,8 +50,12 @@ enum HawkinsFacts {
         // The Upside Down's small fry (a Demodog, Dart, a Demobat and a flayed rat) only ever turn up as agents.
         agentOnly: Set([HawkinsVillain.demodog, .dart, .demobat, .flayedRat].map(\.rawValue)),
         // Vecna and One are the same man in two forms, so they never lead sessions back to back.
-        rivals: [HawkinsVillain.vecna.rawValue, HawkinsVillain.one.rawValue]
-        // Nothing else yet: the compaction (taken to the Upside Down) comes with the mechanics.
+        rivals: [HawkinsVillain.vecna.rawValue, HawkinsVillain.one.rawValue],
+        // The ones who've been to the Upside Down (Will, Eleven, Max, Holly, Nancy, Steve, Robin and Eddie): a
+        // compaction takes them there for a moment, back through the wall, and they come back slimy (`HawkinsTaken`).
+        compaction: .away(who: Set([HawkinsHero.willByers, .eleven, .maxMayfield, .hollyWheeler, .nancyWheeler,
+                                    .steveHarringclawd, .robinBuckley, .eddieMunclawd]
+                                    .map { UniverseFacts.heroBase + $0.rawValue }))
         //
         // Everything below is optional: uncomment what your universe needs. Ids here are local: a villain's is its
         // rawValue, a hero's `UniverseFacts.heroBase + rawValue`.

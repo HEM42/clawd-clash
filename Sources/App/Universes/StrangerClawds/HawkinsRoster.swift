@@ -102,11 +102,16 @@ let hawkinsTheme = Theme(
                  : .hawkinsHome(of: HawkinsHero(rawValue: c.index) ?? .mikeWheeler)
     },
     nemeses: hawkinsNemeses.map { (.hero($0.0), .villain($0.1)) },
-    // Who gets picked up when their agent is done, and by what: nil walks off on foot, as everyone does for now. The
-    // Party's BMX bikes come with the mechanics.
+    // Who gets picked up when their agent is done, and by what: the Party ride off on the back of their friends' BMX
+    // bikes (HawkinsRides.swift). Everyone else walks off on foot: the teenagers and the grown-ups, HEM, and every
+    // villain.
     ride: { c in
-        guard c.universe == .hawkins else { return nil }
-        return nil
+        guard c.universe == .hawkins, !c.isDark else { return nil }
+        switch HawkinsHero(rawValue: c.index) {
+        case .eleven?, .mikeWheeler?, .dustinHenderson?, .lucasSinclawd?, .willByers?, .maxMayfield?, .ericaSinclair?:
+            return .hawkinsBikes
+        default: return nil
+        }
     },
     menuIcon: hawkinsMenuIcon,
     // Who stands in for a session in Status Symbols: usually the universe's lead hero.

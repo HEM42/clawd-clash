@@ -8,6 +8,9 @@ import Foundation
 //   HawkinsRoster.swift      personas, homes, nemeses, the `Theme`, the place keys.
 //   HawkinsHem.swift         HEM's costume here.        HawkinsIcon.swift   the menu bar icon.
 //   Art/                     the characters.            Places/             the places.
+//   HawkinsRides.swift       the Party's BMX bikes.  HawkinsTaken.swift  taken to the Upside Down (compaction).
+//   HawkinsHabits.swift      the nosebleed, Vecna's clock, the babysitter.
+//   HawkinsDrills.swift      the bespoke drills.
 //   Promo/HawkinsReel.swift  the trailer, compiled only into Tools/RenderPromo, never into the app.
 // The scene changes with the engine's plain edge and clock wipes for now; the universe's own trips come later.
 
@@ -36,6 +39,17 @@ struct HawkinsUniverse: UniverseModule {
     }
     /// Nobody floats cross-legged here: Eleven's powers aren't a meditation.
     var meditation: Meditation { Meditation(who: .never) }
+    /// Eleven crushing a can, the Party's d20, Steve's batting practice: HawkinsDrills.swift.
+    var drills: [Cast: BespokeDrill] { hawkinsBespokeDrills }
+    /// The Party's BMX bikes: HawkinsRides.swift.
+    var rides: [Ride] { [.hawkinsBikes] }
+    /// Taken to the Upside Down, back through the wall and slimy: HawkinsTaken.swift.
+    func compactionLook(k: Double, cast: Cast) -> CompactionLook? { HawkinsTaken(k: k) }
+    /// The nosebleed after a fight, Vecna's clock, Steve minding the kids: HawkinsHabits.swift.
+    var quirks: StageQuirks {
+        StageQuirks(jitter: hawkinsStageJitter, prop: hawkinsVecnaClock, remark: hawkinsBabysitter,
+                    afterDuel: [.hero(HawkinsHero.eleven)], afterDuelFrom: [.hero(HawkinsHero.eleven): hawkinsNosebleedFrom])
+    }
 
     /// The README's desktop line-up and social preview (Tools/RenderDocs).
     var docs: DocsInfo {

@@ -88,6 +88,8 @@ private func drawSteveHarringclawd(_ c: PixelCanvas, _ p: Pose) {
     }
     if let a = p.melee {
         steveBat(c, angle: a, trail: p.trail)
+    } else if hawkinsSteveMinding {
+        steveBat(c, angle: -112, trail: [])   // minding the kids (HawkinsHabits.swift): the bat up on his shoulder
     } else {
         steveBat(c, angle: 48, trail: [])
     }
@@ -447,13 +449,16 @@ private func drawEddieMunclawd(_ c: PixelCanvas, _ p: Pose) {
 /// the end, lit along its edge; a smear where a fast thrust just was.
 private func eddieSpear(_ c: PixelCanvas, angle a: Double, trail: [Double]) {
     let h = Sprite.hand
-    hawkinsSmear(c, h, trail, from: 12, to: 18, C(0xE4ECF4))
-    hawkinsBar(c, h, a, from: -3, to: 15, C(0x8A6440), r: 0.7)
-    hawkinsBar(c, h, a, from: -3, to: 14, C(0xB08858), r: 0.25)
-    hawkinsBar(c, h, a, from: 13, to: 15.5, C(0x2A2A30), r: 0.85)
-    hawkinsBar(c, h, a, from: 15.5, to: 18.5, C(0xA8ACB6), r: 0.85)
-    hawkinsBar(c, h, a, from: 18.5, to: 20, C(0xD8DCE4), r: 0.45)
-    let e0 = hawkinsReach(hawkinsReach(h, a, 15.8), a - 90, 0.6), e1 = hawkinsReach(hawkinsReach(h, a, 18.6), a - 90, 0.6)
+    // Swung down past the feet, it's held shorter, so the blade stays a row clear of the frame's bottom edge (the
+    // top, when the Upside Down turns over).
+    let down = sin(a * .pi / 180), k = down > 0 ? min(1, (50 - h.y) / (20.6 * down)) : 1
+    hawkinsSmear(c, h, trail, from: 12 * k, to: 18 * k, C(0xE4ECF4))
+    hawkinsBar(c, h, a, from: -3, to: 15 * k, C(0x8A6440), r: 0.7)
+    hawkinsBar(c, h, a, from: -3, to: 14 * k, C(0xB08858), r: 0.25)
+    hawkinsBar(c, h, a, from: 13 * k, to: 15.5 * k, C(0x2A2A30), r: 0.85)
+    hawkinsBar(c, h, a, from: 15.5 * k, to: 18.5 * k, C(0xA8ACB6), r: 0.85)
+    hawkinsBar(c, h, a, from: 18.5 * k, to: 20 * k, C(0xD8DCE4), r: 0.45)
+    let e0 = hawkinsReach(hawkinsReach(h, a, 15.8 * k), a - 90, 0.6), e1 = hawkinsReach(hawkinsReach(h, a, 18.6 * k), a - 90, 0.6)
     hawkinsLine(c, e0.x, e0.y, e1.x, e1.y, C(0xEEF2F8), 0.3)
     c.rect(Int(h.x.rounded()) - 1, Int(h.y.rounded()) - 1, 3, 3, clawdOrange)
 }
