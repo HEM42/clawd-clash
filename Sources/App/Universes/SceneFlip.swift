@@ -10,8 +10,13 @@ import Foundation
 struct SceneFlip {
     /// The places it can happen at.
     let places: Set<Location>
-    /// The chance that an arrival at one of them turns it over.
+    /// The chance that a try turns it over: one try a moment after arriving at one of them, then one every `every`
+    /// seconds while the place stays on show.
     var chance = 0.1
+    /// Seconds between tries while the place stays on show; nil: only on arriving.
+    var every: Double? = nil
+    /// Seconds after it's back the right way up before it can turn over again, so it never comes twice in a row.
+    var rest = 0.0
     /// How long the half-turn takes, each way, in seconds.
     var turn = 1.5
     /// How long it stays over, in seconds, picked afresh each time.
@@ -33,6 +38,9 @@ final class SceneFlipClock {
     /// Turning back early (the crew moved on): from how far over it was, starting when.
     private var early: (start: Double, from: Double, turn: Double)?
     private var last = 0.0
+    /// When the next try is, and when it was last back the right way up.
+    private var nextTry = Double.infinity
+    private var lastBack = -Double.infinity
 
     /// How far over the scene at `place` is at `now`: 0 the right way up, 1 upside down, eased through the half-turn.
     /// `settled`: when the arrival there is over (its transition done), so nothing turns while the scene is changing.
@@ -40,18 +48,26 @@ final class SceneFlipClock {
         if place != self.place {
             // Leaving somewhere mid-turn (or upside down): it turns back, wherever the crew went.
             let was = last
-            if was > 0 { early = (now, was, flip?.turn ?? 1.5) }
+            if was > 0 { early = (now, was, flip?.turn ?? 1.5); lastBack = now + (flip?.turn ?? 1.5) }
             self.place = place
             flip = place.universe.module.sceneFlip.flatMap { $0.places.contains(place) ? $0 : nil }
             over = nil
-            if let f = flip, Self.always || Double.random(in: 0..<1) < f.chance {
-                let start = max(now, settled) + (Self.always ? 1 : .random(in: f.wait))
-                over = (start, start + f.turn + .random(in: f.stay))
+            nextTry = flip == nil ? .infinity : max(now, settled) + (Self.always ? 1 : .random(in: flip!.wait))
+        }
+        // A try: it turns over now, by chance, unless it was over only a little while ago.
+        if over == nil, now >= nextTry, let f = flip {
+            if Self.always || (now - lastBack >= f.rest && Double.random(in: 0..<1) < f.chance) {
+                over = (now, now + f.turn + .random(in: f.stay))
             }
+            nextTry = f.every.map { now + $0 } ?? .infinity
         }
         var k = 0.0
         if let o = over, let f = flip {
-            if now >= o.back + f.turn { over = nil }
+            if now >= o.back + f.turn {
+                over = nil
+                lastBack = now
+                if let e = f.every { nextTry = max(nextTry, now + e) }
+            }
             else if now >= o.back { k = 1 - Self.ease((now - o.back) / f.turn) }
             else if now >= o.start { k = Self.ease((now - o.start) / f.turn) }
         }
