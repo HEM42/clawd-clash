@@ -62,6 +62,7 @@ func hawkinsRevolver(_ c: PixelCanvas, x: Int = 40, y: Int = 31) {
 /// as a slope. The pixels it touches are worked out at 4×4 samples each and drawn at that coverage, but kept close to
 /// pixel art: anything under a quarter covered stays clear and anything over 0.8 goes solid, so only the odd pixel
 /// on a slope comes out in between. Straight edges, square ends and inside corners stay exactly as the blocks were.
+/// At one pixel a dot it draws the plain blocks: that small, easing only blurs.
 func hawkinsSoftText(_ c: PixelCanvas, _ x: Int, _ y: Int, _ text: String, _ glyphs: [Character: String], _ col: Px,
                      _ p: Int, rows: Int = 5, ease: Double = 1) {
     // The word laid out as one grid of dots.
@@ -93,6 +94,9 @@ func hawkinsSoftText(_ c: PixelCanvas, _ x: Int, _ y: Int, _ text: String, _ gly
         for px in 0..<(gw * p) {
             // A dot is whole pixels, so a pixel in an inked dot is simply solid.
             if cols[px / p][py / p] { c.px(x + px, y + py, col); continue }
+            // At a pixel a dot there's no room to ease anything: an in-between pixel only blurs the letter, so small
+            // lettering (Kamchatka's warning sign) stays crisp.
+            if p < 2 { continue }
             var hit = 0
             for sy in 0..<n {
                 for sx in 0..<n {
