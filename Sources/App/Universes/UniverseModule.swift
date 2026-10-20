@@ -147,6 +147,9 @@ struct StageQuirks {
     var hushers: Set<Cast> = []
     /// These play their signature once a fight they were in, or watched, is over (Mayor Wilclaws' wet wipe; `AfterDuel`).
     var afterDuel: Set<Cast> = []
+    /// For any of those whose signature ends with what they do after a fight: how far into it (0…1) to start, so only
+    /// that end plays (Eleven's nosebleed, after her Eggo). Not listed: the whole signature.
+    var afterDuelFrom: [Cast: Double] = [:]
 
     /// A line with the words taken out of it: the same bubble, the same width (the font is monospaced), nothing in it.
     /// No-break spaces, so the text keeps its width when it's measured.

@@ -198,7 +198,8 @@ struct AfterDuel {
             else if free { pending[key] = nil; wiping[key] = now }
         }
         guard let start = wiping[key] else { return nil }
-        let e = now - start
+        // Only the end of the signature, for one whose signature ends with it (`StageQuirks.afterDuelFrom`).
+        let e = now - start + length * (who.universe.module.quirks.afterDuelFrom[who] ?? 0)
         guard e < length else { wiping[key] = nil; return nil }
         return HabitPlay(kind: .signature, e: e, length: length)
     }
