@@ -51,7 +51,7 @@ struct HawkinsUniverse: UniverseModule {
                     afterDuel: [.hero(HawkinsHero.eleven)], afterDuelFrom: [.hero(HawkinsHero.eleven): hawkinsNosebleedFrom])
     }
     /// Now and then the Upside Down turns over: HawkinsFlip.swift.
-    var sceneFlip: SceneFlip? { hawkinsSceneFlip }
+    var sceneFlip: SceneFlip? { hawkinsUpsideDownTurn }
 
     /// The README's desktop line-up and social preview (Tools/RenderDocs).
     var docs: DocsInfo {
