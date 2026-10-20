@@ -111,6 +111,14 @@ extension Location {
     static let hawkinsCabin = Location("hawkinsCabin")
     static let hawkinsCreel = Location("hawkinsCreel")
     static let hawkinsMind = Location("hawkinsMind")
+    static let hawkinsArcade = Location("hawkinsArcade")
+    static let hawkinsCastleByers = Location("hawkinsCastleByers")
+    static let hawkinsTrailer = Location("hawkinsTrailer")
+    static let hawkinsKamchatka = Location("hawkinsKamchatka")
+    static let hawkinsVoid = Location("hawkinsVoid")
+    static let hawkinsPool = Location("hawkinsPool")
+    static let hawkinsSnowBall = Location("hawkinsSnowBall")
+    static let hawkinsBennys = Location("hawkinsBennys")
 }
 
 /// Every place's drawing, from the Places/HawkinsScenes*.swift files (a few places a file). Add each new file to the
