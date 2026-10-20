@@ -1097,13 +1097,15 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     struct DrawItem {
         var image: CGImage?
         var text: NSAttributedString?
-        let rect: NSRect
+        var rect: NSRect
         var mirrored = false
         var alpha: CGFloat = 1
         var boxed = false      // text drawn on a dark rounded box so it reads on any wallpaper
         var agentBox = false   // agents' task boxes get a blue tint to tell them from project names
         var accent: NSColor?   // project colour for the box border
         var speech = false     // a character's line: dark text on a soft cream backing, nothing like the status bubbles
+        var upsideDown = false // drawn upside down (the scene turned over, `SceneTurn`)
+        var upright = false    // a picture that reads like text (a status bubble): kept upright when the scene turns over
     }
 
     private func buildItems(now: Double) -> [DrawItem] {
@@ -1525,7 +1527,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let bc = PixelCanvas(Bubble.width, Bubble.height)
             drawBubble(bc, kind: b.kind, t: t, urgent: b.urgent, tailRight: r.midX < b.x)
             if let bimg = bc.makeImage() {
-                overlay.append(DrawItem(image: bimg, rect: NSRect(x: r.minX.rounded(), y: r.minY, width: w, height: h), alpha: b.alpha))
+                overlay.append(DrawItem(image: bimg, rect: NSRect(x: r.minX.rounded(), y: r.minY, width: w, height: h), alpha: b.alpha,
+                                        upright: true))
             }
         }
         for n in named {
@@ -3135,6 +3138,15 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         pm.addItem(moodItem)
         pm.addItem(.separator())
         pm.addItem(action: "Add All Villains", #selector(addAllVillains), target: self)
+        // Hidden, for checking a place whose scene turns over (`SceneFlip`): with ⌥ held, the item above becomes this
+        // one, which starts the turn at once. Only offered there, and never documented.
+        if clawdWindow?.sceneView.flipClock.canTurn == true || clawdWindow?.board.canTurnOver == true {
+            let item = NSMenuItem(title: "Surprise Me", action: #selector(startSceneFlip), keyEquivalent: "")
+            item.target = self
+            item.isAlternate = true
+            item.keyEquivalentModifierMask = .option
+            pm.addItem(item)
+        }
         if playground != nil {
             pm.addItem(action: "Exit Playground", #selector(exitPlayground), target: self)
         }
@@ -3166,6 +3178,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         enterPlayground()
         playgroundMood = Mood(rawValue: sender.representedObject as? String ?? "") ?? .working
         refreshStatus()
+    }
+
+    @objc private func startSceneFlip() {
+        let now = Date().timeIntervalSince1970
+        clawdWindow?.sceneView.flipClock.start(now: now)
+        clawdWindow?.board.turnOver(now: now)
     }
 
     @objc private func addAllVillains() {
@@ -3377,9 +3395,9 @@ final class OverlayView: NSView {
             guard let image = item.image else { continue }
             ctx.saveGState()
             ctx.setAlpha(item.alpha)
-            if item.mirrored {
-                ctx.translateBy(x: r.maxX, y: r.minY)
-                ctx.scaleBy(x: -1, y: 1)
+            if item.mirrored || item.upsideDown {
+                ctx.translateBy(x: item.mirrored ? r.maxX : r.minX, y: item.upsideDown ? r.maxY : r.minY)
+                ctx.scaleBy(x: item.mirrored ? -1 : 1, y: item.upsideDown ? -1 : 1)
                 ctx.draw(image, in: NSRect(origin: .zero, size: r.size))
             } else {
                 ctx.draw(image, in: r)

@@ -66,7 +66,8 @@ final class SpriteLayers {
             }
             layer.bounds = CGRect(origin: .zero, size: r.size)
             layer.position = CGPoint(x: r.midX, y: r.midY)
-            layer.transform = item.mirrored ? CATransform3DMakeScale(-1, 1, 1) : CATransform3DIdentity
+            layer.transform = item.mirrored || item.upsideDown
+                ? CATransform3DMakeScale(item.mirrored ? -1 : 1, item.upsideDown ? -1 : 1, 1) : CATransform3DIdentity
             layer.opacity = Float(item.alpha)
             layer.isHidden = item.text == nil && item.image == nil
         }

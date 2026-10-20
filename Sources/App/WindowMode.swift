@@ -197,7 +197,9 @@ final class ClawdWindow: NSObject, NSWindowDelegate {
     /// A point on screen, in the stage's logical coordinates (for hovering and clicking characters).
     func toStage(_ p: NSPoint) -> NSPoint {
         let o = sceneScreenRect.origin, k = Self.scale
-        return NSPoint(x: o.x + (p.x - o.x) / k, y: o.y + (p.y - o.y) / k)
+        let y = o.y + (p.y - o.y) / k
+        // A scene turned over (`SceneFlip`): back to where that spot is the right way up; mid-turn, nowhere.
+        return NSPoint(x: o.x + (p.x - o.x) / k, y: sceneView.turn.unturn(y) ?? -1e5)
     }
 
     /// Show or hide the session list (Settings → Show the session list).
@@ -763,6 +765,10 @@ final class SwitchView: NSView {
 final class RoomView: NSView {
     var image: CGImage? { didSet { needsDisplay = true } }
     var drawRect = CGRect.zero
+    /// How far the scene has turned over (`SceneFlip`), about a line in this view's own coordinates.
+    var turn = SceneTurn.upright() {
+        didSet { if turn.amount != oldValue.amount || turn.axis != oldValue.axis { needsDisplay = true } }
+    }
 
     override var isFlipped: Bool { false }
     override func hitTest(_ point: NSPoint) -> NSView? { nil }   // clicks go to the scene above
@@ -770,7 +776,27 @@ final class RoomView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         guard let ctx = NSGraphicsContext.current?.cgContext, let image else { return }
         ctx.interpolationQuality = .none
+        guard turn.isTurned else { ctx.draw(image, in: drawRect); return }
+        // Turning over: the picture squashed towards the line it turns on and out the other side, dark where it's
+        // left the frame. Upside down, the strip under the header (beyond the floor, now at the top) shows the floor's
+        // own rows again, reflected, so the place runs right up to the top edge.
+        ctx.setFillColor(CGColor(red: 0.03, green: 0.035, blue: 0.05, alpha: 1))
+        ctx.fill(bounds)
+        ctx.saveGState()
+        ctx.translateBy(x: 0, y: turn.axis)
+        ctx.scaleBy(x: 1, y: turn.scale)
+        ctx.translateBy(x: 0, y: -turn.axis)
         ctx.draw(image, in: drawRect)
+        ctx.restoreGState()
+        if turn.scale < 0 {
+            let edge = turn.y(drawRect.minY)
+            ctx.saveGState()
+            ctx.clip(to: CGRect(x: drawRect.minX, y: edge, width: drawRect.width, height: max(0, bounds.maxY - edge)))
+            ctx.translateBy(x: 0, y: edge)
+            ctx.scaleBy(x: 1, y: -turn.scale)
+            ctx.draw(image, in: CGRect(x: drawRect.minX, y: 0, width: drawRect.width, height: drawRect.height))
+            ctx.restoreGState()
+        }
     }
 }
 
@@ -792,6 +818,10 @@ final class SceneView: NSView {
     /// Set while the universe changes: the whole window has its own transition then (`ClawdWindow.playSwitch`).
     var skipWipe = false
     private let sprites = SpriteLayers()
+    /// When the place on show turns over (`SceneFlip`, only where its universe asks for it), and how far it has now:
+    /// about the middle of the strip under the header, in the stage's (screen) coordinates like the crew's items.
+    let flipClock = SceneFlipClock()
+    private(set) var turn = SceneTurn.upright()
     /// CLAWD_SHOT captures the window by drawing its views, which can't see layers: draw the old way then.
     static let drawsItself = ProcessInfo.processInfo.environment["CLAWD_SHOT"] != nil
 
@@ -832,8 +862,34 @@ final class SceneView: NSView {
         }
     }
 
-    /// What moves there (the cantina band, sarlacc tentacles, laser gates, fog…) and the crew, as one frame.
+    /// The frame (`sceneItems`), turned as far over as the scene is (`SceneFlip`): the place, what moves there and
+    /// the crew turned together, names and speech kept upright.
     private func frameItems(origin: NSPoint) -> [OverlayController.DrawItem] {
+        guard let controller else { return [] }
+        let middle = (bounds.height - ClawdWindow.headerHeight) / 2
+        let amount = flipClock.amount(at: controller.location, now: Date().timeIntervalSince1970, settled: wipeEnds)
+        turn = SceneTurn(amount: amount, axis: origin.y + middle)
+        roomView?.turn = SceneTurn(amount: amount, axis: middle)
+        let items = sceneItems(origin: origin)
+        guard turn.isTurned else { return items }
+        return items.compactMap { item in
+            var item = item
+            let r = item.rect
+            if item.text != nil || item.upright {
+                item.rect.origin.y = (turn.y(r.midY) - r.height / 2).rounded()
+                item.alpha *= turn.labelAlpha
+                return item.alpha > 0.01 ? item : nil
+            }
+            let span = turn.span(r.minY, r.height)
+            guard span.height >= 0.5 else { return nil }
+            item.rect = NSRect(x: r.minX, y: span.minY, width: r.width, height: span.height)
+            item.upsideDown = span.upsideDown != item.upsideDown
+            return item
+        }
+    }
+
+    /// What moves there (the cantina band, sarlacc tentacles, laser gates, fog…) and the crew, as one frame.
+    private func sceneItems(origin: NSPoint) -> [OverlayController.DrawItem] {
         guard let controller else { return [] }
         let g = geometry, now = Date().timeIntervalSince1970
         var items: [OverlayController.DrawItem] = []
@@ -909,7 +965,9 @@ final class SceneView: NSView {
         // In the stage's logical coordinates: where the scene sits on screen, plus the (unscaled) point in it.
         let local = convert(event.locationInWindow, from: nil)
         let origin = window.convertToScreen(convert(bounds, to: nil)).origin
-        controller?.click(at: NSPoint(x: origin.x + local.x, y: origin.y + local.y))
+        // Turned over (`SceneFlip`): where that spot is the right way up; mid-turn, nobody's there to click.
+        guard let y = turn.unturn(origin.y + local.y) else { return }
+        controller?.click(at: NSPoint(x: origin.x + local.x, y: y))
     }
 
     override func rightMouseDown(with event: NSEvent) {

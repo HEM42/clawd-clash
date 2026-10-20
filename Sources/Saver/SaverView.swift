@@ -54,6 +54,11 @@ final class ClawdClashSaverView: ScreenSaverView {
     /// new, into `comicLayer`.
     private let comicLayer = CALayer()
     private var comic: (trip: ComicTransition, start: Double, old: CGImage)?
+    /// When the place on show turns over (`SceneFlip`, only where its universe asks for it): the place's layers and the
+    /// crew turned together about the middle of the screen, names and cards kept upright; the clock and the place's
+    /// name stay put.
+    private let flip = SceneFlipClock()
+    private var turn = SceneTurn.upright()
     /// The Clawd Files' typed caption: the place, and when it starts typing (once any transition there is over).
     private var caption: (location: Location, start: Double)?
     private var lastComic: ComicTransition?
@@ -201,6 +206,7 @@ final class ClawdClashSaverView: ScreenSaverView {
 
     override func animateOneFrame() {
         let now = Date().timeIntervalSince1970
+        unturnLayers()
         if now - lastRead >= 1 {
             lastRead = now
             if let feedSource { feed = feedSource() } else {
@@ -301,6 +307,8 @@ final class ClawdClashSaverView: ScreenSaverView {
         var mirrored = false
         var alpha: CGFloat = 1
         var smooth = false      // text and panels: linear filtering; pixel art: nearest
+        var upsideDown = false  // the scene turned over (`SceneTurn`)
+        var upright = false     // names and cards: kept upright, only moved, when the scene turns over
     }
 
     /// Screen points per art pixel: about 270 art pixels from floor to ceiling, whatever the display.
@@ -393,6 +401,10 @@ final class ClawdClashSaverView: ScreenSaverView {
         var items: [Item] = [Item(image: shade(), rect: CGRect(x: 0, y: bounds.height * 0.6, width: bounds.width,
                                                                height: bounds.height * 0.4), smooth: true)]
         let feet = CGFloat(floorRows) * P * 0.55
+        // Turned over (`SceneFlip`): the place and the crew together; the names and cards upright, where their spots went.
+        let settled = max(comic.map { $0.start + $0.trip.duration } ?? 0, wipe.map { $0.start + Wipe.duration } ?? 0)
+        let turn = SceneTurn(amount: flip.amount(at: location, now: now, settled: settled), axis: bounds.height / 2)
+        self.turn = turn
         var people: [Item]
         if crewed(now), let f = feed {
             people = crew(atPlace(f.sessions, location), now: now, feet: feet)
@@ -405,11 +417,60 @@ final class ClawdClashSaverView: ScreenSaverView {
             let shown = CGFloat(w.trip.crewShown((now - w.start) / w.trip.duration))
             if shown < 1 { people = people.compactMap { var p = $0; p.alpha *= shown; return p.alpha > 0.01 ? p : nil } }
         }
+        if turn.isTurned {
+            turnLayers(turn)
+            people = people.compactMap { item in
+                var item = item
+                let r = item.rect
+                if item.upright {
+                    item.rect.origin.y = (turn.y(r.midY) - r.height / 2).rounded()
+                    item.alpha *= turn.labelAlpha
+                    return item.alpha > 0.01 ? item : nil
+                }
+                let span = turn.span(r.minY, r.height)
+                guard span.height >= 0.5 else { return nil }
+                item.rect = CGRect(x: r.minX, y: span.minY, width: r.width, height: span.height)
+                item.upsideDown = span.upsideDown
+                return item
+            }
+        }
         items += people
         items += hud(running ? feed : nil, location: location, now: now, idle: !running)
         show(items, in: root)
         CATransaction.commit()
     }
+
+    /// The place's own layers (its picture, what moves there, the wipe and the transition), all laid out at the
+    /// bottom-left corner: turned about the line `turn` turns on.
+    private var sceneLayers: [CALayer] { [roomLayer, liveLayer, wipeLayer, comicLayer] }
+    private var layersTurned = false
+
+    private func turnLayers(_ turn: SceneTurn) {
+        for l in sceneLayers {
+            l.position = CGPoint(x: l.position.x, y: turn.axis * (1 - turn.scale))
+            l.transform = CATransform3DMakeScale(1, turn.scale, 1)
+        }
+        layersTurned = true
+    }
+
+    /// The right way up again before a frame lays anything out on them (they're placed by their frames).
+    private func unturnLayers() {
+        guard layersTurned else { return }
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        for l in sceneLayers {
+            l.transform = CATransform3DIdentity
+            l.position = CGPoint(x: l.position.x, y: 0)
+        }
+        CATransaction.commit()
+        layersTurned = false
+    }
+
+    /// Whether the place on show can turn over (the app's Playground offers its hidden trigger then).
+    var canTurnOver: Bool { flip.canTurn }
+
+    /// Start turning over now, if the place on show can (the app's Playground's hidden trigger).
+    func turnOver(now: Double) { flip.start(now: now) }
 
     /// `sessions` as they may appear at `place`: the homebound away from home shown as someone else (`Roster.recast`),
     /// the same someone on every frame.
@@ -441,7 +502,8 @@ final class ClawdClashSaverView: ScreenSaverView {
             l.minificationFilter = item.smooth ? .linear : .nearest
             l.bounds = CGRect(origin: .zero, size: item.rect.size)
             l.position = CGPoint(x: item.rect.midX, y: item.rect.midY)
-            l.transform = item.mirrored ? CATransform3DMakeScale(-1, 1, 1) : CATransform3DIdentity
+            l.transform = item.mirrored || item.upsideDown
+                ? CATransform3DMakeScale(item.mirrored ? -1 : 1, item.upsideDown ? -1 : 1, 1) : CATransform3DIdentity
             l.opacity = Float(item.alpha)
             l.isHidden = false
         }
@@ -738,7 +800,7 @@ final class ClawdClashSaverView: ScreenSaverView {
             r.origin.y = hit.maxY + 3 * u
         }
         taken.append(r)
-        return Item(image: img, rect: r, alpha: 0.95, smooth: true)
+        return Item(image: img, rect: r, alpha: 0.95, smooth: true, upright: true)
     }
 
     /// Where its name tag sits: a fixed three art pixels over the top of this character's head, so characters of
@@ -819,19 +881,20 @@ final class ClawdClashSaverView: ScreenSaverView {
             beams.append(beam([CGPoint(x: card.midX, y: card.minY), CGPoint(x: card.midX, y: bottom),
                                CGPoint(x: target.midX, y: target.maxY + 2 * u)], color: looks[i].accent))
             let alpha = looks[i].alert ? 0.75 + 0.25 * CGFloat(sin(now * 5)) : 0.93
-            panels.append(Item(image: images[i], rect: card, alpha: alpha, smooth: true))
+            panels.append(Item(image: images[i], rect: card, alpha: alpha, smooth: true, upright: true))
         }
         // In the window, the card under the mouse again, half as big again and complete, over everything.
         var zoom: [Item] = []
-        if inWindow, let m = mouse, let i = crew.indices.reversed().first(where: { cards[$0].contains(m) }) {
+        let pointer = mouse.flatMap { m in turn.unturn(m.y).map { CGPoint(x: m.x, y: $0) } }   // where it is on the scene the right way up
+        if inWindow, let m = pointer, let i = crew.indices.reversed().first(where: { cards[$0].contains(m) }) {
             let img = hologram(details(crew[i].p, crew[i].agents, lk: looks[i], size: (compact ? 0.75 : 0.85) * 1.5),
                                color: looks[i].accent, width: min(width * 1.5, bounds.width - 16 * u))
             let s = sized(img), card = cards[i]
             let x = min(max(card.midX - s.width / 2, 8 * u), bounds.width - s.width - 8 * u)
             let y = min(max(card.midY - s.height / 2, 8 * u), bounds.height - s.height - 8 * u)
             let r = CGRect(x: x, y: y, width: s.width, height: s.height)
-            zoom.append(Item(image: solid(), rect: r, alpha: 1, smooth: true))   // nothing showing through it
-            zoom.append(Item(image: img, rect: r, alpha: 1, smooth: true))
+            zoom.append(Item(image: solid(), rect: r, alpha: 1, smooth: true, upright: true))   // nothing showing through it
+            zoom.append(Item(image: img, rect: r, alpha: 1, smooth: true, upright: true))
         }
         return beams + panels + tags + zoom
     }
