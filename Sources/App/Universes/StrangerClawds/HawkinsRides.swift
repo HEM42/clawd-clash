@@ -8,7 +8,12 @@ import Foundation
 
 extension Ride {
     /// The Party's bikes: they drive in, and whoever's leaving boards at the rear bike's back pegs.
-    static let hawkinsBikes = Ride(key: "hawkinsBikes", arrival: .drives, boardingOffset: 14) { c, ramp, engines, _, t in
+    static let hawkinsBikes = Ride(key: "hawkinsBikes", arrival: .drives, canvasHeight: Ride.height + 2,
+                                   boardingOffset: 14) { c, ramp, engines, _, t in
+        // Two rows taller than a ship's canvas, everything drawn two rows down: Dustin's cap peak would otherwise sit
+        // on the top row, where its outline is cut off.
+        c.oy += 2
+        defer { c.oy -= 2 }
         hawkinsDrawBikes(c, ramp: ramp, moving: engines, t: t)
     }
 }
