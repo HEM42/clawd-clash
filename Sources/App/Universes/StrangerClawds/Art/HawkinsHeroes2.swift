@@ -82,8 +82,9 @@ private func drawLucasSinclawd(_ c: PixelCanvas, _ p: Pose) {
 
 /// Will Byers: the round brown bowl cut, its fringe straight across his brow and down over his ears; a red flannel
 /// shirt checked with dark lines, open at the neck over a white tee, faded jeans and white sneakers. His power, from
-/// season 5, is violet waves pulsing out of his raised hand. Signature: he holds up one of his drawings, a black crayon
-/// spider of a monster under a red sky.
+/// season 5, is violet waves pulsing out of his raised hand, and while he uses it his eyes turn solid white, as they do
+/// on screen; after a long, hard go a thin line of blood runs from his nose. Signature: he holds up one of his drawings,
+/// a black crayon spider of a monster under a red sky.
 private func drawWillByers(_ c: PixelCanvas, _ p: Pose) {
     let flannel = C(0x9E3430), flannelD = C(0x6E1E20), check = C(0x4A1214), thread = C(0xD8B890)
     let tee = C(0xECE6D8)
@@ -91,6 +92,10 @@ private func drawWillByers(_ c: PixelCanvas, _ p: Pose) {
     let hair = C(0x5A3A24), hairD = C(0x3E2616), hairL = C(0x7E5836)
     let show = hawkinsSpan(p, 0.06, 0.94)
     let lift = Int((hawkinsEase(show, edge: 0.18) * 7).rounded())
+    // Casting: working or fighting with his power, or the crackle between his fingers (not just waiting with it ready).
+    let casting = p.zap != nil && p.mode != .waiting && !p.cheering && !p.walking
+    // The last few seconds of every ten spent casting are the hard part, when his nose bleeds.
+    let strain = casting ? p.lt.truncatingRemainder(dividingBy: 10) - 6.5 : -1
 
     drawLegs(c, Look(leg: jeans), step: p.step)
     if !seatedPose { for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx, hawkinsFoot(p, i) - 4, jeansD) } }
@@ -111,6 +116,16 @@ private func drawWillByers(_ c: PixelCanvas, _ p: Pose) {
     c.rect(31, 34, 2, 1, check)
     c.rect(37, 33, 1, 5, flannelD); c.rect(18, 37, 20, 1, flannelD)
     c.rect(15, 35, 3, 1, flannelD); c.px(16, 34, check)
+
+    if casting {
+        // His eyes gone solid white, a faint violet at their lower edge from the power.
+        c.rect(22, 29, 2, 3, white); c.rect(32, 29, 2, 3, white)
+        c.rect(22, 31, 2, 1, C(0xE4D8FA)); c.rect(32, 31, 2, 1, C(0xE4D8FA))
+        if strain >= 0 {
+            // The nosebleed: a thin red line from between his eyes, a row longer as it goes on.
+            c.rect(28, 31, 1, 1 + min(2, Int(strain / 0.9)), C(0x9C1424)); c.px(28, 31, C(0xC02A34))
+        }
+    }
 
     // The bowl cut: round on top, lit in strokes from the crown, the fringe cut straight across his brow and the sides
     // down over his ears.

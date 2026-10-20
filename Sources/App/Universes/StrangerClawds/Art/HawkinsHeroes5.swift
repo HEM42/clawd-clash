@@ -2,7 +2,7 @@ import Foundation
 
 // Heroes: the allies who come over to the kids' side (Kali, Suzie, Alexei and Yuri) and season 5's Wheelers, Holly
 // and her mother Karen. Clawd in costume like the rest, with Clawd's own orange face showing. Holly is about ten, so
-// she stands lower, as Erica does; her blonde hair and book keep her apart from Max.
+// she stands lower, as Erica does; her blonde hair and mustard cape keep her apart from Max.
 
 let hawkinsHeroes5: [HawkinsHero: Persona] = [
     .kali: Persona(name: "Kali", weapon: .lightning,
@@ -292,78 +292,93 @@ private func drawYuri(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Holly Wheeler
 
-/// Holly Wheeler at about ten: long, straight blonde hair with a fringe, a pink striped jumper over a white collar, a
-/// denim skirt, white socks and red shoes, and *A Wrinkle in Time* tucked under her arm, its dark blue cover with a
-/// pale star. She's small, so she stands lower than the rest. She doesn't fight. Signature: she waves, and Mr. Whatsit,
-/// a friendly man in a brown cardigan with a kind smile, is there beside her for a moment, waving back, and then gone.
+/// Holly Wheeler in season 5, about ten, dressed for the adventure she makes of Camazotz: long straight blonde hair, a
+/// mustard hooded cape (the hood down at her back, a short capelet over her shoulders, the long cape falling behind
+/// her), a red neckerchief at her throat held by a little orange star, a light blue dress with a faint white flower
+/// print, white panels at the bodice's sides, a darker blue sash tied in a bow, a white scalloped underskirt showing
+/// at the hem, and a tan satchel slung across her, a buckled strap and a little blue bow on its flap. She's small, so
+/// she stands lower than the rest. She doesn't fight. Signature: she waves, and Mr. Whatsit, a friendly man in a warm
+/// brown suit, a red tie and glasses, with a kind smile, is there beside her for a moment, waving back; as he goes,
+/// his eyes flash red behind the glasses and for a blink he's Henry Creel in the orderly's whites, a faint red about
+/// him, and then he's gone.
 private func drawHollyWheeler(_ c: PixelCanvas, _ p: Pose) {
-    let jumper = C(0xF0A6C0), jumperD = C(0xCC809C), stripe = C(0xF8E8EE)
-    let skirt = C(0x5A7AAA), skirtD = C(0x44608A)
+    let cape = C(0xC8902E), capeD = C(0x9A6A1C), capeL = C(0xE2AE52)
+    let dress = C(0x8EB8DE), dressD = C(0x6E98C2), flower = C(0xE4F0FA), panel = C(0xF2F2EC)
+    let sash = C(0x4E80BC), sashD = C(0x3A6498)
+    let scarf = C(0xD0302A), scarfD = C(0x9E1E1C), star = C(0xF08A2A)
+    let bag = C(0xC8A274), bagD = C(0x9A784E), bagL = C(0xE0C094), strap = C(0x7A5434)
     let hair = C(0xF0D480), hairD = C(0xC8A850), hairL = C(0xFFEEB4)
-    let book = C(0x22325E), bookL = C(0x3A4E86)
     let k = hawkinsSpan(p, 0.06, 0.94)
     let wave = hawkinsEase(k, edge: 0.15) > 0.5
     let lower = seatedPose ? 0 : 2
-    // Mr. Whatsit flickers in, stays a moment, and flickers out again.
+    // Mr. Whatsit flickers in and stays a moment; then the tell (his eyes red, then a blink of Henry Creel), and he
+    // flickers out, still as Henry.
     let flick = Int(p.t * 14) % 2 == 0
-    let whatsit = k > 0.15 && k < 0.85 && !((k < 0.22 || k > 0.78) && flick)
-
-    if whatsit {
-        // Mr. Whatsit, facing her from ahead: a grown man, taller than her, brown hair neatly combed, the cardigan over a
-        // cream shirt, brown trousers, a kind smile, a hand up to wave back. He stands on four legs like everyone.
-        let card = C(0x8A6A4A), cardD = C(0x6A4E34), cardL = C(0xA88660), shirt = C(0xE8E0CC)
-        let trousers = C(0x6A5A48), whair = C(0x6A4A30), whairD = C(0x4A321E)
-        let wy = p.breathe
-        for (i, lx) in [50, 53, 59, 62].enumerated() {
-            c.rect(lx, 38, 2, 5, trousers); c.rect(lx, 43, 2, 1, C(0x2E2018)); if i % 2 == 0 { c.px(lx + 1, 40, C(0x4E4234)) }
-        }
-        c.rect(49, 17 + wy, 16, 21, clawdOrange); c.rect(49, 37, 16, 1, clawdShade); c.rect(49, 17 + wy, 1, 21, clawdShade)
-        c.rect(52, 22 + wy, 2, 3, ink); c.rect(59, 22 + wy, 2, 3, ink)
-        c.pattern(53, 26 + wy, ["m....m", ".mmmm."], ["m": C(0x5A1A1E)])
-        c.rect(49, 29 + wy, 16, 8, card); c.rect(55, 29 + wy, 4, 4, shirt); c.rect(54, 29 + wy, 1, 8, cardL)
-        c.rect(59, 29 + wy, 1, 8, cardD); c.px(58, 33 + wy, C(0xD8C8A0)); c.px(58, 35 + wy, C(0xD8C8A0))
-        c.rect(49, 36 + wy, 16, 1, cardD); c.rect(60, 29 + wy, 4, 1, cardL)
-        c.pattern(48, 13 + wy, [
-            "...HHHHHHHHHH....",
-            ".HHHHHHlllHHHHH..",
-            "HHHHlllHHHHHHHHH.",
-            "HHHHHHHHHHHHHHHHd",
-            "Hd............HHd",
-        ], ["H": whair, "d": whairD, "l": C(0x8A6644)])
-        // His near hand up, waving back at her.
-        let sway = Int(p.t * 5) % 2
-        c.rect(45, 28 + wy, 4, 3, card); c.rect(44 - sway, 25 + wy, 3, 3, clawdOrange)
+    if k > 0.15 && k < 0.85 && !(k < 0.22 && flick) && !(k > 0.8 && flick) {
+        hawkinsWhatsit(c, p, redEyes: k > 0.73 && k <= 0.77, henry: k > 0.77)
     }
 
-    // Socks and red shoes, her bare legs under the skirt.
+    // Her legs bare under the dress, and little brown shoes.
     drawLegs(c, Look(leg: clawdOrange), step: p.step)
-    drawBoots(c, C(0xF2F2EC), step: p.step, rows: 3)
-    drawBoots(c, C(0xC8302A), step: p.step, rows: 1)
+    drawBoots(c, C(0x6A4428), step: p.step, rows: 1)
 
-    // The book under her far arm, behind her.
     c.oy += lower + p.breathe
-    c.rect(12, 31, 6, 7, book); c.rect(12, 31, 6, 1, bookL); c.rect(12, 31, 1, 7, bookL)
-    c.px(14, 34, C(0xF0E4B0)); c.px(15, 33, C(0xF0E4B0)); c.px(15, 35, C(0xF0E4B0)); c.px(16, 34, C(0xF0E4B0))
-    c.rect(17, 32, 1, 5, C(0xE8E0CC))
+    // The long cape behind her, from her shoulders to below her knees, its folds in long strokes, and the hood down
+    // at her back, bunched under her hair.
+    c.pattern(12, 29, [
+        "...cCCC",
+        "..cCCCC",
+        "..CCcCC",
+        ".cCCcCC",
+        ".CCCcCd",
+        ".CcCCcd",
+        "cCcCCcd",
+        "CCcCCcd",
+        "CCcCCcd",
+        "CdcCdcd",
+        "dCdCdCd",
+    ], ["C": cape, "c": capeL, "d": capeD])
 
-    drawBody(c, Look(arm: jumper), armRight: wave ? 6 : 0)
-    c.pattern(25, 32, ["m....m", ".mmmm."], ["m": C(0x5A1A1E)])
+    drawBody(c, Look(arm: cape), armRight: wave ? 6 : 0)
+    c.pattern(25, 31, ["m....m", ".mmmm."], ["m": C(0x5A1A1E)])
 
-    // The jumper, pink with white stripes, its collar, the far side in shade; the denim skirt over her legs.
-    c.rect(18, 33, 20, 4, jumper)
-    c.rect(18, 34, 20, 1, stripe); c.rect(18, 36, 20, 1, stripe)
-    c.pattern(25, 33, ["WW..WW"], ["W": C(0xFFFFFF)])
-    c.rect(37, 33, 1, 4, jumperD); c.px(37, 34, C(0xD8C8CC)); c.px(37, 36, C(0xD8C8CC))
-    c.rect(18, 37, 20, 1, skirt); c.rect(27, 37, 1, 1, skirtD)
-    if !seatedPose { c.rect(17, 38, 22, 1, skirt); c.rect(17, 38, 1, 1, C(0x7A9ACA)); c.rect(37, 38, 2, 1, skirtD) }
-    c.rect(15, 34, 3, 1, jumper); c.rect(15, 35, 3, 1, jumperD)
+    // The dress: light blue, a white flower here and there, white panels at the bodice's sides, the sash and its bow
+    // at the waist, the skirt over her legs, a soft shadow either side of each leg, and the white scalloped underskirt
+    // at the hem.
+    c.rect(18, 33, 20, 5, dress)
+    c.rect(22, 34, 1, 2, panel); c.rect(33, 34, 1, 2, panel)
+    for (x, y) in [(24, 34), (31, 35), (26, 37), (33, 37), (20, 37), (29, 37)] { c.px(x, y, flower) }
+    c.rect(18, 36, 20, 1, sash)
+    c.pattern(26, 35, ["s..s", "sSSs", "s..s"], ["s": sash, "S": sashD])
+    c.rect(37, 33, 1, 5, dressD)
+    if !seatedPose {
+        // The white underskirt's scalloped edge, the shadows beside each leg falling into its dips.
+        c.rect(17, 38, 22, 1, panel)
+        for x in [18, 21, 22, 25, 30, 33, 34, 37] { c.px(x, 38, C(0xB8C6D4)) }
+    }
+    // The capelet over her shoulders and arms, lit along the top, its edge curving down at the sides, and the long
+    // cape's near edge falling down her front.
+    c.rect(18, 33, 5, 1, cape); c.rect(33, 33, 5, 1, cape); c.rect(19, 33, 3, 1, capeL); c.rect(34, 33, 2, 1, capeL)
+    c.rect(18, 34, 3, 1, capeD); c.rect(35, 34, 3, 1, capeD)
+    c.rect(36, 35, 2, 3, cape); c.rect(37, 35, 1, 3, capeD); c.rect(18, 35, 1, 3, capeD)
+    c.rect(15, 35, 3, 1, capeD)
+    // The red neckerchief, tied at her throat with the little orange star, its point hanging down.
+    c.pattern(25, 33, ["rrrrrr", ".rRRr.", "..rr..", "...R.."], ["r": scarf, "R": scarfD])
+    c.px(27, 33, star); c.px(28, 33, star); c.px(27, 34, C(0xF8B460))
 
-    // Long straight blonde hair with a fringe, combed down in long lit strokes past her shoulders.
+    // The satchel: its strap across her from the far shoulder, the bag at her near hip, a flap with a buckled strap
+    // and a little blue bow on it.
+    hawkinsLine(c, 22.5, 33.5, 31.5, 36.5, strap, 0.5)
+    c.rect(31, 36, 6, 4, bag); c.rect(31, 36, 6, 2, bagL); c.rect(31, 38, 6, 1, bagD); c.rect(36, 36, 1, 4, bagD)
+    c.rect(35, 37, 1, 3, strap); c.px(35, 38, C(0xD8C080))
+    c.px(32, 37, sash); c.px(34, 37, sash); c.px(33, 37, sashD)
+
+    // Long straight blonde hair, combed down in long lit strokes past her shoulders, parted to one side.
     c.pattern(16, 20, [
         ".....HHHHHHHHHHHH.......",
-        "...HHHlllHHHHHlllHH.....",
-        "..HHlllHHHHHHHHHlllHH...",
-        ".HHlHHHHHHHHHHHHHHHHHH..",
+        "...HHHlllHHdHHlllHH.....",
+        "..HHlllHHHHdHHHHlllHH...",
+        ".HHlHHHHHHHHdHHHHHHHHH..",
         ".HHHHHHHHHHHHHHHHHHHHHd.",
         ".HHHHdHHHdHHHdHHHdHHHHd.",
         ".HHHH..............HHHd.",
@@ -377,9 +392,84 @@ private func drawHollyWheeler(_ c: PixelCanvas, _ p: Pose) {
     ], ["H": hair, "d": hairD, "l": hairL])
 
     guard wave else { return }
-    // Her hand up, waving.
+    // Her hand up out of the cape, waving.
     let sway = Int(p.t * 5) % 2
     c.rect(39 + sway, 24, 3, 3, clawdOrange); c.px(40 + sway, 23, clawdOrange)
+}
+
+/// Mr. Whatsit, beside Holly and facing her: a grown man, a head taller than her, his brown hair neatly combed with a
+/// side parting, round glasses, a kind smile, a warm brown suit with its lapels over a cream shirt and a red tie,
+/// waving back at her with his near hand. He stands on four legs like everyone. `redEyes`: the tell, his eyes red
+/// behind the glasses. `henry`: for a blink he's Henry Creel instead, blond hair combed back, the orderly's whites, no
+/// glasses, his mouth flat, a faint red about him.
+private func hawkinsWhatsit(_ c: PixelCanvas, _ p: Pose, redEyes: Bool, henry: Bool) {
+    let suit = henry ? C(0xF2F2EE) : C(0x8A5E3A), suitD = henry ? C(0xC8CCD0) : C(0x6A4428)
+    let suitL = henry ? C(0xFFFFFF) : C(0xA87A50)
+    let trousers = henry ? C(0xE6E6E2) : C(0x6A4E36), trousersD = henry ? C(0xC8CCD0) : C(0x503A28)
+    let shoe = henry ? C(0xA8A8AC) : C(0x2E2018)
+    let hair = henry ? C(0xE2C67A) : C(0x6A4A30), hairD = henry ? C(0xB89A4E) : C(0x4A321E)
+    let hairL = henry ? C(0xF6E2A4) : C(0x8A6644)
+    let wy = p.breathe
+
+    if henry { c.ellipse(57, 28, 11, 17, C(0xE8343E, 0.13)) }
+    // Trousers, a crease down each, the turn-ups, and dark shoes.
+    for (i, lx) in [50, 53, 59, 62].enumerated() {
+        c.rect(lx, 38, 2, 5, trousers); c.px(lx, 40, trousersD)
+        c.rect(lx, 43, 2, 1, shoe); c.px(lx, 42, trousersD); if i % 2 == 1 { c.px(lx + 1, 38, trousersD) }
+    }
+
+    // His face and body, the far side in shade.
+    c.rect(50, 19 + wy, 14, 19, clawdOrange); c.rect(63, 19 + wy, 1, 19, clawdShade); c.rect(50, 37, 14, 1, clawdShade)
+    // The eyes (red for the tell), behind round glasses with a bridge between them; or Henry's own, bare.
+    let eye = redEyes ? C(0xE8343E) : ink
+    c.rect(52, 22 + wy, 2, 3, eye); c.rect(58, 22 + wy, 2, 3, eye)
+    if redEyes { c.px(52, 22 + wy, C(0xFF8A80)); c.px(58, 22 + wy, C(0xFF8A80)) }
+    if !henry {
+        let rim = C(0xC8A464)
+        for gx in [51, 57] {
+            c.rect(gx, 21 + wy, 4, 1, rim); c.rect(gx, 25 + wy, 4, 1, rim)
+            c.rect(gx, 22 + wy, 1, 3, rim); c.rect(gx + 3, 22 + wy, 1, 3, rim)
+        }
+        c.rect(55, 22 + wy, 2, 1, rim); c.px(50, 22 + wy, rim); c.px(61, 22 + wy, rim)
+        // The kind smile, and a little colour in his cheeks.
+        c.pattern(53, 27 + wy, ["m....m", ".mmmm."], ["m": C(0x5A1A1E)])
+        c.px(51, 27 + wy, C(0xF07A5A)); c.px(61, 27 + wy, C(0xF07A5A))
+    } else {
+        c.rect(54, 28 + wy, 4, 1, C(0x8A3A2E))
+    }
+
+    // The suit: lapels over the cream shirt and red tie, two buttons, a pocket each side, the hem in shade. Henry's
+    // whites instead: the V neck, a pen in the pocket.
+    c.rect(50, 30 + wy, 14, 8 - wy, suit); c.rect(50, 30 + wy, 1, 8 - wy, suitL); c.rect(51, 30 + wy, 4, 1, suitL)
+    c.rect(63, 30 + wy, 1, 8 - wy, suitD); c.rect(50, 37, 14, 1, suitD)
+    if henry {
+        c.pattern(54, 30 + wy, ["oooooo", ".oooo.", "..oo.."], ["o": clawdOrange])
+        c.rect(60, 32 + wy, 2, 1, suitD); c.px(61, 31 + wy, C(0x3A6AB0))
+    } else {
+        c.pattern(54, 30 + wy, ["LsrrsL", ".LrrL.", "..rr..", "..r..."], ["s": C(0xE8E0CC), "r": C(0xC8302A), "L": suitL])
+        c.px(56, 34 + wy, suitD); c.px(56, 35 + wy, C(0x3A2818))
+        c.rect(51, 33 + wy, 3, 1, suitD); c.rect(59, 33 + wy, 3, 1, suitD)
+    }
+    // The far arm at his side, and the near one up, waving back at her.
+    c.rect(64, 32 + wy, 2, 4, suit); c.rect(64, 36 + wy, 2, 1, clawdOrange)
+    let sway = Int(p.t * 5) % 2
+    c.rect(47, 29 + wy, 3, 3, suit); c.rect(47, 31 + wy, 3, 1, suitD)
+    c.rect(45 - sway, 26 + wy, 3, 3, clawdOrange)
+
+    // His hair: Mr. Whatsit's combed neatly with a side parting, Henry's combed straight back; both lit in strokes.
+    c.pattern(49, 15 + wy, henry ? [
+        "...HHHHHHHHHH...",
+        ".HHllllHHHHHHH..",
+        "HHHHHHlllllHHHH.",
+        "HHHHHHHHHHHHHHHd",
+        "H.............Hd",
+    ] : [
+        "....HHHHHHHHH...",
+        ".HHHlllHdHHHHH..",
+        "HHHlllHHdHHHHHH.",
+        "HHHHHHHHdHHHHHHd",
+        "Hd...........HHd",
+    ], ["H": hair, "d": hairD, "l": hairL])
 }
 
 // MARK: - Karen Wheeler

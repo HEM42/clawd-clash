@@ -20,7 +20,8 @@ let hawkinsScenes5: [Location: Place] = [
 // MARK: - Shared bits for these scenes
 
 /// A blocky 5-row alphabet with the digits: three dots wide, but M, N and W wider so their diagonals read, the
-/// apostrophe one dot, and the Cyrillic П for the warning sign at Kamchatka.
+/// apostrophe one dot, and the Cyrillic letters for ОПАСНО ("danger") on the warning sign at Kamchatka: О, А, С and Н
+/// drawn as their Latin twins, and П five dots wide, a flat bar over two legs, so it can't be taken for a Latin n.
 private let hawkinsP5Glyphs: [Character: String] = [
     "A": "010101111101101", "B": "110101110101110", "C": "011100100100011", "D": "110101101101110",
     "E": "111100110100111", "F": "111100110100100", "G": "011100101101011", "H": "101101111101101",
@@ -30,7 +31,9 @@ private let hawkinsP5Glyphs: [Character: String] = [
     "X": "101101010101101", "Y": "101101010010010", "Z": "111001010100111", "'": "11000",
     "0": "111101101101111", "1": "010110010010111", "2": "111001111100111", "3": "111001011001111",
     "4": "101101111001001", "5": "111100111001111", "6": "111100111101111", "7": "111001010010010",
-    "8": "111101111101111", "9": "111101111001111", "П": "111101101101101",
+    "8": "111101111101111", "9": "111101111001111",
+    "О": "010101101101010", "П": "1111110001100011000110001", "А": "010101111101101", "С": "011100100100011",
+    "Н": "101101111101101",
 ]
 
 /// Lettering, `p` pixels a dot, from its top-left corner, its steps eased (`hawkinsSoftText`).
@@ -677,9 +680,9 @@ extension Scenes {
     /// Kamchatka, winter 1986: a Soviet prison yard in the snow at dusk. A grey concrete wall right across the back with
     /// coils of barbed wire along its top, a guard tower at either end on tall legs with a hut and a searchlight; the
     /// cell block on the left, small barred windows, a red star over its door, snow on its roof; the gate in the wall,
-    /// iron, shut. In the middle of the yard the pit: a round concrete rim with a rail round it and a warning sign
-    /// (ОПАСНО), dark inside with a dull red glow coming up, and a steel gantry over it with the chain and hook hanging
-    /// down into it. Snowy volcanoes far off, under a cold grey sky. Trampled snow along the front, plain. On the
+    /// iron, shut. In the middle of the yard the pit: a round concrete rim with a rail round it and a warning sign (a
+    /// skull and crossbones and ОПАСНО, "danger"), dark inside with a dull red glow coming up, and a steel gantry over it
+    /// with the chain and hook hanging down into it. Snowy volcanoes far off, under a cold grey sky. Trampled snow along the front, plain. On the
     /// screen saver the towers stand tall over the wall and the mountains rise behind under heavy snow cloud.
     static func hawkinsKamchatka(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), f = hawkinsKamchatkaFrame(c, g), tall = isTall(c)
@@ -814,9 +817,14 @@ extension Scenes {
         // The rail round it, posts and a top bar, and the warning sign hung on it.
         c.rect(px - rx - 3 * s, g - 17 * s, (rx + 3 * s) * 2 + s, s, C(0xC8B030))
         for x in stride(from: px - rx - 3 * s, through: px + rx + 3 * s, by: 10 * s) { c.rect(x, g - 17 * s, s, 10 * s, C(0xA8902A)) }
-        let sw = hawkinsP5Width("OПACHO", s)
-        c.rect(px - rx + 4 * s, g - 18 * s, sw + 4 * s, 8 * s, C(0xE8E8E0)); c.rect(px - rx + 4 * s, g - 18 * s, sw + 4 * s, s, C(0xC82A22))
-        hawkinsP5Sign(c, px - rx + 6 * s, g - 16 * s, "OПACHO", C(0xC82A22), s)
+        // The sign: white with a red band along the top, a skull and crossbones and ОПАСНО in red.
+        let sw = hawkinsP5Width("ОПАСНО", s), sx = px - rx + 4 * s
+        c.rect(sx, g - 18 * s, sw + 13 * s, 8 * s, C(0xE8E8E0)); c.rect(sx, g - 18 * s, sw + 13 * s, s, C(0xC82A22))
+        let skull = ["X.XXX.X", ".XXXXX.", ".X.X.X.", ".XXXXX.", "..X.X..", ".X...X.", "X.....X"]
+        for (j, row) in skull.enumerated() {
+            for (i, ch) in row.enumerated() where ch == "X" { c.rect(sx + (2 + i) * s, g - (17 - j) * s, s, s, C(0x1E1E22)) }
+        }
+        hawkinsP5Sign(c, sx + 11 * s, g - 16 * s, "ОПАСНО", C(0xC82A22), s)
 
         // Snow drifted against the foot of the wall and the buildings.
         for k in 0..<(c.w / (12 * s) + 1) { c.ellipse(k * 12 * s, g - s, (8 + k % 3 * 3) * s, 2 * s, C(0xD8E0E6)) }

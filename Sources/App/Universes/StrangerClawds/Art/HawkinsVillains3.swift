@@ -26,12 +26,12 @@ private func menPistol(_ c: PixelCanvas, x: Int = 40, y: Int = 31) {
 
 // MARK: - Grigori
 
-/// Grigori, the Russians' hitman: a blond crew cut, a heavy moustache and a cold, flat mouth, a long black leather
-/// coat buttoned over a black roll-neck, black gloves, dark trousers and black boots. He fights with a pistol, and has
-/// no signature move: he just keeps coming.
+/// Grigori, the Russians' hitman, got up like the Terminator: a dark brown flat-top, clean-shaven, a cold, flat
+/// mouth, a long black leather coat buttoned over a black roll-neck, black gloves, dark trousers and black boots. He
+/// fights with a pistol, and has no signature move: he just keeps coming.
 private func drawGrigori(_ c: PixelCanvas, _ p: Pose) {
     let coat = C(0x24222A), coatD = C(0x121016), coatL = C(0x464252)
-    let hair = C(0xD8C080), hairD = C(0xA88E50), glove = C(0x18181C)
+    let hair = C(0x4A3426), hairD = C(0x2E2018), hairL = C(0x6A4E3A), glove = C(0x18181C)
 
     drawLegs(c, Look(leg: C(0x2A2A32)), step: p.step)
     drawBoots(c, C(0x101014), step: p.step, rows: 3)
@@ -39,9 +39,9 @@ private func drawGrigori(_ c: PixelCanvas, _ p: Pose) {
 
     c.oy += p.breathe
     drawBody(c, Look(arm: coat))
-    // Cold eyes under a heavy brow, the moustache, the flat mouth.
+    // Cold eyes under a heavy brow, and the flat, clean-shaven mouth.
     c.rect(21, 28, 4, 1, clawdShade); c.rect(31, 28, 4, 1, clawdShade)
-    c.rect(24, 31, 8, 1, C(0xB89A58)); c.rect(25, 32, 6, 1, C(0x5A2A1E))
+    c.rect(25, 32, 6, 1, C(0x5A2A1E))
 
     // The leather coat, belted and buttoned to a roll-neck: lit along the shoulders and the left edge where the
     // leather catches the light, its seams, the far side in shade, falling past his hips over the legs.
@@ -57,13 +57,16 @@ private func drawGrigori(_ c: PixelCanvas, _ p: Pose) {
     }
     c.rect(15, 35, 3, 1, glove)
 
-    // The blond crew cut: short, flat on top, lit in short strokes.
-    c.pattern(18, 22, [
-        "...HHHHHHHHHHHHH....",
-        ".HHlHHlHHlHHlHHHH...",
-        "HHhHHhHHhHHhHHhHHH..",
-        "HHHHlHHHHHHlHHHHHHd.",
-    ], ["H": hair, "h": hairD, "l": C(0xF0DCA0), "d": hairD])
+    // The flat-top: cut dead level on top and short at the sides, the top lit along its front edge, short strokes
+    // standing up in it.
+    c.pattern(18, 21, [
+        ".llllllllllllllllH..",
+        ".HHhHHHhHHHhHHHhHHd.",
+        "HHHHHHHHHHHHHHHHHHd.",
+        "HHhHHhHHhHHhHHhHHHd.",
+        "HHHHHHHHHHHHHHHHHHHd",
+        "Hh................Hd",
+    ], ["H": hair, "h": hairD, "l": hairL, "d": hairD])
 
     c.oy += p.gunY
     c.rect(38, 33, 3, 3, coat); c.rect(39, 34, 2, 1, glove)

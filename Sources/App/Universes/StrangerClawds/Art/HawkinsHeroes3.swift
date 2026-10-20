@@ -596,36 +596,40 @@ private func drawBarb(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Derek Turnbow
 
-/// Derek Turnbow, Holly's classmate: a kid, so he stands lower than the teenagers, his brown hair neatly combed with a
-/// side parting and a stiff quiff, a sneer, a mint polo shirt with its collar popped and a little logo, pressed
-/// khakis and brown loafers. He doesn't fight, and has no signature move.
+/// Derek Turnbow, Holly's classmate, about ten: a kid, so he stands lower than the teenagers, his brown hair neatly
+/// combed with a side parting and a stiff quiff, a sneer, and what he wears in season 5: a sweater striped in bright
+/// bands (red, yellow, blue, green) under a beige vest lined with flannel, its edges showing the red check, jeans
+/// and white sneakers. He doesn't fight, and has no signature move.
 private func drawDerekTurnbow(_ c: PixelCanvas, _ p: Pose) {
-    let polo = C(0x8ED4B4), poloD = C(0x66AE8E), poloL = C(0xB8EAD2)
-    let khaki = C(0xB4A27A), khakiD = C(0x8E7E5A)
+    let bands = [C(0xC8382E), C(0xE8B830), C(0x3A6AB8), C(0x3E9A5A)]
+    let vest = C(0xC8B48A), vestD = C(0xA08E66), vestL = C(0xE0D0AA), lining = C(0xA8302A), liningL = C(0xD8C8B0)
+    let jeans = C(0x5A74A0), jeansD = C(0x42587E)
     let hair = C(0x6A4628), hairD = C(0x48301A), hairL = C(0x8E643C)
     let lower = seatedPose ? 0 : 2
 
-    drawLegs(c, Look(leg: khaki), step: p.step)
-    if !seatedPose { for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx + 1, hawkinsFoot(p, i) - 3, khakiD) } }
-    drawBoots(c, C(0x6A3E22), step: p.step, rows: 2)
-    if !seatedPose { for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx, hawkinsFoot(p, i) - 1, C(0x8E5A34)) } }
+    drawLegs(c, Look(leg: jeans), step: p.step)
+    if !seatedPose { for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx + 1, hawkinsFoot(p, i) - 3, jeansD) } }
+    drawBoots(c, C(0xEEEEE8), step: p.step, rows: 2)
+    drawBoots(c, C(0xA8ACB4), step: p.step, rows: 1)
 
     // Shorter than the teenagers: the whole of him above the legs sits two rows lower.
     c.oy += lower + p.breathe
-    drawBody(c, Look(arm: polo))
+    drawBody(c, Look(arm: bands[0]))
     // The sneer: one brow pulled down, the lip curled up at one side.
     c.rect(31, 28, 3, 1, clawdShade)
     c.pattern(25, 32, ["mmmm.", "....m"], ["m": C(0x5A1A1E)]); c.px(29, 31, C(0x5A1A1E))
 
-    // The polo: mint green, the collar popped up round his neck, its placket and two buttons, a little logo, lit
-    // along the shoulders, the far side in shade, tucked into the khakis' waistband.
-    c.rect(18, 33, 20, 4, polo)
-    c.pattern(23, 32, ["cc......cc", "cCc....cCc", ".cc.bb.cc."], ["c": poloL, "C": poloD, "b": C(0xE8E4DC)])
-    c.rect(27, 34, 2, 2, poloD); c.px(27, 34, C(0xE8E4DC))
-    c.px(33, 34, C(0xC8302A)); c.px(34, 34, C(0x2A3A6A))
-    c.rect(19, 33, 3, 1, poloL); c.rect(37, 33, 1, 4, poloD); c.px(21, 35, poloD)
-    c.rect(18, 37, 20, 1, khaki); c.rect(18, 36, 20, 1, C(0x4A3420)); c.rect(27, 36, 2, 1, C(0xC8B070))
-    c.rect(15, 35, 3, 1, poloD)
+    // The striped sweater: a band of colour a row, across his front and down each sleeve, the crew neck ribbed.
+    for row in 0..<5 { c.rect(18, 33 + row, 20, 1, bands[row % 4]) }
+    for row in 0..<3 { c.rect(15, 33 + row, 3, 1, bands[(row + 1) % 4]); c.rect(38, 33 + row, 3, 1, bands[(row + 1) % 4]) }
+    c.rect(25, 33, 6, 1, C(0x9E2A24))
+    // The vest over it, open down the front: beige, lit along the shoulders, its flannel lining showing red check at
+    // the front edges, a pocket flap each side, the far side and the hem in shade.
+    c.rect(18, 33, 7, 5, vest); c.rect(31, 33, 7, 5, vest)
+    c.rect(19, 33, 4, 1, vestL); c.rect(32, 33, 3, 1, vestL); c.rect(18, 33, 1, 5, vestL)
+    for y in 33...37 { c.px(24, y, y % 2 == 0 ? lining : liningL); c.px(31, y, y % 2 == 0 ? liningL : lining) }
+    c.rect(20, 35, 3, 1, vestD); c.rect(33, 35, 3, 1, vestD)
+    c.rect(37, 33, 1, 5, vestD); c.rect(18, 37, 6, 1, vestD); c.rect(32, 37, 6, 1, vestD)
 
     // Neatly combed brown hair: a side parting, a stiff quiff at the front, short at the sides.
     c.pattern(17, 20, [
