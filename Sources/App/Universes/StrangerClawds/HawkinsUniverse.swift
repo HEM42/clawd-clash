@@ -10,7 +10,7 @@ import Foundation
 //   Art/                     the characters.            Places/             the places.
 //   HawkinsRides.swift       the Party's BMX bikes.  HawkinsTaken.swift  taken to the Upside Down (compaction).
 //   HawkinsHabits.swift      the nosebleed, Vecna's clock, the babysitter.
-//   HawkinsDrills.swift      the bespoke drills.
+//   HawkinsDrills.swift      the bespoke drills.     HawkinsFlip.swift   the Upside Down turning over now and then.
 //   Promo/HawkinsReel.swift  the trailer, compiled only into Tools/RenderPromo, never into the app.
 // The scene changes with the engine's plain edge and clock wipes for now; the universe's own trips come later.
 
@@ -50,6 +50,8 @@ struct HawkinsUniverse: UniverseModule {
         StageQuirks(jitter: hawkinsStageJitter, prop: hawkinsVecnaClock, remark: hawkinsBabysitter,
                     afterDuel: [.hero(HawkinsHero.eleven)], afterDuelFrom: [.hero(HawkinsHero.eleven): hawkinsNosebleedFrom])
     }
+    /// Now and then the Upside Down turns over: HawkinsFlip.swift.
+    var sceneFlip: SceneFlip? { hawkinsSceneFlip }
 
     /// The README's desktop line-up and social preview (Tools/RenderDocs).
     var docs: DocsInfo {
