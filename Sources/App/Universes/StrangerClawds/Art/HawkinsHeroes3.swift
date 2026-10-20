@@ -1,8 +1,8 @@
 import Foundation
 
 // Heroes: the teenagers. Clawd in costume like the rest, with Clawd's own orange face showing. Steve wears his season
-// 2 jacket rather than the Scoops Ahoy uniform, so he and Robin never look alike. Eddie, Argyle, Barb and Derek are
-// stand-ins for now, in their colours; they're drawn properly with the rest of the cast.
+// 2 jacket rather than the Scoops Ahoy uniform, so he and Robin never look alike. Derek is Holly's classmate, so he
+// stands lower, as Erica does.
 
 let hawkinsHeroes3: [HawkinsHero: Persona] = [
     .steveHarringclawd: Persona(name: "Steve Harringclawd", weapon: .saber, headTop: 15, signature: 3.4,
@@ -12,13 +12,10 @@ let hawkinsHeroes3: [HawkinsHero: Persona] = [
     .jonathanByers: Persona(name: "Jonathan Byers", weapon: .blaster, shot: .bullet, muzzle: (47, 32), headTop: 20,
                             signature: 3.0, draw: drawJonathanByers),
     .robinBuckley: Persona(name: "Robin Buckley", headTop: 16, signature: 2.8, callout: "Ahoy!", draw: drawRobinBuckley),
-    // Stand-ins until they're drawn: the engine's plain figure in their colours.
-    .eddieMunclawd: Persona(name: "Eddie Munclawd", weapon: .saber,
-                            draw: { c, p in drawStandIn(c, p, body: C(0x2A2A30), trim: C(0x5A6E96)) }),
-    .argyle: Persona(name: "Argyle", callout: "Duuude.",
-                     draw: { c, p in drawStandIn(c, p, body: C(0xD84A2A), trim: C(0xF0C838)) }),
-    .barb: Persona(name: "Barb", draw: { c, p in drawStandIn(c, p, body: C(0xE8C8D0), trim: C(0x8A5A3A)) }),
-    .derekTurnbow: Persona(name: "Derek Turnbow", draw: { c, p in drawStandIn(c, p, body: C(0x3A8A5A), trim: C(0xEDEDE8)) }),
+    .eddieMunclawd: Persona(name: "Eddie Munclawd", weapon: .saber, headTop: 17, signature: 3.6, draw: drawEddieMunclawd),
+    .argyle: Persona(name: "Argyle", headTop: 19, signature: 3.0, callout: "Duuude.", draw: drawArgyle),
+    .barb: Persona(name: "Barb", headTop: 20, signature: 2.4, draw: drawBarb),
+    .derekTurnbow: Persona(name: "Derek Turnbow", headTop: 22, draw: drawDerekTurnbow),
 ]
 
 // MARK: - Steve Harringclawd
@@ -327,4 +324,318 @@ private func drawRobinBuckley(_ c: PixelCanvas, _ p: Pose) {
     // The salute: her forearm up across to the brim, the hand flat against it.
     hawkinsLine(c, 39.5, 27.5, 36.5, 22.5, stripe, 1.1)
     c.rect(32, 21, 5, 2, clawdOrange); c.rect(32, 22, 5, 1, clawdShade)
+}
+
+// MARK: - Eddie Munclawd
+
+/// Eddie Munclawd: a big mane of long dark curls down past his shoulders, the Hellfire Club t-shirt (black, the club's
+/// red-horned white skull on the chest) under a denim vest with a couple of pins, black jeans with a chain at the hip and
+/// black boots. He fights as he did in the Upside Down: a spear with a knife lashed to the end, and a dustbin lid for a
+/// shield, nails driven through it, on his other arm. Signature: he swaps them for his guitar and plays a solo, his
+/// head banging, the notes flying off it.
+private func drawEddieMunclawd(_ c: PixelCanvas, _ p: Pose) {
+    let tee = C(0x1A181E), teeD = C(0x0E0C12)
+    let denim = C(0x4A6A9A), denimD = C(0x34507A), denimL = C(0x6E8EBE)
+    let jeans = C(0x26262E), jeansD = C(0x16161C)
+    let hair = C(0x3A2618), hairD = C(0x22160E), hairL = C(0x5E422C)
+    let k = hawkinsSpan(p, 0.06, 0.94)
+    let solo = k >= 0
+    let bang = solo && k > 0.2 && k < 0.85 && Int(p.t * 4) % 2 == 0 ? 1 : 0
+
+    // The dustbin-lid shield on his far arm, behind him: dull grey metal, a ring pressed into it, the handle's
+    // rivet in the middle, and the nails sticking out all round.
+    if !solo {
+        let sc = (x: 11.0, y: 33.0)
+        for i in 0..<10 {
+            let a = Double(i) * 36 + 18
+            let b = hawkinsReach(sc, a, 4.5), e = hawkinsReach(sc, a, 6.6)
+            hawkinsLine(c, b.x, b.y, e.x, e.y, C(0xB8BCC4), 0.4)
+        }
+        for y in -5...5 {
+            for x in -5...5 where x * x + y * y <= 22 {
+                let d = x * x + y * y
+                let col = d >= 15 ? C(0x5A5E66) : d >= 8 && d <= 11 ? C(0x6E727A) : x + y < -2 ? C(0xA4A8B0) : C(0x8A8E96)
+                c.px(11 + x, 33 + y, col)
+            }
+        }
+        c.px(11, 33, C(0x3A3E46)); c.px(9, 30, C(0xC8CCD4)); c.px(13, 36, C(0x6A5A4A))
+    }
+
+    // Black jeans, the knees worn pale, and black boots with a lit toe.
+    drawLegs(c, Look(leg: jeans), step: p.step)
+    if !seatedPose { for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx, hawkinsFoot(p, i) - 4, C(0x3E3E48)) } }
+    drawBoots(c, C(0x141418), step: p.step, rows: 2)
+    if !seatedPose { for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx + 1, hawkinsFoot(p, i) - 1, C(0x3A3A42)) } }
+
+    c.oy += p.breathe
+    drawBody(c, Look(arm: tee), armRight: solo ? 4 : 0)
+
+    // The Hellfire tee between the open vest, the club's red-horned white skull on it.
+    c.rect(18, 33, 20, 5, tee); c.rect(24, 37, 8, 1, teeD)
+    c.pattern(25, 34, ["R....R", ".WWWW.", ".WkWk.", "..WW.."], ["R": C(0xD0222C), "W": C(0xE8E4DC), "k": tee])
+    // The denim vest: its edges lit, a seam down each side, a red and a white pin, the far side and the hem darker.
+    c.rect(18, 33, 6, 5, denim); c.rect(32, 33, 6, 5, denim)
+    c.rect(18, 33, 1, 5, denimL); c.rect(19, 33, 4, 1, denimL); c.rect(23, 33, 1, 5, denimL)
+    c.rect(32, 33, 1, 5, denimD); c.rect(37, 33, 1, 5, denimD); c.rect(18, 37, 6, 1, denimD); c.rect(32, 37, 6, 1, denimD)
+    c.rect(21, 34, 1, 3, denimD); c.rect(34, 34, 1, 3, denimD)
+    c.px(20, 35, C(0xD83A3A)); c.px(35, 35, C(0xE8E8E0))
+    c.rect(15, 35, 3, 1, teeD)
+    // The wallet chain looping from his belt round to his back pocket.
+    c.pattern(18, 38, ["s.s.s", ".s.s."], ["s": C(0xB8BCC4)])
+
+    // The mane: long dark curls, lit in little round strokes, falling over his far shoulder and down past his collar,
+    // a lock hanging forward over his near shoulder. It bangs a row lower on the beat of the solo.
+    c.pattern(14, 17 + bang, [
+        "..........HHHHHHH..........",
+        ".......HHHlHHlHHHHHH.......",
+        ".....HHlHHhHlHHhHlHHHH.....",
+        "....HlHHhHHHHhHHHhHHHhH....",
+        "...HHHhHHlHHhHHlHHhHHHhH...",
+        "..HlHHHHHhHHHHHhHHHHHlHHH..",
+        "..HHhHlHHHHHlHHHHHlHHHhHH..",
+        ".HlHHhHHHhHHHHhHHHHhHHHHhH.",
+        ".HHhHHHHHHhHHHHHHhHHHhHlHH.",
+        "HlHHhH...............HhHHH.",
+        "HHhHlH................HlHH.",
+        "HlHHhH................HhHH.",
+        "HHhlHH................hHlH.",
+        "HlHHhH................HHhH.",
+        "HHhHHl................hHH..",
+        "HlHHhH................Hh...",
+        "HHlHhH....................",
+        ".HHhHH.....................",
+        "HlHhHl.....................",
+        ".HhHH......................",
+        "..Hh.......................",
+    ], ["H": hair, "h": hairD, "l": hairL])
+
+    if solo {
+        // The guitar slung across him: a red, pointed body with a black edge and two pickups, the dark neck rising to
+        // his fretting hand and a spiked headstock; his picking hand jumping over the strings.
+        c.pattern(19, 32, [
+            "KR..........",
+            ".KRRRRRRK...",
+            "..RRwRwRRR..",
+            "..RRRRRRRR..",
+            ".KRRRRRRK...",
+            "KR..........",
+        ], ["R": C(0xC8202E), "K": C(0x1A1A1E), "w": C(0xE8E8E0)])
+        c.rect(22, 33, 4, 1, C(0xE8505A))
+        hawkinsLine(c, 29.5, 34.5, 45.5, 26.5, C(0x2A1A10), 0.75)
+        hawkinsLine(c, 30.5, 34, 45, 26.8, C(0x6A4A30), 0.3)
+        c.pattern(45, 23, ["K.K.", ".KKK", "KKK.", "..K."], ["K": C(0x1A1A1E)])
+        c.rect(38, 28, 3, 3, clawdOrange)
+        let pick = Int(p.t * 8) % 2
+        c.rect(26, 34 + pick, 2, 2, clawdOrange)
+        // The notes flying off it, solid little quavers rising and drifting.
+        for i in 0..<2 {
+            let f = (k * 3 + Double(i) * 0.5).truncatingRemainder(dividingBy: 1)
+            guard k > 0.1 && k < 0.9 else { break }
+            let x = 49 + i * 5 + Int(f * 4), y = 26 - Int(f * 10)
+            c.rect(x, y, 2, 1, C(0xF4F0E0)); c.rect(x + 1, y - 3, 1, 3, C(0xF4F0E0)); c.px(x + 2, y - 3, C(0xF4F0E0))
+        }
+        return
+    }
+    if let a = p.melee {
+        eddieSpear(c, angle: a, trail: p.trail)
+    } else {
+        eddieSpear(c, angle: -80, trail: [])
+    }
+}
+
+/// Eddie's spear along `angle` from his hand: a pale wooden shaft, a twist of black tape, and a kitchen knife lashed to
+/// the end, lit along its edge; a smear where a fast thrust just was.
+private func eddieSpear(_ c: PixelCanvas, angle a: Double, trail: [Double]) {
+    let h = Sprite.hand
+    hawkinsSmear(c, h, trail, from: 12, to: 18, C(0xE4ECF4))
+    hawkinsBar(c, h, a, from: -3, to: 15, C(0x8A6440), r: 0.7)
+    hawkinsBar(c, h, a, from: -3, to: 14, C(0xB08858), r: 0.25)
+    hawkinsBar(c, h, a, from: 13, to: 15.5, C(0x2A2A30), r: 0.85)
+    hawkinsBar(c, h, a, from: 15.5, to: 18.5, C(0xA8ACB6), r: 0.85)
+    hawkinsBar(c, h, a, from: 18.5, to: 20, C(0xD8DCE4), r: 0.45)
+    let e0 = hawkinsReach(hawkinsReach(h, a, 15.8), a - 90, 0.6), e1 = hawkinsReach(hawkinsReach(h, a, 18.6), a - 90, 0.6)
+    hawkinsLine(c, e0.x, e0.y, e1.x, e1.y, C(0xEEF2F8), 0.3)
+    c.rect(Int(h.x.rounded()) - 1, Int(h.y.rounded()) - 1, 3, 3, clawdOrange)
+}
+
+// MARK: - Argyle
+
+/// Argyle in his Surfer Boy Pizza uniform: long, straight black hair parted in the middle and falling past his
+/// shoulders, sleepy, half-shut eyes and a grin, a loud short-sleeved shirt open over the pizza place's white tee (its
+/// orange sunset and yellow wave on the chest), a name tag, baggy blue trousers and white hi-tops. He doesn't fight.
+/// Signature: he holds out a slice of pizza, pineapple and ham, the cheese stretching ("Duuude.").
+private func drawArgyle(_ c: PixelCanvas, _ p: Pose) {
+    let shirt = C(0x2A9A9A), shirtD = C(0x1E7276), shirtL = C(0x4ABCB8), pink = C(0xE0488E), yellow = C(0xF2D040)
+    let tee = C(0xF2F0EA), teeD = C(0xCFCBC2)
+    let pants = C(0x3A4E9A), pantsD = C(0x2A3A78)
+    let hair = C(0x1A1614), hairD = C(0x0C0A08), hairL = C(0x3A3230)
+    let k = hawkinsSpan(p, 0.08, 0.92)
+    let out = Int((hawkinsEase(k, edge: 0.2) * 5).rounded())
+
+    drawLegs(c, Look(leg: pants), step: p.step)
+    if !seatedPose { for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx + 1, hawkinsFoot(p, i) - 4, pantsD) } }
+    drawBoots(c, C(0xEEEEE8), step: p.step, rows: 3)
+    drawBoots(c, C(0xB0B0B8), step: p.step, rows: 1)
+
+    c.oy += p.breathe
+    drawBody(c, Look(arm: shirt))
+    // Sleepy eyes: the lids half down.
+    c.rect(22, 29, 2, 1, clawdShade); c.rect(32, 29, 2, 1, clawdShade)
+    c.pattern(25, 32, ["m.....m", ".mmmmm."], ["m": C(0x5A1A1E)])
+
+    // The loud shirt, open over the tee: teal, with pink zigzags and yellow dots, lit along its edges, the far side
+    // and the hem darker; the tee's logo in the gap, and the name tag.
+    c.rect(18, 33, 20, 5, shirt)
+    c.rect(24, 33, 8, 5, tee); c.rect(24, 37, 8, 1, teeD)
+    c.pattern(25, 34, [".oooo.", "yyyyyy"], ["o": C(0xF08A30), "y": yellow]); c.rect(26, 33, 4, 1, teeD)
+    c.rect(18, 33, 1, 5, shirtL); c.rect(23, 33, 1, 5, shirtL); c.rect(32, 33, 1, 5, shirtD); c.rect(37, 33, 1, 5, shirtD)
+    c.pattern(19, 34, ["p.p.", ".p.p", "y..y"], ["p": pink, "y": yellow])
+    c.pattern(33, 35, ["p.p.", ".p.y"], ["p": pink, "y": yellow])
+    c.rect(33, 33, 3, 2, C(0xF4F4F0)); c.rect(33, 34, 3, 1, C(0xC8302A))
+    c.rect(18, 37, 6, 1, shirtD); c.rect(32, 37, 6, 1, shirtD)
+    c.rect(15, 35, 3, 1, shirtD)
+
+    // The hair: long, straight and black, parted in the middle, combed down in long strokes past his shoulders.
+    c.pattern(15, 19, [
+        ".......HHHHHHHHHHHHHH.....",
+        ".....HHHHlHHHHHHlHHHHHH...",
+        "....HHHlHHHHHdHHHHlHHHHH..",
+        "...HHHlHHHHHHdHHHHHlHHHHH.",
+        "...HHlHHHHHHHdHHHHHHlHHHH.",
+        "..HHHHHHHHHHddHHHHHHHHHHH.",
+        "..HHHHHHHHHHdHHHHHHHHHHHH.",
+        "..HHHH................HHH.",
+        "..HlH.................HHd.",
+        "..HlH.................HHd.",
+        "..HHd.................HHd.",
+        ".HHHd.................HHd.",
+        ".HlHd.................HdH.",
+        ".HlHd.................HdH.",
+        ".HHHd.................dHH.",
+        ".HHd..................dH..",
+    ], ["H": hair, "d": hairD, "l": hairL])
+
+    guard out > 0 else { return }
+    // The slice held out on his palm: the crust nearest him, the cheese and its pineapple and ham, the tip forward.
+    c.rect(38, 32, 2 + out, 3, shirt); c.rect(38, 32, 2 + out, 1, shirtL)
+    let x = 40 + out
+    c.rect(x, 33, 3, 2, clawdOrange)
+    c.pattern(x - 1, 27, [
+        "BB......",
+        "BCCC....",
+        "BCyCpC..",
+        "BCCCCCCC",
+        "BbCpCy..",
+        "Bb......",
+    ], ["B": C(0xC88A44), "b": C(0x9A6430), "C": C(0xF4D060), "y": C(0xF8E890), "p": C(0xE07A80)])
+    if out >= 5 && Int(p.t * 3) % 2 == 0 { c.px(x + 4, 33, C(0xF4D060)) }   // a string of cheese
+}
+
+// MARK: - Barb
+
+/// Barb: short auburn hair in soft curls, big round glasses, a pale pink blouse with a big white frilled collar, a
+/// frill down the front and puffed sleeves, high-waisted jeans with a brown belt and white sneakers. She doesn't fight.
+/// Signature: she pushes her glasses back up her nose with one finger.
+private func drawBarb(_ c: PixelCanvas, _ p: Pose) {
+    let blouse = C(0xEEC4CC), blouseD = C(0xCC9CA8), blouseL = C(0xFADCE2), frill = C(0xFAF8F4), frillD = C(0xD8D2CC)
+    let jeans = C(0x5A7AAA), jeansD = C(0x44608A)
+    let hair = C(0xA04A28), hairD = C(0x74321A), hairL = C(0xC86A3C)
+    let frame = C(0x9A7A70), glint = C(0xE8F0FA)
+    let k = hawkinsSpan(p, 0.1, 0.9)
+    let push = hawkinsEase(k, edge: 0.25) > 0.5
+    let up = push && k > 0.4 && k < 0.65 ? 1 : 0
+
+    drawLegs(c, Look(leg: jeans), step: p.step)
+    if !seatedPose { for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx + 1, hawkinsFoot(p, i) - 4, jeansD) } }
+    drawBoots(c, C(0xF0F0EA), step: p.step, rows: 2)
+    drawBoots(c, C(0xB4B4BC), step: p.step, rows: 1)
+
+    c.oy += p.breathe
+    drawBody(c, Look(arm: blouse), armRight: push ? 3 : 0)
+
+    // The blouse: pale pink, lit along the shoulders, the far side in shade, tucked into the
+    // jeans' high waist with its belt.
+    c.rect(18, 33, 20, 4, blouse)
+    c.rect(19, 33, 4, 1, blouseL); c.rect(37, 33, 1, 4, blouseD); c.px(21, 35, blouseD); c.px(34, 35, blouseD)
+    c.rect(18, 37, 20, 1, jeans); c.rect(18, 36, 20, 1, C(0x6A4428)); c.rect(27, 36, 2, 1, C(0xC8B070))
+    // The big frilled collar, ruffled, falling in a V from her shoulders to the frill at the front.
+    c.pattern(22, 33, ["fFf......fFf", ".fFf....fFf.", "..fFf..fFf..", "...fFffFf..."], ["f": frill, "F": frillD])
+    // Puffed sleeves.
+    c.rect(15, 33, 3, 2, blouseL); c.px(17, 35, blouseD); c.rect(15, 35, 3, 1, blouseD)
+
+    // Soft auburn curls: short, round on top, lit in curling strokes, down to her jaw.
+    c.pattern(16, 20, [
+        "......HHHHHHHHHH........",
+        "....HHlHHlHHHlHHHH......",
+        "..HHHlHHhHlHHhHlHHHH....",
+        ".HHlHHhHHHHhHHHHhHHHH...",
+        ".HHHHhHlHHHHlHHHHhHHHd..",
+        "HHlHHHHHHhHHHHHhHHHHHd..",
+        "HHHhH.............HHhHd.",
+        "HlHHd..............HHHd.",
+        "HHhH................HhH.",
+        ".HlHd...............dHd.",
+        ".HHh................dH..",
+        "..Hd....................",
+    ], ["H": hair, "d": hairD, "h": hairD, "l": hairL])
+
+    // The big round glasses, their frames round her eyes, a bridge between, a glint in each lens.
+    c.pattern(20, 27 - up, [
+        ".FFFFF....FFFFF.",
+        "F.....FFFF.....F",
+        "Fg....F..F.g...F",
+        "F.....F..F.....F",
+        ".FFFFF....FFFFF.",
+    ], ["F": frame, "g": glint])
+
+    guard push else { return }
+    // Her forearm up across her front, one finger on the bridge of her glasses.
+    hawkinsLine(c, 39.5, 30.5, 31, 29.5, blouse, 1.0)
+    c.rect(28, 28 - up, 3, 2, clawdOrange); c.px(28, 27 - up, clawdOrange)
+}
+
+// MARK: - Derek Turnbow
+
+/// Derek Turnbow, Holly's classmate: a kid, so he stands lower than the teenagers, his brown hair neatly combed with a
+/// side parting and a stiff quiff, a sneer, a mint polo shirt with its collar popped and a little logo, pressed
+/// khakis and brown loafers. He doesn't fight, and has no signature move.
+private func drawDerekTurnbow(_ c: PixelCanvas, _ p: Pose) {
+    let polo = C(0x8ED4B4), poloD = C(0x66AE8E), poloL = C(0xB8EAD2)
+    let khaki = C(0xB4A27A), khakiD = C(0x8E7E5A)
+    let hair = C(0x6A4628), hairD = C(0x48301A), hairL = C(0x8E643C)
+    let lower = seatedPose ? 0 : 2
+
+    drawLegs(c, Look(leg: khaki), step: p.step)
+    if !seatedPose { for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx + 1, hawkinsFoot(p, i) - 3, khakiD) } }
+    drawBoots(c, C(0x6A3E22), step: p.step, rows: 2)
+    if !seatedPose { for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx, hawkinsFoot(p, i) - 1, C(0x8E5A34)) } }
+
+    // Shorter than the teenagers: the whole of him above the legs sits two rows lower.
+    c.oy += lower + p.breathe
+    drawBody(c, Look(arm: polo))
+    // The sneer: one brow pulled down, the lip curled up at one side.
+    c.rect(31, 28, 3, 1, clawdShade)
+    c.pattern(25, 32, ["mmmm.", "....m"], ["m": C(0x5A1A1E)]); c.px(29, 31, C(0x5A1A1E))
+
+    // The polo: mint green, the collar popped up round his neck, its placket and two buttons, a little logo, lit
+    // along the shoulders, the far side in shade, tucked into the khakis' waistband.
+    c.rect(18, 33, 20, 4, polo)
+    c.pattern(23, 32, ["cc......cc", "cCc....cCc", ".cc.bb.cc."], ["c": poloL, "C": poloD, "b": C(0xE8E4DC)])
+    c.rect(27, 34, 2, 2, poloD); c.px(27, 34, C(0xE8E4DC))
+    c.px(33, 34, C(0xC8302A)); c.px(34, 34, C(0x2A3A6A))
+    c.rect(19, 33, 3, 1, poloL); c.rect(37, 33, 1, 4, poloD); c.px(21, 35, poloD)
+    c.rect(18, 37, 20, 1, khaki); c.rect(18, 36, 20, 1, C(0x4A3420)); c.rect(27, 36, 2, 1, C(0xC8B070))
+    c.rect(15, 35, 3, 1, poloD)
+
+    // Neatly combed brown hair: a side parting, a stiff quiff at the front, short at the sides.
+    c.pattern(17, 20, [
+        "..........HHHHHH......",
+        ".....HHHHHlllHHHHH....",
+        "...HHHHlllHHHHHHlHHH..",
+        "..HHlHHHHHHdHHHHHHHHH.",
+        ".HHHHHHHHHHdHHHHHHHHHd",
+        ".HHHHHHHhHHdHHHHhHHHHd",
+        ".HHH..............HHHd",
+        ".HH................HH.",
+    ], ["H": hair, "d": hairD, "h": hairD, "l": hairL])
 }

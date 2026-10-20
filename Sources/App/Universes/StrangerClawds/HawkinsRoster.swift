@@ -19,10 +19,12 @@ extension HawkinsVillain {
 
 /// Every hero's persona, from the Art/HawkinsHeroes*.swift files (8 to 10 a file), and HEM's, who the engine draws
 /// in this universe's costume (HawkinsHem.swift). Add each new art file to the list.
-let hawkinsHeroPersonas: [HawkinsHero: Persona] = [hawkinsHeroes1, hawkinsHeroes2, hawkinsHeroes3, hawkinsHeroes4]
+let hawkinsHeroPersonas: [HawkinsHero: Persona] = [hawkinsHeroes1, hawkinsHeroes2, hawkinsHeroes3, hawkinsHeroes4,
+                                                   hawkinsHeroes5]
     .reduce([.hem: hemPersona(.hawkins)]) { $0.merging($1) { a, _ in a } }
 /// Every villain's persona, from the Art/HawkinsVillains*.swift files.
-let hawkinsVillainPersonas: [HawkinsVillain: Persona] = [hawkinsVillains1, hawkinsVillains2]
+let hawkinsVillainPersonas: [HawkinsVillain: Persona] = [hawkinsVillains1, hawkinsVillains2, hawkinsVillains3,
+                                                         hawkinsVillains4]
     .reduce([:]) { $0.merging($1) { a, _ in a } }
 
 // MARK: - Homes
@@ -30,28 +32,32 @@ let hawkinsVillainPersonas: [HawkinsVillain: Persona] = [hawkinsVillains1, hawki
 extension Location {
     /// Where each villain belongs: the crew gathers there when one leads the first session (window mode, Automatic).
     /// Every character's home is one of this universe's places, and a `switch` with no `default` makes the compiler
-    /// ask for each new case.
-    /// Characters whose own place isn't drawn yet wait in the basement, each with a comment naming where they belong.
+    /// ask for each new case. Eleven's void is nobody's home: she only visits it.
     static func hawkinsHome(of villain: HawkinsVillain) -> Location {
         switch villain {
         case .vecna: return .hawkinsMind
         case .one: return .hawkinsCreel
-        case .mindFlayer, .democlawgon: return .hawkinsUpsideDown
-        case .drBrenner: return .hawkinsLab
-        case .billyHargrove: return .hawkinsBasement   // for now: his home is the Community Pool
+        case .mindFlayer, .democlawgon, .demodog, .dart, .demobat, .flayedRat: return .hawkinsUpsideDown
+        case .drBrenner, .connieFrazier, .drKay, .colonelSullivan: return .hawkinsLab
+        case .mayorKline, .grigori: return .hawkinsStarcourt
+        case .billyHargrove, .jasonCarver: return .hawkinsPool
         }
     }
 
     static func hawkinsHome(of hero: HawkinsHero) -> Location {
         switch hero {
-        case .mikeWheeler, .nancyWheeler, .barb, .hem: return .hawkinsBasement
-        case .joyceByers, .jonathanByers: return .hawkinsByers
-        case .steveHarringclawd, .robinBuckley, .ericaSinclair, .derekTurnbow: return .hawkinsStarcourt
+        case .mikeWheeler, .nancyWheeler, .hollyWheeler, .karenWheeler, .barb, .hem: return .hawkinsBasement
+        case .suzie: return .hawkinsBasement   // on the other end of Dustin's radio
+        case .joyceByers, .jonathanByers, .bobNewby: return .hawkinsByers
+        case .drOwens, .kali: return .hawkinsLab   // Kali was "Eight" there
+        case .steveHarringclawd, .robinBuckley, .ericaSinclair, .derekTurnbow, .alexei: return .hawkinsStarcourt
+        case .maxMayfield: return .hawkinsArcade
         case .chiefHopper, .eleven: return .hawkinsCabin
-        case .dustinHenderson, .lucasSinclawd: return .hawkinsBasement   // for now: their home is the Snow Ball
-        case .maxMayfield: return .hawkinsBasement                       // for now: her home is the Palace Arcade
-        case .willByers: return .hawkinsBasement                         // for now: his home is Castle Byers
-        case .eddieMunclawd, .argyle: return .hawkinsBasement            // for now: their home is Eddie's trailer
+        case .willByers: return .hawkinsCastleByers
+        case .eddieMunclawd, .argyle: return .hawkinsTrailer
+        case .murrayBauman, .yuri: return .hawkinsKamchatka
+        case .lucasSinclawd, .dustinHenderson, .mrClarke: return .hawkinsSnowBall
+        case .bennyHammond: return .hawkinsBennys
         }
     }
 }
@@ -66,13 +72,20 @@ extension Cast {
 }
 
 /// Arch-enemies: whenever both are fighting, they're paired with each other first, wherever they are in the line. Each
-/// pair is a hero and a villain from this universe; a character can be in more than one pair. The rest of the plan's
-/// pairs (Holly and One, Karen and the Democlawgon, Hopper and Grigori…) come as their other halves are drawn.
+/// pair is a hero and a villain from this universe; a character can be in more than one pair.
 private let hawkinsNemeses: [(HawkinsHero, HawkinsVillain)] = [
-    (.eleven, .drBrenner),          // Papa
-    (.maxMayfield, .vecna),         // season 4
-    (.willByers, .mindFlayer),      // its host in season 2
+    (.eleven, .drBrenner),                  // Papa
+    (.maxMayfield, .vecna),                 // season 4
+    (.hollyWheeler, .one),                  // Mr. Whatsit, season 5
+    (.willByers, .mindFlayer),              // its host in season 2
+    (.karenWheeler, .democlawgon),          // her kitchen fight, season 5
     (.steveHarringclawd, .billyHargrove),   // their fight, season 2
+    (.chiefHopper, .grigori),               // season 3
+    (.lucasSinclawd, .jasonCarver),         // season 4
+    (.nancyWheeler, .mayorKline),           // she uncovers his story at the paper, season 3
+    (.joyceByers, .drKay),                  // season 5's military hunt
+    (.drOwens, .colonelSullivan),           // season 4
+    (.kali, .connieFrazier),                // Brenner's people
 ]
 
 let hawkinsTheme = Theme(

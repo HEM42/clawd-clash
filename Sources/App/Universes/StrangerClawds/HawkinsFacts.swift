@@ -19,6 +19,11 @@ enum HawkinsHero: Int, CaseIterable {
     case steveHarringclawd, nancyWheeler, jonathanByers, robinBuckley, eddieMunclawd, argyle, barb, derekTurnbow
     // The grown-ups
     case chiefHopper, joyceByers
+    case murrayBauman, bobNewby, mrClarke, bennyHammond, drOwens
+    // Allies
+    case kali, suzie, alexei, yuri
+    // Season 5's Wheelers
+    case hollyWheeler, karenWheeler
     case hem   // always last (`Universe.hem`)
 }
 
@@ -26,6 +31,9 @@ enum HawkinsVillain: Int, CaseIterable {
     // The Upside Down and the people who hunt the kids
     case vecna
     case one, mindFlayer, democlawgon, drBrenner, billyHargrove
+    case grigori, jasonCarver, mayorKline, drKay, colonelSullivan, connieFrazier
+    // Small fry, agents only
+    case demodog, dart, demobat, flayedRat
 }
 
 extension Universe {
@@ -39,16 +47,15 @@ enum HawkinsFacts {
     static let facts = UniverseFacts(
         // The counts come from the enums, never typed by hand.
         villainCount: HawkinsVillain.allCases.count, heroCount: HawkinsHero.allCases.count,
+        // The Upside Down's small fry (a Demodog, Dart, a Demobat and a flayed rat) only ever turn up as agents.
+        agentOnly: Set([HawkinsVillain.demodog, .dart, .demobat, .flayedRat].map(\.rawValue)),
         // Vecna and One are the same man in two forms, so they never lead sessions back to back.
         rivals: [HawkinsVillain.vecna.rawValue, HawkinsVillain.one.rawValue]
-        // Nothing else yet: no small fry until the Demodog, Dart, the Demobat and the flayed rat are drawn, and the
-        // compaction (taken to the Upside Down) comes with the mechanics.
+        // Nothing else yet: the compaction (taken to the Upside Down) comes with the mechanics.
         //
         // Everything below is optional: uncomment what your universe needs. Ids here are local: a villain's is its
         // rawValue, a hero's `UniverseFacts.heroBase + rawValue`.
         //
-        // Small fry that only ever turn up as agents, never leading a session (a pet, a minion):
-        //   , agentOnly: [HawkinsVillain.minion.rawValue, UniverseFacts.heroBase + HawkinsHero.pet.rawValue]
         // With another AI running, which side Claude Code plays: false (the default) the heroes, true the villains,
         // nil whoever came first keeps the side it mostly has (Star Clawds):
         //   , claudeSide: false
