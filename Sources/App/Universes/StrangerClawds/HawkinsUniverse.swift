@@ -21,8 +21,9 @@ struct HawkinsUniverse: UniverseModule {
     var hem: HemCostume { hawkinsHem }
     /// The batch names for the art files, one per file in order, and the characters by enum case name.
     var preview: PreviewInfo {
-        .of(.hawkins, heroes: "hawkinsHeroes", [hawkinsHeroes1, hawkinsHeroes2, hawkinsHeroes3, hawkinsHeroes4],
-            villains: "hawkinsVillains", [hawkinsVillains1, hawkinsVillains2])
+        .of(.hawkins, heroes: "hawkinsHeroes", [hawkinsHeroes1, hawkinsHeroes2, hawkinsHeroes3, hawkinsHeroes4,
+                                                hawkinsHeroes5],
+            villains: "hawkinsVillains", [hawkinsVillains1, hawkinsVillains2, hawkinsVillains3, hawkinsVillains4])
     }
     /// The engine's plain edge and clock wipes, until the universe's own trips are drawn.
     var transitions: TransitionSet? { nil }

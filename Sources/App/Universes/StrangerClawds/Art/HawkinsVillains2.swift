@@ -2,8 +2,8 @@ import Foundation
 
 // Villains: One, the Upside Down's two monsters, and the men who hunt the kids. One, Brenner and Billy are Clawd in
 // costume like everyone else, Clawd's orange face showing. The Mind Flayer and the Democlawgon are creatures: the first
-// a spider of black smoke standing on four long legs, the second a faceless Clawd in grey hide whose head opens like a
-// flower. Drawn eerie, never gory.
+// a heavy spider of black smoke standing on four thick legs, the second a faceless Clawd in grey hide whose head opens
+// like a flower. Drawn eerie, never gory.
 
 let hawkinsVillains2: [HawkinsVillain: Persona] = [
     .one: Persona(name: "One", weapon: .lightning,
@@ -101,75 +101,89 @@ private func drawOne(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - The Mind Flayer
 
-/// The Mind Flayer: a towering spider of black smoke. Its body is a dark, roiling mass high up, lit faintly along the
-/// top, a broken rim of dull red underneath from the storm, with faint wisps drifting off it. It stands on four long
-/// legs, their knees high above it and their feet on the ground. It lashes out with a tendril. Signature: two more legs
-/// unfold out of its back and spread wide across the top of the frame, red lightning flickering inside it, and fold
+/// The Mind Flayer: a towering spider of black smoke, drawn as a dark, heavy monster rather than a line drawing. Its
+/// body is a big near-black mass high up, churning slowly at the edge, lit in faint strokes along the top, a dull red
+/// glow from the storm along its underside, and red lightning flickering deep inside it. It stands on four thick legs,
+/// each tapering from its hip under the body up to a knee high above and down to a point on the ground. Only the
+/// wisps drifting off it are see-through, and they're faint. It lashes out with a tendril. Signature: two more legs
+/// unfold out of its back and spread wide across the top of the frame, the lightning inside it flaring, and fold
 /// away again.
 private func drawMindFlayer(_ c: PixelCanvas, _ p: Pose) {
-    let smoke = C(0x16141C), smokeL = C(0x34303E), smokeR = C(0x4E1A24)
+    let smoke = C(0x0E0C12), smokeM = C(0x1C1822), smokeL = C(0x34303E), smokeR = C(0x4E1A24)
+    let bolt = C(0xD8303C), boltL = C(0xFF7A70)
     let k = hawkinsSpan(p, 0.06, 0.94)
-    let spread = hawkinsEase(k, edge: 0.3)
+    let spread = hawkinsEase(k, edge: 0.14)
     let t = p.t
     let by = Double(p.breathe)
 
-    // The four legs it stands on, back to front: each from its hip under the body, up to a knee high above, and down
-    // to its foot on the ground. A lifted pair steps a row higher.
+    /// A leg from its hip up to the knee and down to the foot, thick at the hip and tapering to a point, its upper
+    /// edge catching a little light.
+    func leg(_ hx: Double, _ hy: Double, _ kx: Double, _ ky: Double, _ fx: Double, _ fy: Double, thick: Double) {
+        let mx = (kx + fx) / 2, my = (ky + fy) / 2
+        hawkinsLine(c, hx, hy, kx, ky, smoke, thick)
+        hawkinsLine(c, kx, ky, mx, my, smoke, thick * 0.85)
+        hawkinsLine(c, mx, my, fx, fy, smoke, thick * 0.7)
+        hawkinsLine(c, hx, hy - thick + 0.6, kx, ky - thick + 0.6, smokeM, 0.45)
+        hawkinsLine(c, kx + (kx < 33 ? 0.6 : -0.6), ky, mx + (kx < 33 ? 0.6 : -0.6), my, smokeM, 0.4)
+    }
+
+    // The four legs it stands on, back to front. A lifted pair steps a row higher.
     let legs: [(hx: Double, hy: Double, kx: Double, ky: Double, fx: Double)] = [
-        (24, 21, 10, 9, 4), (28, 24, 18, 15, 16), (38, 24, 47, 15, 49), (42, 21, 56, 9, 63),
+        (24, 20, 9, 10, 5), (28, 24, 17, 14, 16), (38, 24, 49, 14, 50), (42, 20, 57, 10, 62),
     ]
     for (i, l) in legs.enumerated() {
         let lifted = p.step >= 0 && i % 2 == p.step
-        let fy = lifted ? 41.0 : 43.0
         let ky = l.ky + sin(t * 1.3 + Double(i)) * 0.6 - (lifted ? 1 : 0)
-        hawkinsLine(c, l.hx, l.hy + by, l.kx, ky, smoke, 1.4)
-        hawkinsLine(c, l.kx, ky, (l.kx + l.fx) / 2, (ky + fy) / 2, smoke, 1.0)
-        hawkinsLine(c, (l.kx + l.fx) / 2, (ky + fy) / 2, l.fx, fy, smoke, 0.7)
-        hawkinsLine(c, l.hx, l.hy + by - 1, l.kx, ky - 1, smokeL, 0.3)
+        leg(l.hx, l.hy + by, l.kx, ky, l.fx, lifted ? 41.4 : 42.4, thick: i == 0 || i == 3 ? 2.1 : 1.8)
     }
 
-    // The two sky legs, unfolding out of its back in the signature and flung wide across the top of the frame.
-    for side in [-1.0, 1.0] where spread > 0.05 {
-        let hx = 32 + side * 5, hy = 12 + by
-        let kx = 32 + side * (5 + spread * 19), ky = 12 - spread * 9 + sin(t * 1.1 + side) * 0.5
-        let tx = 32 + side * (5 + spread * 25), ty = 12 - spread * 1
-        hawkinsLine(c, hx, hy, kx, ky, smoke, 0.9)
-        hawkinsLine(c, kx, ky, tx, ty, smoke, 0.6)
-    }
-
-    // The body: a dark mass of smoke whose edge churns slowly, lit along the top, red along the underside.
-    let cx = 33.0, cy = 16.0 + by, rx = 13.0, ry = 9.0
-    for y in 5...28 {
-        for x in 17...49 {
+    // The body: a heavy mass of smoke whose edge churns slowly, lit in strokes along the top, dull red underneath.
+    let cx = 33.0, cy = 17.0 + by, rx = 14.0, ry = 9.5
+    for y in 5...30 {
+        for x in 16...51 {
             let dx = (Double(x) + 0.5 - cx) / rx, dy = (Double(y) + 0.5 - cy) / ry
             let ang = atan2(dy, dx)
-            let edge = 1 + 0.12 * sin(ang * 5 + t * 1.5) + 0.06 * sin(ang * 9 - t * 2.3)
+            let edge = 1 + 0.1 * sin(ang * 5 + t * 1.5) + 0.05 * sin(ang * 9 - t * 2.3)
             let d = dx * dx + dy * dy
             guard d <= edge * edge else { continue }
             var col = smoke
-            if dy < -0.55 && d > 0.45 * edge * edge { col = smokeL }
-            if dy > 0.75 && d > 0.7 * edge * edge && (x + Int(t * 3)) % 4 != 0 { col = smokeR }
+            if dy < -0.5 && d > 0.55 * edge * edge && (x + y + Int(t * 2)) % 5 < 3 { col = smokeM }
+            if dy < -0.7 && d > 0.75 * edge * edge && (x + Int(t * 2)) % 4 == 0 { col = smokeL }
+            if dy > 0.7 && d > 0.6 * edge * edge && (x + Int(t * 3)) % 4 != 0 { col = smokeR }
             c.px(x, y, col)
         }
     }
-    // Swirls of paler smoke turning inside it.
+    // The two sky legs, unfolding out of its back in the signature and flung wide across the top of the frame, over
+    // the body, a little light along their tops so they read against it.
+    for side in [-1.0, 1.0] where spread > 0.05 {
+        let hx = 33 + side * 3, hy = 9 + by
+        let kx = 33 + side * (4 + spread * 8), ky = 9 - spread * 6 + sin(t * 1.1 + side) * 0.3
+        let tx = 33 + side * (4 + spread * 23), ty = 9 - spread * 6
+        hawkinsLine(c, hx, hy, kx, ky, smoke, 1.5)
+        hawkinsLine(c, kx, ky, (kx + tx) / 2, (ky + ty) / 2 - 0.4, smoke, 1.3)
+        hawkinsLine(c, (kx + tx) / 2, (ky + ty) / 2 - 0.4, tx, ty, smoke, 1.0)
+        hawkinsLine(c, kx, ky - 0.9, (kx + tx) / 2, (ky + ty) / 2 - 1.1, smokeL, 0.35)
+    }
+    // Swirls of paler smoke turning inside it, in short strokes.
     for i in 0..<3 {
         let a0 = t * 0.6 + Double(i) * 2.1
-        for s in 0..<5 {
-            let a = a0 + Double(s) * 0.3, r = 3.0 + Double(i) * 2
-            c.px(Int((cx + cos(a) * r).rounded()), Int((cy + sin(a) * r * 0.7).rounded()), C(0x2A2632))
+        for s in 0..<6 {
+            let a = a0 + Double(s) * 0.28, r = 3.0 + Double(i) * 2.4
+            c.px(Int((cx + cos(a) * r).rounded()), Int((cy + sin(a) * r * 0.7).rounded()), smokeM)
         }
     }
-    // Wisps drifting off its edge, faint enough to stay soft.
+    // Red lightning deep inside it: a flicker now and then, flaring as the sky legs spread.
+    let flash = spread > 0.6 || Int(p.lt * 3) % 5 == 0
+    if flash {
+        let o = Int(t * 8) % 2 == 0 ? 0 : 6
+        c.pattern(27 + o / 2, 14 + p.breathe, ["R.........", ".RR.......", "...RlR....", "......RR..", "....R...R.", "...R.....R"],
+                  ["R": bolt, "l": boltL])
+    }
+    // Wisps drifting off its edge, faint enough to stay soft and never dot the outline.
     for i in 0..<7 {
         let a = Double(i) * 0.9 + t * 0.35
-        let x = Int((cx + cos(a) * rx * 1.18).rounded()), y = Int((cy + sin(a) * ry * 1.22).rounded())
-        c.rect(x, y, 2, 2, C(0x3A3446, 0.16))
-    }
-    if spread > 0.75 && Int(t * 8) % 3 == 0 {
-        // Red lightning flickering inside it.
-        let o = Int(t * 8) % 2 == 0 ? 0 : 3
-        c.pattern(26 + o, 12, ["R...", ".R..", "RR..", "..R.", "..RR", "...R"], ["R": C(0xC8303A)])
+        let x = Int((cx + cos(a) * rx * 1.18).rounded()), y = Int((cy + sin(a) * ry * 1.25).rounded())
+        c.rect(x, y, 2, 2, C(0x3A3446, 0.14)); c.px(x + 1, y - 1, C(0x3A3446, 0.08))
     }
 
     // The tendril it lashes out with, waving, from the front of its body.
@@ -178,21 +192,21 @@ private func drawMindFlayer(_ c: PixelCanvas, _ p: Pose) {
         for (i, ta) in p.trail.enumerated() {
             let e = hawkinsReach(pv, ta, 15)
             c.glowLine(pv.x, pv.y, e.x, e.y, core: C(0x3A3446), glow: C(0x3A3446), coreR: 0.4, glowR: 1.4,
-                       strength: 0.22 / Double(i + 1))
+                       strength: 0.2 / Double(i + 1))
         }
         var prev = pv
         for d in stride(from: 1.0, through: 16, by: 1) {
             let b = hawkinsReach(pv, a, d), w = sin(d * 0.55 + t * 6) * 1.3 * d / 16
             let pt = hawkinsReach(b, a + 90, w)
-            hawkinsLine(c, prev.x, prev.y, pt.x, pt.y, d > 13 ? smokeR : smoke, 1.0 - d / 32)
+            hawkinsLine(c, prev.x, prev.y, pt.x, pt.y, d > 13 ? smokeR : smoke, 1.5 - d / 20)
             prev = pt
         }
     } else {
         // At rest, a short tendril curls down from under the front of it.
-        var prev = (x: 41.0, y: 23.0 + by)
+        var prev = (x: 41.0, y: 24.0 + by)
         for d in 1...8 {
-            let pt = (x: 41 + Double(d) * 0.5 + sin(t * 2 + Double(d) * 0.7) * 1.2, y: 23 + by + Double(d))
-            hawkinsLine(c, prev.x, prev.y, pt.x, pt.y, smoke, 0.6)
+            let pt = (x: 41 + Double(d) * 0.5 + sin(t * 2 + Double(d) * 0.7) * 1.2, y: 24 + by + Double(d))
+            hawkinsLine(c, prev.x, prev.y, pt.x, pt.y, smoke, 1.2 - Double(d) * 0.08)
             prev = pt
         }
     }
