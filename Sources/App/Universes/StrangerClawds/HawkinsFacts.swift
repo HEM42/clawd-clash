@@ -10,6 +10,10 @@ import Foundation
 //   - never reorder, rename into another character or remove a case once it's on `main`;
 //   - HEM is always the last hero (`Universe.hem` counts on it), so new heroes go just before him.
 // Group the cases with a comment line per group, as the other universes do. A full universe has 80 to 110 characters.
+//
+// One exception, made once and never again: in phase 4 (2026-10-20) the Mind Flayer stopped being a character and
+// became the Upside Down's scenery, so its villain case was taken out and the cases after it moved up one. Stranger
+// Clawds had never shipped, so no saved state held its ids. That was the last time these enums may be reordered.
 
 enum HawkinsHero: Int, CaseIterable {
     // The Party
@@ -30,7 +34,7 @@ enum HawkinsHero: Int, CaseIterable {
 enum HawkinsVillain: Int, CaseIterable {
     // The Upside Down and the people who hunt the kids
     case vecna
-    case one, mindFlayer, democlawgon, drBrenner, billyHargrove
+    case one, democlawgon, drBrenner, billyHargrove
     case grigori, jasonCarver, mayorKline, drKay, colonelSullivan, connieFrazier
     // Small fry, agents only
     case demodog, dart, demobat, flayedRat

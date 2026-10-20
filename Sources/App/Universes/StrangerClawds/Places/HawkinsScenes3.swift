@@ -52,7 +52,7 @@ private func hawkinsP3Vine(_ c: PixelCanvas, _ x: Int, _ y: Int, _ a: Double, le
 extension Scenes {
     /// Where things stand in the Upside Down: the big house, the little one, the telephone pole, the street lamp, the
     /// station wagon, and the foot of the storm cloud (in the window's strip it's only the cloud's lit underside at the
-    /// top; on the screen saver the whole storm hangs over the town, the Mind Flayer in it).
+    /// top; on the screen saver the whole storm hangs over the town).
     static func hawkinsUpsideDownFrame(_ c: PixelCanvas, _ g: Int)
         -> (house: Int, cottage: Int, pole: Int, lamp: Int, car: Int, cloud: Int) {
         let s = unit(g)
@@ -66,7 +66,7 @@ extension Scenes {
     /// with its wires sagging, a dead street lamp with a bike leaning on it, a mailbox, a station wagon left in the
     /// road; and vines over all of it, climbing the walls, wrapping the pole, hanging from the wires and crawling over
     /// the ground behind. Bare trees beyond, and the storm overhead lit red from inside. On the screen saver the storm
-    /// is the whole sky, and the Mind Flayer stands in it, a dark shape with its long legs reaching down.
+    /// is the whole sky. The Mind Flayer towers in it, in the window too, but it moves, so it's in the moving layer.
     static func hawkinsUpsideDown(_ c: PixelCanvas, _ g: Int) {
         let s = unit(g), f = hawkinsUpsideDownFrame(c, g), tall = isTall(c)
         // The sky: dark blue-grey, a little lighter towards the horizon, and the storm's red underside above.
@@ -95,54 +95,7 @@ extension Scenes {
                 let cx = k * 20 * s + Int(noise(k + 600) * Double(10 * s)), cy = f.cloud - Int(noise(k + 610) * Double(10 * s))
                 c.ellipse(cx, cy + 2 * s, (10 + k % 3 * 3) * s, (2 + k % 2) * s, C(0x3E1E28)); c.ellipse(cx, cy, (14 + k % 4 * 3) * s, (3 + k % 3) * s, C(0x221C24))
             }
-            // The Mind Flayer: a vast shape of smoke in the storm, a hunched body high up, arms reaching up and out, and
-            // long legs splayed like a spider's, out at the knee and then down towards the town. Edged dull red where
-            // the storm lights it from below, and smoky round the edges.
-            let mx = c.w * 52 / 100, my = max(f.cloud * 42 / 100, 44 * s)
-            let flayer = C(0x08070A), smoke = C(0x08070A, 0.35), rim = C(0x5A1A24)
-            func limb(_ pts: [(Double, Double)], _ th0: Double) {
-                var prev = pts[0]
-                let total = Double(pts.count - 1)
-                for (i, q) in pts.dropFirst().enumerated() {
-                    let n = max(1, Int(max(abs(q.0 - prev.0), abs(q.1 - prev.1)) / Double(s)))
-                    for st in 0...n {
-                        let u = Double(st) / Double(n), x = prev.0 + (q.0 - prev.0) * u, y = prev.1 + (q.1 - prev.1) * u
-                        let th = max(Double(s), th0 * (1 - (Double(i) + u) / total * 0.85))
-                        c.rect(Int(x - th / 2) - s, Int(y) - s, Int(th) + 2 * s, Int(th) + 2 * s, smoke)
-                        c.rect(Int(x - th / 2), Int(y), Int(th), Int(th), flayer)
-                        c.rect(Int(x - th / 2), Int(y + th), Int(th), s, rim)
-                    }
-                    prev = q
-                }
-            }
-            let H = Double(g - 100 * s - my), W = Double(c.w), X = Double(mx), Y = Double(my)
-            /// A curve through three points (a quadratic Bézier), sampled into the limb's points.
-            func curve(_ a: (Double, Double), _ b: (Double, Double), _ e: (Double, Double)) -> [(Double, Double)] {
-                (0...12).map { i in
-                    let u = Double(i) / 12, v = 1 - u
-                    return (v * v * a.0 + 2 * v * u * b.0 + u * u * e.0, v * v * a.1 + 2 * v * u * b.1 + u * u * e.1)
-                }
-            }
-            for side in [-1.0, 1.0] {
-                // Three legs a side: arching out and up to the knee, then curving down.
-                for j in 0..<3 {
-                    let out = (0.17 + Double(j) * 0.1) * W * side, foot = Y + H * (0.75 + Double(j) * 0.12)
-                    let knee = (X + out * 0.75, Y - Double((8 + j * 5) * s))
-                    limb(curve((X, Y), (X + out * 0.3, Y - Double((20 + j * 6) * s)), knee) +
-                         curve(knee, (X + out * 1.05, Y + H * 0.1), (X + out * 1.15, foot)).dropFirst(), Double((7 - j) * s))
-                }
-                // Two arms a side, reaching up and out into the cloud, curling at the end.
-                for j in 0..<2 {
-                    let reach = (0.13 + Double(j) * 0.12) * W * side
-                    limb(curve((X, Y - Double(8 * s)), (X + reach * 0.4, Y - Double((34 + j * 10) * s)),
-                               (X + reach, Y - Double((18 + j * 14) * s))), Double(5 * s))
-                }
-            }
-            // The body: hunched, taller than wide, a ridge of spines along its top.
-            c.ellipse(mx, my - 6 * s, 17 * s, 26 * s, smoke)
-            c.ellipse(mx, my - 6 * s, 15 * s, 24 * s, flayer); c.ellipse(mx + 2 * s, my + 10 * s, 18 * s, 10 * s, flayer)
-            for k in 0..<7 { c.rect(mx - 12 * s + k * 4 * s, my - 34 * s + abs(k - 3) * 3 * s, 2 * s, 8 * s, flayer) }
-            c.ellipse(mx + 2 * s, my + 19 * s, 14 * s, s, rim)
+            // The Mind Flayer stands in this storm, but it moves: it's drawn in the moving layer (`hawkinsMindFlayer`).
         } else {
             // In the strip only the storm's underside shows, along the top, red where it's lit.
             for k in 0..<24 {
@@ -152,6 +105,14 @@ extension Scenes {
             }
         }
 
+        hawkinsUpsideDownStreet(c, g)
+    }
+
+    /// Everything in front of the sky: the bare trees, the houses, the pole and its wires, the lamp and the bike, the
+    /// mailbox, the station wagon, the vines and the spores hanging in the air, and the ground. Drawn on its own it's
+    /// also where the Mind Flayer can't be seen (`hawkinsUpsideDownOpen`).
+    static func hawkinsUpsideDownStreet(_ c: PixelCanvas, _ g: Int) {
+        let s = unit(g), f = hawkinsUpsideDownFrame(c, g), tall = isTall(c)
         // Bare trees along the back, in the haze.
         for k in 0..<(c.w / (14 * s) + 1) {
             let tx = k * 14 * s + Int(noise(k + 300) * Double(8 * s)), th = (22 + Int(noise(k + 310) * 18)) * s
@@ -273,10 +234,12 @@ extension Scenes {
         c.ground(g, C(0x2E3640), edge: C(0x46505C), speck: C(0x262C34), seed: 41)
     }
 
-    /// The Upside Down's life: spores drifting slowly up and sideways through the air, and every few seconds red
-    /// lightning forking through the storm overhead, its glow on the cloud for a moment.
+    /// The Upside Down's life: the Mind Flayer towering over the town behind everything, spores drifting slowly up and
+    /// sideways through the air, and every few seconds red lightning forking through the storm overhead, its glow on
+    /// the cloud for a moment and lighting the Mind Flayer from inside.
     static func hawkinsUpsideDownLife(_ c: PixelCanvas, _ g: Int, _ t: Double) {
         let s = unit(g), f = hawkinsUpsideDownFrame(c, g)
+        hawkinsMindFlayer(c, g, t)
         // The spores: each on its own slow path, wrapping round.
         let n = c.w * g / (900 * s * s)
         for k in 0..<n {
