@@ -22,15 +22,9 @@ private let hawkinsP3Glyphs: [Character: String] = [
     "Y": "101101010010010", "I": "111010010010111", "M": "1000111011101011000110001", "E": "111100110100111",
 ]
 
-/// Lettering, `p` pixels a dot, from its top-left corner; a space is two dots.
+/// Lettering, `p` pixels a dot, from its top-left corner, its steps eased (`hawkinsSoftText`); a space is two dots.
 private func hawkinsP3Sign(_ c: PixelCanvas, _ x: Int, _ y: Int, _ text: String, _ col: Px, _ p: Int) {
-    var cx = x
-    for ch in text {
-        guard let bits = hawkinsP3Glyphs[ch] else { cx += 3 * p; continue }
-        let w = bits.count / 5
-        for (i, b) in bits.enumerated() where b == "1" { c.rect(cx + (i % w) * p, y + (i / w) * p, p, p, col) }
-        cx += (w + 1) * p
-    }
+    hawkinsSoftText(c, x, y, text, hawkinsP3Glyphs, col, p)
 }
 
 /// How wide `text` comes out at `p` pixels a dot.

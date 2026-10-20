@@ -54,3 +54,56 @@ func hawkinsRevolver(_ c: PixelCanvas, x: Int = 40, y: Int = 31) {
               ["K": C(0x2A2A30), "C": C(0x9A9EA8), "c": C(0x5A5E68), "W": C(0x6A4424)])
     c.rect(x + 1, y, 5, 1, C(0x4E4E58))
 }
+
+/// Blocky lettering with its steps eased a little: `text` in `glyphs` (each a string of 0s and 1s, `rows` dots high,
+/// read row by row), `p` pixels a dot, from its top-left corner, a dot's gap between letters and three dots for
+/// anything not in `glyphs` (a space). Wherever two dots touch only at a corner (a diagonal, the turn of a curve) the
+/// two empty dots beside that corner get a small triangle filled in, `ease` dots along each side, so the step reads
+/// as a slope. The pixels it touches are worked out at 4×4 samples each and drawn at that coverage, but kept close to
+/// pixel art: anything under a quarter covered stays clear and anything over 0.8 goes solid, so only the odd pixel
+/// on a slope comes out in between. Straight edges, square ends and inside corners stay exactly as the blocks were.
+func hawkinsSoftText(_ c: PixelCanvas, _ x: Int, _ y: Int, _ text: String, _ glyphs: [Character: String], _ col: Px,
+                     _ p: Int, rows: Int = 5, ease: Double = 1) {
+    // The word laid out as one grid of dots.
+    var cols: [[Bool]] = []
+    for ch in text {
+        if let bits = glyphs[ch] {
+            let w = bits.count / rows, b = Array(bits)
+            for i in 0..<w { cols.append((0..<rows).map { b[$0 * w + i] == "1" }) }
+            cols.append([Bool](repeating: false, count: rows))
+        } else {
+            cols += [[Bool]](repeating: [Bool](repeating: false, count: rows), count: 3)
+        }
+    }
+    guard !cols.isEmpty, p > 0 else { return }
+    let gw = cols.count
+    func on(_ i: Int, _ j: Int) -> Bool { i >= 0 && j >= 0 && i < gw && j < rows && cols[i][j] }
+    // Whether the point (u, v), in dots from the top-left, is ink.
+    func ink(_ u: Double, _ v: Double) -> Bool {
+        let i = Int(u.rounded(.down)), j = Int(v.rounded(.down))
+        if on(i, j) { return true }
+        let fu = u - Double(i), fv = v - Double(j)
+        let dx = fu < 0.5 ? -1 : 1, dy = fv < 0.5 ? -1 : 1
+        let du = dx < 0 ? fu : 1 - fu, dv = dy < 0 ? fv : 1 - fv
+        // An empty dot's corner: filled only where the dots on both sides of it are ink and the one across it isn't.
+        return du + dv < ease && on(i + dx, j) && on(i, j + dy) && !on(i + dx, j + dy)
+    }
+    let n = 4
+    for py in 0..<(rows * p) {
+        for px in 0..<(gw * p) {
+            // A dot is whole pixels, so a pixel in an inked dot is simply solid.
+            if cols[px / p][py / p] { c.px(x + px, y + py, col); continue }
+            var hit = 0
+            for sy in 0..<n {
+                for sx in 0..<n {
+                    let u = (Double(px) + (Double(sx) + 0.5) / Double(n)) / Double(p)
+                    let v = (Double(py) + (Double(sy) + 0.5) / Double(n)) / Double(p)
+                    if ink(u, v) { hit += 1 }
+                }
+            }
+            let k = Double(hit) / Double(n * n)
+            if k < 0.25 { continue }
+            c.px(x + px, y + py, k > 0.8 ? col : col.alpha(k))
+        }
+    }
+}

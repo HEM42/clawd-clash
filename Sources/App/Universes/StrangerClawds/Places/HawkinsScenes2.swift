@@ -29,20 +29,15 @@ private let hawkinsP2Glyphs: [Character: String] = [
 /// How many dots wide a letter is.
 private func hawkinsP2Width(_ ch: Character) -> Int { (hawkinsP2Glyphs[ch]?.count ?? 15) / 5 }
 
-/// One letter, `p` pixels a dot, from its top-left corner.
+/// One letter, `p` pixels a dot, from its top-left corner, its steps eased (`hawkinsSoftText`).
 private func hawkinsP2Letter(_ c: PixelCanvas, _ x: Int, _ y: Int, _ ch: Character, _ col: Px, _ p: Int) {
-    guard let bits = hawkinsP2Glyphs[ch] else { return }
-    let w = bits.count / 5
-    for (i, b) in bits.enumerated() where b == "1" { c.rect(x + (i % w) * p, y + (i / w) * p, p, p, col) }
+    guard hawkinsP2Glyphs[ch] != nil else { return }
+    hawkinsSoftText(c, x, y, String(ch), hawkinsP2Glyphs, col, p)
 }
 
-/// Lettering, `p` pixels a dot, from its top-left corner; a space is three dots.
+/// Lettering, `p` pixels a dot, from its top-left corner, its steps eased (`hawkinsSoftText`); a space is three dots.
 private func hawkinsP2Sign(_ c: PixelCanvas, _ x: Int, _ y: Int, _ text: String, _ col: Px, _ p: Int) {
-    var cx = x
-    for ch in text {
-        if ch != " " { hawkinsP2Letter(c, cx, y, ch, col, p) }
-        cx += ((ch == " " ? 2 : hawkinsP2Width(ch)) + 1) * p
-    }
+    hawkinsSoftText(c, x, y, text, hawkinsP2Glyphs, col, p)
 }
 
 /// How wide `text` comes out at `p` pixels a dot.
