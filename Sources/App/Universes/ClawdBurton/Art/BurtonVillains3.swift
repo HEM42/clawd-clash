@@ -336,7 +336,7 @@ private func drawGallswell(_ c: PixelCanvas, _ p: Pose) {
 /// and scowls harder.
 private func drawFinis(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0xA0AABE), skinD = C(0x7E889E), coat = C(0x262A36), coatD = C(0x181A24), vest = C(0x6A6E7A)
-    let whisker = C(0xC8CCD4), whiskerD = C(0x9A9EA8), cane = C(0x16141A), knob = C(0xD0D4DC), gold = C(0xE0B840)
+    let whisker = C(0xC8CCD4), cane = C(0x16141A), knob = C(0xD0D4DC), gold = C(0xE0B840)
     let sig = p.signature
     let tapK = sig.map { $0 > 0.1 && $0 < 0.6 ? frac(ramp($0, 0.1, 0.6) * 2) : 1 } ?? 1
     let tapping = sig.map { $0 > 0.1 && $0 < 0.6 } ?? false
