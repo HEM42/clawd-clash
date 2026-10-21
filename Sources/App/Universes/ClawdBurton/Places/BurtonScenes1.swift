@@ -183,12 +183,12 @@ extension Scenes {
         htHouse(c, x: left + f.hw * 2 - 2 * s, base: g, w: 12 * s, h: th, bend: 4 * s, s: s, wall: wall, edge: trim,
                 roof: C(0x4A3A90), face: false, seed: 1607)
         // The block, leaning a little as it rises.
-        for r in 0..<(g - f.roof) {
+        for r in 0..<max(0, g - f.roof) {
             let off = Int(Double(3 * s) * pow(Double(r) / Double(max(1, g - f.roof)), 2))
             c.rect(left + off, g - r - 1, f.hw * 2, 1, wall); c.rect(left + off + f.hw * 2 - s, g - r - 1, s, 1, trim)
         }
         // The gable, its trim, and the rose window with a spider's web across it.
-        let gh = (f.roof - f.spire) / 2, apex = (x: f.cx + 3 * s, y: f.roof - gh)
+        let gh = max(1, (f.roof - f.spire) / 2), apex = (x: f.cx + 3 * s, y: f.roof - gh)
         for r in 0..<gh {
             let half = (f.hw + 3 * s) * (gh - r) / gh, x0 = apex.x - half
             c.rect(x0, f.roof - r - 1, half * 2, 1, wall)
@@ -217,7 +217,7 @@ extension Scenes {
         // The spire off the gable's top, bent over, and the bat on its tip.
         let sh = apex.y - f.spire
         var tip = (x: apex.x, y: apex.y)
-        for r in 0..<sh {
+        for r in 0..<max(0, sh) {
             let k = Double(r) / Double(sh)
             let half = Int(Double(5 * s) * (1 - k)), off = Int(k * k * Double(9 * s)), w = max(s, half * 2)
             c.rect(apex.x - half + off, apex.y - r, w, 1, C(0x4A3A90)); c.rect(apex.x - half + off + w - s, apex.y - r, s, 1, trim)
