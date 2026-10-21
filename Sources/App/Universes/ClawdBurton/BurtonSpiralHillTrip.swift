@@ -5,8 +5,8 @@ import Foundation
 // across the screen like a tongue, laying out the new place as it goes.
 
 extension BurtonTrip {
-    /// A frame `k` (0…1) of the way from `old` to `new`, over the whole of `r`. Night falls over the old place and a
-    /// big moon rises behind as Spiral Hill comes up out of the ground on the left in black silhouette, its rim
+    /// A frame `k` (0…1) of the way from `old` to `new`, over the whole of `r`. Night falls over the old place, then
+    /// a big moon rises behind as Spiral Hill comes up out of the ground on the left in black silhouette, its rim
     /// moonlit violet, its curl standing against the moon (0–0.28). Then the curl rolls off along the hilltop and
     /// out across the screen like a tongue unfurling, winding tighter as it goes, the ridge it leaves behind sloping
     /// up toward the right; under the ridge, close behind the curl, the hill fills with the new place (0.26–0.82).
@@ -18,7 +18,8 @@ extension BurtonTrip {
         let (hill, px) = Self.pixelCanvas(in: r)
         let sky = PixelCanvas(hill.w, hill.h)
         let W = Double(hill.w), H = Double(hill.h)
-        let night = Self.ease(Self.span(k, 0, 0.22)), rise = Self.ease(Self.span(k, 0.03, 0.28))
+        let night = Self.ease(Self.span(k, 0, 0.16)), rise = Self.ease(Self.span(k, 0.03, 0.28))
+        let moon = Self.ease(Self.span(k, 0.12, 0.3))   // once the dark is down: never a moon over daylight
         let roll = Self.ease(Self.span(k, 0.26, 0.82)), fill = Self.ease(Self.span(k, 0.26, 0.42))
         let lift = Self.ease(Self.span(k, 0.62, 0.96))
         // The hill's shape, as `burtonSpiralHill` draws it, coming up out of the ground.
@@ -47,8 +48,8 @@ extension BurtonTrip {
         ctx.draw(old, in: r)
         ctx.setFillColor(rgb(0x140E2C, 0.72 * night)); ctx.fill(r)
         let mr = max(4, Int(H * 0.2)), cyTop = H - h + rad
-        Scenes.htMoon(sky, Int(cx + rad * 0.35), Int(cyTop - rad * 0.15 + (1 - night) * H * 0.4 - up), mr, s: 1)
-        Self.blitCanvas(sky, onto: ctx, px: px, in: r, alpha: CGFloat(night))
+        Scenes.htMoon(sky, Int(cx + rad * 0.35), Int(cyTop - rad * 0.15 + (1 - moon) * H * 0.4 - up), mr, s: 1)
+        Self.blitCanvas(sky, onto: ctx, px: px, in: r, alpha: CGFloat(moon))
 
         // The new place, under the ridge behind the curl; the hill still black ahead of it.
         let ink = burtonInk, violet = burtonViolet, glow = C(0x9A8AF0)
