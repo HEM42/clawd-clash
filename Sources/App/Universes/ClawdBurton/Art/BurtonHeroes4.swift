@@ -59,7 +59,7 @@ private func fadeIn(_ c: PixelCanvas, _ alpha: Double, _ art: (PixelCanvas) -> V
 }
 
 /// A filled ellipse round (cx, cy).
-private func blob(_ c: PixelCanvas, _ cx: Double, _ cy: Double, _ rx: Double, _ ry: Double, _ col: Px) {
+private func hmBlob(_ c: PixelCanvas, _ cx: Double, _ cy: Double, _ rx: Double, _ ry: Double, _ col: Px) {
     for y in Int((cy - ry).rounded(.down))...Int((cy + ry).rounded(.up)) {
         for x in Int((cx - rx).rounded(.down))...Int((cx + rx).rounded(.up)) {
             let dx = (Double(x) + 0.5 - cx) / rx, dy = (Double(y) + 0.5 - cy) / ry
@@ -393,7 +393,7 @@ private func drawRichie(_ c: PixelCanvas, _ p: Pose) {
     if spinning {
         burtonLine(c, 39.5, 34, 42, 26, shirt, 1.1); c.rect(41, 23, 2, 3, clawdOrange)
         let k = frac(p.t * 3)
-        blob(c, 42, 20.5, 5.5, 2.5, disc); c.rect(41, 20, 3, 1, label)
+        hmBlob(c, 42, 20.5, 5.5, 2.5, disc); c.rect(41, 20, 3, 1, label)
         let gx = 38 + Int(k * 9)
         c.px(gx, 19 + (gx > 39 && gx < 45 ? 0 : 1), C(0x6A6A78))
         return
@@ -401,10 +401,10 @@ private func drawRichie(_ c: PixelCanvas, _ p: Pose) {
     if p.fire != nil || p.ready || p.gunLift > 0 {
         c.oy += p.gunY
         c.rect(38, 31, 3, 3, shirt)
-        blob(c, 43.5, 29.5, 3.5, 3.5, disc); c.rect(43, 29, 2, 2, label); c.px(42, 27, C(0x4A4A58))
+        hmBlob(c, 43.5, 29.5, 3.5, 3.5, disc); c.rect(43, 29, 2, 2, label); c.px(42, 27, C(0x4A4A58))
         return
     }
-    blob(c, 42, 37.5, 3.5, 3.5, disc); c.rect(41, 37, 2, 2, label)
+    hmBlob(c, 42, 37.5, 3.5, 3.5, disc); c.rect(41, 37, 2, 2, label)
 }
 
 // MARK: - Grandma Florenz
