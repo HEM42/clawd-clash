@@ -303,14 +303,26 @@ extension Scenes {
                 c.rect(x, y, s, s, C(0xFFF0C0, on ? 0.95 : 0.35))
             }
         }
-        // The spider, crossing the model and back.
+        // The spider, a real one on the model, picking its way across it and back: a round black body and a small
+        // head, eight long jointed legs, knees up, stepping in turn, the far four a shade lighter than the near four.
         let p = mtAt(f, 0.15 + (sin(t * 0.2) * 0.5 + 0.5) * 0.7, 0.62 + sin(t * 0.13) * 0.2)
-        let step = Int(t * 6) % 2 == 0, ink = C(0x0C0A08)
-        c.rect(p.x - k, p.y - 2 * k, 3 * k, 2 * k, ink); c.rect(p.x + 2 * k, p.y - 2 * k, k, k, ink)
-        for leg in 0..<4 {
-            let lx = p.x - 3 * k + leg * 2 * k, up = (leg % 2 == 0) == step
-            c.rect(lx, p.y - (up ? 3 : 1) * k, k, k, ink); c.rect(lx, p.y, k, k, ink)
+        let dir: Double = cos(t * 0.2) >= 0 ? 1 : -1, u = Double(k) * p.z * 1.6
+        let fx = Double(p.x), fy = Double(p.y), cy = fy - 3.2 * u, legR = max(0.5, 0.32 * u)
+        for (far, col) in [(true, C(0x3A342C)), (false, C(0x0C0A08))] {
+            for i in 0..<4 {
+                let spread = Double(i) - 1.5, swing = sin(t * 8 + Double(i) * .pi / 2 + (far ? .pi : 0)) * 0.6 * u
+                let hip = (x: fx + spread * 0.7 * u, y: cy)
+                let knee = (x: fx + spread * 2.4 * u + swing, y: cy - (far ? 2.0 : 2.6) * u)
+                let foot = (x: fx + spread * 4.0 * u + swing * 1.4, y: fy - (far ? 1.0 : 0))
+                burtonLine(c, hip.x, hip.y, knee.x, knee.y, col, legR)
+                burtonLine(c, knee.x, knee.y, foot.x, foot.y, col, legR)
+            }
         }
+        let ink = C(0x0C0A08)
+        c.ellipse(Int(fx - dir * 1.3 * u), Int(cy - 0.4 * u), max(1, Int(2.2 * u)), max(1, Int(1.7 * u)), ink)
+        c.circle(Int(fx + dir * 1.6 * u), Int(cy), max(1, Int(1.1 * u)), ink)
+        c.px(Int(fx - dir * 1.8 * u), Int(cy - 1.4 * u), C(0x4A4438))
+        c.px(Int(fx + dir * 2.3 * u), Int(cy - 0.3 * u), C(0xC8202A))
         // A tiny gravestone wobbling.
         let cp = mtAt(f, 0.53, 0.5), cu = max(1, Int(Double(k) * cp.z))
         let wob = sin(t * 6) > 0.6 ? cu : 0
