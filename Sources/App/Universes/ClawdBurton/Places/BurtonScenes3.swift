@@ -303,10 +303,10 @@ extension Scenes {
                 c.rect(x, y, s, s, C(0xFFF0C0, on ? 0.95 : 0.35))
             }
         }
-        // The spider, a real one on the model, picking its way across it and back: a round black body and a small
+        // The spider, picking its way across the model and back: a round black body and a small
         // head, eight long jointed legs, knees up, stepping in turn, the far four a shade lighter than the near four.
         let p = mtAt(f, 0.15 + (sin(t * 0.2) * 0.5 + 0.5) * 0.7, 0.62 + sin(t * 0.13) * 0.2)
-        let dir: Double = cos(t * 0.2) >= 0 ? 1 : -1, u = Double(k) * p.z * 1.6
+        let dir: Double = cos(t * 0.2) >= 0 ? 1 : -1, u = Double(k) * p.z * 0.8
         let fx = Double(p.x), fy = Double(p.y), cy = fy - 3.2 * u, legR = max(0.5, 0.32 * u)
         for (far, col) in [(true, C(0x3A342C)), (false, C(0x0C0A08))] {
             for i in 0..<4 {
