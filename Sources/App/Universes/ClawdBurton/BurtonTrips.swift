@@ -256,11 +256,14 @@ struct BurtonTrip {
         let write = Self.span(k, 0.5, 0.82), fade = 1 - Self.span(k, 0.93, 1)
         guard write > 0, fade > 0 else { return }
         let (c, px) = Self.pixelCanvas(in: r)
-        let h = max(7.0, Double(c.h) * 0.07), gap = h * 0.22, x0 = max(3, Double(c.w) * 0.03), y0 = max(3, Double(c.h) * 0.05)
+        let name = to.name.uppercased(), x0 = max(3, Double(c.w) * 0.03), y0 = max(3, Double(c.h) * 0.05)
+        // As tall as suits the frame, but never wider than most of it: long names come out smaller.
+        let units = name.reduce(0) { $0 + Self.letterWidth($1) + 0.22 } + 0.4
+        let h = max(5.0, min(max(7.0, Double(c.h) * 0.07), (Double(c.w) * 0.94 - x0) / units)), gap = h * 0.22
         // The strokes, letter by letter, then the underline curling into a spiral.
         var strokes: [[(x: Double, y: Double)]] = []
         var x = x0
-        for (i, ch) in to.name.uppercased().enumerated() {
+        for (i, ch) in name.enumerated() {
             let w = Self.letterWidth(ch) * h
             for line in Self.letters[ch] ?? [] {
                 strokes.append(line.enumerated().map { j, p in
