@@ -66,9 +66,11 @@ enum BurtonVillain: Int, CaseIterable {
     var persona: Persona { burtonVillainPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-let burtonHeroPersonas: [BurtonHero: Persona] = [burtonHeroes1, burtonHeroes2]
+let burtonHeroPersonas: [BurtonHero: Persona] = [burtonHeroes1, burtonHeroes2, burtonHeroes3, burtonHeroes4, burtonHeroes5,
+                                                  burtonHeroes6]
     .reduce([.hem: hemPersona(.clawdBurton)]) { $0.merging($1) { a, _ in a } }
-let burtonVillainPersonas: [BurtonVillain: Persona] = [burtonVillains1, burtonVillains2]
+let burtonVillainPersonas: [BurtonVillain: Persona] = [burtonVillains1, burtonVillains2, burtonVillains3, burtonVillains4,
+                                                        burtonVillains5, burtonVillains6]
     .reduce([:]) { $0.merging($1) { a, _ in a } }
 
 // MARK: - Homes
@@ -183,5 +185,6 @@ extension Location {
 }
 
 /// Every Clawd Burton place, from the Places/BurtonScenes*.swift files.
-let burtonPlaces: [Location: Place] = [burtonScenes1, burtonScenes2, burtonScenes3]
+let burtonPlaces: [Location: Place] = [burtonScenes1, burtonScenes2, burtonScenes3, burtonScenes4, burtonScenes5,
+                                       burtonScenes6]
     .reduce([:]) { $0.merging($1) { a, _ in a } }
