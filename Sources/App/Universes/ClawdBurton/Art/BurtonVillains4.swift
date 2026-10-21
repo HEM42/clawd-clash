@@ -57,7 +57,7 @@ private func fadeIn(_ c: PixelCanvas, _ alpha: Double, _ art: (PixelCanvas) -> V
 }
 
 /// A filled ellipse round (cx, cy).
-private func blob(_ c: PixelCanvas, _ cx: Double, _ cy: Double, _ rx: Double, _ ry: Double, _ col: Px) {
+private func hmBlob(_ c: PixelCanvas, _ cx: Double, _ cy: Double, _ rx: Double, _ ry: Double, _ col: Px) {
     for y in Int((cy - ry).rounded(.down))...Int((cy + ry).rounded(.up)) {
         for x in Int((cx - rx).rounded(.down))...Int((cx + rx).rounded(.up)) {
             let dx = (Double(x) + 0.5 - cx) / rx, dy = (Double(y) + 0.5 - cy) / ry
@@ -160,7 +160,7 @@ private func drawLadyVanTassle(_ c: PixelCanvas, _ p: Pose) {
     fadeIn(c, pot) { l in
         // The cauldron: black iron on three stubby feet, its brew glowing crimson, bubbles popping.
         l.rect(44, 43, 2, 1, C(0x16161B)); l.rect(51, 43, 2, 1, C(0x16161B))
-        blob(l, 48.5, 39, 6, 4.5, C(0x26262E)); l.rect(42, 35, 13, 2, C(0x3A3A44)); l.rect(43, 35, 11, 1, C(0xB01A30))
+        hmBlob(l, 48.5, 39, 6, 4.5, C(0x26262E)); l.rect(42, 35, 13, 2, C(0x3A3A44)); l.rect(43, 35, 11, 1, C(0xB01A30))
         l.px(44, 38, C(0x4A4A56)); l.px(45, 37, C(0x4A4A56))
     }
     drawLegs(c, Look(leg: skin), step: p.step)
@@ -487,7 +487,7 @@ private func drawMartianSpy(_ c: PixelCanvas, _ p: Pose) {
     ], ["H": hair, "h": hairL])
     if bubble > 0 {
         let r = 1 + bubble * 4.5
-        blob(c, 28, 32.5 + r * 0.2, r, r, C(0xFF8AC0)); c.px(Int(28 - r * 0.5), Int(32.5 - r * 0.4), C(0xFFD8EA))
+        hmBlob(c, 28, 32.5 + r * 0.2, r, r, C(0xFF8AC0)); c.px(Int(28 - r * 0.5), Int(32.5 - r * 0.4), C(0xFFD8EA))
     } else if popped {
         c.pattern(23, 31, ["P.....P", ".P...P.", "..PPP..", ".P...P."], ["P": C(0xFF8AC0)])
     }
