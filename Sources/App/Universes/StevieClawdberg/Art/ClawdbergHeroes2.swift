@@ -14,7 +14,7 @@ let clawdbergHeroes2: [ClawdbergHero: Persona] = [
                           callout: "I’m your density", draw: drawGeorgeMcFry),
     .lorraineBaynes: Persona(name: "Lorraine Baynes", headTop: 19, draw: drawLorraineBaynes),
     .einsteinDog: Persona(name: "Einstein the Dog", headTop: 14, signature: 3.2, draw: drawEinsteinDog),
-    .claraClawton: Persona(name: "Clara Clawton", headTop: 18, signature: 3.4, draw: drawClaraClawton),
+    .claraClawton: Persona(name: "Clara Clawdton", headTop: 18, signature: 3.4, draw: drawClaraClawton),
     .goldieWilsun: Persona(name: "Goldie Wilsun", headTop: 20, signature: 3.0, callout: "I’m gonna be mayor!",
                            draw: drawGoldieWilsun),
 ]
@@ -410,9 +410,9 @@ private func drawEinsteinDog(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(34, 32, [".G.", "GwG", ".G."], ["G": gold, "w": face])
 }
 
-// MARK: - Clara Clawton
+// MARK: - Clara Clawdton
 
-/// Clara Clawton: Clawd in 1885, a high-necked white blouse with a cameo at the throat and puffed sleeves, a long
+/// Clara Clawdton: Clawd in 1885, a high-necked white blouse with a cameo at the throat and puffed sleeves, a long
 /// teal skirt down over her legs, button boots below, and her auburn hair pinned up in a bun. She stays out of
 /// fights. Signature: she raises her brass telescope to her eye and looks up at the stars, which twinkle.
 private func drawClaraClawton(_ c: PixelCanvas, _ p: Pose) {

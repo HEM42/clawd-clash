@@ -1,8 +1,8 @@
 import Foundation
 
-// Heroes: the Lone Gunclawds (Bytes, Frohack, Lanky) and Deep Clawt. The Gunclawds don't carry guns, whatever the name
+// Heroes: the Lone Gunclawds (Bytes, Frohack, Lanky) and Deep Clawd. The Gunclawds don't carry guns, whatever the name
 // says: Bytes and Lanky stay out of fights, and Frohack's weapon is his camera, its flash a steady white ray. Deep
-// Clawt only ever brings information.
+// Clawd only ever brings information.
 
 let filesHeroes3: [FilesHero: Persona] = [
     .bytes: Persona(name: "Bytes", weapon: .none, headTop: 20, signature: 3.4, callout: "The public has a right to know.",
@@ -12,7 +12,7 @@ let filesHeroes3: [FilesHero: Persona] = [
                       draw: drawFrohack),
     .lanky: Persona(name: "Lanky", weapon: .none, headTop: 20, signature: 3.2, callout: "I'm in.",
                     draw: drawLanky),
-    .deepClawt: Persona(name: "Deep Clawt", weapon: .none, headTop: 21, signature: 3.6, callout: "Trust no one.",
+    .deepClawt: Persona(name: "Deep Clawd", weapon: .none, headTop: 21, signature: 3.6, callout: "Trust no one.",
                         draw: drawDeepClawt),
 ]
 
@@ -199,9 +199,9 @@ private func drawLanky(_ c: PixelCanvas, _ p: Pose) {
     c.rect(38, 33 - tick % 2, 3, 2, tee); c.rect(15, 33, 3, 3, tee)
 }
 
-// MARK: - Deep Clawt
+// MARK: - Deep Clawd
 
-/// Deep Clawt: Clawd with thinning silver hair, a long dark raincoat over a grey suit and a sober tie: a man who has
+/// Deep Clawd: Clawd with thinning silver hair, a long dark raincoat over a grey suit and a sober tie: a man who has
 /// been inside too long. He carries nothing but what he knows. Signature: the shadows close round him and he holds out
 /// a plain envelope, the only bright thing about him, then tucks it away again.
 private func drawDeepClawt(_ c: PixelCanvas, _ p: Pose) {

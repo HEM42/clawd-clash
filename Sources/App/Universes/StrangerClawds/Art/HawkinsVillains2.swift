@@ -1,7 +1,7 @@
 import Foundation
 
 // Villains: One, the Upside Down's monster, and the men who hunt the kids. One, Brenner and Billy are Clawd in costume
-// like everyone else, Clawd's orange face showing. The Democlawgon is a creature, a faceless Clawd in grey hide whose
+// like everyone else, Clawd's orange face showing. The Democlawdgon is a creature, a faceless Clawd in grey hide whose
 // head opens like a flower. (The Mind Flayer isn't one of the cast: it looms over the Upside Down, as part of the
 // place.) Drawn eerie, never gory.
 
@@ -9,8 +9,8 @@ let hawkinsVillains2: [HawkinsVillain: Persona] = [
     .one: Persona(name: "One", weapon: .lightning,
                   magic: Magic(core: C(0xFFE4DC), glow: C(0xE8343E), jagged: false, rings: true),
                   headTop: 21, signature: 4.4, draw: drawOne),
-    .democlawgon: Persona(name: "The Democlawgon", weapon: .saber, canSit: false, pivot: (40, 30), bulk: 3, headTop: 8,
-                          signature: 3.0, draw: drawDemoclawgon),
+    .democlawdgon: Persona(name: "The Democlawdgon", weapon: .saber, canSit: false, pivot: (40, 30), bulk: 3, headTop: 8,
+                          signature: 3.0, draw: drawDemoclawdgon),
     .drBrenner: Persona(name: "Dr. Brenner", headTop: 20, signature: 3.2, callout: "Hello, Eleven.", draw: drawDrBrenner),
     .billyHargrove: Persona(name: "Billy Hargrove", weapon: .saber, headTop: 19, signature: 3.0, draw: drawBillyHargrove),
 ]
@@ -97,13 +97,13 @@ private func drawOne(_ c: PixelCanvas, _ p: Pose) {
     c.px(38, 27 - (f == 0 ? 1 : 0), clawdOrange); c.px(40, 27 - (f == 1 ? 1 : 0), clawdOrange); c.px(42, 28 - (f == 2 ? 1 : 0), clawdOrange)
 }
 
-// MARK: - The Democlawgon
+// MARK: - The Democlawdgon
 
-/// The Democlawgon: a faceless Clawd in pale grey-brown hide, slick and ridged, standing tall on its four clawed feet,
+/// The Democlawdgon: a faceless Clawd in pale grey-brown hide, slick and ridged, standing tall on its four clawed feet,
 /// a long arm hanging at its back and the other reaching forward with long black claws. Its head is a closed bud on a
 /// thin neck that opens like a flower: five petals peeling back round rings of small teeth. It fights with its claws,
 /// its face opening as it strikes. Signature: its face opens wide, and shuts.
-private func drawDemoclawgon(_ c: PixelCanvas, _ p: Pose) {
+private func drawDemoclawdgon(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0x8E7E72), skinD = C(0x5E5048), skinL = C(0xB4A494), slime = C(0xDCD2C2)
     let flesh = C(0xB83A4A), fleshD = C(0x6A1A26), tooth = C(0xF0E8DA)
     let claw = C(0x2E2824), clawL = C(0x5A504A)

@@ -904,8 +904,10 @@ final class SceneView: NSView {
                 items.append(OverlayController.DrawItem(image: img, rect: g.drawRect.offsetBy(dx: origin.x, dy: origin.y)))
             }
         }
-        // The old place over the new, less of it each frame; under the crew.
+        // The trip (or the old place, less of it each frame) over the new place and over the crew, who are hidden while
+        // it lasts and show through it again as it fades at the end.
         var crewShown = 1.0
+        var trip: [OverlayController.DrawItem] = []
         if let w = wipe {
             let k = (now - w.start) / (w.comic?.duration ?? Wipe.duration)
             if k < 1, let comic = w.comic { crewShown = comic.crewShown(k) }
@@ -918,7 +920,9 @@ final class SceneView: NSView {
                 // Four pixels to every art pixel, so the lettering stays sharp.
                 comic.draw(ctx, old: w.old, new: new, k: k, in: CGRect(x: 0, y: 0, width: ctx.width, height: ctx.height))
                 if let img = ctx.makeImage() {
-                    items.append(OverlayController.DrawItem(image: img, rect: g.drawRect.offsetBy(dx: origin.x, dy: origin.y)))
+                    var item = OverlayController.DrawItem(image: img, rect: g.drawRect.offsetBy(dx: origin.x, dy: origin.y))
+                    item.alpha = CGFloat(ComicTransition.cover(k))
+                    trip.append(item)
                 }
             } else if w.comic == nil, let ctx = CGContext(data: nil, width: w.old.width, height: w.old.height, bitsPerComponent: 8, bytesPerRow: 0,
                                           space: CGColorSpace(name: CGColorSpace.sRGB)!,
@@ -926,17 +930,17 @@ final class SceneView: NSView {
                 let r = CGRect(x: 0, y: 0, width: w.old.width, height: w.old.height)
                 Wipe.drawOld(w.old, k, w.kind, in: ctx, r)
                 if let img = ctx.makeImage() {
-                    items.append(OverlayController.DrawItem(image: img, rect: g.drawRect.offsetBy(dx: origin.x, dy: origin.y)))
+                    trip.append(OverlayController.DrawItem(image: img, rect: g.drawRect.offsetBy(dx: origin.x, dy: origin.y)))
                 }
             }
         }
         // A trip that leaves the ground (the Eagle's sky) takes the crew with it.
-        if crewShown >= 1 { return items + controller.items }
+        if crewShown >= 1 { return items + controller.items + trip }
         return items + controller.items.compactMap { item in
             var item = item
             item.alpha *= CGFloat(crewShown)
             return item.alpha > 0.01 ? item : nil
-        }
+        } + trip
     }
 
     /// A new frame: handed to Core Animation, which scales and composites it on the GPU.

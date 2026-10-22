@@ -8,7 +8,7 @@ let clawdbergHeroes5: [ClawdbergHero: Persona] = [
     .alanGrand: Persona(name: "Alan Grand", weapon: .blaster, shot: .bullet, muzzle: (54, 31), headTop: 20,
                         signature: 3.4, draw: drawAlanGrand),
     .ellieSaddler: Persona(name: "Ellie Saddler", headTop: 21, signature: 3.4, draw: drawEllieSaddler),
-    .ianMalclawm: Persona(name: "Ian Malclawm", weapon: .blaster, shot: .thrown(C(0xFF8A1A)), muzzle: (44, 28),
+    .ianMalclawm: Persona(name: "Ian Malclawd", weapon: .blaster, shot: .thrown(C(0xFF8A1A)), muzzle: (44, 28),
                           headTop: 20, signature: 3.0, callout: "Life, uh, finds a way", draw: drawIanMalclawm),
     .johnHammend: Persona(name: "John Hammend", headTop: 20, signature: 3.2, callout: "Spared no expense",
                           draw: drawJohnHammend),
@@ -209,9 +209,9 @@ private func drawEllieSaddler(_ c: PixelCanvas, _ p: Pose) {
     }
 }
 
-// MARK: - Ian Malclawm
+// MARK: - Ian Malclawd
 
-/// Ian Malclawm: Clawd in black from top to toe, a black leather jacket over a black shirt unbuttoned halfway down, his
+/// Ian Malclawd: Clawd in black from top to toe, a black leather jacket over a black shirt unbuttoned halfway down, his
 /// dark curly hair swept back and black-framed glasses. He fights with a lit orange road flare, waved at whatever's
 /// coming and thrown. Signature: he holds the burning flare up and waves it back and forth over his head.
 private func drawIanMalclawm(_ c: PixelCanvas, _ p: Pose) {

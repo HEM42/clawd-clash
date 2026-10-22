@@ -31,7 +31,7 @@ protocol UniverseModule {
     /// What a compacted session's leader looks like while it's away and back (`UniverseCompaction.away`), `k` (0…1)
     /// through it; nil: nothing to see.
     func compactionLook(k: Double, cast: Cast) -> CompactionLook?
-    /// Little things certain characters do on stage: the Weeping Angle, Captain Clawk's flinch, T. Wrecks's glass…
+    /// Little things certain characters do on stage: the Weeping Angle, Captain Clawd's flinch, T. Wrecks's glass…
     var quirks: StageQuirks { get }
     /// Pairs who face off and now and then end with one bolt getting through (Han shoots first).
     var shootOuts: [ShootOut] { get }
@@ -149,7 +149,7 @@ struct StageQuirks {
     var remark: ((_ who: OnStage, _ others: [OnStage], _ zoom: CGFloat, _ t: Double) -> (facing: CGFloat, line: String)?)? = nil
     /// While one of these is on stage, nobody has a voice: every line comes up an empty bubble (`StageQuirks.hushed`).
     var hushers: Set<Cast> = []
-    /// These play their signature once a fight they were in, or watched, is over (Mayor Wilclaws' wet wipe; `AfterDuel`).
+    /// These play their signature once a fight they were in, or watched, is over (Mayor Wilclawds' wet wipe; `AfterDuel`).
     var afterDuel: Set<Cast> = []
     /// For any of those whose signature ends with what they do after a fight: how far into it (0…1) to start, so only
     /// that end plays (Eleven's nosebleed, after her Eggo). Not listed: the whole signature.

@@ -120,7 +120,7 @@ let hawkinsShots: [Shot] = [
     Shot(name: "ais", start: 40.6, end: 45.0) { ctx, local, t in
         everyAI(ctx, local: local, t: t, cast: [.hero(HawkinsHero.eleven), .hero(HawkinsHero.steveHarringclawd), .villain(HawkinsVillain.vecna),
                                                 .villain(HawkinsVillain.drBrenner), .villain(HawkinsVillain.billyHargrove),
-                                                .villain(HawkinsVillain.democlawgon), .villain(HawkinsVillain.demodog)])
+                                                .villain(HawkinsVillain.democlawdgon), .villain(HawkinsVillain.demodog)])
     },
     // The end card: the basement, the crew lines up, the title lands in red neon, then the app's icon and where to get it.
     Shot(name: "endcard", start: 45.0, end: 49.2) { ctx, local, t in hawkinsEndcard(ctx, local: local, t: t) },
@@ -183,7 +183,7 @@ let hawkinsBeats: [(key: Double, beat: Beat)] = [
             "“Every subagent gets to join the Party.”", "running feet")),
     (38.2, ("WINDOW MODE", "In through the app's Walkie Static trip, Joyce's lights spelling the place's name; the window in \(Location.hawkinsBasement.name), live cards tick, then a card flips to NEEDS YOU.",
             "WINDOW MODE  ·  “Prefer a window? The lights will tell you where.”", "static, DO YOU COPY?, a ping")),
-    (42.8, ("EVERY AI", "Seven sessions, one per AI outline: \(hawkinsName(HawkinsHero.eleven)) (Claude Code, a head taller) and \(hawkinsName(HawkinsHero.steveHarringclawd)) against \(hawkinsName(HawkinsVillain.vecna)), \(hawkinsName(HawkinsVillain.drBrenner)), \(hawkinsName(HawkinsVillain.billyHargrove)) and \(hawkinsName(HawkinsVillain.democlawgon)); a \(hawkinsName(HawkinsVillain.demodog)) in pi's pink.",
+    (42.8, ("EVERY AI", "Seven sessions, one per AI outline: \(hawkinsName(HawkinsHero.eleven)) (Claude Code, a head taller) and \(hawkinsName(HawkinsHero.steveHarringclawd)) against \(hawkinsName(HawkinsVillain.vecna)), \(hawkinsName(HawkinsVillain.drBrenner)), \(hawkinsName(HawkinsVillain.billyHargrove)) and \(hawkinsName(HawkinsVillain.democlawdgon)); a \(hawkinsName(HawkinsVillain.demodog)) in pi's pink.",
             "BRING YOUR OWN AI*  ·  “One AI plays everyone. Run two and they pick sides.”  ·  *README for the full list", "zaps, pops")),
     (47.6, ("END CARD", "\(Location.hawkinsBasement.name): the crew lines up, STRANGER CLAWDS lands in red neon, then the icon and the URL.",
             "STRANGER CLAWDS  ·  “Have fun. Keep track.”  ·  “\(hawkinsTagline)”  ·  github.com/rodclemen/clawd-clash", "the synth pulse back for a bar, a last chord")),

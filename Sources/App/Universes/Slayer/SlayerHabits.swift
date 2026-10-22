@@ -7,7 +7,7 @@ import Foundation
 //    own drawing code);
 //  - the First Evil, now and then, outside its signature, becomes one of the Big Bads before it for a few seconds,
 //    their whole self, as in "Lessons" (`slayerFirstEvilGuise`, read by its drawing code);
-//  - Mayor Wilclaws wipes his hands after every duel he was in or watched (`StageQuirks.afterDuel`, in SlayerUniverse.swift;
+//  - Mayor Wilclawds wipes his hands after every duel he was in or watched (`StageQuirks.afterDuel`, in SlayerUniverse.swift;
 //    the engine's `AfterDuel` keeps track).
 
 

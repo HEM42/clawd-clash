@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: the Upside Down's small fry, who only ever turn up as agents (`agentOnly` in HawkinsFacts.swift): a
 // Demodog, Dart (Dustin's pet, before he grew), a Demobat and a flayed rat. Creatures on their own four legs, smaller
-// than Clawd, in the Democlawgon's grey-brown hide or the Mind Flayer's black smoke. Eerie, never gory.
+// than Clawd, in the Democlawdgon's grey-brown hide or the Mind Flayer's black smoke. Eerie, never gory.
 
 let hawkinsVillains4: [HawkinsVillain: Persona] = [
     .demodog: Persona(name: "Demodog", weapon: .saber, canSit: false, pivot: (44, 33), headTop: 26, draw: drawDemodog),

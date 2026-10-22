@@ -37,7 +37,7 @@ extension Location {
         switch villain {
         case .vecna: return .hawkinsMind
         case .one: return .hawkinsCreel
-        case .democlawgon, .demodog, .dart, .demobat, .flayedRat: return .hawkinsUpsideDown
+        case .democlawdgon, .demodog, .dart, .demobat, .flayedRat: return .hawkinsUpsideDown
         case .drBrenner, .connieFrazier, .drKay, .colonelSullivan: return .hawkinsLab
         case .mayorKline, .grigori: return .hawkinsStarcourt
         case .billyHargrove, .jasonCarver: return .hawkinsPool
@@ -78,7 +78,7 @@ private let hawkinsNemeses: [(HawkinsHero, HawkinsVillain)] = [
     (.maxMayfield, .vecna),                 // season 4
     (.hollyWheeler, .one),                  // Mr. Whatsit, season 5
     (.willByers, .vecna),                   // Henry took him in season 1 and fights him to the end, season 5
-    (.karenWheeler, .democlawgon),          // her kitchen fight, season 5
+    (.karenWheeler, .democlawdgon),          // her kitchen fight, season 5
     (.steveHarringclawd, .billyHargrove),   // their fight, season 2
     (.chiefHopper, .grigori),               // season 3
     (.lucasSinclawd, .jasonCarver),         // season 4

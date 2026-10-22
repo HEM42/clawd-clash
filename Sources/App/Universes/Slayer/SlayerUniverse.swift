@@ -19,7 +19,7 @@ struct SlayerUniverse: UniverseModule {
     var playgroundPrompts: [String] {
         ["stake the bug in the Hellmouth loop", "make the window resize to fit the Claudes",
          "why does the library's book cage keep swinging?", "write a nice README with screenshots",
-         "fix the portrait crop for Glorificlaws's hair"]
+         "fix the portrait crop for Glorificlawds's hair"]
     }
     /// Only the witches float cross-legged (Willow does in "Lessons" and "Chosen").
     var meditation: Meditation { Meditation(who: .heroes(slayerWitches)) }
@@ -28,7 +28,7 @@ struct SlayerUniverse: UniverseModule {
     func compactionLook(k: Double, cast: Cast) -> CompactionLook? { SlayerTabulaRasa(k: k, cast: cast) }
     var rides: [Ride] { [.schoolBus, .deSoto, .gtx] }
 
-    /// Hush: while the Gentlemen are on stage, nobody has a voice. Mayor Wilclaws wipes his hands after every duel.
+    /// Hush: while the Gentlemen are on stage, nobody has a voice. Mayor Wilclawds wipes his hands after every duel.
     var quirks: StageQuirks { StageQuirks(hushers: [.villain(SlayerVillain.gentlemen)], afterDuel: [.villain(SlayerVillain.mayorWilclaws)]) }
 }
 
@@ -45,7 +45,7 @@ extension Ride {
 
 extension SlayerUniverse {
     /// The README's desktop line-up (the Old Master and Buffy, Willow's spell against Drusillah's, Xander's 2×4 against
-    /// a fledgling, Spyke against Draclawla, Rupert Gyles cheering) and social preview.
+    /// a fledgling, Spyke against Clawdula, Rupert Gyles cheering) and social preview.
     var docs: DocsInfo {
         DocsInfo(lineup: [
             LineupSlot.pair(.villain(SlayerVillain.oldMaster), true, "", 30, .hero(SlayerHero.buffyClawmers), true, "", 98),

@@ -1,8 +1,8 @@
 import Foundation
 
-// Stevie Clawdberg's stage quirks (`StageQuirks`): Captain Clawk and the Croc Clock, T. Wrecks's glass of water.
+// Stevie Clawdberg's stage quirks (`StageQuirks`): Captain Clawd and the Croc Clock, T. Wrecks's glass of water.
 
-/// Captain Clawk at the Croc Clock's tick (in Pirate Town, or with the Croc Clock about as an agent): every three
+/// Captain Clawd at the Croc Clock's tick (in Pirate Town, or with the Croc Clock about as an agent): every three
 /// seconds a jump and a shiver, sprite pixels; now and then he mutters about it.
 func clawdbergClawkFlinch(_ a: OnStage, others: [OnStage], place: Location?, t: Double) -> (dx: Int, up: Int, line: String?) {
     guard a.cast == .villain(ClawdbergVillain.captainClawk), !a.leaving, !a.walking else { return (0, 0, nil) }

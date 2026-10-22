@@ -15,7 +15,7 @@ final class ClawdClashSaverView: ScreenSaverView {
     private let host = NSView()
     private let roomLayer = CALayer(), liveLayer = CALayer()
     private var pool: [CALayer] = []
-    /// Who was in a fight (or cheering one), for Mayor Wilclaws' wet wipe after it (`AfterDuel`).
+    /// Who was in a fight (or cheering one), for Mayor Wilclawds' wet wipe after it (`AfterDuel`).
     private var afterDuel = AfterDuel()
     private var room: (size: CGSize, location: Location, image: CGImage)?
     private var live: PixelCanvas?
@@ -90,9 +90,20 @@ final class ClawdClashSaverView: ScreenSaverView {
     /// The clock top right, on unless turned off.
     static var clockShown: Bool { options["clock"] != "off" }
     private var showClock = true                // `clockShown`, read with the feed once a second
+    /// The banner and the session cards, on unless turned off here or in the app's Settings, whichever was changed
+    /// last (`SaverFeed.Privacy`). Only as the screen saver: the app's own window always shows both.
+    private static func privacy(app: SaverFeed.Privacy?) -> SaverFeed.Privacy {
+        let app = app ?? SaverFeed.Privacy(), o = options
+        guard let mine = o["privacyAt"].flatMap(Double.init), mine > app.at else { return app }
+        return SaverFeed.Privacy(banner: o["banner"] != "off", cards: o["cards"] != "off", at: mine)
+    }
+    private var showBanner = true, showCards = true
     private var sheet: NSWindow?
     private let picker = NSPopUpButton(frame: NSRect(x: 20, y: 90, width: 280, height: 26), pullsDown: false)
     private let clockBox = NSButton(checkboxWithTitle: "Show the clock", target: nil, action: nil)
+    private let bannerBox = NSButton(checkboxWithTitle: "Show the banner of what happened lately", target: nil, action: nil)
+    private let cardsBox = NSButton(checkboxWithTitle: "Show the session cards", target: nil, action: nil)
+    private var shownPrivacy = SaverFeed.Privacy()
     /// The Options choices: every offered universe by its key, so a universe appears here once it's released, and not
     /// one unchecked in the app's Settings (the feed says which; the Options can open before the saver has read it).
     private var choices: [(String, String)] = []
@@ -104,25 +115,45 @@ final class ClawdClashSaverView: ScreenSaverView {
 
     override var hasConfigureSheet: Bool { true }
     override var configureSheet: NSWindow? {
-        let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 320, height: 160), styleMask: [.titled], backing: .buffered, defer: false)
+        let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 320, height: 248), styleMask: [.titled], backing: .buffered, defer: false)
         let label = NSTextField(labelWithString: "Universe to show:")
-        label.frame = NSRect(x: 20, y: 122, width: 280, height: 20)
+        label.frame = NSRect(x: 20, y: 210, width: 280, height: 20)
+        picker.frame = NSRect(x: 20, y: 178, width: 280, height: 26)
         picker.removeAllItems()
         choices = Self.makeChoices()
         for (_, title) in choices { picker.addItem(withTitle: title) }
         picker.selectItem(at: choices.firstIndex { $0.0 == Self.choice } ?? 0)
-        clockBox.frame = NSRect(x: 20, y: 56, width: 280, height: 22)
+        clockBox.frame = NSRect(x: 20, y: 144, width: 280, height: 22)
         clockBox.state = Self.clockShown ? .on : .off
+        // What someone walking past may read: the same choices as the app's Settings → Screen Saver.
+        shownPrivacy = Self.privacy(app: SaverFeed.load()?.privacy)
+        bannerBox.frame = NSRect(x: 20, y: 118, width: 280, height: 22)
+        bannerBox.state = shownPrivacy.banner ? .on : .off
+        cardsBox.frame = NSRect(x: 20, y: 92, width: 280, height: 22)
+        cardsBox.state = shownPrivacy.cards ? .on : .off
+        let note = NSTextField(wrappingLabelWithString: "Off, nobody walking past sees your projects, prompts or tasks.")
+        note.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        note.textColor = .secondaryLabelColor
+        note.frame = NSRect(x: 38, y: 56, width: 262, height: 32)
         let ok = NSButton(title: "OK", target: self, action: #selector(closeOptions))
         ok.frame = NSRect(x: 220, y: 14, width: 80, height: 32)
         ok.keyEquivalent = "\r"
-        for v in [label, picker, clockBox, ok] { w.contentView?.addSubview(v) }
+        for v in [label, picker, clockBox, bannerBox, cardsBox, note, ok] { w.contentView?.addSubview(v) }
         sheet = w
         return w
     }
 
     @objc private func closeOptions() {
-        save(["universe": choices[max(0, picker.indexOfSelectedItem)].0, "clock": clockBox.state == .on ? "on" : "off"])
+        var options = ["universe": choices[max(0, picker.indexOfSelectedItem)].0, "clock": clockBox.state == .on ? "on" : "off"]
+        // The banner and cards: kept as the later word only when changed here, so a change in the app still counts.
+        let banner = bannerBox.state == .on, cards = cardsBox.state == .on
+        if banner != shownPrivacy.banner || cards != shownPrivacy.cards {
+            options["banner"] = banner ? "on" : "off"; options["cards"] = cards ? "on" : "off"
+            options["privacyAt"] = String(Date().timeIntervalSince1970)
+        } else {
+            for key in ["banner", "cards", "privacyAt"] { options[key] = Self.options[key] }
+        }
+        save(options)
         if let sheet { sheet.sheetParent?.endSheet(sheet) }
         tripUniverse = nil
         showClock = Self.clockShown
@@ -154,7 +185,10 @@ final class ClawdClashSaverView: ScreenSaverView {
             l.actions = Self.noAnimations
             root.addSublayer(l)
         }
-        // The old place, frozen, over the new one while the wipe takes it away (under the crew and the cards).
+        // The old place, frozen, over the new one while the wipe takes it away, and the trips: over the crew, who are
+        // hidden while the place changes, and under the cards, the clock and the place's name (`Item.underTrip`).
+        wipeLayer.zPosition = 1
+        comicLayer.zPosition = 1
         wipeLayer.anchorPoint = .zero
         wipeLayer.magnificationFilter = .nearest
         wipeLayer.actions = Self.noAnimations
@@ -212,6 +246,8 @@ final class ClawdClashSaverView: ScreenSaverView {
             if let feedSource { feed = feedSource() } else {
                 // Clawd Clash closed (its feed gone stale): the hooks still say who's running.
                 let app = SaverFeed.load()
+                let privacy = Self.privacy(app: app?.privacy)
+                showBanner = privacy.banner; showCards = privacy.cards
                 feed = app.flatMap { now - $0.at < SaverFeed.staleAfter ? $0 : nil } ?? SaverFeed.fromHooks(now: now, last: app) ?? app
             }
             // The app's window shows the app's universe (already `Universe.shown` there). As the screen saver: what
@@ -309,6 +345,7 @@ final class ClawdClashSaverView: ScreenSaverView {
         var smooth = false      // text and panels: linear filtering; pixel art: nearest
         var upsideDown = false  // the scene turned over (`SceneTurn`)
         var upright = false     // names and cards: kept upright, only moved, when the scene turns over
+        var underTrip = false   // the crew: under a trip while the place changes; everything else stays over it
     }
 
     /// Screen points per art pixel: about 270 art pixels from floor to ceiling, whatever the display.
@@ -392,6 +429,7 @@ final class ClawdClashSaverView: ScreenSaverView {
                 // Drawn a screen point to a pixel: the art scaled up crisp, the lettering sharp enough.
                 w.trip.draw(ctx, old: w.old, new: new, k: k, in: CGRect(x: 0, y: 0, width: ctx.width, height: ctx.height))
                 comicLayer.contents = ctx.makeImage()
+                comicLayer.opacity = Float(ComicTransition.cover(k))
                 comicLayer.frame = picture
                 comicLayer.isHidden = false
             }
@@ -407,7 +445,7 @@ final class ClawdClashSaverView: ScreenSaverView {
         self.turn = turn
         var people: [Item]
         if crewed(now), let f = feed {
-            people = crew(atPlace(f.sessions, location), now: now, feet: feet)
+            people = crew(atPlace(f.sessions, location), now: now, feet: feet, cards: showCards)
         } else {
             if demoPlace != location { demo = cast(for: location, now: now); demoPlace = location }
             people = crew(demo, now: now, feet: feet, cards: false)
@@ -434,7 +472,7 @@ final class ClawdClashSaverView: ScreenSaverView {
                 return item
             }
         }
-        items += people
+        items += people.map { var p = $0; p.underTrip = true; return p }
         items += hud(running ? feed : nil, location: location, now: now, idle: !running)
         show(items, in: root)
         CATransaction.commit()
@@ -505,6 +543,7 @@ final class ClawdClashSaverView: ScreenSaverView {
             l.transform = item.mirrored || item.upsideDown
                 ? CATransform3DMakeScale(item.mirrored ? -1 : 1, item.upsideDown ? -1 : 1, 1) : CATransform3DIdentity
             l.opacity = Float(item.alpha)
+            l.zPosition = item.underTrip ? 0 : 2
             l.isHidden = false
         }
         for l in pool.dropFirst(items.count) where !l.isHidden { l.isHidden = true; l.contents = nil }
@@ -613,7 +652,7 @@ final class ClawdClashSaverView: ScreenSaverView {
             let c = PixelCanvas(Sprite.width, Sprite.height)
             let role = roles[p.m.key]
             let up = air(p, role: role, t: ft(p.m.key))
-            // Mayor Wilclaws wipes his hands after every duel (Clawd Slayer): his signature, played right through.
+            // Mayor Wilclawds wipes his hands after every duel (Clawd Slayer): his signature, played right through.
             let sitting = p.m.isLeader && p.m.session.sitting && role == nil
             if let w = afterDuel.wipe(p.m.key, p.m.cast, inFight: role != nil, free: !sitting, now: t) {
                 forcedHabit = w
@@ -836,7 +875,8 @@ final class ClawdClashSaverView: ScreenSaverView {
         let bodies = placed.flatMap { body($0, ls: ls, cs: cs, base: base) }
         for (i, c) in crew.enumerated() {
             let s = c.p.m.session
-            let name = (looks[i].alert ? "⚠ " : "") + Self.clip(s.project.isEmpty ? c.p.m.cast.name : s.project, 16)
+            // Without the cards, the character's own name: the project's is part of what stays private.
+            let name = (looks[i].alert ? "⚠ " : "") + Self.clip(s.project.isEmpty || !show ? c.p.m.cast.name : s.project, 16)
             let t = tag(name, over: c.p, top: headTop(c.p, ls: ls, cs: cs, base: base), color: looks[i].accent,
                         avoid: bodies, taken: &taken)
             tags.append(t); targets.append(t.rect)
@@ -1044,7 +1084,7 @@ final class ClawdClashSaverView: ScreenSaverView {
         }
 
         // The ticker: newest last, scrolling right to left.
-        if let events = feed?.events, !events.isEmpty, !isPreview {
+        if showBanner, let events = feed?.events, !events.isEmpty, !isPreview {
             let line = events.suffix(8).map { "◆ " + $0.text }.joined(separator: "        ")
             let strip = ticker(line)
             let size = CGSize(width: CGFloat(strip.width) / scale, height: CGFloat(strip.height) / scale)

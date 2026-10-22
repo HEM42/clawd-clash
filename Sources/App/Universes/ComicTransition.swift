@@ -19,6 +19,12 @@ struct ComicTransition {
     /// Great Eagle's open sky), so nobody is left standing on thin air.
     func crewShown(_ k: Double) -> Double { trip.crewShown(k) }
 
+    /// How much the trip's picture covers the crew at `k` (0…1). Every trip is drawn over the crew, hiding them while
+    /// the place changes: all of it until its last stretch, then fading out so they show through it again instead of
+    /// popping back.
+    static func cover(_ k: Double) -> Double { k < 1 - coverFade ? 1 : max(0, (1 - k) / coverFade) }
+    static let coverFade = 0.12
+
     /// The trip to `place`, never the same kind as `last` when it's in the same universe; nil where the universe
     /// uses plain wipes. `from`, where it's coming from, if it's known.
     static func pick(after last: ComicTransition?, cast: [Cast], from: Location? = nil, to place: Location) -> ComicTransition? {

@@ -13,7 +13,7 @@ let slayerHeroes2: [SlayerHero: Persona] = [
     .ozz: Persona(name: "Ozz", weapon: .saber, headTop: 17, signature: 3.0, callout: "Hey.", draw: drawOzz),
     .anyaJinkins: Persona(name: "Anya Jinkins", weapon: .saber, headTop: 20, signature: 3.4, callout: "Bunnies!",
                           draw: drawAnyaJinkins),
-    .taraMaclaw: Persona(name: "Tara Maclaw", weapon: .lightning,
+    .taraMaclaw: Persona(name: "Tara Maclawd", weapon: .lightning,
                          magic: Magic(core: C(0xFFFFFF), glow: C(0xB49CE8), jagged: false, touch: true),
                          headTop: 20, signature: 3.4, draw: drawTaraMaclaw),
     .spyke: Persona(name: "Spyke", weapon: .saber, headTop: 21, signature: 3.2, callout: "Bloody hell!", draw: drawSpyke),
@@ -599,9 +599,9 @@ private func drawAnyaSword(_ c: PixelCanvas, angle: Double, trail: [Double]) {
     c.rect(Int(h.x.rounded()) - 1, Int(h.y.rounded()) - 1, 3, 3, clawdOrange)
 }
 
-// MARK: - Tara Maclaw
+// MARK: - Tara Maclawd
 
-/// Tara Maclaw: Clawd with long wavy honey-fair hair and a side fringe, a dusky rose cardigan over a cream top, and a
+/// Tara Maclawd: Clawd with long wavy honey-fair hair and a side fringe, a dusky rose cardigan over a cream top, and a
 /// long dark-blue floral skirt down to her ankles. Her magic is a gentle touch, white and lavender. Signature: she
 /// cups her hands, and a little ball of lavender light rises out of them and floats up.
 private func drawTaraMaclaw(_ c: PixelCanvas, _ p: Pose) {

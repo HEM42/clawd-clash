@@ -1,18 +1,18 @@
 import Foundation
 
-// Heroes: the last of Angel Investigations and Miss Kitty Fanclawstico. Clawd in costume like the rest of the cast:
+// Heroes: the last of Angel Investigations and Miss Kitty Fanclawdstico. Clawd in costume like the rest of the cast:
 // hair, hoods, suits and armour drawn over the blocky body, with Clawd's own orange face showing. Miss Kitty is an
 // agent-only pet, drawn the way Stevie Clawdberg draws its small creatures: Clawd in a kitten suit, his face in the
 // middle of it, still on his four legs.
 
 let slayerHeroes6: [SlayerHero: Persona] = [
     .conner: Persona(name: "Conner", weapon: .saber, headTop: 19, signature: 3.0, draw: drawConner),
-    .kateLockclaw: Persona(name: "Kate Lockclaw", weapon: .blaster, shot: .bullet, muzzle: (47, 32), headTop: 20,
+    .kateLockclaw: Persona(name: "Kate Lockclawd", weapon: .blaster, shot: .bullet, muzzle: (47, 32), headTop: 20,
                            signature: 3.0, draw: drawKateLockclaw),
     .groosalug: Persona(name: "The Groosalug", weapon: .saber, headTop: 19, signature: 3.2, callout: "Princess!",
                         draw: drawGroosalug),
     .drogynn: Persona(name: "Drogynn", weapon: .saber, headTop: 20, draw: drawDrogynn),
-    .missKitty: Persona(name: "Miss Kitty Fanclawstico", headTop: 21, signature: 3.6, draw: drawMissKitty),
+    .missKitty: Persona(name: "Miss Kitty Fanclawdstico", headTop: 21, signature: 3.6, draw: drawMissKitty),
 ]
 
 // MARK: - Shared bits
@@ -119,9 +119,9 @@ private func drawConner(_ c: PixelCanvas, _ p: Pose) {
     if !behind(p) { stake() }
 }
 
-// MARK: - Kate Lockclaw
+// MARK: - Kate Lockclawd
 
-/// Kate Lockclaw: the LAPD detective. Clawd with straight blonde hair to her shoulders, swept to one side, a charcoal
+/// Kate Lockclawd: the LAPD detective. Clawd with straight blonde hair to her shoulders, swept to one side, a charcoal
 /// trouser suit over a white blouse, her gold badge clipped to her belt, and her service pistol in her hand. She fights
 /// with the pistol. Signature: she holsters the pistol, unclips the badge and holds it up for you to see.
 private func drawKateLockclaw(_ c: PixelCanvas, _ p: Pose) {
@@ -307,9 +307,9 @@ private func drawDrogynn(_ c: PixelCanvas, _ p: Pose) {
     if !behind(p) { brand() }
 }
 
-// MARK: - Miss Kitty Fanclawstico
+// MARK: - Miss Kitty Fanclawdstico
 
-/// Miss Kitty Fanclawstico: Willow and Tara's grey kitten. A small Clawd in a grey tabby kitten suit, pointed ears
+/// Miss Kitty Fanclawdstico: Willow and Tara's grey kitten. A small Clawd in a grey tabby kitten suit, pointed ears
 /// with pink insides on top, darker stripes over the head and sides, a pale belly, white paws, whiskers, and a tail
 /// held up and swishing behind; Clawd's orange face in the middle with big eyes and a pink nose. She doesn't fight.
 /// Signature: a ball of red wool rolls up, she crouches, wiggles, pounces on it, and bats it away again.

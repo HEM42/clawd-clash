@@ -196,7 +196,7 @@ The screen saver follows your pick with "The same as Clawd Clash", or has a univ
   - The DeLorean, the moon bike, the mothership or the park jeep picks people up
   - When a time traveller's session compacts its context, they hit 88 mph and come back with three sonic booms
   - T. Wrecks's footsteps ripple a glass of water
-  - Captain Clawk jumps at every tick of the Croc Clock
+  - Captain Clawd jumps at every tick of the Croc Clock
 - **Sides:** Claude Code plays the heroes when another AI runs
 
 <details>
@@ -235,8 +235,8 @@ The screen saver follows your pick with "The same as Clawd Clash", or has a univ
   - When one of the Tabula Rasa eight's sessions compacts its context, Willow's forgetting spell goes off: a crystal glows, they don't know who they are ("JOAN?"), then it cracks underfoot and it all comes back
   - While the Gentlemen are on stage, nobody has a voice: every speech bubble comes up empty
   - On nights when the real moon is full, Ozz and Veruka stay wolves
-  - The First Evil now and then becomes one of the Big Bads before it: the Old Master, the Mayor, Glorificlaws or Adamm
-  - Mayor Wilclaws wipes his hands with a wet wipe after every duel
+  - The First Evil now and then becomes one of the Big Bads before it: the Old Master, the Mayor, Glorificlawds or Adamm
+  - Mayor Wilclawds wipes his hands with a wet wipe after every duel
   - Only the witches (Willow, Tara and Jenny) float cross-legged in meditation
 - **Sides:** Claude Code plays the heroes when another AI runs
 
@@ -250,7 +250,7 @@ The screen saver follows your pick with "The same as Clawd Clash", or has a univ
 
 - **Cast:** 15 villains, 29 heroes
 - **Places:** 16, from the Wheelers' Basement to Benny's Burgers
-- **Weapons:** Eleven's, Will's and Kali's powers, Vecna's and One's minds, Nancy's shotgun, Hopper's revolver, Steve's nail bat, Lucas's slingshot, Joyce's axe, Murray's flamethrower, Karen's wine bottle, the Democlawgon's claws
+- **Weapons:** Eleven's, Will's and Kali's powers, Vecna's and One's minds, Nancy's shotgun, Hopper's revolver, Steve's nail bat, Lucas's slingshot, Joyce's axe, Murray's flamethrower, Karen's wine bottle, the Democlawdgon's claws
 - **Set pieces:**
   - Arch-enemies face off first, and Vecna and One never lead two sessions back to back
   - When one of the Party is done, two friends race in on BMX bikes, walkie-talkies on the bars, and whoever's leaving hops on the pegs
@@ -290,7 +290,7 @@ Every 10 minutes it moves somewhere new, with a transition from the universe it'
 - **Clawd Slayer:** one of thirteen: the opening titles, a stake dusting the place away, the Watcher's tome, Willow's spell, Dark Willow's "Bored now", the Hellmouth opening, Hush's Gentlemen, the curtains of "Once More, With Feeling", sunrise, the Key's portal, a long black coat swishing past, the lift at Wolfram & Hart and the desert sand of "Restless".
 - **Stranger Clawds:** one of ten: the opening titles in red neon, the place draining into the Upside Down, a gate cracking open, walkie-talkie static, Eleven's void, the Mind Flayer's storm, Vecna's grandfather clock, a natural 20, the Starcourt fireworks and an arcade's INSERT COIN. Then Joyce's Christmas lights spell out the new place's name.
 
-Its **Options…** button in System Settings picks the universe: the same as the app, any one universe, Clawd Royale, or Random (a new pick on each trip).
+Its **Options…** button in System Settings picks the universe: the same as the app, any one universe, Clawd Royale, or Random (a new pick on each trip). To keep your work private from anyone walking past, turn off the banner along the bottom and the session cards, in its Options or in **Settings… → Screen Saver**: the characters, their names, how they're doing and what they say stay.
 
 <p align="center">
   <img src="docs/screensaver.png" alt="The screen saver" width="760">

@@ -1,18 +1,18 @@
 import Foundation
 
-// Villains: the Syndicate. Clawcek, the Well-Manicured Clawd, the First Elder, Diana Fowlclaw, Kersh and the Toothpick
+// Villains: the Syndicate. Clawdcek, the Well-Manicured Clawd, the First Elder, Diana Fowlclawd, Kersh and the Toothpick
 // Man. Clawd in costume like the rest: each of them a different cut of the conspiracy, from a leather jacket to a
 // three-piece suit, so they read apart at a glance.
 
 let filesVillains2: [FilesVillain: Persona] = [
-    .clawcek: Persona(name: "Alex Clawcek", weapon: .saber, headTop: 21, signature: 3.0,
+    .clawcek: Persona(name: "Alex Clawdcek", weapon: .saber, headTop: 21, signature: 3.0,
                       callout: "We want the same thing.", draw: drawClawcek),
     .wellManicured: Persona(name: "The Well-Manicured Clawd", weapon: .blaster, shot: .bullet, muzzle: (46, 31),
                             handGun: false, headTop: 20, signature: 3.4,
                             callout: "Quite.", draw: drawWellManicured),
     .firstElder: Persona(name: "The First Elder", weapon: .saber, headTop: 26, signature: 3.0,
                          callout: "We've come too far.", draw: drawFirstElder),
-    .dianaFowlclaw: Persona(name: "Diana Fowlclaw", weapon: .blaster, shot: .bullet, muzzle: (47, 32),
+    .dianaFowlclaw: Persona(name: "Diana Fowlclawd", weapon: .blaster, shot: .bullet, muzzle: (47, 32),
                             headTop: 19, signature: 3.2, callout: "I've always been on your side.",
                             draw: drawDianaFowlclaw),
     .kersh: Persona(name: "Deputy Director Kersh", weapon: .saber, headTop: 21, signature: 2.6,
@@ -50,9 +50,9 @@ private func drawEyes(_ c: PixelCanvas, _ col: Px = ink) {
     c.rect(22, 29, 2, 3, col); c.rect(32, 29, 2, 3, col)
 }
 
-// MARK: - Alex Clawcek
+// MARK: - Alex Clawdcek
 
-/// Alex Clawcek: Clawd with dark hair cropped short, a black leather jacket zipped half up over a grey T-shirt, dark
+/// Alex Clawdcek: Clawd with dark hair cropped short, a black leather jacket zipped half up over a grey T-shirt, dark
 /// jeans and boots. A brawler: he fights with his fists, a pistol tucked away. Now and then the black oil surfaces:
 /// his eyes go glossy black with a blue sheen rippling across them. Signature: the oil takes him fully, swimming over
 /// his eyes and down his cheeks, then sinks back.
@@ -226,9 +226,9 @@ private func drawFirstElder(_ c: PixelCanvas, _ p: Pose) {
     c.rect(41, 33 - tap, 1, 10, cane)
 }
 
-// MARK: - Diana Fowlclaw
+// MARK: - Diana Fowlclawd
 
-/// Diana Fowlclaw: Clawd with long straight dark hair over her shoulders, a slate-green trouser suit and a cream blouse,
+/// Diana Fowlclawd: Clawd with long straight dark hair over her shoulders, a slate-green trouser suit and a cream blouse,
 /// an FBI sidearm. She's always a step behind someone. Signature: a glance over her shoulder, then a quiet word into
 /// her mobile phone.
 private func drawDianaFowlclaw(_ c: PixelCanvas, _ p: Pose) {

@@ -468,7 +468,7 @@ extension Scenes {
     /// One mast: its x, its top row, and its yards' rows, sails' heights and sails' half-widths, top sail first.
     private typealias HkMast = (x: Int, top: Int, yards: [Int], heights: [Int], halves: [Int])
 
-    /// Captain Clawk's galleon at the quay: the horizon, the waterline and the main deck, bow and stern, the
+    /// Captain Clawd's galleon at the quay: the horizon, the waterline and the main deck, bow and stern, the
     /// forecastle's back edge and top, the stern castle's front edge and top, the three masts (fore, main, mizzen),
     /// the bowsprit's tip, where the flag's staff is and the flag's pixel size, and where the lanterns hang.
     private typealias HkGalleon = (sea: Int, water: Int, deck: Int, x0: Int, x1: Int, fore: (x: Int, top: Int),

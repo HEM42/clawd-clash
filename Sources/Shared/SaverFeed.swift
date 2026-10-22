@@ -11,6 +11,16 @@ struct SaverFeed: Codable {
     var universe: Int?             // `Universe.rawValue` the app shows (nil: from before universes, Star Wars)
     var mixed: Bool? = nil         // Clawd Royale: everyone as themselves, places from every universe
     var removed: [Int]? = nil      // universes unchecked in the app's Settings: the saver offers them nowhere
+    var privacy: Privacy? = nil    // what the screen saver shows, as the app's Settings last set it
+
+    /// What the screen saver shows of your work, so someone walking past can't read it: the banner along the bottom
+    /// (what happened lately) and the session cards (projects, prompts, what each one is doing). Set in the app's
+    /// Settings or in the saver's Options; whichever was changed last (`at`) wins.
+    struct Privacy: Codable {
+        var banner = true
+        var cards = true
+        var at: Double = 0
+    }
 
     struct Session: Codable {
         var id: String

@@ -9,12 +9,12 @@ let slayerVillains4: [SlayerVillain: Persona] = [
     .judge: Persona(name: "The Judge", weapon: .lightning,
                     magic: Magic(core: C(0xF6F4FF), glow: C(0x6C5CF0), jagged: false, thick: true),
                     armoured: true, bulk: 2, headTop: 14, signature: 3.0, draw: drawJudge),
-    .mayorWilclaws: Persona(name: "Mayor Wilclaws", armoured: true, headTop: 21, signature: 3.4, callout: "Gosh!",
+    .mayorWilclaws: Persona(name: "Mayor Wilclawds", armoured: true, headTop: 21, signature: 3.4, callout: "Gosh!",
                             draw: drawMayorWilclaws),
     .adamm: Persona(name: "Adamm", weapon: .blaster, shot: .energy(core: C(0xEEFFD8), glow: C(0x5CE030)), armoured: true,
                     muzzle: (48, 33), handGun: false, bulk: 1, headTop: 20, signature: 3.2, draw: drawAdamm),
     .professorWalshe: Persona(name: "Professor Walshe", headTop: 20, signature: 3.0, draw: drawProfessorWalshe),
-    .glorificlaws: Persona(name: "Glorificlaws", weapon: .saber, bulk: 2, headTop: 15, signature: 3.6,
+    .glorificlaws: Persona(name: "Glorificlawds", weapon: .saber, bulk: 2, headTop: 15, signature: 3.6,
                            callout: "I'm a god!", draw: drawGlorificlaws),
     .firstEvil: Persona(name: "The First Evil", motion: .hover, canSit: false, bulk: 3, headTop: 12, signature: 4.2,
                         callout: "From beneath you, it devours.", draw: drawFirstEvil),
@@ -189,9 +189,9 @@ private func drawJudge(_ c: PixelCanvas, _ p: Pose) {
     }
 }
 
-// MARK: - Mayor Wilclaws
+// MARK: - Mayor Wilclawds
 
-/// Mayor Richard Wilclaws: a beaming small-town mayor in a grey suit, white shirt and maroon tie, his hair neatly
+/// Mayor Richard Wilclawds: a beaming small-town mayor in a grey suit, white shirt and maroon tie, his hair neatly
 /// side-parted, with the widest friendliest smile in Sunnydale. He doesn't fight; after the Ascension ritual he's
 /// invulnerable, so shots bounce off. Signature: out comes a packet of wet wipes and he cleans his hands, fussily,
 /// finger by finger ("Gosh!"), and tucks it away.
@@ -336,9 +336,9 @@ private func drawProfessorWalshe(_ c: PixelCanvas, _ p: Pose) {
     c.rect(38, 33, 4, 3, coat); c.rect(40, 33, 2, 2, clawdOrange)            // her hand on the board
 }
 
-// MARK: - Glorificlaws
+// MARK: - Glorificlawds
 
-/// Glorificlaws: Glory, the hell-god in a mortal body, all big blonde curls, a short red dress, red lips and red
+/// Glorificlawds: Glory, the hell-god in a mortal body, all big blonde curls, a short red dress, red lips and red
 /// heels. She fights with her fists, and hits like a god. Signature: she turns a foot to admire her shoes, and for a
 /// moment flickers into Ben, the young doctor she shares a body with (short brown hair, blue scrubs), then back
 /// ("I'm a god!").

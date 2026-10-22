@@ -568,7 +568,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         feedEvents = Array(feedEvents.suffix(12))
         let feed = SaverFeed(at: now, location: location.rawValue, sessions: out, events: feedEvents,
                              universe: Universe.shown.rawValue, mixed: Universe.mixed ? true : nil,
-                             removed: Universe.removed.isEmpty ? nil : Universe.removed.map(\.rawValue).sorted())
+                             removed: Universe.removed.isEmpty ? nil : Universe.removed.map(\.rawValue).sorted(),
+                             privacy: Self.saverPrivacy)
         saverFeed = feed
         if real && saverInstalled { feed.save() }
     }
@@ -1237,7 +1238,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             // (fighting from up there, if they shoot or cast); Spider-Man swings along in arcs on a web line, the Bat-family
             // on grapnel lines.
             let air = self.air(actor, role: roles[actor.key], walking: walking, t: ft(actor.key))
-            // Mayor Wilclaws wipes his hands after every duel (Clawd Slayer): his signature, once he's standing still.
+            // Mayor Wilclawds wipes his hands after every duel (Clawd Slayer): his signature, once he's standing still.
             let wipe = afterDuel.wipe(actor.key, actor.cast, inFight: roles[actor.key] != nil,
                                       free: !walking && !actor.sitting && actor.leaving == nil, now: now)
             if let w = wipe {
@@ -1329,7 +1330,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let bodyX = (mirrored ? CGFloat(canvas.w) - CGFloat(pivotX) : CGFloat(pivotX)) * scale
             // Ducking a bolt in a shoot-out: squat (squashed from the feet up).
             let duck = incoming[actor.key].map { CGFloat(duckAmount(t: ft(actor.key), shooterOffset: $0, armoured: actor.cast.armoured)) } ?? 0
-            // Captain Clawk flinches at every tick of the Croc Clock (Stevie Clawdberg), in Pirate Town or with it about.
+            // Captain Clawd flinches at every tick of the Croc Clock (Stevie Clawdberg), in Pirate Town or with it about.
             let flinch: (dx: Int, up: Int, line: String?) = quirks.jitter?(me, others, location, t) ?? (0, 0, nil)
             let rect = NSRect(x: (actor.x - bodyX).rounded() + CGFloat(flinch.dx) * scale, y: y + CGFloat(drop) * z + lift + CGFloat(flinch.up) * scale,
                               width: CGFloat(canvas.w) * scale, height: (CGFloat(canvas.h) * scale * (1 - 0.22 * duck)).rounded())
@@ -1623,7 +1624,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// line after.
     private var greedoShot: (han: String, greedo: String, start: Double, line: String)?
     private var nextShootsFirst: Double?
-    /// Who was in a fight (or cheering one) and when it ended, for Mayor Wilclaws' wet wipe (`AfterDuel`).
+    /// Who was in a fight (or cheering one) and when it ended, for Mayor Wilclawds' wet wipe (`AfterDuel`).
     private var afterDuel = AfterDuel()
 
     /// How far up (0…1 of `flightHeight`) `a` is right now: taking off or landing on a trip along the line, or out on a
@@ -2498,6 +2499,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         let d = UserDefaults.standard
         let universes = Universe.offered
         let clawdRoyaleRow = universes.count, randomRow = universes.count + 1
+        let locationChoices = self.locationChoices()
         var general: [SettingsRow] = [
             .choice("Universe", options: universes.map(\.title) + ["Clawd Royale", "Random"],
                     get: {
@@ -2532,6 +2534,11 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                         Self.universeEvery = Self.universeIntervals[i]
                         self?.universeSince = Date().timeIntervalSince1970
                     }),
+            // The same choice as the window's Location menu (`pickedLocation`), one setting for both. Clawd Royale picks
+            // the place itself, so the row stays out of the way then, as the menu greys out.
+            .choice("Location", options: locationChoices.map(\.title), shown: { !Universe.mixed },
+                    get: { locationChoices.firstIndex { $0.key == Self.pickedLocation } ?? 0 },
+                    set: { [weak self] i in self?.pickLocation(locationChoices[i].key) }),
             .separator,
             .toggle("Show Dock icon", get: { [weak self] in self?.showInDock ?? true },
                     set: { [weak self] _ in self?.toggleDock() }),
@@ -2645,6 +2652,14 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                         action: { [weak self] in
                             if SaverInstaller.isInstalled { self?.removeSaver() } else { self?.installSaver() }
                         }),
+                .separator,
+                .toggle("Show the banner", note: "The strip along the bottom: who joined, who left and what they're working on.",
+                        get: { Self.saverPrivacy.banner },
+                        set: { on in var p = Self.saverPrivacy; p.banner = on; Self.saverPrivacy = p }),
+                .toggle("Show the session cards", note: "Off, someone walking past sees no projects, prompts or tasks: "
+                            + "only the characters, their names, how they're doing and what they say.",
+                        get: { Self.saverPrivacy.cards },
+                        set: { on in var p = Self.saverPrivacy; p.cards = on; Self.saverPrivacy = p }),
             ]))
         }
         sections.append(SettingsSection(title: "About", symbol: "info.circle",
@@ -2832,6 +2847,23 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         set { UserDefaults.standard.set(newValue, forKey: "charactersOnTop") }
     }
     private static let desktopLevel = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopIconWindow)) + 1)
+
+    /// Settings → Screen Saver: whether it shows the banner and the session cards (both on by default), and when that
+    /// was last changed here, so the saver's own Options can be the later word (`SaverFeed.Privacy`).
+    static var saverPrivacy: SaverFeed.Privacy {
+        get {
+            let d = UserDefaults.standard
+            return SaverFeed.Privacy(banner: d.object(forKey: "saverBanner") as? Bool ?? true,
+                                     cards: d.object(forKey: "saverCards") as? Bool ?? true,
+                                     at: d.double(forKey: "saverPrivacyAt"))
+        }
+        set {
+            let d = UserDefaults.standard
+            d.set(newValue.banner, forKey: "saverBanner")
+            d.set(newValue.cards, forKey: "saverCards")
+            d.set(Date().timeIntervalSince1970, forKey: "saverPrivacyAt")
+        }
+    }
 
     @objc private func toggleSmallWindow() {
         // Ticked in the Larger window: back down to the Compact Window, not just a flag the Larger one hides.
@@ -3030,33 +3062,33 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         }
     }
 
+    /// The Location menu's choices, in its order, for the menu and Settings → General alike: Automatic (nil), Random,
+    /// then every place in the universe on show, each with who calls it home. Clawd Royale keeps the last single
+    /// universe's, so the kept choice still shows.
+    private func locationChoices() -> [(title: String, key: String?)] {
+        let kept = Universe.mixed ? Self.universe : Universe.shown
+        let owners: [Location: [String]] = Dictionary(grouping: Theme.of(kept).cast.filter { !kept.isHem($0.id) }
+            .map { ($0.home, $0.name) }, by: \.0)
+            .mapValues { $0.map(\.1) }
+        return [("Automatic (where the first Claude belongs)", nil), ("Random (somewhere new every 10 minutes)", Self.randomLocation)]
+            + Location.all(in: kept).map { l in
+                let who = owners[l]?.joined(separator: ", ") ?? ""
+                return (who.isEmpty ? l.name : "\(l.name)  ·  \(who)", l.rawValue)
+            }
+    }
+
     private func locationMenu() -> NSMenuItem {
         let root = NSMenuItem(title: Universe.mixed ? "Location: \(location.name) (Clawd Royale)" : "Location: \(location.name)",
                               action: nil, keyEquivalent: "")
         let lm = NSMenu()
         let picked = Self.pickedLocation
-        let auto = NSMenuItem(title: "Automatic (where the first Claude belongs)", action: #selector(setLocation(_:)), keyEquivalent: "")
-        auto.target = self
-        auto.state = picked == nil ? .on : .off
-        lm.addItem(auto)
-        let random = NSMenuItem(title: "Random (somewhere new every 10 minutes)", action: #selector(setLocation(_:)), keyEquivalent: "")
-        random.target = self
-        random.representedObject = Self.randomLocation
-        random.state = picked == Self.randomLocation ? .on : .off
-        lm.addItem(random)
-        lm.addItem(.separator())
-        // Clawd Royale greys the menu out, but the kept choice (the last single universe's) should still show checked.
-        let kept = Universe.mixed ? Self.universe : Universe.shown
-        let owners: [Location: [String]] = Dictionary(grouping: Theme.of(kept).cast.filter { !kept.isHem($0.id) }
-            .map { ($0.home, $0.name) }, by: \.0)
-            .mapValues { $0.map(\.1) }
-        for l in Location.all(in: kept) {
-            let who = owners[l]?.joined(separator: ", ") ?? ""
-            let item = NSMenuItem(title: who.isEmpty ? l.name : "\(l.name)  ·  \(who)", action: #selector(setLocation(_:)), keyEquivalent: "")
+        for (i, choice) in locationChoices().enumerated() {
+            let item = NSMenuItem(title: choice.title, action: #selector(setLocation(_:)), keyEquivalent: "")
             item.target = self
-            item.representedObject = l.rawValue
-            item.state = picked == l.rawValue ? .on : .off
+            item.representedObject = choice.key
+            item.state = picked == choice.key ? .on : .off
             lm.addItem(item)
+            if i == 1 { lm.addItem(.separator()) }
         }
         if Universe.mixed {   // Clawd Royale picks the place; the choice here comes back after
             lm.autoenablesItems = false
@@ -3066,8 +3098,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         return root
     }
 
-    @objc private func setLocation(_ sender: NSMenuItem) {
-        Self.pickedLocation = sender.representedObject as? String
+    @objc private func setLocation(_ sender: NSMenuItem) { pickLocation(sender.representedObject as? String) }
+
+    /// Sets the place (a key, `randomLocation`, or nil for Automatic), from the Location menu or Settings.
+    private func pickLocation(_ key: String?) {
+        Self.pickedLocation = key
+        settingsWindow?.reload()
         clawdWindow?.sceneView.showFrame()
         clawdWindow?.cardsView.needsDisplay = true
         clawdWindow?.header.needsDisplay = true

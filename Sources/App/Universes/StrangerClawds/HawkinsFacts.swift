@@ -34,7 +34,7 @@ enum HawkinsHero: Int, CaseIterable {
 enum HawkinsVillain: Int, CaseIterable {
     // The Upside Down and the people who hunt the kids
     case vecna
-    case one, democlawgon, drBrenner, billyHargrove
+    case one, democlawdgon, drBrenner, billyHargrove
     case grigori, jasonCarver, mayorKline, drKay, colonelSullivan, connieFrazier
     // Small fry, agents only
     case demodog, dart, demobat, flayedRat
