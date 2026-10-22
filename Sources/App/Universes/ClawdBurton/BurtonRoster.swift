@@ -6,63 +6,12 @@ import Foundation
 // (drawn large) or be an agent (small). Who they are, how they fight and how they move is a `Persona`, registered in
 // one of the Art/*.swift files next to its drawing code; who lives where, who fights whom first and who gets picked up
 // is decided here, in `burtonTheme`.
-//
-// Ids are stored in the status file: `Universe.clawdBurton.base` plus `BurtonVillain.rawValue` (< 100) or
-// 100 + `BurtonHero.rawValue`. Only ever append cases (HEM stays last), so running sessions keep their characters
-// across an update.
 
-enum BurtonHero: Int, CaseIterable {
-    // The Nightmare Before Christmas
-    case jackSkullington, sallee, zeero, theMayor, sandyClawz
-    // Beetlejuice and Beetlejuice Beetlejuice
-    case lydiaDeathz, adamMaitclawd, barbaraMaitclawd, deliaDeathz, astridDeathz, junoh, wolfJaxon, shrunkenHeadMan
-    // Edward Scissorhands
-    case edwardScissorclaws, kimBoggz, pegBoggz, theInventor
-    // Corpse Bride
-    case victorVanDawt, emilee, victoriaEverclawt, scrapz, elderGutknocked, bonejingles, generalBonesapart
-    // Sleepy Hollow
-    case ichabodCraine, katrinaVanTassle, youngMasbeth, bromVanBruntt
-    // Mars Attacks!
-    case richieNorriss, grandmaFlorenz, presidentDayle, byronWilyums, professorKessclaw
-    // Charlie and the Chocolate Factory
-    case willyWonky, charlieBuckett, grampaJoe, oompaLoompah, drWilburWonky
-    // Alice in Wonderland
-    case aliceKingsclaw, tarrantHightop, chessur, mirana, mcTwisp, mally, thackeryHare
-    // Frankenweenie
-    case victorFrankenstien, sparkie, elsaVanHelsclaw, mrRzykrusky
-    // Pee-wee's Big Adventure
-    case peeweeHerclawd, dottie, largeMarge
-    // Agent-only
-    case maggott
-    case hem   // always last (`Universe.hem`)
-
+extension BurtonHero {
     var persona: Persona { burtonHeroPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
-enum BurtonVillain: Int, CaseIterable {
-    // Beetlejuice and Beetlejuice Beetlejuice
-    case beetlejooce, sandwurm, delorez, otho, jeremee
-    // The Nightmare Before Christmas
-    case ooogieBoogie, lok, shok, barrell, drFinkelclawd, wolfclawd, tearAwayClown, halloweenWitch
-    // Edward Scissorhands
-    case jimm, joyceMonrow
-    // Corpse Bride
-    case lordBarkissBittern, pastorGallswell, finisEverclawt, maudelineEverclawt
-    // Sleepy Hollow
-    case headlessHorseclawd, ladyVanTassle, westernWoodsCrone
-    // Mars Attacks!
-    case martianLeader, martianAmbassador, martianTrooper, martianSpy, martianWalker
-    // Charlie and the Chocolate Factory
-    case augustusGloopp, verucaSaltt, violetBluregarde, mikeTeevee, slugwurth
-    // Alice in Wonderland
-    case redQueen, stayne, jabberclawky, bandersnatch, redCardKnight
-    // Frankenweenie
-    case edgarGorr, nassorr, toshiakki, weirdGurl, mrWhiskerz, shellee, colossuss, wereRat
-    // Pee-wee's Big Adventure
-    case francisBuxtun, bikeThief, madamRubee, andee
-    // Agent-only small fry
-    case bob, oogieBug, nutSquirrel, seaMonkey
-
+extension BurtonVillain {
     var persona: Persona { burtonVillainPersonas[self] ?? Persona.missing(String(describing: self)) }
 }
 
@@ -154,7 +103,7 @@ let burtonTheme = Theme(
     nemeses: burtonNemeses.map { (.hero($0.0), .villain($0.1)) },
     ride: { _ in nil },
     menuIcon: burtonMenuIcon,
-    legend: .hero(.jackSkullington))
+    legend: .hero(BurtonHero.jackSkullington))
 
 // MARK: - Places
 

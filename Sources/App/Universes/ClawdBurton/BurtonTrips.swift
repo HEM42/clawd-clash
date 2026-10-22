@@ -300,3 +300,5 @@ struct BurtonTrip {
         Self.blitCanvas(c, onto: ctx, px: px, in: r, alpha: CGFloat(fade))
     }
 }
+
+extension BurtonTrip: Trip {}
