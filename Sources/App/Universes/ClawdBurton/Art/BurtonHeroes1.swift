@@ -8,7 +8,7 @@ import Foundation
 let burtonHeroes1: [BurtonHero: Persona] = [
     .jackSkullington: Persona(name: "Jack Skullington", weapon: .lightning,
                               magic: Magic(core: C(0xFFF0D8), glow: C(0xFF8A2A), jagged: false, waves: true, pulse: true),
-                              pivot: jackMouth, headTop: 16, signature: 3.4, callout: "What's this?",
+                              pivot: jackMouth, headTop: 11, signature: 3.4, callout: "What's this?",
                               draw: drawJackSkullington),
     .sallee: Persona(name: "Sallee", weapon: .none, headTop: 20, signature: 3.6, draw: drawSallee),
     .zeero: Persona(name: "Zeero", weapon: .none, motion: .hover, canSit: false, headTop: 14, signature: 3.0, callout: "Arf!",
@@ -19,7 +19,7 @@ let burtonHeroes1: [BurtonHero: Persona] = [
 ]
 
 /// The front of Jack's gaping mouth: his scare pulses out from there (raised by the pose's `armRaise`).
-private let jackMouth = (x: 36.5, y: 31.5)
+private let jackMouth = (x: 33.5, y: 26.5)
 
 /// 0 before `a`, 1 after `b`, a straight line between.
 private func ramp(_ s: Double, _ a: Double, _ b: Double) -> Double { max(0, min(1, (s - a) / (b - a))) }
@@ -35,14 +35,15 @@ private func roundBlock(_ c: PixelCanvas, top: Int, round: Int, _ body: Px, _ sh
 
 // MARK: - Jack Skullington
 
-/// Jack Skullington: the Pumpkin King. The Clawd block is his bone-white skull, its top rounded: huge black eye
-/// sockets, two nose slits and a long stitched grin curling up at its ends; below it the black pinstripe suit with a
-/// heart-shaped white shirt front and a bat for a bow tie, ragged tails behind, the spiky bat-wing collar fanned out
-/// from his shoulders, bony white fingers. He fights by scaring: the skull stretches taller, the eyes turn angry, the
-/// mouth gapes full of teeth, both hands come up clawing, and the fright pulses out of his mouth in bone-white arcs
-/// with a pumpkin glow. Signature: the scary face at its biggest, then a deep showman's bow.
+/// Jack Skullington: the Pumpkin King, a beanpole. A narrow Clawd block (14 wide, 14 tall) on long, thin legs: the
+/// top is his bone-white skull, rounded, with huge black eye sockets, two nose slits and a long stitched grin curling
+/// up at its ends; the bottom the black pinstripe suit with a heart-shaped white shirt front and a bat for a bow tie,
+/// ragged tails behind, the spiky bat-wing collar fanned out from his shoulders, thin sleeves, bony white fingers.
+/// He fights by scaring: the skull stretches taller, the eyes turn angry, the mouth gapes full of teeth, both hands
+/// come up clawing, and the fright pulses out of his mouth in bone-white arcs with a pumpkin glow. Signature: the
+/// scary face at its biggest, then a deep showman's bow.
 private func drawJackSkullington(_ c: PixelCanvas, _ p: Pose) {
-    let suit = C(0x1C1A22), stripe = C(0x5A5664), bone = C(0xF2EEE3), boneD = C(0xC8C2B4)
+    let suit = C(0x1C1A22), stripe = C(0x5A5664), bone = C(0xF2EEE3), boneD = C(0xC8C2B4), shoe = C(0x0C0B0E)
     let sig = p.signature
     let signatureScare = sig.map { $0 > 0.06 && $0 < 0.55 } ?? false
     let dueling: Bool = { if case .zap = p.role { return true } else { return false } }()
@@ -50,69 +51,85 @@ private func drawJackSkullington(_ c: PixelCanvas, _ p: Pose) {
     let bowK = sig.map { $0 >= 0.6 && $0 < 0.95 ? sin(ramp($0, 0.6, 0.95) * .pi) : 0 } ?? 0
     let stretch = signatureScare ? Int((sin(ramp(sig!, 0.06, 0.55) * .pi) * 4).rounded())
                                  : scaring ? jackThrob(p.t) : 0          // in a fight, gaping wider with each burst
+    // The block spans x 21–34; standing, its bottom is row 33 (four rows up on his long legs), seated row 37.
+    let x0 = 21, x1 = 34, bottom = seatedPose ? 37 : 33, suitTop = bottom - 4
 
-    // Thin pinstriped legs and black shoes.
-    drawLegs(c, Look(leg: suit), step: p.step)
-    if !seatedPose {
-        for (i, lx) in [19, 23, 31, 35].enumerated() { c.rect(lx + 1, p.step >= 0 && i % 2 == p.step ? 37 : 38, 1, 3, stripe) }
+    // Long, thin legs, one pixel each, and pointed black shoes.
+    let legs = [21, 24, 31, 34]
+    if seatedPose {
+        for lx in legs { c.rect(lx - 1, 38, 3, 2, suit) }
+    } else {
+        for (i, lx) in legs.enumerated() {
+            let lifted = p.step >= 0 && i % 2 == p.step
+            c.rect(lx, bottom - 1, 1, 45 - bottom - (lifted ? 1 : 0), suit)
+            c.rect(i < 2 ? lx : lx - 1, lifted ? 41 : 42, 2, 2, shoe)
+        }
     }
-    burtonBoots(c, step: p.step, C(0x0C0B0E))
     c.oy += p.breathe
     let bow = Int((bowK * 3).rounded())
     c.ox += bow; c.oy += bow
     // The ragged tailcoat tails behind, the bat-wing collar fanned out from his shoulders: three small filled spikes a side.
-    c.pattern(16, 37, ["KK", "K.", "K."], ["K": suit])
-    for (tip, b0, b1) in [((12.0, 29.0), (19.0, 33.0), (19.0, 29.0)), ((13.0, 23.0), (19.0, 31.0), (20.0, 27.0)),
-                          ((16.0, 19.0), (20.0, 28.0), (22.0, 26.0))] {
-        burtonTriangle(c, tip, b0, b1, burtonInk)
-        burtonTriangle(c, (56 - tip.0, tip.1), (56 - b0.0, b0.1), (56 - b1.0, b1.1), burtonInk)
+    c.pattern(x0 - 2, bottom, ["KK", "K.", "K."], ["K": suit])
+    let dy = Double(suitTop - 34)
+    for (tip, b0, b1) in [((15.0, 29.0), (22.0, 33.0), (22.0, 29.0)), ((16.0, 23.0), (22.0, 31.0), (23.0, 27.0)),
+                          ((19.0, 19.0), (23.0, 28.0), (25.0, 26.0))] {
+        burtonTriangle(c, (tip.0, tip.1 + dy), (b0.0, b0.1 + dy), (b1.0, b1.1 + dy), burtonInk)
+        burtonTriangle(c, (56 - tip.0, tip.1 + dy), (56 - b0.0, b0.1 + dy), (56 - b1.0, b1.1 + dy), burtonInk)
     }
-    // The skull: the block in bone, rounded on top, stretched taller while he scares.
-    let top = 26 - stretch
-    roundBlock(c, top: top, round: 2, bone, boneD)
+    // The skull: the top nine rows of the block in bone, rounded on top, stretched taller while he scares.
+    let top = bottom - 13 - stretch
+    for y in top..<suitTop {
+        let inset = max(0, 2 - (y - top))
+        c.rect(x0 + inset, y, 14 - inset * 2, 1, bone); c.px(x1 - inset, y, boneD)
+    }
     let pal: [Character: Px] = ["K": burtonInk, "W": bone]
     if scaring {
         // Angry slanted sockets, and the mouth gaping open, full of teeth, down to his collar.
-        c.pattern(20, top + 1, ["KK......", "KKKK....", "KKKKK...", ".KKKK..."], pal)
-        c.pattern(30, top + 1, ["......KK", "....KKKK", "...KKKKK", "...KKKK."], pal)
-        c.px(27, top + 5, burtonInk); c.px(29, top + 5, burtonInk)
-        c.rect(21, top + 6, 15, 33 - top - 6 + 1, burtonInk)
-        c.pattern(21, top + 6, ["KWKWKWKWKWKWKWK"], pal); c.pattern(21, 33, ["KWKWKWKWKWKWKWK"], pal)
+        c.pattern(22, top + 1, ["KK....", "KKK...", "KKKK..", "KKKK..", ".KKK.."], pal)
+        c.pattern(28, top + 1, ["....KK", "...KKK", "..KKKK", "..KKKK", "..KKK."], pal)
+        c.px(27, top + 6, burtonInk); c.px(28, top + 6, burtonInk)
+        c.rect(24, top + 7, 9, suitTop - top - 7, burtonInk)
+        c.pattern(24, top + 7, ["KWKWKWKWK"], pal); c.pattern(24, suitTop - 1, ["KWKWKWKWK"], pal)
     } else {
-        // Huge round sockets, two nose slits, the long stitched grin curling up at its ends.
-        c.pattern(20, 27, [".KKK.", "KKKKK", "KKKKK", ".KKK."], pal); c.pattern(31, 27, [".KKK.", "KKKKK", "KKKKK", ".KKK."], pal)
-        c.px(27, 31, burtonInk); c.px(29, 31, burtonInk)
-        c.pattern(19, 31, ["K.................K", ".KKKKKKKKKKKKKKKKK.", "...K.K.K.K.K.K.K..."], pal)
+        // Huge oval sockets, two nose slits, the long stitched grin curling up at its ends.
+        let socket = [".KK.", "KKKK", "KKKK", "KKKK", ".KK."]
+        c.pattern(22, top + 1, socket, pal); c.pattern(30, top + 1, socket, pal)
+        c.px(27, top + 6, burtonInk); c.px(28, top + 6, burtonInk)
+        c.pattern(22, top + 6, ["K...........K", ".KKKKKKKKKKK.", "...K.K.K.K..."], pal)
     }
     // The suit over the bottom of the block: pinstripes, the heart-shaped shirt front, the bat bow tie.
-    c.rect(18, 34, 20, 4, suit)
-    for x in stride(from: 19, to: 37, by: 3) { c.rect(x, 34, 1, 4, stripe) }
-    c.pattern(24, 34, ["WWWWWWWW", ".WWWWWW.", "..WWWW..", "...WW..."], ["W": bone])
-    c.pattern(25, 34, ["K.KK.K", ".K..K."], ["K": burtonInk])
+    c.rect(x0, suitTop, 14, 5, suit)
+    for x in stride(from: x0 + 1, to: x1, by: 3) { c.rect(x, suitTop, 1, 5, stripe) }
+    c.pattern(25, suitTop, ["WWWWWW", ".WWWW.", "..WW.."], ["W": bone])
+    c.pattern(25, suitTop, ["K.KK.K", ".K..K."], ["K": burtonInk])
 
     if bowK > 0 {
         // Bowing: one arm sweeps across his middle, the other flung out behind him.
-        c.rect(26, 36, 9, 2, suit); c.pattern(35, 35, ["B.B", "BBB"], ["B": bone])
-        burtonLine(c, 18, 35, 11, 31, suit, 1.0); c.pattern(8, 29, ["B.B", ".BB", "BB."], ["B": bone])
+        c.rect(26, suitTop + 2, 6, 2, suit); c.pattern(32, suitTop + 1, ["B.B", "BBB"], ["B": bone])
+        burtonLine(c, Double(x0), Double(suitTop + 1), Double(x0 - 7), Double(suitTop - 3), suit, 0.6)
+        c.pattern(x0 - 10, suitTop - 5, ["B.B", ".BB", "BB."], ["B": bone])
         return
     }
     if scaring {
         // Both bony hands up beside his head, fingers spread like claws.
-        burtonLine(c, 17, 35, 13, Double(top + 4), suit, 1.0); burtonLine(c, 39, 35, 43, Double(top + 4), suit, 1.0)
-        c.pattern(11, top - 1, ["B.B.B", "B.B.B", ".BBB."], ["B": bone]); c.pattern(41, top - 1, ["B.B.B", "B.B.B", ".BBB."], ["B": bone])
+        burtonLine(c, Double(x0 - 1), Double(suitTop + 1), Double(x0 - 5), Double(top + 4), suit, 0.6)
+        burtonLine(c, Double(x1 + 2), Double(suitTop + 1), Double(x1 + 6), Double(top + 4), suit, 0.6)
+        c.pattern(x0 - 7, top - 1, ["B.B.B", "B.B.B", ".BBB."], ["B": bone])
+        c.pattern(x1 + 4, top - 1, ["B.B.B", "B.B.B", ".BBB."], ["B": bone])
         return
     }
     if p.zap != nil || p.armRaise > 0 {
         // Ready to scare: both hands half up in front of him, bony fingers curled like claws.
-        burtonLine(c, 17, 35, 14, 30, suit, 1.0); burtonLine(c, 39, 35, 42, 30, suit, 1.0)
-        c.pattern(12, 27, ["B.B", "B.B", ".BB"], ["B": bone]); c.pattern(41, 27, ["B.B", "B.B", "BB."], ["B": bone])
+        burtonLine(c, Double(x0 - 1), Double(suitTop + 1), Double(x0 - 4), Double(suitTop - 4), suit, 0.6)
+        burtonLine(c, Double(x1 + 2), Double(suitTop + 1), Double(x1 + 5), Double(suitTop - 4), suit, 0.6)
+        c.pattern(x0 - 6, suitTop - 7, ["B.B", "B.B", ".BB"], ["B": bone])
+        c.pattern(x1 + 4, suitTop - 7, ["B.B", "B.B", "BB."], ["B": bone])
         return
     }
-    // At rest: the sleeves at his sides, the bony fingers below the cuffs.
-    c.rect(15, 33, 3, 3, suit); c.pattern(14, 36, ["B.B.", ".B.B"], ["B": bone])
-    c.rect(38, 33, 3, 3, suit); c.pattern(38, 36, [".B.B", "B.B."], ["B": bone])
+    // At rest: thin sleeves hanging at his sides, the bony fingers below the cuffs.
+    c.rect(x0 - 2, suitTop - 1, 2, 4, suit); c.pattern(x0 - 3, suitTop + 3, ["B.B.", ".B.B"], ["B": bone])
+    c.rect(x1 + 1, suitTop - 1, 2, 4, suit); c.pattern(x1 + 1, suitTop + 3, [".B.B", "B.B."], ["B": bone])
 }
-
 /// 2 while a burst of his scream is going out (`screamPeriod`), 0 between: the scary face gaping in time with it.
 private func jackThrob(_ t: Double) -> Int { frac(t / screamPeriod) < 0.4 ? 2 : 0 }
 
