@@ -11,8 +11,9 @@ import Foundation
 //   HawkinsRides.swift       the Party's BMX bikes.  HawkinsTaken.swift  taken to the Upside Down (compaction).
 //   HawkinsHabits.swift      the nosebleed, Vecna's clock, the babysitter.
 //   HawkinsDrills.swift      the bespoke drills.     HawkinsFlip.swift   the Upside Down turning over now and then.
+//   HawkinsTrips.swift       the ten trips between places, each drawn in its own Hawkins…Trip.swift, and
+//   HawkinsLights.swift      Joyce's Christmas lights spelling the new place's name at the end of every one.
 //   Promo/HawkinsReel.swift  the trailer, compiled only into Tools/RenderPromo, never into the app.
-// The scene changes with the engine's plain edge and clock wipes for now; the universe's own trips come later.
 
 /// Stranger Clawds, as the app sees it: everything the engine asks of it (`UniverseModule`).
 struct HawkinsUniverse: UniverseModule {
@@ -28,8 +29,11 @@ struct HawkinsUniverse: UniverseModule {
                                                 hawkinsHeroes5],
             villains: "hawkinsVillains", [hawkinsVillains1, hawkinsVillains2, hawkinsVillains3, hawkinsVillains4])
     }
-    /// The engine's plain edge and clock wipes, until the universe's own trips are drawn.
-    var transitions: TransitionSet? { nil }
+    /// The ten trips, each finished with Joyce's Christmas lights spelling the new place: HawkinsTrips.swift.
+    var transitions: TransitionSet? {
+        TransitionSet(pick: { last, cast, from, to in HawkinsTrip.pick(after: (last as? HawkinsTrip)?.kind, cast: cast, from: from, to: to) },
+                      every: { from, to in ShownTrip.all(HawkinsWipe.allCases) { HawkinsTrip(kind: $0, from: from, to: to) } })
+    }
 
     /// The Playground's five cards, in the Party's voice.
     var playgroundPrompts: [String] {
