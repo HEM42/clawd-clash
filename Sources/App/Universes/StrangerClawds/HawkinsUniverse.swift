@@ -57,12 +57,22 @@ struct HawkinsUniverse: UniverseModule {
     /// Now and then the Upside Down turns over: HawkinsFlip.swift.
     var sceneFlip: SceneFlip? { hawkinsUpsideDownTurn }
 
-    /// The README's desktop line-up and social preview (Tools/RenderDocs).
+    /// The README's desktop line-up (Vecna and Eleven, Steve's nail bat against the Democlawgon, Nancy's shotgun
+    /// against a Demodog, Hopper against Billy, Dustin cheering) and social preview.
     var docs: DocsInfo {
         DocsInfo(lineup: [
-            LineupSlot.pair(.villain(HawkinsVillain.vecna), true, "", 60, .hero(HawkinsHero.eleven), true, "", 150),
+            LineupSlot.pair(.villain(HawkinsVillain.vecna), true, "", 30, .hero(HawkinsHero.eleven), true, "", 98),
+            LineupSlot.pair(.hero(HawkinsHero.steveHarringclawd), false, "Check git history", 132,
+                            .villain(HawkinsVillain.democlawgon), false, "Write changelog", 182),
+            LineupSlot.pair(.hero(HawkinsHero.nancyWheeler), false, "Plan the refactor", 214,
+                            .villain(HawkinsVillain.demodog), false, "Review Overlay.swift", 252),
+            LineupSlot.pair(.hero(HawkinsHero.chiefHopper), true, "", 282, .villain(HawkinsVillain.billyHargrove), true, "", 352),
+            [LineupSlot(who: .hero(HawkinsHero.dustinHenderson), leader: false, label: "Run the test suite", x: 388, facing: 1,
+                        role: .cheer)],
         ], social: (title: Universe.hawkins.title.uppercased(), subtitle: "Your AI sessions as a pixel-art Hawkins brawl on your desktop",
                     cast: [.hero(HawkinsHero.eleven), .hero(HawkinsHero.mikeWheeler), .hero(HawkinsHero.dustinHenderson),
-                           .villain(HawkinsVillain.vecna)]))
+                           .hero(HawkinsHero.steveHarringclawd), .villain(HawkinsVillain.vecna),
+                           .villain(HawkinsVillain.democlawgon), .villain(HawkinsVillain.billyHargrove),
+                           .villain(HawkinsVillain.drBrenner)]))
     }
 }

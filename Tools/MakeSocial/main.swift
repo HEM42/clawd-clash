@@ -5,9 +5,10 @@ import CoreText
 // one per universe, each with a fight in full swing, drawn with the app's own sprite and fight-effect code: Luke and
 // Vader's sabers locked under the stars, Thor and Loki trading lightning and magic, Batman against the Joker, Doctor
 // Ten's sonic on a Dalick in the time vortex's blue, Fox Clawder against the Grey in the woods at night, Indiana Bones
-// against René Bellock, Gandclawd the Grey against the Ballrog, Buffy's stake against the Old Master. CLAWD CLASH
-// runs across them all, coloured by the panel each part is in, with a sound effect in each panel and the tagline in a
-// caption box. A new universe adds a panel: a cut, a centre, a sky, a floor, a fight, a sound and a face.
+// against René Bellock, Gandclawd the Grey against the Ballrog, Buffy's stake against the Old Master, Eleven's power
+// against Vecna's in the Upside Down. CLAWD CLASH runs across them all, coloured by the panel each part is in, with a
+// sound effect in each panel and the tagline in a caption box. A new universe adds a panel: a cut, a centre, a sky, a
+// floor, a fight, a sound and a face.
 //   source Tools/universes.sh && swiftc Sources/App/{Pixel,Characters,Fights,Persona,Theme,Pose,Locations,Cast,Habits,Drills,Icon,Rides}.swift \
 //          $UNIVERSE_APP Sources/Shared/*.swift Tools/MakeSocial/main.swift -o build/makesocial \
 //          && build/makesocial docs/social-preview.png
@@ -50,6 +51,8 @@ let allVerses: [Verse] = [
           burst: 0xFF8A3A, face: (0xFFFFFF, 0xFFD27A), sky: (0x6A1E0A, 0x120604), caption: "DEEP IN THE MINES…"),
     Verse(name: "CLAWD SLAYER", hero: .hero(SlayerHero.buffyClawmers), villain: .villain(SlayerVillain.oldMaster), place: .slayerSunkenChurch,
           sound: "POOF!", burst: 0xD8E4FF, face: (0xFFFFFF, 0x9AE86A), sky: (0x2A2E6A, 0x08061A), caption: "MEANWHILE, IN SUNNYDALE…"),
+    Verse(name: "STRANGER CLAWDS", hero: .hero(HawkinsHero.eleven), villain: .villain(HawkinsVillain.vecna), place: .hawkinsUpsideDown,
+          sound: "SHHHK!", burst: 0xFF5A4A, face: (0xFFFFFF, 0xFF3A2A), sky: (0x6A0A12, 0x0A0610), caption: "MEANWHILE, IN HAWKINS…"),
 ]
 /// `UNIVERSES=8` repeats the list up to that many, to see how a style holds up with more universes.
 let versesWanted = Int(ProcessInfo.processInfo.environment["UNIVERSES"] ?? "") ?? 0
