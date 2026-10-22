@@ -15,7 +15,7 @@ let hawkinsHeroes3: [HawkinsHero: Persona] = [
     .eddieMunclawd: Persona(name: "Eddie Munclawd", weapon: .saber, headTop: 17, signature: 3.6, draw: drawEddieMunclawd),
     .argyle: Persona(name: "Argyle", headTop: 19, signature: 3.0, callout: "Duuude.", draw: drawArgyle),
     .barb: Persona(name: "Barb", headTop: 20, signature: 2.4, draw: drawBarb),
-    .derekTurnbow: Persona(name: "Derek Turnbow", headTop: 22, draw: drawDerekTurnbow),
+    .derekTurnbow: Persona(name: "Derek Turnbow", headTop: 23, draw: drawDerekTurnbow),
 ]
 
 // MARK: - Steve Harringclawd
@@ -323,9 +323,11 @@ private func drawRobinBuckley(_ c: PixelCanvas, _ p: Pose) {
     c.rect(23, 16, 4, 1, hat)
 
     guard salute else { return }
-    // The salute: her forearm up across to the brim, the hand flat against it.
-    hawkinsLine(c, 39.5, 27.5, 36.5, 22.5, stripe, 1.1)
-    c.rect(32, 21, 5, 2, clawdOrange); c.rect(32, 22, 5, 1, clawdShade)
+    // The salute: her forearm up across to the brim, its sleeve edged in blue so it stands off the white cap, and the
+    // hand flat against the brim, the fingers reaching out past it.
+    hawkinsLine(c, 39.5, 27.5, 36.5, 22.5, stripeD, 1.5)
+    hawkinsLine(c, 39.5, 27.5, 36.5, 22.5, stripe, 0.8)
+    c.rect(32, 20, 8, 2, clawdOrange); c.rect(32, 21, 8, 1, clawdShade); c.px(39, 20, clawdShade)
 }
 
 // MARK: - Eddie Munclawd
@@ -540,7 +542,7 @@ private func drawArgyle(_ c: PixelCanvas, _ p: Pose) {
 
 /// Barb: short auburn hair in soft curls, big round glasses, a pale pink blouse with a big white frilled collar, a
 /// frill down the front and puffed sleeves, high-waisted jeans with a brown belt and white sneakers. She doesn't fight.
-/// Signature: she pushes her glasses back up her nose with one finger.
+/// Signature: she pushes her glasses back up her nose with one finger, and a glint flashes off a lens.
 private func drawBarb(_ c: PixelCanvas, _ p: Pose) {
     let blouse = C(0xEEC4CC), blouseD = C(0xCC9CA8), blouseL = C(0xFADCE2), frill = C(0xFAF8F4), frillD = C(0xD8D2CC)
     let jeans = C(0x5A7AAA), jeansD = C(0x44608A)
@@ -548,7 +550,8 @@ private func drawBarb(_ c: PixelCanvas, _ p: Pose) {
     let frame = C(0x9A7A70), glint = C(0xE8F0FA)
     let k = hawkinsSpan(p, 0.1, 0.9)
     let push = hawkinsEase(k, edge: 0.25) > 0.5
-    let up = push && k > 0.4 && k < 0.65 ? 1 : 0
+    // The glasses slip down a row as her hand comes up, then she pushes them up a row past where they sit.
+    let up = push ? (k < 0.4 ? -1 : k < 0.65 ? 1 : 0) : 0
 
     drawLegs(c, Look(leg: jeans), step: p.step)
     if !seatedPose { for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx + 1, hawkinsFoot(p, i) - 4, jeansD) } }
@@ -593,8 +596,16 @@ private func drawBarb(_ c: PixelCanvas, _ p: Pose) {
         ".FFFFF....FFFFF.",
     ], ["F": frame, "g": glint])
 
+    // Just after the push, a glint flashes off her near lens, a little star at its top corner.
+    if k > 0.66 && k < 0.86 {
+        let g = C(0xFFFFFF)
+        c.px(22, 27, g); c.px(21, 28, g); c.px(22, 28, g); c.px(23, 28, g); c.px(22, 29, g)
+        if k > 0.72 && k < 0.8 { c.px(22, 26, g.alpha(0.6)); c.px(20, 28, g.alpha(0.6)); c.px(24, 28, g.alpha(0.6)) }
+    }
     guard push else { return }
-    // Her forearm up across her front, one finger on the bridge of her glasses.
+    // Her forearm up across her front, its underside in shade so it stands off her face, one finger on the bridge of
+    // her glasses.
+    hawkinsLine(c, 39.5, 31.5, 31, 30.5, blouseD, 1.0)
     hawkinsLine(c, 39.5, 30.5, 31, 29.5, blouse, 1.0)
     c.rect(28, 28 - up, 3, 2, clawdOrange); c.px(28, 27 - up, clawdOrange)
 }
@@ -610,14 +621,14 @@ private func drawDerekTurnbow(_ c: PixelCanvas, _ p: Pose) {
     let vest = C(0xC8B48A), vestD = C(0xA08E66), vestL = C(0xE0D0AA), lining = C(0xA8302A), liningL = C(0xD8C8B0)
     let jeans = C(0x5A74A0), jeansD = C(0x42587E)
     let hair = C(0x6A4628), hairD = C(0x48301A), hairL = C(0x8E643C)
-    let lower = seatedPose ? 0 : 2
+    let lower = seatedPose ? 0 : hawkinsKidDrop.little
 
     drawLegs(c, Look(leg: jeans), step: p.step)
     if !seatedPose { for (i, lx) in [19, 23, 31, 35].enumerated() { c.px(lx + 1, hawkinsFoot(p, i) - 3, jeansD) } }
     drawBoots(c, C(0xEEEEE8), step: p.step, rows: 2)
     drawBoots(c, C(0xA8ACB4), step: p.step, rows: 1)
 
-    // Shorter than the teenagers: the whole of him above the legs sits two rows lower.
+    // The youngest: the whole of him above the legs sits `hawkinsKidDrop.little` rows lower.
     c.oy += lower + p.breathe
     drawBody(c, Look(arm: bands[0]))
     // The sneer: one brow pulled down, the lip curled up at one side.

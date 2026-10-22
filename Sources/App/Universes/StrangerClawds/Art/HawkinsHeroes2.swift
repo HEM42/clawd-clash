@@ -5,13 +5,13 @@ import Foundation
 // cut, Max's long red hair and the skateboard at her back, and Erica, the youngest, standing lower under her two puffs.
 
 let hawkinsHeroes2: [HawkinsHero: Persona] = [
-    .lucasSinclawd: Persona(name: "Lucas Sinclawd", weapon: .blaster, shot: .thrown(C(0xA4A4AC)), muzzle: (41, 29),
-                            headTop: 22, signature: 3.0, draw: drawLucasSinclawd),
+    .lucasSinclawd: Persona(name: "Lucas Sinclawd", weapon: .blaster, shot: .thrown(C(0xA4A4AC)), muzzle: (41, 31),
+                            headTop: 24, signature: 3.0, draw: drawLucasSinclawd),
     .willByers: Persona(name: "Will Byers", weapon: .lightning,
                         magic: Magic(core: C(0xF0E4FF), glow: C(0x8A4AE0), jagged: false, waves: true),
-                        headTop: 20, signature: 3.2, draw: drawWillByers),
-    .maxMayfield: Persona(name: "Max Mayfield", headTop: 20, signature: 4.2, draw: drawMaxMayfield),
-    .ericaSinclair: Persona(name: "Erica Sinclair", headTop: 20, signature: 3.0, callout: "Nerds.", draw: drawEricaSinclair),
+                        pivot: hawkinsKidHand, headTop: 22, signature: 3.2, draw: drawWillByers),
+    .maxMayfield: Persona(name: "Max Mayfield", headTop: 22, signature: 4.2, draw: drawMaxMayfield),
+    .ericaSinclair: Persona(name: "Erica Sinclair", headTop: 21, signature: 3.0, callout: "Nerds.", draw: drawEricaSinclair),
 ]
 
 // MARK: - Lucas Sinclawd
@@ -35,7 +35,7 @@ private func drawLucasSinclawd(_ c: PixelCanvas, _ p: Pose) {
     drawBoots(c, C(0x5A3A24), step: p.step, rows: 3)
     drawBoots(c, C(0xC8BCA4), step: p.step, rows: 1)
 
-    c.oy += p.breathe
+    c.oy += (seatedPose ? 0 : hawkinsKidDrop.party) + p.breathe
     drawBody(c, Look(arm: jacket), armRight: looking ? 4 : 0)
 
     // The army jacket, open over the red tee: lit lapel and shoulders, a flapped pocket each side, the far side darker.
@@ -102,7 +102,7 @@ private func drawWillByers(_ c: PixelCanvas, _ p: Pose) {
     drawBoots(c, C(0xE4E4DE), step: p.step, rows: 2)
     drawBoots(c, C(0x9A9AA6), step: p.step, rows: 1)
 
-    c.oy += p.breathe
+    c.oy += (seatedPose ? 0 : hawkinsKidDrop.party) + p.breathe
     drawBody(c, Look(arm: flannel), armRight: show >= 0 ? lift : p.armRaise)
 
     // The flannel: red, checked with dark lines down and across, the collar open over the tee, a button placket and a
@@ -196,7 +196,7 @@ private func drawMaxMayfield(_ c: PixelCanvas, _ p: Pose) {
         for wx in [19, 35] { c.px(wx + 1, 45, truck); c.rect(wx, 46, 3, 1, wheel) }
     }
 
-    c.oy += p.breathe
+    c.oy += (seatedPose ? 0 : hawkinsKidDrop.party) + p.breathe
     drawBody(c, Look(arm: hoodie), armRight: reaching ? 8 : 0)
 
     // The hoodie: teal, its hood bunched behind her neck, the zip down the middle, drawstrings, the pocket, lit along
@@ -269,12 +269,12 @@ private func drawEricaSinclair(_ c: PixelCanvas, _ p: Pose) {
     let k = hawkinsSpan(p, 0.06, 0.94)
     let crossed = k > 0.06 && k < 0.94
     let tap = crossed && k > 0.35 && Int(p.t * 4) % 2 == 0
-    let lower = seatedPose ? 0 : 2
+    let lower = seatedPose ? 0 : hawkinsKidDrop.little
 
     drawLegs(c, Look(leg: C(0x2E3A58)), step: tap ? 1 : p.step)
     drawBoots(c, C(0xEDEDE8), step: tap ? 1 : p.step, rows: 1)
 
-    // Shorter than the others: the whole of her above the legs sits two rows lower.
+    // The youngest: the whole of her above the legs sits `hawkinsKidDrop.little` rows lower.
     c.oy += lower + p.breathe
     drawBody(c, Look(arm: top))
     // Half-closed eyes and a smirk.

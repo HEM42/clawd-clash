@@ -44,6 +44,13 @@ func hawkinsEase(_ k: Double, edge: Double = 0.2) -> Double {
     return min(1, k / edge) * min(1, (1 - k) / edge)
 }
 
+/// How much shorter the kids stand than the teenagers and the grown-ups: everything of theirs above the legs is drawn
+/// this many rows lower, so less of each leg shows under them (all four still do). The Party by `party`, the youngest
+/// (Erica, Derek, Holly) by `little`. Never while sitting, when the legs are tucked under already.
+let hawkinsKidDrop = (party: 2, little: 3)
+/// Where the Party's hand is, `hawkinsKidDrop.party` rows under Clawd's: where Eleven's and Will's powers leave it.
+let hawkinsKidHand = (x: Sprite.hand.x, y: Sprite.hand.y + Double(hawkinsKidDrop.party))
+
 /// Where a foot is this frame: the bottom row of leg `i` (0…3, back to front), a row higher while it's lifted.
 func hawkinsFoot(_ p: Pose, _ i: Int) -> Int { p.step >= 0 && i % 2 == p.step ? 42 : 43 }
 

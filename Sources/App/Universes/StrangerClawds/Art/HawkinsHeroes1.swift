@@ -7,9 +7,9 @@ import Foundation
 let hawkinsHeroes1: [HawkinsHero: Persona] = [
     .eleven: Persona(name: "Eleven", weapon: .lightning,
                      magic: Magic(core: C(0xFFE4E4), glow: C(0xE86A7A), jagged: false, waves: true),
-                     headTop: 24, signature: 3.4, callout: "Friends don't lie.", draw: drawEleven),
-    .mikeWheeler: Persona(name: "Mike Wheeler", headTop: 20, signature: 3.0, callout: "Over.", draw: drawMikeWheeler),
-    .dustinHenderson: Persona(name: "Dustin Henderson", headTop: 18, signature: 3.6, callout: "Suzie, do you copy?",
+                     pivot: hawkinsKidHand, headTop: 26, signature: 3.4, callout: "Friends don't lie.", draw: drawEleven),
+    .mikeWheeler: Persona(name: "Mike Wheeler", headTop: 22, signature: 3.0, callout: "Over.", draw: drawMikeWheeler),
+    .dustinHenderson: Persona(name: "Dustin Henderson", headTop: 20, signature: 3.6, callout: "Suzie, do you copy?",
                               draw: drawDustinHenderson),
 ]
 
@@ -41,7 +41,7 @@ private func drawEleven(_ c: PixelCanvas, _ p: Pose) {
         }
     }
 
-    c.oy += p.breathe
+    c.oy += (seatedPose ? 0 : hawkinsKidDrop.party) + p.breathe
     let arm = eat >= 0 ? 4 : wiping ? 3 : p.armRaise
     drawBody(c, Look(arm: jacket), armRight: arm)
 
@@ -122,7 +122,7 @@ private func drawMikeWheeler(_ c: PixelCanvas, _ p: Pose) {
     drawBoots(c, C(0xE4E4DE), step: p.step, rows: 2)
     drawBoots(c, C(0xA8A8B2), step: p.step, rows: 1)
 
-    c.oy += p.breathe
+    c.oy += (seatedPose ? 0 : hawkinsKidDrop.party) + p.breathe
     drawBody(c, Look(arm: shirt), armRight: talk >= 0 ? 6 : 0)
 
     // The shirt: cream with a red and a navy stripe across it and down the sleeves, the far side in shade, a little
@@ -151,8 +151,9 @@ private func drawMikeWheeler(_ c: PixelCanvas, _ p: Pose) {
     ], ["H": hair, "h": hairD, "l": hairL])
 
     if talk < 0 {
-        // The walkie-talkie clipped to his belt at the hip, its stubby aerial up over his shirt.
-        mikeWalkie(c, x: 33, y: 32, aerial: 2)
+        // The walkie-talkie clipped to his belt at the near hip, hanging a little past his side so its shape shows,
+        // its stubby aerial up beside his arm.
+        mikeWalkie(c, x: 36, y: 34, aerial: 3)
         return
     }
     // Up at his mouth, the aerial pulled up, and the static crackling out in little arcs.
@@ -199,7 +200,7 @@ private func drawDustinHenderson(_ c: PixelCanvas, _ p: Pose) {
     drawBoots(c, C(0x4A5A8E), step: p.step, rows: 2)
     drawBoots(c, C(0xDCDCD4), step: p.step, rows: 1)
 
-    c.oy += p.breathe
+    c.oy += (seatedPose ? 0 : hawkinsKidDrop.party) + p.breathe
     drawBody(c, Look(arm: navy), armRight: call >= 0 ? 5 : 0)
 
     // The raglan tee: white, the navy sleeves running up to the neck, the far side and the hem in shade, an iron-on.

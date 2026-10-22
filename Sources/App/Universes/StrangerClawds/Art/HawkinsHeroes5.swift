@@ -11,7 +11,7 @@ let hawkinsHeroes5: [HawkinsHero: Persona] = [
     .suzie: Persona(name: "Suzie", headTop: 17, signature: 3.4, draw: drawSuzie),
     .alexei: Persona(name: "Alexei", headTop: 20, signature: 3.0, draw: drawAlexei),
     .yuri: Persona(name: "Yuri", headTop: 17, signature: 3.4, draw: drawYuri),
-    .hollyWheeler: Persona(name: "Holly Wheeler", headTop: 21, signature: 4.0, draw: drawHollyWheeler),
+    .hollyWheeler: Persona(name: "Holly Wheeler", headTop: 22, signature: 4.0, draw: drawHollyWheeler),
     .karenWheeler: Persona(name: "Karen Wheeler", weapon: .saber, headTop: 17, signature: 3.0, draw: drawKarenWheeler),
 ]
 
@@ -230,7 +230,7 @@ private func drawAlexei(_ c: PixelCanvas, _ p: Pose) {
 private func drawYuri(_ c: PixelCanvas, _ p: Pose) {
     let coat = C(0x5A4A3A), coatD = C(0x3E3226), coatL = C(0x7A6650)
     let fur = C(0x9A7A58), furD = C(0x6E5438), furL = C(0xC0A07A)
-    let beard = C(0x7A6A5A), beardD = C(0x564838), beardL = C(0xA89A88)
+    let beard = C(0x9C948A), beardD = C(0x6E665C), beardL = C(0xC8C0B4)
     let k = hawkinsSpan(p, 0.06, 0.94)
     let eating = k >= 0
     let lick = eating && k > 0.45 && k < 0.8
@@ -252,9 +252,8 @@ private func drawYuri(_ c: PixelCanvas, _ p: Pose) {
               ["F": fur, "f": furD, "l": furL])
     c.rect(14, 34, 4, 2, fur); c.px(14, 34, furL)
 
-    // The bushy beard and moustache, lit in strokes, covering his jaw.
-    c.pattern(18, 29, [
-        "BB................BB",
+    // The bushy greying beard and moustache, lit in strokes, covering his jaw under his eyes.
+    c.pattern(18, 30, [
         "BBBb..bBBBBBBb..bBBB",
         "BBBBBBBBbmmmbBBBBBBB",
         ".BBlBBdBBBBBBBdBBlB.",
@@ -279,14 +278,15 @@ private func drawYuri(_ c: PixelCanvas, _ p: Pose) {
     c.rect(17, 21, 20, 1, C(0x8A6A48))
 
     guard eating else { return }
-    // The jar in his far hand, held up in front of him: glass, the peanut butter inside, its red lid off; his finger
-    // scooping, then up at his mouth.
-    c.pattern(36, 31, ["RRRR", "gPPg", "gPPg", "gPPg", ".gg."], ["R": C(0xC8302A), "g": C(0xC8D4DA), "P": C(0xC08A44)])
+    // The jar in his far hand, held up in front of him, big enough to read: glass, the peanut butter inside, a white
+    // label with a red band, its lid off; his finger scooping, then up at his mouth.
+    c.pattern(36, 29, ["g....g", "gPPPPg", "gWWWWg", "gwRRwg", "gWWWWg", "gPPPPg", ".gggg."],
+              ["R": C(0xC8302A), "g": C(0xC8D4DA), "P": C(0xC08A44), "W": C(0xF4F0E6), "w": C(0xD8D2C4)])
     if lick {
         c.rect(38, 29, 3, 3, coat); c.rect(30, 30, 3, 2, clawdOrange); c.px(30, 30, C(0xC08A44))
         hawkinsLine(c, 33, 31, 38.5, 30.5, coat, 1.0)
     } else {
-        c.rect(40, 31, 2, 2, clawdOrange); c.px(39, 32, C(0xC08A44))
+        c.rect(38, 27, 2, 3, clawdOrange); c.px(38, 29, C(0xC08A44))
     }
 }
 
@@ -310,7 +310,7 @@ private func drawHollyWheeler(_ c: PixelCanvas, _ p: Pose) {
     let hair = C(0xF0D480), hairD = C(0xC8A850), hairL = C(0xFFEEB4)
     let k = hawkinsSpan(p, 0.06, 0.94)
     let wave = hawkinsEase(k, edge: 0.15) > 0.5
-    let lower = seatedPose ? 0 : 2
+    let lower = seatedPose ? 0 : hawkinsKidDrop.little
     // Mr. Whatsit flickers in and stays a moment; then the tell (his eyes red, then a blink of Henry Creel), and he
     // flickers out, still as Henry.
     let flick = Int(p.t * 14) % 2 == 0

@@ -585,16 +585,20 @@ extension Scenes {
         for x in stride(from: 0, to: c.w, by: 6 * s) { c.rect(x, rail + 3 * s, s, g - rail - 3 * s, C(0x5A3820)); c.rect(x + s, rail + 3 * s, s, g - rail - 3 * s, C(0x7A5232)) }
 
         if tall {
-            // The tin ceiling: pressed squares, a cornice; the fan and the hanging lamps.
+            // The tin ceiling, painted cream like the walls: pressed squares lit along the top and shaded underneath, a
+            // cornice; the fan and the hanging lamps.
             let ct = max(22 * s, g - 170 * s)
-            c.rect(0, 0, c.w, ct, C(0xB0A898))
-            // The pressed tin in rows, each row shallower than the one below it as the ceiling goes back.
+            c.rect(0, 0, c.w, ct, C(0xB4A47C))
+            // The pressed tin in rows, each row shallower than the one below it as the ceiling goes back, until they're
+            // too shallow to read; the far ceiling beyond them plain, in shadow.
             var ry = ct - 4 * s, rh = 8 * s, row = 0
-            while ry > 0 {
+            while ry > 0 && rh >= 4 * s {
                 let top = ry - rh
-                c.rect(0, top, c.w, max(1, rh / 8), C(0x8A8274))
+                c.rect(0, top, c.w, max(1, rh / 8), C(0x9A8A66))
                 for x in stride(from: (row % 2) * 4 * s, to: c.w, by: 8 * s) {
-                    c.rect(x + 2 * s, top + rh / 4, 4 * s, max(1, rh / 2), C(0xA09888)); c.rect(x + 2 * s, top + rh / 4, 4 * s, max(1, rh / 8), C(0xC8C0B0))
+                    c.rect(x + 2 * s, top + rh / 4, 4 * s, max(1, rh / 2), C(0xD8CAA2))
+                    c.rect(x + 2 * s, top + rh / 4, 4 * s, max(1, rh / 8), C(0xF0E4C4))
+                    c.rect(x + 2 * s, top + rh / 4 + max(1, rh / 2) - max(1, rh / 8), 4 * s, max(1, rh / 8), C(0xA89670))
                 }
                 ry = top; rh = max(2, rh * 7 / 8); row += 1
             }
