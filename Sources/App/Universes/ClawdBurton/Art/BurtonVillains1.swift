@@ -238,6 +238,10 @@ private func drawSandwurm(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
     let rear = sig.map { min(ramp($0, 0.08, 0.3), 1 - ramp($0, 0.8, 0.95)) } ?? 0
     let snap = sig.map { $0 > 0.34 && $0 < 0.76 ? max(0, sin(ramp($0, 0.34, 0.76) * .pi * 4)) : 0 } ?? 0
+    // The hole stays put in the sand while the worm lunges and recoils: undo the shift the pose gives the whole
+    // sprite (`p.dx`, `p.hop`) for it, its front rim and the body's base.
+    let fixedX = -Double(p.dx), fixedY = -Double(p.hop)
+    c.ox -= p.dx; c.oy -= p.hop
     // The hole: its dark back half behind the worm.
     c.ellipse(28, 43, 9, 2, hole)
     if p.walking {   // sand spraying up as it ploughs along
@@ -246,6 +250,7 @@ private func drawSandwurm(_ c: PixelCanvas, _ p: Pose) {
             c.px(19 - Int(f * 8) + k, 42 - Int(sin(f * .pi) * 6), sand.alpha(1 - f))
         }
     }
+    c.ox += p.dx; c.oy += p.hop
     c.oy += p.breathe + (p.walking ? (p.step == 0 ? 1 : 0) : 0)
     // Where the head is: swung along `p.melee` while it bites, reared up in its signature, swaying at rest.
     let raw = p.melee ?? (-58 - rear * 12 + sin(p.lt * 1.6) * 5)
@@ -258,8 +263,9 @@ private func drawSandwurm(_ c: PixelCanvas, _ p: Pose) {
                    strength: 0.28 / Double(i + 1))
     }
     // The body: from the hole up through the neck to the head, an easy S, banded across.
-    let base = (x: 28.0, y: 44.0)
-    let c1 = (x: 28.0, y: 34.0), c2 = (x: head.x - cos(angle * .pi / 180) * 9, y: head.y - sin(angle * .pi / 180) * 9)
+    let base = (x: 28.0 + fixedX, y: 44.0 + fixedY)
+    let c1 = (x: 28.0 + fixedX * 0.5, y: 34.0 + fixedY * 0.5)
+    let c2 = (x: head.x - cos(angle * .pi / 180) * 9, y: head.y - sin(angle * .pi / 180) * 9)
     var pts: [(x: Double, y: Double)] = []
     for i in 0...40 {
         let u = Double(i) / 40, v = 1 - u
@@ -315,6 +321,7 @@ private func drawSandwurm(_ c: PixelCanvas, _ p: Pose) {
     c.rect(Int(eye.x.rounded(.down)), Int(eye.y.rounded(.down)), 1, 1, C(0xFF9A2A))
     // The hole's front rim, a lip of sand heaped round the worm.
     c.oy -= p.breathe + (p.walking ? (p.step == 0 ? 1 : 0) : 0)
+    c.ox -= p.dx; c.oy -= p.hop
     for x in 18...38 {
         let k = Double(x - 28) / 10, y = 43 + Int((sqrt(max(0, 1 - k * k)) * 1.5).rounded())
         c.px(x, y, sand); c.px(x, y - 1, abs(x - 28) > 6 ? sandD : sand)
