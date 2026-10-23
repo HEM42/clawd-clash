@@ -522,7 +522,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         // A template preview's sessions are adopted into the template's cast: never written where the saver reads them.
         let real = playground == nil && !demo && chaosSeconds == nil && shotPath == nil && Universe.previewed == nil
         if real && now - lastSaverCheck > 10 { lastSaverCheck = now; saverInstalled = SaverFeed.installedSaver != nil }
-        let board = windowMode && ClawdWindow.view == .board
+        let board = windowMode && ClawdWindow.view == .board || fullScreen != nil
         guard (real && saverInstalled) || board, now - lastFeed >= 1 else { return }
         lastFeed = now
         var out: [SaverFeed.Session] = []
@@ -2100,6 +2100,29 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         items.forEach { menu.addItem($0) }
     }
 
+    /// The menu bar's Full Screen (`FullScreenSaver`): the screen saver over the whole screen until Escape or a click.
+    private var fullScreen: FullScreenSaver?
+
+    @objc func openFullScreen() {
+        if fullScreen?.isShown == true { return }
+        fullScreen?.close()
+        let f = FullScreenSaver { [weak self] in self?.saverFeed }
+        // The desktop crew and the window (pinned, it's on every Space, this one too) step aside on that display
+        // while it's up, and come back after. On another display they stay.
+        let aside = [panel, clawdWindow?.window].compactMap { $0 }
+            .filter { $0.isVisible && $0.frame.intersects(f.screenFrame) }
+        aside.forEach { $0.orderOut(nil) }
+        f.onClose = { [weak self, weak f] in
+            guard let self, self.fullScreen === f else { return }
+            self.fullScreen = nil
+            if !self.hidden { aside.forEach { $0.orderFrontRegardless() } }
+        }
+        fullScreen = f
+        lastFeed = 0   // the feed at once, not up to a second from now
+        publishSaverFeed(Date().timeIntervalSince1970)
+        f.show()
+    }
+
     // MARK: Window mode
 
     @objc func toggleWindowMode() {
@@ -2458,6 +2481,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
         m.addItem(action: hidden ? "Show Clawd Clash" : "Hide Clawd Clash", #selector(toggleHidden), target: self)
         m.addItem(action: windowMode ? "Desktop Mode" : "Window Mode", #selector(toggleWindowMode), target: self)
+        m.addItem(action: "Full Screen", #selector(openFullScreen), target: self)
         m.addItem(.separator())
         if windowMode { m.addItem(locationMenu()) }
         m.addItem(statusSymbolsMenu())
