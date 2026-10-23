@@ -1,14 +1,14 @@
 import Foundation
 
-// Heroes: Edward Scissorhands and Corpse Bride. From the castle on the hill, Edward Scissorclaws, the unfinished boy
+// Heroes: Edward Scissorhands and Corpse Bride. From the castle on the hill, Edward Scissorclawds, the unfinished boy
 // with scissors for hands, and the Inventor who made him; from the pastel suburb below, Kim Boggz and her mother Peg,
 // the Avon lady. From Corpse Bride, the living, drawn in the grey-blues of their dreary town (Victor Van Dawt and
-// Victoria Everclawt), and the dead, in colour: Emilee the blue bride, Scrapz the skeleton dog, Elder Gutknocked with
+// Victoria Everclawd), and the dead, in colour: Emilee the blue bride, Scrapz the skeleton dog, Elder Gutknocked with
 // his book, Bonejingles the band leader and the tiny General Bonesapart.
 
 let burtonHeroes3: [BurtonHero: Persona] = [
-    .edwardScissorclaws: Persona(name: "Edward Scissorclaws", weapon: .saber, headTop: 13, signature: 3.8,
-                                 callout: "I'm not finished.", draw: drawEdward),
+    .edwardScissorclawds: Persona(name: "Edward Scissorclawds", weapon: .saber, headTop: 13, signature: 3.8,
+                                  callout: "I'm not finished.", draw: drawEdward),
     .kimBoggz: Persona(name: "Kim Boggz", weapon: .none, headTop: 20, signature: 3.6, draw: drawKim),
     .pegBoggz: Persona(name: "Peg Boggz", weapon: .none, headTop: 18, signature: 3.2, callout: "Avon calling!",
                        draw: drawPeg),
@@ -16,7 +16,7 @@ let burtonHeroes3: [BurtonHero: Persona] = [
     .victorVanDawt: Persona(name: "Victor Van Dawt", weapon: .none, headTop: 18, signature: 3.6,
                             callout: "With this hand…", draw: drawVictor),
     .emilee: Persona(name: "Emilee", weapon: .none, headTop: 18, signature: 3.6, callout: "I do.", draw: drawEmilee),
-    .victoriaEverclawt: Persona(name: "Victoria Everclawt", weapon: .none, headTop: 16, signature: 3.0,
+    .victoriaEverclawd: Persona(name: "Victoria Everclawd", weapon: .none, headTop: 16, signature: 3.0,
                                 draw: drawVictoria),
     .scrapz: Persona(name: "Scrapz", weapon: .saber, pivot: scrapzMouth, headTop: 19, signature: 3.4,
                      draw: drawScrapz),
@@ -49,9 +49,9 @@ private func faded(_ c: PixelCanvas, _ alpha: Double, _ art: (PixelCanvas) -> Vo
     c.ox = ox; c.oy = oy; c.baseY = by
 }
 
-// MARK: - Edward Scissorclaws
+// MARK: - Edward Scissorclawds
 
-/// Edward Scissorclaws: the Clawd block deathly pale, dark rings round his eyes and a few little scars, a wild black
+/// Edward Scissorclawds: the Clawd block deathly pale, dark rings round his eyes and a few little scars, a wild black
 /// mane bursting out over the top of him, black leather strapped and buckled over the bottom of him and down his
 /// legs, and in place of hands, bunches of long silver scissor blades. He fights with them, snipping. Signature: a
 /// hedge appears in front of him and his blades flash through it, leaves flying, until it's a little dinosaur.
@@ -503,9 +503,9 @@ private func emileeButterflies(_ c: PixelCanvas, _ s: Double, t: Double) {
     }
 }
 
-// MARK: - Victoria Everclawt
+// MARK: - Victoria Everclawd
 
-/// Victoria Everclawt: gentle and shy, in the living world's grey-blues: the block pale grey-blue with a faint blush,
+/// Victoria Everclawd: gentle and shy, in the living world's grey-blues: the block pale grey-blue with a faint blush,
 /// dark auburn hair neatly parted and pinned up in a bun, a grey-lilac gown with a high lace collar up her sides,
 /// puffed sleeves and a long full skirt. She doesn't fight. Signature: a shy curtsey: she holds her skirt out, dips,
 /// eyes lowered, blushing.

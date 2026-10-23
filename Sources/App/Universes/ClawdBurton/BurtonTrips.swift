@@ -38,15 +38,15 @@ enum BurtonWipe: Int, CaseIterable {
         case .stripes: return [.villain(BurtonVillain.beetlejooce), .villain(BurtonVillain.bob)]
         case .sandworm: return [.villain(BurtonVillain.sandwurm), .hero(BurtonHero.adamMaitclawd), .hero(BurtonHero.barbaraMaitclawd)]
         case .greyToColour:
-            return ([.emilee, .bonejingles, .victorVanDawt, .victoriaEverclawt, .scrapz, .elderGutknocked,
+            return ([.emilee, .bonejingles, .victorVanDawt, .victoriaEverclawd, .scrapz, .elderGutknocked,
                      .generalBonesapart] as [BurtonHero]).map { Cast.hero($0) }
         case .horseman: return [.villain(BurtonVillain.headlessHorseclawd), .hero(BurtonHero.ichabodCraine)]
-        case .iceDance: return [.hero(BurtonHero.edwardScissorclaws), .hero(BurtonHero.kimBoggz)]
+        case .iceDance: return [.hero(BurtonHero.edwardScissorclawds), .hero(BurtonHero.kimBoggz)]
         case .saucers:
             return ([.martianLeader, .martianAmbassador, .martianTrooper, .martianSpy, .martianWalker]
                     as [BurtonVillain]).map { Cast.villain($0) }
         case .wonkavision: return [.hero(BurtonHero.willyWonky), .villain(BurtonVillain.mikeTeevee)]
-        case .rabbitHole: return [.hero(BurtonHero.aliceKingsclaw), .hero(BurtonHero.mcTwisp), .hero(BurtonHero.tarrantHightop)]
+        case .rabbitHole: return [.hero(BurtonHero.aliceKingsclawd), .hero(BurtonHero.mcTwisp), .hero(BurtonHero.tarrantHightop)]
         case .itsAlive: return [.hero(BurtonHero.victorFrankenstien), .hero(BurtonHero.sparkie)]
         }
     }

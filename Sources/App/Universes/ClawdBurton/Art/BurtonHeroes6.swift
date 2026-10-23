@@ -2,7 +2,7 @@ import Foundation
 
 // Heroes: Frankenweenie, Pee-wee's Big Adventure, and Maggott (agent-only). From New Holland, drawn in greys like the
 // film: Victor Frankenstien and his kite, Sparkie, the bull terrier he brought back with stitches and neck bolts, Elsa
-// Van Helsclaw with her poodle, and Mr. Rzykrusky the science teacher. From Pee-wee's Big Adventure, in toy-box
+// Van Helsclawd with her poodle, and Mr. Rzykrusky the science teacher. From Pee-wee's Big Adventure, in toy-box
 // primaries: Pee-wee Herclawd, Dottie from the bike shop, and Large Marge, the ghost trucker. And Maggott, the worm
 // who lives in Emilee's head. The people are Clawd in costume; Sparkie and Maggott keep their own shapes.
 
@@ -12,7 +12,7 @@ let burtonHeroes6: [BurtonHero: Persona] = [
                                  signature: 3.8, draw: drawVictor),
     .sparkie: Persona(name: "Sparkie", weapon: .saber, pivot: sparkieMouth, headTop: 19, signature: 3.4,
                       draw: drawSparkie),
-    .elsaVanHelsclaw: Persona(name: "Elsa Van Helsclaw", weapon: .none, headTop: 21, signature: 3.0, draw: drawElsa),
+    .elsaVanHelsclawd: Persona(name: "Elsa Van Helsclawd", weapon: .none, headTop: 21, signature: 3.0, draw: drawElsa),
     .mrRzykrusky: Persona(name: "Mr. Rzykrusky", weapon: .none, headTop: 17, signature: 3.4, draw: drawRzykrusky),
     .peeweeHerclawd: Persona(name: "Pee-wee Herclawd", weapon: .blaster, shot: .thrown(C(0xD8202A)), muzzle: (45, 29),
                              headTop: 22, signature: 4.0, callout: "I know you are, but what am I?", draw: drawPeewee),
@@ -198,9 +198,9 @@ private func drawSparkie(_ c: PixelCanvas, _ p: Pose) {
     }
 }
 
-// MARK: - Elsa Van Helsclaw
+// MARK: - Elsa Van Helsclawd
 
-/// Elsa Van Helsclaw: Victor's neighbour, a quiet girl in greys: a pale Clawd with a glossy black bob and a straight
+/// Elsa Van Helsclawd: Victor's neighbour, a quiet girl in greys: a pale Clawd with a glossy black bob and a straight
 /// fringe, a pale dress with a white collar; her poodle on its lead beside her, black with a white streak
 /// through its topknot where the lightning went. She doesn't fight. Signature: a shy little wave.
 private func drawElsa(_ c: PixelCanvas, _ p: Pose) {

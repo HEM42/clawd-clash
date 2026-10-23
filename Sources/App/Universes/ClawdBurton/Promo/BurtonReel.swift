@@ -14,7 +14,7 @@ struct BurtonReel: PromoReel {
     var universe: Universe { .clawdBurton }
     var brawl: BrawlCast {
         BrawlCast(claude: .hero(BurtonHero.jackSkullington), other: .villain(BurtonVillain.ooogieBoogie),
-                  agent: .hero(BurtonHero.edwardScissorclaws), otherAgent: .villain(BurtonVillain.beetlejooce),
+                  agent: .hero(BurtonHero.edwardScissorclawds), otherAgent: .villain(BurtonVillain.beetlejooce),
                   line: universe.isReleased ? "Or visit Clawd Burton." : "Coming soon: Clawd Burton.",
                   sub: "Skeletons, stripes, scissors and Martians: 107 characters in 23 places.")
     }
@@ -310,7 +310,7 @@ private func burtonEndcard(_ ctx: CGContext, local: Double, t: Double) {
     let crew: [(Cast, FightRole, AI)] = [
         (.hero(BurtonHero.sallee), .cheer, .desktop), (.hero(BurtonHero.jackSkullington), .zap, .claude),
         (.villain(BurtonVillain.ooogieBoogie), .hit, .codex), (.villain(BurtonVillain.beetlejooce), .none, .copilot),
-        (.hero(BurtonHero.edwardScissorclaws), .cheer, .qwen), (.hero(BurtonHero.willyWonky), .none, .gemini),
+        (.hero(BurtonHero.edwardScissorclawds), .cheer, .qwen), (.hero(BurtonHero.willyWonky), .none, .gemini),
     ]
     var placed: [Actor] = []
     for (i, (who, role, ai)) in crew.enumerated() {
@@ -386,8 +386,8 @@ private let burtonShots: [Shot] = [
     },
     Shot(name: "ais", start: 40.1, end: 44.5) { ctx, local, t in
         everyAI(ctx, local: local, t: t, cast: [.hero(BurtonHero.jackSkullington), .hero(BurtonHero.willyWonky),
-                                                .hero(BurtonHero.edwardScissorclaws), .hero(BurtonHero.ichabodCraine),
-                                                .hero(BurtonHero.lydiaDeathz), .hero(BurtonHero.aliceKingsclaw),
+                                                .hero(BurtonHero.edwardScissorclawds), .hero(BurtonHero.ichabodCraine),
+                                                .hero(BurtonHero.lydiaDeathz), .hero(BurtonHero.aliceKingsclawd),
                                                 .hero(BurtonHero.sparkie)])
     },
     // The end card: Halloween Town at night, the crew lines up, the title lands with its spiral flourish.
@@ -436,7 +436,7 @@ private let burtonBeats: [(key: Double, beat: Beat)] = [
             "“Three AIs. Nine agents. One very confused Mayor.”  →  “Sound familiar?”", "keyboard clicks")),
     (24.8, ("DESKTOP MODE",
             "\(burtonJack) scaring \(burtonName(BurtonVillain.ooogieBoogie)); "
-            + "\(burtonName(BurtonHero.edwardScissorclaws)) against \(burtonJooce)'s snake arm.",
+            + "\(burtonName(BurtonHero.edwardScissorclawds)) against \(burtonJooce)'s snake arm.",
             "DESKTOP MODE  ·  “The ghost with the most, on your desktop.”  ·  “A pixel-art Clawd Burton brawl along "
             + "the bottom of your screen. They fight while they work.”",
             "scares, snips, dice")),
@@ -457,9 +457,9 @@ private let burtonBeats: [(key: Double, beat: Beat)] = [
             "WINDOW MODE  ·  “Prefer a window? Strange and unusual.”", "a ping")),
     (42.5, ("EVERY AI",
             "Seven sessions, one per AI outline: \(burtonJack) (Claude Code, a head taller) against "
-            + "\(burtonName(BurtonHero.edwardScissorclaws)), with \(burtonName(BurtonHero.willyWonky)), "
+            + "\(burtonName(BurtonHero.edwardScissorclawds)), with \(burtonName(BurtonHero.willyWonky)), "
             + "\(burtonName(BurtonHero.ichabodCraine)), \(burtonName(BurtonHero.lydiaDeathz)), "
-            + "\(burtonName(BurtonHero.aliceKingsclaw)) and \(burtonName(BurtonHero.sparkie)).",
+            + "\(burtonName(BurtonHero.aliceKingsclawd)) and \(burtonName(BurtonHero.sparkie)).",
             "BRING YOUR OWN AI*  ·  “One AI plays everyone. Run two and they pick sides.”  ·  "
             + "*README for the full list",
             "the scare's throb")),

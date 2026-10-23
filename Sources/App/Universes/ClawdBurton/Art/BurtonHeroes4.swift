@@ -3,7 +3,7 @@ import Foundation
 // Heroes: Sleepy Hollow and Mars Attacks! From Sleepy Hollow: Ichabod Craine, the constable with his magnifying
 // spectacles; Katrina Van Tassle and her book of charms; Young Masbeth with his father's lantern; and big Brom Van
 // Bruntt. From Mars Attacks!: Richie Norriss and his Grandma Florenz with her yodelling record, President Dayle,
-// Byron Wilyums the old boxer, and Professor Kessclaw, who thinks the Martians come in peace. Every one of them is
+// Byron Wilyums the old boxer, and Professor Kessclawd, who thinks the Martians come in peace. Every one of them is
 // Clawd in costume.
 
 let burtonHeroes4: [BurtonHero: Persona] = [
@@ -23,8 +23,8 @@ let burtonHeroes4: [BurtonHero: Persona] = [
     .presidentDayle: Persona(name: "President Dayle", weapon: .none, headTop: 21, signature: 3.8, draw: drawPresident),
     .byronWilyums: Persona(name: "Byron Wilyums", weapon: .saber, pivot: byronShoulder, headTop: 22, signature: 3.4,
                            draw: drawByron),
-    .professorKessclaw: Persona(name: "Professor Kessclaw", weapon: .none, headTop: 20, signature: 3.2,
-                                callout: "A peaceful people.", draw: drawKessclaw),
+    .professorKessclawd: Persona(name: "Professor Kessclawd", weapon: .none, headTop: 20, signature: 3.2,
+                                 callout: "A peaceful people.", draw: drawKessclawd),
 ]
 
 /// A caster's raised right hand: Katrina's charm glows from there (raised by `armRaise`).
@@ -581,12 +581,12 @@ private func drawByron(_ c: PixelCanvas, _ p: Pose) {
     }
 }
 
-// MARK: - Professor Kessclaw
+// MARK: - Professor Kessclawd
 
-/// Professor Kessclaw: the President's science adviser: Clawd with grey-streaked hair swept back, a warm, trusting
+/// Professor Kessclawd: the President's science adviser: Clawd with grey-streaked hair swept back, a warm, trusting
 /// smile, a pipe clamped in the corner of his mouth, and a brown tweed jacket over a shirt and knitted tie. He doesn't
 /// fight. Signature: he takes his pipe out and points it up at the sky, towards the Martians he's sure are friendly.
-private func drawKessclaw(_ c: PixelCanvas, _ p: Pose) {
+private func drawKessclawd(_ c: PixelCanvas, _ p: Pose) {
     let tweed = C(0x8A7458), tweedD = C(0x6A5640), fleck = C(0xA89070), hair = C(0x34343A), hairL = C(0x8A8A92)
     let pipe = C(0x5A3A22), stem = C(0x1E1A16)
     let pointing = swell(p.signature, 0.08, 0.25, 0.8, 0.95)

@@ -3,7 +3,7 @@ import Foundation
 // Villains: Charlie and the Chocolate Factory and Alice in Wonderland. The factory's troublemakers: greedy Augustus
 // Gloopp, spoilt Veruca Saltt, gum-chewing Violet Bluregarde and Mike Teevee with his game controller (nobody gets
 // hurt: their silly weapons only splat), and Slugwurth, the rival chocolatier after the recipes. From Underland: the
-// Red Queen with her enormous head and her flamingo, Stayne the Knave of Hearts, the Jabberclawky, the Bandersnatch
+// Red Queen with her enormous head and her flamingo, Stayne the Knave of Hearts, the Jabberclawdky, the Bandersnatch
 // and a Red Card Knight. The people are Clawd in costume; the beasts keep their own shapes at Clawd's size, a boss at
 // most a size up.
 
@@ -20,10 +20,10 @@ let burtonVillains5: [BurtonVillain: Persona] = [
     .redQueen: Persona(name: "The Red Queen", weapon: .saber, pivot: queenHand, bulk: 3, headTop: 9, signature: 3.6,
                        callout: "Off with their heads!", draw: drawRedQueen),
     .stayne: Persona(name: "Stayne", weapon: .saber, headTop: 19, signature: 3.4, draw: drawStayne),
-    .jabberclawky: Persona(name: "The Jabberclawky", weapon: .lightning,
-                           magic: Magic(core: C(0xF0D6FF), glow: C(0x7A2BD1), jagged: true), armoured: true,
-                           canSit: false, pivot: jabberMouth, bulk: 8, headTop: 9, signature: 3.6,
-                           draw: drawJabberclawky),
+    .jabberclawdky: Persona(name: "The Jabberclawdky", weapon: .lightning,
+                            magic: Magic(core: C(0xF0D6FF), glow: C(0x7A2BD1), jagged: true), armoured: true,
+                            canSit: false, pivot: jabberMouth, bulk: 8, headTop: 9, signature: 3.6,
+                            draw: drawJabberclawdky),
     .bandersnatch: Persona(name: "The Bandersnatch", weapon: .saber, canSit: false, pivot: snatchJaws, bulk: 7,
                            headTop: 23, signature: 3.2, draw: drawBandersnatch),
     .redCardKnight: Persona(name: "A Red Card Knight", weapon: .saber, armoured: true, headTop: 19, signature: 3.2,
@@ -32,7 +32,7 @@ let burtonVillains5: [BurtonVillain: Persona] = [
 
 /// The Red Queen's hand, at the side of her bigger block: the flamingo swings from there.
 private let queenHand = (x: 42.5, y: 34.5)
-/// The front of the Jabberclawky's mouth: its lightning leaves from there (raised by `armRaise`, head and all).
+/// The front of the Jabberclawdky's mouth: its lightning leaves from there (raised by `armRaise`, head and all).
 private let jabberMouth = (x: 57.5, y: 20.5)
 /// The Bandersnatch's jaws: its bite snaps from there.
 private let snatchJaws = (x: 48.5, y: 32.5)
@@ -572,13 +572,13 @@ private func stayneFigure(_ c: PixelCanvas, _ p: Pose, bowing: Bool) {
     }
 }
 
-// MARK: - The Jabberclawky
+// MARK: - The Jabberclawdky
 
-/// The Jabberclawky: a dragon at most a size up from Clawd: a dark slate body on four clawed legs, a long neck
+/// The Jabberclawdky: a dragon at most a size up from Clawd: a dark slate body on four clawed legs, a long neck
 /// curving up and forward to a narrow horned head with glowing violet eyes, its tail curling up behind ending in a
 /// barb, and leathery bat wings folded along its back. It fights with jagged purple lightning from its jaws.
 /// Signature: it rears its head, spreads its wings wide and roars, the roar rippling out.
-private func drawJabberclawky(_ c: PixelCanvas, _ p: Pose) {
+private func drawJabberclawdky(_ c: PixelCanvas, _ p: Pose) {
     let hide = C(0x3A3644), hideD = C(0x26222E), hideL = C(0x5A5466), belly = C(0x6A6276), claw = C(0xD8D0C0)
     let wing = C(0x4A3A5C), wingD = C(0x34283F), bone = C(0x6E5E80)
     let sig = p.signature
