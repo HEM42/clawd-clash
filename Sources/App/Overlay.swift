@@ -1360,7 +1360,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 let preferRight = nearest.map { $0.x < actor.x } ?? true
                 let onRight = preferRight ? rightX + w <= screenFrame.maxX : leftX < screenFrame.minX
                 let h = CGFloat(Bubble.height) * ls
-                let by = y + lift + CGFloat(Sprite.height - 1 - Bubble.height) * ls
+                let by = y + lift + CGFloat(Sprite.height - 1 - Bubble.height + actor.cast.bubbleLift) * ls
                 let bx = onRight ? rightX : leftX
                 bubbleSpan = (bx, bx + w, by + h)
                 bubbles.append((actor.key, actor.x, by, kind, actor.urgent, onRight, CGFloat(alpha)))

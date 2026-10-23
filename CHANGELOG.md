@@ -22,6 +22,10 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 - **An after-fight move can be just the end of a signature** (`StageQuirks.afterDuelFrom`): a universe that lists a character in `afterDuel` can say how far into its signature the after-fight move starts, so a signature that ends with what they do once a fight is over plays only that part. Nothing changes for anyone not listed (Mayor Wilclaws still wipes his hands in full).
 
 - **Full Screen in the menu bar menu.** Under Window Mode: the screen saver itself, clock and all, fed live by the app, in macOS's own full screen on the display the mouse is on. It is a Space of its own there, so you can swipe away from it and keep working on another display while it stays up. A click on it, Escape or Exit Full Screen ends it. While it is open, the desktop crew and the pinned window step aside on that display (a pinned window is on every Space and would float over it) and come back when it closes; on other displays they stay.
+
+### Fixed
+- **Tall characters' status bubbles no longer sit on their heads.** The bubble beside the head sat at the same height for everyone, so on characters whose art reaches near the top of the frame (the dinosaurs, Abominator, Galacticus, Smaug, the Tall Visitor and 130 more) it landed on the head. Each character is now measured once, at rest, and one whose art comes within 3 rows of the bubble gets it raised to the usual 7-row gap.
+
 ## 3.7.1 (2026-10-19)
 
 ### Added

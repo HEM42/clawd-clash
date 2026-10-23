@@ -118,4 +118,24 @@ extension Cast {
         Self.measuredTops[key] = result
         return result
     }
+
+    /// How many art pixels the status bubble beside the head goes up. It sits at the top of the frame, 13 to 31 pixels
+    /// either side of the body's centre, 7 rows above the usual head (row 21). Most characters leave it that room; one
+    /// whose art comes within 3 rows of it there (a dinosaur's head, a giant's shoulders) has it raised to 7 again.
+    /// Measured once per character, at rest.
+    var bubbleLift: Int {
+        if let hit = Self.bubbleLifts[id] { return hit }
+        let c = PixelCanvas(Sprite.width, Sprite.height)
+        draw(c, t: 0, mode: .idle, walking: false, role: .none, asSession: true, habits: false)
+        let mid = Int(Sprite.bodyCenterX)
+        var top = c.h
+        rows: for y in 0..<c.h {
+            for x in 0..<c.w where (13...31).contains(abs(x - mid)) && c.buf[(y * c.w + x) * 4 + 3] > 0 { top = y; break rows }
+        }
+        let bottom = 1 + Bubble.height, usual = 21
+        let lift = top < bottom + 3 ? usual - top : 0
+        Self.bubbleLifts[id] = lift
+        return lift
+    }
+    private static var bubbleLifts: [Int: Int] = [:]
 }
