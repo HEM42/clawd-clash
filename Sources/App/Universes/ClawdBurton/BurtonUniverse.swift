@@ -11,8 +11,10 @@ struct BurtonUniverse: UniverseModule {
     }
 
     var preview: PreviewInfo {
-        .of(.clawdBurton, heroes: "burtonHeroes", [burtonHeroes1, burtonHeroes2, burtonHeroes3, burtonHeroes4, burtonHeroes5, burtonHeroes6],
-            villains: "burtonVillains", [burtonVillains1, burtonVillains2, burtonVillains3, burtonVillains4, burtonVillains5, burtonVillains6])
+        .of(.clawdBurton, heroes: "burtonHeroes", [burtonHeroes1, burtonHeroes2, burtonHeroes3, burtonHeroes4,
+                                                   burtonHeroes5, burtonHeroes6, burtonHeroes7, burtonHeroes8],
+            villains: "burtonVillains", [burtonVillains1, burtonVillains2, burtonVillains3, burtonVillains4, burtonVillains5,
+                                         burtonVillains6, burtonVillains7])
     }
 
     var playgroundPrompts: [String] {
