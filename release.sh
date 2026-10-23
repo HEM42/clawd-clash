@@ -1,7 +1,10 @@
 #!/bin/zsh
 # Publishes a release: Apple silicon build → (optional) notarization → zip → GitHub release → Homebrew cask.
 # Only the newest two GitHub releases are kept; older ones are deleted (their tags stay).
-#   ./release.sh 2.14.0                refuses if tag v2.14.0 or its GitHub release already exists
+#   ./release.sh                       the next version, worked out by scripts/next-version.sh (a new universe, a feat:
+#                                      commit or neither), with a '## <version>' CHANGELOG entry waiting for it
+#   ./release.sh 2.14.0                the same, saying which version you expect: stops if it isn't the next one.
+#                                      Refuses if tag v2.14.0 or its GitHub release already exists
 #   ./release.sh 2.14.0 --force        replaces an existing tag and the GitHub release's zip and notes
 #   ./release.sh 2.14.0 --no-notarize  ships without notarization (the cask then clears the quarantine flag)
 # HEAD must be pushed: it has to equal origin/main.
@@ -12,8 +15,9 @@
 set -euo pipefail
 cd "${0:A:h}"
 
-USAGE="usage: ./release.sh <version> [--force] [--no-notarize]"
-VERSION="${1:?$USAGE}"; shift
+USAGE="usage: ./release.sh [<version>] [--force] [--no-notarize]"
+VERSION=""
+if [[ ${1:-} != --* && -n ${1:-} ]]; then VERSION=$1; shift; fi
 FORCE=0
 NO_NOTARIZE=0
 for arg in "$@"; do
@@ -23,6 +27,14 @@ for arg in "$@"; do
         *) echo "unknown option: $arg ($USAGE)" >&2; exit 2 ;;
     esac
 done
+# The number follows the rule (clawdify_guide.md, "Version numbers"), so it's worked out, not picked; a given one must
+# agree. --force replaces an existing release and keeps its number, so the check doesn't apply then.
+if (( ! FORCE )); then
+    NEXT=$(scripts/next-version.sh) || exit 1
+    if [[ -z $VERSION ]]; then VERSION=$NEXT
+    elif [[ $VERSION != $NEXT ]]; then echo "the next version is $NEXT, not $VERSION (scripts/next-version.sh says why)" >&2; exit 1; fi
+fi
+[[ -n $VERSION ]] || { echo "--force needs the version it replaces ($USAGE)" >&2; exit 2; }
 # X.Y.Z only: the version goes into the tag, the cask and the plists, so nothing else gets through.
 [[ $VERSION =~ '^[0-9]+\.[0-9]+\.[0-9]+$' ]] || { echo "version must look like 3.5.1, not '$VERSION'" >&2; exit 2; }
 TAG="v$VERSION"
