@@ -906,11 +906,15 @@ final class SceneView: NSView {
         }
         // The trip (or the old place, less of it each frame) over the new place and over the crew, who are hidden while
         // it lasts and show through it again as it fades at the end.
-        var crewShown = 1.0
+        var crewShown = 1.0, leaving = false
         var trip: [OverlayController.DrawItem] = []
         if let w = wipe {
             let k = (now - w.start) / (w.comic?.duration ?? Wipe.duration)
-            if k < 1, let comic = w.comic { crewShown = comic.crewShown(k) }
+            if k < 1, let comic = w.comic {
+                crewShown = comic.crewShown(k)
+                // At the start the crew fades out over the trip rather than vanishing under it.
+                if let fade = ComicTransition.crewLeaving(k) { crewShown *= fade; leaving = true }
+            }
             if k >= 1 {
                 wipe = nil
             } else if let comic = w.comic, let new = room.flatMap({ Wipe.flatten([$0.image] + (liveNow.map { [$0] } ?? [])) }),
@@ -936,11 +940,12 @@ final class SceneView: NSView {
         }
         // A trip that leaves the ground (the Eagle's sky) takes the crew with it.
         if crewShown >= 1 { return items + controller.items + trip }
-        return items + controller.items.compactMap { item in
+        let crew = controller.items.compactMap { item in
             var item = item
             item.alpha *= CGFloat(crewShown)
             return item.alpha > 0.01 ? item : nil
-        } + trip
+        }
+        return leaving ? items + trip + crew : items + crew + trip
     }
 
     /// A new frame: handed to Core Animation, which scales and composites it on the GPU.
@@ -971,7 +976,9 @@ final class SceneView: NSView {
         let origin = window.convertToScreen(convert(bounds, to: nil)).origin
         // Turned over (`SceneFlip`): where that spot is the right way up; mid-turn, nobody's there to click.
         guard let y = turn.unturn(origin.y + local.y) else { return }
-        controller?.click(at: NSPoint(x: origin.x + local.x, y: y))
+        let at = NSPoint(x: origin.x + local.x, y: y)
+        if event.clickCount == 2 && event.modifierFlags.contains(.shift) { controller?.shiftDoubleClick(at: at); return }
+        controller?.click(at: at)
     }
 
     override func rightMouseDown(with event: NSEvent) {

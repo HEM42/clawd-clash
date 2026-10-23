@@ -450,9 +450,13 @@ final class ClawdClashSaverView: ScreenSaverView {
             if demoPlace != location { demo = cast(for: location, now: now); demoPlace = location }
             people = crew(demo, now: now, feet: feet, cards: false)
         }
-        // A trip that leaves the ground (the Eagle's sky) takes the crew with it.
+        // A trip that leaves the ground (the Eagle's sky) takes the crew with it. At its start the crew fades out
+        // over the trip rather than vanishing under it.
+        var leaving = false
         if let w = comic {
-            let shown = CGFloat(w.trip.crewShown((now - w.start) / w.trip.duration))
+            let k = (now - w.start) / w.trip.duration
+            var shown = CGFloat(w.trip.crewShown(k))
+            if let fade = ComicTransition.crewLeaving(k) { shown *= CGFloat(fade); leaving = true }
             if shown < 1 { people = people.compactMap { var p = $0; p.alpha *= shown; return p.alpha > 0.01 ? p : nil } }
         }
         if turn.isTurned {
@@ -472,7 +476,7 @@ final class ClawdClashSaverView: ScreenSaverView {
                 return item
             }
         }
-        items += people.map { var p = $0; p.underTrip = true; return p }
+        items += people.map { var p = $0; p.underTrip = !leaving; return p }
         items += hud(running ? feed : nil, location: location, now: now, idle: !running)
         show(items, in: root)
         CATransaction.commit()

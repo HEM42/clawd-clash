@@ -489,14 +489,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         relayout()
         // Automatic follows the first session and Random moves on every ten minutes: when the place changes, the
         // scene, the cards' tint, the header's name and tint must follow.
-        if location != shownLocation {
-            shownLocation = location
-            followPlace()
-            clawdWindow?.sceneView.showFrame()
-            clawdWindow?.cardsView.needsDisplay = true
-            clawdWindow?.header.needsDisplay = true
-            clawdWindow?.redrawScroller()
-        }
+        if location != shownLocation { followPlaceChange() }
         updateIdleWindow(now)
         randomUniverseTick(now)
         if windowMode && onScreen { updateCards(now) }
@@ -504,6 +497,15 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     }
 
     private var shownLocation: Location?
+
+    private func followPlaceChange() {
+        shownLocation = location
+        followPlace()
+        clawdWindow?.sceneView.showFrame()
+        clawdWindow?.cardsView.needsDisplay = true
+        clawdWindow?.header.needsDisplay = true
+        clawdWindow?.redrawScroller()
+    }
 
     // MARK: Screen saver feed
 
@@ -2296,6 +2298,23 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
 
     /// Click in the window's scene strip.
     func click(at point: NSPoint) { jump(at: point) }
+
+    /// Shift-double-click on the window's scene, off the crew: somewhere else now, with its trip, instead of waiting
+    /// for Random's ten minutes. Random and Clawd Royale pick a new place and stay Random; a picked place or
+    /// Automatic steps to the next place of the universe, so clicking on goes round all of them.
+    func shiftDoubleClick(at point: NSPoint) {
+        guard !hitRects().contains(where: { $0.1.contains(point) }) else { return }
+        let here = location
+        if Universe.mixed || Self.pickedLocation == Self.randomLocation {
+            let list = Universe.mixed ? Location.everywhere : Location.all(in: .shown)
+            random = (list.filter { $0 != here }.randomElement() ?? here, Int(Date().timeIntervalSince1970 / 600))
+            followPlaceChange()
+        } else {
+            let list = Location.all(in: .shown)
+            let next = list[((list.firstIndex(of: here) ?? -1) + 1) % list.count]
+            pickLocation(next.rawValue)
+        }
+    }
 
     private var portraitCache: [String: CGImage] = [:]
     private func portrait(_ key: String, assistant: String, _ draw: (PixelCanvas) -> Void) -> CGImage? {

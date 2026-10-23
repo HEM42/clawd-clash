@@ -25,6 +25,10 @@ struct ComicTransition {
     static func cover(_ k: Double) -> Double { k < 1 - coverFade ? 1 : max(0, (1 - k) / coverFade) }
     static let coverFade = 0.12
 
+    /// The crew leaving at the start, the other half of `cover`: over the trip's first stretch they're drawn over it,
+    /// fading out (this, 1…0), instead of the trip's picture covering them at once; nil after, when it covers them.
+    static func crewLeaving(_ k: Double) -> Double? { k < coverFade ? 1 - k / coverFade : nil }
+
     /// The trip to `place`, never the same kind as `last` when it's in the same universe; nil where the universe
     /// uses plain wipes. `from`, where it's coming from, if it's known.
     static func pick(after last: ComicTransition?, cast: [Cast], from: Location? = nil, to place: Location) -> ComicTransition? {
