@@ -9,7 +9,7 @@ Its first three universes started as separate apps. Their changelogs from before
 
 Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://github.com/rodclemen/doctor-clawd)), so its whole history is below, from 3.1.0.
 
-## Unreleased
+## 4.0.0 (2026-10-23)
 
 ### Changed
 - **The "Welcome to Sunnydale" sign is pixel art again** (Clawd Slayer), at the town's edge and tipping into the crater. Its board is drawn in the place's own pixels, the crater's tilt stepped as a tilted sign is drawn by hand, and its lettering is in pixel fonts: WELCOME TO in the blocky one, SUNNYDALE in a new heavy one, each letter upright and stepping down the slope so it reads at window size. It was a smooth typeface, out of keeping with the art around it.
