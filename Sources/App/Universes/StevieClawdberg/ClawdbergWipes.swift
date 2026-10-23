@@ -124,13 +124,14 @@ struct ClawdbergTrip {
             ctx.drawShot(k < 0.5 ? old : new, in: r)
             ctx.restoreGState()
         }
+        var gates: CGRect?
         switch kind {
         case .moonBike: drawMoonRide(lo, old: old, new: new, k: k)
         case .eightyEight: drawEightyEight(lo, old: old, new: new, k: k)
         case .mapRoute: drawMapRoute(lo, old: old, new: new, k: k)
         case .fin: drawFin(lo, old: old, new: new, k: k)
         case .flashbulb: drawFlashbulb(lo, old: old, new: new, k: k)
-        case .parkGates: drawParkGates(lo, old: old, new: new, k: k)
+        case .parkGates: gates = drawParkGates(lo, old: old, new: new, k: k)
         case .fiveTones: drawFiveTones(lo, old: old, new: new, k: k)
         case .boulder: drawBoulder(lo, old: old, new: new, k: k)
         case .pixieDust: drawPixieDust(lo, old: old, new: new, k: k)
@@ -141,6 +142,7 @@ struct ClawdbergTrip {
         ctx.interpolationQuality = .none
         ctx.draw(img, in: r)
         ctx.restoreGState()
+        if let gates { Self.gateLettering(ctx, gates: gates, frame: CGSize(width: w, height: h), in: r) }
     }
 
     // MARK: Timing
@@ -652,7 +654,8 @@ struct ClawdbergTrip {
 
     /// The camera pulls back from the park's great wooden gates, torches burning on their posts; they swing shut on the
     /// old place, and open again on the new one as the camera drives on through.
-    private func drawParkGates(_ lo: CBLo, old: CGImage, new: CGImage, k: Double) {
+    /// Draws the gates and gives back where they went in `lo` (zoomed and shaken), for `gateLettering`.
+    private func drawParkGates(_ lo: CBLo, old: CGImage, new: CGImage, k: Double) -> CGRect? {
         let w = CGFloat(lo.w), h = CGFloat(lo.h)
         let shut = Self.ease(Self.span(k, 0.14, 0.42))
         let open = Self.ease(Self.span(k, 0.56, 0.84))
@@ -661,14 +664,47 @@ struct ClawdbergTrip {
         let back = Self.ease(Self.span(k, 0, 0.24))
         let on = pow(Self.span(k, 0.64, 1), 1.5)
         let z = k < 0.5 ? CGFloat(2.7 - 1.7 * back) : CGFloat(1 + 1.9 * on)
-        guard let gate = CBLo(lo.w, lo.h) else { return }
+        guard let gate = CBLo(lo.w, lo.h) else { return nil }
         let slam = Self.bump(k, 0.41, 0.42, 0.44, 0.5)
         Self.gate(gate, angle: angle, k: k)
-        guard let img = gate.ctx.makeImage() else { return }
+        guard let img = gate.ctx.makeImage() else { return nil }
         let fy = h * 0.4
         let shake = CGFloat(sin(k * 300) * 2 * slam).rounded()
         let rect = CGRect(x: w / 2 - w / 2 * z, y: fy - fy * z + shake, width: w * z, height: h * z)
         lo.image(img, rect)
+        return rect
+    }
+
+    /// The sign's board on the gates' beam, in the gates' own frame (`size`, before zoom).
+    private static func signBoard(_ size: CGSize) -> CGRect {
+        let w = size.width, h = size.height
+        let beamY = (h * 0.62).rounded(), beamH = (h * 0.09).rounded()
+        let sw = (w * 0.44).rounded(), sh = (h * 0.11).rounded()
+        return CGRect(x: (w / 2 - sw / 2).rounded(), y: beamY + beamH - 3, width: sw, height: sh)
+    }
+
+    /// JURASSIC CLAWD on the sign, drawn last at the frame's full resolution: in art pixels the window's scene strip
+    /// gives the board about six rows, too few for letters. `gates` is where the gates went in the art-pixel frame
+    /// (`frame`), which is drawn over `r`, so the lettering zooms and shakes with them.
+    private static func gateLettering(_ ctx: CGContext, gates: CGRect, frame: CGSize, in r: CGRect) {
+        let board = signBoard(frame)
+        let sx = r.width / frame.width * gates.width / frame.width, sy = r.height / frame.height * gates.height / frame.height
+        let x0 = r.minX + gates.minX * r.width / frame.width, y0 = r.minY + gates.minY * r.height / frame.height
+        let sign = CGRect(x: x0 + board.minX * sx, y: y0 + board.minY * sy, width: board.width * sx, height: board.height * sy)
+        guard sign.intersects(r), sign.height >= 3 else { return }
+        let text = "JURASSIC CLAWD"
+        var size = (sign.height * 0.72).rounded()
+        while size > 4, CBLo.textWidth(text, size: size) > sign.width - 4 * sx { size -= 1 }
+        let tw = CBLo.textWidth(text, size: size)
+        let tp = CGPoint(x: (sign.midX - tw / 2).rounded(), y: (sign.minY + sign.height * 0.2).rounded())
+        let o = max(1, (size / 14).rounded())   // the red edge, about as thick as at full screen
+        ctx.saveGState()
+        ctx.clip(to: r)
+        for (dx, dy) in [(-1, 0), (1, 0), (0, -1), (0, 1), (1, -1)] as [(CGFloat, CGFloat)] {
+            CBLo.text(text, size: size, at: CGPoint(x: tp.x + dx * o, y: tp.y + dy * o), colour: 0xA81E12, in: ctx)
+        }
+        CBLo.text(text, size: size, at: tp, colour: 0xF6C42E, in: ctx)
+        ctx.restoreGState()
     }
 
     /// The gates, full size: two posts of lashed logs with a torch on each, the beam across them with its sign, and
@@ -697,20 +733,11 @@ struct ClawdbergTrip {
         for i in 0..<Int((w - px * 2) / 9) {
             lo.fill(0x3A2412, 1, CGRect(x: px + CGFloat(i * 9) + 4, y: beamY + 2, width: 1, height: beamH - 4))
         }
-        let sw = (w * 0.44).rounded(), sh = (h * 0.11).rounded()
-        let sx = (w / 2 - sw / 2).rounded(), sy = beamY + beamH - 3
-        lo.fill(0x1A0E06, 1, CGRect(x: sx - 1, y: sy - 1, width: sw + 2, height: sh + 2))
-        lo.fill(0x3A2412, 1, CGRect(x: sx, y: sy, width: sw, height: sh))
-        lo.fill(0x52361C, 1, CGRect(x: sx, y: sy + sh - 2, width: sw, height: 1))
-        let text = "JURASSIC CLAWD"
-        var size = (sh * 0.72).rounded()
-        while size > 4, lo.textWidth(text, size: size) > sw - 4 { size -= 1 }
-        let tw = lo.textWidth(text, size: size)
-        let tp = CGPoint(x: (w / 2 - tw / 2).rounded(), y: (sy + sh * 0.2).rounded())
-        for (dx, dy) in [(-1, 0), (1, 0), (0, -1), (0, 1), (1, -1)] as [(CGFloat, CGFloat)] {
-            lo.text(text, size: size, at: CGPoint(x: tp.x + dx, y: tp.y + dy), colour: 0xA81E12)
-        }
-        lo.text(text, size: size, at: tp, colour: 0xF6C42E)
+        // Its lettering comes last, over the finished frame (`gateLettering`).
+        let b = signBoard(CGSize(width: w, height: h))
+        lo.fill(0x1A0E06, 1, b.insetBy(dx: -1, dy: -1))
+        lo.fill(0x3A2412, 1, b)
+        lo.fill(0x52361C, 1, CGRect(x: b.minX, y: b.maxY - 2, width: b.width, height: 1))
     }
 
     /// Everywhere but through the gates: the jungle at dusk, a ragged tree line against the sky. The place only shows
@@ -1201,7 +1228,7 @@ private final class CBLo {
         }
     }
 
-    private func line(_ s: String, size: CGFloat, colour: UInt32) -> CTLine {
+    private static func line(_ s: String, size: CGFloat, colour: UInt32) -> CTLine {
         let font = CTFontCreateWithName("Impact" as CFString, size, nil)
         let attrs: [NSAttributedString.Key: Any] = [
             NSAttributedString.Key(kCTFontAttributeName as String): font,
@@ -1210,12 +1237,16 @@ private final class CBLo {
         return CTLineCreateWithAttributedString(NSAttributedString(string: s, attributes: attrs))
     }
 
-    func textWidth(_ s: String, size: CGFloat) -> CGFloat {
+    static func textWidth(_ s: String, size: CGFloat) -> CGFloat {
         CGFloat(CTLineGetTypographicBounds(line(s, size: size, colour: 0), nil, nil, nil))
     }
+    func textWidth(_ s: String, size: CGFloat) -> CGFloat { Self.textWidth(s, size: size) }
 
     /// Poster lettering, its baseline at `p`, unsmoothed so it stays in pixels.
-    func text(_ s: String, size: CGFloat, at p: CGPoint, colour: UInt32) {
+    func text(_ s: String, size: CGFloat, at p: CGPoint, colour: UInt32) { Self.text(s, size: size, at: p, colour: colour, in: ctx) }
+
+    /// The same in any context: the gates' sign is lettered on the finished frame (`gateLettering`).
+    static func text(_ s: String, size: CGFloat, at p: CGPoint, colour: UInt32, in ctx: CGContext) {
         ctx.saveGState()
         ctx.setShouldSmoothFonts(false); ctx.setAllowsFontSmoothing(false)
         ctx.textMatrix = .identity

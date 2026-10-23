@@ -25,11 +25,13 @@ let env = ProcessInfo.processInfo.environment
 let W = Int(env["W"] ?? "") ?? 1280, H = Int(env["H"] ?? "") ?? 800, P = 4
 let fps = 30.0
 
-/// A place as the screen saver shows it: the still picture plus its moving layer, scaled up crisp.
+/// A place as the screen saver shows it: the still picture plus its moving layer, scaled up crisp. ART=1 hands the
+/// trips the art-pixel picture instead, as the window's scene strip does (W=960 H=224 ART=1: the window, as drawn).
 func placeImage(_ l: Location, t: Double) -> CGImage {
     let cw = W / P, ch = H / P, floor = max(8, ch / 8)
     let still = PixelCanvas(cw, ch); l.drawStatic(still, floorRows: floor)
     let moving = PixelCanvas(cw, ch); l.drawAnimated(moving, floorRows: floor, t: t)
+    if env["ART"] != nil, let art = Wipe.flatten([still.makeImage(), moving.makeImage()].compactMap { $0 }) { return art }
     let ctx = CGContext(data: nil, width: W, height: H, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
                         bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)!
     ctx.interpolationQuality = .none
