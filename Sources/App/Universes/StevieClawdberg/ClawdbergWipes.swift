@@ -683,9 +683,10 @@ struct ClawdbergTrip {
         return CGRect(x: (w / 2 - sw / 2).rounded(), y: beamY + beamH - 3, width: sw, height: sh)
     }
 
-    /// JURASSIC CLAWD on the sign, drawn last at the frame's full resolution: in art pixels the window's scene strip
-    /// gives the board about six rows, too few for letters. `gates` is where the gates went in the art-pixel frame
-    /// (`frame`), which is drawn over `r`, so the lettering zooms and shakes with them.
+    /// JURASSIC CLAWD on the sign, drawn last in `signFont`: each of its pixels a whole number of the gates' art pixels
+    /// where the board is big enough (full screen: two), else on a grid of `signRows` rows (the window's scene strip
+    /// gives the board about six), scaled up hard-edged either way. `gates` is where the gates went in the art-pixel
+    /// frame (`frame`), which is drawn over `r`, so the lettering zooms and shakes with them.
     private static func gateLettering(_ ctx: CGContext, gates: CGRect, frame: CGSize, in r: CGRect) {
         let board = signBoard(frame)
         let sx = r.width / frame.width * gates.width / frame.width, sy = r.height / frame.height * gates.height / frame.height
@@ -693,18 +694,57 @@ struct ClawdbergTrip {
         let sign = CGRect(x: x0 + board.minX * sx, y: y0 + board.minY * sy, width: board.width * sx, height: board.height * sy)
         guard sign.intersects(r), sign.height >= 3 else { return }
         let text = "JURASSIC CLAWD"
-        var size = (sign.height * 0.72).rounded()
-        while size > 4, CBLo.textWidth(text, size: size) > sign.width - 4 * sx { size -= 1 }
-        let tw = CBLo.textWidth(text, size: size)
-        let tp = CGPoint(x: (sign.midX - tw / 2).rounded(), y: (sign.minY + sign.height * 0.2).rounded())
-        let o = max(1, (size / 14).rounded())   // the red edge, about as thick as at full screen
+        let tw = signTextWidth(text) + 2   // and the red edge either side
+        let fit = Int(min(board.height / signRows, board.width / CGFloat(tw)))
+        let rows = fit >= 1 ? board.height : signRows, k = max(1, fit)
+        let cols = fit >= 1 ? board.width : (board.width * signRows / board.height).rounded()
+        guard let grid = CBLo(Int(cols), Int(rows)) else { return }
+        let x = (Int(cols) - (tw - 2) * k) / 2, y = (Int(rows) - 7 * k) / 2
+        for ((dx, dy), colour) in [((-1, 0), 0xA81E12), ((1, 0), 0xA81E12), ((0, -1), 0xA81E12), ((0, 1), 0xA81E12),
+                                   ((1, -1), 0xA81E12), ((0, 0), 0xF6C42E)] as [((Int, Int), UInt32)] {
+            signText(grid, text, x: x + dx, y: y + dy, k: k, colour: colour)
+        }
+        guard let img = grid.ctx.makeImage() else { return }
         ctx.saveGState()
         ctx.clip(to: r)
-        for (dx, dy) in [(-1, 0), (1, 0), (0, -1), (0, 1), (1, -1)] as [(CGFloat, CGFloat)] {
-            CBLo.text(text, size: size, at: CGPoint(x: tp.x + dx * o, y: tp.y + dy * o), colour: 0xA81E12, in: ctx)
-        }
-        CBLo.text(text, size: size, at: tp, colour: 0xF6C42E, in: ctx)
+        ctx.interpolationQuality = .none
+        ctx.draw(img, in: sign)
         ctx.restoreGState()
+    }
+    /// The fewest rows the board is lettered on: the font's seven, a row of red edge above and below.
+    private static let signRows: CGFloat = 9
+
+    /// The sign's letters, condensed and heavy like the park's own: four wide (I three, W five), seven high, top row first.
+    private static let signFont: [Character: [String]] = [
+        "J": ["..##", "...#", "...#", "...#", "#..#", "#..#", ".##."],
+        "U": ["#..#", "#..#", "#..#", "#..#", "#..#", "#..#", ".##."],
+        "R": ["###.", "#..#", "#..#", "###.", "#.#.", "#..#", "#..#"],
+        "A": [".##.", "#..#", "#..#", "####", "#..#", "#..#", "#..#"],
+        "S": [".###", "#...", "#...", ".##.", "...#", "...#", "###."],
+        "I": ["###", ".#.", ".#.", ".#.", ".#.", ".#.", "###"],
+        "C": [".###", "#...", "#...", "#...", "#...", "#...", ".###"],
+        "L": ["#...", "#...", "#...", "#...", "#...", "#...", "####"],
+        "W": ["#...#", "#...#", "#...#", "#.#.#", "#.#.#", "##.##", "#...#"],
+        "D": ["###.", "#..#", "#..#", "#..#", "#..#", "#..#", "###."],
+    ]
+
+    /// `text`'s width in `signFont` pixels: a pixel between letters, two for a space.
+    private static func signTextWidth(_ text: String) -> Int {
+        text.reduce(0) { $0 + (signFont[$1]?[0].count ?? 2) + 1 } - 1
+    }
+
+    /// `text` in `signFont`, each of its pixels `k` square, its bottom-left at (x, y).
+    private static func signText(_ lo: CBLo, _ text: String, x: Int, y: Int, k: Int, colour: UInt32) {
+        var cx = x
+        for ch in text {
+            guard let rows = signFont[ch] else { cx += 3; continue }
+            for (i, row) in rows.enumerated() {
+                for (j, px) in row.enumerated() where px == "#" {
+                    lo.fill(colour, 1, CGRect(x: cx + j * k, y: y + (6 - i) * k, width: k, height: k))
+                }
+            }
+            cx += (rows[0].count + 1) * k
+        }
     }
 
     /// The gates, full size: two posts of lashed logs with a torch on each, the beam across them with its sign, and
@@ -1228,7 +1268,7 @@ private final class CBLo {
         }
     }
 
-    private static func line(_ s: String, size: CGFloat, colour: UInt32) -> CTLine {
+    private func line(_ s: String, size: CGFloat, colour: UInt32) -> CTLine {
         let font = CTFontCreateWithName("Impact" as CFString, size, nil)
         let attrs: [NSAttributedString.Key: Any] = [
             NSAttributedString.Key(kCTFontAttributeName as String): font,
@@ -1237,16 +1277,12 @@ private final class CBLo {
         return CTLineCreateWithAttributedString(NSAttributedString(string: s, attributes: attrs))
     }
 
-    static func textWidth(_ s: String, size: CGFloat) -> CGFloat {
+    func textWidth(_ s: String, size: CGFloat) -> CGFloat {
         CGFloat(CTLineGetTypographicBounds(line(s, size: size, colour: 0), nil, nil, nil))
     }
-    func textWidth(_ s: String, size: CGFloat) -> CGFloat { Self.textWidth(s, size: size) }
 
     /// Poster lettering, its baseline at `p`, unsmoothed so it stays in pixels.
-    func text(_ s: String, size: CGFloat, at p: CGPoint, colour: UInt32) { Self.text(s, size: size, at: p, colour: colour, in: ctx) }
-
-    /// The same in any context: the gates' sign is lettered on the finished frame (`gateLettering`).
-    static func text(_ s: String, size: CGFloat, at p: CGPoint, colour: UInt32, in ctx: CGContext) {
+    func text(_ s: String, size: CGFloat, at p: CGPoint, colour: UInt32) {
         ctx.saveGState()
         ctx.setShouldSmoothFonts(false); ctx.setAllowsFontSmoothing(false)
         ctx.textMatrix = .identity
