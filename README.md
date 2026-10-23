@@ -23,7 +23,7 @@ https://github.com/user-attachments/assets/9a06ca4d-9636-4c3d-b2f1-197f5bb3a8c8
 
 <p align="center"><sub>Full 1080p version: <a href="promo/clawd-clash-promo.mp4">promo/clawd-clash-promo.mp4</a></sub></p>
 
-Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars), **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars), **[Doctor Clawd](https://github.com/rodclemen/doctor-clawd)**, **[The Clawd Files](https://github.com/rodclemen/the-clawd-files)**, **[Stevie Clawdberg](https://github.com/rodclemen/stevie-clawdberg)**, **[Clawd of the Rings](https://github.com/rodclemen/clawd-of-the-rings)** **[Clawd Slayer](https://github.com/rodclemen/clawd-slayer)** and **[Stranger Clawds](https://github.com/rodclemen/stranger-clawds)**. Pick one in Settings, or Clawd Royale for all of them at once. The universes' own pages show each one on its own; this one is the app.
+Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars), **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars), **[Doctor Clawd](https://github.com/rodclemen/doctor-clawd)**, **[The Clawd Files](https://github.com/rodclemen/the-clawd-files)**, **[Stevie Clawdberg](https://github.com/rodclemen/stevie-clawdberg)**, **[Clawd of the Rings](https://github.com/rodclemen/clawd-of-the-rings)**, **[Clawd Slayer](https://github.com/rodclemen/clawd-slayer)** and **[Stranger Clawds](https://github.com/rodclemen/stranger-clawds)**. Pick one in Settings, or Clawd Royale for all of them at once. The universes' own pages show each one on its own; this one is the app.
 
 | Star Clawds | Marvelous Clawds |
 |---|---|
@@ -34,6 +34,8 @@ Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/r
 | https://github.com/user-attachments/assets/c3c0f4a1-ac2b-41b5-9b72-bc03c1e123c9 | https://github.com/user-attachments/assets/76bd2d03-f7af-4e76-9ec8-9087f5f4badd |
 | **Clawd of the Rings** | **Clawd Slayer** |
 | https://github.com/user-attachments/assets/76756ccd-d111-4290-b832-8ca4e9e728e4 | https://github.com/user-attachments/assets/dd9213e1-7192-4018-b169-ea451f6a146b |
+| **Stranger Clawds** | |
+| https://github.com/user-attachments/assets/cd3941de-f7e2-4494-a7b3-f8872a0623d5 | |
 
 <p align="center"><sub>🔊 Click the speaker in a player for sound: GitHub starts videos muted.</sub></p>
 
