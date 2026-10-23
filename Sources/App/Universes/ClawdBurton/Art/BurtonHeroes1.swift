@@ -2,7 +2,7 @@ import Foundation
 
 // Heroes: The Nightmare Before Christmas. Halloween Town's own: Jack Skullington, the Pumpkin King, a skeleton in a
 // pinstripe suit; Sallee, the rag doll who keeps sewing herself back together; Zeero, Jack's ghost dog; the Mayor
-// with his two faces; and from Christmas Town, Sandy Clawz. Each is the Clawd block in costume, tinted bone,
+// with his two faces; and from Christmas Town, Sandy Clawdz. Each is the Clawd block in costume, tinted bone,
 // stitched cloth or ghost-sheet where that's what they're made of.
 
 let burtonHeroes1: [BurtonHero: Persona] = [
@@ -14,8 +14,8 @@ let burtonHeroes1: [BurtonHero: Persona] = [
     .zeero: Persona(name: "Zeero", weapon: .none, motion: .hover, canSit: false, headTop: 14, signature: 3.0, callout: "Arf!",
                     draw: drawZeero),
     .theMayor: Persona(name: "The Mayor", weapon: .none, bulk: 2, headTop: 12, signature: 3.2, draw: drawMayor),
-    .sandyClawz: Persona(name: "Sandy Clawz", weapon: .blaster, shot: .thrown(C(0xC8202A)), muzzle: (45, 29),
-                         headTop: 17, signature: 3.0, callout: "Ho ho ho!", draw: drawSandyClawz),
+    .sandyClawdz: Persona(name: "Sandy Clawdz", weapon: .blaster, shot: .thrown(C(0xC8202A)), muzzle: (45, 29),
+                          headTop: 17, signature: 3.0, callout: "Ho ho ho!", draw: drawSandyClawdz),
 ]
 
 /// The front of Jack's gaping mouth: his scare pulses out from there (raised by the pose's `armRaise`).
@@ -336,13 +336,13 @@ private func drawMayor(_ c: PixelCanvas, _ p: Pose) {
               ["M": C(0xB8BCC4), "H": C(0x6A6A74)])
 }
 
-// MARK: - Sandy Clawz
+// MARK: - Sandy Clawdz
 
-/// Sandy Clawz: Clawd in the red hat with its white fur band, its tip and bobble drooping behind, a big white beard
+/// Sandy Clawdz: Clawd in the red hat with its white fur band, its tip and bobble drooping behind, a big white beard
 /// over the bottom of him with rosy cheeks above it, the red coat with a black belt and gold buckle, fur at its hem,
 /// black boots, and his sack of presents over his shoulder. He throws wrapped presents. Signature: he pats his round
 /// tummy, which bounces, and laughs.
-private func drawSandyClawz(_ c: PixelCanvas, _ p: Pose) {
+private func drawSandyClawdz(_ c: PixelCanvas, _ p: Pose) {
     let red = C(0xC8202A), redD = C(0x8E1418), fur = C(0xF4F4F0), furD = C(0xD0D4D8), mitt = C(0x141418)
     let sig = p.signature
     let patting = sig.map { $0 > 0.08 && $0 < 0.92 } ?? false

@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: Edward Scissorhands and Corpse Bride. From the pastel suburb, Jimm the bully in his letterman jacket and
 // Joyce Monrow, the neighbourhood's gossip; from Corpse Bride's dreary town, drawn in its grey-blues, Lord Barkiss
-// Bittern the fortune hunter, Pastor Gallswell with his jaw and his staff, and the Everclawts, sour Finis and
+// Bittern the fortune hunter, Pastor Gallswell with his jaw and his staff, and the Everclawds, sour Finis and
 // rigid Maudeline.
 
 let burtonVillains3: [BurtonVillain: Persona] = [
@@ -13,8 +13,8 @@ let burtonVillains3: [BurtonVillain: Persona] = [
                                  draw: drawBarkiss),
     .pastorGallswell: Persona(name: "Pastor Gallswell", weapon: .saber, bulk: 2, headTop: 20, signature: 3.4,
                               draw: drawGallswell),
-    .finisEverclawt: Persona(name: "Finis Everclawt", weapon: .saber, headTop: 26, signature: 3.0, draw: drawFinis),
-    .maudelineEverclawt: Persona(name: "Maudeline Everclawt", weapon: .none, headTop: 9, signature: 3.2,
+    .finisEverclawd: Persona(name: "Finis Everclawd", weapon: .saber, headTop: 26, signature: 3.0, draw: drawFinis),
+    .maudelineEverclawd: Persona(name: "Maudeline Everclawd", weapon: .none, headTop: 9, signature: 3.2,
                                  draw: drawMaudeline),
 ]
 
@@ -328,9 +328,9 @@ private func drawGallswell(_ c: PixelCanvas, _ p: Pose) {
     }
 }
 
-// MARK: - Finis Everclawt
+// MARK: - Finis Everclawd
 
-/// Finis Everclawt: Victoria's father, short, stout and sour, in the living world's grey-blues: a squat, wide grey-blue
+/// Finis Everclawd: Victoria's father, short, stout and sour, in the living world's grey-blues: a squat, wide grey-blue
 /// block, bald on top with grey side-whiskers, bushy brows over a scowl, a turned-down mouth, a dark frock coat over a
 /// grey waistcoat with a gold watch chain. He fights with his cane. Signature: he taps the cane on the floor, twice,
 /// and scowls harder.
@@ -384,9 +384,9 @@ private func drawFinis(_ c: PixelCanvas, _ p: Pose) {
     }
 }
 
-// MARK: - Maudeline Everclawt
+// MARK: - Maudeline Everclawd
 
-/// Maudeline Everclawt: Victoria's mother, tall and rigid as a poker, in the living world's grey-blues: the block
+/// Maudeline Everclawd: Victoria's mother, tall and rigid as a poker, in the living world's grey-blues: the block
 /// grey-blue and drawn up taller, her hair scraped up into a towering grey beehive, narrowed eyes and a tiny pinched
 /// mouth, a grey gown buttoned to a high collar and falling straight to the floor, a gold lorgnette in her hand. She
 /// doesn't fight. Signature: she raises the lorgnette to her eyes and sniffs, disapproving.

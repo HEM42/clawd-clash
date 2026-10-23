@@ -6,23 +6,23 @@ import Foundation
 
 enum BurtonHero: Int, CaseIterable {
     // The Nightmare Before Christmas
-    case jackSkullington, sallee, zeero, theMayor, sandyClawz
+    case jackSkullington, sallee, zeero, theMayor, sandyClawdz
     // Beetlejuice and Beetlejuice Beetlejuice
     case lydiaDeathz, adamMaitclawd, barbaraMaitclawd, deliaDeathz, astridDeathz, junoh, wolfJaxon, shrunkenHeadMan
     // Edward Scissorhands
-    case edwardScissorclaws, kimBoggz, pegBoggz, theInventor
+    case edwardScissorclawds, kimBoggz, pegBoggz, theInventor
     // Corpse Bride
-    case victorVanDawt, emilee, victoriaEverclawt, scrapz, elderGutknocked, bonejingles, generalBonesapart
+    case victorVanDawt, emilee, victoriaEverclawd, scrapz, elderGutknocked, bonejingles, generalBonesapart
     // Sleepy Hollow
     case ichabodCraine, katrinaVanTassle, youngMasbeth, bromVanBruntt
     // Mars Attacks!
-    case richieNorriss, grandmaFlorenz, presidentDayle, byronWilyums, professorKessclaw
+    case richieNorriss, grandmaFlorenz, presidentDayle, byronWilyums, professorKessclawd
     // Charlie and the Chocolate Factory
     case willyWonky, charlieBuckett, grampaJoe, oompaLoompah, drWilburWonky
     // Alice in Wonderland
-    case aliceKingsclaw, tarrantHightop, chessur, mirana, mcTwisp, mally, thackeryHare
+    case aliceKingsclawd, tarrantHightop, chessur, mirana, mcTwisp, mally, thackeryHare
     // Frankenweenie
-    case victorFrankenstien, sparkie, elsaVanHelsclaw, mrRzykrusky
+    case victorFrankenstien, sparkie, elsaVanHelsclawd, mrRzykrusky
     // Pee-wee's Big Adventure
     case peeweeHerclawd, dottie, largeMarge
     // Agent-only
@@ -38,7 +38,7 @@ enum BurtonVillain: Int, CaseIterable {
     // Edward Scissorhands
     case jimm, joyceMonrow
     // Corpse Bride
-    case lordBarkissBittern, pastorGallswell, finisEverclawt, maudelineEverclawt
+    case lordBarkissBittern, pastorGallswell, finisEverclawd, maudelineEverclawd
     // Sleepy Hollow
     case headlessHorseclawd, ladyVanTassle, westernWoodsCrone
     // Mars Attacks!
@@ -46,7 +46,7 @@ enum BurtonVillain: Int, CaseIterable {
     // Charlie and the Chocolate Factory
     case augustusGloopp, verucaSaltt, violetBluregarde, mikeTeevee, slugwurth
     // Alice in Wonderland
-    case redQueen, stayne, jabberclawky, bandersnatch, redCardKnight
+    case redQueen, stayne, jabberclawdky, bandersnatch, redCardKnight
     // Frankenweenie
     case edgarGorr, nassorr, toshiakki, weirdGurl, mrWhiskerz, shellee, colossuss, wereRat
     // Pee-wee's Big Adventure

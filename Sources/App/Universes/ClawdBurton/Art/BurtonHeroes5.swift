@@ -2,7 +2,7 @@ import Foundation
 
 // Heroes: Charlie and the Chocolate Factory and Alice in Wonderland. From the factory: Willy Wonky in his top hat and
 // velvet coat, Charlie Buckett with the golden ticket, Grampa Joe, an Oompa-Loompah and Dr. Wilbur Wonky the dentist.
-// From Underland: Alice Kingsclaw with the Vorpal sword, Tarrant Hightop the Hatter, Chessur the grinning cat, Mirana
+// From Underland: Alice Kingsclawd with the Vorpal sword, Tarrant Hightop the Hatter, Chessur the grinning cat, Mirana
 // the White Queen, McTwisp the White Rabbit, Mally the Dormouse and Thackery Hare. The people are Clawd in costume;
 // the animals keep their own shapes at Clawd's size.
 
@@ -15,8 +15,8 @@ let burtonHeroes5: [BurtonHero: Persona] = [
                            draw: drawOompaLoompah),
     .drWilburWonky: Persona(name: "Dr. Wilbur Wonky", weapon: .blaster, shot: .thrown(C(0xF4F4F0)), muzzle: (44, 28),
                             headTop: 20, signature: 3.4, draw: drawWilburWonky),
-    .aliceKingsclaw: Persona(name: "Alice Kingsclaw", weapon: .saber, headTop: 20, signature: 3.6,
-                             callout: "Six impossible things.", draw: drawAlice),
+    .aliceKingsclawd: Persona(name: "Alice Kingsclawd", weapon: .saber, headTop: 20, signature: 3.6,
+                              callout: "Six impossible things.", draw: drawAlice),
     .tarrantHightop: Persona(name: "Tarrant Hightop", weapon: .blaster, shot: .thrown(C(0x2AB8B0)), muzzle: (45, 27),
                              headTop: 10, signature: 3.4, callout: "Fairfarren!", draw: drawTarrant),
     .chessur: Persona(name: "Chessur", weapon: .none, motion: .hover, canSit: false, headTop: 19, signature: 3.6,
@@ -369,11 +369,11 @@ private func drawWilburWonky(_ c: PixelCanvas, _ p: Pose) {
     }
 }
 
-// MARK: - Alice Kingsclaw
+// MARK: - Alice Kingsclawd
 
-/// Alice Kingsclaw: Clawd with long straight blonde hair falling down her sides, in a pale blue dress; when she fights,
-/// silver armour, and the Vorpal sword, a long bright blade with a gold crossguard. Signature: she drinks from a tiny
-/// bottle and shrinks, sparkling, to half her size for a moment, then grows back.
+/// Alice Kingsclawd: Clawd with long straight blonde hair falling down her sides, in a pale blue dress; when she
+/// fights, silver armour, and the Vorpal sword, a long bright blade with a gold crossguard. Signature: she drinks from
+/// a tiny bottle and shrinks, sparkling, to half her size for a moment, then grows back.
 private func drawAlice(_ c: PixelCanvas, _ p: Pose) {
     let sig = p.signature
     let k = sig.map { min(ramp($0, 0.32, 0.42), 1 - ramp($0, 0.66, 0.78)) } ?? 0

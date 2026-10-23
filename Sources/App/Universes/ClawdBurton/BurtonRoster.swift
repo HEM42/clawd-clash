@@ -34,13 +34,13 @@ extension Location {
         case .ooogieBoogie, .oogieBug, .lok, .shok, .barrell: return .oogiesLair
         case .drFinkelclawd, .wolfclawd, .tearAwayClown, .halloweenWitch: return .halloweenTown
         case .jimm, .joyceMonrow: return .pastelSuburbia
-        case .lordBarkissBittern, .pastorGallswell, .finisEverclawt, .maudelineEverclawt: return .everglotVillage
+        case .lordBarkissBittern, .pastorGallswell, .finisEverclawd, .maudelineEverclawd: return .everglotVillage
         case .headlessHorseclawd, .westernWoodsCrone: return .treeOfTheDead
         case .ladyVanTassle: return .hollowVillage
         case .martianLeader, .martianAmbassador, .martianTrooper, .martianSpy: return .martianSaucerDeck
         case .martianWalker: return .perkinsvilleKansas
         case .augustusGloopp, .verucaSaltt, .violetBluregarde, .mikeTeevee, .slugwurth, .nutSquirrel: return .chocolateRoom
-        case .redQueen, .stayne, .jabberclawky, .bandersnatch, .redCardKnight: return .salazenGrum
+        case .redQueen, .stayne, .jabberclawdky, .bandersnatch, .redCardKnight: return .salazenGrum
         case .edgarGorr, .nassorr, .toshiakki, .weirdGurl, .mrWhiskerz, .shellee, .colossuss, .wereRat, .seaMonkey:
             return .windmillMiniGolf
         case .francisBuxtun, .bikeThief, .madamRubee, .andee: return .breakfastMachineHouse
@@ -50,20 +50,20 @@ extension Location {
     static func burtonHome(of hero: BurtonHero) -> Location {
         switch hero {
         case .jackSkullington, .sallee, .zeero, .theMayor, .hem: return .halloweenTown
-        case .sandyClawz: return .christmasTown
+        case .sandyClawdz: return .christmasTown
         case .lydiaDeathz, .adamMaitclawd, .barbaraMaitclawd, .deliaDeathz, .astridDeathz: return .maitlandHouse
         case .junoh, .wolfJaxon, .shrunkenHeadMan: return .afterlifeWaitingRoom
-        case .edwardScissorclaws, .theInventor: return .inventorsCastle
+        case .edwardScissorclawds, .theInventor: return .inventorsCastle
         case .kimBoggz, .pegBoggz: return .pastelSuburbia
         case .emilee, .scrapz, .elderGutknocked, .bonejingles, .generalBonesapart, .maggott: return .landOfTheDead
-        case .victorVanDawt, .victoriaEverclawt: return .everglotVillage
+        case .victorVanDawt, .victoriaEverclawd: return .everglotVillage
         case .ichabodCraine, .katrinaVanTassle, .youngMasbeth, .bromVanBruntt: return .hollowVillage
-        case .richieNorriss, .grandmaFlorenz, .presidentDayle, .professorKessclaw: return .perkinsvilleKansas
+        case .richieNorriss, .grandmaFlorenz, .presidentDayle, .professorKessclawd: return .perkinsvilleKansas
         case .byronWilyums: return .galaxyHotel
         case .willyWonky, .charlieBuckett, .grampaJoe, .oompaLoompah, .drWilburWonky: return .chocolateRoom
-        case .aliceKingsclaw, .tarrantHightop, .chessur, .mirana, .mcTwisp, .mally, .thackeryHare: return .madTeaParty
+        case .aliceKingsclawd, .tarrantHightop, .chessur, .mirana, .mcTwisp, .mally, .thackeryHare: return .madTeaParty
         case .victorFrankenstien, .sparkie, .mrRzykrusky: return .newHollandAttic
-        case .elsaVanHelsclaw: return .windmillMiniGolf
+        case .elsaVanHelsclawd: return .windmillMiniGolf
         case .peeweeHerclawd, .dottie, .largeMarge: return .breakfastMachineHouse
         }
     }
@@ -78,13 +78,13 @@ extension Cast {
 
 /// Arch-enemies: whenever both are fighting, they're paired with each other first, wherever they are in the line.
 private let burtonNemeses: [(BurtonHero, BurtonVillain)] = [
-    (.jackSkullington, .ooogieBoogie), (.sallee, .drFinkelclawd), (.sandyClawz, .lok), (.lydiaDeathz, .beetlejooce),
+    (.jackSkullington, .ooogieBoogie), (.sallee, .drFinkelclawd), (.sandyClawdz, .lok), (.lydiaDeathz, .beetlejooce),
     (.adamMaitclawd, .otho), (.barbaraMaitclawd, .sandwurm), (.astridDeathz, .jeremee), (.wolfJaxon, .delorez),
-    (.edwardScissorclaws, .jimm), (.pegBoggz, .joyceMonrow), (.emilee, .lordBarkissBittern),
+    (.edwardScissorclawds, .jimm), (.pegBoggz, .joyceMonrow), (.emilee, .lordBarkissBittern),
     (.victorVanDawt, .pastorGallswell), (.ichabodCraine, .headlessHorseclawd), (.katrinaVanTassle, .ladyVanTassle),
     (.presidentDayle, .martianLeader), (.byronWilyums, .martianAmbassador), (.richieNorriss, .martianWalker),
-    (.willyWonky, .slugwurth), (.charlieBuckett, .verucaSaltt), (.aliceKingsclaw, .jabberclawky), (.mirana, .redQueen),
-    (.tarrantHightop, .stayne), (.victorFrankenstien, .edgarGorr), (.sparkie, .mrWhiskerz),
+    (.willyWonky, .slugwurth), (.charlieBuckett, .verucaSaltt), (.aliceKingsclawd, .jabberclawdky),
+    (.mirana, .redQueen), (.tarrantHightop, .stayne), (.victorFrankenstien, .edgarGorr), (.sparkie, .mrWhiskerz),
     (.peeweeHerclawd, .francisBuxtun),
 ]
 
