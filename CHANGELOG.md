@@ -26,6 +26,7 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 ### Fixed
 - **Tall characters' status bubbles no longer sit on their heads.** The bubble beside the head sat at the same height for everyone, so on characters whose art reaches near the top of the frame (the dinosaurs, Abominator, Galacticus, Smaug, the Tall Visitor and 130 more) it landed on the head. Each character is now measured once, at rest, and one whose art comes within 3 rows of the bubble gets it raised to the usual 7-row gap.
 
+- **Jurassic Park's gate trip covers the whole window and reads JURASSIC CLAWD.** The gates only filled the middle, so the new place showed changing around them; now a dusk sky and jungle tree line frame them and the place only shows through the doorway. The place behind is drawn at full resolution, not in the trip's art pixels, so text in it (the window's list during a universe change) stays sharp. The sign over the gates says JURASSIC CLAWD, sized to fit.
 ## 3.7.1 (2026-10-19)
 
 ### Added

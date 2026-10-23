@@ -116,6 +116,14 @@ struct ClawdbergTrip {
         let w = max(8, Int((r.width / cell).rounded())), h = max(8, Int((r.height / cell).rounded()))
         guard let lo = CBLo(w, h) else { ctx.drawShot(k < 0.5 ? old : new, in: r); return }
         let k = min(1, max(0, k))
+        // The gates only lie over the place: it's drawn whole, at its own resolution (the window's list text sharp
+        // while the universe changes), and only the gates in art pixels.
+        if kind == .parkGates {
+            ctx.saveGState()
+            ctx.interpolationQuality = .none
+            ctx.drawShot(k < 0.5 ? old : new, in: r)
+            ctx.restoreGState()
+        }
         switch kind {
         case .moonBike: drawMoonRide(lo, old: old, new: new, k: k)
         case .eightyEight: drawEightyEight(lo, old: old, new: new, k: k)
@@ -646,7 +654,6 @@ struct ClawdbergTrip {
     /// old place, and open again on the new one as the camera drives on through.
     private func drawParkGates(_ lo: CBLo, old: CGImage, new: CGImage, k: Double) {
         let w = CGFloat(lo.w), h = CGFloat(lo.h)
-        lo.image(k < 0.5 ? old : new)
         let shut = Self.ease(Self.span(k, 0.14, 0.42))
         let open = Self.ease(Self.span(k, 0.56, 0.84))
         let swing = (1 - shut) + open
@@ -675,6 +682,7 @@ struct ClawdbergTrip {
         // The doors, behind the posts and the beam.
         let hinge = px + pw
         let dw = w / 2 - hinge
+        jungle(lo, doorway: CGRect(x: hinge, y: 0, width: w - hinge * 2, height: beamY))
         door(lo, hinge: hinge, width: dw, height: doorH, angle: angle, mirrored: false)
         door(lo, hinge: w - hinge, width: dw, height: doorH, angle: angle, mirrored: true)
         // The posts.
@@ -694,14 +702,41 @@ struct ClawdbergTrip {
         lo.fill(0x1A0E06, 1, CGRect(x: sx - 1, y: sy - 1, width: sw + 2, height: sh + 2))
         lo.fill(0x3A2412, 1, CGRect(x: sx, y: sy, width: sw, height: sh))
         lo.fill(0x52361C, 1, CGRect(x: sx, y: sy + sh - 2, width: sw, height: 1))
-        let size = (sh * 0.72).rounded()
-        let text = "JURASSIC PARK"
+        let text = "JURASSIC CLAWD"
+        var size = (sh * 0.72).rounded()
+        while size > 4, lo.textWidth(text, size: size) > sw - 4 { size -= 1 }
         let tw = lo.textWidth(text, size: size)
         let tp = CGPoint(x: (w / 2 - tw / 2).rounded(), y: (sy + sh * 0.2).rounded())
         for (dx, dy) in [(-1, 0), (1, 0), (0, -1), (0, 1), (1, -1)] as [(CGFloat, CGFloat)] {
             lo.text(text, size: size, at: CGPoint(x: tp.x + dx, y: tp.y + dy), colour: 0xA81E12)
         }
         lo.text(text, size: size, at: tp, colour: 0xF6C42E)
+    }
+
+    /// Everywhere but through the gates: the jungle at dusk, a ragged tree line against the sky. The place only shows
+    /// through the doorway, so the change from old to new, behind the shut doors, is never seen round them.
+    private static func jungle(_ lo: CBLo, doorway: CGRect) {
+        let h = CGFloat(lo.h)
+        for xi in 0..<lo.w {
+            let x = CGFloat(xi), fx = Double(xi)
+            let line = h * CGFloat(0.8 + 0.1 * cbNoise(fx / 9, 3) + 0.04 * cbNoise(fx / 3, 8))
+            let skip = x >= doorway.minX && x < doorway.maxX ? doorway.maxY : 0   // the doorway stays open
+            // The sky, dusk over the tree line.
+            for (from, col) in [(line, 0x3A2A3A as UInt32), (line + (h - line) * 0.4, 0x2A2036), (line + (h - line) * 0.75, 0x1C1828)] {
+                lo.fill(col, 1, CGRect(x: x, y: max(from, skip), width: 1, height: max(0, h - max(from, skip))))
+            }
+            // The leaves, in clumps of green, darker toward the ground.
+            guard line > skip else { continue }
+            lo.fill(0x10200E, 1, CGRect(x: x, y: skip, width: 1, height: line - skip))
+            var y = skip
+            while y < line {
+                let n = cbNoise(fx / 4, Double(y) / 4)
+                let col: UInt32 = n > 0.7 ? 0x2E4A1C : n > 0.5 ? 0x22381A : n > 0.3 ? 0x182C14 : 0x10200E
+                lo.fill(col, 1, CGRect(x: x, y: y, width: 1, height: 2))
+                y += 2
+            }
+            lo.fill(0x08140A, 1, CGRect(x: x, y: line - 1, width: 1, height: 1))
+        }
     }
 
     /// A post of three lashed logs, `height` tall, from the ground.
