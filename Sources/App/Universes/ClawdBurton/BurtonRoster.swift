@@ -16,10 +16,10 @@ extension BurtonVillain {
 }
 
 let burtonHeroPersonas: [BurtonHero: Persona] = [burtonHeroes1, burtonHeroes2, burtonHeroes3, burtonHeroes4, burtonHeroes5,
-                                                  burtonHeroes6]
+                                                  burtonHeroes6, burtonHeroes7, burtonHeroes8]
     .reduce([.hem: hemPersona(.clawdBurton)]) { $0.merging($1) { a, _ in a } }
 let burtonVillainPersonas: [BurtonVillain: Persona] = [burtonVillains1, burtonVillains2, burtonVillains3, burtonVillains4,
-                                                        burtonVillains5, burtonVillains6]
+                                                        burtonVillains5, burtonVillains6, burtonVillains7]
     .reduce([:]) { $0.merging($1) { a, _ in a } }
 
 // MARK: - Homes
