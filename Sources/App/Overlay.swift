@@ -2116,8 +2116,15 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             guard let self, self.fullScreen === f else { return }
             self.fullScreen = nil
             if !self.hidden { aside.forEach { $0.orderFrontRegardless() } }
+            self.updateFrontPolicy(active: NSApp.isActive)
         }
         fullScreen = f
+        // A Dock icon while it's open, as any full screen app has: without one, swiping between Spaces skipped its
+        // Space (only Mission Control reached it). `updateFrontPolicy` puts your choice back when it closes.
+        if NSApp.activationPolicy() != .regular {
+            NSApp.setActivationPolicy(.regular)
+            NSApp.mainMenu = makeMainMenu()
+        }
         lastFeed = 0   // the feed at once, not up to a second from now
         publishSaverFeed(Date().timeIntervalSince1970)
         f.show()
@@ -2217,8 +2224,10 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     }
 
     /// With the Dock icon off: a Dock icon (and so the top-bar menus) only while the window is the app in front.
+    /// Not while Full Screen is open (it has a Dock icon then): dropping the icon takes a window out of full screen, and
+    /// macOS then left it as a plain window on Space 1. It's settled when Full Screen closes.
     private func updateFrontPolicy(active: Bool) {
-        guard !showInDock else { return }
+        guard !showInDock, fullScreen == nil else { return }
         let want: NSApplication.ActivationPolicy = active && windowMode && clawdWindow?.window.isVisible == true ? .regular : .accessory
         guard NSApp.activationPolicy() != want else { return }
         NSApp.setActivationPolicy(want)

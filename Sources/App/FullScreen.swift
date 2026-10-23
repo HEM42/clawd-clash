@@ -29,7 +29,9 @@ final class FullScreenSaver: NSObject, NSWindowDelegate {
         window.titleVisibility = .hidden
         window.backgroundColor = .black
         window.isReleasedWhenClosed = false
-        window.collectionBehavior = [.fullScreenPrimary]
+        // On the Space you're on, so its full screen Space opens next to that one. Dropped again once it's full screen,
+        // so it never moves after.
+        window.collectionBehavior = [.fullScreenPrimary, .moveToActiveSpace]
         window.delegate = self
         board.feedSource = feed
         board.autoresizingMask = [.width, .height]
@@ -42,9 +44,13 @@ final class FullScreenSaver: NSObject, NSWindowDelegate {
         let t = Timer(timeInterval: board.animationTimeInterval, repeats: true) { [weak self] _ in self?.board.animateOneFrame() }
         RunLoop.main.add(t, forMode: .common)
         timer = t
-        window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
-        window.toggleFullScreen(nil)
+        window.makeKeyAndOrderFront(nil)
+        // A turn later, once it's on this Space, so the full screen Space opens next to it.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.timer != nil, !self.leaving else { return }
+            self.window.toggleFullScreen(nil)
+        }
     }
 
     /// Out of full screen first (its Space goes with it), then away once that's done (`windowDidExitFullScreen`).
@@ -55,6 +61,7 @@ final class FullScreenSaver: NSObject, NSWindowDelegate {
     }
 
     func windowDidEnterFullScreen(_ notification: Notification) {
+        window.collectionBehavior = [.fullScreenPrimary]
         NSCursor.setHiddenUntilMouseMoves(true)
     }
 
