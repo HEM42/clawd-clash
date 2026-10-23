@@ -45,7 +45,7 @@ enum SlayerFacts {
     static let entry = UniverseEntry(universe: .slayer, key: "slayer", title: "Clawd Slayer", facts: facts)
     static let facts = UniverseFacts(
         villainCount: SlayerVillain.allCases.count, heroCount: SlayerHero.allCases.count,
-        // a fledgling vampire, one of Glory's minions, Gachnar, Amy the rat; Miss Kitty Fanclawstico
+        // a fledgling vampire, one of Glory's minions, Gachnar, Amy the rat; Miss Kitty Fanclawdstico
         agentOnly: Set((44...47).map { $0 } + [UniverseFacts.heroBase + 34]),
         rivals: [UniverseFacts.heroBase + 24, UniverseFacts.heroBase + 8],      // Angstel and Spyke
         // The eight from "Tabula Rasa" (Buffy, Willow, Xander, Giles, Anya, Tara, Spyke, Dawn): Willow's forgetting

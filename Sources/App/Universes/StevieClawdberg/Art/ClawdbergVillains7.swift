@@ -1,11 +1,11 @@
 import Foundation
 
-// Villains: Hook (Captain Clawk, Mr. Smeeh and Bill Jukes), and the agent-only small fry, who only ever turn up small:
+// Villains: Hook (Captain Clawd, Mr. Smeeh and Bill Jukes), and the agent-only small fry, who only ever turn up small:
 // a Compy, a mogwai pup, a Well of Souls snake, a biology-class frog and the Croc Clock. The pirates are Clawd in
 // costume; the creatures are Clawd zipped into a suit of the creature, its head a hood over Clawd's orange face.
 
 let clawdbergVillains7: [ClawdbergVillain: Persona] = [
-    .captainClawk: Persona(name: "Captain Clawk", weapon: .saber, headTop: 13, signature: 3.6, callout: "Bad form!",
+    .captainClawk: Persona(name: "Captain Clawd", weapon: .saber, headTop: 13, signature: 3.6, callout: "Bad form!",
                            draw: drawCaptainClawk),
     .mrSmeeh: Persona(name: "Mr. Smeeh", headTop: 18, signature: 3.0, callout: "Captain!", draw: drawMrSmeeh),
     .billJukes: Persona(name: "Bill Jukes", weapon: .saber, headTop: 21, draw: drawBillJukes),
@@ -20,9 +20,9 @@ let clawdbergVillains7: [ClawdbergVillain: Persona] = [
 
 private let steel = C(0xD8DEE6), steelD = C(0x8A92A0), gold = C(0xE8B830), goldD = C(0xA87A20)
 
-// MARK: - Captain Clawk
+// MARK: - Captain Clawd
 
-/// Captain Clawk: Clawd in a long crimson coat with gold braid and a white lace jabot, its skirts hanging over the
+/// Captain Clawd: Clawd in a long crimson coat with gold braid and a white lace jabot, its skirts hanging over the
 /// tops of his legs; a huge black curly wig falling in ringlets to his shoulders under a great plumed black hat, a
 /// curled black moustache; the silver hook in place of his right hand. He fights with the hook. Signature: a ticking
 /// clock stands in front of him; he glares at it, raises the hook and smashes it to pieces, gears and springs flying.

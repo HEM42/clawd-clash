@@ -1,6 +1,5 @@
 import Foundation
 import CoreGraphics
-import CoreText
 
 // The edges of the map: the "Welcome to Sunnydale" sign by night, the crater it falls into at the end, the First
 // Slayer's dream desert, and Los Angeles (the Hyperion, Caritas, Wolfram & Hart). Each has its own key colour, none of
@@ -94,60 +93,87 @@ private func slayerButte4(_ c: PixelCanvas, x: Int, w: Int, h: Int, base: Int, _
 
 
 /// The "WELCOME TO SUNNYDALE" board, `board` pixels across and high, on two posts `post` high (none at 0), turned
-/// `degrees` clockwise about the posts' feet and set down with them at `feet`. It's drawn with Core Graphics,
-/// antialiased, in a real typeface: pixel lettering couldn't be read at window size, and turned by a few degrees
-/// it broke up or stepped along the slope. The town sign and the crater share it, so the sign looks the same.
+/// `degrees` clockwise about the posts' feet and set down with them at `feet`. It's pixel art in the scene's own units
+/// (`s` pixels each): the board drawn upright, then turned a unit at a time, unsmoothed, and its letters (WELCOME TO in
+/// the blocky alphabet, SUNNYDALE in the heavy one) set on it upright, each where it turns to, stepping down the
+/// slope, as a tilted sign is drawn by hand: turned with the board, their strokes broke up. The town sign and the
+/// crater share it, so the sign looks the same.
 private func slayerSign4(_ c: PixelCanvas, feet: (x: Int, y: Int), degrees: Double = 0, board: (w: Int, h: Int), post: Int,
                          _ s: Int) {
-    let bw = Double(board.w), bh = Double(board.h), border = Double(2 * s), postH = Double(post), k = bh / Double(30 * s)
-    let span = Int(bw + bh + postH) + 8 * s, side = span * 2
-    guard let g = CGContext(data: nil, width: side, height: side, bitsPerComponent: 8, bytesPerRow: side * 4,
-                            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return }
-    g.setShouldAntialias(true); g.setAllowsFontSmoothing(false)
-    // Core Graphics is y-up: the feet at the middle of the square, the sign standing up from them, turned clockwise.
-    g.translateBy(x: Double(span), y: Double(span))
-    g.rotate(by: -degrees * .pi / 180)
-    func fill(_ r: CGRect, _ hex: UInt32) { g.setFillColor(rgb(hex)); g.fill(r) }
-    let left = -bw / 2, bottom = postH
-    for px in [left + bw / 6, left + bw * 5 / 6 - Double(3 * s)] where post > 0 {   // the posts
-        fill(CGRect(x: px, y: 0, width: Double(3 * s), height: postH + border), 0x9A6A40)
-        fill(CGRect(x: px, y: 0, width: Double(s), height: postH + border), 0xC8945A)
+    let bw = board.w / s, bh = board.h / s, ph = post / s, border = 2
+    let uw = bw + 2 * border, uh = bh + 2 * border + ph
+    let u = PixelCanvas(uw, uh)
+    for px in [border + bw / 6, border + bw * 5 / 6 - 3] where ph > 0 {   // the posts
+        u.rect(px, uh - ph - border, 3, ph + border, C(0x9A6A40)); u.rect(px, uh - ph - border, 1, ph + border, C(0xC8945A))
     }
-    fill(CGRect(x: left - border, y: bottom - border, width: bw + 2 * border, height: bh + 2 * border), 0x3A2416)
-    fill(CGRect(x: left, y: bottom, width: bw, height: bh), 0xEEE2C4)
-    fill(CGRect(x: left + bw - Double(s), y: bottom, width: Double(s), height: bh), 0xB8A880)
-    g.setFillColor(rgb(0x2A4A30, 0.35))
-    g.fill(CGRect(x: left + border, y: bottom + bh - border - Double(s), width: bw - 2 * border, height: Double(s) * 0.7))
-    g.fill(CGRect(x: left + border, y: bottom + border, width: bw - 2 * border, height: Double(s) * 0.7))
-    // The lettering: WELCOME TO small above, SUNNYDALE large, each sized to the board's width.
-    func word(_ text: String, cap: Double, maxW: Double, baseline: Double, _ hex: UInt32, bold: Bool) {
-        let name = bold ? "Futura-CondensedExtraBold" : "Futura-Bold"
-        var size = cap / 0.7
-        var font = CTFontCreateWithName(name as CFString, size, nil)
-        func line() -> CTLine {
-            CTLineCreateWithAttributedString(NSAttributedString(string: text, attributes: [
-                NSAttributedString.Key(kCTFontAttributeName as String): font,
-                NSAttributedString.Key(kCTForegroundColorAttributeName as String): rgb(hex),
-                NSAttributedString.Key(kCTKernAttributeName as String): size * 0.06]))
+    u.rect(0, 0, uw, bh + 2 * border, C(0x3A2416))
+    u.rect(border, border, bw, bh, C(0xEEE2C4))
+    u.rect(border + bw - 1, border, 1, bh, C(0xB8A880))
+    u.rect(2 * border, border + 1, bw - 2 * border, 1, C(0x2A4A30, 0.35))
+    u.rect(2 * border, border + bh - 2, bw - 2 * border, 1, C(0x2A4A30, 0.35))
+    // Onto the scene a unit at a time, each one the upright board's unit it turns from (feet at the bottom middle).
+    let a = degrees * .pi / 180, co = cos(a), si = sin(a)
+    let reach = Int((Double(uw * uw + uh * uh)).squareRoot()) + 1
+    for dy in -reach...1 {
+        for dx in -reach...reach {
+            let x = Double(dx) + 0.5, y = Double(dy) + 0.5
+            let sx = Int((x * co + y * si + Double(uw) / 2).rounded(.down)), sy = Int((-x * si + y * co + Double(uh)).rounded(.down))
+            guard sx >= 0, sy >= 0, sx < uw, sy < uh else { continue }
+            let i = (sy * uw + sx) * 4
+            guard u.buf[i + 3] > 0 else { continue }
+            c.rect(feet.x + dx * s, feet.y + dy * s, s, s, Px(r: u.buf[i], g: u.buf[i + 1], b: u.buf[i + 2], a: u.buf[i + 3]))
         }
-        var l = line(), w = CTLineGetTypographicBounds(l, nil, nil, nil)
-        if w > maxW { size *= maxW / w; font = CTFontCreateWithName(name as CFString, size, nil); l = line(); w = CTLineGetTypographicBounds(l, nil, nil, nil) }
-        g.textPosition = CGPoint(x: -w / 2, y: baseline)
-        CTLineDraw(l, g)
     }
-    word("WELCOME TO", cap: Double(5 * s) * k, maxW: bw * 0.6, baseline: bottom + bh - border - Double(8 * s) * k, 0x6A4A2A, bold: false)
-    word("SUNNYDALE", cap: Double(12 * s) * k, maxW: bw - Double(10 * s), baseline: bottom + border + Double(4 * s) * k, 0x2A4A30, bold: true)
-    guard let data = g.data else { return }
-    let px = data.bindMemory(to: UInt8.self, capacity: side * side * 4)
-    // Row 0 of the bitmap is the top of the square; its middle lands on the feet.
-    for y in 0..<side {
-        for x in 0..<side {
-            let i = (y * side + x) * 4, a = px[i + 3]
-            guard a > 0 else { continue }
-            let m = 255 / Double(a)
-            c.px(feet.x - span + x, feet.y - span + y, Px(r: UInt8(min(255, Double(px[i]) * m)), g: UInt8(min(255, Double(px[i + 1]) * m)),
-                                                       b: UInt8(min(255, Double(px[i + 2]) * m)), a: a))
+    // The lettering, centred and as big as the board takes whole: WELCOME TO above, SUNNYDALE below. Each letter steps
+    // down to where its middle turns to, in whole units; across, they keep the font's spacing from where the first one
+    // lands (rounded one by one, a gap could close up).
+    let q = max(1, min((bw - 8) / slayerBoldWidth4("SUNNYDALE", 1), (bh - 11) / 14))
+    let top = border + (bh - (5 * q + 3 + 9 * q)) / 2
+    func place(_ text: String, x: Int, y: Int, w: Int, h: Int, advance: (Character) -> Int, draw: (Int, Int, Character) -> Void) {
+        var lx = x, first: Int?
+        for ch in text {
+            let mx = Double(lx) + Double(w) / 2 - Double(uw) / 2, my = Double(y) + Double(h) / 2 - Double(uh)
+            let start = first ?? Int((mx * co - my * si - Double(w) / 2).rounded())
+            first = start
+            let tx = start + lx - x, ty = Int((mx * si + my * co - Double(h) / 2).rounded())
+            if ch != " " { draw(feet.x + tx * s, feet.y + ty * s, ch) }
+            lx += advance(ch)
         }
+    }
+    let small = slayerTextWidth4("WELCOME TO", q) / q
+    place("WELCOME TO", x: border + (bw - small * q) / 2, y: top, w: 3 * q, h: 5 * q, advance: { ($0 == " " ? 3 : 4) * q }) {
+        slayerText4(c, $0, $1, String($2), C(0x6A4A2A), q * s)
+    }
+    place("SUNNYDALE", x: border + (bw - slayerBoldWidth4("SUNNYDALE", q)) / 2, y: top + 5 * q + 3, w: 6 * q, h: 9 * q,
+          advance: { slayerBoldWidth4(String($0), q) + q }) { slayerBold4(c, $0, $1, String($2), C(0x2A4A30), q * s) }
+}
+
+/// The heavy alphabet: six dots wide (N seven, room for its slant) and nine high, strokes two dots thick, only
+/// SUNNYDALE's letters.
+private let slayerBoldLetters4: [Character: [String]] = [
+    "S": [".####.", "##..##", "##....", ".###..", "..###.", "....##", "....##", "##..##", ".####."],
+    "U": ["##..##", "##..##", "##..##", "##..##", "##..##", "##..##", "##..##", "##..##", ".####."],
+    "N": ["##...##", "###..##", "###..##", "####.##", "##.#.##", "##.####", "##..###", "##..###", "##...##"],
+    "Y": ["##..##", "##..##", "##..##", ".####.", "..##..", "..##..", "..##..", "..##..", "..##.."],
+    "D": ["#####.", "##..##", "##..##", "##..##", "##..##", "##..##", "##..##", "##..##", "#####."],
+    "A": [".####.", "##..##", "##..##", "##..##", "######", "##..##", "##..##", "##..##", "##..##"],
+    "L": ["##....", "##....", "##....", "##....", "##....", "##....", "##....", "##....", "######"],
+    "E": ["######", "##....", "##....", "##....", "#####.", "##....", "##....", "##....", "######"],
+]
+
+/// How wide `text` comes out in the heavy alphabet at `p` pixels a dot.
+private func slayerBoldWidth4(_ text: String, _ p: Int) -> Int {
+    (text.reduce(0) { $0 + (slayerBoldLetters4[$1]?[0].count ?? 6) + 1 } - 1) * p
+}
+
+/// Lettering in the heavy alphabet, `p` pixels a dot, from its top-left corner.
+private func slayerBold4(_ c: PixelCanvas, _ x: Int, _ y: Int, _ text: String, _ col: Px, _ p: Int) {
+    var cx = x
+    for ch in text {
+        for (i, row) in (slayerBoldLetters4[ch] ?? []).enumerated() {
+            for (j, d) in row.enumerated() where d == "#" { c.rect(cx + j * p, y + i * p, p, p, col) }
+        }
+        cx += ((slayerBoldLetters4[ch]?[0].count ?? 6) + 1) * p
     }
 }
 
@@ -177,24 +203,23 @@ private func slayerPalm4(_ c: PixelCanvas, _ x: Int, _ base: Int, _ top: Int, r:
     c.circle(Int(cx), Int(cy), s, C(0x4A3A22))
 }
 
-/// How big the welcome board comes out.
-private func slayerWelcomeSize4(_ p: Int, small: Int, _ s: Int) -> (w: Int, h: Int) {
-    (slayerTextWidth4("SUNNYDALE", p) + 12 * s, 4 * s + 5 * small + 3 * s + 5 * p + 4 * s)
+/// How big the welcome board comes out with its lettering `q` dots a unit (`slayerSign4` fits it to that).
+private func slayerWelcomeSize4(_ q: Int, _ s: Int) -> (w: Int, h: Int) {
+    ((slayerBoldWidth4("SUNNYDALE", q) + 12) * s, (14 * q + 11) * s)
 }
 
 // MARK: - "Welcome to Sunnydale"
 
 extension Scenes {
     /// Where things stand at the town sign: the horizon, the sign's board, the street lamp, the far road.
-    static func slayerTownSignFrame(_ c: PixelCanvas, _ g: Int) -> (horizon: Int, board: (x: Int, y: Int, w: Int, h: Int, p: Int, small: Int),
+    static func slayerTownSignFrame(_ c: PixelCanvas, _ g: Int) -> (horizon: Int, board: (x: Int, y: Int, w: Int, h: Int),
                                                                      lamp: (x: Int, y: Int), road: Int) {
         let s = unit(g), tall = isTall(c)
-        let p = tall ? 3 * s : 2 * s, small = tall ? 2 * s : s
-        let size = slayerWelcomeSize4(p, small: small, s)
+        let size = slayerWelcomeSize4(tall ? 2 : 1, s)
         let bx = c.w * 63 / 100 - size.w / 2, by = tall ? g - 86 * s : g - 47 * s
         let horizon = tall ? g - 66 * s : g - 26 * s
         let lamp = (x: c.w * 34 / 100, y: tall ? g - 128 * s : 9 * s)
-        return (horizon, (bx, by, size.w, size.h, p, small), lamp, horizon + 5 * s)
+        return (horizon, (bx, by, size.w, size.h), lamp, horizon + 5 * s)
     }
 
     /// The sign at the edge of town by night: dry hills under a dark sky that glows orange low down from the town

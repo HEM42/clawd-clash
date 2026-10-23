@@ -31,7 +31,7 @@ protocol UniverseModule {
     /// What a compacted session's leader looks like while it's away and back (`UniverseCompaction.away`), `k` (0…1)
     /// through it; nil: nothing to see.
     func compactionLook(k: Double, cast: Cast) -> CompactionLook?
-    /// Little things certain characters do on stage: the Weeping Angle, Captain Clawk's flinch, T. Wrecks's glass…
+    /// Little things certain characters do on stage: the Weeping Angle, Captain Clawd's flinch, T. Wrecks's glass…
     var quirks: StageQuirks { get }
     /// Pairs who face off and now and then end with one bolt getting through (Han shoots first).
     var shootOuts: [ShootOut] { get }
@@ -45,6 +45,9 @@ protocol UniverseModule {
     /// What Tools/RenderDocs draws for the README besides the roster and places: the desktop line-up and the social
     /// preview. Empty: neither is drawn.
     var docs: DocsInfo { get }
+    /// Places where, now and then, the whole scene turns over (`SceneFlip`), in the window and the screen saver; nil:
+    /// never.
+    var sceneFlip: SceneFlip? { get }
     /// Only the template says true (`Sources/App/Universes/_Template/`), and it's never shown in the app: the registry
     /// refuses it in any build but a `TEMPLATE=1` one.
     var isTemplate: Bool { get }
@@ -68,6 +71,7 @@ extension UniverseModule {
     var drills: [Cast: BespokeDrill] { [:] }
     var regeneration: (length: Double, draw: (_ c: PixelCanvas, _ k: Double, _ t: Double) -> Void)? { nil }
     var docs: DocsInfo { DocsInfo() }
+    var sceneFlip: SceneFlip? { nil }
     var isTemplate: Bool { false }
 }
 
@@ -145,8 +149,11 @@ struct StageQuirks {
     var remark: ((_ who: OnStage, _ others: [OnStage], _ zoom: CGFloat, _ t: Double) -> (facing: CGFloat, line: String)?)? = nil
     /// While one of these is on stage, nobody has a voice: every line comes up an empty bubble (`StageQuirks.hushed`).
     var hushers: Set<Cast> = []
-    /// These play their signature once a fight they were in, or watched, is over (Mayor Wilclaws' wet wipe; `AfterDuel`).
+    /// These play their signature once a fight they were in, or watched, is over (Mayor Wilclawds' wet wipe; `AfterDuel`).
     var afterDuel: Set<Cast> = []
+    /// For any of those whose signature ends with what they do after a fight: how far into it (0…1) to start, so only
+    /// that end plays (Eleven's nosebleed, after her Eggo). Not listed: the whole signature.
+    var afterDuelFrom: [Cast: Double] = [:]
 
     /// A line with the words taken out of it: the same bubble, the same width (the font is monospaced), nothing in it.
     /// No-break spaces, so the text keeps its width when it's measured.

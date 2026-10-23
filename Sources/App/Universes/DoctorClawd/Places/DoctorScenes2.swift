@@ -673,6 +673,12 @@ extension Scenes {
         return (g - (tall ? 40 : 24) * b, g - (tall ? 9 : 6) * b, Int(Double(c.w) * 0.6), tall ? 54 : 40, b)
     }
 
+    /// The arts centre's middle and its shell's half-width and height; the pierhead's middle and half-width.
+    static func plassBuildings(_ c: PixelCanvas, _ g: Int) -> (mx: Int, mrx: Int, mry: Int, ph: Int, phw: Int) {
+        let b = d2Big(c, g), tall = isTall(c)
+        return (Int(Double(c.w) * 0.17), (tall ? 70 : 50) * b, (tall ? 40 : 23) * b, Int(Double(c.w) * 0.87), 25 * b)
+    }
+
     /// Roald Doll Plass on a Cardiff evening: a sunset sky over the bay, the sun sinking into the far shore, the
     /// bronze shell of the arts centre on the left and the red-brick pierhead with its clock tower on the right. The
     /// plaza's back rail runs along the water, and on the plaza stands the tall silver water tower, water sheeting
@@ -687,45 +693,81 @@ extension Scenes {
             wisp(c, x, y, (24 + Int(noise(i * 5 + 152) * 40)) * b, C(0xF08A9A, 0.55), s: b)
         }
         let sunX = Int(Double(c.w) * 0.32)
-        d2Glow(c, sunX, hz, 24 * b, C(0xFFD890), 0.5)
-        c.circle(sunX, hz, 7 * b, C(0xFFE4A0))
+        d2Glow(c, sunX, hz, 36 * b, C(0xFFD890), 0.55)
+        d2Glow(c, sunX, hz, 18 * b, C(0xFFC070), 0.35)
+        c.circle(sunX, hz, 11 * b, C(0xFFD890))
+        c.circle(sunX, hz, 10 * b, C(0xFFE8B0))
         d2Ridge(c, base: hz + b, amp: 6 * b, scale: Double(26 * b), seed: 53, C(0x2A2C4A))
         for i in 0..<(c.w / (12 * b)) where noise(i + 540) > 0.5 { c.rect(i * 12 * b, hz - b, max(1, b / 2), max(1, b / 2), C(0xFFD27A)) }
         // The bay.
         c.gradient(hz + b, pe, C(0x8A6A8A), C(0x1E2A4A), bands: 5)
         for k in 0..<((pe - hz) / (2 * b)) {
-            let y = hz + 2 * b + k * 2 * b, w = (14 - k) * b
+            let y = hz + 2 * b + k * 2 * b, w = (22 - k * 2) * b
             if w > 0 { c.rect(sunX - w / 2, y, w, max(1, b / 2), C(0xFFD890, 0.5)) }
         }
-        // The arts centre: a bronze shell with lit lettering cut through its front.
-        let mx = Int(Double(c.w) * 0.16), mrx = (tall ? 54 : 38) * b, mry = (tall ? 30 : 17) * b
+        // The arts centre: a bronze shell over walls of layered slate, its two lines of giant lettering cut through
+        // the front as windows, lit from inside, and a glass front at the foot.
+        let bl = plassBuildings(c, g), mx = bl.mx, mrx = bl.mrx, mry = bl.mry
+        func shellHalf(_ dy: Int) -> Int { Int(Double(mrx) * (1 - Double(dy * dy) / Double(mry * mry)).squareRoot()) }
+        let slates: [UInt32] = [0x4A4658, 0x5C5A4C, 0x3E4A56, 0x524252, 0x2E3440]
         for dy in 0...mry {
-            let k = 1 - Double(dy * dy) / Double(mry * mry)
-            let half = Int(Double(mrx) * k.squareRoot())
+            let half = shellHalf(dy)
+            if dy < mry / 3 {   // the slate walls, in their coloured courses
+                c.rect(mx - half, pe - dy, 2 * half, 1, C(slates[(dy / max(1, b + b / 2)) % slates.count]))
+                continue
+            }
             let band = (dy / (3 * b)) % 2 == 0
-            c.rect(mx - half, pe - dy, 2 * half, 1, band ? C(0x9A6A30) : C(0x84582A))
+            c.rect(mx - half, pe - dy, 2 * half, 1, band ? C(0xA87434) : C(0x8E602C))
             c.rect(mx + half - max(1, half / 5), pe - dy, max(1, half / 5), 1, C(0x5A3C1E))
+            c.rect(mx - half, pe - dy, max(1, half / 9), 1, C(0xC89A58))
         }
-        for k in 0..<10 {
-            let u = mx - mrx * 2 / 3 + k * (mrx * 4 / 30)
-            c.rect(u, pe - mry / 2, 2 * b, 3 * b, C(0xFFD27A, 0.85))
+        // The lettering: two lines of tall window letters, spaced as words, inside the shell.
+        for (row, at) in [(0, 0.66), (1, 0.48)] {
+            let dy = Int(Double(mry) * at), lh = (row == 0 ? 4 : 3) * b, half = shellHalf(dy + lh) - 6 * b
+            var x = mx - half, k = row * 7
+            while x < mx + half - 2 * b {
+                let gap = noise(k + 560) > 0.8 ? 4 * b : b          // now and then a space between words
+                let lw = (noise(k + 561) > 0.6 ? 3 : 2) * b
+                c.rect(x, pe - dy - lh, lw, lh, C(0xFFD27A, 0.9))
+                c.rect(x, pe - dy - lh, lw, max(1, b / 2), C(0xFFF0C0, 0.9))
+                x += lw + gap; k += 1
+            }
         }
-        c.rect(mx - mrx * 3 / 4, pe - 4 * b, mrx * 3 / 2, 4 * b, C(0x3A4A6A)); c.rect(mx - mrx * 3 / 4, pe - 4 * b, mrx * 3 / 2, max(1, b / 2), C(0xFFD8A0, 0.7))
-        // The pierhead: red brick, arched windows, a clock tower.
-        let ph = Int(Double(c.w) * 0.88), p = D2Pen(c: c, x: ph, y: pe, s: b)
-        let brick = C(0x9A3A2A), dk = C(0x6A2418)
-        p.rect(-16, -16, 32, 16, brick); p.rect(-16, -16, 32, 1, C(0xC85A44))
-        p.roof(-10, -21, half: 5, h: 5, dk); p.roof(10, -21, half: 5, h: 5, dk)
-        p.rect(-4, -34, 8, 18, brick); p.rect(-4, -34, 1, 18, C(0xC85A44)); p.rect(3, -34, 1, 18, dk)
-        p.roof(0, -40, half: 5, h: 6, dk); p.rect(0, -42, 1, 2, dk)
-        p.circle(0, -30, 2, C(0xF2ECD8)); p.rect(0, -31, 1, 1, dk); p.rect(0, -30, 1, 1, dk)
-        for u in stride(from: -13, through: 11, by: 4) { p.rect(u, -12, 2, 4, C(0xFFD27A, 0.8)); p.rect(u, -6, 2, 4, C(0x2A1A20)) }
+        c.rect(mx - mrx * 3 / 4, pe - 5 * b, mrx * 3 / 2, 5 * b, C(0x3A4A6A))
+        c.rect(mx - mrx * 3 / 4, pe - 5 * b, mrx * 3 / 2, max(1, b / 2), C(0xFFD8A0, 0.7))
+        for x in stride(from: mx - mrx * 3 / 4 + 4 * b, to: mx + mrx * 3 / 4, by: 6 * b) {
+            c.rect(x, pe - 5 * b, max(1, b / 2), 5 * b, C(0x26324A)); c.rect(x + b, pe - 4 * b, 4 * b, 3 * b, C(0xFFD8A0, 0.25))
+        }
+        // The pierhead: red brick and terracotta, corner turrets, two rows of arched windows, the clock tower.
+        let p = D2Pen(c: c, x: bl.ph, y: pe, s: b)
+        let brick = C(0x9A3A2A), dk = C(0x6A2418), lt = C(0xC85A44), stone = C(0xD8B890)
+        p.rect(-22, -24, 44, 24, brick); p.rect(-22, -24, 44, 1, lt); p.rect(-22, -13, 44, 1, stone)
+        for u in [-25, 19] { p.rect(u, -32, 6, 32, brick); p.rect(u, -32, 1, 32, lt); p.rect(u + 5, -32, 1, 32, dk)
+            p.roof(u + 3, -38, half: 4, h: 6, dk); p.rect(u + 3, -40, 1, 2, dk) }
+        p.roof(-11, -29, half: 7, h: 6, dk); p.roof(11, -29, half: 7, h: 6, dk)
+        p.rect(-5, -48, 10, 24, brick); p.rect(-5, -48, 1, 24, lt); p.rect(4, -48, 1, 24, dk); p.rect(-5, -36, 10, 1, stone)
+        p.rect(-6, -49, 12, 1, stone)
+        p.roof(0, -57, half: 6, h: 8, dk); p.rect(0, -60, 1, 3, dk)
+        p.circle(0, -42, 3, C(0xF2ECD8)); p.rect(0, -44, 1, 2, dk); p.rect(0, -42, 2, 1, dk)
+        for u in stride(from: -18, through: 15, by: 5) where abs(u) > 3 {
+            p.rect(u, -21, 3, 6, C(0xFFD27A, 0.85)); p.rect(u + 1, -22, 1, 1, C(0xFFD27A, 0.85))
+            p.rect(u, -11, 3, 7, C(0xFFD27A, 0.7)); p.rect(u + 1, -12, 1, 1, C(0xFFD27A, 0.7))
+        }
+        p.rect(-3, -9, 6, 9, C(0x2A1A20)); p.rect(-2, -10, 4, 1, C(0x2A1A20))
         // The plaza's back rail.
         c.rect(0, pe, c.w, g - pe, C(0x7A7E88))
         for y in stride(from: pe + 3 * b, to: g, by: 3 * b) { c.rect(0, y, c.w, max(1, b / 2), C(0x6A6E78)) }
         c.rect(0, pe - 3 * b, c.w, max(1, b / 2), C(0xB8BCC4))
         for x in stride(from: 0, to: c.w, by: 8 * b) { c.rect(x, pe - 3 * b, max(1, b / 2), 3 * b, C(0x9AA0AA)) }
         c.rect(0, pe, c.w, b, C(0xA8ACB4))
+        // Lamps along the rail, lit for the evening.
+        for at in [0.42, 0.5, 0.71, 0.77] {
+            let x = Int(Double(c.w) * at), lw = max(1, b / 2 + b % 2)
+            c.rect(x, pe - 12 * b, lw, 12 * b, C(0x2E323C))
+            c.rect(x - b, pe - 13 * b, 2 * b + lw, b, C(0x2E323C))
+            d2Glow(c, x, pe - 12 * b, 4 * b, C(0xFFE0A0), 0.35)
+            c.rect(x - b + lw / 2, pe - 12 * b, 2 * b, b, C(0xFFE8B0))
+        }
         // The water tower and its pool.
         plassTower(c, g)
         // The paving, with the lift slab.
@@ -772,7 +814,7 @@ extension Scenes {
         c.rect(f.fx + Int(ring * Double(11 * b)), foot - b / 2, max(1, b), max(1, b / 2), C(0xE8F4FF, 0.7 * (1 - ring)))
         // The bay glittering.
         let rows = max(1, (f.pe - f.hz) / b)
-        let centre = Int(Double(c.w) * 0.16) + (isTall(c) ? 54 : 38) * b, pier = Int(Double(c.w) * 0.88)
+        let bl = plassBuildings(c, g), centre = bl.mx + bl.mrx, pier = bl.ph
         for i in 0..<(c.w * rows / (60 * b) + 4) {
             let y = f.hz + 2 * b + Int(noise(i * 5 + 410) * Double(max(1, f.pe - f.hz - 3 * b)))
             let speed = 2 + noise(i * 5 + 411) * 4
@@ -780,7 +822,7 @@ extension Scenes {
             let x = Int((noise(i * 5 + 412) * span + t * speed * Double(b)).truncatingRemainder(dividingBy: span)) - 10 * b
             let a = 0.25 + 0.35 * (0.5 + 0.5 * sin(t * 2 + Double(i)))
             let len = (2 + Int(noise(i * 5 + 413) * 4)) * b
-            if x < centre || (x + len > pier - 17 * b && x < pier + 17 * b) { continue }
+            if x < centre || (x + len > pier - bl.phw && x < pier + bl.phw) { continue }
             c.rect(x, y, len, max(1, b / 2), C(0xF8D8C0, a))
         }
         // Gulls.

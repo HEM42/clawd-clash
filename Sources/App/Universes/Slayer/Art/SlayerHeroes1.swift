@@ -4,16 +4,16 @@ import Foundation
 // with Clawd's own orange face showing.
 
 let slayerHeroes1: [SlayerHero: Persona] = [
-    .buffyClawmers: Persona(name: "Buffy Clawmers", weapon: .saber, headTop: 20, signature: 3.0,
+    .buffyClawmers: Persona(name: "Buffy Clawdmers", weapon: .saber, headTop: 20, signature: 3.0,
                             callout: "Beep me if the apocalypse comes.", draw: drawBuffyClawmers),
-    .willowRosenclaw: Persona(name: "Willow Rosenclaw", weapon: .lightning,
+    .willowRosenclaw: Persona(name: "Willow Rosenclawd", weapon: .lightning,
                               magic: Magic(core: C(0xDCFFC0), glow: C(0x34C060), jagged: false, spell: true),
                               headTop: 20, signature: 3.2, callout: "Resolve face!", draw: drawWillowRosenclaw),
 ]
 
-// MARK: - Buffy Clawmers
+// MARK: - Buffy Clawdmers
 
-/// Buffy Clawmers: Clawd with long blonde hair past her shoulders, a short black leather jacket open over a red top,
+/// Buffy Clawdmers: Clawd with long blonde hair past her shoulders, a short black leather jacket open over a red top,
 /// the silver cross Angel gave her at her throat, dark jeans and boots. She fights with a wooden stake. Signature: she
 /// flips the stake up, it turns over twice in the air, and she catches it without looking.
 private func drawBuffyClawmers(_ c: PixelCanvas, _ p: Pose) {
@@ -73,9 +73,9 @@ private func heldStake(_ c: PixelCanvas) {
     c.rect(39, 36, 2, 2, slayerStakeWood); c.rect(40, 36, 1, 2, slayerStakeDark); c.px(39, 38, slayerStakePoint)
 }
 
-// MARK: - Willow Rosenclaw
+// MARK: - Willow Rosenclawd
 
-/// Willow Rosenclaw: Clawd with long straight red hair parted in the middle, a fuzzy lilac jumper, a short green skirt
+/// Willow Rosenclawd: Clawd with long straight red hair parted in the middle, a fuzzy lilac jumper, a short green skirt
 /// over dark tights and Mary Janes. Her magic is a ribbon of leaf-green sparkles. Signature: the pencil from
 /// "Doppelgangland": she lifts a hand and a pencil floats up off it and spins in the air, a little green glow round
 /// it, then drops back into her palm.

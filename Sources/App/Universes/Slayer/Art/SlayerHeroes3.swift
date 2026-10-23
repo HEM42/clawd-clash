@@ -1,17 +1,17 @@
 import Foundation
 
-// Heroes: the Summers family, the other Slayers, Jenny Clawlendar and two of Angel Investigations. Clawd in costume
+// Heroes: the Summers family, the other Slayers, Jenny Clawdlendar and two of Angel Investigations. Clawd in costume
 // like the rest of the cast: hair and clothes drawn over the blocky body, with Clawd's own orange face showing.
 
 let slayerHeroes3: [SlayerHero: Persona] = [
-    .dawnClawmers: Persona(name: "Dawn Clawmers", headTop: 20, signature: 3.2, draw: drawDawnClawmers),
-    .joyceClawmers: Persona(name: "Joyce Clawmers", weapon: .saber, headTop: 21, signature: 3.4,
+    .dawnClawmers: Persona(name: "Dawn Clawdmers", headTop: 20, signature: 3.2, draw: drawDawnClawmers),
+    .joyceClawmers: Persona(name: "Joyce Clawdmers", weapon: .saber, headTop: 21, signature: 3.4,
                             callout: "Have you tried not being a Slayer?", draw: drawJoyceClawmers),
     .faithLehayne: Persona(name: "Faith Lehayne", weapon: .saber, headTop: 20, signature: 3.0,
                            callout: "Five by five.", draw: drawFaithLehayne),
     .kendraYung: Persona(name: "Kendra Yung", weapon: .saber, headTop: 20, signature: 3.0,
                          callout: "Mr. Pointy.", draw: drawKendraYung),
-    .jennyClawlendar: Persona(name: "Jenny Clawlendar", weapon: .lightning,
+    .jennyClawlendar: Persona(name: "Jenny Clawdlendar", weapon: .lightning,
                               magic: Magic(core: C(0xFFF2C4), glow: C(0xE0961E), jagged: false, touch: true),
                               pivot: (40, 29.5), headTop: 21, signature: 3.4, draw: drawJennyClawlendar),
     .angstel: Persona(name: "Angstel", weapon: .saber, headTop: 17, signature: 3.6,
@@ -47,9 +47,9 @@ private func slayerWave(_ c: PixelCanvas, _ p: Pose, sleeve: Px, nowAndThen: Boo
     c.rect(38, 26 - up, 3, 7 + up, sleeve); c.rect(38, 24 - up, 3, 2, clawdOrange)
 }
 
-// MARK: - Dawn Clawmers
+// MARK: - Dawn Clawdmers
 
-/// Dawn Clawmers: Clawd with very long straight brown hair, a soft blue teen jumper with a white stripe across it,
+/// Dawn Clawdmers: Clawd with very long straight brown hair, a soft blue teen jumper with a white stripe across it,
 /// jeans and white trainers. She doesn't fight. Signature: the Key's green energy flickers through her, faint green
 /// light running over her in bands, a few motes rising off her hair, then gone.
 private func drawDawnClawmers(_ c: PixelCanvas, _ p: Pose) {
@@ -104,9 +104,9 @@ private func drawDawnClawmers(_ c: PixelCanvas, _ p: Pose) {
     }
 }
 
-// MARK: - Joyce Clawmers
+// MARK: - Joyce Clawdmers
 
-/// Joyce Clawmers: Clawd with short wavy blonde hair, a smart dusty-rose blouse with a white collar, tan slacks and low
+/// Joyce Clawdmers: Clawd with short wavy blonde hair, a smart dusty-rose blouse with a white collar, tan slacks and low
 /// shoes. She fights with the fire axe from "School Hard", which she only takes up when she has to. Signature: she
 /// folds her arms, her brows come down, and she gives you a mum's look, tapping one foot.
 private func drawJoyceClawmers(_ c: PixelCanvas, _ p: Pose) {
@@ -293,9 +293,9 @@ private func drawKendraYung(_ c: PixelCanvas, _ p: Pose) {
     }
 }
 
-// MARK: - Jenny Clawlendar
+// MARK: - Jenny Clawdlendar
 
-/// Jenny Clawlendar: Clawd with dark chin-length hair and a fringe, a long plum cardigan to her knees over a rust
+/// Jenny Clawdlendar: Clawd with dark chin-length hair and a fringe, a long plum cardigan to her knees over a rust
 /// patterned dress, her laptop tucked under one arm and the Orb of Thessulah in her other hand. The Orb is the Romani
 /// spirit vessel of the Ritual of Restoration, the one that gives a vampire back his soul: it never fires anything, it
 /// glows. So when she casts it lights from within, pale gold, and whoever she holds it up to is bathed in amber light,

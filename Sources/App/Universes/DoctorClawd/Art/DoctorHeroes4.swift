@@ -6,7 +6,7 @@ import Foundation
 // Leelah her knives.
 
 let doctorHeroes4: [DoctorHero: Persona] = [
-    .susan: Persona(name: "Susan Foreclaw", headTop: 21,
+    .susan: Persona(name: "Susan Foreclawd", headTop: 21,
                   draw: drawSusan),
     .ian: Persona(name: "Ian Chesterclawd", weapon: .saber, headTop: 22,
                   draw: drawIan),
@@ -79,9 +79,9 @@ private func drawArm(_ c: PixelCanvas, _ p: Pose, _ arm: Arm, sleeve: Px) {
 
 private func armLift(_ arm: Arm) -> Int { arm == .down ? 0 : 2 }
 
-// MARK: - Susan Foreclaw
+// MARK: - Susan Foreclawd
 
-/// Susan Foreclaw: the Doctor's granddaughter, a 1960s schoolgirl. A short black pixie crop with a ragged fringe, a
+/// Susan Foreclawd: the Doctor's granddaughter, a 1960s schoolgirl. A short black pixie crop with a ragged fringe, a
 /// dark pullover with a white Peter Pan collar, grey checked slacks and black flats; a red school book under her hand
 /// when she isn't pointing at something.
 private func drawSusan(_ c: PixelCanvas, _ p: Pose) {

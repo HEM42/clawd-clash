@@ -54,7 +54,7 @@ func clawdbergShowcase() {
             at(sprite(clara), ctx, o, bodyX: 26)
             tag("Verify the fix", ctx, centerX: o.x + 26 * unit, bottom: sy(spriteTop + 18))
         },
-        Panel(caption: "3 · Clara Clawton gets in") { ctx, o, _ in
+        Panel(caption: "3 · Clara Clawdton gets in") { ctx, o, _ in
             ride(ctx, o, .delorean, x: 92, ramp: 1, lit: false)
             at(sprite(clara, t: 0.06, walking: true), ctx, o, bodyX: 70, alpha: 0.8)
         },

@@ -10,10 +10,13 @@ import AppKit
 //   build/preview drills out.png luke ironMan ...  each solo practice set it does, at a few moments (blank: not one of its);
 //                                                  DRILL=bespoke shows just that one, at more moments
 //   build/preview place out.png avengersTower ...  locations at window size and at screen-saver size
+//   build/preview place out.png <universe> --flipped  each place of its that can turn over (`SceneFlip`) the right
+//                                                  way up, mid-turn and upside down, a crew on it with their names
 //   build/preview magic out.png [names…]           every magic user's stream side by side, at a few moments
 //   build/preview rides out.png [rides…]           the ships, landed and flying (all, or only those named, e.g. gtx)
 //   build/preview edges out.txt ironMan ...        every moment solid art touches the frame's top or side edges, where
-//                                                  its outline is cut off (shots and exits leaving on purpose show too)
+//                                                  its outline is cut off (shots and exits leaving on purpose show too);
+//                                                  --flipped checks the bottom edge too, the top when a scene turns over
 //   build/preview ids out.txt                      every saved id and what it means, as text: each universe's facts
 //                                                  (what the hook reads), every character, place, magic variant and
 //                                                  adoption. The universe-modules refactor must leave it identical.
@@ -28,7 +31,10 @@ guard args.count >= 2 else {
     print("  a name two universes share is an error; put the universe's key in front: dc:sandman, marvel:sandman")
     exit(2)
 }
-let mode = args[0], out = args[1], names = Array(args.dropFirst(2))
+let mode = args[0], out = args[1]
+/// `--flipped`: the scene turned over (`SceneFlip`), for `place` and `edges`.
+let flipped = args.contains("--flipped")
+let names = Array(args.dropFirst(2)).filter { $0 != "--flipped" }
 let scale = CGFloat(Double(ProcessInfo.processInfo.environment["SCALE"] ?? "") ?? 3)
 if let moon = ProcessInfo.processInfo.environment["MOON"] { slayerMoonOverride = moon == "full" }
 if let g = ProcessInfo.processInfo.environment["GUISE"].flatMap(Int.init) {
@@ -146,6 +152,8 @@ case "edges":
             draw(n)
             var edges = Set<String>()
             for x in 0..<n.w where n.buf[x * 4 + 3] >= 250 { edges.insert("top") }
+            // Turned over, the frame's bottom row is its top: whatever's solid there is cut off against the ceiling.
+            if flipped { for x in 0..<n.w where n.buf[((n.h - 1) * n.w + x) * 4 + 3] >= 250 { edges.insert("bottom (the top, upside down)") } }
             for y in 0..<n.h {
                 if n.buf[(y * n.w) * 4 + 3] >= 250 { edges.insert("left") }
                 if n.buf[(y * n.w + n.w - 1) * 4 + 3] >= 250 { edges.insert("right") }
@@ -389,9 +397,74 @@ case "place":
     func place(_ n: String) -> Location? {
         Location(rawValue: n) ?? everywhere.first { squashed($0.name) == squashed(n) }
     }
-    let places = names.isEmpty || names == ["all"] ? everywhere
+    var places = names.isEmpty || names == ["all"] ? everywhere
         : universe.map { Location.all(in: $0) }
         ?? names.map { n in place(n) ?? { print("unknown place: \(n)"); exit(2) }() }
+    if flipped {
+        // The places that can turn over (a universe named: just its own), each the right way up, mid-turn and upside
+        // down, with a crew standing on its floor and their names, as the window and the screen saver turn them
+        // (`SceneTurn`).
+        if universe != nil || names.isEmpty { places = places.filter { $0.universe.module.sceneFlip?.places.contains($0) == true } }
+        guard !places.isEmpty else { print("no place there turns over"); exit(2) }
+        let strip = (w: 480, h: 75), tall = (w: 480, h: 300)
+        let s: CGFloat = 2, gap: CGFloat = 12
+        let turns: [(String, Double)] = [("the right way up", 0), ("turning", 0.4), ("upside down", 1)]
+        let rowH = CGFloat(strip.h + tall.h) * s + 64
+        let w = Int(CGFloat(strip.w) * s * 3 + gap * 4), h = Int(rowH * CGFloat(places.count))
+        save(sheet(w, h) { ctx in
+            for (i, l) in places.enumerated() {
+                let top = CGFloat(h) - rowH * CGFloat(i)
+                label(l.name, 6, top - 18, size: 13)
+                // Who stands there: whoever lives there first, then the universe's first heroes, four in all.
+                let cast = Theme.of(l.universe).cast.filter { !$0.universe.isHem($0.id) }
+                let crew = Array((cast.filter { $0.home == l } + cast.filter { !$0.isDark && $0.home != l }).prefix(4))
+                for (j, size) in [strip, tall].enumerated() {
+                    let room = PixelCanvas(size.w, size.h); l.drawStatic(room, floorRows: 10)
+                    let live = PixelCanvas(size.w, size.h); l.drawAnimated(live, floorRows: 10, t: 1.3)
+                    let y = j == 0 ? top - 40 - CGFloat(strip.h) * s : top - 56 - CGFloat(strip.h + tall.h) * s
+                    for (k, turn) in turns.enumerated() {
+                        let x = gap + CGFloat(k) * (CGFloat(size.w) * s + gap)
+                        let frame = CGRect(x: x, y: y, width: CGFloat(size.w) * s, height: CGFloat(size.h) * s)
+                        if j == 0 { label(turn.0, x, top - 36, size: 11, color: NSColor(white: 0.75, alpha: 1)) }
+                        let t = SceneTurn(amount: turn.1, axis: frame.midY)
+                        ctx.saveGState()
+                        ctx.clip(to: frame)
+                        ctx.setFillColor(CGColor(red: 0.03, green: 0.035, blue: 0.05, alpha: 1)); ctx.fill(frame)
+                        ctx.translateBy(x: 0, y: t.axis); ctx.scaleBy(x: 1, y: t.scale); ctx.translateBy(x: 0, y: -t.axis)
+                        for img in [room.makeImage(), live.makeImage()].compactMap({ $0 }) { ctx.draw(img, in: frame) }
+                        // The crew, a sprite's pixel to a place's, feet a little way into the floor.
+                        var tags: [(String, CGFloat, CGFloat)] = []
+                        for (n, who) in crew.enumerated() {
+                            let c = PixelCanvas(Sprite.width, Sprite.height)
+                            who.draw(c, t: 0.4 + Double(n), mode: .idle, walking: false, role: .none, asSession: true)
+                            c.addOutline(C(0xFFFFFF, 0.92))
+                            let cx = frame.minX + (60 + CGFloat(n) * 100) * s
+                            if let img = c.makeImage() {
+                                ctx.draw(img, in: CGRect(x: cx - CGFloat(Sprite.bodyCenterX) * s, y: frame.minY,
+                                                         width: CGFloat(Sprite.width) * s, height: CGFloat(Sprite.height) * s))
+                            }
+                            tags.append((who.name, cx, frame.minY + CGFloat(Sprite.height - who.drawnTop() + 4) * s))
+                        }
+                        ctx.restoreGState()
+                        // Their names, upright, where the spot over their heads went.
+                        ctx.saveGState(); ctx.clip(to: frame)
+                        for tag in tags {
+                            let text = NSAttributedString(string: tag.0, attributes: [.font: NSFont.systemFont(ofSize: 11, weight: .bold),
+                                .foregroundColor: NSColor.white.withAlphaComponent(t.labelAlpha)])
+                            let ts = text.size()
+                            let my = t.y(tag.2 + ts.height / 2)
+                            let box = CGRect(x: tag.1 - ts.width / 2 - 4, y: my - ts.height / 2 - 1, width: ts.width + 8, height: ts.height + 2)
+                            ctx.setFillColor(CGColor(gray: 0.08, alpha: 0.82 * t.labelAlpha))
+                            ctx.addPath(CGPath(roundedRect: box, cornerWidth: 4, cornerHeight: 4, transform: nil)); ctx.fillPath()
+                            text.draw(at: NSPoint(x: box.minX + 4, y: box.minY + 1))
+                        }
+                        ctx.restoreGState()
+                    }
+                }
+            }
+        })
+        exit(0)
+    }
     // The window's strip (about 480×75 pixels) and a screen-saver frame (16:10, tall enough for the extras).
     let strip = (w: 480, h: 75), tall = (w: 480, h: 300)
     let s: CGFloat = 2

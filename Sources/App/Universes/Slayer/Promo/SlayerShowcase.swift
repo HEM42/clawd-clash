@@ -79,7 +79,7 @@ func slayerShowcase() {
 
     // Tabula Rasa: /compact, and Willow's forgetting spell goes off on Buffy: the crystal glows, she has no idea who
     // she is ("JOAN?"), then it cracks underfoot and it all comes back.
-    let name = "Buffy Clawmers", bx = 62.0
+    let name = "Buffy Clawdmers", bx = 62.0
     strip(.slayerMagicBox, [
         Panel(caption: "you type /compact") { ctx, o, sy in
             at(sprite(buffy), ctx, o, bodyX: bx)

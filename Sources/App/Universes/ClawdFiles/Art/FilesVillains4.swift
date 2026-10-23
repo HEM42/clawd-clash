@@ -4,7 +4,7 @@ import Foundation
 // else (the Flukeman's pale suit covers him head to foot); creepy, but no worse than the show at teatime.
 
 let filesVillains4: [FilesVillain: Persona] = [
-    .tooms: Persona(name: "Eugene Clawms", weapon: .saber, headTop: 21, signature: 3.8, callout: "Back in thirty years.",
+    .tooms: Persona(name: "Eugene Clawdms", weapon: .saber, headTop: 21, signature: 3.8, callout: "Back in thirty years.",
                     draw: drawTooms),
     .flukeman: Persona(name: "The Flukeman", weapon: .saber, canSit: false, headTop: 12, signature: 3.6, callout: "Glrrbl.",
                        draw: drawFlukeman),
@@ -62,9 +62,9 @@ private func blit(_ src: PixelCanvas, into c: PixelCanvas, alpha: Double = 1, cl
     }
 }
 
-// MARK: - Eugene Clawms
+// MARK: - Eugene Clawdms
 
-/// Eugene Clawms: Clawd in an animal-control uniform (a khaki work shirt with a badge on the chest, brown trousers),
+/// Eugene Clawdms: Clawd in an animal-control uniform (a khaki work shirt with a badge on the chest, brown trousers),
 /// dark hair combed flat, and yellow eyes that don't blink. His fingers are long and end in yellowed nails, and he
 /// fights with them, raking. Signature: he squeezes himself thin, taller and narrower, slides sideways into a vent grate
 /// at his feet and is gone, then squeezes back out again.

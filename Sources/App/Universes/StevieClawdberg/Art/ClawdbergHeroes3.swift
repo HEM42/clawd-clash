@@ -18,7 +18,7 @@ let clawdbergHeroes3: [ClawdbergHero: Persona] = [
     .lynnPeltclawd: Persona(name: "Lynn Peltclawd", weapon: .saber, headTop: 21, draw: drawLynnPeltclawd),
     .mrWing: Persona(name: "Mr. Wing", headTop: 22, signature: 3.4, callout: "Never after midnight",
                      draw: drawMrWing),
-    .futterclaw: Persona(name: "Murray Futterclaw", weapon: .blaster,
+    .futterclaw: Persona(name: "Murray Futterclawd", weapon: .blaster,
                          shot: .beam(core: C(0xEAF6FF), glow: C(0x5AA8F0)), muzzle: (49, 32), headTop: 21,
                          signature: 3.0, callout: "Gremlins!", draw: drawFutterclaw),
     .grandpaDread: Persona(name: "Grandpa Dread", headTop: 18, signature: 2.6, draw: drawGrandpaDread),
@@ -424,9 +424,9 @@ private func drawMrWing(_ c: PixelCanvas, _ p: Pose) {
     c.rect(38, 32 - up / 2, 3, 3, robe); c.rect(41, 31 - up, 2, 2, clawdOrange)
 }
 
-// MARK: - Murray Futterclaw
+// MARK: - Murray Futterclawd
 
-/// Murray Futterclaw: Clawd as the grumpy old WWII vet next door, an olive peaked cap, bushy grey brows, stubble, and
+/// Murray Futterclawd: Clawd as the grumpy old WWII vet next door, an olive peaked cap, bushy grey brows, stubble, and
 /// a red-and-black buffalo-plaid jacket. In a fight he turns a fire hose on them, a brass nozzle and a canvas hose,
 /// a hard spray of water. Signature: a little foreign car putters past and he shakes his fist at it.
 private func drawFutterclaw(_ c: PixelCanvas, _ p: Pose) {

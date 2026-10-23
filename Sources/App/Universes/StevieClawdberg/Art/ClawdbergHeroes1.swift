@@ -21,7 +21,7 @@ let clawdbergHeroes1: [ClawdbergHero: Persona] = [
                            callout: "Does anyone here speak English?", draw: drawMarcusBrodie),
     .grailKnight: Persona(name: "The Grail Knight", weapon: .saber, armoured: true, headTop: 22, signature: 3.6,
                           callout: "You have chosen wisely.", draw: drawGrailKnight),
-    .mutt: Persona(name: "Mutt Willclaws", weapon: .saber, headTop: 19, signature: 3.0, draw: drawMutt),
+    .mutt: Persona(name: "Mutt Willclawds", weapon: .saber, headTop: 19, signature: 3.0, draw: drawMutt),
     .helenaShore: Persona(name: "Helena Shore", weapon: .blaster, shot: .bullet, muzzle: (47, 32), headTop: 20,
                           signature: 3.0, draw: drawHelenaShore),
 ]
@@ -654,9 +654,9 @@ private func drawGrailKnight(_ c: PixelCanvas, _ p: Pose) {
     c.rect(38, 29, 3, 3, mail); c.rect(41, 28, 2, 2, mail)
 }
 
-// MARK: - Mutt Willclaws
+// MARK: - Mutt Willclawds
 
-/// Mutt Willclaws: Clawd in a black leather biker jacket over a white T-shirt, jeans and black boots, a black biker
+/// Mutt Willclawds: Clawd in a black leather biker jacket over a white T-shirt, jeans and black boots, a black biker
 /// cap pushed back on his head and a slick dark quiff rising in front of it. He fights with a switchblade, flicked
 /// open. Signature: out comes a comb instead, flicked like the blade, and he runs it through the quiff, which shines.
 private func drawMutt(_ c: PixelCanvas, _ p: Pose) {

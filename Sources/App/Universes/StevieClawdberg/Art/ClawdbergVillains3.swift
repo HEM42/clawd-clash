@@ -2,7 +2,7 @@ import Foundation
 
 // Villains: Gremlins. The gremlins are Clawd in green scaly gremlin suits, the same blocky body on its four legs with
 // huge pointed ears, red eyes and a toothy grin, each told apart by its tell (a white mohawk tuft, a fin, glasses and
-// a tie, leathery wings, a crackling outline, lipstick, wide eyes). Mrs. Deegle and Dr. Clawtheter are Clawd in
+// a tie, leathery wings, a crackling outline, lipstick, wide eyes). Mrs. Deegle and Dr. Clawdtheter are Clawd in
 // costume, orange face showing.
 
 let clawdbergVillains3: [ClawdbergVillain: Persona] = [
@@ -18,7 +18,7 @@ let clawdbergVillains3: [ClawdbergVillain: Persona] = [
     .greta: Persona(name: "Greta", headTop: 22, signature: 2.8, draw: drawGreta),
     .daffy: Persona(name: "Daffy", weapon: .saber, headTop: 22, signature: 2.8, draw: drawDaffy),
     .mrsDeegle: Persona(name: "Mrs. Deegle", headTop: 17, signature: 3.0, draw: drawMrsDeegle),
-    .drClawtheter: Persona(name: "Dr. Clawtheter", headTop: 20, signature: 3.2, draw: drawDrClawtheter),
+    .drClawtheter: Persona(name: "Dr. Clawdtheter", headTop: 20, signature: 3.2, draw: drawDrClawtheter),
 ]
 
 // MARK: - The gremlin suit
@@ -550,9 +550,9 @@ private func drawMrsDeegle(_ c: PixelCanvas, _ p: Pose) {
     c.rect(15, 33, 3, 3, coat); c.rect(38, 33, 3, 3, coat)
 }
 
-// MARK: - Dr. Clawtheter
+// MARK: - Dr. Clawdtheter
 
-/// Dr. Clawtheter: Clawd as the Clamp Centre's mad geneticist, silver hair swept back, a doctor's head mirror on a
+/// Dr. Clawdtheter: Clawd as the Clamp Centre's mad geneticist, silver hair swept back, a doctor's head mirror on a
 /// band, a long white lab coat (down over the tops of his legs) over a dark tie, coloured serum vials in its breast
 /// pocket and black rubber gloves. He doesn't fight. Signature: he holds a glowing serum vial up to the light and
 /// gazes up at it, a glint running over the glass.

@@ -109,6 +109,9 @@ struct TemplateUniverse: UniverseModule {
     var rides: [Ride] { [] }
     /// Characters' own practice sets, done now and then among the general drills (`BespokeDrill`).
     var drills: [Cast: BespokeDrill] { [:] }
+    /// Places where, now and then, the whole scene turns over in the window and the screen saver (`SceneFlip`); nil:
+    /// never.
+    var sceneFlip: SceneFlip? { nil }
     /// The README's pictures besides the roster and places (Tools/RenderDocs): the desktop line-up, left to right,
     /// pairs fighting each other and the odd one cheering, and the social preview's title, line and cast.
     var docs: DocsInfo {

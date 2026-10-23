@@ -1,7 +1,7 @@
 import Foundation
 
 // Villains: the rest of the vampires. Kakistoes and the Turok-Hahn are big Clawds (a taller, broader block, their
-// `bulk` and fist say so) still on four legs; Sundae, Lyle Grouch and Draclawla are Clawd at Clawd's own size. Each is
+// `bulk` and fist say so) still on four legs; Sundae, Lyle Grouch and Clawdula are Clawd at Clawd's own size. Each is
 // carried by an outfit and a silhouette first (the game face is fine detail): a battered greatcoat and cloven hooves,
 // a punk's red crop and tartan, a cowboy hat, a flaring red-lined collar, bare grey muscle and bat ears.
 
@@ -10,7 +10,7 @@ let slayerVillains3: [SlayerVillain: Persona] = [
                         draw: drawKakistoes),
     .sundae: Persona(name: "Sundae", weapon: .saber, headTop: 18, signature: 3.4, draw: drawSundae),
     .lyleGrouch: Persona(name: "Lyle Grouch", weapon: .saber, headTop: 14, signature: 3.2, draw: drawLyleGrouch),
-    .draclawla: Persona(name: "Draclawla", weapon: .lightning,
+    .draclawla: Persona(name: "Clawdula", weapon: .lightning,
                         magic: Magic(core: C(0xFFF6F2), glow: C(0xB0101E), jagged: false, rings: true),
                         pivot: (44.0, 31.0), headTop: 19, signature: 3.6, draw: drawDraclawla),
     .turokHahn: Persona(name: "The Turok-Hahn", weapon: .saber, armoured: true, canSit: false, pivot: v3TurokFist,
@@ -335,9 +335,9 @@ private func drawLyleGrouch(_ c: PixelCanvas, _ p: Pose) {
     if let a = p.melee { slayerClaws(c, angle: a, trail: p.trail, sleeve: denim) }
 }
 
-// MARK: - Draclawla
+// MARK: - Clawdula
 
-/// Draclawla: the Count himself, in Sunnydale for the Slayer. Black hair slicked back to a widow's peak, a neat dark
+/// Clawdula: the Count himself, in Sunnydale for the Slayer. Black hair slicked back to a widow's peak, a neat dark
 /// goatee, a black suit and a white ruffled shirt with a red-stoned medallion; a long black cape lined in blood red,
 /// its high collar flaring to two points behind his head. His thrall is rings of blood red, from a clawed hand held
 /// out, his eyes glowing red with it. Signature: he turns to mist, a red-grey fog swirling where he stood with two red
@@ -368,7 +368,7 @@ private func drawDraclawla(_ c: PixelCanvas, _ p: Pose) {
     }
 }
 
-/// Draclawla himself (drawn into a canvas of its own and faded for his signature).
+/// Clawdula himself (drawn into a canvas of its own and faded for his signature).
 private func drawDraclawlaBody(_ c: PixelCanvas, _ p: Pose) {
     let cape = C(0x161218), capeD = C(0x08060A), capeL = C(0x34293A), lining = C(0x9A1020), liningD = C(0x6A0A16)
     let hair = C(0x16121A), hairL = C(0x3E3446), shirt = C(0xECE4DC), shirtD = C(0xB8B0A8), gold = C(0xD4AA4A)

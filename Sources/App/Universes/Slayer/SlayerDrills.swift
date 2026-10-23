@@ -40,7 +40,7 @@ private func ease(_ k: Double) -> Double {
     return u * u * (3 - 2 * u)
 }
 
-// MARK: - Buffy Clawmers
+// MARK: - Buffy Clawdmers
 
 /// Buffy kicking a heavy bag: it hangs from a bracket in front of her, she snaps a front kick into it (every third one
 /// a high kick), it swings away on its chain and back, and she kicks it again as it comes back to her.
@@ -94,7 +94,7 @@ private func drawPunchBag(_ c: PixelCanvas, _ who: Cast, _ d: DrillPlay, _ t: Do
     }
 }
 
-// MARK: - Willow Rosenclaw
+// MARK: - Willow Rosenclawd
 
 /// Willow practising "emotional control" ("Doppelgangland"): a pencil on a stack of books in front of her, her hand
 /// up, and it lifts, hovers wobbling, and settles back down; now and then her focus slips and it drops with a clatter.

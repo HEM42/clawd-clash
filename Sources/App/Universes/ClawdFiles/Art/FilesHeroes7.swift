@@ -1,13 +1,13 @@
 import Foundation
 
-// Heroes: friendly oddities and pets. Tad O'Clawley, Dr. Blockclaw, the Conundrum, Sheriff Hartwell, Queequeg and Daggoo.
+// Heroes: friendly oddities and pets. Tad O'Clawdley, Dr. Blockclawd, the Conundrum, Sheriff Hartwell, Queequeg and Daggoo.
 // The show's comic side: a webcaster, two sideshow performers from Gibsonton, a hapless small-town sheriff, Scrawly's
 // Pomeranian and Clawder's goldfish. Clawd in costume as everywhere, except the two pets, who are animals of Clawd orange.
 
 let filesHeroes7: [FilesHero: Persona] = [
-    .tadOClawley: Persona(name: "Tad O'Clawley", weapon: .none, headTop: 20, signature: 3.4, callout: "Wake up, America!",
+    .tadOClawley: Persona(name: "Tad O'Clawdley", weapon: .none, headTop: 20, signature: 3.4, callout: "Wake up, America!",
                           draw: drawTadOClawley),
-    .drBlockclaw: Persona(name: "Dr. Blockclaw", weapon: .saber, headTop: 26, signature: 3.2, callout: "Step right up!",
+    .drBlockclaw: Persona(name: "Dr. Blockclawd", weapon: .saber, headTop: 26, signature: 3.2, callout: "Step right up!",
                           draw: drawDrBlockclaw),
     .conundrum: Persona(name: "The Conundrum", weapon: .none, headTop: 26, signature: 3.0, callout: "…",
                         draw: drawConundrum),
@@ -40,9 +40,9 @@ private func h7Edge(_ c: PixelCanvas, x: Int, y: Int, length: Int, vertical: Boo
     }
 }
 
-// MARK: - Tad O'Clawley
+// MARK: - Tad O'Clawdley
 
-/// Tad O'Clawley: Clawd with dark hair swept up in a glossy wave, a navy blazer over an open-collared white shirt, an
+/// Tad O'Clawdley: Clawd with dark hair swept up in a glossy wave, a navy blazer over an open-collared white shirt, an
 /// earpiece, and a handheld microphone he never puts down. No weapon: in a fight he shouts. Signature: he goes live, the
 /// mic up to his mouth, a red LIVE light blinking over his shoulder and his voice rolling out in arcs.
 private func drawTadOClawley(_ c: PixelCanvas, _ p: Pose) {
@@ -106,9 +106,9 @@ private func drawTadOClawley(_ c: PixelCanvas, _ p: Pose) {
     c.rect(41, 33, 1, 4, mic); c.rect(40, 31, 3, 2, micHead)
 }
 
-// MARK: - Dr. Blockclaw
+// MARK: - Dr. Blockclawd
 
-/// Dr. Blockclaw: a Gibsonton sideshow performer. Clawd bald and shining, blue tattoo lines winding round his arms and
+/// Dr. Blockclawd: a Gibsonton sideshow performer. Clawd bald and shining, blue tattoo lines winding round his arms and
 /// up his cheeks, a black waistcoat over his bare chest, striped red circus trousers. He swings a big carpenter's
 /// hammer. Signature: the human block's act: he sets a nail to his nose and taps it in, tink, tink, stars popping
 /// (it's a trick, and he takes a bow).

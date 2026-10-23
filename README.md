@@ -5,7 +5,7 @@
 <h1 align="center">Clawd Clash</h1>
 
 <p align="center">
-  <b>Your Claude Code sessions, and those of every other AI you run, as a pixel-art Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd, The Clawd Files, Stevie Clawdberg, Clawd of the Rings or Clawd Slayer battle on your desktop.</b><br>
+  <b>Your Claude Code sessions, and those of every other AI you run, as a pixel-art Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd, The Clawd Files, Stevie Clawdberg, Clawd of the Rings, Clawd Slayer or Stranger Clawds battle on your desktop.</b><br>
   Every session is a hero or a villain, every subagent joins in, and they fight while they work.
 </p>
 
@@ -23,7 +23,7 @@ https://github.com/user-attachments/assets/9a06ca4d-9636-4c3d-b2f1-197f5bb3a8c8
 
 <p align="center"><sub>Full 1080p version: <a href="promo/clawd-clash-promo.mp4">promo/clawd-clash-promo.mp4</a></sub></p>
 
-Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars), **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars), **[Doctor Clawd](https://github.com/rodclemen/doctor-clawd)**, **[The Clawd Files](https://github.com/rodclemen/the-clawd-files)**, **[Stevie Clawdberg](https://github.com/rodclemen/stevie-clawdberg)**, **[Clawd of the Rings](https://github.com/rodclemen/clawd-of-the-rings)** and **[Clawd Slayer](https://github.com/rodclemen/clawd-slayer)**. Pick one in Settings, or Clawd Royale for all of them at once. The universes' own pages show each one on its own; this one is the app.
+Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars), **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars), **[Doctor Clawd](https://github.com/rodclemen/doctor-clawd)**, **[The Clawd Files](https://github.com/rodclemen/the-clawd-files)**, **[Stevie Clawdberg](https://github.com/rodclemen/stevie-clawdberg)**, **[Clawd of the Rings](https://github.com/rodclemen/clawd-of-the-rings)**, **[Clawd Slayer](https://github.com/rodclemen/clawd-slayer)** and **[Stranger Clawds](https://github.com/rodclemen/stranger-clawds)**. Pick one in Settings, or Clawd Royale for all of them at once. The universes' own pages show each one on its own; this one is the app.
 
 | Star Clawds | Marvelous Clawds |
 |---|---|
@@ -34,6 +34,8 @@ Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/r
 | https://github.com/user-attachments/assets/c3c0f4a1-ac2b-41b5-9b72-bc03c1e123c9 | https://github.com/user-attachments/assets/76bd2d03-f7af-4e76-9ec8-9087f5f4badd |
 | **Clawd of the Rings** | **Clawd Slayer** |
 | https://github.com/user-attachments/assets/76756ccd-d111-4290-b832-8ca4e9e728e4 | https://github.com/user-attachments/assets/dd9213e1-7192-4018-b169-ea451f6a146b |
+| **Stranger Clawds** | |
+| https://github.com/user-attachments/assets/cd3941de-f7e2-4494-a7b3-f8872a0623d5 | |
 
 <p align="center"><sub>🔊 Click the speaker in a player for sound: GitHub starts videos muted.</sub></p>
 
@@ -80,14 +82,15 @@ You run Claude Code in three terminals. One is thinking, one is waiting for your
   <img src="docs/desktop-the-clawd-files.png" alt="The Clawd Files sessions and agents fighting along the bottom of the screen"><br>
   <img src="docs/desktop-stevie-clawdberg.png" alt="Stevie Clawdberg sessions and agents fighting along the bottom of the screen"><br>
   <img src="docs/desktop-clawd-of-the-rings.png" alt="Clawd of the Rings sessions and agents fighting along the bottom of the screen"><br>
-  <img src="docs/desktop-clawd-slayer.png" alt="Clawd Slayer sessions and agents fighting along the bottom of the screen">
+  <img src="docs/desktop-clawd-slayer.png" alt="Clawd Slayer sessions and agents fighting along the bottom of the screen"><br>
+  <img src="docs/desktop-stranger-clawds.png" alt="Stranger Clawds sessions and agents fighting along the bottom of the screen">
 </p>
 
 ## The universes
 
 Pick one in **Settings… → Universe**:
 
-- **One universe:** Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd, The Clawd Files, Stevie Clawdberg, Clawd of the Rings or Clawd Slayer.
+- **One universe:** Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd, The Clawd Files, Stevie Clawdberg, Clawd of the Rings, Clawd Slayer or Stranger Clawds.
 - **Random:** a different universe on its own every 1, 5, 10, 15, 30 or 60 minutes.
 - **Clawd Royale:** every cast in one scene, heroes against villains, each character as itself. The place is a random one from any universe and changes every ten minutes (the Location menu is greyed out meanwhile).
 
@@ -195,7 +198,7 @@ The screen saver follows your pick with "The same as Clawd Clash", or has a univ
   - The DeLorean, the moon bike, the mothership or the park jeep picks people up
   - When a time traveller's session compacts its context, they hit 88 mph and come back with three sonic booms
   - T. Wrecks's footsteps ripple a glass of water
-  - Captain Clawk jumps at every tick of the Croc Clock
+  - Captain Clawd jumps at every tick of the Croc Clock
 - **Sides:** Claude Code plays the heroes when another AI runs
 
 <details>
@@ -234,8 +237,8 @@ The screen saver follows your pick with "The same as Clawd Clash", or has a univ
   - When one of the Tabula Rasa eight's sessions compacts its context, Willow's forgetting spell goes off: a crystal glows, they don't know who they are ("JOAN?"), then it cracks underfoot and it all comes back
   - While the Gentlemen are on stage, nobody has a voice: every speech bubble comes up empty
   - On nights when the real moon is full, Ozz and Veruka stay wolves
-  - The First Evil now and then becomes one of the Big Bads before it: the Old Master, the Mayor, Glorificlaws or Adamm
-  - Mayor Wilclaws wipes his hands with a wet wipe after every duel
+  - The First Evil now and then becomes one of the Big Bads before it: the Old Master, the Mayor, Glorificlawds or Adamm
+  - Mayor Wilclawds wipes his hands with a wet wipe after every duel
   - Only the witches (Willow, Tara and Jenny) float cross-legged in meditation
 - **Sides:** Claude Code plays the heroes when another AI runs
 
@@ -243,6 +246,26 @@ The screen saver follows your pick with "The same as Clawd Clash", or has a univ
 <summary><b>The Clawd Slayer cast and places</b></summary>
 <p align="center"><img src="docs/roster-clawd-slayer.png" alt="All Clawd Slayer characters" width="760"></p>
 <p align="center"><img src="docs/locations-clawd-slayer.png" alt="All Clawd Slayer places" width="760"></p>
+</details>
+
+### Stranger Clawds
+
+- **Cast:** 15 villains, 29 heroes
+- **Places:** 16, from the Wheelers' Basement to Benny's Burgers
+- **Weapons:** Eleven's, Will's and Kali's powers, Vecna's and One's minds, Nancy's shotgun, Hopper's revolver, Steve's nail bat, Lucas's slingshot, Joyce's axe, Murray's flamethrower, Karen's wine bottle, the Democlawdgon's claws
+- **Set pieces:**
+  - Arch-enemies face off first, and Vecna and One never lead two sessions back to back
+  - When one of the Party is done, two friends race in on BMX bikes, walkie-talkies on the bars, and whoever's leaving hops on the pegs
+  - When the session of one of the eight who've been to the Upside Down compacts its context, the wall behind them stretches like a membrane and pulls them through; they stumble back out slimy, spores in their hair
+  - Eleven's nose bleeds after a fight, a ghostly grandfather clock looms behind the heroes while Vecna is on stage, and Steve tells the kids to stay close
+  - The Mind Flayer towers over the Upside Down in the storm, made of black smoke
+  - Demodogs, Dart, Demobats and a flayed rat only turn up as agents
+- **Sides:** Claude Code plays the heroes when another AI runs
+
+<details>
+<summary><b>The Stranger Clawds cast and places</b></summary>
+<p align="center"><img src="docs/roster-stranger-clawds.png" alt="All Stranger Clawds characters" width="760"></p>
+<p align="center"><img src="docs/locations-stranger-clawds.png" alt="All Stranger Clawds places" width="760"></p>
 </details>
 
 ## Window mode and the screen saver
@@ -267,8 +290,9 @@ Every 10 minutes it moves somewhere new, with a transition from the universe it'
 - **Stevie Clawdberg:** one of ten from the films: the bike crossing the full moon, the DeLorean at 88 mph, a red line across the map, the fin, a camera flash, the park gates, the five tones, the rolling boulder, pixie dust and One-Eyed Willy's doubloon.
 - **Clawd of the Rings:** one of nine: the Eye opening, a dotted line walking across the map, the Red Book's page turning, the Great Eagles, the Ring going on, the beacons of Gondor lighting, Gladriel's Mirror, Gandclawd's fireworks dragon and the palantír.
 - **Clawd Slayer:** one of thirteen: the opening titles, a stake dusting the place away, the Watcher's tome, Willow's spell, Dark Willow's "Bored now", the Hellmouth opening, Hush's Gentlemen, the curtains of "Once More, With Feeling", sunrise, the Key's portal, a long black coat swishing past, the lift at Wolfram & Hart and the desert sand of "Restless".
+- **Stranger Clawds:** one of ten: the opening titles in red neon, the place draining into the Upside Down, a gate cracking open, walkie-talkie static, Eleven's void, the Mind Flayer's storm, Vecna's grandfather clock, a natural 20, the Starcourt fireworks and an arcade's INSERT COIN. Then Joyce's Christmas lights spell out the new place's name.
 
-Its **Options…** button in System Settings picks the universe: the same as the app, any one universe, Clawd Royale, or Random (a new pick on each trip).
+Its **Options…** button in System Settings picks the universe: the same as the app, any one universe, Clawd Royale, or Random (a new pick on each trip). To keep your work private from anyone walking past, turn off the banner along the bottom and the session cards, in its Options or in **Settings… → Screen Saver**: the characters, their names, how they're doing and what they say stay.
 
 <p align="center">
   <img src="docs/screensaver.png" alt="The screen saver" width="760">

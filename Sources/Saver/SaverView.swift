@@ -15,7 +15,7 @@ final class ClawdClashSaverView: ScreenSaverView {
     private let host = NSView()
     private let roomLayer = CALayer(), liveLayer = CALayer()
     private var pool: [CALayer] = []
-    /// Who was in a fight (or cheering one), for Mayor Wilclaws' wet wipe after it (`AfterDuel`).
+    /// Who was in a fight (or cheering one), for Mayor Wilclawds' wet wipe after it (`AfterDuel`).
     private var afterDuel = AfterDuel()
     private var room: (size: CGSize, location: Location, image: CGImage)?
     private var live: PixelCanvas?
@@ -54,6 +54,11 @@ final class ClawdClashSaverView: ScreenSaverView {
     /// new, into `comicLayer`.
     private let comicLayer = CALayer()
     private var comic: (trip: ComicTransition, start: Double, old: CGImage)?
+    /// When the place on show turns over (`SceneFlip`, only where its universe asks for it): the place's layers and the
+    /// crew turned together about the middle of the screen, names and cards kept upright; the clock and the place's
+    /// name stay put.
+    private let flip = SceneFlipClock()
+    private var turn = SceneTurn.upright()
     /// The Clawd Files' typed caption: the place, and when it starts typing (once any transition there is over).
     private var caption: (location: Location, start: Double)?
     private var lastComic: ComicTransition?
@@ -85,9 +90,20 @@ final class ClawdClashSaverView: ScreenSaverView {
     /// The clock top right, on unless turned off.
     static var clockShown: Bool { options["clock"] != "off" }
     private var showClock = true                // `clockShown`, read with the feed once a second
+    /// The banner and the session cards, on unless turned off here or in the app's Settings, whichever was changed
+    /// last (`SaverFeed.Privacy`). Only as the screen saver: the app's own window always shows both.
+    private static func privacy(app: SaverFeed.Privacy?) -> SaverFeed.Privacy {
+        let app = app ?? SaverFeed.Privacy(), o = options
+        guard let mine = o["privacyAt"].flatMap(Double.init), mine > app.at else { return app }
+        return SaverFeed.Privacy(banner: o["banner"] != "off", cards: o["cards"] != "off", at: mine)
+    }
+    private var showBanner = true, showCards = true
     private var sheet: NSWindow?
     private let picker = NSPopUpButton(frame: NSRect(x: 20, y: 90, width: 280, height: 26), pullsDown: false)
     private let clockBox = NSButton(checkboxWithTitle: "Show the clock", target: nil, action: nil)
+    private let bannerBox = NSButton(checkboxWithTitle: "Show the banner of what happened lately", target: nil, action: nil)
+    private let cardsBox = NSButton(checkboxWithTitle: "Show the session cards", target: nil, action: nil)
+    private var shownPrivacy = SaverFeed.Privacy()
     /// The Options choices: every offered universe by its key, so a universe appears here once it's released, and not
     /// one unchecked in the app's Settings (the feed says which; the Options can open before the saver has read it).
     private var choices: [(String, String)] = []
@@ -99,25 +115,45 @@ final class ClawdClashSaverView: ScreenSaverView {
 
     override var hasConfigureSheet: Bool { true }
     override var configureSheet: NSWindow? {
-        let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 320, height: 160), styleMask: [.titled], backing: .buffered, defer: false)
+        let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 320, height: 248), styleMask: [.titled], backing: .buffered, defer: false)
         let label = NSTextField(labelWithString: "Universe to show:")
-        label.frame = NSRect(x: 20, y: 122, width: 280, height: 20)
+        label.frame = NSRect(x: 20, y: 210, width: 280, height: 20)
+        picker.frame = NSRect(x: 20, y: 178, width: 280, height: 26)
         picker.removeAllItems()
         choices = Self.makeChoices()
         for (_, title) in choices { picker.addItem(withTitle: title) }
         picker.selectItem(at: choices.firstIndex { $0.0 == Self.choice } ?? 0)
-        clockBox.frame = NSRect(x: 20, y: 56, width: 280, height: 22)
+        clockBox.frame = NSRect(x: 20, y: 144, width: 280, height: 22)
         clockBox.state = Self.clockShown ? .on : .off
+        // What someone walking past may read: the same choices as the app's Settings → Screen Saver.
+        shownPrivacy = Self.privacy(app: SaverFeed.load()?.privacy)
+        bannerBox.frame = NSRect(x: 20, y: 118, width: 280, height: 22)
+        bannerBox.state = shownPrivacy.banner ? .on : .off
+        cardsBox.frame = NSRect(x: 20, y: 92, width: 280, height: 22)
+        cardsBox.state = shownPrivacy.cards ? .on : .off
+        let note = NSTextField(wrappingLabelWithString: "Off, nobody walking past sees your projects, prompts or tasks.")
+        note.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        note.textColor = .secondaryLabelColor
+        note.frame = NSRect(x: 38, y: 56, width: 262, height: 32)
         let ok = NSButton(title: "OK", target: self, action: #selector(closeOptions))
         ok.frame = NSRect(x: 220, y: 14, width: 80, height: 32)
         ok.keyEquivalent = "\r"
-        for v in [label, picker, clockBox, ok] { w.contentView?.addSubview(v) }
+        for v in [label, picker, clockBox, bannerBox, cardsBox, note, ok] { w.contentView?.addSubview(v) }
         sheet = w
         return w
     }
 
     @objc private func closeOptions() {
-        save(["universe": choices[max(0, picker.indexOfSelectedItem)].0, "clock": clockBox.state == .on ? "on" : "off"])
+        var options = ["universe": choices[max(0, picker.indexOfSelectedItem)].0, "clock": clockBox.state == .on ? "on" : "off"]
+        // The banner and cards: kept as the later word only when changed here, so a change in the app still counts.
+        let banner = bannerBox.state == .on, cards = cardsBox.state == .on
+        if banner != shownPrivacy.banner || cards != shownPrivacy.cards {
+            options["banner"] = banner ? "on" : "off"; options["cards"] = cards ? "on" : "off"
+            options["privacyAt"] = String(Date().timeIntervalSince1970)
+        } else {
+            for key in ["banner", "cards", "privacyAt"] { options[key] = Self.options[key] }
+        }
+        save(options)
         if let sheet { sheet.sheetParent?.endSheet(sheet) }
         tripUniverse = nil
         showClock = Self.clockShown
@@ -149,7 +185,10 @@ final class ClawdClashSaverView: ScreenSaverView {
             l.actions = Self.noAnimations
             root.addSublayer(l)
         }
-        // The old place, frozen, over the new one while the wipe takes it away (under the crew and the cards).
+        // The old place, frozen, over the new one while the wipe takes it away, and the trips: over the crew, who are
+        // hidden while the place changes, and under the cards, the clock and the place's name (`Item.underTrip`).
+        wipeLayer.zPosition = 1
+        comicLayer.zPosition = 1
         wipeLayer.anchorPoint = .zero
         wipeLayer.magnificationFilter = .nearest
         wipeLayer.actions = Self.noAnimations
@@ -201,11 +240,14 @@ final class ClawdClashSaverView: ScreenSaverView {
 
     override func animateOneFrame() {
         let now = Date().timeIntervalSince1970
+        unturnLayers()
         if now - lastRead >= 1 {
             lastRead = now
             if let feedSource { feed = feedSource() } else {
                 // Clawd Clash closed (its feed gone stale): the hooks still say who's running.
                 let app = SaverFeed.load()
+                let privacy = Self.privacy(app: app?.privacy)
+                showBanner = privacy.banner; showCards = privacy.cards
                 feed = app.flatMap { now - $0.at < SaverFeed.staleAfter ? $0 : nil } ?? SaverFeed.fromHooks(now: now, last: app) ?? app
             }
             // The app's window shows the app's universe (already `Universe.shown` there). As the screen saver: what
@@ -241,6 +283,9 @@ final class ClawdClashSaverView: ScreenSaverView {
 
     /// Off somewhere new: freeze what's on screen into the wipe layer, pick the place, and start the wipe (a hard edge
     /// across the screen and a clock wipe, taking turns).
+    /// Off somewhere new now, as at the ten minutes: the app's Full Screen does it on a Shift-click, to try the trips.
+    func travelNow() { travel(Date().timeIntervalSince1970) }
+
     private func travel(_ now: Double) {
         lastTrip = now
         let onStage = (crewed(now) ? feed?.sessions ?? [] : demo).flatMap { [$0.cast] + $0.agents.map(\.cast) }.map { Cast(id: $0) }
@@ -301,6 +346,9 @@ final class ClawdClashSaverView: ScreenSaverView {
         var mirrored = false
         var alpha: CGFloat = 1
         var smooth = false      // text and panels: linear filtering; pixel art: nearest
+        var upsideDown = false  // the scene turned over (`SceneTurn`)
+        var upright = false     // names and cards: kept upright, only moved, when the scene turns over
+        var underTrip = false   // the crew: under a trip while the place changes; everything else stays over it
     }
 
     /// Screen points per art pixel: about 270 art pixels from floor to ceiling, whatever the display.
@@ -384,6 +432,7 @@ final class ClawdClashSaverView: ScreenSaverView {
                 // Drawn a screen point to a pixel: the art scaled up crisp, the lettering sharp enough.
                 w.trip.draw(ctx, old: w.old, new: new, k: k, in: CGRect(x: 0, y: 0, width: ctx.width, height: ctx.height))
                 comicLayer.contents = ctx.makeImage()
+                comicLayer.opacity = Float(ComicTransition.cover(k))
                 comicLayer.frame = picture
                 comicLayer.isHidden = false
             }
@@ -393,23 +442,80 @@ final class ClawdClashSaverView: ScreenSaverView {
         var items: [Item] = [Item(image: shade(), rect: CGRect(x: 0, y: bounds.height * 0.6, width: bounds.width,
                                                                height: bounds.height * 0.4), smooth: true)]
         let feet = CGFloat(floorRows) * P * 0.55
+        // Turned over (`SceneFlip`): the place and the crew together; the names and cards upright, where their spots went.
+        let settled = max(comic.map { $0.start + $0.trip.duration } ?? 0, wipe.map { $0.start + Wipe.duration } ?? 0)
+        let turn = SceneTurn(amount: flip.amount(at: location, now: now, settled: settled), axis: bounds.height / 2)
+        self.turn = turn
         var people: [Item]
         if crewed(now), let f = feed {
-            people = crew(atPlace(f.sessions, location), now: now, feet: feet)
+            people = crew(atPlace(f.sessions, location), now: now, feet: feet, cards: showCards)
         } else {
             if demoPlace != location { demo = cast(for: location, now: now); demoPlace = location }
             people = crew(demo, now: now, feet: feet, cards: false)
         }
-        // A trip that leaves the ground (the Eagle's sky) takes the crew with it.
+        // A trip that leaves the ground (the Eagle's sky) takes the crew with it. At its start the crew fades out
+        // over the trip rather than vanishing under it.
+        var leaving = false
         if let w = comic {
-            let shown = CGFloat(w.trip.crewShown((now - w.start) / w.trip.duration))
+            let k = (now - w.start) / w.trip.duration
+            var shown = CGFloat(w.trip.crewShown(k))
+            if let fade = ComicTransition.crewLeaving(k) { shown *= CGFloat(fade); leaving = true }
             if shown < 1 { people = people.compactMap { var p = $0; p.alpha *= shown; return p.alpha > 0.01 ? p : nil } }
         }
-        items += people
+        if turn.isTurned {
+            turnLayers(turn)
+            people = people.compactMap { item in
+                var item = item
+                let r = item.rect
+                if item.upright {
+                    item.rect.origin.y = (turn.y(r.midY) - r.height / 2).rounded()
+                    item.alpha *= turn.labelAlpha
+                    return item.alpha > 0.01 ? item : nil
+                }
+                let span = turn.span(r.minY, r.height)
+                guard span.height >= 0.5 else { return nil }
+                item.rect = CGRect(x: r.minX, y: span.minY, width: r.width, height: span.height)
+                item.upsideDown = span.upsideDown
+                return item
+            }
+        }
+        items += people.map { var p = $0; p.underTrip = !leaving; return p }
         items += hud(running ? feed : nil, location: location, now: now, idle: !running)
         show(items, in: root)
         CATransaction.commit()
     }
+
+    /// The place's own layers (its picture, what moves there, the wipe and the transition), all laid out at the
+    /// bottom-left corner: turned about the line `turn` turns on.
+    private var sceneLayers: [CALayer] { [roomLayer, liveLayer, wipeLayer, comicLayer] }
+    private var layersTurned = false
+
+    private func turnLayers(_ turn: SceneTurn) {
+        for l in sceneLayers {
+            l.position = CGPoint(x: l.position.x, y: turn.axis * (1 - turn.scale))
+            l.transform = CATransform3DMakeScale(1, turn.scale, 1)
+        }
+        layersTurned = true
+    }
+
+    /// The right way up again before a frame lays anything out on them (they're placed by their frames).
+    private func unturnLayers() {
+        guard layersTurned else { return }
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        for l in sceneLayers {
+            l.transform = CATransform3DIdentity
+            l.position = CGPoint(x: l.position.x, y: 0)
+        }
+        CATransaction.commit()
+        layersTurned = false
+    }
+
+    /// Whether the place on show can turn over (the app's Playground offers its hidden trigger then).
+    var canTurnOver: Bool { flip.canTurn }
+
+    /// Start turning over now, if the place on show can (the app's Playground's hidden trigger).
+    func turnOver(now: Double) { flip.start(now: now) }
 
     /// `sessions` as they may appear at `place`: the homebound away from home shown as someone else (`Roster.recast`),
     /// the same someone on every frame.
@@ -441,8 +547,10 @@ final class ClawdClashSaverView: ScreenSaverView {
             l.minificationFilter = item.smooth ? .linear : .nearest
             l.bounds = CGRect(origin: .zero, size: item.rect.size)
             l.position = CGPoint(x: item.rect.midX, y: item.rect.midY)
-            l.transform = item.mirrored ? CATransform3DMakeScale(-1, 1, 1) : CATransform3DIdentity
+            l.transform = item.mirrored || item.upsideDown
+                ? CATransform3DMakeScale(item.mirrored ? -1 : 1, item.upsideDown ? -1 : 1, 1) : CATransform3DIdentity
             l.opacity = Float(item.alpha)
+            l.zPosition = item.underTrip ? 0 : 2
             l.isHidden = false
         }
         for l in pool.dropFirst(items.count) where !l.isHidden { l.isHidden = true; l.contents = nil }
@@ -551,7 +659,7 @@ final class ClawdClashSaverView: ScreenSaverView {
             let c = PixelCanvas(Sprite.width, Sprite.height)
             let role = roles[p.m.key]
             let up = air(p, role: role, t: ft(p.m.key))
-            // Mayor Wilclaws wipes his hands after every duel (Clawd Slayer): his signature, played right through.
+            // Mayor Wilclawds wipes his hands after every duel (Clawd Slayer): his signature, played right through.
             let sitting = p.m.isLeader && p.m.session.sitting && role == nil
             if let w = afterDuel.wipe(p.m.key, p.m.cast, inFight: role != nil, free: !sitting, now: t) {
                 forcedHabit = w
@@ -738,7 +846,7 @@ final class ClawdClashSaverView: ScreenSaverView {
             r.origin.y = hit.maxY + 3 * u
         }
         taken.append(r)
-        return Item(image: img, rect: r, alpha: 0.95, smooth: true)
+        return Item(image: img, rect: r, alpha: 0.95, smooth: true, upright: true)
     }
 
     /// Where its name tag sits: a fixed three art pixels over the top of this character's head, so characters of
@@ -774,7 +882,8 @@ final class ClawdClashSaverView: ScreenSaverView {
         let bodies = placed.flatMap { body($0, ls: ls, cs: cs, base: base) }
         for (i, c) in crew.enumerated() {
             let s = c.p.m.session
-            let name = (looks[i].alert ? "⚠ " : "") + Self.clip(s.project.isEmpty ? c.p.m.cast.name : s.project, 16)
+            // Without the cards, the character's own name: the project's is part of what stays private.
+            let name = (looks[i].alert ? "⚠ " : "") + Self.clip(s.project.isEmpty || !show ? c.p.m.cast.name : s.project, 16)
             let t = tag(name, over: c.p, top: headTop(c.p, ls: ls, cs: cs, base: base), color: looks[i].accent,
                         avoid: bodies, taken: &taken)
             tags.append(t); targets.append(t.rect)
@@ -819,19 +928,20 @@ final class ClawdClashSaverView: ScreenSaverView {
             beams.append(beam([CGPoint(x: card.midX, y: card.minY), CGPoint(x: card.midX, y: bottom),
                                CGPoint(x: target.midX, y: target.maxY + 2 * u)], color: looks[i].accent))
             let alpha = looks[i].alert ? 0.75 + 0.25 * CGFloat(sin(now * 5)) : 0.93
-            panels.append(Item(image: images[i], rect: card, alpha: alpha, smooth: true))
+            panels.append(Item(image: images[i], rect: card, alpha: alpha, smooth: true, upright: true))
         }
         // In the window, the card under the mouse again, half as big again and complete, over everything.
         var zoom: [Item] = []
-        if inWindow, let m = mouse, let i = crew.indices.reversed().first(where: { cards[$0].contains(m) }) {
+        let pointer = mouse.flatMap { m in turn.unturn(m.y).map { CGPoint(x: m.x, y: $0) } }   // where it is on the scene the right way up
+        if inWindow, let m = pointer, let i = crew.indices.reversed().first(where: { cards[$0].contains(m) }) {
             let img = hologram(details(crew[i].p, crew[i].agents, lk: looks[i], size: (compact ? 0.75 : 0.85) * 1.5),
                                color: looks[i].accent, width: min(width * 1.5, bounds.width - 16 * u))
             let s = sized(img), card = cards[i]
             let x = min(max(card.midX - s.width / 2, 8 * u), bounds.width - s.width - 8 * u)
             let y = min(max(card.midY - s.height / 2, 8 * u), bounds.height - s.height - 8 * u)
             let r = CGRect(x: x, y: y, width: s.width, height: s.height)
-            zoom.append(Item(image: solid(), rect: r, alpha: 1, smooth: true))   // nothing showing through it
-            zoom.append(Item(image: img, rect: r, alpha: 1, smooth: true))
+            zoom.append(Item(image: solid(), rect: r, alpha: 1, smooth: true, upright: true))   // nothing showing through it
+            zoom.append(Item(image: img, rect: r, alpha: 1, smooth: true, upright: true))
         }
         return beams + panels + tags + zoom
     }
@@ -981,7 +1091,7 @@ final class ClawdClashSaverView: ScreenSaverView {
         }
 
         // The ticker: newest last, scrolling right to left.
-        if let events = feed?.events, !events.isEmpty, !isPreview {
+        if showBanner, let events = feed?.events, !events.isEmpty, !isPreview {
             let line = events.suffix(8).map { "◆ " + $0.text }.joined(separator: "        ")
             let strip = ticker(line)
             let size = CGSize(width: CGFloat(strip.width) / scale, height: CGFloat(strip.height) / scale)

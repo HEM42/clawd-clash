@@ -1,7 +1,7 @@
 import Foundation
 
-// Heroes: allies of the X-Files. Max Fenig, Agent Pendrill, Arthur Dales, Clyde Bruckclaw, Jose Chung, Leyla Harriclaw
-// and Frank Blackclaw. A UFO chaser, a lab man, a retired agent with a bat, a psychic, a writer, a fan in the Bureau and
+// Heroes: allies of the X-Files. Max Fenig, Agent Pendrill, Arthur Dales, Clyde Bruckclawd, Jose Chung, Leyla Harriclawd
+// and Frank Blackclawd. A UFO chaser, a lab man, a retired agent with a bat, a psychic, a writer, a fan in the Bureau and
 // a man who sees too much: most of them don't carry a gun, and each wears something nobody else in the cast does.
 
 let filesHeroes6: [FilesHero: Persona] = [
@@ -11,16 +11,16 @@ let filesHeroes6: [FilesHero: Persona] = [
                        draw: drawPendrill),
     .arthurDales: Persona(name: "Arthur Dales", weapon: .saber, headTop: 21, signature: 3.2, callout: "Back in '52…",
                           draw: drawArthurDales),
-    .clydeBruckclaw: Persona(name: "Clyde Bruckclaw", weapon: .none, headTop: 18, signature: 3.4,
+    .clydeBruckclaw: Persona(name: "Clyde Bruckclawd", weapon: .none, headTop: 18, signature: 3.4,
                              callout: "There are worse ways to go.",
                              draw: drawClydeBruckclaw),
     .joseChung: Persona(name: "Jose Chung", weapon: .none, headTop: 24, signature: 3.4,
                         callout: "Truth is as subjective as reality.",
                         draw: drawJoseChung),
-    .leylaHarriclaw: Persona(name: "Leyla Harriclaw", weapon: .blaster, shot: .bullet, muzzle: (47, 32),
+    .leylaHarriclaw: Persona(name: "Leyla Harriclawd", weapon: .blaster, shot: .bullet, muzzle: (47, 32),
                              headTop: 20, signature: 3.0, callout: "I've read every one of your cases!",
                              draw: drawLeylaHarriclaw),
-    .frankBlackclaw: Persona(name: "Frank Blackclaw", weapon: .blaster, shot: .bullet, muzzle: (47, 32),
+    .frankBlackclaw: Persona(name: "Frank Blackclawd", weapon: .blaster, shot: .bullet, muzzle: (47, 32),
                              headTop: 21, signature: 3.4, callout: "This is who we are.",
                              draw: drawFrankBlackclaw),
 ]
@@ -225,9 +225,9 @@ private func drawBat(_ c: PixelCanvas, angle: Double, alpha: Double = 1) {
     line(c, m.0 + 0.4, m.1 + 0.4, e.0 + 0.4, e.1 + 0.4, woodD, 0.6)
 }
 
-// MARK: - Clyde Bruckclaw
+// MARK: - Clyde Bruckclawd
 
-/// Clyde Bruckclaw: Clawd under a sad brown fedora with a dark band, grey hair showing at the sides, heavy lids over
+/// Clyde Bruckclawd: Clawd under a sad brown fedora with a dark band, grey hair showing at the sides, heavy lids over
 /// tired eyes, and a rumpled tan suit with a crooked tie. He sees how people die and doesn't fight. Signature: he
 /// holds up a little kewpie doll, then shudders at what he's just seen.
 private func drawClydeBruckclaw(_ c: PixelCanvas, _ p: Pose) {
@@ -326,9 +326,9 @@ private func drawJoseChung(_ c: PixelCanvas, _ p: Pose) {
     drawPlainArms(c, p, sleeve: blazer, cuff: blazerD)
 }
 
-// MARK: - Leyla Harriclaw
+// MARK: - Leyla Harriclawd
 
-/// Leyla Harriclaw: Clawd with a strawberry-blonde ponytail that bounces as she walks, a navy blazer over a pink blouse
+/// Leyla Harriclawd: Clawd with a strawberry-blonde ponytail that bounces as she walks, a navy blazer over a pink blouse
 /// and an FBI sidearm with its flashlight. She knows every case by heart. Signature: she holds up her notebook and the
 /// file folders flutter round her, one after another.
 private func drawLeylaHarriclaw(_ c: PixelCanvas, _ p: Pose) {
@@ -376,9 +376,9 @@ private func drawLeylaHarriclaw(_ c: PixelCanvas, _ p: Pose) {
     filesDrawCuffs(c, blazerD, left: false)
 }
 
-// MARK: - Frank Blackclaw
+// MARK: - Frank Blackclawd
 
-/// Frank Blackclaw: Clawd with close-cropped grey hair, a lined, tired look, and a heavy charcoal-brown coat with its
+/// Frank Blackclawd: Clawd with close-cropped grey hair, a lined, tired look, and a heavy charcoal-brown coat with its
 /// collar turned up over a dark shirt; an FBI sidearm. Signature: he sees: stark black-and-white flashes burst round
 /// him, one after another, while he presses a hand to his temple.
 private func drawFrankBlackclaw(_ c: PixelCanvas, _ p: Pose) {

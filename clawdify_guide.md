@@ -496,13 +496,18 @@ These are public or shared, so they're the owner's, and done once the folder is 
 - **A cask, if wanted**: the manifest's `cask` line. `release.sh` writes a cask for every universe that has one, from the build's list, so there's nothing else to edit.
 - **The main promo and the Clawd Royale teaser**, if they should show off the new universe: they're the owner's reels, in `Tools/RenderPromo/main.swift`, along with MakeSocial's comic cover.
 - **A showcase repo** (`rodclemen/<universe-name>`), if there's to be one.
-- **The release**: `./release.sh <version>`, then the push.
+- **The release**: `./release.sh` (it works out the version, see below), then the push.
 - **`NUMBERS`**: the universe's line goes from `reserved` to `shipped` with the release that first carries it. From then on its number can never be reused, and its enums are append-only for good.
 - **Thanks**: a contributor's name in About's "Thanks to" list (`CONTRIBUTING.md` says where).
 
 Trailers never say how many universes there are (the end card reads "One of many universes in Clawd Clash"), so nothing needs updating when one is added. Don't add a count anywhere else either: the README and `llms.txt` say "many" or "several".
 
-**Version numbers:** a new universe, and only a new universe, raises the middle number: 3.6.x → 3.7.0. Everything else (fixes, tweaks, features that don't add a universe) raises only the last: 3.6.0 → 3.6.1 → 3.6.2. So a universe ships as the next `3.N.0`, and its own fixes after that as `3.N.1`, `3.N.2`…
+**Version numbers** (from Stranger Clawds, 4.0.0, on; 3.x numbered universes in the middle): each number means one kind of release, and the kinds never spill into each other.
+- **A new universe raises the first number:** 4.1.2 → 5.0.0. It's the release where the universe's `NUMBERS` line goes from `reserved` to `shipped`.
+- **A feature raises the middle one:** 4.1.2 → 4.2.0. Something new that isn't a universe: a setting, a menu item, a new kind of trip, a place redone.
+- **Everything else raises the last one:** 4.1.2 → 4.1.3. Fixes, polish, docs.
+
+The biggest kind in a release decides: a release with a fix and a feature is a feature release. Nobody picks the number: `scripts/next-version.sh` reads it from the commits since the last release tag (a `shipped` line new to `NUMBERS`, then any `feat:` commit, else the last number), and `./release.sh` with no version uses it. Give it a version and it stops if that isn't the one. So the only thing to get right is the commit prefix: `feat:` (or `feat(scope):`) for a feature, `fix:`, `docs:`, `chore:` for the rest. Run `scripts/next-version.sh` before writing the CHANGELOG's `## <version>` heading.
 
 **After the release**, fixes and polish to the universe are later pull requests that, again, touch only its folder.
 
