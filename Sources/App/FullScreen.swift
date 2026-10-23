@@ -3,7 +3,7 @@ import AppKit
 /// The menu bar's Full Screen: the screen saver itself (`ClawdClashSaverView`, clock and all), fed by the app like
 /// the window's screen-saver view, in macOS's own full screen on the display the mouse is on. It's a Space of its own
 /// there, so you can swipe between it and your other Spaces and keep working on another display. A click on it,
-/// Escape or the system's own Exit Full Screen leaves it.
+/// Escape or the system's own Exit Full Screen leaves it; a Shift-click sends it somewhere new, with its trip.
 final class FullScreenSaver: NSObject, NSWindowDelegate {
     private let window: NSWindow
     private let board: ClawdClashSaverView
@@ -37,6 +37,7 @@ final class FullScreenSaver: NSObject, NSWindowDelegate {
         board.autoresizingMask = [.width, .height]
         window.contentView = board
         (window as? KeyWindow)?.onLeave = { [weak self] in self?.leave() }
+        (window as? KeyWindow)?.onTravel = { [weak self] in self?.board.travelNow() }
     }
 
     func show() {
@@ -78,9 +79,11 @@ final class FullScreenSaver: NSObject, NSWindowDelegate {
     }
 
     private final class KeyWindow: NSWindow {
-        var onLeave: (() -> Void)?
+        var onLeave: (() -> Void)?, onTravel: (() -> Void)?
         override func sendEvent(_ event: NSEvent) {
             switch event.type {
+            case .leftMouseDown where event.modifierFlags.contains(.shift):
+                if event.clickCount == 1 { onTravel?() }   // a double's second click goes nowhere
             case .keyDown where event.keyCode == 53, .leftMouseDown:   // 53: Escape
                 onLeave?()
             default: super.sendEvent(event)

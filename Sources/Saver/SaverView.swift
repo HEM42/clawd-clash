@@ -283,6 +283,9 @@ final class ClawdClashSaverView: ScreenSaverView {
 
     /// Off somewhere new: freeze what's on screen into the wipe layer, pick the place, and start the wipe (a hard edge
     /// across the screen and a clock wipe, taking turns).
+    /// Off somewhere new now, as at the ten minutes: the app's Full Screen does it on a Shift-click, to try the trips.
+    func travelNow() { travel(Date().timeIntervalSince1970) }
+
     private func travel(_ now: Double) {
         lastTrip = now
         let onStage = (crewed(now) ? feed?.sessions ?? [] : demo).flatMap { [$0.cast] + $0.agents.map(\.cast) }.map { Cast(id: $0) }
