@@ -9,6 +9,11 @@ Its first three universes started as separate apps. Their changelogs from before
 
 Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://github.com/rodclemen/doctor-clawd)), so its whole history is below, from 3.1.0.
 
+## Unreleased
+
+### Fixed
+- **The screen saver's ticker says when it was an agent.** An agent leaves the scene when its job is done, so "Dustin is done: Fix the tests" named someone you could no longer see. It now reads "Dustin, Eleven's agent, finished and left: Fix the tests", and an agent arriving "joined Eleven as an agent". In the screen saver, Full Screen and the window's screen-saver view.
+
 ## 4.0.0 (2026-10-23)
 
 ### Changed

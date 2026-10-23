@@ -563,8 +563,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         for (id, was) in feedSeen where seenNow[id] == nil && !first {
             event("\(was.name) left\(was.project.isEmpty ? "" : " " + was.project)")
         }
-        for (id, a) in agentsNow where feedAgents[id] == nil && !first { event("\(a.name) joined \(a.leader): \(short(a.task))") }
-        for (id, a) in feedAgents where agentsNow[id] == nil && !first { event("\(a.name) is done: \(short(a.task))") }
+        // An agent leaves the scene when it's done, so the line says whose agent it was and that it's gone.
+        for (id, a) in agentsNow where feedAgents[id] == nil && !first {
+            event("\(a.name) joined \(a.leader) as an agent: \(short(a.task))")
+        }
+        for (id, a) in feedAgents where agentsNow[id] == nil && !first {
+            event("\(a.name), \(a.leader)'s agent, finished and left: \(short(a.task))")
+        }
         feedSeen = seenNow
         feedAgents = agentsNow
         feedEvents = Array(feedEvents.suffix(12))
