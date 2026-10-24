@@ -1419,8 +1419,12 @@ func promoSound(_ m: Mix) {
         m.tone(hit + s, d, midi(n), wave: .saw, vol: 0.045, release: 0.08)
     }
 
-    // the groove, from the hook to the end card
-    groove(m, from: start("hook"), to: start("endcard"), fadeIn: 1.2)
+    // the groove, from the hook to the end card, with a break for Clawd Royale: it stops on a whole bar (its snare
+    // fill) before the Royale shot, so the fanfare isn't played over it in another key, and comes back after, as in
+    // the Royale teaser
+    let g0 = start("hook"), beforeRoyale = g0 + floor((start("royale") - g0) / 2) * 2
+    groove(m, from: g0, to: beforeRoyale, fadeIn: 1.2)
+    groove(m, from: start("crossover") - 0.5, to: start("endcard"), fadeIn: 1.0)
     let hook = start("hook")
     for i in 0..<26 { m.click(hook + 0.2 + Double(i) * 0.13 + noise(i) * 0.06) }
 
