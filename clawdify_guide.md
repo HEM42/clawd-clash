@@ -502,12 +502,11 @@ These are public or shared, so they're the owner's, and done once the folder is 
 
 Trailers never say how many universes there are (the end card reads "One of many universes in Clawd Clash"), so nothing needs updating when one is added. Don't add a count anywhere else either: the README and `llms.txt` say "many" or "several".
 
-**Version numbers** (from Stranger Clawds, 4.0.0, on; 3.x numbered universes in the middle): each number means one kind of release, and the kinds never spill into each other.
-- **A new universe raises the first number:** 4.1.2 → 5.0.0. It's the release where the universe's `NUMBERS` line goes from `reserved` to `shipped`.
-- **A feature raises the middle one:** 4.1.2 → 4.2.0. Something new that isn't a universe: a setting, a menu item, a new kind of trip, a place redone.
-- **Everything else raises the last one:** 4.1.2 → 4.1.3. Fixes, polish, docs.
+**Version numbers** (from Superclawdtural, 4.1.0, on): the first number stays at 4; it moves only by hand, for a change big enough to call a new generation of the app. Stranger Clawds was 4.0.0 under an earlier rule, where every universe raised the first number; that climbed too fast.
+- **A new universe raises the middle number:** 4.1.2 → 4.2.0. It's the release where the universe's `NUMBERS` line goes from `reserved` to `shipped`.
+- **Everything else raises the last one:** 4.1.2 → 4.1.3. Features, fixes, polish, docs; the CHANGELOG's Added, Changed and Fixed say which.
 
-The biggest kind in a release decides: a release with a fix and a feature is a feature release. Each number counts up as far as it needs (4.0.9 → 4.0.10 → 4.0.11, newer each time), once per release rather than once per fix, and starts again at 0 when a number before it goes up. Nobody picks the number: `scripts/next-version.sh` reads it from the commits since the last release tag (a `shipped` line new to `NUMBERS`, then any `feat:` commit, else the last number), and `./release.sh` with no version uses it. Give it a version and it stops if that isn't the one. So the only thing to get right is the commit prefix: `feat:` (or `feat(scope):`) for a feature, `fix:`, `docs:`, `chore:` for the rest. Run `scripts/next-version.sh` before writing the CHANGELOG's `## <version>` heading.
+A release with a universe in it is a universe release, whatever else it carries. Each number counts up as far as it needs (4.1.9 → 4.1.10 → 4.1.11, newer each time), once per release rather than once per fix, and the last starts again at 0 when the middle one goes up. Nobody picks the number: `scripts/next-version.sh` reads it from the commits since the last release tag (a `shipped` line new to `NUMBERS`, else the last number), and `./release.sh` with no version uses it. Give it a version and it stops if that isn't the one. Commit prefixes still matter for the CHANGELOG and the history: `feat:` (or `feat(scope):`) for a feature, `fix:`, `docs:`, `chore:` for the rest. Run `scripts/next-version.sh` before writing the CHANGELOG's `## <version>` heading.
 
 **After the release**, fixes and polish to the universe are later pull requests that, again, touch only its folder.
 

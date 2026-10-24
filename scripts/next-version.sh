@@ -1,8 +1,8 @@
 #!/bin/zsh
 # The next release's version, from what HEAD has since the last release tag (clawdify_guide.md, "Version numbers"):
-#   a universe newly `shipped` in NUMBERS    → the first number:  4.1.2 → 5.0.0
-#   otherwise, any `feat:` commit             → the middle one:    4.1.2 → 4.2.0
-#   otherwise (fix:, docs:, chore:…)          → the last one:      4.1.2 → 4.1.3
+#   a universe newly `shipped` in NUMBERS    → the middle number: 4.1.2 → 4.2.0
+#   otherwise (feat:, fix:, docs:, chore:…)   → the last one:      4.1.2 → 4.1.3
+# The first number stays put; it moves only by hand, for a change big enough to call a new generation of the app.
 # Prints the version on stdout and why on stderr; release.sh uses it when no version is given.
 #   scripts/next-version.sh
 set -euo pipefail
@@ -19,15 +19,12 @@ numbers=Sources/App/Universes/NUMBERS
 shipped() { awk '!/^#/ && $4 == "shipped" { print $3 }' | sort }
 new=$(comm -13 <(git show "$last:$numbers" 2>/dev/null | shipped) <(shipped < $numbers))
 feats=$(print -r -- $subjects | grep -cE '^feat(\([^)]*\))?!?:' || true)
-fixes=$(( $(print -r -- $subjects | wc -l) - feats ))
+others=$(( $(print -r -- $subjects | wc -l) - feats ))
 
 if [[ -n $new ]]; then
-    echo "$((major + 1)).0.0"
-    echo "universe: ${(j:, :)${(f)new}} newly shipped since $last" >&2
-elif (( feats > 0 )); then
     echo "$major.$((minor + 1)).0"
-    echo "feature: $feats feat commit(s) since $last" >&2
+    echo "universe: ${(j:, :)${(f)new}} newly shipped since $last" >&2
 else
     echo "$major.$minor.$((patch + 1))"
-    echo "fix: $fixes commit(s) since $last, none of them feat" >&2
+    echo "no new universe since $last: $feats feat and $others other commit(s)" >&2
 fi

@@ -11,6 +11,9 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 
 ## Unreleased
 
+### Changed
+- **Version numbers climb slower.** A new universe now raises the middle number (the next, Superclawdtural, will be 4.1.0, not 5.0.0), and everything else, features included, the last one (4.1.1). The first number stays at 4 and only moves by hand, for a big enough change to the app as a whole. Under the rule 4.0.0 started, every universe raised the first number, which would have reached 13 with the universes already planned. `scripts/next-version.sh` and the guide's "Version numbers" follow the new rule; `./release.sh` works the number out as before.
+
 ### Added
 - **A new kind of magic, the grip** (`Magic(grip: true)`), for telekinesis that holds rather than throws: there's no stream; the caster's clenched hand glows, a faint thread wavers from it, and whoever they're fighting is hauled a few pixels off the ground, kicking, while a glowing coil squeezes in tight round their middle, then dropped for a breath before the next. It's the engine request for Superclawdtural's Abaddon, who chokes people from across the room in the show; any universe can use it. It counts as its own family for the magic-look check, so no other character's magic changes.
 - **A character a habit moves takes its name tag and speech bubble along** (`StageQuirks.jitter`). Steve's few steps over to the kids (Stranger Clawds) used to leave his name behind; now it follows him, and a habit can move someone further, even turn them up beside someone else for a moment. Each character on stage now also says how big its art pixels are (`OnStage.scale`), so a habit can work out how far that is. Requested for Superclawdtural's Clawdstiel, who has no sense of personal space.
