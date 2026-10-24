@@ -117,6 +117,12 @@ func cast(named n: String) -> [Cast] {
     exit(2)
 }
 
+/// How many pixels a fighter is lifted at `t` by its foe's telekinetic grip (`Magic.grip`), if the foe has one.
+func gripLift(by foe: Cast, _ foeRole: FightRole, _ t: Double) -> Int {
+    guard case .zap = foeRole, foe.persona.magic.grip else { return 0 }
+    return Int((gripHold(t) * gripHeight).rounded())
+}
+
 switch mode {
 case "ids":
     var lines: [String] = []
@@ -307,11 +313,12 @@ case "fight":
         for (i, t) in moments.enumerated() {
             let c = PixelCanvas(width, Sprite.height + headroom)
             let lx = margin + 10, rx = lx + gap
-            let ua = Int((sortieAir(a, seed: 0, fighting: true, t: t) * 16).rounded())
-            let ub = Int((sortieAir(b, seed: 0.5, fighting: true, t: t) * 16).rounded())
+            let sa = Int((sortieAir(a, seed: 0, fighting: true, t: t) * 16).rounded())
+            let sb = Int((sortieAir(b, seed: 0.5, fighting: true, t: t) * 16).rounded())
+            let ua = sa + gripLift(by: b, rb, t), ub = sb + gripLift(by: a, ra, t)
             let ca = PixelCanvas(Sprite.width, Sprite.height), cb = PixelCanvas(Sprite.width, Sprite.height)
-            a.draw(ca, t: t, mode: .working, walking: false, role: ra, asSession: false, aloft: ua > 4)
-            b.draw(cb, t: t, mode: .working, walking: false, role: rb, asSession: false, aloft: ub > 4)
+            a.draw(ca, t: t, mode: .working, walking: false, role: ra, asSession: false, aloft: sa > 4)
+            b.draw(cb, t: t, mode: .working, walking: false, role: rb, asSession: false, aloft: sb > 4)
             cb.flipHorizontally()
             c.paste(ca, x: Int(lx - Sprite.bodyCenterX), y: headroom - ua)
             c.paste(cb, x: Int(rx - (Double(Sprite.width) - Sprite.bodyCenterX)), y: headroom - ub)
@@ -369,13 +376,14 @@ case "fightclip":
             a.draw(ca, t: t, mode: .working, walking: false, role: ra, asSession: false)
             b.draw(cb, t: t, mode: .working, walking: false, role: rb, asSession: false)
             cb.flipHorizontally()
-            c.paste(ca, x: Int(lx - Sprite.bodyCenterX), y: headroom)
-            c.paste(cb, x: Int(rx - (Double(Sprite.width) - Sprite.bodyCenterX)), y: headroom)
-            func fighter(_ who: Cast, x: Double, side: Double) -> Fighter {
-                Fighter(weapon: who.weapon, x: x, k: 1, top: Double(headroom), side: side, muzzle: who.muzzle,
+            let ua = gripLift(by: b, rb, t), ub = gripLift(by: a, ra, t)
+            c.paste(ca, x: Int(lx - Sprite.bodyCenterX), y: headroom - ua)
+            c.paste(cb, x: Int(rx - (Double(Sprite.width) - Sprite.bodyCenterX)), y: headroom - ub)
+            func fighter(_ who: Cast, x: Double, side: Double, up: Int) -> Fighter {
+                Fighter(weapon: who.weapon, x: x, k: 1, top: Double(headroom - up), side: side, muzzle: who.muzzle,
                         armoured: who.armoured, pivot: who.weaponPivot).dressed(as: who)
             }
-            drawFightFX(c, t: t, left: fighter(a, x: lx, side: 1), right: fighter(b, x: rx, side: -1))
+            drawFightFX(c, t: t, left: fighter(a, x: lx, side: 1, up: ua), right: fighter(b, x: rx, side: -1, up: ub))
             put(c, ctx, x: 0, y: 0, outline: false)
             label(caption, 8, CGFloat(h) - 22, size: 14)
         }

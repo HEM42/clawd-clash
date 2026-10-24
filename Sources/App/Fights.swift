@@ -43,6 +43,19 @@ func fightIsCloseQuarters(_ a: Weapon, _ b: Weapon) -> Bool { a == .saber && b =
 
 let blasterPeriod = 0.9
 
+/// A telekinetic grip (`Magic.grip`) in rhythm: how far its victim is lifted, 0…1, at fight time `t`. They're hauled
+/// up, held there kicking, dropped, and get a breath before the next.
+func gripHold(_ t: Double) -> Double {
+    let f = frac(t / gripPeriod) * gripPeriod
+    if f < 0.35 { let g = f / 0.35; return 1 - (1 - g) * (1 - g) }
+    if f < 1.9 { return 1 }
+    if f < 2.1 { return 1 - (f - 1.9) / 0.2 }
+    return 0
+}
+let gripPeriod = 2.6
+/// How high a grip holds its victim off the ground, in the victim's own pixels.
+let gripHeight = 5.0
+
 /// What happens to a bolt in a blaster-vs-blaster shoot-out. Plain hits stay in the mix, but most shots are saved.
 enum BoltOutcome { case hit, duck, collide, shield, ricochet }
 
@@ -296,7 +309,8 @@ func drawFightFX(_ c: PixelCanvas, t: Double, left: Fighter, right: Fighter) {
             case .zap: to = ((me.x + foe.x) / 2, h.y - 4)
             default: to = foe.body
             }
-            drawMagic(c, me.magic, from: from, to: (to.x, to.y), t: t + me.side)
+            // A grip keeps the fight's own clock, so its haze tightens just as the victim leaves the ground.
+            drawMagic(c, me.magic, from: from, to: (to.x, to.y), t: me.magic.grip ? t : t + me.side)
             // Music sparks only as each blast lands (drawn with it); gadgets and touches don't spark.
             if !me.magic.gadget && !me.magic.notes { drawSparks(c, x: to.x, y: to.y, t: t + me.side, size: 2.5) }
         default:

@@ -1137,6 +1137,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         /// The clock a character's fight moves (and its effects) run on.
         func ft(_ key: String) -> Double { t + (fightPhase[key] ?? 0) }
         var incoming: [String: Double] = [:]   // blaster-vs-blaster: each defender → its shooter's clock offset
+        var held: Set<String> = []             // caught in a telekinetic grip (`Magic.grip`): lifted off the ground
         for fight in fights {
             guard let a = actors.first(where: { $0.key == fight.a && $0.leaving == nil }),
                   let b = actors.first(where: { $0.key == fight.b && $0.leaving == nil }),
@@ -1150,6 +1151,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let phase = shootsFirst ? 0 : fightPhaseOffset(l.key, r.key)
             fightPhase[l.key] = phase; fightPhase[r.key] = phase
             if case .shoot(let lo) = lRole, case .shoot(let ro) = rRole { incoming[l.key] = ro; incoming[r.key] = lo }
+            if case .zap = lRole, l.cast.persona.magic.grip { held.insert(r.key) }
+            if case .zap = rRole, r.cast.persona.magic.grip { held.insert(l.key) }
         }
         for a in actors where cheering.contains(a.key) && a.walkDir == 0 && a.leaving == nil { roles[a.key] = .cheer }
 
@@ -1275,6 +1278,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             }
             var pivotX = Sprite.bodyCenterX, knockedTop: Int?
             var lift = air * Self.flightHeight * scale
+            // Held in a telekinetic grip: hauled off the ground and kicking, on the fight's clock.
+            if held.contains(actor.key) {
+                let k = gripHold(ft(actor.key))
+                lift += CGFloat(k * gripHeight) * scale
+                if k > 0.6 { actor.x += (noise(Int(t * 24)) > 0.5 ? 1 : -1) * scale }
+            }
             // Greedo, shot: knocked head over heels, flat on his back, back on his feet (his own, bigger canvas).
             if let s = shot, actor.key == s.greedo, s.e >= ShootsFirst.hit {
                 let pose = ShootsFirst.pose(s.e), who = actor.cast
@@ -1480,6 +1489,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             func fighter(_ a: Actor, side: Double) -> Fighter {
                 let sc = a.isLeader ? ls : cs
                 let lift = (a.isLeader ? 0 : (ls - cs) * 8) + self.air(a, role: roles[a.key], walking: false, t: ft(a.key)) * Self.flightHeight * sc
+                    + (held.contains(a.key) ? CGFloat(gripHold(ft(a.key)) * gripHeight) * sc : 0)
                 return Fighter(weapon: weapon(a), x: Double((a.x - left) / ls), k: Double(sc / ls),
                                top: Double((CGFloat(Sprite.height) * (ls - sc) - lift) / ls) + Double(headroom), side: side,
                                muzzle: a.cast.muzzle, armoured: a.cast.armoured, pivot: a.cast.weaponPivot).dressed(as: a.cast)

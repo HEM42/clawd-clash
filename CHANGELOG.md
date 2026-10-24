@@ -11,6 +11,9 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 
 ## Unreleased
 
+### Added
+- **A new kind of magic, the grip** (`Magic(grip: true)`), for telekinesis that holds rather than throws: there's no stream; the caster's clenched hand glows, a faint thread wavers from it, and whoever they're fighting is hauled a few pixels off the ground, kicking, while a glowing coil squeezes in tight round their middle, then dropped for a breath before the next. It's the engine request for Superclawdtural's Abaddon, who chokes people from across the room in the show; any universe can use it. It counts as its own family for the magic-look check, so no other character's magic changes.
+
 ### Fixed
 - **The screen saver's ticker says when it was an agent.** An agent leaves the scene when its job is done, so "Dustin is done: Fix the tests" named someone you could no longer see. It now reads "Dustin, Eleven's agent, finished and left: Fix the tests", and an agent arriving "joined Eleven as an agent". In the screen saver, Full Screen and the window's screen-saver view.
 

@@ -209,9 +209,9 @@ func drawPersona(_ c: PixelCanvas, _ who: Cast, t: Double, mode: VaderMode, walk
         }
         if p.zap == true {
             // Practising alone, at nobody: a stream may run off the frame's edge, but whatever lands (rings and arcs
-            // swelling as they arrive) stops short of it, so it isn't cut in half. A touch has nothing to land on: its
+            // swelling as they arrive) stops short of it, so it isn't cut in half. A touch or a grip has nothing to land on: its
             // glow and rising motes gather round the caster's own hand.
-            let to = persona.magic.touch ? hand : (70 - persona.magic.landing, hand.1 - (classic ? 2.5 : 2))
+            let to = persona.magic.touch || persona.magic.grip ? hand : (70 - persona.magic.landing, hand.1 - (classic ? 2.5 : 2))
             drawMagic(c, persona.magic, from: hand, to: to, t: t)
         } else if p.zap == false {
             // Crackling between the fingers (the Emperor's, as in Clawd Wars: pale blue and white, a pixel further on).
@@ -335,6 +335,39 @@ func drawMagic(_ c: PixelCanvas, _ m: Magic, from a: (Double, Double), to b: (Do
     let len = max(sqrt(dx * dx + dy * dy), 0.01)
     let nx = -dy / len, ny = dx / len
     var v = m.variant
+    if m.grip {
+        // No beam: the clenched hand glows, brighter while it holds. A faint thread wavers from it to whoever's held,
+        // and a coil of light wraps round them, squeezing in tight as they're lifted and loosening as they drop, wisps
+        // curling up off it. The coil is drawn as a smooth band, never as loose specks.
+        let k = gripHold(t)
+        c.glowLine(a.0, a.1, a.0 + 0.5, a.1, core: m.core.alpha(0.25 + 0.35 * k), glow: m.glow.alpha(0.2 + 0.4 * k),
+                   coreR: 0.5, glowR: 2.6 + 1.2 * k)
+        guard k > 0.02 else { return }
+        // `b` is the side of them facing the caster: the coil is centred on the body behind it, round its middle below
+        // the eyes, and wider than the body so it wraps round rather than sitting on it.
+        let cx = b.0 + (b.0 >= a.0 ? 8 : -8), cy = b.1 + 3
+        let r = 14 - 2.5 * k + 0.4 * sin(t * 31)
+        let wob = sin(t * 17) * 0.8
+        c.glowLine(a.0, a.1, (a.0 + b.0) / 2, (a.1 + b.1) / 2 + wob, core: m.core.alpha(0.18 * k), glow: m.glow.alpha(0.22 * k),
+                   coreR: 0.3, glowR: 1.3)
+        c.glowLine((a.0 + b.0) / 2, (a.1 + b.1) / 2 + wob, b.0, b.1, core: m.core.alpha(0.18 * k), glow: m.glow.alpha(0.22 * k),
+                   coreR: 0.3, glowR: 1.3)
+        let n = 40, spin = t * 2.2
+        func at(_ i: Int) -> (Double, Double) {
+            let ang = Double(i) / Double(n) * 2 * .pi + spin
+            return (cx + cos(ang) * r, cy + sin(ang) * r * 0.3)
+        }
+        for i in 0..<n where i % 10 != 9 {   // a few gaps, so it reads as a coil turning
+            let p0 = at(i), p1 = at(i + 1)
+            c.glowLine(p0.0, p0.1, p1.0, p1.1, core: m.core.alpha(0.9 * k), glow: m.glow.alpha(0.55 * k), coreR: 0.5, glowR: 1.7)
+        }
+        for i in 0..<5 {
+            let f = frac(t * 0.8 + Double(i) / 5)
+            let x = cx + (Double(i) - 2) * 3 + sin(t * 3 + Double(i)) * 1.2, y = cy - r * 0.3 - 1 - f * 8
+            c.px(Int(x.rounded()), Int(y.rounded()), (i % 2 == 0 ? m.core : m.glow).alpha(k * 0.75 * (1 - f)))
+        }
+        return
+    }
     if m.touch {
         // No stream: the fingertip lights up, and whoever it points at glows, motes of light drifting up round them.
         let pulse = 0.75 + 0.25 * sin(t * 7)
