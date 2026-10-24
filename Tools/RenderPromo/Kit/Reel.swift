@@ -35,6 +35,16 @@ protocol PromoReel {
     var brawl: BrawlCast { get }
     /// Who's in its window, and what you asked them (the shared shot `windowShot`, which the promo plays too).
     var window: WindowCast { get }
+    /// Its panel on the promo's comic page (`nil` until it has one; the promo stops if a universe it shows has none).
+    var comic: ComicPanel? { get }
+}
+
+/// A universe's panel on the promo's Pick your universe page: who faces off on it, its sound word and pop-art colours
+/// (base, pattern), and the big moment the camera reads on it: a word, a moment of its trailer (drawn from `piece`'s
+/// time, about 0.8 to 1.5 s into the panel) and the hit heard as the camera gets there (`hit`, at that time).
+struct ComicPanel {
+    let hero, villain: Cast; let sound: String; let pop: (UInt32, UInt32)
+    let word: String; let piece: (CGContext, Double, Double) -> Void; let hit: (Mix, Double) -> Void
 }
 
 /// A universe's desktop brawl: Claude's session against the other AI's, an agent of each trading shots, and the
@@ -56,6 +66,7 @@ func promoReel(_ u: Universe) -> PromoReel {
 extension PromoReel {
     var softWipe: Double { 2.7 }
     var poster: (shot: String, at: Double) { ("endcard", 2.5) }
+    var comic: ComicPanel? { nil }
     /// The storyboard's file name: "storyboard-star-clawds.png" for "star-clawds-promo".
     var storyboardFile: String { "storyboard-\(base.hasSuffix("-promo") ? String(base.dropLast(6)) : base).png" }
 }

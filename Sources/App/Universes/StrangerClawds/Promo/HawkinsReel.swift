@@ -34,6 +34,16 @@ struct HawkinsReel: PromoReel {
                    prompt: "You: “roll a d20 for the flaky test”", otherPrompt: "You: “open the gate”")
     }
     func sound(_ m: Mix) { hawkinsSound(m) }
+    /// Its panel on the promo's comic page: Eleven against Vecna, and the opening titles as the red neon letters lock
+    /// into place, with the synth's low drone swelling under them.
+    var comic: ComicPanel? {
+        ComicPanel(hero: .hero(HawkinsHero.eleven), villain: .villain(HawkinsVillain.vecna), sound: "SKREEE!", pop: (0xE8467A, 0xFF9CBC),
+                   word: "BZZZT!", piece: { hawkinsIntro($0, local: 14.0 + $1, t: $2) },
+                   hit: { m, at in
+                       m.tone(at, 1.2, 55, wave: .saw, vol: 0.06, attack: 0.2, release: 0.4)
+                       m.tone(at + 0.1, 1.0, 110, to: 116, wave: .square(0.3), vol: 0.03, attack: 0.3, release: 0.4)
+                   })
+    }
 }
 
 /// The end card's line under "Have fun. Keep track.": never a count of universes.

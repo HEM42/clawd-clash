@@ -226,8 +226,16 @@ func pickVerse(_ u: Universe) -> (hero: Cast, villain: Cast, sound: String, pop:
     case .clawdberg: return (.hero(ClawdbergHero.indianaBones), .villain(ClawdbergVillain.reneBellock), "CRACK!", (0xA65AE8, 0xD2A8FF))
     case .middleEarth: return (.hero(RingsHero.gandalf), .villain(RingsVillain.balrog), "KA-THOOM!", (0x1EB8A8, 0x8AE8DC))
     case .slayer: return (.hero(SlayerHero.buffyClawmers), .villain(SlayerVillain.oldMaster), "THWACK!", (0x2ED8D0, 0xA0F6F0))
-    default: preconditionFailure("no promo data for \(u.title) here yet: the universe-modules plan moves it into its folder")
+    default: let c = comicPanel(u); return (c.hero, c.villain, c.sound, c.pop)
     }
+}
+
+/// The panel of a universe whose trailer has its own (`PromoReel.comic`): every universe from Stranger Clawds on.
+func comicPanel(_ u: Universe) -> ComicPanel {
+    guard let c = promoReel(u).comic else {
+        preconditionFailure("\(u.title) has no panel on the promo's comic page: give its Promo/<Prefix>Reel.swift a `comic`")
+    }
+    return c
 }
 
 /// A pop-art fill over `r`: 0 diagonal stripes, 1 halftone dots, 2 a sunburst, 3 swirling rays, 4 dots fading up.
@@ -464,7 +472,7 @@ func setPiece(_ u: Universe) -> (word: String, draw: (CGContext, Double, Double)
     case .clawdberg: return ("88 MPH!", { clawdbergHillValley($0, local: 3.0 + $1, t: $2) })
     case .middleEarth: return ("DOOM!", { ringsBridge($0, local: 2.8 + $1, t: $2) })
     case .slayer: return ("THWACK!", { slayerHomecoming($0, local: slayerHomeCut + slayerHomeFight - 0.6 + $1, t: $2) })
-    default: preconditionFailure("no promo data for \(u.title) here yet: the universe-modules plan moves it into its folder")
+    default: let c = comicPanel(u); return (c.word, c.piece)
     }
 }
 
@@ -1434,7 +1442,7 @@ func promoSound(_ m: Mix) {
         case .clawdberg: m.tone(at, 0.4, 300, to: 1800, wave: .saw, vol: 0.04, release: 0.05); m.boom(at + 0.45, vol: 0.2)
         case .middleEarth: for k in 0..<4 { m.kick(at + Double(k) * 0.24, vol: 0.25) }
         case .slayer: m.chug(at, root: 38, len: 0.5, mute: false); m.crash(at, vol: 0.08)
-        default: break   // no sound of its own
+        default: comicPanel(p.u).hit(m, at)
         }
     }
     for at in pageTurns { m.flip(chs + at + 0.1, vol: 0.14); m.whoosh(chs + at + pageTurn / 2, pageTurn, vol: 0.1) }
