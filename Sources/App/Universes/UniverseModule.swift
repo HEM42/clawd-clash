@@ -135,13 +135,17 @@ struct OnStage {
     let leaving: Bool
     /// Its own offset (0…1), so two of them don't do the same thing at the same moment.
     let phase: Double
+    /// Screen points to one of its art pixels (a leader's are bigger than an agent's), to turn a distance on stage
+    /// into sprite pixels for `jitter`.
+    var scale: CGFloat = 1
 }
 
 /// A universe's stage quirks: things certain characters do, whoever else is about.
 struct StageQuirks {
     /// Only move while nobody's looking at them, and then quickly (the Weeping Angle).
     var unseenMovers: Set<Cast> = []
-    /// A jump and a shiver, in sprite pixels, and maybe a muttered line: `who` among `others`, at `place`.
+    /// A jump and a shiver, in sprite pixels, and maybe a muttered line: `who` among `others`, at `place`. Its name tag
+    /// and speech bubble go with it, so it can also step (or vanish and turn up) somewhere else for a moment.
     var jitter: ((_ who: OnStage, _ others: [OnStage], _ place: Location?, _ t: Double) -> (dx: Int, up: Int, line: String?))? = nil
     /// Something drawn beside `who`, standing on `ground`, `scale` points to an art pixel.
     var prop: ((_ who: OnStage, _ ground: CGFloat, _ scale: CGFloat, _ t: Double) -> StageLayer?)? = nil

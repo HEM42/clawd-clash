@@ -1348,7 +1348,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let duck = incoming[actor.key].map { CGFloat(duckAmount(t: ft(actor.key), shooterOffset: $0, armoured: actor.cast.armoured)) } ?? 0
             // Captain Clawd flinches at every tick of the Croc Clock (Stevie Clawdberg), in Pirate Town or with it about.
             let flinch: (dx: Int, up: Int, line: String?) = quirks.jitter?(me, others, location, t) ?? (0, 0, nil)
-            let rect = NSRect(x: (actor.x - bodyX).rounded() + CGFloat(flinch.dx) * scale, y: y + CGFloat(drop) * z + lift + CGFloat(flinch.up) * scale,
+            actor.x += CGFloat(flinch.dx) * scale   // its name tag and speech bubble go with it
+            let rect = NSRect(x: (actor.x - bodyX).rounded(), y: y + CGFloat(drop) * z + lift + CGFloat(flinch.up) * scale,
                               width: CGFloat(canvas.w) * scale, height: (CGFloat(canvas.h) * scale * (1 - 0.22 * duck)).rounded())
             if windowMode, actor.key == listHoverKey, let glow = Self.hoverGlow {
                 let gw = 30 * scale, gh = 8 * scale
@@ -1360,7 +1361,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             }
             out.append(DrawItem(image: img, rect: rect, mirrored: mirrored, alpha: CGFloat(alpha)))
             // A prop beside them (T. Wrecks's glass of water).
-            if let p = quirks.prop?(OnStage(cast: me.cast, x: me.x, facing: facing, walking: walking, leaving: me.leaving, phase: me.phase), y, scale, t) {
+            if let p = quirks.prop?(OnStage(cast: me.cast, x: me.x, facing: facing, walking: walking, leaving: me.leaving, phase: me.phase,
+                                            scale: scale), y, scale, t) {
                 out.append(DrawItem(image: p.image, rect: p.rect, mirrored: p.mirrored, alpha: 1))
             }
 
@@ -1860,7 +1862,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     /// An actor as a universe's stage quirks see it (`OnStage`).
     private func stageView(_ a: Actor) -> OnStage {
         OnStage(cast: a.cast, x: a.x, facing: a.walkDir != 0 ? a.walkDir : a.facing, walking: a.walkDir != 0,
-                leaving: a.leaving != nil, phase: a.phase)
+                leaving: a.leaving != nil, phase: a.phase, scale: (a.isLeader ? Self.leaderScale : Self.companionScale) * zoom)
     }
 
     // MARK: Chaos test
