@@ -1712,11 +1712,12 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             engines = true; gear = p < 0.78
         }
         // A spare row under it, so the outline goes all the way round the wheels or hull, and placed a row lower to
-        // match: what's drawn sits exactly where it did.
-        let c = PixelCanvas(Ride.width, Ride.height + 1)
+        // match: what's drawn sits exactly where it did. Its own height, so a ride drawn taller than a ship (Stranger
+        // Clawds' bikes) keeps its bottom rows.
+        let c = PixelCanvas(Ride.width, ride.canvasHeight + 1)
         drawRide(c, ride, ramp: ramp, engines: engines, gear: gear)
         c.addOutline(C(0xFFFFFF, 0.92))
-        let w = CGFloat(Ride.width) * s, h = CGFloat(Ride.height + 1) * s
+        let w = CGFloat(Ride.width) * s, h = CGFloat(ride.canvasHeight + 1) * s
         return DrawItem(image: c.makeImage(), rect: NSRect(x: (x - w / 2).rounded(), y: (feet - 2 * s + lift).rounded(), width: w, height: h),
                         mirrored: exit.dir < 0, alpha: 1)
     }

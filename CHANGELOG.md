@@ -16,6 +16,7 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 - **A character a habit moves takes its name tag and speech bubble along** (`StageQuirks.jitter`). Steve's few steps over to the kids (Stranger Clawds) used to leave his name behind; now it follows him, and a habit can move someone further, even turn them up beside someone else for a moment. Each character on stage now also says how big its art pixels are (`OnStage.scale`), so a habit can work out how far that is. Requested for Superclawdtural's Clawdstiel, who has no sense of personal space.
 
 ### Fixed
+- **Stranger Clawds' BMX bikes keep their wheels.** A ride that drives in was always drawn on a ship's canvas, whatever height it asked for, so the bikes, drawn two rows taller to keep Dustin's cap clear of the top, lost their bottom two rows, the tyres and the ground under them, as they came and went. Rides that drive in now get their own height, as the TARDIS always did.
 - **The screen saver's ticker says when it was an agent.** An agent leaves the scene when its job is done, so "Dustin is done: Fix the tests" named someone you could no longer see. It now reads "Dustin, Eleven's agent, finished and left: Fix the tests", and an agent arriving "joined Eleven as an agent". In the screen saver, Full Screen and the window's screen-saver view.
 
 ## 4.0.0 (2026-10-23)
