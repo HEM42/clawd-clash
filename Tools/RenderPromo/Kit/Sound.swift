@@ -217,6 +217,11 @@ extension Mix {
     func rain(_ t: Double, _ dur: Double, vol: Double = 0.05) {      // a Gotham downpour
         noise(t, dur, vol: vol, cutoff: 0.5, attack: 0.6, release: 0.8, highpass: true, seed: 404)
     }
+    func smack(_ t: Double, vol: Double = 0.3) {                     // a sticker slapped down flat by hand
+        noise(t, 0.05, vol: vol, cutoff: 0.95, decay: 0.012, highpass: true, seed: Int(t * 211))
+        noise(t, 0.09, vol: vol * 0.8, cutoff: 0.35, decay: 0.025, seed: Int(t * 223))
+        tone(t, 0.1, 160, to: 70, wave: .sine, vol: vol * 0.7, release: 0.03, decay: 0.035)
+    }
     func clunk(_ t: Double, vol: Double = 0.25) {                    // the searchlight's shutter thrown open
         tone(t, 0.12, 90, to: 50, wave: .square(0.4), vol: vol, decay: 0.05)
         noise(t, 0.08, vol: vol * 0.6, cutoff: 0.3, decay: 0.03, seed: 41)
@@ -310,8 +315,9 @@ func transitionSound(_ m: Mix, _ s: Shot) {
 func start(_ name: String) -> Double { shots.first { $0.name == name }!.start }
 func end(_ name: String) -> Double { shots.first { $0.name == name }!.end }
 
-/// The chiptune groove (Am F C G), on its own track and faded in from `from` over `fadeIn` seconds.
-func groove(_ m: Mix, from g0: Double, to g1: Double, fadeIn: Double) {
+/// The chiptune groove (Am F C G), on its own track and faded in from `from` over `fadeIn` seconds; no lead melody
+/// in `noLead`, for a moment that shouldn't sound like a fanfare.
+func groove(_ m: Mix, from g0: Double, to g1: Double, fadeIn: Double, noLead: ClosedRange<Double>? = nil) {
     let gm = Mix(seconds: duration), beat = 0.5, bar = 2.0
     let roots = [45, 41, 48, 43], triads = [[69, 72, 76], [65, 69, 72], [67, 72, 76], [67, 71, 74]]
     let melodyA: [[(Int, Double)]] = [[(76, 1), (81, 1), (84, 0.5), (83, 0.5), (81, 1)], [(84, 1), (81, 1), (77, 0.5), (79, 0.5), (81, 1)],
@@ -330,7 +336,10 @@ func groove(_ m: Mix, from g0: Double, to g1: Double, fadeIn: Double) {
             gm.kick(t0 + 2 * beat); gm.kick(t0 + 2.5 * beat, vol: 0.18); gm.snare(t0 + beat); gm.snare(t0 + 3 * beat)
             for s in 0..<16 { gm.tone(t0 + Double(s) * beat / 4, beat / 4 * 0.8, midi(triads[c][s % 3] - 12 + (s / 3 % 2) * 12), wave: .triangle, vol: 0.03, release: 0.02) }
             var tt = t0
-            for (n, d) in ((b - 2) / 4 % 2 == 0 ? melodyA : melodyB)[c] { gm.tone(tt, d * beat * 0.92, midi(n), wave: .square(0.5), vol: 0.055, release: 0.04, vibrato: 0.004); tt += d * beat }
+            for (n, d) in ((b - 2) / 4 % 2 == 0 ? melodyA : melodyB)[c] {
+                if noLead.map({ !$0.contains(tt) }) ?? true { gm.tone(tt, d * beat * 0.92, midi(n), wave: .square(0.5), vol: 0.055, release: 0.04, vibrato: 0.004) }
+                tt += d * beat
+            }
         }
         if b == bars - 1 { for k in 0..<8 { gm.snare(t0 + 2 * beat + Double(k) * beat / 4, vol: 0.06 + Double(k) * 0.01) } }
     }

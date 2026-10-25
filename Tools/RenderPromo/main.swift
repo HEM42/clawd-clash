@@ -1379,7 +1379,7 @@ var promoBeats: [(key: Double, beat: Beat)] { [
     (afterChoose + 7.0, ("SUBAGENTS (STEVIE CLAWDBERG)", "The treasure map routes us in: \(Cast.hero(ClawdbergHero.mikeyWaltz).name) stands guard, the Goonies walk in with their jobs on their labels.", "“Every subagent gets to be a Goonie.”", "footsteps")),
     (afterChoose + 12.3, ("WINDOW (CLAWD OF THE RINGS)", "The map of Middle-earth walks us to the window in \(Location.prancingPony.name): live cards tick, then a Codex card flips to NEEDS YOU.", "“Prefer a window? Step into \(Location.prancingPony.name).”", "a ping")),
     (afterChoose + 18.2, ("RANDOM", "The window changes universe on its own, twice, each with that universe's transition, inside the window only: down the vortex into Doctor Clawd, then a Star Clawds wipe.", "RANDOM · EVERY 5 MIN  ·  “Can't decide? Random switches the whole window to a new universe every few minutes.”", "the transitions' own sounds")),
-    (afterChoose + 23.0, ("CLAWD ROYALE", "Halftone blue: every universe's menu bar emblem flies in from round the frame and they slam together, KRA-KOOM!, and CLAWD ROYALE stamps in.", "KRA-KOOM!  ·  CLAWD ROYALE  ·  “UNIVERSES COLLIDE.”", "whooshes, the big hit, a fanfare")),
+    (afterChoose + 23.0, ("CLAWD ROYALE", "Halftone blue: every universe's menu bar emblem flies in from round the frame and they slam together, KRA-KOOM!, and CLAWD ROYALE stamps in.", "KRA-KOOM!  ·  CLAWD ROYALE  ·  “UNIVERSES COLLIDE.”", "whooshes and two smacks, like stickers slapped on, over the groove")),
     (afterChoose + 26.4, ("THE CROSSOVER", "A FWIP! web burst into \(Location.cantina.name): \(Cast.hero(FilesHero.foxClawder).name) against a Dalick, Batclawd duelling Darth Vapor, \(Cast.hero(RingsHero.gandalf).name) holding off Thanoz' gauntlet; Spider-Clawd swings over everyone as E.Clawd's bike flies the other way.", "CLAWD ROYALE  ·  “Nobody asked who'd win. We're answering anyway.”  ·  “Settings → Universe → Clawd Royale. A new place every ten minutes.”", "sabers, blasters, web thwips, a whoosh")),
     (afterChoose + 31.5, ("END CARD", "The icon lands over its dimmed panels, and every universe's emblem pops in under it.", "“Have fun. Keep track.”  ·  “Pick a universe, or let them collide · free for macOS · github.com/rodclemen/clawd-clash”", "a heroic cadence")),
 ] }
@@ -1419,12 +1419,10 @@ func promoSound(_ m: Mix) {
         m.tone(hit + s, d, midi(n), wave: .saw, vol: 0.045, release: 0.08)
     }
 
-    // the groove, from the hook to the end card, with a break for Clawd Royale: it stops on a whole bar (its snare
-    // fill) before the Royale shot, so the fanfare isn't played over it in another key, and comes back after, as in
-    // the Royale teaser
-    let g0 = start("hook"), beforeRoyale = g0 + floor((start("royale") - g0) / 2) * 2
-    groove(m, from: g0, to: beforeRoyale, fadeIn: 1.2)
-    groove(m, from: start("crossover") - 0.5, to: start("endcard"), fadeIn: 1.0)
+    // the groove, from the hook to the end card, straight through Clawd Royale (its title is slapped on like a sticker,
+    // no fanfare of its own to clash with it); the lead melody bows out at the slam and stays out, or its high note
+    // lands on the FWIP like a fanfare, and coming back for the last bars sounds like the music starting over
+    groove(m, from: start("hook"), to: start("endcard"), fadeIn: 1.2, noLead: start("royale") + royaleSlam - 0.5...start("endcard"))
     let hook = start("hook")
     for i in 0..<26 { m.click(hook + 0.2 + Double(i) * 0.13 + noise(i) * 0.06) }
 
@@ -1464,20 +1462,11 @@ func promoSound(_ m: Mix) {
     for k in [0.9, 1.8] { m.click(wi + k, vol: 0.06) }
     m.ping(wi + 2.5)
 
-    // Clawd Royale: the emblems fly in and slam, the title stamps down to a fanfare, then everyone at once
-    let ro = start("royale"), slam = ro + royaleSlam
-    var r = ro
-    while r < slam - 0.03 { m.snare(r, vol: 0.03 + 0.1 * (r - ro) / royaleSlam); r += 1.0 / 20 }
+    // Clawd Royale: the emblems fly in and get slapped together, the title slapped on top, then everyone at once
+    let ro = start("royale")
     for k in Universe.offered.indices { m.whoosh(ro + 0.3 + Double(k) * 0.03, 0.6, vol: 0.09) }
-    m.boom(slam, vol: 0.65); m.noise(slam, 1.8, vol: 0.14, cutoff: 0.9, decay: 0.55, highpass: true, seed: 3)
-    m.snare(slam, vol: 0.2); m.kick(slam, vol: 0.4)
-    for n in [48, 55, 60, 64, 67] { m.tone(slam, 1.4, midi(n), wave: .saw, vol: 0.05, release: 0.6, decay: 0.8) }
-    let stamp = ro + royaleStamp
-    m.clunk(stamp, vol: 0.3); m.boom(stamp, vol: 0.3)
-    for (s, d, n) in [(0.0, 0.22, 67), (0.25, 0.22, 72), (0.5, 0.5, 76), (1.05, 0.22, 74), (1.3, 0.22, 76), (1.55, 0.9, 79)] as [(Double, Double, Int)] {
-        m.tone(stamp + s, d, midi(n + 12), wave: .square(0.5), vol: 0.07, release: 0.08, vibrato: 0.006)
-        m.tone(stamp + s, d, midi(n), wave: .saw, vol: 0.045, release: 0.08)
-    }
+    m.smack(ro + royaleSlam, vol: 0.45)
+    m.smack(ro + royaleStamp, vol: 0.38)
     let cr = start("crossover"), ce = end("crossover")
     m.hum(cr, ce - cr, vol: 0.022)
     for t in clashTimes(cr, ce) { m.clash(t, vol: 0.1) }
