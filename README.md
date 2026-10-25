@@ -5,7 +5,7 @@
 <h1 align="center">Clawd Clash</h1>
 
 <p align="center">
-  <b>Your Claude Code sessions, and those of every other AI you run, as a pixel-art Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd, The Clawd Files, Stevie Clawdberg, Clawd of the Rings, Clawd Slayer or Stranger Clawds battle on your desktop.</b><br>
+  <b>Your Claude Code sessions, and those of every other AI you run, as a pixel-art Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd, The Clawd Files, Stevie Clawdberg, Clawd of the Rings, Clawd Slayer, Stranger Clawds or Superclawdtural battle on your desktop.</b><br>
   Every session is a hero or a villain, every subagent joins in, and they fight while they work.
 </p>
 
@@ -23,7 +23,7 @@ https://github.com/user-attachments/assets/9a06ca4d-9636-4c3d-b2f1-197f5bb3a8c8
 
 <p align="center"><sub>Full 1080p version: <a href="promo/clawd-clash-promo.mp4">promo/clawd-clash-promo.mp4</a></sub></p>
 
-Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars), **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars), **[Doctor Clawd](https://github.com/rodclemen/doctor-clawd)**, **[The Clawd Files](https://github.com/rodclemen/the-clawd-files)**, **[Stevie Clawdberg](https://github.com/rodclemen/stevie-clawdberg)**, **[Clawd of the Rings](https://github.com/rodclemen/clawd-of-the-rings)**, **[Clawd Slayer](https://github.com/rodclemen/clawd-slayer)** and **[Stranger Clawds](https://github.com/rodclemen/stranger-clawds)**. Pick one in Settings, or Clawd Royale for all of them at once. The universes' own pages show each one on its own; this one is the app.
+Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/rodclemen/star-clawds)** (formerly Clawd Wars), **[Marvelous Clawds](https://github.com/rodclemen/marvelous-clawds)** (formerly Clawdvengers: Clawd Wars), **[Detective Clawds](https://github.com/rodclemen/detective-clawds)** (formerly Justice Clawds: Clawd Wars), **[Doctor Clawd](https://github.com/rodclemen/doctor-clawd)**, **[The Clawd Files](https://github.com/rodclemen/the-clawd-files)**, **[Stevie Clawdberg](https://github.com/rodclemen/stevie-clawdberg)**, **[Clawd of the Rings](https://github.com/rodclemen/clawd-of-the-rings)**, **[Clawd Slayer](https://github.com/rodclemen/clawd-slayer)**, **[Stranger Clawds](https://github.com/rodclemen/stranger-clawds)** and **[Superclawdtural](https://github.com/rodclemen/superclawdtural)**. Pick one in Settings, or Clawd Royale for all of them at once. The universes' own pages show each one on its own; this one is the app.
 
 | Star Clawds | Marvelous Clawds |
 |---|---|
@@ -83,14 +83,15 @@ You run Claude Code in three terminals. One is thinking, one is waiting for your
   <img src="docs/desktop-stevie-clawdberg.png" alt="Stevie Clawdberg sessions and agents fighting along the bottom of the screen"><br>
   <img src="docs/desktop-clawd-of-the-rings.png" alt="Clawd of the Rings sessions and agents fighting along the bottom of the screen"><br>
   <img src="docs/desktop-clawd-slayer.png" alt="Clawd Slayer sessions and agents fighting along the bottom of the screen"><br>
-  <img src="docs/desktop-stranger-clawds.png" alt="Stranger Clawds sessions and agents fighting along the bottom of the screen">
+  <img src="docs/desktop-stranger-clawds.png" alt="Stranger Clawds sessions and agents fighting along the bottom of the screen"><br>
+  <img src="docs/desktop-superclawdtural.png" alt="Superclawdtural sessions and agents fighting along the bottom of the screen">
 </p>
 
 ## The universes
 
 Pick one in **Settings… → Universe**:
 
-- **One universe:** Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd, The Clawd Files, Stevie Clawdberg, Clawd of the Rings, Clawd Slayer or Stranger Clawds.
+- **One universe:** Star Clawds, Marvelous Clawds, Detective Clawds, Doctor Clawd, The Clawd Files, Stevie Clawdberg, Clawd of the Rings, Clawd Slayer, Stranger Clawds or Superclawdtural.
 - **Random:** a different universe on its own every 1, 5, 10, 15, 30 or 60 minutes.
 - **Clawd Royale:** every cast in one scene, heroes against villains, each character as itself. The place is a random one from any universe and changes every ten minutes (the Location menu is greyed out meanwhile).
 
@@ -268,6 +269,25 @@ The screen saver follows your pick with "The same as Clawd Clash", or has a univ
 <p align="center"><img src="docs/locations-stranger-clawds.png" alt="All Stranger Clawds places" width="760"></p>
 </details>
 
+### Superclawdtural
+
+- **Cast:** 45 villains, 34 heroes
+- **Places:** 20, from the Bunker's war room to Jody's kitchen in Sioux Falls
+- **Weapons:** Dean's Colt M1911, John's Colt, Sam's demon-killing knife, Bobby's rock-salt shotgun, the angels' blades, Demon Dean's First Blade, Gordon's machete, Death's scythe, Rowena's spells and Abaddon's grip
+- **Set pieces:**
+  - Arch-enemies face off first
+  - Baby, the '67 Impala, drives in to pick the crew up, the trunk swinging open on the arsenal
+  - When the session of Dean, Sam, Clawdstiel, Bobby or Jack compacts its context, hellhounds drag them down to Hell, and a fist punches back up through the dirt
+  - Clawdstiel turns up right behind the nearest hero, far too close, and Dean and Sam trade "Bitch." "Jerk."
+  - The hunters paint devil's traps for practice; the angels train with their blades, wing shadows flaring
+- **Sides:** Claude Code plays the heroes when another AI runs
+
+<details>
+<summary><b>The Superclawdtural cast and places</b></summary>
+<p align="center"><img src="docs/roster-superclawdtural.png" alt="All Superclawdtural characters" width="760"></p>
+<p align="center"><img src="docs/locations-superclawdtural.png" alt="All Superclawdtural places" width="760"></p>
+</details>
+
 ## Window mode and the screen saver
 
 It opens in a window by default (switch to the desktop from the menu): the whole crew in a scene set where the first session's character belongs, with a card for every session: its project, what it's doing right now, your last prompt, its last reply, and its agents in a little tree.
@@ -291,6 +311,7 @@ Every 10 minutes it moves somewhere new, with a transition from the universe it'
 - **Clawd of the Rings:** one of nine: the Eye opening, a dotted line walking across the map, the Red Book's page turning, the Great Eagles, the Ring going on, the beacons of Gondor lighting, Gladriel's Mirror, Gandclawd's fireworks dragon and the palantír.
 - **Clawd Slayer:** one of thirteen: the opening titles, a stake dusting the place away, the Watcher's tome, Willow's spell, Dark Willow's "Bored now", the Hellmouth opening, Hush's Gentlemen, the curtains of "Once More, With Feeling", sunrise, the Key's portal, a long black coat swishing past, the lift at Wolfram & Hart and the desert sand of "Restless".
 - **Stranger Clawds:** one of ten: the opening titles in red neon, the place draining into the Upside Down, a gate cracking open, walkie-talkie static, Eleven's void, the Mind Flayer's storm, Vecna's grandfather clock, a natural 20, the Starcourt fireworks and an arcade's INSERT COIN. Then Joyce's Christmas lights spell out the new place's name.
+- **Superclawdtural:** one of twelve: The Road So Far on grainy film, the Impala's headlights, a grave salted and burned, a devil's trap, demon smoke, angel light with wing shadows, hellhound claws, a cold spot frosting over, the Ghostfacers' camcorder, the motel's wallpaper, the Leviathan's grin and Chuck rewriting the page.
 
 Its **Options…** button in System Settings picks the universe: the same as the app, any one universe, Clawd Royale, or Random (a new pick on each trip). To keep your work private from anyone walking past, turn off the banner along the bottom and the session cards, in its Options or in **Settings… → Screen Saver**: the characters, their names, how they're doing and what they say stay.
 
