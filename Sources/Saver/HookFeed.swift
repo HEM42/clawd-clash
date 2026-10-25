@@ -20,7 +20,8 @@ extension SaverFeed {
                 id: s.id, cast: s.leader, assistant: s.group, project: s.project, accent: accents[s.project],
                 mood: s.mood.rawValue, urgent: s.mood == .waiting && held > 60, asleep: resting && held > 300,
                 sitting: resting && held > 120, unknown: false, focused: nil, since: since,
-                activity: s.mood == .idle ? nil : s.record?.activity, prompt: s.record?.prompt,
+                activity: s.mood == .background ? s.record?.background?.first.map { "Waiting on: " + $0 }
+                    : s.mood == .idle ? nil : s.record?.activity, prompt: s.record?.prompt,
                 agents: s.agents.map { Agent(id: $0.id, cast: $0.cast ?? StatusStore.heroBase + $0.character, task: $0.label.isEmpty ? "Agent" : $0.label) })
         }
         guard !sessions.isEmpty else { return nil }

@@ -28,7 +28,7 @@ struct SaverFeed: Codable {
         var assistant: String      // "claude", "codex"… (its outline colour)
         var project: String
         var accent: UInt32?        // the project's colour, as in the app
-        var mood: String           // "working", "thinking", "waiting", "idle"
+        var mood: String           // "working", "thinking", "waiting", "background", "idle"
         var urgent = false         // waiting and ignored for a while
         var asleep = false         // idle for a long time
         var sitting = false

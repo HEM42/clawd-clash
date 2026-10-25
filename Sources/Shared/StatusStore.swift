@@ -5,7 +5,7 @@ import Foundation
 // Lives at ~/.claude/clawd-clash/state.json.
 
 struct SessionRecord: Codable {
-    var state: String      // idle | thinking | working | waiting
+    var state: String      // idle | thinking | working | waiting | background
     var updated: Double
     var leader: Int?       // cast id of this session's character (`Universe.base` + local: villains <100, heroes 100+)
     var project: String?   // last path component of the session's cwd
@@ -27,6 +27,7 @@ struct SessionRecord: Codable {
     var abducted: Double?    // an FBI agent's last missing time (its context compacted), for the abduction
     var context: Double?     // how near its next compaction, 0…1, where the AI's hooks say (Qwen's Stop, our pi extension)
     var transcript: String?  // its session log, where the hooks name it and the app reads it (Gemini CLI's chat file)
+    var background: [String]? // what it left running in the background (a render, a build), until it's woken up again
 }
 
 struct AgentRecord: Codable {
@@ -97,6 +98,7 @@ extension StatusFile {
 
 enum Mood: String {
     case idle, thinking, working, waiting
+    case background     // its turn is over, but it's waiting on something it left running and will carry on by itself
 }
 
 /// One Claude Code session as the overlay should draw it.
@@ -143,6 +145,8 @@ enum StatusStore {
     static let thinkingTTL: Double = 10 * 60
     static let workingTTL: Double = 30 * 60
     static let waitingTTL: Double = 15 * 60
+    /// A background job that never wakes its session (killed, or the AI quit) stops counting after this.
+    static let backgroundTTL: Double = 60 * 60
     static let agentTTL: Double = 20 * 60
     static let sessionTTL: Double = 3 * 60 * 60
     /// A session with no known process can't be checked for being alive: past this it no longer counts when
@@ -314,6 +318,12 @@ enum StatusStore {
                 return flat.count > n ? String(flat.prefix(n - 1)) + "…" : flat
             }
             if let title = clip(json["session_title"], 80) { s.sessions[session]?.title = title }
+            // Its first event after a background wait: a job it left running has finished and woken it (or you
+            // typed something), so it's at work again. Which job isn't said, so they all count as done; any it
+            // starts again are counted afresh.
+            if agentId == nil, s.sessions[session]?.state == "background", event != "Notification" && event != "PreCompact" {
+                s.sessions[session]?.background = nil
+            }
 
             switch event {
             case "SessionStart":
@@ -339,6 +349,11 @@ enum StatusStore {
                     set("working")
                     s.sessions[session]?.lastTool = now
                     s.sessions[session]?.activity = activity
+                    if let job = backgroundJob(assistant, json["tool_name"] as? String ?? "", json["tool_input"] as? [String: Any] ?? [:],
+                                                cwd: json["cwd"] as? String) {
+                        let jobs = (s.sessions[session]?.background ?? []) + [job]
+                        s.sessions[session]?.background = jobs
+                    }
                     let toolsCount = (s.sessions[session]?.tools ?? 0) + 1
                     s.sessions[session]?.tools = toolsCount
                     // Remember the task of each agent Claude launches; SubagentStart picks it up.
@@ -379,7 +394,7 @@ enum StatusStore {
                     s.sessions[session]?.regenerated = now
                 }
             case "Stop", "StopFailure", "Interrupt":
-                set("idle")
+                set(s.sessions[session]?.background?.isEmpty == false ? "background" : "idle")
                 s.sessions[session]?.lastTool = nil
                 s.sessions[session]?.activity = nil
                 if let r = clip(json["last_assistant_message"], 240) { s.sessions[session]?.reply = r }
@@ -419,6 +434,58 @@ enum StatusStore {
                 break
             }
         }
+    }
+
+    /// What a tool call leaves running in the background, by its description ("Render the promo"), or nil when it
+    /// runs to the end before the AI goes on, or the AI won't be woken when it's done. Only the AIs that carry on by
+    /// themselves when the job finishes count, so a session never waits on something that will never wake it:
+    /// - Claude Code: Bash with `run_in_background`, and the Monitor tool.
+    /// - Qwen Code: `run_shell_command` with `is_background`, and its monitor tool. Its woken turn skips
+    ///   UserPromptSubmit, but its first tool call or Stop ends the wait all the same.
+    /// - Copilot CLI: Bash with `mode: "async"` (detached too): it starts a turn of its own when the job ends.
+    /// - Gemini CLI: `run_shell_command` with `is_background`, only when its settings feed the result back and let it
+    ///   take a turn by itself (`geminiWakesOnJobs`); otherwise a finished job waits for you, so it's plain idle.
+    /// - Codex and pi: never. Codex has to poll its running commands itself (`write_stdin`), pi has no background jobs.
+    /// Background agents aren't here: they're on stage as agents, and the session already waits on them.
+    static func backgroundJob(_ assistant: String, _ tool: String, _ input: [String: Any], cwd: String? = nil) -> String? {
+        func str(_ k: String) -> String? {
+            guard let v = (input[k] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !v.isEmpty else { return nil }
+            return v
+        }
+        func job(_ fallback: String) -> String {
+            let flat = (str("description") ?? str("command") ?? fallback).replacingOccurrences(of: "\n", with: " ")
+            return flat.count > 60 ? String(flat.prefix(59)) + "…" : flat
+        }
+        switch (assistant, tool) {
+        case ("claude", "Bash") where input["run_in_background"] as? Bool == true,
+             ("qwen", "run_shell_command") where input["is_background"] as? Bool == true,
+             ("copilot", "Bash"), ("copilot", "bash"):
+            if assistant == "copilot" && str("mode") != "async" { return nil }
+            return job("a command")
+        case ("claude", "Monitor"), ("qwen", "monitor"), ("qwen", "Monitor"):   // wakes it on each line it watches for
+            return job("a process")
+        case ("gemini", "run_shell_command") where input["is_background"] as? Bool == true:
+            return geminiWakesOnJobs(cwd: cwd) ? job("a command") : nil
+        default:
+            return nil
+        }
+    }
+
+    /// Gemini CLI takes a turn by itself when a background command ends only with both settings on:
+    /// `tools.shell.backgroundCompletionBehavior` "inject" or "notify" (the default "silent" feeds nothing back) and
+    /// `experimental.modelSteering`. The project's .gemini/settings.json wins over ~/.gemini/settings.json.
+    static func geminiWakesOnJobs(cwd: String?) -> Bool {
+        var behavior = "silent", steering = false
+        let files = [SaverFeed.home + "/.gemini/settings.json"] + (cwd.map { [$0 + "/.gemini/settings.json"] } ?? [])
+        for f in files {
+            guard let data = FileManager.default.contents(atPath: f),
+                  let root = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { continue }
+            if let b = ((root["tools"] as? [String: Any])?["shell"] as? [String: Any])?["backgroundCompletionBehavior"] as? String {
+                behavior = b
+            }
+            if let on = (root["experimental"] as? [String: Any])?["modelSteering"] as? Bool { steering = on }
+        }
+        return steering && (behavior == "inject" || behavior == "notify")
     }
 
     /// A short, human description of a tool call: "Edit Overlay.swift", "Bash: swift build", "Grep fightRoles".
@@ -646,7 +713,8 @@ enum StatusStore {
             }
         }
         switch m {
-        case .thinking where age > thinkingTTL, .working where age > workingTTL, .waiting where age > waitingTTL:
+        case .thinking where age > thinkingTTL, .working where age > workingTTL, .waiting where age > waitingTTL,
+             .background where age > backgroundTTL:
             return .idle
         case .thinking where now - (rec.lastTool ?? 0) < toolGrace:
             return .working

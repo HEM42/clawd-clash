@@ -71,6 +71,7 @@ You run Claude Code in three terminals. One is thinking, one is waiting for your
 - **Thinking?** A thought bubble.
 - **Needs you?** A red `!`, and if you ignore it for a minute, it starts jumping up and down. It keeps asking until you answer; press Esc instead and it stands down.
 - **Done and idle?** It stops fighting and passes the time with habits of its own, and most characters have a signature move (Ahh2-De2 plays Princess Laya's message, Han Yolo spins his blaster, Iron Clawd flips his faceplate up, Thanoz snaps, Batclawd's clawdarang loops back to his hand, Doctor Four offers round his jelly babies). After a couple of minutes it sits down; after five it's asleep (zZz).
+- **Left something running?** When it ends its turn on a build, a render or a dev server running in the background, it stands by with a teal hourglass instead of dozing off, and its card names the job. It carries on by itself when the job is done (Claude Code, Qwen Code, Copilot CLI, and Gemini CLI when it's set to wake up).
 - **Spawned subagents?** They walk (or fly, or swing) in one by one, each labelled with what it's doing, and leave when they finish.
 - **Hover** any character for the details; **click** it to jump straight to that session's terminal or editor tab.
 

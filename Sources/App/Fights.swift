@@ -330,9 +330,10 @@ enum BubbleKind: Equatable {
     case unknown        // session without hooks: we can't tell what it's doing
     case sleeping       // idle for a long time
     case agentsOut(Int) // done for now, but this many of its agents are still out: it's waiting on them, not on you
+    case background     // done for now, but something it left running (a build, a render) will wake it: an hourglass
 }
 
-/// Compact bubble, it only ever holds three thinking dots, a "!", a "?", zZz or how many agents are out.
+/// Compact bubble, it only ever holds three thinking dots, a "!", a "?", zZz, how many agents are out or an hourglass.
 /// `tailRight`: the bubble sits left of the head, so its tail points right. Only the frame is
 /// mirrored for that, the symbol inside never reads backwards.
 func drawBubble(_ c: PixelCanvas, kind: BubbleKind, t: Double, urgent: Bool = false, tailRight: Bool = false) {
@@ -342,6 +343,7 @@ func drawBubble(_ c: PixelCanvas, kind: BubbleKind, t: Double, urgent: Bool = fa
     case .unknown: border = C(0xC98A1A)
     case .sleeping: border = C(0x6A5ACD)
     case .agentsOut: border = C(0x5B8FE8)   // the blue of an agent's name tag
+    case .background: border = C(0x2FA89A)
     case .thinking: border = outline
     }
     c.rect(5, 1, 11, 7, white)
@@ -368,6 +370,14 @@ func drawBubble(_ c: PixelCanvas, kind: BubbleKind, t: Double, urgent: Bool = fa
     case .thinking:
         let step = Int(t * 3) % 4
         for i in 0..<3 where step > i { c.rect(6 + i * 3, 3, 2, 2, border) }
+    case .background:
+        // An hourglass: the sand runs from the top bulb to the bottom one in 3 s, a grain falling through the neck,
+        // then it turns over (drawn the right way up again at once, since the full bulb is now on top).
+        let sand = C(0xE8B04A), p = (t / 3).truncatingRemainder(dividingBy: 1)
+        c.pattern(8, 2, ["XXXXX", ".X.X.", "..X..", ".X.X.", "XXXXX"], ["X": border])
+        if p < 0.5 { c.px(10, 3, sand) }                      // the top bulb, until it's run out
+        if p > 0.25 { c.px(10, 5, sand) }                     // the bottom one, filling
+        if Int(t * 4) % 2 == 0 && p < 0.9 { c.px(10, 4, sand) } // a grain in the neck
     case .agentsOut(let n):
         // The number out, in a 3×5 pixel figure (9 and over: a "+").
         let digits: [[String]] = [["XXX", "X.X", "X.X", "X.X", "XXX"], [".X.", "XX.", ".X.", ".X.", "XXX"],
