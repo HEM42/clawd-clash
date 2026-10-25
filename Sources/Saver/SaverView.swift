@@ -770,6 +770,7 @@ final class ClawdClashSaverView: ScreenSaverView {
         case "working": return .working
         case "thinking": return .thinking
         case "waiting": return .waiting
+        case "background": return .standGuard   // waiting on a job it left running: standing by, not idle
         default: return .idle
         }
     }
@@ -800,6 +801,7 @@ final class ClawdClashSaverView: ScreenSaverView {
         case "working": return l("◉ WORKING · \(held)", 0.42, 0.9, 0.46)
         case "thinking": return l("◌ THINKING · \(held)", 0.42, 0.71, 1)
         case "waiting": return l((s.urgent ? "⚠ NEEDS YOU! · " : "⚠ NEEDS YOU · ") + held, 1, 0.35, 0.35, alert: true)
+        case "background": return l("⧗ WAITING ON A JOB · \(held)", 0.3, 0.8, 0.72)
         default:
             if s.asleep { return l("z z  ASLEEP · \(held)", 0.63, 0.55, 1) }
             return Look(accent: accent, status: "IDLE · \(held)", statusColor: Self.dim, alert: false)

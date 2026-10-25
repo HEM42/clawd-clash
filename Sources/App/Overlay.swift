@@ -544,7 +544,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 id: s.id, cast: cast.id, assistant: s.group, project: s.project, 
                 accent: hex, mood: s.mood.rawValue, urgent: actor?.urgent ?? false, asleep: asleep, sitting: actor?.sitting ?? false,
                 unknown: !s.live || s.hookSilent, focused: s.pid != nil && s.pid == focusedPid, since: since(s, now: now),
-                activity: s.mood == .idle ? nil : s.record?.activity, prompt: s.record?.prompt, agents: agents))
+                activity: s.mood == .background ? "Waiting on: " + backgroundJobs(s) : s.mood == .idle ? nil : s.record?.activity,
+                prompt: s.record?.prompt, agents: agents))
             seenNow[s.id] = (s.mood.rawValue, asleep, cast.name, s.project, s.record?.prompt)
             for (a, fa) in zip(s.agents, agents) { agentsNow[a.id] = (Cast.of(a).name, fa.task, cast.name) }
         }
@@ -556,6 +557,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             let place = n.project.isEmpty ? "" : " in \(n.project)"
             guard let was = feedSeen[id] else { event("\(n.name) arrived\(place)"); continue }
             if n.mood == "waiting" && was.mood != "waiting" { event("\(n.name) is waiting on you\(place)") }
+            else if n.mood == "background" && was.mood != "background" { event("\(n.name) is waiting on a job\(place)") }
             else if n.mood == "idle" && (was.mood == "working" || was.mood == "thinking") {
                 event("\(n.name) finished\(n.prompt.map { " “" + short($0) + "”" } ?? "")\(place)")
             } else if n.asleep && !was.asleep { event("\(n.name) fell asleep\(place)") }
@@ -605,6 +607,13 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
     }
 
     /// How long a session has been in its current mood (hooks know exactly; otherwise we count from when we saw it).
+    /// What a session waiting on a background job left running: "Render the promo", or "Build the app, and 2 more".
+    private func backgroundJobs(_ s: SessionSnapshot) -> String {
+        let jobs = s.record?.background ?? []
+        guard let first = jobs.first else { return "a job" }
+        return jobs.count == 1 ? first : first + ", and \(jobs.count - 1) more"
+    }
+
     private func since(_ s: SessionSnapshot, now: Double) -> Double {
         if let rec = s.record, let t = rec.since, rec.state == s.mood.rawValue { return t }
         return moodSince[s.id] ?? now
@@ -806,7 +815,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
             var bubble: BubbleKind?, urgent = false, accent: NSColor?
             if let s = u.session {
                 mood = s.mood
-                mode = s.mood == .idle && !s.agents.isEmpty ? .standGuard : VaderMode(s.mood)
+                mode = (s.mood == .idle && !s.agents.isEmpty) || s.mood == .background ? .standGuard : VaderMode(s.mood)
                 label = s.project.isEmpty ? (s.id == "home" ? "" : Cast(id: s.leader).name) : s.project
                 let held = now - since(s, now: now)
                 switch s.mood {
@@ -816,6 +825,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                     if (!s.live && s.pid != nil) || s.stalled { bubble = .unknown }  // no live status: say so, don't fake idle
                     else if !s.agents.isEmpty { bubble = .agentsOut(s.agents.count) } // its agents are still out
                     else if s.record != nil && held > 300 { bubble = .sleeping }    // idle 5+ min
+                case .background: bubble = .background
                 case .working: break
                 }
                 accent = Accents.color(for: s.project)
@@ -1086,6 +1096,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
         case .working: lines.append("Working · \(held)")
         case .thinking: lines.append("Thinking · \(held)")
         case .waiting: lines.append("Needs you · \(held)")
+        case .background: lines.append("Waiting on: " + backgroundJobs(s) + " · " + held)
         case .idle where !s.agents.isEmpty:
             lines.append("Waiting on \(s.agents.count) agent\(s.agents.count == 1 ? "" : "s") · " + held)
         case .idle: lines.append((now - since(s, now: now) > 300 ? "Asleep · " : "Idle · ") + held)
@@ -2395,6 +2406,7 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 color = NSColor(srgbRed: 1, green: 0.35, blue: 0.35, alpha: 1)
             case (.idle, .some(.unknown)): status = "NO LIVE STATUS"; color = NSColor(srgbRed: 1, green: 0.69, blue: 0.24, alpha: 1)
             case (.idle, .some(.sleeping)): status = "ASLEEP · \(held)"; color = NSColor(srgbRed: 0.63, green: 0.55, blue: 1, alpha: 1)
+            case (.background, _): status = "WAITING ON A JOB · \(held)"; color = NSColor(srgbRed: 0.3, green: 0.8, blue: 0.72, alpha: 1)
             case (.idle, .some(.agentsOut(let n))): status = "WAITING ON \(n) AGENT\(n == 1 ? "" : "S") · \(held)"
                 color = NSColor(srgbRed: 0.45, green: 0.65, blue: 1, alpha: 1)
             case (.idle, _): status = "IDLE · \(held)"; color = dim
@@ -2405,7 +2417,8 @@ final class OverlayController: NSObject, NSMenuDelegate, NSApplicationDelegate, 
                 let meta = [r.model, r.title].compactMap { $0 }.joined(separator: "  ·  ")
                 if !meta.isEmpty { lines.append((meta, dim)) }
                 if let a = r.activity, s.mood != .idle { lines.append(("Now: " + a, .white)) }
-                let reply = s.mood == .idle ? r.reply.map { s.aiLabel.components(separatedBy: " · ")[0] + ": “" + $0 + "”" } : nil
+                if s.mood == .background { lines.append(("Waiting on: " + backgroundJobs(s), .white)) }
+                let reply = s.mood == .idle || s.mood == .background ? r.reply.map { s.aiLabel.components(separatedBy: " · ")[0] + ": “" + $0 + "”" } : nil
                 if compact {
                     // Compact Window: one line of the conversation, the reply once it's done, otherwise your prompt.
                     if let line = reply ?? r.prompt.map({ "You: “" + $0 + "”" }) { lines.append((line, soft)) }
@@ -3416,6 +3429,7 @@ private extension VaderMode {
         case .thinking: self = .thinking
         case .working: self = .working
         case .waiting: self = .waiting
+        case .background: self = .standGuard
         }
     }
 }
