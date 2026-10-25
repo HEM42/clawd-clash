@@ -9,7 +9,7 @@ Its first three universes started as separate apps. Their changelogs from before
 
 Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://github.com/rodclemen/doctor-clawd)), so its whole history is below, from 3.1.0.
 
-## Unreleased
+## 4.1.1 (2026-10-25)
 
 ### Added
 - **A session waiting on a background job says so.** When an AI leaves something running in the background (a render, a build, a dev server) and ends its turn, it used to show as idle, then nodded off, though it would carry on by itself the moment the job finished. Now it stands by with a teal hourglass, the sand running down, and its card reads "WAITING ON A JOB", with the job by name ("Waiting on: Render the full promo"); the screen saver and its ticker say the same. The first thing it does once the job has woken it ends the wait. Which AIs: Claude Code (Bash in the background, and Monitor), Qwen Code (a background shell command, and its monitor), Copilot CLI (an async shell command) and Gemini CLI (a background shell command, only with `tools.shell.backgroundCompletionBehavior` set to inject or notify and `experimental.modelSteering` on, since otherwise it never wakes by itself). Not Codex, which checks on its running commands itself rather than being woken, or pi, which has no background jobs. Background agents were already covered: they're on stage, and the session waits on them. A job that never wakes its session stops counting after an hour. The menu's Status Symbols lists the hourglass as "Waiting on a job".
