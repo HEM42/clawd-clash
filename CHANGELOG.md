@@ -9,7 +9,7 @@ Its first three universes started as separate apps. Their changelogs from before
 
 Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://github.com/rodclemen/doctor-clawd)), so its whole history is below, from 3.1.0.
 
-## Unreleased
+## 4.1.0 (2026-10-25)
 
 ### Changed
 - **Version numbers climb slower.** A new universe now raises the middle number (the next, Superclawdtural, will be 4.1.0, not 5.0.0), and everything else, features included, the last one (4.1.1). The first number stays at 4 and only moves by hand, for a big enough change to the app as a whole. Under the rule 4.0.0 started, every universe raised the first number, which would have reached 13 with the universes already planned. `scripts/next-version.sh` and the guide's "Version numbers" follow the new rule; `./release.sh` works the number out as before.
@@ -29,6 +29,8 @@ Doctor Clawd, the fourth, was made for Clawd Clash ([doctor-clawd](https://githu
 - **The promo's music no longer plays two tunes at once at Clawd Royale.** The groove ran straight through the Royale shot while the teaser's own fanfare, in another key, came in over it. Now the groove keeps going to the end card and Royale brings no music of its own: the emblems and the CLAWD ROYALE title are slapped on like stickers, with a smack each. The groove's lead tune bows out at the slam and stays out, so nothing lands on the FWIP like a second fanfare and the tune doesn't start over for the last few seconds. The Royale teaser keeps its fanfare.
 - **Stranger Clawds' BMX bikes keep their wheels.** A ride that drives in was always drawn on a ship's canvas, whatever height it asked for, so the bikes, drawn two rows taller to keep Dustin's cap clear of the top, lost their bottom two rows, the tyres and the ground under them, as they came and went. Rides that drive in now get their own height, as the TARDIS always did.
 - **The screen saver's ticker says when it was an agent.** An agent leaves the scene when its job is done, so "Dustin is done: Fix the tests" named someone you could no longer see. It now reads "Dustin, Eleven's agent, finished and left: Fix the tests", and an agent arriving "joined Eleven as an agent". In the screen saver, Full Screen and the window's screen-saver view.
+
+_Taught a demon hunter to sharpen a machete three times before it stopped looking like he was petting a floating brick. Then the Open Road crashed at one width out of fifteen hundred, so we tried all fifteen hundred, and the promo's Royale fanfare took three renders to leave, two of which were the old video wearing a new file name._
 
 ## 4.0.0 (2026-10-23)
 
