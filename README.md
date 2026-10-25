@@ -19,7 +19,7 @@
 
 <p align="center"><a href="https://ko-fi.com/F4F0290P72"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi"></a></p>
 
-https://github.com/user-attachments/assets/9a06ca4d-9636-4c3d-b2f1-197f5bb3a8c8
+https://github.com/user-attachments/assets/a932957d-41c4-4854-9424-f6ab161fe7df
 
 <p align="center"><sub>Full 1080p version: <a href="promo/clawd-clash-promo.mp4">promo/clawd-clash-promo.mp4</a></sub></p>
 
@@ -34,8 +34,8 @@ Clawd Clash is one app with many universes: **[Star Clawds](https://github.com/r
 | https://github.com/user-attachments/assets/c3c0f4a1-ac2b-41b5-9b72-bc03c1e123c9 | https://github.com/user-attachments/assets/76bd2d03-f7af-4e76-9ec8-9087f5f4badd |
 | **Clawd of the Rings** | **Clawd Slayer** |
 | https://github.com/user-attachments/assets/76756ccd-d111-4290-b832-8ca4e9e728e4 | https://github.com/user-attachments/assets/dd9213e1-7192-4018-b169-ea451f6a146b |
-| **Stranger Clawds** | |
-| https://github.com/user-attachments/assets/cd3941de-f7e2-4494-a7b3-f8872a0623d5 | |
+| **Stranger Clawds** | **Superclawdtural** |
+| https://github.com/user-attachments/assets/cd3941de-f7e2-4494-a7b3-f8872a0623d5 | https://github.com/user-attachments/assets/cdd105eb-1056-415e-b5bc-9cce6e1ae66a |
 
 <p align="center"><sub>🔊 Click the speaker in a player for sound: GitHub starts videos muted.</sub></p>
 
