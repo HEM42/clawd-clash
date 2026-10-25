@@ -387,9 +387,15 @@ func showcaseTitle(_ ctx: CGContext, _ u: Universe, _ line: String, local l: Dou
 /// The promo's opening, in the style of Doctor Clawd's title sequence: down the time vortex, with the police box and
 /// every universe's legend tumbling up out of it and past us, then CLAWD CLASH flying up out of the eye of it and landing
 /// with a bang in the middle of the screen. They come out in waves of two from opposite sides, the second a beat
-/// later, on its own curve and at its own speed, so a new universe adds to a wave instead of making the intro longer.
+/// later, on its own curve and at its own speed, so a new universe adds to a wave instead of making the intro longer:
+/// the waves close up to fit, so the last tumbler is always past by `introLastPast` and the title always lands in time.
 var introTumblers: [Cast?] { [nil] + Universe.offered.map { Theme.of($0).legend } }
-let introPerWave = 2, introWave = 1.25, introFly = 2.7
+let introPerWave = 2, introFly = 2.7, introLastPast = 8.4
+/// The gap between waves: as long as fits every tumbler in before `introLastPast` (1.25 s at most).
+var introWave: Double {
+    let last = introTumblers.count - 1, waves = last / introPerWave, j = Double(last % introPerWave)
+    return min(1.25, (introLastPast - 0.3 - introFly - j * 0.7) / Double(max(1, waves)))
+}
 
 /// When tumbler `i` sets off and how long it takes to fly past.
 func introTiming(_ i: Int) -> (start: Double, fly: Double) {
@@ -1351,6 +1357,8 @@ if let r = universeReel {
     poster = ("clapper", 2.0)
 } else if reel == "royale" {
     poster = ("collide", 2.2)
+} else {
+    poster = ("worlds", introSlam + 0.4)    // CLAWD CLASH just landed, the flash gone
 }
 shots = universeReel?.shots ?? {
     switch reel {

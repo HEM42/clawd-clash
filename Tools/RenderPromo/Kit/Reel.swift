@@ -83,6 +83,6 @@ var duration: Double { shots.last!.end }
 /// The soft promo wipe's length: the owner's reels keep the quicker one.
 var softWipe = 2.0
 /// Its first frame, the poster GitHub shows before play: a shot and a time into it.
-var poster: (shot: String, at: Double) = ("worlds", 9.0)
+var poster: (shot: String, at: Double) = ("worlds", 9.0)    // the promo's is set from its title's landing
 /// What Gemini's terminal on the desktop is busy with, in the reel's universe.
 var geminiTask = "gemini ▸ fix the clawdarang"
