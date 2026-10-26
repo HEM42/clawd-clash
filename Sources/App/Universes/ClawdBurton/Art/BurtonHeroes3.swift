@@ -30,8 +30,9 @@ private func faded(_ c: PixelCanvas, _ alpha: Double, _ art: (PixelCanvas) -> Vo
 
 /// Edward Scissorclawds: the Clawd block deathly pale, dark rings round his eyes and a few little scars, a wild black
 /// mane bursting out over the top of him, black leather strapped and buckled over the bottom of him and down his
-/// legs, and in place of hands, bunches of long silver scissor blades. He fights with them, snipping. Signature: a
-/// hedge appears in front of him and his blades flash through it, leaves flying, until it's a little dinosaur.
+/// legs, and in place of hands, bunches of long thin silver scissor blades splayed out, dark between each blade and
+/// the next. He fights with them, snipping. Signature: a hedge appears in front of him and his blades flash through
+/// it, leaves flying, until it's a little dinosaur.
 private func drawEdward(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0xE8E6EE), skinD = C(0xC4C2D0), leather = C(0x1C1A20), leatherL = C(0x3A3644), leatherD = C(0x0E0D12)
     let buckle = C(0xC0C4CE), hair = C(0x111014), hairL = C(0x2C2A36)
@@ -74,10 +75,11 @@ private func drawEdward(_ c: PixelCanvas, _ p: Pose) {
     for (x, y) in [(22, 34), (31, 34), (26, 36), (34, 36)] { c.rect(x, y, 2, 1, buckle) }
     c.pattern(25, 33, ["L....L", ".L..L."], ["L": leatherL])
 
-    // The left hand: a bunch of blades hanging down behind.
+    // The left hand: a bunch of blades splayed out behind him (tipped up when he sits, clear of the floor).
+    let tilt = seatedPose ? 14.0 : 0
     c.rect(15, 33, 3, 3, leather); c.px(16, 34, buckle)
-    edwardBlades(c, from: (16, 35.5), angle: 112, spread: 14, lengths: [6, 7, 5])
-    // The right hand: the blades swung along `p.melee`, snipping while he sculpts, or hanging at his side.
+    edwardBlades(c, from: (16, 35.5), angle: 180 + tilt, spread: 14, lengths: [10, 12, 11, 10])
+    // The right hand: the blades swung along `p.melee`, snipping while he sculpts, or splayed out at his side.
     c.rect(38, 33, 3, 3, leather); c.px(39, 34, buckle)
     if snipping {
         let a = -18 + sin(p.t * 9) * 16
@@ -90,24 +92,49 @@ private func drawEdward(_ c: PixelCanvas, _ p: Pose) {
         }
         edwardBlades(c, from: Sprite.hand, angle: a, spread: 11, lengths: [10, 12, 9])
     } else {
-        edwardBlades(c, from: Sprite.hand, angle: 72, spread: 20, lengths: [7, 8, 7])
+        edwardBlades(c, from: Sprite.hand, angle: -tilt, spread: 14, lengths: [11, 12, 11, 10])
     }
 }
 
-/// A bunch of scissor blades fanned out from `h` along `angle` (degrees), `spread` apart: each a filled silver
-/// sliver, lit along one edge.
+/// A bunch of scissor blades fanned out from `h` along `angle` (degrees), `spread` apart, riveted to a knuckle
+/// plate: each a long thin blade a pixel wide, bright steel, duller near its root, a dark gap between one blade and
+/// the next.
 private func edwardBlades(_ c: PixelCanvas, from h: (x: Double, y: Double), angle: Double, spread: Double,
                           lengths: [Double]) {
-    let steel = C(0x868C98), steelL = C(0xDCE0E8)
-    for (i, len) in lengths.enumerated() {
-        let a = angle + spread * Double(i - lengths.count / 2)
-        let r = a * .pi / 180, sx = -sin(r), sy = cos(r)
-        let base = burtonReach(h, a, 0.5), tip = burtonReach(h, a, len)
-        let b0 = (base.x + sx * 1.2, base.y + sy * 1.2), b1 = (base.x - sx * 1.2, base.y - sy * 1.2)
-        burtonTriangle(c, b0, b1, (tip.x, tip.y), steel)
-        burtonTriangle(c, b1, (base.x, base.y), (tip.x, tip.y), steelL)
+    let steel = C(0x868C98), steelL = C(0xDCE0E8), gap = C(0x2A2C36)
+    /// A hard one-pixel line, no softening.
+    func pixels(_ p: (x: Double, y: Double), _ q: (x: Double, y: Double), _ col: Px) {
+        let n = max(1, Int(max(abs(q.x - p.x), abs(q.y - p.y)).rounded(.up)))
+        for k in 0...n {
+            let f = Double(k) / Double(n)
+            c.px(Int((p.x + (q.x - p.x) * f).rounded(.down)), Int((p.y + (q.y - p.y) * f).rounded(.down)), col)
+        }
     }
-    c.rect(Int(h.x) - 1, Int(h.y) - 1, 2, 2, C(0x5A5E68))
+    // Each blade rooted on its own knuckle, two pixels from the next, across the way the bunch points.
+    let r = angle * .pi / 180, mid = Double(lengths.count - 1) / 2
+    let blades = lengths.enumerated().map { i, len -> (root: (x: Double, y: Double), tip: (x: Double, y: Double)) in
+        let k = Double(i) - mid, a = angle + spread * k
+        let root = (x: h.x + cos(r) * 0.5 - sin(r) * k * 2, y: h.y + sin(r) * 0.5 + cos(r) * k * 2)
+        return (root, burtonReach(root, a, len))
+    }
+    // The dark between the blades first, out to where the gap is wide enough not to fill with outline.
+    func toward(_ p: (x: Double, y: Double), _ q: (x: Double, y: Double), _ f: Double) -> (Double, Double) {
+        (p.x + (q.x - p.x) * f, p.y + (q.y - p.y) * f)
+    }
+    for (b, n) in zip(blades, blades.dropFirst()) {
+        let bt = toward(b.root, b.tip, 0.6), nt = toward(n.root, n.tip, 0.6)
+        burtonTriangle(c, (b.root.x, b.root.y), (n.root.x, n.root.y), nt, gap)
+        burtonTriangle(c, (b.root.x, b.root.y), nt, bt, gap)
+    }
+    // The knuckle plate they're riveted to.
+    if let f = blades.first, let l = blades.last {
+        burtonLine(c, f.root.x, f.root.y, l.root.x, l.root.y, C(0x5A5E68), 1)
+    }
+    for b in blades {
+        pixels(b.root, b.tip, steelL)
+        let s = toward(b.root, b.tip, 0.3)
+        pixels(b.root, (x: s.0, y: s.1), steel)
+    }
 }
 
 /// The hedge he sculpts, in front of him: a round green bush; as `cut` goes 0…1 everything that isn't the little
