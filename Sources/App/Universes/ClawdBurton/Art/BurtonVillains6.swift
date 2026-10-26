@@ -19,7 +19,7 @@ let burtonVillains6: [BurtonVillain: Persona] = [
                       headTop: 16, signature: 3.6, draw: drawShellee),
     .colossuss: Persona(name: "Colossuss", weapon: .saber, pivot: colossussMouth, headTop: 21, signature: 3.2,
                         draw: drawColossuss),
-    .wereRat: Persona(name: "The Were-Rat", weapon: .saber, headTop: 20, signature: 3.0, draw: drawWereRat),
+    .wereRat: Persona(name: "The Were-Rat", weapon: .saber, bulk: 4, headTop: 16, signature: 3.0, draw: drawWereRat),
 ]
 
 /// Mr. Whiskerz's jaws: he bites from there.
@@ -489,51 +489,78 @@ private func drawColossuss(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - The Were-Rat
 
-/// The Were-Rat: a pet rat brought back wrong, now a rat-man, in greys: the Clawd block in grey fur with round
-/// ears on top, beady eyes and a long pointed snout jutting out in front with whiskers and two big front teeth,
-/// tattered dark rags, a long bare tail. Claws. Signature: it lifts its snout and sniffs the air, whiskers twitching.
+/// The Were-Rat: Edgar's dead rat brought back wrong, a hulking rat-monster, in greys: a hunched back a size bigger
+/// than Clawd, bristling, its fur in dark strokes and ragged tufts along the spine, tall pointed ears laid back, a
+/// glaring eye under a heavy brow, a long snout with its jaws open on long fangs, whiskers, four clawed legs and a long
+/// bald tail. Claws. Signature: it lifts its snout and sniffs the air, whiskers twitching.
 private func drawWereRat(_ c: PixelCanvas, _ p: Pose) {
-    let fur = C(0x8C8C90), furD = C(0x6A6A70), furL = C(0xAAAAB0), skin = C(0xC8C8C8), rags = C(0x48484E)
-    let ragsD = C(0x34343A)
+    let fur = C(0x7C7C82), furD = C(0x56565C), furL = C(0x9E9EA4), skin = C(0xC4BCBC), skinD = C(0xA09898)
+    let claw = C(0xECECE4)
     let sniffing = p.signature.map { $0 > 0.1 && $0 < 0.9 } ?? false
     let twitch = Int(p.t * (sniffing ? 14 : 3)) % 2
 
-    drawLegs(c, Look(leg: fur), step: p.step)
-    if !seatedPose { for lx in [19, 23, 31, 35] { c.rect(lx, 43, 2, 1, skin) } }
+    // Four clawed legs, thick and dark-sided, the claws out.
+    if seatedPose {
+        drawLegs(c, Look(leg: fur), step: p.step)
+    } else {
+        for (i, lx) in [17, 22, 31, 36].enumerated() {
+            let h = p.step >= 0 && i % 2 == p.step ? 7 : 8
+            c.rect(lx, 36, 3, h, fur); c.rect(lx + 2, 36, 1, h, furD)
+            c.px(lx, 35 + h, claw); c.px(lx + 2, 35 + h, claw)
+        }
+    }
     c.oy += p.breathe
-    // The long bare tail, curving off behind.
-    var prev = (x: 18.0, y: 35.0)
-    for i in 1...8 {
-        let f = Double(i) / 8, q = (x: 18 - f * 14, y: 35 + sin(f * 2.4) * 5 - f * 2)
-        burtonLine(c, prev.x, prev.y, q.x, q.y, skin, 0.7 - f * 0.2)
+    // The long bald tail, thick at the root, ringed, curving off behind.
+    var prev = (x: 15.0, y: 33.0)
+    for i in 1...10 {
+        let f = Double(i) / 10, q = (x: 15 - f * 13, y: 33 + sin(f * 2.6) * 5 - f * 3)
+        burtonLine(c, prev.x, prev.y, q.x, q.y, i % 3 == 0 ? skinD : skin, 1.1 - f * 0.6)
         prev = q
     }
-    // Round ears on top, the furry block.
-    c.circle(21, 23, 3, fur); c.rect(20, 22, 2, 2, skin); c.circle(34, 23, 3, fur); c.rect(33, 22, 2, 2, skin)
-    drawBody(c, Look(body: fur, shade: furD, arm: fur, eye: nil))
-    c.rect(18, 26, 20, 1, furL); for x in stride(from: 20, to: 37, by: 3) { c.px(x, 27, furL) }
-    c.rect(22, 29, 2, 2, burtonInk); c.px(22, 29, C(0xFFFFFF))
-    c.rect(31, 29, 2, 2, burtonInk); c.px(31, 29, C(0xFFFFFF))
-    // The snout: out in front, or lifted to sniff; whiskers and front teeth.
-    let pal: [Character: Px] = ["F": furL, "N": burtonInk, "T": C(0xF4F4EC)]
-    let wk = C(0xE0E0E0, 0.55)
-    if sniffing {
-        c.pattern(35, 22, ["....NN", "...FFN", "..FFFF", ".FFFF.", "FFFF..", "FFF...", "FTT..."], pal)
-        for dy in [-1, 1] {
-            c.glowLine(40, 24 + Double(dy), 45, 22 + Double(dy * 2 + twitch), core: wk, glow: C(0, 0), coreR: 0.4,
-                       glowR: 0.5)
-        }
-        if frac(p.t * 2.5) < 0.5 { c.pattern(43, 17, ["W.W", ".W.", "W.."], ["W": C(0xFFFFFF, 0.5)]) }
-    } else {
-        c.pattern(36, 28, ["FFFF....", "FFFFFFF.", "FFFFFFFN", "FFFFFF..", ".TT....."], pal)
-        for dy in [-1, 1] {
-            c.glowLine(41, 30 + Double(dy), 46, 29.5 + Double(dy * 2 + twitch), core: wk, glow: C(0, 0), coreR: 0.4,
-                       glowR: 0.5)
-        }
+    // The hunched back, dark underneath, its fur in strokes, ragged tufts bristling back along the spine.
+    let top = [30, 28, 27, 26, 25, 24, 23, 23, 22, 22, 21, 21, 20, 20, 20, 20, 20, 21, 21, 22, 22, 23, 23, 24, 25, 25]
+    for (i, t) in top.enumerated() {
+        let bottom = i == 0 ? 34 : i == 1 ? 35 : 37
+        c.rect(13 + i, t, 1, bottom - t + 1, fur); c.px(13 + i, bottom, furD)
     }
-    // Tattered rags over the bottom of it, ragged at the hem.
-    c.rect(18, 33, 20, 5, rags); c.rect(37, 33, 1, 5, ragsD)
-    c.pattern(18, 38, ["RR.RRR..RR.RRR.RR.RR", "R....R...R..R....R.."], ["R": rags])
-    c.pattern(21, 34, ["d...d", ".d.d."], ["d": ragsD])
-    if let a = p.melee { claws(c, angle: a, trail: p.trail, arm: fur, claw: C(0xF0F0E8)) }
+    for (i, h) in [(4, 1.0), (7, 2), (10, 1.5), (13, 2.5), (16, 1.5), (19, 2)] {
+        let x = Double(13 + i), t = Double(top[i])
+        burtonTriangle(c, (x - 1, t + 1), (x + 2, t + 1), (x - 2, t - 1 - h), fur)
+        c.px(13 + i, top[i], furD); c.px(14 + i, top[i], furL)
+    }
+    for (x, y, n) in [(24, 23, 2), (30, 23, 3), (19, 26, 2), (23, 26, 3), (28, 26, 2), (33, 25, 2), (16, 29, 2),
+                      (21, 29, 3), (26, 29, 2), (31, 28, 3), (18, 32, 3), (24, 32, 2), (29, 31, 3), (34, 32, 2),
+                      (21, 35, 2), (27, 34, 2)] {
+        for k in 0..<n { c.px(x - k, y + k, furD) }
+    }
+    // Tall pointed ears laid back, the far one darker.
+    burtonTriangle(c, (37, 24), (41, 24), (39, 16), furD)
+    burtonTriangle(c, (33, 25), (38, 23), (32, 15), fur)
+    burtonTriangle(c, (34.5, 23.5), (36.5, 23), (33, 18), skin)
+    // The head: a heavy brow over a glaring eye, the long snout out in front, jaws open on its fangs; lifted to sniff
+    // the air, jaws shut and the nose twitching.
+    let pal: [Character: Px] = ["F": fur, "D": furD, "L": furL, "B": C(0x303036), "W": C(0xF4F4EC),
+                                "K": burtonInk, "M": C(0x2A1A1A)]
+    let wk = C(0xE0E0E0, 0.55), hy = sniffing ? -3 : 0
+    c.pattern(32, 22 + hy, [
+        "...FFFFF.........",
+        "..FFFFFFFF.......",
+        ".FFFFFFFFFF......",
+        "FFBBBFFFFFFFL....",
+        "FFFFBBBFLLLLLLL..",
+        "FFFWWWKFFFFFFFFF.",
+        "FFFWWKKFFFFFFFFF" + (sniffing && twitch == 1 ? "." : "K"),
+        "FFFFFFFFFFFFFFFKK",
+        sniffing ? "FFFFFFFMMMMMMMM.." : "FFFFFFMMMMMMMMMM.",
+        sniffing ? "FFFFFFWFFFWFFF..." : "FFFFFMWMMMWMMM...",
+        sniffing ? "FFFFFFWFFFWF....." : "FFFFFFWFFFWFF....",
+        "DFFFFFFFFFFF.....",
+        ".DDDDDDD.........",
+    ], pal)
+    for dy in [-1, 1] {
+        c.glowLine(45, 28.5 + Double(hy + dy), 50, 28 + Double(hy + dy * 2 + twitch), core: wk, glow: C(0, 0),
+                   coreR: 0.4, glowR: 0.5)
+    }
+    if sniffing && frac(p.t * 2.5) < 0.5 { c.pattern(48, 19, ["W.W", ".W.", "W.."], ["W": C(0xFFFFFF, 0.5)]) }
+    if let a = p.melee { claws(c, angle: a, trail: p.trail, arm: fur, claw: claw) }
 }
