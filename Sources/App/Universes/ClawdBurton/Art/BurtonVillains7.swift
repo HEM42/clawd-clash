@@ -12,7 +12,7 @@ let burtonVillains7: [BurtonVillain: Persona] = [
                          callout: "The basement of the Alamo!", draw: drawMadamRubee),
     .andee: Persona(name: "Andee", weapon: .saber, pivot: andeeFist, bulk: 4, headTop: 20, signature: 3.6,
                     draw: drawAndee),
-    .bob: Persona(name: "Bob", weapon: .none, headTop: 23, draw: drawBob),
+    .bob: Persona(name: "Bob", weapon: .none, headTop: 28, draw: drawBob),
     .oogieBug: Persona(name: "An Oogie Bug", weapon: .none, headTop: 27, draw: drawOogieBug),
     .nutSquirrel: Persona(name: "A Nut Squirrel", weapon: .none, headTop: 17, draw: drawNutSquirrel),
     .seaMonkey: Persona(name: "A Sea-Monkey", weapon: .none, headTop: 19, draw: drawSeaMonkey),
@@ -396,23 +396,28 @@ private func smallLegs(_ c: PixelCanvas, _ p: Pose, _ leg: Px, foot: Px? = nil) 
     c.oy += p.breathe
 }
 
-/// Bob: one of Beetlejooce's shrunken-head workers: a small dark suit with a white shirt and a thin black tie, and on
-/// top of it, a tiny dark shrunken head, white pinprick eyes, its lips stitched shut, black hair combed flat.
+/// Bob: one of Beetlejooce's shrunken-head workers. The small fry's block is his shrunken head: dark, wrinkled
+/// leathery brown, black hair combed flat over its top, wide staring eyes and a tiny mouth stitched shut with pale
+/// thread; over its bottom rows, a dark suit collar with a white shirt and a thin black tie, suit sleeves at his sides
+/// and suit trousers down to black shoes.
 private func drawBob(_ c: PixelCanvas, _ p: Pose) {
     let suit = C(0x2E2E3A), suitD = C(0x20202A), head = C(0x5A4232), headD = C(0x3E2C20)
     smallLegs(c, p, suit, foot: C(0x101012))
-    c.rect(21, 30, 14, 9, suit); c.rect(21, 38, 14, 1, suitD); c.rect(34, 30, 1, 9, suitD)
-    c.rect(19, 33, 2, 2, suit); c.rect(35, 33, 2, 2, suit)
-    c.pattern(25, 30, ["WWWWWW", ".WWKW.", "..WK..", "...K.."], ["W": C(0xF0F0EC), "K": burtonInk])
-    c.pattern(25, 23, [
-        ".HHHHH.",
-        "HHHHHHH",
-        "SSSSSSS",
-        "SWSSSWS",
-        "SSShSSS",
-        "SKKKKKS",
-        ".SSSSS.",
-    ], ["H": C(0x16161A), "S": head, "h": headD, "W": C(0xF4F0E0), "K": C(0xC8B890)])
+    c.pattern(21, 28, [
+        "...HHHHHHHH...",
+        ".HHHHHHHHHHHH.",
+        "HHHHHhHHHHHHHH",
+        "SwwSSSSSSSwwSd",
+        "SSWWWSSSSWWWSd",
+        "SSWKWSnnSWKWSd",
+        "SwSSSSSSSSSSwd",
+        "SSSSKTKTKSSSSd",
+        "SSwSSSSSSSSwSd",
+        "UUUUWWKWWUUUUD",
+        "DDDDDWKWDDDDDD",
+    ], ["H": C(0x16161A), "h": C(0x34343E), "S": head, "d": headD, "w": headD, "n": headD, "W": C(0xF4F0E0),
+        "K": burtonInk, "T": C(0xC8B890), "U": suit, "D": suitD])
+    c.rect(19, 36, 2, 2, suit); c.rect(35, 36, 2, 2, suit)
 }
 
 /// An Oogie Bug: a beetle fallen out of Ooogie Boogie's seams, grown to a small fry's size: a dark green shell with a
