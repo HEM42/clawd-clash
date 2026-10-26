@@ -29,7 +29,8 @@ private func ramp(_ s: Double, _ a: Double, _ b: Double) -> Double { max(0, min(
 /// Beetlejooce: Clawd as the ghost with the most: the block a pale, mouldy face with dark sunken eyes and a huge sharp
 /// yellow grin, a wild lime mane bursting out round the top of it, and the black-and-white striped suit with a white
 /// shirt and black tie over the bottom of it, striped trousers and black boots. He fights the way a poltergeist
-/// would: his arm turns into a black-and-white striped snake that lashes out and snaps. Signature: his name bubbles
+/// would: as he strikes, his arm turns into a black-and-white striped snake that lashes out and snaps, and slithers
+/// back into the sleeve as he winds up again, his plain hand between strikes. Signature: his name bubbles
 /// up over his head three times, and on the third he drops down into a black-and-white striped ring on the floor,
 /// hands gripping its rim, and springs straight back up out of it.
 private func drawBeetlejooce(_ c: PixelCanvas, _ p: Pose) {
@@ -110,28 +111,39 @@ private func drawJooceFigure(_ c: PixelCanvas, _ p: Pose) {
     // The left arm: a striped sleeve and a grubby long-nailed hand.
     c.pattern(13, 34, ["FF", ".F", ".F"], ["F": hand])
     if !seatedPose { jooceBeetle(c, lt: p.lt) }
-    if let a = p.melee {
-        // The right arm turned into a striped snake, lashing out along `a` from the sleeve.
-        burtonStripes(c, 38, 33, 3, 3, alongX: false, width: 1)
-        jooceSnake(c, angle: a, trail: p.trail, t: p.t)
+    burtonStripes(c, 38, 33, 3, 3, alongX: false, width: 1)
+    if let a = p.melee, case let reach = jooceStrike(a), reach > 0.15 {
+        // The right arm turned into a striped snake, lashing out along `a` from the sleeve, only while he strikes.
+        jooceSnake(c, angle: a, trail: p.trail, t: p.t, reach: reach)
     } else {
-        burtonStripes(c, 38, 33, 3, 3, alongX: false, width: 1)
+        // Between strikes, his plain grubby hand.
         c.pattern(41, 34, ["FF", "F.", "F."], ["F": hand])
     }
+}
+
+/// How far (0…1) his snake arm is out at swing angle `a`: in the sleeve while the arm is up on guard or wound back
+/// (-60 and above it, as when he walks, waits, cheers or stands guard), shooting out as the swing comes forward past
+/// -60, all the way out from -40 down to straight ahead and below; back in as he winds up again.
+private func jooceStrike(_ a: Double) -> Double {
+    var n = a.truncatingRemainder(dividingBy: 360)
+    if n > 180 { n -= 360 } else if n <= -180 { n += 360 }
+    return n > 90 ? 0 : ramp(n, -60, -40)
 }
 
 /// His snake arm: a long black-and-white banded body slithering out of the sleeve along `angle` in an S that ripples
 /// down its length, lagging behind a fast swing, a faint smear where it just was, and a big diamond head on the end
 /// with a lime eye; when it strikes the jaws gape and a forked red tongue flicks out. Kept in front of him: it never
-/// swings back over his own face.
-private func jooceSnake(_ c: PixelCanvas, angle raw: Double, trail: [Double], t: Double) {
+/// swings back over his own face. `reach` (0…1) is how far out of the sleeve it is.
+private func jooceSnake(_ c: PixelCanvas, angle raw: Double, trail: [Double], t: Double, reach: Double) {
     let angle = max(-100, min(70, raw))
     for (i, a) in trail.enumerated() {
-        let p0 = burtonReach(jooceHand, max(-100, min(70, a)), 5), p1 = burtonReach(jooceHand, max(-100, min(70, a)), 20)
-        c.glowLine(p0.x, p0.y, p1.x, p1.y, core: C(0xE8E8DC), glow: C(0xE8E8DC), coreR: 0.8, glowR: 2.2, strength: 0.3 / Double(i + 1))
+        let p0 = burtonReach(jooceHand, max(-100, min(70, a)), 5 * reach)
+        let p1 = burtonReach(jooceHand, max(-100, min(70, a)), 20 * reach)
+        c.glowLine(p0.x, p0.y, p1.x, p1.y, core: C(0xE8E8DC), glow: C(0xE8E8DC), coreR: 0.8, glowR: 2.2,
+                   strength: 0.3 / Double(i + 1))
     }
     let lag = trail.first.map { max(-100, min(70, $0)) - angle } ?? 0
-    let length = 19.0, step = 0.5
+    let length = max(4, 19 * reach), step = 0.5
     var pts: [(x: Double, y: Double)] = []
     for i in 0...Int(length / step) {
         let s = Double(i) * step, f = s / length
