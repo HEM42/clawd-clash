@@ -19,7 +19,8 @@ let burtonVillains5: [BurtonVillain: Persona] = [
     .slugwurth: Persona(name: "Slugwurth", weapon: .none, headTop: 22, signature: 3.6, draw: drawSlugwurth),
     .redQueen: Persona(name: "The Red Queen", weapon: .saber, pivot: queenHand, bulk: 3, headTop: 9, signature: 3.6,
                        callout: "Off with their heads!", draw: drawRedQueen),
-    .stayne: Persona(name: "Stayne", weapon: .saber, headTop: 19, signature: 3.4, draw: drawStayne),
+    .stayne: Persona(name: "Stayne", weapon: .saber, pivot: stayneHand, headTop: 14, signature: 3.4,
+                     draw: drawStayne),
     .jabberclawdky: Persona(name: "The Jabberclawdky", weapon: .lightning,
                             magic: Magic(core: C(0xF0D6FF), glow: C(0x7A2BD1), jagged: true), armoured: true,
                             canSit: false, pivot: jabberMouth, bulk: 8, headTop: 9, signature: 3.6,
@@ -32,6 +33,10 @@ let burtonVillains5: [BurtonVillain: Persona] = [
 
 /// The Red Queen's hand, at the side of her bigger block: the flamingo swings from there.
 private let queenHand = (x: 42.5, y: 34.5)
+/// How far Stayne's long legs raise everything above them while he stands.
+private let stayneLift = 5
+/// Stayne's sword hand, raised with the rest of him: his sword swings from there.
+private let stayneHand = (x: Sprite.hand.x, y: Sprite.hand.y - Double(stayneLift))
 /// The front of the Jabberclawdky's mouth: its lightning leaves from there (raised by `armRaise`, head and all).
 private let jabberMouth = (x: 57.5, y: 20.5)
 /// The Bandersnatch's jaws: its bite snaps from there.
@@ -493,14 +498,25 @@ private func drawRedQueen(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Stayne
 
-/// Stayne: the Knave of Hearts, tall, the Clawd block two rows taller, long black hair down his sides, a black heart
+/// Stayne: the Knave of Hearts, very tall: the Clawd block two rows taller, raised high on long thin legs with
+/// plated knees and tall black boots, so he towers over the court. Long black hair down his sides, a black heart
 /// patch over one eye on its strap, black armour with red hearts and heart-studded shoulder plates, and a long sword.
 /// Signature: a slow, mocking bow, one hand on his sword's hilt and the other swept out.
 private func drawStayne(_ c: PixelCanvas, _ p: Pose) {
     let bow = held(p.signature, 0.1, 0.32, 0.68, 0.9)
-    drawLegs(c, Look(leg: C(0x1E1E26)), step: p.step)
-    burtonBoots(c, step: p.step, C(0x0C0C10), height: 3)
-    c.oy += p.breathe
+    let leg = C(0x1E1E26), lift = seatedPose ? 0 : stayneLift
+    if seatedPose {
+        drawLegs(c, Look(leg: leg), step: p.step)
+    } else {
+        // Long legs from under the raised armour skirt to the ground, a plate on each knee, tall boots.
+        for (i, lx) in [19, 23, 31, 35].enumerated() {
+            let lifted = p.step >= 0 && i % 2 == p.step
+            c.rect(lx, 36 - lift, 2, (lifted ? 7 : 8) + lift, leg)
+            c.rect(lx, lifted ? 37 : 38, 2, 1, C(0x5A5A6E))
+        }
+    }
+    burtonBoots(c, step: p.step, C(0x0C0C10), height: 4)
+    c.oy += p.breathe - lift
     guard bow > 0 else { stayneFigure(c, p, bowing: false); return }
     // The bow: the upper body drawn on a layer and tipped forward about his hips.
     let s = PixelCanvas(c.w, c.h)
@@ -520,8 +536,8 @@ private func stayneFigure(_ c: PixelCanvas, _ p: Pose, bowing: Bool) {
     // The armour skirt over his legs, plated.
     c.rect(17, 38, 22, seatedPose ? 1 : 2, armourD);
     for x in stride(from: 18, to: 38, by: 4) { c.rect(x, 38, 1, 2, armourL) }
-    // The taller block.
-    c.rect(18, 24, 20, 2, clawdOrange); c.rect(37, 24, 1, 2, clawdShade)
+    // The taller block, its forehead showing under the parting of his fringe.
+    c.rect(18, 24, 20, 2, clawdOrange); c.rect(37, 24, 1, 2, clawdShade); c.rect(27, 23, 4, 1, clawdOrange)
     drawBody(c, Look(arm: armour, eye: nil))
     c.rect(22, 29, 2, 3, ink)
     // The heart-shaped eye patch over his other eye, its strap, a scar under it.
