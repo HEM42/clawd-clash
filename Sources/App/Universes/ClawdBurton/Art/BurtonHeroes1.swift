@@ -11,7 +11,7 @@ let burtonHeroes1: [BurtonHero: Persona] = [
                               pivot: jackMouth, headTop: 11, signature: 3.4, callout: "What's this?",
                               draw: drawJackSkullington),
     .sallee: Persona(name: "Sallee", weapon: .none, headTop: 20, signature: 3.6, draw: drawSallee),
-    .zeero: Persona(name: "Zeero", weapon: .none, motion: .hover, canSit: false, headTop: 14, signature: 3.0, callout: "Arf!",
+    .zeero: Persona(name: "Zeero", weapon: .none, motion: .hover, canSit: false, headTop: 7, signature: 3.0, callout: "Arf!",
                     draw: drawZeero),
     .theMayor: Persona(name: "The Mayor", weapon: .none, bulk: 2, headTop: 12, signature: 3.2, draw: drawMayor),
     .sandyClawdz: Persona(name: "Sandy Clawdz", weapon: .blaster, shot: .thrown(C(0xC8202A)), muzzle: (45, 29),
@@ -220,10 +220,11 @@ private func drawSallee(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Zeero
 
-/// Zeero: Jack's ghost dog, a little white sheet of a dog floating off the ground, floppy ears, two dark eyes, a
-/// collar with a tiny bow tie, and his glowing pumpkin nose; behind him, no hind legs, just a wispy tail curling
-/// away. Bobs gently as he hovers. He doesn't fight. Signature: his nose lights up bright as a jack-o'-lantern, he
-/// loops once round in the air, and barks.
+/// Zeero: Jack's ghost dog, a little white sheet of a dog floating off the ground: a round crown tapering into a
+/// snout with his glowing pumpkin nose on its tip, long floppy ears hanging down past his jaw, two dark eyes, a
+/// collar with a tiny bow tie; behind him, no hind legs, just a wispy tail curling away. Bobs gently as he hovers.
+/// He doesn't fight. Signature: his nose lights up bright as a jack-o'-lantern, he loops once round in the air, and
+/// barks.
 private func drawZeero(_ c: PixelCanvas, _ p: Pose) {
     let sheet = C(0xF4F6F2), sheetD = C(0xC8D0D4), nose = C(0xFF6A1A)
     let sig = p.signature
@@ -255,24 +256,39 @@ private func drawZeero(_ c: PixelCanvas, _ p: Pose) {
         "..SS.SSS.SSdd........",
         "...S..S...S..........",
     ], ["S": sheet, "d": sheetD])
-    // The head, ears flopping, the eyes and the collar.
-    c.pattern(24, 17, [
-        ".....SSSSSSSSS....",
-        "...SSSSSSSSSSSSS..",
-        "EEESSSSSSSSSSSSSS.",
-        "EEESSKKSSSSKKSSSS.",
-        "EEESSKKSSSSKKSSSSS",
-        "EE.SSSSSSSSSSSSSSS",
-        "EE..SSSSSSSSSSSSSS",
-        "EE...SSSSSSSSSSS..",
-        ".E................",
-    ], ["S": sheet, "E": sheetD, "K": C(0x1A1A22)])
-    c.rect(29, 25, 9, 1, C(0x2A2A30)); c.pattern(32, 25, ["OKO", ".O."], ["O": C(0xE8701A), "K": C(0x2A2A30)])
-    // The nose: a little pumpkin, glowing, and lit right up in his signature.
+    // His long floppy ears hang from the back of his crown down past his jaw, swinging a beat behind his bob: the
+    // far one, darker, peeks out behind the near one.
+    let sway = sin(p.t * 2.2 - 0.9)
+    func drawEar(_ rows: [(Int, Int, Int)], _ fill: Px, _ edge: Px) {
+        for (y, x0, x1) in rows {
+            let s = Int((sway * Double(max(0, y - 20)) / 7).rounded())
+            c.rect(x0 + s, y, x1 - x0 + 1, 1, fill); c.px(x0 + s, y, edge)
+        }
+    }
+    drawEar([(17, 23, 25), (18, 22, 24), (19, 21, 23), (20, 20, 22), (21, 20, 22), (22, 20, 22), (23, 20, 22),
+             (24, 20, 22), (25, 20, 22), (26, 20, 22), (27, 20, 21), (28, 21, 21)], C(0xA4ACB6), C(0x8E96A2))
+    // The head: a round crown tapering forward into a snout, the pumpkin nose at its tip; a mouth line under the
+    // snout, two eyes, and the collar with its bow tie.
+    c.pattern(21, 16, [
+        "......SSSSSS",
+        "....SSSSSSSSSS",
+        "...SSSSSSSSSSSS",
+        "..SSSSSSKKSSKKSSS",
+        "..SSSSSSKKSSKKSSSSSS",
+        "..SSSSSSSSSSSSSSSSSSS",
+        "..SSSSSSSSSSSSSSmmmm",
+        "...SSSSSSSSSSSdddd",
+        "....SSSSSSSSdd",
+    ], ["S": sheet, "d": sheetD, "m": C(0x9AA2AA), "K": C(0x1A1A22)])
+    c.rect(26, 25, 8, 1, C(0x2A2A30)); c.pattern(29, 25, ["OKO", ".O."], ["O": C(0xE8701A), "K": C(0x2A2A30)])
+    drawEar([(16, 25, 27), (17, 24, 26), (18, 23, 25), (19, 22, 24), (20, 22, 24), (21, 22, 24), (22, 22, 24),
+             (23, 22, 24), (24, 22, 24), (25, 22, 24), (26, 22, 24), (27, 22, 24), (28, 22, 23), (29, 23, 23)],
+            sheetD, C(0xA4ACB6))
+    // The nose: a little pumpkin on the tip of his snout, glowing, and lit right up in his signature.
     let glow = glowing ? 1.0 : 0.55 + 0.15 * sin(p.t * 4)
-    c.glowLine(41.5, 22.5, 41.5, 22.5, core: C(0xFFD27A, glow), glow: nose.alpha(glow * 0.8), coreR: glowing ? 1.4 : 0.9,
+    c.glowLine(42.5, 20.5, 42.5, 20.5, core: C(0xFFD27A, glow), glow: nose.alpha(glow * 0.8), coreR: glowing ? 1.4 : 0.9,
                glowR: glowing ? 4.2 : 2.6)
-    c.rect(40, 22, 3, 2, nose); c.px(41, 21, C(0x3A6A1A))
+    c.rect(41, 20, 3, 2, nose); c.px(42, 19, C(0x3A6A1A))
 }
 
 // MARK: - The Mayor
