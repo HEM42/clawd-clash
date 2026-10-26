@@ -370,10 +370,10 @@ private func drawMrWhiskerz(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Shellee
 
-/// Shellee: a pet turtle grown into a kaiju, in greys: a domed grey shell a size bigger than Clawd, plated and
-/// ridged with spikes, her head reaching out in front with a heavy brow and a toothy mouth, four stumpy elephant legs,
-/// a stub of a tail. Shots bounce off her shell. She stomps. Signature: she roars at the sky, then stomps, left,
-/// right, the ground shaking.
+/// Shellee: a pet turtle grown into a kaiju, in greys: a domed grey shell a size bigger than Clawd, covered in
+/// hexagonal scutes and ridged with spikes, her head reaching out in front with a heavy brow and a toothy mouth, four
+/// stumpy elephant legs, a stub of a tail. Shots bounce off her shell. She stomps. Signature: she roars at the sky,
+/// then stomps, left, right, the ground shaking.
 private func drawShellee(_ c: PixelCanvas, _ p: Pose) {
     let shell = C(0x7A7A80), shellD = C(0x5A5A60), shellL = C(0x9A9AA0), plate = C(0x48484E), skin = C(0xA8A8A8)
     let skinD = C(0x868686), spike = C(0x34343A), belly = C(0xC8C8C0)
@@ -423,7 +423,8 @@ private func drawShellee(_ c: PixelCanvas, _ p: Pose) {
             }
         }
     }
-    // The domed shell, plated, its rim along the bottom, spikes along its ridge.
+    // The domed shell, spikes along its ridge. Its scutes: big hexagons over the middle, one on top and one down
+    // each flank, and a ring of small marginal scutes round the rim; each outlined dark with a lighter centre.
     for (k, sx) in [18, 23, 28, 33].enumerated() {
         let h = k == 1 || k == 2 ? 6.0 : 5.0
         burtonTriangle(c, (Double(sx), 23), (Double(sx) + 4, 23), (Double(sx) + 1.5, 23 - h), spike)
@@ -433,11 +434,22 @@ private func drawShellee(_ c: PixelCanvas, _ p: Pose) {
         c.rect(14 + inset, y, 24 - inset * 2, 1, y > 34 ? belly : shell)
         c.px(37 - inset, y, y > 34 ? C(0xA8A8A0) : shellD)
     }
-    c.rect(18, 22, 12, 1, shellL); c.rect(16, 23, 4, 1, shellL)
-    for y in [27, 31] { c.rect(15, y, 22, 1, plate) }
-    for (y0, y1, xs) in [(22, 26, [21, 27, 33]), (28, 30, [18, 24, 30]), (32, 34, [21, 27, 33])] {
-        for x in xs { c.rect(x, y0, 1, y1 - y0 + 1, plate) }
-    }
+    c.pattern(14, 21, [
+        ".........D....D.........",
+        ".....LL.D..LL..D.LL.....",
+        ".......D..LLLL..D.......",
+        "..DDDDD..LLLLLL..DDDDD..",
+        "..D....D..LLLL..D....D..",
+        "..D.LL..D..LL..D..LL.D..",
+        "DDD.LLL..DDDDDD..LLL.DDD",
+        "..D.LL..D..LL..D..LL.D..",
+        "..D....D..LLLL..D....D..",
+        "..DDDDDDDDDDDDDDDDDDDD..",
+        ".....D...D....D...D.....",
+        "..LL.D.L.D.LL.D.L.D.LL..",
+        ".....D...D....D...D.....",
+        "DDDDDDDDDDDDDDDDDDDDDDDD",
+    ], ["D": plate, "L": shellL])
     if landed >= 0 { dust(c, x: 18.5, landed); dust(c, x: 38.5, landed) }
 }
 
