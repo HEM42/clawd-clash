@@ -252,23 +252,24 @@ private func drawBikeThief(_ c: PixelCanvas, _ p: Pose) {
 
 /// Madam Rubee: the phoney fortune-teller: an orange Clawd in a red silk turban with a gold jewel and a white plume,
 /// blue eye shadow, red lips, gold hoop earrings, strings of coloured beads over a blue shawl with a gold fringe; her
-/// crystal ball on its draped stand beside her. She doesn't fight. Signature: she waves her hand over the crystal
-/// ball, the other at her temple, and the ball glows.
+/// crystal ball on its draped stand beside her while she stands, carried in her hands while she walks. She doesn't
+/// fight. Signature: she waves her hand over the crystal ball, the other at her temple, and the ball glows.
 private func drawMadamRubee(_ c: PixelCanvas, _ p: Pose) {
     let turban = C(0xC8202A), turbanD = C(0x981418), turbanL = C(0xE84A4A), gold = C(0xE8B830), shawl = C(0x2A4AB0)
     let shawlD = C(0x1E3488), cloth = C(0x6A2A9A), clothD = C(0x4A1A70)
     let sig = p.signature
     let k = sig.map { min(ramp($0, 0.08, 0.2), 1 - ramp($0, 0.82, 0.94)) } ?? 0
 
-    // The crystal ball on its draped stand.
-    let standY = seatedPose ? -4 : 0
-    c.pattern(42, 36 + standY, [".CCCCCCCCC.", "CCCCCCCCCCC", "CcCcCcCcCcC", ".C.......C.",
-                                ".C.......C.", ".C.......C.",
-                                ".D.......D.", "DD.......DD"], ["C": cloth, "c": clothD, "D": C(0x3A1A10)])
-    c.rect(45, 34 + standY, 5, 2, gold)
-    c.circle(47, 30 + standY, 4, C(0xA8C8F0))
-    c.circle(46, 29 + standY, 1, C(0xE8F4FF)); c.px(45, 28 + standY, C(0xFFFFFF))
-    for y in 29...33 { c.px(50 - abs(y - 31) / 2, y + standY, C(0x7AA0D8)) }
+    // Standing still, the crystal ball on its draped stand beside her (walking, she carries the ball: below). The
+    // stand stays put on the floor when she hops or sits.
+    let standY = -p.hop
+    if !p.walking {
+        c.pattern(42, 36 + standY, [".CCCCCCCCC.", "CCCCCCCCCCC", "CcCcCcCcCcC", ".C.......C.",
+                                    ".C.......C.", ".C.......C.",
+                                    ".D.......D.", "DD.......DD"], ["C": cloth, "c": clothD, "D": C(0x3A1A10)])
+        c.rect(45, 34 + standY, 5, 2, gold)
+        rubeeBall(c, 47, 30 + standY, r: 4)
+    }
     if k > 0 {
         let g = k * (0.7 + 0.3 * sin(p.t * 6))
         c.glowLine(47.5, 30.5 + Double(standY), 47.5, 30.5 + Double(standY), core: C(0xFFFFFF, g),
@@ -312,6 +313,20 @@ private func drawMadamRubee(_ c: PixelCanvas, _ p: Pose) {
         raisedHand(c, from: 39.5, hx, hy, sleeve: shawl, hand: clawdOrange)
         raisedHand(c, from: 16.5, 14, 25, sleeve: shawl, hand: clawdOrange)
     }
+    // Walking, she carries the ball in front of her, cupped in both hands.
+    if p.walking {
+        rubeeBall(c, 42, 29, r: 3)
+        c.rect(38, 33, 1, 2, shawl); c.rect(39, 33, 2, 2, clawdOrange); c.rect(43, 33, 2, 2, clawdOrange)
+        c.rect(41, 33, 2, 1, clawdOrange)
+    }
+}
+
+/// Madam Rubee's crystal ball, centred on (`x`, `y`): pale blue glass, a white shine up on the left, a darker crescent
+/// down its right side.
+private func rubeeBall(_ c: PixelCanvas, _ x: Int, _ y: Int, r: Int) {
+    c.circle(x, y, r, C(0xA8C8F0))
+    c.circle(x - 1, y - 1, 1, C(0xE8F4FF)); c.px(x - 2, y - 2, C(0xFFFFFF))
+    for dy in -(r / 2)...(r / 2) { c.px(x + r - 1 - abs(dy) / 2, y + 1 + dy, C(0x7AA0D8)) }
 }
 
 // MARK: - Andee
