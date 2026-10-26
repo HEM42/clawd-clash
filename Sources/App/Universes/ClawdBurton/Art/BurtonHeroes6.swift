@@ -8,7 +8,7 @@ import Foundation
 
 let burtonHeroes6: [BurtonHero: Persona] = [
     .victorFrankenstien: Persona(name: "Victor Frankenstien", weapon: .lightning,
-                                 magic: Magic(core: C(0xFFFFFF), glow: C(0xA8A8A8)), pivot: victorHand, headTop: 20,
+                                 magic: Magic(core: C(0xFFFFFF), glow: C(0xA8A8A8)), pivot: victorHand, headTop: 24,
                                  signature: 3.8, draw: drawVictor),
     .sparkie: Persona(name: "Sparkie", weapon: .saber, pivot: sparkieMouth, headTop: 19, signature: 3.4,
                       draw: drawSparkie),
@@ -24,7 +24,7 @@ let burtonHeroes6: [BurtonHero: Persona] = [
 ]
 
 /// Victor's raised hand: his lightning leaves from there (raised by `armRaise`).
-private let victorHand = (x: 43.5, y: 30.5)
+private let victorHand = (x: 40.5, y: 31.5)
 /// The front of Sparkie's jaws: he bites from there.
 private let sparkieMouth = (x: 46.5, y: 29.5)
 
@@ -51,49 +51,65 @@ private func raisedHand(_ c: PixelCanvas, from sx: Double, _ hx: Int, _ hy: Int,
 
 // MARK: - Victor Frankenstien
 
-/// Victor Frankenstien: a small, serious boy in the greys of an old horror film: a pale grey Clawd with untidy black
-/// hair, a dark sweater vest over a white shirt, its collar showing in the V. He fights with jagged grey-white
-/// lightning, the kind he brings things back to life with. Signature: he flies a kite up into a storm until lightning
-/// strikes it, and it flashes white and drifts back down.
+/// A small Clawd (a 14×9 block at (21, 30)) on short legs, its eyes on the block; applies the breathing bob. The
+/// child-sized Clawd the Oompa-Loompah and Young Masbeth stand on.
+private func smallClawd(_ c: PixelCanvas, _ p: Pose, body: Px, shade: Px, leg: Px, shoe: Px) {
+    if seatedPose {
+        for lx in [22, 25, 30, 33] { c.rect(lx - 1, 37, 3, 2, leg) }
+    } else {
+        for (i, lx) in [22, 25, 30, 33].enumerated() {
+            let lifted = p.step >= 0 && i % 2 == p.step
+            c.rect(lx, 39, 2, lifted ? 3 : 4, leg); c.rect(lx, lifted ? 41 : 42, 2, 1, shoe)
+        }
+    }
+    c.oy += p.breathe
+    c.rect(21, 30, 14, 9, body); c.rect(21, 38, 14, 1, shade); c.rect(34, 30, 1, 9, shade)
+    c.rect(24, 32, 2, 2, ink); c.rect(30, 32, 2, 2, ink)
+}
+
+/// Victor Frankenstien: a small, serious boy in the greys of an old horror film: a child-sized pale grey Clawd with
+/// untidy black hair, a dark sweater vest over a white shirt, its collar showing in the V. He fights with jagged
+/// grey-white lightning, the kind he brings things back to life with. Signature: he flies a kite up into a storm until
+/// lightning strikes it, and it flashes white and drifts back down.
 private func drawVictor(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0xD2D2D2), skinD = C(0xA8A8A8), vest = C(0x5C5C62), vestD = C(0x44444A), vestL = C(0x7C7C84)
     let shirt = C(0xF2F2F2), hair = C(0x17171B), hairL = C(0x40404A)
     let sig = p.signature
     let kiting = sig.map { $0 > 0.03 && $0 < 0.97 } ?? false
 
-    drawLegs(c, Look(leg: C(0x3C3C42)), step: p.step)
-    burtonBoots(c, step: p.step, C(0x111114), height: 1)
-    c.oy += p.breathe
-    drawBody(c, Look(body: skin, shade: skinD, arm: shirt))
-    c.rect(26, 32, 4, 1, C(0x6A6A6E))
-    // The sweater vest over the bottom of Clawd, the shirt collar in its V, a diamond either side.
-    c.rect(18, 33, 20, 5, vest); c.rect(37, 33, 1, 5, vestD); c.rect(18, 37, 20, 1, vestD)
-    c.pattern(24, 33, ["WWWWWWWW", ".WWWWWW.", "..WWWW..", "...WW..."], ["W": shirt])
-    c.pattern(19, 34, [".L.", "L.L", ".L."], ["L": vestL]); c.pattern(33, 34, [".L.", "L.L", ".L."], ["L": vestL])
-    // Untidy black hair over the top of Clawd, tufts sticking up.
-    c.pattern(17, 20, [
-        "....H...HH....H..H....",
-        "..HHH.HHHHH.HHHHHHH...",
-        ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHhHHHHHHHHhHHHHH.",
-        ".HHHHHHHHHHHHHHHHHHHHH",
-        ".HHHH.HHHH.HHH..HHHHHH",
-        ".HHH...H....H....H.HH.",
-        ".HH.................H.",
+    smallClawd(c, p, body: skin, shade: skinD, leg: C(0x3C3C42), shoe: C(0x111114))
+    c.rect(26, 34, 4, 1, C(0x6A6A6E))
+    // The sweater vest over the bottom of him, the shirt collar in its V, a diamond either side.
+    c.rect(21, 35, 14, 4, vest); c.rect(34, 35, 1, 4, vestD); c.rect(21, 38, 14, 1, vestD)
+    c.pattern(25, 35, ["WWWWWW", ".WWWW.", "..WW.."], ["W": shirt])
+    c.pattern(22, 35, [".L.", "L.L", ".L."], ["L": vestL]); c.pattern(31, 35, [".L.", "L.L", ".L."], ["L": vestL])
+    // Untidy black hair over the top of him, tufts sticking up.
+    c.pattern(20, 24, [
+        "....H.....H.....",
+        "...HH..H..HH.H..",
+        "..HHHHHHHHHHHHH.",
+        ".HHhhhHHHHHHHHHH",
+        "HHHHHHHHHHHHHHHH",
+        "HHHHHHHHHHHHHHHH",
+        "HHHH.HHHH.HHHHHH",
+        "HHH....H.....HHH",
     ], ["H": hair, "h": hairL])
-    // The right hand: up, crackling, or holding the kite's string.
+    // His left arm; the right hand: down, up, crackling, or holding the kite's string.
+    c.rect(18, 34, 3, 3, shirt)
     let raise = kiting ? 3 : p.armRaise
     if kiting || p.zap != nil || raise > 0 {
-        raisedHand(c, from: 39.5, 42, 30 - raise, sleeve: shirt, hand: skin)
+        raisedHand(c, from: 36.5, 39, 31 - raise, sleeve: shirt, hand: skin)
+    } else {
+        c.rect(35, 34, 3, 3, shirt)
     }
     guard kiting, let s = sig else { return }
     // The kite: up on its string into the storm, struck, flashing white, and drifting back down.
     let rise = ramp(s, 0.06, 0.4), fall = ramp(s, 0.64, 0.94)
-    let kx = 44 + 12 * rise - 6 * fall, ky = 26 - 18 * rise + 10 * fall
+    let kx = 41 + 12 * rise - 6 * fall, ky = 27 - 18 * rise + 10 * fall
     let struck = s > 0.44 && s < 0.62
     let alpha = min(ramp(s, 0.03, 0.12), 1 - ramp(s, 0.86, 0.97))
     faded(c, alpha) { k in
-        let hx = 43.0, hy = Double(27 - raise + 2)
+        let hx = 40.0, hy = Double(30 - raise)
         for i in 0..<10 {   // the string, sagging a little
             let f0 = Double(i) / 10, f1 = Double(i + 1) / 10
             let sag = { (f: Double) in sin(f * .pi) * 2.5 }
