@@ -532,13 +532,15 @@ private func drawPresident(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Byron Wilyums
 
-/// Byron Wilyums: a big old heavyweight boxer, now greeting guests at a Las Vegas casino: a dark-skinned Clawd with
-/// close-cropped grey-black hair, in the casino's maroon uniform with gold braid and buttons and a black bow tie, white
-/// gloves. He fights with his fists. Signature: he shadow-boxes, quick jabs left and right, then raises his gloves
-/// high like a champion.
+/// Byron Wilyums: a big old heavyweight boxer, now greeting guests at an Egyptian-themed Las Vegas casino: a
+/// dark-skinned Clawd in the casino's pharaoh get-up over its maroon uniform: a gold-and-blue striped nemes headdress,
+/// a gold cobra on its brow band and its striped lappets down either side of his face, a broad collar of gold and
+/// lapis over the uniform's gold braid and buttons, white gloves. He fights with his fists. Signature: he
+/// shadow-boxes, quick jabs left and right, then raises his gloves high like a champion.
 private func drawByron(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0x8A5A3A), skinD = C(0x6A4228), coat = C(0x7A1A28), coatD = C(0x56101C), gold = C(0xE0B040)
-    let glove = C(0xF4F2EA), hair = C(0x24201E), hairL = C(0x5A5654)
+    let goldD = C(0xB08420), goldL = C(0xFFDC70), blue = C(0x2448A8), blueD = C(0x18307A)
+    let glove = C(0xF4F2EA)
     let sig = p.signature
     let boxing = sig.map { $0 > 0.06 && $0 < 0.6 } ?? false
     let champ = swell(sig, 0.6, 0.68, 0.88, 0.96)
@@ -547,16 +549,29 @@ private func drawByron(_ c: PixelCanvas, _ p: Pose) {
     burtonBoots(c, step: p.step, C(0x0C0B0E), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(body: skin, shade: skinD, arm: coat))
-    // The uniform: maroon, gold braid at the shoulders and down the front, gold buttons, the bow tie.
+    // The uniform: maroon, gold braid down the front, a gold button.
     c.rect(18, 33, 20, 5, coat); c.rect(37, 33, 1, 5, coatD); c.rect(18, 37, 20, 1, coatD)
-    c.rect(18, 33, 3, 1, gold); c.rect(35, 33, 3, 1, gold); c.rect(24, 33, 1, 5, gold); c.rect(31, 33, 1, 5, gold)
-    c.px(28, 35, gold); c.px(28, 37, gold)
-    c.pattern(26, 33, ["KK.KK", "KKKKK", "KK.KK"], ["K": C(0x101014)])
+    c.rect(24, 33, 1, 5, gold); c.rect(31, 33, 1, 5, gold); c.px(28, 37, gold)
+    // The broad collar over it: a gold rim, a band of lapis, and a fringe of gold drops.
+    c.rect(18, 33, 20, 1, gold); c.rect(18, 34, 20, 1, blue); c.rect(37, 33, 1, 2, goldD)
+    c.pattern(19, 35, ["G.G.G.G.G.G.G.G.G."], ["G": gold])
     // A broken boxer's nose and a set jaw.
     c.rect(27, 30, 2, 1, skinD)
-    // Close-cropped hair, flat on top, grey at the temples.
-    c.pattern(17, 23, ["..HHHHHHHHHHHHHHHHHH..", ".HHHHHHHHHHHHHHHHHHHH.", ".HHHHHHHHHHHHHHHHHHHH.",
-                       ".lH................Hl."], ["H": hair, "l": hairL])
+    // The nemes: gold and blue stripes over the top of him, a gold brow band with the cobra rising from it, and the
+    // striped lappets down either side of his face.
+    c.pattern(16, 22, [
+        "......GGGGGGGGGGGG......",
+        "....BBBBBBBBBBBBBBBB....",
+        "...GGGGGGGGUUGGGGGGGG...",
+        "..BBBBBBBBBUkBBBBBBBBB..",
+        ".GGGGGGGGGGGUGGGGGGGGGd.",
+        "BBBBUUUUUUUUUUUUUUUUBBBb",
+        "GGGG................GGGd",
+        "BBBB................BBBb",
+        ".GGG................GGd.",
+        "..BB................Bb..",
+        "..GG................Gd..",
+    ], ["G": gold, "d": goldD, "B": blue, "b": blueD, "U": goldL, "k": C(0x101014)])
     // Arms: shadow-boxing, raised like a champion, a fist swinging, or at his sides.
     if boxing {
         let jab = frac(p.t * 3.5) < 0.5
