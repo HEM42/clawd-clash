@@ -23,7 +23,7 @@ let burtonVillains5: [BurtonVillain: Persona] = [
                      draw: drawStayne),
     .jabberclawdky: Persona(name: "The Jabberclawdky", weapon: .lightning,
                             magic: Magic(core: C(0xF0D6FF), glow: C(0x7A2BD1), jagged: true), armoured: true,
-                            canSit: false, pivot: jabberMouth, bulk: 8, headTop: 9, signature: 3.6,
+                            canSit: false, pivot: jabberMouth, bulk: 5, headTop: 13, signature: 3.6,
                             draw: drawJabberclawdky),
     .bandersnatch: Persona(name: "The Bandersnatch", weapon: .saber, canSit: false, pivot: snatchJaws, bulk: 7,
                            headTop: 23, signature: 3.2, draw: drawBandersnatch),
@@ -38,7 +38,7 @@ private let stayneLift = 5
 /// Stayne's sword hand, raised with the rest of him: his sword swings from there.
 private let stayneHand = (x: Sprite.hand.x, y: Sprite.hand.y - Double(stayneLift))
 /// The front of the Jabberclawdky's mouth: its lightning leaves from there (raised by `armRaise`, head and all).
-private let jabberMouth = (x: 57.5, y: 20.5)
+private let jabberMouth = (x: 50.5, y: 24.5)
 /// The Bandersnatch's jaws: its bite snaps from there.
 private let snatchJaws = (x: 48.5, y: 32.5)
 
@@ -604,17 +604,17 @@ private func drawJabberclawdky(_ c: PixelCanvas, _ p: Pose) {
     let lift = Double(p.armRaise) + (roaring ? 2 : 0)
 
     // The wings: folded along its back, or spread wide, the far one behind.
-    let shoulder = (x: 29.0, y: 27.0)
-    let folded: [(Double, Double)] = [(15, 22), (20, 16), (26, 15)]
-    let far: [(Double, Double)] = [(4, 14), (12, 5), (22, 3)]
-    let near: [(Double, Double)] = [(7, 20), (17, 9), (30, 5)]
+    let shoulder = (x: 29.0, y: 29.0)
+    let folded: [(Double, Double)] = [(19, 25), (22, 21), (27, 20)]
+    let far: [(Double, Double)] = [(12, 20), (17, 14), (24, 12)]
+    let near: [(Double, Double)] = [(14, 24), (21, 16), (30, 14)]
     func wingAt(_ open: [(Double, Double)], _ col: Px, _ dark: Px, dy: Double) {
         var tips: [(Double, Double)] = []
         for i in 0..<3 {
             let f = folded[i], o = open[i]
             tips.append((f.0 + (o.0 - f.0) * spread, f.1 + (o.1 - f.1) * spread + dy))
         }
-        let root = (shoulder.x, shoulder.y + dy), back = (shoulder.x - 9, shoulder.y + 1 + dy)
+        let root = (shoulder.x, shoulder.y + dy), back = (shoulder.x - 8, shoulder.y + 1 + dy)
         burtonTriangle(c, root, tips[0], back, dark)
         burtonTriangle(c, root, tips[0], tips[1], col)
         burtonTriangle(c, root, tips[1], tips[2], col)
@@ -622,37 +622,37 @@ private func drawJabberclawdky(_ c: PixelCanvas, _ p: Pose) {
     }
     if spread > 0.05 { wingAt(far, wingD, C(0x281E30), dy: -1) }
     // The tail, curling up behind it, the barb on its end.
-    for i in 0..<14 {
-        let f = Double(i) / 13
-        let x = 16 - f * 11 + sin(p.lt * 2 + f * 3) * 0.8, y = 35 - f * 9 + sin(f * .pi) * 1.5
-        burtonLine(c, x, y, x, y, i % 3 == 0 ? hideL : hide, 1.9 - f * 0.8)
+    for i in 0..<11 {
+        let f = Double(i) / 10
+        let x = 18 - f * 6 + sin(p.lt * 2 + f * 3) * 0.6, y = 35 - f * 8 + sin(f * .pi) * 1.2
+        burtonLine(c, x, y, x, y, i % 3 == 0 ? hideL : hide, 1.7 - f * 0.7)
     }
-    burtonTriangle(c, (5, 26), (2, 22), (8, 23), hideD)
+    burtonTriangle(c, (12, 27), (10, 23), (15, 24), hideD)
     // Four clawed legs.
-    for (i, lx) in [17, 22, 31, 36].enumerated() {
+    for (i, lx) in [18, 22, 31, 35].enumerated() {
         let lifted = p.step >= 0 && i % 2 == p.step
-        c.rect(lx, 36, 3, lifted ? 6 : 7, i % 2 == 0 ? hide : hideD)
+        c.rect(lx, 37, 3, lifted ? 5 : 6, i % 2 == 0 ? hide : hideD)
         c.pattern(lx - 1, lifted ? 42 : 43, ["C.C.C"], ["C": claw])
     }
     c.oy += p.breathe
     // The body: a block a size up, rounded at the top, belly plates underneath, scales on its back.
-    for y in 26...38 {
-        let inset = y == 26 ? 3 : y == 27 ? 1 : 0
-        c.rect(15 + inset, y, 24 - inset * 2, 1, hide); c.px(38 - inset, y, hideD)
+    for y in 28...38 {
+        let inset = y == 28 ? 3 : y == 29 ? 1 : 0
+        c.rect(17 + inset, y, 22 - inset * 2, 1, hide); c.px(38 - inset, y, hideD)
     }
-    for y in [34, 36] { c.rect(19, y, 16, 1, belly) }
-    c.rect(19, 38, 16, 1, hideD)
-    for x in stride(from: 19, to: 36, by: 4) { c.px(x, 29, hideL); c.px(x + 2, 31, hideL) }
-    for x in stride(from: 19, to: 31, by: 4) { burtonTriangle(c, (Double(x), 26.5), (Double(x) + 3, 26.5),
-        (Double(x) + 1, 23.5), hideD) }
+    for y in [34, 36] { c.rect(20, y, 14, 1, belly) }
+    c.rect(20, 38, 14, 1, hideD)
+    for x in stride(from: 20, to: 36, by: 4) { c.px(x, 31, hideL); c.px(x + 2, 33, hideL) }
+    for x in stride(from: 20, to: 32, by: 4) { burtonTriangle(c, (Double(x), 28.5), (Double(x) + 3, 28.5),
+        (Double(x) + 1, 25.5), hideD) }
     if spread <= 0.05 { wingAt(near, wing, wingD, dy: 0) }
     // The long neck curving up and forward, spines along it.
-    let head = (x: 49.0, y: 17.0 - lift)
-    var prev = (x: 35.0, y: 30.0)
-    for i in 1...8 {
-        let f = Double(i) / 8
-        let q = (x: 35 + (head.x - 35) * f, y: 30 + (head.y + 2 - 30) * (1 - (1 - f) * (1 - f)))
-        burtonLine(c, prev.x, prev.y, q.x, q.y, hide, 2.4 - f * 0.9)
+    let head = (x: 44.0, y: 21.0 - lift)
+    var prev = (x: 35.0, y: 31.0)
+    for i in 1...6 {
+        let f = Double(i) / 6
+        let q = (x: 35 + (head.x - 35) * f, y: 31 + (head.y + 2 - 31) * (1 - (1 - f) * (1 - f)))
+        burtonLine(c, prev.x, prev.y, q.x, q.y, hide, 2.2 - f * 0.8)
         if i % 2 == 0 { burtonTriangle(c, (q.x - 2, q.y - 1.5), (q.x, q.y - 1.5), (q.x - 2.5, q.y - 4), hideD) }
         prev = q
     }
@@ -661,19 +661,19 @@ private func drawJabberclawdky(_ c: PixelCanvas, _ p: Pose) {
     let hx = Int(head.x.rounded()) - 4, hy = Int(head.y.rounded()) - 3
     c.pattern(hx - 3, hy - 5, ["dd...HH..", ".dd...HH.", "..dd.HHH.", "...ddHHH."], ["H": hide, "d": hideD])
     c.pattern(hx, hy, [
-        ".HHHHHHH......",
-        "HHHHEEHHHHHH..",
-        "HHHHHHHHHHHHHH",
-        "HHHHHHHHHHHHHH",
+        ".HHHHHH.....",
+        "HHHEEHHHHH..",
+        "HHHHHHHHHHHH",
+        "HHHHHHHHHHHH",
     ], ["H": hide, "E": C(0xC88AFF)])
-    c.pattern(hx + 1, hy + 4 + open, ["HHHHHHHHHHHH", ".HHHHHHHHHH."], ["H": hideD])
+    c.pattern(hx + 1, hy + 4 + open, ["HHHHHHHHHH", ".HHHHHHHH."], ["H": hideD])
     if open > 0 {
-        c.rect(hx + 4, hy + 4, 9, open, C(0x3A1028))
-        for x in stride(from: hx + 5, to: hx + 13, by: 2) { c.px(x, hy + 4, claw); c.px(x + 1, hy + 4 + open, claw) }
+        c.rect(hx + 3, hy + 4, 8, open, C(0x3A1028))
+        for x in stride(from: hx + 4, to: hx + 11, by: 2) { c.px(x, hy + 4, claw); c.px(x + 1, hy + 4 + open, claw) }
     } else {
-        for x in stride(from: hx + 6, to: hx + 13, by: 3) { c.px(x, hy + 4, claw) }
+        for x in stride(from: hx + 5, to: hx + 11, by: 3) { c.px(x, hy + 4, claw) }
     }
-    c.glowLine(Double(hx) + 5, Double(hy) + 1.5, Double(hx) + 5, Double(hy) + 1.5, core: C(0xE8C8FF),
+    c.glowLine(Double(hx) + 4, Double(hy) + 1.5, Double(hx) + 4, Double(hy) + 1.5, core: C(0xE8C8FF),
         glow: C(0x7A2BD1, 0.6),
                coreR: 0.5, glowR: casting ? 3 : 2)
     if spread > 0.05 { wingAt(near, wing, wingD, dy: 0) }
@@ -683,7 +683,7 @@ private func drawJabberclawdky(_ c: PixelCanvas, _ p: Pose) {
             let f = (p.t * 1.6 + Double(k) / 3).truncatingRemainder(dividingBy: 1), r = 3 + f * 8
             for s in -3...3 {
                 let a = -0.3 + Double(s) * 0.2
-                c.px(hx + 14 + Int((cos(a) * r).rounded()), hy + 4 + Int((sin(a) * r).rounded()), C(0xE8C8FF,
+                c.px(hx + 12 + Int((cos(a) * r).rounded()), hy + 4 + Int((sin(a) * r).rounded()), C(0xE8C8FF,
                     0.8 * (1 - f)))
             }
         }
