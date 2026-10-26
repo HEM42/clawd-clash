@@ -326,7 +326,8 @@ private func drawRzykrusky(_ c: PixelCanvas, _ p: Pose) {
 
 /// Pee-wee Herclawd: a pale Clawd with rosy cheeks and black hair slicked flat with a shine, in a grey suit a size too
 /// small, a white shirt and a red bow tie, and white shoes. He throws joke-shop novelties: wind-up chattering teeth.
-/// Signature: he kicks off his shoes and does his big-shoe dance on the spot, arms swinging, then he's back in them.
+/// Signature: he kicks off his shoes, steps up into a pair of tall white platform shoes, and does his big-shoe dance on
+/// the spot in them, arms swinging; then the platforms go and he's back in his own shoes.
 private func drawPeewee(_ c: PixelCanvas, _ p: Pose) {
     let skin = C(0xF4DCCB), skinD = C(0xD6BAA6), suit = C(0x8E8E98), suitD = C(0x6E6E78), suitL = C(0xA8A8B2)
     let red = C(0xD8202A), redD = C(0x9A141A), hair = C(0x18181C), sheen = C(0x4A4A58), shoe = C(0xF8F8F8)
@@ -334,6 +335,9 @@ private func drawPeewee(_ c: PixelCanvas, _ p: Pose) {
     let shoesOff = sig.map { $0 > 0.05 && $0 < 0.93 } ?? false
     let dance = sig.map { $0 > 0.2 && $0 < 0.84 } ?? false
     let beat = Int(p.t * 4.5) % 2
+    // The platform shoes: they fade in under his feet as he rises onto them, and fade as he steps back down.
+    let platforms = sig.map { min(ramp($0, 0.13, 0.2), 1 - ramp($0, 0.84, 0.9)) } ?? 0
+    let rise = seatedPose ? 0 : Int((Double(peeweePlatform) * platforms).rounded())
 
     if let s = sig, shoesOff {
         // The shoes, kicked off in two arcs, landing either side of him, fading away at the end.
@@ -347,8 +351,12 @@ private func drawPeewee(_ c: PixelCanvas, _ p: Pose) {
     }
     let sway = dance ? (beat == 0 ? -2 : 2) : 0
     c.ox += sway
+    c.oy -= rise
     drawLegs(c, Look(leg: suit), step: dance ? beat : p.step)
     if !shoesOff { burtonBoots(c, step: p.step, shoe, height: 2) }
+    if rise > 0 {
+        faded(c, max(0.35, platforms)) { s in peeweePlatforms(s, step: dance ? beat : p.step, rise: rise) }
+    }
     c.oy += dance ? -beat : p.breathe
     drawBody(c, Look(body: skin, shade: skinD, arm: suit))
     c.rect(19, 31, 2, 1, C(0xF08A9A)); c.rect(35, 31, 2, 1, C(0xF08A9A))
@@ -380,6 +388,25 @@ private func drawPeewee(_ c: PixelCanvas, _ p: Pose) {
         let chatter = Int(p.t * 12) % 2
         c.pattern(41, 27 - chatter, ["RRRRR", "WKWKW"], ["R": red, "W": C(0xFFFFFF), "K": redD])
         c.pattern(41, 29, ["WKWKW", "RRRRR"], ["R": red, "W": C(0xFFFFFF), "K": redD])
+    }
+}
+
+/// How many pixels Pee-wee's platform shoes lift him by.
+private let peeweePlatform = 4
+
+/// The tall white platform shoes under Pee-wee's four feet, `rise` rows of sole each under the foot of its leg (drawn
+/// with the body lifted by `rise`): chunky, a pixel wider than the leg on its outer side, a white upper over the foot,
+/// a grey welt, thick off-white soles shaded on one side, and a dark bottom edge. `step` as in `drawLegs`, so a lifted
+/// foot's shoe lifts with it.
+private func peeweePlatforms(_ c: PixelCanvas, step: Int, rise: Int) {
+    let white = C(0xF4F4F4), sole = C(0xD4D4DC), shade = C(0xACACB8), welt = C(0x8A8A96), bottom = C(0x56565F)
+    for (i, lx) in [19, 23, 31, 35].enumerated() {
+        let foot = step >= 0 && i % 2 == step ? 42 : 43
+        let x0 = i % 2 == 0 ? lx - 1 : lx
+        for r in 0...rise {
+            let row = r == rise ? bottom : r == 1 && rise >= 3 ? welt : nil
+            c.rect(x0, foot + r, 2, 1, row ?? (r == 0 ? white : sole)); c.px(x0 + 2, foot + r, row ?? shade)
+        }
     }
 }
 
