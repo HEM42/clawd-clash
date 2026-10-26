@@ -6,8 +6,8 @@ import Foundation
 // Spy with her beehive, and the giant Martian Walker.
 
 let burtonVillains4: [BurtonVillain: Persona] = [
-    .headlessHorseclawd: Persona(name: "The Headless Horseclawd", weapon: .saber, bulk: 3, headTop: 20, signature: 3.6,
-                                 draw: drawHorseclawd),
+    .headlessHorseclawd: Persona(name: "The Headless Horseclawd", weapon: .saber, armoured: true, bulk: 3, headTop: 20,
+                                 signature: 3.6, draw: drawHorseclawd),
     .ladyVanTassle: Persona(name: "Lady Van Tassle", weapon: .lightning,
                             magic: Magic(core: C(0xFFC2C2), glow: C(0x9E1B2E), jagged: false, spell: true),
                             pivot: castingHand, headTop: 15, signature: 3.6, draw: drawLadyVanTassle),
