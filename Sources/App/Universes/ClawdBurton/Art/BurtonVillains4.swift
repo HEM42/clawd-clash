@@ -20,8 +20,9 @@ let burtonVillains4: [BurtonVillain: Persona] = [
                                 headTop: 15, signature: 4.0, callout: "We come in peace!", draw: drawMartianAmbassador),
     .martianTrooper: Persona(name: "A Martian Trooper", weapon: .blaster, shot: martianRay, muzzle: rayMuzzle,
                              headTop: 15, signature: 3.0, draw: drawMartianTrooper),
-    .martianSpy: Persona(name: "The Martian Spy", weapon: .blaster, shot: martianRay, muzzle: rayMuzzle, headTop: 7,
-                         signature: 3.6, draw: drawMartianSpy),
+    .martianSpy: Persona(name: "The Martian Spy", weapon: .lightning,
+                         magic: Magic(core: C(0xFFE0F0), glow: C(0xF07AB8), jagged: false, rings: true),
+                         pivot: spyStare, headTop: 7, signature: 3.6, draw: drawMartianSpy),
     .martianWalker: Persona(name: "The Martian Walker", weapon: .blaster, shot: martianRay, armoured: true,
                             canSit: false, muzzle: (52, 30.5), bulk: 4, headTop: 13, signature: 4.0,
                             draw: drawMartianWalker),
@@ -437,10 +438,15 @@ private func drawMartianTrooper(_ c: PixelCanvas, _ p: Pose) {
     c.paste(g.rotated(angle, about: (41.5, 31.5), into: c.w, c.h, at: (41.5, 31.5)))
 }
 
+/// Two rows under the Martian Spy's right eye: her hypnotic stare leaves from the eye itself (the stream starts
+/// `armRaise`, 2, above this).
+private let spyStare = (x: 32.5, y: 31.5)
+
 /// The Martian Spy: disguised as a woman, a pale-green Martian face with huge unblinking black eyes, sharp painted
 /// brows and red lips, chewing gum; a towering black beehive of hair hides her brain; a tight black dress with white
-/// swirls. She walks stiffly, with no bob. She fires a ray gun. Signature: she blows a big pink bubble of gum, it
-/// pops, and she stares on without blinking.
+/// swirls, long red nails. She walks stiffly, with no bob. She carries no gun: she fights with her hypnotic stare, a
+/// soft pink ray rippling with rings out of her right eye, her eyes glinting pink while she does. Signature: she
+/// blows a big pink bubble of gum, it pops, and she stares on without blinking.
 private func drawMartianSpy(_ c: PixelCanvas, _ p: Pose) {
     let face = C(0xD6E6C4), faceD = C(0xAEC49C), dress = C(0x16161B), dressD = C(0x0C0C10), swirl = C(0xE8E8F0)
     let hair = C(0x121216), hairL = C(0x34343E), lips = C(0xD8202A)
@@ -456,10 +462,13 @@ private func drawMartianSpy(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, dress); c.rect(37, 33, 1, 5, dressD); c.rect(18, 37, 20, 1, dressD)
     c.pattern(19, 33, [".SS.....SS....SS..", "S..S...S..S..S..S.", "..S.......S.....S.", ".S......SS...SS..."],
               ["S": swirl])
-    // Huge staring eyes with long lashes, sharp brows, the red lips chewing.
+    // Huge staring eyes with long lashes, sharp brows, the red lips chewing; glinting pink while she stares someone
+    // down.
+    let staring = p.zap != nil
     c.pattern(20, 26, ["KK.........KK...", "..KK.....KK.....", "LKKKL...LKKKL...", ".KKKK....KKKK...",
-                       ".KWKK....KWKK...",
-                       ".KKKK....KKKK..."], ["K": ink, "L": ink, "W": C(0xFFFFFF)])
+                       staring ? ".KWPK....KWPK..." : ".KWKK....KWKK...",
+                       ".KKKK....KKKK..."],
+              ["K": ink, "L": ink, "W": staring ? C(0xFFC2E2) : C(0xFFFFFF), "P": C(0xF07AB8)])
     let chew = !(bubble > 0) && Int(p.lt * 3) % 2 == 0
     c.pattern(26, 32, chew ? [".LL.", "LLLL"] : ["LLLL", ".LL."], ["L": lips])
     // The towering beehive.
@@ -491,8 +500,11 @@ private func drawMartianSpy(_ c: PixelCanvas, _ p: Pose) {
     } else if popped {
         c.pattern(23, 31, ["P.....P", ".P...P.", "..PPP..", ".P...P."], ["P": C(0xFF8AC0)])
     }
-    c.rect(15, 33, 3, 3, dress)
-    martianGun(c, p, sleeve: dress, hand: face)
+    // Both arms down at her sides, black sleeves and pale-green hands with long red nails.
+    for x in [15, 38] {
+        c.rect(x, 33, 3, 3, dress)
+        c.pattern(x == 15 ? 15 : 39, 36, ["FF", "NN"], ["F": face, "N": lips])
+    }
 }
 
 /// The Martian Walker: a giant Martian robot a size up from Clawd, a riveted silver block on four thick mechanical
