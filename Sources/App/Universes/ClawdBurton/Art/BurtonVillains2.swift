@@ -431,7 +431,7 @@ private func drawHalloweenWitch(_ c: PixelCanvas, _ p: Pose) {
         "........HHHHHHHHH...",
         ".......HHHHHHHHHH...",
         ".......HHHHGGGHHH...",
-        ".......HHHHG.GHHH...",
+        ".......HHHHGHGHHH...",
         ".......HHHHGGGHHH...",
         ".......HHHHHHHHHHH..",
         ".......HHHHHHHHHHH..",

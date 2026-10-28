@@ -15,7 +15,7 @@ let burtonHeroes1: [BurtonHero: Persona] = [
                     draw: drawZeero),
     .theMayor: Persona(name: "The Mayor", weapon: .none, bulk: 2, headTop: 9, signature: 3.2, draw: drawMayor),
     .sandyClawdz: Persona(name: "Sandy Clawdz", weapon: .blaster, shot: .thrown(C(0xC8202A)), muzzle: (45, 29),
-                          bulk: 2, headTop: 17, signature: 3.0, callout: "Ho ho ho!", draw: drawSandyClawdz),
+                          bulk: 2, headTop: 19, signature: 3.0, callout: "Ho ho ho!", draw: drawSandyClawdz),
 ]
 
 /// The front of Jack's gaping mouth: his scare pulses out from there (raised by the pose's `armRaise`).

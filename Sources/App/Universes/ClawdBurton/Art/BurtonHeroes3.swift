@@ -4,7 +4,7 @@ import Foundation
 // hands, and the Inventor who made him; from the pastel suburb below, Kim Boggz and her mother Peg, the Avon lady.
 
 let burtonHeroes3: [BurtonHero: Persona] = [
-    .edwardScissorclawds: Persona(name: "Edward Scissorclawds", weapon: .saber, headTop: 13, signature: 3.8,
+    .edwardScissorclawds: Persona(name: "Edward Scissorclawds", weapon: .saber, headTop: 15, signature: 3.8,
                                   callout: "I'm not finished.", draw: drawEdward),
     .kimBoggz: Persona(name: "Kim Boggz", weapon: .none, headTop: 20, signature: 3.6, draw: drawKim),
     .pegBoggz: Persona(name: "Peg Boggz", weapon: .none, headTop: 18, signature: 3.2, callout: "Avon calling!",
