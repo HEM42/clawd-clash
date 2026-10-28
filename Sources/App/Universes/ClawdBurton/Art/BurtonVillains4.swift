@@ -184,8 +184,8 @@ private func drawLadyVanTassle(_ c: PixelCanvas, _ p: Pose) {
         "...HHHHHhhHHHHHHHHH...",
         "..HHHHHHHHHHHHHhHHHH..",
         ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HHHHHH.......HHHHHHH.",
-        ".HHH..............HHH.",
+        ".HHHHHHHHHHHHHHHHHHHH.",
+        ".HHHHHHHHHHHHHHHHHHHH.",
         ".HH................HH.",
     ], ["H": hair, "h": hairL])
     // Her right hand: stirring the cauldron with a long stick, raised to cast, or at her side.
@@ -231,7 +231,8 @@ private func drawCrone(_ c: PixelCanvas, _ p: Pose) {
     c.rect(18, 33, 20, 5, rag); c.rect(37, 33, 1, 5, ragD)
     c.pattern(18, 33, ["L..L...L..L...L..L..", ".L...L...L...L...L.."], ["L": ragL])
     c.pattern(14, 21, ["...RRRRR....", ".RRRRRRRRR..", "RRRRRrRRRRR.", "RRRRRRRRRRRR", "RRRrRRRRRR..", "RRRRRRR.....",
-                       "RRRR........", "RRR........."], ["R": rag, "r": ragD])
+                       "RRRR........", "RRRR........", "RRrR........",
+                       "RRRR........", "RrRR........", "RRRR........"], ["R": rag, "r": ragD])
     // Stringy grey hair from under the rags, down her sides.
     c.pattern(18, 24, ["..HHHHHHHHHHHHHHHHH.", "HHHHHHHHHHHHHHHHHHHH", "HH.H............H.HH", "H..H............H..H",
                        "H..d............d..H", "H...................",
@@ -429,13 +430,13 @@ private func drawMartianTrooper(_ c: PixelCanvas, _ p: Pose) {
     c.rect(16, 32, 4, 2, suitL); c.rect(36, 32, 4, 2, suitD)
     c.rect(15, 33, 3, 3, suit)
     guard spin, let s = p.signature else { martianGun(c, p, sleeve: suit); return }
-    // The gun twirling round his finger.
-    c.rect(38, 31, 3, 3, suit); c.rect(40, 31, 2, 2, martianGreen)
+    // The gun twirling round his finger, his arm held out so it spins clear of his face.
+    c.rect(38, 31, 3, 3, suit); c.rect(41, 31, 3, 2, suit); c.rect(44, 31, 2, 2, martianGreen)
     let g = PixelCanvas(c.w, c.h)
     g.pattern(41, 30, ["SSSSRSRSGG", "SsSSRSRSGG", "Ss........", "ss........"],
               ["S": C(0xC8CCD6), "s": C(0x8A8E9A), "R": C(0xD8302A), "G": C(0x9AF07A)])
     let angle = -ramp(s, 0.1, 0.9) * 360 * 3
-    c.paste(g.rotated(angle, about: (41.5, 31.5), into: c.w, c.h, at: (41.5, 31.5)))
+    c.paste(g.rotated(angle, about: (43.5, 31.5), into: c.w, c.h, at: (45.5, 31.5)))
 }
 
 /// Two rows under the Martian Spy's right eye: her hypnotic stare leaves from the eye itself (the stream starts
@@ -472,6 +473,7 @@ private func drawMartianSpy(_ c: PixelCanvas, _ p: Pose) {
     let chew = !(bubble > 0) && Int(p.lt * 3) % 2 == 0
     c.pattern(26, 32, chew ? [".LL.", "LLLL"] : ["LLLL", ".LL."], ["L": lips])
     // The towering beehive.
+    c.rect(20, 25, 16, 1, face)   // her brow under the hairline, so the beehive sits on her with no gap
     c.pattern(18, 7, [
         "......HHHHHHHH......",
         "....HHHHHHHHHHHH....",
@@ -489,8 +491,8 @@ private func drawMartianSpy(_ c: PixelCanvas, _ p: Pose) {
         ".HHHHHHHHHHHHHHHHHH.",
         "HHHHHHHHHHHHHHHHHHHH",
         "HHHHHHHHHHHHHHHHHHHH",
-        "HHHH............HHHH",
-        "HHH..............HHH",
+        "HHHHHHHHHHHHHHHHHHHH",
+        "HHHHHHHHHHHHHHHHHHHH",
         "HH................HH",
         "H..................H",
     ], ["H": hair, "h": hairL])

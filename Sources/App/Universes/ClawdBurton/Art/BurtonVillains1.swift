@@ -411,7 +411,7 @@ private func drawDelorezFigure(_ c: PixelCanvas, _ p: Pose) {
         ".HHHHHHHHHHHHHHHHHHHHHHHH.",
         ".HHHHHHHHHHHHHHHHHHHHHHHH.",
         "HHHHHHHHHHHHHHHHHHHHHHHHHH",
-        "HHHHHHH...........HHHHHHHH",
+        "HHHHHHHHHHHHHHHHHHHHHHHHHH",
         "HHHHH................HHHHH",
         "HHHH..................HHHH",
         "HHHH..................HHHH",
@@ -531,7 +531,7 @@ private func drawJeremeeFigure(_ c: PixelCanvas, _ p: Pose) {
     drawBody(c, Look(body: skin, shade: skinD, arm: sweater, eye: nil))
     c.rect(22, 29, 2, 3, ink)
     if wink { c.rect(32, 30, 2, 1, ink) } else { c.rect(32, 29, 2, 3, ink) }
-    c.pattern(24, 31, ["K......K", ".KWWWWK."], ["K": ink, "W": C(0xFFFFFF)])
+    c.pattern(25, 31, ["K....K", ".KKKK."], ["K": ink])
     if twinkle > 0.2 { c.pattern(29, 29, ["..W..", ".WWW.", "WWWWW", ".WWW.", "..W.."], ["W": C(0xFFFFFF, twinkle)]) }
     // The varsity sweater over the bottom of Clawd: a cream band at its hem, cream cuffs, the big letter J.
     c.rect(18, 33, 20, 5, sweater); c.rect(37, 33, 1, 5, sweaterD); c.rect(18, 37, 20, 1, cream)
@@ -545,7 +545,7 @@ private func drawJeremeeFigure(_ c: PixelCanvas, _ p: Pose) {
         "..HHHHHHHHHHHHHHHHHH..",
         ".HHHHHHHHHHHHHHHHHHHH.",
         ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HHH..............HHH.",
+        ".HHHHHHHHHHHHHHHHHHHH.",
         ".HH................HH.",
     ], ["H": hair, "h": hairL])
     // His left hand on the handlebars while he leans.

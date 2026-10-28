@@ -18,7 +18,7 @@ let burtonVillains2: [BurtonVillain: Persona] = [
     .tearAwayClown: Persona(name: "The Tear-Away Clown", weapon: .none, canSit: false, headTop: 17, signature: 3.2,
                             draw: drawTearAwayClown),
     .halloweenWitch: Persona(name: "The Halloween Witch", weapon: .lightning, motion: .fly,
-                             magic: Magic(core: C(0xFFE0B0), glow: C(0xFF7A1A)), pivot: witchHand, headTop: 14,
+                             magic: Magic(core: C(0xFFE0B0), glow: C(0xFF7A1A)), pivot: witchHand, headTop: 15,
                              signature: 3.2, callout: "Hee hee hee!", draw: drawHalloweenWitch),
 ]
 
@@ -188,6 +188,7 @@ private func drawShok(_ c: PixelCanvas, _ p: Pose) {
     c.pattern(19, 15, ["..........H...", ".........HH...", "........HHH...", ".......HHHH...", "......HHHH....",
                        ".....HHHHH....", "....HHHHHH....", "....HHHHHHH...", "...HHHHHHHH...", "...HHHHHHHHH..",
                        "..HHHHHHHHHH..", "..HHHHHHHHHHH.", "HHHHHHHHHHHHHHHH"], ["H": hat])
+    c.rect(21, 28, 14, 2, hat)   // dark under the brim, down to her head, so no gap shows with the mask on or up
     kidMask(c, ["..MMMMMMMMMM..", ".MMMMMMMMMMMM.", "MMKKMMMMMMKKMM", "MMMMMMNNMMMMMM", "MMMMMMMNNNMMMM", "MMMKKKKKKKKMMM",
                 ".MMMMMMMMMMMM."], ["M": C(0xC8D8B8), "K": C(0x2A2A30), "N": C(0xA8B898)], up: up)
     let twirl = p.signature.map { $0 > 0.25 && $0 < 0.75 } ?? false
@@ -241,16 +242,20 @@ private func drawFinkelclawd(_ c: PixelCanvas, _ p: Pose) {
     let scratching = sig.map { $0 > 0.25 && $0 < 0.8 } ?? false
     // The wheelchair: a big spoked wheel, the seat, the footrest and the push handles.
     let wheel = (x: 24, y: 37)
-    c.circle(wheel.x, wheel.y, 7, metal); c.circle(wheel.x, wheel.y, 6, C(0, 0))
-    for k in 0..<56 {
-        let a = Double(k) / 56 * 2 * .pi
-        c.px(wheel.x + Int((cos(a) * 6.5).rounded()), wheel.y + Int((sin(a) * 6.5).rounded()), C(0x2A2A30))
+    // The dark tyre round a thin metal rim, the dark gaps between the spokes, light spokes turning across it.
+    for y in (wheel.y - 7)...(wheel.y + 7) {
+        for x in (wheel.x - 7)...(wheel.x + 7) {
+            let d = hypot(Double(x - wheel.x), Double(y - wheel.y))
+            if d > 7.3 { continue }
+            c.px(x, y, d > 5.6 ? C(0x2A2A30) : d > 4.6 ? metal : C(0x1C1C22))
+        }
     }
     for k in 0..<4 {
         let a = Double(k) / 4 * .pi + p.t * 0.5
-        burtonLine(c, Double(wheel.x) - cos(a) * 6, Double(wheel.y) - sin(a) * 6, Double(wheel.x) + cos(a) * 6,
-                   Double(wheel.y) + sin(a) * 6, metal, 0.35)
+        burtonLine(c, Double(wheel.x) + 0.5 - cos(a) * 5, Double(wheel.y) + 0.5 - sin(a) * 5,
+                   Double(wheel.x) + 0.5 + cos(a) * 5, Double(wheel.y) + 0.5 + sin(a) * 5, C(0xB8BCC6), 0.5)
     }
+    c.px(wheel.x, wheel.y, metal)
     c.rect(18, 33, 20, 2, metal); c.rect(36, 35, 2, 6, metal); c.rect(35, 41, 6, 1, metal); c.circle(37, 43, 1, C(0x2A2A30))
     c.rect(15, 20, 2, 14, metal); c.rect(13, 20, 4, 1, metal)
     c.oy += p.breathe
@@ -419,7 +424,7 @@ private func drawHalloweenWitch(_ c: PixelCanvas, _ p: Pose) {
     if looping || p.zap == true { c.rect(25, 32, 6, 1, ink) }
     // Stringy dark hair down her sides, and the tall crooked hat with its buckle.
     c.pattern(16, 25, ["HHH", "HH.", "HH.", "H..", "H..", "H.."], ["H": C(0x2A2A30)])
-    c.pattern(15, 14, [
+    c.pattern(15, 15, [
         "...........HHHHH....",
         "..........HHHHHH....",
         ".........HHHHHHH....",
