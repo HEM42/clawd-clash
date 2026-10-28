@@ -427,11 +427,12 @@ private func drawDottie(_ c: PixelCanvas, _ p: Pose) {
     c.oy += p.breathe
     drawBody(c, Look(arm: shirt))
     c.pattern(26, 31, ["K..K", ".KK."], ["K": C(0x5A2A1A)])
-    // The overalls: the red shirt at her sides, the blue bib and its straps, a spanner in the pocket.
+    // The overalls: the red shirt at her sides, the blue bib and its straps, a spanner in the pocket, its head
+    // sticking up out of it.
     c.rect(18, 33, 20, 5, shirt); c.rect(18, 35, 20, 3, blue); c.rect(37, 35, 1, 3, blueD)
     c.rect(22, 33, 12, 2, blue); c.rect(21, 32, 2, 1, blue); c.rect(33, 32, 2, 1, blue)
-    c.rect(29, 34, 5, 2, blueD); c.px(23, 33, C(0xE8C040)); c.px(32, 33, C(0xE8C040))
-    c.pattern(30, 31, ["S.S", "SSS", ".S.", ".D."], ["S": steel, "D": steelD])
+    c.px(23, 33, C(0xE8C040)); c.px(32, 33, C(0xE8C040))
+    c.pattern(29, 33, ["S.S", "SSS"], ["S": steel]); c.rect(29, 35, 5, 2, blueD); c.px(30, 35, steelD)
     // Short tousled hair over the top of her.
     c.pattern(17, 20, [
         "....h..hh...h..h......",

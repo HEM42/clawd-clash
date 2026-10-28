@@ -337,17 +337,20 @@ private func drawInventor(_ c: PixelCanvas, _ p: Pose) {
     burtonBoots(c, step: p.step, C(0x141216), height: 1)
     c.oy += p.breathe
     drawBody(c, Look(body: skin, shade: skinD, arm: velvet))
-    // A kindly face: lines under the eyes, the thin moustache, a smile (broad while he admires the biscuit).
+    // A kindly face: lines under the eyes.
     c.px(21, 32, skinD); c.px(34, 32, skinD)
-    c.pattern(24, 31, ["MMM..MMM", up > 0.5 ? ".K....K." : "........", up > 0.5 ? "..KKKK.." : "...KK..."],
-              ["M": C(0x5A5660), "K": C(0x7A3A3A)])
     // The velvet smoking jacket over the bottom of him: quilted, black satin lapels, the white cravat.
     c.rect(18, 33, 20, 5, velvet); c.rect(37, 33, 1, 5, velvetD); c.rect(18, 37, 20, 1, velvetD)
     for (x, y) in [(20, 35), (23, 36), (33, 35), (35, 36)] { c.px(x, y, velvetL) }
     c.pattern(22, 33, ["SSSWWWWWWSSS", ".SSSWWWWSSS.", "..SSS..SSS..", "...S....S..."],
               ["S": C(0x3A1622), "W": C(0xF4F0E8)])
     c.px(28, 35, C(0xD8B040)); c.px(15, 35, satin); c.px(40, 35, satin)
-    c.rect(18, 21, 20, 5, skin); c.rect(37, 21, 1, 5, skinD)
+    // The thin moustache under the eyes, one shape, and below it his smile over the top of the cravat (broad, its
+    // corners turned up, while he admires the biscuit).
+    c.pattern(24, 32, [up > 0.5 ? "K......K" : "........", up > 0.5 ? ".KKKKKK." : "...KK..."], ["K": C(0x7A3A3A)])
+    c.rect(25, 32, 6, 1, C(0x5A5660))
+    // His high brow, up under the hair.
+    c.rect(18, 23, 20, 3, skin); c.rect(37, 23, 1, 3, skinD)
     // Silver hair, swept back from a high brow, longer at the back.
     c.pattern(16, 20, [
         "......HHHHHHHHHHH.......",

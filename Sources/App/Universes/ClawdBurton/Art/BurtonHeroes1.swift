@@ -8,14 +8,14 @@ import Foundation
 let burtonHeroes1: [BurtonHero: Persona] = [
     .jackSkullington: Persona(name: "Jack Skullington", weapon: .lightning,
                               magic: Magic(core: C(0xFFF0D8), glow: C(0xFF8A2A), jagged: false, waves: true, pulse: true),
-                              pivot: jackMouth, headTop: 11, signature: 3.4, callout: "What's this?",
+                              pivot: jackMouth, headTop: 16, signature: 3.4, callout: "What's this?",
                               draw: drawJackSkullington),
     .sallee: Persona(name: "Sallee", weapon: .none, headTop: 20, signature: 3.6, draw: drawSallee),
     .zeero: Persona(name: "Zeero", weapon: .none, motion: .hover, canSit: false, headTop: 7, signature: 3.0, callout: "Arf!",
                     draw: drawZeero),
-    .theMayor: Persona(name: "The Mayor", weapon: .none, bulk: 2, headTop: 12, signature: 3.2, draw: drawMayor),
+    .theMayor: Persona(name: "The Mayor", weapon: .none, bulk: 2, headTop: 9, signature: 3.2, draw: drawMayor),
     .sandyClawdz: Persona(name: "Sandy Clawdz", weapon: .blaster, shot: .thrown(C(0xC8202A)), muzzle: (45, 29),
-                          headTop: 17, signature: 3.0, callout: "Ho ho ho!", draw: drawSandyClawdz),
+                          bulk: 2, headTop: 17, signature: 3.0, callout: "Ho ho ho!", draw: drawSandyClawdz),
 ]
 
 /// The front of Jack's gaping mouth: his scare pulses out from there (raised by the pose's `armRaise`).
@@ -355,9 +355,9 @@ private func drawMayor(_ c: PixelCanvas, _ p: Pose) {
 // MARK: - Sandy Clawdz
 
 /// Sandy Clawdz: Clawd in the red hat with its white fur band, its tip and bobble drooping behind, a big white beard
-/// over the bottom of him with rosy cheeks above it, the red coat with a black belt and gold buckle, fur at its hem,
-/// black boots, and his sack of presents over his shoulder. He throws wrapped presents. Signature: he pats his round
-/// tummy, which bounces, and laughs.
+/// over the bottom of him with rosy cheeks above it, the red coat round his tummy, which bulges out in front, with
+/// a black belt and gold buckle and fur at its hem, black boots, and his sack of presents over his shoulder. He throws
+/// wrapped presents. Signature: he pats his round tummy, which bounces, and laughs.
 private func drawSandyClawdz(_ c: PixelCanvas, _ p: Pose) {
     let red = C(0xC8202A), redD = C(0x8E1418), fur = C(0xF4F4F0), furD = C(0xD0D4D8), mitt = C(0x141418)
     let sig = p.signature
@@ -372,9 +372,11 @@ private func drawSandyClawdz(_ c: PixelCanvas, _ p: Pose) {
               ["B": C(0x8A6A3A), "b": C(0x6A4E2A)])
     // The coat's skirt over his legs, fur at its hem; the coat over the bottom of him, the tummy bouncing as he pats it.
     c.rect(17 - bounce, 38, 22 + bounce * 2, seatedPose ? 1 : 2, red); c.rect(17 - bounce, seatedPose ? 38 : 39, 22 + bounce * 2, 1, fur)
-    drawBody(c, Look(arm: red))
-    c.rect(18 - bounce, 33, 20 + bounce * 2, 5, red); c.rect(37 + bounce, 33, 1, 5, redD)
-    c.rect(18 - bounce, 36, 20 + bounce * 2, 1, mitt); c.pattern(26, 36, ["GGGG"], ["G": C(0xE8B830)])
+    drawBody(c, Look(arm: red), armRight: patting ? 0 : 2)
+    c.rect(18 - bounce, 33, 20 + bounce * 2, 5, red)
+    // His round tummy, bulging 2 px out in front, shaded on its curve.
+    c.pattern(38 + bounce, 34, ["R.", "RR", "RR", "Rd", "d."], ["R": red, "d": redD])
+    c.rect(18 - bounce, 36, 22 + bounce * 2, 1, mitt); c.pattern(26, 36, ["GGGG"], ["G": C(0xE8B830)])
     // Rosy cheeks, and the big white beard over the bottom of his face.
     c.px(20, 31, C(0xE88A8A)); c.px(35, 31, C(0xE88A8A))
     c.pattern(18, 32, ["BB................BB", "BBBBBBBB....BBBBBBBB", ".BBBBBBBBBBBBBBBBBB.", "..BBBBbBBBBBBbBBBB..",
@@ -390,7 +392,7 @@ private func drawSandyClawdz(_ c: PixelCanvas, _ p: Pose) {
         "FFFfFFFFFFFFFFFfFFFFFF",
     ], ["R": red, "F": fur, "f": furD])
     c.pattern(12, 19, ["..RRRR", ".RR...", "RR....", "FFF...", "FFF..."], ["R": red, "F": fur])
-    // Arms: patting the tummy, a present raised to throw, or mittens at his sides.
+    // Arms: patting the tummy, a present raised to throw, or one mitten at his side and one resting on his tummy.
     if patting {
         c.rect(20 - bounce, 35, 3, 3, mitt); c.rect(33 + bounce, 35, 3, 3, mitt)
         return
@@ -402,5 +404,5 @@ private func drawSandyClawdz(_ c: PixelCanvas, _ p: Pose) {
         c.pattern(41, 26, ["RRYRR", "RRYRR", "YYYYY", "RRYRR", "RRYRR"], ["R": red, "Y": C(0xF0D040)])
         return
     }
-    c.rect(39, 36, 3, 2, mitt)
+    c.rect(39, 33, 2, 2, mitt)
 }

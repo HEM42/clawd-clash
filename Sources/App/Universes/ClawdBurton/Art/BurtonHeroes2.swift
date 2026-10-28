@@ -158,9 +158,10 @@ private func drawBarbaraFigure(_ c: PixelCanvas, _ p: Pose) {
     // The auburn bob over the top of Clawd, its ends curling under at her jaw; blown straight up while she scares.
     if scary {
         c.pattern(17, 16, [".H..H..H...H..H..H....", ".HH.HH.HH..HH.HH.HH...", "HHHHHHHHHHHHHHHHHHHHH.",
-                           "HHHHHHHHHHHHHHHHHHHHHH", ".HHHHHHHHHHHHHHHHHHHH.", ".H..................H."],
+                           "HHHHHHHHHHHHHHHHHHHHHH", ".HHHHHHHHHHHHHHHHHHHH.", ".HHHHHHHHHHHHHHHHHHHH."],
                   ["H": hair])
-        c.rect(17, 22, 2, 4, hair); c.rect(37, 22, 2, 4, hair)
+        // Down to the top of the skull, so no gap shows between them.
+        c.rect(17, 22, 22, 4, hair)
     } else {
         c.pattern(16, 21, [
             ".....HHHHHHHHHHHHHH.....",
@@ -328,12 +329,15 @@ private func drawJunoh(_ c: PixelCanvas, _ p: Pose) {
         ".GG................GG.",
         ".G..................G.",
     ], ["G": grey, "g": greyD])
-    // The Handbook held up in her right hand; her left hand tapping it.
+    // The Handbook held up in her right hand; her left hand tapping it, the arm across under her chin with a dark
+    // underside so it reads against the cardigan.
     c.rect(38, 33, 3, 3, cardi)
     burtonHandbook(c, x: 39, y: 27)
     if tapping {
-        c.rect(15, 33, 3, 3, cardi); burtonLine(c, 18, 31, 36, Double(tap ? 28 : 26), cardi, 1.0)
-        c.rect(37, tap ? 27 : 25, 2, 2, clawdOrange)
+        let hand = tap ? 32.0 : 30.0
+        c.rect(15, 33, 3, 3, cardi); burtonLine(c, 18, 34, 36, hand + 2, cardi, 1.0)
+        burtonLine(c, 18, 35.5, 36, hand + 3.5, cardiD, 0.5)
+        c.rect(37, Int(hand), 2, 2, clawdOrange)
     } else {
         c.rect(15, 33, 3, 3, cardi)
     }

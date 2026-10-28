@@ -15,7 +15,7 @@ let burtonHeroes4: [BurtonHero: Persona] = [
     .youngMasbeth: Persona(name: "Young Masbeth", weapon: .none, headTop: 24, signature: 3.2, draw: drawMasbeth),
     .bromVanBruntt: Persona(name: "Brom Van Bruntt", weapon: .saber, pivot: bromShoulder, bulk: 2, headTop: 20,
                             signature: 3.8, draw: drawBrom),
-    .richieNorriss: Persona(name: "Richie Norriss", weapon: .blaster, shot: .thrown(C(0x16161B)), muzzle: (46, 30.5),
+    .richieNorriss: Persona(name: "Richie Norriss", weapon: .blaster, shot: .thrown(C(0xD8302A)), muzzle: (46, 30.5),
                             headTop: 20, signature: 3.2, draw: drawRichie),
     .grandmaFlorenz: Persona(name: "Grandma Florenz", weapon: .lightning,
                              magic: Magic(core: C(0xFFF0E0), glow: C(0xFF9EC8), jagged: false, waves: true),
@@ -465,8 +465,9 @@ private func drawGrandmaFlorenz(_ c: PixelCanvas, _ p: Pose) {
     c.px(44, 32, C(0xD8302A)); c.px(45, 32, C(0xD8302A))
     c.oy += lift
     if turning, let s = sig {
-        // Her left hand reaching across to the volume knob, turning it.
-        burtonLine(c, 18, 35, 30, 38, cardi, 1.1); c.rect(30 + Int(ramp(s, 0.08, 0.28) * 2) % 2, 37, 2, 2, clawdOrange)
+        // Her right hand reaching down the front of the player to the red volume knob, turning it.
+        burtonLine(c, 39.5, 34, 46, 36.5, cardi, 1.1)
+        c.rect(46 + Int(ramp(s, 0.08, 0.28) * 4) % 2, 36, 2, 2, clawdOrange)
     }
     if tapping, let s = sig {
         // Notes bobbing up out of the speaker.
