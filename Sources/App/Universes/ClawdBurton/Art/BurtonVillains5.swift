@@ -104,9 +104,9 @@ private func shrunk(_ c: PixelCanvas, _ k: Double, keep: Double = 1, _ art: (Pix
 // MARK: - Augustus Gloopp
 
 /// Augustus Gloopp: a big boy, the Clawd block a little wider and taller than usual, rosy cheeks and chocolate smeared
-/// round his mouth, neat light-brown hair, a white shirt under green leather lederhosen with braces, and white knee
-/// socks. He throws candy bars. Signature: he stuffs a whole chocolate bar into his mouth, bite after bite, his
-/// cheeks bulging, and the smears grow.
+/// round his mouth and down onto his collar, neat light-brown hair, a white shirt under green leather lederhosen
+/// with braces, and white knee socks. He throws candy bars. Signature: he stuffs a whole chocolate bar into his
+/// mouth, bite after bite, his cheeks bulging, and the smears grow.
 private func drawAugustus(_ c: PixelCanvas, _ p: Pose) {
     let shirt = C(0xF0EEE6), shirtD = C(0xC8C4BA), leather = C(0x4A5A2E), leatherD = C(0x34401E)
     let hair = C(0xA8784A), hairL = C(0xC89868), choc = C(0x5A321E), chocL = C(0x7A4A2A)
@@ -127,22 +127,23 @@ private func drawAugustus(_ c: PixelCanvas, _ p: Pose) {
     c.rect(14, 33, 3, 3, shirt); c.rect(39, 33, 3, 3, shirt)
     c.rect(22, 29, 2, 3, ink); c.rect(32, 29, 2, 3, ink)
     c.rect(19, 31, 2, 1, C(0xE87A7A)); c.rect(35, 31, 2, 1, C(0xE87A7A))
-    // The mouth, chomping, and the chocolate smeared round it.
+    // The mouth, chomping.
     c.rect(26, 32, 4, chomp ? 1 : 1, chomp ? choc : C(0x7A2A1A))
-    c.px(25, 31, choc); c.px(30, 33, choc); if eaten > 0.3 { c.px(24, 32, choc); c.px(31, 31, chocL) }
-    if eaten > 0.7 { c.rect(25, 33, 2, 1, choc); c.px(29, 30, chocL) }
     // The shirt and the lederhosen bib with its braces.
     c.rect(17, 33, 22, 5, shirt); c.rect(38, 33, 1, 5, shirtD)
     c.rect(21, 33, 2, 5, leather); c.rect(33, 33, 2, 5, leather); c.rect(21, 35, 14, 3, leather);
     c.rect(17, 37, 22, 1, leatherD)
     c.pattern(26, 35, [".W.", "WYW", ".W."], ["W": C(0xF4F4F0), "Y": C(0xE8C040)])
+    // The chocolate smeared round his mouth and down onto his shirt.
+    c.px(25, 31, choc); c.px(30, 33, choc); if eaten > 0.3 { c.px(24, 32, choc); c.px(31, 31, chocL) }
+    if eaten > 0.7 { c.rect(25, 33, 2, 1, choc); c.px(29, 30, chocL) }
     // Neat light-brown hair, parted.
     c.pattern(16, 20, [
         ".....HHHHHHHHHHHHHH.....",
         "...HHHHHHHHhHHHHHHHHH...",
         "..HHHHHHHHHhHHHHHHHHHH..",
-        ".HHHHHHHHHH.HHHHHHHHHHH.",
-        ".HHHHHHHHHHH.HHHHHHHHHH.",
+        ".HHHHHHHHHHhHHHHHHHHHHH.",
+        ".HHHHHHHHHHHhHHHHHHHHHH.",
         ".HHH..............HHHHH.",
         ".HH................HHH..",
     ], ["H": hair, "h": hairL])
@@ -210,7 +211,7 @@ private func drawVeruca(_ c: PixelCanvas, _ p: Pose) {
         "...HHHHHHHHHHHHHHHHHH...",
         "..PPPPPPPPPPPPPPPPPPPP..",
         ".HHHHHHlHHHHHHHHHlHHHHH.",
-        ".HHHHH............HHHHH.",
+        ".HHHHHHHHHHHHHHHHHHHHHH.",
         ".HHH................HHH.",
     ], ["H": hair, "l": hairL, "P": C(0xF08AB0)])
     for x in [15, 38] {
@@ -340,9 +341,9 @@ private func mikeFigure(_ c: PixelCanvas, _ p: Pose) {
         "..HHHHHHHHHHHHHHHHHH..",
         ".HHHHlHHHHlHHHHHlHHHH.",
         ".HHHHHHHHHHHHHHHHHHHH.",
-        ".HHH.HH..HHH..HH.HHHH.",
+        ".HHHSHHSSHHHSSHHSHHHH.",
         ".HH................HH.",
-    ], ["H": hair, "l": hairL])
+    ], ["H": hair, "l": hairL, "S": clawdOrange])
     if armed(p) {
         // The game zapper, raised to fire.
         c.oy += p.gunY

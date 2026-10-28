@@ -239,12 +239,12 @@ private func drawBikeThief(_ c: PixelCanvas, _ p: Pose) {
         }
         boltCutters(c, angle: a, open: open)
     } else {
-        boltCutters(c, angle: 82, open: false)
+        boltCutters(c, angle: 38, open: false)
     }
     if let s = sig, s > 0.55, s < 0.85 {
         let a = min(ramp(s, 0.55, 0.6), 1 - ramp(s, 0.8, 0.85))
-        shout(c, "HEE", x: 6, y: 11 - (Int(p.t * 6) % 2), C(0xFFFFFF, 0.85 * a))
-        shout(c, "HEE", x: 18, y: 6 + (Int(p.t * 6) % 2), C(0xFFFFFF, 0.85 * a))
+        shout(c, "HEE", x: 14, y: 11 - (Int(p.t * 6) % 2), C(0xFFFFFF, 0.85 * a))
+        shout(c, "HEE", x: 26, y: 6 + (Int(p.t * 6) % 2), C(0xFFFFFF, 0.85 * a))
     }
 }
 
@@ -331,7 +331,7 @@ private func rubeeBall(_ c: PixelCanvas, _ x: Int, _ y: Int, r: Int) {
 
 // MARK: - Andee
 
-/// Andee: Dottie's enormous, short-tempered boyfriend: a Clawd a size bigger than most, a flat crew cut, angry brows
+/// Andee: Simone's enormous, short-tempered boyfriend: a Clawd a size bigger than most, a flat crew cut, angry brows
 /// and a scowl, a red plaid shirt over a white T-shirt, jeans, and big fists. He punches. Signature: he cracks his
 /// knuckles, then stomps forward after someone, the ground shaking, and back.
 private func drawAndee(_ c: PixelCanvas, _ p: Pose) {

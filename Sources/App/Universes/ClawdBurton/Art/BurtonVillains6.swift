@@ -7,13 +7,13 @@ import Foundation
 let burtonVillains6: [BurtonVillain: Persona] = [
     .edgarGorr: Persona(name: "Edgar \"E\" Gorr", weapon: .blaster, shot: .thrown(C(0xF4F4F4)), muzzle: (45, 27),
                         headTop: 21, signature: 3.4, draw: drawEdgar),
-    .nassorr: Persona(name: "Nassorr", weapon: .blaster, shot: .thrown(C(0x9A9A9A)), muzzle: (45, 27), headTop: 15,
+    .nassorr: Persona(name: "Nassorr", weapon: .blaster, shot: .thrown(C(0x9A9A9A)), muzzle: (45, 27), headTop: 17,
                       signature: 3.0, draw: drawNassorr),
     .toshiakki: Persona(name: "Toshiakki", weapon: .blaster, shot: .thrown(C(0xC8CCD4)), muzzle: (43, 22), headTop: 20,
                         signature: 3.6, draw: drawToshiakki),
     .weirdGurl: Persona(name: "Weird Gurl", weapon: .blaster, shot: .thrown(C(0x9A9A9A)), muzzle: (44, 27), headTop: 20,
                         signature: 3.2, draw: drawWeirdGurl),
-    .mrWhiskerz: Persona(name: "Mr. Whiskerz", weapon: .saber, motion: .fly, pivot: whiskerzMouth, headTop: 18,
+    .mrWhiskerz: Persona(name: "Mr. Whiskerz", weapon: .saber, motion: .fly, pivot: whiskerzMouth, headTop: 20,
                          signature: 3.0, draw: drawMrWhiskerz),
     .shellee: Persona(name: "Shellee", weapon: .saber, armoured: true, canSit: false, pivot: shelleeFoot, bulk: 5,
                       headTop: 16, signature: 3.6, draw: drawShellee),
@@ -108,10 +108,10 @@ private func drawEdgar(_ c: PixelCanvas, _ p: Pose) {
         "...HHHHHHHHHHHHHHH....",
         ".HHHHHHHhHHHHHHHHHHH..",
         ".HHHHHHHhHHHHHHHHHHHH.",
-        ".HHHH...HHHHHHHHHHHHH.",
-        ".HH.......HHH....HHHH.",
+        ".HHHHSSSHHHHHHHHHHHHH.",
+        ".HHSSSSSSSHHHSSSSHHHH.",
         ".H.................HH.",
-    ], ["H": hair, "h": hairL])
+    ], ["H": hair, "h": hairL, "S": skin])
     if showing, let s = sig {
         // The goldfish bowl held up: water and glass, nothing in it, a bubble going up.
         raisedHand(c, from: 39.5, 42, 29, sleeve: sweater, hand: skin)
@@ -206,8 +206,8 @@ private func drawToshiakki(_ c: PixelCanvas, _ p: Pose) {
         ".....HHHHHHHHHHHH.....",
         "...HHHHHHHHHHHHHHHH...",
         "..HHHHHhhHHHHHHHHHHH..",
-        ".HHHHHHH.HHHHHHHHHHHH.",
-        ".HHHHHHH.hHHHHHHHHHHH.",
+        ".HHHHHHHhHHHHHHHHHHHH.",
+        ".HHHHHHHhhHHHHHHHHHHH.",
         ".HHHHHHHHHHHHHHHHHHHH.",
         ".HHHHHHHHHHHHHHHHHHHH.",
         ".HH................HH.",
@@ -455,7 +455,7 @@ private func drawShellee(_ c: PixelCanvas, _ p: Pose) {
 
 // MARK: - Colossuss
 
-/// Colossuss: Toshiakki's dead hamster, brought back as a mummy, in greys: a round hamster the size of Clawd wrapped
+/// Colossuss: Nassorr's dead hamster, brought back as a mummy, in greys: a round hamster the size of Clawd wrapped
 /// in bandages, little round ears, dark eyes peering out between the wraps, buck teeth, a loose end trailing, its
 /// stubby arms held straight out in front. It bites. Signature: it waddles from side to side, arms out.
 private func drawColossuss(_ c: PixelCanvas, _ p: Pose) {
